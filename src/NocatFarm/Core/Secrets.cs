@@ -42,6 +42,9 @@ public static class Secrets {
 
 	private static readonly Lock KeyGate = new();
 	private static byte[]? _key;
+
+	/// <summary>The key file <see cref="_key"/> was read from or made in. A key is only ever used for the folder it belongs to.</summary>
+	private static string? _keyPath;
 	private static string _keyProblem = "";
 	private static bool _warned;
 	private static bool _warnedForeign;
@@ -180,15 +183,21 @@ public static class Secrets {
 	/// </summary>
 	private static byte[]? Key(bool create) {
 		lock (KeyGate) {
-			if (_key != null) {
+			string path = KeyPath;
+
+			// Held for the config folder it came from only. Kept across a change of folder, a value saved in the new one
+			// was sealed with the old folder's key - which the new one doesn't have - and read back there as nothing: a
+			// locked backup opened into a fresh folder lost every password and login it carried.
+			if ((_key != null) && string.Equals(_keyPath, path, StringComparison.Ordinal)) {
 				return _key;
 			}
+
+			_key = null;
+			_keyPath = null;
 
 			if (!AesGcm.IsSupported) {
 				return null;
 			}
-
-			string path = KeyPath;
 
 			try {
 				if (!File.Exists(path)) {
@@ -211,6 +220,7 @@ public static class Secrets {
 						fs.Write(Encoding.ASCII.GetBytes(Convert.ToBase64String(fresh) + "\n"));
 						fs.Flush(true);
 						_key = fresh;
+						_keyPath = path;
 						Log.Info(new Said("made the login key: {0}", path));
 						Log.Info(new Said("keep it with the config folder - saved logins need it"));
 
@@ -228,6 +238,7 @@ public static class Secrets {
 
 				OwnerOnly(path);
 				_key = key;
+				_keyPath = path;
 
 				return _key;
 			} catch (Exception e) {
@@ -244,6 +255,7 @@ public static class Secrets {
 	internal static void ForgetKey() {
 		lock (KeyGate) {
 			_key = null;
+			_keyPath = null;
 		}
 	}
 

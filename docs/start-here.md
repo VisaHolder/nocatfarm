@@ -73,7 +73,8 @@ on the Overview page replays it.
 2. **Easy or Advanced.** Easy is the default: a few plain questions about your phone, updates and the account,
    about two minutes in all. Advanced adds opening it from anywhere, Discord and Telegram, and the update hours,
    and ends by opening every setting of the account. It's for people who've used ArchiSteamFarm or something like
-   it.
+   it. Moving from another PC? *Restore from a backup file* on this first screen puts back a daily backup (see
+   [Daily backups](dashboard.md#daily-backups-that-open-on-any-pc)).
 3. **Your phone.** *Yes, set it up* opens the dashboard to your Wi-Fi. You pick a dashboard password, then scan a QR
    code with your phone. If Windows Firewall is in the way, the button to let it through is right there. *Not now*
    keeps the dashboard on this PC.
@@ -123,6 +124,11 @@ It also, without being asked:
 - collects free event items: the daily sticker during a Steam sale, and anything free in the Points Shop
 - goes through the discovery queue during Steam sales, for the sale items and badge progress
 - watches for bans and tells you straight away if one appears
+- watches for the signs of a stolen account (a new API key or device, a changed email, phone or Steam Guard) and
+  holds that account's trades until you've checked (see [Scam watch](trades.md#scam-watch))
+- shows a Health line on each account card and tells you when something gets worse
+- during Steam sales nominates and votes in the Steam Awards - a human-mode account one step at a time, inside its
+  day (see [Sale events](cards-and-idling.md#sale-events))
 - joins the nocat.farm Steam group, which you can change or clear (see
   [Steam groups](phone-and-notifications.md#steam-groups))
 - clears Steam's notification counters
@@ -130,8 +136,16 @@ It also, without being asked:
 - checks for updates every 2 hours and tells you what's new, but only installs one by itself if you set *Updates*
   to *install by itself at night*
 
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
+Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
+account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
+things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+
 These stay **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
-achievements, selling cards, crafting badges, fair card swaps, Discord and Telegram, rep4rep, and plugins.
+achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
+Points on levels, making booster packs from gems, crafting badges, fair card swaps, daily backups, Discord and
+Telegram, rep4rep, and plugins. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
+added account - farm accounts too - until you turn it on.
 
 ## 4. Finding your way around
 
@@ -225,7 +239,7 @@ Updates & plugins on this PC) and a window opens to pick the zip, starting in Do
 path. In Docker, nocat.farm is updated by hand (see below).
 
 To go back to an older version, `update versions` lists the ones still on GitHub (the last 5 releases), and
-`update to 1.7.1` installs one, the same way. Or use *Go back to an older version* under Settings → Updates &
+`update to 1.7.3` installs one, the same way. Or use *Go back to an older version* under Settings → Updates &
 plugins. Your settings are saved first (in config/backups), and any the older version doesn't know come back when
 you update again, without undoing what you changed in between. The version you came from won't install by itself
 until a newer one is out; `update accept` brings it back.

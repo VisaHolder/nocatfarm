@@ -917,6 +917,7 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<SteamUser.WalletInfoCallback>(OnWalletInfo);
 		_cb.Subscribe<GiftNotificationCallback>(OnGiftNotification);
 		_cb.Subscribe<SteamApps.GuestPassListCallback>(OnGuestPassList);
+		_cb.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
 	}
 
 	/// <summary>Raised when Steam says gifts or guest passes are waiting. The gifts module does the accepting.</summary>
@@ -1004,6 +1005,16 @@ public sealed class Bot : IAsyncDisposable {
 		WalletCurrency = cb.Currency;
 	}
 
+	// ── 1.8.0 account health: limited-account status, from what Steam says at sign-in ──
+	/// <summary>
+	/// Whether Steam treats this account as limited (it has never spent $5) - from the account flags Steam sends with every
+	/// sign-in. Null until Steam has said, this session or the last.
+	/// </summary>
+	public bool? Limited { get; internal set; }
+
+	private void OnAccountInfo(SteamUser.AccountInfoCallback cb) =>
+		Limited = (cb.AccountFlags & (EAccountFlags.LimitedUser | EAccountFlags.LimitedUserForce)) != 0;
+
 	/// <summary>The account's Steam level, asked of Steam each time. Null if it wouldn't say.</summary>
 	public async Task<uint?> GetLevelAsync() {
 		if (Unified?.CreateService<Player>() is not { } player) {
@@ -1089,8 +1100,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>A family member started or stopped a shared game. Hand the whole picture to the library.</summary>
 	private void OnFamilyRunningApps(SteamUnifiedMessages.ServiceMethodNotification<CFamilyGroupsClient_NotifyRunningApps_Notification> cb) {
 		try {
+			// Each player with the owner of the copy they're on - a game several members own has a copy per owner.
 			Library.NoteFamilyRunning(cb.Body.running_apps
-				.Select(static a => (a.appid, a.playing_members.Select(static m => m.member_steamid))));
+				.Select(static a => (a.appid, a.playing_members.Select(static m => (m.member_steamid, m.owner_steamid)))));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the family's running games: {0}", Log.Describe(e)), Name);
 		}
@@ -1669,6 +1681,7 @@ public sealed class Bot : IAsyncDisposable {
 		// Only once the modules have stopped: human mode banks the session in flight as it stops, measured from this
 		// sign-in - cleared first, it found no sign-in to measure from and every stop lost up to a minute of play.
 		OnlineSince = null;
+		Library.NoteSignedOut();
 
 		_heartbeat?.Dispose();
 		_heartbeat = null;
@@ -2070,6 +2083,8 @@ public sealed class Bot : IAsyncDisposable {
 			// A rejected token means the session was revoked (password change, "sign out everywhere") - not that the
 			// account is bad. Drop it so the next attempt asks for the password again.
 			if (cb.Result is EResult.InvalidPassword or EResult.AccessDenied or EResult.Expired) {
+				// Scam watch: the saved login refused as revoked - every session signed out, which a thief does first.
+				NocatFarm.Modules.ScamWatch.SavedLoginRefused(this, cb.Result, WebSession.ReadJwtExpiryOf(_refreshToken ?? ""));
 				ReplaceTokens(null, null);   // the whole family is revoked - the cached web token is dead too
 				Log.Warn(new Said("login token rejected ({0}) - needs the password again", cb.Result), Name);
 			} else if (cb.Result is EResult.RateLimitExceeded or EResult.AccountLoginDeniedThrottle) {
@@ -2092,6 +2107,7 @@ public sealed class Bot : IAsyncDisposable {
 		_guardPrompt = null;
 		Log.Good(new Said("logged on as {0} ({1})", Cfg.SteamLogin, SteamId), Name);
 		Plugins.PluginHost.RaiseOnline(this);
+		Library.NoteSignedIn();   // ask Steam who in the family is playing what now, rather than trust the old picture
 
 		try {
 			// ALWAYS, even when the state we want is the one we think we already have.
@@ -2262,6 +2278,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>What a connection that's gone leaves behind: nothing playing, nothing announced, no web session.</summary>
 	private void ForgetConnection() {
 		OnlineSince = null;
+		Library.NoteSignedOut();   // the family's "who's playing what" is from before now
 		Playing = "";
 		PlayingApps = [];   // nothing is playing on a session that's gone - or a grind thinks its game is still on
 		IsFarming = false;
@@ -2874,6 +2891,15 @@ public sealed class Bot : IAsyncDisposable {
 	/// Returns empty on any failure, or when only part of the answer came: "no answer", never "owns nothing". Refund
 	/// protection then holds nothing new but keeps what it already held; the DLC check holds the game.
 	/// </summary>
+	/// <summary>The licences as last worked out by <see cref="GetAppOwnershipAsync"/>, without asking Steam; null when not yet.</summary>
+	internal IReadOnlyDictionary<uint, AppOwnership>? KnownOwnership {
+		get {
+			lock (_licenses) {
+				return _appOwnedSince;
+			}
+		}
+	}
+
 	internal async Task<IReadOnlyDictionary<uint, AppOwnership>> GetAppOwnershipAsync() {
 		Dictionary<uint, Licence> snapshot;
 		int generation;
@@ -3059,6 +3085,12 @@ public sealed class Bot : IAsyncDisposable {
 
 		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
 		// be lost until the slow pass came round the better part of an hour later.
+		Volatile.Write(ref _tradeOfferPending, 1);
+		_tradeOffer.TrySetResult(true);
+	}
+
+	/// <summary>Ends the trade module's wait now, as an offer arriving would - for 'scamwatch ok' lifting a hold.</summary>
+	public void WakeTradeLoop() {
 		Volatile.Write(ref _tradeOfferPending, 1);
 		_tradeOffer.TrySetResult(true);
 	}

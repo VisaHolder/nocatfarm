@@ -16,13 +16,40 @@ banned in - the games you put on the list too. The Human mode panel and `human` 
 account that had *Bank hours overnight* on with an empty list before the most-played pick existed banked nothing,
 so it was switched off when it updated (the log says so): turn it on to idle its most-played games overnight.
 
+The night says what it's doing, item by item: the status reads "asleep, banking hours quietly on Counter-Strike 2,
+ShareX (software), ... · up 09:00", and any game on the list it leaves out is named with the reason, for example
+"ARC Raiders left out - someone in your Steam Family is playing it (back 20 min after they stop)". The log says it
+when a game drops out or comes back, and `human myaccount` and `config myaccount` list the same.
+
+### Software works like a game
+
+Software and tools the account owns (OBS Studio, ShareX, Blender, Godot) go anywhere a game can: the main game,
+*Games and how often*, hour targets, *Games to idle* and *Games to idle overnight*. Every game search in the dashboard
+finds them by name, marked "(software)", and `owns 400040` reports them. Software it really uses counts among its
+most played. Card farming and achievements stay games only, since software has neither. Typing in an appID the
+account doesn't own still adds it, with a warning ("new doesn't own Blender - add it to its Steam library first, or
+idling it banks nothing"), because idling something it doesn't own banks nothing. Free software has to be added to
+the Steam library first, like a free game.
+
+### Steam Family games
+
+With *Include family-shared games* on, a shared game waits while someone in your Steam Family is playing it, and for
+*Wait after a family member stops* (20 minutes) after they stop. Every sign-in asks Steam who in the family is playing
+what, so a picture from before a reconnect doesn't keep a game out. When a game is owned by more than one member and
+only one copy is in use, *Borrow another family member's copy when one is in use* (on) switches to the free copy
+instead of leaving the game out: it changes only who that one game is borrowed from, never takes a copy anyone is
+using, and logs it ("ARC Raiders: Sam's copy is in use - borrowing Alex's free copy instead"). This works for the
+night, the day's sittings and the idle list.
+
 It doesn't start a game the moment it signs in. It settles in first, and no game starts until at least 3 minutes
 after sign-in and several checks that you aren't already playing on the account yourself. No setting shortens that.
 
 Anything other people can see gets a person's sort of delay. Trades, gifts and friend requests each wait their own
 time, and while it's asleep they wait for morning (*Only react while awake*, on). Behind-the-scenes jobs like
-badges, free games, booster packs and selling run at any hour, just not the moment it signs in. And when you stop
-the account, it finishes up for a few seconds instead of vanishing mid-game.
+badges, free games and making booster packs run at any hour, just not the moment it signs in. Spare items, opening
+booster packs and spending Steam Points only happen during its day (opening packs and spending points are off on a
+human-mode account unless you turn them on). And when you stop the account, it finishes up for a few seconds instead
+of vanishing mid-game.
 
 *Reaction speed* (normal, quick or relaxed) sets all those waits at once: quick halves them and relaxed doubles them,
 each still picked at random, and your own numbers stay as you set them (normal uses them exactly). It covers the

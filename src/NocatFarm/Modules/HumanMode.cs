@@ -24,7 +24,7 @@ namespace NocatFarm.Modules;
 /// Overnight it can still bank hours: invisible, so nobody sees it, and with as many games at once as you like,
 /// because there is nobody to see how many. That is the one place "one game at a time" buys nothing.
 /// </summary>
-public sealed class HumanMode(Bot bot) : BotModule(bot) {
+public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 	public enum Phase { Off, WarmingUp, Playing, ShortBreak, MealBreak, SwitchingGame, Asleep, NightIdle, DoneForToday, DayOff, StoodDown }
 
 	/// <summary>
@@ -304,8 +304,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Phase.NightIdle or Phase.Asleep when _nightFarming => Loc.T("asleep, the card farmer is working · up {0}", (NextWakeTime()).ToString("HH:mm")),
 				// Games it picked itself are named, so nobody wonders what is banking all night.
 				Phase.NightIdle when NightPicked is { Count: > 0 } picked => Loc.T("asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}", picked.Count, NightPickedNames(picked), (NextWakeTime()).ToString("HH:mm")),
-				Phase.NightIdle => Loc.T("asleep, banking hours quietly on {0} game(s) · up {1}", NightGames().Count, (NextWakeTime()).ToString("HH:mm")),
+				Phase.NightIdle => Loc.T("asleep, banking hours quietly on {0} · up {1}", NightItems(), (NextWakeTime()).ToString("HH:mm")) + NightLeftOutLine(),
 				// Banking overnight is on by default; with nothing it may play, say so rather than sleep quietly.
+				Phase.Asleep when NothingToBank && (NightLeftOut().Count > 0) => Loc.T("asleep · up {0}", (NextWakeTime()).ToString("HH:mm")) + NightLeftOutLine(),
 				Phase.Asleep when NothingToBank => Loc.T("asleep · up {0} · nothing to bank overnight - add games to the overnight list", (NextWakeTime()).ToString("HH:mm")),
 				Phase.Asleep => Loc.T("asleep · up {0}", (NextWakeTime()).ToString("HH:mm")),
 				Phase.DoneForToday => Loc.T("done for today ({0}) · back {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")),
@@ -331,7 +332,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	public IReadOnlyList<uint> NightPicked => Bot.Cfg.LegitMode && Bot.Cfg.OfflineIdleAtNight && (Bot.Cfg.OfflineIdleGames.Count == 0) ? TopForNight() : [];
 
 	/// <summary>"Counter-Strike 2, Dota 2" - the library's names, for the status and the dashboard.</summary>
-	public string NightPickedNames(IReadOnlyList<uint> picked) => string.Join(", ", picked.Select(a => Bot.Library.Find(a)?.Name ?? GameNames.Of(a)));
+	public string NightPickedNames(IReadOnlyList<uint> picked) => string.Join(", ", picked.Select(a => Bot.Library.ItemName(a)));
 
 	/// <summary>How many games bank the night: the list or the most-played picked in its place, and any hour target that needs it.</summary>
 	public int NightGameCount => NightGames().Count;
@@ -1322,7 +1323,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// The main game's own written share is the centre of today's roll. It used to be ignored outright in
 		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
 		// position in the list carried meaning.
-		List<(uint Game, int Weight)> spread = Weights();
+		// Rolled from the day's games as set (less refunds and the never-play lists), not with a family game somebody happens
+		// to be on right now left out: that read the side games as the whole day, and its share (e.g. 50% instead of 70%)
+		// stood all day, long after the game was free again. Who's playing is only asked when a sitting's game is picked.
+		List<(uint Game, int Weight)> spread = Weights(familyNow: false);
 		DayRoll roll = RollDayWith(Bot.Cfg, date, Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95), spread.Count >= 2, lastBed, _rng, Extras(date));
 
 		// What yesterday left over, up to an hour of it (CarryIn). Only from yesterday: after a day it didn't run at all it
@@ -1751,7 +1755,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 			return;
 		}
-		List<uint> night = NightGames();
+		List<uint> night = NightGames(play: true);
 		bool banking = Bot.Cfg.OfflineIdleAtNight && (night.Count > 0);
 		Phase want = banking ? Phase.NightIdle : Phase.Asleep;
 
@@ -1785,6 +1789,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		_nightFarming = false;
 
+		if ((_phase == want) && Bot.Cfg.OfflineIdleAtNight) {
+			SayNightChanges();   // a game left out of the night, or back on it - Modules/HumanModeNight.cs
+		}
+
 		// Nobody sees the account at night, but the owner can still sit down at it. Right after a sign-in Steam's
 		// "the owner is playing" can be minutes late, so the overnight games wait for the same safety check the day
 		// does - three minutes and several clear reads - rather than going on the first tick after logging on.
@@ -1814,12 +1822,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (banking) {
 			Log.Info(NightPicked is { Count: > 0 } picked
 				? new Said("asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}", (NextWakeTime()).ToString("HH:mm"), NightPickedNames(picked))
-				: new Said("asleep - banking hours quietly until {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
+				: new Said("asleep - banking hours quietly until {0} on {1}", (NextWakeTime()).ToString("HH:mm"), NightItems()), Bot.Name);
+			SayNightChanges();
 		} else {
 			Bot.StopPlaying();
 			Log.Info(NothingToBank
 				? new Said("asleep - back around {0}. Nothing to bank overnight: add games to the overnight list", (NextWakeTime()).ToString("HH:mm"))
 				: new Said("asleep - back around {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
+			SayNightChanges();   // every listed game left out: say why, rather than only "nothing to bank"
 		}
 	}
 
@@ -2692,7 +2702,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// refund, and not a family game unless shared games are allowed and nobody in the family is on it.
 	/// </summary>
 	private bool MayPlayExtra(uint app, bool allowShared) =>
-		(Bot.Library.Find(app) is { } entry) && (!entry.Shared || (allowShared && !Bot.Library.FamilyIsPlaying(app)))
+		(Bot.Library.Find(app) is { } entry) && (!entry.Shared || (allowShared && Bot.Library.FamilyMayPlay(app)))
 		&& !Bot.Cfg.BlacklistedGames.Contains(app) && !Live.Global.GlobalBlacklistedGames.Contains(app) && !Bot.Refunds.Holds(app);
 
 	/// <summary>
@@ -2978,8 +2988,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		DateTime now = DateTime.Now;
 
 		foreach (HourTargets.Target target in HourTargets.Parse(Bot.Cfg.HourTargets)) {
-			// Only games it can play: owned, not blacklisted, not inside their refund window.
-			if ((Bot.Library.Find(target.AppId) == null) || Bot.Cfg.BlacklistedGames.Contains(target.AppId)
+			// Only games it can play: owned (software too), not blacklisted, not inside their refund window.
+			if (!Bot.Library.CanPlay(target.AppId) || Bot.Cfg.BlacklistedGames.Contains(target.AppId)
 				|| Live.Global.GlobalBlacklistedGames.Contains(target.AppId) || Bot.Refunds.Holds(target.AppId)) {
 				continue;
 			}
@@ -3035,19 +3045,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// What banks hours overnight: the overnight list, plus any dated hour target that day play alone won't finish in
 	/// time. Only matters with night banking switched on - that stays the owner's call.
 	/// </summary>
-	private List<uint> NightGames() {
-		List<uint> games = Bot.Cfg.OfflineIdleGames.Count > 0 ? [.. Bot.Cfg.OfflineIdleGames] : TopForNight();
-
-		foreach (HourTargets.Progress p in OpenTargets()) {
-			if ((p.Target.By != null) && (p.DailyMinutesNeeded > Math.Max(30, _targetMinutes * 0.6)) && !games.Contains(p.Target.AppId)) {
-				games.Add(p.Target.AppId);
-			}
-		}
+	/// <param name="play">For the night's games themselves, not a read of them: a family game whose copy is in use may
+	/// switch to another member's free copy (Library.FamilyMayPlay). The status and the counts only read.</param>
+	private List<uint> NightGames(bool play = false) {
+		List<uint> games = NightWanted();
 
 		// The games typed into the list (and the hour targets) go by the same rules as the ones it picks itself: a game
 		// held for its refund idled all night on the list, where the most-played pick already left it out.
 		HashSet<uint> banned = BannedNow();
-		games = [.. games.Where(a => MayBankAtNight(a, banned))];
+		games = [.. games.Where(a => MayBankAtNight(a, banned, play))];
 
 		return games.Count > Core.SteamIds.GamesAtOnce ? games[..Core.SteamIds.GamesAtOnce] : games;
 	}
@@ -3059,7 +3065,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private List<uint> TopForNight() {
 		HashSet<uint> banned = BannedNow();
 
-		return TopPlayed(Bot.Library.Games, Bot.Cfg.OfflineIdleTopGames, a => MayBankAtNight(a, banned));
+		// Software it really uses counts as one of its most played (OBS Studio, run for hours a day) - as a game would.
+		return TopPlayed(Bot.Library.Games.Concat(Bot.Library.UsedSoftware), Bot.Cfg.OfflineIdleTopGames, a => MayBankAtNight(a, banned));
 	}
 
 	private HashSet<uint> BannedNow() => [.. BotManager.ModuleOf<BanWatch>(Bot)?.BannedGames ?? []];
@@ -3081,9 +3088,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// a family game unless shared games are allowed and nobody in the family is on it. A game typed into the list that
 	/// the library doesn't show (a free game never played, say) still goes on - only a family game is known to be one.
 	/// </summary>
-	private bool MayBankAtNight(uint app, HashSet<uint> banned) =>
-		!banned.Contains(app) && !Bot.Cfg.BlacklistedGames.Contains(app) && !Live.Global.GlobalBlacklistedGames.Contains(app) && !Bot.Refunds.Holds(app)
-		&& ((Bot.Library.Find(app) is not { Shared: true }) || (Bot.Cfg.IncludeFamilyLibrary && !Bot.Library.FamilyIsPlaying(app)));
+	private bool MayBankAtNight(uint app, HashSet<uint> banned, bool play = false) => NightRule(app, banned, play) == NightOut.No;
 
 	/// <summary>The most-played games that are allowed, most minutes first - only ones it has actually played.</summary>
 	public static List<uint> TopPlayed(IEnumerable<Library.Entry> games, int count, Func<uint, bool> allowed) =>
@@ -3101,7 +3106,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			string name = GameName(target.AppId);
 			string have = Fmt.Hm(p.MinutesNow);
 
-			if (Bot.Library.Find(target.AppId) == null) {
+			if (!Bot.Library.CanPlay(target.AppId)) {
 				lines.Add($"{name}: not in this account's library - skipped");
 			} else if (Bot.Cfg.BlacklistedGames.Contains(target.AppId) || Live.Global.GlobalBlacklistedGames.Contains(target.AppId)) {
 				lines.Add($"{name}: blacklisted - skipped");
@@ -3162,7 +3167,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return weights.Count > 0 ? weights[0].Game : 0;
 	}
 
-	private List<(uint Game, int Weight)> Weights() {
+	/// <param name="familyNow">Leave out a Steam Family game somebody is on right now - for picking a sitting's game. Off for
+	/// rolling the day: whose copy is in use at that moment says nothing about the day's split.</param>
+	private List<(uint Game, int Weight)> Weights(bool familyNow = true) {
 		List<(uint Game, int Weight)> weights = ParseWeights(Bot.Cfg.GameWeights);
 
 		if (weights.Count == 0) {
@@ -3187,10 +3194,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		List<(uint Game, int Weight)> list = playable.Count > 0 ? playable : weights;
 
+		// A Steam Family game somebody is on (or just put down) is never taken - not even when it's the only one, which
+		// would take their copy. Another member's free copy is borrowed first when it can be (PickGame, Core/Family.cs).
+		if (familyNow && list.Exists(w => Bot.Library.FamilyIsPlaying(w.Game))) {
+			list = [.. list.Where(w => !Bot.Library.FamilyIsPlaying(w.Game))];
+		}
+
 		// The main game dropped out (refundable, blacklisted): the first side game is read as the main one now, and
 		// its small number would be taken as its share - "730:70, 440:15, 550:15" with 730 held played 550 85% of
 		// the day. What's left splits by weight instead, as the side games already did between themselves.
-		if ((list != weights) && (weights.Count > 0) && (list[0].Game != weights[0].Game)) {
+		if ((list != weights) && (weights.Count > 0) && (list.Count > 0) && (list[0].Game != weights[0].Game)) {
 			int left = Math.Max(1, list.Sum(static w => Math.Max(1, w.Weight)));
 			list[0] = (list[0].Game, Math.Max(1, (int) Math.Round(100.0 * Math.Max(1, list[0].Weight) / left)));
 		}
@@ -3227,6 +3240,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// "Farm cards" had its own when (FarmCardsWhen): two sittings in three went to a game with drops whenever one of
 		// these had any, so on top of the farming sittings the usual games' shares were fiction while cards lasted -
 		// and "only at night" farmed in the day after all. Cards are farmed when that setting says; this is the rest.
+
+		// A family game in the day's games whose copy is in use: switch to another member's free copy when there is one
+		// (Core/Family.cs), so it's back for a later sitting rather than left out all day.
+		foreach ((uint listed, _) in ParseWeights(Bot.Cfg.GameWeights)) {
+			Bot.Library.FamilyMayPlay(listed);
+		}
 
 		// An hour target, if one wants this sitting.
 		uint target = PreferTarget();

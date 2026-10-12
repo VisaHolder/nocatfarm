@@ -178,6 +178,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			// Paused is paused: every other module stops for it, and this one went on accepting and confirming. Answering by
 			// hand ('trade accept') still works.
+			// A scam-watch warning holds the account's trades until 'scamwatch ok' - offers are still looked at and announced
+			// (answering them yourself still works), but nothing is accepted, declined or confirmed by itself (CheckAsync).
 			if (Wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && (awake || nightDonations) && ShouldLook()) {
 				try {
 					await CheckAsync(awake, ct).ConfigureAwait(false);
@@ -222,6 +224,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// an hour otherwise - the slow pass exists only to catch an offer Steam never pushed a notification for.
 	/// </summary>
 	private TimeSpan NextGap() {
+		// Held by scam watch: nothing to answer, only new offers to announce - and Steam's push wakes it for those, as
+		// 'scamwatch ok' does once the hold is lifted.
+		if (ScamWatch.HoldsTrades(Bot)) {
+			return Rng.Minutes(45, 90);
+		}
+
 		if (_waiting.Count > 0) {
 			return Rng.Minutes(4, 9);
 		}
@@ -248,11 +256,22 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public static bool StillHeld(bool wasHeld, bool awake, int queued, int steamSays) => wasHeld && !(awake && (queued == 0) && (steamSays == 0));
 
+	/// <summary>Test seam: the live offers, instead of asking Steam.</summary>
+	internal Func<CancellationToken, Task<List<TradeOffers.Offer>?>>? ReadOffers { get; set; }
+
 	private async Task CheckAsync(bool awake, CancellationToken ct) {
 		// Steam's own list of this account's live incoming offers. Null is "Steam didn't answer" - try again later,
 		// never read as "nothing waiting".
-		if (await TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct).ConfigureAwait(false) is not { } live) {
+		if (await (ReadOffers?.Invoke(ct) ?? TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct)).ConfigureAwait(false) is not { } live) {
 			return;
+		}
+
+		// Held by scam watch: looked at and announced, never answered by itself. What was queued goes back on hold, and gets
+		// a fresh wait once 'scamwatch ok' lifts it.
+		bool held = ScamWatch.HoldsTrades(Bot);
+
+		if (held) {
+			_waiting.Hold();
 		}
 
 		// Accepted already and waiting on a confirmation: not ours to accept again, and its cards are spoken for.
@@ -297,7 +316,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		// Offers held while the account slept get their wait now, from a while after it's up - not all in its first
 		// few minutes. The same extra wait gifts get, so a morning doesn't open with everything answered at once.
-		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, () => TradeWait() + (Bot.Cfg.LegitMode ? AfterWaking() : TimeSpan.Zero)) : []) {
+		foreach ((ulong id, DateTime due) in awake && !held ? _waiting.Arm(DateTime.UtcNow, () => TradeWait() + (Bot.Cfg.LegitMode ? AfterWaking() : TimeSpan.Zero)) : []) {
 			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
 		}
 
@@ -309,6 +328,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		KeepNumbers(offers);
 		await AnnounceAsync(offers, ids, allowed, fleet, awake, ct).ConfigureAwait(false);
+
+		if (held) {
+			Bot.NoteTradeOffersSeen(offers.Count);
+
+			return;
+		}
 
 		foreach (TradeOffers.Offer offer in offers) {
 			// One offer that can't be read or judged must not stop the rest - donations and your own accounts included.
@@ -686,6 +711,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>What nocat.farm is going to do with it, in words.</summary>
 	private Said Plan(TradeOffers.Offer offer, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool awake, int n) {
 		bool later = !awake;
+
+		if (ScamWatch.HoldsTrades(Bot)) {
+			return new Said("held by scam watch - nothing done by itself; trade accept or decline {0} {1}", Bot.Name, n);
+		}
 
 		if (Bot.Cfg.AcceptDonations && offer.IsPureDonation) {
 			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("donation - accepting when awake") : new Said("donation - accepting in a few min");

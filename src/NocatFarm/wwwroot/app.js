@@ -503,7 +503,7 @@ function render() {
 
   paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
-    ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('Points'))}</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
+    ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('rep4rep points'))}</dt><dd>${state.PointsKnown === false ? '-' : state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
     <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
   // Kept with the rail rather than in renderOverview, for the same reason as the Plugins tag above: that only
@@ -565,6 +565,13 @@ function filterTo(group) {
   go('accounts');
 }
 
+// 1.8.0 scam watch: the banner's "It was me" - clears the account's warnings, and its trades go back to normal.
+async function scamOk(name) {
+  const r = await post('/api/command', { Line: 'scamwatch ok ' + name }).catch(() => null);
+  if (r && r.output) toast(r.output);
+  refresh();
+}
+
 function renderAlerts() {
   const out = [];
 
@@ -609,6 +616,14 @@ function renderAlerts() {
       : t("rep4rep is switched on for one account but there's no API token, so nothing is being posted."))}</span>
       <span class="spacer"></span><button onclick="go('rep4rep')">${esc(t('Add token'))}</button></div>`);
   }
+
+  // 1.8.0 scam watch: a warning on an account stays up here until it's cleared - 'It was me' runs 'scamwatch ok'.
+  state.Bots.filter((b) => b.Scam && b.Scam.length).forEach((b) => {
+    out.push(`<div class="alert bad"><span><b>${esc(tf('Scam watch - {0}', b.Name))}</b>: ${esc(b.Scam.join('; '))}. ${esc(b.ScamHolding
+      ? t("Its trades are on hold. If that wasn't you, change the Steam password now.")
+      : t("If that wasn't you, change the Steam password now."))}</span>
+      <span class="spacer"></span><button onclick="scamOk(${esc(JSON.stringify(b.Name))})">${esc(t('It was me'))}</button></div>`);
+  });
 
   state.Bots.filter((b) => b.Group === 'problem').forEach((b) => {
     out.push(`<div class="alert bad"><span><b>${esc(b.Name)}</b> — ${esc(b.Detail)}</span></div>`);
@@ -715,7 +730,7 @@ function renderOverview() {
     (!r4rOn()
       ? ''
       : state.Rep4RepToken
-        ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
+        ? tile(state.PointsKnown === false ? '-' : state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
             state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
@@ -1224,7 +1239,9 @@ function renderAccounts() {
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
         data-tip="${esc(t("What your friends list shows for this account. The status is what nocat.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
-      ${b.Bans ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
+      ${b.Scam && b.Scam.length ? `<div class="bot-scam" data-tip="${esc(t("Scam watch saw a sign of a stolen account or a trade scam. If it was you, type scamwatch ok and the account name. If it wasn't, change the Steam password now."))}">${esc(tf('SCAM WATCH: {0}', b.Scam[b.Scam.length - 1]))}</div>` : ''}
+      ${b.Health ? `<div class="bot-health ${b.Health.Colour}" data-tip="${esc(t('Account health: level, bans, trade hold, market access, limited account, Steam Guard and phone. Checked when it signs in and every few hours; you are told when something gets worse. Type health for every item.'))}">${esc(tf('Health: {0}', b.Health.Line))}</div>` : ''}
+      ${b.Bans && !b.Health ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
       ${b.NameNotShowing && !b.PersonaHidden
         ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
         : ''}
@@ -2559,7 +2576,8 @@ function tutStepWelcome() {
         <li>${tf('{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.', b(t('Human mode')))}</li>
         <li>${tf('{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.', b(t('Free event items')))}</li>
         <li>${tf('{0} - Steam wallet gift cards and guest passes people send you.', b(t('Gifts')))}</li>
-      </ul><p class="muted small">${esc(t('Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.'))}</p></details>`,
+      </ul><p class="muted small">${esc(t('Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.'))}</p></details>
+      <p class="muted small" style="margin-top:12px">${esc(t('Moving from another PC?'))} <a href="#" onclick="pickRestoreFile();return false">${esc(t('Restore from a backup file'))}</a></p>`,
     next: t('Start'),
   };
 }
@@ -3006,11 +3024,17 @@ function tutStepType() {
   };
 }
 
+/// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened or spent by default.
+function safeItemsNote() {
+  return `<div class="tut-note safe-items"><b>${esc(t('Your items are safe by default'))}</b>
+    <span>${esc(t("nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
+}
+
 function tutStepFinal() {
   const hasAccounts = !!(state && state.Bots && state.Bots.length);
   const importing = !!(imp && imp.tutorial) && !tutorialManual;
 
-  const tips = `<p class="muted small">${tf('Everything has an explanation attached - tap or hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
+  const tips = `${safeItemsNote()}<p class="muted small">${tf('Everything has an explanation attached - tap or hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
       ${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`;
 
   // The account comes LAST. Adding one starts it signing in, and every question before it is best out of the way
@@ -3143,7 +3167,7 @@ async function startTutorialSetup(name, steps) {
   }
   if (!tutorialOpen) return;
   tutSetup.lib = tutSetup.lib || [];
-  tutSetup.lib.forEach((g) => { if (g.Name) GAME_NAMES[g.AppId] = g.Name; });
+  tutSetup.lib.forEach((g) => { if (g.Name) GAME_NAMES[g.AppId] = g.Name; if (g.Software) SOFTWARE.add(g.AppId); });
 
   // Already has games (brought across from ArchiSteamFarm, say): start from those, so it's a tweak, not a redo.
   if (!config || !config.Bots) await loadConfig().catch(() => {});
@@ -3166,7 +3190,7 @@ function tutGameChips(selected, onclick, extra) {
   // Anything picked by hand that isn't in the top list still shows, so it can be seen and un-picked.
   const added = [...extra].filter((id) => !ids.has(id)).map((id) => ({ AppId: id, Name: gameLabel(id), Minutes: 0 }));
   return `<div class="langpick">${[...games, ...added].map((g) =>
-    `<span class="p ${selected(g.AppId)}" role="button" tabindex="0" onclick="${onclick}(${g.AppId})">${esc(g.Name || gameLabel(g.AppId))}${g.Minutes ? ` <span class="muted">${tutHours(g.Minutes)}</span>` : ''}</span>`).join('')}</div>`;
+    `<span class="p ${selected(g.AppId)}" role="button" tabindex="0" onclick="${onclick}(${g.AppId})">${esc(g.Software ? tf('{0} (software)', g.Name) : (g.Name || gameLabel(g.AppId)))}${g.Minutes ? ` <span class="muted">${tutHours(g.Minutes)}</span>` : ''}</span>`).join('')}</div>`;
 }
 
 function renderTutorialSetup() {
@@ -3328,6 +3352,7 @@ function tutShowDone() {
     badge: true,
     body: `<p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
       <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
+      ${safeItemsNote()}
       ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
       ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
         <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span></div>` : ''}
@@ -3667,6 +3692,7 @@ function renderPhone() {
   phPaint('phoneChat', phoneChatCard());
   phPaint('phoneSafe', phoneSafeCard(p));
   phPaint('phoneVisitors', phoneVisitorsCard(phone.visitors));
+  phPaint('phoneApp', phoneAppCard());
 }
 
 /// Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and the internet turned away.
@@ -4104,9 +4130,9 @@ function renderRep4RepAccount() {
   $('r4rAccount').innerHTML = `
     <h2>${esc(t('Your rep4rep account'))}</h2>
     <div class="tiles">
-      <div class="tile"><div class="n">${r4r.Points}</div><div class="k">${esc(t('Points you can spend'))}${tipIcon(t('Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.'))}</div>
+      <div class="tile"><div class="n">${r4r.PointsKnown === false ? '-' : r4r.Points}</div><div class="k">${esc(t('Points you can spend'))}${tipIcon(t('Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.'))}</div>
         ${r4r.SyncedAt ? `<div class="muted small">${esc(tf('as of {0}', new Date(r4r.SyncedAt).toLocaleTimeString()))}</div>` : ''}</div>
-      <div class="tile"><div class="n">${r4r.Pending}</div><div class="k">${esc(t('Waiting to be verified'))}${tipIcon(t("Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck."))}</div>
+      <div class="tile"><div class="n">${r4r.PointsKnown === false ? '-' : r4r.Pending}</div><div class="k">${esc(t('Waiting to be verified'))}${tipIcon(t("Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck."))}</div>
         <div class="sub">${esc(t('turns into points on its own'))}</div></div>
     </div>
     ${on === 0 && total > 0
@@ -4929,13 +4955,18 @@ async function openLogFolder() {
 
 function sectionIntro(section, values) {
   const val = (k) => (pending[k] !== undefined ? pending[k] : values[k]);
+  const areaB = areaBIntro(section);   // Backups
+  if (areaB !== null) return areaB;
 
   // What gets sent to Discord / Telegram, as chips to tap rather than nine more rows - and a test button, so you
   // know it works before the first card drops.
   if (section === 'Notifications' && settingsTarget === GLOBAL) {
     const kinds = [['SendCardDrops', 'Card drops'], ['SendFreeStuff', 'Free stuff'], ['SendTrades', 'Trades'],
       ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
-      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts']];
+      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts'],
+      ['SendPoints', 'Steam Points']];
+    kinds.push(['SendBackups', 'Backups']);
+    kinds.push(['SendItems', 'Spare items & packs']);   // 1.8.0: gems, sales and booster packs
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
       <b>${esc(t('Get notified on Discord or Telegram'))}</b>
@@ -4970,6 +5001,17 @@ function sectionIntro(section, values) {
     return `<div class="explain"><b>${esc(t('Open on your phone'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.'))}</p>
       <button class="ghost" onclick="go('phone')">${esc(t('Open on your phone'))}</button></div>`;
+  }
+
+  // Steam Points: spending is permanent, so the section says plainly where this account stands. One switch: turning it on
+  // shows what it would buy first and asks; off stops it at once.
+  if (section === 'Steam Points' && settingsTarget !== GLOBAL) {
+    const byItself = !!values.PointsOk && val('SpendPoints');
+    return `<div class="explain">
+      <b>${esc(byItself ? t('On: it buys badge levels by itself, within the limits below.') : t('Off: nothing is spent.'))}</b>
+      <p style="margin:6px 0 0">${esc(t('The only thing in the Points Shop that raises your Steam level is the seasonal badge: about 100 XP for every 1,000 points. Points spent are gone for good.'))}
+      ${esc(byItself ? t('Switch it off to stop it at once.') : t('Turning it on shows what it would buy first, and asks you to confirm.'))}</p>
+    </div>`;
   }
 
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
@@ -5135,7 +5177,9 @@ const GAME_NAMES = {
   4000: "Garry's Mod", 271590: 'Grand Theft Auto V', 1623730: 'Palworld', 892970: 'Valheim'
 };
 
-const gameLabel = (id) => GAME_NAMES[id] || ('app ' + id);
+// Software and tools (OBS Studio, ShareX, Blender) can go anywhere a game can - marked, so nobody mistakes one for a game.
+const SOFTWARE = new Set();
+const gameLabel = (id) => SOFTWARE.has(Number(id)) && GAME_NAMES[id] ? tf('{0} (software)', GAME_NAMES[id]) : (GAME_NAMES[id] || ('app ' + id));
 
 // AppIDs we've asked the server about, so a name that genuinely can't be resolved isn't re-requested forever.
 const namesAsked = new Set();
@@ -5539,10 +5583,10 @@ function backupPanel() {
     <div class="explain">
       <p style="margin:0 0 8px">${esc(t('One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.'))}</p>
       <p class="muted small" style="margin:0 0 12px">${esc(t('Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.'))}</p>
+      <p class="muted small" style="margin:0 0 12px">${esc(t('For a backup that opens on any PC if this one dies, use Backups above.'))}</p>
       <div class="backupbtns">
         <button onclick="downloadBackup(this)">${esc(t('Download a backup'))}</button>
-        <button class="ghost" onclick="$('restoreFile').click()">${esc(t('Restore a backup'))}</button>
-        <input type="file" id="restoreFile" accept=".zip,application/zip" hidden onchange="checkRestore(this)">
+        <button class="ghost" onclick="pickRestoreFile()">${esc(t('Restore a backup'))}</button>
       </div>
     </div>
   </div>`;
@@ -5591,7 +5635,12 @@ async function checkRestore(input) {
   } catch { r = null; }
 
   if (!r || !r.Ok) { toast((r && r.Error) || t("That didn't work"), true); return; }
+  if (r.Locked && !r.Accounts) { askBackupPassword(r.Token, false); return; }   // a password-locked backup: its password first
+  showRestoreCheck(r);
+}
 
+/// What a checked backup holds, and the Restore button - for a zip, and for a locked backup once its password opened it.
+function showRestoreCheck(r) {
   const kinds = {
     settings: t('settings'), account: t('account settings'), 'login token': t('saved logins'), authenticator: t('authenticators'),
     'login key': t('login key'), history: t('history days'), state: t('progress and totals'),
@@ -5603,10 +5652,11 @@ async function checkRestore(input) {
     <p>${esc(tf('Made {0} by nocat.farm {1} on {2}.', new Date(r.Created).toLocaleString(), r.Version, r.Machine))}</p>
     <p><b>${esc(t('Accounts'))}:</b> ${esc((r.Accounts || []).join(', ') || '-')}</p>
     <p class="muted small">${esc(what)}</p>
+    ${r.Logs ? `<p class="muted small">${esc(tf('{0} log file(s) too - put back only where there is none.', r.Logs))}</p>` : ''}
     ${r.SameMachine ? '' : `<p class="small warnline">${esc(t('Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.'))}</p>`}
     <p class="small">${esc(t('Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.'))}</p>
     <div class="actions">
-      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button class="ghost" onclick="restoreCancel()">${esc(t('Cancel'))}</button>
       <button class="danger" data-token="${esc(r.Token)}" onclick="applyRestore(this)">${esc(t('Restore'))}</button>
     </div>`);
 }
@@ -5628,7 +5678,152 @@ async function applyRestore(btn) {
 
   toast(r.Message);
   await loadConfig().catch(() => {});
+  backupInfo = null;
+  if (tutorialOpen) { tutorialOpen = false; closeModal(); location.reload(); return; }   // restored from the first-run setup
   if (view === 'settings') renderSettings();
+}
+
+// ── password-locked backups and the phone app (1.8.0) ───────────────────────
+// A locked backup (.nfbackup) restores through the same check-then-confirm as a zip: the server holds the file, the page
+// asks for its password, and only then shows what's inside. The Backups settings show when the last one ran and when the
+// next is due. The phone app is the manifest, the icons and the service worker (sw.js - the page itself only, never /api).
+
+/// A file picker for a backup, made on the spot - the Backups section, the first-run setup and Backup & restore all use it.
+function pickRestoreFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.nfbackup,.zip,application/zip';
+  input.onchange = () => checkRestore(input);
+  input.click();
+}
+
+/// A locked backup: its password, tried on the PC. A wrong one can be typed again; the file stays held for a few minutes.
+function askBackupPassword(token, again) {
+  modal(`
+    <h2>${esc(t('This backup is locked'))}</h2>
+    <p>${esc(t('Type the backup password it was made with. It only goes to nocat.farm on this PC, and is never written down.'))}</p>
+    ${again ? `<p class="small warnline">${esc(t('wrong backup password'))}</p>` : ''}
+    <input type="password" id="bkPw" autocomplete="off" spellcheck="false" placeholder="${esc(t('Backup password'))}"
+      onkeydown="if (event.key === 'Enter') $('bkGo').click()">
+    <div class="actions">
+      <button class="ghost" onclick="restoreCancel()">${esc(t('Cancel'))}</button>
+      <button id="bkGo" data-token="${esc(token)}" onclick="unlockBackup(this)">${esc(t('Open'))}</button>
+    </div>`);
+  setTimeout(() => { const i = $('bkPw'); if (i) i.focus(); }, 30);
+}
+
+/// Cancelled: back to the first-run setup when it was opened from there, otherwise just closed.
+function restoreCancel() {
+  if (tutorialOpen) renderTutorial(); else closeModal();
+}
+
+async function unlockBackup(btn) {
+  const pw = $('bkPw') ? $('bkPw').value : '';
+  if (!pw) return;
+  btn.disabled = true;
+  btn.textContent = t('Opening...');
+  const r = await post('/api/restore/unlock', { Token: btn.dataset.token, Password: pw }).catch(() => null);
+  if (r && r.WrongPassword) { askBackupPassword(btn.dataset.token, true); return; }
+  if (!r || !r.Ok) { restoreCancel(); toast((r && r.Error) || t("That didn't work"), true); return; }
+  showRestoreCheck(r);
+}
+
+// ── Settings, Backups ──
+let backupInfo = null;
+let backupInfoLoading = false;
+
+async function loadBackupInfo() {
+  if (backupInfoLoading) return;
+  backupInfoLoading = true;
+  try { backupInfo = await api('/api/backups/status').catch(() => backupInfo || {}); } finally { backupInfoLoading = false; }
+  if (view === 'settings' && settingsTarget === GLOBAL) renderSettings();
+}
+
+function backupsIntro() {
+  if (!backupInfo) { loadBackupInfo(); return `<div class="explain"><p class="muted small">${esc(t('Loading…'))}</p></div>`; }
+  const b = backupInfo;
+  const when = (iso) => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const lines = [];
+  if (!b.PasswordSet) lines.push(`<p class="small warnline">${esc(t('No backup password yet. Pick one below (at least 12 characters) - only you choose it, and you need it to restore on a new PC.'))}</p>`);
+  if (b.LastAt) {
+    lines.push(b.LastOk
+      ? `<p class="small">${esc(tf('Last backup: {0} - {1}', when(b.LastAt), b.LastFile))}</p>`
+      : `<p class="small warnline">${esc(tf('Last try failed: {0}', b.LastError))}</p>`);
+  }
+  if (b.On && b.Next) lines.push(`<p class="muted small">${esc(tf('Next one: {0}, into {1} ({2} kept there now).', when(b.Next), b.Folder, b.Kept))}</p>`);
+  return `<div class="explain">
+    <b>${esc(t('A backup that opens on any PC'))}</b>
+    <p style="margin:6px 0 10px">${esc(t('Once a day everything goes into one file locked with your backup password. If this PC dies: install nocat.farm on the new one, pick Restore from a backup file, type the password - and your accounts sign straight back in.'))}</p>
+    ${lines.join('')}
+    <div class="backupbtns">
+      <button class="ghost" ${b.PasswordSet ? '' : 'disabled'} onclick="backupNow(this)">${esc(t('Back up now'))}</button>
+      <button class="ghost" onclick="pickRestoreFile()">${esc(t('Restore from a backup file'))}</button>
+    </div>
+  </div>`;
+}
+
+async function backupNow(btn) {
+  btn.disabled = true;
+  btn.textContent = t('Backing up...');
+  const r = await post('/api/backups/now', {}).catch(() => null);
+  toast((r && r.Message) || t("That didn't work"), !(r && r.Ok));
+  await loadBackupInfo();
+}
+
+/// The intro of the Backups section, or null for any other.
+function areaBIntro(section) {
+  if (settingsTarget !== GLOBAL) return null;
+  if (section === 'Backups') return backupsIntro();
+  return null;
+}
+
+// ── the phone app ──
+let installPrompt = null;     // Chrome's "install this app" prompt, kept until the button asks for it
+
+/// The page itself kept for the phone app - only where the browser allows a service worker at all (this PC, or https).
+/// Anything going wrong here is only a missing extra: the dashboard works the same without it.
+function registerShell() {
+  try {
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  } catch { /* not in this browser */ }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  if (view === 'phone') renderPhone();
+});
+
+async function installApp() {
+  if (!installPrompt) return;
+  const p = installPrompt;
+  installPrompt = null;
+  try { await p.prompt(); } catch { /* closed */ }
+  if (view === 'phone') renderPhone();
+}
+
+/// Opened from the home screen already: the how-to has nothing left to say.
+const runningAsApp = () => {
+  try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
+};
+
+/// The Phone page's "Install on your phone" card: the how-to (unless switched off under Settings, Phone app) and where
+/// alerts come from.
+function phoneAppCard() {
+  const g = (config && config.Global) || {};
+  const alerts = `<p class="ph-text">${esc(t('Alerts on your phone come through Telegram or Discord - set them up under Notifications.'))}</p>
+    <button class="ghost" onclick="goSetting('TelegramBotToken')">${esc(t('Notifications'))}</button>`;
+  if (g.PhoneInstallHint === false) return `<h2>${esc(t('Phone app'))}</h2>${alerts}`;
+  const how = runningAsApp()
+    ? `<p class="ph-text">${esc(t("You're using the app from your home screen."))}</p>`
+    : `<p class="ph-text">${esc(t("Put the dashboard on your phone's home screen, with the nocat.farm icon, so it's one tap away."))}</p>
+      <ul class="small">
+        <li>${tf('{0}: the Share button, then Add to Home Screen. It opens like an app.', `<b>${esc(t('iPhone, in Safari'))}</b>`)}</li>
+        <li>${tf('{0}: the ⋮ menu, then Add to Home screen. Its icon goes on your home screen and opens in Chrome.', `<b>${esc(t('Android, in Chrome'))}</b>`)}</li>
+      </ul>
+      ${installPrompt ? `<button onclick="installApp()">${esc(t('Install the app'))}</button>` : ''}`;
+  return `<h2>${esc(t('Install on your phone'))}</h2>${how}${alerts}`;
 }
 
 // ── other versions ───────────────────────────────────────────────────────────
@@ -5786,7 +5981,49 @@ const GUARDED_OFF = {
   },
 };
 
+// Spare items and Steam Points are one switch each, saved straight away: turning one on first shows what it would do and
+// asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
+const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points' };
+
+function confirmSwitch(name, account) {
+  modal(`
+    <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : t('Turn on spending Steam Points?'))}</h2>
+    <p>${esc(name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
+      : t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'))}</p>
+    <pre class="switch-preview" id="switchPreview">${esc(t('Working out what it would do...'))}</pre>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button id="switchGo" data-setting="${esc(name)}" data-account="${esc(account)}"
+              onclick="switchTo(this.dataset.setting, this.dataset.account, true)">${esc(t('Turn on'))}</button>
+    </div>`);
+  api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
+    .then((r) => { const el = $('switchPreview'); if (el) el.textContent = (r && r.text) || t('No preview - try again in a minute.'); })
+    .catch(() => { const el = $('switchPreview'); if (el) el.textContent = t('No preview - try again in a minute.'); });
+}
+
+async function switchTo(name, account, on) {
+  try {
+    const r = await post(`/api/bots/${encodeURIComponent(account)}/switch`, { Feature: name, On: on });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'failed');
+    delete pending[name];
+    closeModal();
+    await loadConfig();
+    renderSettings();
+    toast(on ? t('Turned on.') : t('Turned off.'));
+  } catch (e) {
+    toast(t('Not changed - try again.'), true);
+  }
+}
+
 function editBool(name, el) {
+  if (CONFIRMED_ON[name] && settingsTarget !== GLOBAL) {
+    const on = el.checked;
+    el.checked = !on;   // as it is, until it's done
+    if (on) confirmSwitch(name, settingsTarget);
+    else switchTo(name, settingsTarget, false);
+    return;
+  }
+
   const guard = GUARDED_OFF[name];
 
   // Only when switching OFF, and only for the handful listed above.
@@ -6076,7 +6313,9 @@ const PANEL_SECTIONS = new Set(['Discord profile']);
 // Settings drawn by a section's own panel (chips and switches) instead of as rows.
 const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
   'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
-  'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns']);
+  'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns', 'SendPoints']);
+PANEL_ROWS.add('SendBackups');
+PANEL_ROWS.add('SendItems');   // 1.8.0: drawn as a chip with the other notification kinds
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
@@ -6402,8 +6641,8 @@ function libraryFor(key) {
   if (have && have.games && (have.games.length || Date.now() - have.at < 60000)) return Promise.resolve(have.games);
   const url = key === '*' ? '/api/library' : `/api/bots/${encodeURIComponent(key)}/library?all=1`;
   const loading = api(url).then((d) => {
-    const games = ((d && d.Games) || []).map((g) => ({ id: g.AppId, name: g.Name || '', low: (g.Name || '').toLowerCase(), mins: g.Minutes || 0 }));
-    games.forEach((g) => { if (g.name && !GAME_NAMES[g.id]) GAME_NAMES[g.id] = g.name; });
+    const games = ((d && d.Games) || []).map((g) => ({ id: g.AppId, name: g.Name || '', low: (g.Name || '').toLowerCase(), mins: g.Minutes || 0, soft: !!g.Software }));
+    games.forEach((g) => { if (g.name && !GAME_NAMES[g.id]) GAME_NAMES[g.id] = g.name; if (g.soft) SOFTWARE.add(g.id); });
     libCache.set(key, { games, at: Date.now() });
     return games;
   }).catch(() => { libCache.delete(key); return []; });
@@ -6460,7 +6699,7 @@ async function appSearch(name, input) {
   const hits = appMatches(games, q, new Set(appListNow(name)));
   if (!sug) { sug = document.createElement('div'); sug.className = 'appsug'; sug.setAttribute('role', 'listbox'); box.appendChild(sug); }
   sug.innerHTML = hits.length
-    ? hits.map((g, i) => `<div class="s${i === 0 ? ' on' : ''}" role="option" data-app="${g.id}" onmousedown="event.preventDefault();pickApp('${name}',${g.id})">${esc(g.name)}${g.mins ? ` <span class="muted">${esc(tutHours(g.mins))}</span>` : ''}</div>`).join('')
+    ? hits.map((g, i) => `<div class="s${i === 0 ? ' on' : ''}" role="option" data-app="${g.id}" onmousedown="event.preventDefault();pickApp('${name}',${g.id})">${esc(g.soft ? tf('{0} (software)', g.name) : g.name)}${g.mins ? ` <span class="muted">${esc(tutHours(g.mins))}</span>` : ''}</div>`).join('')
     : `<div class="muted small none">${esc(games.length ? t('No game in its library matches - paste its appID or store link.') : t("Its games haven't been read yet - paste an appID or store link."))}</div>`;
 }
 
@@ -6534,16 +6773,27 @@ function addApp(name, input, refocus) {
   if (!raw) return;
   const m = raw.match(/\/app\/(\d+)/) || raw.match(/^(\d+)$/);
   if (!m) { toast(t('No game in its library matches - paste its appID or store link.'), true); return; }
-  if (WEIGHT_PICKS.has(name)) { input.value = ''; pickWeight(name, parseInt(m[1]), refocus); return; }
+  if (WEIGHT_PICKS.has(name)) { input.value = ''; pickWeight(name, parseInt(m[1]), refocus); warnIfNotOwned(name, parseInt(m[1])); return; }
   const list = (pending[name] !== undefined ? pending[name] : settingsValues()[name] || []).slice();
   const id = parseInt(m[1]);
   if (!list.includes(id)) list.push(id);
   input.value = '';
   editAndRender(name, list);
+  warnIfNotOwned(name, id);
   // Typed in with Enter: back in the box, like a game picked from the matches. Not when it went in on leaving the box -
   // the focus is going somewhere else then.
   const again = refocus && document.querySelector(`#settingsBody [data-setting="${name}"] .appin`);
   if (again) again.focus();
+}
+
+// An appID typed into an idle list that the account holds no licence for goes in, with a plain warning: idling it banks
+// nothing. Only on one account's idle lists, and only when the server can tell (its library and licences are read).
+const OWN_CHECKED = new Set(['IdleGames', 'OfflineIdleGames', 'GameWeights', 'GameWeightsMain']);
+async function warnIfNotOwned(name, id) {
+  if (!OWN_CHECKED.has(name) || settingsTarget === GLOBAL) return;
+  const who = settingsTarget;
+  const r = await api(`/api/bots/${encodeURIComponent(who)}/owns?app=${id}`).catch(() => null);
+  if (r && r.Known && !r.Owns) toast(tf("{0} doesn't own {1} - add it to its Steam library first, or idling it banks nothing", who, r.Name || String(id)), true);
 }
 
 function removeApp(name, index) {
@@ -6693,6 +6943,7 @@ async function refresh() {
 }
 
 async function boot() {
+  registerShell();   // the phone app's service worker, where the browser allows one - never in the way if it can't
   const ping = await fetch('/api/ping').then((r) => r.json()).catch(() => null);
   if (!ping) { showLogin(t("Can't reach nocat.farm.")); return; }
   if (ping.needsPassword && !ping.authorised && !token) { showLogin(); return; }

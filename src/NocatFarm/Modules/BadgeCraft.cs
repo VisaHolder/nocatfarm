@@ -21,8 +21,6 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	private const int SweepHighHours = 26;
 	private const int CraftGapLowSeconds = 6;
 	private const int CraftGapHighSeconds = 14;
-	private const int UnpackGapLowSeconds = 3;
-	private const int UnpackGapHighSeconds = 12;
 	private const int BackoffHours = 6;
 	private const int MaxBadgePages = 20;
 
@@ -38,15 +36,10 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// <summary>The last sweep left sets uncrafted on purpose (human mode crafts a few at a time) - look again sooner.</summary>
 	private bool _moreToCraft;
 
-	/// <summary>A booster pack Steam didn't say it opened this sweep - look again in a few hours, not tomorrow.</summary>
-	private bool _unpackFailed;
-
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
-			// Either switch runs the daily pass. Opening booster packs used to happen only inside a badge-crafting
-			// pass, so turning on "Open booster packs" by itself - which is what its own description invites -
-			// never opened a thing.
-			if (!Bot.Cfg.CraftBadges && !Bot.Cfg.UnpackBoosterPacks) {
+			// Booster packs are opened by their own module now (PackOpener), with its own choices.
+			if (!Bot.Cfg.CraftBadges) {
 				_status = new Said("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -101,7 +94,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
-				} else if (_moreToCraft || _unpackFailed) {
+				} else if (_moreToCraft) {
 					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -128,7 +121,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 					return;
 				}
 
-				if ((Bot.Cfg.CraftBadges != crafting) || (!Bot.Cfg.CraftBadges && !Bot.Cfg.UnpackBoosterPacks)) {
+				if (Bot.Cfg.CraftBadges != crafting) {
 					// A fresh short wait from here. The day's wait was already set, so breaking out alone went straight
 					// back to sleeping it out at the top of the loop.
 					_nextSweep = DateTime.MinValue;
@@ -140,106 +133,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Open any booster packs sitting in the inventory. A sealed pack is three cards missing from the set count,
-	/// so leaving them shut quietly weakens the crafting this module exists to do.
-	/// </summary>
-	private async Task<int> UnpackBoostersAsync(CancellationToken ct) {
-		// All of it, not the first page. Asking for 200 items meant that on an account holding 914 Steam items -
-		// cards, backgrounds, emoticons - a booster pack anywhere past the two-hundredth was never seen at all.
-		InventoryContents? inventory = await Inventory.ReadAsync(Bot, 753, "6", ct).ConfigureAwait(false);
-
-		if (inventory == null) {
-			return 0;
-		}
-
-		List<(string App, ulong Asset)> packs = Packs(inventory, []);
-
-		if (packs.Count == 0) {
-			return 0;
-		}
-
-		// A pack in a trade offer that's waiting - a timed send of boosters to your main, say - isn't this account's to
-		// open: opening it takes it out of the offer, and Steam drops the whole offer. Not knowing is a reason to wait, as
-		// it is for a sale or a craft.
-		if (await TradeOffers.PromisedAsync(Bot, ct).ConfigureAwait(false) is not { } promised) {
-			Log.Debug(new Said("Steam wouldn't say which booster packs are in a waiting trade - opening them later"), Bot.Name);
-			_unpackFailed = true;
-
-			return 0;
-		}
-
-		int opened = 0;
-
-		foreach ((string appId, ulong asset) in Packs(inventory, promised)) {
-			ct.ThrowIfCancellationRequested();
-
-			// Claimed like a card for a send or a sale (Bot.ClaimItems): a send reading the inventory this moment could
-			// otherwise put the pack in its offer just as it's opened.
-			HashSet<ulong> claimed = Bot.ClaimItems([asset]);
-
-			if (claimed.Count == 0) {
-				continue;   // being sent right now
-			}
-
-			string assetId = asset.ToString(CultureInfo.InvariantCulture);
-			string? body;
-
-			try {
-				body = await Bot.Web.PostAsync(
-					new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/ajaxunpackbooster/"),
-					new Dictionary<string, string>(StringComparer.Ordinal) {
-						["appid"] = appId,
-						["communityitemid"] = assetId
-					},
-					new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
-			} finally {
-				Bot.ReleaseItems(claimed);
-			}
-
-			// Only Steam's yes counts - "success":1 or true, or the cards it hands over. Anything else, a numeric failure
-			// code included, used to be counted as opened; now it's written down and the pack is tried again later.
-			if (Succeeded(body, "rgItems")) {
-				opened++;
-			} else {
-				_unpackFailed = true;
-				Log.Debug($"opening booster pack {assetId} (app {appId}) didn't go through: {(body == null ? "no answer" : Log.Scrub(body.Length > 150 ? body[..150] : body))}", Bot.Name);
-			}
-
-			if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
-				return opened;
-			}
-		}
-
-		if (opened > 0) {
-			Log.Reward(new Said("opened {0} booster pack(s)", opened), Bot.Name);
-		}
-
-		return opened;
-	}
-
-	/// <summary>
 	/// One sweep. Returns how many badges were crafted, or -1 if Steam refused and we should back off.
 	/// </summary>
 	public async Task<int> SweepAsync(CancellationToken ct) {
 		// Only this sweep says whether there's more to craft. Left over from the last one, a sweep that found the badges
 		// page unreadable or nothing ready at all still came back in 2-6 hours rather than a day - and every one after it.
 		_moreToCraft = false;
-		_unpackFailed = false;
-
-		if (Bot.Cfg.UnpackBoosterPacks) {
-			_status = new Said("opening booster packs");
-
-			try {
-				await UnpackBoostersAsync(ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-				throw;
-			} catch (Exception e) {
-				Log.Debug(new Said("booster unpack: {0}", Log.Describe(e)), Bot.Name);
-			}
-		}
 
 		if (!Bot.Cfg.CraftBadges) {
-			_status = new Said("opens booster packs once a day - badge crafting is off");
+			_status = new Said("off");
 
 			return 0;
 		}

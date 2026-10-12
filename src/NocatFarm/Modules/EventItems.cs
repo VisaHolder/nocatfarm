@@ -31,6 +31,23 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	private DateTime _nextSticker = DateTime.MinValue;
 	private DateTime _nextShop = DateTime.MinValue;
 
+	/// <summary>The sale's queue item is waiting to be claimed at the sticker's next look (a human-mode account).</summary>
+	private bool _queueItemDue;
+
+	/// <summary>
+	/// When the sale's queue item is claimed after the discovery queue: null on a robot (now, seconds after the queue), a
+	/// human gap later on a human-mode account ("Human mode waits between steps", 5-30 minutes by default).
+	/// </summary>
+	public static DateTime? QueueItemAt(BotConfig c, DateTime nowUtc) {
+		if (!c.LegitMode) {
+			return null;
+		}
+
+		(int lo, int hi) = SaleEvents.Gap(c, human: true);
+
+		return nowUtc + Rng.HumanMinutes(lo, hi);
+	}
+
 	/// <summary>When Steam last said a sale was on - the sticker check is how it knows.</summary>
 	private DateTime _saleSeen = DateTime.MinValue;
 
@@ -43,7 +60,33 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	private Said _status = new("");
 
 	public override string Name => "event items";
-	public override string Status => Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0) ? _status : "";
+	public override string Status => Bot.Cfg.SaleEvents && (Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0)) ? _status : "";
+
+	// ── read by 'events' (1.8.0) ──
+	/// <summary>Whether Steam said a sale is on in the last day or so - the sticker check is how it knows.</summary>
+	public bool SaleOn => DateTime.UtcNow - _saleSeen < TimeSpan.FromHours(30);
+
+	/// <summary>When it next looks for the sticker.</summary>
+	public Said StickerLine {
+		get {
+			DateTime next = _nextSticker;
+
+			return next == DateTime.MinValue ? new Said("not looked yet") : new Said("next look around {0}", (Func<string>) (() => Fmt.Clock(next)));
+		}
+	}
+
+	/// <summary>Whether today's discovery queue is done (Steam's day).</summary>
+	public bool QueueDoneToday {
+		get {
+			try {
+				string? day = _queueDay ?? (File.Exists(QueuePath) ? File.ReadAllText(QueuePath).Trim() : null);
+
+				return day == SteamDay();
+			} catch (IOException) {
+				return false;
+			}
+		}
+	}
 
 	private string StatePath => Path.Combine(ConfigStore.ConfigDir, "state", $"freeitems-{Bot.Name}.json");
 
@@ -71,7 +114,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			bool wanted = Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0);
+			// "Take part in Steam events" off stops these too (they're part of the Sale events settings since 1.8.0).
+			bool wanted = Bot.Cfg.SaleEvents && (Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0) || SaleEvents.NextFestClaims(Bot));
 
 			// A sticker claimed or an item taken shows on the profile, and a queue gone through counts as activity - so
 			// a human-mode account does these in its own day, one kind of thing at a time rather than sticker, shop
@@ -84,7 +128,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 					// The sticker check also tells us whether a sale is on, which the queue needs to know.
 					if (DateTime.UtcNow >= _nextSticker) {
-						acted = await StickerAsync(ct, claim: Bot.Cfg.ClaimEventItems).ConfigureAwait(false);
+						acted = await StickerLookAsync(ct).ConfigureAwait(false);
 					}
 
 					if (!(acted && Bot.Cfg.LegitMode) && Bot.Cfg.ClaimEventItems && (DateTime.UtcNow >= _nextShop)) {
@@ -92,7 +136,21 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 					}
 
 					if (!(acted && Bot.Cfg.LegitMode) && QueueDue()) {
-						acted |= await QueueAsync(ct).ConfigureAwait(false) > 0;
+						bool queued = await QueueAsync(ct).ConfigureAwait(false) > 0;
+						acted |= queued;
+
+						// The sale's extra for the queue: the queue page claims an item once it's through, the same claim as the
+						// sticker - so it's looked for now rather than at the sticker's next time. A human-mode account claims it a
+						// human gap later (the sticker's next look), not seconds after the queue.
+						if (queued && SaleOn && Bot.Cfg.SaleQuests && SaleEvents.Allowed(Bot.Cfg)) {
+							if (QueueItemAt(Bot.Cfg, DateTime.UtcNow) is { } later) {
+								_nextSticker = later;
+								_queueItemDue = true;
+							} else {
+								await Task.Delay(Rng.Seconds(5, 20), ct).ConfigureAwait(false);
+								await StickerAsync(ct, claim: true).ConfigureAwait(false);
+							}
+						}
 					}
 
 					if (acted) {
@@ -123,6 +181,14 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// The loop's look at the sticker: claims it when free items are on, or when the sale's queue item is waiting. The
+	/// queue item stays waiting until a claim is made or Steam says there's nothing to claim - a look that failed leaves it
+	/// for the next one.
+	/// </summary>
+	internal Task<bool> StickerLookAsync(CancellationToken ct) =>
+		StickerAsync(ct, claim: _queueItemDue || Bot.Cfg.ClaimEventItems || SaleEvents.NextFestClaims(Bot));
+
 	/// <summary>The daily sale sticker. Returns whether one was claimed.</summary>
 	/// <param name="claim">False only looks - to learn whether a sale is on - without taking anything.</param>
 	public Task<bool> StickerAsync(CancellationToken ct, bool claim = true) => OneAtATimeAsync(() => StickerLockedAsync(ct, claim), ct);
@@ -152,6 +218,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		}
 
 		if (!claimable) {
+			// Nothing to claim: the queue item (if one was waiting) is already taken, or isn't there to take.
+			_queueItemDue = false;
+
 			// During a sale Steam says when the next one opens; outside one it says nothing, and a sale starting
 			// is noticed on one of the looks a few hours apart.
 			_nextSticker = NextClaim(canBody) ?? DateTime.UtcNow + Rng.Minutes(180, 300);
@@ -170,6 +239,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 		using JsonDocument doc = JsonDocument.Parse(claimed);
 		JsonElement body = doc.RootElement.TryGetProperty("response", out JsonElement b) ? b : default;
+
+		// Claimed - the same claim takes the queue item, so it's no longer waiting.
+		_queueItemDue = false;
 		string? item = null;
 
 		if ((body.ValueKind == JsonValueKind.Object) && body.TryGetProperty("reward_item", out JsonElement reward)

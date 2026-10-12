@@ -20,7 +20,7 @@ namespace NocatFarm.Web;
 /// internet. Two hard rules on the wire - PascalCase names matching the config files exactly, and every
 /// SteamID64 and rep4rep id as a string, because JavaScript silently mangles 17-digit numbers.
 /// </summary>
-public sealed class WebHost : IAsyncDisposable {
+public sealed partial class WebHost : IAsyncDisposable {
 	private const int MaxFailedLogins = 5;
 	private const int LockoutMinutes = 60;
 
@@ -1087,6 +1087,8 @@ public sealed class WebHost : IAsyncDisposable {
 
 	// ── endpoints ───────────────────────────────────────────────────────────
 	private void MapApi(WebApplication app) {
+		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
+
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,
 			needsPassword = !string.IsNullOrEmpty(_cfg.WebPassword),
@@ -1542,7 +1544,7 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit) {
-				limit.MaxRequestBodySize = Backup.MaxZipBytes + 1;
+				limit.MaxRequestBodySize = LockedBackup.MaxFileBytes + 1;
 			}
 
 			byte[] bytes;
@@ -1553,6 +1555,11 @@ public sealed class WebHost : IAsyncDisposable {
 				bytes = ms.ToArray();
 			} catch (Exception e) when (e is BadHttpRequestException or IOException) {
 				return Results.Json(new { Ok = false, Error = new Said("that file is too big to be a nocat.farm backup").ToString() });
+			}
+
+			// A password-locked backup: held here until the page sends its password (/api/restore/unlock).
+			if (LockedBackup.IsLocked(bytes)) {
+				return StageLocked(bytes);
 			}
 
 			Backup.Inspection check = Backup.Inspect(bytes);
@@ -1612,6 +1619,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			string passwordBefore = _cfg.WebPassword;
 			string message = await Backup.RestoreAsync(_mgr, bytes).ConfigureAwait(false);
+			PutBackStagedLogs(body?.Token);   // a locked backup's log files, if it had any
 
 			// A different dashboard password came back with it: everyone else signs in again, this browser carries on.
 			string? fresh = null;
@@ -1681,6 +1689,8 @@ public sealed class WebHost : IAsyncDisposable {
 
 			foreach (Bot bot in _mgr.All) {
 				bots[bot.Name] = Redact(Clone(bot.Cfg), Settings.Bot, out List<string> set);
+				// 'points ok' lives with the account's Steam Points spending, not its settings - shown on the page, never saved from it.
+				bots[bot.Name].PointsOk = Modules.PointsLedger.Approved(bot);
 				botSecrets[bot.Name] = [.. set];
 			}
 
@@ -1790,6 +1800,50 @@ public sealed class WebHost : IAsyncDisposable {
 			Log.Info("settings saved from the dashboard", bot.Name);
 
 			return Results.Json(new { ok = true, Adjusted = adjusted });
+		});
+
+		// ── Spare items and Steam Points: one switch each, turned on through a confirm popup ──
+		// What it would do, for the popup: from the prices already held (pricing can take minutes), with the limits.
+		app.MapGet("/api/bots/{name}/switch/{feature}/preview", async (HttpContext ctx, string name, string feature) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			// The page asks by its word for it ('spare', 'points'); only the setting's name was understood, so every preview
+			// answered 400 and the popup said "No preview".
+			string? which = Switches.FeatureOfWord(feature);
+
+			if (which == null) {
+				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
+			}
+
+			string text = await Commands.SwitchPreviewAsync(bot, which, ctx.RequestAborted).ConfigureAwait(false);
+
+			return Results.Json(new { ok = true, text });
+		});
+
+		// "Turn on" in the popup: the switch and its go-ahead in one step. Off: both cleared.
+		app.MapPost("/api/bots/{name}/switch", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
+			string? which = Switches.FeatureOf(sent?["Feature"]?.ToString() ?? "");
+
+			if ((which == null) || (sent?["On"] is not JsonValue onValue) || !onValue.TryGetValue(out bool on)) {
+				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
+			}
+
+			return Results.Json(new { ok = true, said = Switches.Set(bot, which, on) });
 		});
 
 		// ── account lifecycle ──
@@ -2241,17 +2295,22 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			if (all == "1") {
+				// Software and tools after the games (ShareX, OBS Studio, Blender), marked, so a game list can find them by name.
 				return Results.Json(new {
 					bot.Library.Ready,
 					Games = bot.Library.Games.OrderByDescending(static g => g.MinutesPlayed)
-						.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed, g.Shared }).ToList()
+						.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed, g.Shared, Software = false })
+						.Concat(bot.Library.Software.Select(static s => new { s.AppId, s.Name, Minutes = s.MinutesPlayed, Shared = false, Software = true }))
+						.ToList()
 				});
 			}
 
+			// Software it has really used (OBS Studio, ShareX) can be a main game too, so it's among the most played - marked.
 			return Results.Json(new {
 				bot.Library.Ready,
-				Games = bot.Library.Games.Where(static g => !g.Shared).OrderByDescending(static g => g.MinutesPlayed).Take(40)
-					.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed }).ToList()
+				Games = bot.Library.Games.Where(static g => !g.Shared).Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed, Software = false })
+					.Concat(bot.Library.Software.Where(static s => s.MinutesPlayed > 0).Select(static s => new { s.AppId, s.Name, Minutes = s.MinutesPlayed, Software = true }))
+					.OrderByDescending(static g => g.Minutes).Take(40).ToList()
 			});
 		}));
 
@@ -2264,8 +2323,25 @@ public sealed class WebHost : IAsyncDisposable {
 				Ready = bots.Any(static b => b.Library.Ready),
 				Games = bots.SelectMany(static b => b.Library.Games)
 					.GroupBy(static g => g.AppId)
-					.Select(static grp => new { AppId = grp.Key, grp.First().Name, Minutes = grp.Sum(static g => g.MinutesPlayed), Shared = grp.All(static g => g.Shared) })
-					.OrderByDescending(static g => g.Minutes).ToList()
+					.Select(static grp => new { AppId = grp.Key, grp.First().Name, Minutes = grp.Sum(static g => g.MinutesPlayed), Shared = grp.All(static g => g.Shared), Software = false })
+					.OrderByDescending(static g => g.Minutes)
+					.Concat(bots.SelectMany(static b => b.Library.Software)
+						.GroupBy(static s => s.AppId)
+						.Select(static grp => new { AppId = grp.Key, grp.First().Name, Minutes = grp.Sum(static s => s.MinutesPlayed), Shared = false, Software = true }))
+					.ToList()
+			});
+		}));
+
+		// Does this account hold a licence for an app - asked when an appID is typed into one of its idle lists, so one it
+		// doesn't own gets a plain warning (idling it banks nothing). Known is false when that can't be told yet.
+		app.MapGet("/api/bots/{name}/owns", (HttpContext ctx, string name, uint app) => Guard(ctx, () => {
+			Library.Holding how = _mgr.Get(name)?.Library.Holds(app) ?? Library.Holding.Unknown;
+
+			return Results.Json(new {
+				Known = how != Library.Holding.Unknown,
+				Owns = how is not (Library.Holding.No or Library.Holding.Unknown),
+				Software = how == Library.Holding.Software,
+				Name = GameNames.Of(app)
 			});
 		}));
 
@@ -2298,17 +2374,7 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { Connected = false });
 			}
 
-			// Forced: somebody is looking straight at this number, and points move the moment they spend any.
-			// The cheap cached value is fine for the overview tile; it is not fine here.
-			(int Points, int PendingPoints)? user = await CachedPointsAsync(true).ConfigureAwait(false);
-
-			return Results.Json(new {
-				Connected = user != null,
-				Error = user == null ? "rep4rep didn't accept that token, or it can't be reached right now." : null,
-				Points = user?.Points ?? 0,
-				Pending = user?.PendingPoints ?? 0,
-				SyncedAt = _pointsCache?.At
-			});
+			return Results.Json(await Rep4RepViewAsync().ConfigureAwait(false));
 		});
 
 		app.MapPost("/api/rep4rep/token", async (HttpContext ctx) => {
@@ -2342,9 +2408,9 @@ public sealed class WebHost : IAsyncDisposable {
 				ConfigStore.SaveGlobal(_mgr.Global);
 			}
 			RememberPoints(user.Value.Points, user.Value.PendingPoints);
-			Log.Good(new Said("rep4rep connected - {0} points", user.Value.Points));
+			Log.Good(new Said("rep4rep connected - {0} points", Math.Max(0, user.Value.Points)));
 
-			return Results.Json(new { ok = true, Points = user.Value.Points, Pending = user.Value.PendingPoints });
+			return Results.Json(new { ok = true, Points = Math.Max(0, user.Value.Points), Pending = Math.Max(0, user.Value.PendingPoints) });
 		});
 
 		app.MapGet("/api/rep4rep/profiles", async (HttpContext ctx) => {
@@ -2646,13 +2712,26 @@ public sealed class WebHost : IAsyncDisposable {
 
 			KeepSecrets(body, current, Settings.Bot);
 
+			// Real Steam Points spending is allowed by 'points ok <account>' only - never by a settings save.
+			body.PointsOk = current.PointsOk;
+
 			if (Invalid(body, current, Settings.Bot) is { } error) {
 				return new BotSave(error, [], [], false);
 			}
 
 			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
 			// A skip changed in this same save is the owner's choice, and stays.
+			// Spending Steam Points follows human mode too (on for a robot, off for human mode) - unless changed in this same save.
+			bool pointsChosen = body.SpendPoints != current.SpendPoints, spendChosen = body.SpendPoints;
 			Settings.ApplyLegitMode(body, current.LegitMode, skipChosen: body.AchievementSkipMultiplayer != current.AchievementSkipMultiplayer);
+
+			if (pointsChosen) {
+				body.SpendPoints = spendChosen;
+			}
+
+			// Spare items and Steam Points are turned on only through their confirm popup (/api/bots/{name}/switch), never by a
+			// plain save; off clears the go-ahead (Switches).
+			Switches.Settle(body, bot.Name);
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
@@ -2854,7 +2933,9 @@ public sealed class WebHost : IAsyncDisposable {
 			// line per request buried everything else in the log.
 			if (!_warnedAboutBalance) {
 				_warnedAboutBalance = true;
-				Log.Debug(new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user?.Points, user?.PendingPoints));
+				Log.Debug(user?.Points == Rep4RepApi.NotANumber
+					? new Said("rep4rep is reporting points that aren't a number - keeping the last sensible figure")
+					: new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user?.Points, user?.PendingPoints));
 			}
 
 			return CachedPoints();
@@ -2862,22 +2943,53 @@ public sealed class WebHost : IAsyncDisposable {
 
 		_warnedAboutBalance = false;
 
-		if (user != null) {
-			RememberPoints(user.Value.Points, user.Value.PendingPoints);
+		if (user == null) {
+			return CachedPoints();   // not reached: "connected" says so (Rep4RepView); the last sensible figure stays
 		}
 
-		return user;
+		RememberPoints(user.Value.Points, user.Value.PendingPoints);
+
+		return Sensible(user);
+	}
+
+	/// <summary>What the rep4rep tab shows. <c>Connected</c> is "a token is set and rep4rep took it the last time it was
+	/// asked" - never the points figure: a balance it couldn't believe used to turn a working token into the set-up screen.</summary>
+	internal sealed record Rep4RepView(bool Connected, string? Error, int Points, int Pending, bool PointsKnown, DateTime? SyncedAt);
+
+	internal async Task<Rep4RepView> Rep4RepViewAsync() {
+		if (!_mgr.Rep4Rep.HasToken) {
+			return new Rep4RepView(false, null, 0, 0, false, null);
+		}
+
+		// Forced: somebody is looking straight at this number, and points move the moment they spend any.
+		// The cheap cached value is fine for the overview tile; it is not fine here.
+		(int Points, int PendingPoints)? user = await CachedPointsAsync(true).ConfigureAwait(false);
+
+		// Not asked yet (another request is asking right now) counts as connected: only a real "no" is shown as one.
+		bool connected = _mgr.Rep4Rep.UserAnswered != false;
+
+		return new Rep4RepView(
+			connected,
+			connected ? null : "rep4rep didn't accept that token, or it can't be reached right now.",
+			user?.Points ?? 0,
+			user?.PendingPoints ?? 0,
+			user != null,
+			_pointsCache?.At);
 	}
 
 	/// <summary>
-	/// Whether a balance rep4rep just handed us can be true.
+	/// Whether a balance rep4rep just handed us can be true: spendable points that are a number and not below 0.
 	///
-	/// Their API really does serve things like "-107 waiting to be verified" from time to time. Believing one
-	/// puts a nonsense figure on screen; caching one keeps it there long after the API has recovered.
+	/// A NEGATIVE pending is not impossible - rep4rep serves -16, -49 and the like all the time - it's read as 0 waiting
+	/// (see <see cref="Sensible"/>). Calling it impossible left the dashboard with no points at all after a restart.
 	/// </summary>
 	/// <remarks>The 'rep4rep points' command asks the same, so the dashboard and the command agree on what's nonsense.</remarks>
 	internal static bool Believable((int Points, int PendingPoints)? user) =>
-		user is null or { Points: >= 0, PendingPoints: >= 0 };
+		user is null or { Points: >= 0 };
+
+	/// <summary>The balance as it's shown: pending below 0 is 0 pending; null for one that can't be true (or none).</summary>
+	internal static (int Points, int PendingPoints)? Sensible((int Points, int PendingPoints)? user) =>
+		user is { Points: >= 0 } u ? (u.Points, Math.Max(0, u.PendingPoints)) : null;
 
 	/// <summary>The last sensible rep4rep balance the dashboard got, or null when it has none yet.</summary>
 	internal (int Points, int PendingPoints)? LastSensiblePoints => CachedPoints();
@@ -2885,6 +2997,7 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>The only place the points cache is written, so nothing can slip past the check above.</summary>
 	internal void RememberPoints(int points, int pending) {
 		if (Believable((points, pending))) {
+			pending = Math.Max(0, pending);
 			_pointsCache = new PointsSnapshot(points, pending, DateTime.UtcNow);
 		}
 	}
@@ -3007,6 +3120,7 @@ public sealed class WebHost : IAsyncDisposable {
 			LockedToThisPc = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
 			Points = CachedPoints()?.Points ?? 0,
 			PendingPoints = CachedPoints()?.PendingPoints ?? 0,
+			PointsKnown = CachedPoints() != null,
 			CardsToday = cards,
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
@@ -3069,6 +3183,10 @@ public sealed class WebHost : IAsyncDisposable {
 					Seen = b.PlayingAsSeen,
 					NameNotShowing = b.CustomNameNotShowing,
 					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
+					// 1.8.0: the Health line (it takes the bans line's place on the card while it's on) and scam watch's warnings.
+					Health = HealthCard(b),
+					Scam = BotManager.ModuleOf<ScamWatch>(b)?.Hits.Select(static h => ScamWatch.What(h).ToString()).ToList() ?? [],
+					ScamHolding = ScamWatch.HoldsTrades(b),
 					Online = b.IsOnline,
 					Paused = b.Paused,
 					Blocked = b.PlayingBlocked,
@@ -3134,6 +3252,24 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>The one status vocabulary the whole app uses - kept in <see cref="BotStatus.Group"/> so the mini window's
 	/// counts and the dashboard's chips can't disagree.</summary>
 	private static string GroupOf(Bot b) => BotStatus.Group(b);
+
+	/// <summary>
+	/// 1.8.0: an account's Health line for its card - "good", "warn" or "bad" and the words - or null while account health is
+	/// off or hasn't checked yet. The bans are the ban watch's latest, which may be newer than the last health check.
+	/// </summary>
+	internal static object? HealthCard(Bot b) {
+		if (!b.Cfg.WatchHealth || (BotManager.ModuleOf<AccountHealth>(b)?.Last is not { } facts)) {
+			return null;
+		}
+
+		facts = facts with { Bans = BotManager.ModuleOf<BanWatch>(b)?.Last ?? facts.Bans };
+		AccountHealth.Level worst = AccountHealth.Worst(AccountHealth.Assess(facts));
+
+		return new {
+			Colour = worst switch { AccountHealth.Level.Bad => "bad", AccountHealth.Level.Warn => "warn", _ => "good" },
+			Line = AccountHealth.Line(facts).ToString()
+		};
+	}
 
 	private sealed class LoginRequest {
 		public string? Password { get; set; }

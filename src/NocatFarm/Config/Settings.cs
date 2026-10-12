@@ -77,12 +77,22 @@ public static class Settings {
 	public const string SecPrices = "Inventory prices";
 	public const string SecUpdates = "Updates & plugins";
 
+	// Global: where scam-watch and account-health alerts go
+	public const string SecScamWatchAlerts = "Scam watch";
+	public const string SecHealthAlerts = "Account health";
+	public const string SecBackups = "Backups";
+	public const string SecPhoneApp = "Phone app";
+
 	// ── per-account sections, in display order ──────────────────────────────
 	public const string SecAccount = "Account";
 	public const string SecPlaying = "What it plays";
 	public const string SecCards = "Trading cards";
 	public const string SecExtras = "Free stuff";
+	public const string SecSaleEvents = "Sale events";
+	public const string SecPoints = "Steam Points";
 	public const string SecBadges = "Badges, boosters & selling";
+	public const string SecSpare = "Spare items";
+	public const string SecPacks = "Booster packs";
 	public const string SecInventory = "Inventory & bans";
 	public const string SecAchievements = "Achievements";
 	public const string SecComments = "rep4rep commenting";
@@ -90,6 +100,11 @@ public static class Settings {
 	public const string SecSocial = "Friends & messages";
 	public const string SecTrading = "Trades";
 	public const string SecCourtesy = "Staying out of the way";
+	public const string SecFamily = "Steam Family";
+
+	// Scam watch and account health, per account
+	public const string SecScamWatch = "Scam watch";
+	public const string SecHealth = "Account health";
 
 	public static readonly IReadOnlyList<SettingDef> Global = ForThisPlatform(BuildGlobal());
 	public static readonly IReadOnlyList<SettingDef> Bot = BuildBot();
@@ -108,7 +123,8 @@ public static class Settings {
 		}
 
 		string[] windowsOnly = ["Tray", "MinimizeToTray", "StartMinimized", "MiniOnTop", "MiniStats", "StartWithWindows", "KeepAwake",
-			"TrayNotifications", "NotifyEarnings", "NotifySocial", "NotifyProblems", "NotifyTrades"];
+			"TrayNotifications", "NotifyEarnings", "NotifySocial", "NotifyProblems", "NotifyTrades",
+			"ScamAlertPopup", "HealthAlertPopup"];
 
 		return [.. all.Where(d => !windowsOnly.Contains(d.Name, StringComparer.OrdinalIgnoreCase))];
 	}
@@ -121,7 +137,8 @@ public static class Settings {
 	/// from habit, or in a script or a plugin - still reach the setting.
 	/// </summary>
 	private static readonly Dictionary<string, string> Renamed = new(StringComparer.OrdinalIgnoreCase) {
-		["BoosterGames"] = "BoosterPackGames"
+		["BoosterGames"] = "BoosterPackGames",
+		["SellDuplicates"] = "SpareItems"
 	};
 
 	private static string NewName(string name) => Renamed.GetValueOrDefault(name, name);
@@ -400,6 +417,11 @@ public static class Settings {
 			}
 
 			default:
+				// Long enough to hold up against guessing: anyone with the file can try passwords as fast as their PC allows.
+				if ((def.Name == "BackupPassword") && (raw.Length is > 0 and < Core.LockedBackup.MinPassword)) {
+					return $"{def.Label} has to be at least {Core.LockedBackup.MinPassword} characters";
+				}
+
 				if ((def.Name == "WebTrustedProxies") && (Core.TrustedProxies.Unreadable(raw) is { } bad)) {
 					return $"'{bad}' isn't an address or a range like 172.16.0.0/12";
 				}
@@ -542,7 +564,7 @@ public static class Settings {
 	/// <param name="skipChosen">The same save also changed "Skip multiplayer achievements" - the owner chose it, so it
 	/// stays as chosen rather than following the mode. One dashboard save that turned human mode on and the skip off
 	/// ended with the skip on.</param>
-	public static void ApplyLegitMode(BotConfig cfg, bool wasLegit, bool skipChosen = false) {
+	public static void ApplyLegitMode(BotConfig cfg, bool wasLegit, bool skipChosen = false, bool pointsChosen = false) {
 		if (cfg.LegitMode == wasLegit) {
 			return;
 		}
@@ -551,6 +573,18 @@ public static class Settings {
 		// was chosen in the same save.
 		if (!skipChosen) {
 			cfg.AchievementSkipMultiplayer = cfg.LegitMode;
+		}
+
+		// Spending Steam Points goes off with human mode - unless chosen in the same save. Turning human mode off never turns it
+		// on: nothing that uses up an account's things starts by itself. Either way nothing is spent before 'points ok <account>'.
+		if (!pointsChosen && cfg.LegitMode) {
+			cfg.SpendPoints = false;
+		}
+
+		// Booster packs are never opened on a human-mode account unless you turn it on: turning human mode on takes "only
+		// when the cards are worth more" to never. "Always", chosen, stays.
+		if (cfg.LegitMode && (cfg.OpenBoosterPacks == 1)) {
+			cfg.OpenBoosterPacks = 0;
 		}
 
 		if (cfg.LegitMode) {
@@ -599,7 +633,8 @@ public static class Settings {
 	/// <summary>On, in any casing - "ON" and "Yes" used to read as off.</summary>
 	public static bool IsTrue(string v) => v.ToLowerInvariant() is "1" or "on" or "yes" or "y" or "true";
 
-	private static bool IsFalse(string v) => v.ToLowerInvariant() is "0" or "off" or "no" or "n" or "false";
+	/// <summary>Off, in any casing - every word <see cref="Apply"/> reads as off.</summary>
+	public static bool IsFalse(string v) => v.ToLowerInvariant() is "0" or "off" or "no" or "n" or "false";
 
 	// ═════════════════════════════════════════════════════════════════════════
 	//  GLOBAL
@@ -700,6 +735,8 @@ public static class Settings {
 			"Cards dropping, a game's cards finished, badges crafted and booster packs made.", Advanced: true),
 		new("SendFreeStuff", "Send free games, items and gifts", SecNotifications, SettingKind.Bool,
 			"Free games claimed, free Points Shop and sale items, gifted games and activated keys.", Advanced: true),
+		new("SendPoints", "Send Steam Points spending", SecNotifications, SettingKind.Bool,
+			"Badge levels bought with Steam Points, how many points and what's left. Only real purchases are sent.", Advanced: true),
 		new("SendTrades", "Send trades", SecNotifications, SettingKind.Bool,
 			"Trade offers accepted, with how many items came in.", Advanced: true),
 		new("SendProblems", "Send problems that need you", SecNotifications, SettingKind.Bool,
@@ -710,6 +747,8 @@ public static class Settings {
 			"When an update installs: downloaded and installing, then installed with the new version and what's new - or that it failed or was undone, and why. Off unless you turn it on.", Advanced: true),
 		new("SendSignIns", "Send dashboard sign-ins", SecNotifications, SettingKind.Bool,
 			"Somebody signed in to the dashboard from outside your home. Signing in at home is only written in the visitor log - type visitors.", Advanced: true),
+		new("SendItems", "Send spare items and booster packs", SecNotifications, SettingKind.Bool,
+			"Items turned into gems or listed by Spare items, and booster packs opened.", Advanced: true),
 		new("SendBreakIns", "Send break-in attempts", SecNotifications, SettingKind.Bool,
 			"Somebody is guessing the dashboard password: an address locked out after wrong passwords or codes, signing in from outside paused after too many, or Open from anywhere switched off by itself.", Advanced: true),
 		new("SendDailySummary", "Send the daily summary", SecNotifications, SettingKind.Bool,
@@ -759,6 +798,22 @@ public static class Settings {
 			"Shows a pop-up when an account needs you, like a Steam Guard code, a failed login or a comment ban.", Advanced: true),
 		new("NotifyTrades", "Pop up for trade offers", SecPopups, SettingKind.Bool,
 			"Shows a pop-up for every new trade offer - who it's from, what you'd give and get, and what nocat.farm will do - and when one is accepted, declined or needs confirming.", Advanced: true),
+		// ── scam watch and account health - where the alerts go ──
+		new("ScamAlertTelegram", "Scam warnings on Telegram", SecScamWatchAlerts, SettingKind.Bool,
+			"Sends scam-watch warnings (a new API key, a new device, a changed email, phone or Steam Guard, every session signed out) to your Telegram chat. Needs Telegram set up under Notifications."),
+		new("ScamAlertDiscord", "Scam warnings on Discord", SecScamWatchAlerts, SettingKind.Bool,
+			"Sends scam-watch warnings to your Discord channel. Needs the Discord webhook set up under Notifications."),
+		new("ScamAlertPopup", "Scam warnings as a pop-up", SecScamWatchAlerts, SettingKind.Bool,
+			"Shows a pop-up on this PC for every scam-watch warning, as long as Show pop-ups is on."),
+		new("ScamWatchTrustedDevices", "Devices of yours to ignore", SecScamWatchAlerts, SettingKind.Text,
+			"Names of your own devices, separated by commas, exactly as Steam lists them under Authorized devices - for example: My Phone, LAPTOP-7. A new sign-in from one of these is never reported. nocat.farm's own sign-ins are always recognised by themselves.",
+			Advanced: true, Placeholder: "My Phone, LAPTOP-7"),
+		new("HealthAlertTelegram", "Health alerts on Telegram", SecHealthAlerts, SettingKind.Bool,
+			"Sends a message to your Telegram chat when something about an account gets worse - a ban, a trade hold, the market blocked, Steam Guard switched off. Needs Telegram set up under Notifications."),
+		new("HealthAlertDiscord", "Health alerts on Discord", SecHealthAlerts, SettingKind.Bool,
+			"Sends a message to your Discord channel when something about an account gets worse. Needs the Discord webhook set up under Notifications."),
+		new("HealthAlertPopup", "Health alerts as a pop-up", SecHealthAlerts, SettingKind.Bool,
+			"Shows a pop-up on this PC when something about an account gets worse, as long as Show pop-ups is on."),
 		// ── Inventory prices ──
 		new("MarketCurrency", "Inventory prices in", SecPrices, SettingKind.Choice,
 			"The currency inventory values are shown in. Pick the one your Steam store uses so totals match the market. Changing it re-checks every price.",
@@ -788,7 +843,10 @@ public static class Settings {
 			"What happens when a new version is out. It always tells you first, in the log and on Telegram and Discord. Install when I click, once everyone's asleep: the Update button or update accept installs it once your accounts are asleep - no human-mode account awake, nobody playing, no trade or gift waiting. Install when I click: right away. Install by itself at night: it installs on its own in the hours below, at a quiet time, and tells you before and after. update now always installs right away. Not in Docker or as a Linux service, which update by hand.",
 			Choices: "0 install when I click, once everyone's asleep | 1 install when I click | 2 install by itself at night"),
 		new("CountMeAsUser", "Count me as a user", SecUpdates, SettingKind.Bool,
-			"Once an hour, tells nocat.lol this copy is running - a random number made for this install, the app version, the platform and how many of your Steam accounts are signed in (just the number), nothing else: no account names, Steam IDs or settings. It's how the Steam accounts count is made. Off sends nothing."),
+			"Once an hour, tells nocat.lol this copy is running - a random number made for this install, the app version, the platform and how many of your Steam accounts are signed in (just the number), plus the hours and cards totals if you share them (the next setting), nothing else: no account names, Steam IDs or settings. It's how the Steam accounts count is made. Off sends nothing."),
+		new("ShareFarmTotals", "Share my hours and cards totals", SecUpdates, SettingKind.Bool,
+			"Adds two numbers to the hourly \"Count me as a user\" message: the hours of game time your accounts banked and the cards they got since the last one, for example 41.5 hours and 12 cards. The first time it's on, it also sends once the same two numbers for everything already in this copy's history from before. nocat.lol adds everyone's up and shows the totals on its nocat.farm page. Nothing about which account, game or card. Only while \"Count me as a user\" is on; off sends neither number.",
+			ShowWhen: "CountMeAsUser=true"),
 		new("AutoUpdateFromHour", "...between", SecUpdates, SettingKind.Hour,
 			"The earliest hour it may install by itself.",
 			Advanced: true, Min: 0, Max: 23),
@@ -810,6 +868,47 @@ public static class Settings {
 		new("PluginsEnabled", "Load plugins", SecUpdates, SettingKind.Bool,
 			"Loads plugins from the plugins folder. Only turn this on for plugins you wrote or fully trust. A plugin can reach everything nocat.farm can, including your Steam logins.",
 			Advanced: true, NeedsRestart: true),
+		// ── Backups ──
+		new("BackupAuto", "Back up every day", SecBackups, SettingKind.Bool,
+			"Once a day it saves everything - settings, accounts, saved logins, authenticators and history - into one file locked with your backup password, so it can be put back on any PC, even if this one dies. Needs a backup password first. Off until you turn it on."),
+		new("BackupFolder", "Save backups in", SecBackups, SettingKind.Text,
+			"The folder the daily backup goes in - a OneDrive or Dropbox folder, or a USB drive, so it survives this PC. Example: D:\\OneDrive\\nocat.farm. Empty saves them in the backups folder next to nocat.farm.",
+			Placeholder: "D:\\OneDrive\\nocat.farm"),
+		new("BackupPassword", "Backup password", SecBackups, SettingKind.Secret,
+			"The password that locks your backups - at least 12 characters, and only you pick it. You need it to restore a backup on a new PC, so write it down somewhere safe: without it nobody can open the backup, not even you. It stays on this PC, encrypted, and is never sent anywhere. Changing it only locks the backups made after the change - older ones still need the old password."),
+		new("BackupKeep", "Keep the last (backups)", SecBackups, SettingKind.Int,
+			"How many daily backups to keep in the folder, e.g. 7 keeps a week. Older ones are deleted, newest kept. Only its own backup files are ever deleted.",
+			Advanced: true, Min: 1, Max: 365),
+		new("BackupHour", "Back up at", SecBackups, SettingKind.Hour,
+			"The hour the daily backup runs, e.g. 4 am. If the PC was off then, it runs as soon as nocat.farm is open again.",
+			Advanced: true, Min: 0, Max: 23),
+		new("BackupJitterMinutes", "Up to this many minutes later", SecBackups, SettingKind.Int,
+			"A random number of minutes added to the backup time each day, up to this many, e.g. 30. 0 runs it on the hour exactly.",
+			Advanced: true, Min: 0, Max: 180),
+		new("BackupIncludeSettings", "Include the settings", SecBackups, SettingKind.Bool,
+			"Puts the global settings in the backup: the dashboard, notifications, this page.", Advanced: true),
+		new("BackupIncludeAccounts", "Include accounts and saved logins", SecBackups, SettingKind.Bool,
+			"Puts every account's settings, its saved Steam login and its progress (human mode's day, the achievement hunt, rep4rep counts) in the backup. Without it a restore brings back no accounts.", Advanced: true),
+		new("BackupIncludeAuthenticators", "Include authenticators", SecBackups, SettingKind.Bool,
+			"Puts the Steam Guard authenticator files (.maFile) in the backup, if you added any. They can confirm trades, so the backup password matters even more with them in.", Advanced: true),
+		new("BackupIncludeHistory", "Include history and stats", SecBackups, SettingKind.Bool,
+			"Puts the day-by-day history behind the charts, the hours banked in all and the daily and weekly reports in the backup.", Advanced: true),
+		new("BackupIncludeLogs", "Include logs", SecBackups, SettingKind.Bool,
+			"Puts the last 7 days of log files in the backup too. Makes it bigger. Off unless you turn it on.", Advanced: true),
+		new("BackupNotify", "Tell me", SecBackups, SettingKind.Choice,
+			"When you hear about backups on Telegram and Discord: only when one fails (the folder is missing, the disk is full, no permission), or after every backup too. Needs Send backups on under Notifications.",
+			Advanced: true, Choices: "0 only when a backup fails | 1 after every backup"),
+		new("BackupLocalCopy", "Also keep a copy here", SecBackups, SettingKind.Bool,
+			"Also keeps the same backups in the backups folder next to nocat.farm, so one is at hand if the backup folder is missing. The same number are kept there. Does nothing when Save backups in is empty.",
+			Advanced: true),
+		new("BackupRetryMinutes", "Try again after (minutes)", SecBackups, SettingKind.Int,
+			"After a backup fails, minutes to wait before trying again that day, e.g. 60. 0 waits until tomorrow.",
+			Advanced: true, Min: 0, Max: 1440),
+		new("SendBackups", "Send backups", SecNotifications, SettingKind.Bool,
+			"A backup failed and why - or, with Tell me set to after every backup, each backup saved.", Advanced: true),
+		// ── Phone app ──
+		new("PhoneInstallHint", "Show how to install it on a phone", SecPhoneApp, SettingKind.Bool,
+			"Shows a short how-to on the Phone page for putting the dashboard on your phone's home screen, like an app."),
 		// ── Steam connection ──
 		new("LoginStaggerSeconds", "Gap between logins", SecConnection, SettingKind.Int,
 			"Seconds between two accounts signing in - at startup, start all, or a reconnect - give or take a little, and never under 5. Steam limits logins per internet connection, so a gap stops several accounts getting blocked.",
@@ -1162,9 +1261,6 @@ public static class Settings {
 		// ── Badges, boosters & selling ──
 		new("CraftBadges", "Craft badges from card sets", SecBadges, SettingKind.Bool,
 			"Turns finished card sets into badges once a day, which is what raises your Steam level. Cards just sitting in the inventory raise nothing."),
-		new("UnpackBoosterPacks", "Open booster packs", SecBadges, SettingKind.Bool,
-			"Opens booster packs that land in the inventory, so their cards count toward badges.",
-			Advanced: true),
 		// A game list like the others now (search by name, chips with names), where it was a box of numbers to type.
 		new("BoosterPackGames", "Make booster packs for", SecBadges, SettingKind.AppIds,
 			"Games to turn gems into booster packs for. Steam allows one pack per game a day, only for games that still drop cards. Leave it empty to turn it off.",
@@ -1172,11 +1268,109 @@ public static class Settings {
 		new("BoosterGems", "Booster packs use", SecBadges, SettingKind.Choice,
 			"Which gems booster packs use when the account has both kinds. Tradable first makes packs you can trade or sell. Untradable first uses up gems that can't go anywhere else.",
 			Advanced: true, Choices: "0 tradable gems first | 1 untradable gems first"),
-		new("SellDuplicates", "Sell duplicate cards", SecBadges, SettingKind.Bool,
-			"Lists a few spare cards on the market every 8 to 14 hours, a cent under the cheapest listing. It keeps what you need for badges and never sells foils. Needs phone confirmation unless the authenticator is added."),
 		new("SellPerRun", "Cards to list at a time", SecBadges, SettingKind.Int,
-			"How many spare cards each round lists, most valuable first. A few at a time looks natural.",
+			"How many spare cards the sell command lists when you don't say how many, most valuable first. Spare items has its own number.",
 			Advanced: true, Min: 1, Max: 25),
+		// ── Spare items (1.8.0) ──
+		new("SpareItems", "Deal with spare items", SecSpare, SettingKind.Bool,
+			"Turns spare cards, backgrounds and emoticons into gems or sells them, a few a day - whichever pays more. Only Steam's own items (cards, backgrounds, emoticons) - never game items or CS2 skins. It never touches what your badges still need, anything new or anything over the price limit. Turning it on first shows what it would do, and asks you to confirm; off stops it at once."),
+		new("SpareAction", "What to do with spare items", SecSpare, SettingKind.Choice,
+			"Best of gems or selling turns an item into gems when the gems are worth more than selling it (by the margin below), and sells it otherwise. Keep everything only reports what's spare.",
+			Choices: "0 best of gems or selling | 1 gems only | 2 sell only | 3 keep everything (just report)"),
+		new("SpareGems", "Gems afterwards", SecSpare, SettingKind.Choice,
+			"What happens to the gems. Automatic packs them into sacks of 1000 and keeps them tradable on a human-mode account, and keeps them loose on robot accounts so \"Make booster packs for\" can use them - automatic never sells. \"Sell the sacks\" lists one sack per look, inside the spare-items daily limits.",
+			Choices: "0 automatic | 1 keep them loose (booster packs use them) | 2 pack into 1000-gem sacks and keep them tradable | 3 send the sacks to another of my accounts | 4 sell the sacks"),
+		new("SpareGemsSendTo", "Send the sacks to", SecSpare, SettingKind.Text,
+			"The name of one of your other accounts here, e.g. main. Only used when \"Gems afterwards\" sends the sacks. Sending needs the phone to confirm unless the authenticator is added.",
+			Advanced: true, ShowWhen: "SpareGems=3"),
+		new("SpareKeepGems", "Keep at least this many gems loose", SecSpare, SettingKind.Int,
+			"Gems never packed, sent or sold, e.g. 500. 0 packs every full 1000.",
+			Advanced: true, Min: 0, Max: 1_000_000),
+		new("SpareMaxedBadgeCards", "Cards from finished badges", SecSpare, SettingKind.Bool,
+			"Counts cards of a game whose badge is already at level 5 (or whose foil badge is made) as spare, keeping the copies set below.",
+			Advanced: true),
+		new("SpareExtraCards", "Extra card copies", SecSpare, SettingKind.Bool,
+			"Counts card copies beyond what the badge still needs as spare. At badge level 2 it keeps 3 of each card, for example.",
+			Advanced: true),
+		new("SpareKeepCopies", "Keep this many of each card", SecSpare, SettingKind.Int,
+			"Copies of each card always kept, even when the badge is finished, e.g. 1. 0 keeps none, so the last copy can go too. Cards a badge still needs are always kept.",
+			Advanced: true, Min: 0, Max: 10),
+		new("SpareFoils", "Foil cards too", SecSpare, SettingKind.Bool,
+			"Lets foil cards count as spare. Off by default: foils are rarer and often worth more.",
+			Advanced: true),
+		new("SpareBackgrounds", "Duplicate backgrounds", SecSpare, SettingKind.Bool,
+			"Counts extra copies of a profile background as spare.",
+			Advanced: true),
+		new("SpareKeepBackgrounds", "Keep this many of each background", SecSpare, SettingKind.Int,
+			"Copies of each background always kept, e.g. 1. 0 keeps none, so the last copy can go too.",
+			Advanced: true, Min: 0, Max: 10),
+		new("SpareEmoticons", "Duplicate emoticons", SecSpare, SettingKind.Bool,
+			"Counts extra copies of an emoticon as spare.",
+			Advanced: true),
+		new("SpareKeepEmoticons", "Keep this many of each emoticon", SecSpare, SettingKind.Int,
+			"Copies of each emoticon always kept, e.g. 1. 0 keeps none, so the last copy can go too.",
+			Advanced: true, Min: 0, Max: 10),
+		new("SpareMaxPrice", "Never touch items worth more than", SecSpare, SettingKind.Float,
+			"In this account's own Steam wallet currency, e.g. 0.25 for dollars or euros - use the same value in your own currency, e.g. 40 for yen. Worth is the higher of the cheapest listing and what it sold for over the last day. Anything worth more is only listed in spare preview, for you to decide.",
+			Advanced: true, Min: 0.01, Max: 1_000_000),
+		new("SpareNewDays", "Leave new items alone for (days)", SecSpare, SettingKind.Int,
+			"Days an item stays untouched after it arrives, e.g. 7. nocat.farm counts from when it first saw the item, so right after turning this on everything waits this long. 0 turns the rule off.",
+			Advanced: true, Min: 0, Max: 30),
+		new("SpareKeepItems", "Never touch these items", SecSpare, SettingKind.Text,
+			"Full item names as the inventory shows them, separated by commas, e.g. Sans, Gordon Freeman (Foil). A name keeps that item in every game. These are always kept.",
+			Advanced: true),
+		new("SpareKeepGames", "Never touch items from these games", SecSpare, SettingKind.AppIds,
+			"Games whose cards, backgrounds and emoticons are always kept.",
+			Advanced: true),
+		new("SpareGemMarginPct", "Gems must beat selling by (%)", SecSpare, SettingKind.Int,
+			"In percent, e.g. 20: an item only becomes gems when its gems are worth at least 20% more than selling it would pay you after Steam's fees. Otherwise it's sold.",
+			Advanced: true, Min: 0, Max: 500),
+		new("SparePerRun", "Items at a time", SecSpare, SettingKind.Int,
+			"The most items one look turns into gems or sells, most valuable first, e.g. 5.",
+			Advanced: true, Min: 1, Max: 50),
+		new("SpareDailyItems", "Items a day, at most", SecSpare, SettingKind.Int,
+			"The most items turned into gems or sold in one day, e.g. 10.",
+			Advanced: true, Min: 1, Max: 500),
+		new("SpareDailyValue", "Value a day, at most", SecSpare, SettingKind.Float,
+			"The most a day's items may be worth together, in this account's own Steam wallet currency, e.g. 1.00 for dollars or euros - use the same value in your own currency, e.g. 150 for yen.",
+			Advanced: true, Min: 0.01, Max: 1_000_000),
+		new("SpareRunHours", "Look every (hours)", SecSpare, SettingKind.Int,
+			"Hours between looks for spare items, e.g. 12 - it varies a little each time. A human-mode account only looks during its day.",
+			Advanced: true, Min: 1, Max: 72),
+		new("SpareGapSeconds", "Wait between items (seconds)", SecSpare, SettingKind.Int,
+			"Seconds between two items, e.g. 40 - it varies each time, and is longer on a human-mode account.",
+			Advanced: true, Min: 3, Max: 600),
+		new("SparePriceMaxAgeHours", "Trust a price for (hours)", SecSpare, SettingKind.Int,
+			"Hours a market price counts as fresh, e.g. 24. An item whose price is older, or not known, is kept until it's priced again.",
+			Advanced: true, Min: 1, Max: 168),
+		new("SpareSellPrice", "Selling price", SecSpare, SettingKind.Choice,
+			"What anything is listed for, priced again in this account's own Steam wallet currency just before it goes up. \"A cent under the real price\" (the safe default): what it sold for over the last day, or the cheapest listing if that's higher - one listing dumped far below is ignored, e.g. sold for 0.30 with one at 0.10 lists at 0.29. No sale lately or nobody selling: kept. The others: the same as the cheapest, the median (never under the cheapest), or a cent under the cheapest (sells fastest, follows dumps down).",
+			Advanced: true, Choices: "0 a cent under the real price | 1 the same as the cheapest | 2 the median sale price | 3 a cent under the cheapest"),
+		new("SpareDumpPct", "Keep an item whose cheapest listing is this far under its sales (%)", SecSpare, SettingKind.Int,
+			"In percent, e.g. 50: if the cheapest listing is at least 50% under what the item sold for over the last day and only one sale backs that price, the two prices contradict each other and the item is kept, not listed. With two or more sales it's listed a cent under what it sold for - a listing under that never sets your price anyway. 0 lists it on a single sale too. Only for \"a cent under the real price\".",
+			Advanced: true, Min: 0, Max: 95, ShowWhen: "SpareSellPrice=0"),
+		new("SpareRelistDays", "Take down unsold listings after (days)", SecSpare, SettingKind.Int,
+			"Days, e.g. 7: a listing nocat.farm put up itself, still unsold by then with someone else selling cheaper, comes down and is listed again at that day's price. Listings you made yourself are never touched.",
+			Advanced: true, Min: 1, Max: 60),
+		// ── Booster packs (1.8.0) ──
+		new("OpenBoosterPacks", "Open booster packs", SecPacks, SettingKind.Choice,
+			"Opens booster packs in the inventory, so their cards count toward badges (or become spare items). Never by default - nothing opens until you choose. \"Only when the cards are worth more\" opens a pack only when its cards are worth more on the market than the sealed pack; an unknown price keeps it shut. A human-mode account opens packs only during its day.",
+			Choices: "0 never | 1 only when the cards are worth more | 2 always"),
+		new("BoosterOpenNewDays", "Leave new packs alone for (days)", SecPacks, SettingKind.Int,
+			"Days a pack stays shut after it arrives, e.g. 7. 0 opens them straight away.",
+			Advanced: true, Min: 0, Max: 30),
+		new("BoosterNeverOpen", "Never open packs from these games", SecPacks, SettingKind.AppIds,
+			"Games whose booster packs always stay sealed.",
+			Advanced: true),
+		new("BoosterUnopened", "Packs it doesn't open", SecPacks, SettingKind.Choice,
+			"What happens to packs left sealed because they're worth more sealed, their game is on the list above, or opening is off. Sending or selling them happens only while Spare items is on, and selling keeps to its limits. Packs that are new or on the market are always left alone.",
+			Advanced: true, Choices: "0 keep them | 1 send to another of my accounts | 2 sell them"),
+		new("BoosterSendTo", "Send unopened packs to", SecPacks, SettingKind.Text,
+			"The name of one of your other accounts here, e.g. main. Sending needs the phone to confirm unless the authenticator is added.",
+			Advanced: true, ShowWhen: "BoosterUnopened=1"),
+		new("BoosterCheckHours", "Look for packs every (hours)", SecPacks, SettingKind.Int,
+			"Hours between looks for booster packs, e.g. 24 - it varies a little each time.",
+			Advanced: true, Min: 1, Max: 168),
 		// ── Achievements ──
 		new("UnlockAchievements", "Earn achievements over time", SecAchievements, SettingKind.Bool,
 			"Unlocks a few achievements a day in the games this account plays, easiest first. Unlocking a whole list at once shows on the profile forever, and this avoids that."),
@@ -1244,22 +1438,83 @@ public static class Settings {
 		new("BoostOnlyPlayedGames", "Only hunt games you've played", SecAchievements, SettingKind.Bool,
 			"Only lets \"all single-player\" hunt games this account has launched before. The strictest way to keep it to games that fit the account's history.",
 			Advanced: true),
-		new("IncludeFamilyLibrary", "Include family-shared games", SecAchievements, SettingKind.Bool,
+		// ── Steam Family ──
+		new("IncludeFamilyLibrary", "Include family-shared games", SecFamily, SettingKind.Bool,
 			"Also hunts achievements in games shared with this account through Steam Family. They count on this account like owned games, and owned games always go first.",
 			Advanced: true),
-		new("YieldToFamily", "Give a shared game back when they want it", SecAchievements, SettingKind.Bool,
-			"Hands a borrowed family game straight back when someone in the family starts it, and moves on. It stays out of the rotation for 20 minutes after they stop.",
+		new("YieldToFamily", "Give a shared game back when they want it", SecFamily, SettingKind.Bool,
+			"Hands a borrowed family game straight back when someone in the family starts it, and moves on. It stays out of the rotation for a while after they stop (\"Wait after a family member stops\", below).",
 			Advanced: true),
+		new("BorrowFamilyCopy", "Borrow another family member's copy when one is in use", SecFamily, SettingKind.Bool,
+			"When someone in your Steam Family is playing a shared game on one member's copy and another member owns it too, it switches to that free copy and carries on, instead of leaving the game out. Only that one game's \"borrow from\" member is changed, never a copy anyone is using. For family-shared games only (\"Include family-shared games\")."),
+		new("FamilyWaitMinutes", "Wait after a family member stops (minutes)", SecFamily, SettingKind.Int,
+			"Minutes a family-shared game is left alone after someone in your Steam Family stops playing it, e.g. 20 - people often start again. 0 uses it straight away.",
+			Advanced: true, Min: 0, Max: 240),
 		// ── Free stuff ──
 		// One choice where there were three chained switches (free games, then free DLC too, then the DLC's game too).
 		new("ClaimFree", "Claim free games", SecExtras, SettingKind.Choice,
 			"Watches for paid games given away free to keep and adds them to this account. Free-to-play junk is skipped. Games and DLC also takes paid DLC marked down to free, like a supporter pack. Steam only gives DLC to accounts that own its game, so when that game is free right now too, it claims the game first.",
 			Choices: "0 off | 1 games | 2 games and DLC"),
-		new("ClaimEventItems", "Claim free event items", SecExtras, SettingKind.Bool,
+		// ── Sale events (1.8.0): the sticker and the queue moved in here, with the Steam Awards and Next Fest ──
+		new("SaleEvents", "Take part in Steam events", SecSaleEvents, SettingKind.Bool,
+			"The switch for everything below: during Steam sales, the Steam Awards and Next Fest it picks up what's free - the daily sticker, free Points Shop items, the discovery queue, award nominations and votes. Outside an event it only looks now and then. Off does none of it on this account."),
+		new("SaleEventsHumanToo", "Human-mode accounts too", SecSaleEvents, SettingKind.Bool,
+			"Lets this human-mode account nominate and vote in the Steam Awards, claim the sale's queue item and Next Fest's item - one at a time, inside its day, minutes apart. On by default. Turn it off so a human-mode account only does the sticker and the queue (their own switches below). Robot accounts always take part.",
+			Mode: "legit"),
+		new("SaleAwardsNominate", "Nominate in the Steam Awards", SecSaleEvents, SettingKind.Bool,
+			"In late November, nominates a game in each Steam Awards category, for the nomination badge. Only games this account has played, picked as set below; a category with none of them is left empty."),
+		new("SaleAwardsVote", "Vote in the Steam Awards", SecSaleEvents, SettingKind.Bool,
+			"In the winter sale, votes once in each Steam Awards category, for the sticker each vote gives. It picks the finalist this account played most, or any finalist when it played none."),
+		new("ClaimEventItems", "Claim free event items", SecSaleEvents, SettingKind.Bool,
 			"Picks up the free daily sticker during Steam sales and anything that costs 0 points in the Points Shop."),
-		new("DiscoveryQueue", "Go through the discovery queue", SecExtras, SettingKind.Choice,
+		new("DiscoveryQueue", "Go through the discovery queue", SecSaleEvents, SettingKind.Choice,
 			"Clicks through the store's discovery queue once a day like a person would. During sales this earns event items and badge progress.",
 			Choices: "0 off | 1 during sales | 2 every day"),
+		new("SaleQuests", "Claim the sale's queue item", SecSaleEvents, SettingKind.Bool,
+			"During a sale, once the discovery queue is done, picks up the item the sale gives for it straight away instead of at the next sticker look.",
+			Advanced: true),
+		new("SaleNextFest", "Next Fest items", SecSaleEvents, SettingKind.Bool,
+			"While Steam Next Fest is on, claims its free item when it has one. Steam hasn't given one at recent Next Fests, so usually nothing happens - this is ready if it comes back.",
+			Advanced: true),
+		new("SaleNominatePick", "Which game to nominate", SecSaleEvents, SettingKind.Choice,
+			"Which game goes in each Steam Awards category, from the games this account played that Steam says fit it. The most played one, or any one of them at random. It tries not to use the same game twice.",
+			Advanced: true, Choices: "0 the game it played most | 1 any game it played"),
+		new("SaleGapMinSeconds", "Robot accounts wait between steps (seconds)", SecSaleEvents, SettingKind.Int,
+			"Seconds between two nominations or votes on a robot account, the shortest wait - for example 5.",
+			Advanced: true, Min: 1, Max: 600),
+		new("SaleGapMaxSeconds", "...up to (seconds)", SecSaleEvents, SettingKind.Int,
+			"The longest wait between two steps on a robot account, in seconds - for example 20. Each wait is picked at random in between.",
+			Advanced: true, Min: 1, Max: 600),
+		new("SaleHumanGapMinMinutes", "Human mode waits between steps (minutes)", SecSaleEvents, SettingKind.Int,
+			"Minutes between two nominations or votes on a human-mode account, the shortest wait - for example 5. Only inside its day.",
+			Advanced: true, Min: 0, Max: 240, Mode: "legit"),
+		new("SaleHumanGapMaxMinutes", "...up to (minutes)", SecSaleEvents, SettingKind.Int,
+			"The longest wait between two steps on a human-mode account, in minutes - for example 30.",
+			Advanced: true, Min: 0, Max: 240, Mode: "legit"),
+		new("SaleCheckHours", "Look for events every (hours)", SecSaleEvents, SettingKind.Int,
+			"How often it looks whether a Steam event has started, in hours - for example 6. While one is on it looks about every hour.",
+			Advanced: true, Min: 1, Max: 48),
+		// ── Steam Points (Modules/PointsSpender.cs) ──
+		new("SpendPoints", "Spend Steam Points on levels", SecPoints, SettingKind.Bool,
+			"Spends this account's Steam Points on levels of the Points Shop's seasonal badge - the only thing there that raises your Steam level, about 100 XP for every 1,000 points. Off by default on every account. Turning it on first shows what it would buy, and asks you to confirm; off stops it at once."),
+		new("PointsKeepAtLeast", "Always keep at least", SecPoints, SettingKind.Int,
+			"Points it never spends, so some are left for you, e.g. 1000. One badge level costs 1,000 points.",
+			Advanced: true, Min: 0, Max: 10000000),
+		new("PointsWeeklyCap", "Spend at most, a week", SecPoints, SettingKind.Int,
+			"The most points it spends in any 7 days, e.g. 3000 (three badge levels). 0 spends nothing.",
+			Advanced: true, Min: 0, Max: 10000000),
+		new("PointsBuySeasonalBadge", "Buy levels of the seasonal badge", SecPoints, SettingKind.Bool,
+			"Lets it buy levels of the badge the Points Shop is selling now, like the Summer Collection. A new one comes with the big Steam sales.",
+			Advanced: true),
+		new("PointsBuyOlderBadges", "Also older seasonal badges", SecPoints, SettingKind.Bool,
+			"Also buys levels of older seasonal badges the shop still lists, once the current one is done. Steam has turned some of these down, so it's off; a refusal is only logged.",
+			Advanced: true),
+		new("PointsBadgeMaxLevel", "Stop each badge at level", SecPoints, SettingKind.Int,
+			"The highest level it takes any badge to, e.g. 40 (the most Steam allows). Lower it to keep points for something else.",
+			Advanced: true, Min: 1, Max: 40),
+		new("PointsCheckEveryHours", "Look every (hours)", SecPoints, SettingKind.Int,
+			"How often it looks at the points and the shop, in hours, e.g. 12. A human-mode account only looks during its day.",
+			Advanced: true, Min: 1, Max: 168),
 		// ── Inventory & bans ──
 		new("ShowInventoryValue", "Work out what its inventory is worth", SecInventory, SettingKind.Bool,
 			"Works out what this account's inventory is worth at Steam market prices and shows it on the dashboard. Turn it off on accounts that only hold a few cards.",
@@ -1269,6 +1524,61 @@ public static class Settings {
 			Advanced: true),
 		new("WatchBans", "Watch for bans", SecInventory, SettingKind.Bool,
 			"Looks at this account's bans every few hours - VAC, game bans, a trade ban, a community ban - and tells you straight away (log, pop-up, Discord/Telegram) when a new one appears. It only looks; it never changes anything. Games it finds the account banned in are left out of trades by themselves; trading cards keep trading."),
+		// ── scam watch ──
+		new("WatchForScams", "Watch for scams", SecScamWatch, SettingKind.Bool,
+			"Every half hour or so, looks for the signs of a stolen account or a trade scam: an API key that wasn't there before, a device signing in that isn't yours, the email, phone or Steam Guard changing, or every session being signed out. It only looks. On a warning you get a red log line, a pop-up and a message, and what happens next is set below."),
+		new("ScamWatchStopTrades", "On a warning: stop trading", SecScamWatch, SettingKind.Bool,
+			"After a warning, this account stops accepting trade offers and stops sending items by itself until you type scamwatch ok and the account name. Answering offers yourself still works."),
+		new("ScamWatchCancelOffers", "On a warning: take back sent offers", SecScamWatch, SettingKind.Bool,
+			"After a warning, cancels the trade offers this account has sent that haven't gone through yet - a scammer with your API key swaps them for fake ones."),
+		new("ScamWatchRevokeKey", "On a new API key: revoke it", SecScamWatch, SettingKind.Bool,
+			"When an API key appears that wasn't there before, presses Revoke on Steam's key page straight away. Off by default: leave it off if you make API keys yourself (some trading sites ask for one).",
+			Advanced: true),
+		new("ScamWatchApiKey", "Check for an API key", SecScamWatch, SettingKind.Bool,
+			"Looks at the account's Steam Web API key page. A key that appears or changes without you is the most common trade scam. Only a fingerprint of the key is kept, never the key.",
+			Advanced: true),
+		new("ScamWatchDevices", "Check for new devices", SecScamWatch, SettingKind.Bool,
+			"Looks at the account's list of authorized devices and warns about one that is new and isn't yours or nocat.farm's own.",
+			Advanced: true),
+		new("ScamWatchDetails", "Check email, phone and Steam Guard", SecScamWatch, SettingKind.Bool,
+			"Looks at the account details page and warns when the email address, the phone number or Steam Guard changes. Only the hidden forms Steam shows (like th***@gmail.com, ends in 12) are kept.",
+			Advanced: true),
+		new("ScamWatchSessions", "Check for everything signed out", SecScamWatch, SettingKind.Bool,
+			"Warns when Steam refuses the saved login because every session on the account was signed out - what a thief does first. A normal reconnect, or you playing on the account, never counts.",
+			Advanced: true),
+		new("ScamWatchMinMinutes", "Shortest wait between looks (minutes)", SecScamWatch, SettingKind.Int,
+			"The shortest time between two looks, in minutes - for example 30. Each look is a few page views, the same as opening them in a browser.",
+			Advanced: true, Min: 10, Max: 1440),
+		new("ScamWatchMaxMinutes", "...up to (minutes)", SecScamWatch, SettingKind.Int,
+			"The longest time between two looks, in minutes - for example 60. Each wait is a random time between the two.",
+			Advanced: true, Min: 10, Max: 1440),
+		// ── account health ──
+		new("WatchHealth", "Keep an eye on account health", SecHealth, SettingKind.Bool,
+			"Shows one Health line on the account's card: level, bans, trade hold, market access, limited account, Steam Guard and phone. Checked when it signs in and every few hours. It only looks, and tells you the moment something gets worse."),
+		new("HealthAlertBans", "Alert on a new ban", SecHealth, SettingKind.Bool,
+			"Tells you when a ban appears. While Watch for bans is on, that one already tells you, so this stays quiet to avoid saying it twice.",
+			Advanced: true),
+		new("HealthAlertTradeHold", "Alert on a trade hold", SecHealth, SettingKind.Bool,
+			"Tells you when this account's trades start being held for days - for example 15 days after Steam Guard changes.",
+			Advanced: true),
+		new("HealthAlertMarket", "Alert when the market is blocked", SecHealth, SettingKind.Bool,
+			"Tells you when Steam stops this account using the Community Market - for example for 7 days after signing in on a new device.",
+			Advanced: true),
+		new("HealthAlertLimited", "Alert on a limited account", SecHealth, SettingKind.Bool,
+			"Tells you when Steam starts treating this account as limited (no friend invites, no market). An account that has never spent 5 dollars is limited.",
+			Advanced: true),
+		new("HealthAlertGuard", "Alert when Steam Guard gets weaker", SecHealth, SettingKind.Bool,
+			"Tells you when Steam Guard goes from the phone app to email, or off.",
+			Advanced: true),
+		new("HealthAlertPhone", "Alert when the phone is removed", SecHealth, SettingKind.Bool,
+			"Tells you when the account no longer has a phone number on it.",
+			Advanced: true),
+		new("HealthMinHours", "Shortest wait between health checks (hours)", SecHealth, SettingKind.Int,
+			"The shortest time between two health checks, in hours - for example 5. It always checks once when the account signs in.",
+			Advanced: true, Min: 1, Max: 48),
+		new("HealthMaxHours", "...up to (hours)", SecHealth, SettingKind.Int,
+			"The longest time between two health checks, in hours - for example 7. Each wait is a random time between the two.",
+			Advanced: true, Min: 1, Max: 48),
 		// ── Trades ──
 		new("AcceptDonations", "Accept donations", SecTrading, SettingKind.Bool,
 			"Accepts trade offers where this account gives nothing away. These can't scam you, since an offer asking for even one of your items is never accepted here."),

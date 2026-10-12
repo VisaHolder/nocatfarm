@@ -113,7 +113,7 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare)-(?<name>[^/\\:*?""<>|]+)\.json" +
 		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
@@ -330,6 +330,8 @@ public static partial class Backup {
 		sb.AppendLine("  state/human-, hunt-,      today's human-mode plans, achievement hunt progress,");
 		sb.AppendLine("  owner-, rotation-         what it learned from how you play, where the idle rotation is,");
 		sb.AppendLine("  rep4rep-, keys, report    rep4rep counts, the key queue, the daily/weekly report");
+		sb.AppendLine("  points-, spare-           Steam Points spent this week, spare items' daily counts (never an ok to spend:");
+		sb.AppendLine("                            whether Spare items and Steam Points are on stays as it is on the PC you restore on)");
 		sb.AppendLine("  manifest.json             what this backup is, so nocat.farm knows it on restore");
 		sb.AppendLine();
 		sb.AppendLine("Not inside: logs, caches (prices, game names), and anything nocat.farm rebuilds by itself.");
@@ -484,7 +486,13 @@ public static partial class Backup {
 		// Case ignored, as the check for two files of the same name does, and as Windows does.
 		HashSet<string> restored = new(contents.Select(static c => c.Rel), StringComparer.OrdinalIgnoreCase);
 
-		foreach ((string rel, byte[] data) in contents) {
+		// The history coming back is the install's that made the backup: it never goes in this install's one-time catch-up
+		// of the hours from before (nocat.lol would count it twice). Settled before the first history file lands.
+		if (contents.Any(static c => Kind(c.Rel) == "history")) {
+			FarmTotals.Restoring(DateTime.UtcNow);
+		}
+
+		foreach ((string rel, byte[] came) in contents) {
 			// An account's overnight note is put back together with the account's own file, below - never on its own
 			// ahead of it. Written in zip order, a note sorting before its account ("state/" before "zed.json") was down
 			// already when a file in between failed, and the old account file left behind was taken as looked at.
@@ -500,6 +508,8 @@ public static partial class Backup {
 
 			Directory.CreateDirectory(Path.GetDirectoryName(full)!);
 			string tmp = $"{full}.{Guid.NewGuid():N}.tmp";
+			// Never an ok to spend from a backup - see KeepOwnApprovals.
+			byte[] data = KeepOwnApprovals(rel, came, full);
 
 			try {
 				// Owner-only off Windows, like the files it puts back were: secret.key, the login tokens, the authenticators.
@@ -542,6 +552,98 @@ public static partial class Backup {
 		}
 
 		return written;
+	}
+
+	/// <summary>
+	/// Spending isn't something a backup can switch on. A restore never brings an ok with it - 'points ok' and 'spare ok'
+	/// stay exactly as they are on this PC (none, on a new one), and an ok still in an old account file is dropped - while the
+	/// spending itself comes back added to what's here: the week's Steam Points from both, today's spare-items count the
+	/// higher of the two. Restoring an older backup can't reset a limit, and restoring onto another PC can't approve anything.
+	/// </summary>
+	internal static byte[] KeepOwnApprovals(string rel, byte[] data, string full) {
+		try {
+			if (Kind(rel) == "account") {
+				if (System.Text.Json.Nodes.JsonNode.Parse(data) is not System.Text.Json.Nodes.JsonObject account) {
+					return data;
+				}
+
+				List<string> oks = [.. account.Select(static p => p.Key).Where(static k => k.Equals("PointsOk", StringComparison.OrdinalIgnoreCase))];
+
+				if (oks.Count == 0) {
+					return data;
+				}
+
+				foreach (string key in oks) {
+					account.Remove(key);
+				}
+
+				return Encoding.UTF8.GetBytes(account.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+			}
+
+			bool points = rel.StartsWith("state/points-", StringComparison.OrdinalIgnoreCase), spare = rel.StartsWith("state/spare-", StringComparison.OrdinalIgnoreCase);
+
+			if (!points && !spare) {
+				return data;
+			}
+
+			string? here = null;
+
+			try {
+				here = File.Exists(full) ? File.ReadAllText(full) : null;
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				// nothing readable here: nothing approved here
+			}
+
+			if (points) {
+				Modules.PointsLedger.Stored came = Modules.PointsLedger.Parse(Encoding.UTF8.GetString(data)) ?? new Modules.PointsLedger.Stored();
+				Modules.PointsLedger.Stored? mine = null;
+
+				try {
+					mine = here == null ? null : Modules.PointsLedger.Parse(here);
+				} catch (JsonException) {
+					// unreadable here: no ok, and the backup's list stands
+				}
+
+				return JsonSerializer.SerializeToUtf8Bytes(new Modules.PointsLedger.Stored {
+					Ok = mine?.Ok ?? false,
+					Migrated = true,
+					Entries = [.. came.Entries.Concat(mine?.Entries ?? []).DistinctBy(static e => (e.At, e.DefId, e.Points, e.Levels)).OrderBy(static e => e.At)]
+				});
+			}
+
+			SpareLedger restored = JsonSerializer.Deserialize<SpareLedger>(data) ?? new SpareLedger();
+			SpareLedger? local = null;
+
+			try {
+				local = here == null ? null : JsonSerializer.Deserialize<SpareLedger>(here);
+			} catch (JsonException) {
+				// unreadable here: no ok
+			}
+
+			restored.Approved = local?.Approved ?? false;
+			restored.Seen ??= new Dictionary<string, long>(StringComparer.Ordinal);
+
+			if (local != null) {
+				// The later day's counts; the same day, the higher of each - a cap is never reset by a restore.
+				int order = string.CompareOrdinal(local.Day, restored.Day);
+
+				if (order > 0) {
+					(restored.Day, restored.DoneItems, restored.DoneCents) = (local.Day, local.DoneItems, local.DoneCents);
+				} else if (order == 0) {
+					(restored.DoneItems, restored.DoneCents) = (Math.Max(local.DoneItems, restored.DoneItems), Math.Max(local.DoneCents, restored.DoneCents));
+				}
+
+				// An item counts from the later of the two first sightings - new for longer, the safe way round.
+				foreach ((string id, long at) in local.Seen ?? []) {
+					restored.Seen[id] = restored.Seen.TryGetValue(id, out long was) ? Math.Max(was, at) : at;
+				}
+			}
+
+			return JsonSerializer.SerializeToUtf8Bytes(restored);
+		} catch (JsonException) {
+			// Not something to merge: an approval file that can't be read approves nothing, an account file goes as it came.
+			return data;
+		}
 	}
 
 	/// <summary>The account an overnight note in a backup belongs to - "zed" for state/overnight-zed.seen - or null.</summary>
@@ -605,6 +707,8 @@ public static partial class Backup {
 
 					// Everything that read these files once and kept them reads them again.
 					Secrets.ForgetKey();
+					SpareLedger.ForgetLoaded();
+					Modules.PointsLedger.ForgetLoaded();
 					Lifetime.Reload();
 					History.Reload();
 					DailyReport.Reload();

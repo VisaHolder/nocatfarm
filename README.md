@@ -89,23 +89,46 @@ picks up again a few minutes after you stop.
 Beyond that:
 
 - Gifts, guest passes and sale stickers are picked up by default. Free-to-keep games and free DLC are one choice.
+  During Steam sales, robot accounts also nominate and vote in the Steam Awards and claim the sale's queue item
+  (human-mode accounts only if you switch that on). `events` shows what it did.
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
 - For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
   and market listings to confirm or deny, like the Steam app.
 - A new VAC, game, trade or community ban is reported straight away, and that game's items are kept out of trades.
+- Scam watch looks at each account every 30-60 minutes for the signs of a stolen account: a new API key, a new
+  device, the email, phone or Steam Guard changing, or everything signed out. On a change you're told straight away
+  and that account stops trading by itself until you type `scamwatch ok myaccount`.
+- Each account card has a Health line: level, bans, trade hold, market, limited account, Steam Guard and phone.
+  You're told once when something gets worse. `health` shows it all.
+- Daily backups, locked with a password you pick, go into a folder you choose (OneDrive, a USB drive) and open on
+  any PC. Off until you set a folder and password. `backup now` makes one straight away.
 - History charts show cards per day, hours banked and inventory value, with this week against last.
 - The Phone page gives you QR codes for your Wi-Fi and for away from home, and a checklist that fixes whatever
-  isn't ready.
+  isn't ready. The dashboard can go on your phone's home screen with the nocat.farm icon.
 - Discord and Telegram can send you notifications and take commands. There's an optional *Playing nocat.farm*
   card for your Discord profile too.
 - If you switch it on, achievements are earned one at a time in an order a real player could manage: "10 kills"
   after "5 kills", chapter 2 after chapter 1, Hard after Normal, the ending last. It paces them to how long the
   game really takes, so "finish the game" never lands 3 hours into a 20-hour game. An optional hunter picks games to
   earn them in.
-- Smaller extras: selling spare cards, pricing your next Steam level, booster packs, crafting badges, product keys
-  and rep4rep.
+
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
+Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
+account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
+things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+
+- Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
+  or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's
+  own wallet currency. Turning it on shows what it would do first and asks you to confirm.
+- Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
+  choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
+  once you turn it on (it shows what it would buy first and asks you to confirm). Nothing that sells, opens or uses up your items is on by default.
+- Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
+  is busy, another member's free copy is borrowed.
+- Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and
+  rep4rep.
 - It imports accounts and settings from ArchiSteamFarm, Idle Master Extended, Idle Master, HourBoostr,
   SingleBoostr, Steam Game Idler and steam-idler, and asks for each one whether you play on it or it's a spare.
 - It updates itself when you click Update, or at night while your accounts sleep. A new version that won't start
@@ -149,6 +172,10 @@ itself off as things get fixed: a dashboard password, opening it to other device
 router. Anything that isn't ready has its fix right beside it, including a button that restarts the dashboard
 without signing your accounts out.
 
+To have it one tap away, put it on your phone's home screen: on an iPhone, Safari's Share button then *Add to Home
+Screen* (it opens like an app); on Android, Chrome's ⋮ menu then *Add to Home screen*. Alerts come through Telegram or
+Discord.
+
 Away from home works like Jellyfin: your router forwards the port and nothing else needs installing. It needs a
 password of at least 12 characters. If you'd rather not open anything, Telegram and Discord work from anywhere, and
 their setup is on the same page.
@@ -189,9 +216,11 @@ Type these in the app window or the dashboard's Console tab. You can also send t
 | `human myaccount week` | See how human mode would spend the next week. |
 | `value` | What each account's items are worth. |
 | `match` | Swap spare cards between your own accounts so sets finish (`match do` sends them). |
-| `sell myaccount` | Which spare cards it would sell, and what you'd get. |
+| `spare preview myaccount` | Which spare items it would turn into gems or sell, and why (`spare on myaccount` turns it on). |
 | `levelup myaccount 50` | What reaching Steam level 50 would cost. |
 | `offers` | Every trade offer that's waiting. |
+| `scamwatch` · `health` | The last scam-watch look and each account's health. |
+| `backup now` | Make a locked backup straight away (`backup status` says when the next one is due). |
 | `dashboard` | The dashboard's address on this PC, on your phone, and from anywhere if you've set that up. |
 | `update accept` | Install the newest version (`update now` skips any waiting, `update skip` skips that version). |
 | `help` | Every command. `help <anything>` explains one command or setting; `help rot` lists everything starting with "rot". |
@@ -221,7 +250,9 @@ off). Discord, Telegram, rep4rep and SteamSpy (game lengths for achievements) on
 on, and *Open from anywhere* only talks to your router if you turn it on.
 
 Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
-and how many of your accounts are signed in (just the number), nothing else. *Count me as a user* turns it off.
+and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
+also carries two numbers, the game-hours banked and the cards dropped, for the totals on nocat.lol's nocat.farm page
+(*Share my hours and cards totals* turns just that off). *Count me as a user* turns it all off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
 you also use in your own Steam app, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.
@@ -261,7 +292,9 @@ restarts. nocat.farm waits it out by itself.
 
 **Where are my settings?** In the `config` folder next to `nocatFarm.exe`. With the setup that's
 `%LOCALAPPDATA%\Programs\nocat.farm\config`; with the portable zip it's wherever you unzipped it. Back that folder
-up and you've backed up everything.
+up and you've backed up everything. Or turn on **Back up every day** (Settings → Global settings → Backups) for a
+password-locked backup that opens on any PC: on the new one, pick *Restore from a backup file* in the first-run
+walkthrough.
 
 **How do I uninstall it?** Windows *Settings → Apps → nocat.farm → Uninstall*. It asks whether to keep your
 accounts and settings. For the portable zip, close it and delete the folder.

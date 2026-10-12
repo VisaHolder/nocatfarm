@@ -1,0 +1,16 @@
+{
+ "response": {
+  "nominations": [
+   {
+    "category_id": 130,
+    "appid": 1245620,
+    "last_updated": 1795629600
+   },
+   {
+    "category_id": 131,
+    "appid": 2215130,
+    "last_updated": 1795629600
+   }
+  ]
+ }
+}

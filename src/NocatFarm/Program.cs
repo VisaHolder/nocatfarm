@@ -498,6 +498,9 @@ if (!shutdown.IsCancellationRequested) {
 
 	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on nocat.farm". Sends nothing while it's off.
 	NocatFarm.Core.UserCount.Start();
+
+	// The daily password-locked backup (Settings, Backups) - off until it's set up. Looks once a minute.
+	NocatFarm.Core.BackupSchedule.Start();
 }
 
 // 1.5.9's "Tell me if nocat.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
@@ -752,6 +755,7 @@ TrayIcon StartTray(BotManager mgr, Func<string> url) {
 			NotifyKind.Social => g.NotifySocial,
 			NotifyKind.Problem => g.NotifyProblems,
 			NotifyKind.Trade => g.NotifyTrades,
+			NotifyKind.Alarm => true,   // scam watch and account health: their own pop-up switch already said yes
 			_ => false
 		};
 

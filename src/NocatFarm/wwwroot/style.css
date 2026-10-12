@@ -680,6 +680,12 @@ table.today tr.fleet td:first-child { color: var(--muted); }
   line-height: 1.6; margin: 0 0 var(--s3); max-width: 90ch;
 }
 
+/* Spare items / Steam Points "Turn on?" popup: what it would do, scrollable, in the console's own type. */
+.switch-preview {
+  background: var(--panel2); padding: var(--s3); font-size: 12px; line-height: 1.5; max-height: 45vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 0 0 var(--s3);
+}
+
 /* The notification set-up walkthroughs: folded until clicked, numbered, nothing else. */
 /* The Discord card preview - drawn in Discord's own colours, not ours, so it looks like what people will see. */
 .dcard-intro { margin-top: var(--s3); }
@@ -1026,6 +1032,16 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .bot-persona.hidden-persona b { color: var(--muted); }
 .bot-mismatch { font-size: 11px; color: var(--warn); margin-top: 2px; }
 .bot-bans { font-size: 11px; color: var(--bad); margin-top: 2px; }
+
+/* 1.8.0: the Health line (green, amber, red) and scam watch's warning on an account card. */
+.bot-health { font-size: 11px; margin-top: 2px; }
+.bot-health::before { content: "\25CF"; margin-right: 5px; }
+.bot-health.good::before { color: #6fcf7f; }
+.bot-health.good { color: var(--muted); }
+.bot-health.warn { color: var(--warn); }
+.bot-health.bad { color: var(--bad); }
+:root[data-theme="light"] .bot-health.good::before { color: #1e7b34; }
+.bot-scam { font-size: 12px; font-weight: 600; color: var(--bad); margin-top: 4px; }
 
 /* ── authenticator ── */
 .auth-card { margin-bottom: var(--s3); }

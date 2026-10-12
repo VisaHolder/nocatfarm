@@ -1,0 +1,21 @@
+{
+ "response": {
+  "user_votes": [
+   {
+    "voteid": 130,
+    "appid": 1245620,
+    "communityitemid": "31415926535"
+   },
+   {
+    "voteid": 131,
+    "appid": 730,
+    "communityitemid": "31415926536"
+   },
+   {
+    "voteid": 132,
+    "appid": 1145360,
+    "communityitemid": "31415926537"
+   }
+  ]
+ }
+}

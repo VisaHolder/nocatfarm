@@ -145,6 +145,91 @@ public static class UserCount {
 		JsonSerializer.Serialize(new { id = InstallId(), v = Build.Version, os = Os, a = Math.Clamp(signedIn, 0, MaxAccounts) });
 
 	/// <summary>
+	/// The body with the live stats added when there's a batch to send (see <see cref="FarmTotals"/>): h = game-hours,
+	/// c = cards, b = the batch's name. Without one it's the four fields above, as before. An older nocat.lol reads only
+	/// the four it knows and leaves the rest.
+	/// </summary>
+	public static string Body(int signedIn, FarmTotals.Batch? batch) => Body(signedIn, batch, null);
+
+	/// <summary>
+	/// ...and the one-time catch-up of the hours and cards from before (see <see cref="FarmTotals.CatchUp"/>) in a field
+	/// of its own, "old": {h, c, b, n = accounts, d = days}. An older nocat.lol reads none of it.
+	/// </summary>
+	public static string Body(int signedIn, FarmTotals.Batch? batch, FarmTotals.CatchUp? old) => Body(signedIn, batch, old, DateTime.UtcNow);
+
+	/// <summary>
+	/// ...and with a batch, the time it covers and the accounts it's from: s = seconds since it began, e = seconds since it
+	/// was made (both counted back from now, so this PC's clock being off doesn't matter), n = this copy's accounts.
+	/// nocat.lol caps the batch by those. A batch saved by a build before them goes without them, as it did.
+	/// </summary>
+	public static string Body(int signedIn, FarmTotals.Batch? batch, FarmTotals.CatchUp? old, DateTime nowUtc) {
+		if ((batch == null) && (old == null)) {
+			return Body(signedIn);
+		}
+
+		System.Text.Json.Nodes.JsonObject body = new() {
+			["id"] = InstallId(), ["v"] = Build.Version, ["os"] = Os, ["a"] = Math.Clamp(signedIn, 0, MaxAccounts)
+		};
+
+		if (batch != null) {
+			body["h"] = Math.Round(batch.Hours, 1);
+			body["c"] = batch.Cards;
+			body["b"] = batch.B;
+
+			if (batch.Start != default) {
+				body["s"] = (long) Math.Max(0, Math.Ceiling((nowUtc - batch.Start).TotalSeconds));
+				body["e"] = (long) Math.Max(0, Math.Floor((nowUtc - batch.Made).TotalSeconds));
+				body["n"] = Math.Clamp(batch.Accounts, 0, MaxAccounts);
+			}
+		}
+
+		if (old != null) {
+			body["old"] = new System.Text.Json.Nodes.JsonObject {
+				["h"] = Math.Round(old.Hours, 1), ["c"] = old.Cards, ["b"] = old.B,
+				["n"] = Math.Clamp(old.Accounts, 0, MaxAccounts), ["d"] = Math.Max(0, old.Days)
+			};
+		}
+
+		return body.ToJsonString();
+	}
+
+	/// <summary>The batch nocat.lol says it has counted: "got" in a 200's answer - or null (an older nocat.lol never says it).</summary>
+	public static string? ParseGot(HttpStatusCode status, string body) {
+		if (status != HttpStatusCode.OK) {
+			return null;
+		}
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+
+			return (doc.RootElement.ValueKind == JsonValueKind.Object) && doc.RootElement.TryGetProperty("got", out JsonElement got)
+				&& (got.ValueKind == JsonValueKind.String) && FarmTotals.IsBatchName(got.GetString())
+				? got.GetString()
+				: null;
+		} catch (JsonException) {
+			return null;
+		}
+	}
+
+	/// <summary>The catch-up nocat.lol says it has: "gotold" in a 200's answer - or null (an older nocat.lol never says it).</summary>
+	public static string? ParseGotOld(HttpStatusCode status, string body) {
+		if (status != HttpStatusCode.OK) {
+			return null;
+		}
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+
+			return (doc.RootElement.ValueKind == JsonValueKind.Object) && doc.RootElement.TryGetProperty("gotold", out JsonElement got)
+				&& (got.ValueKind == JsonValueKind.String) && FarmTotals.IsBatchName(got.GetString())
+				? got.GetString()
+				: null;
+		} catch (JsonException) {
+			return null;
+		}
+	}
+
+	/// <summary>
 	/// The counts in nocat.lol's answer: a 200 with {"users":N,"accounts":M}. A count that's missing, not a whole number,
 	/// or 0 is unknown; another status, not JSON, or no count in it at all is null.
 	/// </summary>
@@ -190,11 +275,23 @@ public static class UserCount {
 		}
 
 		try {
-			using HttpRequestMessage req = new(HttpMethod.Post, Target) { Content = new StringContent(Body(), Encoding.UTF8) };
+			// The live stats' batch is on disk before it goes, so a ping that fails - or whose answer is lost - sends the
+			// same batch again next time, never a second one with the same hours in it.
+			FarmTotals.Batch? batch = FarmTotals.ForPing(g, BotManager.Instance?.All.Count ?? 0, DateTime.UtcNow);
+			FarmTotals.CatchUp? old = FarmTotals.OldForPing(g, DateTime.UtcNow);
+			using HttpRequestMessage req = new(HttpMethod.Post, Target) { Content = new StringContent(Body(SignedIn(), batch, old), Encoding.UTF8) };
 			req.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
 			using HttpResponseMessage resp = await http.SendAsync(req, ct).ConfigureAwait(false);
 			string text = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+			if ((batch != null) && (ParseGot(resp.StatusCode, text) == batch.B)) {
+				FarmTotals.Acknowledged(batch.B, DateTime.UtcNow);
+			}
+
+			if ((old != null) && (ParseGotOld(resp.StatusCode, text) == old.B)) {
+				FarmTotals.OldAcknowledged(old.B, DateTime.UtcNow);
+			}
 
 			if (ParseReply(resp.StatusCode, text) is not { } counts) {
 				Log.Debug($"user count: no count in nocat.lol's answer (HTTP {(int) resp.StatusCode}) - trying again in an hour");
@@ -276,6 +373,8 @@ public static class UserCount {
 		lock (Gate) {
 			_stop?.Cancel();
 		}
+
+		FarmTotals.Save();
 	}
 
 	/// <summary>

@@ -60,6 +60,9 @@ const DENY_HANDLER = {
   doRemoveBot: 'deletes the account',
   applyRestore: 'restores a backup over this copy',
   doUpdate: 'downloads and installs an update',
+  // Pressed, it downloaded the older release from GitHub and restarted the copy into it - every check after it (the
+  // settings walk included) then ran against the old version, and still passed.
+  goBack: 'downloads and installs an older version',
   doUnlockAll: 'unlocks every achievement on Steam, for good',
   phoneRestart: 'restarts the dashboard it is being tested through',
   allowFirewall: 'changes the Windows Firewall',
@@ -891,6 +894,43 @@ async function putBack(def, orig, target, defaults) {
   return true;
 }
 
+// Spare items and Steam Points (per account) are turned on only through a pop-up that shows what they'd do: ticked, the
+// pop-up comes up with a preview; Cancel leaves it off; ticked again and "Turn on" switches it on; unticked it's off at once.
+// Saved straight away by the pop-up (not by the Save button), so they're walked here on their own, outside the batches.
+const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints'];
+
+async function confirmSwitchScenario(n, target, who) {
+  const saved = async () => valuesOf(await api('/api/config'), target)[n];
+  const tick = async () => { await field(n).locator('label.switch').first().click(); await settle(300); };
+  const ticked = () => field(n).locator('input[type=checkbox]').first().isChecked();
+  const was = await saved();
+  if (was) await tick();   // off first: off is off at once, no pop-up
+  check(`settings ${who}: ${n} is off to start with`, (await saved()) === false && !(await modalOpen()));
+
+  await tick();
+  const asked = (await modalOpen()) && (await page.locator('#switchGo').count()) > 0;
+  let preview = '';
+  if (asked) {
+    const first = await page.locator('#switchPreview').textContent();
+    await page.waitForFunction((t) => { const el = document.getElementById('switchPreview'); return el && el.textContent !== t; }, first, { timeout: 20000 }).catch(() => {});
+    preview = (await page.locator('#switchPreview').textContent()) || '';
+  }
+  check(`settings ${who}: ticking ${n} first shows what it would do, in a pop-up with Turn on and Cancel`, asked && preview.trim().length > 0 && /Limits:|points/i.test(preview), preview.slice(0, 200));
+  check(`settings ${who}: while it asks, ${n} still shows off`, !(await ticked()));
+  if (asked) { await page.locator('#modal button.ghost').first().click(); await settle(300); }
+  check(`settings ${who}: Cancel closes the pop-up and ${n} stays off`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
+
+  await tick();
+  if (await page.locator('#switchGo').count()) { await page.click('#switchGo'); await settle(600); }
+  check(`settings ${who}: ticked again and "Turn on" - ${n} is on (in /api/config too)`, !(await modalOpen()) && (await saved()) === true && await ticked());
+
+  await tick();
+  check(`settings ${who}: unticked - ${n} is off at once, no pop-up`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
+
+  await closeModalIfOpen();
+  await healthy(`settings ${who}: the ${n} switch left the page healthy`);
+}
+
 async function settingsRound(target) {
   const who = target || 'global';
   const defs = target ? schema.Bot : schema.Global;
@@ -928,6 +968,11 @@ async function settingsRound(target) {
           await settle(150);
           check(`settings ${who}: ${n} Clear asks first, and "no" keeps it`, dialogs.length === asked + 1 && !(n in await pendingNow()));
         }
+        shown = await shownSettings();
+        continue;
+      }
+      if (target && CONFIRM_SWITCH.includes(n)) {
+        try { await confirmSwitchScenario(n, target, who); } catch (e) { check(`settings ${who}: ${n} switch`, false, String(e.message || e).split(/\r?\n/)[0]); await closeModalIfOpen(); }
         shown = await shownSettings();
         continue;
       }
@@ -1132,8 +1177,17 @@ if (PING_STUB) {
   let body = {};
   try { body = JSON.parse(first.body || '{}'); } catch { /* checked below */ }
   // The fixture's accounts are all switched off, so none is signed in: "a" is 0 - a plain number, nothing about them.
-  check('user count: the ping is a JSON POST of the install id, the version, the platform and the accounts signed in - nothing else',
-    seen.length >= 1 && JSON.stringify(Object.keys(body)) === '["id","v","os","a"]' && /^[0-9a-f]{32}$/.test(body.id || '')
+  // Since 1.8.0 it may also carry the live totals: a batch (h, c, b, and s, e, n) and the one-time catch-up of earlier
+  // history (old: h, c, b, n, d) - numbers and a random batch name, nothing about the accounts.
+  const num = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+  const name = (v) => typeof v === 'string' && /^[0-9a-f]{16}$/.test(v);
+  const keys = Object.keys(body);
+  const totalsOk = keys.every((k) => ['id', 'v', 'os', 'a', 'h', 'c', 'b', 's', 'e', 'n', 'old'].includes(k))
+    && ['h', 'c', 's', 'e', 'n'].every((k) => !(k in body) || num(body[k])) && (!('b' in body) || name(body.b))
+    && (!('old' in body) || (JSON.stringify(Object.keys(body.old)) === '["h","c","b","n","d"]'
+      && ['h', 'c', 'n', 'd'].every((k) => num(body.old[k])) && name(body.old.b)));
+  check('user count: the ping is a JSON POST of the install id, the version, the platform, the accounts signed in and the hours/cards totals as numbers - nothing else',
+    seen.length >= 1 && JSON.stringify(keys.slice(0, 4)) === '["id","v","os","a"]' && totalsOk && /^[0-9a-f]{32}$/.test(body.id || '')
       && ['windows', 'linux', 'mac', 'docker'].includes(body.os) && Number.isInteger(body.a) && body.a === 0
       && /^application\/json/.test(first.contentType || '') && (first.userAgent || '') === `nocat.farm/${body.v}`, JSON.stringify(first));
   await gotoView('overview');

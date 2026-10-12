@@ -389,6 +389,10 @@ public static partial class Rollback {
 				HashSet<string> there = new(current.Select(static p => p.Key), StringComparer.OrdinalIgnoreCase);
 				List<string> added = [];
 
+				if (shape == typeof(BotConfig)) {
+					OldVersionChoices(saved, current, there, added);
+				}
+
 				// The top level only: a list or a table (games, add-ons left alone) is one setting. Filled in item by item, an
 				// entry taken out on the older version would come back.
 				foreach ((string key, JsonNode? value) in saved) {
@@ -410,6 +414,30 @@ public static partial class Rollback {
 		}
 
 		return (count, where, skipped);
+	}
+
+	/// <summary>
+	/// 1.7.x has "Sell duplicate cards" and "Open booster packs" as switches, written by 1.8.0 as mirrors of Spare items and
+	/// Open booster packs. One that's different now from the copy was changed on the older version - and that change wins:
+	/// put back, the copy's newer settings turned selling (or opening) on again after the owner had turned it off there.
+	/// Off: Spare items off, or packs never opened; on: as an older file is carried over (ConfigStore.MigrateSpare) -
+	/// Spare items on, which still waits for 'spare ok', or packs always opened. Only when the new setting is missing (the
+	/// older version dropped it); the rest come back from the copy as usual.
+	/// </summary>
+	private static void OldVersionChoices(JsonObject saved, JsonObject current, HashSet<string> there, List<string> added) {
+		static bool? Bool(JsonObject o, string key) =>
+			o.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value is JsonValue v && v.TryGetValue(out bool b) ? b : null;
+
+		void Changed(string old, string now, Func<bool, JsonNode> meaning) {
+			if (!there.Contains(now) && (Bool(saved, old) is bool was) && (Bool(current, old) is bool isNow) && (was != isNow)) {
+				current[now] = meaning(isNow);
+				there.Add(now);
+				added.Add($"{now} (changed on the older version)");
+			}
+		}
+
+		Changed("SellDuplicates", "SpareItems", static on => JsonValue.Create(on));
+		Changed("UnpackBoosterPacks", "OpenBoosterPacks", static on => JsonValue.Create(on ? 2 : 0));
 	}
 
 	private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };

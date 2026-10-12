@@ -61,6 +61,10 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 
 	private string StatePath => Path.Combine(ConfigStore.ConfigDir, "state", $"bans-{Bot.Name}.json");
 
+	// ── test seams: the profile's ban lines and the banned games, faked in the tests (no network) ──
+	internal Func<CancellationToken, Task<Bans?>>? ReadBans { get; set; }
+	internal Func<CancellationToken, Task<List<uint>?>>? ReadGames { get; set; }
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		// Not in the first minutes after signing in, with everything else.
 		if (!await Sleep(Rng.Minutes(3, 9), ct).ConfigureAwait(false)) {
@@ -113,7 +117,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	}
 
 	private async Task<Bans?> CheckOnceAsync(CancellationToken ct) {
-		Bans? now = await FromProfileAsync(ct).ConfigureAwait(false);
+		Bans? now = await (ReadBans ?? FromProfileAsync)(ct).ConfigureAwait(false);
 
 		if (now == null) {
 			return null;
@@ -121,7 +125,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 
 		Saved? before = Seen;
 		now = OnNoticePage(now, before is { } b ? new Bans(b.Vac, b.Game, b.Community, b.Economy, b.DaysSinceLast) : null);
-		List<uint>? games = now.Any ? await BanGames.ReadAsync(Bot, ct).ConfigureAwait(false) : [];
+		List<uint>? games = now.Any ? await (ReadGames?.Invoke(ct) ?? BanGames.ReadAsync(Bot, ct)).ConfigureAwait(false) : [];
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
 
@@ -131,8 +135,16 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 				Log.Info(new Said("bans on record: {0}", Summary(now)), Bot.Name);
 			}
 		} else {
+			// With the ban watch itself off, account health tells about a new ban (its own alert): said here only in the log,
+			// or one ban - read by health's own look, or by 'bans' typed - would be two messages.
+			bool healthTells = BotManager.ModuleOf<AccountHealth>(Bot) is { } health && health.BansRead(now);
+
 			foreach (Said news in News(new Bans(before.Vac, before.Game, before.Community, before.Economy, before.DaysSinceLast), now)) {
-				Log.Attention(news, Bot.Name, Topic.Problems);
+				if (healthTells) {
+					Log.Warn(news, Bot.Name);
+				} else {
+					Log.Attention(news, Bot.Name, Topic.Problems);
+				}
 			}
 		}
 

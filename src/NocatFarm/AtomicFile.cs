@@ -15,11 +15,28 @@ public static class AtomicFile {
 
 		try {
 			File.WriteAllText(tmp, content);
-			File.Move(tmp, path, overwrite: true);
+			MoveOver(tmp, path);
 		} catch {
 			TryDelete(tmp);   // a half-written copy of a secret must not be left lying next to it
 
 			throw;
+		}
+	}
+
+	/// <summary>
+	/// The rename, tried again for a moment while something has the file open: Windows refuses to replace a file another
+	/// reader has open ("access denied"), even one opened to allow it - a reload, the dashboard, a virus scanner. A settings
+	/// save landing while one read failed, and the change was lost. Gives up (throws the last error) after about a second.
+	/// </summary>
+	private static void MoveOver(string tmp, string path) {
+		for (int attempt = 1; ; attempt++) {
+			try {
+				File.Move(tmp, path, overwrite: true);
+
+				return;
+			} catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && (e is not FileNotFoundException and not DirectoryNotFoundException) && (attempt < 100)) {
+				Thread.Sleep(attempt < 10 ? 1 : 10);
+			}
 		}
 	}
 
@@ -35,7 +52,7 @@ public static class AtomicFile {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 		try {
 			await File.WriteAllTextAsync(tmp, content).ConfigureAwait(false);
-			File.Move(tmp, path, overwrite: true);
+			MoveOver(tmp, path);
 		} catch {
 			TryDelete(tmp);
 

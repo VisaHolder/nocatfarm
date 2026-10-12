@@ -1,0 +1,37 @@
+{
+ "response": {
+  "played_app": [
+   {
+    "appid": 1245620,
+    "playtime": 5400
+   },
+   {
+    "appid": 367520,
+    "playtime": 12000
+   },
+   {
+    "appid": 2215130,
+    "playtime": 99999
+   },
+   {
+    "appid": 105600,
+    "playtime": 60
+   }
+  ],
+  "suggested_apps": [
+   {
+    "appid": 1086940
+   },
+   {
+    "appid": 2358720
+   }
+  ],
+  "suggested_events": [
+   {
+    "clanid": 4,
+    "event_gid": "1",
+    "appid": 1086940
+   }
+  ]
+ }
+}

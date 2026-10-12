@@ -100,6 +100,77 @@ community ban, and when a new one appears it tells you straight away with a log 
 Discord/Telegram message. It only looks and never changes anything, apart from keeping games the account is banned
 in out of trades. `bans [account|all]` checks now.
 
+## Scam watch
+
+*Watch for scams* is on by default, on every account. Every 30 to 60 minutes it opens three of the account's own
+pages, the same as you would in a browser, and looks for the signs of a stolen account or a trade scam:
+
+- **An API key.** A Steam Web API key that appears (or changes) without you is the most common trade scam: the thief
+  watches your trade offers and swaps them for fake ones. Only a fingerprint of the key is kept, never the key.
+- **A new device.** A device on the account's *Authorized devices* list that wasn't there last time and isn't yours.
+  nocat.farm's own sign-ins carry this PC's name (or the account's *Device name* setting), so it never warns about
+  itself. Add your own phones and PCs to *Devices of yours to ignore*.
+- **Email, phone or Steam Guard changed.** Only the hidden forms Steam shows (like `fa***@example.com`, ends in 42)
+  are kept. Steam Guard (phone app, email codes or off) is asked from Steam's own two-factor service, the same one the
+  Steam app uses, so the phone app being removed is noticed. If Steam doesn't answer, Steam Guard counts as "not
+  known" for that look and nothing is compared.
+- **Every session signed out.** Steam refusing the saved login because it was revoked. A normal reconnect, or you
+  playing on the account, never counts, and neither does a saved login that simply ran out after about 200 days.
+
+The first look only takes note of what's there; nothing already on the account is reported as new. A key page
+that says the account can't have a key (no checked email, no phone app) counts as "no key", so a key appearing later
+is a warning.
+
+On a warning you get a red line in the log (which account, what changed and what nocat.farm did), a pop-up, a
+Discord/Telegram message and a red banner on the dashboard. Then, as set per account:
+
+- trades stop being accepted by themselves, and nothing is sent, swapped or listed on the market by itself (timed
+  sends, the cards after farming, spare items, gem sacks and booster packs), until you've checked and typed
+  `scamwatch ok <account>` (or `scamwatch <account> ok`, or pressed *It was me* on the banner) at the PC, on the
+  dashboard, or from Telegram or Discord - never from Steam chat, since whoever has the account could type it. New offers are still announced, so you can answer
+  them yourself with `trade accept|decline`. A `send`, `sell`, `spare do`, `booster open ... do` or `match do` you type
+  still works, with a warning line. Cards held back when farming finished go once you type `scamwatch ok` (or, if the
+  account logged out when done, the next time farming finishes - logging out isn't held up by the warning);
+- the offers the account sent that haven't gone through are cancelled;
+- only if you switch it on (off by default): a new API key is revoked straight away.
+
+If it wasn't you, change the Steam password first. `scamwatch [account]` shows the last look and any warning.
+
+### What each scam watch setting does
+
+| Setting | Default | What it does |
+|---|---|---|
+| Watch for scams | on | The whole thing, per account. |
+| On a warning: stop trading | on | No trades accepted or items sent by themselves until `scamwatch ok`. |
+| On a warning: take back sent offers | on | Cancels the account's own offers still waiting. |
+| On a new API key: revoke it | off | Presses Revoke on Steam's key page. Leave off if you make keys yourself. |
+| Check for an API key / new devices / email, phone and Steam Guard / everything signed out | on | Each check on its own. |
+| Shortest wait between looks / ...up to (minutes) | 30 / 60 minutes | Each wait is a random time between the two. |
+| Scam warnings on Telegram / Discord / as a pop-up (Global settings, Scam watch) | on | Where warnings go. |
+| Devices of yours to ignore (Global settings) | empty | Your own device names, as Steam lists them, comma separated. |
+
+## Account health
+
+*Keep an eye on account health* is on by default. Each account card gets one **Health** line, green, amber or red:
+level, bans, trade hold, market access, limited account, Steam Guard and phone. When everything is fine it says
+*all good · level 12*; otherwise what isn't, like *market: blocked for 7 day(s) (new device)*. While it's on, it
+takes the place of the old bans line.
+
+It checks a few minutes after the account signs in, then every 5 to 7 hours. It reads only what nocat.farm already
+reads (the ban watch, scam watch's account page, the trade-hold lookup, what Steam says at sign-in) plus one look at
+the Community Market page. When something gets **worse** it tells you once (log, pop-up, Discord/Telegram); getting
+better is only written in the log. A new ban is told once: by the ban watch while *Watch for bans* is on, and by
+health while it's off (health then reads the bans itself at each check). `health [account]` shows every item.
+
+### What each account health setting does
+
+| Setting | Default | What it does |
+|---|---|---|
+| Keep an eye on account health | on | The Health line and the alerts, per account. |
+| Alert on a new ban / a trade hold / the market blocked / a limited account / Steam Guard weaker / the phone removed | on | Which changes alert. Off still writes them in the log. A ban is only alerted here while *Watch for bans* is off. |
+| Shortest wait between health checks / ...up to (hours) | 5 / 7 hours | Each wait is a random time between the two. |
+| Health alerts on Telegram / Discord / as a pop-up (Global settings, Account health) | on | Where alerts go. |
+
 ## Inventory value
 
 ```

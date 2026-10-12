@@ -11,17 +11,18 @@ then covers the few settings most people change and what to do when something lo
 
 Nothing past Start here is required reading. Open whichever page you need.
 
-- [The dashboard and the app window](dashboard.md): the tabs, backup and restore, the Phone page, mini mode, the
+- [The dashboard and the app window](dashboard.md): the tabs, backup and restore (daily backups that open on any PC), the Phone page, mini mode, the
   tray and console mode
 - [Accounts and signing in](accounts.md): adding accounts, Steam Guard, authenticators, and importing from another
   idler
-- [Cards and idling](cards-and-idling.md): card farming, idling, a custom game name, free games, booster packs,
-  badges, selling and product keys
+- [Cards and idling](cards-and-idling.md): card farming, idling, a custom game name, free games, sale events,
+  making booster packs, badges, selling, Steam Points into levels, spare items, opening booster packs and product
+  keys
 - [Human mode](human-mode.md): making an account play like a person, and keeping out of your way when you play
-- [Trades](trades.md): trade offers, sending items, the Authenticator page, ban watch, inventory value and history
-  charts
+- [Trades](trades.md): trade offers, sending items, the Authenticator page, ban watch, scam watch, account health,
+  inventory value and history charts
 - [Achievements and the hunter](achievements.md)
-- [Phone and notifications](phone-and-notifications.md): Discord and Telegram, pop-ups, the Discord profile card,
+- [Phone and notifications](phone-and-notifications.md): the phone app, Discord and Telegram, pop-ups, the Discord profile card,
   the daily summary, the weekly report, stuck accounts and Steam groups
 - [rep4rep](rep4rep.md), only if you use rep4rep.com
 - [Settings and commands](settings.md): how settings work, what's in each group, command line options, and

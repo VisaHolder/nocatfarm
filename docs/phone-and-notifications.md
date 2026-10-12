@@ -6,6 +6,25 @@ Opening the dashboard itself on your phone is covered in
 [Using the dashboard from another device](dashboard.md#using-the-dashboard-from-another-device). This page is about
 the other ways to keep an eye on things.
 
+## The phone app
+
+Open the dashboard on your phone (see the Phone page) and put it on the home screen, with the nocat.farm icon, so
+it's one tap away.
+
+- **iPhone, in Safari:** the Share button, then *Add to Home Screen*. It opens like an app.
+- **Android, in Chrome:** the ⋮ menu, then *Add to Home screen*. Its icon goes on your home screen and opens in Chrome.
+
+If your browser offers to install it, the Phone page shows an *Install the app* button too.
+
+It works at home on your Wi-Fi and through *Open from anywhere*. Everything stays on your PC: nothing goes through
+nocat.lol or anywhere else. Alerts on your phone come through Telegram or Discord, set up under Notifications (below).
+On this PC the browser also keeps a copy of the page itself (never your accounts or settings), so the app still opens
+when the PC is briefly out of reach.
+
+| Setting | What it does | Default |
+|---|---|---|
+| *Show how to install it on a phone* (Settings → Phone app) | the how-to on the Phone page | on |
+
 ## Discord and Telegram
 
 Everything here is under **Settings → Global settings → Notifications**, and the dashboard has step-by-step guides
@@ -68,8 +87,8 @@ nocat.farm can't be started again from Telegram.
 ### What gets sent
 
 `notify test` (or *Send a test message*) checks both. `notify` shows what's set up, whether the Discord bot is
-online and under which name, which Discord account it's connected to, and what gets sent. That last part is ten
-switches, under Show advanced:
+online and under which name, which Discord account it's connected to, and what gets sent. That last part is a
+switch for each kind, under Show advanced:
 
 | Switch | Default |
 |---|---|
@@ -83,8 +102,14 @@ switches, under Show advanced:
 | Send profile comments | off |
 | Send achievements | off |
 | Send rep4rep comments | off |
+| Send Steam Points spending (badge levels bought) | on |
+| Send spare items and booster packs (gems made, items listed, packs opened, the first preview) | on |
+| Send backups (a daily backup failed, or every backup with *Tell me* set to after every backup) | on |
 
 The weekly report has no switch here: when *Weekly report* is on, it's sent too.
+
+Scam watch warnings and account health alerts have their own switches, one per place (Telegram, Discord, pop-up), in
+their own groups in Global settings: *Scam watch* and *Account health*. See [Scam watch](trades.md#scam-watch).
 
 A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
 pretty good player"*. If Steam is still checking a comment, it says so instead.

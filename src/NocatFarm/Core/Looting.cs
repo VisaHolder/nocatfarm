@@ -211,6 +211,11 @@ public static partial class Looting {
 		BotConfig cfg = bot.Cfg;
 		ulong master = to;
 
+		// Held by scam watch: nothing goes, and nothing is even read for it - unless you asked by a command.
+		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
+			return (held, false);
+		}
+
 		if (!bot.IsOnline || !bot.Web.Ready) {
 			return ($"{bot.Name}: not logged in", false);
 		}
@@ -513,6 +518,10 @@ public static partial class Looting {
 			return (false, "a swap needs the same number of items on both sides");
 		}
 
+		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
+			return (false, held);
+		}
+
 		// Claimed on both sides like a send or a sale claims them (Bot.ClaimItems). Unclaimed, a listing or a send
 		// running meanwhile took a card out of the swap and Steam voided the whole offer, and a second 'match do'
 		// offered the same cards twice. A swap is pairs, so it goes only when every card on both sides is free.
@@ -559,6 +568,12 @@ public static partial class Looting {
 	private const int SwapChunk = 100;
 
 	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct, IReadOnlyCollection<Item>? wanted = null) {
+		// Every offer this account makes goes through here - so a scam watch hold stops each one, whoever asked for it,
+		// unless it was you by a command (ScamWatch.HeldBack).
+		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
+			return (false, held);
+		}
+
 		StringBuilder assets = new();
 
 		foreach (Item item in items) {

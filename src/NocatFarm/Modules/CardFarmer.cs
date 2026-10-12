@@ -379,24 +379,125 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// <summary>A card dropped since the app started - there's something to send.</summary>
 	private bool _farmedThisRun;
 
-	private async Task SweepAsync(CancellationToken ct) {
+	/// <summary>
+	/// A sweep that didn't happen because scam watch held the account's trades (or the account stopped while it waited):
+	/// the next time farming finishes, or 'scamwatch ok' while the account is running, sends it.
+	/// </summary>
+	private volatile bool _sweepPending;
+
+	/// <summary>1 while a sweep is on its way - never two for one account, whoever started them.</summary>
+	private int _sweeping;
+
+	/// <summary>The send itself - a stand-in in the tests.</summary>
+	internal Func<Task<string>> SendCards { get; set; } = () => Looting.SendToMasterAsync(bot);
+
+	/// <summary>How long it gives the last drop to land first (2-6 minutes) - shorter in the tests.</summary>
+	internal Func<TimeSpan> SweepSettle { get; set; } = static () => Rng.Minutes(2, 6);
+
+	/// <summary>How often a sweep waiting out a scam-watch hold looks again.</summary>
+	internal TimeSpan HoldPoll { get; set; } = TimeSpan.FromMinutes(1);
+
+	/// <summary>
+	/// Farming has finished: send the cards on, if that's set and there's something to send. Logging out straight after,
+	/// it's waited for - but never held up by a scam-watch hold: then it's skipped and noted, and logging out goes ahead.
+	/// Otherwise it runs beside the farmer, ending with the farmer's own token.
+	/// </summary>
+	internal async Task FinishedSweepAsync(bool logOut, CancellationToken ct) {
+		if (!Bot.Cfg.SendOnFarmingFinished || !((!_sweptThisRun && _farmedThisRun) || _sweepPending)) {
+			return;
+		}
+
+		_sweptThisRun = true;
+
+		// Logging out straight after: the send has to finish first. Started in the background, it was still
+		// waiting for the last drop to land when the account signed out underneath it, and failed.
+		if (logOut) {
+			_status = new Said("finished - sending the cards on, then logging out");
+			await SweepAsync(waitOutHold: false, ct).ConfigureAwait(false);
+			ct.ThrowIfCancellationRequested();
+		} else {
+			_ = SweepAsync(waitOutHold: true, ct);
+		}
+	}
+
+	/// <summary>'scamwatch ok': a sweep the hold skipped goes now, if the farmer is running.</summary>
+	internal void HoldLifted() {
+		if (!_sweepPending || !Bot.Cfg.SendOnFarmingFinished || Bot.Stopping) {
+			return;
+		}
+
+		CancellationToken ct;
+
 		try {
+			if (Cts is not { } cts) {
+				return;   // not running (logged out) - the next finish sends it
+			}
+
+			ct = cts.Token;
+		} catch (ObjectDisposedException) {
+			return;
+		}
+
+		_ = SweepAsync(waitOutHold: true, ct);
+	}
+
+	private async Task SweepAsync(bool waitOutHold, CancellationToken ct) {
+		if (Interlocked.CompareExchange(ref _sweeping, 1, 0) != 0) {
+			return;   // one is already on its way, and it sends everything there is
+		}
+
+		try {
+			if (!waitOutHold && ScamWatch.HoldsTrades(Bot)) {
+				SkipHeld();
+
+				return;
+			}
+
 			// Long enough for the last drop to actually land in the inventory - Steam is not instant about it.
-			await Task.Delay(Rng.Minutes(2, 6), ct).ConfigureAwait(false);
+			await Task.Delay(SweepSettle(), ct).ConfigureAwait(false);
 
 			// It goes to one of your own accounts - nobody sees it - so it isn't held for the account's day.
 			HumanGate gate = HumanGate.Quiet(Bot);
 
-			while (!gate.Open) {
-				await Task.Delay(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
+			// A scam-watch warning holds the account's trades: the cards wait for 'scamwatch ok', then go.
+			bool saidHeld = false;
+
+			while (!gate.Open || ScamWatch.HoldsTrades(Bot)) {
+				if (ScamWatch.HoldsTrades(Bot)) {
+					if (!waitOutHold) {
+						SkipHeld();
+
+						return;
+					}
+
+					if (!saidHeld) {
+						saidHeld = true;
+						Log.Info(ScamWatch.OnHold(Bot.Name), Bot.Name);
+					}
+				}
+
+				await Task.Delay(HoldPoll, ct).ConfigureAwait(false);
 			}
 
-			Looting.Report(Bot, await Looting.SendToMasterAsync(Bot).ConfigureAwait(false));
+			_sweepPending = false;
+			Looting.Report(Bot, await SendCards().ConfigureAwait(false));
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-			// Shutting down while it waited - nothing was sent, and nothing needs saying.
+			// Stopped while it waited - nothing was sent, so the next finish sends it.
+			_sweepPending = true;
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't send the cards on: {0}", Log.Describe(e)), Bot.Name);
+		} finally {
+			Volatile.Write(ref _sweeping, 0);
 		}
+	}
+
+	/// <summary>Logging out while held: no waiting for 'scamwatch ok' - the cards are left for later, and it says so once.</summary>
+	private void SkipHeld() {
+		if (!_sweepPending) {
+			Log.Info(new Said("the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes", Bot.Name), Bot.Name);
+		}
+
+		_sweepPending = true;
 	}
 
 	private void Release() {
@@ -525,19 +626,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// sittings, the nights, everything human mode is there for.
 			bool logOut = Bot.Cfg.StopWhenFarmingDone && !Bot.Cfg.LegitMode;
 
-			if (Bot.Cfg.SendOnFarmingFinished && !_sweptThisRun && _farmedThisRun) {
-				_sweptThisRun = true;
-
-				// Logging out straight after: the send has to finish first. Started in the background, it was still
-				// waiting for the last drop to land when the account signed out underneath it, and failed.
-				if (logOut) {
-					_status = new Said("finished - sending the cards on, then logging out");
-					await SweepAsync(ct).ConfigureAwait(false);
-					ct.ThrowIfCancellationRequested();
-				} else {
-					_ = SweepAsync(CancellationToken.None);
-				}
-			}
+			await FinishedSweepAsync(logOut, ct).ConfigureAwait(false);
 
 			if (logOut) {
 				_status = new Said("finished - logging out");

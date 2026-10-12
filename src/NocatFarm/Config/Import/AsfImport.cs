@@ -515,7 +515,7 @@ public static class AsfImport {
 		bot.FarmPriorityOnly = (flags & 8) != 0;         // FarmPriorityQueueOnly
 		bot.SkipRefundableGames = (flags & 16) != 0;     // SkipRefundableGames
 		bot.SkipUnplayedGames = (flags & 32) != 0;       // SkipUnplayedGames
-		bot.UnpackBoosterPacks = (flags & 256) != 0;     // AutoUnpackBoosterPacks
+		bot.OpenBoosterPacks = (flags & 256) != 0 ? 2 : bot.OpenBoosterPacks;     // AutoUnpackBoosterPacks: always
 
 		// AutoSteamSaleEvent: the sale's discovery queue and its free items. It was never read, so both stayed on here
 		// whatever ASF had.

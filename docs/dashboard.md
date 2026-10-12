@@ -12,7 +12,9 @@ The dashboard is at `http://127.0.0.1:7242/`. Its tabs, in order:
 
 **Accounts** has a card per account. You can search by name, login, notes or game, filter by state with the chips,
 and drag cards to change the order (the app window and the console follow the same order). **Import from another
-idler** and **+ Add account** are here. Removing an account asks you to type its name first.
+idler** and **+ Add account** are here. Removing an account asks you to type its name first. Each card has a
+**Health** line (see [Account health](trades.md#account-health)). A scam-watch warning shows as a red banner at the
+top of the dashboard, with an *It was me* button (see [Scam watch](trades.md#scam-watch)).
 
 **rep4rep** only shows when rep4rep is switched on. **Authenticator** only shows once at least one account's
 authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
@@ -71,6 +73,50 @@ A zip that isn't a nocat.farm backup, or has anything else in it, is refused. Re
 dashboard, not from Telegram, Discord or Steam chat. On Linux and a Mac the backups are only readable by your user,
 and in Docker they're kept in `./backups` next to `./config`.
 
+### Daily backups that open on any PC
+
+For "this PC died, back in minutes", turn on **Back up every day** under *Settings → Global settings → Backups*. It's
+off until you set it up, because it needs a **backup password** that only you pick (12 characters or more). Write it
+down somewhere safe: without it nobody can open the backup, you included. It stays on this PC, encrypted like your other
+secrets, so the daily backup runs with nobody there. It's never sent anywhere and never written to the log.
+
+Once a day (4 am by default, give or take up to 30 minutes, and as soon as nocat.farm is open again if the PC was off)
+it saves `nocat.farm-backup-2026-10-11.nfbackup` into the folder you pick, such as your OneDrive or a USB drive. Inside
+are your settings, accounts and saved logins, authenticators and history (each one a switch, plus logs if you want
+them). The saved logins are opened first and the whole file is locked with your password
+(strong encryption - without the password it can't be opened), so it opens on any Windows, Linux or Mac PC. It keeps the
+newest 7 (only its own backup files are ever deleted), and by default a copy in the `backups` folder too. A backup
+is never bigger than a restore takes: if the logs are very big, the oldest are left out (`backup status` says so), and
+if something else is too big it doesn't save one and says why. Backups due late in the evening that land after
+midnight still run that night. On Linux and a Mac a folder you already had (a Dropbox, a NAS share) is left as it is;
+the backup files in it are only readable by your user.
+
+If a backup fails (the folder is missing, the disk is full, no permission) it says so in the log and on Telegram and
+Discord, once per reason a day, and tries again an hour later. `backup now` makes one straight away; `backup status`
+says when the last one was made and when the next is due.
+
+**To restore on a new PC:** install nocat.farm, and in the first-run setup pick *Restore from a backup file* (or later
+*Settings → Backup & restore → Restore a backup*). Pick the `.nfbackup` file and type the password. It shows what's
+inside first; press *Restore* and the saved logins are locked again with the new PC's own key, so the accounts sign
+straight back in. A wrong password is refused and can be typed again; a file that was changed after it was made is
+refused. Restoring only works at home or on this PC.
+
+### What each backup setting does
+
+| Setting | What it does | Default |
+|---|---|---|
+| *Back up every day* | the daily locked backup | off |
+| *Save backups in* | the folder it goes in, e.g. `D:\OneDrive\nocat.farm`; empty is the `backups` folder | empty |
+| *Backup password* | locks the backups, 12+ characters, picked by you | none |
+| *Keep the last (backups)* | how many of its backups stay in the folder | 7 |
+| *Back up at* | the hour it runs | 4 am |
+| *Up to this many minutes later* | a random delay each day, in minutes | 30 |
+| *Include the settings* / *accounts and saved logins* / *authenticators* / *history and stats* / *logs* | what goes in | all on, logs off |
+| *Tell me* | only when a backup fails, or after every backup too | only when it fails |
+| *Also keep a copy here* | the same backups in the `backups` folder too | on |
+| *Try again after (minutes)* | minutes before trying again after a failure; 0 waits until tomorrow | 60 |
+| *Send backups* (Notifications) | backups on Telegram and Discord | on |
+
 ## The app window (Windows)
 
 The title bar has *mini*, *hide* and *quit*. The toolbar under it has *start all*, *stop all*, *dashboard*,
@@ -123,6 +169,8 @@ always get.
 
 Out of the box the dashboard only answers this PC. The **Phone** tab is where you change that, and it's also where
 the **Open on your phone** buttons elsewhere in the dashboard lead.
+
+To put the dashboard on your phone's home screen, see [The phone app](phone-and-notifications.md#the-phone-app).
 
 At the top are two cards. *At home* is the link for a phone on the same Wi-Fi. *Away from home* is the link for
 mobile data, once *Open from anywhere* is on. Each shows its link as a QR code to scan with the phone's camera, with a

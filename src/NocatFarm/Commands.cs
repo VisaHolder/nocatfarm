@@ -79,8 +79,9 @@ public static partial class Commands {
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
 			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
-		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself."),
-		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs for\" setting does it by itself every day.", "boosters"),
+		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
+		new("booster", "[account|all] | <account> <appIDs> | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs for\" setting does it by itself every day. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
+		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what would be turned into gems, sold or kept, and why - item by item, with the price limit, the new-item days and today's caps. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
@@ -99,16 +100,19 @@ public static partial class Commands {
 		new("freegames", "[account|all]", GroupFree, "Look for free games now: paid games given away free to keep, the same check \"Claim free games\" makes by itself every half hour or so. Says what it claimed, and what was free but couldn't be claimed, and why. On an account with it off, it takes games only."),
 		new("freeitems", "[account|all]", GroupFree, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("queue", "[account|all]", GroupFree, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
+		new("events", "[account|all]", GroupFree, "Steam events: whether a sale, the Steam Awards (nominations or votes) or Next Fest is on, and what each account has done - the sticker, the queue, its nominations and votes. The Sale events settings do it all by themselves."),
 		new("redeem", "[account] <key|file.txt> [key...]", GroupFree, "Activate product keys, or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
 		new("keys", "[list|clear]", GroupFree, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 
 		new("value", "[account|all] [refresh]", GroupInfo, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 		new("level", "[account|all]", GroupInfo, "Each account's Steam level."),
 		new("balance", "[account|all]", GroupInfo, "Steam wallet balance, and anything still pending.", "wallet"),
-		new("points", "[account|all]", GroupInfo, "Steam points each account can spend in the Points Shop."),
+		new("points", "[account|all] | spend preview [account|all] | on|off|spend <account>", GroupInfo, "Steam Points each account can spend in the Points Shop, and spending them on levels: the shop's seasonal badge, about 100 XP for every 1,000 points. 'points spend preview' shows what it would buy and buys nothing. Nothing is ever spent until spending is turned on - the switch in the account's settings, after its preview, or 'points on <account>'; then it buys by itself within its Steam Points settings, and 'points spend <account>' buys now. 'points off <account>' turns it off."),
 		new("bans", "[account|all]", GroupInfo, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
+		new("scamwatch", "[account|all] | ok <account>", GroupInfo, "Scam watch: when each account was last checked for the signs of a stolen account or a trade scam (a new API key, a new device, a changed email, phone or Steam Guard, every session signed out), and any warning standing. After a warning the account's trades stay on hold until you've checked it was you and typed 'scamwatch ok <account>'. Read-only; it checks by itself every half hour or so.", "scam"),
+		new("health", "[account|all]", GroupInfo, "Each account's health: level, bans, trade hold, market access, limited account, Steam Guard and phone, green, amber or red. It checks by itself when the account signs in and every few hours, and tells you when something gets worse."),
 		new("owns", "<appID|name>", GroupInfo,
-			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
+			"Which accounts already own a game or a piece of software (OBS Studio, ShareX), and how long each has played it. Takes an appID, a store URL, or part of a name."),
 		new("privacy", "<account> [public|friends|private|part=level ...]", GroupInfo,
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
@@ -117,7 +121,7 @@ public static partial class Commands {
 
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
-		new("backup", "", GroupSettings, "Save a backup zip of your settings, accounts, saved logins, authenticators and history into the backups folder next to config, and say where. Restoring one is done in the dashboard: Settings, Backup & restore."),
+		new("backup", "[now|status]", GroupSettings, "'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup."),
 		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler, ArchiSteamFarm login tokens and all."),
 
 		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
@@ -609,8 +613,8 @@ public static partial class Commands {
 		command is "status" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa"
 			// With no account these go over every account - claiming event items on all of them, every account's trades,
 			// wallet, inventory and bans - which from one account's chat reached past it.
-			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "value" or "level"
-			or "balance" or "points" or "bans";
+			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "events" or "value" or "level"
+			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare";
 
 	/// <summary>
 	/// A Steam-chat line with this account's name put in after the command, for a command that takes the account first and,
@@ -635,8 +639,13 @@ public static partial class Commands {
 	public static bool SteamChatRefusesAnswer(BotManager mgr, string line) {
 		string[] words = Words(line);
 
-		return (words.Length > 1) && (Resolve(words[0])?.Name == "dlc") && (words[1].ToLowerInvariant() is "leave" or "undo")
-			&& (mgr.Get(words[1]) == null);
+		return ((words.Length > 1) && (Resolve(words[0])?.Name == "dlc") && (words[1].ToLowerInvariant() is "leave" or "undo")
+			&& (mgr.Get(words[1]) == null))
+			// Spending Steam Points, or agreeing to it, can't be undone - the owner's word too. 'points spend preview' is only a look.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "points") && PointsNeedsOwner(words[1..]))
+			|| SpareRefusesFromChat(words)
+			// 'scamwatch ok' lifts a scam watch hold - the owner's word, never a chat's: whoever took the account could send it.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "scamwatch") && words[1..].Any(static w => w.Equals("ok", StringComparison.OrdinalIgnoreCase)));
 	}
 
 	/// <summary>
@@ -946,6 +955,8 @@ public static partial class Commands {
 				"rotation" => Rotation(mgr, rest),
 				"offers" => await OffersAsync(mgr, rest).ConfigureAwait(false),
 				"bans" => await BansAsync(mgr, rest).ConfigureAwait(false),
+				"scamwatch" or "scam" => ScamWatchCommand(mgr, rest),           // 1.8.0
+				"health" => await HealthCommandAsync(mgr, rest).ConfigureAwait(false),   // 1.8.0
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
 				"levelup" or "lvlup" => LevelUp(mgr, rest),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
@@ -971,9 +982,11 @@ public static partial class Commands {
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
+				"spare" or "gems" => await GemsAsync(mgr, rest).ConfigureAwait(false),
 				"freegames" => await FreeGamesAsync(mgr, rest).ConfigureAwait(false),
 				"freeitems" => await FreeItemsAsync(mgr, rest).ConfigureAwait(false),
 				"queue" => await QueueAsync(mgr, rest).ConfigureAwait(false),
+				"events" => Events(mgr, rest),
 				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
@@ -985,7 +998,7 @@ public static partial class Commands {
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
 				"enable" => Enable(mgr, rest, true),
 				"disable" => Enable(mgr, rest, false),
-				"set" => Set(mgr, rest, line),
+				"set" => await SetAsync(mgr, rest, line).ConfigureAwait(false),
 				"config" => ShowConfig(mgr, rest),
 				"import" => await ImportAsync(mgr, rest, line).ConfigureAwait(false),
 				"reload" => await ReloadAsync(mgr).ConfigureAwait(false),
@@ -994,7 +1007,7 @@ public static partial class Commands {
 				"report" => Report(mgr, rest),
 				"weekly" => WeeklyReport.Text(mgr),
 				"stuck" or "alarm" => StuckWatch.Text(mgr),
-				"backup" => BackupNow(),
+				"backup" => await BackupCommand(rest).ConfigureAwait(false),
 				"answer" => Prompt.Answer(Tail(line, 1)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"screen" or "monitor" or "display" => await ScreenAsync(rest).ConfigureAwait(false),
@@ -1600,9 +1613,12 @@ public static partial class Commands {
 
 		// An appID is exact; a name is a contains-match across every library, so one search can turn up several
 		// games and the answer has to say which is which.
+		// Software and tools too (ShareX, OBS Studio, Blender): the library keeps them apart from the games, and 'owns' said
+		// "nobody owns it" of a free app every account had added.
 		List<(uint App, string Name)> hits = wanted > 0
 			? [(wanted, GameNames.Of(wanted))]
-			: bots.SelectMany(static b => b.Library.Games)
+			: bots.SelectMany(static b => b.Library.Games.Select(static g => (g.AppId, g.Name))
+					.Concat(b.Library.Software.Select(static s => (s.AppId, Name: s.Name + " (software)"))))
 				.Where(g => g.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
 				.GroupBy(static g => g.AppId)
 				.Select(static g => (g.Key, g.First().Name))
@@ -1617,9 +1633,10 @@ public static partial class Commands {
 		StringBuilder sb = new();
 
 		foreach ((uint app, string name) in hits) {
-			List<Bot> owners = bots.Where(b => b.Library.Find(app) != null).ToList();
+			List<(Bot Bot, Library.Holding How)> owners = [.. bots.Select(b => (b, b.Library.Holds(app)))
+				.Where(static o => o.Item2 is Library.Holding.Game or Library.Holding.Family or Library.Holding.Software or Library.Holding.Other)];
 
-			sb.AppendLine($"{name}  ({app})");
+			sb.AppendLine(wanted > 0 && bots.Any(b => b.Library.FindSoftware(app) != null) ? $"{name} (software)  ({app})" : $"{name}  ({app})");
 
 			if (owners.Count == 0) {
 				sb.AppendLine("  nobody owns it");
@@ -1627,16 +1644,38 @@ public static partial class Commands {
 				continue;
 			}
 
-			foreach (Bot bot in owners) {
-				Library.Entry entry = bot.Library.Find(app)!;
-				string how = entry.SharedFrom != 0 ? " (family)" : "";
-				string played = entry.MinutesPlayed > 0 ? Fmt.Hm(entry.MinutesPlayed) : "never played";
+			foreach ((Bot bot, Library.Holding how) in owners) {
+				int minutes = bot.Library.Find(app)?.MinutesPlayed ?? bot.Library.FindSoftware(app)?.MinutesPlayed ?? 0;
+				string kind = how switch {
+					Library.Holding.Family => " (family)",
+					Library.Holding.Software => " (software)",
+					Library.Holding.Other => " (owned, not a game or software - a DLC or the like)",
+					_ => ""
+				};
+				string played = how == Library.Holding.Other ? "" : minutes > 0 ? Fmt.Hm(minutes) : "never played";
 
-				sb.AppendLine($"  {bot.Name,-14} {played}{how}");
+				sb.AppendLine($"  {bot.Name,-14} {played}{kind}".TrimEnd());
 			}
 		}
 
 		return sb.ToString().TrimEnd();
+	}
+
+	/// <summary>
+	/// "new doesn't own Blender - ..." for each app on an idle list the account holds no licence for: idling one banks
+	/// nothing, and it's easily missed (a free app shows in the store as owned only once it's added). Only when the
+	/// library and licences are known - never a guess.
+	/// </summary>
+	internal static List<string> NotOwnedWarnings(Bot bot, SettingDef def) {
+		List<uint> apps = def.Name switch {
+			"IdleGames" => bot.Cfg.IdleGames,
+			"OfflineIdleGames" => bot.Cfg.OfflineIdleGames,
+			"GameWeights" => [.. HumanMode.ParseWeights(bot.Cfg.GameWeights).Select(static w => w.Game)],   // the main game and the rest
+			_ => []
+		};
+
+		return [.. apps.Where(a => bot.Library.Holds(a) == Library.Holding.No)
+			.Select(a => $"{bot.Name} doesn't own {GameNames.Of(a)} - add it to its Steam library first, or idling it banks nothing")];
 	}
 
 	/// <summary>
@@ -2480,6 +2519,12 @@ public static partial class Commands {
 				sb.AppendLine("  " + line);
 			}
 
+			// What the night banks on, item by item, and any listed game it leaves out, with why - and the day's games a
+			// family member is on.
+			foreach (string line in human.DayFamilyReport().Concat(human.NightReport())) {
+				sb.AppendLine("  " + line);
+			}
+
 			List<(uint Game, int Minutes)> byGame = human.TodayByGame().ToList();
 
 			if (byGame.Count > 0) {
@@ -2651,7 +2696,8 @@ public static partial class Commands {
 		// Working the plan out only reads, so 'match do' isn't turned away while it does - only a second 'match do' is.
 		Slow job = new("match", send ? "sending the card swaps" : "working out card swaps", Key: send ? "match do" : "match");
 
-		return await SlowAsync(job, () => MatchNowAsync(mgr, bots, send), ReplyWithin, bots).ConfigureAwait(false);
+		// You asked: a scam watch hold doesn't stop it, it only says so (ScamWatch.AsYouAskedAsync) - the same for send and sell.
+		return await SlowAsync(job, () => ScamWatch.AsYouAskedAsync(() => MatchNowAsync(mgr, bots, send)), ReplyWithin, bots).ConfigureAwait(false);
 	}
 
 	private static async Task<string> MatchNowAsync(BotManager mgr, List<Bot> bots, bool send) {
@@ -2870,7 +2916,7 @@ public static partial class Commands {
 		// One send at a time an account, wherever it goes: two at once could put the same items in two offers.
 		Slow job = new("send", to != null ? $"sending its items to {to.Name}" : "sending its items");
 
-		return await SlowAsync(job, bots, b => to != null ? Looting.SendItemsAsync(b, to.SteamId, null, types ?? "") : Looting.SendToMasterAsync(b, types),
+		return await SlowAsync(job, bots, b => ScamWatch.AsYouAskedAsync(() => to != null ? Looting.SendItemsAsync(b, to.SteamId, null, types ?? "") : Looting.SendToMasterAsync(b, types)),
 			ReplyWithin, oneAtATime: true).ConfigureAwait(false);
 	}
 
@@ -3776,6 +3822,10 @@ public static partial class Commands {
 		// Steam gives the same answer, Fail, when the account doesn't own the game - asked about ARC Raiders on an
 		// account without it, this said "ARC Raiders has no achievements" of a game that has fifty.
 		if (set.Total == 0) {
+			if (bot.Library.FindSoftware(set.AppId) is not null) {
+				return $"{GameNames.Of(set.AppId)} is software - it has no achievements.";
+			}
+
 			return bot.Library.Find(set.AppId) is null
 				? $"{bot.Name} doesn't own {GameNames.Of(set.AppId)}, and Steam only shows achievements for games in the library."
 				: $"{GameNames.Of(set.AppId)} has no achievements - there is nothing to see or unlock.";
@@ -4712,20 +4762,6 @@ public static partial class Commands {
 		}));
 	}
 
-	private static async Task<string> PointsAsync(BotManager mgr, string[] args) {
-		if (Pick(mgr, args, out string? problem) is not { } bots) {
-			return problem!;
-		}
-
-		string[] lines = await Task.WhenAll(bots.Select(static async b => !b.IsOnline
-			? $"{b.Name}: not logged in"
-			: await b.GetPointsAsync().ConfigureAwait(false) is { } points
-				? $"{b.Name}: {points.ToString("N0", CultureInfo.InvariantCulture)} Steam points"
-				: $"{b.Name}: Steam didn't say")).ConfigureAwait(false);
-
-		return string.Join(Environment.NewLine, lines);
-	}
-
 	private static async Task<string> FairSwapCheckAsync(BotManager mgr, string[] args) {
 		if ((args.Length < 2) || (mgr.Get(args[0]) is not { } bot) || !ulong.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out ulong offerId)) {
 			return "fairswap <account> <offerID>";
@@ -4886,7 +4922,7 @@ public static partial class Commands {
 			_ => "working out what it would sell"
 		}, Key: "sell " + doing);
 
-		return await SlowAsync(job, [bot], b => SellNowAsync(b, what, count), ReplyWithin).ConfigureAwait(false);
+		return await SlowAsync(job, [bot], b => ScamWatch.AsYouAskedAsync(() => SellNowAsync(b, what, count)), ReplyWithin).ConfigureAwait(false);
 	}
 
 	private static async Task<string> SellNowAsync(Bot bot, string what, int count) {
@@ -4943,6 +4979,11 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> BoosterAsync(BotManager mgr, string[] args) {
+		// 'booster open ...' - and from Steam chat, where the account goes first, 'booster <account> open ...'.
+		if (OpenWords(mgr, args) is { } open) {
+			return await BoosterOpenAsync(mgr, open).ConfigureAwait(false);
+		}
+
 		// "booster all 730" used to list every account and quietly drop the appIDs - so it looked like it had
 		// done something it never tried. Packs cost gems per account, so making them is one account at a time.
 		if ((args.Length > 1) && args[0].Equals("all", StringComparison.OrdinalIgnoreCase)) {
@@ -5209,18 +5250,19 @@ public static partial class Commands {
 					return "rep4rep didn't answer. Check the token is right and that you can reach rep4rep.com.";
 				}
 
-				// rep4rep really does answer "-107 still being verified" now and then - the dashboard's own check, and its
-				// last sensible figure when there is one, rather than the nonsense as if it were true.
+				// The dashboard's own check, and its last sensible figure when there is one, rather than nonsense as if it
+				// were true. A negative "still being verified" (rep4rep sends -16 and the like often) is 0 waiting, not nonsense.
 				if (!Web.WebHost.Believable(got)) {
-					return $"rep4rep gave an impossible balance ({got.Points} points, {got.PendingPoints} still being verified)"
+					return $"rep4rep gave an impossible balance ({(got.Points == Rep4Rep.Rep4RepApi.NotANumber ? "points that aren't a number" : $"{got.Points} points")}, {got.PendingPoints} still being verified)"
 						+ (Web.WebHost.Current?.LastSensiblePoints is { } kept
 							? $" - the last sensible one was {kept.Points} points you can spend, {kept.PendingPoints} still being verified."
 							: " - nothing sensible from it yet; try again in a while.");
 				}
 
 				Web.WebHost.Current?.RememberPoints(got.Points, got.PendingPoints);
+				(int shownPoints, int shownPending) = Web.WebHost.Sensible(got) ?? got;
 
-				return $"rep4rep: {got.Points} points you can spend, {got.PendingPoints} still being verified.";
+				return $"rep4rep: {shownPoints} points you can spend, {shownPending} still being verified.";
 			}
 
 			case "profiles": {
@@ -5436,6 +5478,16 @@ public static partial class Commands {
 			}
 		}
 
+		// One account's: what its night banks on, item by item, and any listed game left out, with why.
+		if ((positional.Length > 0) && (mgr.Get(positional[0]) is { } nightBot) && (BotManager.ModuleOf<HumanMode>(nightBot) is { } nightMode)
+			&& (nightMode.DayFamilyReport().Concat(nightMode.NightReport()).ToList() is { Count: > 0 } night)) {
+			sb.AppendLine();
+
+			foreach (string line in night) {
+				sb.AppendLine("  " + line);
+			}
+		}
+
 		if (hidden > 0) {
 			sb.AppendLine();
 			sb.AppendLine($"  {hidden} advanced setting(s) hidden - 'config{(positional.Length > 0 ? " " + positional[0] : "")} all' shows them.");
@@ -5520,6 +5572,10 @@ public static partial class Commands {
 
 				Settings.ApplyLegitMode(bot.Cfg, wasLegit);
 
+				// Spare items and Steam Points change only through their switch (SetAsync): whatever got here, on without
+				// its go-ahead goes back off, and off clears the go-ahead - as a dashboard save does.
+				Switches.Settle(bot.Cfg, bot.Name);
+
 				// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
 				// The dashboard fixed one such pair; this fixes all of them, on both paths.
 				pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
@@ -5532,7 +5588,8 @@ public static partial class Commands {
 			// The value as 'config' shows it: a proxy without the password typed into it.
 			return $"{bot.Name}.{def.Name} = {Settings.Shown(bot.Cfg, def)}"
 				+ (def.NeedsRestart ? "   (applies after a restart)" : "")
-				+ (pulled.Count > 0 ? Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", pulled) : "");
+				+ (pulled.Count > 0 ? Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", pulled) : "")
+				+ string.Concat(NotOwnedWarnings(bot, def).Select(static w => Environment.NewLine + "  " + w));
 		}
 
 		// 'set <account>' alone.

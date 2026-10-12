@@ -184,6 +184,9 @@ public sealed class GlobalConfig {
 
 	public bool SendCardDrops { get; set; } = true;
 	public bool SendFreeStuff { get; set; } = true;
+
+	/// <summary>Badge levels bought with Steam Points (see Modules/PointsSpender.cs).</summary>
+	public bool SendPoints { get; set; } = true;
 	public bool SendTrades { get; set; } = true;
 	public bool SendProblems { get; set; } = true;
 	public bool SendUpdates { get; set; } = true;
@@ -196,16 +199,61 @@ public sealed class GlobalConfig {
 
 	/// <summary>On by default: lockouts, wrong codes, the internet brake, and Open from anywhere switching itself off.</summary>
 	public bool SendBreakIns { get; set; } = true;
+
+	/// <summary>Spare items and booster packs: items turned into gems or listed, packs opened, the first preview.</summary>
+	public bool SendItems { get; set; } = true;
 	public bool SendDailySummary { get; set; } = true;
 	public bool SendComments { get; set; }
 	public bool SendAchievements { get; set; }
 	public bool SendRep4Rep { get; set; }
+
+	// ── scam watch and account health - where their alerts go, and devices that are yours ──
+	/// <summary>Scam-watch warnings to Telegram / Discord / as a pop-up.</summary>
+	public bool ScamAlertTelegram { get; set; } = true;
+	public bool ScamAlertDiscord { get; set; } = true;
+	public bool ScamAlertPopup { get; set; } = true;
+
+	/// <summary>Device names on the authorised-devices list that are yours, comma separated - never reported as new.</summary>
+	public string ScamWatchTrustedDevices { get; set; } = "";
+
+	/// <summary>Account-health alerts (something got worse) to Telegram / Discord / as a pop-up.</summary>
+	public bool HealthAlertTelegram { get; set; } = true;
+	public bool HealthAlertDiscord { get; set; } = true;
+	public bool HealthAlertPopup { get; set; } = true;
 
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
 	/// with the nocat.farm group; anyone can change or clear it.</summary>
 	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";
 
 	public bool ExitWhenAllFinished { get; set; }
+
+	// ── backups (Core/LockedBackup.cs) ──
+	/// <summary>The daily password-locked backup. Off until the owner sets it up - it needs a password only they pick.</summary>
+	public bool BackupAuto { get; set; }
+
+	/// <summary>Where the daily backup goes (OneDrive, a USB drive). Empty: the backups folder next to config.</summary>
+	public string BackupFolder { get; set; } = "";
+
+	/// <summary>The password the daily backups are locked with - kept encrypted like every other secret, never sent anywhere.</summary>
+	public string BackupPassword { get; set; } = "";
+	public int BackupHour { get; set; } = 4;
+	public int BackupJitterMinutes { get; set; } = 30;
+	public int BackupKeep { get; set; } = 7;
+	public bool BackupIncludeSettings { get; set; } = true;
+	public bool BackupIncludeAccounts { get; set; } = true;
+	public bool BackupIncludeAuthenticators { get; set; } = true;
+	public bool BackupIncludeHistory { get; set; } = true;
+	public bool BackupIncludeLogs { get; set; }
+
+	/// <summary>0: tell me only when a backup fails. 1: after every backup too.</summary>
+	public int BackupNotify { get; set; }
+	public bool BackupLocalCopy { get; set; } = true;
+	public int BackupRetryMinutes { get; set; } = 60;
+	public bool SendBackups { get; set; } = true;
+
+	// ── phone app (wwwroot/manifest.webmanifest, sw.js) ──
+	/// <summary>The how-to on the Phone page for putting the dashboard on a phone's home screen.</summary>
+	public bool PhoneInstallHint { get; set; } = true;
 
 	// ── logging ──
 	/// <summary>
@@ -276,6 +324,9 @@ public sealed class GlobalConfig {
 
 	/// <summary>The hourly "this copy is running" to nocat.lol behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
 	public bool CountMeAsUser { get; set; } = true;
+
+	/// <summary>The ping also carries the hours banked and cards dropped since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
+	public bool ShareFarmTotals { get; set; } = true;
 
 	public bool UpdateReminders { get; set; } = true;
 
@@ -490,6 +541,12 @@ public sealed class BotConfig {
 	public bool AchievementRealLength { get; set; } = true;
 	public bool IncludeFamilyLibrary { get; set; }
 	public bool YieldToFamily { get; set; } = true;
+
+	/// <summary>A family game whose copy is in use switches to another member's free copy (Steam's preferred lender for it). See Core/Family.cs.</summary>
+	public bool BorrowFamilyCopy { get; set; } = true;
+
+	/// <summary>Minutes a family game's copy is left alone after its player stops. 0: straight away.</summary>
+	public int FamilyWaitMinutes { get; set; } = 20;
 	public int BoostMinReviews { get; set; } = 200;
 	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];
@@ -538,6 +595,40 @@ public sealed class BotConfig {
 	/// <summary>Look for VAC, game, trade and community bans every few hours, and say so when a new one appears.</summary>
 	public bool WatchBans { get; set; } = true;
 
+	// ── scam watch ──
+	/// <summary>Look for the signs of a stolen account or a trade scam (an API key, a new device, changed email/phone/Guard, every session signed out).</summary>
+	public bool WatchForScams { get; set; } = true;
+	public bool ScamWatchApiKey { get; set; } = true;
+	public bool ScamWatchDevices { get; set; } = true;
+	public bool ScamWatchDetails { get; set; } = true;
+	public bool ScamWatchSessions { get; set; } = true;
+
+	/// <summary>How often it looks, a random time between these two, in minutes.</summary>
+	public int ScamWatchMinMinutes { get; set; } = 30;
+	public int ScamWatchMaxMinutes { get; set; } = 60;
+
+	/// <summary>On a warning: stop taking trades (and sending items) until 'scamwatch ok'.</summary>
+	public bool ScamWatchStopTrades { get; set; } = true;
+
+	/// <summary>On a warning: cancel the offers this account has sent that haven't gone through.</summary>
+	public bool ScamWatchCancelOffers { get; set; } = true;
+
+	/// <summary>On a NEW API key: press Revoke on Steam's key page. Off by default.</summary>
+	public bool ScamWatchRevokeKey { get; set; }
+
+	// ── account health ──
+	public bool WatchHealth { get; set; } = true;
+	public bool HealthAlertBans { get; set; } = true;
+	public bool HealthAlertTradeHold { get; set; } = true;
+	public bool HealthAlertMarket { get; set; } = true;
+	public bool HealthAlertLimited { get; set; } = true;
+	public bool HealthAlertGuard { get; set; } = true;
+	public bool HealthAlertPhone { get; set; } = true;
+
+	/// <summary>How often it looks, a random time between these two, in hours.</summary>
+	public int HealthMinHours { get; set; } = 5;
+	public int HealthMaxHours { get; set; } = 7;
+
 	// ── inventory ──
 	public bool ShowInventoryValue { get; set; } = true;
 	public List<uint> InventoryIgnoreGames { get; set; } = [];
@@ -581,7 +672,22 @@ public sealed class BotConfig {
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public bool? ClaimFreeDlcBase { get; set; }
 	public bool CraftBadges { get; set; }
-	public bool UnpackBoosterPacks { get; set; }
+
+	/// <summary>
+	/// Retired "Open booster packs" switch - carried over to <see cref="OpenBoosterPacks"/> (ConfigStore.MigrateSpare). Still
+	/// written, as a mirror of it ("always" is on), so rolling back to 1.7.x keeps packs opening as they were; read only from
+	/// a file without OpenBoosterPacks.
+	/// </summary>
+	public bool UnpackBoosterPacks {
+		get => _openBoosterPacksSet ? (_openBoosterPacks == 2) : _unpackBoosterPacks;
+		set => _unpackBoosterPacks = value;
+	}
+
+	private bool _unpackBoosterPacks;
+
+	/// <summary>The old switch as a file from before 1.8.0 had it - for the carry-over only.</summary>
+	[JsonIgnore]
+	internal bool OldUnpackBoosterPacks => _unpackBoosterPacks;
 
 	/// <summary>Games to make a booster pack for each day, from gems.</summary>
 	public List<uint> BoosterPackGames {
@@ -614,8 +720,178 @@ public sealed class BotConfig {
 	/// <summary>0 off, 1 during sales, 2 every day.</summary>
 	public int DiscoveryQueue { get; set; } = 1;
 
-	public bool SellDuplicates { get; set; }
+	// ── Sale events (1.8.0) - see Modules/SaleEvents.cs ──
+	/// <summary>Master switch for everything during Steam events: the awards, the sale's extras, Next Fest, the sticker and the queue.</summary>
+	public bool SaleEvents { get; set; } = true;
+
+	/// <summary>On a human-mode account, the awards, the sale's extras and Next Fest happen at all (inside its day). Robots always may.</summary>
+	/// <remarks>
+	/// On by default since 1.8.0 was finished. Every setting is written to the file, so the "false" earlier 1.8.0 builds
+	/// wrote there (as "SaleEventsInHumanMode") is the old default, not a choice - the setting has a new name, so a file
+	/// with only the old one gets the new default. An off chosen from now on is written under the new name and stays off.
+	/// </remarks>
+	public bool SaleEventsHumanToo { get; set; } = true;
+
+	public bool SaleAwardsNominate { get; set; } = true;
+	public bool SaleAwardsVote { get; set; } = true;
+
+	/// <summary>The sale's extra item after the discovery queue (claimed the way the queue page claims it).</summary>
+	public bool SaleQuests { get; set; } = true;
+
+	public bool SaleNextFest { get; set; } = true;
+
+	/// <summary>0 the game it played most, 1 any game it has played.</summary>
+	public int SaleNominatePick { get; set; }
+
+	public int SaleGapMinSeconds { get; set; } = 5;
+	public int SaleGapMaxSeconds { get; set; } = 20;
+	public int SaleHumanGapMinMinutes { get; set; } = 5;
+	public int SaleHumanGapMaxMinutes { get; set; } = 30;
+	public int SaleCheckHours { get; set; } = 6;
+	// ── Steam Points into levels (see Modules/PointsSpender.cs) ──
+
+	/// <summary>
+	/// Spend Steam Points on badge levels by itself. Off by default on every account, robots too: nothing that uses up an
+	/// account's things happens on a freshly added one until it's turned on. Turning human mode on turns it off
+	/// (<see cref="Settings.ApplyLegitMode"/>); turning human mode off never turns it on. Nothing is ever spent before
+	/// 'points ok &lt;account&gt;' (<see cref="PointsOk"/>), whatever this says.
+	/// </summary>
+	public bool SpendPoints { get; set; }
+
+	/// <summary>Never spend below this many points.</summary>
+	public int PointsKeepAtLeast { get; set; } = 1000;
+
+	/// <summary>The most points spent in any 7 days. 0 spends nothing.</summary>
+	public int PointsWeeklyCap { get; set; } = 3000;
+
+	/// <summary>May buy levels of the Points Shop's current seasonal badge (the only thing there that gives XP outside events).</summary>
+	public bool PointsBuySeasonalBadge { get; set; } = true;
+
+	/// <summary>May buy levels of older seasonal badges the shop still lists. Off: Steam has refused some of those.</summary>
+	public bool PointsBuyOlderBadges { get; set; }
+
+	/// <summary>Stop each badge at this level (Steam's badges go to 40).</summary>
+	public int PointsBadgeMaxLevel { get; set; } = 40;
+
+	/// <summary>How often it looks at the Points Shop and the balance, in hours.</summary>
+	public int PointsCheckEveryHours { get; set; } = 12;
+
+	/// <summary>
+	/// Where 'points ok &lt;account&gt;' used to be kept. It lives with the account's Steam Points spending now
+	/// (Modules.PointsLedger, state/points-&lt;account&gt;.json), so it never travels with a settings file or a backup: a
+	/// true here is moved over once (PointsLedger.Approved) and then cleared, and never read again. Not a setting.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public bool PointsOk { get; set; }
+
+	/// <summary>
+	/// Retired "Sell duplicate cards" switch - carried over to <see cref="SpareItems"/> (ConfigStore.MigrateSpare). Still
+	/// written, for a rollback to 1.7.x, whose seller lists cards straight away with no preview: true only when this version
+	/// would sell on the account too - Spare items on, an action that sells, and 'spare ok' given (worked out as it's saved,
+	/// <see cref="SellMirror"/>). Read only from a file without SpareItems.
+	/// </summary>
+	public bool SellDuplicates {
+		get => _spareItemsSet ? _sellMirror : _sellDuplicates;
+		set => _sellDuplicates = value;
+	}
+
+	private bool _sellDuplicates, _sellMirror;
+
+	/// <summary>What <see cref="SellDuplicates"/> is written as - set on the copy that goes to disk (ConfigStore.SaveBot), false otherwise.</summary>
+	[JsonIgnore]
+	internal bool SellMirror {
+		set => _sellMirror = value;
+	}
+
+	/// <summary>Whether 1.7.x may sell on this account after a rollback: this version would sell too (needs the account's 'spare ok').</summary>
+	internal static bool SellsAfterRollback(BotConfig cfg, bool approved) => cfg.SpareItems && (cfg.SpareAction is 0 or 2) && approved;
+
+	/// <summary>The old switch as a file from before 1.8.0 had it - for the carry-over only.</summary>
+	[JsonIgnore]
+	internal bool OldSellDuplicates => _sellDuplicates;
+
 	public int SellPerRun { get; set; } = 5;
+
+	// ── spare items (1.8.0) ──
+	/// <summary>Spare items on: turn spare cards, backgrounds and emoticons into gems or sell them, after 'gems ok'.</summary>
+	public bool SpareItems {
+		get => _spareItems;
+		set {
+			_spareItems = value;
+			_spareItemsSet = true;
+		}
+	}
+
+	private bool _spareItems;
+
+	/// <summary>SpareItems was in the file (or set since) - an old SellDuplicates beside it is never read as a choice.</summary>
+	[JsonIgnore]
+	public bool SpareItemsSet => _spareItemsSet;
+
+	private bool _spareItemsSet;
+
+	/// <summary>0 best of gems or selling, 1 gems only, 2 sell only, 3 keep everything (just report).</summary>
+	public int SpareAction { get; set; }
+	public bool SpareMaxedBadgeCards { get; set; } = true;
+	public bool SpareExtraCards { get; set; } = true;
+	public int SpareKeepCopies { get; set; } = 1;
+	public bool SpareBackgrounds { get; set; } = true;
+	public int SpareKeepBackgrounds { get; set; } = 1;
+	public bool SpareEmoticons { get; set; } = true;
+	public int SpareKeepEmoticons { get; set; } = 1;
+	public bool SpareFoils { get; set; }
+
+	/// <summary>Never touch items worth more than this, in the account's own currency.</summary>
+	public float SpareMaxPrice { get; set; } = 0.25f;
+	public int SpareNewDays { get; set; } = 7;
+	public string SpareKeepItems { get; set; } = "";
+	public List<uint> SpareKeepGames { get; set; } = [];
+	public int SpareGemMarginPct { get; set; } = 20;
+	public int SparePerRun { get; set; } = 5;
+	public int SpareDailyItems { get; set; } = 10;
+	public float SpareDailyValue { get; set; } = 1.00f;
+	public int SpareRunHours { get; set; } = 12;
+	public int SpareGapSeconds { get; set; } = 40;
+	public int SparePriceMaxAgeHours { get; set; } = 24;
+
+	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
+	/// cheapest listing. 0 was "a cent under the cheapest" before 1.8.0 was out - it became the real price on purpose.</summary>
+	public int SpareSellPrice { get; set; }
+
+	/// <summary>A cheapest listing this many percent or more under the median sale price is a dump and doesn't set the price.</summary>
+	public int SpareDumpPct { get; set; } = 50;
+	public int SpareRelistDays { get; set; } = 7;
+
+	/// <summary>0 automatic (sacks kept on a human-mode account, loose on the others), 1 loose, 2 sacks kept, 3 sacks sent, 4 sacks sold.</summary>
+	public int SpareGems { get; set; }
+	public string SpareGemsSendTo { get; set; } = "";
+	public int SpareKeepGems { get; set; }
+
+	// ── booster packs (1.8.0) ──
+	/// <summary>0 never, 1 only when the cards are worth more than the pack, 2 always.</summary>
+	public int OpenBoosterPacks {
+		get => _openBoosterPacks;
+		set {
+			_openBoosterPacks = value;
+			_openBoosterPacksSet = true;
+		}
+	}
+
+	/// <summary>Never, by default on every account: opening a pack gets rid of it, and nothing does that until it's chosen.</summary>
+	private int _openBoosterPacks;
+
+	/// <summary>OpenBoosterPacks was in the file (or set since).</summary>
+	[JsonIgnore]
+	public bool OpenBoosterPacksSet => _openBoosterPacksSet;
+
+	private bool _openBoosterPacksSet;
+	public int BoosterOpenNewDays { get; set; } = 7;
+	public List<uint> BoosterNeverOpen { get; set; } = [];
+
+	/// <summary>Packs it doesn't open: 0 keep, 1 send to another of your accounts, 2 sell.</summary>
+	public int BoosterUnopened { get; set; }
+	public string BoosterSendTo { get; set; } = "";
+	public int BoosterCheckHours { get; set; } = 24;
 	public bool ClearInventoryNotifications { get; set; } = true;
 
 	// Everything else in Steam's notification tray - comments, gifts, help requests, friend invites. None of
@@ -973,6 +1249,7 @@ public static class ConfigStore {
 			loaded.WebPassword = Secrets.Unprotect(loaded.WebPassword);
 			loaded.Rep4RepApiToken = Secrets.Unprotect(loaded.Rep4RepApiToken);
 			loaded.WebProxyPassword = Secrets.Unprotect(loaded.WebProxyPassword);
+			plain |= SecretSettings.Open(loaded);   // every other secret setting (the backup password), by its kind
 
 			// It loads, so it can be saved again. A file that was broken once and fixed ('reload') used to stay refused for
 			// the rest of the run: every change after that said it was saved and was gone at the next start.
@@ -982,6 +1259,7 @@ public static class ConfigStore {
 
 			bool migrated = MigrateUpdates(loaded);
 			migrated |= MigrateDiscordNames(loaded, text);
+			migrated |= MigrateShareTotals(loaded, text);
 
 			if ((plain && Secrets.Available) || migrated) {
 				SaveGlobal(loaded);
@@ -1141,6 +1419,7 @@ public static class ConfigStore {
 				onDisk.WebPassword = Secrets.Protect(cfg.WebPassword, "global");
 				onDisk.Rep4RepApiToken = Secrets.Protect(cfg.Rep4RepApiToken, "global");
 				onDisk.WebProxyPassword = Secrets.Protect(cfg.WebProxyPassword, "global");
+				SecretSettings.Seal(onDisk, cfg);   // every other secret setting (the backup password), by its kind
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
 
@@ -1280,6 +1559,34 @@ public static class ConfigStore {
 		return true;
 	}
 
+	/// <summary>
+	/// "Share my hours and cards totals" (1.8.0) starts out as "Count me as a user" was. A file from before it has no
+	/// ShareFarmTotals, and the default (on) would have someone who had counting off start sending totals the day they
+	/// turn counting on just to be counted - something they never agreed to. A file that has the key is left alone.
+	/// </summary>
+	/// <returns>true when the key was missing, so the file gets it written.</returns>
+	public static bool MigrateShareTotals(GlobalConfig g, string json) {
+		try {
+			using JsonDocument doc = JsonDocument.Parse(json);
+
+			if (doc.RootElement.ValueKind != JsonValueKind.Object) {
+				return false;
+			}
+
+			foreach (JsonProperty p in doc.RootElement.EnumerateObject()) {
+				if (p.Name.Equals(nameof(GlobalConfig.ShareFarmTotals), StringComparison.OrdinalIgnoreCase)) {
+					return false;
+				}
+			}
+		} catch (JsonException) {
+			return false;
+		}
+
+		g.ShareFarmTotals = g.CountMeAsUser;
+
+		return true;
+	}
+
 	/// <summary>Carries the booster games typed as text ("730, 440") over to the game list.</summary>
 	/// <returns>true when the config changed and should be written back.</returns>
 	public static bool MigrateBoosterGames(BotConfig cfg) {
@@ -1337,6 +1644,61 @@ public static class ConfigStore {
 
 		cfg.ClaimFreeGames = false;
 		cfg.ClaimFreeDlc = false;
+
+		return true;
+	}
+
+	/// <summary>
+	/// 1.8.0: "Sell duplicate cards" became part of Spare items, and the "Open booster packs" switch a choice. Sell duplicate
+	/// cards on carries over as Spare items on - which still only shows what it would do until 'spare ok', so nothing starts
+	/// converting by itself. Open booster packs on is "always", as it was; off stays off on a human-mode account (never
+	/// started silently there) and becomes "only when worth more" on the others.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateSpare(BotConfig cfg, string name = "") {
+		bool changed = false;
+
+		// The old names stay in the file as mirrors of the new ones (for a rollback to 1.7.x), so they only count from a file
+		// that doesn't have the new ones yet - then the new ones are set, and the mirrors follow them from there.
+		// Never "on but waiting for a command": Spare items stays off, and says once where to turn it on - the switch shows
+		// what it would do first (Switches).
+		if (!cfg.SpareItemsSet && cfg.OldSellDuplicates) {
+			cfg.SpareItems = false;
+			Log.Attention(new Said("{0}: Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do", name), name);
+			changed = true;
+		}
+
+		if (!cfg.OpenBoosterPacksSet) {
+			// On in 1.7.x is "always", as it was; off or missing is never - robots too.
+			cfg.OpenBoosterPacks = cfg.OldUnpackBoosterPacks ? 2 : 0;
+			changed = true;
+		}
+
+		return changed;
+	}
+
+	/// <summary>
+	/// Spare items or Steam Points left on without their go-ahead (an earlier 1.8.0 build, a hand edit): shown off, said once.
+	/// Each is turned on through its preview only (<see cref="Core.Switches"/>).
+	/// </summary>
+	internal static bool SettleSwitches(BotConfig cfg, string name) {
+		if (name.Length == 0) {
+			return false;
+		}
+
+		bool spare = cfg.SpareItems, points = cfg.SpendPoints;
+
+		if (!Core.Switches.Settle(cfg, name)) {
+			return false;
+		}
+
+		if (spare && !cfg.SpareItems) {
+			Log.Attention(new Said("{0}: Spare items is off until you turn it on in Settings - it shows what it would do first", name), name);
+		}
+
+		if (points && !cfg.SpendPoints) {
+			Log.Attention(new Said("{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first", name), name);
+		}
 
 		return true;
 	}
@@ -1403,6 +1765,18 @@ public static class ConfigStore {
 		Log.Info(new Said("game shares moved into the games list - now \"{0}\"", cfg.GameWeights), name);
 
 		return true;
+	}
+
+	/// <summary>
+	/// The accounts with a file in the config folder, by name - without reading any of them. For a reload, which reads each
+	/// one under its account's lock (<see cref="LoadBot"/>): a read outside it held the file open while the account saved,
+	/// Windows refused that save, and the reload then put the older file back.
+	/// </summary>
+	public static List<string> BotNames() {
+		Directory.CreateDirectory(ConfigDir);
+
+		return [.. Directory.GetFiles(ConfigDir, "*.json").Select(Path.GetFileNameWithoutExtension).OfType<string>()
+			.Where(static name => !string.Equals(name, "nocatFarm", StringComparison.OrdinalIgnoreCase) && (name.Length > 0) && (name[0] != '.'))];
 	}
 
 	public static Dictionary<string, BotConfig> LoadBots() {
@@ -1472,6 +1846,8 @@ public static class ConfigStore {
 			migrated |= MigrateFarmWhen(cfg, name);
 			migrated |= MigrateFreeGames(cfg, name);
 			migrated |= MigrateBoosterGames(cfg);
+			migrated |= MigrateSpare(cfg, name);
+			migrated |= SettleSwitches(cfg, name);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and
 			// saving the account drops OfflineIdleTopGames from the file, and the next update read that as a file from
 			// before - switching off overnight banking somebody had turned on since.
@@ -1520,6 +1896,10 @@ public static class ConfigStore {
 		try {
 			Directory.CreateDirectory(ConfigDir);
 
+			// The "Sell duplicate cards" mirror for a rollback: on only when this version would sell here too - which needs the
+			// account's 'spare ok', kept with its spare items (Core.SpareLedger), not in the settings.
+			bool sellMirror = BotConfig.SellsAfterRollback(cfg, Core.SpareLedger.Load(name).Approved);
+
 			lock (SaveGate) {
 				if (HeldByRestore) {
 					Log.Debug($"config: not saving {name}.json - a backup is being restored over it", name);
@@ -1538,6 +1918,7 @@ public static class ConfigStore {
 				// Copied inside the lock, like SaveGlobal. Copied before it, a module's save and a dashboard save that
 				// ran together could write in the opposite order to the one they copied in - older settings last.
 				BotConfig onDisk = Secrets.Available ? Sealed(cfg, name) : JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
+				onDisk.SellMirror = sellMirror;
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
 
@@ -1653,7 +2034,11 @@ public static class ConfigStore {
 		("state", "dropsfirst-", ".json"), ("state", "freegames-", ".json"), ("state", "freeitems-", ".json"), ("state", "grind-", ".json"),
 		("state", "human-", ".json"), ("state", "hunt-", ".json"), ("state", "invvalue-", ".json"), ("state", "owner-", ".json"),
 		("state", "ownersitting-", ".json"), ("state", "queue-", ".txt"), ("state", "rep4rep-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
-		("state", "trades-announced-", ".json"), ("state", "overnight-", ".seen")
+		("state", "trades-announced-", ".json"), ("state", "overnight-", ".seen"),
+		("state", "scamwatch-", ".json"), ("state", "health-", ".json"),   // scam watch, account health
+		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
+		("state", "spare-", ".json"),
+		("state", "listed-", ".json")   // listings nocat.farm put up itself (Core/OurListings.cs)
 	];
 
 	/// <summary>

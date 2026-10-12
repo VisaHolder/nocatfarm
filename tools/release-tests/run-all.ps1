@@ -15,10 +15,18 @@ $failed = @()
 function Step($name, [scriptblock]$run) {
   Write-Host "== $name" -ForegroundColor Cyan
   $out = & $run 2>&1 | Out-String
-  $bad = ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) -or ($out -match '(?m)^\s*FAIL\b') -or ($out -match '(?m)^\s*[1-9]\d* failed\s*$') -or ($out -match '[1-9]\d* Error\(s\)') -or ($out -match '[1-9]\d* Warning\(s\)') -or ($out -match '[1-9]\d* problem\(s\)')
+  $code = $LASTEXITCODE
+  # Which rule said no, and on what line - a failed step whose output says "all passed" is otherwise a guess. The rules
+  # match case: PowerShell's -match doesn't, and a test's "1 warning(s) cleared" failed a run as if the build had warned.
+  $why = @()
+  if ($code -ne 0 -and $code -ne $null) { $why += "exit code $code" }
+  foreach ($rule in '(?m)^\s*FAIL\b.*$', '(?m)^\s*[1-9]\d* failed\s*$', '.*[1-9]\d* Error\(s\).*', '.*[1-9]\d* Warning\(s\).*', '.*[1-9]\d* problem\(s\).*') {
+    foreach ($m in [regex]::Matches($out, $rule) | Select-Object -First 3) { $why += "matched: $($m.Value.Trim())" }
+  }
+  $bad = $why.Count -gt 0
   $summary = ($out -split "`n" | Where-Object { $_ -match 'PASS|FAIL|all passed|all clear|Error\(s\)|Warning\(s\)|problem|Done  ->|success|failure' } | Select-Object -Last 12) -join "`n"
   Write-Host $summary
-  if ($bad) { $script:failed += $name; Write-Host "!! $name FAILED" -ForegroundColor Red; Write-Host ($out -split "`n" | Select-Object -Last 30 | Out-String) }
+  if ($bad) { $script:failed += $name; Write-Host "!! $name FAILED - $($why -join ' | ')" -ForegroundColor Red; Write-Host ($out -split "`n" | Select-Object -Last 30 | Out-String) }
 }
 
 # A run stopped part-way leaves things behind: a test copy the update swap restarted by itself (on the default port, where

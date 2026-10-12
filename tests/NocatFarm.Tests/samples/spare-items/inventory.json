@@ -1,0 +1,32 @@
+{"assets":[
+{"appid":753,"contextid":"6","assetid":"1001","classid":"11","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1002","classid":"11","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1003","classid":"12","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1004","classid":"13","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1005","classid":"14","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1006","classid":"15","instanceid":"0","amount":"2412"},
+{"appid":753,"contextid":"6","assetid":"1007","classid":"16","instanceid":"0","amount":"3"},
+{"appid":753,"contextid":"6","assetid":"1008","classid":"17","instanceid":"0","amount":"1"},
+{"appid":753,"contextid":"6","assetid":"1009","classid":"18","instanceid":"0","amount":"1"}
+],
+"descriptions":[
+{"appid":753,"classid":"11","instanceid":"0","name":"Fake Scout","market_hash_name":"999990-Fake Scout","market_fee_app":"999990","type":"Fake Game Trading Card","tradable":1,"marketable":1,
+ "owner_actions":[{"link":"javascript:GetGooValue( '%contextid%', '%assetid%', 999990, 2, 0 )","name":"Turn into Gems..."}],
+ "tags":[{"category":"Game","internal_name":"app_999990"},{"category":"item_class","internal_name":"item_class_2"},{"category":"cardborder","internal_name":"cardborder_0"}]},
+{"appid":753,"classid":"12","instanceid":"0","name":"Fake Scout","market_hash_name":"999990-Fake Scout (Foil)","market_fee_app":"999990","type":"Fake Game Foil Trading Card","tradable":1,"marketable":1,
+ "owner_actions":[{"link":"javascript:GetGooValue( '%contextid%', '%assetid%', 999990, 2, 1 )","name":"Turn into Gems..."}],
+ "tags":[{"category":"item_class","internal_name":"item_class_2"},{"category":"cardborder","internal_name":"cardborder_1"}]},
+{"appid":753,"classid":"13","instanceid":"0","name":"Fake Sky","market_hash_name":"999990-Fake Sky (Profile Background)","market_fee_app":"999990","type":"Fake Game Profile Background","tradable":0,"marketable":0,
+ "owner_actions":[{"link":"javascript:GetGooValue( '%contextid%', '%assetid%', 999990, 3, 0 )","name":"Turn into Gems..."}],
+ "tags":[{"category":"item_class","internal_name":"item_class_3"}]},
+{"appid":753,"classid":"14","instanceid":"0","name":":fakesmile:","market_hash_name":"999990-:fakesmile:","market_fee_app":"999990","type":"Fake Game Emoticon","tradable":1,"marketable":1,
+ "tags":[{"category":"item_class","internal_name":"item_class_4"}]},
+{"appid":753,"classid":"15","instanceid":"0","name":"Gems","market_hash_name":"753-Gems","market_fee_app":"753","type":"Steam Gems","tradable":1,"marketable":0,
+ "tags":[{"category":"item_class","internal_name":"item_class_7"}]},
+{"appid":753,"classid":"16","instanceid":"0","name":"Sack of Gems","market_hash_name":"753-Sack of Gems","market_fee_app":"753","type":"Steam Gems","tradable":1,"marketable":1,
+ "tags":[{"category":"item_class","internal_name":"item_class_7"}]},
+{"appid":753,"classid":"17","instanceid":"0","name":"Fake Game Booster Pack","market_hash_name":"999990-Fake Game Booster Pack","market_fee_app":"999990","type":"Booster Pack","tradable":1,"marketable":1,
+ "tags":[{"category":"item_class","internal_name":"item_class_5"}]},
+{"appid":753,"classid":"18","instanceid":"0","name":"Fake Sale Sticker","market_hash_name":"753-Fake Sale Sticker","market_fee_app":"753","type":"Steam Sale Sticker","tradable":0,"marketable":0}
+],
+"total_inventory_count":9,"success":1,"rwgrsn":-2}

@@ -1,0 +1,21 @@
+{
+ "response": {
+  "items": [
+   {
+    "communityitemid": "40011122233344",
+    "item_type": 1,
+    "appid": 4844660,
+    "owner": 123456789,
+    "attributes": [
+     {
+      "attributeid": 1,
+      "value": "1782400000"
+     }
+    ],
+    "used": false,
+    "owner_origin": 0,
+    "amount": "1"
+   }
+  ]
+ }
+}

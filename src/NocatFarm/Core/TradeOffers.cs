@@ -167,6 +167,11 @@ public static class TradeOffers {
 			r.TryGetProperty(side, out JsonElement e) && (e.ValueKind == JsonValueKind.Object)
 			&& long.TryParse(Text(e, "escrow_end_duration_seconds"), out long s) ? s : -1;
 
+		// 1.8.0 account health: this account's OWN hold (no authenticator long enough, a new device), whoever the partner is.
+		if (Seconds(response, "my_escrow") is >= 0 and var mine) {
+			OwnHolds[bot.Name] = (TimeSpan.FromSeconds(mine), DateTime.UtcNow);
+		}
+
 		long both = Seconds(response, "both_escrow");
 		long longest = both >= 0 ? both : Math.Max(Seconds(response, "my_escrow"), Seconds(response, "their_escrow"));
 
@@ -178,6 +183,12 @@ public static class TradeOffers {
 
 		return TimeSpan.FromSeconds(longest);
 	}
+
+	/// <summary>
+	/// 1.8.0 account health: the last hold Steam said each account's own trades get ("my_escrow"), and when it said so -
+	/// read whenever trade alerts look a hold up, and by account health's own look.
+	/// </summary>
+	public static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (TimeSpan Hold, DateTime At)> OwnHolds = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
 	/// Every asset on either side of a live offer - ours and the partner's. Not to be planned, offered or sold again:

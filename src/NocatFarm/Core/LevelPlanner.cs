@@ -125,7 +125,9 @@ public static class LevelPlanner {
 		int Left(uint app) => MaxBadgeLevel - badges.GameLevels.GetValueOrDefault(app);
 
 		StringBuilder sb = new();
-		static string Money(int cents) => PriceBook.Symbol + (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
+		// US dollars, said so: the market's search answers in nothing else. "$" alone read as Canadian dollars, and "€" put a
+		// euro sign on a dollar amount.
+		static string Money(int cents) => "US$" + (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
 
 		sb.AppendLine($"{bot.Name}: level {badges.Level} ({badges.Xp:N0} XP) -> {target} needs {xpNeeded:N0} XP = {sets} badge level(s), 100 XP each");
 
@@ -319,7 +321,9 @@ public static class LevelPlanner {
 
 	// ── the market ───────────────────────────────────────────────────────────
 	/// <summary>A game's normal card set: its size, each card's lowest listing in cents (0 = none listed), and the total.</summary>
-	/// <param name="Currency">Steam's currency id the prices are in (1 = US dollar). Older cache entries default to 1.</param>
+	/// <param name="Currency">Steam's currency id the prices are in: always 1, the US dollar - the market's search answers in
+	/// nothing else, whatever currency is asked for (see <see cref="MarketQuote"/>). Entries saved under another currency
+	/// before that was known are US dollars wrongly labelled, and are never read.</param>
 	internal sealed record SetPrice(uint App, string Game, int Size, Dictionary<string, int> Cards, long At, int Currency = 1) {
 		public int Cents => Cards.Values.Sum();
 	}
@@ -334,14 +338,16 @@ public static class LevelPlanner {
 	/// <summary>Steam's own inventory, where trading cards live.</summary>
 	private const uint SteamItems = 753;
 
+	/// <summary>Steam's currency id for the US dollar - the only one its market search answers in.</summary>
+	internal const int UsDollar = 1;
+
 	private const string Search = "/market/search/render/?norender=1&appid=753&category_753_item_class[]=tag_item_class_2&category_753_cardborder[]=tag_cardborder_0&l=english";
 
 	/// <summary>A game's set price from the cache, or from the market if it's older than a day - null when the market
-	/// didn't answer. Asked = a request was actually sent: none is while the market's pause stands.</summary>
-	/// <param name="currency">Steam's currency id to price in; the global display currency when not given. Selling
-	/// passes the account's own wallet currency - Steam reads a listing's price in that.</param>
-	internal static async Task<(SetPrice? Set, bool Asked)> PriceAsync(Bot bot, uint app, CancellationToken ct, int? currency = null) {
-		int cur = Math.Max(1, currency ?? Live.Global.MarketCurrency);
+	/// didn't answer. Asked = a request was actually sent: none is while the market's pause stands. In US dollars, always:
+	/// it's a search, and a search answers in nothing else. Never a price anything is listed at.</summary>
+	internal static async Task<(SetPrice? Set, bool Asked)> PriceAsync(Bot bot, uint app, CancellationToken ct) {
+		const int cur = UsDollar;
 
 		lock (SetsGate) {
 			_sets ??= LoadSets();
@@ -414,7 +420,7 @@ public static class LevelPlanner {
 		List<uint> games = [];
 
 		for (int start = 0, page = 0; (start < 200) && (page < 4); page++) {
-			int cur = Math.Max(1, Live.Global.MarketCurrency);
+			const int cur = UsDollar;
 			(string? json, _) = await PriceBook.MarketGetAsync($"{Search}&sort_column=price&sort_dir=asc&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {

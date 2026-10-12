@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nocat.farm</title>
 <link rel="icon" href="favicon.ico">
+<!-- The phone app: "Add to Home Screen" puts the nocat.farm icon on the home screen. iPhone opens it like an app (the
+     apple- tags); Chrome on Android opens it in a normal tab over a plain http address. Relative links, so it works at whatever address the dashboard is opened on. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="nocat.farm">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
   // Before the stylesheet paints, so a light-theme user never sees a dark flash.
   try { document.documentElement.setAttribute('data-theme', localStorage.getItem('nocatfarm-theme') || 'dark'); } catch (e) {}
@@ -207,6 +216,7 @@
           <div id="phoneSafe" class="card"></div>
         </div>
       </div>
+      <div id="phoneApp" class="card"></div>
       <div id="phoneVisitors" class="card"></div>
     </section>
 

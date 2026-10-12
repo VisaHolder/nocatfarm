@@ -65,7 +65,6 @@
     "Hours": "時間",
     "Next up": "次の予定",
     "Comments": "コメント",
-    "Points": "ポイント",
     "Cards left": "残りカード",
     "Target": "対象",
     "Name": "名前",
@@ -520,7 +519,6 @@
     "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "オフにすると、アカウントを追加したあとはコマンドラインに取り残され、アカウントはカードを集めたあと、設定し忘れている間ずっと何もしません。わかっている人向けです。",
     "nocat.farm on GitHub - source, releases and issues.": "GitHub の nocat.farm - ソースコード、リリース、Issue。",
     "nothing more": "ほかには何もしません",
-    "opens booster packs once a day - badge crafting is off": "1日1回ブースターパックを開けます - バッジ作成はオフです",
     "plugin {0} took too long to unload - closing without it": "プラグイン {0} のアンロードに時間がかかりすぎました - 待たずに終了します",
     "Couldn't add that account.": "そのアカウントを追加できませんでした。",
     "Add one by hand instead": "代わりに手動で追加する",
@@ -592,7 +590,6 @@
     "{0}/{1} today - next in {2}": "本日 {0}/{1} - 次は {2} 後",
     "{0}/{1} today - no task available": "本日 {0}/{1} - 利用可能なタスクなし",
     "asleep · up {0}": "就寝中 · {0} に起床",
-    "asleep, banking hours quietly on {0} game(s) · up {1}": "就寝中、{0}本のゲームで静かに時間を貯めています · {1} に起床",
     "asleep, the card farmer is working · up {0}": "就寝中、カード収集が稼働中 · {0} に起床",
     "closing the game": "ゲームを終了中",
     "closing the game, then {0}": "ゲームを終了して {0} へ",
@@ -817,7 +814,6 @@
     "module {0} failed to start: {1}": "モジュール{0}を起動できませんでした: {1}",
     "paint failed: {0}: {1}": "描画に失敗しました: {0}: {1}",
     "keep-awake: {0}": "スリープ防止: {0}",
-    "booster unpack: {0}": "ブースターの開封: {0}",
     "parental unlock on {0}: {1}": "{0}のペアレンタル解除: {1}",
     "market lookup for {0} failed: {1}": "{0}のマーケット照会に失敗しました: {1}",
     "POST {0} failed: {1}": "POST {0} が失敗しました: {1}",
@@ -843,7 +839,6 @@
     "achievement pacing restored for {0} game(s)": "{0}本のゲームで実績ペースを復元しました",
     "answered {0} ({1}) in {2}s": "{0} ({1}) に{2}秒で応答しました",
     "asleep - back around {0}": "就寝中 - {0}ごろ戻ります",
-    "asleep - banking hours quietly until {0}": "就寝中 - {0}まで静かに時間を貯めます",
     "auto-replied to {0} after {1}s": "{0}に{1}秒後に自動返信しました",
     "awake for the day - warming up for ~{0}": "本日の活動開始 - 約{0}かけて準備します",
     "back to banking hours quietly until {0}": "{0}まで再び静かに時間を貯めます",
@@ -872,7 +867,6 @@
     "crafted {0} badge(s) - Steam level up": "バッジを{0}個作成 - Steamレベルアップ",
     "craft refused - backing off {0}h rather than retrying": "作成が拒否されました - 再試行せず{0}時間待機します",
     "{0} completed card set(s) ready to craft": "完成したカードセットが{0}組、作成可能です",
-    "opened {0} booster pack(s)": "ブースターパックを{0}個開封しました",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "他の何かがこのアカウントのステータスを設定しています ({0}と表示、こちらは{1}を要求) - 手を引きます",
     "now appearing {0}": "現在{0}として表示中",
     "now showing {0}": "現在{0}を表示中",
@@ -989,8 +983,6 @@
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "ライブラリ: Steamの所有リストから漏れていたプレイ済みゲーム {0} 本をプレイ履歴から追加 ({1})",
     "the discovery queue wasn't available - Steam said {0}": "ディスカバリーキューを取得できませんでした - Steamの応答: {0}",
     "went through the discovery queue ({0} game(s))": "ディスカバリーキューを見終えました ({0} 本)",
-    "couldn't sell duplicate cards: {0}": "重複カードを売れませんでした: {0}",
-    "next look for spare cards to sell around {0}": "次の余りカード確認は {0} ごろ",
     "it isn't an active offer any more": "もうアクティブなオファーではありません",
     "the cards would sit in a trade hold": "カードがトレード保留に入ってしまいます",
     "Steam didn't say what every item is": "Steamがすべてのアイテムの種類を返しませんでした",
@@ -1075,6 +1067,34 @@
     "Try again": "再試行",
     "notifications: {0}": "通知: {0}",
     "Free stuff": "無料のもの",
+    "Sale events": "Steamイベント",
+    "{0}: not signed in - it looks for events once it is": "{0}: サインインしていません - サインインしたらイベントを探します",
+    "not looked yet": "まだ確認していません",
+    "next look around {0}": "次の確認は{0}ごろ",
+    "nominated {0} for a Steam Award": "{0}をSteamアワードにノミネートしました",
+    "voted for {0} in the Steam Awards": "Steamアワードで{0}に投票しました",
+    "Steam events: off on this human-mode account": "Steamイベント: この人間モードのアカウントではオフ",
+    "Steam Awards nominations: {0} of {1} done": "Steamアワードのノミネート: {1}件中{0}件完了",
+    "Steam Awards votes: {0} of {1} done": "Steamアワードの投票: {1}件中{0}件完了",
+    "Steam Next Fest is on": "Steam Next Fest開催中",
+    "{0}: Steam events are off for this account (Sale events → Take part in Steam events)": "{0}: このアカウントではSteamイベントがオフです(Steamイベント → Steamイベントに参加する)",
+    "{0}: a Steam sale is on": "{0}: Steamセール開催中",
+    "{0}: no Steam sale seen right now": "{0}: 今はSteamセールは見当たりません",
+    "daily sticker: {0}": "デイリーステッカー: {0}",
+    "discovery queue: done today": "ディスカバリーキュー: 今日は完了",
+    "discovery queue: not done today": "ディスカバリーキュー: 今日はまだ",
+    "Steam Awards and Next Fest: off on this human-mode account (Sale events → Human-mode accounts too)": "SteamアワードとNext Fest: この人間モードのアカウントではオフ(Steamイベント → 人間モードのアカウントも)",
+    "Steam Awards and Next Fest: not looked yet - it looks a few minutes after signing in": "SteamアワードとNext Fest: まだ確認していません - サインインの数分後に確認します",
+    "Steam Awards nominations: open - {0} of {1} categories done": "Steamアワードのノミネート: 受付中 - {1}部門中{0}部門完了",
+    "Steam Awards nominations: not running": "Steamアワードのノミネート: 開催していません",
+    "Steam Awards votes: open - {0} of {1} categories done": "Steamアワードの投票: 受付中 - {1}部門中{0}部門完了",
+    "Steam Awards votes: not running": "Steamアワードの投票: 開催していません",
+    "Steam Next Fest: on until {0}": "Steam Next Fest: {0}まで開催中",
+    "Steam Next Fest: not on": "Steam Next Fest: 開催していません",
+    "Steam didn't take a nomination or vote - limited accounts (never spent $5) can't take part; it tries again at the next look": "Steamがノミネートか投票を受け付けませんでした - 制限付きアカウント(5ドル未満の購入)は参加できません。次の確認でもう一度試します",
+    "Steam Awards votes: it can't tell which sale they belong to, so it isn't voting": "Steamアワードの投票: どのセールのものか分からないため、投票しません",
+    "Steam didn't answer every look - it tries again later": "Steamがすべての確認に応答しませんでした - 後でもう一度試します",
+    "last look {0}": "最終確認 {0}",
     "Daily summary": "日次まとめ",
     "nocat.farm": "nocat.farm",
     "...and {0} more": "…ほか {0} 件",
@@ -1687,7 +1707,6 @@
     "its items are busy with a sale or another send - sending again around {0}": "アイテムが販売か別の送付で使用中です - {0} ごろにもう一度送ります",
     "confirmed market listing {0} with its authenticator": "マーケット出品 {0} を自身の認証で確認",
     "dropping a queued key - none of your accounts can use it  ({0} left)": "キューのキーを破棄します - どのアカウントでも使えません  (残り{0})",
-    "Steam wouldn't say which booster packs are in a waiting trade - opening them later": "保留中のトレードにどのブースターパックが入っているか Steam が答えませんでした - 後で開封します",
     "bad proxy '{0}' ({1}) - connecting directly": "プロキシ '{0}' が無効 ({1}) - 直接接続します",
     "sign-in: scan the QR on the dashboard (Steam app, Steam Guard)": "サインイン: ダッシュボードの QR をスキャン（Steam アプリ、Steam Guard）",
     "signed in with the QR code as {0} - saved for next time": "QR コードで {0} としてサインイン - 次回用に保存",
@@ -2194,6 +2213,7 @@
     "Backup & restore": "バックアップと復元",
     "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "設定、すべてのアカウント、保存されたログイン、認証システム、履歴、進行状況をまとめた一つの zip です。ログとキャッシュは含みません。",
     "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "中のログイン情報はディスク上と同じく暗号化されたままです。Windows で作ったバックアップは、同じ PC の同じ Windows ユーザーでしか開けません - 別の場所で復元すると、各アカウントが一度だけパスワードを聞いてきます。zip は人に渡さないでください: アカウントにサインインできます。",
+    "For a backup that opens on any PC if this one dies, use Backups above.": "この PC が壊れても別の PC で開けるバックアップは、上の「バックアップ」を使ってください。",
     "Download a backup": "バックアップをダウンロード",
     "Restore a backup": "バックアップを復元",
     "Saved {0}": "{0} を保存しました",
@@ -2496,7 +2516,292 @@
     "it signed in at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}": "{0} にサインインしました - 人間モードはアカウントに表れることをする前に少し待ちます。{1} ごろから進められます",
     "it was back from a break at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}": "{0} に休憩から戻りました - 人間モードはアカウントに表れることをする前に少し待ちます。{1} ごろから進められます",
     "it woke up at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}": "{0} に起きました - 人間モードはアカウントに表れることをする前に少し待ちます。{1} ごろから進められます",
-    "you stopped playing on it at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}": "{0} にあなたがこのアカウントでのプレイをやめました - 人間モードはアカウントに表れることをする前に少し待ちます。{1} ごろから進められます"
+    "you stopped playing on it at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}": "{0} にあなたがこのアカウントでのプレイをやめました - 人間モードはアカウントに表れることをする前に少し待ちます。{1} ごろから進められます",
+    "{0}: nothing to clear": "{0}: 解除するものはありません",
+    "{0}: no warnings to clear": "{0}: 解除する警告はありません",
+    "{0}: {1} warning(s) cleared - trades back to normal": "{0}: 警告を {1} 件解除しました - トレードは通常に戻りました",
+    "{0}: nothing to show": "{0}: 表示するものはありません",
+    "{0}: WARNING - {1} - trades on hold; 'scamwatch ok {0}' once you've checked it was you": "{0}: 警告 - {1} - トレードを停止中。自分だったと確認できたら 'scamwatch ok {0}'",
+    "{0}: WARNING - {1} - 'scamwatch ok {0}' once you've checked it was you": "{0}: 警告 - {1} - 自分だったと確認できたら 'scamwatch ok {0}'",
+    "{0}: scam watch is off": "{0}: 詐欺監視はオフです",
+    "{0}: no look yet - the first is a few minutes after it signs in": "{0}: まだ確認していません - 最初の確認はサインインの数分後です",
+    "{0}: all clear, last look {1} - email {2}, phone {3}, Steam Guard {4}": "{0}: 問題なし、最終確認 {1} - メール {2}、電話 {3}、Steam Guard {4}",
+    "{0}: all clear, last look {1}": "{0}: 問題なし、最終確認 {1}",
+    "nothing to show": "表示するものはありません",
+    "{0}: account health is off": "{0}: アカウントの健康チェックはオフです",
+    "{0}: not checked yet - it checks a few minutes after signing in": "{0}: まだ確認していません - サインインの数分後に確認します",
+    "level {0}": "レベル {0}",
+    "{0}: {1} - {2} (checked {3})": "{0}: {1} - {2} (確認 {3})",
+    "Scam watch": "詐欺監視",
+    "Account health": "アカウントの健康状態",
+    "account health couldn't look: {0}": "アカウントの健康状態を確認できませんでした: {0}",
+    "account health: {0}": "アカウントの健康状態: {0}",
+    "account health got worse: {0}": "アカウントの健康状態が悪化しました: {0}",
+    "account health better: {0}": "アカウントの健康状態が改善しました: {0}",
+    "no trade hold": "トレード保留なし",
+    "trade hold: {0} day(s)": "トレード保留: {0} 日",
+    "market: open": "マーケット: 利用可",
+    "market: blocked for {0} day(s) ({1})": "マーケット: {0} 日間利用不可 ({1})",
+    "market: blocked ({0})": "マーケット: 利用不可 ({0})",
+    "limited account": "制限付きアカウント",
+    "not limited": "制限なし",
+    "Steam Guard: phone app": "Steam Guard: スマホアプリ",
+    "Steam Guard: email codes only": "Steam Guard: メールのコードのみ",
+    "Steam Guard: off": "Steam Guard: オフ",
+    "no phone number": "電話番号なし",
+    "phone ends in {0}": "電話番号の末尾 {0}",
+    "new device": "新しい端末",
+    "new phone authenticator": "新しいスマホ認証",
+    "password was reset": "パスワードがリセットされた",
+    "Steam Guard not on long enough": "Steam Guard を有効にしてからの期間が短い",
+    "no recent purchase": "最近の購入なし",
+    "trade or market ban": "トレードまたはマーケットの BAN",
+    "reason not given": "理由は示されていません",
+    "the market page says: {0}": "マーケットページの表示: {0}",
+    "not checked yet": "まだ確認していません",
+    "all good · {0}": "問題なし · {0}",
+    "all good": "問題なし",
+    "couldn't read the saved account health: {0}": "保存されたアカウントの健康状態を読めませんでした: {0}",
+    "couldn't save the account health: {0}": "アカウントの健康状態を保存できませんでした: {0}",
+    "WARNING - {0}": "警告 - {0}",
+    "scam watch couldn't look: {0}": "詐欺監視が確認できませんでした: {0}",
+    "Steam Guard read from Steam's two-factor service: {0}": "Steam Guard を Steam の二段階認証サービスから読み取りました: {0}",
+    "Steam Guard read from the account page: {0}": "Steam Guard をアカウントページから読み取りました: {0}",
+    "Steam Guard not known this time - Steam's two-factor service didn't answer": "今回は Steam Guard が不明です - Steam の二段階認証サービスが応答しませんでした",
+    "this account already has a Steam Web API key - if you didn't make it, revoke it at {0}": "このアカウントにはすでに Steam Web API キーがあります - 自分で作っていなければ {0} で取り消してください",
+    "SCAM WATCH on {0}: {1} - {2}. If that wasn't you, change your Steam password now": "【詐欺監視】{0}: {1} - {2}。自分でなければ、今すぐ Steam のパスワードを変更してください",
+    "the phone app": "スマホアプリ",
+    "email codes": "メールのコード",
+    "not known": "不明",
+    "ends in {0}": "末尾 {0}",
+    "trade auto-accept and sending stopped, and its sent offers are being cancelled - type 'scamwatch ok {0}' when you've checked": "トレードの自動承認と送信を止め、送ったオファーを取り消しています - 確認したら 'scamwatch ok {0}' と入力してください",
+    "trade auto-accept and sending stopped - type 'scamwatch ok {0}' when you've checked": "トレードの自動承認と送信を止めました - 確認したら 'scamwatch ok {0}' と入力してください",
+    "on hold after a scam watch warning - nothing is sent or sold by itself until 'scamwatch ok {0}'": "詐欺ウォッチの警告で保留中 - 'scamwatch ok {0}' まで自動では何も送信・出品しません",
+    "the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes": "ログアウト前にカードは送信しません - 詐欺ウォッチがこのアカウントのトレードを保留中です。'scamwatch ok {0}' の後か、次にファームが終わったときに送信します",
+    "scam watch is holding {0}'s trades - doing this anyway because you asked. Type 'scamwatch ok {0}' once you've checked": "詐欺ウォッチが {0} のトレードを保留中です - 指示されたのでこのまま実行します。確認したら 'scamwatch ok {0}' と入力してください",
+    "held by scam watch - nothing done by itself; trade accept or decline {0} {1}": "詐欺ウォッチで保留中 - 自動では何もしません。trade accept または decline {0} {1}",
+    "account health couldn't read the bans: {0}": "アカウントの状態: BAN を読み取れませんでした: {0}",
+    "its sent offers are being cancelled, trades carry on (stopping them is off) - type 'scamwatch ok {0}' to clear the warning": "送ったオファーを取り消しています。トレードは続けます (停止はオフ) - 警告を解除するには 'scamwatch ok {0}' と入力してください",
+    "nothing was stopped (both reactions are off) - type 'scamwatch ok {0}' to clear the warning": "何も止めていません (どちらの対応もオフ) - 警告を解除するには 'scamwatch ok {0}' と入力してください",
+    "a Steam Web API key appeared that wasn't there before": "以前はなかった Steam Web API キーが現れました",
+    "the Steam Web API key changed": "Steam Web API キーが変わりました",
+    "a new device was authorized: {0}": "新しい端末が承認されました: {0}",
+    "the email address changed (now {0})": "メールアドレスが変わりました (現在 {0})",
+    "the phone number changed (now {0})": "電話番号が変わりました (現在 {0})",
+    "Steam Guard changed (now {0})": "Steam Guard が変わりました (現在 {0})",
+    "every session on the account was signed out": "アカウントのすべてのセッションがサインアウトされました",
+    "SCAM WATCH on {0}: took back its sent offers - {1}": "【詐欺監視】{0}: 送ったオファーを取り消しました - {1}",
+    "SCAM WATCH on {0}: revoked the new API key": "【詐欺監視】{0}: 新しい API キーを取り消しました",
+    "SCAM WATCH on {0}: couldn't revoke the API key - revoke it yourself at {1}": "【詐欺監視】{0}: API キーを取り消せませんでした - {1} でご自身で取り消してください",
+    "scam watch: warnings cleared - trades back to normal": "詐欺監視: 警告を解除しました - トレードは通常に戻りました",
+    "couldn't read the saved scam watch: {0}": "保存された詐欺監視のデータを読めませんでした: {0}",
+    "couldn't save the scam watch: {0}": "詐欺監視のデータを保存できませんでした: {0}",
+    "send due - on hold after a scam watch warning": "送信の予定 - 詐欺監視の警告により保留中",
+    "Scam watch - {0}": "詐欺監視 - {0}",
+    "Its trades are on hold. If that wasn't you, change the Steam password now.": "トレードは保留中です。自分でなければ、今すぐ Steam のパスワードを変更してください。",
+    "If that wasn't you, change the Steam password now.": "自分でなければ、今すぐ Steam のパスワードを変更してください。",
+    "It was me": "自分でした",
+    "Scam watch saw a sign of a stolen account or a trade scam. If it was you, type scamwatch ok and the account name. If it wasn't, change the Steam password now.": "詐欺監視が、アカウントの乗っ取りかトレード詐欺の兆候を見つけました。自分だった場合は scamwatch ok とアカウント名を入力してください。そうでなければ、今すぐ Steam のパスワードを変更してください。",
+    "SCAM WATCH: {0}": "【詐欺監視】{0}",
+    "Account health: level, bans, trade hold, market access, limited account, Steam Guard and phone. Checked when it signs in and every few hours; you are told when something gets worse. Type health for every item.": "アカウントの健康状態: レベル、BAN、トレード保留、マーケットの利用、制限付きアカウント、Steam Guard、電話。サインイン時と数時間ごとに確認し、何かが悪化したら知らせます。すべての項目を見るには health と入力してください。",
+    "Health: {0}": "健康状態: {0}",
+    "spent {0} Steam Points on {1} level(s) of {2}: level {3} now, +{4} XP. {5} points left.": "Steam ポイントを {0} 使って {2} を {1} レベル上げました: 現在レベル {3}、+{4} XP。残り {5} ポイント。",
+    "couldn't save the Steam Points spending list: {0}": "Steam ポイントの使用履歴を保存できませんでした: {0}",
+    "couldn't read the Steam Points spending list: {0}": "Steam ポイントの使用履歴を読めませんでした: {0}",
+    "Steam Points: buying {0} level(s) of {1} was turned down - Steam said {2}": "Steam ポイント: {1} を {0} レベル分買う操作は断られました - Steam の返答は {2}",
+    "Steam Points: no answer from Steam about buying {0} level(s) of {1} - counted as spent until a later look sees the badge's level": "Steam ポイント: {1} を {0} レベル分買う件で Steam から返答がありません - 後の確認でバッジのレベルが分かるまで、使ったものとして数えます",
+    "Steam Points: the {0} level(s) of {1} Steam didn't answer about were bought - level {2} now": "Steam ポイント: Steam から返答がなかった {1} の {0} レベル分は購入済みでした - 現在レベル {2}",
+    "Steam Points: the {0} level(s) of {1} Steam didn't answer about weren't bought - taken off this week's spending": "Steam ポイント: Steam から返答がなかった {1} の {0} レベル分は購入されていませんでした - 今週の使用分から差し引きました",
+    "couldn't look at the Steam Points: {0}": "Steam ポイントを確認できませんでした: {0}",
+    "The only thing in the Points Shop that raises your Steam level is the seasonal badge: about 100 XP for every 1,000 points. Points spent are gone for good.": "ポイントショップで Steam レベルが上がるのはシーズンバッジだけです: 1,000 ポイントごとに約 100 XP。使ったポイントは戻りません。",
+    "Steam Points": "Steam ポイント",
+    "Steam Points: next look around {0}": "Steam ポイント: 次の確認は {0} ごろ",
+    "Back up now": "今すぐバックアップ",
+    "A backup that opens on any PC": "どの PC でも開けるバックアップ",
+    "that isn't a nocat.farm backup": "これは nocat.farm のバックアップではありません",
+    "nothing is picked to go in the backup - see Settings, Backups": "バックアップに入れるものが選ばれていません - 設定の「バックアップ」を見てください",
+    "restore: {0} log file(s) from the backup put back in the logs folder": "復元：バックアップのログファイル {0} 件をログフォルダーに戻しました",
+    "Backup password": "バックアップのパスワード",
+    "backup saved: {0} ({1} KB)": "バックアップを保存しました：{0}（{1} KB）",
+    "Restore from a backup file": "バックアップファイルから復元",
+    "the backup folder {0} isn't there - is the drive plugged in?": "バックアップフォルダー {0} がありません - ドライブはつながっていますか？",
+    "Next one: {0}, into {1} ({2} kept there now).": "次回：{0}、保存先 {1}（今そこに {2} 個）。",
+    "that backup is from a newer nocat.farm - update first": "このバックアップは新しい nocat.farm で作られています - 先に更新してください",
+    "Android, in Chrome": "Android（Chrome）",
+    "that backup file has been changed or damaged since it was made, so it can't be trusted": "このバックアップファイルは作成後に変更されたか壊れているため、信頼できません",
+    "iPhone, in Safari": "iPhone（Safari）",
+    "Opening...": "開いています...",
+    "Type the backup password it was made with. It only goes to nocat.farm on this PC, and is never written down.": "作ったときのバックアップのパスワードを入力してください。この PC の nocat.farm にだけ渡り、どこにも書き残されません。",
+    "wrong backup password": "バックアップのパスワードが違います",
+    "Backups": "バックアップ",
+    "Once a day everything goes into one file locked with your backup password. If this PC dies: install nocat.farm on the new one, pick Restore from a backup file, type the password - and your accounts sign straight back in.": "1 日 1 回、すべてをバックアップのパスワードでロックした 1 つのファイルにまとめます。この PC が壊れたら：新しい PC に nocat.farm を入れ、「バックアップファイルから復元」を選び、パスワードを入力 - アカウントはすぐにまたサインインします。",
+    "Alerts on your phone come through Telegram or Discord - set them up under Notifications.": "スマホへのお知らせは Telegram か Discord で届きます - 「通知」で設定してください。",
+    "couldn't make the backup: {0}": "バックアップを作れませんでした：{0}",
+    "backup: {0} saved secret(s) couldn't be opened on this PC - they go in as they are and will be asked for again after a restore": "バックアップ：保存された秘密 {0} 件をこの PC で開けませんでした - そのまま入れ、復元後にもう一度聞かれます",
+    "{0} is too big to go in a backup (over {1} MB), so the backup couldn't be restored": "{0} はバックアップに入れるには大きすぎます（{1} MB 超）。そのバックアップは復元できません",
+    "the backup would be too big to restore - pick less to go in under Settings, Backups": "バックアップが大きすぎて復元できなくなります - 設定の「バックアップ」で入れるものを減らしてください",
+    "backup: {0} older log file(s) left out, so the backup stays small enough to restore": "バックアップ：復元できる大きさに収めるため、古いログファイル {0} 件を入れませんでした",
+    "Open": "開く",
+    "the disk with {0} is full": "{0} のあるディスクがいっぱいです",
+    "Phone app": "スマホアプリ",
+    "couldn't write in {0}: {1}": "{0} に書き込めませんでした：{1}",
+    "No backup password yet. Pick one below (at least 12 characters) - only you choose it, and you need it to restore on a new PC.": "バックアップのパスワードがまだありません。下で決めてください（12 文字以上）- 決めるのはあなただけで、新しい PC で復元するときに必要です。",
+    "{0}: the Share button, then Add to Home Screen. It opens like an app.": "{0}：共有ボタンから「ホーム画面に追加」。アプリのように開きます。",
+    "backups work again - {0}": "バックアップがまた動くようになりました - {0}",
+    "no permission to write in {0}": "{0} に書き込む権限がありません",
+    "that backup has far too many files in it": "このバックアップにはファイルが多すぎます",
+    "Install the app": "アプリをインストール",
+    "Moving from another PC?": "別の PC から移ってきましたか？",
+    "no backup password set - pick one under Settings, Backups": "バックアップのパスワードがありません - 設定の「バックアップ」で決めてください",
+    "You're using the app from your home screen.": "ホーム画面からアプリとして使っています。",
+    "{0}: the ⋮ menu, then Add to Home screen. Its icon goes on your home screen and opens in Chrome.": "{0}：⋮ メニューから「ホーム画面に追加」。ホーム画面にアイコンが置かれ、Chrome で開きます。",
+    "Install on your phone": "スマホにインストール",
+    "This backup is locked": "このバックアップはロックされています",
+    "{0} log file(s) too - put back only where there is none.": "ログファイルも {0} 件 - 無いところにだけ戻します。",
+    "Backing up...": "バックアップ中...",
+    "Put the dashboard on your phone's home screen, with the nocat.farm icon, so it's one tap away.": "ダッシュボードを nocat.farm のアイコンでスマホのホーム画面に置けば、ワンタップで開けます。",
+    "Last try failed: {0}": "前回の試みは失敗しました：{0}",
+    "backup: the copy next to nocat.farm wasn't saved - {0}": "バックアップ：nocat.farm の横のコピーは保存されませんでした - {0}",
+    "Last backup: {0} - {1}": "前回のバックアップ：{0} - {1}",
+    "{0}: its copy is in use and Steam didn't say which family it's in - left out for now": "{0}: そのコピーは使用中で、Steam がどのファミリーか教えてくれませんでした - いったん外します",
+    "family: Steam hasn't said who's playing what since the sign-in - keeping the last picture and asking again": "ファミリー: サインイン以降、誰が何をプレイ中か Steam から届いていません - 前回の状態のままにして、もう一度確認します",
+    "Steam Family": "Steam ファミリー",
+    "{0}: its copy is in use and Steam wouldn't switch to another family member's copy ({1}) - left out for now": "{0}: そのコピーは使用中で、Steam が他のファミリーメンバーのコピーへの切り替えを断りました ({1}) - いったん外します",
+    "{0} left out - someone in your Steam Family is playing it": "{0} を外しました - Steam ファミリーの誰かがプレイ中です",
+    "{0} left out - it's a family game and \"Include family-shared games\" is off": "{0} を外しました - ファミリーのゲームで、「ファミリー共有のゲームも含める」がオフです",
+    "a family member": "ファミリーメンバー",
+    "{0} (software)": "{0} (ソフトウェア)",
+    "{0} left out - someone in your Steam Family is using it": "{0} を外しました - Steam ファミリーの誰かが使用中です",
+    "{0} left out - someone in your Steam Family was playing it before the reconnect; asking Steam again": "{0} を外しました - 再接続の前に Steam ファミリーの誰かがプレイしていました。Steam にもう一度確認しています",
+    "{0} left out - Steam has this account banned in it": "{0} を外しました - このアカウントは Steam でこのゲームから BAN されています",
+    "{0} left out - its copy is in use and Steam wouldn't lend another family member's copy (tries again in a while)": "{0} を外しました - そのコピーは使用中で、Steam が他のファミリーメンバーのコピーを貸してくれませんでした (しばらくしてまた試します)",
+    "{0}: this account doesn't own it, so idling it banks nothing - add it to its Steam library first": "{0}: このアカウントは所有していないので、回しても何も貯まりません - 先に Steam ライブラリに追加してください",
+    "{0} doesn't own {1} - add it to its Steam library first, or idling it banks nothing": "{0} は {1} を所有していません - 先に Steam ライブラリに追加してください。そのままでは回しても何も貯まりません",
+    "family: Steam sent who's playing what ({0} shared game(s) in use)": "ファミリー: 誰が何をプレイ中か Steam から届きました (共有ゲーム {0} 本が使用中)",
+    "{0}: couldn't ask Steam to lend another family member's copy ({1}) - left out for now": "{0}: 他のファミリーメンバーのコピーを貸してもらうよう Steam に頼めませんでした ({1}) - いったん外します",
+    "{0}: {1}'s copy is in use - borrowing {2}'s free copy (already set that way)": "{0}: {1} のコピーは使用中です - {2} の空いているコピーを借ります (すでにその設定でした)",
+    "another family member": "別のファミリーメンバー",
+    "rep4rep is reporting points that aren't a number - keeping the last sensible figure": "rep4rep が数値ではないポイントを返しています - 最後のまともな値をそのまま使います",
+    "{0} left out - Steam plays {1} at once": "{0} を外しました - Steam が同時に動かせるのは {1} 本までです",
+    "{0} left out - someone in your Steam Family just stopped playing it (back at {1})": "{0} を外しました - Steam ファミリーの誰かがプレイをやめたばかりです ({1} に戻します)",
+    "{0} left out - someone in your Steam Family is playing it (back {1} min after they stop)": "{0} を外しました - Steam ファミリーの誰かがプレイ中です (やめてから {1} 分後に戻します)",
+    "{0}: {1}'s copy is in use - borrowing {2}'s free copy instead": "{0}: {1} のコピーは使用中です - 代わりに {2} の空いているコピーを借ります",
+    "asleep, banking hours quietly on {0} · up {1}": "就寝中、{0} で静かに時間を貯めています · {1} に起床",
+    "{0}: its copy is in use - switching to {1}'s free copy": "{0}: そのコピーは使用中です - {1} の空いているコピーに切り替えます",
+    "{0} is back on the overnight list": "{0} が夜のリストに戻りました",
+    "{0} left out - held back so it can still be refunded": "{0} を外しました - まだ返金できるように取っておいています",
+    "asleep - banking hours quietly until {0} on {1}": "就寝中 - {0} まで {1} で静かに時間を貯めます",
+    "couldn't read the software this account holds: {0}": "このアカウントのソフトウェアを読み込めませんでした: {0}",
+    "{0} left out - it's on \"Never touch these\"": "{0} を外しました - 「これには絶対に触らない」に入っています",
+    "library: {0} piece(s) of software owned too ({1})": "ライブラリ: ソフトウェアも {0} 本所有 ({1})",
+    "opened {0}: {1} - {2}": "{0} を開封しました：{1} - {2}",
+    "its cards are worth about {0}, the pack {1}": "カードは約 {0}、パックは {1}",
+    "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "{0} で売れ、受け取りは {1} - ジェム {2} 個の価値（{3}）より上です",
+    "its gem value isn't known yet - kept": "ジェムの価値がまだ分かりません - 残します",
+    "couldn't list a sack of gems: {0}": "ジェムの袋を出品できませんでした：{0}",
+    "packed {0} gems into {1} sack(s) of gems": "ジェム {0} 個をジェムの袋 {1} 個にまとめました",
+    "unopened booster packs: {0}": "未開封のブースターパック：{0}",
+    "{0}: '{1}' isn't one of your accounts here - nothing sent": "{0}: '{1}' はここにあるあなたのアカウントではありません - 何も送っていません",
+    "{0} gems - the market pays nothing for it": "ジェム {0} 個 - マーケットでは値がつきません",
+    "needed for the badge": "バッジに必要です",
+    "on your keep list": "残すリストに入っています",
+    "it doesn't turn into gems": "ジェムにできません",
+    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "ジェム {0} 個（{1} 相当）- 販売（{2}）より {3}% 以上お得",
+    "unopened booster packs: listed {0} - {1}": "未開封のブースターパック：{0} 個出品 - {1}",
+    "next look at booster packs around {0}": "次にブースターパックを見るのは {0} ごろ",
+    "today's limit of {0} in value is reached": "今日の金額上限 {0} に達しました",
+    "no fresh price yet - kept until it has one": "まだ新しい価格がありません - 価格が分かるまで残します",
+    "{0}: sent {1} item(s) to {2}": "{0}: {1} 個のアイテムを {2} に送りました",
+    "opening booster packs is off": "ブースターパックの開封はオフです",
+    "its game is on the never-open list": "そのゲームは「開封しない」リストに入っています",
+    "you chose to keep everything - only reported": "すべて残す設定です - 報告するだけです",
+    "{0}: Steam wouldn't say which items are in a waiting trade - sending later": "{0}: 保留中のトレードにどのアイテムが入っているか Steam が答えませんでした - 後で送ります",
+    "Booster packs": "ブースターパック",
+    "couldn't turn {0} into gems: {1}": "{0} をジェムにできませんでした：{1}",
+    "sacks of gems: {0}": "ジェムの袋：{0}",
+    "a stack, not one item": "1 個ではなくスタックです",
+    "{0}: couldn't send - {1}": "{0}: 送れませんでした - {1}",
+    "worth nothing as gems or on the market": "ジェムとしてもマーケットでも価値がありません",
+    "listed a sack of gems for {0}, you get {1}": "ジェムの袋を {0} で出品しました、受け取りは {1}",
+    "not a card, background or emoticon": "カード、背景、絵文字のどれでもありません",
+    "today's limit of {0} item(s) is reached": "今日の上限 {0} 個に達しました",
+    "selling {0} ({1}) - {2}": "{0}（{1}）を販売します - {2}",
+    "Spare items": "余ったアイテム",
+    "a foil card - foils are switched off": "キラカード - キラカードはオフです",
+    "couldn't pack gems into sacks: {0}": "ジェムを袋にまとめられませんでした：{0}",
+    "a copy you keep": "残しておくコピー",
+    "trade-locked": "トレード不可",
+    "nobody sells it, so there's no price - kept": "誰も出品していないので価格がありません - 残します",
+    "Steam refused one - trying again next time": "Steam が 1 つ拒否しました - 次回もう一度試します",
+    "next look at spare items around {0}": "次に余ったアイテムを見るのは {0} ごろ",
+    "the price of gems isn't known yet - kept": "ジェムの価格がまだ分かりません - 残します",
+    "worth more sealed: the pack {0}, its cards about {1}": "未開封の方が価値があります：パック {0}、カード約 {1}",
+    "worth more sealed": "未開封の方が価値があります",
+    "worth {0} - left for you to decide": "{0} の価値 - 判断はあなたにお任せします",
+    "set to always open": "常に開封する設定です",
+    "{0}: it can't send to itself - pick another account": "{0}: 自分自身には送れません - 別のアカウントを選んでください",
+    "couldn't look at booster packs: {0}": "ブースターパックを確認できませんでした：{0}",
+    "sells for {0}, you get {1}": "{0} で売れ、受け取りは {1}",
+    "opened {0} - Steam didn't say what was in it - {1}": "{0} を開封しました - 中身を Steam が教えてくれませんでした - {1}",
+    "couldn't read which listings nocat.farm made: {0}": "nocat.farm が出品したものを読み込めませんでした: {0}",
+    "couldn't write down a listing nocat.farm made: {0}": "nocat.farm の出品を記録できませんでした: {0}",
+    "stopped part way - human mode: its day ended or you're playing on it; the rest waits for a later look": "途中で止めました - 人間モード: その日が終わったか、あなたがプレイ中です。残りは後の確認で行います",
+    "couldn't look at spare items: {0}": "余ったアイテムを確認できませんでした：{0}",
+    "{0} gems": "ジェム {0} 個",
+    "came in within the last {0} day(s)": "直近 {0} 日以内に届きました",
+    "worth nothing on the market, gem value not known": "マーケットでは価値がなく、ジェムの価値も不明です",
+    "on the market or in a trade offer": "マーケットに出品中か、トレードオファーに入っています",
+    "extra card copies are switched off": "余分なカードの重複はオフです",
+    "duplicate backgrounds are switched off": "重複した背景はオフです",
+    "the market pays nothing for it": "マーケットでは値がつきません",
+    "Spare items & packs": "余ったアイテムとパック",
+    "duplicate emoticons are switched off": "重複した絵文字はオフです",
+    "cards from finished badges are switched off": "完成したバッジのカードはオフです",
+    "turned {0} ({1}) into {2} gems - {3}": "{0}（{1}）をジェム {2} 個にしました - {3}",
+    "sack of gems": "ジェムの袋",
+    "sells for {0}, you get {1} - no gems for it": "{0} で売れ、受け取りは {1} - ジェムにはできません",
+    "no fresh price for the pack or its cards yet - kept until there is": "パックかそのカードの新しい価格がまだありません - 分かるまで残します",
+    "live stats: a backup's history was put back - counting starts now, with no catch-up (that history isn't this install's)": "ライブ統計: バックアップの履歴を戻しました - 集計は今から始まり、過去分の追加送信はありません（その履歴はこのインストールのものではありません）",
+    "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "ライブ統計: 送信待ちのデータが壊れていました - farm-totals.json.broken として保管しました。集計は今から続け、過去分の追加送信はありません",
+    "human mode (its day ended or you're playing on it)": "人間モード（その日が終わったか、あなたがプレイ中）",
+    "no price in this account's own currency - kept": "このアカウント自身の通貨での価格がない - 保持",
+    "nobody is selling it right now - kept, there's no price to go by": "今は誰も売っていない - 保持、目安になる価格がない",
+    "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm は自分から何かを売ったり、ジェムに変えたり、開封したり、使ったりすることはありません。余ったアイテム、ブースターパックの開封と作成、Steam ポイントの使用はすべて、アカウントの設定でオンにするまでオフです。売却・ジェム・Steam ポイントは、まず何をするかを見せて確認を求めます。自分から受け取るのは無料のものだけです：Steam セール中のイベントアイテムと、オンにした場合の無料ゲーム。",
+    "spare items preview for {0}: {1} to gems, {2} to sell, {3} left for you to decide. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each item and why.": "{0} の余ったアイテムのプレビュー：{1} 個をジェムに、{2} 個を売却、{3} 個はあなたの判断待ち。設定で「余ったアイテム」をオンにするまで何も起きません - 'spare preview {0}' で各アイテムと理由を表示。",
+    "the market didn't say its price just now - kept": "マーケットが今その価格を返さなかった - 保持",
+    "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: Steam がまだこのアカウントのウォレット通貨を伝えていない - 何も出品していません",
+    "No preview - try again in a minute.": "プレビューなし - 1分後にもう一度お試しください。",
+    "Not changed - try again.": "変更されませんでした - もう一度お試しください。",
+    "Off: nothing is spent.": "オフ：何も使われません。",
+    "On: it buys badge levels by itself, within the limits below.": "オン：下の上限の範囲で、自分でバッジのレベルを買います。",
+    "Spare items is off for {0}: nothing is turned into gems or sold": "{0} の余ったアイテムはオフ：何もジェムにも売却にもしません",
+    "Spare items is off on {0} - it only shows what it would do": "{0} の余ったアイテムはオフ - 何をするか見せるだけです",
+    "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "{0} の余ったアイテムはオン：上限の範囲で余ったアイテムをジェムに変えるか売ります",
+    "Spare items was turned off on {0} - stopped before the next item": "{0} の余ったアイテムがオフにされました - 次のアイテムの前で止めました",
+    "Spending Steam Points is off for {0}: nothing is spent": "{0} の Steam ポイント使用はオフ：何も使いません",
+    "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "{0} の Steam ポイント使用はオン：上限の範囲で自分でバッジのレベルを買います",
+    "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam ポイント：使用はオフ - 設定でオンにすると何を買うかが表示されます",
+    "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam ポイント：{2} の {1} レベルに {0} ポイントを使う予定（+{3} XP）- 設定で使用をオンにするまで何も使いません",
+    "Switch it off to stop it at once.": "オフにするとすぐに止まります。",
+    "This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.": "今買うものと、守る上限です。使ったポイントは戻りません。「オンにする」を押すまで何も使いません。",
+    "This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.": "今行うことと、守る上限です。「オンにする」を押すまで何も売らず、ジェムにもしません。",
+    "Turn on Spare items?": "余ったアイテムをオンにしますか？",
+    "Turn on spending Steam Points?": "Steam ポイントの使用をオンにしますか？",
+    "Turn on": "オンにする",
+    "Turned off.": "オフにしました。",
+    "Turned on.": "オンにしました。",
+    "Turning it on shows what it would buy first, and asks you to confirm.": "オンにすると、まず何を買うかを見せて確認を求めます。",
+    "Working out what it would do...": "何をするか計算中...",
+    "Your items are safe by default": "アイテムは初期設定で安全です",
+    "its price went up to {0} since it was counted - it waits for the next look": "数えた後に価格が {0} に上がった - 次の確認を待ちます",
+    "its prices contradict each other (cheapest {0}, recent sales {1}) - kept": "価格が矛盾している（最安 {0}、最近の売却 {1}）- 保持",
+    "kept {0} ({1}) instead of listing it: {2}": "{0}（{1}）を出品せずに保持：{2}",
+    "no sale in the last day, so no median - kept": "直近1日に売れていないので中央値がない - 保持",
+    "no sale in the last day, so no real price - kept": "直近1日に売れていないので実際の価格がない - 保持",
+    "worth {0} now - left for you to decide": "現在 {0} の価値 - あなたの判断に任せます",
+    "{0}: Spare items is off until you turn it on in Settings - it shows what it would do first": "{0}：設定でオンにするまで余ったアイテムはオフ - まず何をするかを見せます",
+    "{0}: Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do": "{0}：余ったアイテムが「重複カードを売る」に代わりました - 設定でオンにすると何をするかが表示されます",
+    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}：設定でオンにするまで Steam ポイントの使用はオフ - まず何を買うかを見せます"
   },
   "settings": {
     "WebEnabled": {
@@ -3115,7 +3420,7 @@
     },
     "YieldToFamily": {
       "label": "共有ゲームは求められたらすぐ返す",
-      "tip": "借りているファミリーのゲームを家族の誰かが起動したら、すぐに返して次へ移ります。相手がやめてから 20 分間はローテーションから外します。"
+      "tip": "借りているファミリーのゲームを家族の誰かが起動したら、すぐに返して次へ移ります。相手がやめてからしばらくはローテーションから外します (下の「ファミリーメンバーがやめた後の待ち時間」)。"
     },
     "IncludeFamilyLibrary": {
       "label": "ファミリー共有のゲームも含める",
@@ -3137,10 +3442,6 @@
       "label": "このゲームだけ",
       "tip": "実績の対象をこのゲームの ID に絞ります。空にすると、アカウントが遊んでいるゲームを使います。"
     },
-    "UnpackBoosterPacks": {
-      "label": "ブースターパックを開ける",
-      "tip": "インベントリに届いたブースターパックを開け、そのカードをバッジに使えるようにします。"
-    },
     "ClaimEventItems": {
       "label": "無料イベントアイテムを受け取る",
       "tip": "Steam セール中の無料の日替わりステッカーと、ポイントショップで 0 ポイントのものを受け取ります。"
@@ -3150,13 +3451,58 @@
       "tip": "1 日 1 回、人と同じようにストアのディスカバリーキューを最後まで見ます。セール中はイベントアイテムやバッジの進行がもらえます。",
       "choices": "0 オフ | 1 セール中 | 2 毎日"
     },
-    "SellDuplicates": {
-      "label": "重複カードを売る",
-      "tip": "8〜14 時間ごとに余ったカードを数枚、最安値より 1 セント安くマーケットに出品します。バッジに必要な分は残し、キラカードは売りません。認証アプリを追加していない場合は、スマホでの承認が必要です。"
+    "SaleEvents": {
+      "label": "Steamイベントに参加する",
+      "tip": "下のすべての項目のスイッチです: Steamセール、Steamアワード、Next Festの期間中、無料でもらえるもの(デイリーステッカー、ポイントショップの無料アイテム、ディスカバリーキュー、アワードのノミネートと投票)を受け取ります。イベント外ではときどき確認するだけです。オフならこのアカウントでは何もしません。"
+    },
+    "SaleEventsHumanToo": {
+      "label": "人間モードのアカウントも",
+      "tip": "この人間モードのアカウントで Steam アワードのノミネートと投票、セールのキューアイテムと Next Fest のアイテムの受け取りをします - 1つずつ、その日の中で、数分あけて。初期設定はオン。オフにすると、人間モードのアカウントはステッカーとキューだけを行います（下にそれぞれのスイッチ）。ロボットアカウントは常に参加します。"
+    },
+    "SaleAwardsNominate": {
+      "label": "Steamアワードでノミネートする",
+      "tip": "11月下旬に、Steamアワードの各部門にゲームを1つノミネートします(ノミネートバッジのため)。このアカウントが遊んだゲームだけを、下の設定どおりに選びます。該当するゲームがない部門は空のままにします。"
+    },
+    "SaleAwardsVote": {
+      "label": "Steamアワードで投票する",
+      "tip": "ウィンターセール中に、Steamアワードの各部門で1回ずつ投票します(1票ごとにもらえるステッカーのため)。このアカウントが最も遊んだ最終候補を選び、どれも遊んでいなければ最終候補のどれかを選びます。"
+    },
+    "SaleQuests": {
+      "label": "キューに対するセールのアイテムを受け取る",
+      "tip": "セール中、ディスカバリーキューを終えたら、セールがその分としてくれるアイテムを次のステッカー確認を待たずにすぐ受け取ります。"
+    },
+    "SaleNextFest": {
+      "label": "Next Festのアイテム",
+      "tip": "Steam Next Festの期間中、無料アイテムがあれば受け取ります。最近のNext Festでは配布がなかったので、たいていは何も起きません - 復活したときのための準備です。"
+    },
+    "SaleNominatePick": {
+      "label": "ノミネートするゲーム",
+      "tip": "Steamアワードの各部門に入れるゲームを、このアカウントが遊んだゲームのうちSteamが該当するとしたものから選びます。最も遊んだもの、またはその中からランダムに1つ。同じゲームを2回使わないようにします。",
+      "choices": "0 最も遊んだゲーム | 1 遊んだゲームのどれか"
+    },
+    "SaleGapMinSeconds": {
+      "label": "ロボットアカウントの手順の間隔 (秒)",
+      "tip": "ロボットアカウントでノミネートや投票の間にあける秒数の最短値 - 例: 5。"
+    },
+    "SaleGapMaxSeconds": {
+      "label": "…最長 (秒)",
+      "tip": "ロボットアカウントで次の手順までに待つ最長の秒数 - 例: 20。毎回その間でランダムに決めます。"
+    },
+    "SaleHumanGapMinMinutes": {
+      "label": "人間モードの手順の間隔 (分)",
+      "tip": "人間モードのアカウントでノミネートや投票の間にあける分数の最短値 - 例: 5。そのアカウントの1日の中だけです。"
+    },
+    "SaleHumanGapMaxMinutes": {
+      "label": "…最長 (分)",
+      "tip": "人間モードのアカウントで次の手順までに待つ最長の分数 - 例: 30。"
+    },
+    "SaleCheckHours": {
+      "label": "イベントを確認する間隔 (時間)",
+      "tip": "Steamイベントが始まったかを確認する頻度(時間) - 例: 6。イベント中はおよそ1時間ごとに確認します。"
     },
     "SellPerRun": {
       "label": "1回の出品枚数",
-      "tip": "1 回に出品する余ったカードの枚数です。価値の高いものから出します。数枚ずつなら自然に見えます。"
+      "tip": "数を指定しないときに sell コマンドが出品する余ったカードの枚数です。価値の高いものから出します。「余ったアイテム」には別の設定があります。"
     },
     "BoosterGems": {
       "label": "ブースターパックに使う",
@@ -3570,7 +3916,11 @@
     },
     "CountMeAsUser": {
       "label": "ユーザーとして数える",
-      "tip": "1時間に1回、このコピーが動いていることを nocat.lol に伝えます - このインストール用に作られたランダムな番号、アプリのバージョン、プラットフォーム、サインイン中の Steam アカウントの数 (数だけ) で、アカウント名や Steam ID、設定は送りません。これで Steam アカウント数を数えます。オフなら何も送りません。"
+      "tip": "1時間に1回、このコピーが動いていることをnocat.lolに伝えます - このインストール用に作ったランダムな番号、アプリのバージョン、プラットフォーム、サインイン中のSteamアカウントの数(数だけ)、共有している場合は時間とカードの合計(次の設定を参照)。それ以外は何も送りません: アカウント名、Steam ID、設定は送りません。Steamアカウント数はこれで作られます。オフなら何も送りません。"
+    },
+    "ShareFarmTotals": {
+      "label": "時間とカードの合計を共有する",
+      "tip": "1時間ごとの「ユーザーとして数える」の送信に数字を2つ加えます: 前回以降にアカウントが稼いだゲーム時間と、手に入れたカードの数です(例: 41.5時間と12枚)。初めてオンになったときは、このコピーの履歴にそれ以前から残っている分の同じ2つの数字も一度だけ送ります。nocat.lolが全員分を合計し、nocat.farmのページに表示します。どのアカウント・ゲーム・カードかは一切送りません。「ユーザーとして数える」がオンの間だけ。オフならどちらの数字も送りません。"
     },
     "ReactionSpeed": {
       "label": "反応の速さ",
@@ -3584,6 +3934,356 @@
     "AchievementSkipMultiplayer": {
       "label": "マルチプレイの実績をスキップ",
       "tip": "他のプレイヤーが必要な実績は解除しません：マルチプレイ、協力プレイ、ゾンビ、対戦、ランクマッチ、オンライン。こうしたゲームは試合ごとに記録を残すので、試合の裏付けがない実績は目立ちます。人間モードのアカウントではオン、ロボットではオフ。人間モードをオン・オフすると、それに合わせて切り替わります。"
+    },
+    "HealthAlertBans": {
+      "label": "新しい BAN を知らせる",
+      "tip": "BAN が出たら知らせます。「BAN を監視」がオンのときはそちらがすでに知らせるので、二重にならないようこちらは黙っています。"
+    },
+    "HealthAlertDiscord": {
+      "label": "健康アラートを Discord に",
+      "tip": "アカウントの何かが悪化したとき、Discord チャンネルにメッセージを送ります。「通知」で Discord ウェブフックの設定が必要です。"
+    },
+    "HealthAlertGuard": {
+      "label": "Steam Guard が弱くなったら知らせる",
+      "tip": "Steam Guard がスマホアプリからメールに変わったり、オフになったりしたら知らせます。"
+    },
+    "HealthAlertLimited": {
+      "label": "制限付きアカウントになったら知らせる",
+      "tip": "Steam がこのアカウントを制限付きとして扱い始めたら知らせます (フレンド招待もマーケットも不可)。一度も 5 ドル使ったことのないアカウントは制限付きです。"
+    },
+    "HealthAlertMarket": {
+      "label": "マーケットが使えなくなったら知らせる",
+      "tip": "Steam がこのアカウントのコミュニティマーケット利用を止めたら知らせます - たとえば新しい端末でサインインしてから 7 日間。"
+    },
+    "HealthAlertPhone": {
+      "label": "電話番号が外されたら知らせる",
+      "tip": "アカウントに電話番号が登録されていなくなったら知らせます。"
+    },
+    "HealthAlertPopup": {
+      "label": "健康アラートをポップアップで",
+      "tip": "アカウントの何かが悪化したとき、このPCにポップアップを表示します (「ポップアップを表示」がオンの場合)。"
+    },
+    "HealthAlertTelegram": {
+      "label": "健康アラートを Telegram に",
+      "tip": "アカウントの何かが悪化したとき、Telegram チャットにメッセージを送ります - BAN、トレード保留、マーケットの利用停止、Steam Guard のオフなど。「通知」で Telegram の設定が必要です。"
+    },
+    "HealthAlertTradeHold": {
+      "label": "トレード保留を知らせる",
+      "tip": "このアカウントのトレードが数日間保留されるようになったら知らせます - たとえば Steam Guard を変更してから 15 日間。"
+    },
+    "HealthMaxHours": {
+      "label": "…最長 (時間)",
+      "tip": "2 回の健康チェックの間の最長時間 (時間単位) - たとえば 7。毎回の待ち時間は 2 つの値の間のランダムな時間です。"
+    },
+    "HealthMinHours": {
+      "label": "健康チェックの最短間隔 (時間)",
+      "tip": "2 回の健康チェックの間の最短時間 (時間単位) - たとえば 5。アカウントがサインインしたときには必ず 1 回確認します。"
+    },
+    "ScamAlertDiscord": {
+      "label": "詐欺の警告を Discord に",
+      "tip": "詐欺監視の警告を Discord チャンネルに送ります。「通知」で Discord ウェブフックの設定が必要です。"
+    },
+    "ScamAlertPopup": {
+      "label": "詐欺の警告をポップアップで",
+      "tip": "詐欺監視の警告が出るたびに、このPCにポップアップを表示します (「ポップアップを表示」がオンの場合)。"
+    },
+    "ScamAlertTelegram": {
+      "label": "詐欺の警告を Telegram に",
+      "tip": "詐欺監視の警告 (新しい API キー、新しい端末、メール・電話・Steam Guard の変更、全セッションのサインアウト) を Telegram チャットに送ります。「通知」で Telegram の設定が必要です。"
+    },
+    "ScamWatchApiKey": {
+      "label": "API キーを確認",
+      "tip": "アカウントの Steam Web API キーのページを確認します。知らないうちにキーが現れたり変わったりするのは、最もよくあるトレード詐欺です。保存するのはキーの指紋だけで、キーそのものは保存しません。"
+    },
+    "ScamWatchCancelOffers": {
+      "label": "警告時: 送ったオファーを取り消す",
+      "tip": "警告のあと、このアカウントが送ってまだ成立していないトレードオファーを取り消します - API キーを手にした詐欺師はそれを偽物にすり替えます。"
+    },
+    "ScamWatchDetails": {
+      "label": "メール・電話・Steam Guard を確認",
+      "tip": "アカウント詳細のページを確認し、メールアドレス、電話番号、Steam Guard が変わったら警告します。保存するのは Steam が表示する伏せ字の形 (th***@gmail.com、末尾 12 など) だけです。"
+    },
+    "ScamWatchDevices": {
+      "label": "新しい端末を確認",
+      "tip": "アカウントの承認済み端末の一覧を確認し、新しく現れた、あなたのものでも nocat.farm 自身のものでもない端末について警告します。"
+    },
+    "ScamWatchMaxMinutes": {
+      "label": "…最長 (分)",
+      "tip": "2 回の確認の間の最長時間 (分単位) - たとえば 60。毎回の待ち時間は 2 つの値の間のランダムな時間です。"
+    },
+    "ScamWatchMinMinutes": {
+      "label": "確認の最短間隔 (分)",
+      "tip": "2 回の確認の間の最短時間 (分単位) - たとえば 30。1 回の確認はページを数回見るだけで、ブラウザで開くのと同じです。"
+    },
+    "ScamWatchRevokeKey": {
+      "label": "新しい API キー: 取り消す",
+      "tip": "以前はなかった API キーが現れたら、すぐに Steam のキーのページで「取り消し」を押します。初期設定はオフ: 自分で API キーを作る場合 (一部のトレードサイトが求めます) はオフのままにしてください。"
+    },
+    "ScamWatchSessions": {
+      "label": "全サインアウトを確認",
+      "tip": "アカウントのすべてのセッションがサインアウトされたために Steam が保存済みのログインを拒否したら警告します - 盗む人が最初にやることです。通常の再接続や、あなたがそのアカウントで遊んでいることは数えません。"
+    },
+    "ScamWatchStopTrades": {
+      "label": "警告時: トレードを止める",
+      "tip": "警告のあと、このアカウントは scamwatch ok とアカウント名を入力するまで、トレードオファーの承認とアイテムの自動送信を止めます。自分でオファーに応えることはできます。"
+    },
+    "ScamWatchTrustedDevices": {
+      "label": "無視する自分の端末",
+      "tip": "自分の端末の名前を、Steam の「承認済み端末」に表示されているとおりにカンマ区切りで - たとえば: My Phone, LAPTOP-7。これらからの新しいサインインは報告しません。nocat.farm 自身のサインインは常に自動で見分けます。"
+    },
+    "WatchForScams": {
+      "label": "詐欺を監視",
+      "tip": "30 分ほどごとに、アカウントの乗っ取りやトレード詐欺の兆候を探します: 以前はなかった API キー、あなたのものではない端末のサインイン、メール・電話・Steam Guard の変更、全セッションのサインアウト。見るだけです。警告が出ると、赤いログ行、ポップアップ、メッセージが届き、その後どうするかは下で設定します。"
+    },
+    "WatchHealth": {
+      "label": "アカウントの健康状態を見守る",
+      "tip": "アカウントのカードに健康状態の行を 1 つ表示します: レベル、BAN、トレード保留、マーケットの利用、制限付きアカウント、Steam Guard、電話。サインイン時と数時間ごとに確認します。見るだけで、何かが悪化したらすぐに知らせます。"
+    },
+    "PointsWeeklyCap": {
+      "label": "1 週間に使う上限",
+      "tip": "どの 7 日間でも使うポイントの上限。例: 3000 (バッジ 3 レベル)。0 なら何も使いません。"
+    },
+    "PointsBadgeMaxLevel": {
+      "label": "各バッジを止めるレベル",
+      "tip": "どのバッジもこのレベルまでしか上げません。例: 40 (Steam の上限)。ほかにポイントを残したいなら下げてください。"
+    },
+    "SendPoints": {
+      "label": "Steam ポイントの使用を送る",
+      "tip": "Steam ポイントで買ったバッジのレベル、使ったポイントと残り。実際の購入だけを送ります。"
+    },
+    "PointsBuyOlderBadges": {
+      "label": "古いシーズンバッジも",
+      "tip": "今のバッジが終わったら、ショップにまだ載っている古いシーズンバッジのレベルも買います。Steam に断られたものもあるのでオフです。断られてもログに残るだけです。"
+    },
+    "SpendPoints": {
+      "label": "Steam ポイントをレベルに使う",
+      "tip": "このアカウントの Steam ポイントを、ポイントショップの季節バッジのレベルに使います - Steam レベルを上げられる唯一のもので、1,000 ポイントで約 100 XP。すべてのアカウントで初期設定はオフ。オンにすると、まず何を買うかを見せて確認を求めます。オフにするとすぐ止まります。"
+    },
+    "PointsKeepAtLeast": {
+      "label": "常に最低限残す",
+      "tip": "決して使わないポイント数。自分用に残せます。例: 1000。バッジ 1 レベルは 1,000 ポイントです。"
+    },
+    "PointsCheckEveryHours": {
+      "label": "確認の間隔（時間）",
+      "tip": "ポイントとショップを確認する間隔 (時間)。例: 12。ヒューマンモードのアカウントは自分の一日の間だけ確認します。"
+    },
+    "PointsBuySeasonalBadge": {
+      "label": "シーズンバッジのレベルを買う",
+      "tip": "ポイントショップが今売っているバッジ (Summer Collection など) のレベルを買えるようにします。大型の Steam セールごとに新しいものが出ます。"
+    },
+    "BackupRetryMinutes": {
+      "label": "再試行までの時間 (分)",
+      "tip": "バックアップに失敗したあと、その日にもう一度試すまで待つ分数。例：60。0 なら翌日まで待ちます。"
+    },
+    "SendBackups": {
+      "label": "バックアップを送る",
+      "tip": "バックアップの失敗とその理由。「知らせるとき」が毎回のバックアップの後なら、保存したバックアップも毎回。"
+    },
+    "BackupFolder": {
+      "label": "バックアップの保存先",
+      "tip": "毎日のバックアップを入れるフォルダー。この PC が壊れても残るよう、OneDrive や Dropbox のフォルダー、USB ドライブなどに。例：D:\\OneDrive\\nocat.farm。空なら nocat.farm の横の backups フォルダーに保存します。"
+    },
+    "BackupIncludeLogs": {
+      "label": "ログを含める",
+      "tip": "直近 7 日分のログファイルもバックアップに入れます。サイズが大きくなります。オンにしない限りオフです。"
+    },
+    "BackupHour": {
+      "label": "バックアップの時刻",
+      "tip": "毎日のバックアップを行う時刻。例：午前 4 時。そのとき PC が切れていたら、nocat.farm がまた開いたらすぐ行います。"
+    },
+    "BackupPassword": {
+      "label": "バックアップのパスワード",
+      "tip": "バックアップをロックするパスワード。12 文字以上で、決めるのはあなただけです。新しい PC でバックアップを復元するときに必要なので、安全な場所に書き留めてください。これが無いと誰も（あなたも）バックアップを開けません。この PC に暗号化して保存され、どこにも送られません。変更しても、変更後に作ったバックアップにしか使われません - それより古いものは古いパスワードが必要です。"
+    },
+    "BackupLocalCopy": {
+      "label": "ここにもコピーを残す",
+      "tip": "同じバックアップを nocat.farm の横の backups フォルダーにも残し、保存先フォルダーが無いときでも手元に 1 つあるようにします。同じ数だけ残します。「バックアップの保存先」が空なら何もしません。"
+    },
+    "BackupIncludeSettings": {
+      "label": "設定を含める",
+      "tip": "全体の設定をバックアップに入れます：ダッシュボード、通知、このページ。"
+    },
+    "BackupIncludeAccounts": {
+      "label": "アカウントと保存したサインインを含める",
+      "tip": "各アカウントの設定、保存した Steam のサインイン、進み具合（人間モードの 1 日、実績ハント、rep4rep の回数）をバックアップに入れます。これが無いと復元してもアカウントは戻りません。"
+    },
+    "BackupNotify": {
+      "label": "知らせるとき",
+      "tip": "Telegram と Discord でバックアップについて知らせるタイミング：失敗したとき（フォルダーが無い、ディスクがいっぱい、権限が無い）だけか、毎回のバックアップの後もか。通知の「バックアップを送る」がオンである必要があります。",
+      "choices": "0 バックアップが失敗したときだけ | 1 毎回のバックアップの後"
+    },
+    "PhoneInstallHint": {
+      "label": "スマホへの入れ方を表示",
+      "tip": "スマホのページに、ダッシュボードをアプリのようにスマホのホーム画面に置く短い手順を表示します。"
+    },
+    "BackupJitterMinutes": {
+      "label": "最大で何分遅らせるか",
+      "tip": "毎日バックアップの時刻に足すランダムな分数の上限。例：30。0 ならちょうどその時刻に行います。"
+    },
+    "BackupKeep": {
+      "label": "残す数 (バックアップ)",
+      "tip": "フォルダーに残す毎日のバックアップの数。例：7 なら 1 週間分。古いものから消え、新しいものが残ります。消すのは自分のバックアップファイルだけです。"
+    },
+    "BackupAuto": {
+      "label": "毎日バックアップ",
+      "tip": "1 日 1 回、すべて（設定、アカウント、保存したサインイン、認証システム、履歴）をバックアップのパスワードでロックした 1 つのファイルに保存します。この PC が壊れても、どの PC にでも戻せます。先にバックアップのパスワードが必要です。オンにするまではオフです。"
+    },
+    "BackupIncludeHistory": {
+      "label": "履歴と統計を含める",
+      "tip": "グラフのもとになる日ごとの履歴、これまでに記録した時間、日報と週報をバックアップに入れます。"
+    },
+    "BackupIncludeAuthenticators": {
+      "label": "認証システムを含める",
+      "tip": "追加した Steam Guard 認証システムのファイル（.maFile）をバックアップに入れます。トレードを承認できるので、これが入るとバックアップのパスワードがさらに大事になります。"
+    },
+    "BorrowFamilyCopy": {
+      "label": "コピーが使用中なら別のファミリーメンバーのコピーを借りる",
+      "tip": "Steam ファミリーの誰かがあるメンバーのコピーで共有ゲームをプレイ中で、別のメンバーもそのゲームを持っている場合、ゲームを外す代わりにその空いているコピーに切り替えて続けます。変えるのはそのゲーム 1 本の「借りる相手」だけで、誰かが使っているコピーは絶対に取りません。ファミリー共有のゲームのみ (「ファミリー共有のゲームも含める」)。"
+    },
+    "FamilyWaitMinutes": {
+      "label": "ファミリーメンバーがやめた後の待ち時間 (分)",
+      "tip": "Steam ファミリーの誰かが共有ゲームのプレイをやめてから、そのゲームに手を付けずにおく分数。例: 20 - すぐにまた始めることがよくあります。0 ならすぐに使います。"
+    },
+    "SpareKeepGems": {
+      "label": "バラで残すジェムの最低数",
+      "tip": "袋詰め・送信・販売を決してしないジェムの数（例: 500）。0 なら 1000 個ごとにすべてまとめます。"
+    },
+    "SpareKeepBackgrounds": {
+      "label": "各背景を残す数",
+      "tip": "常に残す各背景の数、例：1。0 なら残さず、最後の1つも手放せます。"
+    },
+    "SpareGems": {
+      "label": "その後のジェム",
+      "tip": "ジェムをどうするか。自動では、人間モードのアカウントでは 1000 個入りの袋にまとめてトレード可能なまま残し、ロボットのアカウントではバラのままにして「ブースターパックを作るゲーム」で使えるようにします。自動では決して売りません。「袋を売る」は 1 回の確認につき 1 袋を、余ったアイテムの 1 日の上限内で出品します。",
+      "choices": "0 自動 | 1 バラのまま（ブースターパックに使う） | 2 1000 個の袋にまとめてトレード可能なまま残す | 3 袋を自分の別アカウントに送る | 4 袋を売る"
+    },
+    "SpareGapSeconds": {
+      "label": "アイテム間の待ち時間（秒）",
+      "tip": "2 つのアイテムの間の秒数（例: 40）。毎回変わり、人間モードのアカウントでは長くなります。"
+    },
+    "SparePerRun": {
+      "label": "1 回に処理する数",
+      "tip": "1 回の確認でジェムにするか売るアイテムの最大数。価値の高いものから（例: 5）。"
+    },
+    "SpareKeepItems": {
+      "label": "これらのアイテムには触れない",
+      "tip": "インベントリに表示されるとおりの完全なアイテム名をカンマ区切りで（例: Sans, Gordon Freeman (Foil)）。名前を書いたアイテムは、どのゲームのものでも残します。これらは必ず残します。"
+    },
+    "BoosterCheckHours": {
+      "label": "パックを確認する間隔（時間）",
+      "tip": "ブースターパックを確認する間隔（時間、例: 24）。毎回少しずつ変わります。"
+    },
+    "SpareKeepEmoticons": {
+      "label": "各絵文字を残す数",
+      "tip": "常に残す各エモティコンの数、例：1。0 なら残さず、最後の1つも手放せます。"
+    },
+    "BoosterUnopened": {
+      "label": "開封しないパック",
+      "tip": "未開封の方が価値がある、ゲームが上のリストにある、または開封がオフのため未開封のまま残るパックをどうするか。送る・売るのは「余ったアイテム」がオンの間だけで、売却はその上限を守ります。新しいパックや出品中のパックには常に触れません。",
+      "choices": "0 残す | 1 自分の別アカウントに送る | 2 売る"
+    },
+    "SpareBackgrounds": {
+      "label": "重複した背景",
+      "tip": "プロフィール背景の余分な重複を余りとして数えます。"
+    },
+    "SparePriceMaxAgeHours": {
+      "label": "価格を信用する期間（時間）",
+      "tip": "マーケット価格を新しいとみなす時間（例: 24）。価格が古いか分からないアイテムは、価格が付き直すまで残します。"
+    },
+    "BoosterSendTo": {
+      "label": "未開封パックの送り先",
+      "tip": "ここにある自分の別アカウントの名前（例: main）。認証情報を追加していない場合、送るにはスマートフォンでの確認が必要です。"
+    },
+    "SpareRunHours": {
+      "label": "確認の間隔（時間）",
+      "tip": "余ったアイテムを確認する間隔（時間、例: 12）。毎回少しずつ変わります。人間モードのアカウントは自分の 1 日の間だけ確認します。"
+    },
+    "SpareKeepGames": {
+      "label": "これらのゲームのアイテムには触れない",
+      "tip": "カード、背景、絵文字を必ず残すゲーム。"
+    },
+    "SpareSellPrice": {
+      "label": "販売価格",
+      "tip": "出品価格。出品の直前に、このアカウント自身の Steam ウォレット通貨で価格を取り直します。「実際の価格より1セント安く」（安全な初期設定）：直近1日に売れた価格、または最安の出品の方が高ければそちら - かけ離れて安い投げ売りの出品1件は無視します。例：0.30 で売れていて 0.10 の出品が1件あれば 0.29 で出品。最近売れていない、または誰も売っていない場合は保持。ほかの選択肢：最安と同じ、中央値（最安より下にはしない）、最安より1セント安く（最も早く売れるが、投げ売りにつられて下がる）。",
+      "choices": "0 実際の価格より1セント安く | 1 最安と同じ | 2 売却価格の中央値 | 3 最安より1セント安く"
+    },
+    "SpareRelistDays": {
+      "label": "売れない出品を取り下げるまで（日）",
+      "tip": "日数（例: 7）。nocat.farm 自身が出した出品で、それまでに売れず、ほかの人がもっと安く出しているものは取り下げ、その日の価格で出品し直します。自分で出した出品には決して触れません。"
+    },
+    "SpareMaxPrice": {
+      "label": "これより高いアイテムには触れない",
+      "tip": "このアカウント自身の Steam ウォレット通貨で、例：ドルやユーロなら 0.25 - 自分の通貨では同じ価値の額、例：円なら 40。価値は最安の出品価格と直近1日の売却価格の高い方です。それより価値の高いものは spare preview に載るだけで、判断はあなたに任せます。"
+    },
+    "SpareGemMarginPct": {
+      "label": "ジェムが販売を上回るべき割合（%）",
+      "tip": "パーセントで指定（例: 20）。ジェムの価値が、Steam の手数料を引いた販売額より 20% 以上高いときだけジェムにします。そうでなければ売ります。"
+    },
+    "SpareMaxedBadgeCards": {
+      "label": "完成したバッジのカード",
+      "tip": "バッジがすでにレベル 5 のゲーム（またはキラバッジを作ったゲーム）のカードを余りとして数えます。下で設定した枚数は残します。"
+    },
+    "SpareNewDays": {
+      "label": "新しいアイテムに触れない期間（日）",
+      "tip": "アイテムが届いてから手を付けない日数（例: 7）。nocat.farm はそのアイテムを初めて見た時から数えるので、オンにした直後はすべてがこの日数だけ待ちます。0 でこのルールはオフです。"
+    },
+    "SpareGemsSendTo": {
+      "label": "袋の送り先",
+      "tip": "ここにある自分の別アカウントの名前（例: main）。「その後のジェム」が袋を送るときだけ使います。認証アプリを追加していない場合、送信にはスマホでの承認が必要です。"
+    },
+    "OpenBoosterPacks": {
+      "label": "ブースターパックを開封する",
+      "tip": "インベントリのブースターパックを開封し、カードをバッジに使えるようにします（または余ったアイテムにします）。初期設定は「開けない」- 選ぶまで何も開けません。「カードの方が価値がある時だけ」は、カードの市場価値が未開封パックより高い時だけ開けます。価格が不明なら開けません。人間モードのアカウントは自分の一日の間だけパックを開けます。",
+      "choices": "0 開封しない | 1 カードの方が価値があるときだけ | 2 常に開封"
+    },
+    "SpareAction": {
+      "label": "余ったアイテムをどうするか",
+      "tip": "「ジェムと販売の得な方」は、ジェムの価値が販売より（下のマージン分）高いときはジェムにし、そうでなければ売ります。「すべて残す」は余っているものを報告するだけです。",
+      "choices": "0 ジェムと販売の得な方 | 1 ジェムのみ | 2 販売のみ | 3 すべて残す（報告のみ）"
+    },
+    "SpareEmoticons": {
+      "label": "重複した絵文字",
+      "tip": "絵文字の余分な重複を余りとして数えます。"
+    },
+    "BoosterNeverOpen": {
+      "label": "これらのゲームのパックは開封しない",
+      "tip": "ブースターパックを常に未開封のままにするゲーム。"
+    },
+    "SpareItems": {
+      "label": "余ったアイテムを処理する",
+      "tip": "余ったカード、背景、エモティコンをジェムに変えるか売ります（1日に数個、得な方）。Steam 自身のアイテム（カード、背景、エモティコン）だけで、ゲームのアイテムや CS2 スキンには触れません。バッジにまだ必要なもの、新しいもの、価格上限を超えるものには決して触れません。オンにすると、まず何をするかを見せて確認を求めます。オフにするとすぐ止まります。"
+    },
+    "SpareDailyValue": {
+      "label": "1 日の最大金額",
+      "tip": "1日のアイテムの合計価値の上限。このアカウント自身の Steam ウォレット通貨で、例：ドルやユーロなら 1.00 - 自分の通貨では同じ価値の額、例：円なら 150。"
+    },
+    "SpareDailyItems": {
+      "label": "1 日の最大個数",
+      "tip": "1 日にジェムにするか売るアイテムの最大数（例: 10）。"
+    },
+    "SpareFoils": {
+      "label": "キラカードも",
+      "tip": "キラカードも余りとして数えます。初期設定はオフ：キラカードは珍しく、価値が高いことが多いからです。"
+    },
+    "BoosterOpenNewDays": {
+      "label": "新しいパックに触れない期間（日）",
+      "tip": "パックが届いてから開封しない日数（例: 7）。0 ならすぐ開封します。"
+    },
+    "SpareExtraCards": {
+      "label": "余分なカード",
+      "tip": "バッジにもう必要ないカードの重複を余りとして数えます。たとえばバッジがレベル 2 なら各カードを 3 枚残します。"
+    },
+    "SendItems": {
+      "label": "余ったアイテムとブースターパックを送る",
+      "tip": "余ったアイテムがジェムに変えた、または出品したアイテムと、開封したブースターパック。"
+    },
+    "SpareKeepCopies": {
+      "label": "各カードを残す枚数",
+      "tip": "バッジが完成していても常に残す各カードの枚数、例：1。0 なら残さず、最後の1枚も手放せます。バッジにまだ必要なカードは常に残します。"
+    },
+    "SpareDumpPct": {
+      "label": "最安の出品が売却価格よりこれだけ安いときは保持（%）",
+      "tip": "パーセント、例：50。最安の出品が直近1日の売却価格より 50% 以上安く、その売却価格を裏付ける売却が1件しかないときは、2つの価格が矛盾しているので出品せずに保持します。売却が2件以上あれば売却価格の1セント下で出品します。それより安い出品があなたの価格を決めることはもともとありません。0 なら売却が1件でも出品します。「実際の価格より1セント安く」のときだけ。"
     }
   }
 }

@@ -130,8 +130,30 @@ public static partial class Notifier {
 		Topic.Rep4Rep => G.SendRep4Rep,
 		Topic.Security => G.SendSignIns,
 		Topic.BreakIn => G.SendBreakIns,
+		// scam watch and account health decide for themselves whether to alert at all; which channels get it
+		// is per channel (OnChannel), so a channel added later (phone push) gets them by its own switches.
+		Topic.ScamWatch or Topic.Health => true,
+		Topic.Points => G.SendPoints,
+		Topic.Backups => G.SendBackups,
+		Topic.Items => G.SendItems,
 		_ => false
 	};
+
+	// ── per-channel switches for scam watch and account health ──
+	/// <summary>
+	/// Whether one channel ("discord", "telegram") takes this kind of event. Every other kind goes to every channel that is
+	/// set up, as before; scam watch and account health each have their own switch per channel, in their own settings group.
+	/// </summary>
+	public static bool OnChannel(Topic topic, string channel) => (topic, channel) switch {
+		(Topic.ScamWatch, "discord") => G.ScamAlertDiscord,
+		(Topic.ScamWatch, "telegram") => G.ScamAlertTelegram,
+		(Topic.Health, "discord") => G.HealthAlertDiscord,
+		(Topic.Health, "telegram") => G.HealthAlertTelegram,
+		_ => true
+	};
+
+	/// <summary>The blocks one channel takes - see <see cref="OnChannel"/>.</summary>
+	internal static List<Block> For(List<Block> blocks, string channel) => [.. blocks.Where(b => OnChannel(b.Topic, channel))];
 
 	private static void OnPublished(Topic topic, string source, string text) {
 		if (!Wanted(topic) || (!HasDiscord && !HasTelegramToken)) {
@@ -204,12 +226,12 @@ public static partial class Notifier {
 			.GroupBy(static e => (e.Topic, e.Source))
 			.Select(static g => new Block(g.Key.Topic, g.Key.Source, [.. g.Select(static e => e.Text)]))];
 
-		if (HasDiscord) {
-			await SendDiscordAsync(blocks, ct).ConfigureAwait(false);
+		if (HasDiscord && (For(blocks, "discord") is { Count: > 0 } toDiscord)) {
+			await SendDiscordAsync(toDiscord, ct).ConfigureAwait(false);
 		}
 
-		if (HasTelegram) {
-			await SendTelegramAsync(blocks, ct).ConfigureAwait(false);
+		if (HasTelegram && (For(blocks, "telegram") is { Count: > 0 } toTelegram)) {
+			await SendTelegramAsync(toTelegram, ct).ConfigureAwait(false);
 		}
 	}
 
@@ -232,6 +254,11 @@ public static partial class Notifier {
 		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
 		Topic.Security => (new Said("Dashboard sign-ins"), 0xE74C3C),
 		Topic.BreakIn => (new Said("Break-in attempts"), 0xE74C3C),
+		Topic.ScamWatch => (new Said("Scam watch"), 0xE74C3C),
+		Topic.Health => (new Said("Account health"), 0xE67E22),
+		Topic.Points => (new Said("Steam Points"), 0x9B59B6),
+		Topic.Backups => (new Said("Backups"), 0x3498DB),
+		Topic.Items => (new Said("Spare items & packs"), 0x9B59B6),
 		_ => (new Said("nocat.farm"), 0xC8C8C8)
 	};
 

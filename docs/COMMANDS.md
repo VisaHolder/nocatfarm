@@ -16,18 +16,18 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
-| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `levelup` |
+| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `levelup` |
 | **[Trades & items](#trades--items)** | `offers` `trade` `send` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
-| **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `redeem` `keys` |
-| **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
+| **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `events` `redeem` `keys` |
+| **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `scamwatch` `health` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `backup` `import` |
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-77 commands in all.
+81 commands in all.
 
 ## Accounts
 
@@ -68,8 +68,9 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `cards [account]` | What is still left to farm, and about how long it will take. |
 | `drops <account> [appID\|next] [count\|all] \| <account> off` | You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming ("When to farm cards") needs no command. |
 | `match [do]` | Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself. |
-| `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself. |
-| `booster [account\|all] \| <account> <appIDs>` <br>also `boosters` | Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the "Make booster packs for" setting does it by itself every day. |
+| `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. "Deal with spare items" does it by itself (see 'spare'). |
+| `booster [account\|all] \| <account> <appIDs> \| open [account\|all] \| open <account> do` <br>also `boosters` | Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the "Make booster packs for" setting does it by itself every day. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. "Open booster packs" does it by itself. |
+| `spare preview [account\|all] \| on\|off <account> \| do <account>` <br>also `gems` | Spare items: 'spare preview' shows exactly what would be turned into gems, sold or kept, and why - item by item, with the price limit, the new-item days and today's caps. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day). |
 | `levelup <account> <level>` <br>also `lvlup` | What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background. |
 
 ## Trades & items
@@ -104,6 +105,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `freegames [account\|all]` | Look for free games now: paid games given away free to keep, the same check "Claim free games" makes by itself every half hour or so. Says what it claimed, and what was free but couldn't be claimed, and why. On an account with it off, it takes games only. |
 | `freeitems [account\|all]` | Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself. |
 | `queue [account\|all]` | Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default). |
+| `events [account\|all]` | Steam events: whether a sale, the Steam Awards (nominations or votes) or Next Fest is on, and what each account has done - the sticker, the queue, its nominations and votes. The Sale events settings do it all by themselves. |
 | `redeem [account] <key\|file.txt> [key...]` | Activate product keys, or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it. |
 | `keys [list\|clear]` | Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once. |
 
@@ -114,9 +116,11 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `value [account\|all] [refresh]` <br>also `inv`, `inventory` | What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again. |
 | `level [account\|all]` | Each account's Steam level. |
 | `balance [account\|all]` <br>also `wallet` | Steam wallet balance, and anything still pending. |
-| `points [account\|all]` | Steam points each account can spend in the Points Shop. |
+| `points [account\|all] \| spend preview [account\|all] \| on\|off\|spend <account>` | Steam Points each account can spend in the Points Shop, and spending them on levels: the shop's seasonal badge, about 100 XP for every 1,000 points. 'points spend preview' shows what it would buy and buys nothing. Nothing is ever spent until spending is turned on - the switch in the account's settings, after its preview, or 'points on <account>'; then it buys by itself within its Steam Points settings, and 'points spend <account>' buys now. 'points off <account>' turns it off. |
 | `bans [account\|all]` | Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours. |
-| `owns <appID\|name>` | Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name. |
+| `scamwatch [account\|all] \| ok <account>` <br>also `scam` | Scam watch: when each account was last checked for the signs of a stolen account or a trade scam (a new API key, a new device, a changed email, phone or Steam Guard, every session signed out), and any warning standing. After a warning the account's trades stay on hold until you've checked it was you and typed 'scamwatch ok <account>'. Read-only; it checks by itself every half hour or so. |
+| `health [account\|all]` | Each account's health: level, bans, trade hold, market access, limited account, Steam Guard and phone, green, amber or red. It checks by itself when the account signs in and every few hours, and tells you when something gets worse. |
+| `owns <appID\|name>` | Which accounts already own a game or a piece of software (OBS Studio, ShareX), and how long each has played it. Takes an appID, a store URL, or part of a name. |
 | `privacy <account> [public\|friends\|private\|part=level ...]` | See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments. |
 | `joingroup <account\|all> <group link or name>` | Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the "Groups every account joins" setting instead. |
 
@@ -132,7 +136,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | `config [account] [all]` | Show the settings and their current values. Add 'all' to include the advanced ones. |
 | `set [account] <key> <value>` | Change a setting. Without an account name it changes a global one. |
-| `backup` | Save a backup zip of your settings, accounts, saved logins, authenticators and history into the backups folder next to config, and say where. Restoring one is done in the dashboard: Settings, Backup & restore. |
+| `backup [now\|status]` | 'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup. |
 | `import <asf\|ime\|idlemaster\|hourboostr\|singleboostr\|sgi\|steamidler\|auto> [path] [force]` | Bring accounts and settings across from another idler, ArchiSteamFarm login tokens and all. |
 
 ## The app

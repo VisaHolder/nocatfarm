@@ -224,7 +224,7 @@ were ruled out.
 **Steam Families.** *Include family-shared games* (off) lets the hunter use games shared with the account; owned
 games always go first. With *Protect refunds* on, a shared game is skipped for its first 14 days in case whoever
 bought it wants a refund. *Give a shared game back when they want it* (on) hands a game back the moment someone in the family
-starts it, then leaves it alone until 20 minutes after they stop.
+starts it, then leaves it alone until *Wait after a family member stops* (20 minutes) after they stop.
 
 ## Unlocking everything
 

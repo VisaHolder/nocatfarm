@@ -1,4 +1,4 @@
-using NocatFarm.Config;
+﻿using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
@@ -192,7 +192,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		// story: the farmer left it alone and the idler would have sat on it for days.
 		bool Allowed(uint a) => !Bot.Cfg.BlacklistedGames.Contains(a) && !Live.Global.GlobalBlacklistedGames.Contains(a) && !Bot.Refunds.Holds(a);
 
-		List<uint> games = Bot.Cfg.IdleGames.Where(Allowed).ToList();
+		// A family game typed into the list waits while someone in the family is on its copy - or switches to another
+		// member's free copy (Library.FamilyMayPlay) - as the whole-library pick below always waited. The account's own
+		// games are never a family question.
+		List<uint> games = Bot.Cfg.IdleGames.Where(a => Allowed(a) && Bot.Library.FamilyMayPlay(a)).ToList();
 		bool whole = Bot.Cfg.IdleWholeLibrary;
 
 		if (!whole && !Bot.Cfg.RotateIdleGames) {
@@ -210,6 +213,7 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 			games.AddRange(Bot.Library.Games
 				.Where(g => !g.Shared || (Bot.Cfg.IncludeFamilyLibrary && !Bot.Library.FamilyIsPlaying(g.AppId)))
 				.Select(static g => g.AppId)
+				.Concat(Bot.Library.UsedSoftware.Select(static s => s.AppId))   // software it really uses, too - not SDKs it never opened
 				.Where(Allowed));
 		}
 

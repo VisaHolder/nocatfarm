@@ -82,22 +82,25 @@ public sealed class BotManager : IAsyncDisposable {
 
 	/// <summary>Load every bot config from disk, creating and removing bots to match.</summary>
 	public async Task SyncFromDiskAsync() {
-		Dictionary<string, BotConfig> onDisk = ConfigStore.LoadBots();
+		// Only the names: every file is read further down under its account's lock. Read here for all of them at once (outside
+		// any lock), a reload held an account's file open just as that account saved - Windows refused the save, and the
+		// read under the lock then put the older file back in memory: a change lost.
+		HashSet<string> onDisk = new(ConfigStore.BotNames(), StringComparer.OrdinalIgnoreCase);
 
-		// Only accounts whose file is really gone. A file that is there but didn't parse was skipped by LoadBots with a
-		// warning; removing the account for that would stop it over one stray comma.
-		foreach (string gone in _bots.Keys.Where(k => !onDisk.ContainsKey(k) && !File.Exists(Path.Combine(ConfigStore.ConfigDir, k + ".json"))).ToArray()) {
+		// Only accounts whose file is really gone - one that's there but doesn't parse doesn't stop the account over one
+		// stray comma.
+		foreach (string gone in _bots.Keys.Where(k => !onDisk.Contains(k) && !File.Exists(Path.Combine(ConfigStore.ConfigDir, k + ".json"))).ToArray()) {
 			if (_bots.TryRemove(gone, out Bot? b)) {
 				Log.Info("config removed - stopping", gone);
 				await b.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 			}
 		}
 
-		foreach (string name in onDisk.Keys) {
+		foreach (string name in onDisk) {
 			if (_bots.TryGetValue(name, out Bot? existing)) {
-				// Read again under the account's lock. The copy above was read for every account at once, before any of
-				// them was put in, so a save made in between (a dashboard save, 'set', a learned ban) was already newer
-				// than it - put in, it undid that change here and at the account's next save on disk too.
+				// Read under the account's lock. A copy read for every account at once, before any of them was put in, was
+				// older than a save made in between (a dashboard save, 'set', a learned ban) - put in, it undid that change
+				// here and at the account's next save on disk too.
 				lock (existing.CfgGate) {
 					if (ConfigStore.LoadBot(existing.Name) is { } fresh) {
 						existing.Reconfigure(fresh);
@@ -137,8 +140,13 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Gifts(bot));
 		bot.AddModule(new Boosters(bot));
 		bot.AddModule(new EventItems(bot));
+		bot.AddModule(new SaleEvents(bot));
+		bot.AddModule(new PointsSpender(bot));
 		bot.AddModule(new BanWatch(bot));
-		bot.AddModule(new DuplicateSeller(bot));
+		bot.AddModule(new ScamWatch(bot));       // 1.8.0
+		bot.AddModule(new AccountHealth(bot));   // 1.8.0
+		bot.AddModule(new SpareItems(bot));
+		bot.AddModule(new PackOpener(bot));
 		bot.AddModule(new AchievementPacer(bot));
 		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Upkeep(bot));

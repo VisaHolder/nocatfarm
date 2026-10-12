@@ -237,6 +237,13 @@ public static partial class PriceBook {
 	/// <summary>The same, for anything that keeps values over time and has to know which currency they were in.</summary>
 	public static int CurrencyId => Currency;
 
+	/// <summary>
+	/// Whether search pages can price this book: only in US dollars. The market's search answers in US dollars whatever
+	/// currency is asked for ("$0.39" asked for euros and Canadian dollars alike, live 2026-10-12, where priceoverview said
+	/// "0,36€" and "CDN$ 0.57"), so in any other currency every price is asked for on its own.
+	/// </summary>
+	public static bool SearchesFit => Currency == 1;
+
 	/// <summary>The symbol to print. Steam uses "$" for several of these, which is exactly what people expect.</summary>
 	public static string Symbol => Currency switch {
 		2 => "£",
@@ -560,7 +567,8 @@ public static partial class PriceBook {
 			_pageSize = page.PageSize;
 		}
 
-		foreach ((string hash, int cents) in page.Prices) {
+		// US dollars, whatever was asked: never kept as another currency's prices (NextAsk asks none then anyway).
+		foreach ((string hash, int cents) in SearchesFit ? page.Prices : []) {
 			Remember(ask.SearchApp, hash, cents / 100m);
 		}
 
@@ -619,7 +627,8 @@ public static partial class PriceBook {
 	/// search (and its count) says.
 	/// </summary>
 	public static void Learn(uint app, string json, int currency) {
-		if ((currency != Currency) || (ParseSearch(json) is not { } page)) {
+		// A search page is US dollars whatever it was asked for: only a US-dollar book learns from one.
+		if ((currency != Currency) || !SearchesFit || (ParseSearch(json) is not { } page)) {
 			return;
 		}
 
@@ -1112,7 +1121,7 @@ public static partial class PriceBook {
 
 		// Searches being refused while single lookups are answered: one at a time until they're tried again. And right after
 		// a refused search, one item on its own - its answer says which it was.
-		if (SearchOff || (_searchDoubt >= 0) || (GroupOf(app, hash) is not { } group)) {
+		if (!SearchesFit || SearchOff || (_searchDoubt >= 0) || (GroupOf(app, hash) is not { } group)) {
 			return single;
 		}
 
@@ -1160,7 +1169,7 @@ public static partial class PriceBook {
 	public static int RequestsFor(IEnumerable<(uint App, string Hash)> waiting) {
 		int requests = 0;
 		int size = Math.Max(1, _pageSize);
-		bool singles = SearchOff;   // one request each while searches are being left alone
+		bool singles = SearchOff || !SearchesFit;   // one request each while searches are being left alone, or can't price this currency
 		Dictionary<string, List<(uint App, string Hash)>> groups = new(StringComparer.Ordinal);
 
 		foreach ((uint app, string hash) in waiting) {
@@ -1332,8 +1341,16 @@ public static partial class PriceBook {
 				Dictionary<string, Price>? saved = JsonSerializer.Deserialize<Dictionary<string, Price>>(File.ReadAllText(Path));
 
 				if (saved != null) {
+					// Written before searches were known to answer in US dollars: every price in another currency may be a
+					// dollar price under the wrong name, and can't be told from a real one - asked for again, once.
+					bool trusted = saved.ContainsKey(CurrencyMark);
+
 					lock (Cache) {
 						foreach ((string key, Price p) in saved) {
+							if ((key == CurrencyMark) || (!trusted && !key.StartsWith(AsidePrefix, StringComparison.Ordinal) && !IsDollarKey(key))) {
+								continue;
+							}
+
 							// Anything a month old is either an item nobody holds any more or a currency nobody uses
 							// any more - keeping either for ever is how a cache file quietly becomes a megabyte.
 							if (DateTime.UtcNow - p.When >= TimeSpan.FromDays(30)) {
@@ -1358,6 +1375,12 @@ public static partial class PriceBook {
 		}
 	}
 
+	/// <summary>In a book written since searches were known to answer in US dollars (1.8.0): its other currencies are real.</summary>
+	private const string CurrencyMark = "~searches-in-dollars";
+
+	/// <summary>A price key ("app/currency/name") in US dollars.</summary>
+	private static bool IsDollarKey(string key) => key.IndexOf('/') is int a and > 0 && key.IndexOf('/', a + 1) is int b and > 0 && key[(a + 1)..b] == "1";
+
 	/// <summary>Write the book out. Called on a timer and once on the way out.</summary>
 	public static void Save() {
 		try {
@@ -1379,6 +1402,8 @@ public static partial class PriceBook {
 					if (snapshot.Count == 0) {
 						return;
 					}
+
+					snapshot[CurrencyMark] = new Price { Usd = 1, At = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
 				}
 
 				Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);

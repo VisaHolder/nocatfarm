@@ -121,6 +121,7 @@ public static class History {
 
 			if (kind == Stats.KindCard) {
 				d.Cards++;
+				FarmTotals.NoteCard();   // the live stats on nocat.lol - nothing while sharing them is off
 			} else {
 				d.Comments++;
 			}
@@ -152,6 +153,8 @@ public static class History {
 				string id = app.ToString(CultureInfo.InvariantCulture);
 				d.Games[id] = d.Games.GetValueOrDefault(id) + minutes;
 			}
+
+			FarmTotals.NotePlay(minutes, apps.Count(static a => a != 0));   // the live stats on nocat.lol - nothing while sharing them is off
 
 			Dirty.Add(day[..7]);
 		}
@@ -364,6 +367,58 @@ public static class History {
 		}
 
 		return sum;
+	}
+
+	/// <summary>
+	/// Everything recorded so far, for the live stats' one-time catch-up (<see cref="FarmTotals"/>): game-minutes banked
+	/// (every running game counted, <see cref="Banked"/>) and cards, over every account and day - each account's day
+	/// capped to what's physically possible (<see cref="FarmTotals.MaxMinutesPerAccountDay"/>,
+	/// <see cref="FarmTotals.MaxCardsPerAccountDay"/>) - plus how many accounts that was and how many days from the first
+	/// one to today.
+	/// </summary>
+	public static (double Minutes, int Cards, int Accounts, int Days) Past() {
+		Load();
+
+		lock (Gate) {
+			double minutes = 0;
+			long cards = 0;
+			HashSet<string> accounts = new(StringComparer.OrdinalIgnoreCase);
+			string? first = null;
+
+			foreach ((string day, Dictionary<string, Day> bots) in Days) {
+				foreach ((string bot, Day d) in bots) {
+					double m = Math.Min(Banked(d), FarmTotals.MaxMinutesPerAccountDay);
+					int c = Math.Min(d.Cards, FarmTotals.MaxCardsPerAccountDay);
+
+					if ((m <= 0) && (c <= 0)) {
+						continue;
+					}
+
+					first ??= day;
+					accounts.Add(bot);
+					minutes += Math.Max(0, m);
+					cards += Math.Max(0, c);
+				}
+			}
+
+			int days = 0;
+
+			if ((first != null) && DateTime.TryParseExact(first, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime from)) {
+				days = Math.Max(1, (int) (DateTime.Now.Date - from.Date).TotalDays + 1);
+			}
+
+			return (minutes, (int) Math.Min(cards, int.MaxValue), accounts.Count, days);
+		}
+	}
+
+	/// <summary>Runs <paramref name="f"/> under the history's lock - what the live stats start counting under, so no
+	/// playtime tick or card drop falls between what the history holds and what they count.</summary>
+	internal static T Locked<T>(Func<T> f) {
+		Load();
+
+		lock (Gate) {
+			return f();
+		}
 	}
 
 	/// <summary>Forget what's in memory and read the month files again - after a restore put other ones in their place.</summary>

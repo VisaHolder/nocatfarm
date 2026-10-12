@@ -27,7 +27,10 @@ rep4rep rest myaccount      # a full day off, then a clean start
 ```
 
 *Hold commenting for (hours)* (Show advanced) pauses every account for that many hours, then carries on by itself.
-Points show as pending at first, while rep4rep checks that the comment landed.
+Points show as pending at first, while rep4rep checks that the comment landed. rep4rep sometimes reports a pending
+figure below zero (-16, say); that is shown as 0 pending, with your points as they are. Whether rep4rep shows as
+connected depends only on the token and whether rep4rep answered last time, never on the points, so an odd figure
+never sends you back to the set-up screen.
 
 ---
 

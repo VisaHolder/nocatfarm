@@ -19,7 +19,7 @@ namespace NocatFarm.Core;
 ///
 /// Refreshed on a long timer: a library changes when you buy something, not by the minute.
 /// </summary>
-public sealed class Library(Bot bot) {
+public sealed partial class Library(Bot bot) {
 	/// <summary>One game the account can launch. Minutes are Steam's own total, across every device.</summary>
 	public sealed record Entry(uint AppId, string Name, int MinutesPlayed, DateTime Acquired, ulong SharedFrom) {
 		/// <summary>Borrowed through a Steam Family rather than owned outright.</summary>
@@ -36,60 +36,7 @@ public sealed class Library(Bot bot) {
 
 	public DateTime RefreshedAt { get; private set; }
 
-	// ── who else in the family is playing what ───────────────────────────────
-	private HashSet<uint> _familyBusy = [];
-	private readonly Dictionary<uint, DateTime> _freeSince = [];
-
-	/// <summary>
-	/// A family member is playing this shared game right now, so it is not ours to touch.
-	///
-	/// Steam lends a shared game to one person at a time and the OWNER always wins: start hunting something they
-	/// then launch and the account is thrown out of it mid-session, left "playing" a game it no longer has. This
-	/// is the polite version of the same rule - don't take a game somebody is using, and don't pounce the instant
-	/// they put it down either.
-	/// </summary>
-	public bool FamilyIsPlaying(uint app) {
-		if (_familyBusy.Contains(app)) {
-			return true;
-		}
-
-		// A grace period after they stop. Somebody who just quit is quite likely to start it up again, and an
-		// account that grabs the game four seconds after they close it is not behaving like a housemate.
-		// Locked: Steam's push writes this on its own thread while the modules read it, and a Dictionary read in the
-		// middle of a write can throw.
-		lock (_freeSince) {
-			return _freeSince.TryGetValue(app, out DateTime free) && (DateTime.UtcNow - free < TimeSpan.FromMinutes(20));
-		}
-	}
-
-	/// <summary>
-	/// Steam's live "who in the family is running what" push. It carries the WHOLE current picture each time, so
-	/// the set is replaced rather than added to.
-	///
-	/// This account appears in it too, playing whatever it is playing - counting that would mean reading our own
-	/// hunt as somebody else's and standing down from it immediately, so we are filtered out by SteamID.
-	/// </summary>
-	internal void NoteFamilyRunning(IEnumerable<(uint App, IEnumerable<ulong> Members)> running) {
-		HashSet<uint> busy = [];
-
-		foreach ((uint app, IEnumerable<ulong> members) in running) {
-			if (members.Any(m => m != bot.SteamId)) {
-				busy.Add(app);
-			}
-		}
-
-		lock (_freeSince) {
-			foreach (uint app in _familyBusy.Except(busy)) {
-				_freeSince[app] = DateTime.UtcNow;   // they've just stopped - start the grace period
-			}
-
-			foreach (uint app in busy) {
-				_freeSince.Remove(app);
-			}
-		}
-
-		_familyBusy = busy;
-	}
+	// Who else in the family is playing what, and whose copy: Core/Family.cs.
 
 	public Entry? Find(uint app) => _byApp.GetValueOrDefault(app);
 
@@ -99,7 +46,7 @@ public sealed class Library(Bot bot) {
 	public IReadOnlyDictionary<uint, int> LastTwoWeeks => _twoWeeks;
 
 	/// <summary>Minutes on record for a game, or 0 if we've never heard of it.</summary>
-	public int MinutesOn(uint app) => Find(app)?.MinutesPlayed ?? 0;
+	public int MinutesOn(uint app) => Find(app)?.MinutesPlayed ?? FindSoftware(app)?.MinutesPlayed ?? 0;
 
 	/// <summary>
 	/// GetOwnedGames doesn't always list everything the account plays. It left out 2,757 hours of Team Fortress 2 on
@@ -137,6 +84,7 @@ public sealed class Library(Bot bot) {
 		}
 
 		_twoWeeks = played.Where(static p => p.Value.TwoWeeks > 0).ToDictionary(static p => p.Key, static p => p.Value.TwoWeeks);
+		_playedForever = played.Where(static p => p.Value.Forever > 0).ToDictionary(static p => p.Key, static p => p.Value.Forever);
 
 		for (int i = 0; i < found.Count; i++) {
 			if (played.TryGetValue(found[i].AppId, out (int Forever, int TwoWeeks) time) && (time.Forever > found[i].MinutesPlayed)) {
@@ -317,6 +265,11 @@ public sealed class Library(Bot bot) {
 		Ready = true;
 		RefreshedAt = DateTime.UtcNow;
 
+		// After the games are in, and on its own: an account with thousands of DLC licences takes minutes the first time,
+		// and nothing that plays games should wait for it - the achievement hunter and the upkeep's inventory look wait
+		// on this read. Core/LibrarySoftware.cs
+		StartSoftwareRead(found, ct);
+
 		if (first) {
 			Log.Debug(shared > 0
 				? new Said("library: {0} game(s) owned, {1} shared by the family", found.Count - shared, shared)
@@ -357,6 +310,9 @@ public sealed class Library(Bot bot) {
 			return shared;
 		}
 
+		FamilyGroupId = ulong.TryParse(familyId, out ulong groupId) ? groupId : 0;
+		Dictionary<uint, ulong[]> owners = [];
+
 		string? json = await bot.Web.ApiGetAsync("IFamilyGroupsService", "GetSharedLibraryApps", new Dictionary<string, string> {
 			["family_groupid"] = familyId,
 			["steamid"] = bot.SteamId.ToString(),
@@ -389,21 +345,25 @@ public sealed class Library(Bot bot) {
 				continue;   // the family has taken this one out of sharing
 			}
 
-			ulong owner = 0;
+			// Every member who owns a copy - each can be borrowed from on its own (see Core/Family.cs). The first is the one
+			// the library names, as before.
+			List<ulong> copies = [];
 
-			if (app.TryGetProperty("owner_steamids", out JsonElement owners) && (owners.ValueKind == JsonValueKind.Array)) {
-				foreach (JsonElement o in owners.EnumerateArray()) {
-					if (ulong.TryParse(o.ValueKind == JsonValueKind.String ? o.GetString() : o.ToString(), out ulong parsed) && (parsed != 0)) {
-						owner = parsed;
-
-						break;
+			if (app.TryGetProperty("owner_steamids", out JsonElement ownerList) && (ownerList.ValueKind == JsonValueKind.Array)) {
+				foreach (JsonElement o in ownerList.EnumerateArray()) {
+					if (ulong.TryParse(o.ValueKind == JsonValueKind.String ? o.GetString() : o.ToString(), out ulong parsed) && (parsed != 0)
+						&& (parsed != bot.SteamId) && !copies.Contains(parsed)) {
+						copies.Add(parsed);
 					}
 				}
 			}
 
-			if (owner == 0) {
+			if (copies.Count == 0) {
 				continue;   // nobody to borrow it from
 			}
+
+			ulong owner = copies[0];
+			owners[appId] = [.. copies];
 
 			string name = app.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
 			int minutes = app.TryGetProperty("rt_playtime", out JsonElement p) && p.TryGetInt32(out int mins) ? mins : 0;
@@ -414,6 +374,8 @@ public sealed class Library(Bot bot) {
 
 			shared.Add(new Entry(appId, string.IsNullOrWhiteSpace(name) ? GameNames.Of(appId) : name, Math.Max(0, minutes), acquired, owner));
 		}
+
+		_copyOwners = owners;
 
 		return shared;
 	}

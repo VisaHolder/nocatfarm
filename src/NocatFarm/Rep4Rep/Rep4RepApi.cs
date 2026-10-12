@@ -27,7 +27,31 @@ public sealed class Rep4RepApi : IDisposable {
 
 	private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
-	public string Token { get; set; } = "";
+	private volatile string _token = "";
+
+	/// <summary>The API token. A different one forgets whether rep4rep took the last one (see <see cref="UserAnswered"/>).</summary>
+	public string Token {
+		get => _token;
+		set {
+			if (!string.Equals(_token, value, StringComparison.Ordinal)) {
+				_token = value;
+				_userAnswered = 0;
+			}
+		}
+	}
+
+	// 0 = not asked yet with this token, 1 = the last /user answered with a balance, -1 = it didn't.
+	private volatile int _userAnswered;
+
+	/// <summary>
+	/// Whether the last <see cref="GetUserAsync"/> with this token got a balance back (any balance, even an odd one):
+	/// true yes, false no (a bad token, or rep4rep unreachable), null not asked yet. "Connected" is this, never the
+	/// points figure - a negative pending made the dashboard call a working token "unlinked".
+	/// </summary>
+	public bool? UserAnswered => _userAnswered switch { 1 => true, -1 => false, _ => null };
+
+	/// <summary>The points when rep4rep sends something that isn't a number - a balance that can't be true.</summary>
+	public const int NotANumber = int.MinValue;
 
 	public bool HasToken => !string.IsNullOrWhiteSpace(Token);
 
@@ -103,6 +127,18 @@ public sealed class Rep4RepApi : IDisposable {
 
 	/// <summary>Points currently on the rep4rep account, or null if it couldn't be read.</summary>
 	public async Task<(int Points, int PendingPoints)?> GetUserAsync(CancellationToken ct = default) {
+		string asked = Token;
+		(int Points, int PendingPoints)? user = await ReadUserAsync(ct).ConfigureAwait(false);
+
+		// Only for the token it was asked with: a token swapped in meanwhile starts again from "not asked yet".
+		if (string.Equals(asked, Token, StringComparison.Ordinal) && (asked.Length > 0)) {
+			_userAnswered = user == null ? -1 : 1;
+		}
+
+		return user;
+	}
+
+	private async Task<(int Points, int PendingPoints)?> ReadUserAsync(CancellationToken ct) {
 		string? body = await GetAsync("/user", ct).ConfigureAwait(false);
 
 		if (body == null) {
@@ -121,7 +157,15 @@ public sealed class Rep4RepApi : IDisposable {
 				root = user;
 			}
 
-			return (ReadInt(root, "points"), ReadInt(root, "pendingPoints"));
+			// rep4rep answers a bad token with a 200 and an error, not a balance: no "points" at all is no answer.
+			if ((root.ValueKind != JsonValueKind.Object) || !root.TryGetProperty("points", out _)) {
+				return null;
+			}
+
+			// A "points" that isn't a number is an answer, just an impossible one (see WebHost.Believable).
+			int points = int.TryParse(ReadString(root, "points"), out int p) ? p : NotANumber;
+
+			return (points, ReadInt(root, "pendingPoints"));
 		} catch (Exception e) {
 			Unreadable("/user", e);
 

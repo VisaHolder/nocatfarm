@@ -4,13 +4,26 @@ using Said = NocatFarm.Core.Said;
 namespace NocatFarm;
 
 /// <summary>What a notification is about, so the user can switch off the kinds they don't care for.</summary>
-public enum NotifyKind { Earning, Social, Problem, Trade }
+public enum NotifyKind { Earning, Social, Problem, Trade,
+	// scam watch and account health, whose own pop-up switch has already said yes
+	Alarm }
 
 /// <summary>
 /// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
 /// pick exactly which of these they want sent.
 /// </summary>
-public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs, Weekly, Security, BreakIn }
+public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs, Weekly, Security, BreakIn,
+	// scam watch and account health alerts
+	ScamWatch, Health,
+
+	/// <summary>Badge levels bought with Steam Points (Modules/PointsSpender.cs).</summary>
+	Points,
+
+	/// <summary>The daily password-locked backups (Core/BackupSchedule.cs).</summary>
+	Backups,
+
+	/// <summary>Spare items turned into gems or sold, and booster packs opened (Modules/SpareItems.cs).</summary>
+	Items }
 
 /// <summary>
 /// Console + file logging, and a ring buffer the dashboard reads so the browser shows the same stream you see
@@ -308,6 +321,25 @@ public static class Log {
 			Notify?.Invoke(NotifyKind.Problem, title.ToString(), brief.ToString());
 			Publish(topic, "nocat.farm", brief);
 		}
+	}
+
+	/// <summary>
+	/// A scam-watch or account-health alert (1.8.0): the log line (red for scam watch, a "needs you" line for health), a
+	/// pop-up only when that feature's pop-up switch is on, and Discord/Telegram (and any other channel) under its own
+	/// <paramref name="topic"/> - so each channel can be switched on or off for it on its own.
+	/// </summary>
+	public static void Alarm(Core.Said text, string source, Topic topic, bool popup, bool red = true) {
+		if (red) {
+			Write("ERROR", source, text, ConsoleColor.Red);
+		} else {
+			Write("WARN", source, text, ConsoleColor.Magenta);
+		}
+
+		if (popup) {
+			Notify?.Invoke(NotifyKind.Alarm, source, text.ToString());
+		}
+
+		Publish(topic, source, text);
 	}
 
 	/// <summary>

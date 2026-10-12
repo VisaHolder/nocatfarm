@@ -105,6 +105,17 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// A scam-watch warning holds the account's trades until 'scamwatch ok': nothing is sent meanwhile.
+			if (ScamWatch.HoldsTrades(Bot)) {
+				_status = new Said("send due - on hold after a scam watch warning");
+
+				if (!await Sleep(TimeSpan.FromMinutes(10), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				continue;
+			}
+
 			if (!Bot.IsOnline || !Bot.Web.Ready || Bot.Paused) {
 				_status = new Said("waiting for the account");
 

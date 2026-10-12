@@ -8,7 +8,8 @@ Your accounts stay on your PC. Accounts, login tokens, settings and logs are nev
 
 Passwords are optional. After the first sign-in a Steam login token does the work. Login tokens, saved passwords,
 authenticator secrets and proxy passwords are all encrypted on disk: on Windows they're tied to your Windows user,
-and on Linux, a Mac and Docker they use a key only your user can read.
+and on Linux, a Mac and Docker they use a key only your user can read. The daily backup file is locked with your backup
+password: AES-256-GCM, with the key made from the password by PBKDF2-SHA256 and 600,000 rounds.
 
 nocat.farm talks to Steam, always. It checks GitHub every 2 hours for a new version (*Look for updates every*) and
 downloads one when you say so; *Notify if an update is available* turns the check off. Discord, Telegram and rep4rep
@@ -21,6 +22,17 @@ and how many of your Steam accounts are signed in, as a number only. No account 
 it, and the install ID isn't in backups. That's where "1,240 Steam accounts on nocat.farm" on the Overview and the
 Discord card comes from. *Count me as a user* (*Global settings
 → Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
+
+With *Share my hours and cards totals* (*Global settings → Updates & plugins*, right under *Count me as a user*, on while that is) the same
+message also carries two numbers, about every 6 hours: the game-hours banked and the cards dropped since the last one. They're capped to
+what your accounts could really have done in that time, and each lot is sent under a random name until nocat.lol says
+it has it, so it's never counted twice. With them go how many hours that lot covers and how many accounts this copy
+has (a number only), which nocat.lol caps it by. The first time it's on, the message also carries, once, the same two numbers for
+what this copy's history already held from before (up to about 400 days), so the hours you banked before 1.8.0 count
+too. That's added up the moment counting starts, so an hour is in it or in the 6-hourly numbers, never both, and it's
+capped to what your accounts could have done on those days. nocat.lol counts it once per install, ever. A history restored from a backup belongs to the copy that made the
+backup, so it's never sent from the copy it's restored on. That's the
+"hours of game time banked · cards farmed" on nocat.lol's nocat.farm page. Turn it off and neither number is sent.
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
