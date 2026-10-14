@@ -27499,6 +27499,12 @@ await CommandSweep.RunAsync(Check);
 
 		try {
 			Directory.Delete(soTmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
 // ── 1.8.2: buying cards and the cheapest full sets ──
 {
 	string bcRealRoot = NocatFarm.Config.ConfigStore.Root;
@@ -28980,6 +28986,8 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 sealed class FakeCardSwaps : NocatFarm.Modules.ICardSwaps {
 	public long Cost { get; set; }
 	public Task<long?> SwapCostAsync(NocatFarm.Core.Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult<long?>(Cost);
+}
+
 /// <summary>A pretend nocat.lol for card swaps: answers every request with <see cref="Reply"/> and notes what it was sent. Nothing reaches the network.</summary>
 sealed class FakeSwapSite : HttpMessageHandler {
 	public List<string> Bodies { get; } = [];
