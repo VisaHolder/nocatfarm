@@ -1096,26 +1096,6 @@ public sealed partial class MainWindow : IDisposable {
 				});
 
 				break;
-
-			case 'c':
-				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> cards " + name)));
-				_ = Task.Run(async () => {
-					try {
-						string output = await Commands.RunAsync(_mgr, "cards " + name).ConfigureAwait(false);
-
-						foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
-							if (line.Length > 0) {
-								Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + line)));
-							}
-						}
-					} catch (Exception e) {
-						Log.Failed("the cards button", e, name);
-					}
-
-					Invalidate();
-				});
-
-				break;
 		}
 
 		Invalidate();
@@ -1402,17 +1382,12 @@ public sealed partial class MainWindow : IDisposable {
 	/// row that then has to grow to fit them. It scrolls, so the number of accounts stops being a layout problem.
 	/// </summary>
 	/// <summary>What the two button columns plus the right margin occupy, so the text lays out around them.</summary>
+	/// <remarks>
+	/// 1.8.2: every row is the same 2 x 2 grid of equal buttons - [stop][pause] / [profile][Steam] - the Steam slot left
+	/// empty on an account without the Open in Steam button, so the columns line up down the list. (The cards button went:
+	/// the 'cards' command and the dashboard still show what's left to farm.)
+	/// </remarks>
 	private const int ButtonBlock = 14 + (58 * 2) + 5;
-
-	/// <summary>
-	/// 1.8.2: with the Open in Steam button on some account, the buttons are a 3 x 2 grid of narrower, equal buttons -
-	/// [stop][pause][cards] / [profile][Steam] - so the row keeps its height. Every row keeps the same grid, the Steam
-	/// slot left empty on an account without it, so the columns line up down the list.
-	/// </summary>
-	private const int GridBtnW = 50;
-
-	/// <summary>The 3 x 2 grid plus the right margin.</summary>
-	private const int GridBlock = 14 + (GridBtnW * 3) + (5 * 2);
 
 	/// <summary>The account row's Steam button under the pointer, for its tooltip: where it is drawn. Null when none.</summary>
 	private (int X, int Y, int W, int H)? _steamTip;
@@ -1480,9 +1455,6 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, TitleH, _w, _h - TitleH, Rgb(6, 6, 6));
 
 		List<Bot> all = _mgr.All.ToList();
-		// The Open in Steam button on any account: the buttons become a 3 x 2 grid (GridBlock), the row the same height.
-		bool anySteamOpen = all.Any(b => Core.SteamOpen.On(b.Cfg, b.Name));
-		int buttonBlock = anySteamOpen ? GridBlock : ButtonBlock;
 		const int SheetRow = 54;
 		const int HeaderH = 38;
 		const int FooterH = 14;
@@ -1529,7 +1501,7 @@ public sealed partial class MainWindow : IDisposable {
 			// small to finish a sentence the column is dropped and the space goes to what the account is doing.
 			const int MinDetail = 110;
 			int textLeft = x + 30;
-			int textRoom = (x + w - buttonBlock) - textLeft;
+			int textRoom = (x + w - ButtonBlock) - textLeft;
 			int detailW = (textRoom * 40) / 100;
 
 			if (detailW < MinDetail) {
@@ -1537,7 +1509,7 @@ public sealed partial class MainWindow : IDisposable {
 			}
 
 			int doingW = Math.Max(40, textRoom - detailW - (detailW > 0 ? 12 : 0));
-			int detailX = (x + w - buttonBlock) - detailW;
+			int detailX = (x + w - ButtonBlock) - detailW;
 
 			Clipped(dc, doing, textLeft, y + 22, doingW, _fontSmall, TextMid);
 
@@ -1578,32 +1550,19 @@ public sealed partial class MainWindow : IDisposable {
 			}
 
 			// Every action for this account, in fixed positions so they are in the same place on every row.
+			const int BtnW = 58;
 			const int BtnH = 20;
 			const int Gap = 5;
-			int bx = (x + w) - buttonBlock;
-			string run = bot.Running ? "stop" : "start", pause = bot.Paused ? "resume" : "pause";
-			int runColour = bot.Running ? Red : Green;
+			int bx = (x + w) - ButtonBlock;
+			int row2 = y + 4 + BtnH + Gap;
 
-			if (anySteamOpen) {
-				// [stop][pause][cards] / [profile][Steam]: one grid on every row, the Steam slot empty where it's off.
-				int Col(int i) => bx + (i * (GridBtnW + Gap));
-				int row2 = y + 4 + BtnH + Gap;
+			// [stop][pause] / [profile][Steam]: one grid on every row, the Steam slot empty where its button is off.
+			RowButton(dc, bot.Running ? "stop" : "start", bx, y + 4, BtnW, BtnH, bot.Name, 'x', bot.Running ? Red : Green);
+			RowButton(dc, bot.Paused ? "resume" : "pause", bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
+			RowButton(dc, "profile", bx, row2, BtnW, BtnH, bot.Name, 'n', TextMid);
 
-				RowButton(dc, run, Col(0), y + 4, GridBtnW, BtnH, bot.Name, 'x', runColour);
-				RowButton(dc, pause, Col(1), y + 4, GridBtnW, BtnH, bot.Name, 'p', Amber);
-				RowButton(dc, "cards", Col(2), y + 4, GridBtnW, BtnH, bot.Name, 'c', TextMid);
-				RowButton(dc, "profile", Col(0), row2, GridBtnW, BtnH, bot.Name, 'n', TextMid);
-
-				if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
-					RowButton(dc, "Steam", Col(1), row2, GridBtnW, BtnH, bot.Name, 'o', Accent);
-				}
-			} else {
-				const int BtnW = 58;
-
-				RowButton(dc, run, bx, y + 4, BtnW, BtnH, bot.Name, 'x', runColour);
-				RowButton(dc, pause, bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
-				RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
-				RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
+			if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
+				RowButton(dc, "Steam", bx + BtnW + Gap, row2, BtnW, BtnH, bot.Name, 'o', Accent);
 			}
 
 			y += SheetRow;
