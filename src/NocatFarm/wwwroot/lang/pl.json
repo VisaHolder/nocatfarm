@@ -2703,9 +2703,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "Zbędne przedmioty są włączone dla {0}: zamienia zbędne przedmioty w klejnoty albo je sprzedaje, w swoich granicach",
     "Spare items was turned off on {0} - stopped before the next item": "Zbędne przedmioty zostały wyłączone na {0} - zatrzymano przed następnym przedmiotem",
     "Spending Steam Points is off for {0}: nothing is spent": "Wydawanie punktów Steam jest wyłączone dla {0}: nic nie jest wydawane",
+    "Buying cards": "Kupowanie kart",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: kupowanie kart jest wyłączone, dopóki nie włączysz go w ustawieniach - najpierw pokaże, co by kupił",
     "up {0}": "wstaje {0}",
+    "couldn't look for an open buy order: {0}": "nie udało się sprawdzić otwartego zlecenia kupna: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Kupowanie kart jest włączone dla {0}: sam kupuje brakujące karty do swoich odznak, w swoich granicach",
+    "Buying cards is off for {0}: nothing is bought": "Kupowanie kart jest wyłączone dla {0}: nic nie jest kupowane",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam chce danych rozliczeniowych przed pierwszym zakupem tego konta na rynku - kup raz ręcznie jedną kartę, potem będzie mógł kupować",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam wymaga potwierdzania każdego zakupu tego konta na rynku e-mailem, czego nocat.farm nie potrafi",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam wymaga potwierdzania każdego zakupu tego konta na rynku w aplikacji Steam - dodaj jego uwierzytelniacz do nocat.farm, żeby mógł potwierdzać własne zakupy",
+    "couldn't save the card buying list: {0}": "nie udało się zapisać listy zakupów kart: {0}",
+    "couldn't read the card buying list: {0}": "nie udało się odczytać listy zakupów kart: {0}",
+    "buying cards: next look around {0}": "kupowanie kart: następne sprawdzenie około {0}",
+    "couldn't look at buying cards: {0}": "nie udało się sprawdzić kupowania kart: {0}",
+    "bought {0} · {1} · {2}": "kupiono {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "brak odpowiedzi przy kupnie {0} · liczone jako wydane",
+    "buying {0} turned down · {1}": "kupno {0} odrzucone · {1}",
+    "buying {0} turned down": "kupno {0} odrzucone",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "kupiono kart: {0} · {1} · zestawy do stworzenia: {2}",
     "next up {0} · goes to bed {1}": "następna pobudka {0} · idzie spać {1}",
     "{0} · that sitting's over": "{0} · ta sesja się skończyła",
+    "Turn on buying cards?": "Włączyć kupowanie kart?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Oto co kupiłby następnie i za ile, oraz granice, których się trzyma. Wydaje z portfela Steam tego konta. Nic nie zostanie kupione, dopóki nie naciśniesz Włącz.",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Nie jest zalogowany, więc nie może jeszcze zajrzeć na rynek. Oto granice, których będzie się trzymał.",
+    "Couldn't look at the market: {0}": "Nie udało się zajrzeć na rynek: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "„Twórz odznaki z kart” jest wyłączone - nic nie zostanie kupione, dopóki tego nie włączysz, bo karty tylko by leżały.",
+    "card to buy": "karta do kupienia",
+    "cards to buy": "kart do kupienia",
+    "{0} for {1} badge level(s)": "{0} za poziomy odznak: {1}",
+    "badge levels": "poziomy odznak",
+    "wallet: {0}": "portfel: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Pełny zestaw {0} ({1} kart) za {2} - poziom {3} do {4}, około {5} PD za 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} z {1} kart do {2} ({3}) za {4} - poziom {5} do {6}, około {7} PD za 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Wydaje najwyżej {0} dziennie (wydano {1} w ostatniej dobie)",
+    "Spends at most {0} a week ({1} spent this week)": "Wydaje najwyżej {0} tygodniowo (wydano {1} w tym tygodniu)",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "Nigdy więcej, niż jest w portfelu, i tylko całe zestawy - nigdy część zestawu",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Każda karta w najniższej cenie na rynku, sprawdzonej ponownie tuż przed zakupem",
+    "Badges it has started first, then the cheapest full sets": "Najpierw rozpoczęte odznaki, potem najtańsze pełne zestawy",
+    "Only badges it has started - not full sets": "Tylko rozpoczęte odznaki - nie pełne zestawy",
+    "Only during its day (human mode), one set at a time": "Tylko w jego dniu (tryb ludzki), jeden zestaw naraz",
+    "Badge crafting turns each finished set into a level": "Tworzenie odznak zamienia każdy ukończony zestaw w poziom",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Wydawanie punktów Steam jest włączone dla {0}: sam kupuje poziomy odznaki, w swoich granicach",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Punkty Steam: wydawanie jest wyłączone - włącz je w Ustawieniach, żeby zobaczyć, co by kupił",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Punkty Steam: wydałby {0} punktów na {1} poziom(y) {2} (+{3} PD) - nic nie jest wydawane, dopóki wydawanie nie zostanie włączone w Ustawieniach",
@@ -4233,6 +4270,26 @@
     "PointsCheckEveryHours": {
       "label": "Sprawdzaj co (godziny)",
       "tip": "Jak często sprawdza punkty i sklep, w godzinach - na przykład 12, dwa razy dziennie. Konto w trybie ludzkim sprawdza tylko w swoim dniu."
+    },
+    "BuyCards": {
+      "label": "Kupuj brakujące karty",
+      "tip": "Kupuje karty, których odznace brakuje do następnego poziomu, w najniższej cenie na rynku, żeby dało się ją stworzyć - najpierw najbliższa odznaka, i tylko całe zestawy. Na przykład mając 4 z 5 kart, kupuje 5., za około 0,05 do 0,15. Wydaje z portfela Steam tego konta. Domyślnie wyłączone na każdym koncie. Włączenie najpierw pokazuje, co by kupił i za ile, i prosi o potwierdzenie; wyłączenie zatrzymuje od razu. Wymaga włączonego „Twórz odznaki z kart”."
+    },
+    "BuyFullSets": {
+      "label": "Kupuj najtańsze pełne zestawy",
+      "tip": "Kupuje też pełne zestawy kart do gier, z których nie ma żadnej karty, najpierw najtańsze, każdy to jeden poziom odznaki (100 PD). Pomija zestawy, w których jakaś karta ma mniej niż 2 oferty na rynku albo jedna bardzo tania karta sprawia, że zestaw wygląda na tańszy, niż jest. Wyłączone: tylko karty do rozpoczętych odznak."
+    },
+    "BuyDailyLimit": {
+      "label": "Wydawaj najwyżej, na dzień",
+      "tip": "Najwięcej, ile wydaje w ciągu 24 godzin, w walucie portfela Steam tego konta. Na przykład 1,50: zestaw za 0,60 i drugi za 0,70 wypełniają dzień; następny czeka do jutra. Nigdy nie wydaje więcej, niż jest w portfelu."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Wydawaj najwyżej, na tydzień",
+      "tip": "Najwięcej, ile wydaje w ciągu 7 dni, w walucie portfela Steam tego konta. Na przykład 8,00 przy 1,50 dziennie: około 5 pełnych dni kupowania w tygodniu. 0 nic nie kupuje."
+    },
+    "BuyCheckHours": {
+      "label": "Sprawdzaj co (godziny)",
+      "tip": "Jak często szuka kart do kupienia, w godzinach - na przykład 12, dwa razy dziennie. Konto w trybie ludzkim sprawdza tylko w swoim dniu i kupuje jeden zestaw za razem."
     },
     "PointsBuySeasonalBadge": {
       "label": "Kupuj poziomy odznaki sezonowej",

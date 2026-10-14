@@ -104,6 +104,7 @@ public static class Settings {
 	public const string SecExtras = "Free stuff";
 	public const string SecSaleEvents = "Sale events";
 	public const string SecPoints = "Steam Points";
+	public const string SecBuy = "Buying cards";
 	public const string SecBadges = "Badges & selling";
 	public const string SecSpare = "Spare items";
 	public const string SecPacks = "Booster packs";
@@ -128,6 +129,7 @@ public static class Settings {
 		[SecSpare] = ["What it does", "What counts as spare", "Never touch", "Limits", "Selling", "Gems"],
 		[SecPacks] = ["Making packs", "Opening packs", "Packs it doesn't open"],
 		[SecPoints] = ["What it does", "What it buys", "Limits", "How often"],
+		[SecBuy] = ["What it does", "Limits", "How often"],
 		[SecScamWatch] = ["What it does", "What it checks", "On a warning", "How often"],
 		[SecHealth] = ["What it does", "Tell me about", "How often"],
 		[SecSaleEvents] = ["What it does", "Sales", "Steam Awards", "Next Fest", "How often"],
@@ -1634,6 +1636,21 @@ public static class Settings {
 		new("PointsCheckEveryHours", "Look every (hours)", SecPoints, SettingKind.Int,
 			"How often it looks at the points and the shop, in hours - for example 12, twice a day. A human-mode account only looks during its day.",
 			Advanced: true, Min: 1, Max: 168, ShowWhen: "SpendPoints=true", Group: "How often"),
+		// ── Buying cards (Modules/CardBuyer.cs) - 1.8.2 ──
+		new("BuyCards", "Buy missing cards", SecBuy, SettingKind.Bool,
+			"Buys the cards a badge is missing for its next level, at the cheapest price on the market, so it can be crafted - closest badge first, and only whole sets. For example, with 4 of 5 cards held it buys the 5th, about 0.05 to 0.15. It spends this account's Steam wallet. Off by default on every account. Turning it on first shows what it would buy and for how much, and asks you to confirm; off stops it at once. Needs \"Craft badges from card sets\" on.", Group: "What it does"),
+		new("BuyFullSets", "Buy the cheapest full sets", SecBuy, SettingKind.Bool,
+			"Also buys whole card sets for games it has no cards of, cheapest first, one badge level (100 XP) each. Sets where a card has fewer than 2 on the market, or one very cheap card that makes the set look cheaper than it is, are left out. Off: only cards for badges it has started.",
+			Advanced: true, ShowWhen: "BuyCards=true", Group: "What it does"),
+		new("BuyDailyLimit", "Spend at most, a day", SecBuy, SettingKind.Float,
+			"The most it spends in any 24 hours, in this account's own Steam wallet currency. For example 1.50: a set costing 0.60 and another at 0.70 fill the day; the next set waits for tomorrow. It never spends more than the wallet holds.",
+			Advanced: true, Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits"),
+		new("BuyWeeklyLimit", "Spend at most, a week", SecBuy, SettingKind.Float,
+			"The most it spends in any 7 days, in this account's own Steam wallet currency. For example 8.00 with 1.50 a day: about 5 full days of buying a week. 0 buys nothing.",
+			Advanced: true, Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits"),
+		new("BuyCheckHours", "Look every (hours)", SecBuy, SettingKind.Int,
+			"How often it looks for cards to buy, in hours - for example 12, twice a day. A human-mode account only looks during its day, and buys one set a look.",
+			Advanced: true, Min: 1, Max: 168, ShowWhen: "BuyCards=true", Group: "How often"),
 		// ── Inventory & bans ──
 		new("ShowInventoryValue", "Work out what its inventory is worth", SecInventory, SettingKind.Bool,
 			"Works out what this account's inventory is worth at Steam market prices and shows it on the dashboard. Turn it off on accounts that only hold a few cards.",

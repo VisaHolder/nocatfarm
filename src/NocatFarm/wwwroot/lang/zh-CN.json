@@ -2703,9 +2703,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "{0} 的多余物品已开启：会在限额内把多余物品转成宝石或出售",
     "Spare items was turned off on {0} - stopped before the next item": "{0} 的多余物品已被关闭 - 在下一件物品之前停下",
     "Spending Steam Points is off for {0}: nothing is spent": "{0} 的 Steam 点数花费已关闭：不会花任何东西",
+    "Buying cards": "购买卡牌",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}：购买卡牌在你于设置中打开前一直关闭 - 会先显示它要买什么",
     "up {0}": "{0} 起床",
+    "couldn't look for an open buy order: {0}": "无法查看未完成的购买订单：{0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} 的卡牌购买已开启：会在限额内自己购买徽章缺少的卡牌",
+    "Buying cards is off for {0}: nothing is bought": "{0} 的卡牌购买已关闭：不会购买任何东西",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam 要求此账户在市场首次购买前填写账单信息 - 先手动买一张卡牌，之后它就能购买",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam 要求此账户的每笔市场购买都通过电子邮件确认，nocat.farm 无法做到",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam 要求此账户的每笔市场购买都在 Steam 应用中确认 - 把它的身份验证器加到 nocat.farm，它就能确认自己的购买",
+    "couldn't save the card buying list: {0}": "无法保存卡牌购买记录：{0}",
+    "couldn't read the card buying list: {0}": "无法读取卡牌购买记录：{0}",
+    "buying cards: next look around {0}": "购买卡牌：下次查看约在 {0}",
+    "couldn't look at buying cards: {0}": "无法查看卡牌购买：{0}",
+    "bought {0} · {1} · {2}": "已购买 {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "购买 {0} 无响应 · 记为已花费",
+    "buying {0} turned down · {1}": "购买 {0} 被拒绝 · {1}",
+    "buying {0} turned down": "购买 {0} 被拒绝",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "已购买 {0} 张卡牌 · {1} · 可合成 {2} 套",
     "next up {0} · goes to bed {1}": "下次起床 {0} · 睡觉 {1}",
     "{0} · that sitting's over": "{0} · 那段游玩已结束",
+    "Turn on buying cards?": "打开卡牌购买？",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "这是它接下来会买什么、花多少，以及它遵守的限额。它会花此账户的 Steam 钱包。你按下“打开”之前不会购买任何东西。",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "未登录，所以还不能查看市场。以下是它会遵守的限额。",
+    "Couldn't look at the market: {0}": "无法查看市场：{0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "“用卡牌合成徽章”已关闭 - 打开之前不会购买，否则卡牌只会放着。",
+    "card to buy": "要买的卡牌",
+    "cards to buy": "要买的卡牌",
+    "{0} for {1} badge level(s)": "{1} 个徽章等级，共 {0}",
+    "badge levels": "徽章等级",
+    "wallet: {0}": "钱包：{0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "{0} 的整套（{1} 张卡牌），{2} - {3} 级到 {4} 级，每 1.00 约 {5} XP",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{2} 的 {1} 张卡牌中的 {0} 张（{3}），{4} - {5} 级到 {6} 级，每 1.00 约 {7} XP",
+    "Spends at most {0} a day ({1} spent in the last day)": "每天最多花 {0}（过去一天已花 {1}）",
+    "Spends at most {0} a week ({1} spent this week)": "每周最多花 {0}（本周已花 {1}）",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "绝不超过钱包余额，而且只买整套 - 绝不只买一套中的一部分",
+    "Each card at the cheapest price on the market, checked again right before it buys": "每张卡牌都按市场最低价，购买前会再查一次",
+    "Badges it has started first, then the cheapest full sets": "先买已开始的徽章，再买最便宜的整套",
+    "Only badges it has started - not full sets": "只买已开始的徽章 - 不买整套",
+    "Only during its day (human mode), one set at a time": "只在它的一天内（拟人模式），每次一套",
+    "Badge crafting turns each finished set into a level": "徽章合成会把每套集齐的卡牌变成一个等级",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "{0} 的 Steam 点数花费已开启：会在限额内自己购买徽章等级",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam 点数：花费已关闭 - 在设置里打开即可看到它会买什么",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam 点数：会花 {0} 点买 {2} 的 {1} 个等级（+{3} 经验）- 在设置里打开花费之前什么都不会花",
@@ -4233,6 +4270,26 @@
     "PointsCheckEveryHours": {
       "label": "查看间隔（小时）",
       "tip": "多久查看一次点数和商店，单位为小时 - 例如 12，每天两次。拟人模式账户只在它的一天内查看。"
+    },
+    "BuyCards": {
+      "label": "购买缺少的卡牌",
+      "tip": "以市场最低价购买徽章升到下一级还缺的卡牌，让它能合成 - 先买最接近下一级的徽章，而且只买整套。例如 5 张里已有 4 张，就花约 0.05 到 0.15 买第 5 张。会花此账户的 Steam 钱包。每个账户默认关闭。打开时会先显示要买什么、花多少，并请你确认；关闭会立即停止。需要打开“用卡牌合成徽章”。"
+    },
+    "BuyFullSets": {
+      "label": "购买最便宜的整套",
+      "tip": "也会为一张卡牌都没有的游戏购买整套卡牌，从最便宜的开始，每套是一个徽章等级（100 XP）。如果某张卡牌在市场上少于 2 张，或者一张特别便宜的卡牌让整套看起来比实际便宜，就跳过那套。关闭：只买已开始的徽章的卡牌。"
+    },
+    "BuyDailyLimit": {
+      "label": "每天最多花费",
+      "tip": "任意 24 小时内最多花多少，按此账户 Steam 钱包的货币计算。例如 1.50：一套 0.60 加一套 0.70 就用满当天，下一套等到明天。绝不会花超过钱包余额。"
+    },
+    "BuyWeeklyLimit": {
+      "label": "每周最多花费",
+      "tip": "任意 7 天内最多花多少，按此账户 Steam 钱包的货币计算。例如每天 1.50、每周 8.00：每周大约能买满 5 天。0 表示什么都不买。"
+    },
+    "BuyCheckHours": {
+      "label": "查看间隔（小时）",
+      "tip": "多久查看一次要买的卡牌，单位是小时 - 例如 12，每天两次。拟人模式的账户只在它的一天内查看，每次买一套。"
     },
     "PointsBuySeasonalBadge": {
       "label": "购买季节徽章等级",

@@ -418,7 +418,7 @@ public static class LevelPlanner {
 	}
 
 	/// <summary>Games whose cards are the cheapest on the market right now, cheapest first - null when the market didn't answer.</summary>
-	private static async Task<List<uint>?> CheapestGamesAsync(Bot bot, CancellationToken ct) {
+	internal static async Task<List<uint>?> CheapestGamesAsync(Bot bot, CancellationToken ct) {
 		List<uint> games = [];
 
 		for (int start = 0, page = 0; (start < 200) && (page < 4); page++) {

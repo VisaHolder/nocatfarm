@@ -62,6 +62,42 @@ public static class SwitchPreview {
 
 	public sealed record PointsBuy(string Badge, int From, int To, int Levels, long Cost, int Xp);
 
+	/// <summary>Buying cards (1.8.2): what it would buy next, for how much, and the limits.</summary>
+	public sealed record BuyNumbers(
+		bool SignedIn,
+		string Problem,
+		int Blocked,
+		string Currency,
+		string Wallet,
+		string DayLimit,
+		string DaySpent,
+		string WeekLimit,
+		string WeekSpent,
+		string Cost,
+		int Cards,
+		IReadOnlyList<BuySet> Sets,
+		IReadOnlyList<string> Notes,
+		bool FullSets,
+		bool CraftOff,
+		bool OwnDayOnly
+	) {
+		public string Kind => "buy";
+	}
+
+	/// <summary>One set it would buy: the game, the cards, its cost and XP for each whole unit of money.</summary>
+	public sealed record BuySet(string Game, bool FullSet, int Level, int Cards, int SetSize, string Cost, long XpPerUnit, IReadOnlyList<string> Names);
+
+	/// <summary>The numbers of one buying-cards look.</summary>
+	public static BuyNumbers Buy(BuyPlan? plan, BotConfig cfg, bool signedIn, string problem) {
+		int cur = plan?.Currency ?? 0;
+		string M(long cents) => BuyPlan.Money(cents, cur);
+		List<BuySet> sets = plan == null ? [] : [.. plan.Steps.Select(s => new BuySet(s.Game, s.FullSet, s.Level, s.Cards.Count, s.SetSize, M(s.Cost), s.XpPerUnit, [.. s.Cards.Select(static c => c.Name)]))];
+
+		return new BuyNumbers(signedIn, problem, (int) (plan?.Block ?? BuyBlock.None), cur > 0 ? MarketQuotes.Code(cur) : "", plan == null ? "" : M(plan.Wallet),
+			M(BuyPlan.Cents(cfg.BuyDailyLimit)), M(plan?.DaySpent ?? 0), M(BuyPlan.Cents(cfg.BuyWeeklyLimit)), M(plan?.WeekSpent ?? 0),
+			M(plan?.Cost ?? 0), plan?.CardCount ?? 0, sets, plan?.Notes.ToList() ?? [], cfg.BuyFullSets, !cfg.CraftBadges, cfg.LegitMode);
+	}
+
 	/// <summary>The numbers of one spare-items look: counted from its plan, the limits from the account's settings.</summary>
 	public static SpareNumbers Spare(SparePlan? plan, BotConfig cfg, int currency, MarketPrice? sack, bool signedIn, string problem) {
 		SpareRules r = SpareRules.From(cfg);
@@ -115,6 +151,16 @@ public static class SwitchPreview {
 
 			return (SpareRun.Preview(bot.Name, look) + Environment.NewLine + limits,
 				Spare(look.Plan, bot.Cfg, look.Currency, SparePrices.Sack(look.Currency), true, ""));
+		}
+
+		if (feature == Switches.Buy) {
+			if (!signedIn || (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer)) {
+				return ($"{bot.Name}: not signed in, so it can't look at the market yet.{Environment.NewLine}{Commands.BuyLimits(bot)}", Buy(null, bot.Cfg, false, ""));
+			}
+
+			CardBuyer.Result look = await buyer.LookAsync(CardBuyer.Mode.Preview, ct).ConfigureAwait(false);
+
+			return (string.Join(Environment.NewLine, Commands.BuySaid(bot, CardBuyer.Mode.Preview, look)), Buy(look.Plan, bot.Cfg, true, look.Problem));
 		}
 
 		string keeps = $"It keeps at least {PointsPlan.N(bot.Cfg.PointsKeepAtLeast)} points and spends at most {PointsPlan.N(bot.Cfg.PointsWeeklyCap)} a week{(bot.Cfg.LegitMode ? ", only during its day" : "")}. Points spent are gone for good.";

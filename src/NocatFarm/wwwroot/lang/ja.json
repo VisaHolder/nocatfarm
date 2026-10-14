@@ -2703,9 +2703,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "{0} の余ったアイテムはオン：上限の範囲で余ったアイテムをジェムに変えるか売ります",
     "Spare items was turned off on {0} - stopped before the next item": "{0} の余ったアイテムがオフにされました - 次のアイテムの前で止めました",
     "Spending Steam Points is off for {0}: nothing is spent": "{0} の Steam ポイント使用はオフ：何も使いません",
+    "Buying cards": "カードの購入",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: 設定でオンにするまでカードの購入はオフです - 先に何を買うかを表示します",
     "up {0}": "{0} に起床",
+    "couldn't look for an open buy order: {0}": "未完了の購入注文を確認できませんでした: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} のカード購入はオン：上限の範囲でバッジに足りないカードを自分で買います",
+    "Buying cards is off for {0}: nothing is bought": "{0} のカード購入はオフ：何も買いません",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam はこのアカウントの最初のマーケット購入の前に請求先情報を求めています - 一度手でカードを 1 枚買えば、その後は買えます",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam はこのアカウントのマーケット購入ごとにメールでの確認を求めています。nocat.farm にはできません",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam はこのアカウントのマーケット購入ごとに Steam アプリでの確認を求めています - 自分の購入を確認できるよう、認証機能を nocat.farm に追加してください",
+    "couldn't save the card buying list: {0}": "カード購入リストを保存できませんでした: {0}",
+    "couldn't read the card buying list: {0}": "カード購入リストを読めませんでした: {0}",
+    "buying cards: next look around {0}": "カードの購入: 次の確認は {0} ごろ",
+    "couldn't look at buying cards: {0}": "カードの購入を確認できませんでした: {0}",
+    "bought {0} · {1} · {2}": "購入: {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "{0} の購入に応答なし · 使ったものとして数えます",
+    "buying {0} turned down · {1}": "{0} の購入が拒否されました · {1}",
+    "buying {0} turned down": "{0} の購入が拒否されました",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "カード {0} 枚を購入 · {1} · 作れるセット {2} 個",
     "next up {0} · goes to bed {1}": "次の起床 {0} · 就寝 {1}",
     "{0} · that sitting's over": "{0} · そのセッションは終わりました",
+    "Turn on buying cards?": "カードの購入をオンにしますか？",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "次に何をいくらで買うかと、守る上限です。このアカウントの Steam ウォレットを使います。「オンにする」を押すまで何も買いません。",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "サインインしていないので、まだマーケットを確認できません。守る上限は次のとおりです。",
+    "Couldn't look at the market: {0}": "マーケットを確認できませんでした: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "「カードからバッジを作る」がオフです - オンになるまで何も買いません。買ってもカードが置いたままになるだけです。",
+    "card to buy": "購入するカード",
+    "cards to buy": "購入するカード",
+    "{0} for {1} badge level(s)": "バッジ {1} レベル分で {0}",
+    "badge levels": "バッジのレベル",
+    "wallet: {0}": "ウォレット: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "{0} のフルセット（カード {1} 枚）を {2} で - レベル {3} → {4}、1.00 あたり約 {5} XP",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{2} のカード {1} 枚中 {0} 枚（{3}）を {4} で - レベル {5} → {6}、1.00 あたり約 {7} XP",
+    "Spends at most {0} a day ({1} spent in the last day)": "1 日に最大 {0} まで使います（直近 1 日で {1} 使用）",
+    "Spends at most {0} a week ({1} spent this week)": "1 週間に最大 {0} まで使います（今週 {1} 使用）",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "ウォレットの残高を超えることはなく、セットは丸ごとだけ - セットの一部だけは買いません",
+    "Each card at the cheapest price on the market, checked again right before it buys": "各カードはマーケットの最安値で、買う直前にもう一度確認します",
+    "Badges it has started first, then the cheapest full sets": "まず作りかけのバッジ、次に最も安いフルセット",
+    "Only badges it has started - not full sets": "作りかけのバッジだけ - フルセットは買いません",
+    "Only during its day (human mode), one set at a time": "自分の一日の間だけ（人間モード）、1 回に 1 セット",
+    "Badge crafting turns each finished set into a level": "バッジ作成で、そろった各セットがレベルになります",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "{0} の Steam ポイント使用はオン：上限の範囲で自分でバッジのレベルを買います",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam ポイント：使用はオフ - 設定でオンにすると何を買うかが表示されます",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam ポイント：{2} の {1} レベルに {0} ポイントを使う予定（+{3} XP）- 設定で使用をオンにするまで何も使いません",
@@ -4233,6 +4270,26 @@
     "PointsCheckEveryHours": {
       "label": "確認の間隔（時間）",
       "tip": "ポイントとショップを確認する間隔（時間）です - 例: 12 なら 1 日 2 回。人間モードのアカウントは自分の一日の間だけ確認します。"
+    },
+    "BuyCards": {
+      "label": "足りないカードを買う",
+      "tip": "バッジの次のレベルに足りないカードを、マーケットの最安値で買い、作れるようにします - 次のレベルに一番近いバッジから、セットは丸ごとだけ。例えば 5 枚中 4 枚あれば 5 枚目を約 0.05〜0.15 で買います。このアカウントの Steam ウォレットを使います。どのアカウントでも初期設定はオフ。オンにすると、先に何をいくらで買うかを表示して確認を求めます。オフにすればすぐ止まります。「カードからバッジを作る」がオンである必要があります。"
+    },
+    "BuyFullSets": {
+      "label": "最も安いフルセットを買う",
+      "tip": "カードを 1 枚も持っていないゲームのフルセットも、安い順に買います。1 セットでバッジ 1 レベル（100 XP）です。マーケットに 2 枚未満しかないカードがあるセットや、とても安いカードのせいで実際より安く見えるセットは除きます。オフ：作りかけのバッジのカードだけ。"
+    },
+    "BuyDailyLimit": {
+      "label": "1 日に使う上限",
+      "tip": "24 時間で使う上限です。このアカウントの Steam ウォレットの通貨で指定します。例えば 1.50 なら、0.60 のセットと 0.70 のセットでその日は終わり、次のセットは翌日まで待ちます。ウォレットの残高を超えて使うことはありません。"
+    },
+    "BuyWeeklyLimit": {
+      "label": "1 週間に使う上限",
+      "tip": "7 日間で使う上限です。このアカウントの Steam ウォレットの通貨で指定します。例えば 1 日 1.50 で 8.00 なら、1 週間に約 5 日分買えます。0 なら何も買いません。"
+    },
+    "BuyCheckHours": {
+      "label": "確認の間隔（時間）",
+      "tip": "買うカードを探す間隔（時間）です - 例えば 12 なら 1 日 2 回。人間モードのアカウントは自分の一日の間だけ確認し、1 回に 1 セット買います。"
     },
     "PointsBuySeasonalBadge": {
       "label": "シーズンバッジのレベルを買う",

@@ -2703,9 +2703,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "Objetos sobrantes está activado para {0}: convierte los objetos sobrantes en gemas o los vende, dentro de sus límites",
     "Spare items was turned off on {0} - stopped before the next item": "Objetos sobrantes se desactivó en {0} - se detuvo antes del siguiente objeto",
     "Spending Steam Points is off for {0}: nothing is spent": "Gastar Puntos de Steam está desactivado para {0}: no se gasta nada",
+    "Buying cards": "Comprar cromos",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: comprar cromos está desactivado hasta que lo actives en Ajustes - primero muestra lo que compraría",
     "up {0}": "se levanta {0}",
+    "couldn't look for an open buy order: {0}": "no se pudo buscar una orden de compra abierta: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Comprar cromos está activado para {0}: compra por sí solo los cromos que faltan para sus insignias, dentro de sus límites",
+    "Buying cards is off for {0}: nothing is bought": "Comprar cromos está desactivado para {0}: no se compra nada",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam pide datos de facturación antes de la primera compra en el mercado de esta cuenta - compra un cromo a mano una vez y después podrá comprar",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam pide confirmar por correo cada compra en el mercado de esta cuenta, y nocat.farm no puede hacerlo",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam pide confirmar en la app de Steam cada compra en el mercado de esta cuenta - añade su autenticador a nocat.farm para que pueda confirmar sus propias compras",
+    "couldn't save the card buying list: {0}": "no se pudo guardar la lista de compras de cromos: {0}",
+    "couldn't read the card buying list: {0}": "no se pudo leer la lista de compras de cromos: {0}",
+    "buying cards: next look around {0}": "comprar cromos: próxima consulta hacia las {0}",
+    "couldn't look at buying cards: {0}": "no se pudo mirar la compra de cromos: {0}",
+    "bought {0} · {1} · {2}": "comprado {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "sin respuesta al comprar {0} · contado como gastado",
+    "buying {0} turned down · {1}": "compra de {0} rechazada · {1}",
+    "buying {0} turned down": "compra de {0} rechazada",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "comprados {0} cromo(s) · {1} · {2} colección(es) para crear",
     "next up {0} · goes to bed {1}": "se levanta {0} · se acuesta {1}",
     "{0} · that sitting's over": "{0} · esa sesión ha terminado",
+    "Turn on buying cards?": "¿Activar comprar cromos?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Esto es lo que compraría a continuación y por cuánto, y los límites que respeta. Gasta del monedero de Steam de esta cuenta. No se compra nada hasta que pulses Activar.",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "No ha iniciado sesión, así que aún no puede mirar el mercado. Estos son los límites que respetará.",
+    "Couldn't look at the market: {0}": "No se pudo mirar el mercado: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "\"Crear insignias con los cromos\" está desactivado - no se compra nada hasta que se active, o los cromos solo se quedarían ahí.",
+    "card to buy": "cromo a comprar",
+    "cards to buy": "cromos a comprar",
+    "{0} for {1} badge level(s)": "{0} por {1} nivel(es) de insignia",
+    "badge levels": "niveles de insignia",
+    "wallet: {0}": "monedero: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Una colección completa de {0} ({1} cromos) por {2} - del nivel {3} al {4}, unos {5} PE por cada 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} de {1} cromos de {2} ({3}) por {4} - del nivel {5} al {6}, unos {7} PE por cada 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Gasta como mucho {0} al día ({1} gastado en el último día)",
+    "Spends at most {0} a week ({1} spent this week)": "Gasta como mucho {0} a la semana ({1} gastado esta semana)",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "Nunca más de lo que hay en el monedero, y solo colecciones completas - nunca parte de una colección",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Cada cromo al precio más barato del mercado, comprobado otra vez justo antes de comprar",
+    "Badges it has started first, then the cheapest full sets": "Primero las insignias ya empezadas, luego las colecciones completas más baratas",
+    "Only badges it has started - not full sets": "Solo insignias ya empezadas - no colecciones completas",
+    "Only during its day (human mode), one set at a time": "Solo durante su día (modo humano), una colección cada vez",
+    "Badge crafting turns each finished set into a level": "Crear insignias convierte cada colección completa en un nivel",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Gastar Puntos de Steam está activado para {0}: compra niveles de insignia por sí solo, dentro de sus límites",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Puntos de Steam: gastar está desactivado - actívalo en Ajustes para ver lo que compraría",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Puntos de Steam: gastaría {0} puntos en {1} nivel(es) de {2} (+{3} XP) - no se gasta nada hasta que se active gastar en Ajustes",
@@ -4233,6 +4270,26 @@
     "PointsCheckEveryHours": {
       "label": "Mirar cada (horas)",
       "tip": "Cada cuánto mira los puntos y la tienda, en horas - por ejemplo 12, dos veces al día. Una cuenta en modo humano solo mira durante su día."
+    },
+    "BuyCards": {
+      "label": "Comprar los cromos que faltan",
+      "tip": "Compra los cromos que le faltan a una insignia para su siguiente nivel, al precio más barato del mercado, para poder crearla - primero la insignia más cercana, y solo colecciones completas. Por ejemplo, con 4 de 5 cromos compra el 5.º, unos 0,05 a 0,15. Gasta del monedero de Steam de esta cuenta. Desactivado por defecto en todas las cuentas. Al activarlo, primero muestra qué compraría y por cuánto, y te pide confirmar; desactivarlo lo detiene al momento. Necesita \"Crear insignias con los cromos\" activado."
+    },
+    "BuyFullSets": {
+      "label": "Comprar las colecciones completas más baratas",
+      "tip": "También compra colecciones completas de cromos de juegos de los que no tiene ninguno, las más baratas primero, un nivel de insignia (100 PE) cada una. Se dejan fuera las colecciones en las que un cromo tiene menos de 2 en el mercado, o un cromo muy barato hace que la colección parezca más barata de lo que es. Desactivado: solo cromos para insignias ya empezadas."
+    },
+    "BuyDailyLimit": {
+      "label": "Gastar como mucho, por día",
+      "tip": "Lo máximo que gasta en 24 horas, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 1,50: una colección de 0,60 y otra de 0,70 llenan el día; la siguiente espera a mañana. Nunca gasta más de lo que hay en el monedero."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Gastar como mucho, por semana",
+      "tip": "Lo máximo que gasta en 7 días, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 8,00 con 1,50 al día: unos 5 días completos de compras a la semana. 0 no compra nada."
+    },
+    "BuyCheckHours": {
+      "label": "Mirar cada (horas)",
+      "tip": "Cada cuánto busca cromos que comprar, en horas - por ejemplo 12, dos veces al día. Una cuenta en modo humano solo mira durante su día, y compra una colección cada vez."
     },
     "PointsBuySeasonalBadge": {
       "label": "Comprar niveles de la insignia de temporada",

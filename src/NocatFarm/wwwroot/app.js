@@ -383,7 +383,7 @@ function stateText(b) {
       return `${b.Status} · ${tf('up {0}', clock(b.UpFrom) === clock(b.UpTo) ? clock(b.UpFrom) : `${clock(b.UpFrom)}-${clock(b.UpTo)}`)}`;
     }
     return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
-  
+  }
   return b.Status;
 }
 
@@ -6077,11 +6077,14 @@ const GUARDED_OFF = {
 // Spare items and Steam Points are one switch each, saved straight away: turning one on first shows what it would do and
 // asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
 const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points' };
+// Buying cards (1.8.2): spends the wallet's money, so it's turned on the same way.
+CONFIRMED_ON.BuyCards = 'buy';
 
 function confirmSwitch(name, account) {
   modal(`
-    <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : t('Turn on spending Steam Points?'))}</h2>
+    <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : name === 'BuyCards' ? t('Turn on buying cards?') : t('Turn on spending Steam Points?'))}</h2>
     <p>${esc(name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
+      : name === 'BuyCards' ? t("This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.")
       : t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'))}</p>
     <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
     <div class="actions">
@@ -6092,7 +6095,7 @@ function confirmSwitch(name, account) {
   const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
   const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
   api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => show(r && r.data ? (r.data.Kind === 'points' ? pointsPreviewHtml(r.data) : sparePreviewHtml(r.data)) : none))
+    .then((r) => show(r && r.data ? (r.data.Kind === 'points' ? pointsPreviewHtml(r.data) : r.data.Kind === 'buy' ? buyPreviewHtml(r.data) : sparePreviewHtml(r.data)) : none))
     .catch(() => show(none));
 }
 
@@ -6174,6 +6177,45 @@ function pointsPreviewHtml(d) {
   limits.push(t('Points spent are gone for good'));
 
   return `${top.join('')}${big}${buys}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// What buying cards would buy next, from the server's numbers: each set, its cards and price, the XP for the money, and
+// the limits. Money comes already written out in the wallet's currency ("0.35 CAD").
+function buyPreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the market yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the market: {0}", d.Problem))}</p>`);
+  // Why Steam won't let it buy by itself: billing details first, or each purchase confirmed by email or in the Steam app.
+  const blocked = [null,
+    t("Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy"),
+    t("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
+    t('Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases')][d.Blocked];
+  if (blocked) top.push(`<p class="problem">${esc(blocked)}</p>`);
+  if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
+
+  const big = d.SignedIn && !d.Problem ? `<div class="big">
+    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards)}
+    ${bigNumber(d.Sets.length, t('badge levels'), d.Wallet ? tf('wallet: {0}', d.Wallet) : '', true)}
+  </div>` : '';
+
+  const sets = d.Sets.length
+    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.FullSet
+      ? tf('A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00', s.Game, s.Cards, s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit))
+      : tf('{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00', s.Cards, s.SetSize, s.Game, s.Names.join(', '), s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit)))}</li>`).join('')}</ul>`
+    : '';
+  const notes = d.Notes.length ? `<ul class="limits muted">${d.Notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+
+  const limits = [
+    tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
+    tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
+    t('Never more than the wallet holds, and only whole sets - never part of a set'),
+    t('Each card at the cheapest price on the market, checked again right before it buys'),
+    d.FullSets ? t('Badges it has started first, then the cheapest full sets') : t('Only badges it has started - not full sets'),
+  ];
+  if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));
+  limits.push(t('Badge crafting turns each finished set into a level'));
+
+  return `${top.join('')}${big}${sets}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
 }
 
 async function switchTo(name, account, on) {

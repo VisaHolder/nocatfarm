@@ -122,7 +122,7 @@ public static partial class Commands {
 			string value = Unquote(SetValue(line, Words(line), 2)).Trim().ToLowerInvariant();
 			// Every word 'set' reads as on or off ('y', 'n' too): one it doesn't is answered by 'set' as wrong, and changes nothing.
 			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
-			string word = feature == Switches.Spare ? "spare" : "points";
+			string word = feature == Switches.Spare ? "spare" : feature == Switches.Buy ? "buy" : "points";
 
 			if (on == false) {
 				Switches.Set(bot, feature, false);
@@ -131,7 +131,9 @@ public static partial class Commands {
 			}
 
 			if (on == true) {
-				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name) : bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
+				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name)
+					: feature == Switches.Buy ? CardBuyer.On(bot)
+					: bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
 
 				if (already) {
 					return $"{bot.Name}.{feature} = on";
@@ -159,6 +161,10 @@ public static partial class Commands {
 			}
 
 			return await SpareRun.QuickPreviewAsync(bot, ct).ConfigureAwait(false) + Environment.NewLine + limits;
+		}
+
+		if (feature == Switches.Buy) {
+			return (await SwitchPreview.LookAsync(bot, feature, ct).ConfigureAwait(false)).Text;
 		}
 
 		string keeps = $"It keeps at least {PointsPlan.N(bot.Cfg.PointsKeepAtLeast)} points and spends at most {PointsPlan.N(bot.Cfg.PointsWeeklyCap)} a week{(bot.Cfg.LegitMode ? ", only during its day" : "")}. Points spent are gone for good.";

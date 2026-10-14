@@ -237,7 +237,7 @@ Two things follow:
 |---|---|---|
 | Card drops from your games | free | nocat.farm (*Farm trading cards*) |
 | Steam Points: the seasonal badge | 100 XP per 1,000 points | nocat.farm, once you turn on *Spend Steam Points on levels* |
-| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | you buy the cards; `levelup myaccount 50` lists the cheapest sets |
+| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | nocat.farm, once you turn on *Buy missing cards* and *Buy the cheapest full sets* (and *Spare items* → *Gems afterwards* set to sell the sacks turns gems into money) - see [Buying cards](#buying-cards) |
 | Gems into booster packs | about 20 to 50 XP per 1,000 gems | nocat.farm (*Make booster packs: automatic*) |
 | Keep the gems | nothing | - |
 
@@ -323,6 +323,65 @@ Settings, the account, **Steam Points**:
 | *Also older seasonal badges* | off | Older seasonal badges the shop still lists, once the current one is done. Steam has turned some of these down. |
 | *Stop each badge at level* | 40 | The highest level it takes a badge to. |
 | *Look every (hours)* | 12 | How often it looks at the points and the shop. |
+
+## Buying cards
+
+*Buy missing cards* (in **Buying cards**, off by default on every account) buys the cards a badge is still missing for
+its next level, at the cheapest price on the market, so badge crafting can turn the set into a level (100 XP). It
+spends the account's Steam wallet, so it's careful:
+
+- **Preview first.** `buy preview myaccount` shows exactly what it would buy next: each badge, its missing cards and
+  their prices, the level it goes to and the XP for the money (*1 of 5 cards for Task Bar Hero (Card 5 0.09 CAD) for
+  0.09 CAD - level 2 to 3, about 1,111 XP per 1.00*). It buys nothing.
+- **One switch, and you see it first.** Turning *Buy missing cards* on opens a popup with what it would buy and for
+  how much, and its limits - *Turn on* or *Cancel*. Off stops it at once. At the console, `set myaccount BuyCards on`
+  answers with the same preview, `buy on myaccount` confirms it and `buy off myaccount` turns it off. Steam chat can
+  look (`buy preview`) but can't turn it on or buy. A backup brings back the money spent, never the switch.
+- **Closest badge first, whole sets only.** It picks the badge closest to its next level - the fewest cards missing,
+  then the cheapest - the same rule as automatic booster packs. It buys a set's missing cards only when every one is
+  on the market and all of them fit inside the limits: never 3 of 5 cards and then nothing. A set that costs more than
+  a day's limit is passed over (it says so); one that doesn't fit what's left of today waits for tomorrow.
+- **Limits.** *Spend at most, a day* (1.50) and *Spend at most, a week* (8.00), in the wallet's own currency, over any
+  24 hours and any 7 days - and never more than the wallet holds. It reads the wallet first.
+- **Checked again right before buying.** Each card's price and the wallet are read again just before it buys. A card
+  dearer than planned isn't bought; the next look plans again. If Steam doesn't answer about a purchase, it counts as
+  spent, so it's never bought twice.
+- **Then it's crafted.** *Craft badges from card sets* has to be on - otherwise nothing is bought, or the cards would
+  only sit there. Once a set is whole, badge crafting looks within the hour instead of at its daily round.
+- **Human mode.** A human-mode account buys only during its own day, one set a look, with a pause between cards.
+  Purchases show on the account's market history like anybody's.
+
+**The cheapest full sets.** With *Buy the cheapest full sets* on (off by default), once the started badges are done it
+also buys whole sets for games the account has no cards of and whose badge isn't at level 5 - cheapest first, so the
+most XP for the money. Selling gems and buying the cheapest sets gives about 3 to 7 times the XP of turning the same
+gems into booster packs (see [the numbers](#the-numbers)). A set is left out when any card has fewer than 2 on the
+market, or when one card's cheapest listing is far under the rest (a "dumped" card - the set's real price is higher).
+To turn gems into money for this, set *Spare items* → *Gems afterwards* to sell the sacks: it lists one sack of 1,000 gems a look, inside the spare-items limits.
+
+**Card swaps.** For each missing card it takes the cheaper of buying it now or waiting for a card swap. Card swapping
+isn't in this version yet, so for now every missing card is bought.
+
+**How it buys.** Trading cards are bought the way Steam's new market buys them: one order for one card at the
+cheapest listing's price, which goes through at once - or, if somebody bought that card first, is taken back. Nothing
+is ever left waiting on the market. If Steam wants each purchase confirmed in the Steam app, it confirms its own
+purchase with the account's authenticator when that's in nocat.farm; by email, or with no authenticator here, it buys
+nothing and tells you once.
+
+`buy` shows what each account has spent today and this week; `buy do myaccount` buys the next ones now, inside the
+same limits. Each card bought goes in the log, and one line per look (with *Send spare items and booster packs* on, to
+Discord and Telegram).
+
+### What each setting does (Buying cards)
+
+Settings, the account, **Buying cards**:
+
+| Setting | Default | What it does |
+|---|---|---|
+| *Buy missing cards* | off | Buys the cards its badges are missing, cheapest first. Turning it on shows what it would buy first and asks you to confirm. |
+| *Buy the cheapest full sets* | off | Also whole sets for games it has no cards of, cheapest first. |
+| *Spend at most, a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
+| *Spend at most, a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
+| *Look every (hours)* | 12 | How often it looks. A human-mode account only in its day. |
 
 ## Spare items: gems, sell or keep
 

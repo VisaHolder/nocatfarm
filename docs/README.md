@@ -16,8 +16,8 @@ Nothing past Start here is required reading. Open whichever page you need.
 - [Accounts and signing in](accounts.md): adding accounts, Steam Guard, authenticators, and importing from another
   idler
 - [Cards and idling](cards-and-idling.md): card farming, idling, a custom game name, free games, sale events,
-  making booster packs, badges, selling, Steam Points into levels, spare items, opening booster packs and product
-  keys
+  making booster packs, badges, selling, Steam Points into levels, buying cards, spare items, opening booster packs
+  and product keys
 - [Human mode](human-mode.md): making an account play like a person, and keeping out of your way when you play
 - [Trades](trades.md): trade offers, sending items, the Authenticator page, ban watch, scam watch, account health,
   inventory value and history charts
