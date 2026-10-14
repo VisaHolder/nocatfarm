@@ -28014,6 +28014,84 @@ await BuySafetyChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 // ── 1.8.2: card swaps can't be cheated - each attack played against the real checks; fakes only ──
 await CardSwapCheatChecks.RunAsync(Check);
 
+// ── 1.8.2: Sign in through Steam posts the form as Steam does ──
+{
+	using var mp = NocatFarm.Core.WebSession.Multipart([new("action", "steam_openid_login"), new("openid.mode", "checkid_setup"), new("nonce", "abc")]);
+	string mpBody = await mp.ReadAsStringAsync();
+	Check("swap proof: the Steam sign-in form goes as multipart/form-data, with every field (url-encoded, Steam only showed the page again)",
+		(mp.Headers.ContentType?.MediaType == "multipart/form-data") && mpBody.Contains("name=action", StringComparison.Ordinal) && mpBody.Contains("steam_openid_login", StringComparison.Ordinal)
+		&& mpBody.Contains("name=openid.mode", StringComparison.Ordinal) && mpBody.Contains("name=nonce", StringComparison.Ordinal), mpBody.Length.ToString(System.Globalization.CultureInfo.InvariantCulture));
+}
+
+// ── 1.8.2: 'swaps check' and why a sign-in through Steam didn't work ──
+{
+	const ulong ScMe = 76561198000000001UL, ScOther = 76561198000000002UL;
+	const string ScHash = "0123456789abcdef";
+	string scForm = "<html><script>g_steamID = \"" + ScMe + "\";</script><form name=\"loginForm\" id=\"openidForm\" action=\"https://steamcommunity.com/openid/login\" method=\"POST\">"
+		+ "<input type=\"hidden\" name=\"action\" value=\"steam_openid_login\"><input type=\"hidden\" name=\"openidparams\" value=\"secretparams\">"
+		+ "<input type=\"hidden\" name=\"nonce\" value=\"n0nce\"></form></html>";
+	const string ScLogin = "<html><script>g_steamID = false;</script><div class=\"newlogindialog\">Sign in</div></html>";
+	string ScBack(ulong who, string host = "https://nocat.lol/") => host + "api/farm/swap/proof?i=" + ScHash + "&t=1&openid.mode=id_res"
+		+ "&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F" + who + "&openid.sig=s1gnature";
+	List<Uri> scAsked = [];
+	Uri? scReferer = null;
+
+	async Task<NocatFarm.Core.CardExchange.Proved> ScProve(string? page, NocatFarm.Core.WebSession.Redirected answer, ulong who = ScMe) {
+		scAsked.Clear();
+		scReferer = null;
+		return await NocatFarm.Core.CardExchange.ProofFromAsync((u, _) => { scAsked.Add(u); return Task.FromResult(page); },
+			(u, _, referer, _) => { scAsked.Add(u); scReferer = referer; return Task.FromResult(answer); },
+			who, ScHash, new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc), CancellationToken.None);
+	}
+
+	var scOk = await ScProve(scForm, new(new Uri(ScBack(ScMe)), 302, null));
+	Check("swaps check: the sign-in form is posted with Steam's sign-in page as its Referer (the page with its query), as a browser sends it",
+		scOk.Ok && (scAsked.Count == 2) && (scReferer != null) && (scReferer == scAsked[0]) && scReferer.Query.Contains("openid.return_to=", StringComparison.Ordinal)
+		&& (scAsked[1].AbsoluteUri == "https://steamcommunity.com/openid/login"), $"{scReferer} | {string.Join(" ", scAsked)}");
+	Check("swaps check: only Steam is asked - nothing goes to nocat.lol", scAsked.All(static u => u.Host == "steamcommunity.com"), string.Join(" ", scAsked));
+
+	async Task<string> ScWhy(string? page, NocatFarm.Core.WebSession.Redirected answer, ulong who = ScMe) {
+		var r = await ScProve(page, answer, who);
+		return r.Ok ? "(worked)" : r.Why.ToEnglish();
+	}
+
+	NocatFarm.Core.WebSession.Redirected scNever = new(new Uri(ScBack(ScMe)), 302, null);
+	(string Case, string Why, string Want)[] scReasons = [
+		("page didn't load", await ScWhy(null, scNever), "Steam's sign-in page didn't load"),
+		("not signed in on the web", await ScWhy(ScLogin, scNever), "Steam says it isn't signed in on the web"),
+		("no form", await ScWhy("<html>changed</html>", scNever), "no sign-in form on Steam's page"),
+		("no answer", await ScWhy(scForm, new(null, 0, null)), "Steam didn't answer the sign-in"),
+		("the sign-in page again", await ScWhy(scForm, new(null, 200, scForm)), "Steam answered 200 and showed the sign-in page again"),
+		("the login page", await ScWhy(scForm, new(null, 200, ScLogin)), "Steam answered 200 and showed its login page"),
+		("anything else", await ScWhy(scForm, new(null, 500, "<html>error</html>")), "Steam answered 500 and sent it nowhere"),
+		("sent elsewhere", await ScWhy(scForm, new(new Uri(ScBack(ScMe, "https://evil.example/")), 302, null)), "Steam sent it to evil.example, not nocat.lol"),
+		("another account", await ScWhy(scForm, new(new Uri(ScBack(ScOther)), 302, null)), "Steam's answer was for another account"),
+		("not a sign-in", await ScWhy(scForm, new(new Uri(ScBack(ScMe).Replace("id_res", "cancel", StringComparison.Ordinal)), 302, null)), "Steam's answer wasn't a sign-in"),
+	];
+	Check("swaps check: each failure says why - the status Steam answered, its sign-in page again, its login page, or no form",
+		scReasons.All(static r => r.Why == r.Want), string.Join(" | ", scReasons.Where(static r => r.Why != r.Want).Select(static r => $"{r.Case}: {r.Why}")));
+	Check("swaps check: no reason carries the form, the page or Steam's answer",
+		scReasons.All(static r => !r.Why.Contains("n0nce", StringComparison.Ordinal) && !r.Why.Contains("secretparams", StringComparison.Ordinal)
+			&& !r.Why.Contains("s1gnature", StringComparison.Ordinal) && !r.Why.Contains("<", StringComparison.Ordinal)));
+
+	Check("swaps check: works - one line saying so, never Steam's answer itself",
+		NocatFarm.Commands.SwapsCheckLine("old", scOk) == "old: Steam sign-in for card swaps works", NocatFarm.Commands.SwapsCheckLine("old", scOk));
+	Check("swaps check: doesn't - one line with the reason",
+		NocatFarm.Commands.SwapsCheckLine("old", new(null, new NocatFarm.Core.Said("Steam answered {0} and showed the sign-in page again", 200)))
+			== "old: Steam sign-in for card swaps doesn't work yet - Steam answered 200 and showed the sign-in page again");
+
+	// The account as the command meets it: signed out here, so the reason is that - and it lands in the debug log.
+	var scBot = new NocatFarm.Core.Bot("harness-swapcheck", new NocatFarm.Config.BotConfig());
+	long scMark = NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	var scOff = await NocatFarm.Core.CardExchange.CheckAsync(scBot, CancellationToken.None);
+	Check("swaps check: an account not signed in says so, and swaps stay off",
+		!scOff.Ok && (scOff.Why.ToEnglish() == "not signed in to Steam") && !NocatFarm.Core.CardExchange.On(scBot.Cfg, scBot.Name), scOff.Why.ToEnglish());
+	Check("swaps check: the debug log says why, short, important word first",
+		NocatFarm.Log.Since(scMark).Any(static e => (e.Level == "DEBUG") && (e.Said.ToEnglish() == "swap sign-in failed · not signed in to Steam")),
+		string.Join(" | ", NocatFarm.Log.Since(scMark).Select(static e => e.Said.ToEnglish())));
+	await scBot.DisposeAsync();
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -28795,6 +28873,7 @@ static class CommandSweep {
 		["addlicense"] = ["robo", "robo 123", "robo a/440", "all 123", "robo abc"],
 		["reload"] = [],
 		["screen"] = ["bogus"],
+		["swaps"] = ["robo", "preview robo", "check robo", "check", "off robo"],
 	};
 
 	public static async Task RunAsync(Action<string, bool, string> check) {
@@ -28919,6 +28998,12 @@ static class CommandSweep {
 				&& Chat("booster robo 440").Contains("at the PC", StringComparison.Ordinal) && Chat("booster 440").Contains("at the PC", StringComparison.Ordinal)
 				&& !Chat("sell robo preview").Contains("at the PC", StringComparison.Ordinal) && !Chat("booster").Contains("at the PC", StringComparison.Ordinal)
 				&& !Chat("booster open").Contains("at the PC", StringComparison.Ordinal), Chat("booster 440"));
+			check("swaps check: at the PC it tries the sign-in alone - signed out here, it says so, and swaps stay off",
+				(Pc("swaps check robo") == "robo: Steam sign-in for card swaps doesn't work yet - not signed in to Steam") && Pc("swaps robo").Contains("card swaps off", StringComparison.Ordinal)
+				&& Pc("swaps check").Contains("one account at a time", StringComparison.Ordinal), Pc("swaps check robo"));
+			check("Steam chat: 'swaps check' is the owner's word, like 'swaps on' - it signs the account in through Steam",
+				Chat("swaps check").Contains("at the PC", StringComparison.Ordinal) && Chat("swaps check robo").Contains("at the PC", StringComparison.Ordinal)
+				&& !Chat("swaps").Contains("at the PC", StringComparison.Ordinal), Chat("swaps check"));
 
 			check("every command: none fails, whatever it's given", broken.Count == 0, string.Join(" | ", broken));
 			check("every command: each answers something", silent.Count == 0, string.Join(" | ", silent));
@@ -30607,8 +30692,9 @@ static class CardSwapCheatChecks {
 					return "no such method";
 				}
 				Func<Uri, CancellationToken, Task<string?>> get = (u, _) => { asked = u; return Task.FromResult<string?>(html); };
-				Func<Uri, IReadOnlyList<KeyValuePair<string, string>>, CancellationToken, Task<Uri?>> post = (_, f, _) => { posted = [.. f]; return Task.FromResult<Uri?>(new Uri(location)); };
-				return await (Task<string?>) proofFrom.Invoke(null, [get, post, who, expectHash, new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc), CancellationToken.None])!;
+				Func<Uri, IReadOnlyList<KeyValuePair<string, string>>, Uri, CancellationToken, Task<NocatFarm.Core.WebSession.Redirected>> post =
+					(_, f, _, _) => { posted = [.. f]; return Task.FromResult(new NocatFarm.Core.WebSession.Redirected(new Uri(location), 302, null)); };
+				return (await (Task<NocatFarm.Core.CardExchange.Proved>) proofFrom.Invoke(null, [get, post, who, expectHash, new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc), CancellationToken.None])!).Query;
 			}
 			string? proof = await Prove(page, back, MeId);
 			Check("swap cheat: signing in posts back Steam's own form and hands nocat.lol Steam's answer as it came",

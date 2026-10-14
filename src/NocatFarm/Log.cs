@@ -488,6 +488,17 @@ public static class Log {
 		return true;
 	}
 
+	/// <summary>The same, for a line with values - compared by its English, values filled in.</summary>
+	public static bool DebugOnChange(string key, Core.Said text, string source = "nocat.farm") {
+		if (!OnChange(key, text.ToEnglish())) {
+			return false;
+		}
+
+		Debug(text, source);
+
+		return true;
+	}
+
 	private static bool OnChange(string key, string text) {
 		DateTime now = DateTime.UtcNow;
 

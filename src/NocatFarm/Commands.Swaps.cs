@@ -6,7 +6,8 @@ namespace NocatFarm;
 public static partial class Commands {
 	/// <summary>
 	/// 'swaps [account]' says what each account's card swaps are doing; 'swaps preview|on|off &lt;account&gt;' shows, turns on
-	/// (after its preview, as the switch in its settings) or off; 'swaps sync' asks nocat.lol for new matches now.
+	/// (after its preview, as the switch in its settings) or off; 'swaps sync' asks nocat.lol for new matches now;
+	/// 'swaps check &lt;account&gt;' tries only the sign-in through Steam.
 	/// </summary>
 	private static async Task<string> SwapsAsync(BotManager mgr, string[] args) {
 		string verb = "status";
@@ -15,7 +16,7 @@ public static partial class Commands {
 		foreach (string a in args) {
 			string w = a.ToLowerInvariant();
 
-			if ((w is "status" or "preview" or "on" or "off" or "sync") && (mgr.Get(a) == null)) {
+			if ((w is "status" or "preview" or "on" or "off" or "sync" or "check") && (mgr.Get(a) == null)) {
 				verb = w;
 			} else {
 				account ??= a;
@@ -45,6 +46,8 @@ public static partial class Commands {
 		}
 
 		switch (verb) {
+			case "check":
+				return SwapsCheckLine(bot.Name, await CardExchange.CheckAsync(bot, CancellationToken.None).ConfigureAwait(false));
 			case "off":
 				// Safe from anywhere, Steam chat too: it only stops things.
 				Switches.Set(bot, Switches.Swaps, false);
@@ -59,6 +62,13 @@ public static partial class Commands {
 					+ (CardExchange.On(bot.Cfg, bot.Name) ? "" : $"{Environment.NewLine}To turn it on, type: swaps on {bot.Name}");
 		}
 	}
+
+	/// <summary>
+	/// 'swaps check': whether the account can sign in to nocat.lol through Steam - only ok or why not, never Steam's answer
+	/// itself. The sign-in alone: nothing goes to nocat.lol, nothing is turned on, swaps don't have to be on.
+	/// </summary>
+	public static string SwapsCheckLine(string account, CardExchange.Proved proved) =>
+		proved.Ok ? $"{account}: Steam sign-in for card swaps works" : $"{account}: Steam sign-in for card swaps doesn't work yet - {proved.Why.ToEnglish()}";
 
 	/// <summary>One account's card swaps in a line: on or off, today's count, matches waiting, offers out.</summary>
 	public static string SwapsStatus(Bot bot, DateTime nowUtc) {

@@ -132,6 +132,11 @@ another's.
 `swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks nocat.lol for
 new matches now.
 
+`swaps check myaccount` tries only the sign-in through Steam that swaps need, and says in one line whether it works -
+or why not, like `Steam answered 200 and showed the sign-in page again`. It sends nothing to nocat.lol, turns nothing
+on, and works with swaps off. It never shows Steam's answer itself. Only at the PC, Telegram or Discord, not from Steam
+chat. When the sign-in fails during a sync, the debug log says why the same way: `swap sign-in failed · ...`.
+
 ## The Authenticator page
 
 This is for accounts whose maFile is in `config/authenticators`, or whose secrets are in their settings. The

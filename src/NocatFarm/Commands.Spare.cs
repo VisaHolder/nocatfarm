@@ -43,7 +43,8 @@ public static partial class Commands {
 
 		return ((name == "spare") && (rest.Contains("on") || rest.Contains("ok") || rest.Contains("do") || rest.Contains("now")))
 			|| ((name == "booster") && rest.Contains("open") && (rest.Contains("do") || rest.Contains("now")))
-			|| ((name == "swaps") && rest.Contains("on"));   // 1.8.2: card swaps are turned on by the owner only
+			|| ((name == "swaps") && rest.Contains("on"))   // 1.8.2: card swaps are turned on by the owner only
+			|| ((name == "swaps") && rest.Contains("check"));   // and only the owner signs an account in through Steam to try it
 	}
 
 	/// <summary>The words after 'open' in 'booster open ...' or 'booster &lt;account&gt; open ...' - null when it isn't that.</summary>
