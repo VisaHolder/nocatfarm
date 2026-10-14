@@ -211,5 +211,74 @@ public sealed class SteamVdf {
 		}
 	}
 
+	/// <summary>
+	/// 1.8.2: change one leaf's value in a KeyValues text WITHOUT rewriting the rest - every other byte (layout, line
+	/// endings, comments, the other values) stays exactly as it was. For <c>config/config.vdf</c>, which is Steam's big
+	/// settings file: only the value between the quotes is replaced, wherever the key appears with value
+	/// <paramref name="from"/> (case-insensitive key, exact value). Null when there's nothing to change, or when the text
+	/// can't be read - then the file is left alone.
+	/// </summary>
+	public static string? ReplaceLeafInPlace(string text, string key, string from, string to) {
+		List<(int Start, int Length)> spans = [];
+		int i = text.StartsWith('﻿') ? 1 : 0;   // a byte-order mark is kept, not read
+		int depth = 0;
+
+		try {
+			while (true) {
+				SkipSpace(text, ref i);
+
+				if (i >= text.Length) {
+					break;
+				}
+
+				if (text[i] == '}') {
+					if (--depth < 0) {
+						return null;
+					}
+
+					i++;
+
+					continue;
+				}
+
+				string k = ReadString(text, ref i, out _);
+				SkipSpace(text, ref i);
+
+				if (i >= text.Length) {
+					return null;
+				}
+
+				if (text[i] == '{') {
+					depth++;
+					i++;
+
+					continue;
+				}
+
+				int start = i + 1;
+				string value = ReadString(text, ref i, out string raw);
+
+				if (string.Equals(k, key, StringComparison.OrdinalIgnoreCase) && string.Equals(value, from, StringComparison.Ordinal)) {
+					spans.Add((start, raw.Length));
+				}
+			}
+		} catch (FormatException) {
+			return null;
+		}
+
+		if ((depth != 0) || (spans.Count == 0)) {
+			return null;
+		}
+
+		StringBuilder sb = new(text);
+
+		// Back to front, so the earlier positions stay right.
+		for (int n = spans.Count - 1; n >= 0; n--) {
+			sb.Remove(spans[n].Start, spans[n].Length).Insert(spans[n].Start, Escape(to));
+		}
+
+		return sb.ToString();
+	}
+
 	private static string Escape(string s) => s.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 }

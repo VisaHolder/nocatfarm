@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam이 {0}의 로그인 화면에 있습니다: 비밀번호를 입력하고(요청하면 Steam Guard 코드도) 로그인 정보 기억을 체크한 채로 두세요 - 다음부터는 한 번 클릭이면 됩니다",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam이 닫히지 않았습니다 - 메시지 상자가 떠 있으면 닫은 뒤 다시 시도하세요",
+    "Open in Steam is on for every account: each one shows the one-click button": "모든 계정에서 Steam에서 열기가 켜졌습니다: 각 계정에 한 번 클릭 버튼이 보입니다",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "모든 계정용 Steam에서 열기가 꺼졌습니다: 하나씩 켠 계정에만 보입니다",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam이 아직 이 계정을 기억하지 못해서, 이름이 입력된 Steam 로그인 화면으로 열립니다: 비밀번호를 한 번 입력하고 로그인 정보 기억을 체크한 채로 두세요.",
+    "Steam Guard code: {0}": "Steam Guard 코드: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam이 이 계정의 로그인 화면에 있습니다: Steam이 요청하면 이 코드를 입력하세요.",
+    "Turn on Open in Steam for every account?": "모든 계정에서 Steam에서 열기를 켤까요?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "모든 계정에 Steam에서 열기 버튼을 보여 주므로 하나씩 켤 필요가 없습니다. 여기서 켜기를 누를 때까지 아무것도 바뀌지 않습니다.",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Steam 앱이 아직 이 계정을 기억하지 못합니다: 버튼을 누르면 이름이 입력된 Steam 로그인 화면이 열립니다. \"로그인 정보 기억\"을 체크하고 비밀번호를 한 번 입력하세요(요청하면 Steam Guard 코드도) - 그다음부터는 한 번 클릭입니다.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Steam의 \"Steam을 시작할 때마다 사용할 계정 묻기\"가 켜져 있으면 끕니다 - 그렇지 않으면 Steam이 지정된 계정을 무시합니다.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "더블클릭과 같은 방식으로 Steam을 다시 시작해 이 계정으로 바로 로그인합니다 - 처음에는 이름이 입력된 로그인 화면을 엽니다.",
+    "ready - Steam remembers it": "준비됨 - Steam이 기억합니다",
+    "opens Steam's sign-in the first time": "처음에는 Steam 로그인 화면을 엽니다",
+    "sign in once with Remember me": "로그인 정보 기억으로 한 번 로그인",
+    "Every account": "모든 계정",
+    "What pressing one does": "누르면 하는 일",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam이 시작할 때마다 사용할 계정을 묻도록 설정되어 있습니다 - 이것을 끕니다. 그렇지 않으면 Steam이 이 계정을 무시합니다.",
     "Open in Steam: sign your Steam app into this account": "Steam에서 열기: 이 계정으로 Steam 앱에 로그인",
     "signing your Steam app into {0} - it closes and opens again": "Steam 앱을 {0} 계정으로 로그인합니다 - 닫았다가 다시 열립니다",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0}에서 'Steam에서 열기'가 켜져 있지 않습니다 - 먼저 설정에서 켜세요",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0}의 'Steam에서 열기'가 켜짐: 버튼 한 번으로 Steam 앱을 이 계정으로 로그인합니다",
     "Open in Steam is off for {0}: the button is hidden": "{0}의 'Steam에서 열기'가 꺼짐: 버튼이 숨겨집니다",
     "couldn't change Steam's saved accounts - {0}": "Steam의 저장된 계정을 변경할 수 없습니다 - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam이 닫히지 않아 아무것도 바꾸지 않았어요 - Steam을 닫은 뒤 {0}을(를) 다시 여세요",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "Steam의 저장된 계정을 먼저 백업하지 못해 아무것도 바꾸지 않았어요",
     "one Open in Steam is already running - wait for it to finish": "Steam에서 열기가 이미 하나 실행 중이에요 - 끝날 때까지 기다리세요",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "한 번의 클릭으로 Steam 앱을 이 계정으로 로그인합니다. Steam을 닫았다가 다시 엽니다. 이 계정의 파밍은 계속됩니다.",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "이 계정에 한 번의 클릭으로 Steam 앱을 로그인시키는 버튼을 표시합니다. 누르면 정확히 이렇게 동작합니다. 여기서 켜기를 누르기 전까지 버튼은 아무 일도 하지 않습니다.",
     "Closes your Steam app (the polite way, letting it finish).": "Steam 앱을 닫습니다(정상적으로 마무리하도록 둡니다).",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Steam의 저장된 계정 파일을 이 계정으로 지정합니다 - 이 계정만이며, 다른 계정은 건드리지 않습니다.",
-    "Starts Steam again, so it signs straight into this account.": "Steam을 다시 시작하여 이 계정으로 바로 로그인합니다.",
     "Open in Steam only works on Windows for now.": "'Steam에서 열기'는 지금은 Windows에서만 작동합니다.",
     "Steam doesn't look installed on this PC.": "이 PC에 Steam이 설치되어 있지 않은 것 같습니다.",
     "A game is open in Steam right now - the button won't switch while one is running.": "지금 Steam에서 게임이 실행 중입니다 - 실행 중에는 버튼으로 전환되지 않습니다.",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "카드 교환 · {0}에게 보낸 제안을 Steam 이메일에서 확인하세요"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "모든 계정에 Steam에서 열기 버튼",
+      "tip": "모든 계정에 한 번 클릭 Steam에서 열기 버튼을 보여 줍니다(계정 카드와 앱 창). 계정마다 하나씩 켤 필요가 없습니다. 버튼은 Steam 데스크톱 앱을 그 계정으로 로그인시킵니다: Steam을 닫고, Steam이 그 계정을 가리키게 한 뒤, Steam을 다시 시작합니다. Steam이 아직 기억하지 못하는 계정은 이름이 입력된 Steam 로그인 화면으로 열립니다. nocat.farm의 파밍을 멈추지 않습니다. Windows 전용. 기본값은 꺼짐. 켜면 먼저 버튼이 하는 일을 정확히 보여 주고 확인을 받습니다. 일부 계정에만 원하면 이것은 끈 채로 두고 그 계정 설정에서 Steam에서 열기 버튼을 켜세요."
+    },
     "SteamOpenButton": {
       "label": "'Steam에서 열기' 버튼",
       "tip": "이 계정에 - 카드와 앱 창에 - 비밀번호 입력 없이 Steam 앱을 로그인시키는 버튼을 표시합니다. 누르면 Steam을 닫고, Steam의 저장된 계정 파일을 이 계정으로 지정한 뒤 Steam을 다시 열어, Steam이 이미 기억하는 로그인으로 바로 로그인합니다. nocat.farm이 이 계정을 파밍하는 것을 멈추지 않습니다: Steam은 로그인을 허용하고 실제로 게임을 실행할 때만 파밍을 물러나게 합니다. Windows 전용. 기본값은 꺼짐. 켤 때 먼저 버튼이 하는 일을 정확히 보여주고 확인을 요청합니다."

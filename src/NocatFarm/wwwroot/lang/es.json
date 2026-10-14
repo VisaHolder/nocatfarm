@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam está en el inicio de sesión de {0}: escribe su contraseña (y el código de Steam Guard si lo pide), deja marcado Recordarme - la próxima vez es un clic",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam no se cerró - si muestra un cuadro de mensaje, ciérralo y vuelve a intentarlo",
+    "Open in Steam is on for every account: each one shows the one-click button": "Abrir en Steam está activado en todas las cuentas: cada una muestra el botón de un clic",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "Abrir en Steam está desactivado para todas las cuentas: solo lo muestran las cuentas activadas una por una",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam todavía no recuerda esta cuenta, así que abre el inicio de sesión de Steam con el nombre ya puesto: escribe su contraseña una vez y deja marcado Recordarme.",
+    "Steam Guard code: {0}": "Código de Steam Guard: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam está en el inicio de sesión de esta cuenta: escribe este código cuando Steam lo pida.",
+    "Turn on Open in Steam for every account?": "¿Activar Abrir en Steam en todas las cuentas?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "Esto muestra el botón Abrir en Steam en todas las cuentas, así no tienes que activarlo de una en una. No cambia nada hasta que pulses Activar aquí.",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Tu app de Steam todavía no recuerda esta cuenta: el botón abre el inicio de sesión de Steam con su nombre ya puesto. Escribe su contraseña una vez (y su código de Steam Guard si lo pide) con \"Recordarme\" marcado - después es un clic.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Desactiva en Steam \"Preguntar qué cuenta usar cada vez que se inicie Steam\" si está activado - si no, Steam ignoraría la cuenta a la que se le apunta.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "Vuelve a iniciar Steam como lo hace un doble clic, para que entre directamente en esta cuenta - o, la primera vez, abra su inicio de sesión con el nombre ya puesto.",
+    "ready - Steam remembers it": "lista - Steam la recuerda",
+    "opens Steam's sign-in the first time": "abre el inicio de sesión de Steam la primera vez",
+    "sign in once with Remember me": "inicia sesión una vez con Recordarme",
+    "Every account": "Todas las cuentas",
+    "What pressing one does": "Qué hace pulsar uno",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam está configurado para preguntar qué cuenta usar cada vez que se inicia - esto lo desactiva, si no Steam ignoraría la cuenta.",
     "Open in Steam: sign your Steam app into this account": "Abrir en Steam: inicia sesión en tu app de Steam con esta cuenta",
     "signing your Steam app into {0} - it closes and opens again": "iniciando sesión de {0} en tu app de Steam - se cierra y se vuelve a abrir",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "Abrir en Steam no está activado para {0} - actívalo primero en sus ajustes",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "Abrir en Steam está activado para {0}: un botón inicia sesión de tu app de Steam con un clic",
     "Open in Steam is off for {0}: the button is hidden": "Abrir en Steam está desactivado para {0}: el botón está oculto",
     "couldn't change Steam's saved accounts - {0}": "no se pudieron cambiar las cuentas guardadas de Steam - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam no se cerró, así que no se cambió nada - cierra Steam y vuelve a abrir {0}",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "no se pudieron respaldar primero las cuentas guardadas de Steam, así que no se cambió nada",
     "one Open in Steam is already running - wait for it to finish": "ya hay un Abrir en Steam en marcha - espera a que termine",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Inicia sesión de tu app de Steam en esta cuenta con un clic. Cierra Steam y lo vuelve a abrir. Sigue farmeando esta cuenta.",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Esto muestra un botón en esta cuenta que inicia sesión de tu app de Steam con un clic. Esto es exactamente lo que hace al pulsarlo. El botón no hace nada hasta que pulsas Activar aquí.",
     "Closes your Steam app (the polite way, letting it finish).": "Cierra tu app de Steam (con suavidad, dejándola terminar).",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Apunta los archivos de cuentas guardadas de Steam a esta cuenta - solo a esta; las demás no se tocan.",
-    "Starts Steam again, so it signs straight into this account.": "Vuelve a iniciar Steam, para que entre directamente en esta cuenta.",
     "Open in Steam only works on Windows for now.": "Abrir en Steam de momento solo funciona en Windows.",
     "Steam doesn't look installed on this PC.": "Steam no parece estar instalado en este PC.",
     "A game is open in Steam right now - the button won't switch while one is running.": "Ahora mismo hay un juego abierto en Steam - el botón no cambia mientras uno esté en marcha.",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "intercambio de cartas · confirma la oferta a {0} desde el correo de Steam"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "Botones Abrir en Steam en todas las cuentas",
+      "tip": "Muestra el botón de un clic Abrir en Steam en todas las cuentas - en su tarjeta y en la ventana de la app - para que no tengas que activarlo cuenta por cuenta. El botón inicia sesión en tu app de escritorio de Steam con esa cuenta: cierra Steam, apunta Steam a la cuenta y vuelve a iniciar Steam. Una cuenta que Steam todavía no recuerda abre el inicio de sesión de Steam con su nombre ya puesto. Nunca impide que nocat.farm farmee. Solo en Windows. Desactivado de forma predeterminada. Al activarlo, primero muestra exactamente lo que hace el botón y te pide confirmación. Para tenerlo solo en algunas cuentas, deja esto desactivado y activa Botón Abrir en Steam en los ajustes de esas cuentas."
+    },
     "SteamOpenButton": {
       "label": "Botón Abrir en Steam",
       "tip": "Muestra un botón en esta cuenta - en su tarjeta y en la ventana de la app - que inicia sesión de tu app de Steam sin escribir contraseña. Al pulsarlo se cierra Steam, se apuntan los archivos de cuentas guardadas de Steam a esta cuenta y se vuelve a abrir Steam, de modo que entra directamente con el inicio de sesión que Steam ya recuerda. Nunca impide que nocat.farm farmee esta cuenta: Steam permite el inicio de sesión y solo detiene el farmeo cuando de verdad inicias un juego. Solo en Windows. Desactivado por defecto. Al activarlo primero muestra exactamente lo que hace el botón y te pide confirmación."

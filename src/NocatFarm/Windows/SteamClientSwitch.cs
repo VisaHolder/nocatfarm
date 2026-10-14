@@ -72,6 +72,31 @@ public static class SteamClientSwitch {
 
 	private static string VdfPath(string steamPath) => Path.Combine(steamPath, "config", "loginusers.vdf");
 
+	/// <summary>1.8.2: Steam's settings file, read for (and only ever changed in) "Ask which account to use each time Steam starts".</summary>
+	private static string ConfigPath(string steamPath) => Path.Combine(steamPath, "config", "config.vdf");
+
+	/// <summary>
+	/// A text file exactly as it is - null when it's missing, unreadable, or not plain UTF-8 that would be written back byte
+	/// for byte (then it's never changed). A byte-order mark is kept as the text's first character, so it's written back too.
+	/// </summary>
+	private static string? ReadExact(string path) {
+		try {
+			if (!File.Exists(path)) {
+				return null;
+			}
+
+			byte[] bytes = File.ReadAllBytes(path);
+			string text = new System.Text.UTF8Encoding(false, true).GetString(bytes);
+
+			return System.Text.Encoding.UTF8.GetBytes(text).AsSpan().SequenceEqual(bytes) ? text : null;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.DecoderFallbackException) {
+			return null;
+		}
+	}
+
+	/// <summary>Write text back with no encoding changes (a leading byte-order mark stays), through a temp file and a rename.</summary>
+	private static void WriteExact(string path, string text) => AtomicFile.Write(path, text);
+
 	private static bool SteamRunning() {
 		try {
 			Process[] all = Process.GetProcessesByName("steam");
@@ -107,6 +132,7 @@ public static class SteamClientSwitch {
 			}
 		}
 
+		string? config = steamPath == null ? null : ReadExact(ConfigPath(steamPath));
 		string? autoLogin = null;
 		bool remember = false;
 		uint runningApp = 0;
@@ -127,7 +153,7 @@ public static class SteamClientSwitch {
 			// the defaults above
 		}
 
-		return new SteamOpen.Inputs(vdf, autoLogin, remember, runningApp, installed);
+		return new SteamOpen.Inputs(vdf, autoLogin, remember, runningApp, installed, config);
 	}
 
 	/// <summary>One press at a time: a double-click (or the window button and the dashboard together) can't race on the files.</summary>
@@ -150,7 +176,7 @@ public static class SteamClientSwitch {
 			SteamOpen.Inputs inputs = Read();
 			SteamOpen.Plan plan = SteamOpen.Decide(login, steamId, inputs);
 
-			if (plan.Code is not SteamOpen.Ok) {
+			if (plan.Code is not (SteamOpen.Ok or SteamOpen.SignIn)) {
 				Log.Info(SteamOpen.Message(plan.Code, display), display);
 
 				return (plan.Code, SteamOpen.Message(plan.Code, display).ToEnglish());
@@ -166,20 +192,31 @@ public static class SteamClientSwitch {
 			}
 
 			string vdfPath = VdfPath(steamPath);
+			string configPath = ConfigPath(steamPath);
 			Exception? writeError = null;
 
 			var ops = new SteamOpen.Ops(
 				Running: SteamRunning,
 				CloseAndWait: () => CloseSteamAndWaitAsync(exe),
-				Backup: () => BackUp(vdfPath, inputs),
+				// Read again once Steam has closed: it saves its files as it goes, and the change goes onto what it saved.
+				Replan: () => SteamOpen.Decide(login, steamId, Read()),
+				Backup: p => BackUp(vdfPath, configPath, p, inputs),
 				Write: p => {
 					try {
 						if (p.NewVdf != null) {
 							AtomicFile.Write(vdfPath, p.NewVdf);
 						}
 
-						// Only AutoLoginUser - the single "sign this one in" pointer. RememberPassword is the owner's own
-						// global choice and is never written here.
+						// 1.8.2: "Ask which account to use each time Steam starts" off - only that one value changes in
+						// config.vdf, every other byte stays as it was.
+						if (p.NewConfig != null) {
+							WriteExact(configPath, p.NewConfig);
+							Log.Info(SteamOpen.ChooserLine, display);
+						}
+
+						// Only AutoLoginUser - the single "sign this one in" pointer (for an account Steam doesn't remember,
+						// the name its sign-in is filled in with). RememberPassword is the owner's own global choice and is
+						// never written here; no password or token is written anywhere.
 						using RegistryKey key = Registry.CurrentUser.CreateSubKey(SteamKey, true);
 						key.SetValue("AutoLoginUser", p.NewAutoLoginUser ?? login, RegistryValueKind.String);
 					} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) {
@@ -199,7 +236,7 @@ public static class SteamClientSwitch {
 					}
 				});
 
-			string code = await SteamOpen.ApplyAsync(plan, ops).ConfigureAwait(false);
+			SteamOpen.Plan done = await SteamOpen.ApplyAsync(plan, ops).ConfigureAwait(false);
 
 			if (writeError != null) {
 				Log.Failed("couldn't write Steam's saved-accounts files", writeError, display);
@@ -207,9 +244,10 @@ public static class SteamClientSwitch {
 				return (SteamOpen.NoSteam, new Said("couldn't change Steam's saved accounts - {0}", Log.Scrub(writeError.Message)).ToEnglish());
 			}
 
-			Log.Info(SteamOpen.Message(code, display), display);
+			Said said = SteamOpen.Message(done.Code, display, done.NewAutoLoginUser);
+			Log.Info(said, display);
 
-			return (code, SteamOpen.Message(code, display).ToEnglish());
+			return (done.Code, said.ToEnglish());
 		} finally {
 			OneAtATime.Release();
 		}
@@ -248,7 +286,7 @@ public static class SteamClientSwitch {
 	/// the last three so a mistake can always be undone by hand; never touches a token. True on success; false when it
 	/// couldn't back up, so the caller leaves the files alone.
 	/// </summary>
-	private static bool BackUp(string vdfPath, SteamOpen.Inputs inputs) {
+	private static bool BackUp(string vdfPath, string configPath, SteamOpen.Plan plan, SteamOpen.Inputs inputs) {
 		try {
 			Directory.CreateDirectory(BackupDir);
 			string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
@@ -257,6 +295,11 @@ public static class SteamClientSwitch {
 
 			if (File.Exists(vdfPath)) {
 				File.Copy(vdfPath, Path.Combine(into, "loginusers.vdf"), overwrite: false);
+			}
+
+			// 1.8.2: config.vdf too, whenever the account picker is about to be turned off in it.
+			if ((plan.NewConfig != null) && File.Exists(configPath)) {
+				File.Copy(configPath, Path.Combine(into, "config.vdf"), overwrite: false);
 			}
 
 			File.WriteAllText(Path.Combine(into, "registry.txt"),

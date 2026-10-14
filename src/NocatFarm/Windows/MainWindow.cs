@@ -1072,9 +1072,19 @@ public sealed partial class MainWindow : IDisposable {
 			case 'o':
 				// A real action on the PC (Steam closes and reopens), so it asks first - the dashboard button asks too.
 				const uint MbYesNo = 0x4, MbIconQuestion = 0x20, IdYes = 6;
+				string ask = Core.Loc.T("Sign your Steam app into {0}? Steam will close and open again.", name);
 
-				if (MessageBox(_hwnd, Core.Loc.T("Sign your Steam app into {0}? Steam will close and open again.", name),
-						Core.Loc.T("Open in Steam"), MbYesNo | MbIconQuestion) != IdYes) {
+				// 1.8.2: an account Steam doesn't remember yet opens on Steam's sign-in - say so, with its Steam Guard code
+				// when nocat.farm has its authenticator (Ctrl+C copies a message box's text).
+				if ((_mgr.Get(name) is { } who) && Core.SteamOpen.Look(who).SignIn) {
+					ask += "\n\n" + Core.Loc.T("Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.");
+
+					if (Core.SteamOpen.GuardCode(who) is { } guard) {
+						ask += "\n\n" + Core.Loc.T("Steam Guard code: {0}", guard.Code);
+					}
+				}
+
+				if (MessageBox(_hwnd, ask, Core.Loc.T("Open in Steam"), MbYesNo | MbIconQuestion) != IdYes) {
 					break;
 				}
 

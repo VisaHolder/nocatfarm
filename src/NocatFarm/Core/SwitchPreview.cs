@@ -141,6 +141,47 @@ public static class SwitchPreview {
 			cfg.PointsBuySeasonalBadge, cfg.PointsBuyOlderBadges, Math.Clamp(cfg.PointsBadgeMaxLevel, 1, 40));
 	}
 
+	/// <summary>1.8.2 Open in Steam on every account: what each account's button would do, for its Turn on? pop-up.</summary>
+	public sealed record SteamOpenAllNumbers(bool Supported, bool SteamFound, bool GameRunning, bool AsksWhichAccount, IReadOnlyList<SteamOpen.Numbers> Accounts) {
+		public string Kind => "steamopenall";
+	}
+
+	/// <summary>One account's Open in Steam look in a line, for the console.</summary>
+	public static string SteamOpenLine(SteamOpen.Numbers n, string account) {
+		string line = !n.Supported ? $"{account}: Open in Steam only works on Windows for now."
+			: !n.SteamFound ? $"{account}: Steam doesn't look installed on this PC."
+			: n.GameRunning ? $"{account}: a game is open in Steam right now - the button won't switch while one is running."
+			: n.Remembered ? $"{account}: your Steam app remembers this account, so the button signs it in with no password."
+			: n.SignIn ? $"{account}: your Steam app doesn't remember this account yet - the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked; after that it's one click."
+			: $"{account}: no Steam login name is set for this account. Sign into it once in Steam with \"Remember me\" ticked, then the button works.";
+
+		return n.AsksWhichAccount
+			? line + $"{Environment.NewLine}Steam is set to ask which account to use each time it starts - the button turns that off, or Steam would ignore the account it's pointed at."
+			: line;
+	}
+
+	/// <summary>1.8.2: the look for "Open in Steam buttons on every account" - every account's, read-only from the local Steam files.</summary>
+	public static (string Text, SteamOpenAllNumbers Data) LookEveryone(IEnumerable<Bot> bots) {
+		List<SteamOpen.Numbers> each = [.. bots.Select(SteamOpen.Look)];
+		SteamOpen.Numbers first = each.FirstOrDefault() ?? SteamOpen.Look("", 0, "");
+		var data = new SteamOpenAllNumbers(first.Supported, first.SteamFound, first.GameRunning, first.AsksWhichAccount, each);
+
+		if (!first.Supported) {
+			return ("Open in Steam only works on Windows for now.", data);
+		}
+
+		List<string> lines = ["Open in Steam on every account: each account shows the one-click button that signs your Steam app into it."];
+		lines.AddRange(each.Select(n => "  " + SteamOpenLine(n with { AsksWhichAccount = false }, n.Account)));
+
+		if (first.AsksWhichAccount) {
+			lines.Add("Steam is set to ask which account to use each time it starts - the button turns that off, or Steam would ignore the account it's pointed at.");
+		}
+
+		lines.Add("Pressing a button closes Steam, points it at that account, and starts Steam again. It never stops nocat.farm farming.");
+
+		return (string.Join(Environment.NewLine, lines), data);
+	}
+
 	/// <summary>
 	/// One look for the pop-up: the console's text (exactly what 'set &lt;account&gt; SpareItems on' prints) and the numbers.
 	/// </summary>
@@ -151,13 +192,8 @@ public static class SwitchPreview {
 		// for the console and the same facts as numbers for the pop-up.
 		if (feature == Switches.SteamOpenButton) {
 			SteamOpen.Numbers n = SteamOpen.Look(bot);
-			string line = !n.Supported ? $"{bot.Name}: Open in Steam only works on Windows for now."
-				: !n.SteamFound ? $"{bot.Name}: Steam doesn't look installed on this PC."
-				: n.GameRunning ? $"{bot.Name}: a game is open in Steam right now - the button won't switch while one is running."
-				: n.Remembered ? $"{bot.Name}: your Steam app remembers this account, so the button can sign it in with no password."
-				: $"{bot.Name}: your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then the button works.";
 
-			return (line, n);
+			return (SteamOpenLine(n, bot.Name), n);
 		}
 
 		if (feature == Switches.Swaps) {

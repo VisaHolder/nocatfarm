@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam на входе в {0}: введи пароль (и код Steam Guard, если спросит), оставь галочку «Запомнить меня» - в следующий раз это один клик",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam не закрылся - если он показывает окно с сообщением, закрой его и попробуй снова",
+    "Open in Steam is on for every account: each one shows the one-click button": "«Открыть в Steam» включено для всех аккаунтов: у каждого есть кнопка в один клик",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "«Открыть в Steam» для всех аккаунтов выключено: кнопка есть только у аккаунтов, где она включена отдельно",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam ещё не помнит этот аккаунт, поэтому откроется вход в Steam с уже вписанным именем: введи пароль один раз и оставь галочку «Запомнить меня».",
+    "Steam Guard code: {0}": "Код Steam Guard: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam на входе в этот аккаунт: введи этот код, когда Steam его попросит.",
+    "Turn on Open in Steam for every account?": "Включить «Открыть в Steam» для всех аккаунтов?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "Кнопка «Открыть в Steam» появится у всех аккаунтов, не нужно включать её по одному. Ничего не изменится, пока ты не нажмёшь здесь «Включить».",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Твоё приложение Steam ещё не помнит этот аккаунт: кнопка откроет вход в Steam с уже вписанным именем. Введи пароль один раз (и код Steam Guard, если спросит) с галочкой «Запомнить меня» - потом это один клик.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Выключает в Steam «Спрашивать, какой аккаунт использовать при каждом запуске Steam», если это включено, - иначе Steam проигнорирует указанный аккаунт.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "Снова запускает Steam так же, как двойной щелчок, чтобы он сразу вошёл в этот аккаунт - или в первый раз открыл вход с уже вписанным именем.",
+    "ready - Steam remembers it": "готово - Steam его помнит",
+    "opens Steam's sign-in the first time": "в первый раз откроет вход в Steam",
+    "sign in once with Remember me": "войди один раз с «Запомнить меня»",
+    "Every account": "Все аккаунты",
+    "What pressing one does": "Что делает нажатие",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam настроен спрашивать при каждом запуске, какой аккаунт использовать, - это будет выключено, иначе Steam проигнорирует аккаунт.",
     "Open in Steam: sign your Steam app into this account": "Открыть в Steam: войти в приложение Steam под этим аккаунтом",
     "signing your Steam app into {0} - it closes and opens again": "вхожу в приложение Steam под {0} - оно закроется и откроется снова",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "«Открыть в Steam» не включено для {0} - сначала включите в его настройках",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "«Открыть в Steam» включено для {0}: кнопка в один клик входит в ваше приложение Steam под этим аккаунтом",
     "Open in Steam is off for {0}: the button is hidden": "«Открыть в Steam» выключено для {0}: кнопка скрыта",
     "couldn't change Steam's saved accounts - {0}": "не удалось изменить сохранённые аккаунты Steam - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam не закрылся, поэтому ничего не изменено - закройте Steam и снова откройте {0}",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "не удалось сначала сделать резервную копию сохранённых аккаунтов Steam, поэтому ничего не изменено",
     "one Open in Steam is already running - wait for it to finish": "«Открыть в Steam» уже выполняется - дождитесь завершения",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Войдите в приложение Steam под этим аккаунтом в один клик. Закрывает Steam и открывает снова. Фарм этого аккаунта продолжается.",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Это показывает у этого аккаунта кнопку, которая в один клик входит в ваше приложение Steam. Вот что именно она делает при нажатии. Кнопка ничего не делает, пока вы не нажмёте «Включить» здесь.",
     "Closes your Steam app (the polite way, letting it finish).": "Закрывает приложение Steam (аккуратно, давая ему завершиться).",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Направляет файлы сохранённых аккаунтов Steam на этот аккаунт - только на него; другие аккаунты не трогаются.",
-    "Starts Steam again, so it signs straight into this account.": "Снова запускает Steam, чтобы он сразу вошёл в этот аккаунт.",
     "Open in Steam only works on Windows for now.": "«Открыть в Steam» пока работает только в Windows.",
     "Steam doesn't look installed on this PC.": "Похоже, Steam не установлен на этом ПК.",
     "A game is open in Steam right now - the button won't switch while one is running.": "Сейчас в Steam открыта игра - кнопка не переключит, пока игра запущена.",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "Кнопки «Открыть в Steam» у всех аккаунтов",
+      "tip": "Показывает кнопку «Открыть в Steam» в один клик у всех аккаунтов - на карточке и в окне приложения, - чтобы не включать её у каждого по отдельности. Кнопка входит в твоё приложение Steam под этим аккаунтом: закрывает Steam, направляет Steam на аккаунт и снова запускает Steam. Аккаунт, который Steam ещё не помнит, откроется на входе в Steam с уже вписанным именем. Никогда не мешает nocat.farm фармить. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтвердить. Если нужно только у некоторых аккаунтов, оставь это выключенным и включи кнопку «Открыть в Steam» в настройках этих аккаунтов."
+    },
     "SteamOpenButton": {
       "label": "Кнопка «Открыть в Steam»",
       "tip": "Показывает у этого аккаунта кнопку - на его карточке и в окне приложения - которая входит в ваше приложение Steam без ввода пароля. Нажатие закрывает Steam, направляет файлы сохранённых аккаунтов Steam на этот аккаунт и снова запускает Steam, так что он сразу входит под логином, который Steam уже помнит. Он никогда не прекращает фарм этого аккаунта в nocat.farm: Steam разрешает вход и отступает только когда вы действительно запускаете игру. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтверждение."

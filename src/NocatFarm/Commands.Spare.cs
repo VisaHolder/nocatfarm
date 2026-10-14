@@ -120,6 +120,25 @@ public static partial class Commands {
 	/// with the preview and how to confirm ('spare on &lt;account&gt;'); 'off' turns it off at once. Everything else is 'set' as ever.
 	/// </summary>
 	private static async Task<string> SetAsync(BotManager mgr, string[] args, string line) {
+		// 1.8.2: 'set SteamOpenEveryAccount on' - the global switch for Open in Steam on every account, the same way: on only
+		// shows its preview and how to turn it on ('steam on all'); off turns it off at once.
+		if ((args.Length >= 1) && KeyOf(args[0]).Key.Equals(Switches.SteamOpenEveryone, StringComparison.OrdinalIgnoreCase)) {
+			string value = Unquote(SetValue(line, Words(line), 1)).Trim().ToLowerInvariant();
+			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
+
+			if (on == false) {
+				Switches.SetEveryone(mgr.Global, false);
+
+				return $"{Switches.SteamOpenEveryone} = off";
+			}
+
+			if (on == true) {
+				return SteamOpen.EveryoneOn(mgr.Global)
+					? $"{Switches.SteamOpenEveryone} = on"
+					: $"{SteamEveryonePreview(mgr)}{Environment.NewLine}{Switches.SteamOpenEveryone} is still off.";
+			}
+		}
+
 		if ((args.Length >= 2) && (mgr.Get(args[0]) is { } bot) && (Switches.FeatureOf(KeyOf(args[1]).Key) is { } feature)) {
 			string value = Unquote(SetValue(line, Words(line), 2)).Trim().ToLowerInvariant();
 			// Every word 'set' reads as on or off ('y', 'n' too): one it doesn't is answered by 'set' as wrong, and changes nothing.

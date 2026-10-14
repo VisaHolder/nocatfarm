@@ -398,6 +398,11 @@ public sealed class GlobalConfig {
 	/// </summary>
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
+
+	// ── Open in Steam (1.8.2) ── the button on every account at once. Off by default; like each account's own switch,
+	// its go-ahead lives outside the settings (SteamOpenLedger.Everyone), so this alone can't switch it on - the
+	// preview's Turn on does.
+	public bool SteamOpenEveryAccount { get; set; }
 }
 
 public sealed class BotConfig {
@@ -1369,6 +1374,10 @@ public static class ConfigStore {
 			bool migrated = MigrateUpdates(loaded);
 			migrated |= MigrateDiscordNames(loaded, text);
 			migrated |= MigrateShareTotals(loaded, text);
+
+			// 1.8.2: "Open in Steam buttons on every account" on in the file without its go-ahead (a file copied from another
+			// PC, typed in by hand) goes back off - it's turned on only through its preview.
+			migrated |= Core.Switches.SettleEveryone(loaded);
 
 			if ((plain && Secrets.Available) || migrated) {
 				SaveGlobal(loaded);

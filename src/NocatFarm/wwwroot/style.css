@@ -1704,3 +1704,7 @@ a.loglink:hover { color: #79b8ff; }
 /* Turn on / Cancel stay in reach while a long preview scrolls on a phone. */
 #modalCard:has(.swpop) > .actions { position: sticky; bottom: -16px; background: var(--panel); padding: 10px 0 16px; margin-bottom: -16px; }
 @media (max-width: 420px) { .swpop .num { padding: 8px; } .swpop .num b { font-size: 19px; } }
+/* 1.8.2 Open in Steam: the Steam Guard code to type on Steam's sign-in - on the account card and in the button's confirm. */
+.steamcode { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px; border: 1px solid var(--line); background: var(--panel2); font-size: 13px; color: var(--muted); }
+.steamcode b { font-size: 18px; letter-spacing: 4px; color: var(--text); user-select: all; font-weight: 600; }
+.steamcode button { margin-left: auto; }

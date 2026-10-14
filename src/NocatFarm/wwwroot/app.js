@@ -1292,7 +1292,10 @@ function renderAccounts() {
           ? `<button class="ghost" data-tip="${esc(t('Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.'))}" data-act="steamopen" data-bot="${esc(b.Name)}">${esc(t('Open in Steam'))}</button>`
           : `<button class="ghost" disabled data-tip="${esc(t('Windows only for now'))}">${esc(t('Open in Steam'))}</button>`) : ''}
         <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
-      </div></div>`;
+      </div>
+      ${b.SteamOpenCode ? `<div class="steamcode" data-tip="${esc(t('Steam is on the sign-in for this account: type this code when Steam asks for it.'))}">
+        <span>${esc(t('Steam Guard code'))}</span><b>${esc(b.SteamOpenCode)}</b>
+        <button class="ghost" data-act="steamcode" data-bot="${esc(b.Name)}">${esc(t('Copy'))}</button></div>` : ''}</div>`;
   });
 
   paintCards(bots.map((b) => b.Name), cards);
@@ -4066,6 +4069,7 @@ document.addEventListener('click', (e) => {
     case 'start': case 'stop': case 'pause': case 'resume': act(name, el.dataset.act); break;
     case 'cards': openBot(name); break;
     case 'steamopen': openInSteam(name); break;
+    case 'steamcode': copySteamCode(name); break;
     case 'settings': closeModal(); openBotSettings(name); break;
     case 'remove': removeBot(name); break;
     case 'postnow': postNow(name); break;
@@ -6117,6 +6121,48 @@ const SWITCH_POPUPS = {
   },
 };
 
+// 1.8.2: the one switch of this kind in the global settings - Open in Steam on every account. The same pattern: ticking it
+// shows what it would do and asks; Turn on switches it on with its go-ahead; off is off at once.
+const GLOBAL_SWITCH_POPUPS = {
+  SteamOpenEveryAccount: {
+    title: () => t('Turn on Open in Steam for every account?'),
+    intro: () => t('This shows the Open in Steam button on every account, so you don\'t have to turn it on one at a time. Nothing changes until you press Turn on here.'),
+    html: (d) => steamOpenAllPreviewHtml(d),
+  },
+};
+
+function confirmGlobalSwitch(name) {
+  const pop = GLOBAL_SWITCH_POPUPS[name];
+  if (!pop) return;
+  modal(`
+    <h2>${esc(pop.title())}</h2>
+    <p>${esc(pop.intro())}</p>
+    <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button id="switchGo" data-setting="${esc(name)}" onclick="globalSwitchTo(this.dataset.setting, true)">${esc(t('Turn on'))}</button>
+    </div>`);
+  const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
+  const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
+  api('/api/steam-open/everyone/preview')
+    .then((r) => show(r && r.data ? pop.html(r.data) : none))
+    .catch(() => show(none));
+}
+
+async function globalSwitchTo(name, on) {
+  try {
+    const r = await post('/api/steam-open/everyone', { On: on });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'failed');
+    delete pending[name];
+    closeModal();
+    await loadConfig();
+    renderSettings();
+    toast(on ? t('Turned on.') : t('Turned off.'));
+  } catch (e) {
+    toast(t('Not changed - try again.'), true);
+  }
+}
+
 function confirmSwitch(name, account) {
   const pop = SWITCH_POPUPS[name];
   if (!pop) return;
@@ -6138,36 +6184,111 @@ function confirmSwitch(name, account) {
 
 // What the Open in Steam button does on the PC, and whether this PC and Steam are ready for it.
 function steamOpenPreviewHtml(d) {
-  const steps = [
+  return `${steamOpenNote(d)}<h4>${esc(t('What pressing it does'))}</h4><ul class="limits">${steamOpenSteps().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${steamOpenSafe().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// One account's Open in Steam look in a line: ready, the first sign-in, or why it can't. 1.8.2: an account Steam doesn't
+// remember opens Steam's sign-in with its name filled in.
+function steamOpenNote(d) {
+  if (!d.Supported) return `<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`;
+  if (!d.SteamFound) return `<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>`;
+  if (d.GameRunning) return `<p class="problem">${esc(t("A game is open in Steam right now - the button won't switch while one is running."))}</p>`;
+  if (d.Remembered) return `<p class="pricing">${esc(t('Your Steam app remembers this account, so the button can sign it in with no password.'))}</p>`;
+  if (d.SignIn) return `<p class="pricing">${esc(t('Your Steam app doesn\'t remember this account yet: the button opens Steam\'s sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with "Remember me" ticked - after that it\'s one click.'))}</p>`;
+  return `<p class="problem">${esc(t('Your Steam app doesn\'t remember this account yet. Sign into it once in Steam with "Remember me" ticked, then this button works.'))}</p>`;
+}
+
+function steamOpenSteps() {
+  return [
     t('Closes your Steam app (the polite way, letting it finish).'),
     t("Points Steam's saved-accounts files at this account - only this one; other accounts are left alone."),
-    t('Starts Steam again, so it signs straight into this account.'),
+    t('Turns off Steam\'s "Ask which account to use each time Steam starts" if it\'s on - otherwise Steam would ignore the account it\'s pointed at.'),
+    t('Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.'),
   ];
-  const note = [];
-  if (!d.Supported) note.push(`<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`);
-  else if (!d.SteamFound) note.push(`<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>`);
-  else if (d.GameRunning) note.push(`<p class="problem">${esc(t("A game is open in Steam right now - the button won't switch while one is running."))}</p>`);
-  else if (!d.Remembered) note.push(`<p class="problem">${esc(t('Your Steam app doesn\'t remember this account yet. Sign into it once in Steam with "Remember me" ticked, then this button works.'))}</p>`);
-  else note.push(`<p class="pricing">${esc(t('Your Steam app remembers this account, so the button can sign it in with no password.'))}</p>`);
-  const safe = [
+}
+
+function steamOpenSafe() {
+  return [
     t('It never types a password and never touches your login tokens.'),
     t('It backs up the files it changes first, and keeps the last three backups.'),
     t('It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.'),
   ];
-  return `${note.join('')}<h4>${esc(t('What pressing it does'))}</h4><ul class="limits">${steps.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
-    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${safe.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
 }
 
-// Press the Open in Steam button on an account card.
+// 1.8.2: "Open in Steam buttons on every account" - every account's look, and what pressing a button does.
+function steamOpenAllPreviewHtml(d) {
+  if (!d.Supported) return `<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`;
+  const rows = (d.Accounts || []).map((n) => `<li><b>${esc(n.Account)}</b>: ${esc(!n.SteamFound ? t("Steam doesn't look installed on this PC.")
+    : n.Remembered ? t('ready - Steam remembers it') : n.SignIn ? t('opens Steam\'s sign-in the first time') : t('sign in once with Remember me'))}</li>`).join('');
+  return `${!d.SteamFound ? `<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>` : ''}
+    <h4>${esc(t('Every account'))}</h4><ul class="limits">${rows || `<li>${esc(t('No accounts yet.'))}</li>`}</ul>
+    <h4>${esc(t('What pressing one does'))}</h4><ul class="limits">${steamOpenSteps().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${steamOpenSafe().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// Press the Open in Steam button on an account card: it asks first (Steam closes and opens again). 1.8.2: for an account
+// Steam doesn't remember yet it says Steam opens on its sign-in, and shows the Steam Guard code to type when nocat.farm
+// has its authenticator - only the 5-character code, refreshed as it runs out.
+let steamOpenTimer = null;
 async function openInSteam(name) {
-  if (!confirm(tf('Sign your Steam app into {0}? Steam will close and open again.', name))) return;
+  let look = null;
+  try { look = await api(`/api/bots/${encodeURIComponent(name)}/steam-open`); } catch (e) { look = null; }
+  const d = (look && look.data) || {};
+  modal(`
+    <h2>${esc(t('Open in Steam'))}</h2>
+    <p>${esc(tf('Sign your Steam app into {0}? Steam will close and open again.', name))}</p>
+    ${look ? steamOpenNote(d) : ''}
+    ${d.AsksWhichAccount ? `<p class="muted small">${esc(t('Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.'))}</p>` : ''}
+    <div id="steamOpenCode">${steamCodeHtml(look)}</div>
+    <div class="actions">
+      <button class="ghost" onclick="closeSteamOpen()">${esc(t('Cancel'))}</button>
+      <button id="steamOpenGo" data-bot="${esc(name)}" onclick="pressSteamOpen(this.dataset.bot)">${esc(t('Open in Steam'))}</button>
+    </div>`);
+  clearInterval(steamOpenTimer);
+  if (look && look.GuardCode) {
+    let left = look.SecondsLeft;
+    steamOpenTimer = setInterval(async () => {
+      if ($('modal').classList.contains('hidden') || !$('steamOpenCode')) { clearInterval(steamOpenTimer); return; }
+      if (--left > 0) return;
+      try { const again = await api(`/api/bots/${encodeURIComponent(name)}/steam-open`); left = again.SecondsLeft || 30; const box = $('steamOpenCode'); if (box) box.innerHTML = steamCodeHtml(again); } catch (e) { left = 5; }
+    }, 1000);
+  }
+}
+
+function steamCodeHtml(look) {
+  if (!look || !look.GuardCode) return '';
+  return `<div class="steamcode"><span>${esc(t('Steam Guard code'))}</span><b>${esc(look.GuardCode)}</b>
+    <button class="ghost" data-code="${esc(look.GuardCode)}" onclick="copyText(this.dataset.code, t('Code copied'))">${esc(t('Copy'))}</button></div>`;
+}
+
+function closeSteamOpen() { clearInterval(steamOpenTimer); closeModal(); }
+
+async function pressSteamOpen(name) {
+  closeSteamOpen();
   toast(tf('Signing Steam into {0}…', name));
   try {
     const r = await post(`/api/bots/${encodeURIComponent(name)}/steam-open`, {});
-    toast(r && r.said ? r.said : (r && r.ok ? t('Done.') : t("That didn't work")), !(r && r.ok));
+    toast(steamOpenSaid(r, name), !(r && r.ok));
+    if (r && r.code === 'sign-in') refresh();
   } catch (e) {
     toast(t("That didn't work"), true);
   }
+}
+
+// What a press did, in the page's language where it's one of the usual outcomes.
+function steamOpenSaid(r, name) {
+  if (!r) return t("That didn't work");
+  if (r.code === 'ok') return tf('signing your Steam app into {0} - it closes and opens again', name);
+  if (r.code === 'sign-in') return tf("Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click", r.login || name);
+  if (r.code === 'steam-busy' && r.said && r.said.startsWith("Steam wouldn't close")) return t("Steam wouldn't close - if it shows a message box, close it, then try again");
+  return r.said || (r.ok ? t('Done.') : t("That didn't work"));
+}
+
+// The Steam Guard code on an account card, while Steam is on its sign-in.
+function copySteamCode(name) {
+  const b = ((state && state.Bots) || []).find((x) => x.Name === name);
+  if (b && b.SteamOpenCode) copyText(b.SteamOpenCode, t('Code copied'));
 }
 
 // One big figure in the pop-up: the number, what it is, and a small line under it.
@@ -6335,6 +6456,14 @@ async function switchTo(name, account, on) {
 }
 
 function editBool(name, el) {
+  if (GLOBAL_SWITCH_POPUPS[name] && settingsTarget === GLOBAL) {
+    const on = el.checked;
+    el.checked = !on;   // as it is, until it's done
+    if (on) confirmGlobalSwitch(name);
+    else globalSwitchTo(name, false);
+    return;
+  }
+
   if (SWITCH_POPUPS[name] && settingsTarget !== GLOBAL) {
     const on = el.checked;
     el.checked = !on;   // as it is, until it's done

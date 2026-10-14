@@ -20,12 +20,24 @@ public sealed class SteamOpenLedger {
 	private static readonly Dictionary<string, SteamOpenLedger> Loaded = new(StringComparer.OrdinalIgnoreCase);
 	private bool _onDisk;
 
+	/// <summary>Where this one is kept: an account's own file, or the every-account one.</summary>
+	private string _path = "";
+
 	private static string PathOf(string name) => Path.Combine(ConfigStore.ConfigDir, "state", $"steamopen-{name}.json");
 
-	public static SteamOpenLedger Load(string account) {
-		lock (Gate) {
-			string path = PathOf(account);
+	/// <summary>
+	/// 1.8.2: the go-ahead of "Open in Steam buttons on every account" - kept the same way, in a file of its own, named so
+	/// no account's file can ever be it (an account's is "steamopen-&lt;name&gt;.json").
+	/// </summary>
+	private static string EveryonePath => Path.Combine(ConfigStore.ConfigDir, "state", "steamopen_all.json");
 
+	/// <summary>1.8.2: the go-ahead for the button on every account.</summary>
+	public static SteamOpenLedger Everyone() => LoadFrom(EveryonePath, "every account");
+
+	public static SteamOpenLedger Load(string account) => LoadFrom(PathOf(account), account);
+
+	private static SteamOpenLedger LoadFrom(string path, string account) {
+		lock (Gate) {
 			if (Loaded.TryGetValue(path, out SteamOpenLedger? held) && (!held._onDisk || File.Exists(path))) {
 				return held;
 			}
@@ -44,6 +56,7 @@ public sealed class SteamOpenLedger {
 			bool fromFile = read != null;
 			read ??= new SteamOpenLedger();
 			read.Account = account;
+			read._path = path;
 			read._onDisk = fromFile;
 			Loaded[path] = read;
 
@@ -65,7 +78,7 @@ public sealed class SteamOpenLedger {
 
 		lock (Gate) {
 			try {
-				string path = PathOf(Account);
+				string path = _path.Length > 0 ? _path : PathOf(Account);
 				Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 				AtomicFile.Write(path, JsonSerializer.Serialize(this));
 				_onDisk = true;

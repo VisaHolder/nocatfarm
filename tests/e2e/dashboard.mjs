@@ -904,6 +904,8 @@ async function putBack(def, orig, target, defaults) {
 // switches it on; unticked it's off at once. Saved straight away by the pop-up (not by the Save button), so they're walked
 // here on their own, outside the batches.
 const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'];
+// 1.8.2: the one switch of this kind in the global settings - Open in Steam on every account.
+const GLOBAL_CONFIRM_SWITCH = ['SteamOpenEveryAccount'];
 // The ones whose section is all theirs: off, the section shows only the switch.
 const OWN_SECTION = ['SpareItems', 'SpendPoints', 'BuyCards'];
 
@@ -917,7 +919,7 @@ async function confirmSwitchScenario(n, target, who) {
   // Off, its section is the switch and one line saying what turning it on does - its other settings are hidden.
   const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(@class,"section")][1]');
   const offRows = await sectionOf().locator('[data-setting]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null || e.closest('label.switch')).map((e) => e.dataset.setting));
-  const dependents = (schema.Bot || []).filter((d) => d.ShowWhen === `${n}=true`).map((d) => d.Name);
+  const dependents = ((target ? schema.Bot : schema.Global) || []).filter((d) => d.ShowWhen === `${n}=true`).map((d) => d.Name);
   if (OWN_SECTION.includes(n)) {
     check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
       offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
@@ -950,8 +952,10 @@ async function confirmSwitchScenario(n, target, who) {
   const onRows = await sectionOf().locator('.field [data-setting]').count();
   const titles = await sectionOf().locator('.sgroup > .sgtitle').count();
   const indented = await sectionOf().locator('.field.sub').count();
-  check(`settings ${who}: with ${n} on its settings show in titled boxes, the dependent ones indented`, onRows > 3 && titles >= 2 && (n !== 'SpareItems' || indented >= 1) && (await field(n).locator('.offhint').count()) === 0,
-    `${onRows} rows, ${titles} titles, ${indented} indented`);
+  if (target) {
+    check(`settings ${who}: with ${n} on its settings show in titled boxes, the dependent ones indented`, onRows > 3 && titles >= 2 && (n !== 'SpareItems' || indented >= 1) && (await field(n).locator('.offhint').count()) === 0,
+      `${onRows} rows, ${titles} titles, ${indented} indented`);
+  }
 
   await tick();
   check(`settings ${who}: unticked - ${n} is off at once, no pop-up`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
@@ -1006,7 +1010,7 @@ async function settingsRound(target) {
         shown = await shownSettings();
         continue;
       }
-      if (target && CONFIRM_SWITCH.includes(n)) {
+      if ((target ? CONFIRM_SWITCH : GLOBAL_CONFIRM_SWITCH).includes(n)) {
         try { await confirmSwitchScenario(n, target, who); } catch (e) { check(`settings ${who}: ${n} switch`, false, String(e.message || e).split(/\r?\n/)[0]); await closeModalIfOpen(); }
         shown = await shownSettings();
         continue;

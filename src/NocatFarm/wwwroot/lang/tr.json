@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam, {0} için oturum açma ekranında: şifresini yaz (istenirse Steam Guard kodunu da), Beni hatırla işaretli kalsın - bir dahakine tek tık",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam kapanmadı - bir mesaj kutusu gösteriyorsa kapat, sonra tekrar dene",
+    "Open in Steam is on for every account: each one shows the one-click button": "Steam'de aç her hesapta açık: her biri tek tıklık düğmeyi gösteriyor",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "Steam'de aç tüm hesaplar için kapalı: yalnızca tek tek açılan hesaplarda görünür",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam bu hesabı henüz hatırlamıyor, bu yüzden adı doldurulmuş Steam oturum açma ekranında açılır: şifresini bir kez yaz ve Beni hatırla işaretli kalsın.",
+    "Steam Guard code: {0}": "Steam Guard kodu: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam bu hesabın oturum açma ekranında: Steam isteyince bu kodu yaz.",
+    "Turn on Open in Steam for every account?": "Steam'de aç her hesap için açılsın mı?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "Bu, Steam'de aç düğmesini her hesapta gösterir, böylece tek tek açman gerekmez. Burada Aç'a basana kadar hiçbir şey değişmez.",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Steam uygulaman bu hesabı henüz hatırlamıyor: düğme, adı doldurulmuş Steam oturum açma ekranını açar. \"Beni hatırla\" işaretliyken şifresini bir kez yaz (istenirse Steam Guard kodunu da) - sonrası tek tık.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Açıksa Steam'in \"Steam her başladığında hangi hesabın kullanılacağını sor\" ayarını kapatır - yoksa Steam yönlendirildiği hesabı yok sayar.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "Steam'i çift tıklamanın yaptığı gibi yeniden başlatır, böylece doğrudan bu hesaba girer - ya da ilk seferde adı doldurulmuş oturum açma ekranını açar.",
+    "ready - Steam remembers it": "hazır - Steam hatırlıyor",
+    "opens Steam's sign-in the first time": "ilk seferde Steam oturum açma ekranını açar",
+    "sign in once with Remember me": "Beni hatırla ile bir kez oturum aç",
+    "Every account": "Her hesap",
+    "What pressing one does": "Birine basınca ne olur",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam her başladığında hangi hesabın kullanılacağını soracak şekilde ayarlı - bu onu kapatır, yoksa Steam hesabı yok sayar.",
     "Open in Steam: sign your Steam app into this account": "Steam'de aç: Steam uygulamanı bu hesaba giriş yaptır",
     "signing your Steam app into {0} - it closes and opens again": "Steam uygulamanı {0} hesabına giriş yaptırıyorum - kapanıp yeniden açılır",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} için Steam'de aç açık değil - önce ayarlarından aç",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} için Steam'de aç açık: bir düğme tek tıkla Steam uygulamanı bu hesaba giriş yaptırır",
     "Open in Steam is off for {0}: the button is hidden": "{0} için Steam'de aç kapalı: düğme gizli",
     "couldn't change Steam's saved accounts - {0}": "Steam'in kayıtlı hesapları değiştirilemedi - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam kapanmadı, bu yüzden hiçbir şey değiştirilmedi - Steam'i kapatıp {0} hesabını yeniden aç",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "Steam'in kayıtlı hesapları önce yedeklenemedi, bu yüzden hiçbir şey değiştirilmedi",
     "one Open in Steam is already running - wait for it to finish": "zaten bir Steam'de aç çalışıyor - bitmesini bekle",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Steam uygulamanı tek tıkla bu hesaba giriş yaptır. Steam'i kapatıp yeniden açar. Bu hesabı farmlamaya devam eder.",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Bu, bu hesapta Steam uygulamanı tek tıkla giriş yaptıran bir düğme gösterir. Basınca tam olarak bunu yapar. Burada Aç'a basana kadar düğme hiçbir şey yapmaz.",
     "Closes your Steam app (the polite way, letting it finish).": "Steam uygulamanı kapatır (nazikçe, bitirmesine izin vererek).",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Steam'in kayıtlı hesap dosyalarını bu hesaba yönlendirir - yalnızca buna; diğer hesaplara dokunulmaz.",
-    "Starts Steam again, so it signs straight into this account.": "Steam'i yeniden başlatır, böylece doğrudan bu hesaba giriş yapar.",
     "Open in Steam only works on Windows for now.": "Steam'de aç şimdilik yalnızca Windows'ta çalışır.",
     "Steam doesn't look installed on this PC.": "Bu bilgisayarda Steam kurulu görünmüyor.",
     "A game is open in Steam right now - the button won't switch while one is running.": "Şu anda Steam'de bir oyun açık - bir oyun çalışırken düğme geçiş yapmaz.",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "Her hesapta Steam'de aç düğmeleri",
+      "tip": "Tek tıklık Steam'de aç düğmesini her hesapta gösterir - hesap kartında ve uygulama penceresinde - böylece hesap hesap açman gerekmez. Düğme, Steam masaüstü uygulamanda o hesapla oturum açar: Steam'i kapatır, Steam'i hesaba yönlendirir ve Steam'i yeniden başlatır. Steam'in henüz hatırlamadığı bir hesap, adı doldurulmuş Steam oturum açma ekranında açılır. nocat.farm'ın farm yapmasını asla durdurmaz. Yalnızca Windows. Varsayılan olarak kapalı. Açınca önce düğmenin tam olarak ne yaptığını gösterir ve onay ister. Yalnızca bazı hesaplarda istiyorsan bunu kapalı bırak ve o hesapların ayarlarında Steam'de aç düğmesini aç."
+    },
     "SteamOpenButton": {
       "label": "Steam'de aç düğmesi",
       "tip": "Bu hesapta - kartında ve uygulama penceresinde - Steam uygulamanı parola yazmadan giriş yaptıran bir düğme gösterir. Basmak Steam'i kapatır, Steam'in kayıtlı hesap dosyalarını bu hesaba yönlendirir ve Steam'i yeniden açar, böylece Steam'in zaten hatırladığı girişle doğrudan oturum açar. nocat.farm'ın bu hesabı farmlamasını asla durdurmaz: Steam girişe izin verir ve yalnızca gerçekten bir oyun başlattığında farm'ı geri çeker. Yalnızca Windows. Varsayılan olarak kapalı. Açarken önce düğmenin tam olarak ne yaptığını gösterir ve onay ister."

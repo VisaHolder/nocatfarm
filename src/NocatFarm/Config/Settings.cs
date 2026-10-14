@@ -797,6 +797,9 @@ public static class Settings {
 		new("StuckAlarmHours", "Stuck after", SecAllAccounts, SettingKind.Int,
 			"How many hours without banking any hours, when it should be, before an account counts as stuck.",
 			Advanced: true, Min: 1, Max: 48),
+		// ── Open in Steam on every account (1.8.2) ──
+		new("SteamOpenEveryAccount", "Open in Steam buttons on every account", SecAllAccounts, SettingKind.Bool,
+			"Shows the one-click Open in Steam button on every account - on its card and in the app window - so you don't have to turn it on one account at a time. The button signs your Steam desktop app into that account: it closes Steam, points Steam at the account and starts Steam again. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in. It never stops nocat.farm farming. Windows only. Off by default. Turning it on first shows exactly what the button does, and asks you to confirm. To have it on only some accounts, leave this off and turn on Open in Steam button in those accounts' settings."),
 		// ── Notifications ──
 		new("TelegramBotToken", "Telegram bot token", SecNotifications, SettingKind.Secret,
 			"Paste your Telegram bot's token (make a bot by messaging @BotFather - the guide above shows how), press Save, then press Connect Telegram and press Start in Telegram."),

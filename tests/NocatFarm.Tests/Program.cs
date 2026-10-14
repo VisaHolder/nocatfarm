@@ -27420,8 +27420,9 @@ await CommandSweep.RunAsync(Check);
 	// By the SteamID64 (the block's own key), even when the login name typed doesn't match any account's name.
 	NocatFarm.Core.SteamOpen.Plan soById = NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 76561190000000002UL, soReady);
 	Check("steam open: an account is found by its SteamID64 first, not by its name", (soById.Code == NocatFarm.Core.SteamOpen.Ok) && (soById.NewAutoLoginUser == "farmer_login"));
-	Check("steam open: the nocat.farm account name is never used to match - a wrong login with no SteamID is refused",
-		NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 0, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	NocatFarm.Core.SteamOpen.Plan soUnknownLogin = NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 0, soReady);
+	Check("steam open: a login Steam doesn't remember (no SteamID match) opens Steam's sign-in for that login, the saved accounts untouched",
+		(soUnknownLogin.Code == NocatFarm.Core.SteamOpen.SignIn) && (soUnknownLogin.NewVdf == null) && (soUnknownLogin.NewAutoLoginUser == "not-the-login-name"));
 
 	NocatFarm.Core.SteamVdf soAfter = NocatFarm.Core.SteamVdf.Parse(soPlan.NewVdf ?? "");
 	NocatFarm.Core.SteamVdf? soOwner = soAfter.Child("users")?.Children[0].Value;
@@ -27434,20 +27435,23 @@ await CommandSweep.RunAsync(Check);
 		(soOwner?.Leaf("MostRecent") == "0") && (soOwner?.Leaf("AccountName") == "owner") && (soOwner?.Leaf("RememberPassword") == "1"));
 
 	// finding 5: an account whose password the client does NOT remember (RememberPassword 0) is not really remembered.
-	Check("steam open: an account with the password not saved is refused - we never flip RememberPassword on",
-		NocatFarm.Core.SteamOpen.Decide("noremember", 76561190000000003UL, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	NocatFarm.Core.SteamOpen.Plan soNoPassword = NocatFarm.Core.SteamOpen.Decide("noremember", 76561190000000003UL, soReady);
+	Check("steam open: an account with the password not saved opens Steam's sign-in - RememberPassword is never flipped on, the saved accounts untouched",
+		(soNoPassword.Code == NocatFarm.Core.SteamOpen.SignIn) && (soNoPassword.NewVdf == null) && (soNoPassword.NewAutoLoginUser == "noremember"));
 
 	// Decide: the refusals, each changing nothing.
-	Check("steam open: an account the client doesn't remember is refused", NocatFarm.Core.SteamOpen.Decide("stranger", 0, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: an account the client doesn't remember opens Steam's sign-in", NocatFarm.Core.SteamOpen.Decide("stranger", 0, soReady).Code == NocatFarm.Core.SteamOpen.SignIn);
 	Check("steam open: no Steam installed is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { SteamInstalled = false }).Code == NocatFarm.Core.SteamOpen.NoSteam);
 	Check("steam open: a game running in the client is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { RunningAppId = 730 }).Code == NocatFarm.Core.SteamOpen.GameRunning);
-	Check("steam open: no saved-accounts file is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = null }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
-	Check("steam open: an unreadable saved-accounts file is refused, not thrown", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = "not a vdf {{{" }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: no saved-accounts file opens Steam's sign-in", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = null }).Code == NocatFarm.Core.SteamOpen.SignIn);
+	Check("steam open: an unreadable saved-accounts file opens Steam's sign-in and leaves the file alone, not thrown",
+		NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = "not a vdf {{{" }) is { Code: NocatFarm.Core.SteamOpen.SignIn, NewVdf: null });
 
 	// The outcome sentences name the account, and read plainly.
 	Check("steam open: the OK message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.Ok, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
 	Check("steam open: the not-remembered message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.NotRemembered, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
-	Check("steam open: the steam-busy message says nothing was changed", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.SteamBusy, "farmer").ToEnglish().Contains("nothing was changed", StringComparison.Ordinal));
+	Check("steam open: the steam-busy message says plainly to close a message box Steam shows, then try again",
+		NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.SteamBusy, "farmer").ToEnglish() == "Steam wouldn't close - if it shows a message box, close it, then try again");
 	Check("steam open: the backup-failed message says nothing was changed", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.BackupFailed, "farmer").ToEnglish().Contains("nothing was changed", StringComparison.Ordinal));
 
 	// finding 6: a value we don't edit round-trips byte for byte - an unknown escape keeps its backslash, a literal "\n"
@@ -27468,10 +27472,10 @@ await CommandSweep.RunAsync(Check);
 		var okOps = new NocatFarm.Core.SteamOpen.Ops(
 			Running: () => true,
 			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
-			Backup: () => { steps.Add("backup"); return true; },
+			Backup: _ => { steps.Add("backup"); return true; },
 			Write: _ => steps.Add("write"),
 			Start: () => steps.Add("start"));
-		string soApplied = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, okOps);
+		string soApplied = (await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, okOps)).Code;
 		Check("steam open: the attempt closes, backs up, writes, then starts - in that order",
 			(soApplied == NocatFarm.Core.SteamOpen.Ok) && steps.SequenceEqual(["close", "backup", "write", "start"]), string.Join(",", steps));
 	}
@@ -27480,10 +27484,10 @@ await CommandSweep.RunAsync(Check);
 		var busyOps = new NocatFarm.Core.SteamOpen.Ops(
 			Running: () => true,
 			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(false); },
-			Backup: () => { steps.Add("backup"); return true; },
+			Backup: _ => { steps.Add("backup"); return true; },
 			Write: _ => steps.Add("write"),
 			Start: () => steps.Add("start"));
-		string soBusy = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, busyOps);
+		string soBusy = (await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, busyOps)).Code;
 		Check("steam open: Steam won't close - nothing is backed up, written or started, and it says steam-busy",
 			(soBusy == NocatFarm.Core.SteamOpen.SteamBusy) && steps.SequenceEqual(["close"]), string.Join(",", steps));
 	}
@@ -27492,10 +27496,10 @@ await CommandSweep.RunAsync(Check);
 		var backupFailOps = new NocatFarm.Core.SteamOpen.Ops(
 			Running: () => true,
 			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
-			Backup: () => { steps.Add("backup"); return false; },
+			Backup: _ => { steps.Add("backup"); return false; },
 			Write: _ => steps.Add("write"),
 			Start: () => steps.Add("start"));
-		string soBackup = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, backupFailOps);
+		string soBackup = (await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, backupFailOps)).Code;
 		Check("steam open: a failed backup stops the change - nothing is written or started, and it says backup-failed",
 			(soBackup == NocatFarm.Core.SteamOpen.BackupFailed) && steps.SequenceEqual(["close", "backup"]), string.Join(",", steps));
 	}
@@ -28105,6 +28109,180 @@ await CardSwapCheatChecks.RunAsync(Check);
 	System.Diagnostics.ProcessStartInfo sdStop = NocatFarm.Core.SteamOpen.ShutdownInfo(@"C:\Program Files (x86)\Steam\steam.exe");
 	Check("steam open: Steam is asked to close with its own -shutdown, through the shell and never elevated",
 		(sdStop.FileName == @"C:\Program Files (x86)\Steam\steam.exe") && (sdStop.Arguments == "-shutdown") && sdStop.UseShellExecute && (sdStop.Verb.Length == 0));
+}
+
+// ── 1.8.2: Open in Steam - an easier first sign-in, Steam started like a double-click, one switch for every account ──
+{
+	const string sfLogins = "\"users\"\n{\n\t\"76561190000000002\"\n\t{\n\t\t\"AccountName\"\t\t\"farmer_login\"\n\t\t\"RememberPassword\"\t\t\"1\"\n\t\t\"MostRecent\"\t\t\"0\"\n\t}\n}\n";
+	// Steam's settings file as it might really be: CRLF, a comment, odd spacing, an escape - all of it must survive byte for byte.
+	const string sfConfig = "\"InstallConfigStore\"\r\n{\r\n\t\"Software\"\r\n\t{\r\n\t\t\"Valve\"\r\n\t\t{\r\n\t\t\t\"Steam\"\r\n\t\t\t{\r\n\t\t\t\t// kept\r\n"
+		+ "\t\t\t\t\"AlwaysShowUserChooser\"   \"1\"\r\n\t\t\t\t\"Odd\"\t\"a\\\\b\\q\"\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n";
+	string sfConfigOff = sfConfig.Replace("\"AlwaysShowUserChooser\"   \"1\"", "\"AlwaysShowUserChooser\"   \"0\"", StringComparison.Ordinal);
+
+	// "Ask which account to use each time Steam starts": 1 becomes 0, and nothing else in the file changes at all.
+	Check("steam open: the account picker is turned off in config.vdf with every other byte kept", NocatFarm.Core.SteamOpen.ChooserOff(sfConfig) == sfConfigOff);
+	Check("steam open: an account picker already off leaves config.vdf alone", NocatFarm.Core.SteamOpen.ChooserOff(sfConfigOff) == null);
+	Check("steam open: config.vdf without the picker setting is left alone", NocatFarm.Core.SteamOpen.ChooserOff("\"InstallConfigStore\"\n{\n\t\"Other\"\t\t\"1\"\n}\n") == null);
+	Check("steam open: an unreadable config.vdf is left alone, not thrown", NocatFarm.Core.SteamOpen.ChooserOff("\"InstallConfigStore\"\n{\n\t\"AlwaysShowUserChooser\" \"1\"\n") == null);
+	Check("steam open: a config.vdf with a byte-order mark keeps it", NocatFarm.Core.SteamOpen.ChooserOff("\uFEFF" + sfConfig) == "\uFEFF" + sfConfigOff);
+
+	var sfReady = new NocatFarm.Core.SteamOpen.Inputs(sfLogins, "owner", true, 0, true, sfConfig);
+	NocatFarm.Core.SteamOpen.Plan sfOk = NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, sfReady);
+	Check("steam open: switching to a remembered account also turns the account picker off", (sfOk.Code == NocatFarm.Core.SteamOpen.Ok) && (sfOk.NewConfig == sfConfigOff));
+	Check("steam open: with the picker already off config.vdf isn't written",
+		NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, sfReady with { ConfigText = sfConfigOff }).NewConfig == null);
+	Check("steam open: an unreadable config.vdf doesn't stop the switch - it's just left alone",
+		NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, sfReady with { ConfigText = "{{{" }) is { Code: NocatFarm.Core.SteamOpen.Ok, NewConfig: null });
+
+	// An account Steam doesn't remember yet: only AutoLoginUser points at its login, the saved accounts are left exactly as they are.
+	NocatFarm.Core.SteamOpen.Plan sfNew = NocatFarm.Core.SteamOpen.Decide("brand_new", 0, sfReady);
+	Check("steam open: an account Steam doesn't remember opens the sign-in - AutoLoginUser is its login, picker off, no saved-accounts block added",
+		(sfNew.Code == NocatFarm.Core.SteamOpen.SignIn) && (sfNew.NewAutoLoginUser == "brand_new") && (sfNew.NewVdf == null) && (sfNew.NewConfig == sfConfigOff));
+	Check("steam open: with no Steam login name at all there's nothing to fill in - it says to sign in once",
+		NocatFarm.Core.SteamOpen.Decide("", 0, sfReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: a plan has no place for a password or a token",
+		!typeof(NocatFarm.Core.SteamOpen.Plan).GetProperties().Any(static p => p.Name.Contains("Password", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Token", StringComparison.OrdinalIgnoreCase)));
+	Check("steam open: a game running still refuses the sign-in case too", NocatFarm.Core.SteamOpen.Decide("brand_new", 0, sfReady with { RunningAppId = 730 }).Code == NocatFarm.Core.SteamOpen.GameRunning);
+
+	// What the card, the console and the log say for the sign-in.
+	Check("steam open: the sign-in message names the Steam login and says what to type",
+		NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.SignIn, "farm1", "brand_new").ToEnglish()
+		== "Steam is on the sign-in for brand_new: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click");
+	Check("steam open: the account-picker log line is short", NocatFarm.Core.SteamOpen.ChooserLine.ToEnglish().Length <= 60, NocatFarm.Core.SteamOpen.ChooserLine.ToEnglish());
+
+	// The sign-in goes through the same safe order: close, then back up, write and start.
+	{
+		var steps = new List<string>();
+		var signInOps = new NocatFarm.Core.SteamOpen.Ops(
+			Running: () => true,
+			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
+			Backup: p => { steps.Add("backup:" + p.Code); return true; },
+			Write: p => steps.Add("write:" + p.NewAutoLoginUser),
+			Start: () => steps.Add("start"));
+		NocatFarm.Core.SteamOpen.Plan sfDone = await NocatFarm.Core.SteamOpen.ApplyAsync(sfNew, signInOps);
+		Check("steam open: the sign-in closes Steam, backs up, points AutoLoginUser at the login, then starts Steam",
+			(sfDone.Code == NocatFarm.Core.SteamOpen.SignIn) && steps.SequenceEqual(["close", "backup:sign-in", "write:brand_new", "start"]), string.Join(",", steps));
+	}
+
+	// Once Steam has closed (and saved its files), the change is worked out again from what it saved.
+	{
+		var steps = new List<string>();
+		var after = new NocatFarm.Core.SteamOpen.Plan(NocatFarm.Core.SteamOpen.Ok, "saved-by-steam", "farmer_login");
+		var replanOps = new NocatFarm.Core.SteamOpen.Ops(
+			Running: () => true,
+			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
+			Backup: p => { steps.Add("backup:" + p.NewVdf); return true; },
+			Write: p => steps.Add("write:" + p.NewVdf),
+			Start: () => steps.Add("start"),
+			Replan: () => { steps.Add("read again"); return after; });
+		await NocatFarm.Core.SteamOpen.ApplyAsync(sfOk, replanOps);
+		Check("steam open: after Steam closes the files are read again and the new plan is the one backed up and written",
+			steps.SequenceEqual(["close", "read again", "backup:saved-by-steam", "write:saved-by-steam", "start"]), string.Join(",", steps));
+
+		steps.Clear();
+		var refusedOps = replanOps with { Replan = () => { steps.Add("read again"); return new NocatFarm.Core.SteamOpen.Plan(NocatFarm.Core.SteamOpen.NoSteam, null, null); } };
+		NocatFarm.Core.SteamOpen.Plan sfRefused = await NocatFarm.Core.SteamOpen.ApplyAsync(sfOk, refusedOps);
+		Check("steam open: if reading again finds nothing safe to do, nothing is backed up, written or started",
+			(sfRefused.Code == NocatFarm.Core.SteamOpen.NoSteam) && steps.SequenceEqual(["close", "read again"]), string.Join(",", steps));
+	}
+
+	// The card offers the Steam Guard code for ten minutes after the button left Steam on the sign-in; signing straight in ends it.
+	DateTime sfAt = new(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc);
+	NocatFarm.Core.SteamOpen.Opened("sf-acct", NocatFarm.Core.SteamOpen.SignIn, sfAt);
+	bool sfDuring = NocatFarm.Core.SteamOpen.OnSignIn("sf-acct", sfAt.AddMinutes(5));
+	bool sfLater = NocatFarm.Core.SteamOpen.OnSignIn("sf-acct", sfAt.AddMinutes(11));
+	NocatFarm.Core.SteamOpen.Opened("sf-acct", NocatFarm.Core.SteamOpen.Ok, sfAt);
+	Check("steam open: the card shows the code while Steam is on the sign-in, then stops; a straight sign-in ends it",
+		sfDuring && !sfLater && !NocatFarm.Core.SteamOpen.OnSignIn("sf-acct", sfAt.AddMinutes(1)), $"{sfDuring} {sfLater}");
+
+	string sfRealRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig sfRealGlobal = NocatFarm.Config.Live.Global;
+	string sfTmpRoot = Path.Combine(Path.GetTempPath(), "nf-steamopen2-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(sfTmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(sfTmpRoot);
+	NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+	bool sfWasSuppressed = NocatFarm.Log.Suppressed;
+	NocatFarm.Log.Suppressed = true;
+	NocatFarm.Core.SteamOpen.ReaderForTests = () => new NocatFarm.Core.SteamOpen.Inputs(sfLogins, null, false, 0, true, sfConfig);
+	var sfMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	// A made-up 20-byte authenticator secret: the code is worked out from the clock, nothing is asked of Steam.
+	var sfGuarded = new NocatFarm.Core.Bot("sf-guarded", new NocatFarm.Config.BotConfig { SteamLogin = "brand_new", SharedSecret = Convert.ToBase64String(new byte[20]) });
+	var sfPlain = new NocatFarm.Core.Bot("sf-plain", new NocatFarm.Config.BotConfig { SteamLogin = "farmer_login" });
+
+	try {
+		var sfBots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(sfMgr)!;
+		sfBots[sfGuarded.Name] = sfGuarded;
+		sfBots[sfPlain.Name] = sfPlain;
+
+		NocatFarm.Config.ConfigStore.SaveBot(sfPlain.Name, sfPlain.Cfg);
+
+		// The Steam Guard code: only the 5 characters, and only from an authenticator nocat.farm has.
+		Check("steam open: an account with its authenticator in nocat.farm gives its 5-character Steam Guard code",
+			NocatFarm.Core.SteamOpen.GuardCode(sfGuarded) is { Code.Length: 5, SecondsLeft: > 0 and <= 30 });
+		Check("steam open: an account without an authenticator gives no code", NocatFarm.Core.SteamOpen.GuardCode(sfPlain) == null);
+
+		// The preview says when the button opens the sign-in, and that it turns Steam's account picker off.
+		NocatFarm.Core.SteamOpen.Numbers sfLook = NocatFarm.Core.SteamOpen.Look(sfGuarded);
+		Check("steam open: the preview says the button opens Steam's sign-in for an account Steam doesn't remember", sfLook.SignIn && !sfLook.Remembered);
+		Check("steam open: the preview says Steam asks which account to use, and that the button turns it off",
+			sfLook.AsksWhichAccount && NocatFarm.Core.SwitchPreview.SteamOpenLine(sfLook, "sf-guarded").Contains("turns that off", StringComparison.Ordinal));
+		Check("steam open: the preview for an account Steam remembers says it signs in with no password", NocatFarm.Core.SteamOpen.Look(sfPlain).Remembered);
+
+		// One switch for every account: off by default, on only through its preview, and it doesn't touch an account's own switch.
+		Check("steam open: 'Open in Steam buttons on every account' is a global setting, off by default",
+			(NocatFarm.Config.Settings.FindGlobal("SteamOpenEveryAccount") is { Kind: NocatFarm.Config.SettingKind.Bool }) && !new NocatFarm.Config.GlobalConfig().SteamOpenEveryAccount);
+		Check("steam open: with neither switch on, no button shows", !NocatFarm.Core.SteamOpen.On(sfPlain.Cfg, sfPlain.Name));
+
+		sfMgr.Global.SteamOpenEveryAccount = true;
+		Check("steam open: every-account on in the settings without its go-ahead does NOT show the buttons", !NocatFarm.Core.SteamOpen.On(sfPlain.Cfg, sfPlain.Name));
+		Check("steam open: settling puts every-account back off when it has no go-ahead",
+			NocatFarm.Core.Switches.SettleEveryone(sfMgr.Global) && !sfMgr.Global.SteamOpenEveryAccount);
+
+		string sfSet = await Commands.RunAsync(sfMgr, "set SteamOpenEveryAccount on");
+		Check("steam open: 'set SteamOpenEveryAccount on' only shows the preview - it stays off until 'steam on all'",
+			!NocatFarm.Core.SteamOpen.EveryoneOn(sfMgr.Global) && sfSet.Contains("steam on all", StringComparison.Ordinal) && sfSet.Contains("sf-guarded", StringComparison.Ordinal), sfSet);
+
+		string sfOn = await Commands.RunAsync(sfMgr, "steam on all");
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		bool sfSaved = NocatFarm.Config.ConfigStore.LoadGlobal().SteamOpenEveryAccount;
+		Check("steam open: 'steam on all' shows the button on every account (saved, with its go-ahead) - their own switches untouched",
+			NocatFarm.Core.SteamOpen.On(sfPlain.Cfg, sfPlain.Name) && NocatFarm.Core.SteamOpen.On(sfGuarded.Cfg, sfGuarded.Name) && sfSaved
+			&& !NocatFarm.Core.SteamOpen.AccountOn(sfPlain.Cfg, sfPlain.Name) && !sfPlain.Cfg.SteamOpenButton, sfOn);
+
+		string sfOffOne = await Commands.RunAsync(sfMgr, "steam off sf-plain");
+		Check("steam open: 'steam off <account>' while every account has it says the button still shows", sfOffOne.Contains("still shows", StringComparison.Ordinal), sfOffOne);
+		Check("steam open: 'steam all' shows every account's look", (await Commands.RunAsync(sfMgr, "steam all")).Contains("sf-plain", StringComparison.Ordinal));
+
+		await Commands.RunAsync(sfMgr, "steam off all");
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		Check("steam open: 'steam off all' hides them again and clears the go-ahead",
+			!NocatFarm.Core.SteamOpen.On(sfPlain.Cfg, sfPlain.Name) && !NocatFarm.Core.SteamOpenLedger.Everyone().Approved && !sfMgr.Global.SteamOpenEveryAccount);
+
+		// A settings file copied from another PC that says on: loading it puts it back off.
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig { WebEnabled = false, SteamOpenEveryAccount = true });
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		Check("steam open: a global settings file that says every-account on, without its go-ahead, loads as off",
+			!NocatFarm.Config.ConfigStore.LoadGlobal().SteamOpenEveryAccount);
+
+		(string sfAllText, NocatFarm.Core.SwitchPreview.SteamOpenAllNumbers sfAll) = NocatFarm.Core.SwitchPreview.LookEveryone(sfMgr.All);
+		Check("steam open: the every-account preview lists each account and says the picker gets turned off",
+			(sfAll.Accounts.Count == 2) && sfAll.AsksWhichAccount && sfAll.Accounts.Any(static n => n.SignIn) && sfAllText.Contains("sf-plain", StringComparison.Ordinal));
+	} finally {
+		NocatFarm.Core.SteamOpen.ReaderForTests = null;
+		NocatFarm.Log.Suppressed = sfWasSuppressed;
+		await sfGuarded.DisposeAsync();
+		await sfPlain.DisposeAsync();
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		NocatFarm.Config.ConfigStore.UseRoot(sfRealRoot);
+		NocatFarm.Config.Live.Global = sfRealGlobal;
+
+		try {
+			Directory.Delete(sfTmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
 }
 
 // SETTINGSCOUNT

@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam は {0} のサインイン画面です：パスワードを入力し（求められたら Steam Guard コードも）、「ログイン情報を保存」にチェックを入れたままにしてください - 次回からはワンクリックです",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam が終了しませんでした - メッセージボックスが出ていたら閉じてから、もう一度試してください",
+    "Open in Steam is on for every account: each one shows the one-click button": "すべてのアカウントで「Steamで開く」がオンです：どのアカウントにもワンクリックのボタンが出ます",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "全アカウント向けの「Steamで開く」はオフです：個別にオンにしたアカウントだけに表示されます",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam はまだこのアカウントを覚えていないので、名前が入力済みの Steam サインイン画面で開きます：パスワードを一度入力し、「ログイン情報を保存」にチェックを入れたままにしてください。",
+    "Steam Guard code: {0}": "Steam Guard コード：{0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam はこのアカウントのサインイン画面です：Steam に求められたらこのコードを入力してください。",
+    "Turn on Open in Steam for every account?": "すべてのアカウントで「Steamで開く」をオンにしますか？",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "すべてのアカウントに「Steamで開く」ボタンを表示するので、1つずつオンにする必要はありません。ここで「オンにする」を押すまで何も変わりません。",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Steam アプリはまだこのアカウントを覚えていません：ボタンを押すと名前が入力済みの Steam サインイン画面が開きます。「ログイン情報を保存」にチェックを入れて、パスワードを一度入力してください（求められたら Steam Guard コードも）- その後はワンクリックです。",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Steam の「Steam を起動するたびに使用するアカウントを確認する」がオンならオフにします - そうしないと Steam は指定したアカウントを無視してしまいます。",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "ダブルクリックと同じ方法で Steam を起動し直し、このアカウントにそのままサインインします - 初回は名前が入力済みのサインイン画面を開きます。",
+    "ready - Steam remembers it": "準備完了 - Steam が覚えています",
+    "opens Steam's sign-in the first time": "初回は Steam のサインイン画面を開きます",
+    "sign in once with Remember me": "「ログイン情報を保存」で一度サインイン",
+    "Every account": "すべてのアカウント",
+    "What pressing one does": "押すと何が起きるか",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam は起動するたびに使うアカウントを確認する設定です - これをオフにします。そうしないと Steam はこのアカウントを無視します。",
     "Open in Steam: sign your Steam app into this account": "Steamで開く：このアカウントでSteamアプリにサインイン",
     "signing your Steam app into {0} - it closes and opens again": "Steamアプリを {0} でサインインします - 一度閉じて開き直します",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} では「Steamで開く」がオンになっていません - まず設定でオンにしてください",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} の「Steamで開く」がオン：ボタン1つでSteamアプリをこの口座にサインインできます",
     "Open in Steam is off for {0}: the button is hidden": "{0} の「Steamで開く」がオフ：ボタンは非表示です",
     "couldn't change Steam's saved accounts - {0}": "Steamの保存済みアカウントを変更できませんでした - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam が閉じなかったため、何も変更していません - Steam を閉じてから {0} をもう一度開いてください",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "Steam の保存済みアカウントをまずバックアップできなかったため、何も変更していません",
     "one Open in Steam is already running - wait for it to finish": "「Steam で開く」はすでに実行中です - 終わるまでお待ちください",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "ワンクリックでSteamアプリをこの口座にサインインします。Steamを閉じて開き直します。この口座のファームは続きます。",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "この口座に、ワンクリックでSteamアプリをサインインさせるボタンを表示します。押したときの動作はこの通りです。ここでオンを押すまでボタンは何もしません。",
     "Closes your Steam app (the polite way, letting it finish).": "Steamアプリを閉じます（丁寧に、終了を待ちます）。",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Steamの保存済みアカウントのファイルをこの口座に向けます - この口座だけで、他の口座には触れません。",
-    "Starts Steam again, so it signs straight into this account.": "Steamを再び起動し、この口座にそのままサインインします。",
     "Open in Steam only works on Windows for now.": "「Steamで開く」は今のところWindowsでのみ使えます。",
     "Steam doesn't look installed on this PC.": "このPCにSteamがインストールされていないようです。",
     "A game is open in Steam right now - the button won't switch while one is running.": "今Steamでゲームが起動中です - 起動中はボタンで切り替えできません。",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "すべてのアカウントに「Steamで開く」ボタン",
+      "tip": "すべてのアカウントに「Steamで開く」のワンクリックボタンを表示します（アカウントカードとアプリのウィンドウ）。1つずつオンにする必要はありません。ボタンを押すと、Steam デスクトップアプリをそのアカウントでサインインさせます：Steam を閉じ、Steam をそのアカウントに向けてから、Steam を起動し直します。Steam がまだ覚えていないアカウントは、名前が入力済みの Steam サインイン画面で開きます。nocat.farm のファームを止めることはありません。Windows のみ。既定ではオフ。オンにすると、まずボタンが何をするかを正確に見せてから確認を求めます。一部のアカウントだけにしたい場合は、これをオフのままにして、そのアカウントの設定で「Steamで開く」ボタンをオンにしてください。"
+    },
     "SteamOpenButton": {
       "label": "「Steamで開く」ボタン",
       "tip": "この口座に - カードとアプリのウィンドウに - パスワード入力なしでSteamアプリをサインインさせるボタンを表示します。押すとSteamを閉じ、Steamの保存済みアカウントのファイルをこの口座に向け、Steamを開き直すので、Steamがすでに記憶しているログインで直接サインインします。nocat.farm がこの口座をファームするのを止めることはありません：Steamはサインインを許可し、実際にゲームを起動したときだけファームを下げます。Windowsのみ。既定ではオフ。オンにするとき、まずボタンの動作を正確に表示し、確認を求めます。"

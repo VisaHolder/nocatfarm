@@ -1868,7 +1868,52 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			(string code, string said) = await SteamOpen.OpenAsync(bot).ConfigureAwait(false);
 
-			return Results.Json(new { ok = code == SteamOpen.Ok, code, said });
+			// 1.8.2: Steam is on the sign-in - the card shows the Steam Guard code (when nocat.farm has its authenticator).
+			return Results.Json(new { ok = code is SteamOpen.Ok or SteamOpen.SignIn, code, said, login = bot.Cfg.SteamLogin });
+		});
+
+		// 1.8.2: what pressing the button would do, for its confirm dialog - read-only, from the local Steam files - and the
+		// account's Steam Guard code right now when Steam would open on its sign-in and nocat.farm has its authenticator.
+		// Only the 5-character code, never a secret.
+		app.MapGet("/api/bots/{name}/steam-open", (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			SteamOpen.Numbers n = SteamOpen.Look(bot);
+			(string Code, int SecondsLeft)? guard = n.SignIn ? SteamOpen.GuardCode(bot) : null;
+
+			return Results.Json(new { ok = true, data = n, GuardCode = guard?.Code, SecondsLeft = guard?.SecondsLeft ?? 0 });
+		});
+
+		// 1.8.2: "Open in Steam buttons on every account" - its preview (every account, and whether Steam remembers each),
+		// and its Turn on / off: the global setting and its go-ahead in one step.
+		app.MapGet("/api/steam-open/everyone/preview", (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			(string text, SwitchPreview.SteamOpenAllNumbers data) = SwitchPreview.LookEveryone(_mgr.All);
+
+			return Results.Json(new { ok = true, text, data });
+		});
+
+		app.MapPost("/api/steam-open/everyone", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
+
+			if ((sent?["On"] is not JsonValue onValue) || !onValue.TryGetValue(out bool on)) {
+				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
+			}
+
+			return Results.Json(new { ok = true, said = Switches.SetEveryone(Live.Global, on) });
 		});
 
 		// ── account lifecycle ──
@@ -2833,6 +2878,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			List<string> adjusted = Clamp(body, Settings.Global);
 
+			// 1.8.2: Open in Steam on every account is turned on only through its preview (/api/steam-open/everyone), never by
+			// a plain save; off clears its go-ahead.
+			Switches.SettleEveryone(body);
+
 			// The password is left out: the check reads the live config, so a new one is in force the moment it is
 			// saved - telling people it waits for a restart had them leaving the old one "active" that wasn't.
 			List<string> restartNeeded = Settings.Global
@@ -3236,6 +3285,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 					// 1.8.2: the Open in Steam button - whether it's turned on for this account, and whether this PC can do it.
 					SteamOpen = Core.SteamOpen.On(b.Cfg, b.Name),
 					SteamOpenSupported = Core.SteamOpen.Supported,
+					// 1.8.2: the button left Steam on this account's sign-in: its Steam Guard code (5 characters, never a secret)
+					// and the seconds it has left, when nocat.farm has its authenticator. Empty otherwise.
+					SteamOpenCode = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } guard) ? guard.Code : "",
+					SteamOpenCodeLeft = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } left) ? left.SecondsLeft : 0,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,

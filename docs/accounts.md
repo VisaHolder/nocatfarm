@@ -38,15 +38,29 @@ Steam's saved-accounts files at that account, and starts Steam again, so Steam s
 already remembers. It never stops nocat.farm farming the account: Steam allows the sign-in and only backs the farm
 off when you actually launch a game. It's off until you turn it on - tick it in the account's settings, read the
 preview of exactly what the button does, and press Turn on; or `steam on myaccount`. Then press the button (it asks
-you to confirm first, since Steam closes and reopens), or `steam open myaccount`. If Steam doesn't remember the
-account's password yet, sign into it once in Steam with *Remember me* ticked and it works after that - it will only
-switch to an account whose password Steam has saved, and it never turns *Remember me* on for you.
+you to confirm first, since Steam closes and reopens), or `steam open myaccount`.
+
+**Want it on every account?** Tick *Open in Steam buttons on every account* in Settings, under All accounts (same
+preview, same Turn on), or `steam on all`. Every account then shows the button. To have it on only some accounts,
+leave that off and turn it on in those accounts' own settings. `steam off all` hides them again.
+
+**The first time, for an account Steam doesn't remember yet**, the button still works: Steam opens on its sign-in
+with the account's login name already filled in. Type its password (and its Steam Guard code if Steam asks), keep
+*Remember me* ticked, and from then on it's one click. If nocat.farm has the account's authenticator (its maFile),
+the confirm box and the account's card show the current Steam Guard code with a Copy button - just the 5-character
+code, nothing else. nocat.farm never types or stores a password for this, and never turns *Remember me* on for you.
+
+**If Steam is set to "Ask which account to use each time Steam starts"**, Steam would show its *Who's playing?*
+picker and ignore the account. So the button turns that one setting off (in Steam's `config.vdf`, backed up first,
+every other line left exactly as it was) and says so in the log.
 
 It finds the account by its Steam ID (and failing that its Steam login name), never by the name you gave it in
 nocat.farm, so a label that differs from the real login still works. It closes Steam first and waits for it to go;
-only once Steam has really closed does it back up the two files it changes (each backup in its own folder, keeping
-the last three), write the change and start Steam again. If Steam won't close, or the backup fails, it changes
-nothing and says so. It never touches another account's entry or any login token.
+only once Steam has really closed does it back up the files it changes (each backup in its own folder, keeping the
+last three), write the change and start Steam again - the same way a double-click on Steam starts it. If Steam
+won't close, it changes nothing and says *Steam wouldn't close - if it shows a message box, close it, then try
+again*. If the backup fails, it changes nothing and says so. It never touches another account's entry or any login
+token.
 
 `disable myaccount` keeps the settings but never signs in, and `enable myaccount` undoes it. `remove myaccount`
 deletes the account and its login token. `nickname myaccount <name>` changes the profile name everybody sees, and

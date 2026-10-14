@@ -1,5 +1,23 @@
 {
   "ui": {
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam 已打开 {0} 的登录界面：输入密码（如有要求再输入 Steam 令牌验证码），保持勾选“记住我” - 下次只需点一下",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam 没有关闭 - 如果它弹出了消息框，先关掉，然后再试一次",
+    "Open in Steam is on for every account: each one shows the one-click button": "所有账号都已开启“在 Steam 中打开”：每个账号都显示一键按钮",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "“在 Steam 中打开”已对所有账号关闭：只有单独开启的账号才显示",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam 还没有记住这个账号，所以会打开已填好名字的 Steam 登录界面：输入一次密码，并保持勾选“记住我”。",
+    "Steam Guard code: {0}": "Steam 令牌验证码：{0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam 正在这个账号的登录界面：Steam 要求时输入这个验证码。",
+    "Turn on Open in Steam for every account?": "为所有账号开启“在 Steam 中打开”？",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "这会在每个账号上显示“在 Steam 中打开”按钮，不用一个个去开。在这里按“开启”之前，什么都不会改变。",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "你的 Steam 应用还没有记住这个账号：按钮会打开已填好名字的 Steam 登录界面。勾选“记住我”，输入一次密码（如有要求再输入 Steam 令牌验证码）- 之后只需点一下。",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "如果 Steam 开启了“每次启动 Steam 时询问使用哪个账号”，就把它关掉 - 否则 Steam 会忽略指定的账号。",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "像双击一样重新启动 Steam，让它直接登录这个账号 - 第一次则打开已填好名字的登录界面。",
+    "ready - Steam remembers it": "就绪 - Steam 记得它",
+    "opens Steam's sign-in the first time": "第一次会打开 Steam 登录界面",
+    "sign in once with Remember me": "勾选“记住我”登录一次",
+    "Every account": "所有账号",
+    "What pressing one does": "按下后会做什么",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam 设置为每次启动时询问使用哪个账号 - 这里会把它关掉，否则 Steam 会忽略这个账号。",
     "Open in Steam: sign your Steam app into this account": "在 Steam 中打开：用这个账号登录你的 Steam 应用",
     "signing your Steam app into {0} - it closes and opens again": "正在让你的 Steam 应用登录 {0} - 它会关闭并重新打开",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} 的“在 Steam 中打开”未开启 - 请先在它的设置里开启",
@@ -11,7 +29,6 @@
     "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} 的“在 Steam 中打开”已开启：一个按钮可一键让你的 Steam 应用登录该账户",
     "Open in Steam is off for {0}: the button is hidden": "{0} 的“在 Steam 中打开”已关闭：按钮已隐藏",
     "couldn't change Steam's saved accounts - {0}": "无法更改 Steam 的已保存账户 - {0}",
-    "Steam wouldn't close, so nothing was changed - close Steam, then open {0} again": "Steam 没有关闭，所以没有做任何更改 - 请关闭 Steam，然后重新打开 {0}",
     "couldn't back up Steam's saved accounts first, so nothing was changed": "无法先备份 Steam 的已保存账户，所以没有做任何更改",
     "one Open in Steam is already running - wait for it to finish": "已有一个“在 Steam 中打开”正在运行 - 请等它完成",
     "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "一键让你的 Steam 应用登录此账户。会关闭并重新打开 Steam。该账户会继续挂卡。",
@@ -21,7 +38,6 @@
     "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "这会在此账户上显示一个按钮，一键让你的 Steam 应用登录。按下时正是执行这些操作。在此按下开启之前，按钮不会有任何动作。",
     "Closes your Steam app (the polite way, letting it finish).": "关闭你的 Steam 应用（以正常方式，让它完成退出）。",
     "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "将 Steam 的已保存账户文件指向此账户 - 仅此一个；其他账户不受影响。",
-    "Starts Steam again, so it signs straight into this account.": "重新启动 Steam，使其直接登录此账户。",
     "Open in Steam only works on Windows for now.": "“在 Steam 中打开”目前仅支持 Windows。",
     "Steam doesn't look installed on this PC.": "这台电脑上似乎没有安装 Steam。",
     "A game is open in Steam right now - the button won't switch while one is running.": "Steam 中正运行一个游戏 - 游戏运行时按钮不会切换。",
@@ -3124,6 +3140,10 @@
     "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "所有账号都显示“在 Steam 中打开”按钮",
+      "tip": "在每个账号上显示一键“在 Steam 中打开”按钮（账号卡片和应用窗口里），不用一个个账号去开。按钮会让你的 Steam 桌面应用登录那个账号：关闭 Steam，把 Steam 指向该账号，再重新启动 Steam。Steam 还没记住的账号会打开已填好名字的 Steam 登录界面。不会停止 nocat.farm 挂卡。仅限 Windows。默认关闭。开启时会先准确展示按钮会做什么，并请你确认。如果只想在部分账号上使用，就保持这里关闭，在那些账号的设置里开启“在 Steam 中打开”按钮。"
+    },
     "SteamOpenButton": {
       "label": "“在 Steam 中打开”按钮",
       "tip": "在此账户上 - 在它的卡片和应用窗口中 - 显示一个按钮，无需输入密码即可让你的 Steam 应用登录。按下会关闭 Steam，将 Steam 的已保存账户文件指向此账户，并重新打开 Steam，于是它用 Steam 已记住的登录直接登录。它绝不会让 nocat.farm 停止挂这个账户：Steam 允许登录，只有当你真的启动游戏时才让挂卡让步。仅限 Windows。默认关闭。开启时会先准确显示按钮的操作，并请你确认。"

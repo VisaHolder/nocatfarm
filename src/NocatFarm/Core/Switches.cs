@@ -180,10 +180,57 @@ public static class Switches {
 		new(Swaps, "swaps", "swaps")
 	];
 
+	// ── 1.8.2: Open in Steam on every account - one global switch of the same shape ──
+	/// <summary>The global setting "Open in Steam buttons on every account". Not in <see cref="All"/>: it isn't an account's.</summary>
+	public const string SteamOpenEveryone = "SteamOpenEveryAccount";
+
+	/// <summary>
+	/// Turn the Open in Steam button on (setting and go-ahead together) or off (both cleared) for every account at once, and
+	/// save. The caller has shown its preview first. An account's own switch is left as it is. A line for the log and the reply.
+	/// </summary>
+	public static string SetEveryone(GlobalConfig g, bool on) {
+		// Under the lock every change to the global settings takes, so a dashboard save at the same moment can't undo it.
+		lock (ConfigStore.GlobalEditGate) {
+			g.SteamOpenEveryAccount = on;
+			SteamOpenLedger ledger = SteamOpenLedger.Everyone();
+			ledger.Approved = on;
+			ledger.Save();
+			ConfigStore.SaveGlobal(g);
+		}
+
+		Said said = on
+			? new Said("Open in Steam is on for every account: each one shows the one-click button")
+			: new Said("Open in Steam is off for every account: only accounts turned on one by one show it");
+		Log.Info(said);
+
+		return said.ToEnglish();
+	}
+
+	/// <summary>
+	/// After a change to the global settings (a dashboard save, a load): on without its go-ahead goes back off, off clears a
+	/// go-ahead left behind. True when the settings were changed (to be saved).
+	/// </summary>
+	public static bool SettleEveryone(GlobalConfig g) {
+		SteamOpenLedger ledger = SteamOpenLedger.Everyone();
+
+		if (g.SteamOpenEveryAccount && !ledger.Approved) {
+			g.SteamOpenEveryAccount = false;
+
+			return true;
+		}
+
+		if (!g.SteamOpenEveryAccount && ledger.Approved) {
+			ledger.Approved = false;
+			ledger.Save();
+		}
+
+		return false;
+	}
+
 	/// <summary>Whether a switch is on for this account: the setting and its go-ahead together.</summary>
 	public static bool IsOn(Bot bot, string feature) => feature switch {
 		Spare => SpareOn(bot.Cfg, bot.Name),
-		SteamOpenButton => SteamOpen.On(bot.Cfg, bot.Name),
+		SteamOpenButton => SteamOpen.AccountOn(bot.Cfg, bot.Name),
 		Buy => Modules.CardBuyer.On(bot),
 		Swaps => CardExchange.On(bot.Cfg, bot.Name),
 		_ => bot.Cfg.SpendPoints && Modules.PointsLedger.Approved(bot)
