@@ -3029,7 +3029,69 @@
     "done grinding · back to the usual day": "グラインド終了 · いつもの一日に戻ります",
     "{0} is on the market · {1}": "{0} がマーケットに出品中 · {1}",
     "{0} is on the market": "{0} がマーケットに出品中",
-    "couldn't look at the listings waiting on a confirmation: {0}": "確認待ちの出品を確認できませんでした: {0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "確認待ちの出品を確認できませんでした: {0}",
+    "its cards have changed since": "カードがその後変わりました",
+    "no fresh price for some of its cards": "一部のカードに最新の価格がありません",
+    "it would set back a set now": "今だとセットが後退します",
+    "it would lose more than your limit": "上限より多く損します",
+    "not a swap nocat.lol paired with this account": "nocat.lol がこのアカウントと組んだ交換ではありません",
+    "it has something that isn't a normal trading card": "通常のトレーディングカードではないものが含まれています",
+    "it isn't the swap nocat.lol paired": "nocat.lol が組んだ交換ではありません",
+    "no fresh price yet for {0}": "{0} の最新の価格がまだありません",
+    "it's worth less than this account gives": "このアカウントが渡す分より価値が低いです",
+    "card swaps: couldn't read its own trade link - not listed this time": "カード交換: 自分のトレードリンクを読めませんでした - 今回は載せません",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} のカード交換はオン: 上限の範囲で、余ったカードを他の nocat.farm ユーザーと交換します",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} のカード交換はオフ: 何も交換せず、nocat.lol からも消えます",
+    "held by scam watch - no swaps until 'scamwatch ok'": "詐欺監視で保留中 - 'scamwatch ok' まで交換しません",
+    "waiting for its day": "その日の活動時間を待っています",
+    "{0} swaps today - the most for a day": "今日は {0} 回交換 - 1 日の上限です",
+    "next swap from about {0}": "次の交換は {0} ごろから",
+    "no swap to send right now": "今送る交換はありません",
+    "card swap with {0} done · {1} card(s) each way": "{0} とのカード交換が完了 · それぞれ {1} 枚",
+    "card swap offer to {0} taken back · not accepted in 2 days": "{0} への交換オファーを取り消し · 2 日以内に承認されず",
+    "card swap with {0} didn't go through": "{0} とのカード交換は成立しませんでした",
+    "card swap with {0} skipped · {1}": "{0} とのカード交換をスキップ · {1}",
+    "Steam didn't say whether the trade would be held": "取引が保留されるかどうか Steam が答えませんでした",
+    "the trade would be held": "取引が保留されます",
+    "couldn't read its cards": "カードを読めませんでした",
+    "Steam didn't say what's on its offers": "オファーに何が入っているか Steam が答えませんでした",
+    "Steam hasn't said its wallet currency yet": "Steam がまだウォレットの通貨を伝えていません",
+    "waiting for prices": "価格を待っています",
+    "nothing in it fits any more": "もう合うものがありません",
+    "Steam refused the offer: {0}": "Steam がオファーを拒否しました: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "カード交換 · {0} にオファーを送信 · それぞれ {1} 枚",
+    "card swap · you give {0} · you get {1}": "カード交換 · 渡す {0} · 受け取る {1}",
+    "card swap · confirm the offer to {0} on your phone": "カード交換 · {0} へのオファーをスマホで確認して",
+    "sent a swap to {0}": "{0} に交換を送信しました",
+    "a card swap nocat.lol paired": "nocat.lol が組んだカード交換",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol が組んだカード交換 · 確認してから承認か拒否",
+    "offer {0} is from an account that once sent a bad swap · left for you": "オファー {0} は以前に不正な交換を送ったアカウントから · あなたの判断に残します",
+    "from an account that once sent a bad swap": "以前に不正な交換を送ったアカウントから",
+    "not now": "今はしません",
+    "offer {0} isn't a good swap now ({1}) - declining": "オファー {0} は今は良い交換ではありません ({1}) - 拒否します",
+    "card swap · you'd give {0} · you'd get {1}": "カード交換 · 渡す予定 {0} · 受け取る予定 {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "交換オファー {0} は組まれた内容と違います ({1}) · あなたの判断に残します",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "オファー {0} は nocat.lol が組んでいないカード交換を名乗っています · あなたの判断に残します",
+    "Swaps with other users": "他のユーザーとの交換",
+    "Turn on card swaps?": "カード交換をオンにしますか?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "今交換できるものと、守る上限です。オンにするを押すまで何も交換しません。",
+    "spare cards to swap": "交換できる余りカード",
+    "in {0} games": "{0} 本のゲーム",
+    "swaps a day, at most": "1 日の交換の上限",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "通常のトレーディングカードのみ - フォイル、背景、絵文字は対象外",
+    "One for one, in the same game, and only when it helps your sets": "同じゲーム内で 1 枚ずつ、セットの役に立つときだけ",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "セットに必要なカード、最後の 1 枚、触らないリストにあるものは決して出しません",
+    "Each swap worth at most {0} less than what it gives": "どの交換も、渡す分より最大 {0} までしか安くなりません",
+    "Never when Steam would hold the trade": "Steam が取引を保留する場合は交換しません",
+    "Also when Steam would hold the trade": "Steam が取引を保留する場合も交換します",
+    "Its offers are confirmed by its authenticator here": "オファーはここにある認証システムで確認されます",
+    "Its offers wait for you to confirm them on your phone": "オファーはスマホでの確認を待ちます",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "オンの間、nocat.lol はこのアカウントの SteamID とトレードリンクを保持します - オフにすると削除されます",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "ウォレットの通貨がまだ分かりません - 分かるまで何も交換しません",
+    "1 card still needs a price first.": "1 枚のカードはまだ先に価格が必要です。",
+    "{0} cards still need a price first.": "{0} 枚のカードはまだ先に価格が必要です。",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} への交換オファーは nocat.lol の内容と違いました · 取り消しました",
+    "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して"
   },
   "settings": {
     "SteamOpenButton": {
@@ -4581,6 +4643,22 @@
     "CraftFoilBadges": {
       "label": "キラバッジも作る",
       "tip": "そろったキラカードのセットからキラバッジも作ります。オフにすると通常のバッジだけを作り、キラカードには手を付けません。Steam がキラバッジを拒否したときは、キラだけが待ち、通常のバッジは続けます。"
+    },
+    "CardSwaps": {
+      "label": "他の nocat.farm ユーザーとカードを交換",
+      "tip": "余った通常のトレーディングカードを、同じゲーム内で 1 枚ずつ他の nocat.farm ユーザーと交換し、お互いのセットを早く揃えます。nocat.lol がアカウントを組み合わせ、このアカウントがどの交換も先にもう一度確認します。セットに必要なカードやその最後の 1 枚、フォイル、背景、絵文字、「触らない」リストにあるものは決して渡しません。オンの間、nocat.lol はこのアカウントの SteamID とトレードリンクを保持し、オフにすると削除されます。オンにするとまず何をするかを見せて、確認を求めます。"
+    },
+    "CardSwapMaxLoss": {
+      "label": "交換で損してよい上限",
+      "tip": "交換が渡す分よりどれだけ安くてもよいか。マーケットの最安値で、このアカウントの Steam ウォレット通貨で数えます。例えば 0.01 なら、0.12 のカードを 0.11 のカードと交換するのは OK、0.10 なら NG。0 なら決して安くなりません。直近 1 日の価格がないカードは交換しません。"
+    },
+    "CardSwapsPerDay": {
+      "label": "1 日の交換の上限",
+      "tip": "1 日に送るか承認する交換の最大数 - 例えば 5。ヒューマンモードのアカウントでは、さらにその日の中で 45 分から 2 時間あけて分散します。"
+    },
+    "CardSwapSkipHeld": {
+      "label": "Steam が保留する交換はしない",
+      "tip": "Steam が取引を何日も保留するときは、そのアカウントとは交換しません - 例えば片方が Steam Guard アプリを使い始めて間もない場合。オンが一番安全です。"
     }
   }
 }

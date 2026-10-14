@@ -73,6 +73,47 @@ declining it.
 Items from games the account is banned in can't be traded. Ban watch adds those games to *...but not these games*
 by itself, and you can add more.
 
+## Card swaps with other nocat.farm users
+
+*Swap cards with other nocat.farm users* (`CardSwaps`, off) swaps your spare normal trading cards with other people's
+nocat.farm accounts: one card for one card, in the same game, so both of you finish sets sooner. It's per account.
+Ticking it first shows what it could swap now and its limits, and nothing happens until you press **Turn on**. Off
+stops it at once. From the console: `swaps preview myaccount`, `swaps on myaccount`, `swaps off myaccount`.
+
+How it goes:
+
+1. About twice a day your copy tells nocat.lol which spare cards each opted-in account has, for games where it has a
+   spare copy, with their market prices. With it go the account's SteamID and trade link, so a partner can send it an
+   offer. Turning it off deletes all of it from nocat.lol within a minute or two.
+2. Once an hour nocat.lol pairs accounts the way ArchiSteamFarm does: a card only goes from a bigger pile to a smaller
+   one, on both sides, so neither side's sets lose anything. Several games go in one offer, and of the ways to pair two
+   accounts it picks the one that finishes the most badge levels and sets.
+3. One side sends the offer, with a note like `nocat.farm card swap #a1b2c3d4e5f6`. Before sending, it checks
+   everything again against its own cards and prices.
+4. The other side checks it once more before accepting: it has to be exactly what nocat.lol paired (or part of it),
+   from the account it paired, and give nothing else. An offer that isn't is never accepted, is left for you, and that
+   account is never swapped with again (nocat.lol is told too). An offer that's fine but no longer good for this
+   account (its cards changed, or the prices did) is declined.
+
+What it never does:
+
+- Never foils, backgrounds, emoticons, gems or game items. Only normal trading cards.
+- Never a card your sets need, never the last copy of a card, never more than *Keep this many of each card* (Spare
+  items) allows, and nothing on *Never touch these items* or *Never touch items from these games*.
+- Never worth more than *Most a swap may lose* (0.01 by default) less than what it gives, by the market's cheapest
+  price in this account's own wallet currency. 0 means a swap is never worth less. A card with no price from the last
+  day is never swapped. The log shows both sides' worth: `card swap · you give 0.10 USD · you get 0.11 USD`.
+- Never with an account whose trades Steam would hold (*Skip swaps Steam would hold*, on).
+- Never more than *Swaps a day, at most* (5) - sent and accepted together. On a human-mode account only in its own
+  day, 45 minutes to 2 hours apart.
+- Nothing while scam watch holds the account's trades.
+
+An account whose authenticator is in nocat.farm confirms its own offers. Without one, the offer waits for you in the
+Steam app on your phone, and the log says so. An offer nobody accepted in 2 days is taken back.
+
+`swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks nocat.lol for
+new matches now.
+
 ## The Authenticator page
 
 This is for accounts whose maFile is in `config/authenticators`, or whose secrets are in their settings. The

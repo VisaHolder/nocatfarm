@@ -694,6 +694,8 @@ public static class SpareRun {
 		}
 
 		HashSet<ulong> busy = [.. promised, .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
+		// 1.8.2: cards promised to a card swap nocat.lol paired stay for it - never sold or turned into gems meanwhile.
+		busy.UnionWith(CardExchange.Reserved(bot.Name, bot.SteamId, DateTime.UtcNow));
 		List<SpareItem> items = Spare.Read(inventory);
 		DateTime now = DateTime.UtcNow;
 		SpareLedger ledger = SpareLedger.Load(bot.Name);

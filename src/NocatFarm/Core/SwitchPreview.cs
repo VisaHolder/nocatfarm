@@ -96,6 +96,18 @@ public static class SwitchPreview {
 		return new BuyNumbers(signedIn, problem, (int) (plan?.Block ?? BuyBlock.None), cur > 0 ? MarketQuotes.Code(cur) : "", plan == null ? "" : M(plan.Wallet),
 			M(BuyPlan.Cents(cfg.BuyDailyLimit)), M(plan?.DaySpent ?? 0), M(BuyPlan.Cents(cfg.BuyWeeklyLimit)), M(plan?.WeekSpent ?? 0),
 			M(plan?.Cost ?? 0), plan?.CardCount ?? 0, sets, plan?.Notes.ToList() ?? [], cfg.BuyFullSets, !cfg.CraftBadges, cfg.LegitMode);
+
+	/// <summary>1.8.2 card swaps: spare cards it could swap now, and the limits it keeps to.</summary>
+	public sealed record SwapNumbers(bool SignedIn, string Problem, int Games, int Cards, int Unpriced, string Currency, string MaxLoss, int PerDay,
+		bool SkipHeld, bool Confirms, bool Human) {
+		public string Kind => "swaps";
+	}
+
+	public static SwapNumbers Swaps(CardExchange.Spares? spares, Bot bot, bool signedIn, string problem) {
+		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		return new SwapNumbers(signedIn, problem, spares?.Games ?? 0, spares?.Cards ?? 0, spares?.Unpriced ?? 0, currency > 0 ? MarketQuotes.Code(currency) : "",
+			Core.Spare.Money(CardExchange.MaxLossCents(bot.Cfg), currency), CardExchange.PerDay(bot.Cfg), bot.Cfg.CardSwapSkipHeld, bot.CanConfirmTrades, bot.Cfg.LegitMode);
 	}
 
 	/// <summary>The numbers of one spare-items look: counted from its plan, the limits from the account's settings.</summary>
@@ -145,6 +157,12 @@ public static class SwitchPreview {
 				: $"{bot.Name}: your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then the button works.";
 
 			return (line, n);
+		}
+
+		if (feature == Switches.Swaps) {
+			(string text, CardExchange.Spares? spares, string problem) = await CardExchange.PreviewAsync(bot, ct).ConfigureAwait(false);
+
+			return (text, Swaps(spares, bot, signedIn, problem));
 		}
 
 		if (feature == Switches.Spare) {

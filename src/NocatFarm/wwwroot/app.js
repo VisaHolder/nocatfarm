@@ -6082,12 +6082,23 @@ const GUARDED_OFF = {
 // asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
 const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points', SteamOpenButton: 'steamopen', BuyCards: 'buy' };
 
+// 1.8.2: card swaps with other nocat.farm users - one switch like those, with its own pop-up.
+CONFIRMED_ON.CardSwaps = 'swaps';
+const SWITCH_POPUPS = {
+  CardSwaps: {
+    title: () => t('Turn on card swaps?'),
+    intro: () => t('This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.'),
+    html: (d) => swapsPreviewHtml(d),
+  },
+};
+
 function confirmSwitch(name, account) {
-  const title = name === 'SpareItems' ? t('Turn on Spare items?')
+  const own = SWITCH_POPUPS[name];
+  const title = own ? own.title() : name === 'SpareItems' ? t('Turn on Spare items?')
     : name === 'SpendPoints' ? t('Turn on spending Steam Points?')
     : name === 'BuyCards' ? t('Turn on buying cards?')
     : t('Turn on the Open in Steam button?');
-  const intro = name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
+  const intro = own ? own.intro() : name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
     : name === 'SpendPoints' ? t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.')
     : name === 'BuyCards' ? t("This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.")
     : t('This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.');
@@ -6104,7 +6115,7 @@ function confirmSwitch(name, account) {
   const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
   const draw = (d) => d.Kind === 'points' ? pointsPreviewHtml(d) : d.Kind === 'steamopen' ? steamOpenPreviewHtml(d) : d.Kind === 'buy' ? buyPreviewHtml(d) : sparePreviewHtml(d);
   api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => show(r && r.data ? draw(r.data) : none))
+    .then((r) => show(r && r.data ? (own ? own.html(r.data) : draw(r.data)) : none))
     .catch(() => show(none));
 }
 
@@ -6187,6 +6198,36 @@ function sparePreviewHtml(d) {
     : '';
 
   return `${top.join('')}${big}${pace}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>${pricing}`;
+}
+
+// 1.8.2: what card swaps could do now, from the server's numbers - the spare cards it could swap, and its limits in plain words.
+function swapsPreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the inventory yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the inventory: {0}", d.Problem))}</p>`);
+
+  const big = d.SignedIn && !d.Problem ? `<div class="big">
+    ${bigNumber(d.Cards, t('spare cards to swap'), d.Games ? tf('in {0} games', grouped(d.Games)) : '', !d.Cards)}
+    ${bigNumber(d.PerDay, t('swaps a day, at most'), '', true)}
+  </div>` : '';
+
+  const limits = [
+    t('Normal trading cards only - never foils, backgrounds or emoticons'),
+    t('One for one, in the same game, and only when it helps your sets'),
+    t('Never a card your sets need, the last copy of one, or anything on your never-touch lists'),
+    tf('Each swap worth at most {0} less than what it gives', d.MaxLoss),
+    d.SkipHeld ? t('Never when Steam would hold the trade') : t('Also when Steam would hold the trade'),
+  ];
+  if (d.Human) limits.push(t('Only during its day (human mode)'));
+  limits.push(d.Confirms ? t('Its offers are confirmed by its authenticator here') : t('Its offers wait for you to confirm them on your phone'));
+  limits.push(t("While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them"));
+  limits.push(d.Currency ? tf("Prices in {0}, this account's wallet currency", d.Currency) : t('Its wallet currency is not known yet - nothing is swapped until it is'));
+
+  const pricing = d.SignedIn && d.Unpriced > 0
+    ? `<p class="pricing">${esc(d.Unpriced === 1 ? t('1 card still needs a price first.') : tf('{0} cards still need a price first.', grouped(d.Unpriced)))}</p>`
+    : '';
+
+  return `${top.join('')}${big}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>${pricing}`;
 }
 
 // What spending Steam Points would buy, from the server's numbers.

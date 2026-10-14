@@ -22,7 +22,7 @@ namespace NocatFarm.Modules;
 ///
 /// Nothing is acted on the instant it lands. A trade accepted two seconds after it was sent is a bot accepting.
 /// </summary>
-public sealed class Trading(Bot bot) : BotModule(bot) {
+public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>How many looks that turn up nothing to do before Steam's waiting count stops meaning "hurry".</summary>
 	private const int FruitlessBeforeBackingOff = 3;
 
@@ -126,7 +126,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
 	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
-		|| ((BotManager.Instance?.All.Count ?? 0) > 1);
+		|| ((BotManager.Instance?.All.Count ?? 0) > 1) || Bot.Cfg.CardSwaps;
 
 	/// <summary>
 	/// What the fair-swap test said about each offer. A "no" is kept only for a while: cards move, and an offer
@@ -393,7 +393,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		bool swapWanted = Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner);
-		bool? swap = !fromMaster && !donation && swapWanted ? await FairSwapAsync(offer, ct).ConfigureAwait(false) : false;
+		// 1.8.2: a card swap nocat.lol paired is judged on what was paired (Trading.Swaps.cs) - and declined when it no longer
+		// fits, whatever "Decline everything else" says; one that isn't what was paired is left for you.
+		bool exchange = !fromMaster && !donation && IsExchangeOffer(offer);
+		bool? swap = exchange ? await ExchangeVerdictAsync(offer, ct).ConfigureAwait(false)
+			: !fromMaster && !donation && swapWanted ? await FairSwapAsync(offer, ct).ConfigureAwait(false) : false;
 		bool fair = swap == true;
 		bool accept = fromMaster || donation || fair;
 
@@ -402,14 +406,15 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			return (false, false);
 		}
 
-		if (!accept && !Bot.Cfg.DeclineOtherTrades) {
+		if (!accept && !exchange && !Bot.Cfg.DeclineOtherTrades) {
 			return (false, false);   // leave it sitting there for the user to look at
 		}
 
 		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
 		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait() + (Bot.Cfg.LegitMode && _wasHeld ? AfterWaking() : TimeSpan.Zero))
 			&& (_waiting.DueOf(offer.Id) is { } due)) {
-			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
+			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
+				: fair ? new Said("a fair card swap") : new Said("a donation");
 			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
 
@@ -431,7 +436,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			// Would it sit in a trade hold? Steam only says so up front through its hold lookup - an offer's own
 			// hold date appears once it's already held. A held swap can be cancelled and leaves cards in limbo.
-			TimeSpan? hold = await TradeOffers.HoldAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+			// A card swap nocat.lol paired looks only when "Skip swaps Steam would hold" is on.
+			TimeSpan? hold = exchange && !Bot.Cfg.CardSwapSkipHeld ? TimeSpan.Zero : await TradeOffers.HoldAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
 
 			if (hold == null) {
 				return (true, false);   // Steam didn't say - ask again at the next look
@@ -447,7 +453,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			// Judged again NOW, against the cards held now. The first verdict is minutes old - hours, if it waited
 			// out the night - and other swaps may have moved cards since.
-			(bool? still, Said why) = await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
+			(bool? still, Said why) = exchange ? await ExchangeJudgeNowAsync(offer, ct).ConfigureAwait(false)
+				: await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
 
 			if (still != true) {
 				// A "no" is kept like any other, so the next look doesn't say "isn't a fair swap" all over again; a
@@ -462,7 +469,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 				_waiting.Remove(offer.Id);
 
-				if (still == false) {
+				// A card swap nocat.lol paired said why already, and is declined at the next look.
+				if ((still == false) && !exchange) {
 					Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
 				}
 
@@ -482,7 +490,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			if (accept) {
 				// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
 				// your own) are confirmed without asking.
-				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner)).ConfigureAwait(false);
+				// A card swap nocat.lol paired: you turned swaps on for this account, after its preview - that is the go-ahead.
+				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange).ConfigureAwait(false);
 
 				if (result == Accepted.Failed) {
 					return (true, false);
@@ -493,6 +502,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				string who = Who(offer);
 				Finish(offer.Id);
 				swapped = fair && !fromMaster && !donation;
+
+				if (exchange) {
+					ExchangeAccepted(offer, result == Accepted.Done);
+				}
 
 				if (swapped) {
 					lock (_fair) {
@@ -722,6 +735,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		if (Auto(offer, allowed)) {
 			return later ? new Said("allowed sender · accepting when awake") : new Said("allowed sender · accepting in a few min");
+		}
+
+		if (IsExchangeOffer(offer)) {
+			return new Said("a card swap nocat.lol paired · checked, then accepted or declined");
 		}
 
 		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {

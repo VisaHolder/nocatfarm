@@ -17,7 +17,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` `steam` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
 | **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `buy` `levelup` |
-| **[Trades & items](#trades--items)** | `offers` `trade` `send` |
+| **[Trades & items](#trades--items)** | `offers` `trade` `send` `swaps` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
 | **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `events` `redeem` `keys` |
@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-82 commands in all.
+84 commands in all.
 
 ## Accounts
 
@@ -82,6 +82,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `offers [account\|all]` | Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold. |
 | `trade accept\|decline <account> <number\|all> \| cancel <account> <offer id\|all>` | Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation. |
 | `send <account\|all> [to <account>] [types]` | Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account. |
+| `swaps [account] \| preview\|on\|off <account> \| sync` | Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and nocat.lol deletes its SteamID and trade link. 'swaps sync' asks nocat.lol for new matches now. |
 
 ## Steam Guard
 

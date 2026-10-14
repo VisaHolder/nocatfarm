@@ -3029,7 +3029,69 @@
     "done grinding · back to the usual day": "刷完了 · 回到平常的一天",
     "{0} is on the market · {1}": "{0} 已在市场上架 · {1}",
     "{0} is on the market": "{0} 已在市场上架",
-    "couldn't look at the listings waiting on a confirmation: {0}": "无法查看等待确认的上架：{0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "无法查看等待确认的上架：{0}",
+    "its cards have changed since": "它的卡牌之后有了变化",
+    "no fresh price for some of its cards": "部分卡牌没有最新价格",
+    "it would set back a set now": "现在会让某套卡退步",
+    "it would lose more than your limit": "损失会超过你的上限",
+    "not a swap nocat.lol paired with this account": "不是 nocat.lol 为此账户配对的交换",
+    "it has something that isn't a normal trading card": "其中有不是普通集换式卡牌的东西",
+    "it isn't the swap nocat.lol paired": "不是 nocat.lol 配对的那次交换",
+    "no fresh price yet for {0}": "{0} 还没有最新价格",
+    "it's worth less than this account gives": "价值低于此账户付出的",
+    "card swaps: couldn't read its own trade link - not listed this time": "卡牌交换：读不到自己的交易链接 - 这次不上榜",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} 的卡牌交换已开启：在限制范围内与其他 nocat.farm 用户交换多余的卡牌",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} 的卡牌交换已关闭：不再交换任何东西，nocat.lol 也会忘掉它",
+    "held by scam watch - no swaps until 'scamwatch ok'": "被防诈骗暂停 - 输入 'scamwatch ok' 前不交换",
+    "waiting for its day": "等它的一天开始",
+    "{0} swaps today - the most for a day": "今天已交换 {0} 次 - 一天的上限",
+    "next swap from about {0}": "下次交换大约从 {0} 开始",
+    "no swap to send right now": "目前没有要发送的交换",
+    "card swap with {0} done · {1} card(s) each way": "与 {0} 的卡牌交换完成 · 双方各 {1} 张",
+    "card swap offer to {0} taken back · not accepted in 2 days": "给 {0} 的交换报价已撤回 · 2 天内未被接受",
+    "card swap with {0} didn't go through": "与 {0} 的卡牌交换没有成功",
+    "card swap with {0} skipped · {1}": "跳过与 {0} 的卡牌交换 · {1}",
+    "Steam didn't say whether the trade would be held": "Steam 没说这次交易会不会被暂挂",
+    "the trade would be held": "交易会被暂挂",
+    "couldn't read its cards": "读不到它的卡牌",
+    "Steam didn't say what's on its offers": "Steam 没说它的报价里有什么",
+    "Steam hasn't said its wallet currency yet": "Steam 还没告诉它的钱包货币",
+    "waiting for prices": "等待价格",
+    "nothing in it fits any more": "里面已经没有合适的了",
+    "Steam refused the offer: {0}": "Steam 拒绝了这个报价：{0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "卡牌交换 · 已向 {0} 发送报价 · 双方各 {1} 张",
+    "card swap · you give {0} · you get {1}": "卡牌交换 · 你付出 {0} · 你得到 {1}",
+    "card swap · confirm the offer to {0} on your phone": "卡牌交换 · 请在手机上确认给 {0} 的报价",
+    "sent a swap to {0}": "已向 {0} 发送交换",
+    "a card swap nocat.lol paired": "nocat.lol 配对的卡牌交换",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol 配对的卡牌交换 · 先检查，再接受或拒绝",
+    "offer {0} is from an account that once sent a bad swap · left for you": "报价 {0} 来自曾发送过不良交换的账户 · 留给你处理",
+    "from an account that once sent a bad swap": "来自曾发送过不良交换的账户",
+    "not now": "现在不行",
+    "offer {0} isn't a good swap now ({1}) - declining": "报价 {0} 现在不是好交换（{1}）- 正在拒绝",
+    "card swap · you'd give {0} · you'd get {1}": "卡牌交换 · 你会付出 {0} · 你会得到 {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "交换报价 {0} 与配对的不一致（{1}）· 留给你处理",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "报价 {0} 自称是 nocat.lol 没配对过的卡牌交换 · 留给你处理",
+    "Swaps with other users": "与其他用户交换",
+    "Turn on card swaps?": "开启卡牌交换？",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "这是它现在能交换的，以及它遵守的限制。在你按下开启之前不会交换任何东西。",
+    "spare cards to swap": "可交换的多余卡牌",
+    "in {0} games": "分布在 {0} 个游戏",
+    "swaps a day, at most": "每天最多交换次数",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "只限普通集换式卡牌 - 绝不交换闪亮卡牌、背景或表情",
+    "One for one, in the same game, and only when it helps your sets": "同一游戏内一换一，并且只在对你的卡套有帮助时",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "绝不交出你的卡套需要的卡、某张卡的最后一张，或你的「绝不动」清单里的东西",
+    "Each swap worth at most {0} less than what it gives": "每次交换的价值最多比付出的少 {0}",
+    "Never when Steam would hold the trade": "Steam 会暂挂交易时绝不交换",
+    "Also when Steam would hold the trade": "即使 Steam 会暂挂交易也交换",
+    "Its offers are confirmed by its authenticator here": "它的报价由这里的验证器确认",
+    "Its offers wait for you to confirm them on your phone": "它的报价要等你在手机上确认",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "还不知道它的钱包货币 - 知道之前不交换任何东西",
+    "1 card still needs a price first.": "还有 1 张卡需要先定价。",
+    "{0} cards still need a price first.": "还有 {0} 张卡需要先定价。",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "给 {0} 的交换报价与 nocat.lol 说的不符 · 已撤回",
+    "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价"
   },
   "settings": {
     "SteamOpenButton": {
@@ -4581,6 +4643,22 @@
     "CraftFoilBadges": {
       "label": "也合成闪亮徽章",
       "tip": "也把集齐的闪亮卡牌合成闪亮徽章。关闭时只合成普通徽章，闪亮卡牌不动。Steam 拒绝闪亮徽章时，只有闪亮徽章等待 —— 普通徽章继续。"
+    },
+    "CardSwaps": {
+      "label": "与其他 nocat.farm 用户交换卡牌",
+      "tip": "在同一游戏内与其他 nocat.farm 用户一换一交换多余的普通集换式卡牌，让双方都更快集齐卡套。nocat.lol 负责配对账户；此账户在每次交换前会再检查一遍。它绝不交出你的卡套需要的卡或某张卡的最后一张，绝不交换闪亮卡牌、背景或表情，也不动你「绝不动」清单里的东西。开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除。开启时会先展示它会做什么，并请你确认。"
+    },
+    "CardSwapMaxLoss": {
+      "label": "每次交换最多可亏",
+      "tip": "一次交换的价值最多可以比付出的少多少，按市场最低价、用此账户的 Steam 钱包货币计算。例如 0.01：用价值 0.12 的卡换价值 0.11 的卡可以，换 0.10 的就不行。0：交换绝不会更便宜。最近一天没有价格的卡绝不交换。"
+    },
+    "CardSwapsPerDay": {
+      "label": "每天最多交换次数",
+      "tip": "一天内最多发送或接受的交换数 - 例如 5。在真人模式的账户上，还会分散在它自己的一天里，间隔 45 分钟到 2 小时。"
+    },
+    "CardSwapSkipHeld": {
+      "label": "跳过 Steam 会暂挂的交换",
+      "tip": "如果 Steam 会把交易暂挂好几天，就绝不与那个账户交换 - 例如某一方刚开始用 Steam Guard 手机应用不久。开启最安全。"
     }
   }
 }

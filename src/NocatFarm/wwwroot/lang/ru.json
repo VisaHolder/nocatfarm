@@ -3029,7 +3029,69 @@
     "done grinding · back to the usual day": "гринд окончен · обычный день",
     "{0} is on the market · {1}": "{0} на торговой площадке · {1}",
     "{0} is on the market": "{0} на торговой площадке",
-    "couldn't look at the listings waiting on a confirmation: {0}": "не удалось проверить лоты, ждущие подтверждения: {0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "не удалось проверить лоты, ждущие подтверждения: {0}",
+    "its cards have changed since": "его карточки с тех пор изменились",
+    "no fresh price for some of its cards": "для некоторых его карточек нет свежей цены",
+    "it would set back a set now": "сейчас это отбросило бы набор назад",
+    "it would lose more than your limit": "потеря превысила бы твой лимит",
+    "not a swap nocat.lol paired with this account": "это не обмен, который nocat.lol подобрал для этого аккаунта",
+    "it has something that isn't a normal trading card": "в нём есть что-то, что не является обычной коллекционной карточкой",
+    "it isn't the swap nocat.lol paired": "это не тот обмен, который подобрал nocat.lol",
+    "no fresh price yet for {0}": "для {0} пока нет свежей цены",
+    "it's worth less than this account gives": "это стоит меньше, чем отдаёт этот аккаунт",
+    "card swaps: couldn't read its own trade link - not listed this time": "обмен карточками: не удалось прочитать свою ссылку для обмена - в этот раз не в списке",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "Обмен карточками включён для {0}: он меняет лишние карточки с другими пользователями nocat.farm в пределах своих лимитов",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "Обмен карточками выключен для {0}: ничего не меняется, и nocat.lol его забывает",
+    "held by scam watch - no swaps until 'scamwatch ok'": "задержано защитой от мошенников - никаких обменов до 'scamwatch ok'",
+    "waiting for its day": "ждёт своего дня",
+    "{0} swaps today - the most for a day": "{0} обменов сегодня - максимум за день",
+    "next swap from about {0}": "следующий обмен примерно с {0}",
+    "no swap to send right now": "сейчас нечего отправлять",
+    "card swap with {0} done · {1} card(s) each way": "обмен карточками с {0} завершён · по {1} карт. в каждую сторону",
+    "card swap offer to {0} taken back · not accepted in 2 days": "предложение обмена для {0} отозвано · не принято за 2 дня",
+    "card swap with {0} didn't go through": "обмен карточками с {0} не состоялся",
+    "card swap with {0} skipped · {1}": "обмен карточками с {0} пропущен · {1}",
+    "Steam didn't say whether the trade would be held": "Steam не сказал, будет ли обмен задержан",
+    "the trade would be held": "обмен был бы задержан",
+    "couldn't read its cards": "не удалось прочитать его карточки",
+    "Steam didn't say what's on its offers": "Steam не сказал, что в его предложениях",
+    "Steam hasn't said its wallet currency yet": "Steam ещё не сообщил валюту кошелька",
+    "waiting for prices": "ждёт цены",
+    "nothing in it fits any more": "ничего больше не подходит",
+    "Steam refused the offer: {0}": "Steam отклонил предложение: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "обмен карточками · предложение отправлено {0} · по {1} карт. в каждую сторону",
+    "card swap · you give {0} · you get {1}": "обмен карточками · отдаёшь {0} · получаешь {1}",
+    "card swap · confirm the offer to {0} on your phone": "обмен карточками · подтверди предложение для {0} на телефоне",
+    "sent a swap to {0}": "обмен отправлен {0}",
+    "a card swap nocat.lol paired": "обмен карточками, подобранный nocat.lol",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "обмен карточками, подобранный nocat.lol · проверяется, потом принимается или отклоняется",
+    "offer {0} is from an account that once sent a bad swap · left for you": "предложение {0} от аккаунта, который однажды прислал плохой обмен · оставлено тебе",
+    "from an account that once sent a bad swap": "от аккаунта, который однажды прислал плохой обмен",
+    "not now": "не сейчас",
+    "offer {0} isn't a good swap now ({1}) - declining": "предложение {0} сейчас невыгодно ({1}) - отклоняю",
+    "card swap · you'd give {0} · you'd get {1}": "обмен карточками · отдал бы {0} · получил бы {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "предложение обмена {0} не совпадает с подобранным ({1}) · оставлено тебе",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "предложение {0} называет себя обменом, который nocat.lol не подбирал · оставлено тебе",
+    "Swaps with other users": "Обмен с другими пользователями",
+    "Turn on card swaps?": "Включить обмен карточками?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Вот что он мог бы обменять сейчас, и лимиты, которых он держится. Ничего не меняется, пока ты не нажмёшь «Включить».",
+    "spare cards to swap": "лишних карточек для обмена",
+    "in {0} games": "в {0} играх",
+    "swaps a day, at most": "обменов в день, не больше",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Только обычные коллекционные карточки - никогда металлические, фоны или смайлики",
+    "One for one, in the same game, and only when it helps your sets": "Один к одному, в одной игре, и только когда это помогает твоим наборам",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Никогда карточку, нужную твоим наборам, последний экземпляр или что-то из списков «не трогать»",
+    "Each swap worth at most {0} less than what it gives": "Каждый обмен стоит не больше чем на {0} меньше того, что он отдаёт",
+    "Never when Steam would hold the trade": "Никогда, если Steam задержал бы обмен",
+    "Also when Steam would hold the trade": "Даже если Steam задержал бы обмен",
+    "Its offers are confirmed by its authenticator here": "Его предложения подтверждает аутентификатор здесь",
+    "Its offers wait for you to confirm them on your phone": "Его предложения ждут, пока ты подтвердишь их на телефоне",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "Валюта кошелька ещё неизвестна - ничего не меняется, пока она не станет известна",
+    "1 card still needs a price first.": "1 карточке сначала ещё нужна цена.",
+    "{0} cards still need a price first.": "{0} карточкам сначала ещё нужна цена.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "предложение обмена для {0} не совпало с тем, что сказал nocat.lol · отозвано",
+    "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam"
   },
   "settings": {
     "SteamOpenButton": {
@@ -4581,6 +4643,22 @@
     "CraftFoilBadges": {
       "label": "Собирать и металлические значки",
       "tip": "Собирает в значки и полные наборы металлических карточек. Выключено - собирает только обычные значки и не трогает металлические карточки. Если Steam отклонит металлический значок, ждут только металлические - обычные продолжаются."
+    },
+    "CardSwaps": {
+      "label": "Менять карточки с другими пользователями nocat.farm",
+      "tip": "Меняет лишние обычные коллекционные карточки один к одному с другими пользователями nocat.farm, в одной игре, чтобы обе стороны быстрее собирали наборы. nocat.lol подбирает пары аккаунтов; этот аккаунт ещё раз проверяет каждый обмен. Он никогда не отдаёт карточку, нужную твоим наборам, или последний экземпляр, никогда металлические карточки, фоны или смайлики и ничего из списков «не трогать». Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их. При включении он сначала показывает, что будет делать, и просит подтвердить."
+    },
+    "CardSwapMaxLoss": {
+      "label": "Сколько обмен может потерять, не больше",
+      "tip": "Насколько обмен может стоить меньше того, что он отдаёт, по самой низкой цене на торговой площадке, в валюте кошелька Steam этого аккаунта. Например 0.01: карточки за 0.12 на карточки за 0.11 - можно, на 0.10 - нельзя. 0: обмен никогда не дешевле. Карточка без цены за последние сутки никогда не меняется."
+    },
+    "CardSwapsPerDay": {
+      "label": "Обменов в день, не больше",
+      "tip": "Наибольшее число обменов, которые он отправляет или принимает за день - например 5. На аккаунте в человеческом режиме они ещё и распределяются по его собственному дню, с промежутками от 45 минут до 2 часов."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Пропускать обмены, которые Steam задержал бы",
+      "tip": "Никогда не меняется с аккаунтом, если Steam задержал бы обмен на несколько дней - например, когда у одной стороны приложение Steam Guard недавно. Включено - безопаснее всего."
     }
   }
 }

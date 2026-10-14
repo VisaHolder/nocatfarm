@@ -1171,6 +1171,22 @@ public sealed class BotConfig {
 	public int GiftDelayMinMinutes { get; set; } = 2;
 	public int GiftDelayMaxMinutes { get; set; } = 15;
 	public bool AcceptFairCardSwaps { get; set; }
+
+	// ── 1.8.2: card swaps with other nocat.farm users (Core/CardExchange.cs) ──
+	/// <summary>
+	/// Swap spare normal cards one for one with other nocat.farm users' accounts. Only turned on through its preview: the
+	/// go-ahead lives in config/state/cardswaps-&lt;account&gt;.json, never here (see <see cref="Core.Switches"/>).
+	/// </summary>
+	public bool CardSwaps { get; set; }
+
+	/// <summary>The most a swap may be worth less than what it gives, in the wallet's currency. 0: never worth less.</summary>
+	public float CardSwapMaxLoss { get; set; } = 0.01f;
+
+	/// <summary>Never swap with an account when the trade would be held.</summary>
+	public bool CardSwapSkipHeld { get; set; } = true;
+
+	/// <summary>Swaps sent or accepted in a day, at most.</summary>
+	public int CardSwapsPerDay { get; set; } = 5;
 	public bool AcceptFromMasters { get; set; }
 	public string TradeMasters { get; set; } = "";
 
@@ -2174,7 +2190,8 @@ public static class ConfigStore {
 		("state", "buy-", ".json"),   // money spent buying cards, and its go-ahead (Modules/CardBuyer.cs)
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
-		("state", "steamopen-", ".json")   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
+		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
+		("state", "cardswaps-", ".json")   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)
 	];
 
 	/// <summary>

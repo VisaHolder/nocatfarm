@@ -42,7 +42,8 @@ public static partial class Commands {
 		HashSet<string> rest = [.. words[1..].Select(static w => w.ToLowerInvariant())];
 
 		return ((name == "spare") && (rest.Contains("on") || rest.Contains("ok") || rest.Contains("do") || rest.Contains("now")))
-			|| ((name == "booster") && rest.Contains("open") && (rest.Contains("do") || rest.Contains("now")));
+			|| ((name == "booster") && rest.Contains("open") && (rest.Contains("do") || rest.Contains("now")))
+			|| ((name == "swaps") && rest.Contains("on"));   // 1.8.2: card swaps are turned on by the owner only
 	}
 
 	/// <summary>The words after 'open' in 'booster open ...' or 'booster &lt;account&gt; open ...' - null when it isn't that.</summary>
@@ -122,7 +123,7 @@ public static partial class Commands {
 			string value = Unquote(SetValue(line, Words(line), 2)).Trim().ToLowerInvariant();
 			// Every word 'set' reads as on or off ('y', 'n' too): one it doesn't is answered by 'set' as wrong, and changes nothing.
 			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
-			string word = feature == Switches.Spare ? "spare" : feature == Switches.SteamOpenButton ? "steam" : feature == Switches.Buy ? "buy" : "points";
+			string word = feature == Switches.Spare ? "spare" : feature == Switches.SteamOpenButton ? "steam" : feature == Switches.Buy ? "buy" : feature == Switches.Swaps ? "swaps" : "points";
 
 			if (on == false) {
 				Switches.Set(bot, feature, false);
@@ -134,6 +135,7 @@ public static partial class Commands {
 				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name)
 					: feature == Switches.SteamOpenButton ? SteamOpen.On(bot.Cfg, bot.Name)
 					: feature == Switches.Buy ? CardBuyer.On(bot)
+					: feature == Switches.Swaps ? CardExchange.On(bot.Cfg, bot.Name)
 					: bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
 
 				if (already) {
@@ -158,6 +160,10 @@ public static partial class Commands {
 			(string text, _) = await SwitchPreview.LookAsync(bot, feature, ct).ConfigureAwait(false);
 
 			return text + Environment.NewLine + "Pressing the button closes Steam, points its saved accounts at this one, and starts Steam again. It never stops nocat.farm farming this account.";
+		}
+
+		if (feature == Switches.Swaps) {
+			return (await CardExchange.PreviewAsync(bot, ct).ConfigureAwait(false)).Text;
 		}
 
 		if (feature == Switches.Spare) {

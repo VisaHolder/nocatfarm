@@ -3029,7 +3029,69 @@
     "done grinding · back to the usual day": "grind concluído · de volta ao dia normal",
     "{0} is on the market · {1}": "{0} está no mercado · {1}",
     "{0} is on the market": "{0} está no mercado",
-    "couldn't look at the listings waiting on a confirmation: {0}": "não deu para ver os anúncios aguardando confirmação: {0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "não deu para ver os anúncios aguardando confirmação: {0}",
+    "its cards have changed since": "as cartas dela mudaram desde então",
+    "no fresh price for some of its cards": "não há preço recente para algumas das cartas",
+    "it would set back a set now": "agora faria um conjunto regredir",
+    "it would lose more than your limit": "perderia mais do que o seu limite",
+    "not a swap nocat.lol paired with this account": "não é uma troca que o nocat.lol pareou com esta conta",
+    "it has something that isn't a normal trading card": "tem algo que não é uma carta colecionável normal",
+    "it isn't the swap nocat.lol paired": "não é a troca que o nocat.lol pareou",
+    "no fresh price yet for {0}": "ainda não há preço recente para {0}",
+    "it's worth less than this account gives": "vale menos do que esta conta dá",
+    "card swaps: couldn't read its own trade link - not listed this time": "troca de cartas: não deu para ler o próprio link de troca - não listada desta vez",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "A troca de cartas está ligada para {0}: troca cartas sobrando com outros usuários do nocat.farm, dentro dos limites",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "A troca de cartas está desligada para {0}: nada é trocado, e o nocat.lol a esquece",
+    "held by scam watch - no swaps until 'scamwatch ok'": "retido pelo alerta de golpes - sem trocas até 'scamwatch ok'",
+    "waiting for its day": "esperando o dia dela",
+    "{0} swaps today - the most for a day": "{0} trocas hoje - o máximo por dia",
+    "next swap from about {0}": "próxima troca a partir de cerca de {0}",
+    "no swap to send right now": "nenhuma troca para enviar agora",
+    "card swap with {0} done · {1} card(s) each way": "troca de cartas com {0} feita · {1} carta(s) para cada lado",
+    "card swap offer to {0} taken back · not accepted in 2 days": "oferta de troca para {0} retirada · não aceita em 2 dias",
+    "card swap with {0} didn't go through": "a troca de cartas com {0} não foi concluída",
+    "card swap with {0} skipped · {1}": "troca de cartas com {0} pulada · {1}",
+    "Steam didn't say whether the trade would be held": "a Steam não disse se a troca ficaria retida",
+    "the trade would be held": "a troca ficaria retida",
+    "couldn't read its cards": "não deu para ler as cartas",
+    "Steam didn't say what's on its offers": "a Steam não disse o que está nas ofertas",
+    "Steam hasn't said its wallet currency yet": "a Steam ainda não informou a moeda da carteira",
+    "waiting for prices": "esperando preços",
+    "nothing in it fits any more": "nada mais serve",
+    "Steam refused the offer: {0}": "a Steam recusou a oferta: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "troca de cartas · oferta enviada para {0} · {1} carta(s) para cada lado",
+    "card swap · you give {0} · you get {1}": "troca de cartas · você dá {0} · você recebe {1}",
+    "card swap · confirm the offer to {0} on your phone": "troca de cartas · confirme a oferta para {0} no seu celular",
+    "sent a swap to {0}": "troca enviada para {0}",
+    "a card swap nocat.lol paired": "uma troca de cartas pareada pelo nocat.lol",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "uma troca de cartas pareada pelo nocat.lol · conferida e depois aceita ou recusada",
+    "offer {0} is from an account that once sent a bad swap · left for you": "a oferta {0} é de uma conta que já mandou uma troca ruim · deixada para você",
+    "from an account that once sent a bad swap": "de uma conta que já mandou uma troca ruim",
+    "not now": "agora não",
+    "offer {0} isn't a good swap now ({1}) - declining": "a oferta {0} não é uma boa troca agora ({1}) - recusando",
+    "card swap · you'd give {0} · you'd get {1}": "troca de cartas · você daria {0} · você receberia {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "a oferta de troca {0} não é o que foi pareado ({1}) · deixada para você",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "a oferta {0} diz ser uma troca que o nocat.lol não pareou · deixada para você",
+    "Swaps with other users": "Trocas com outros usuários",
+    "Turn on card swaps?": "Ligar a troca de cartas?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Isto é o que ela poderia trocar agora e os limites que respeita. Nada é trocado até você apertar Ligar.",
+    "spare cards to swap": "cartas sobrando para trocar",
+    "in {0} games": "em {0} jogos",
+    "swaps a day, at most": "trocas por dia, no máximo",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Só cartas colecionáveis normais - nunca brilhantes, fundos ou emoticons",
+    "One for one, in the same game, and only when it helps your sets": "Uma por uma, no mesmo jogo, e só quando ajuda os seus conjuntos",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Nunca uma carta que seus conjuntos precisam, a última cópia de uma ou algo das suas listas de nunca mexer",
+    "Each swap worth at most {0} less than what it gives": "Cada troca vale no máximo {0} a menos do que dá",
+    "Never when Steam would hold the trade": "Nunca quando a Steam reteria a troca",
+    "Also when Steam would hold the trade": "Também quando a Steam reteria a troca",
+    "Its offers are confirmed by its authenticator here": "As ofertas são confirmadas pelo autenticador daqui",
+    "Its offers wait for you to confirm them on your phone": "As ofertas esperam você confirmar no celular",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "A moeda da carteira ainda não é conhecida - nada é trocado até ser",
+    "1 card still needs a price first.": "1 carta ainda precisa de um preço antes.",
+    "{0} cards still need a price first.": "{0} cartas ainda precisam de um preço antes.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "a oferta de troca para {0} não era o que o nocat.lol disse · retirada",
+    "card swap · confirm the offer to {0} from Steam's email": "troca de cartas · confirme a oferta para {0} pelo e-mail da Steam"
   },
   "settings": {
     "SteamOpenButton": {
@@ -4581,6 +4643,22 @@
     "CraftFoilBadges": {
       "label": "Criar também emblemas brilhantes",
       "tip": "Transforma também os conjuntos completos de cartas brilhantes em emblemas brilhantes. Desligado, cria só emblemas normais e deixa as cartas brilhantes em paz. Se a Steam recusar um emblema brilhante, só os brilhantes esperam - os normais continuam."
+    },
+    "CardSwaps": {
+      "label": "Trocar cartas com outros usuários do nocat.farm",
+      "tip": "Troca cartas colecionáveis normais sobrando, uma por uma, com outros usuários do nocat.farm, no mesmo jogo, para os dois lados completarem conjuntos mais cedo. O nocat.lol pareia as contas; esta conta confere cada troca de novo antes. Nunca dá uma carta que seus conjuntos precisam nem a última cópia de uma, nunca cartas brilhantes, fundos ou emoticons, e nada das suas listas de \"nunca mexer\". Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois. Ao ligar, primeiro mostra o que faria e pede confirmação."
+    },
+    "CardSwapMaxLoss": {
+      "label": "O máximo que uma troca pode perder",
+      "tip": "Quanto uma troca pode valer a menos do que dá, pelo preço mais barato do mercado, na moeda da carteira Steam desta conta. Por exemplo 0.01: cartas de 0.12 por cartas de 0.11 tudo bem; por 0.10, não. 0: uma troca nunca vale menos. Uma carta sem preço do último dia nunca é trocada."
+    },
+    "CardSwapsPerDay": {
+      "label": "Trocas por dia, no máximo",
+      "tip": "O máximo de trocas que ela envia ou aceita em um dia - por exemplo 5. Numa conta em modo humano, elas também se espalham pelo próprio dia dela, de 45 minutos a 2 horas de intervalo."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Pular trocas que a Steam reteria",
+      "tip": "Nunca troca com uma conta quando a Steam reteria a troca por dias - por exemplo, quando um lado tem o app Steam Guard há pouco tempo. Ligado é o mais seguro."
     }
   }
 }

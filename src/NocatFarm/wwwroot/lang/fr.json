@@ -3029,7 +3029,69 @@
     "done grinding · back to the usual day": "grind terminé · retour à la journée habituelle",
     "{0} is on the market · {1}": "{0} est sur le marché · {1}",
     "{0} is on the market": "{0} est sur le marché",
-    "couldn't look at the listings waiting on a confirmation: {0}": "impossible de regarder les annonces en attente de confirmation : {0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "impossible de regarder les annonces en attente de confirmation : {0}",
+    "its cards have changed since": "ses cartes ont changé depuis",
+    "no fresh price for some of its cards": "pas de prix récent pour certaines de ses cartes",
+    "it would set back a set now": "cela ferait maintenant reculer un set",
+    "it would lose more than your limit": "il perdrait plus que ta limite",
+    "not a swap nocat.lol paired with this account": "pas un échange que nocat.lol a associé à ce compte",
+    "it has something that isn't a normal trading card": "il contient quelque chose qui n'est pas une carte à échanger normale",
+    "it isn't the swap nocat.lol paired": "ce n'est pas l'échange que nocat.lol a associé",
+    "no fresh price yet for {0}": "pas encore de prix récent pour {0}",
+    "it's worth less than this account gives": "il vaut moins que ce que ce compte donne",
+    "card swaps: couldn't read its own trade link - not listed this time": "échange de cartes : impossible de lire son propre lien d'échange - pas inscrit cette fois",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "L'échange de cartes est activé pour {0} : il échange les cartes en trop avec d'autres utilisateurs de nocat.farm, dans ses limites",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "L'échange de cartes est désactivé pour {0} : rien n'est échangé, et nocat.lol l'oublie",
+    "held by scam watch - no swaps until 'scamwatch ok'": "bloqué par la surveillance des arnaques - pas d'échange avant 'scamwatch ok'",
+    "waiting for its day": "attend sa journée",
+    "{0} swaps today - the most for a day": "{0} échanges aujourd'hui - le maximum pour une journée",
+    "next swap from about {0}": "prochain échange à partir d'environ {0}",
+    "no swap to send right now": "aucun échange à envoyer pour l'instant",
+    "card swap with {0} done · {1} card(s) each way": "échange de cartes avec {0} fait · {1} carte(s) dans chaque sens",
+    "card swap offer to {0} taken back · not accepted in 2 days": "offre d'échange à {0} retirée · pas acceptée en 2 jours",
+    "card swap with {0} didn't go through": "l'échange de cartes avec {0} n'a pas abouti",
+    "card swap with {0} skipped · {1}": "échange de cartes avec {0} ignoré · {1}",
+    "Steam didn't say whether the trade would be held": "Steam n'a pas dit si l'échange serait suspendu",
+    "the trade would be held": "l'échange serait suspendu",
+    "couldn't read its cards": "impossible de lire ses cartes",
+    "Steam didn't say what's on its offers": "Steam n'a pas dit ce qu'il y a dans ses offres",
+    "Steam hasn't said its wallet currency yet": "Steam n'a pas encore donné la devise de son portefeuille",
+    "waiting for prices": "attend les prix",
+    "nothing in it fits any more": "plus rien ne convient",
+    "Steam refused the offer: {0}": "Steam a refusé l'offre : {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "échange de cartes · offre envoyée à {0} · {1} carte(s) dans chaque sens",
+    "card swap · you give {0} · you get {1}": "échange de cartes · tu donnes {0} · tu reçois {1}",
+    "card swap · confirm the offer to {0} on your phone": "échange de cartes · confirme l'offre à {0} sur ton téléphone",
+    "sent a swap to {0}": "échange envoyé à {0}",
+    "a card swap nocat.lol paired": "un échange de cartes associé par nocat.lol",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "un échange de cartes associé par nocat.lol · vérifié, puis accepté ou refusé",
+    "offer {0} is from an account that once sent a bad swap · left for you": "l'offre {0} vient d'un compte qui a déjà envoyé un mauvais échange · laissée pour toi",
+    "from an account that once sent a bad swap": "d'un compte qui a déjà envoyé un mauvais échange",
+    "not now": "pas maintenant",
+    "offer {0} isn't a good swap now ({1}) - declining": "l'offre {0} n'est plus un bon échange ({1}) - refusée",
+    "card swap · you'd give {0} · you'd get {1}": "échange de cartes · tu donnerais {0} · tu recevrais {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "l'offre d'échange {0} n'est pas ce qui a été associé ({1}) · laissée pour toi",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "l'offre {0} se dit un échange que nocat.lol n'a pas associé · laissée pour toi",
+    "Swaps with other users": "Échanges avec d'autres utilisateurs",
+    "Turn on card swaps?": "Activer l'échange de cartes ?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Voici ce qu'il pourrait échanger maintenant, et les limites qu'il respecte. Rien n'est échangé avant que tu appuies sur Activer.",
+    "spare cards to swap": "cartes en trop à échanger",
+    "in {0} games": "dans {0} jeux",
+    "swaps a day, at most": "échanges par jour, au maximum",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Uniquement des cartes à échanger normales - jamais de cartes brillantes, d'arrière-plans ou d'émoticônes",
+    "One for one, in the same game, and only when it helps your sets": "Un pour un, dans le même jeu, et seulement si ça aide tes sets",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Jamais une carte dont tes sets ont besoin, le dernier exemplaire d'une carte, ni rien de tes listes « ne jamais toucher »",
+    "Each swap worth at most {0} less than what it gives": "Chaque échange vaut au plus {0} de moins que ce qu'il donne",
+    "Never when Steam would hold the trade": "Jamais quand Steam suspendrait l'échange",
+    "Also when Steam would hold the trade": "Même quand Steam suspendrait l'échange",
+    "Its offers are confirmed by its authenticator here": "Ses offres sont confirmées par son authentificateur ici",
+    "Its offers wait for you to confirm them on your phone": "Ses offres attendent que tu les confirmes sur ton téléphone",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Tant qu'il est activé, nocat.lol garde le SteamID et le lien d'échange de ce compte - le désactiver les supprime",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "La devise de son portefeuille n'est pas encore connue - rien n'est échangé avant",
+    "1 card still needs a price first.": "1 carte a encore besoin d'un prix.",
+    "{0} cards still need a price first.": "{0} cartes ont encore besoin d'un prix.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "l'offre d'échange à {0} n'était pas ce que nocat.lol avait dit · retirée",
+    "card swap · confirm the offer to {0} from Steam's email": "échange de cartes · confirme l'offre à {0} depuis l'e-mail de Steam"
   },
   "settings": {
     "SteamOpenButton": {
@@ -4581,6 +4643,22 @@
     "CraftFoilBadges": {
       "label": "Fabriquer aussi les badges brillants",
       "tip": "Transforme aussi les séries de cartes brillantes complètes en badges brillants. Désactivé, il ne fabrique que les badges normaux et laisse les cartes brillantes tranquilles. Si Steam refuse un badge brillant, seuls les brillants attendent - les badges normaux continuent."
+    },
+    "CardSwaps": {
+      "label": "Échanger des cartes avec d'autres utilisateurs de nocat.farm",
+      "tip": "Échange les cartes à échanger normales en trop, une pour une, avec d'autres utilisateurs de nocat.farm, dans le même jeu, pour que chacun finisse ses sets plus vite. nocat.lol associe les comptes ; ce compte revérifie chaque échange avant. Il ne donne jamais une carte dont tes sets ont besoin ni le dernier exemplaire d'une carte, jamais de cartes brillantes, d'arrière-plans ou d'émoticônes, et rien de tes listes « ne jamais toucher ». Tant qu'il est activé, nocat.lol garde le SteamID et le lien d'échange de ce compte - le désactiver les supprime. À l'activation, il montre d'abord ce qu'il ferait et demande confirmation."
+    },
+    "CardSwapMaxLoss": {
+      "label": "Le maximum qu'un échange peut perdre",
+      "tip": "De combien un échange peut valoir moins que ce qu'il donne, selon le prix le plus bas du marché, dans la devise du portefeuille Steam de ce compte. Par exemple 0.01 : des cartes à 0.12 contre des cartes à 0.11, c'est bon ; contre 0.10, non. 0 : un échange ne vaut jamais moins. Une carte sans prix de la dernière journée n'est jamais échangée."
+    },
+    "CardSwapsPerDay": {
+      "label": "Échanges par jour, au maximum",
+      "tip": "Le nombre maximum d'échanges qu'il envoie ou accepte en une journée - par exemple 5. Sur un compte en mode humain, ils sont aussi répartis sur sa propre journée, espacés de 45 minutes à 2 heures."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Ignorer les échanges que Steam suspendrait",
+      "tip": "N'échange jamais avec un compte si Steam suspendrait l'échange pendant des jours - par exemple quand un côté n'a pas l'application Steam Guard depuis longtemps. Activé est le plus sûr."
     }
   }
 }

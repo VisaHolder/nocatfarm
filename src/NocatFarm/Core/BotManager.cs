@@ -152,6 +152,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Upkeep(bot));
 		bot.AddModule(new Heartbeat(bot));
+		bot.AddModule(new CardSwaps(bot));   // 1.8.2: card swaps with other nocat.farm users
 	}
 
 	/// <summary>

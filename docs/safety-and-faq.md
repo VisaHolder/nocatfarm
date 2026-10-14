@@ -39,6 +39,12 @@ opened, and items the market history says sold. Each is counted only once Steam 
 per hour (60 items into gems, 10 badges, 30 packs, 60 sold). There's nothing from before 1.8.1 for these: the history
 only started keeping them then. Turn the setting off and none of these numbers is sent.
 
+Card swaps with other nocat.farm users (1.8.2, *Swap cards with other nocat.farm users*, off on every account) talk to
+nocat.lol only for accounts you turned them on for: the same random install ID, and for each of those accounts its
+SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Never an account name,
+password or login. Turning swaps off on an account deletes its SteamID and trade link from nocat.lol within a minute or
+two; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
+
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
 the internet, ten wrong passwords in an hour from any addresses pause signing in from outside for an hour, and every
