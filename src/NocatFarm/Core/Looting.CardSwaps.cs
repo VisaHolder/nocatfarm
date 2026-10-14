@@ -32,6 +32,11 @@ public static partial class Looting {
 			return new SwapSent(false, 0, false, "a swap needs the same number of cards both ways");
 		}
 
+		// The token goes into the offer as it is: only ever Steam's own shape.
+		if (!CardExchange.TokenOk(token)) {
+			return new SwapSent(false, 0, false, "the partner's trade link isn't valid");
+		}
+
 		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
 			return new SwapSent(false, 0, false, held);
 		}

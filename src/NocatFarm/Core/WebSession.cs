@@ -557,5 +557,6 @@ public sealed partial class WebSession : IDisposable {
 		// Not _refreshLock: a refresh still running when the account is removed releases it afterwards, and a disposed
 		// semaphore throws there. It holds nothing that needs freeing.
 		_http.Dispose();
+		_noRedirect?.Dispose();
 	}
 }

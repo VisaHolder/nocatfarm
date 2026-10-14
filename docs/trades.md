@@ -84,16 +84,25 @@ How it goes:
 
 1. About twice a day your copy tells nocat.lol which spare cards each opted-in account has, for games where it has a
    spare copy, with their market prices. With it go the account's SteamID and trade link, so a partner can send it an
-   offer. Turning it off deletes all of it from nocat.lol within a minute or two.
+   offer. Turning it off deletes all of it from nocat.lol within a minute or two, even if the other accounts' cards
+   can't be read just then; its old matches go from nocat.lol within the hour.
+   The first time (and every few weeks), each account also signs in to nocat.lol through Steam, the way you'd sign in to
+   a trading site, so nocat.lol knows it's really yours. nocat.lol never pairs an account nobody proved like that: no
+   one can list your SteamID, block you, or collect trade links with made-up accounts. Steam's answer only says "this
+   is SteamID X"; it can't sign in or trade, and it's made out to your copy alone.
 2. Once an hour nocat.lol pairs accounts the way ArchiSteamFarm does: a card only goes from a bigger pile to a smaller
    one, on both sides, so neither side's sets lose anything. Several games go in one offer, and of the ways to pair two
    accounts it picks the one that finishes the most badge levels and sets.
 3. One side sends the offer, with a note like `nocat.farm card swap #a1b2c3d4e5f6`. Before sending, it checks
-   everything again against its own cards and prices.
+   everything again against its own cards and prices. Then, before confirming, it checks the offer Steam actually made
+   the same way the other side will: priced by Steam's own names for the cards, never by what the partner told
+   nocat.lol. Anything off and the offer is taken back, never confirmed.
 4. The other side checks it once more before accepting: it has to be exactly what nocat.lol paired (or part of it),
    from the account it paired, and give nothing else. An offer that isn't is never accepted, is left for you, and that
-   account is never swapped with again (nocat.lol is told too). An offer that's fine but no longer good for this
-   account (its cards changed, or the prices did) is declined.
+   account is never swapped with again (nocat.lol is told too; after 3 different people report the same account,
+   nocat.lol never pairs it with anyone). An offer that's fine but no longer good for this account (its cards changed,
+   or the prices did), for a match it already swapped or one paired over 2 days ago, or asking for a card already on
+   another offer or swap, is declined.
 
 What it never does:
 
@@ -108,14 +117,16 @@ What it never does:
 - Never with an account whose trades Steam would hold (*Skip swaps Steam would hold*, on).
 - Never more than *Swaps a day, at most* (5) - sent and accepted together. On a human-mode account only in its own
   day, 45 minutes to 2 hours apart.
-- Nothing while scam watch holds the account's trades.
+- Nothing while scam watch holds the account's trades, and an offer already out isn't confirmed then either (nor
+  outside a human-mode account's day) - it waits, or is taken back.
 
 An account whose authenticator is in nocat.farm confirms its own offers. Without one, the offer waits for you in the
-Steam app on your phone, and the log says so. An offer nobody accepted in 2 days is taken back.
+Steam app on your phone, and the log says so. An offer nobody accepted in 2 days is taken back, and so is every swap
+offer still out when you turn swaps off.
 
 Cards promised to a swap stay for it: spare items and `sell` never sell them or turn them into gems while the swap is
-open. With [buying cards](cards-and-idling.md#buying-cards) on, a missing card a paired swap will bring is waited for
-instead of bought. Each has its own daily limit: swaps a day, spare items a day, money spent a day - one never uses up
+open. With [buying cards](cards-and-idling.md#buying-cards) on, a missing card already on its way in a swap offer
+this account has checked is waited for instead of bought; a swap that's only paired doesn't hold buying back. Each has its own daily limit: swaps a day, spare items a day, money spent a day - one never uses up
 another's.
 
 `swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks nocat.lol for

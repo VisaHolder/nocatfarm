@@ -12,7 +12,10 @@ namespace NocatFarm.Modules;
 /// Never more than "Swaps a day, at most"; on a human-mode account only in its own day and spaced out (45 minutes to
 /// 2 hours between swaps); never while scam watch holds its trades; never with an account whose trades would be held,
 /// when that's switched on; never with an account that once sent a bad offer. The offer is confirmed by itself when the
-/// account's authenticator is in nocat.farm - otherwise it waits for your phone, and the log says so.
+/// account's authenticator is in nocat.farm - otherwise it waits for your phone, and the log says so - and only once the
+/// offer Steam made has passed the receiving side's own check (<see cref="CardExchange.Verify"/>), by Steam's own names
+/// and this account's own prices. Outside its day or while scam watch holds it, an offer out is only ever taken back,
+/// never confirmed. Turned off, its swap offers still out are taken back.
 /// </remarks>
 public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 	private Said _status = new("");
@@ -36,6 +39,9 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 	internal Func<ulong, CancellationToken, Task<string>>? NameOf { get; set; }
 	internal Func<bool>? DayOpen { get; set; }
 	internal Func<ulong, CancellationToken, Task<bool>>? ConfirmOffer { get; set; }
+	internal Func<bool>? HeldByScamWatch { get; set; }
+
+	private bool ScamHeld => HeldByScamWatch?.Invoke() ?? ScamWatch.HoldsTrades(Bot);
 
 	/// <summary>Offers it has already asked you to confirm on your phone - once each.</summary>
 	private readonly HashSet<ulong> _askedPhone = [];
@@ -55,7 +61,8 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			if (CardExchange.On(Bot.Cfg, Bot.Name) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused
+			// On - or turned off with swap offers still out, to take them back.
+			if ((CardExchange.On(Bot.Cfg, Bot.Name) || (CardExchange.Ledger.Load(Bot.Name).InState("sent").Count > 0)) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
 				try {
 					await LookAsync(DateTime.UtcNow, ct).ConfigureAwait(false);
@@ -76,13 +83,23 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 	internal async Task<Said> LookAsync(DateTime now, CancellationToken ct) {
 		CardExchange.Ledger ledger = CardExchange.Ledger.Load(Bot.Name);
 
-		await FollowUpAsync(ledger, now, ct).ConfigureAwait(false);
+		// Turned off: its own swap offers still out are taken back, and nothing else happens.
+		if (!CardExchange.On(Bot.Cfg, Bot.Name)) {
+			await WithdrawAsync(ledger, now, ct).ConfigureAwait(false);
 
-		if (ScamWatch.HoldsTrades(Bot)) {
+			return _status = new Said("");
+		}
+
+		bool held = ScamHeld, open = DayOpen?.Invoke() ?? Gate.Open;
+
+		// Held by scam watch, or outside its day: the offers out are followed up - and taken back if need be - never confirmed.
+		await FollowUpAsync(ledger, now, !held && open, ct).ConfigureAwait(false);
+
+		if (held) {
 			return _status = new Said("held by scam watch - no swaps until 'scamwatch ok'");
 		}
 
-		if (!(DayOpen?.Invoke() ?? Gate.Open)) {
+		if (!open) {
 			return _status = new Said("waiting for its day");
 		}
 
@@ -109,8 +126,11 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		return _status = await SendAsync(next, ledger, now, ct).ConfigureAwait(false);
 	}
 
-	/// <summary>The swap offers it sent: noted once they went through, taken back after 2 days, let go when they're gone.</summary>
-	private async Task FollowUpAsync(CardExchange.Ledger ledger, DateTime now, CancellationToken ct) {
+	/// <summary>
+	/// The swap offers it sent: noted once they went through, taken back after 2 days, let go when they're gone; one still
+	/// waiting on its confirmation is checked and confirmed - only when <paramref name="mayConfirm"/>.
+	/// </summary>
+	private async Task FollowUpAsync(CardExchange.Ledger ledger, DateTime now, bool mayConfirm, CancellationToken ct) {
 		foreach ((string id, CardExchange.Record r) in ledger.InState("sent")) {
 			if ((r.Offer == 0) || (_checked.TryGetValue(r.Offer, out DateTime last) && (now - last < TimeSpan.FromMinutes(30)))) {
 				continue;
@@ -144,7 +164,7 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 
 					break;
 				case TradeOffers.NeedsConfirmation when offer.Ours && (CardExchange.Find(Bot.SteamId, id) is { } match):
-					await ConfirmAsync(match, offer, who, ledger, now, ct).ConfigureAwait(false);
+					await ConfirmAsync(match, offer, who, ledger, now, mayConfirm, offer.ConfirmationMethod == 1, ct).ConfigureAwait(false);
 
 					break;
 				case TradeOffers.Active or TradeOffers.NeedsConfirmation or TradeOffers.InEscrow:
@@ -196,9 +216,9 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 			return Wait(new Said("Steam didn't say what's on its offers"));
 		}
 
-		// Its own cards in this match are what it sends now; its other matches' stay promised to them.
-		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. CardExchange.Reserved(Bot.Name, Bot.SteamId, now)];
-		busy.ExceptWith(match.Pairs.Select(static p => p.GiveAsset));
+		// Its own cards in this match are what it sends now; its other matches' stay promised to them, and a copy on any
+		// offer is never sent again.
+		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. CardExchange.Reserved(Bot.Name, Bot.SteamId, now, match.Id)];
 		List<CardExchange.OwnCard> cards = CardExchange.ReadCards(inventory);
 		CardExchange.Rules rules = CardExchange.RulesOf(Bot, now);
 		int currency = Bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) Bot.WalletCurrency;
@@ -244,15 +264,13 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		Log.Trade(new Said("card swap · offer sent to {0} · {1} card(s) each way", who, chosen.Count), Bot.Name);
 		Log.Info(new Said("card swap · you give {0} · you get {1}", give, get), Bot.Name);
 
-		if (sent.ByEmail) {
-			Log.Attention(new Said("card swap · confirm the offer to {0} from Steam's email", who), Bot.Name, Topic.Trades);
-		} else if (sent.WaitsForPhone) {
-			// Nobody sees it until it's confirmed - and it's only confirmed once the offer Steam made is checked to be the match.
+		if (sent.ByEmail || sent.WaitsForPhone) {
+			// Nobody sees it until it's confirmed - and it's only confirmed once the offer Steam made has passed the check.
 			_checked[sent.OfferId] = now;
 			(bool answered, TradeOffers.Offer? made) = await (ReadOffer?.Invoke(sent.OfferId, ct) ?? TradeOffers.OneAsync(Bot, sent.OfferId, ct)).ConfigureAwait(false);
 
 			if (answered && (made is { State: TradeOffers.NeedsConfirmation })) {
-				await ConfirmAsync(match, made, who, ledger, now, ct).ConfigureAwait(false);
+				await ConfirmAsync(match, made, who, ledger, now, true, sent.ByEmail, ct).ConfigureAwait(false);
 			}
 		}
 
@@ -260,30 +278,118 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// An offer of ours waiting on its mobile confirmation: confirmed only when it's exactly the match - our cards out, the
-	/// partner's normal cards in, one for one. Anything else is taken back, and that partner never swapped with again.
-	/// Confirmed by the authenticator when it's here; otherwise you're asked once, on your phone.
+	/// An offer of ours waiting on its confirmation: checked the way the receiving side checks one (<see cref="CardExchange.Verify"/>)
+	/// on the offer Steam made - the match and nothing else, by Steam's own names and this account's own prices, its sets
+	/// and keep counts, nothing promised elsewhere. Something else than the match is taken back and that partner never
+	/// swapped with again; one no longer good for this account is taken back; one Steam didn't fully describe (or with no
+	/// fresh price yet) is looked at again in half an hour. Then, only when <paramref name="mayConfirm"/>: confirmed by the
+	/// authenticator when it's here, otherwise you're asked once - on your phone, or from Steam's email.
 	/// </summary>
-	private async Task ConfirmAsync(CardExchange.Match match, TradeOffers.Offer offer, string who, CardExchange.Ledger ledger, DateTime now, CancellationToken ct) {
-		if (!CardExchange.AsPaired(offer, match)) {
-			await (Cancel?.Invoke(offer.Id, ct) ?? Looting.CancelSwapAsync(Bot, offer.Id, ct)).ConfigureAwait(false);
-			ledger.SetState(match.Id, "bad", match.You, now);
-			ledger.Change(l => {
-				if (!l.Blocked.Contains(match.You)) {
-					l.Blocked.Add(match.You);
-				}
-			});
-			Log.Attention(new Said("card swap offer to {0} wasn't what nocat.lol said · taken back", who), Bot.Name, Topic.Trades);
+	private async Task ConfirmAsync(CardExchange.Match match, TradeOffers.Offer offer, string who, CardExchange.Ledger ledger, DateTime now, bool mayConfirm, bool byEmail,
+		CancellationToken ct) {
+		(CardExchange.Verdict verdict, Said why) = await CheckMadeAsync(match, offer, now, ct).ConfigureAwait(false);
 
+		switch (verdict) {
+			case CardExchange.Verdict.Accept:
+				break;
+			case CardExchange.Verdict.Wait:
+				return;
+			case CardExchange.Verdict.Bad:
+				await (Cancel?.Invoke(offer.Id, ct) ?? Looting.CancelSwapAsync(Bot, offer.Id, ct)).ConfigureAwait(false);
+				ledger.SetState(match.Id, "bad", match.You, now);
+				ledger.Change(l => {
+					if (!l.Blocked.Contains(match.You)) {
+						l.Blocked.Add(match.You);
+					}
+				});
+				Log.Attention(new Said("card swap offer to {0} wasn't what nocat.lol said · taken back", who), Bot.Name, Topic.Trades);
+
+				return;
+			default:
+				if (await (Cancel?.Invoke(offer.Id, ct) ?? Looting.CancelSwapAsync(Bot, offer.Id, ct)).ConfigureAwait(false)) {
+					ledger.SetState(match.Id, "dropped", match.You, now);
+					Log.Info(new Said("card swap offer to {0} taken back · {1}", who, why), Bot.Name);
+				}
+
+				return;
+		}
+
+		// What comes in, by Steam's own names: what buying cards waits for instead of buying.
+		ledger.SetGets(match.Id, offer.Receiving.Select(static i => i.Hash));
+
+		if (!mayConfirm) {
 			return;
 		}
 
-		if (await (ConfirmOffer?.Invoke(offer.Id, ct) ?? Bot.ConfirmMobileAsync(offer.Id, true, ct)).ConfigureAwait(false)) {
+		if (!byEmail && await (ConfirmOffer?.Invoke(offer.Id, ct) ?? Bot.ConfirmMobileAsync(offer.Id, true, ct)).ConfigureAwait(false)) {
 			return;
 		}
 
 		if (_askedPhone.Add(offer.Id)) {
-			Log.Attention(new Said("card swap · confirm the offer to {0} on your phone", who), Bot.Name, Topic.Trades);
+			Log.Attention(byEmail ? new Said("card swap · confirm the offer to {0} from Steam's email", who) : new Said("card swap · confirm the offer to {0} on your phone", who),
+				Bot.Name, Topic.Trades);
+		}
+	}
+
+	/// <summary>The receiving side's own check, from this side, on the offer Steam made: its cards and offers read now.</summary>
+	private async Task<(CardExchange.Verdict Verdict, Said Why)> CheckMadeAsync(CardExchange.Match match, TradeOffers.Offer offer, DateTime now, CancellationToken ct) {
+		int currency = Bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) Bot.WalletCurrency;
+
+		if ((currency == 0) || (await (ReadInventory?.Invoke(ct) ?? Inventory.ReadAsync(Bot, 753, "6", ct)).ConfigureAwait(false) is not { Complete: true } inventory)) {
+			return (CardExchange.Verdict.Wait, new Said("couldn't read its cards"));
+		}
+
+		if (await (ReadOffers?.Invoke(ct) ?? TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct)).ConfigureAwait(false) is not { } live) {
+			return (CardExchange.Verdict.Wait, new Said("Steam didn't say what's on its offers"));
+		}
+
+		// Its cards now, less what's on its other offers and promised to its other matches.
+		HashSet<ulong> leaving = [.. TradeOffers.Committed(live.Where(o => o.Id != offer.Id)), .. CardExchange.Reserved(Bot.Name, Bot.SteamId, now, match.Id)];
+		Dictionary<SwapRules.Card, int> held = CardExchange.Held(CardExchange.ReadCards(inventory), leaving);
+		CardExchange.Rules rules = CardExchange.RulesOf(Bot, now);
+		long maxLoss = CardExchange.MaxLossCents(Bot.Cfg);
+		(CardExchange.Verdict verdict, Said why, _, _) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, now), maxLoss, rules, busy: leaving);
+
+		// No fresh price: the cards in it are asked about in the wallet's own currency, then checked again.
+		if ((verdict == CardExchange.Verdict.Wait) && offer.Giving.Concat(offer.Receiving).All(static i => i.Described && (i.Hash.Length > 0))) {
+			foreach (TradeOffers.Item item in offer.Giving.Concat(offer.Receiving).Where(i => CardExchange.WalletCents(i.Hash, currency, now) == null).DistinctBy(static i => i.Hash).Take(6)) {
+				await (PriceCard?.Invoke(item.Hash, currency, ct) ?? MarketQuotes.FetchAsync(item.Hash, currency, ct)).ConfigureAwait(false);
+			}
+
+			(verdict, why, _, _) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, DateTime.UtcNow), maxLoss, rules, busy: leaving);
+		}
+
+		return (verdict, why);
+	}
+
+	/// <summary>Swaps turned off: its own swap offers still out are taken back; the rest of what was out is let go.</summary>
+	private async Task WithdrawAsync(CardExchange.Ledger ledger, DateTime now, CancellationToken ct) {
+		foreach ((string id, CardExchange.Record r) in ledger.InState("sent")) {
+			(bool answered, TradeOffers.Offer? offer) = r.Offer == 0 ? (true, null)
+				: await (ReadOffer?.Invoke(r.Offer, ct) ?? TradeOffers.OneAsync(Bot, r.Offer, ct)).ConfigureAwait(false);
+
+			if (!answered) {
+				continue;
+			}
+
+			switch (offer?.State) {
+				case 3:   // accepted
+					ledger.SetState(id, "done", r.Partner, now);
+
+					break;
+				case TradeOffers.Active or TradeOffers.NeedsConfirmation when offer.Ours:
+					if (await (Cancel?.Invoke(r.Offer, ct) ?? Looting.CancelSwapAsync(Bot, r.Offer, ct)).ConfigureAwait(false)) {
+						ledger.SetState(id, "dropped", r.Partner, now);
+						Log.Info(new Said("card swap offer to {0} taken back · swaps are off", await Who(r.Partner, ct).ConfigureAwait(false)), Bot.Name);
+					}
+
+					break;
+				default:
+					// Gone, or one it accepted that waits for your phone: yours now, not a swap it follows any more.
+					ledger.SetState(id, "dropped", r.Partner, now);
+
+					break;
+			}
 		}
 	}
 }

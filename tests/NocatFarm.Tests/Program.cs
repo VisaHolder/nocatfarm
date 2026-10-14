@@ -28011,6 +28011,9 @@ await SwitchesTogetherChecks.RunAsync(Check);
 // ── 1.8.2: buying is safe when Steam is unclear - the whole purchase against a pretend Steam ──
 await BuySafetyChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: card swaps can't be cheated - each attack played against the real checks; fakes only ──
+await CardSwapCheatChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -29472,6 +29475,7 @@ static class CardSwapChecks {
 		Type rt = typeof(NocatFarm.Modules.Trading);
 		rt.GetProperty("ReadCards", SwInst)!.SetValue(rTrades, (Func<CancellationToken, Task<NocatFarm.Core.InventoryContents?>>) (_ => Task.FromResult<NocatFarm.Core.InventoryContents?>(sendInv)));
 		rt.GetProperty("PriceCard", SwInst)!.SetValue(rTrades, (Func<string, int, CancellationToken, Task>) ((_, _, _) => Task.CompletedTask));
+		rt.GetProperty("ReadOffers", SwInst)!.SetValue(rTrades, (Func<CancellationToken, Task<List<NocatFarm.Core.TradeOffers.Offer>?>>) (_ => Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([])));
 		MethodInfo judge = rt.GetMethod("ExchangeJudgeNowAsync", SwInst)!;
 		async Task<bool?> Judge(NocatFarm.Core.TradeOffers.Offer o) {
 			object task = judge.Invoke(rTrades, [o, CancellationToken.None])!;
@@ -29496,7 +29500,7 @@ static class CardSwapChecks {
 			(badVerdict == null) && heldSwaps.Contains(72) && rLedger.IsBlocked(YouId) && rLedger.PendingReports().SequenceEqual([$"abcabcabcabc|{YouId}"])
 			&& Log.Since(mark).Any(e => e.Said.ToEnglish().StartsWith("card swap offer ", StringComparison.Ordinal) && e.Said.ToEnglish().Contains("isn't what was paired", StringComparison.Ordinal)));
 		Check("swap receive: after that, even a good offer from that account is left for you", await Judge(ROffer(73, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == null && heldSwaps.Contains(73));
-		rLedger.Change(l => { l.Blocked.Clear(); l.Reports.Clear(); });
+		rLedger.Change(l => { l.Blocked.Clear(); l.Reports.Clear(); l.Records.Clear(); });
 		NocatFarm.Core.SparePrices.Keep(new NocatFarm.Core.SparePrices.Game(440, 1, DateTime.UtcNow.Ticks, new() {
 			["440-Card10"] = new(9, NocatFarm.Core.SpareKind.Card), ["440-Card40"] = new(6, NocatFarm.Core.SpareKind.Card) }));
 		Check("swap receive: worth 3 cents less than it gives, limit 1 cent → declined", await Judge(ROffer(74, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == false);
@@ -29662,24 +29666,22 @@ static class SwitchesTogetherChecks {
 			var match = new NocatFarm.Core.CardExchange.Match("c0c0c0c0c0c0", DateTime.UtcNow, MeId, YouId, true, "Tok12345", [
 				new(100, 1, "100-Card 1", 11, 3, 5, "100-Card 5", 99, 9)]);
 			NocatFarm.Core.CardExchange.Remember([match]);
-			var priced = new Dictionary<string, int> { ["100-Card 1"] = 3 };
-			long? Cost(string hash = "100-Card 5", uint game = 100, DateTime? at = null) =>
-				NocatFarm.Core.CardExchange.CostOf(sc, game, hash, at ?? DateTime.UtcNow, h => priced.TryGetValue(h, out int c) ? c : null);
+			long? Cost(string hash = "100-Card 5", uint game = 100, DateTime? at = null) => NocatFarm.Core.CardExchange.CostOf(sc, game, hash, at ?? DateTime.UtcNow);
 			Check("swap cost: card swaps off - no swap, so it's bought", Cost() == null);
 			NocatFarm.Core.Switches.Set(sc, NocatFarm.Core.Switches.Swaps, true);
-			Check("swap cost: a match nocat.lol made brings the card - it costs what this account gives for it (its spare card's price)", Cost() == 3);
-			Check("swap cost: a card no match brings, or the same name in another game - no swap", Cost("100-Card 4") == null && Cost(game: 200) == null);
-			priced.Clear();
-			Check("swap cost: no fresh price for the card it gives - not sure, so no swap (it's bought)", Cost() == null);
+			Check("swap cost: a match nocat.lol made, no offer out yet - what it brings is only the partner's word, so it's bought", Cost() == null);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetState(match.Id, "sent", YouId, DateTime.UtcNow, 777);
-			Check("swap cost: its offer is already out - 0, the card is on the way (buying it would be a second copy)", Cost() == 0);
+			Check("swap cost: an offer out that this account hasn't checked yet - not sure, so it's bought", Cost() == null);
+			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetGets(match.Id, ["100-Card 5"]);
+			Check("swap cost: its offer is out and checked, the card coming by Steam's own name - 0, it's on the way (buying it would be a second copy)", Cost() == 0);
+			Check("swap cost: a card that offer doesn't bring, or the same name in another game - no swap", Cost("100-Card 4") == null && Cost(game: 200) == null);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetState(match.Id, "dropped", YouId, DateTime.UtcNow);
-			priced["100-Card 1"] = 3;
 			Check("swap cost: a match that didn't happen - no swap", Cost() == null);
 			NocatFarm.Core.CardExchange.Ledger.Reset();
 			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "cardswaps-sw-cost.json"));
 			NocatFarm.Core.Switches.Set(sc, NocatFarm.Core.Switches.Swaps, true);
-			Check("swap cost: a match older than 2 days isn't acted on any more - no swap", Cost(at: DateTime.UtcNow.AddDays(3)) == null && Cost() == 3);
+			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetState(match.Id, "sent", YouId, DateTime.UtcNow, 777, ["100-Card 5"]);
+			Check("swap cost: checked and on its way - 0", Cost() == 0);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).Change(l => l.Blocked.Add(YouId));
 			Check("swap cost: a partner that once sent a bad offer - no swap", Cost() == null);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).Change(l => l.Blocked.Clear());
@@ -29709,10 +29711,11 @@ static class SwitchesTogetherChecks {
 				bot, DateTime.UtcNow, CancellationToken.None);
 			Prices(3);
 			var waits = await Plan(sc);
-			Check("buy plan: a paired swap brings the missing card for less (0.03 against 0.09) - it waits for the swap, buys nothing of that set",
+			Check("buy plan: a swap offer out and checked brings the missing card - it waits for the swap, buys nothing of that set",
 				waits.Steps.Count == 0 && waits.Notes.Any(static n => n.Contains("waiting for a card swap for Card 5", StringComparison.Ordinal)), string.Join("; ", waits.Notes));
-			Prices(12);
-			Check("buy plan: the swap would give more than the card costs - it's bought", (await Plan(sc)).Steps.SelectMany(static s => s.Cards).Select(static c => c.Hash).SequenceEqual(["100-Card 5"]));
+			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetGets(match.Id, []);
+			Check("buy plan: a swap that isn't checked to bring it - it's bought", (await Plan(sc)).Steps.SelectMany(static s => s.Cards).Select(static c => c.Hash).SequenceEqual(["100-Card 5"]));
+			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetGets(match.Id, ["100-Card 5"]);
 			NocatFarm.Core.Switches.Set(sc, NocatFarm.Core.Switches.Swaps, false);
 			Prices(3);
 			Check("buy plan: card swaps off on this account - it's bought", (await Plan(sc)).Steps.Count == 1);
@@ -29721,8 +29724,7 @@ static class SwitchesTogetherChecks {
 			Check("buy plan: no match brings it (nocat.lol paired nothing) - it's bought", (await Plan(sc)).Steps.Count == 1);
 			NocatFarm.Core.CardExchange.Remember([match]);
 			NocatFarm.Core.SparePrices.Reset();
-			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetState(match.Id, "sent", YouId, DateTime.UtcNow, 778);
-			Check("buy plan: the swap's offer is out - never bought a second time, priced or not", (await Plan(sc)).Steps.Count == 0);
+			Check("buy plan: the swap's offer is out and checked - never bought a second time, priced or not", (await Plan(sc)).Steps.Count == 0);
 
 			// ── cards promised to a swap are never sold ──
 			var promisedNow = NocatFarm.Core.CardExchange.NotForSale(sc, [42UL], DateTime.UtcNow);
@@ -29761,7 +29763,7 @@ static class SwitchesTogetherChecks {
 			Check("swaps: receiving, a swap that would give a card of a game it bought cards of is declined - with nothing bought, the same swap is accepted",
 				kept.Verdict == NocatFarm.Core.CardExchange.Verdict.Decline && kept.Why.ToEnglish() == "it gives a card this account keeps"
 				&& fine.Verdict == NocatFarm.Core.CardExchange.Verdict.Accept, $"{kept.Verdict} {fine.Verdict}");
-			Check("swaps: the receiving side checks with what this account keeps", Src("src/NocatFarm/Modules/Trading.Swaps.cs").Split(", maxLoss, rules);").Length == 3);
+			Check("swaps: the receiving side checks with what this account keeps", Src("src/NocatFarm/Modules/Trading.Swaps.cs").Split(", maxLoss, rules, now, leaving);").Length == 3);
 
 			// Fair card swaps from anyone, the same.
 			var fair = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Modules.FairSwap")!.GetMethod("JudgeAsync", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -30315,5 +30317,327 @@ static class BuySafetyChecks {
 				// temp - it goes when Windows tidies up
 			}
 		}
+	}
+}
+
+/// <summary>
+/// 1.8.2 card swaps can't be cheated: each attack a partner (or anybody talking to nocat.lol) could try, played against
+/// the real code with a pretend Steam and a pretend nocat.lol. Fakes only.
+/// </summary>
+static class CardSwapCheatChecks {
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public;
+	const ulong MeId = 76561198000000501UL, YouId = 76561198000000602UL, OtherId = 76561198000000703UL;
+
+	static NocatFarm.Core.TradeOffers.Item Ci(ulong asset, ulong cls, string name, bool described = true) =>
+		new(753, "6", asset, cls, 0, 1, "Team Fortress 2 Trading Card", name, 440, described, "", $"440-{name}");
+
+	static NocatFarm.Core.InventoryContents Inv(params (ulong Asset, string Cls, string Name)[] cards) {
+		var inv = new NocatFarm.Core.InventoryContents { Complete = true };
+		foreach ((ulong asset, string cls, string name) in cards) {
+			inv.Assets.Add(System.Text.Json.JsonDocument.Parse($"{{\"assetid\":\"{asset}\",\"classid\":\"{cls}\",\"instanceid\":\"0\",\"amount\":\"1\"}}").RootElement);
+			inv.Descriptions[cls + "_0"] = System.Text.Json.JsonDocument.Parse($"{{\"classid\":\"{cls}\",\"instanceid\":\"0\",\"type\":\"Team Fortress 2 Trading Card\",\"name\":\"{name}\",\"market_hash_name\":\"440-{name}\",\"market_fee_app\":\"440\",\"tradable\":1,\"tags\":[{{\"category\":\"item_class\",\"internal_name\":\"item_class_2\"}}]}}").RootElement;
+		}
+		return inv;
+	}
+
+	static void Prices(Dictionary<string, int> cents) => NocatFarm.Core.SparePrices.Keep(new NocatFarm.Core.SparePrices.Game(440, 1, DateTime.UtcNow.Ticks,
+		cents.ToDictionary(static c => c.Key, static c => new NocatFarm.Core.SparePrices.Row(c.Value, NocatFarm.Core.SpareKind.Card))));
+
+	/// <summary>Sets a test seam by name - false when the code has no such seam.</summary>
+	static bool Seam(object target, string name, object value) {
+		PropertyInfo? p = target.GetType().GetProperty(name, Inst) ?? target.GetType().GetProperty(name, Stat);
+		if (p == null) {
+			return false;
+		}
+		p.SetValue(target, value);
+		return true;
+	}
+
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-swapcheat-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Core.CardExchange.Ledger.Reset();
+		List<NocatFarm.Core.Bot> made = [];
+
+		NocatFarm.Core.Bot NewBot(string name, ulong steamId) {
+			var bot = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig());
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(bot, steamId);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(bot, SteamKit2.ECurrencyCode.USD);
+			made.Add(bot);
+			return bot;
+		}
+
+		try {
+			// ── the sending side: what it confirms is the offer Steam made, priced by Steam's own names ──
+			Prices(new() { ["440-Card10"] = 300, ["440-Gold"] = 300, ["440-Cheap"] = 3, ["440-Card50"] = 300 });
+			var sBot = NewBot("swc-send", MeId);
+			NocatFarm.Core.Switches.Set(sBot, NocatFarm.Core.Switches.Swaps, true);
+			var sender = new NocatFarm.Modules.CardSwaps(sBot);
+			var sInv = Inv((1, "10", "Card10"), (2, "10", "Card10"), (3, "10", "Card10"), (4, "10", "Card10"));
+			var sent = new List<(ulong Id, List<NocatFarm.Core.Looting.Item> Give, List<NocatFarm.Core.Looting.Item> Take)>();
+			var confirmed = new List<ulong>();
+			var cancelled = new List<ulong>();
+			Func<ulong, NocatFarm.Core.TradeOffers.Offer?> made1 = _ => null;
+			bool dayOpen = true, scamHeld = false, confirmWorks = true;
+			Seam(sender, "ReadInventory", (Func<CancellationToken, Task<NocatFarm.Core.InventoryContents?>>) (_ => Task.FromResult<NocatFarm.Core.InventoryContents?>(sInv)));
+			Seam(sender, "ReadOffers", (Func<CancellationToken, Task<List<NocatFarm.Core.TradeOffers.Offer>?>>) (_ => Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([])));
+			Seam(sender, "ReadHold", (Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, _, _) => Task.FromResult<TimeSpan?>(TimeSpan.Zero)));
+			Seam(sender, "Send", (Func<ulong, string, List<NocatFarm.Core.Looting.Item>, List<NocatFarm.Core.Looting.Item>, string, CancellationToken, Task<NocatFarm.Core.Looting.SwapSent>>) ((_, _, g, k, _, _) => {
+				ulong id = 7000 + (ulong) sent.Count;
+				sent.Add((id, g, k));
+				return Task.FromResult(new NocatFarm.Core.Looting.SwapSent(true, id, true, "sent"));
+			}));
+			Seam(sender, "ReadOffer", (Func<ulong, CancellationToken, Task<(bool, NocatFarm.Core.TradeOffers.Offer?)>>) ((id, _) => Task.FromResult<(bool, NocatFarm.Core.TradeOffers.Offer?)>((true, made1(id)))));
+			Seam(sender, "ConfirmOffer", (Func<ulong, CancellationToken, Task<bool>>) ((id, _) => { if (confirmWorks) confirmed.Add(id); return Task.FromResult(confirmWorks); }));
+			Seam(sender, "Cancel", (Func<ulong, CancellationToken, Task<bool>>) ((id, _) => { cancelled.Add(id); return Task.FromResult(true); }));
+			Seam(sender, "PriceCard", (Func<string, int, CancellationToken, Task>) ((_, _, _) => Task.CompletedTask));
+			Seam(sender, "NameOf", (Func<ulong, CancellationToken, Task<string>>) ((_, _) => Task.FromResult("Partner")));
+			Seam(sender, "DayOpen", (Func<bool>) (() => dayOpen));
+			Seam(sender, "HeldByScamWatch", (Func<bool>) (() => scamHeld));
+			MethodInfo look = typeof(NocatFarm.Modules.CardSwaps).GetMethod("LookAsync", Inst)!;
+			async Task<string> Look(DateTime at) => ((NocatFarm.Core.Said) await (Task<NocatFarm.Core.Said>) look.Invoke(sender, [at, CancellationToken.None])!).ToEnglish();
+			var sLedger = NocatFarm.Core.CardExchange.Ledger.Load(sBot.Name);
+			DateTime t0 = DateTime.Today.AddHours(10).ToUniversalTime();
+			NocatFarm.Core.TradeOffers.Offer Made(ulong id, int state, List<NocatFarm.Core.TradeOffers.Item> giving, List<NocatFarm.Core.TradeOffers.Item> receiving) =>
+				new(id, YouId, state, true, null, giving, receiving, 0, "");
+
+			// The partner listed its 3-cent card under a 3-dollar card's market name: paired for this account's 3-dollar card.
+			var gold = new NocatFarm.Core.CardExchange.Match("b10000000001", t0, MeId, YouId, true, "Tok12345", [new(440, 10, "440-Card10", 1, 300, 40, "440-Gold", 901, 300)]);
+			NocatFarm.Core.CardExchange.Remember([gold]);
+			made1 = id => Made(id, NocatFarm.Core.TradeOffers.NeedsConfirmation, [Ci(1, 10, "Card10")], [Ci(901, 40, "Cheap")]);
+			await Look(t0);
+			Check("swap cheat: a 3-cent card listed under a 3-dollar card's name - the offer Steam made is priced by Steam's own names: never confirmed, taken back",
+				(sent.Count == 1) && (confirmed.Count == 0) && cancelled.Contains(7000) && (sLedger.Of("b10000000001")?.State == "dropped") && !sLedger.IsBlocked(YouId),
+				$"sent {sent.Count} confirmed {confirmed.Count} cancelled {string.Join(",", cancelled)} state {sLedger.Of("b10000000001")?.State}");
+
+			// Steam left a description out of the offer it made: not a bad partner - asked again later, then confirmed.
+			var blank = new NocatFarm.Core.CardExchange.Match("b10000000002", t0, MeId, YouId, true, "Tok12345", [new(440, 10, "440-Card10", 2, 300, 50, "440-Card50", 902, 300)]);
+			NocatFarm.Core.CardExchange.Remember([blank]);
+			sLedger.Change(l => l.NextAt = 0);
+			bool described = false;
+			made1 = id => Made(id, NocatFarm.Core.TradeOffers.NeedsConfirmation, [Ci(2, 10, "Card10")], [Ci(902, 50, "Card50", described)]);
+			await Look(t0.AddMinutes(10));
+			Check("swap cheat: Steam didn't describe a card in the offer it made - not taken back, the partner not blocked, nothing confirmed yet",
+				(sent.Count == 2) && !cancelled.Contains(7001) && !sLedger.IsBlocked(YouId) && (confirmed.Count == 0) && (sLedger.Of("b10000000002")?.State == "sent"),
+				$"cancelled {string.Join(",", cancelled)} blocked {sLedger.IsBlocked(YouId)} state {sLedger.Of("b10000000002")?.State}");
+			described = true;
+			await Look(t0.AddMinutes(50));
+			Check("swap cheat: ...and once Steam says what it is, it's checked and confirmed", confirmed.SequenceEqual([7001UL]), string.Join(",", confirmed));
+
+			// Its offer waits on the authenticator: outside its day, or held by scam watch, it's never confirmed.
+			var later = new NocatFarm.Core.CardExchange.Match("b10000000003", t0, MeId, YouId, true, "Tok12345", [new(440, 10, "440-Card10", 3, 300, 50, "440-Card50", 903, 300)]);
+			NocatFarm.Core.CardExchange.Remember([later]);
+			sLedger.Change(l => l.NextAt = 0);
+			confirmWorks = false;
+			made1 = id => Made(id, NocatFarm.Core.TradeOffers.NeedsConfirmation, [Ci(3, 10, "Card10")], [Ci(903, 50, "Card50")]);
+			await Look(t0.AddMinutes(60));
+			confirmWorks = true;
+			dayOpen = false;
+			await Look(t0.AddMinutes(100));
+			Check("swap cheat: an offer waiting on its confirmation isn't confirmed outside the account's day", (sent.Count == 3) && !confirmed.Contains(7002), string.Join(",", confirmed));
+			dayOpen = true;
+			scamHeld = true;
+			await Look(t0.AddMinutes(140));
+			Check("swap cheat: ...nor while scam watch holds its trades", !confirmed.Contains(7002), string.Join(",", confirmed));
+			scamHeld = false;
+			await Look(t0.AddMinutes(180));
+			Check("swap cheat: ...and is, once it's its day and nothing holds it", confirmed.Contains(7002), string.Join(",", confirmed));
+
+			// Swaps turned off: its own offers still out are taken back.
+			made1 = id => Made(id, NocatFarm.Core.TradeOffers.Active, [Ci(3, 10, "Card10")], [Ci(903, 50, "Card50")]);
+			NocatFarm.Core.Switches.Set(sBot, NocatFarm.Core.Switches.Swaps, false);
+			await Look(t0.AddMinutes(220));
+			Check("swap cheat: swaps turned off - its swap offers still out are taken back", cancelled.Contains(7002) && (sLedger.Of("b10000000003")?.State == "dropped"),
+				$"cancelled {string.Join(",", cancelled)} state {sLedger.Of("b10000000003")?.State}");
+
+			// ── the receiving side: a match used once, an old one, keep counts, copies promised elsewhere ──
+			Prices(new() { ["440-Card10"] = 5, ["440-Card40"] = 6 });
+			var rBot = NewBot("swc-recv", MeId);
+			NocatFarm.Core.Switches.Set(rBot, NocatFarm.Core.Switches.Swaps, true);
+			var trades = new NocatFarm.Modules.Trading(rBot);
+			var rInv = Inv((1, "10", "Card10"), (2, "10", "Card10"), (3, "10", "Card10"));
+			var live = new List<NocatFarm.Core.TradeOffers.Offer>();
+			Seam(trades, "ReadCards", (Func<CancellationToken, Task<NocatFarm.Core.InventoryContents?>>) (_ => Task.FromResult<NocatFarm.Core.InventoryContents?>(rInv)));
+			Seam(trades, "PriceCard", (Func<string, int, CancellationToken, Task>) ((_, _, _) => Task.CompletedTask));
+			Seam(trades, "ReadOffers", (Func<CancellationToken, Task<List<NocatFarm.Core.TradeOffers.Offer>?>>) (_ => Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([.. live])));
+			MethodInfo judge = typeof(NocatFarm.Modules.Trading).GetMethod("ExchangeJudgeNowAsync", Inst)!;
+			async Task<bool?> Judge(ulong id, string match, ulong asset) {
+				var offer = new NocatFarm.Core.TradeOffers.Offer(id, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(asset, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "nocat.farm card swap #" + match);
+				live.Add(offer);
+				try {
+					object task = judge.Invoke(trades, [offer, CancellationToken.None])!;
+					await (Task) task;
+					object result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+					return (bool?) result.GetType().GetField("Item1")!.GetValue(result);
+				} finally {
+					live.Remove(offer);
+				}
+			}
+			NocatFarm.Core.CardExchange.Match Recv(string id, DateTime when, ulong asset = 1) =>
+				new(id, when, MeId, YouId, false, "", [new(440, 10, "440-Card10", asset, 5, 40, "440-Card40", 901, 6)]);
+			var rLedger = NocatFarm.Core.CardExchange.Ledger.Load(rBot.Name);
+			DateTime now = DateTime.UtcNow;
+			NocatFarm.Core.CardExchange.Remember([Recv("c00000000001", now)]);
+			Check("swap cheat: a fair offer for a fresh match is accepted (the checks below are what changes)", await Judge(80, "c00000000001", 1) == true);
+			rLedger.SetState("c00000000001", "done", YouId, now, 79);
+			Check("swap cheat: the same offer sent again for a match that's done is never accepted", await Judge(81, "c00000000001", 2) == false);
+			NocatFarm.Core.CardExchange.Remember([Recv("c00000000002", now.AddDays(-3))]);
+			Check("swap cheat: an offer for a match paired 3 days ago is never accepted", await Judge(82, "c00000000002", 1) == false);
+			rBot.Cfg.SpareKeepCopies = 3;
+			NocatFarm.Core.CardExchange.Remember([Recv("c00000000003", now)]);
+			Check("swap cheat: \"Keep this many of each card\" 3, 3 held - giving one would leave 2: never accepted", await Judge(83, "c00000000003", 1) == false);
+			rBot.Cfg.SpareKeepCopies = 1;
+			rInv = Inv((1, "10", "Card10"), (2, "10", "Card10"));
+			NocatFarm.Core.CardExchange.Remember([Recv("c00000000004", now), Recv("c00000000008", now),
+				Recv("c00000000005", now, asset: 1) with { Pairs = [new(440, 10, "440-Card10", 1, 5, 50, "440-Card50", 905, 6)] }]);
+			Check("swap cheat: the copy it asks for is promised to another open match - never accepted", await Judge(84, "c00000000004", 1) == false);
+			Check("swap cheat: another copy, but 2 held and 1 promised elsewhere - giving it would be the last: never accepted", await Judge(85, "c00000000008", 2) == false);
+			rInv = Inv((1, "10", "Card10"), (2, "10", "Card10"), (3, "10", "Card10"));
+			NocatFarm.Core.CardExchange.Remember([Recv("c00000000006", now), Recv("c00000000007", now)]);
+			live.Add(new NocatFarm.Core.TradeOffers.Offer(999, OtherId, NocatFarm.Core.TradeOffers.Active, true, null, [Ci(3, 10, "Card10")], [], 0, ""));
+			Check("swap cheat: the copy it asks for is already on another offer - never accepted", await Judge(86, "c00000000006", 3) == false);
+			live.Clear();
+			Check("swap cheat: the same with nothing else going on is accepted", await Judge(87, "c00000000007", 3) == true);
+
+			// ── what a missing card costs by a swap: only by Steam's own name for it, from this account's side ──
+			var cBot = NewBot("swc-cost", MeId);
+			NocatFarm.Core.Switches.Set(cBot, NocatFarm.Core.Switches.Swaps, true);
+			var lie = new NocatFarm.Core.CardExchange.Match("c0c0c0c0c0c1", DateTime.UtcNow, MeId, YouId, true, "Tok12345", [new(100, 1, "100-Card 1", 11, 3, 5, "100-Card 5", 99, 9)]);
+			NocatFarm.Core.CardExchange.Remember([lie]);
+			long? Cost(string hash) => NocatFarm.Core.CardExchange.CostOf(cBot, 100, hash, DateTime.UtcNow);
+			Check("swap cheat: a card a partner only SAYS it will give (nocat.lol's name for it) doesn't hold buying back", Cost("100-Card 5") == null, $"{Cost("100-Card 5")}");
+			var cLedger = NocatFarm.Core.CardExchange.Ledger.Load(cBot.Name);
+			cLedger.SetState(lie.Id, "sent", YouId, DateTime.UtcNow, 555);
+			Check("swap cheat: an offer out that hasn't been checked yet doesn't either", Cost("100-Card 5") == null, $"{Cost("100-Card 5")}");
+			PropertyInfo? gets = typeof(NocatFarm.Core.CardExchange.Record).GetProperty("Gets");
+			gets?.SetValue(cLedger.Of(lie.Id), new List<string> { "100-Card 4" });
+			Check("swap cheat: an offer out, checked, bringing another card - that card isn't waited for", (gets != null) && (Cost("100-Card 5") == null) && (Cost("100-Card 4") == 0));
+
+			// ── what nocat.lol hands over: names of the pair's own game, trade tokens of Steam's own shape ──
+			string Reply(string tok, string give, string get) => "{\"m\":[{\"id\":\"a1b2c3d4e5f6\",\"t\":1760000000000,\"me\":\"76561198000000501\",\"you\":\"76561198000000602\",\"send\":true,\"tok\":\"" + tok
+				+ "\",\"p\":[[440,\"10\",\"" + give + "\",\"101\",5,\"30\",\"" + get + "\",\"901\",6]]}],\"up\":true,\"wait\":0}";
+			Check("swap cheat: a pair with a card named for another game is never taken - the whole match is skipped",
+				NocatFarm.Core.CardExchange.ParseReply(Reply("Tok12345", "440-Scout", "440-Pyro"))!.Matches.Count == 1
+				&& NocatFarm.Core.CardExchange.ParseReply(Reply("Tok12345", "440-Scout", "730-AK-47"))!.Matches.Count == 0
+				&& NocatFarm.Core.CardExchange.ParseReply(Reply("Tok12345", "Scout", "440-Pyro"))!.Matches.Count == 0);
+			Check("swap cheat: a trade token that isn't Steam's shape is never used - the match is skipped",
+				NocatFarm.Core.CardExchange.ParseReply(Reply("Tok 1234", "440-Scout", "440-Pyro"))!.Matches.Count == 0
+				&& NocatFarm.Core.CardExchange.ParseReply(Reply("Tok12345\\\"}", "440-Scout", "440-Pyro"))!.Matches.Count == 0
+				&& NocatFarm.Core.CardExchange.ParseReply(Reply("ab", "440-Scout", "440-Pyro"))!.Matches.Count == 0);
+			MethodInfo sendSwap = typeof(NocatFarm.Core.Looting).GetMethod("SendCardSwapAsync", Stat)!;
+			var oneCard = new List<NocatFarm.Core.Looting.Item> { new(1, 10, 0, 1, "", "440-Card10", 753, 6, 440) };
+			var refused = await (Task<NocatFarm.Core.Looting.SwapSent>) sendSwap.Invoke(null, [cBot, YouId, "Tok\",\"x", oneCard, oneCard, "note", CancellationToken.None])!;
+			Check("swap cheat: sending, a trade token that isn't Steam's shape is refused before anything is built", !refused.Ok && refused.Message.Contains("trade link", StringComparison.Ordinal), refused.Message);
+
+			// ── a stranger's swap whose trade hold Steam won't say: left for you, and the log says why ──
+			var hBot = NewBot("swc-hold", MeId);
+			var hTrades = new NocatFarm.Modules.Trading(hBot);
+			bool seamed = Seam(hTrades, "ReadHold", (Func<ulong, CancellationToken, Task<TimeSpan?>>) ((_, _) => Task.FromResult<TimeSpan?>(null)));
+			MethodInfo? holdVerdict = typeof(NocatFarm.Modules.Trading).GetMethod("HoldVerdictAsync", Inst);
+			var stranger = new NocatFarm.Core.TradeOffers.Offer(4242, OtherId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")]);
+			long mark = NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+			var answers = new List<bool?>();
+			for (int i = 0; (holdVerdict != null) && (i < 3); i++) {
+				answers.Add(await (Task<bool?>) holdVerdict.Invoke(hTrades, [stranger, false, CancellationToken.None])!);
+			}
+			var heldSwaps = (HashSet<ulong>) typeof(NocatFarm.Modules.Trading).GetField("_heldSwaps", Inst)!.GetValue(hTrades)!;
+			Check("swap cheat: Steam won't say whether a stranger's swap would be held - asked twice more, then left for you, never accepted on a guess",
+				seamed && (answers.Count == 3) && (answers[0] == null) && (answers[1] == null) && (answers[2] == false) && heldSwaps.Contains(4242), string.Join(",", answers));
+			Check("swap cheat: ...and the log says why",
+				NocatFarm.Log.Since(mark).Any(e => e.Said.ToEnglish().Contains("Steam won't say whether it would be held", StringComparison.Ordinal)),
+				string.Join(" | ", NocatFarm.Log.Since(mark).Select(e => e.Said.ToEnglish())));
+
+			// ── talking to nocat.lol: proving each account, and taking an opted-out one off at once ──
+			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "cardswaps.json"));
+			var site = new FakeSwapSite();
+			using var http = new HttpClient(site);
+			var y = NewBot("swc-y", MeId);
+			var z = NewBot("swc-z", OtherId);
+			NocatFarm.Core.Switches.Set(y, NocatFarm.Core.Switches.Swaps, true);
+			NocatFarm.Core.Switches.Set(z, NocatFarm.Core.Switches.Swaps, true);
+			bool zReadable = true;
+			Func<NocatFarm.Core.Bot, CancellationToken, Task<System.Text.Json.Nodes.JsonObject?>> build = (b, _) => Task.FromResult<System.Text.Json.Nodes.JsonObject?>(
+				(b == z) && !zReadable ? null : NocatFarm.Core.CardExchange.AccountJson(b.SteamId, "Tok12345", 1, true, 0, false, [], []));
+			bool proving = typeof(NocatFarm.Core.CardExchange).GetProperty("ProveSeam", Stat) is { } proveSeam
+				&& SetStatic(proveSeam, (Func<NocatFarm.Core.Bot, CancellationToken, Task<string?>>) ((b, _) => Task.FromResult<string?>("openid.mode=id_res&who=" + b.SteamId)));
+			List<NocatFarm.Core.Bot> both = [y, z];
+			DateTime y0 = DateTime.UtcNow;
+			site.Reply = "{\"m\":[],\"up\":true,\"wait\":0,\"pv\":[\"" + MeId + "\"]}";
+			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0, CancellationToken.None);
+			var acc1 = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[^1])!["acc"]!.AsArray();
+			Check("swap cheat: each account goes with its proof of being signed in (Steam's own answer) - nocat.lol pairs nothing else",
+				proving && (acc1.Count == 2) && acc1.All(a => a!["pf"]?.ToString() == "openid.mode=id_res&who=" + a["s"]!.ToString()), site.Bodies[^1]);
+			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(14), CancellationToken.None);
+			var acc2 = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[^1])!["acc"]?.AsArray();
+			Check("swap cheat: an account nocat.lol says is proven isn't proven again; one it doesn't, is",
+				(acc2 != null) && (acc2.Single(a => a!["s"]!.ToString() == MeId.ToString())!["pf"] == null) && (acc2.Single(a => a!["s"]!.ToString() == OtherId.ToString())!["pf"] != null), site.Bodies[^1]);
+			NocatFarm.Core.Switches.Set(y, NocatFarm.Core.Switches.Swaps, false);
+			zReadable = false;
+			site.Reply = "{\"m\":[],\"up\":false,\"wait\":0,\"rm\":true}";
+			int before = site.Bodies.Count;
+			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(15), CancellationToken.None);
+			string rmBody = site.Bodies.Count > before ? site.Bodies[^1] : "";
+			Check("swap cheat: an account turned off while the other's cards can't be read - it still comes off nocat.lol at once",
+				rmBody.Contains("\"rm\":[\"" + MeId + "\"]", StringComparison.Ordinal) && !rmBody.Contains(OtherId + "\",\"t\"", StringComparison.Ordinal), rmBody);
+			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(16), CancellationToken.None);
+			Check("swap cheat: ...and once nocat.lol took it off, it isn't asked again", !site.Bodies[^1].Contains("\"rm\"", StringComparison.Ordinal), site.Bodies[^1]);
+
+			// ── signing in to nocat.lol through Steam: Steam's own form, Steam's own answer, for this account only ──
+			MethodInfo? proofFrom = typeof(NocatFarm.Core.CardExchange).GetMethod("ProofFromAsync", Stat);
+			MethodInfo? hashOf = typeof(NocatFarm.Core.CardExchange).GetMethod("InstallHash", Stat);
+			string expectHash = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("nocat.farm swaps 0123456789abcdef0123456789abcdef")))[..16];
+			Check("swap cheat: the install's number goes to Steam only as its hash - the same one nocat.lol works out",
+				(hashOf != null) && ((string) hashOf.Invoke(null, ["0123456789abcdef0123456789abcdef"])! == expectHash));
+			string page = "<html><form name=\"loginForm\" id=\"openidForm\" action=\"https://steamcommunity.com/openid/login\" method=\"POST\">"
+				+ "<input type=\"hidden\" name=\"action\" value=\"steam_openid_login\"><input type=\"hidden\" name=\"openid.mode\" value=\"checkid_setup\">"
+				+ "<input type=\"hidden\" name=\"openidparams\" value=\"abc&amp;def\"><input type=\"hidden\" name=\"nonce\" value=\"n0nce\"><input type=\"image\" id=\"imageLogin\"></form></html>";
+			Uri? asked = null;
+			List<KeyValuePair<string, string>>? posted = null;
+			string back = "https://nocat.lol/api/farm/swap/proof?i=" + expectHash + "&t=1&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=id_res"
+				+ "&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F" + MeId + "&openid.sig=x";
+			async Task<string?> Prove(string html, string location, ulong who) {
+				if (proofFrom == null) {
+					return "no such method";
+				}
+				Func<Uri, CancellationToken, Task<string?>> get = (u, _) => { asked = u; return Task.FromResult<string?>(html); };
+				Func<Uri, IReadOnlyList<KeyValuePair<string, string>>, CancellationToken, Task<Uri?>> post = (_, f, _) => { posted = [.. f]; return Task.FromResult<Uri?>(new Uri(location)); };
+				return await (Task<string?>) proofFrom.Invoke(null, [get, post, who, expectHash, new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc), CancellationToken.None])!;
+			}
+			string? proof = await Prove(page, back, MeId);
+			Check("swap cheat: signing in posts back Steam's own form and hands nocat.lol Steam's answer as it came",
+				(proof == back[(back.IndexOf('?') + 1)..]) && (posted != null) && posted.Any(f => f is { Key: "openidparams", Value: "abc&def" }) && posted.Any(f => f is { Key: "nonce", Value: "n0nce" })
+				&& (asked != null) && Uri.UnescapeDataString(asked.Query).Contains("openid.return_to=https://nocat.lol/api/farm/swap/proof?i=" + expectHash + "&t=", StringComparison.Ordinal)
+				&& Uri.UnescapeDataString(asked.Query).Contains("openid.realm=https://nocat.lol/", StringComparison.Ordinal), $"{proof} | {asked}");
+			Check("swap cheat: not signed in (Steam's login page), an answer for another account, or one sent elsewhere - no proof",
+				(proofFrom != null) && (await Prove("<html>Sign in</html>", back, MeId) == null) && (await Prove(page, back, OtherId) == null)
+				&& (await Prove(page, back.Replace("https://nocat.lol/", "https://evil.example/", StringComparison.Ordinal), MeId) == null));
+		} finally {
+			foreach (var bot in made) {
+				await bot.DisposeAsync();
+			}
+			typeof(NocatFarm.Core.CardExchange).GetProperty("ProveSeam", Stat)?.SetValue(null, null);
+			NocatFarm.Core.CardExchange.Remember([]);
+			NocatFarm.Core.CardExchange.Ledger.Reset();
+			NocatFarm.Core.SparePrices.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			try {
+				Directory.Delete(root, true);
+			} catch {
+				// the temp folder empties itself eventually
+			}
+		}
+	}
+
+	static bool SetStatic(PropertyInfo p, object value) {
+		p.SetValue(null, value);
+		return true;
 	}
 }

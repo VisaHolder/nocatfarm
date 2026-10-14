@@ -436,17 +436,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 			// Would it sit in a trade hold? Steam only says so up front through its hold lookup - an offer's own
 			// hold date appears once it's already held. A held swap can be cancelled and leaves cards in limbo.
-			// A card swap nocat.lol paired looks only when "Skip swaps Steam would hold" is on.
-			TimeSpan? hold = exchange && !Bot.Cfg.CardSwapSkipHeld ? TimeSpan.Zero : await TradeOffers.HoldAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+			// Held, or Steam won't say (three looks running): left for you (Trading.Holds.cs).
+			bool? clear = await HoldVerdictAsync(offer, exchange, ct).ConfigureAwait(false);
 
-			if (hold == null) {
+			if (clear == null) {
 				return (true, false);   // Steam didn't say - ask again at the next look
 			}
 
-			if (hold > TimeSpan.Zero) {
-				LeaveHeldSwap(offer.Id);
+			if (clear == false) {
 				_waiting.Remove(offer.Id);
-				Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), new Said("the cards would sit in a trade hold")), Bot.Name);
 
 				return (true, false);
 			}

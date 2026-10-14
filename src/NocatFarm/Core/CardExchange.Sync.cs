@@ -15,9 +15,11 @@ namespace NocatFarm.Core;
 /// </summary>
 /// <remarks>
 /// Sent: the random number made for this install (the same as the user count's, never logged), the app version, and per
-/// opted-in account what <see cref="BuildList"/> makes plus its steamid and trade link token. No account name, password,
-/// login token or anything else. Never waits on nocat.lol: no answer is one debug line, and the next try is the next
-/// look's.
+/// opted-in account what <see cref="BuildList"/> makes plus its steamid and trade link token, and - until nocat.lol says
+/// it has one - Steam's answer to the account signing in to nocat.lol (<see cref="ProveAsync"/>). No account name,
+/// password, login token or anything else. An account turned off is taken off nocat.lol at the next sync whatever else
+/// happens (`rm`), even when the other accounts' lists can't be made just then. Never waits on nocat.lol: no answer is
+/// one debug line, and the next try is the next look's.
 /// </remarks>
 public static partial class CardExchange {
 	public const string Endpoint = "https://nocat.lol/api/farm/swap";
@@ -36,13 +38,20 @@ public static partial class CardExchange {
 	public sealed class Sent {
 		public List<string> Listed { get; set; } = [];
 		public long NextUpload { get; set; }
+
+		/// <summary>The accounts nocat.lol said it has a proof for, and when this copy last sent one (UTC ticks).</summary>
+		public Dictionary<string, long> Proven { get; set; } = [];
 	}
 
 	private static string SentPath => Path.Combine(ConfigStore.ConfigDir, "state", "cardswaps.json");
 
 	internal static Sent LoadSent() {
 		try {
-			return File.Exists(SentPath) ? JsonSerializer.Deserialize<Sent>(File.ReadAllText(SentPath)) ?? new Sent() : new Sent();
+			Sent sent = File.Exists(SentPath) ? JsonSerializer.Deserialize<Sent>(File.ReadAllText(SentPath)) ?? new Sent() : new Sent();
+			sent.Listed ??= [];
+			sent.Proven ??= [];
+
+			return sent;
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			Log.Debug($"card swaps: couldn't read what was sent: {Log.Describe(e)}");
 
@@ -159,7 +168,11 @@ public static partial class CardExchange {
 		bool due = !want.SetEquals(sent.Listed) || (nowUtc.Ticks >= sent.NextUpload);
 		JsonArray? acc = null;
 		List<string> listing = [];
+		HashSet<string> provedNow = [];
 		bool skipped = false;
+
+		// Turned off since the last list: taken off nocat.lol now, whether or not the others' lists can be made this time.
+		List<string> gone = [.. sent.Listed.Where(s => !want.Contains(s))];
 
 		if (opted.Count == 0) {
 			acc = [];   // every account turned off: the list - steamids, trade links - is deleted
@@ -183,8 +196,29 @@ public static partial class CardExchange {
 					continue;
 				}
 
+				// Until nocat.lol has a proof that this copy is signed in to it, the account goes with one - unproven, it's
+				// never paired, so nobody else can list it.
+				string sid = bot.SteamId.ToString(CultureInfo.InvariantCulture);
+
+				if (!sent.Proven.TryGetValue(sid, out long proved) || (nowUtc - new DateTime(proved, DateTimeKind.Utc) > ProofFor)) {
+					string? pf = null;
+
+					try {
+						pf = await (ProveSeam ?? ProveAsync)(bot, ct).ConfigureAwait(false);
+					} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+						throw;
+					} catch (Exception e) {
+						Log.Debug($"card swaps: couldn't sign in to nocat.lol through Steam: {Log.Describe(e)}", bot.Name);
+					}
+
+					if (pf != null) {
+						one["pf"] = pf;
+						provedNow.Add(sid);
+					}
+				}
+
 				acc.Add(one);
-				listing.Add(bot.SteamId.ToString(CultureInfo.InvariantCulture));
+				listing.Add(sid);
 			}
 
 			// Nothing could be read on any of them: no list this time (it would delete the one there), just the matches.
@@ -194,6 +228,17 @@ public static partial class CardExchange {
 		}
 
 		JsonObject body = new() { ["id"] = UserCount.InstallId(), ["v"] = Build.Version, ["op"] = "sync" };
+
+		// Every account off: the empty list deletes it all anyway.
+		if ((gone.Count > 0) && !(acc is { Count: 0 })) {
+			JsonArray rm = [];
+
+			foreach (string s in gone.Take(MaxAccounts)) {
+				rm.Add(s);
+			}
+
+			body["rm"] = rm;
+		}
 
 		if (acc != null) {
 			body["acc"] = acc;
@@ -230,9 +275,27 @@ public static partial class CardExchange {
 			HashSet<ulong> mine = [.. opted.Select(static b => b.SteamId)];
 			Remember(reply.Matches.Where(m => mine.Contains(m.Me)));
 
+			if ((acc == null) && reply.Removed) {
+				sent.Listed = [.. sent.Listed.Where(s => !gone.Contains(s))];
+				SaveSent(sent);
+			}
+
 			if (acc != null) {
 				if (reply.Up) {
 					sent.Listed = listing;
+
+					// What nocat.lol has a proof for now: kept as proven (since this proof, when one just went); the rest
+					// goes with a proof next time.
+					foreach (string s in sent.Proven.Keys.Where(s => !listing.Contains(s) || !(reply.Proven ?? []).Contains(s)).ToList()) {
+						sent.Proven.Remove(s);
+					}
+
+					foreach (string s in (reply.Proven ?? []).Where(listing.Contains)) {
+						if (provedNow.Contains(s) || !sent.Proven.ContainsKey(s)) {
+							sent.Proven[s] = nowUtc.Ticks;
+						}
+					}
+
 					sent.NextUpload = (nowUtc + (skipped ? TimeSpan.FromHours(1) : UploadEvery + TimeSpan.FromMinutes(Random.Shared.Next(-60, 61)))).Ticks;
 					Log.Debug(acc.Count == 0 ? "card swaps: the list on nocat.lol is deleted" : $"card swaps: sent the list of {acc.Count} account(s)");
 				} else {
@@ -252,8 +315,11 @@ public static partial class CardExchange {
 		}
 	}
 
-	/// <summary>nocat.lol's answer: the matches, whether the list was taken, and how long until one would be.</summary>
-	public sealed record Reply(List<Match> Matches, bool Up, int Wait);
+	/// <summary>
+	/// nocat.lol's answer: the matches, whether the list was taken, and how long until one would be; with a list taken, the
+	/// accounts on it it has a proof for; and whether accounts asked to be taken off were.
+	/// </summary>
+	public sealed record Reply(List<Match> Matches, bool Up, int Wait, List<string>? Proven = null, bool Removed = false);
 
 	public static Reply? ParseReply(string text) {
 		try {
@@ -274,8 +340,12 @@ public static partial class CardExchange {
 
 			bool up = root.TryGetProperty("up", out JsonElement u) && (u.ValueKind == JsonValueKind.True);
 			int wait = root.TryGetProperty("wait", out JsonElement w) && w.TryGetInt32(out int s) ? s : 0;
+			List<string>? proven = root.TryGetProperty("pv", out JsonElement pv) && (pv.ValueKind == JsonValueKind.Array)
+				? [.. pv.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.String).Select(static e => e.GetString()!)]
+				: null;
+			bool removed = root.TryGetProperty("rm", out JsonElement rm) && (rm.ValueKind == JsonValueKind.True);
 
-			return new Reply(matches, up, wait);
+			return new Reply(matches, up, wait, proven, removed);
 		} catch (JsonException) {
 			return null;
 		}
@@ -295,8 +365,9 @@ public static partial class CardExchange {
 		bool send = m.TryGetProperty("send", out JsonElement sendEl) && (sendEl.ValueKind == JsonValueKind.True);
 		string token = S(m, "tok");
 
+		// A trade token is only ever Steam's own shape: it goes into the offer as it is.
 		if ((MatchIdOf(Tag + id) == null) || (me == 0) || (you == 0) || (me == you) || !m.TryGetProperty("t", out JsonElement t) || !t.TryGetInt64(out long made)
-			|| !m.TryGetProperty("p", out JsonElement rows) || (rows.ValueKind != JsonValueKind.Array) || (send && (token.Length == 0))) {
+			|| !m.TryGetProperty("p", out JsonElement rows) || (rows.ValueKind != JsonValueKind.Array) || (send && !TokenOk(token)) || (!send && (token.Length > 0) && !TokenOk(token))) {
 			return null;
 		}
 
@@ -312,7 +383,9 @@ public static partial class CardExchange {
 
 			Pair p = new(game, U(r[1].GetString()!), r[2].GetString()!, U(r[3].GetString()!), giveUsd, U(r[5].GetString()!), r[6].GetString()!, U(r[7].GetString()!), getUsd);
 
-			if ((p.Give == 0) || (p.Get == 0) || (p.GiveAsset == 0) || (p.GetAsset == 0) || (p.Give == p.Get)) {
+			// Each card's name is its own game's ("440-Scout"); only ever a first guess at a price - the offer Steam makes is
+			// what's checked and priced, by Steam's own names.
+			if ((p.Give == 0) || (p.Get == 0) || (p.GiveAsset == 0) || (p.GetAsset == 0) || (p.Give == p.Get) || !NameFits(p.GiveName, game) || !NameFits(p.GetName, game)) {
 				return null;
 			}
 

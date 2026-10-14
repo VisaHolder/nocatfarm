@@ -62,6 +62,12 @@ public static partial class CardExchange {
 
 		/// <summary>Looks that couldn't decide (no price yet, Steam didn't answer).</summary>
 		public int Tries { get; set; }
+
+		/// <summary>
+		/// The cards coming in, by Steam's own market names ("440-Scout"), once this account checked the offer Steam made -
+		/// never the names nocat.lol was handed. What buying cards waits for.
+		/// </summary>
+		public List<string> Gets { get; set; } = [];
 	}
 
 	/// <summary>
@@ -118,6 +124,11 @@ public static partial class CardExchange {
 				read ??= new Ledger();
 				read.Account = account;
 				read.Records = new Dictionary<string, Record>(read.Records ?? [], StringComparer.Ordinal);
+
+				foreach (Record r in read.Records.Values) {
+					r.Gets ??= [];
+				}
+
 				read.Blocked ??= [];
 				read.Reports ??= [];
 				Loaded[path] = read;
@@ -195,7 +206,8 @@ public static partial class CardExchange {
 			l.NextAt = (nowUtc + gap).Ticks;
 		});
 
-		public void SetState(string match, string state, ulong partner, DateTime nowUtc, ulong offer = 0) => Change(l => {
+		/// <param name="gets">The cards coming in, by Steam's own names, once the offer Steam made was checked.</param>
+		public void SetState(string match, string state, ulong partner, DateTime nowUtc, ulong offer = 0, IEnumerable<string>? gets = null) => Change(l => {
 			Record r = l.Records.TryGetValue(match, out Record? had) ? had : l.Records[match] = new Record();
 			r.State = state;
 			r.Partner = partner;
@@ -203,6 +215,17 @@ public static partial class CardExchange {
 
 			if (offer != 0) {
 				r.Offer = offer;
+			}
+
+			if (gets != null) {
+				r.Gets = [.. gets];
+			}
+		});
+
+		/// <summary>The cards coming in, by Steam's own names, once the offer Steam made was checked - nothing else of it changes.</summary>
+		public void SetGets(string match, IEnumerable<string> gets) => Change(l => {
+			if (l.Records.TryGetValue(match, out Record? r)) {
+				r.Gets = [.. gets];
 			}
 		});
 
@@ -253,14 +276,25 @@ public static partial class CardExchange {
 	/// This account's copies promised to an open match - kept off its list, and never sold or turned into gems meanwhile
 	/// (spare items leaves them alone).
 	/// </summary>
-	public static HashSet<ulong> Reserved(string account, ulong steamId, DateTime nowUtc) {
+	/// <param name="except">A match whose own copies aren't counted - the one being sent or checked now.</param>
+	public static HashSet<ulong> Reserved(string account, ulong steamId, DateTime nowUtc, string? except = null) {
 		if (steamId == 0) {
 			return [];
 		}
 
 		HashSet<string> open = [.. OpenIds(account, steamId, nowUtc)];
 
-		return [.. MatchesOf(steamId).Where(m => open.Contains(m.Id)).SelectMany(static m => m.Pairs).Select(static p => p.GiveAsset)];
+		return [.. MatchesOf(steamId).Where(m => open.Contains(m.Id) && (m.Id != except)).SelectMany(static m => m.Pairs).Select(static p => p.GiveAsset)];
+	}
+
+	/// <summary>A trade link token as Steam makes them: 6-16 letters, digits, "-" or "_". Anything else is never used.</summary>
+	public static bool TokenOk(string? token) => token is { Length: >= 6 and <= 16 } && token.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+
+	/// <summary>Whether a card's market name is its own game's, the way Steam writes them: "440-Scout" for game 440.</summary>
+	public static bool NameFits(string hash, uint game) {
+		string prefix = game.ToString(CultureInfo.InvariantCulture) + "-";
+
+		return (game != 0) && (hash.Length > prefix.Length) && hash.StartsWith(prefix, StringComparison.Ordinal);
 	}
 
 	/// <summary>The match an offer's note names - "nocat.farm card swap #a1b2c3d4e5f6" - or null when it isn't a swap offer.</summary>
@@ -603,27 +637,40 @@ public static partial class CardExchange {
 	}
 
 	/// <summary>
-	/// The receiving side's check of a swap offer, before it's accepted: it matches what nocat.lol paired (the same cards,
-	/// or some of the pairs - never anything else), from the account that was paired, one for one in every game; this
-	/// account's sets lose nothing (ASF's own test); and by its own prices it gets at least what it gives, less the most a
-	/// swap may lose.
+	/// The check of a swap offer by either side, on the offer Steam itself made - by the receiving side before it's
+	/// accepted, by the sending side before it's confirmed: it matches what nocat.lol paired (the same cards, or some of the
+	/// pairs - never anything else), with the account that was paired, one for one in every game; nothing in it is promised
+	/// to another swap or offer; this account keeps "Keep this many of each card" (never its last copy) and its sets lose
+	/// nothing (ASF's own test); and by its own prices - of the cards as Steam names them, never as nocat.lol was told -
+	/// it gets at least what it gives, less the most a swap may lose.
 	/// </summary>
-	/// <param name="held">This account's cards now, less what's already leaving.</param>
+	/// <param name="held">This account's cards now, less what's leaving in other swaps and offers.</param>
 	/// <param name="price">A card's price in this account's wallet currency, null when there's no fresh one.</param>
 	/// <param name="rules">What never goes from this account (<see cref="RulesOf"/>): a swap giving one is declined.</param>
+	/// <param name="nowUtc">The receiving side: a match paired more than 2 days ago is declined.</param>
+	/// <param name="busy">This account's copies on another offer or promised to another match: an offer asking for one is declined.</param>
 	public static (Verdict Verdict, Said Why, long Give, long Get) Verify(TradeOffers.Offer offer, Match? match, IReadOnlyDictionary<SwapRules.Card, int> held,
-		Func<TradeOffers.Item, int?> price, long maxLossCents, Rules? rules = null) {
-		if ((match == null) || match.Send || (offer.Partner != match.You) || offer.Ours) {
+		Func<TradeOffers.Item, int?> price, long maxLossCents, Rules? rules = null, DateTime? nowUtc = null, IReadOnlySet<ulong>? busy = null) {
+		if ((match == null) || (match.Send != offer.Ours) || (offer.Partner != match.You)) {
 			return (Verdict.Unknown, new Said("not a swap nocat.lol paired with this account"), 0, 0);
 		}
 
+		if ((nowUtc is DateTime now) && (now - match.Made > MatchFor)) {
+			return (Verdict.Decline, new Said("it was paired more than 2 days ago"), 0, 0);
+		}
+
 		// Steam sometimes leaves descriptions out: that's "don't know yet", never "not a card".
-		if (offer.Giving.Concat(offer.Receiving).Any(static i => !i.Described)) {
+		if (offer.Giving.Concat(offer.Receiving).Any(static i => !i.Described || (i.Hash.Length == 0))) {
 			return (Verdict.Wait, new Said("Steam didn't say what every item is"), 0, 0);
 		}
 
 		if ((offer.Giving.Count == 0) || !offer.Giving.All(Normal) || !offer.Receiving.All(Normal)) {
 			return (Verdict.Bad, new Said("it has something that isn't a normal trading card"), 0, 0);
+		}
+
+		// Priced by Steam's own name for each card, which starts with the card's own game: never a name from elsewhere.
+		if (offer.Giving.Concat(offer.Receiving).Any(static i => !NameFits(i.Hash, i.Game))) {
+			return (Verdict.Decline, new Said("Steam's name for a card in it doesn't fit its game"), 0, 0);
 		}
 
 		List<SwapRules.Card> giving = [.. offer.Giving.Select(static i => new SwapRules.Card(i.Game, i.ClassId))];
@@ -633,9 +680,22 @@ public static partial class CardExchange {
 			return (Verdict.Bad, new Said("it isn't the swap nocat.lol paired"), 0, 0);
 		}
 
+		if ((busy != null) && offer.Giving.Any(i => busy.Contains(i.AssetId))) {
+			return (Verdict.Decline, new Said("a card in it is already on another offer or swap"), 0, 0);
+		}
+
 		// Kept since it was paired - put on a never-touch list, or its game's cards bought for a badge that isn't crafted yet.
 		if ((rules != null) && offer.Giving.Any(i => rules.Keeps(i.Game, i.Name, i.Hash))) {
 			return (Verdict.Decline, new Said("it gives a card this account keeps"), 0, 0);
+		}
+
+		// "Keep this many of each card" - and never the last copy, whatever it's set to.
+		int keep = Math.Max(1, rules?.Keep ?? 1);
+
+		if (giving.GroupBy(static c => c).FirstOrDefault(g => held.GetValueOrDefault(g.Key) - g.Count() < keep) is { } tooFew) {
+			string name = offer.Giving.First(i => (i.Game == tooFew.Key.Game) && (i.ClassId == tooFew.Key.ClassId)).Name;
+
+			return (Verdict.Decline, new Said("it would leave fewer than {0} of {1}", keep, name), 0, 0);
 		}
 
 		if (!SwapRules.NeutralOrBetter(held, giving, receiving)) {

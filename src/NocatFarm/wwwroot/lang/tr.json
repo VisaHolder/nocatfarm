@@ -3099,6 +3099,15 @@
     "1 card still needs a price first.": "1 kartın önce hâlâ bir fiyata ihtiyacı var.",
     "{0} cards still need a price first.": "{0} kartın önce hâlâ bir fiyata ihtiyacı var.",
     "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} kişisine takas teklifi nocat.lol'un söylediği gibi değildi · geri alındı",
+    "it was paired more than 2 days ago": "2 günden daha önce eşleştirildi",
+    "Steam's name for a card in it doesn't fit its game": "içindeki bir kartın Steam adı oyununa uymuyor",
+    "a card in it is already on another offer or swap": "içindeki bir kart zaten başka bir teklifte ya da takasta",
+    "it would leave fewer than {0} of {1}": "{1} kartından {0} taneden az kalırdı",
+    "card swap offer to {0} taken back · {1}": "{0} kişisine takas teklifi geri alındı · {1}",
+    "card swap offer to {0} taken back · swaps are off": "{0} kişisine takas teklifi geri alındı · takaslar kapalı",
+    "offer {0} · left for you · Steam won't say whether it would be held": "teklif {0} · sana bırakıldı · Steam bekletilip bekletilmeyeceğini söylemiyor",
+    "that swap was already done or dropped": "o takas zaten yapıldı ya da bırakıldı",
+    "card swaps: couldn't sign in to nocat.lol through Steam - not paired until it can": "kart takası: Steam ile nocat.lol'a giriş yapılamadı - olana kadar eşleştirme yok",
     "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla"
   },
   "settings": {

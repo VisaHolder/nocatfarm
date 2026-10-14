@@ -41,9 +41,11 @@ only started keeping them then. Turn the setting off and none of these numbers i
 
 Card swaps with other nocat.farm users (1.8.2, *Swap cards with other nocat.farm users*, off on every account) talk to
 nocat.lol only for accounts you turned them on for: the same random install ID, and for each of those accounts its
-SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Never an account name,
-password or login. Turning swaps off on an account deletes its SteamID and trade link from nocat.lol within a minute or
-two; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
+SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Every few weeks each account
+also signs in to nocat.lol through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID
+it is, can't sign in or trade, and nocat.lol keeps only the date. Never an account name, password or login. Turning
+swaps off on an account deletes its SteamID and trade link from nocat.lol within a minute or two, and its old matches
+within the hour; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
