@@ -1046,6 +1046,14 @@ public sealed partial class MainWindow : IDisposable {
 				break;
 
 			case 'o':
+				// A real action on the PC (Steam closes and reopens), so it asks first - the dashboard button asks too.
+				const uint MbYesNo = 0x4, MbIconQuestion = 0x20, IdYes = 6;
+
+				if (MessageBox(_hwnd, Core.Loc.T("Sign your Steam app into {0}? Steam will close and open again.", name),
+						Core.Loc.T("Open in Steam"), MbYesNo | MbIconQuestion) != IdYes) {
+					break;
+				}
+
 				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> steam open " + name)));
 				_ = Task.Run(async () => {
 					try {
@@ -2462,6 +2470,7 @@ public sealed partial class MainWindow : IDisposable {
 	[DllImport("user32.dll")] private static extern IntPtr SetTimer(IntPtr hwnd, IntPtr id, int elapse, IntPtr func);
 	[DllImport("user32.dll")] private static extern bool ReleaseCapture();
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int MessageBox(IntPtr hwnd, string text, string caption, uint type);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool SetWindowText(IntPtr hwnd, string text);
 	[DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);

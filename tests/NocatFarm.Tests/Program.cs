@@ -27386,11 +27386,19 @@ await CommandSweep.RunAsync(Check);
 			}
 			"76561190000000002"
 			{
-				"AccountName"		"farmer"
+				"AccountName"		"farmer_login"
 				"PersonaName"		"Farmer"
-				"RememberPassword"		"0"
+				"RememberPassword"		"1"
 				"MostRecent"		"0"
 				"Timestamp"		"1699000000"
+			}
+			"76561190000000003"
+			{
+				"AccountName"		"noremember"
+				"PersonaName"		"NoRemember"
+				"RememberPassword"		"0"
+				"MostRecent"		"0"
+				"Timestamp"		"1698000000"
 			}
 		}
 		""";
@@ -27398,35 +27406,99 @@ await CommandSweep.RunAsync(Check);
 	// The parser round-trips and finds a block's fields.
 	NocatFarm.Core.SteamVdf soParsed = NocatFarm.Core.SteamVdf.Parse(vdf);
 	NocatFarm.Core.SteamVdf? soUsers = soParsed.Child("users");
-	Check("steam open: vdf parses the users block", soUsers is { IsMap: true } && (soUsers.Children.Count == 2));
-	Check("steam open: vdf reads an account's name", soUsers?.Children[1].Value.Leaf("AccountName") == "farmer");
+	Check("steam open: vdf parses the users block", soUsers is { IsMap: true } && (soUsers.Children.Count == 3));
+	Check("steam open: vdf reads an account's name", soUsers?.Children[1].Value.Leaf("AccountName") == "farmer_login");
 	Check("steam open: vdf round-trips (re-parses to the same names)",
 		NocatFarm.Core.SteamVdf.Parse(soParsed.Serialize()).Child("users")?.Children[0].Value.Leaf("AccountName") == "owner");
 
-	// Decide: switching to an account the client remembers.
+	// The account is found by the login name, never by the nocat.farm account name (here deliberately different).
 	var soReady = new NocatFarm.Core.SteamOpen.Inputs(vdf, "owner", true, 0, true);
-	NocatFarm.Core.SteamOpen.Plan soPlan = NocatFarm.Core.SteamOpen.Decide("farmer", soReady);
+	NocatFarm.Core.SteamOpen.Plan soPlan = NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady);
 	Check("steam open: a remembered account gives an OK plan", soPlan.Code == NocatFarm.Core.SteamOpen.Ok);
-	Check("steam open: the plan points auto-login at the account", soPlan.NewAutoLoginUser == "farmer");
+	Check("steam open: the plan points auto-login at the real login name, not the nocat.farm name", soPlan.NewAutoLoginUser == "farmer_login");
+
+	// By the SteamID64 (the block's own key), even when the login name typed doesn't match any account's name.
+	NocatFarm.Core.SteamOpen.Plan soById = NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 76561190000000002UL, soReady);
+	Check("steam open: an account is found by its SteamID64 first, not by its name", (soById.Code == NocatFarm.Core.SteamOpen.Ok) && (soById.NewAutoLoginUser == "farmer_login"));
+	Check("steam open: the nocat.farm account name is never used to match - a wrong login with no SteamID is refused",
+		NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 0, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
 
 	NocatFarm.Core.SteamVdf soAfter = NocatFarm.Core.SteamVdf.Parse(soPlan.NewVdf ?? "");
 	NocatFarm.Core.SteamVdf? soOwner = soAfter.Child("users")?.Children[0].Value;
 	NocatFarm.Core.SteamVdf? soFarmer = soAfter.Child("users")?.Children[1].Value;
-	Check("steam open: the chosen account becomes most-recent, remembered, auto-login",
-		(soFarmer?.Leaf("MostRecent") == "1") && (soFarmer?.Leaf("RememberPassword") == "1") && (soFarmer?.Leaf("AllowAutoLogin") == "1"));
+	Check("steam open: the chosen account becomes most-recent and auto-login",
+		(soFarmer?.Leaf("MostRecent") == "1") && (soFarmer?.Leaf("AllowAutoLogin") == "1"));
+	Check("steam open: RememberPassword is never written - the owner's own choice stands (left at 1 here)",
+		(soFarmer?.Leaf("RememberPassword") == "1") && !(soPlan.NewVdf ?? "").Contains("\"RememberPassword\"\t\t\"1\"\n\t\t\t\"RememberPassword\"", StringComparison.Ordinal));
 	Check("steam open: every other account only has MostRecent cleared - its name and remembered flag are untouched",
 		(soOwner?.Leaf("MostRecent") == "0") && (soOwner?.Leaf("AccountName") == "owner") && (soOwner?.Leaf("RememberPassword") == "1"));
 
-	// Decide: the refusals, each changing nothing.
-	Check("steam open: an account the client doesn't remember is refused", NocatFarm.Core.SteamOpen.Decide("stranger", soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
-	Check("steam open: no Steam installed is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { SteamInstalled = false }).Code == NocatFarm.Core.SteamOpen.NoSteam);
-	Check("steam open: a game running in the client is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { RunningAppId = 730 }).Code == NocatFarm.Core.SteamOpen.GameRunning);
-	Check("steam open: no saved-accounts file is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { VdfText = null }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
-	Check("steam open: an unreadable saved-accounts file is refused, not thrown", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { VdfText = "not a vdf {{{" }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	// finding 5: an account whose password the client does NOT remember (RememberPassword 0) is not really remembered.
+	Check("steam open: an account with the password not saved is refused - we never flip RememberPassword on",
+		NocatFarm.Core.SteamOpen.Decide("noremember", 76561190000000003UL, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
 
-	// The outcome sentences name the account.
+	// Decide: the refusals, each changing nothing.
+	Check("steam open: an account the client doesn't remember is refused", NocatFarm.Core.SteamOpen.Decide("stranger", 0, soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: no Steam installed is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { SteamInstalled = false }).Code == NocatFarm.Core.SteamOpen.NoSteam);
+	Check("steam open: a game running in the client is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { RunningAppId = 730 }).Code == NocatFarm.Core.SteamOpen.GameRunning);
+	Check("steam open: no saved-accounts file is refused", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = null }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: an unreadable saved-accounts file is refused, not thrown", NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady with { VdfText = "not a vdf {{{" }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+
+	// The outcome sentences name the account, and read plainly.
 	Check("steam open: the OK message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.Ok, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
 	Check("steam open: the not-remembered message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.NotRemembered, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
+	Check("steam open: the steam-busy message says nothing was changed", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.SteamBusy, "farmer").ToEnglish().Contains("nothing was changed", StringComparison.Ordinal));
+	Check("steam open: the backup-failed message says nothing was changed", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.BackupFailed, "farmer").ToEnglish().Contains("nothing was changed", StringComparison.Ordinal));
+
+	// finding 6: a value we don't edit round-trips byte for byte - an unknown escape keeps its backslash, a literal "\n"
+	// stays two characters, not a newline - while a value we set is escaped fresh.
+	const string soRaw = "\"users\"\n{\n\t\"1\"\n\t{\n\t\t\"AccountName\"\t\t\"od\\d\\name\"\n\t\t\"RememberPassword\"\t\t\"1\"\n\t\t\"PersonaName\"\t\t\"line\\nbreak\"\n\t}\n}\n";
+	NocatFarm.Core.SteamVdf soRawParsed = NocatFarm.Core.SteamVdf.Parse(soRaw);
+	Check("steam vdf: an unedited value round-trips with its exact escapes", soRawParsed.Serialize() == soRaw, soRawParsed.Serialize());
+	NocatFarm.Core.SteamVdf? soRawUser = soRawParsed.Child("users")?.Child("1");
+	soRawUser?.SetLeaf("MostRecent", "1");
+	string soRawOut = soRawParsed.Serialize();
+	Check("steam vdf: the untouched values keep their raw text after another value is set",
+		soRawOut.Contains("\"od\\d\\name\"", StringComparison.Ordinal) && soRawOut.Contains("\"line\\nbreak\"", StringComparison.Ordinal) && soRawOut.Contains("\"MostRecent\"\t\t\"1\"", StringComparison.Ordinal), soRawOut);
+
+	// finding 2 + 4: the attempt does things in the safe order, and backs out if Steam won't close or the backup fails.
+	var soGoodPlan = new NocatFarm.Core.SteamOpen.Plan(NocatFarm.Core.SteamOpen.Ok, "x", "farmer_login");
+	{
+		var steps = new List<string>();
+		var okOps = new NocatFarm.Core.SteamOpen.Ops(
+			Running: () => true,
+			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
+			Backup: () => { steps.Add("backup"); return true; },
+			Write: _ => steps.Add("write"),
+			Start: () => steps.Add("start"));
+		string soApplied = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, okOps);
+		Check("steam open: the attempt closes, backs up, writes, then starts - in that order",
+			(soApplied == NocatFarm.Core.SteamOpen.Ok) && steps.SequenceEqual(["close", "backup", "write", "start"]), string.Join(",", steps));
+	}
+	{
+		var steps = new List<string>();
+		var busyOps = new NocatFarm.Core.SteamOpen.Ops(
+			Running: () => true,
+			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(false); },
+			Backup: () => { steps.Add("backup"); return true; },
+			Write: _ => steps.Add("write"),
+			Start: () => steps.Add("start"));
+		string soBusy = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, busyOps);
+		Check("steam open: Steam won't close - nothing is backed up, written or started, and it says steam-busy",
+			(soBusy == NocatFarm.Core.SteamOpen.SteamBusy) && steps.SequenceEqual(["close"]), string.Join(",", steps));
+	}
+	{
+		var steps = new List<string>();
+		var backupFailOps = new NocatFarm.Core.SteamOpen.Ops(
+			Running: () => true,
+			CloseAndWait: () => { steps.Add("close"); return Task.FromResult(true); },
+			Backup: () => { steps.Add("backup"); return false; },
+			Write: _ => steps.Add("write"),
+			Start: () => steps.Add("start"));
+		string soBackup = await NocatFarm.Core.SteamOpen.ApplyAsync(soGoodPlan, backupFailOps);
+		Check("steam open: a failed backup stops the change - nothing is written or started, and it says backup-failed",
+			(soBackup == NocatFarm.Core.SteamOpen.BackupFailed) && steps.SequenceEqual(["close", "backup"]), string.Join(",", steps));
+	}
 
 	// The go-ahead lives outside the settings: the switch and Settle keep the two the same, as spare items do.
 	string soRealRoot = NocatFarm.Config.ConfigStore.Root;
@@ -27469,8 +27541,13 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Config.ConfigStore.SaveBot(soBot.Name, soBot.Cfg);
 		bool soWasSuppressed = NocatFarm.Log.Suppressed;
 		NocatFarm.Log.Suppressed = true;
+		// finding 9: the checks read Steam through an injected fake, never the real registry or Steam folder.
+		NocatFarm.Core.SteamOpen.ReaderForTests = () => new NocatFarm.Core.SteamOpen.Inputs(null, null, false, 0, false);
 
 		try {
+			// With the fake reader saying no Steam, a look is harmless and never touches the PC.
+			Check("steam open: the preview reads through the injected fake, not the real PC", !NocatFarm.Core.SteamOpen.Look(soBot).SteamFound);
+
 			(string soCode, _) = await NocatFarm.Core.SteamOpen.OpenAsync(soBot);
 			Check("steam open: the button off - pressing it is refused before anything on the PC is read or changed", soCode == NocatFarm.Core.SteamOpen.Off, soCode);
 
@@ -27491,10 +27568,12 @@ await CommandSweep.RunAsync(Check);
 			Check("steam open: never from Steam chat - it signs this PC's Steam app in", Commands.SteamChatRefuses("steam"));
 			Check("steam open: off by default on a new account", !new NocatFarm.Config.BotConfig().SteamOpenButton);
 		} finally {
+			NocatFarm.Core.SteamOpen.ReaderForTests = null;
 			NocatFarm.Log.Suppressed = soWasSuppressed;
 			await soBot.DisposeAsync();
 		}
 	} finally {
+		NocatFarm.Core.SteamOpen.ReaderForTests = null;
 		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(soRealRoot);
 
@@ -27864,6 +27943,31 @@ await CommandSweep.RunAsync(Check);
 		wkOff is { } wo && (wo.From.Date == new DateTime(2026, 10, 15)), $"{wkOff}");
 	Check("wake time: no window while the planned wake is ahead", NocatFarm.Modules.HumanMode.UpWindow(wkNight.AddHours(11), wkNight, wkCfg) == null);
 
+	// finding 8: just past the planned wake, still before bedtime and under three hours, the chip's window is null so it
+	// reads "any moment" - never jumping to tomorrow's window.
+	DateTime wkJustWoke = new(2026, 10, 14, 13, 32, 0, DateTimeKind.Local);   // 2 min past a 13:30 wake
+	DateTime wkPlanned = new(2026, 10, 14, 13, 30, 0, DateTimeKind.Local);
+	DateTime wkBed = new(2026, 10, 15, 1, 0, 0, DateTimeKind.Local);
+	Check("wake time: the chip window is empty just past the wake (any moment), not tomorrow's",
+		NocatFarm.Modules.HumanMode.WindowWhenWaking(wkPlanned, wkBed, wkJustWoke, wkCfg) == null);
+	Check("wake time: once more than three hours past the wake the window returns",
+		NocatFarm.Modules.HumanMode.WindowWhenWaking(wkPlanned, wkBed, wkPlanned.AddHours(4), wkCfg) is { });
+	Check("wake time: past bedtime the window returns even within three hours",
+		NocatFarm.Modules.HumanMode.WindowWhenWaking(wkPlanned, wkPlanned.AddMinutes(10), wkPlanned.AddMinutes(20), wkCfg) is { });
+
+	// finding 11: a day off says "back tomorrow" as tomorrow's wake WINDOW, not today's single wake time.
+	Check("wake time: a day off's back-tomorrow is tomorrow's window, not one time",
+		NocatFarm.Modules.HumanMode.DayAfterUpText(new DateTime(2026, 10, 14), wkCfg) == "13:15-14:45",
+		NocatFarm.Modules.HumanMode.DayAfterUpText(new DateTime(2026, 10, 14), wkCfg));
+	Check("wake time: the day-off log line uses tomorrow's window",
+		WkSrc("src/NocatFarm/Modules/HumanMode.cs").Contains("back tomorrow around {0}\", TomorrowUpAt()", StringComparison.Ordinal));
+
+	// finding 7 + 10: the Sitting column / chip past bedtime shows the window or any-moment, never a wrong-day countdown.
+	Check("wake time: the Sitting column shows the window when asleep, else is left empty",
+		WkSrc("src/NocatFarm/Core/BotStatus.cs").Contains("sitting = human.UpWindowNow is { } w ? new Said(\"up {0}\"", StringComparison.Ordinal));
+	Check("wake time: the dashboard chip says any moment when the wake time is in the past",
+		WkSrc("src/NocatFarm/wwwroot/app.js").Contains("new Date(b.Until).getTime() <= Date.now()) return `${b.Status} · ${t('any moment')}`", StringComparison.Ordinal));
+
 	DateTime wkNowUtc = DateTime.UtcNow;
 	DateTime wkFrom = DateTime.Now.Date.AddDays(1).AddHours(13).AddMinutes(15), wkTo = wkFrom.AddMinutes(90);
 	Check("wake time: the chip and mini mode say the window",
@@ -27892,6 +27996,10 @@ await CommandSweep.RunAsync(Check);
 	Check("end of a sitting: the cut-off sitting that's over ends the way a sitting does - a break or switching",
 		wkHuman.Contains("if (!CarriesOn(was.Ends - now))", StringComparison.Ordinal)
 		&& WkSrc("src/NocatFarm/Core/BotStatus.cs").Contains("Math.Max(1, total - done)", StringComparison.Ordinal));
+	// nit: an already-ended sitting (Ends <= now) must reach that same end-of-sitting path, not snap into a fresh game.
+	Check("end of a sitting: an over sitting no longer short-circuits to a brand-new game",
+		!wkHuman.Contains("(was.Ends <= now) || !MayCarryOn(was)", StringComparison.Ordinal)
+		&& wkHuman.Contains("if (!MayCarryOn(was)) {", StringComparison.Ordinal));
 }
 // ── 1.8.2: card swaps with other nocat.farm users - the rules, the list, the checks on both sides, the sync; fakes only ──
 await CardSwapChecks.RunAsync(Check);

@@ -378,8 +378,10 @@ function stateText(b) {
     return `${b.Status} · ${left > 0 ? tf('{0} to go', hm(left)) : t('any moment')}`;
   }
   if (b.Group === 'asleep' || b.Group === 'nightidle') {
+    // Its wake has come and gone while it's still asleep: it gets up any moment, not at a time in the past.
+    if (new Date(b.Until).getTime() <= Date.now()) return `${b.Status} · ${t('any moment')}`;
     // After bedtime the next day isn't planned yet: the window it gets up in, not the day before's wake time.
-    if (b.UpFrom && b.UpTo && new Date(b.Until).getTime() > Date.now()) {
+    if (b.UpFrom && b.UpTo) {
       return `${b.Status} · ${tf('up {0}', clock(b.UpFrom) === clock(b.UpTo) ? clock(b.UpFrom) : `${clock(b.UpFrom)}-${clock(b.UpTo)}`)}`;
     }
     return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;

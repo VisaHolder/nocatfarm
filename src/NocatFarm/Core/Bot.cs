@@ -407,7 +407,7 @@ public sealed class Bot : IAsyncDisposable {
 			GrindDropsLeft = Math.Max(0, saved.DropsLeft);
 			GrindRun++;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
-			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)), Name);
+			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) Math.Max(1, Math.Ceiling((until - DateTime.UtcNow).TotalMinutes)))), Name);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't resume the grind: {0}", Log.Describe(e)), Name);
 		}

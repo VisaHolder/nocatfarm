@@ -150,7 +150,7 @@ public static class SwitchPreview {
 		// 1.8.2: Open in Steam - a read-only look at the local Steam client (no Steam network call), then the plain text
 		// for the console and the same facts as numbers for the pop-up.
 		if (feature == Switches.SteamOpenButton) {
-			SteamOpen.Numbers n = SteamOpen.Look(bot.Name);
+			SteamOpen.Numbers n = SteamOpen.Look(bot);
 			string line = !n.Supported ? $"{bot.Name}: Open in Steam only works on Windows for now."
 				: !n.SteamFound ? $"{bot.Name}: Steam doesn't look installed on this PC."
 				: n.GameRunning ? $"{bot.Name}: a game is open in Steam right now - the button won't switch while one is running."

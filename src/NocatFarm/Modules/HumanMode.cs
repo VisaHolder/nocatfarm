@@ -1385,7 +1385,9 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		Persist();
 
 		if (_targetMinutes == 0) {
-			Log.Info(new Said("taking today off - back tomorrow around {0}", UpAt()), Bot.Name);
+			// "back tomorrow" means tomorrow's window, not today's wake time: the day is rolled at (or just before) today's
+			// wake, where UpAt() would still read today's time.
+			Log.Info(new Said("taking today off - back tomorrow around {0}", TomorrowUpAt()), Bot.Name);
 
 			return;
 		}
@@ -1805,8 +1807,19 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private string UpAt() => UpText(PlanWake(), DateTime.Now, Bot.Cfg);
 
+	/// <summary>Tomorrow's wake window in words, for a "back tomorrow" said while today's plan is being rolled (a day off).</summary>
+	private string TomorrowUpAt() => DayAfterUpText(PlanDate(_dayStamp, DateTime.Now), Bot.Cfg);
+
+	/// <summary>The wake window (in words) for the day after <paramref name="planDate"/> - the next day it actually plays.</summary>
+	public static string DayAfterUpText(DateTime planDate, BotConfig cfg) {
+		DateTime next = planDate.Date.AddDays(1);
+		(int lo, int hi) = WakeWindow(cfg);
+
+		return WindowWords(next.AddMinutes(lo), next.AddMinutes(hi));
+	}
+
 	/// <summary>The window the next wake falls in, while today's planned wake has been and gone (local times) - else null.</summary>
-	public (DateTime From, DateTime To)? UpWindowNow => _dayStamp < 0 ? null : UpWindow(PlanWake(), DateTime.Now, Bot.Cfg);
+	public (DateTime From, DateTime To)? UpWindowNow => _dayStamp < 0 ? null : WindowWhenWaking(PlanWake(), PlanEnds(), DateTime.Now, Bot.Cfg);
 
 	/// <summary><see cref="UpAt"/>, from the plan's wake time, the time now and the settings.</summary>
 	public static string UpText(DateTime planned, DateTime now, BotConfig cfg) =>
@@ -1822,6 +1835,20 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 	/// that's today; done for the day in the evening, or a day off, tomorrow) - or, when that's long gone too (signed out for
 	/// days), the next one from now. Null while the planned wake is still ahead.
 	/// </summary>
+	/// <summary>
+	/// The wake window for a chip or a column, which must agree with the any-moment wording: null not only while the planned
+	/// wake is still ahead but also for the short spell just past it - up to three hours, while today's plan hasn't ended -
+	/// when it gets up at its next look. That is exactly when <see cref="WakeDue"/> still returns the planned time, so the
+	/// chip reads as up any moment rather than jumping to tomorrow's window. Past that, the ordinary <see cref="UpWindow"/>.
+	/// </summary>
+	public static (DateTime From, DateTime To)? WindowWhenWaking(DateTime planned, DateTime planEnds, DateTime now, BotConfig cfg) {
+		if ((now >= planned) && (now < planEnds) && (now - planned < TimeSpan.FromHours(3))) {
+			return null;
+		}
+
+		return UpWindow(planned, now, cfg);
+	}
+
 	public static (DateTime From, DateTime To)? UpWindow(DateTime planned, DateTime now, BotConfig cfg) {
 		if (planned > now) {
 			return null;
@@ -2603,11 +2630,12 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			return true;
 		}
 
-		if ((was.Ends <= now) || !MayCarryOn(was)) {
+		if (!MayCarryOn(was)) {
 			return false;
 		}
 
-		// Only moments of it left: that sitting is over. It ends as any sitting does - a break, or the next game.
+		// Over, or only moments of it left: that sitting is done. It ends as any sitting does - a break, or the next game -
+		// rather than snapping straight into a fresh one (which is what an already-ended sitting used to do).
 		if (!CarriesOn(was.Ends - now)) {
 			Log.Info(new Said("{0} · that sitting's over", GameName(was.Game)), Bot.Name);
 			EndSession();

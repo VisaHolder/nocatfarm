@@ -19,9 +19,23 @@ public sealed class SteamVdf {
 	/// <summary>Children in file order (a key can repeat, as Valve allows). Empty for a leaf.</summary>
 	public List<KeyValuePair<string, SteamVdf>> Children { get; } = [];
 
+	/// <summary>
+	/// The exact text between the quotes as it was read, escapes and all, for a value we did NOT change - so an untouched
+	/// value is written back byte for byte, never re-escaped. Null once we set the value ourselves (then it's escaped fresh).
+	/// </summary>
+	private string? _rawValue;
+
+	/// <summary>The same for a key: its raw text as read, so a key we never edit round-trips exactly.</summary>
+	private string? _rawKey;
+
 	private SteamVdf() { }
 
 	private SteamVdf(string value) => Value = value;
+
+	private SteamVdf(string value, string raw) {
+		Value = value;
+		_rawValue = raw;
+	}
 
 	public bool IsMap => Value == null;
 
@@ -39,11 +53,13 @@ public sealed class SteamVdf {
 	/// <summary>The leaf value under <paramref name="key"/>, or null when it's missing or a map.</summary>
 	public string? Leaf(string key) => Child(key)?.Value;
 
-	/// <summary>Set (or add) a leaf child to <paramref name="value"/>, keeping its place when it's already there.</summary>
+	/// <summary>Set (or add) a leaf child to <paramref name="value"/>, keeping its place (and its raw key) when it's already there.</summary>
 	public void SetLeaf(string key, string value) {
 		for (int i = 0; i < Children.Count; i++) {
 			if (string.Equals(Children[i].Key, key, StringComparison.OrdinalIgnoreCase)) {
-				Children[i] = new KeyValuePair<string, SteamVdf>(Children[i].Key, new SteamVdf(value));
+				// Keep the existing key node's raw key (so it writes back as it was); only the value is ours now, escaped fresh.
+				var replacement = new SteamVdf(value) { _rawKey = Children[i].Value._rawKey };
+				Children[i] = new KeyValuePair<string, SteamVdf>(Children[i].Key, replacement);
 
 				return;
 			}
@@ -64,14 +80,17 @@ public sealed class SteamVdf {
 				break;
 			}
 
-			string key = ReadString(text, ref i);
+			string key = ReadString(text, ref i, out string rawKey);
 			SkipSpace(text, ref i);
 
 			if ((i < text.Length) && (text[i] == '{')) {
 				i++;
-				root.Children.Add(new KeyValuePair<string, SteamVdf>(key, ParseMap(text, ref i)));
+				SteamVdf child = ParseMap(text, ref i);
+				child._rawKey = rawKey;
+				root.Children.Add(new KeyValuePair<string, SteamVdf>(key, child));
 			} else {
-				root.Children.Add(new KeyValuePair<string, SteamVdf>(key, new SteamVdf(ReadString(text, ref i))));
+				string value = ReadString(text, ref i, out string rawValue);
+				root.Children.Add(new KeyValuePair<string, SteamVdf>(key, new SteamVdf(value, rawValue) { _rawKey = rawKey }));
 			}
 		}
 
@@ -94,7 +113,7 @@ public sealed class SteamVdf {
 				return map;
 			}
 
-			string key = ReadString(text, ref i);
+			string key = ReadString(text, ref i, out string rawKey);
 			SkipSpace(text, ref i);
 
 			if (i >= text.Length) {
@@ -103,9 +122,12 @@ public sealed class SteamVdf {
 
 			if (text[i] == '{') {
 				i++;
-				map.Children.Add(new KeyValuePair<string, SteamVdf>(key, ParseMap(text, ref i)));
+				SteamVdf child = ParseMap(text, ref i);
+				child._rawKey = rawKey;
+				map.Children.Add(new KeyValuePair<string, SteamVdf>(key, child));
 			} else {
-				map.Children.Add(new KeyValuePair<string, SteamVdf>(key, new SteamVdf(ReadString(text, ref i))));
+				string value = ReadString(text, ref i, out string rawValue);
+				map.Children.Add(new KeyValuePair<string, SteamVdf>(key, new SteamVdf(value, rawValue) { _rawKey = rawKey }));
 			}
 		}
 	}
@@ -126,18 +148,23 @@ public sealed class SteamVdf {
 		}
 	}
 
-	private static string ReadString(string text, ref int i) {
+	private static string ReadString(string text, ref int i, out string raw) {
 		if ((i >= text.Length) || (text[i] != '"')) {
 			throw new FormatException("expected a quoted string");
 		}
 
 		i++;
+		int rawStart = i;
 		StringBuilder sb = new();
 
 		while (i < text.Length) {
 			char c = text[i++];
 
 			if (c == '"') {
+				// The exact bytes between the quotes, so an untouched value round-trips verbatim (no backslash lost on an
+				// escape we don't know, no real newline where the file had a literal "\n").
+				raw = text.Substring(rawStart, (i - 1) - rawStart);
+
 				return sb.ToString();
 			}
 
@@ -165,9 +192,11 @@ public sealed class SteamVdf {
 
 	private static void Write(StringBuilder sb, string key, SteamVdf node, int depth) {
 		string indent = new('\t', depth);
+		// A key we never edited goes back exactly as it came in; one we added ourselves is escaped fresh.
+		string keyText = node._rawKey ?? Escape(key);
 
 		if (node.IsMap) {
-			sb.Append(indent).Append('"').Append(Escape(key)).Append('"').Append('\n');
+			sb.Append(indent).Append('"').Append(keyText).Append('"').Append('\n');
 			sb.Append(indent).Append('{').Append('\n');
 
 			foreach (KeyValuePair<string, SteamVdf> kv in node.Children) {
@@ -176,7 +205,9 @@ public sealed class SteamVdf {
 
 			sb.Append(indent).Append('}').Append('\n');
 		} else {
-			sb.Append(indent).Append('"').Append(Escape(key)).Append("\"\t\t\"").Append(Escape(node.Value ?? "")).Append('"').Append('\n');
+			// Likewise the value: the raw text for one we left alone, a fresh escape only for one we set.
+			string valueText = node._rawValue ?? Escape(node.Value ?? "");
+			sb.Append(indent).Append('"').Append(keyText).Append("\"\t\t\"").Append(valueText).Append('"').Append('\n');
 		}
 	}
 

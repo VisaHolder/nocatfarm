@@ -89,7 +89,7 @@ public static class SteamClientSwitch {
 	}
 
 	/// <summary>Read the two files and three values Open in Steam looks at, changing nothing.</summary>
-	private static SteamOpen.Inputs Read() {
+	internal static SteamOpen.Inputs Read() {
 		string? steamPath = SteamPath();
 		string? exe = SteamExe(steamPath);
 		bool installed = (steamPath != null) && (exe != null);
@@ -130,112 +130,133 @@ public static class SteamClientSwitch {
 		return new SteamOpen.Inputs(vdf, autoLogin, remember, runningApp, installed);
 	}
 
-	/// <summary>Read-only look for the preview: whether this PC can do it, Steam is here, the account is remembered, a game is on.</summary>
-	public static SteamOpen.Numbers Look(string account) {
-		SteamOpen.Inputs inputs = Read();
-		SteamOpen.Plan plan = SteamOpen.Decide(account, inputs);
+	/// <summary>One press at a time: a double-click (or the window button and the dashboard together) can't race on the files.</summary>
+	private static readonly SemaphoreSlim OneAtATime = new(1, 1);
 
-		return new SteamOpen.Numbers(
-			Supported: true,
-			SteamFound: inputs.SteamInstalled,
-			Remembered: plan.Code is SteamOpen.Ok,
-			GameRunning: plan.Code is SteamOpen.GameRunning,
-			Account: account);
+	/// <summary>
+	/// Do it: close Steam first and wait for it to go, then (and only then) back up the files, write the account's flags,
+	/// and start Steam. Returns the outcome code and its sentence. Changes nothing - and says so - when the client already
+	/// doesn't remember the account, a game is running, Steam wouldn't close, or the backup failed.
+	/// </summary>
+	/// <param name="login">The Steam login name (Cfg.SteamLogin), matched against the saved accounts.</param>
+	/// <param name="steamId">The account's SteamID64, matched first; 0 when it isn't signed in yet.</param>
+	/// <param name="display">The nocat.farm account name, for the log and the reply.</param>
+	public static async Task<(string Code, string Said)> OpenAsync(string login, ulong steamId, string display) {
+		if (!await OneAtATime.WaitAsync(0).ConfigureAwait(false)) {
+			return (SteamOpen.SteamBusy, new Said("one Open in Steam is already running - wait for it to finish").ToEnglish());
+		}
+
+		try {
+			SteamOpen.Inputs inputs = Read();
+			SteamOpen.Plan plan = SteamOpen.Decide(login, steamId, inputs);
+
+			if (plan.Code is not SteamOpen.Ok) {
+				Log.Info(SteamOpen.Message(plan.Code, display), display);
+
+				return (plan.Code, SteamOpen.Message(plan.Code, display).ToEnglish());
+			}
+
+			string? steamPath = SteamPath();
+			string? exe = SteamExe(steamPath);
+
+			if ((steamPath == null) || (exe == null)) {
+				Log.Info(SteamOpen.Message(SteamOpen.NoSteam, display), display);
+
+				return (SteamOpen.NoSteam, SteamOpen.Message(SteamOpen.NoSteam, display).ToEnglish());
+			}
+
+			string vdfPath = VdfPath(steamPath);
+			Exception? writeError = null;
+
+			var ops = new SteamOpen.Ops(
+				Running: SteamRunning,
+				CloseAndWait: () => CloseSteamAndWaitAsync(exe),
+				Backup: () => BackUp(vdfPath, inputs),
+				Write: p => {
+					try {
+						if (p.NewVdf != null) {
+							AtomicFile.Write(vdfPath, p.NewVdf);
+						}
+
+						// Only AutoLoginUser - the single "sign this one in" pointer. RememberPassword is the owner's own
+						// global choice and is never written here.
+						using RegistryKey key = Registry.CurrentUser.CreateSubKey(SteamKey, true);
+						key.SetValue("AutoLoginUser", p.NewAutoLoginUser ?? login, RegistryValueKind.String);
+					} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) {
+						writeError = e;
+					}
+				},
+				Start: () => {
+					if (writeError != null) {
+						return;   // the write failed, so don't start Steam onto a half-written change
+					}
+
+					try {
+						Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true })?.Dispose();
+					} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
+						Log.Failed("couldn't start Steam again", e, display);
+					}
+				});
+
+			string code = await SteamOpen.ApplyAsync(plan, ops).ConfigureAwait(false);
+
+			if (writeError != null) {
+				Log.Failed("couldn't write Steam's saved-accounts files", writeError, display);
+
+				return (SteamOpen.NoSteam, new Said("couldn't change Steam's saved accounts - {0}", Log.Scrub(writeError.Message)).ToEnglish());
+			}
+
+			Log.Info(SteamOpen.Message(code, display), display);
+
+			return (code, SteamOpen.Message(code, display).ToEnglish());
+		} finally {
+			OneAtATime.Release();
+		}
 	}
 
 	/// <summary>
-	/// Do it: back up the files, write the account's flags, restart Steam. Returns the outcome code and its sentence.
-	/// Refuses (and changes nothing) unless the client already remembers the account and no game is running.
+	/// Close Steam the polite way (steam.exe -shutdown) and wait up to ~60 seconds for it to go. True once it's gone (or was
+	/// never up); false if it wouldn't close - we never kill it, so a client mid-save is left to finish and the caller
+	/// changes nothing.
 	/// </summary>
-	public static async Task<(string Code, string Said)> OpenAsync(string account) {
-		SteamOpen.Inputs inputs = Read();
-		SteamOpen.Plan plan = SteamOpen.Decide(account, inputs);
-
-		if (plan.Code is not SteamOpen.Ok) {
-			Log.Info(SteamOpen.Message(plan.Code, account), account);
-
-			return (plan.Code, SteamOpen.Message(plan.Code, account).ToEnglish());
-		}
-
-		string? steamPath = SteamPath();
-		string? exe = SteamExe(steamPath);
-
-		if ((steamPath == null) || (exe == null)) {
-			Log.Info(SteamOpen.Message(SteamOpen.NoSteam, account), account);
-
-			return (SteamOpen.NoSteam, SteamOpen.Message(SteamOpen.NoSteam, account).ToEnglish());
+	private static async Task<bool> CloseSteamAndWaitAsync(string exe) {
+		if (!SteamRunning()) {
+			return true;
 		}
 
 		try {
-			BackUp(VdfPath(steamPath), inputs);
-
-			// The saved-accounts file, then the two registry values, before Steam is told to close - so a half-written
-			// change can never be what a still-running client reads.
-			if (plan.NewVdf != null) {
-				AtomicFile.Write(VdfPath(steamPath), plan.NewVdf);
-			}
-
-			using (RegistryKey key = Registry.CurrentUser.CreateSubKey(SteamKey, true)) {
-				key.SetValue("AutoLoginUser", plan.NewAutoLoginUser ?? account, RegistryValueKind.String);
-				key.SetValue("RememberPassword", 1, RegistryValueKind.DWord);
-			}
-		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException) {
-			Log.Failed("couldn't write Steam's saved-accounts files", e, account);
-
-			return (SteamOpen.NoSteam, new Said("couldn't change Steam's saved accounts - {0}", Log.Scrub(e.Message)).ToEnglish());
-		}
-
-		Log.Info(SteamOpen.Message(SteamOpen.Ok, account), account);
-		await RestartSteamAsync(exe).ConfigureAwait(false);
-
-		return (SteamOpen.Ok, SteamOpen.Message(SteamOpen.Ok, account).ToEnglish());
-	}
-
-	/// <summary>Close Steam the polite way (steam.exe -shutdown), wait for it to go, then start it again.</summary>
-	private static async Task RestartSteamAsync(string exe) {
-		if (SteamRunning()) {
-			try {
-				ProcessStartInfo stop = new(exe) { UseShellExecute = false };
-				stop.ArgumentList.Add("-shutdown");
-				Process.Start(stop)?.Dispose();
-			} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
-				Log.Debug($"steam -shutdown wouldn't start: {Log.Describe(e)}");
-			}
-
-			// Up to ~15 seconds for it to exit on its own; we never kill it, so a client mid-save is left to finish.
-			for (int i = 0; (i < 30) && SteamRunning(); i++) {
-				await Task.Delay(500).ConfigureAwait(false);
-			}
-		}
-
-		if (SteamRunning()) {
-			Log.Warn(new Said("Steam didn't close - leaving it as it is, nothing started"));
-
-			return;
-		}
-
-		try {
-			Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true })?.Dispose();
+			ProcessStartInfo stop = new(exe) { UseShellExecute = false };
+			stop.ArgumentList.Add("-shutdown");
+			Process.Start(stop)?.Dispose();
 		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
-			Log.Failed("couldn't start Steam again", e);
+			Log.Debug($"steam -shutdown wouldn't start: {Log.Describe(e)}");
 		}
+
+		// Up to ~60 seconds for it to exit on its own.
+		for (int i = 0; (i < 120) && SteamRunning(); i++) {
+			await Task.Delay(500).ConfigureAwait(false);
+		}
+
+		return !SteamRunning();
 	}
 
 	private static string BackupDir => Path.Combine(ConfigStore.ConfigDir, "state", "steam-open-backups");
 
 	/// <summary>
-	/// Copy the saved-accounts file and note the old registry values before any change, into a timestamped folder.
-	/// Keeps the last three so a mistake can always be undone by hand; never touches a token.
+	/// Copy the saved-accounts file and note the old registry values before any change, into a folder of its own (a
+	/// timestamp plus a short unique tag, so two presses in the same second never share - or overwrite - a folder). Keeps
+	/// the last three so a mistake can always be undone by hand; never touches a token. True on success; false when it
+	/// couldn't back up, so the caller leaves the files alone.
 	/// </summary>
-	private static void BackUp(string vdfPath, SteamOpen.Inputs inputs) {
+	private static bool BackUp(string vdfPath, SteamOpen.Inputs inputs) {
 		try {
 			Directory.CreateDirectory(BackupDir);
 			string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-			string into = Path.Combine(BackupDir, stamp);
+			string into = Path.Combine(BackupDir, $"{stamp}-{Guid.NewGuid().ToString("N")[..6]}");
 			Directory.CreateDirectory(into);
 
 			if (File.Exists(vdfPath)) {
-				File.Copy(vdfPath, Path.Combine(into, "loginusers.vdf"), overwrite: true);
+				File.Copy(vdfPath, Path.Combine(into, "loginusers.vdf"), overwrite: false);
 			}
 
 			File.WriteAllText(Path.Combine(into, "registry.txt"),
@@ -249,8 +270,12 @@ public static class SteamClientSwitch {
 					// leave it; a stale backup folder is harmless
 				}
 			}
+
+			return true;
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			Log.Debug($"couldn't back up Steam's saved-accounts files: {Log.Describe(e)}");
+
+			return false;
 		}
 	}
 }

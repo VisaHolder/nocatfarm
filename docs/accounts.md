@@ -37,10 +37,16 @@ app window - that signs your own Steam desktop app into it, no password typing. 
 Steam's saved-accounts files at that account, and starts Steam again, so Steam signs straight in from the login it
 already remembers. It never stops nocat.farm farming the account: Steam allows the sign-in and only backs the farm
 off when you actually launch a game. It's off until you turn it on - tick it in the account's settings, read the
-preview of exactly what the button does, and press Turn on; or `steam on myaccount`. Then press the button, or
-`steam open myaccount`. If Steam doesn't remember the account yet, sign into it once in Steam with *Remember me*
-ticked and it works after that. It backs up the two files it changes (keeping the last three backups) and never
-touches another account's entry or any login token.
+preview of exactly what the button does, and press Turn on; or `steam on myaccount`. Then press the button (it asks
+you to confirm first, since Steam closes and reopens), or `steam open myaccount`. If Steam doesn't remember the
+account's password yet, sign into it once in Steam with *Remember me* ticked and it works after that - it will only
+switch to an account whose password Steam has saved, and it never turns *Remember me* on for you.
+
+It finds the account by its Steam ID (and failing that its Steam login name), never by the name you gave it in
+nocat.farm, so a label that differs from the real login still works. It closes Steam first and waits for it to go;
+only once Steam has really closed does it back up the two files it changes (each backup in its own folder, keeping
+the last three), write the change and start Steam again. If Steam won't close, or the backup fails, it changes
+nothing and says so. It never touches another account's entry or any login token.
 
 `disable myaccount` keeps the settings but never signs in, and `enable myaccount` undoes it. `remove myaccount`
 deletes the account and its login token. `nickname myaccount <name>` changes the profile name everybody sees, and

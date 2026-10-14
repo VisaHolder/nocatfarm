@@ -30,7 +30,7 @@ public static partial class Commands {
 				}
 
 				return string.Join(Environment.NewLine, mgr.All.Select(b => {
-					SteamOpen.Numbers n = SteamOpen.Look(b.Name);
+					SteamOpen.Numbers n = SteamOpen.Look(b);
 					string state = !SteamOpen.On(b.Cfg, b.Name) ? "button off"
 						: !n.SteamFound ? "Steam not found"
 						: n.GameRunning ? "a game is open in Steam"
