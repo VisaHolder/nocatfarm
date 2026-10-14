@@ -215,7 +215,7 @@ public interface ICardMarket {
 
 /// <summary>
 /// Card swaps, as buying cards asks them: whether a missing card could come by a swap instead, and for how much. Card
-/// swapping answers through <see cref="CardSwaps.Current"/> once it's there; until then there's no swap on offer and
+/// swapping answers through <see cref="SwapCost.Current"/> once it's there; until then there's no swap on offer and
 /// every missing card is bought.
 /// </summary>
 public interface ICardSwaps {
@@ -227,7 +227,7 @@ public interface ICardSwaps {
 }
 
 /// <summary>Where buying cards finds card swapping. None for now.</summary>
-public static class CardSwaps {
+public static class SwapCost {
 	private sealed class NoSwaps : ICardSwaps {
 		public Task<long?> SwapCostAsync(Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult<long?>(null);
 	}
@@ -746,7 +746,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	}
 
 	private readonly ICardMarket _market = market ?? new SteamCardMarket(bot);
-	private ICardSwaps Swaps => swaps ?? CardSwaps.Current;
+	private ICardSwaps Swaps => swaps ?? SwapCost.Current;
 	private readonly SemaphoreSlim _busy = new(1, 1);
 	private HumanGate? _gate;
 	private Said _status = new("");

@@ -27585,7 +27585,7 @@ await CommandSweep.RunAsync(Check);
 			return m;
 		}
 		async Task<NocatFarm.Modules.BuyPlan> BcPlan(NocatFarm.Config.BotConfig cfg, FakeCardMarket m, NocatFarm.Modules.ICardSwaps? swaps = null, NocatFarm.Modules.BuyLedger? ledger = null) =>
-			await NocatFarm.Modules.BuyPlan.MakeAsync(cfg, m, swaps ?? NocatFarm.Modules.CardSwaps.None,
+			await NocatFarm.Modules.BuyPlan.MakeAsync(cfg, m, swaps ?? NocatFarm.Modules.SwapCost.None,
 				ledger ?? new NocatFarm.Modules.BuyLedger(Path.Combine(bcRoot, "config", "state", "buy-" + Guid.NewGuid().ToString("N") + ".json")), null, bcNow, CancellationToken.None);
 
 		var bcP = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true }, BcMarket());
@@ -27636,7 +27636,7 @@ await CommandSweep.RunAsync(Check);
 			(bcSwapPlan.Steps.Count == 0) && bcSwapPlan.Notes.Any(static n => n.Contains("waiting for a card swap", StringComparison.Ordinal)));
 		var bcDearSwap = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true }, BcMarket(), new FakeCardSwaps { Cost = 500 });
 		Check("plan: a swap dearer than buying - bought", bcDearSwap.Steps.Count == 2);
-		Check("plan: card swapping isn't there yet - no swap is on offer", (await NocatFarm.Modules.CardSwaps.Current.SwapCostAsync(null, 1, "1-a", CancellationToken.None)) == null);
+		Check("plan: card swapping isn't there yet - no swap is on offer", (await NocatFarm.Modules.SwapCost.Current.SwapCostAsync(null, 1, "1-a", CancellationToken.None)) == null);
 		var bcBlind = BcMarket();
 		bcBlind.Wallet = null;
 		Check("plan: no wallet read, no plan", (await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true }, bcBlind)).Problem.Length > 0);
@@ -27690,7 +27690,7 @@ await CommandSweep.RunAsync(Check);
 			if (on) {
 				NocatFarm.Core.Switches.Set(bot, NocatFarm.Core.Switches.Buy, true);
 			}
-			var buyer = new NocatFarm.Modules.CardBuyer(bot, m, NocatFarm.Modules.CardSwaps.None);
+			var buyer = new NocatFarm.Modules.CardBuyer(bot, m, NocatFarm.Modules.SwapCost.None);
 			var result = await buyer.LookAsync(mode, CancellationToken.None);
 			return (result, m, bot, buyer);
 		}
@@ -27730,7 +27730,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Core.Switches.Set(bcMid, NocatFarm.Core.Switches.Buy, true);
 		var bcMidMarket = BcMarket();
 		bcMidMarket.AfterBuys = (1, () => NocatFarm.Core.Switches.Set(bcMid, NocatFarm.Core.Switches.Buy, false));
-		await new NocatFarm.Modules.CardBuyer(bcMid, bcMidMarket, NocatFarm.Modules.CardSwaps.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		await new NocatFarm.Modules.CardBuyer(bcMid, bcMidMarket, NocatFarm.Modules.SwapCost.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 		Check("module: turned off while it buys - it stops before the next card", bcMidMarket.Bought.Count == 1, string.Join(",", bcMidMarket.Bought));
 		var bcSilent = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true,
 			setup: m => m.Answer = NocatFarm.Modules.BuyResult.NoAnswer);
@@ -27751,7 +27751,7 @@ await CommandSweep.RunAsync(Check);
 		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(bcPerson, DateTime.UtcNow);
 		NocatFarm.Core.Switches.Set(bcPerson, NocatFarm.Core.Switches.Buy, true);
 		var bcPersonMarket = BcMarket();
-		var bcPersonResult = await new NocatFarm.Modules.CardBuyer(bcPerson, bcPersonMarket, NocatFarm.Modules.CardSwaps.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		var bcPersonResult = await new NocatFarm.Modules.CardBuyer(bcPerson, bcPersonMarket, NocatFarm.Modules.SwapCost.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 		Check("human mode: outside its day nothing is bought, by hand either", (bcPersonMarket.Bought.Count == 0) && bcPersonResult.Problem.StartsWith("not now", StringComparison.Ordinal), bcPersonResult.Problem);
 		await bcPerson.DisposeAsync();
 		string bcBuyerSrc = BcSrc("src/NocatFarm/Modules/CardBuyer.cs");
