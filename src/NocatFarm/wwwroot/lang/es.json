@@ -3094,6 +3094,15 @@
     "1 card still needs a price first.": "A 1 carta todavía le falta un precio.",
     "{0} cards still need a price first.": "A {0} cartas todavía les falta un precio.",
     "card swap offer to {0} wasn't what nocat.lol said · taken back": "la oferta de intercambio a {0} no era lo que dijo nocat.lol · retirada",
+    "it was paired more than 2 days ago": "se emparejó hace más de 2 días",
+    "Steam's name for a card in it doesn't fit its game": "el nombre de Steam para una carta no corresponde a su juego",
+    "a card in it is already on another offer or swap": "una carta ya está en otra oferta o intercambio",
+    "it would leave fewer than {0} of {1}": "quedarían menos de {0} de {1}",
+    "card swap offer to {0} taken back · {1}": "oferta de intercambio a {0} retirada · {1}",
+    "card swap offer to {0} taken back · swaps are off": "oferta de intercambio a {0} retirada · los intercambios están desactivados",
+    "offer {0} · left for you · Steam won't say whether it would be held": "oferta {0} · queda para ti · Steam no dice si quedaría retenida",
+    "that swap was already done or dropped": "ese intercambio ya se hizo o se descartó",
+    "card swaps: couldn't sign in to nocat.lol through Steam - not paired until it can": "intercambio de cartas: no se pudo iniciar sesión en nocat.lol con Steam - sin emparejar hasta que se pueda",
     "card swap · confirm the offer to {0} from Steam's email": "intercambio de cartas · confirma la oferta a {0} desde el correo de Steam"
   },
   "settings": {

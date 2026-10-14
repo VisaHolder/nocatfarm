@@ -9,8 +9,11 @@ namespace NocatFarm.Modules;
 /// <list type="bullet">
 /// <item>exactly what nocat.lol paired (or some of its pairs), from the account it paired, nothing else - else it's never
 /// accepted, it's left for you, nocat.lol is told, and that account is never swapped with again;</item>
-/// <item>this account's sets lose nothing (ASF's own test) and by its own prices it gets at least what it gives, less "Most
-/// a swap may lose" - else it's declined;</item>
+/// <item>a match this account hasn't swapped, declined or found bad already, paired no more than 2 days ago, asking for no
+/// copy that's on another offer or promised to another match - else it's declined;</item>
+/// <item>this account keeps "Keep this many of each card" (never its last copy), its sets lose nothing (ASF's own test),
+/// and by its own prices - of the cards as Steam names them - it gets at least what it gives, less "Most a swap may
+/// lose" - else it's declined;</item>
 /// <item>within "Swaps a day, at most", and on a human-mode account in its own day, spaced out.</item>
 /// </list>
 /// Then it's accepted the usual way: after the usual wait, one swap a look, and confirmed by the authenticator when it's
@@ -85,27 +88,32 @@ public sealed partial class Trading {
 			return Remember(null, new Said("not now"));
 		}
 
+		// A match is swapped once: an offer for one this account already swapped, declined or found bad is never accepted.
+		if (ledger.Of(id) != null) {
+			Said used = new("that swap was already done or dropped");
+			Log.Info(new Said("offer {0} isn't a good swap now ({1}) - declining", n, used), Bot.Name);
+
+			return Remember(false, used);
+		}
+
 		int currency = Bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) Bot.WalletCurrency;
 
 		if ((currency == 0) || (await (ReadCards?.Invoke(ct) ?? Inventory.ReadAsync(Bot, 753, "6", ct)).ConfigureAwait(false) is not { Complete: true } inventory)) {
 			return Remember(null, new Said("couldn't read this account's cards"));
 		}
 
-		// Its cards now, less the ones promised to swaps accepted and still waiting on a confirmation.
-		Dictionary<SwapRules.Card, int> held = CardExchange.Held(CardExchange.ReadCards(inventory), new HashSet<ulong>());
-
-		foreach (FairSwap.Card leaving in Promised()) {
-			SwapRules.Card c = new(leaving.Game, leaving.ClassId);
-
-			if (held.TryGetValue(c, out int have)) {
-				held[c] = Math.Max(0, have - 1);
-			}
+		if (await (ReadOffers?.Invoke(ct) ?? TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct)).ConfigureAwait(false) is not { } live) {
+			return Remember(null, new Said("Steam didn't say what's on its offers"));
 		}
 
+		// Its cards now, less what's on its other offers (swaps accepted and waiting on a confirmation too) and promised to
+		// its other matches - none of those may go in this one, nor count as held.
+		HashSet<ulong> leaving = [.. TradeOffers.Committed(live.Where(o => o.Id != offer.Id)), .. CardExchange.Reserved(Bot.Name, Bot.SteamId, now, id)];
+		Dictionary<SwapRules.Card, int> held = CardExchange.Held(CardExchange.ReadCards(inventory), leaving);
 		CardExchange.Match? match = CardExchange.Find(Bot.SteamId, id);
 		long maxLoss = CardExchange.MaxLossCents(Bot.Cfg);
 		CardExchange.Rules rules = CardExchange.RulesOf(Bot, now);
-		(CardExchange.Verdict verdict, Said why, long give, long get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, now), maxLoss, rules);
+		(CardExchange.Verdict verdict, Said why, long give, long get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, now), maxLoss, rules, now, leaving);
 
 		// No fresh price: the cards in it are asked about in the wallet's own currency, then judged again.
 		if (verdict == CardExchange.Verdict.Wait) {
@@ -113,7 +121,7 @@ public sealed partial class Trading {
 				await (PriceCard?.Invoke(item.Hash, currency, ct) ?? MarketQuotes.FetchAsync(item.Hash, currency, ct)).ConfigureAwait(false);
 			}
 
-			(verdict, why, give, get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, DateTime.UtcNow), maxLoss, rules);
+			(verdict, why, give, get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, DateTime.UtcNow), maxLoss, rules, now, leaving);
 		}
 
 		switch (verdict) {
@@ -198,7 +206,8 @@ public sealed partial class Trading {
 
 		DateTime now = DateTime.UtcNow;
 		CardExchange.Ledger ledger = CardExchange.Ledger.Load(Bot.Name);
-		ledger.SetState(id, done ? "done" : "sent", offer.Partner, now, offer.Id);
+		// What comes in, by Steam's own names - what buying cards waits for instead of buying.
+		ledger.SetState(id, done ? "done" : "sent", offer.Partner, now, offer.Id, offer.Receiving.Select(static i => i.Hash));
 		ledger.Counted(now, Bot.Cfg.LegitMode ? Rng.HumanMinutes(45, 120) : TimeSpan.Zero);
 
 		(long Give, long Get, int Currency) worth;

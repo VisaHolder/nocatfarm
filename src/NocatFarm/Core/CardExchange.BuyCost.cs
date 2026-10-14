@@ -13,40 +13,29 @@ public static partial class CardExchange {
 	/// sure a swap is coming, the answer is "no swap" and the card is bought.
 	/// </summary>
 	public sealed class BuyCosts : ICardSwaps {
-		public Task<long?> SwapCostAsync(Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult(bot == null ? null
-			: CostOf(bot, app, hash, DateTime.UtcNow, h => WalletCents(h, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, DateTime.UtcNow)));
+		public Task<long?> SwapCostAsync(Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult(bot == null ? null : CostOf(bot, app, hash, DateTime.UtcNow));
 	}
 
 	/// <summary>
-	/// What getting this card by a swap would cost, in the wallet's currency, or null when no swap for it is likely soon. Only
-	/// a match nocat.lol handed this account at its last sync counts - still open, with the card in it coming to this
-	/// account, from a partner that never sent a bad offer - and only while card swaps are on, scam watch isn't holding its
-	/// trades, and it isn't a game it bought cards of lately. A match with an offer already out costs 0: its card is on the
-	/// way, and buying it would be a second copy. One not acted on yet costs what this account gives for it (its spare
-	/// card's price); with no fresh price for that, null - not sure, so it's bought.
+	/// What getting this card by a swap costs: 0 when it's already on its way, null when no swap is sure to bring it. Only a
+	/// swap whose offer is out and that this account checked counts - the offer Steam made, with this very card coming in
+	/// by Steam's own name for it (game and all), from a partner that never sent a bad offer - and only while card swaps
+	/// are on, scam watch isn't holding its trades, and it isn't a game it bought cards of lately. A match not acted on
+	/// yet doesn't: the names nocat.lol hands over are only what the partner said, and a partner could name any card.
+	/// Conservative: not sure is "no swap", and the card is bought.
 	/// </summary>
-	/// <param name="price">A card's price in the wallet's currency from no more than a day ago, null when there's none.</param>
-	public static long? CostOf(Bot bot, uint app, string hash, DateTime nowUtc, Func<string, int?> price) {
+	public static long? CostOf(Bot bot, uint app, string hash, DateTime nowUtc) {
 		// A game it bought cards of lately isn't swapped from (its cards stay for the craft), so no swap in it is coming.
-		if (string.IsNullOrEmpty(hash) || (bot.SteamId == 0) || !On(bot.Cfg, bot.Name) || ScamWatch.HoldsTrades(bot) || BoughtGames(bot.Name, nowUtc).Contains(app)) {
+		if (string.IsNullOrEmpty(hash) || !NameFits(hash, app) || (bot.SteamId == 0) || !On(bot.Cfg, bot.Name) || ScamWatch.HoldsTrades(bot)
+			|| BoughtGames(bot.Name, nowUtc).Contains(app)) {
 			return null;
 		}
 
 		Ledger ledger = Ledger.Load(bot.Name);
 		HashSet<string> open = [.. OpenIds(bot.Name, bot.SteamId, nowUtc)];
-		long? best = null;
 
-		foreach (Match m in MatchesOf(bot.SteamId).Where(m => open.Contains(m.Id) && !ledger.IsBlocked(m.You))) {
-			foreach (Pair p in m.Pairs.Where(p => (p.Game == app) && p.GetName.Equals(hash, StringComparison.Ordinal))) {
-				long? cost = ledger.Of(m.Id) is { State: "sent" } ? 0 : price(p.GiveName);
-
-				if ((cost is long c) && ((best == null) || (c < best))) {
-					best = c;
-				}
-			}
-		}
-
-		return best;
+		return MatchesOf(bot.SteamId).Any(m => open.Contains(m.Id) && !ledger.IsBlocked(m.You)
+			&& (ledger.Of(m.Id) is { State: "sent" } r) && r.Gets.Contains(hash, StringComparer.Ordinal)) ? 0 : null;
 	}
 
 	/// <summary>How long a game whose cards were bought for a badge is kept out of swaps and spare items: until it's crafted, a week at most.</summary>

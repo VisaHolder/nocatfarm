@@ -3094,6 +3094,15 @@
     "1 card still needs a price first.": "1 枚のカードはまだ先に価格が必要です。",
     "{0} cards still need a price first.": "{0} 枚のカードはまだ先に価格が必要です。",
     "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} への交換オファーは nocat.lol の内容と違いました · 取り消しました",
+    "it was paired more than 2 days ago": "ペアになってから2日以上たっています",
+    "Steam's name for a card in it doesn't fit its game": "中のカードの Steam での名前がそのゲームと合いません",
+    "a card in it is already on another offer or swap": "中のカードはすでに別のオファーか交換に入っています",
+    "it would leave fewer than {0} of {1}": "{1} が {0} 枚より少なくなります",
+    "card swap offer to {0} taken back · {1}": "{0} への交換オファーを取り消しました · {1}",
+    "card swap offer to {0} taken back · swaps are off": "{0} への交換オファーを取り消しました · 交換はオフです",
+    "offer {0} · left for you · Steam won't say whether it would be held": "オファー {0} · あなたに任せます · トレード保留になるか Steam が答えません",
+    "that swap was already done or dropped": "その交換はもう済んだか取りやめになっています",
+    "card swaps: couldn't sign in to nocat.lol through Steam - not paired until it can": "カード交換: Steam で nocat.lol にサインインできません - できるまでペアになりません",
     "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して"
   },
   "settings": {

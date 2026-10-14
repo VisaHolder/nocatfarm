@@ -3094,6 +3094,15 @@
     "1 card still needs a price first.": "카드 1장은 아직 먼저 가격이 필요합니다.",
     "{0} cards still need a price first.": "카드 {0}장은 아직 먼저 가격이 필요합니다.",
     "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0}에게 보낸 교환 제안이 nocat.lol이 말한 것과 달랐습니다 · 취소함",
+    "it was paired more than 2 days ago": "2일보다 전에 짝지어졌습니다",
+    "Steam's name for a card in it doesn't fit its game": "안에 있는 카드의 Steam 이름이 그 게임과 맞지 않습니다",
+    "a card in it is already on another offer or swap": "안에 있는 카드가 이미 다른 제안이나 교환에 있습니다",
+    "it would leave fewer than {0} of {1}": "{1}이(가) {0}장보다 적게 남게 됩니다",
+    "card swap offer to {0} taken back · {1}": "{0}에게 보낸 교환 제안 취소함 · {1}",
+    "card swap offer to {0} taken back · swaps are off": "{0}에게 보낸 교환 제안 취소함 · 교환이 꺼져 있습니다",
+    "offer {0} · left for you · Steam won't say whether it would be held": "제안 {0} · 직접 결정하세요 · Steam이 보류될지 알려주지 않습니다",
+    "that swap was already done or dropped": "그 교환은 이미 끝났거나 취소되었습니다",
+    "card swaps: couldn't sign in to nocat.lol through Steam - not paired until it can": "카드 교환: Steam으로 nocat.lol에 로그인할 수 없습니다 - 될 때까지 짝지어지지 않습니다",
     "card swap · confirm the offer to {0} from Steam's email": "카드 교환 · {0}에게 보낸 제안을 Steam 이메일에서 확인하세요"
   },
   "settings": {

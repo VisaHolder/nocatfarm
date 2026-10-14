@@ -3094,6 +3094,15 @@
     "1 card still needs a price first.": "还有 1 张卡需要先定价。",
     "{0} cards still need a price first.": "还有 {0} 张卡需要先定价。",
     "card swap offer to {0} wasn't what nocat.lol said · taken back": "给 {0} 的交换报价与 nocat.lol 说的不符 · 已撤回",
+    "it was paired more than 2 days ago": "配对已超过 2 天",
+    "Steam's name for a card in it doesn't fit its game": "其中一张卡的 Steam 名称与它的游戏不符",
+    "a card in it is already on another offer or swap": "其中一张卡已在别的报价或交换里",
+    "it would leave fewer than {0} of {1}": "{1} 会剩下不到 {0} 张",
+    "card swap offer to {0} taken back · {1}": "给 {0} 的交换报价已撤回 · {1}",
+    "card swap offer to {0} taken back · swaps are off": "给 {0} 的交换报价已撤回 · 交换已关闭",
+    "offer {0} · left for you · Steam won't say whether it would be held": "报价 {0} · 留给你处理 · Steam 不说会不会被暂挂",
+    "that swap was already done or dropped": "这次交换已经完成或已放弃",
+    "card swaps: couldn't sign in to nocat.lol through Steam - not paired until it can": "卡牌交换：无法通过 Steam 登录 nocat.lol - 能登录之前不会配对",
     "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价"
   },
   "settings": {
