@@ -20,6 +20,9 @@ public static class Switches {
 	// Turn on. Its go-ahead lives in SteamOpenLedger, so a settings file or a backup can't bring it back.
 	public const string SteamOpenButton = "SteamOpenButton";
 
+	/// <summary>Buying cards (1.8.2): its go-ahead lives beside its spending, in Modules.BuyLedger.</summary>
+	public const string Buy = "BuyCards";
+
 	/// <summary>Whether this account's spare items are on: the switch and its go-ahead together.</summary>
 	public static bool SpareOn(BotConfig cfg, string account) => cfg.SpareItems && SpareLedger.Load(account).Approved;
 
@@ -56,6 +59,9 @@ public static class Switches {
 				SpareLedger ledger = SpareLedger.Load(bot.Name);
 				ledger.Approved = on;
 				ledger.Save();
+			} else if (feature == Buy) {
+				bot.Cfg.BuyCards = on;
+				Modules.BuyLedger.Of(bot.Name).SetOk(on);
 			} else {
 				Modules.PointsLedger.Approved(bot);   // an old ok in the settings is moved over first, so this one has the last word
 				bot.Cfg.SpendPoints = on;
@@ -70,6 +76,8 @@ public static class Switches {
 		Said said = (feature, on) switch {
 			(Spare, true) => new Said("Spare items is on for {0}: it turns spare items into gems or sells them, within its limits", bot.Name),
 			(Spare, false) => new Said("Spare items is off for {0}: nothing is turned into gems or sold", bot.Name),
+			(Buy, true) => new Said("Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits", bot.Name),
+			(Buy, false) => new Said("Buying cards is off for {0}: nothing is bought", bot.Name),
 			(_, true) => new Said("Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits", bot.Name),
 			_ => new Said("Spending Steam Points is off for {0}: nothing is spent", bot.Name)
 		};
@@ -123,6 +131,16 @@ public static class Switches {
 			}
 		}
 
+		// Buying cards: the same rule, its go-ahead in its own spending list.
+		Modules.BuyLedger buy = Modules.BuyLedger.Of(account);
+
+		if (cfg.BuyCards && !buy.Ok) {
+			cfg.BuyCards = false;
+			changed = true;
+		} else if (!cfg.BuyCards && buy.Ok) {
+			buy.SetOk(false);
+		}
+
 		return changed;
 	}
 
@@ -134,6 +152,7 @@ public static class Switches {
 		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare
 		: word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points
 		: word.Equals("steamopen", StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
+		: word.Equals("buy", StringComparison.OrdinalIgnoreCase) ? Buy
 		: FeatureOf(word);
 
 	/// <summary>The setting's name for the feature a word names ('spare', 'points', 'steamopen'), or null.</summary>
@@ -141,5 +160,6 @@ public static class Switches {
 		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare
 		: setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points
 		: setting.Equals(SteamOpenButton, StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
+		: setting.Equals(Buy, StringComparison.OrdinalIgnoreCase) ? Buy
 		: null;
 }

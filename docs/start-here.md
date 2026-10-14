@@ -137,13 +137,14 @@ It also, without being asked:
   to *install by itself at night*
 
 **Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
-account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
+Spare items, opening and making booster packs, spending Steam Points and buying cards are all off until you switch them
+on in an account's settings - and selling, gems, Steam Points and buying cards show what they would do first and ask
+you to confirm. The only
 things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
 
 These stay **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
 achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
-Points on levels, making booster packs from gems, crafting badges, fair card swaps, daily backups, Discord and
+Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, daily backups, Discord and
 Telegram, rep4rep, and plugins. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
 added account - farm accounts too - until you turn it on.
 

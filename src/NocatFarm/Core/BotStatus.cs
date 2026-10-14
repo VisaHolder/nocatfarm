@@ -182,10 +182,13 @@ public readonly record struct BotStatus(
 			logDoing = human.LogDoing;
 
 			if (total > 0) {
-				logSitting = new Said("{0} left", Fmt.Hm(Math.Max(0, total - done)));
+				// Never "0m left": the last minute of a sitting is still a minute, and then it ends with a break or the next game.
+				logSitting = new Said("{0} left", Fmt.Hm(Math.Max(1, total - done)));
 			} else if (human.NextChange is { } wake) {
 				int left = (int) Math.Max(0, (wake - DateTime.UtcNow).TotalMinutes);
 				logSitting = left <= 0 ? new Said("any moment")
+					// After bedtime the next day isn't planned yet: when it gets up is a window, not the day before's time.
+					: quiet && (human.UpWindowNow is { } window) ? new Said("up {0}", HumanMode.WindowWords(window.From, window.To))
 					: quiet ? new Said("up in {0}", Fmt.Hm(left))
 					: phase is HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak ? new Said("back in {0}", Fmt.Hm(left))
 					: new Said("{0} to go", Fmt.Hm(left));

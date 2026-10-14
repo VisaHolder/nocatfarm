@@ -115,8 +115,9 @@ Beyond that:
   earn them in.
 
 **Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
-account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
+Spare items, opening and making booster packs, spending Steam Points and buying cards are all off until you switch them
+on in an account's settings - and selling, gems, Steam Points and buying cards show what they would do first and ask
+you to confirm. The only
 things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
 
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
@@ -124,7 +125,10 @@ things it picks up by itself are free: event items during Steam sales, and free 
   own wallet currency. Turning it on shows what it would do first and asks you to confirm.
 - Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
   choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
-  once you turn it on (it shows what it would buy first and asks you to confirm). Nothing that sells, opens or uses up your items is on by default.
+  once you turn it on (it shows what it would buy first and asks you to confirm). Buying cards (off until you turn
+  it on) buys the cards your badges are missing at the cheapest price, whole sets only, within a day's and a week's
+  spending limit (1.50 and 8.00 in your wallet's currency) - and, if you like, the cheapest full sets. Nothing that
+  sells, opens or uses up your items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.
 - Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and

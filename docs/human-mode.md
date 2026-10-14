@@ -86,7 +86,12 @@ morning's, so 02:00 is two in the morning after the day. A window that crosses m
 day itself: 00:30 give or take an hour gets on between 00:00 and 01:30. An account set up before these settings
 keeps its times: the hour it had, 13, is 13:00, and the old names `DayStartHour` and `BedHour` still work at the
 console. `human myaccount` shows today's planned times and the windows ("up 10:47 · bed 01:12 · gets on
-10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard.
+10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard. After bedtime, until it
+wakes and plans the next day, it shows when it gets up next as that window instead ("next up 10:30-11:30"), never
+the day before's time - the same in the log, the dashboard and mini mode ("asleep · up 10:30-11:30").
+
+A sitting cut off by a restart is carried on after the warm-up only if at least 2 minutes of it are left; with less,
+it ends there the way any sitting does - a break, or the next game - rather than "carrying on" for a moment.
 
 Some days go on the main game alone (*Days on the main game only*, 25%), so side games show up in bursts. That
 lowers their weekly share, and the dashboard and `human` show the real weekly figure next to the one you set.

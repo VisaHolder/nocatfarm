@@ -83,6 +83,7 @@ public static partial class Commands {
 		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
 		new("booster", "[account|all] | <account> <appIDs> | plan [account|all] | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs\" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
 		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
+		new("buy", "[account|all] | preview [account|all] | on|off|do <account>", GroupCards, "Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent."),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
@@ -615,7 +616,9 @@ public static partial class Commands {
 			// With no account these go over every account - claiming event items on all of them, every account's trades,
 			// wallet, inventory and bans - which from one account's chat reached past it.
 			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "events" or "value" or "level"
-			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare";
+			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare"
+			// 1.8.2
+			or "buy";
 
 	/// <summary>
 	/// A Steam-chat line with this account's name put in after the command, for a command that takes the account first and,
@@ -652,6 +655,8 @@ public static partial class Commands {
 			// Spending Steam Points, or agreeing to it, can't be undone - the owner's word too. 'points spend preview' is only a look.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "points") && PointsNeedsOwner(words[1..]))
 			|| SpareRefusesFromChat(words)
+			// Turning buying cards on, or buying now, spends money - the owner's word too. 'buy preview' is only a look.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "buy") && BuyNeedsOwner(words[1..]))
 			|| SpendsFromChat(words)
 			// 'scamwatch ok' lifts a scam watch hold - the owner's word, never a chat's: whoever took the account could send it.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "scamwatch") && words[1..].Any(static w => w.Equals("ok", StringComparison.OrdinalIgnoreCase)));
@@ -992,6 +997,7 @@ public static partial class Commands {
 				"level" => await LevelAsync(mgr, rest).ConfigureAwait(false),
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
+				"buy" => await BuyCardsAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
 				"spare" or "gems" => await GemsAsync(mgr, rest).ConfigureAwait(false),
 				"freegames" => await FreeGamesAsync(mgr, rest).ConfigureAwait(false),

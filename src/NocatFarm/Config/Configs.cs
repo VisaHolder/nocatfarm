@@ -812,6 +812,27 @@ public sealed class BotConfig {
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public bool PointsOk { get; set; }
 
+	// ── Buying cards (see Modules/CardBuyer.cs) - 1.8.2 ──
+
+	/// <summary>
+	/// Buy the missing cards of the badges it's levelling, at the cheapest listing. Off by default on every account: it spends
+	/// the wallet's money. Turned on only through its preview (Core/Switches.cs), its go-ahead kept beside its spending
+	/// (Modules.BuyLedger), never here.
+	/// </summary>
+	public bool BuyCards { get; set; }
+
+	/// <summary>Also buy the cheapest whole sets for games it has no cards of. Off by default.</summary>
+	public bool BuyFullSets { get; set; }
+
+	/// <summary>The most it spends in any 24 hours, in the wallet's own currency.</summary>
+	public float BuyDailyLimit { get; set; } = 1.50f;
+
+	/// <summary>The most it spends in any 7 days, in the wallet's own currency.</summary>
+	public float BuyWeeklyLimit { get; set; } = 8.00f;
+
+	/// <summary>How often it looks, in hours.</summary>
+	public int BuyCheckHours { get; set; } = 12;
+
 	/// <summary>
 	/// Retired "Sell duplicate cards" switch - carried over to <see cref="SpareItems"/> (ConfigStore.MigrateSpare). Still
 	/// written, for a rollback to 1.7.x, whose seller lists cards straight away with no preview: true only when this version
@@ -1792,7 +1813,7 @@ public static class ConfigStore {
 			return false;
 		}
 
-		bool spare = cfg.SpareItems, points = cfg.SpendPoints;
+		bool spare = cfg.SpareItems, points = cfg.SpendPoints, buy = cfg.BuyCards;
 
 		if (!Core.Switches.Settle(cfg, name)) {
 			return false;
@@ -1804,6 +1825,10 @@ public static class ConfigStore {
 
 		if (points && !cfg.SpendPoints) {
 			Log.Attention(new Said("{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first", name), name);
+		}
+
+		if (buy && !cfg.BuyCards) {
+			Log.Attention(new Said("{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first", name), name);
 		}
 
 		return true;
@@ -2146,6 +2171,7 @@ public static class ConfigStore {
 		("state", "scamwatch-", ".json"), ("state", "health-", ".json"),   // scam watch, account health
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
 		("state", "spare-", ".json"),
+		("state", "buy-", ".json"),   // money spent buying cards, and its go-ahead (Modules/CardBuyer.cs)
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 		("state", "steamopen-", ".json")   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)

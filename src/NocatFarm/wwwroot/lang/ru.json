@@ -2735,6 +2735,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "«Лишние предметы» включены для {0}: превращает лишние предметы в самоцветы или продаёт их в своих пределах",
     "Spare items was turned off on {0} - stopped before the next item": "«Лишние предметы» выключены на {0} - остановлено перед следующим предметом",
     "Spending Steam Points is off for {0}: nothing is spent": "Трата очков Steam выключена для {0}: ничего не тратится",
+    "Buying cards": "Покупка карточек",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: покупка карточек выключена, пока вы не включите её в настройках - сначала покажет, что купила бы",
+    "up {0}": "встанет {0}",
+    "couldn't look for an open buy order: {0}": "не удалось проверить открытый ордер на покупку: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Покупка карточек включена для {0}: сама покупает недостающие карточки для значков в своих пределах",
+    "Buying cards is off for {0}: nothing is bought": "Покупка карточек выключена для {0}: ничего не покупается",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam просит платёжные данные перед первой покупкой этого аккаунта на торговой площадке - купите одну карточку вручную один раз, потом она сможет покупать",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam требует подтверждать каждую покупку этого аккаунта на торговой площадке по почте, а nocat.farm так не умеет",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam требует подтверждать каждую покупку этого аккаунта в приложении Steam - добавьте его аутентификатор в nocat.farm, чтобы она могла подтверждать свои покупки",
+    "couldn't save the card buying list: {0}": "не удалось сохранить список покупок карточек: {0}",
+    "couldn't read the card buying list: {0}": "не удалось прочитать список покупок карточек: {0}",
+    "buying cards: next look around {0}": "покупка карточек: следующая проверка около {0}",
+    "couldn't look at buying cards: {0}": "не удалось проверить покупку карточек: {0}",
+    "bought {0} · {1} · {2}": "куплено {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "нет ответа о покупке {0} · считается потраченным",
+    "buying {0} turned down · {1}": "покупка {0} отклонена · {1}",
+    "buying {0} turned down": "покупка {0} отклонена",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "куплено карточек: {0} · {1} · наборов к сборке: {2}",
+    "next up {0} · goes to bed {1}": "следующий подъём {0} · ложится {1}",
+    "{0} · that sitting's over": "{0} · этот сеанс окончен",
+    "Turn on buying cards?": "Включить покупку карточек?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Вот что она купила бы дальше и за сколько, и пределы, которых она держится. Она тратит кошелёк Steam этого аккаунта. Ничего не покупается, пока вы не нажмёте «Включить».",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Не выполнен вход, поэтому она пока не может посмотреть торговую площадку. Вот пределы, которых она будет держаться.",
+    "Couldn't look at the market: {0}": "Не удалось посмотреть торговую площадку: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "«Собирать значки из карточек» выключено - ничего не покупается, пока это не включено, иначе карточки просто лежали бы.",
+    "card to buy": "карточка к покупке",
+    "cards to buy": "карточек к покупке",
+    "{0} for {1} badge level(s)": "{0} за уровни значков: {1}",
+    "badge levels": "уровней значков",
+    "wallet: {0}": "кошелёк: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Полный набор {0} ({1} карточек) за {2} - уровень с {3} до {4}, около {5} XP за 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} из {1} карточек для {2} ({3}) за {4} - уровень с {5} до {6}, около {7} XP за 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Тратит не больше {0} в день (за последние сутки потрачено {1})",
+    "Spends at most {0} a week ({1} spent this week)": "Тратит не больше {0} в неделю (на этой неделе потрачено {1})",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "Никогда больше, чем есть в кошельке, и только целые наборы - никогда часть набора",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Каждая карточка по самой низкой цене на торговой площадке, с повторной проверкой прямо перед покупкой",
+    "Badges it has started first, then the cheapest full sets": "Сначала начатые значки, потом самые дешёвые полные наборы",
+    "Only badges it has started - not full sets": "Только начатые значки - не полные наборы",
+    "Only during its day (human mode), one set at a time": "Только в течение его дня (человеческий режим), по одному набору за раз",
+    "Badge crafting turns each finished set into a level": "Сборка значков превращает каждый собранный набор в уровень",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Трата очков Steam включена для {0}: сам покупает уровни значка в своих пределах",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Очки Steam: трата выключена - включи её в настройках, чтобы увидеть, что он купил бы",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Очки Steam: потратил бы {0} очков на {1} уровн(я/ей) {2} (+{3} опыта) - ничего не тратится, пока трата не включена в настройках",
@@ -2782,7 +2822,7 @@
     "you declined its listing on your phone - never listed again": "вы отклонили его лот на телефоне - больше никогда не выставляется",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Самоцветы упаковываются в мешки по 1000, а мешки отправляются на {0}",
     "Daily backup": "Ежедневная копия",
-    "up ~{0}": "вверх ~{0}",
+    "up ~{0}": "встанет ~{0}",
     "to sell": "на продажу",
     "Value: at most {0} a day": "Стоимость: не больше {0} в день",
     "Booster packs it doesn't open are sent to {0}": "Неоткрытые наборы карточек отправляются на {0}",
@@ -4266,6 +4306,26 @@
     "PointsCheckEveryHours": {
       "label": "Проверять каждые (часы)",
       "tip": "Как часто он смотрит очки и магазин, в часах - например, 12, дважды в день. Аккаунт в человеческом режиме смотрит только в течение своего дня."
+    },
+    "BuyCards": {
+      "label": "Покупать недостающие карточки",
+      "tip": "Покупает карточки, которых значку не хватает до следующего уровня, по самой низкой цене на торговой площадке, чтобы его можно было собрать - сначала самый близкий значок, и только целые наборы. Например, если есть 4 из 5 карточек, покупает 5-ю, примерно за 0,05-0,15. Тратит кошелёк Steam этого аккаунта. По умолчанию выключено на каждом аккаунте. При включении сначала показывает, что купила бы и за сколько, и просит подтвердить; выключение сразу останавливает. Нужно включённое «Собирать значки из карточек»."
+    },
+    "BuyFullSets": {
+      "label": "Покупать самые дешёвые полные наборы",
+      "tip": "Также покупает полные наборы карточек для игр, от которых у аккаунта нет ни одной карточки, сначала самые дешёвые, каждый - один уровень значка (100 XP). Наборы, где какой-то карточки меньше 2 на торговой площадке или одна очень дешёвая карточка делает набор дешевле, чем он есть, пропускаются. Выключено: только карточки для начатых значков."
+    },
+    "BuyDailyLimit": {
+      "label": "Тратить не больше, за день",
+      "tip": "Больше всего, что она тратит за 24 часа, в валюте кошелька Steam этого аккаунта. Например, 1,50: набор за 0,60 и ещё один за 0,70 заполняют день; следующий набор ждёт до завтра. Никогда не тратит больше, чем есть в кошельке."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Тратить не больше, за неделю",
+      "tip": "Больше всего, что она тратит за 7 дней, в валюте кошелька Steam этого аккаунта. Например, 8,00 при 1,50 в день: около 5 полных дней покупок в неделю. 0 - ничего не покупает."
+    },
+    "BuyCheckHours": {
+      "label": "Проверять каждые (часы)",
+      "tip": "Как часто она ищет карточки для покупки, в часах - например, 12, дважды в день. Аккаунт в человеческом режиме проверяет только в течение своего дня и покупает по одному набору за раз."
     },
     "PointsBuySeasonalBadge": {
       "label": "Покупать уровни сезонного значка",

@@ -2735,6 +2735,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "{0}의 남는 아이템이 켜짐: 한도 안에서 남는 아이템을 보석으로 바꾸거나 팝니다",
     "Spare items was turned off on {0} - stopped before the next item": "{0}의 남는 아이템이 꺼졌습니다 - 다음 아이템 전에 멈췄습니다",
     "Spending Steam Points is off for {0}: nothing is spent": "{0}의 Steam 포인트 사용이 꺼짐: 아무것도 쓰지 않습니다",
+    "Buying cards": "카드 구매",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: 설정에서 켜기 전까지 카드 구매는 꺼져 있습니다 - 먼저 무엇을 살지 보여 줍니다",
+    "up {0}": "{0} 기상",
+    "couldn't look for an open buy order: {0}": "열린 구매 주문을 확인하지 못했습니다: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0}의 카드 구매가 켜짐: 한도 안에서 배지에 모자란 카드를 스스로 삽니다",
+    "Buying cards is off for {0}: nothing is bought": "{0}의 카드 구매가 꺼짐: 아무것도 사지 않습니다",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam이 이 계정의 첫 마켓 구매 전에 청구 정보를 요구합니다 - 카드 한 장을 직접 한 번 사면 그다음부터 살 수 있습니다",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam이 이 계정의 모든 마켓 구매를 이메일로 확인하라고 요구합니다. nocat.farm은 할 수 없습니다",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam이 이 계정의 모든 마켓 구매를 Steam 앱에서 확인하라고 요구합니다 - 자기 구매를 확인할 수 있도록 인증기를 nocat.farm에 추가하세요",
+    "couldn't save the card buying list: {0}": "카드 구매 목록을 저장하지 못했습니다: {0}",
+    "couldn't read the card buying list: {0}": "카드 구매 목록을 읽지 못했습니다: {0}",
+    "buying cards: next look around {0}": "카드 구매: 다음 확인은 {0}쯤",
+    "couldn't look at buying cards: {0}": "카드 구매를 확인하지 못했습니다: {0}",
+    "bought {0} · {1} · {2}": "구매함 {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "{0} 구매에 응답 없음 · 쓴 것으로 계산",
+    "buying {0} turned down · {1}": "{0} 구매가 거절됨 · {1}",
+    "buying {0} turned down": "{0} 구매가 거절됨",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "카드 {0}장 구매 · {1} · 제작할 세트 {2}개",
+    "next up {0} · goes to bed {1}": "다음 기상 {0} · 취침 {1}",
+    "{0} · that sitting's over": "{0} · 그 세션은 끝났습니다",
+    "Turn on buying cards?": "카드 구매를 켤까요?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "다음에 무엇을 얼마에 살지와 지키는 한도입니다. 이 계정의 Steam 지갑을 씁니다. 켜기를 누를 때까지 아무것도 사지 않습니다.",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "로그인하지 않아 아직 마켓을 볼 수 없습니다. 지킬 한도는 다음과 같습니다.",
+    "Couldn't look at the market: {0}": "마켓을 확인하지 못했습니다: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "\"카드로 배지 제작\"이 꺼져 있습니다 - 켜질 때까지 아무것도 사지 않습니다. 사도 카드가 그냥 남아 있을 뿐입니다.",
+    "card to buy": "살 카드",
+    "cards to buy": "살 카드",
+    "{0} for {1} badge level(s)": "배지 {1}레벨에 {0}",
+    "badge levels": "배지 레벨",
+    "wallet: {0}": "지갑: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "{0} 전체 세트(카드 {1}장)를 {2}에 - 레벨 {3} → {4}, 1.00당 약 {5} XP",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{2} 카드 {1}장 중 {0}장({3})을 {4}에 - 레벨 {5} → {6}, 1.00당 약 {7} XP",
+    "Spends at most {0} a day ({1} spent in the last day)": "하루에 최대 {0}까지 씁니다(지난 하루 {1} 사용)",
+    "Spends at most {0} a week ({1} spent this week)": "일주일에 최대 {0}까지 씁니다(이번 주 {1} 사용)",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "지갑에 있는 것보다 더 쓰지 않고, 세트는 통째로만 - 세트의 일부만 사지 않습니다",
+    "Each card at the cheapest price on the market, checked again right before it buys": "카드마다 마켓 최저가로, 사기 직전에 다시 확인합니다",
+    "Badges it has started first, then the cheapest full sets": "먼저 시작한 배지, 그다음 가장 싼 전체 세트",
+    "Only badges it has started - not full sets": "시작한 배지만 - 전체 세트는 사지 않음",
+    "Only during its day (human mode), one set at a time": "자기 하루 동안에만 (사람 모드), 한 번에 한 세트",
+    "Badge crafting turns each finished set into a level": "배지 제작이 완성된 세트를 하나씩 레벨로 바꿉니다",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "{0}의 Steam 포인트 사용이 켜짐: 한도 안에서 스스로 배지 레벨을 삽니다",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam 포인트: 사용이 꺼짐 - 설정에서 켜면 무엇을 살지 보여 줍니다",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam 포인트: {2}의 {1}레벨에 {0}포인트를 쓸 예정 (+{3} XP) - 설정에서 사용을 켜기 전까지 아무것도 쓰지 않습니다",
@@ -2782,7 +2822,7 @@
     "you declined its listing on your phone - never listed again": "휴대폰에서 이 등록을 거절했습니다 - 다시는 등록하지 않습니다",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "보석을 1000개짜리 자루로 묶어 {0}(으)로 보냅니다",
     "Daily backup": "매일 백업",
-    "up ~{0}": "약 {0} 상승",
+    "up ~{0}": "{0}쯤 기상",
     "to sell": "판매",
     "Value: at most {0} a day": "가치: 하루 최대 {0}",
     "Booster packs it doesn't open are sent to {0}": "열지 않는 부스터 팩은 {0}(으)로 보냅니다",
@@ -4266,6 +4306,26 @@
     "PointsCheckEveryHours": {
       "label": "확인 간격(시간)",
       "tip": "포인트와 상점을 확인하는 간격(시간)입니다 - 예: 12면 하루에 두 번. 사람 모드 계정은 자기 하루 동안에만 확인합니다."
+    },
+    "BuyCards": {
+      "label": "모자란 카드 사기",
+      "tip": "배지의 다음 레벨에 모자란 카드를 마켓 최저가로 사서 제작할 수 있게 합니다 - 가장 가까운 배지부터, 세트는 통째로만. 예를 들어 카드 5장 중 4장이 있으면 5번째를 약 0.05~0.15에 삽니다. 이 계정의 Steam 지갑을 씁니다. 모든 계정에서 기본은 꺼짐. 켜면 먼저 무엇을 얼마에 살지 보여 주고 확인을 받습니다. 끄면 바로 멈춥니다. \"카드로 배지 제작\"이 켜져 있어야 합니다."
+    },
+    "BuyFullSets": {
+      "label": "가장 싼 전체 세트 사기",
+      "tip": "카드가 하나도 없는 게임의 전체 카드 세트도 가장 싼 것부터 삽니다. 세트마다 배지 1레벨(100 XP)입니다. 마켓에 2장 미만인 카드가 있거나, 아주 싼 카드 하나 때문에 실제보다 싸 보이는 세트는 빼놓습니다. 끔: 시작한 배지의 카드만."
+    },
+    "BuyDailyLimit": {
+      "label": "하루에 최대 사용",
+      "tip": "24시간 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 1.50이면 0.60짜리 세트와 0.70짜리 세트로 하루가 차고, 다음 세트는 내일까지 기다립니다. 지갑에 있는 것보다 더 쓰지 않습니다."
+    },
+    "BuyWeeklyLimit": {
+      "label": "일주일에 최대 사용",
+      "tip": "7일 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 하루 1.50에 8.00이면 일주일에 약 5일 동안 살 수 있습니다. 0이면 아무것도 사지 않습니다."
+    },
+    "BuyCheckHours": {
+      "label": "확인 간격(시간)",
+      "tip": "살 카드를 찾는 간격(시간)입니다 - 예를 들어 12면 하루 두 번. 사람 모드 계정은 자기 하루 동안에만 확인하고 한 번에 한 세트를 삽니다."
     },
     "PointsBuySeasonalBadge": {
       "label": "시즌 배지 레벨 사기",

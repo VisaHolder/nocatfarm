@@ -2735,6 +2735,46 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "Übrige Gegenstände ist für {0} an: es verwandelt übrige Gegenstände in Edelsteine oder verkauft sie, innerhalb seiner Grenzen",
     "Spare items was turned off on {0} - stopped before the next item": "Übrige Gegenstände wurde auf {0} ausgeschaltet - vor dem nächsten Gegenstand angehalten",
     "Spending Steam Points is off for {0}: nothing is spent": "Steam-Punkte ausgeben ist für {0} aus: nichts wird ausgegeben",
+    "Buying cards": "Karten kaufen",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: Karten kaufen ist aus, bis du es in den Einstellungen einschaltest - es zeigt zuerst, was es kaufen würde",
+    "up {0}": "steht auf {0}",
+    "couldn't look for an open buy order: {0}": "konnte nicht nach einem offenen Kaufauftrag sehen: {0}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Karten kaufen ist für {0} an: es kauft selbst fehlende Karten für seine Abzeichen, innerhalb seiner Grenzen",
+    "Buying cards is off for {0}: nothing is bought": "Karten kaufen ist für {0} aus: nichts wird gekauft",
+    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam will vor dem ersten Marktkauf dieses Kontos Rechnungsdaten - kauf einmal selbst eine Karte, dann kann es kaufen",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam verlangt, dass jeder Marktkauf dieses Kontos per E-Mail bestätigt wird - das kann nocat.farm nicht",
+    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam verlangt, dass jeder Marktkauf dieses Kontos in der Steam-App bestätigt wird - füge seinen Authenticator zu nocat.farm hinzu, damit es seine eigenen Käufe bestätigen kann",
+    "couldn't save the card buying list: {0}": "konnte die Liste der Kartenkäufe nicht speichern: {0}",
+    "couldn't read the card buying list: {0}": "konnte die Liste der Kartenkäufe nicht lesen: {0}",
+    "buying cards: next look around {0}": "Karten kaufen: nächster Blick gegen {0}",
+    "couldn't look at buying cards: {0}": "konnte nicht nach den Kartenkäufen sehen: {0}",
+    "bought {0} · {1} · {2}": "gekauft: {0} · {1} · {2}",
+    "no answer buying {0} · counted as spent": "keine Antwort beim Kauf von {0} · als ausgegeben gezählt",
+    "buying {0} turned down · {1}": "Kauf von {0} abgelehnt · {1}",
+    "buying {0} turned down": "Kauf von {0} abgelehnt",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "{0} Karte(n) gekauft · {1} · {2} Satz/Sätze zum Herstellen",
+    "next up {0} · goes to bed {1}": "steht als Nächstes auf {0} · geht schlafen {1}",
+    "{0} · that sitting's over": "{0} · diese Sitzung ist vorbei",
+    "Turn on buying cards?": "Karten kaufen einschalten?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Das würde es als Nächstes kaufen und für wie viel, und die Grenzen, an die es sich hält. Es gibt Geld aus der Steam-Geldbörse dieses Kontos aus. Nichts wird gekauft, bis du auf Einschalten drückst.",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Nicht angemeldet, darum kann es noch nicht auf den Markt schauen. Das sind die Grenzen, an die es sich halten wird.",
+    "Couldn't look at the market: {0}": "Konnte nicht auf den Markt schauen: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "„Abzeichen aus Kartensätzen herstellen“ ist aus - nichts wird gekauft, bis es an ist, sonst lägen die Karten nur herum.",
+    "card to buy": "Karte zu kaufen",
+    "cards to buy": "Karten zu kaufen",
+    "{0} for {1} badge level(s)": "{0} für {1} Abzeichenstufe(n)",
+    "badge levels": "Abzeichenstufen",
+    "wallet: {0}": "Geldbörse: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Ein ganzer Satz {0} ({1} Karten) für {2} - Stufe {3} auf {4}, etwa {5} EP pro 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} von {1} Karten für {2} ({3}) für {4} - Stufe {5} auf {6}, etwa {7} EP pro 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Gibt höchstens {0} am Tag aus ({1} am letzten Tag ausgegeben)",
+    "Spends at most {0} a week ({1} spent this week)": "Gibt höchstens {0} pro Woche aus ({1} diese Woche ausgegeben)",
+    "Never more than the wallet holds, and only whole sets - never part of a set": "Nie mehr, als in der Geldbörse ist, und nur ganze Sätze - nie einen Teil eines Satzes",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Jede Karte zum günstigsten Preis auf dem Markt, direkt vor dem Kauf noch einmal geprüft",
+    "Badges it has started first, then the cheapest full sets": "Zuerst angefangene Abzeichen, dann die günstigsten ganzen Sätze",
+    "Only badges it has started - not full sets": "Nur angefangene Abzeichen - keine ganzen Sätze",
+    "Only during its day (human mode), one set at a time": "Nur während seines Tages (Menschen-Modus), ein Satz nach dem anderen",
+    "Badge crafting turns each finished set into a level": "Das Herstellen von Abzeichen macht aus jedem fertigen Satz eine Stufe",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Steam-Punkte ausgeben ist für {0} an: es kauft selbst Abzeichenstufen, innerhalb seiner Grenzen",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam-Punkte: Ausgeben ist aus - schalte es in den Einstellungen ein, um zu sehen, was es kaufen würde",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam-Punkte: würde {0} Punkte für {1} Stufe(n) von {2} ausgeben (+{3} EP) - nichts wird ausgegeben, bis Ausgeben in den Einstellungen eingeschaltet ist",
@@ -4266,6 +4306,26 @@
     "PointsCheckEveryHours": {
       "label": "Nachsehen alle (Stunden)",
       "tip": "Wie oft es nach den Punkten und dem Shop sieht, in Stunden - zum Beispiel 12, zweimal am Tag. Ein Konto im Menschen-Modus sieht nur während seines Tages nach."
+    },
+    "BuyCards": {
+      "label": "Fehlende Karten kaufen",
+      "tip": "Kauft die Karten, die einem Abzeichen für seine nächste Stufe fehlen, zum günstigsten Preis auf dem Markt, damit es hergestellt werden kann - das nächstgelegene Abzeichen zuerst, und nur ganze Sätze. Zum Beispiel: mit 4 von 5 Karten kauft es die 5., etwa 0,05 bis 0,15. Es gibt Geld aus der Steam-Geldbörse dieses Kontos aus. Standardmäßig auf jedem Konto aus. Beim Einschalten zeigt es zuerst, was es kaufen würde und für wie viel, und fragt dich; Ausschalten stoppt es sofort. Braucht „Abzeichen aus Kartensätzen herstellen“ an."
+    },
+    "BuyFullSets": {
+      "label": "Die günstigsten ganzen Sätze kaufen",
+      "tip": "Kauft außerdem ganze Kartensätze für Spiele, von denen es keine Karten hat, die günstigsten zuerst, je eine Abzeichenstufe (100 EP). Sätze, bei denen eine Karte weniger als 2 Mal auf dem Markt ist oder eine sehr billige Karte den Satz günstiger aussehen lässt, als er ist, werden ausgelassen. Aus: nur Karten für angefangene Abzeichen."
+    },
+    "BuyDailyLimit": {
+      "label": "Höchstens ausgeben, pro Tag",
+      "tip": "Das Höchste, was es in 24 Stunden ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 1,50: ein Satz für 0,60 und einer für 0,70 füllen den Tag; der nächste Satz wartet bis morgen. Es gibt nie mehr aus, als in der Geldbörse ist."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Höchstens ausgeben, pro Woche",
+      "tip": "Das Höchste, was es in 7 Tagen ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 8,00 bei 1,50 am Tag: etwa 5 volle Tage Kaufen pro Woche. 0 kauft nichts."
+    },
+    "BuyCheckHours": {
+      "label": "Nachsehen alle (Stunden)",
+      "tip": "Wie oft es nach Karten zum Kaufen sieht, in Stunden - zum Beispiel 12, zweimal am Tag. Ein Konto im Menschen-Modus sieht nur während seines Tages nach und kauft einen Satz pro Blick."
     },
     "PointsBuySeasonalBadge": {
       "label": "Stufen des Saison-Abzeichens kaufen",
