@@ -338,14 +338,26 @@ spends the account's Steam wallet, so it's careful:
   answers with the same preview, `buy on myaccount` confirms it and `buy off myaccount` turns it off. Steam chat can
   look (`buy preview`) but can't turn it on or buy. A backup brings back the money spent, never the switch.
 - **Closest badge first, whole sets only.** It picks the badge closest to its next level - the fewest cards missing,
-  then the cheapest - the same rule as automatic booster packs. It buys a set's missing cards only when every one is
-  on the market and all of them fit inside the limits: never 3 of 5 cards and then nothing. A set that costs more than
-  a day's limit is passed over (it says so); one that doesn't fit what's left of today waits for tomorrow.
+  then the cheapest - the same rule as automatic booster packs. It plans a set's missing cards only when every one is
+  on the market and all of them fit inside the limits. A set that costs more than a day's limit is passed over (it
+  says so); one that doesn't fit what's left of today waits for tomorrow. Only normal cards of that game count - never
+  a foil or anything else the market search lets in.
 - **Limits.** *Spend at most, a day* (1.50) and *Spend at most, a week* (8.00), in the wallet's own currency, over any
-  24 hours and any 7 days - and never more than the wallet holds. It reads the wallet first.
-- **Checked again right before buying.** Each card's price and the wallet are read again just before it buys. A card
-  dearer than planned isn't bought; the next look plans again. If Steam doesn't answer about a purchase, it counts as
-  spent, so it's never bought twice.
+  24 hours and any 7 days by Steam's clock (a wrong PC clock can't move them) - and never more than the wallet holds.
+  It reads the wallet first; if Steam doesn't say how this account's purchases are confirmed, it buys nothing that look.
+- **Checked again right before buying.** Every card of a set is priced again before the first one is bought: if any
+  moved, that set isn't started and waits for the next look. Each card's price and the wallet are read once more just
+  before it buys; a card dearer than planned isn't bought. So a set can still stop partway (a price moved, or Steam
+  stopped answering) - the rest of it waits for the next look.
+- **Never "nothing bought" on a guess.** Each card is written down as spent (at its price) before the order goes to
+  Steam. It only comes off the list when Steam says plainly that nothing was bought - its own "no", or the order's
+  status saying it closed with nothing bought. Anything unclear (no answer, an error page, a rate limit, a cancel that
+  failed) stays counted, the order is taken back, and the next look asks about it again. A stop, a disconnect or an
+  update in the middle doesn't lose this: once an order is sent, finding out and taking it back finish on their own.
+- **Only its own orders.** It takes back only orders it placed itself (it keeps their ids) - never a buy order you
+  placed by hand.
+- **Its spending list.** If the list of what it spent (config/state/buy-*account*.json) can't be read, it buys nothing
+  and says so - fix or delete that file. If the list can't be saved, it stops buying until nocat.farm starts again.
 - **Then it's crafted.** *Craft badges from card sets* has to be on - otherwise nothing is bought, or the cards would
   only sit there. Once a set is whole, badge crafting looks within the hour instead of at its daily round.
 - **Human mode.** A human-mode account buys only during its own day, one set a look, with a pause between cards.
@@ -372,11 +384,14 @@ that's held whole, since the missing cards will be bought.
 **How it buys.** Trading cards are bought the way Steam's new market buys them: one order for one card at the
 cheapest listing's price, which goes through at once - or, if somebody bought that card first, is taken back. Nothing
 is ever left waiting on the market. If Steam wants each purchase confirmed in the Steam app, it confirms its own
-purchase with the account's authenticator when that's in nocat.farm; by email, or with no authenticator here, it buys
-nothing and tells you once.
+purchase with the account's authenticator when that's in nocat.farm - only that market purchase, matched exactly. If
+it can't confirm it, it denies that same confirmation so nothing is left waiting in your Steam app. By email, or with
+no authenticator here, it buys nothing and tells you once.
 
 `buy` shows what each account has spent today and this week; `buy do myaccount` buys the next ones now, inside the
-same limits. Each card bought goes in the log, and one line per look (with *Send spare items and booster packs* on, to
+same limits (not while the account is paused, and never beside a look that's already buying). Something that won't
+clear by itself - crafting off, Steam asking for email confirmation, Steam saying no - waits for the next usual look
+instead of trying again within the hour. Each card bought goes in the log, and one line per look (with *Send spare items and booster packs* on, to
 Discord and Telegram).
 
 ### What each setting does (Buying cards)

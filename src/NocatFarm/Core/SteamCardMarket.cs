@@ -8,20 +8,40 @@ namespace NocatFarm.Core;
 /// Buying cards' market, for real: over the account's own web session, so every price is in its wallet's currency. See
 /// <see cref="CardMarket"/> for how Steam's market answers.
 /// </summary>
-internal sealed class SteamCardMarket(Bot bot) : ICardMarket {
+/// <remarks>
+/// Money first: an answer that doesn't say plainly what happened is never taken for "nothing bought". Three outcomes:
+/// <list type="bullet">
+/// <item>nothing happened - only Steam's own readable refusal with no order in it, or a request that never left this PC;</item>
+/// <item>gone - only when the order's status says it's closed with nothing bought (active 0, purchased 0);</item>
+/// <item>unsure - everything else: counted as spent at the order's price, the order taken back, and asked about again
+/// at the next look.</item>
+/// </list>
+/// </remarks>
+public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMarket {
 	/// <summary>One card's price read at a time across every account, a little apart - the market minds being rushed.</summary>
 	private static readonly SemaphoreSlim Pace = new(1, 1);
 
 	private static DateTime _lastRead = DateTime.MinValue;
 
+	/// <summary>Steam's confirmation type for a market purchase (SteamKit's EMobileConfirmationType.MarketPurchase).</summary>
+	internal const int MarketPurchase = 12;
+
+	/// <summary>
+	/// Once an order is sent, how long finding out what it did - and taking it back - may take. On a clock of its own, not
+	/// the module's: a stop, a disconnect or an update in the middle still finds out, and still takes it back.
+	/// </summary>
+	internal static readonly TimeSpan AfterSending = TimeSpan.FromMinutes(3);
+
+	private readonly IMarketWeb _web = web ?? new BotMarketWeb(bot);
+
 	public async Task<CardMarket.Wallet?> WalletAsync(CancellationToken ct) {
-		string? json = await bot.Web.GetAsync(new Uri(WebSession.Community, "/market/userbillinginfo"), ct).ConfigureAwait(false);
+		string? json = await _web.GetAsync(new Uri(WebSession.Community, "/market/userbillinginfo"), ct).ConfigureAwait(false);
 
 		if (CardMarket.ParseWallet(json) is { } wallet) {
 			return wallet;
 		}
 
-		// The page didn't answer: what Steam last pushed, with nothing known about confirmations.
+		// The page didn't answer: what Steam last pushed, with nothing known about confirmations - which buys nothing.
 		return (bot.WalletCents is { } cents) && (bot.WalletCurrency != SteamKit2.ECurrencyCode.Invalid)
 			? new CardMarket.Wallet(cents, (int) bot.WalletCurrency, false, -1)
 			: null;
@@ -60,7 +80,7 @@ internal sealed class SteamCardMarket(Bot bot) : ICardMarket {
 			}
 
 			string qp = JsonSerializer.Serialize(new object[] { CardMarket.SteamItems, hash });
-			string? json = await bot.Web.GetAsync(new Uri(WebSession.Community, $"/market/orderbook?q=Load&qp={Uri.EscapeDataString(qp)}"), ct).ConfigureAwait(false);
+			string? json = await _web.GetAsync(new Uri(WebSession.Community, $"/market/orderbook?q=Load&qp={Uri.EscapeDataString(qp)}"), ct).ConfigureAwait(false);
 
 			return CardMarket.ParseBook(json);
 		} finally {
@@ -71,206 +91,294 @@ internal sealed class SteamCardMarket(Bot bot) : ICardMarket {
 
 	/// <summary>
 	/// One card: a buy order for one at <paramref name="price"/>, which the cheapest listing fills at once. Asked what it
-	/// bought a few times; still open after that, it's taken back - an order is never left waiting on the market.
+	/// bought a few times; still open after that, it's taken back - an order is never left waiting on the market. Once
+	/// the order is sent, <paramref name="ct"/> no longer stops it: finding out and taking it back run on their own clock.
 	/// </summary>
-	public async Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, CancellationToken ct) {
+	public async Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, Action<string>? placed, CancellationToken ct) {
+		if (ct.IsCancellationRequested) {
+			return new BuyAnswer(BuyResult.NotSent, 0, "stopped before anything was sent");
+		}
+
 		Uri page = new(WebSession.Community, $"/market/listings/{CardMarket.SteamItems}/{Uri.EscapeDataString(hash)}");
-		string confirmation = "0";
-		string? orderId = null;
+		using CancellationTokenSource own = new(AfterSending);
+		CancellationToken t = own.Token;
 
-		for (int attempt = 0; (attempt < 3) && (orderId == null); attempt++) {
-			Dictionary<string, string> form = new(StringComparer.Ordinal) {
-				["currency"] = currency.ToString(CultureInfo.InvariantCulture),
-				["appid"] = CardMarket.SteamItems.ToString(CultureInfo.InvariantCulture),
-				["market_hash_name"] = hash,
-				["price_total"] = price.ToString(CultureInfo.InvariantCulture),
-				["tradefee_tax"] = "0",
-				["quantity"] = "1",
-				["first_name"] = "",
-				["last_name"] = "",
-				["billing_address"] = "",
-				["billing_address_two"] = "",
-				["billing_country"] = "",
-				["billing_city"] = "",
-				["billing_state"] = "",
-				["billing_postal_code"] = "",
-				["save_my_address"] = "0",
-				["confirmation"] = confirmation
-			};
-
-			string? body = await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), form, page, ct).ConfigureAwait(false);
-
-			if (body == null) {
-				// It may have reached Steam: an order left open is taken back, and the card counts as spent.
-				await CancelOpenAsync(hash, ct).ConfigureAwait(false);
-
-				return new BuyAnswer(BuyResult.NoAnswer, price, "no answer");
-			}
-
-			(string? id, string? confirm, string message) = ReadOrder(body);
-
-			if (id != null) {
-				orderId = id;
-
-				break;
-			}
-
-			if ((confirm == null) || (confirmation != "0")) {
-				return new BuyAnswer(BuyResult.Refused, 0, message.Length > 0 ? message : confirm != null ? "the purchase wasn't confirmed" : "");
-			}
-
-			// Steam wants the purchase confirmed: with its authenticator here, exactly this confirmation is accepted - the one
-			// Steam just named for this purchase, never a trade or a listing - and the order sent again with it.
-			if (!await ConfirmAsync(confirm, ct).ConfigureAwait(false)) {
-				return new BuyAnswer(BuyResult.Refused, 0, "Steam wants the purchase confirmed, and it couldn't be");
-			}
-
-			confirmation = confirm;
-		}
-
-		if (orderId == null) {
-			return new BuyAnswer(BuyResult.Refused, 0, "Steam didn't place the order");
-		}
-
-		for (int look = 0; look < 4; look++) {
-			await Task.Delay(Rng.Seconds(2, 3), ct).ConfigureAwait(false);
-
-			if (await StatusAsync(orderId, ct).ConfigureAwait(false) is { Bought: > 0 } status) {
-				return new BuyAnswer(BuyResult.Bought, status.Paid > 0 ? status.Paid : price);
-			}
-		}
-
-		await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/market/cancelbuyorder/"),
-			new Dictionary<string, string>(StringComparer.Ordinal) { ["buy_orderid"] = orderId }, page, ct).ConfigureAwait(false);
-
-		// Filled between the last look and taking it back: bought after all.
-		return await StatusAsync(orderId, ct).ConfigureAwait(false) is { Bought: > 0 } late
-			? new BuyAnswer(BuyResult.Bought, late.Paid > 0 ? late.Paid : price)
-			: new BuyAnswer(BuyResult.Gone, 0);
-	}
-
-	/// <summary>A createbuyorder answer: the order's id, or the confirmation Steam wants, and its message.</summary>
-	internal static (string? Id, string? Confirm, string Message) ReadOrder(string body) {
 		try {
-			using JsonDocument doc = JsonDocument.Parse(body);
-			JsonElement root = doc.RootElement;
+			(string? body, bool sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(hash, price, currency, "0"), page, t).ConfigureAwait(false);
 
-			if (root.ValueKind != JsonValueKind.Object) {
-				return (null, null, "");
+			if (!sent) {
+				return new BuyAnswer(BuyResult.NotSent, 0, "it couldn't be sent - nothing bought");
 			}
 
-			string message = root.TryGetProperty("message", out JsonElement m) && (m.ValueKind == JsonValueKind.String) ? Log.Scrub(m.GetString() ?? "") : "";
-			bool success = root.TryGetProperty("success", out JsonElement s) && (s.ValueKind == JsonValueKind.Number) && s.TryGetInt32(out int ok) && (ok == 1);
+			Order first = ReadOrder(body);
 
-			if (success && root.TryGetProperty("buy_orderid", out JsonElement id) && (Text(id) is { Length: > 0 } order) && (order != "0")) {
-				return (order, null, message);
+			switch (first.Kind) {
+				case OrderKind.Placed:
+					return await PlacedAsync(first.Id!, price, page, placed, t).ConfigureAwait(false);
+				case OrderKind.Refused:
+					return new BuyAnswer(BuyResult.Refused, 0, first.Message);
+				case OrderKind.Unclear:
+					Log.Debug(new Said("buy order for {0} · no clear answer · {1}", hash, Shown(body)), bot.Name);
+
+					return new BuyAnswer(BuyResult.Unsure, price, "Steam didn't answer clearly");
 			}
 
-			if (root.TryGetProperty("need_confirmation", out JsonElement need) && (need.ValueKind == JsonValueKind.True)
-				&& root.TryGetProperty("confirmation", out JsonElement c) && c.TryGetProperty("confirmation_id", out JsonElement cid) && (Text(cid) is { Length: > 0 } confirm)) {
-				return (null, confirm, message);
+			// Steam wants the purchase confirmed: with its authenticator here, exactly this confirmation is accepted - the
+			// one Steam just named, and only a market purchase - and the order sent again with it.
+			string confirm = first.Confirm!;
+
+			if (!await ConfirmAsync(confirm, accept: true, t).ConfigureAwait(false)) {
+				// Nothing is left waiting in the Steam app: exactly that confirmation is turned down.
+				return await ConfirmAsync(confirm, accept: false, t).ConfigureAwait(false)
+					? new BuyAnswer(BuyResult.Refused, 0, "Steam wanted the purchase confirmed, and it couldn't be - turned down")
+					: new BuyAnswer(BuyResult.Unsure, price, "a purchase confirmation may still be waiting in the Steam app");
 			}
 
-			return (null, null, message);
-		} catch (JsonException) {
-			return (null, null, "");
+			(body, sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(hash, price, currency, confirm), page, t).ConfigureAwait(false);
+			Order second = sent ? ReadOrder(body) : default;
+
+			if (second.Kind == OrderKind.Placed) {
+				return await PlacedAsync(second.Id!, price, page, placed, t).ConfigureAwait(false);
+			}
+
+			// Confirmed, and then no order id: it may well have gone in.
+			Log.Debug(new Said("buy order for {0} · no clear answer · {1}", hash, Shown(body)), bot.Name);
+
+			return new BuyAnswer(BuyResult.Unsure, price, "confirmed, but Steam didn't say the order went in");
+		} catch (Exception e) {
+			// Sent, or maybe sent: whatever broke, it may have bought.
+			return new BuyAnswer(BuyResult.Unsure, price, Log.Describe(e));
 		}
 	}
 
-	/// <summary>What a buy order has bought so far, and what it paid. Null when Steam didn't say.</summary>
-	private async Task<(int Bought, long Paid)?> StatusAsync(string orderId, CancellationToken ct) {
-		string? json = await bot.Web.GetAsync(new Uri(WebSession.Community,
-			$"/market/getbuyorderstatus/?sessionid={Uri.EscapeDataString(bot.Web.SessionId)}&buy_orderid={Uri.EscapeDataString(orderId)}"), ct).ConfigureAwait(false);
+	/// <summary>
+	/// An order bought earlier that Steam didn't settle: what it bought, or - still open - taken back. Only ever an order
+	/// this program placed (its id was written down when it was), never one the owner placed by hand.
+	/// </summary>
+	public async Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+		if (ct.IsCancellationRequested) {
+			return new BuyAnswer(BuyResult.Unsure, price, "", orderId);
+		}
+
+		using CancellationTokenSource own = new(AfterSending);
+
+		try {
+			return await SettleAsync(orderId, price, null, looks: 1, own.Token).ConfigureAwait(false);
+		} catch (Exception e) {
+			return new BuyAnswer(BuyResult.Unsure, price, Log.Describe(e), orderId);
+		}
+	}
+
+	private static Dictionary<string, string> OrderForm(string hash, long price, int currency, string confirmation) => new(StringComparer.Ordinal) {
+		["currency"] = currency.ToString(CultureInfo.InvariantCulture),
+		["appid"] = CardMarket.SteamItems.ToString(CultureInfo.InvariantCulture),
+		["market_hash_name"] = hash,
+		["price_total"] = price.ToString(CultureInfo.InvariantCulture),
+		["tradefee_tax"] = "0",
+		["quantity"] = "1",
+		["first_name"] = "",
+		["last_name"] = "",
+		["billing_address"] = "",
+		["billing_address_two"] = "",
+		["billing_country"] = "",
+		["billing_city"] = "",
+		["billing_state"] = "",
+		["billing_postal_code"] = "",
+		["save_my_address"] = "0",
+		["confirmation"] = confirmation
+	};
+
+	private async Task<BuyAnswer> PlacedAsync(string orderId, long price, Uri page, Action<string>? placed, CancellationToken t) {
+		placed?.Invoke(orderId);   // written down before anything else, so a sweep can find it whatever happens next
+
+		return await SettleAsync(orderId, price, page, looks: 4, t).ConfigureAwait(false);
+	}
+
+	/// <summary>Ask what an order did; still open (or not said), take it back and ask again. Bought, Gone or Unsure - never a guess.</summary>
+	private async Task<BuyAnswer> SettleAsync(string orderId, long price, Uri? page, int looks, CancellationToken t) {
+		for (int look = 0; look < looks; look++) {
+			if (page != null) {
+				await _web.DelayAsync(Rng.Seconds(2, 3), t).ConfigureAwait(false);
+			}
+
+			if (Settled(await StatusAsync(orderId, t).ConfigureAwait(false), orderId, price) is { } done) {
+				return done;
+			}
+		}
+
+		(string? body, _) = await _web.PostAsync(new Uri(WebSession.Community, "/market/cancelbuyorder/"),
+			new Dictionary<string, string>(StringComparer.Ordinal) { ["buy_orderid"] = orderId }, page, t).ConfigureAwait(false);
+		bool cancelled = ReadCancel(body);
+
+		// Filled between the last look and taking it back is bought after all - so it's asked once more, whatever the
+		// cancel said.
+		for (int again = 0; again < 2; again++) {
+			await _web.DelayAsync(Rng.Seconds(1, 2), t).ConfigureAwait(false);
+			OrderStatus? after = await StatusAsync(orderId, t).ConfigureAwait(false);
+
+			if (Settled(after, orderId, price) is { } done) {
+				return done;
+			}
+
+			if (after is { Active: > 0 }) {
+				break;   // still open: asking again won't change that
+			}
+		}
+
+		Log.Debug(new Said("buy order {0} · not settled yet · {1}", orderId, Shown(body)), bot.Name);
+
+		return new BuyAnswer(BuyResult.Unsure, price, cancelled ? "taken back, but Steam didn't say whether it bought" : "the order couldn't be taken back yet", orderId);
+	}
+
+	private static BuyAnswer? Settled(OrderStatus? status, string orderId, long price) => status switch {
+		{ Filled: true } s => new BuyAnswer(BuyResult.Bought, s.Paid > 0 ? s.Paid : price, "", orderId),
+		{ Gone: true } => new BuyAnswer(BuyResult.Gone, 0, "", orderId),
+		_ => null
+	};
+
+	/// <summary>What a buy order has done. Null when Steam didn't say.</summary>
+	private async Task<OrderStatus?> StatusAsync(string orderId, CancellationToken t) {
+		string? json = await _web.GetAsync(new Uri(WebSession.Community,
+			$"/market/getbuyorderstatus/?sessionid={Uri.EscapeDataString(_web.SessionId)}&buy_orderid={Uri.EscapeDataString(orderId)}"), t).ConfigureAwait(false);
 
 		return ReadStatus(json);
 	}
 
-	/// <summary>A getbuyorderstatus answer: {"success":1,"active":0,"purchased":1,"quantity":"1","purchases":[{"price_total":7,...}]}.</summary>
-	internal static (int Bought, long Paid)? ReadStatus(string? json) {
-		if (string.IsNullOrWhiteSpace(json)) {
-			return null;
-		}
-
-		try {
-			using JsonDocument doc = JsonDocument.Parse(json);
-			JsonElement root = doc.RootElement;
-
-			if ((root.ValueKind != JsonValueKind.Object) || !root.TryGetProperty("success", out JsonElement s) || (Number(s) != 1)) {
-				return null;
-			}
-
-			int bought = root.TryGetProperty("purchased", out JsonElement p) ? (int) Math.Clamp(Number(p), 0, int.MaxValue) : 0;
-			long paid = 0;
-
-			if (root.TryGetProperty("purchases", out JsonElement list) && (list.ValueKind == JsonValueKind.Array)) {
-				foreach (JsonElement one in list.EnumerateArray()) {
-					paid += one.TryGetProperty("price_total", out JsonElement total) ? Number(total)
-						: (one.TryGetProperty("price_subtotal", out JsonElement sub) ? Number(sub) : 0) + (one.TryGetProperty("price_fee", out JsonElement fee) ? Number(fee) : 0);
-				}
-			}
-
-			return (bought, Math.Max(0, paid));
-		} catch (JsonException) {
-			return null;
-		}
-	}
-
-	/// <summary>Accept exactly the confirmation Steam named for this purchase, with the account's authenticator. False when it can't.</summary>
-	private async Task<bool> ConfirmAsync(string confirmationId, CancellationToken ct) {
-		if (!bot.CanConfirmTrades || !ulong.TryParse(confirmationId, NumberStyles.None, CultureInfo.InvariantCulture, out ulong id)) {
+	/// <summary>Accept (or deny) exactly the confirmation Steam named for this purchase, with the account's authenticator. False when it can't.</summary>
+	private async Task<bool> ConfirmAsync(string confirmationId, bool accept, CancellationToken t) {
+		if (!_web.CanConfirm || !ulong.TryParse(confirmationId, NumberStyles.None, CultureInfo.InvariantCulture, out ulong id) || (id == 0)) {
 			return false;
 		}
 
 		for (int attempt = 0; attempt < 3; attempt++) {
-			await Task.Delay(Rng.Seconds(2, 4), ct).ConfigureAwait(false);
-			(bool ok, _, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, ct, fresh: true).ConfigureAwait(false);
+			await _web.DelayAsync(Rng.Seconds(2, 4), t).ConfigureAwait(false);
+			(bool ok, IReadOnlyList<Confirmations.Item> items) = await _web.ConfirmationsAsync(t).ConfigureAwait(false);
 
-			if (ok && (items.FirstOrDefault(i => ((i.Id == id) || (i.CreatorId == id)) && (i.Type is not (Confirmations.Trade or Confirmations.MarketListing))) is { } match)) {
-				return await Confirmations.ActAsync(bot, [match], accept: true, ct).ConfigureAwait(false);
+			if (ok && (items.FirstOrDefault(i => (i.Id == id) && (i.Type == MarketPurchase)) is { } match)) {
+				return await _web.ActAsync(match, accept, t).ConfigureAwait(false);
 			}
 		}
 
 		return false;
 	}
 
-	/// <summary>After a buy order went unanswered: an order for this card still open is taken back, so nothing waits on the market.</summary>
-	private async Task CancelOpenAsync(string hash, CancellationToken ct) {
-		try {
-			string? json = await bot.Web.GetAsync(new Uri(WebSession.Community, "/market/mylistings/render/?start=0&count=10&norender=1"), ct).ConfigureAwait(false);
+	/// <summary>A createbuyorder answer, read.</summary>
+	public enum OrderKind {
+		/// <summary>Not an answer that says plainly what happened: it may have gone in.</summary>
+		Unclear,
 
-			foreach (string order in OpenOrders(json, hash)) {
-				await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/market/cancelbuyorder/"),
-					new Dictionary<string, string>(StringComparer.Ordinal) { ["buy_orderid"] = order }, null, ct).ConfigureAwait(false);
+		/// <summary>An order went in - Steam gave its id.</summary>
+		Placed,
+
+		/// <summary>Steam wants it confirmed first.</summary>
+		Confirm,
+
+		/// <summary>Steam said no, readably, with no order: nothing happened.</summary>
+		Refused
+	}
+
+	public readonly record struct Order(OrderKind Kind, string? Id, string? Confirm, string Message);
+
+	/// <summary>
+	/// A createbuyorder answer. Any order id that isn't 0 means it went in, whatever "success" says (1 or true). Only a JSON
+	/// answer that says no - success false, or a failure code - with no order is a refusal; anything else is unclear.
+	/// </summary>
+	public static Order ReadOrder(string? body) {
+		if (string.IsNullOrWhiteSpace(body)) {
+			return new Order(OrderKind.Unclear, null, null, "");
+		}
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+			JsonElement root = doc.RootElement;
+
+			if (root.ValueKind != JsonValueKind.Object) {
+				return new Order(OrderKind.Unclear, null, null, "");
 			}
-		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
-			Log.Debug(new Said("couldn't look for an open buy order: {0}", Log.Describe(e)), bot.Name);
+
+			string message = root.TryGetProperty("message", out JsonElement m) && (m.ValueKind == JsonValueKind.String) ? Log.Scrub(m.GetString() ?? "") : "";
+
+			if (root.TryGetProperty("buy_orderid", out JsonElement id) && (Text(id) is { } order) && ulong.TryParse(order, NumberStyles.None, CultureInfo.InvariantCulture, out ulong n) && (n > 0)) {
+				return new Order(OrderKind.Placed, order, null, message);
+			}
+
+			if (root.TryGetProperty("need_confirmation", out JsonElement need) && (need.ValueKind == JsonValueKind.True)) {
+				return root.TryGetProperty("confirmation", out JsonElement c) && (c.ValueKind == JsonValueKind.Object)
+					&& c.TryGetProperty("confirmation_id", out JsonElement cid) && (Text(cid) is { Length: > 0 } confirm)
+					? new Order(OrderKind.Confirm, null, confirm, message)
+					: new Order(OrderKind.Unclear, null, null, message);
+			}
+
+			// No order: a refusal only when Steam says so plainly. Success with no order, Steam's "timed out" (16) or
+			// "pending" (22), or no word at all - it may have gone in.
+			return root.TryGetProperty("success", out JsonElement s) && (Code(s) is { } code) && (code is not (1 or 16 or 22 or 0))
+				? new Order(OrderKind.Refused, null, null, message)
+				: new Order(OrderKind.Unclear, null, null, message);
+		} catch (Exception e) when (e is JsonException or InvalidOperationException) {
+			return new Order(OrderKind.Unclear, null, null, "");
 		}
 	}
 
-	/// <summary>The account's open buy orders for one card, from /market/mylistings/render/?norender=1 ("buy_orders").</summary>
-	internal static List<string> OpenOrders(string? json, string hash) {
-		List<string> orders = [];
+	/// <summary>A buy order's status. Active and Bought are -1 when Steam didn't say.</summary>
+	public readonly record struct OrderStatus(int Active, int Bought, long Paid) {
+		public bool Filled => Bought > 0;
 
+		/// <summary>Closed with nothing bought - the only answer that means nothing was spent.</summary>
+		public bool Gone => (Active == 0) && (Bought == 0);
+	}
+
+	/// <summary>A getbuyorderstatus answer: {"success":1,"active":0,"purchased":1,"quantity":"1","purchases":[{"price_total":7,...}]}. Null when it isn't one.</summary>
+	public static OrderStatus? ReadStatus(string? json) {
 		if (string.IsNullOrWhiteSpace(json)) {
-			return orders;
+			return null;
 		}
 
 		try {
 			using JsonDocument doc = JsonDocument.Parse(json);
+			JsonElement root = doc.RootElement;
 
-			if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("buy_orders", out JsonElement list) && (list.ValueKind == JsonValueKind.Array)) {
-				foreach (JsonElement o in list.EnumerateArray()) {
-					if (o.TryGetProperty("hash_name", out JsonElement h) && (h.GetString() == hash) && o.TryGetProperty("buy_orderid", out JsonElement id) && (Text(id) is { Length: > 0 } order)) {
-						orders.Add(order);
+			if ((root.ValueKind != JsonValueKind.Object) || !root.TryGetProperty("success", out JsonElement s) || (Code(s) != 1)) {
+				return null;
+			}
+
+			int active = root.TryGetProperty("active", out JsonElement a) && (Code(a) is { } on) ? (int) Math.Clamp(on, 0, int.MaxValue) : -1;
+			int bought = root.TryGetProperty("purchased", out JsonElement p) && (Code(p) is { } got) ? (int) Math.Clamp(got, 0, int.MaxValue) : -1;
+			long paid = 0;
+
+			if (root.TryGetProperty("purchases", out JsonElement list) && (list.ValueKind == JsonValueKind.Array)) {
+				foreach (JsonElement one in list.EnumerateArray()) {
+					if (one.ValueKind != JsonValueKind.Object) {
+						continue;
 					}
+
+					paid += one.TryGetProperty("price_total", out JsonElement total) && (Code(total) is { } whole) ? whole
+						: (one.TryGetProperty("price_subtotal", out JsonElement sub) ? Code(sub) ?? 0 : 0) + (one.TryGetProperty("price_fee", out JsonElement fee) ? Code(fee) ?? 0 : 0);
 				}
 			}
-		} catch (JsonException) {
-			// nothing readable - nothing to take back
+
+			return new OrderStatus(active, bought, Math.Max(0, paid));
+		} catch (Exception e) when (e is JsonException or InvalidOperationException) {
+			return null;
+		}
+	}
+
+	/// <summary>Whether a cancelbuyorder answer says it was taken back.</summary>
+	public static bool ReadCancel(string? body) {
+		if (string.IsNullOrWhiteSpace(body)) {
+			return false;
 		}
 
-		return orders;
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+
+			return (doc.RootElement.ValueKind == JsonValueKind.Object) && doc.RootElement.TryGetProperty("success", out JsonElement s) && (Code(s) == 1);
+		} catch (JsonException) {
+			return false;
+		}
 	}
+
+	/// <summary>An answer for the log: Steam's JSON as it is, a page by its title.</summary>
+	private static string Shown(string? body) => body == null ? "-" : Log.Scrub(WebSession.FailureText(body));
 
 	private static string? Text(JsonElement e) => e.ValueKind switch {
 		JsonValueKind.String => e.GetString(),
@@ -278,9 +386,53 @@ internal sealed class SteamCardMarket(Bot bot) : ICardMarket {
 		_ => null
 	};
 
-	private static long Number(JsonElement e) => e.ValueKind switch {
+	/// <summary>A number Steam may send as a number, as text, or as true/false (1/2 - EResult's OK and Fail). Null when it's none of those.</summary>
+	private static long? Code(JsonElement e) => e.ValueKind switch {
+		JsonValueKind.True => 1,
+		JsonValueKind.False => 2,
 		JsonValueKind.Number when e.TryGetInt64(out long n) => n,
 		JsonValueKind.String when long.TryParse(e.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out long n) => n,
-		_ => 0
+		_ => null
 	};
+}
+
+/// <summary>What buying cards needs from the account's web session and its authenticator. A fake in the tests - nothing reaches Steam.</summary>
+public interface IMarketWeb {
+	Task<string?> GetAsync(Uri url, CancellationToken ct);
+
+	/// <summary>POST a form. Sent is false only when it never left this PC; a failed answer's JSON body (Steam's reason) comes back.</summary>
+	Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct);
+
+	string SessionId { get; }
+
+	/// <summary>Whether its authenticator is here, to confirm (or deny) its own purchases.</summary>
+	bool CanConfirm { get; }
+
+	Task<(bool Ok, IReadOnlyList<Confirmations.Item> Items)> ConfirmationsAsync(CancellationToken ct);
+
+	Task<bool> ActAsync(Confirmations.Item item, bool accept, CancellationToken ct);
+
+	Task DelayAsync(TimeSpan wait, CancellationToken ct);
+}
+
+/// <summary>The account's own web session and authenticator.</summary>
+internal sealed class BotMarketWeb(Bot bot) : IMarketWeb {
+	public Task<string?> GetAsync(Uri url, CancellationToken ct) => bot.Web.GetAsync(url, ct);
+
+	public Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct) =>
+		bot.Web.PostTrackedAsync(url, form, referer, ct, errorVerdict: true);
+
+	public string SessionId => bot.Web.SessionId;
+
+	public bool CanConfirm => bot.CanConfirmTrades;
+
+	public async Task<(bool Ok, IReadOnlyList<Confirmations.Item> Items)> ConfirmationsAsync(CancellationToken ct) {
+		(bool ok, _, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, ct, fresh: true).ConfigureAwait(false);
+
+		return (ok, items);
+	}
+
+	public Task<bool> ActAsync(Confirmations.Item item, bool accept, CancellationToken ct) => Confirmations.ActAsync(bot, [item], accept, ct);
+
+	public Task DelayAsync(TimeSpan wait, CancellationToken ct) => Task.Delay(wait, ct);
 }

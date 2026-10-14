@@ -27549,23 +27549,21 @@ await CommandSweep.RunAsync(Check);
 			bcWallet is { Balance: 1234, Currency: 20, NeedsBilling: false, Confirm: 2 }, $"{bcWallet}");
 		Check("market: a sign-in page is no wallet", NocatFarm.Modules.CardMarket.ParseWallet("<!DOCTYPE html><title>Steam Community :: Error</title>") == null);
 
-		Type bcSteam = typeof(Rng).Assembly.GetType("NocatFarm.Core.SteamCardMarket")!;
-		object? BcStatic(string m, params object?[] a) => bcSteam.GetMethod(m, BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, a);
-		var bcPlaced = ((string? Id, string? Confirm, string Message)) BcStatic("ReadOrder", "{\"success\":1,\"buy_orderid\":\"7071138734\"}")!;
-		var bcConfirm = ((string? Id, string? Confirm, string Message)) BcStatic("ReadOrder", "{\"success\":22,\"need_confirmation\":true,\"confirmation\":{\"confirmation_id\":\"15544087251\"}}")!;
-		var bcNo = ((string? Id, string? Confirm, string Message)) BcStatic("ReadOrder", "{\"success\":29,\"message\":\"You already have an active buy order for this item.\"}")!;
+		var bcPlaced = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":1,\"buy_orderid\":\"7071138734\"}");
+		var bcConfirm = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":22,\"need_confirmation\":true,\"confirmation\":{\"confirmation_id\":\"15544087251\"}}");
+		var bcNo = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":29,\"message\":\"You already have an active buy order for this item.\"}");
 		Check("buy order: placed, wanting a confirmation, or turned down with Steam's reason",
-			(bcPlaced.Id == "7071138734") && (bcConfirm.Id == null) && (bcConfirm.Confirm == "15544087251") && (bcNo.Id == null) && (bcNo.Confirm == null)
+			(bcPlaced.Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Placed) && (bcPlaced.Id == "7071138734")
+			&& (bcConfirm.Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Confirm) && (bcConfirm.Id == null) && (bcConfirm.Confirm == "15544087251")
+			&& (bcNo.Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Refused) && (bcNo.Id == null) && (bcNo.Confirm == null)
 			&& bcNo.Message.Contains("active buy order", StringComparison.Ordinal));
-		var bcStatus = ((int Bought, long Paid)?) BcStatic("ReadStatus", "{\"success\":1,\"active\":0,\"purchased\":1,\"quantity\":\"1\",\"quantity_remaining\":\"0\",\"purchases\":[{\"listingid\":\"1\",\"price_subtotal\":5,\"price_fee\":2}]}");
-		var bcOpen = ((int Bought, long Paid)?) BcStatic("ReadStatus", "{\"success\":1,\"active\":1,\"purchased\":0,\"quantity\":\"1\",\"quantity_remaining\":\"1\",\"purchases\":[]}");
-		Check("buy order: its status says what it bought and paid", (bcStatus is { Bought: 1, Paid: 7 }) && (bcOpen is { Bought: 0 }), $"{bcStatus} {bcOpen}");
-		var bcOrders = (List<string>) BcStatic("OpenOrders", "{\"buy_orders\":[{\"hash_name\":\"730-SWAT\",\"buy_orderid\":\"11\"},{\"hash_name\":\"730-FBI\",\"buy_orderid\":\"12\"}]}", "730-FBI")!;
-		Check("buy order: one left open after no answer is found by its card", bcOrders.SequenceEqual(["12"]));
+		var bcStatus = NocatFarm.Core.SteamCardMarket.ReadStatus("{\"success\":1,\"active\":0,\"purchased\":1,\"quantity\":\"1\",\"quantity_remaining\":\"0\",\"purchases\":[{\"listingid\":\"1\",\"price_subtotal\":5,\"price_fee\":2}]}");
+		var bcOpen = NocatFarm.Core.SteamCardMarket.ReadStatus("{\"success\":1,\"active\":1,\"purchased\":0,\"quantity\":\"1\",\"quantity_remaining\":\"1\",\"purchases\":[]}");
+		Check("buy order: its status says what it bought and paid", (bcStatus is { Bought: 1, Paid: 7, Filled: true }) && (bcOpen is { Bought: 0, Active: 1, Gone: false }), $"{bcStatus} {bcOpen}");
 		string bcMarketSrc = BcSrc("src/NocatFarm/Core/SteamCardMarket.cs");
 		Check("buy order: one card at a time, never left waiting on the market, and a confirmation is only ever this purchase's",
 			bcMarketSrc.Contains("/market/cancelbuyorder/", StringComparison.Ordinal) && bcMarketSrc.Contains("[\"quantity\"] = \"1\"", StringComparison.Ordinal)
-			&& bcMarketSrc.Contains("i.Type is not (Confirmations.Trade or Confirmations.MarketListing)", StringComparison.Ordinal));
+			&& bcMarketSrc.Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
 
 		// ── the plan, against a fake market ──
 		var bcNow = DateTime.UtcNow;
@@ -27697,7 +27695,7 @@ await CommandSweep.RunAsync(Check);
 			if (on) {
 				NocatFarm.Core.Switches.Set(bot, NocatFarm.Core.Switches.Buy, true);
 			}
-			var buyer = new NocatFarm.Modules.CardBuyer(bot, m, NocatFarm.Modules.SwapCost.None);
+			var buyer = new NocatFarm.Modules.CardBuyer(bot, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
 			var result = await buyer.LookAsync(mode, CancellationToken.None);
 			return (result, m, bot, buyer);
 		}
@@ -27705,9 +27703,12 @@ await CommandSweep.RunAsync(Check);
 		var bcPreview = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Preview, on: true);
 		Check("module: a preview buys nothing, even with buying on", (bcPreview.Market.Bought.Count == 0) && (bcPreview.Result.Plan?.Steps.Count == 2));
 		var bcOff = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: false);
-		Check("module: while it's off, 'buy do' buys nothing and says so", (bcOff.Market.Bought.Count == 0) && bcOff.Result.Problem.Contains("off", StringComparison.Ordinal));
-		Check("module: the reply says how to turn it on",
-			Commands.BuySaid(bcOff.Bot, NocatFarm.Modules.CardBuyer.Mode.Now, bcOff.Result).Any(l => l.Contains("nothing is bought while buying cards is off. 'buy on", StringComparison.Ordinal)));
+		Check("module: while it's off, 'buy do' buys nothing and says so - before reading anything from the market",
+			(bcOff.Market.Bought.Count == 0) && bcOff.Result.Problem.Contains("off", StringComparison.Ordinal) && bcOff.Result.Lasting && (bcOff.Market.Reads == 0) && (bcOff.Result.Plan == null));
+		List<string> bcOffSaid = Commands.BuySaid(bcOff.Bot, NocatFarm.Modules.CardBuyer.Mode.Now, bcOff.Result);
+		Check("module: the reply says it's off, without 'try again in a minute'",
+			bcOffSaid.Any(static l => l.EndsWith(": buying cards is off", StringComparison.Ordinal)) && !bcOffSaid.Any(static l => l.Contains("try again", StringComparison.Ordinal)),
+			string.Join(" | ", bcOffSaid));
 		var bcNoCraft = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = false }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true);
 		Check("module: with badge crafting off nothing is bought - the cards would only sit there",
 			(bcNoCraft.Market.Bought.Count == 0) && bcNoCraft.Result.Problem.Contains("Craft badges", StringComparison.Ordinal));
@@ -27724,7 +27725,7 @@ await CommandSweep.RunAsync(Check);
 			(bcAgain.Plan!.DaySpent == 21) && (bcAgain.Plan.Room == 129) && (bcBuy.Market.Bought.Sum(static b => b.Price) <= 129), $"{bcAgain.Plan.Room} {string.Join(",", bcBuy.Market.Bought)}");
 
 		var bcDearer = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true,
-			setup: m => m.AfterBookReads = (4, () => m.Books["100-Card 5"] = FakeCardMarket.B(15)));
+			setup: m => m.AfterBookReads = (5, () => m.Books["100-Card 5"] = FakeCardMarket.B(15)));
 		Check("module: each card's price is read again right before buying - dearer than planned, nothing bought",
 			(bcDearer.Market.Bought.Count == 0) && bcDearer.Result.Problem.Contains("costs more than planned", StringComparison.Ordinal), bcDearer.Result.Problem);
 		var bcCheaper = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true,
@@ -27737,10 +27738,10 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Core.Switches.Set(bcMid, NocatFarm.Core.Switches.Buy, true);
 		var bcMidMarket = BcMarket();
 		bcMidMarket.AfterBuys = (1, () => NocatFarm.Core.Switches.Set(bcMid, NocatFarm.Core.Switches.Buy, false));
-		await new NocatFarm.Modules.CardBuyer(bcMid, bcMidMarket, NocatFarm.Modules.SwapCost.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		await new NocatFarm.Modules.CardBuyer(bcMid, bcMidMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 		Check("module: turned off while it buys - it stops before the next card", bcMidMarket.Bought.Count == 1, string.Join(",", bcMidMarket.Bought));
 		var bcSilent = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true,
-			setup: m => m.Answer = NocatFarm.Modules.BuyResult.NoAnswer);
+			setup: m => m.Answer = NocatFarm.Modules.BuyResult.Unsure);
 		Check("module: no answer from Steam - counted as spent, and it stops",
 			(bcSilent.Market.Bought.Count == 1) && (bcSilent.Buyer.Ledger.SpentSince(DateTime.UtcNow.AddDays(-1)) == 9) && bcSilent.Buyer.Ledger.All.Single().Pending);
 		var bcRefused = await BcLook(new NocatFarm.Config.BotConfig { CraftBadges = true }, NocatFarm.Modules.CardBuyer.Mode.Now, on: true,
@@ -27758,7 +27759,7 @@ await CommandSweep.RunAsync(Check);
 		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(bcPerson, DateTime.UtcNow);
 		NocatFarm.Core.Switches.Set(bcPerson, NocatFarm.Core.Switches.Buy, true);
 		var bcPersonMarket = BcMarket();
-		var bcPersonResult = await new NocatFarm.Modules.CardBuyer(bcPerson, bcPersonMarket, NocatFarm.Modules.SwapCost.None).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		var bcPersonResult = await new NocatFarm.Modules.CardBuyer(bcPerson, bcPersonMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 		Check("human mode: outside its day nothing is bought, by hand either", (bcPersonMarket.Bought.Count == 0) && bcPersonResult.Problem.StartsWith("not now", StringComparison.Ordinal), bcPersonResult.Problem);
 		await bcPerson.DisposeAsync();
 		string bcBuyerSrc = BcSrc("src/NocatFarm/Modules/CardBuyer.cs");
@@ -27898,6 +27899,9 @@ await CardSwapChecks.RunAsync(Check);
 
 // ── 1.8.2: the five switches, and card swaps beside buying cards and spare items ──
 await SwitchesTogetherChecks.RunAsync(Check);
+
+// ── 1.8.2: buying is safe when Steam is unclear - the whole purchase against a pretend Steam ──
+await BuySafetyChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
@@ -28975,14 +28979,49 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 		return Task.FromResult(Books.GetValueOrDefault(hash));
 	}
 
-	public Task<NocatFarm.Modules.BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, CancellationToken ct) {
+	/// <summary>The order id each purchase hands back the moment it's placed (null: none).</summary>
+	public string? OrderId { get; set; }
+
+	/// <summary>Done during a purchase, after the order is placed - to see what's written down by then.</summary>
+	public Action? DuringBuy { get; set; }
+
+	/// <summary>Thrown by a purchase, after the order is placed.</summary>
+	public Exception? Throws { get; set; }
+
+	/// <summary>What asking about an earlier order says, by its id; the orders asked about.</summary>
+	public Dictionary<string, NocatFarm.Modules.BuyAnswer> Checks { get; } = [];
+	public List<string> Checked { get; } = [];
+
+	/// <summary>Every price read so far.</summary>
+	public int Reads => _reads;
+
+	/// <summary>The tests' clock: this PC's, never a request to Steam.</summary>
+	public static Task<DateTime> Clock(CancellationToken ct) => Task.FromResult(DateTime.UtcNow);
+
+	public Task<NocatFarm.Modules.BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, Action<string>? placed, CancellationToken ct) {
 		Bought.Add((hash, price));
+
+		if (OrderId != null) {
+			placed?.Invoke(OrderId);
+		}
+
+		DuringBuy?.Invoke();
 
 		if (AfterBuys is { } after && (Bought.Count == after.After)) {
 			after.Do();
 		}
 
-		return Task.FromResult(new NocatFarm.Modules.BuyAnswer(Answer, Answer == NocatFarm.Modules.BuyResult.Bought ? price : 0));
+		if (Throws != null) {
+			throw Throws;
+		}
+
+		return Task.FromResult(new NocatFarm.Modules.BuyAnswer(Answer, Answer == NocatFarm.Modules.BuyResult.Bought ? price : 0, "", OrderId));
+	}
+
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+		Checked.Add(orderId);
+
+		return Task.FromResult(Checks.GetValueOrDefault(orderId) ?? new NocatFarm.Modules.BuyAnswer(NocatFarm.Modules.BuyResult.Unsure, price, "", orderId));
 	}
 }
 
@@ -29680,6 +29719,486 @@ static class SwitchesTogetherChecks {
 			NocatFarm.Core.SpareLedger.ForgetLoaded();
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(root, true);
+			} catch (IOException) {
+				// temp - it goes when Windows tidies up
+			}
+		}
+	}
+}
+
+/// <summary>A pretend web session for the card market: scripted answers to each kind of request, and a note of every request. Nothing reaches Steam.</summary>
+sealed class FakeMarketWeb : NocatFarm.Core.IMarketWeb {
+	/// <summary>createbuyorder's answers in turn (body, sent). Run out: no answer, sent.</summary>
+	public Queue<(string? Body, bool Sent)> Orders { get; } = new();
+
+	/// <summary>getbuyorderstatus's answers in turn. Run out: the last one again (null if none).</summary>
+	public Queue<string?> Statuses { get; } = new();
+
+	/// <summary>cancelbuyorder's answer.</summary>
+	public string? CancelAnswer { get; set; } = "{\"success\":1}";
+
+	/// <summary>After the cancel, getbuyorderstatus says this instead (null: carry on with <see cref="Statuses"/>).</summary>
+	public string? AfterCancel { get; set; }
+
+	public List<NocatFarm.Core.Confirmations.Item> Waiting { get; } = [];
+	public bool AllowWorks { get; set; } = true;
+	public bool DenyWorks { get; set; } = true;
+	public bool CanConfirm { get; set; }
+	public string SessionId => "fake";
+
+	/// <summary>Every request, in order: "order:&lt;confirmation&gt;", "status:&lt;id&gt;", "cancel:&lt;id&gt;", "allow:&lt;id&gt;", "deny:&lt;id&gt;".</summary>
+	public List<string> Calls { get; } = [];
+
+	/// <summary>Done at each request, with its note - to cancel a token in the middle, say.</summary>
+	public Action<string>? OnCall { get; set; }
+
+	private string? _lastStatus;
+	private bool _cancelled;
+
+	private void Note(string call) {
+		Calls.Add(call);
+		OnCall?.Invoke(call);
+	}
+
+	public Task<string?> GetAsync(Uri url, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+
+		if (!url.AbsolutePath.Contains("getbuyorderstatus", StringComparison.Ordinal)) {
+			return Task.FromResult<string?>(null);
+		}
+
+		string id = System.Web.HttpUtility.ParseQueryString(url.Query)["buy_orderid"] ?? "";
+		Note("status:" + id);
+
+		if (_cancelled && (AfterCancel != null)) {
+			return Task.FromResult<string?>(AfterCancel);
+		}
+
+		if (Statuses.Count > 0) {
+			_lastStatus = Statuses.Dequeue();
+		}
+
+		return Task.FromResult(_lastStatus);
+	}
+
+	public Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+
+		if (url.AbsolutePath.Contains("cancelbuyorder", StringComparison.Ordinal)) {
+			Note("cancel:" + form["buy_orderid"]);
+			_cancelled = true;
+
+			return Task.FromResult((CancelAnswer, true));
+		}
+
+		Note("order:" + form["confirmation"]);
+
+		return Task.FromResult(Orders.Count > 0 ? Orders.Dequeue() : ((string?) null, true));
+	}
+
+	public Task<(bool Ok, IReadOnlyList<NocatFarm.Core.Confirmations.Item> Items)> ConfirmationsAsync(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+
+		return Task.FromResult<(bool, IReadOnlyList<NocatFarm.Core.Confirmations.Item>)>((true, [.. Waiting]));
+	}
+
+	public Task<bool> ActAsync(NocatFarm.Core.Confirmations.Item item, bool accept, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		Note((accept ? "allow:" : "deny:") + item.Id);
+		bool ok = accept ? AllowWorks : DenyWorks;
+
+		if (ok) {
+			Waiting.Remove(item);
+		}
+
+		return Task.FromResult(ok);
+	}
+
+	public Task DelayAsync(TimeSpan wait, CancellationToken ct) => ct.IsCancellationRequested ? Task.FromCanceled(ct) : Task.CompletedTask;
+
+	/// <summary>A confirmation waiting in the Steam app.</summary>
+	public static NocatFarm.Core.Confirmations.Item Conf(ulong id, int type, ulong creator = 0) => new(id, 5, creator, type, "", "", [], "", 0);
+}
+
+/// <summary>The 1.8.2 checks that buying cards is safe when Steam is unclear. Fakes only - nothing reaches Steam.</summary>
+static class BuySafetyChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-buysafe-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot(NocatFarm.Config.BotConfig? cfg = null) {
+			var b = new NocatFarm.Core.Bot("bs-" + Guid.NewGuid().ToString("N")[..8], cfg ?? new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			return b;
+		}
+
+		const string Placed = "{\"success\":1,\"buy_orderid\":\"5001\"}";
+		const string PlacedTrue = "{\"success\":true,\"buy_orderid\":5001}";
+		const string Filled = "{\"success\":1,\"active\":0,\"purchased\":1,\"quantity\":\"1\",\"purchases\":[{\"price_total\":7}]}";
+		const string Open = "{\"success\":1,\"active\":1,\"purchased\":0,\"quantity\":\"1\",\"purchases\":[]}";
+		const string Closed = "{\"success\":1,\"active\":0,\"purchased\":0,\"quantity\":\"1\",\"purchases\":[]}";
+		const string Confirm = "{\"success\":22,\"need_confirmation\":true,\"confirmation\":{\"confirmation_id\":\"900\"}}";
+
+		async Task<(NocatFarm.Modules.BuyAnswer Answer, FakeMarketWeb Web, List<string> Noted)> Buy(Action<FakeMarketWeb> setup, CancellationToken ct = default) {
+			var web = new FakeMarketWeb();
+			setup(web);
+			var market = new NocatFarm.Core.SteamCardMarket(NewBot(), web);
+			List<string> noted = [];
+			var answer = await market.BuyAsync(730, "730-Card", 9, 20, noted.Add, ct);
+			return (answer, web, noted);
+		}
+
+		try {
+			// ── one purchase, start to end, against a pretend Steam ──
+			var ok1 = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue(Filled); });
+			var ok2 = await Buy(w => { w.Orders.Enqueue((PlacedTrue, true)); w.Statuses.Enqueue(Filled); });
+			Check("buy flow: placed (\"success\":1 or true), asked about, bought at what Steam says it paid - the order id noted first, nothing taken back",
+				(ok1.Answer is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7, Order: "5001" }) && ok1.Noted.SequenceEqual(["5001"]) && !ok1.Web.Calls.Any(static c => c.StartsWith("cancel", StringComparison.Ordinal))
+				&& (ok2.Answer is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }) && ok2.Noted.SequenceEqual(["5001"]),
+				$"{ok1.Answer} {ok2.Answer} {string.Join(",", ok1.Web.Calls)}");
+			Check("buy flow: any order id that isn't 0 means it went in, whatever \"success\" says",
+				(NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":16,\"buy_orderid\":\"77\"}").Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Placed)
+				&& (NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":1,\"buy_orderid\":\"0\"}").Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Unclear));
+
+			var limited = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue(null); });
+			Check("buy flow: empty status answers (a rate limit) are never \"gone\" - taken back, counted as spent at its price, the order kept to ask again",
+				(limited.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9, Order: "5001" }) && limited.Web.Calls.Contains("cancel:5001"),
+				$"{limited.Answer} {string.Join(",", limited.Web.Calls)}");
+			var openThenGone = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue(Open); w.AfterCancel = Closed; });
+			Check("buy flow: still open (active 1) is never gone - taken back, and gone only once its status says active 0, purchased 0",
+				(openThenGone.Answer.Result == NocatFarm.Modules.BuyResult.Gone) && (openThenGone.Web.Calls.Count(static c => c == "status:5001") >= 5) && openThenGone.Web.Calls.Contains("cancel:5001")
+				&& (NocatFarm.Core.SteamCardMarket.ReadStatus(Open) is { Gone: false }) && (NocatFarm.Core.SteamCardMarket.ReadStatus(Closed) is { Gone: true })
+				&& (NocatFarm.Core.SteamCardMarket.ReadStatus("{\"success\":1,\"purchased\":0}") is { Gone: false }),
+				$"{openThenGone.Answer} {string.Join(",", openThenGone.Web.Calls)}");
+			var cancelFails = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue(Open); w.CancelAnswer = "{\"success\":false}"; });
+			Check("buy flow: a cancel that fails leaves it unsure - counted as spent, never \"nothing bought\"",
+				(cancelFails.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9, Order: "5001" }) && cancelFails.Answer.Message.Contains("couldn't be taken back", StringComparison.Ordinal),
+				$"{cancelFails.Answer}");
+			var lateFill = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue(Open); w.AfterCancel = Filled; });
+			Check("buy flow: filled just as it was taken back - bought after all", lateFill.Answer is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }, $"{lateFill.Answer}");
+
+			var html = await Buy(w => w.Orders.Enqueue((null, true)));
+			var htmlBody = await Buy(w => w.Orders.Enqueue(("<!DOCTYPE html><title>502 Bad Gateway</title>", true)));
+			Check("buy flow: a 502/504 page (or no answer) to the order is unsure - counted at its price, not \"turned down\"",
+				(html.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }) && (htmlBody.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }),
+				$"{html.Answer} {htmlBody.Answer}");
+			var refused = await Buy(w => w.Orders.Enqueue(("{\"success\":29,\"message\":\"You already have an active buy order for this item.\"}", true)));
+			var refusedFalse = await Buy(w => w.Orders.Enqueue(("{\"success\":false,\"message\":\"no\"}", true)));
+			var notSent = await Buy(w => w.Orders.Enqueue((null, false)));
+			Check("buy flow: nothing happened only for Steam's readable no with no order, or a request that never left this PC",
+				(refused.Answer is { Result: NocatFarm.Modules.BuyResult.Refused, Paid: 0 }) && refused.Answer.Message.Contains("active buy order", StringComparison.Ordinal)
+				&& (refusedFalse.Answer.Result == NocatFarm.Modules.BuyResult.Refused) && (notSent.Answer is { Result: NocatFarm.Modules.BuyResult.NotSent, Paid: 0 }),
+				$"{refused.Answer} {refusedFalse.Answer} {notSent.Answer}");
+			var successNoId = await Buy(w => w.Orders.Enqueue(("{\"success\":1}", true)));
+			var timedOut = await Buy(w => w.Orders.Enqueue(("{\"success\":16}", true)));
+			Check("buy flow: \"success\" with no order id, or Steam's timed out, is unsure - not nothing",
+				(successNoId.Answer.Result == NocatFarm.Modules.BuyResult.Unsure) && (timedOut.Answer.Result == NocatFarm.Modules.BuyResult.Unsure), $"{successNoId.Answer} {timedOut.Answer}");
+
+			// Odd shapes never throw: unsure, and taken back when there's an order.
+			var odd = await Buy(w => w.Orders.Enqueue(("{\"need_confirmation\":true,\"confirmation\":5}", true)));
+			var oddStatus = await Buy(w => { w.Orders.Enqueue((Placed, true)); w.Statuses.Enqueue("{\"success\":1,\"active\":0,\"purchased\":1,\"purchases\":[1,\"x\",{\"price_subtotal\":\"5\",\"price_fee\":2}]}"); });
+			Check("buy flow: answers of an odd shape don't throw - unclear is unsure, a status with odd purchases still reads",
+				(odd.Answer.Result == NocatFarm.Modules.BuyResult.Unsure) && (oddStatus.Answer is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 })
+				&& (NocatFarm.Core.SteamCardMarket.ReadOrder("[1,2]").Kind == NocatFarm.Core.SteamCardMarket.OrderKind.Unclear)
+				&& (NocatFarm.Core.SteamCardMarket.ReadStatus("{\"success\":1,\"active\":0,\"purchased\":1,\"purchases\":{\"a\":1}}") is { Filled: true })
+				&& (NocatFarm.Core.SteamCardMarket.ReadStatus("[]") == null),
+				$"{odd.Answer} {oddStatus.Answer}");
+
+			// ── Steam wanting the purchase confirmed ──
+			var confirmed = await Buy(w => {
+				w.CanConfirm = true;
+				w.Waiting.Add(FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade));       // a trade with the same id: never touched
+				w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900));                           // the id only as its creator: not it
+				w.Waiting.Add(FakeMarketWeb.Conf(900, 12));
+				w.Orders.Enqueue((Confirm, true));
+				w.Orders.Enqueue((Placed, true));
+				w.Statuses.Enqueue(Filled);
+			});
+			Check("confirmation: only the market purchase with exactly that id is accepted, then the order goes in with it",
+				(confirmed.Answer.Result == NocatFarm.Modules.BuyResult.Bought) && confirmed.Web.Calls.Take(3).SequenceEqual(["order:0", "allow:900", "order:900"])
+				&& (confirmed.Web.Waiting.Count == 2) && confirmed.Web.Waiting.All(static i => (i.Type == NocatFarm.Core.Confirmations.Trade) || (i.Id == 901)),
+				string.Join(",", confirmed.Web.Calls));
+			var onlyTrade = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade)); w.Orders.Enqueue((Confirm, true)); });
+			Check("confirmation: not found as a market purchase - nothing accepted or denied, and unsure (it may still be waiting in the Steam app)",
+				(onlyTrade.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }) && !onlyTrade.Web.Calls.Any(static c => c.StartsWith("allow", StringComparison.Ordinal) || c.StartsWith("deny", StringComparison.Ordinal)),
+				$"{onlyTrade.Answer} {string.Join(",", onlyTrade.Web.Calls)}");
+			var denied = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); });
+			Check("confirmation: it couldn't be confirmed - exactly that one is denied, so nothing is left waiting, and nothing was bought",
+				(denied.Answer is { Result: NocatFarm.Modules.BuyResult.Refused, Paid: 0 }) && denied.Web.Calls.SequenceEqual(["order:0", "allow:900", "deny:900"]),
+				$"{denied.Answer} {string.Join(",", denied.Web.Calls)}");
+			var stuck = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.DenyWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); });
+			Check("confirmation: couldn't confirm or deny - unsure, counted at its price", stuck.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }, $"{stuck.Answer}");
+			var confirmedUnclear = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue(("{\"success\":29,\"message\":\"x\"}", true)); });
+			var confirmedSilent = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue((null, true)); });
+			Check("confirmation: accepted, then anything without an order id is unsure - never 0 spent",
+				(confirmedUnclear.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }) && (confirmedSilent.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }),
+				$"{confirmedUnclear.Answer} {confirmedSilent.Answer}");
+
+			// ── a stop in the middle ──
+			using (var cts = new CancellationTokenSource()) {
+				var mid = await Buy(w => {
+					w.Orders.Enqueue((Placed, true));
+					w.Statuses.Enqueue(Open);
+					w.AfterCancel = Closed;
+					w.OnCall = c => { if (c.StartsWith("order", StringComparison.Ordinal)) { cts.Cancel(); } };
+				}, cts.Token);
+				Check("stop mid-purchase: once the order is sent it still asks, takes it back, and says how it ended - on its own clock",
+					(mid.Answer.Result == NocatFarm.Modules.BuyResult.Gone) && mid.Web.Calls.Contains("cancel:5001") && mid.Web.Calls.Contains("status:5001"),
+					$"{mid.Answer} {string.Join(",", mid.Web.Calls)}");
+			}
+			using (var cts = new CancellationTokenSource()) {
+				cts.Cancel();
+				var before = await Buy(w => w.Orders.Enqueue((Placed, true)), cts.Token);
+				Check("stop before sending: nothing sent, nothing spent", (before.Answer.Result == NocatFarm.Modules.BuyResult.NotSent) && (before.Web.Calls.Count == 0), $"{before.Answer}");
+			}
+
+			// ── an earlier order asked about again ──
+			var checkWeb = new FakeMarketWeb();
+			checkWeb.Statuses.Enqueue(Open);
+			checkWeb.AfterCancel = Closed;
+			var checkAnswer = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkWeb).CheckOrderAsync("6001", 9, CancellationToken.None);
+			var checkFilledWeb = new FakeMarketWeb();
+			checkFilledWeb.Statuses.Enqueue(Filled);
+			var checkFilled = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkFilledWeb).CheckOrderAsync("6002", 9, CancellationToken.None);
+			Check("an earlier order: still open is taken back by its own id; filled is bought",
+				(checkAnswer.Result == NocatFarm.Modules.BuyResult.Gone) && checkWeb.Calls.Contains("cancel:6001") && (checkFilled is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }),
+				$"{checkAnswer} {checkFilled} {string.Join(",", checkWeb.Calls)}");
+			string marketSrc = Src("src/NocatFarm/Core/SteamCardMarket.cs");
+			Check("an earlier order: only ids it placed - never the owner's own orders found on the listings page",
+				!marketSrc.Contains("mylistings", StringComparison.Ordinal) && !marketSrc.Contains("CreatorId", StringComparison.Ordinal));
+
+			// ── the module: written down before, set straight after ──
+			FakeCardMarket Market() {
+				var m = new FakeCardMarket();
+				m.Sets[100] = new NocatFarm.Modules.CardSet(100, "Hundred", ["100-Card 1", "100-Card 2"], new Dictionary<string, int> { ["100-Card 1"] = 5, ["100-Card 2"] = 5 });
+				m.Held[100] = new() { ["100-Card 1"] = 1 };
+				m.Books["100-Card 1"] = FakeCardMarket.B(9);
+				m.Books["100-Card 2"] = FakeCardMarket.B(9);
+				return m;
+			}
+			NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, FakeCardMarket m, Func<CancellationToken, Task<DateTime>>? clock = null) {
+				NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+				return new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, clock ?? FakeCardMarket.Clock);
+			}
+
+			var preBot = NewBot();
+			var preMarket = Market();
+			preMarket.OrderId = "7001";
+			var preBuyer = Buyer(preBot, preMarket);
+			List<NocatFarm.Modules.BuyLedger.Entry> during = [];
+			preMarket.DuringBuy = () => during.AddRange(preBuyer.Ledger.All);
+			var preResult = await preBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var preAfter = preBuyer.Ledger.All;
+			Check("ledger: written down as pending at its price, with the order id, before the purchase answers - then set to what was paid",
+				(during.Count == 1) && during[0] is { Pending: true, Cents: 9, Order: "7001" } && (preResult.Bought.Count == 1)
+				&& (preAfter.Count == 1) && preAfter[0] is { Pending: false, Cents: 9, Order: "7001" },
+				string.Join(" | ", during) + " / " + string.Join(" | ", preAfter));
+
+			var throwBot = NewBot();
+			var throwMarket = Market();
+			throwMarket.OrderId = "7002";
+			throwMarket.Throws = new OperationCanceledException();
+			var throwBuyer = Buyer(throwBot, throwMarket);
+			using (var cts = new CancellationTokenSource()) {
+				throwMarket.DuringBuy = cts.Cancel;
+				var throwResult = await throwBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, cts.Token);
+				Check("stop mid-purchase: the spend is never lost - it stays counted, with its order to ask about, and nothing more is bought",
+					throwBuyer.Ledger.All is [{ Pending: true, Cents: 9, Order: "7002" }] && (throwMarket.Bought.Count == 1) && (throwBuyer.Ledger.OpenOrders.Count == 1)
+					&& throwResult.Problem.Contains("for sure", StringComparison.Ordinal),
+					throwResult.Problem + " " + string.Join(" | ", throwBuyer.Ledger.All));
+			}
+
+			var refusedBot = NewBot();
+			var refusedMarket = Market();
+			refusedMarket.Answer = NocatFarm.Modules.BuyResult.Refused;
+			var refusedResult = await Buyer(refusedBot, refusedMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var notSentBot = NewBot();
+			var notSentMarket = Market();
+			notSentMarket.Answer = NocatFarm.Modules.BuyResult.NotSent;
+			var notSentResult = await Buyer(notSentBot, notSentMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("ledger: turned down or never sent - nothing counted; turned down waits for the usual look, never sent is tried again soon",
+				(NocatFarm.Modules.BuyLedger.Of(refusedBot.Name).All.Count == 0) && refusedResult.Lasting
+				&& (NocatFarm.Modules.BuyLedger.Of(notSentBot.Name).All.Count == 0) && !notSentResult.Lasting && (notSentResult.Problem.Length > 0),
+				refusedResult.Problem + " / " + notSentResult.Problem);
+
+			// The next look asks about orders that weren't settled - by the ids it wrote down, and no other.
+			var sweepBot = NewBot();
+			var sweepMarket = Market();
+			var sweepLedger = NocatFarm.Modules.BuyLedger.Of(sweepBot.Name);
+			DateTime t0 = DateTime.UtcNow.AddHours(-3);
+			sweepLedger.Add(new(t0, 9, 20, 100, "100-Card 2", Pending: true, Order: "a1", Key: "k1"));
+			sweepLedger.Add(new(t0, 9, 20, 100, "100-Card 2", Pending: true, Order: "b2", Key: "k2"));
+			sweepLedger.Add(new(t0, 9, 20, 100, "100-Card 2", Pending: true, Order: "c3", Key: "k3"));
+			sweepLedger.Add(new(t0, 9, 20, 100, "100-Card 2", Pending: true, Key: "k4"));
+			sweepLedger.Add(new(t0, 9, 20, 100, "100-Card 1", Order: "d4", Key: "k5"));
+			sweepMarket.Checks["a1"] = new(NocatFarm.Modules.BuyResult.Bought, 6, "", "a1");
+			sweepMarket.Checks["b2"] = new(NocatFarm.Modules.BuyResult.Gone, 0, "", "b2");
+			sweepMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(1000, 20, false, 1);   // blocked: only the sweep runs
+			await Buyer(sweepBot, sweepMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var swept = sweepLedger.All;
+			Check("sweep: each look first asks about its own unsettled orders - bought at what it paid, gone off the list, still unsure stays counted",
+				sweepMarket.Checked.SequenceEqual(["a1", "b2", "c3"])
+				&& swept.Any(static e => e is { Key: "k1", Pending: false, Cents: 6 }) && !swept.Any(static e => e.Key == "k2")
+				&& swept.Any(static e => e is { Key: "k3", Pending: true, Cents: 9 }) && swept.Any(static e => e is { Key: "k4", Pending: true })
+				&& swept.Any(static e => e is { Key: "k5", Pending: false }),
+				string.Join(",", sweepMarket.Checked) + " / " + string.Join(" | ", swept));
+			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
+			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0)) {", StringComparison.Ordinal) && buyerSrc.Contains("await SweepLockedAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal));
+
+			// ── re-priced before a set is started ──
+			var moveBot = NewBot();
+			var moveMarket = Market();
+			moveMarket.Sets[200] = new NocatFarm.Modules.CardSet(200, "Two Hundred", ["200-Card 1", "200-Card 2"], new Dictionary<string, int> { ["200-Card 1"] = 5, ["200-Card 2"] = 5 });
+			moveMarket.Held[200] = new() { ["200-Card 1"] = 1 };
+			moveMarket.Books["200-Card 2"] = FakeCardMarket.B(4);
+			moveMarket.AfterBookReads = (2, () => moveMarket.Books["100-Card 2"] = FakeCardMarket.B(15));
+			var moveResult = await Buyer(moveBot, moveMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("whole sets: every card of a set is priced again before its first is bought - one that moved and the set isn't started, the next set still goes",
+				moveMarket.Bought.Select(static b => b.Hash).SequenceEqual(["200-Card 2"]) && moveResult.Problem.Contains("moved since the plan", StringComparison.Ordinal),
+				string.Join(",", moveMarket.Bought) + " " + moveResult.Problem);
+			string appJs = Src("src/NocatFarm/wwwroot/app.js");
+			Check("whole sets: the pop-up says what's true - only whole sets planned, the rest waits if a price moves partway",
+				!appJs.Contains("never part of a set", StringComparison.Ordinal) && appJs.Contains("if one moves partway, the rest of the set waits for the next look", StringComparison.Ordinal));
+
+			// ── foils and other things in a set ──
+			System.Reflection.MethodInfo setCard = typeof(NocatFarm.Core.LevelPlanner).GetMethod("SetCard", BindingFlags.NonPublic | BindingFlags.Static)!;
+			(string Hash, int Price, string Game)? SetCard(string json) {
+				using var doc = System.Text.Json.JsonDocument.Parse(json);
+				return ((string, int, string)?) setCard.Invoke(null, [doc.RootElement, 440u]);
+			}
+			var normal = SetCard("{\"hash_name\":\"440-Pyro\",\"sell_listings\":5,\"sell_price\":7,\"asset_description\":{\"type\":\"Team Fortress 2 Trading Card\"}}");
+			Check("set: only the game's normal trading cards - never a foil, another game's card, or something without a card's type",
+				(normal is ("440-Pyro", 7, "Team Fortress 2"))
+				&& (SetCard("{\"hash_name\":\"440-Pyro (Foil)\",\"sell_listings\":5,\"sell_price\":70,\"asset_description\":{\"type\":\"Team Fortress 2 Foil Trading Card\"}}") == null)
+				&& (SetCard("{\"hash_name\":\"570-Axe\",\"sell_listings\":5,\"sell_price\":7,\"asset_description\":{\"type\":\"Dota 2 Trading Card\"}}") == null)
+				&& (SetCard("{\"hash_name\":\"440-Emoticon\",\"sell_listings\":5,\"sell_price\":7,\"asset_description\":{\"type\":\"Team Fortress 2 Emoticon\"}}") == null)
+				&& (SetCard("{\"hash_name\":\"440-Spy\",\"sell_listings\":\"x\",\"sell_price\":7,\"asset_description\":{\"type\":\"Team Fortress 2 Trading Card\"}}") is ("440-Spy", 0, _))
+				&& (SetCard("{\"hash_name\":\"440-Spy\"}") == null),
+				$"{normal}");
+
+			// ── the spending list can't be read, or saved ──
+			var badBot = NewBot();
+			string badFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"buy-{badBot.Name}.json");
+			Directory.CreateDirectory(Path.GetDirectoryName(badFile)!);
+			File.WriteAllText(badFile, "{not json");
+			var badMarket = Market();
+			var badPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(badBot.Cfg, badMarket, NocatFarm.Modules.SwapCost.None, NocatFarm.Modules.BuyLedger.Of(badBot.Name), badBot, DateTime.UtcNow, CancellationToken.None);
+			NocatFarm.Core.Switches.Set(badBot, NocatFarm.Core.Switches.Buy, true);
+			string badState = Commands.BuyingState(badBot);
+			Check("unreadable list: said plainly - no made-up billions spent - nothing planned or bought, and the file is never written over",
+				badPlan.Problem.Contains("can't be read", StringComparison.Ordinal) && badPlan.Lasting && (badPlan.DaySpent == 0) && (badMarket.Reads == 0)
+				&& !NocatFarm.Core.SwitchPreview.Buy(badPlan, badBot.Cfg, true, badPlan.Problem).DaySpent.Contains(",", StringComparison.Ordinal)
+				&& badState.Contains("can't be read", StringComparison.Ordinal) && !badState.Contains("today", StringComparison.Ordinal) && (File.ReadAllText(badFile) == "{not json")
+				&& (NocatFarm.Modules.BuyLedger.Of(badBot.Name).SpentSince(DateTime.UtcNow.AddDays(-1)) > 1_000_000),
+				badPlan.Problem + " / " + badState);
+			var badResult = await new NocatFarm.Modules.CardBuyer(badBot, badMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("unreadable list: a look that would buy stops, said", (badMarket.Bought.Count == 0) && badResult.Lasting && badResult.Problem.Contains("can't be read", StringComparison.Ordinal), badResult.Problem);
+			File.Delete(badFile);
+			Check("unreadable list: deleted, it starts a fresh one", !NocatFarm.Modules.BuyLedger.Of(badBot.Name).Unreadable);
+
+			var saveBot = NewBot();
+			var saveMarket = Market();
+			Directory.CreateDirectory(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"buy-{saveBot.Name}.json"));   // a folder where the file goes: it can't be saved
+			var saveBuyer = Buyer(saveBot, saveMarket);
+			var saveResult = await saveBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var saveAgain = await saveBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("list not saved: nothing is bought on it, and buying stops for the session, said",
+				(saveMarket.Bought.Count == 0) && saveResult.Lasting && saveResult.Problem.Contains("couldn't be saved", StringComparison.Ordinal)
+				&& saveAgain.Problem.Contains("couldn't be saved", StringComparison.Ordinal)
+				&& buyerSrc.Contains("Log.Attention(new Said(\"card buying stopped · its spending list can't be read or saved\"), Bot.Name);", StringComparison.Ordinal),
+				saveResult.Problem + " / " + saveAgain.Problem);
+
+			// ── Steam's clock for the limits ──
+			var clockBot = NewBot();
+			var clockMarket = Market();
+			NocatFarm.Modules.BuyLedger.Of(clockBot.Name).Add(new(DateTime.UtcNow.AddHours(-2), 145, 20, 1, "1-x"));
+			DateTime steamNow = DateTime.UtcNow.AddDays(2);
+			var clockResult = await Buyer(clockBot, clockMarket, _ => Task.FromResult(steamNow)).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("Steam's clock: the limits' windows and each purchase's time go by Steam's clock, not this PC's",
+				(clockResult.Plan?.DaySpent == 0) && (clockMarket.Bought.Count == 1)
+				&& NocatFarm.Modules.BuyLedger.Of(clockBot.Name).All.Any(e => (e.Card == "100-Card 2") && (e.At == steamNow)),
+				$"{clockResult.Plan?.DaySpent} {clockResult.Problem}");
+			Check("Steam's clock: the real module asks Steam's clock", buyerSrc.Contains("Confirmations.SteamTimeAsync(ct)", StringComparison.Ordinal) && buyerSrc.Contains("clock ?? SteamClockAsync", StringComparison.Ordinal));
+
+			// ── switches, blocks and retries ──
+			var unknownBot = NewBot();
+			var unknownMarket = Market();
+			unknownMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(1000, 20, false, -1);
+			var unknownResult = await Buyer(unknownBot, unknownMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("wallet page didn't answer: how purchases are confirmed is unknown, so nothing is bought - and it asks again soon",
+				(unknownMarket.Bought.Count == 0) && unknownResult.Problem.Contains("didn't say how", StringComparison.Ordinal) && !unknownResult.Lasting
+				&& (unknownMarket.Reads == 0)
+				&& (NocatFarm.Modules.BuyPlan.BlockOf(new(1, 20, false, 7), true) == NocatFarm.Modules.BuyBlock.Unknown)
+				&& (NocatFarm.Modules.BuyPlan.BlockOf(new(1, 20, false, 2), true) == NocatFarm.Modules.BuyBlock.None)
+				&& (NocatFarm.Modules.BuyPlan.BlockOf(new(1, 20, false, 0), false) == NocatFarm.Modules.BuyBlock.None),
+				unknownResult.Problem);
+			var emailBot = NewBot();
+			var emailMarket = Market();
+			emailMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(1000, 20, false, 1);
+			var emailResult = await Buyer(emailBot, emailMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var craftBot = NewBot(new NocatFarm.Config.BotConfig { CraftBadges = false });
+			var craftMarket = Market();
+			var craftResult = await Buyer(craftBot, craftMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("blocks: an email-confirm account or crafting off - nothing read from the market, and the next look waits for the usual time",
+				emailResult.Lasting && (emailMarket.Reads == 0) && craftResult.Lasting && (craftMarket.Reads == 0) && (craftResult.Plan == null)
+				&& buyerSrc.Contains("if ((result.Problem.Length > 0) && !result.Lasting) {", StringComparison.Ordinal),
+				emailResult.Problem + " / " + craftResult.Problem);
+
+			var pausedBot = NewBot();
+			var pausedMarket = Market();
+			var pausedBuyer = Buyer(pausedBot, pausedMarket);
+			typeof(NocatFarm.Core.Bot).GetProperty("Paused")!.SetValue(pausedBot, true);
+			var pausedResult = await pausedBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("pause: a paused account buys nothing, 'buy do' too",
+				(pausedMarket.Bought.Count == 0) && pausedResult.Problem.Contains("paused", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/CommandsBuy.cs").Contains("if (bot.Paused) {", StringComparison.Ordinal), pausedResult.Problem);
+
+			// ── one buyer per account ──
+			var twoBot = NewBot();
+			var twoMarket = Market();
+			var first = Buyer(twoBot, twoMarket);
+			var second = new NocatFarm.Modules.CardBuyer(twoBot, Market(), NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			using var inBuy = new ManualResetEventSlim();
+			using var letGo = new ManualResetEventSlim();
+			twoMarket.DuringBuy = () => { inBuy.Set(); letGo.Wait(TimeSpan.FromSeconds(30)); };
+			Task<NocatFarm.Modules.CardBuyer.Result> firstLook = Task.Run(() => first.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None));
+			bool reached = inBuy.Wait(TimeSpan.FromSeconds(30));
+			bool secondWaited;
+			using (var soon = new CancellationTokenSource(TimeSpan.FromMilliseconds(300))) {
+				try {
+					await second.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, soon.Token);
+					secondWaited = false;
+				} catch (OperationCanceledException) {
+					secondWaited = true;
+				}
+			}
+			letGo.Set();
+			await firstLook;
+			var notRunning = await second.BuyNowAsync();
+			Check("one buyer: a second copy of the module (after a restore) waits for the first, and 'buy do' only runs on a running module",
+				reached && secondWaited && notRunning.Problem.Contains("isn't running", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/CommandsBuy.cs").Contains("ScamWatch.AsYouAskedAsync(buyer.BuyNowAsync)", StringComparison.Ordinal),
+				$"{reached} {secondWaited} {notRunning.Problem}");
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
 			try {

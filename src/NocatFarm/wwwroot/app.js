@@ -6288,7 +6288,8 @@ function buyPreviewHtml(d) {
   const blocked = [null,
     t("Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy"),
     t("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
-    t('Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases')][d.Blocked];
+    t('Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases'),
+    t("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time")][d.Blocked];
   if (blocked) top.push(`<p class="problem">${esc(blocked)}</p>`);
   if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
 
@@ -6307,7 +6308,7 @@ function buyPreviewHtml(d) {
   const limits = [
     tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
     tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
-    t('Never more than the wallet holds, and only whole sets - never part of a set'),
+    t('Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look'),
     t('Each card at the cheapest price on the market, checked again right before it buys'),
     d.FullSets ? t('Badges it has started first, then the cheapest full sets') : t('Only badges it has started - not full sets'),
   ];

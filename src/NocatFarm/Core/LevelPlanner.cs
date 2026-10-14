@@ -361,7 +361,7 @@ public static class LevelPlanner {
 
 		Dictionary<string, int> cards = new(StringComparer.Ordinal);
 		string game = GameNames.Of(app);
-		int total = 0;
+		int total = 0, others = 0;
 		bool asked = false;
 
 		// The market hands out fewer than asked per page (ten, signed out), so page by what actually came back.
@@ -390,14 +390,17 @@ public static class LevelPlanner {
 			}
 
 			foreach (JsonElement r in results.EnumerateArray()) {
-				string hash = r.TryGetProperty("hash_name", out JsonElement h) ? h.GetString() ?? "" : "";
-				cards[hash] = r.TryGetProperty("sell_listings", out JsonElement l) && (l.GetInt32() > 0) && r.TryGetProperty("sell_price", out JsonElement p) ? p.GetInt32() : 0;
 				got++;
 
-				if (r.TryGetProperty("asset_description", out JsonElement d) && InventoryContents.Text(d, "type") is { Length: > 13 } type
-					&& type.EndsWith(" Trading Card", StringComparison.Ordinal)) {
-					game = type[..^13];
+				// Only this game's normal cards: a foil or anything else the search lets in is never part of the set.
+				if (SetCard(r, app) is not { } card) {
+					others++;
+
+					continue;
 				}
+
+				cards[card.Hash] = card.Price;
+				game = card.Game;
 			}
 
 			start += got;
@@ -407,7 +410,8 @@ public static class LevelPlanner {
 			}
 		}
 
-		SetPrice set = new(app, game, cards.Count == total ? total : 0, cards, DateTime.UtcNow.Ticks, cur);
+		// Known whole only when every result was read: the set's cards, and nothing else that came with them.
+		SetPrice set = new(app, game, (cards.Count > 0) && (cards.Count + others == total) ? cards.Count : 0, cards, DateTime.UtcNow.Ticks, cur);
 
 		lock (SetsGate) {
 			_sets![Key(app, cur)] = set;
@@ -415,6 +419,28 @@ public static class LevelPlanner {
 		}
 
 		return (set, true);
+	}
+
+	/// <summary>
+	/// One market search result, if it's a normal trading card of this game: its type ends " Trading Card" without "Foil",
+	/// and its market name starts with "&lt;app&gt;-". Its price is 0 when nobody is selling it. Null for anything else.
+	/// </summary>
+	internal static (string Hash, int Price, string Game)? SetCard(JsonElement r, uint app) {
+		if (r.ValueKind != JsonValueKind.Object) {
+			return null;
+		}
+
+		string hash = r.TryGetProperty("hash_name", out JsonElement h) && (h.ValueKind == JsonValueKind.String) ? h.GetString() ?? "" : "";
+		string type = r.TryGetProperty("asset_description", out JsonElement d) && (d.ValueKind == JsonValueKind.Object) ? InventoryContents.Text(d, "type") : "";
+
+		if (!hash.StartsWith($"{app}-", StringComparison.Ordinal) || (type.Length <= 13) || !type.EndsWith(" Trading Card", StringComparison.Ordinal)
+			|| type.Contains("Foil", StringComparison.OrdinalIgnoreCase)) {
+			return null;
+		}
+
+		static int Int(JsonElement e, string name) => e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.Number) && v.TryGetInt32(out int n) ? n : 0;
+
+		return (hash, Int(r, "sell_listings") > 0 ? Math.Max(0, Int(r, "sell_price")) : 0, type[..^13]);
 	}
 
 	/// <summary>Games whose cards are the cheapest on the market right now, cheapest first - null when the market didn't answer.</summary>
