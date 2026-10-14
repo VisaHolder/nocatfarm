@@ -61,6 +61,7 @@ public static partial class Commands {
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 		new("stuck", "", GroupAccounts, "The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off.", "alarm"),
+		new("steam", "[account|all] | open <account> | on|off <account>", GroupAccounts, "Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. It never stops nocat.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. The button is off until you turn it on."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
@@ -663,6 +664,8 @@ public static partial class Commands {
 	public static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
 			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini"
+			// Open in Steam signs this PC's Steam client in - it only makes sense at the PC, never from a chat.
+			or "steam"
 			// Who has been at the dashboard (addresses, devices, and signing everybody out), a zip of every saved login,
 			// and the reports that show every account.
 			or "visitors" or "backup" or "report" or "stuck"
@@ -1003,6 +1006,7 @@ public static partial class Commands {
 				"cards" => Cards(mgr, AllIsEvery(rest)),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
+				"steam" => await SteamAsync(mgr, rest).ConfigureAwait(false),
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
 				"enable" => Enable(mgr, rest, true),
 				"disable" => Enable(mgr, rest, false),

@@ -1,5 +1,37 @@
 {
   "ui": {
+    "signing your Steam app into {0} - it closes and opens again": "вхожу в приложение Steam под {0} - оно закроется и откроется снова",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "«Открыть в Steam» не включено для {0} - сначала включите в его настройках",
+    "Open in Steam only works on Windows for now": "«Открыть в Steam» пока работает только в Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "Похоже, Steam не установлен на этом ПК, так что открывать нечего",
+    "a game is open in Steam - close it first, then open {0}": "в Steam открыта игра - сначала закройте её, затем откройте {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "войдите в Steam под {0} один раз, отметив «Запомнить меня», и тогда эта кнопка заработает",
+    "couldn't open {0} in Steam": "не удалось открыть {0} в Steam",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "«Открыть в Steam» включено для {0}: кнопка в один клик входит в ваше приложение Steam под этим аккаунтом",
+    "Open in Steam is off for {0}: the button is hidden": "«Открыть в Steam» выключено для {0}: кнопка скрыта",
+    "couldn't change Steam's saved accounts - {0}": "не удалось изменить сохранённые аккаунты Steam - {0}",
+    "Steam didn't close - leaving it as it is, nothing started": "Steam не закрылся - оставляю как есть, ничего не запущено",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Войдите в приложение Steam под этим аккаунтом в один клик. Закрывает Steam и открывает снова. Фарм этого аккаунта продолжается.",
+    "Open in Steam": "Открыть в Steam",
+    "Windows only for now": "Пока только Windows",
+    "Turn on the Open in Steam button?": "Включить кнопку «Открыть в Steam»?",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Это показывает у этого аккаунта кнопку, которая в один клик входит в ваше приложение Steam. Вот что именно она делает при нажатии. Кнопка ничего не делает, пока вы не нажмёте «Включить» здесь.",
+    "Closes your Steam app (the polite way, letting it finish).": "Закрывает приложение Steam (аккуратно, давая ему завершиться).",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Направляет файлы сохранённых аккаунтов Steam на этот аккаунт - только на него; другие аккаунты не трогаются.",
+    "Starts Steam again, so it signs straight into this account.": "Снова запускает Steam, чтобы он сразу вошёл в этот аккаунт.",
+    "Open in Steam only works on Windows for now.": "«Открыть в Steam» пока работает только в Windows.",
+    "Steam doesn't look installed on this PC.": "Похоже, Steam не установлен на этом ПК.",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Сейчас в Steam открыта игра - кнопка не переключит, пока игра запущена.",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Ваше приложение Steam ещё не помнит этот аккаунт. Войдите в Steam один раз, отметив «Запомнить меня», и тогда эта кнопка заработает.",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Ваше приложение Steam помнит этот аккаунт, поэтому кнопка может войти без пароля.",
+    "It never types a password and never touches your login tokens.": "Он никогда не вводит пароль и не трогает ваши токены входа.",
+    "It backs up the files it changes first, and keeps the last three backups.": "Сначала делает резервную копию изменяемых файлов и хранит последние три копии.",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "Он никогда не прекращает фарм этого аккаунта в nocat.farm - Steam отступает только когда вы действительно запускаете игру.",
+    "What pressing it does": "Что делает нажатие",
+    "Safe by design": "Безопасно по замыслу",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Войти в приложение Steam под {0}? Steam закроется и откроется снова.",
+    "Signing Steam into {0}…": "Вход в Steam под {0}…",
+    "Done.": "Готово.",
     "That's not a command - did you mean '{0}'?": "Это не команда - может быть, вы имели в виду '{0}'?",
     "That's not a command - 'help' lists them.": "Это не команда - 'help' покажет их список.",
     "Overview": "Обзор",
@@ -2960,6 +2992,10 @@
     "couldn't look at the listings waiting on a confirmation: {0}": "не удалось проверить лоты, ждущие подтверждения: {0}"
   },
   "settings": {
+    "SteamOpenButton": {
+      "label": "Кнопка «Открыть в Steam»",
+      "tip": "Показывает у этого аккаунта кнопку - на его карточке и в окне приложения - которая входит в ваше приложение Steam без ввода пароля. Нажатие закрывает Steam, направляет файлы сохранённых аккаунтов Steam на этот аккаунт и снова запускает Steam, так что он сразу входит под логином, который Steam уже помнит. Он никогда не прекращает фарм этого аккаунта в nocat.farm: Steam разрешает вход и отступает только когда вы действительно запускаете игру. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтверждение."
+    },
     "WebEnabled": {
       "label": "Веб-панель",
       "tip": "Включает веб-панель. Без неё всё тоже работает, а nocat.farm управляется командами в консоли."

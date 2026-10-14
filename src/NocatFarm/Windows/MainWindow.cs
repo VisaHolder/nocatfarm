@@ -1045,6 +1045,26 @@ public sealed partial class MainWindow : IDisposable {
 
 				break;
 
+			case 'o':
+				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> steam open " + name)));
+				_ = Task.Run(async () => {
+					try {
+						string output = await Commands.RunAsync(_mgr, "steam open " + name).ConfigureAwait(false);
+
+						foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
+							if (line.Length > 0) {
+								Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + line)));
+							}
+						}
+					} catch (Exception e) {
+						Log.Failed("the Open in Steam button", e, name);
+					}
+
+					Invalidate();
+				});
+
+				break;
+
 			case 'c':
 				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> cards " + name)));
 				_ = Task.Run(async () => {
@@ -1403,7 +1423,10 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, TitleH, _w, _h - TitleH, Rgb(6, 6, 6));
 
 		List<Bot> all = _mgr.All.ToList();
-		const int SheetRow = 54;
+		// A taller row only when some account shows the Open in Steam button, so it has a third button line; otherwise
+		// the rows stay as compact as they were.
+		bool anySteamOpen = all.Any(b => Core.SteamOpen.On(b.Cfg, b.Name));
+		int SheetRow = anySteamOpen ? 78 : 54;
 		const int HeaderH = 38;
 		const int FooterH = 14;
 		const int MaxVisible = 6;
@@ -1507,6 +1530,11 @@ public sealed partial class MainWindow : IDisposable {
 			RowButton(dc, bot.Paused ? "resume" : "pause", bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
 			RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
 			RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
+
+			// 1.8.2: Open in Steam, on its own line, only for an account whose button is turned on.
+			if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
+				RowButton(dc, "open in Steam", bx, y + 4 + (2 * (BtnH + Gap)), (BtnW * 2) + Gap, BtnH, bot.Name, 'o', Accent);
+			}
 
 			y += SheetRow;
 			Fill(dc, x + 8, y - 2, w - 16, 1, Rgb(28, 28, 28));

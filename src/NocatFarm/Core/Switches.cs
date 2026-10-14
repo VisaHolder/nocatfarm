@@ -16,6 +16,10 @@ public static class Switches {
 	public const string Spare = "SpareItems";
 	public const string Points = "SpendPoints";
 
+	// 1.8.2: the Open in Steam button is a third switch of the same shape - off is off, on only after its preview's
+	// Turn on. Its go-ahead lives in SteamOpenLedger, so a settings file or a backup can't bring it back.
+	public const string SteamOpenButton = "SteamOpenButton";
+
 	/// <summary>Whether this account's spare items are on: the switch and its go-ahead together.</summary>
 	public static bool SpareOn(BotConfig cfg, string account) => cfg.SpareItems && SpareLedger.Load(account).Approved;
 
@@ -24,6 +28,28 @@ public static class Switches {
 	/// would do first. A line for the log and the reply.
 	/// </summary>
 	public static string Set(Bot bot, string feature, bool on) {
+		// 1.8.2: the Open in Steam button. No spending and no items, so its go-ahead is a single flag in its ledger;
+		// everything else below (spare items, Steam Points) is unchanged.
+		if (feature == SteamOpenButton) {
+			lock (bot.CfgGate) {
+				bot.Cfg.SteamOpenButton = on;
+				SteamOpenLedger ledger = SteamOpenLedger.Load(bot.Name);
+				ledger.Approved = on;
+				ledger.Save();
+
+				if (File.Exists(Path.Combine(ConfigStore.ConfigDir, bot.Name + ".json"))) {
+					ConfigStore.SaveBot(bot.Name, bot.Cfg);
+				}
+			}
+
+			Said steamSaid = on
+				? new Said("Open in Steam is on for {0}: a one-click button signs your Steam app into it", bot.Name)
+				: new Said("Open in Steam is off for {0}: the button is hidden", bot.Name);
+			Log.Info(steamSaid, bot.Name);
+
+			return steamSaid.ToEnglish();
+		}
+
 		lock (bot.CfgGate) {
 			if (feature == Spare) {
 				bot.Cfg.SpareItems = on;
@@ -60,6 +86,18 @@ public static class Switches {
 	/// </summary>
 	public static bool Settle(BotConfig cfg, string account) {
 		bool changed = false;
+
+		// 1.8.2: Open in Steam, the same rule - on without its go-ahead goes off, off clears any stale go-ahead.
+		SteamOpenLedger steam = SteamOpenLedger.Load(account);
+
+		if (cfg.SteamOpenButton && !steam.Approved) {
+			cfg.SteamOpenButton = false;
+			changed = true;
+		} else if (!cfg.SteamOpenButton && steam.Approved) {
+			steam.Approved = false;
+			steam.Save();
+		}
+
 		SpareLedger spare = SpareLedger.Load(account);
 
 		if (cfg.SpareItems && !spare.Approved) {
@@ -93,9 +131,15 @@ public static class Switches {
 	/// the page sends it) or its setting's name. Null for anything else.
 	/// </summary>
 	public static string? FeatureOfWord(string word) =>
-		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare : word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points : FeatureOf(word);
+		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare
+		: word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points
+		: word.Equals("steamopen", StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
+		: FeatureOf(word);
 
-	/// <summary>The setting's name for the feature a word names ('spare', 'points'), or null.</summary>
+	/// <summary>The setting's name for the feature a word names ('spare', 'points', 'steamopen'), or null.</summary>
 	public static string? FeatureOf(string setting) =>
-		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare : setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points : null;
+		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare
+		: setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points
+		: setting.Equals(SteamOpenButton, StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
+		: null;
 }

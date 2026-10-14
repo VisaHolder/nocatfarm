@@ -122,7 +122,7 @@ public static partial class Commands {
 			string value = Unquote(SetValue(line, Words(line), 2)).Trim().ToLowerInvariant();
 			// Every word 'set' reads as on or off ('y', 'n' too): one it doesn't is answered by 'set' as wrong, and changes nothing.
 			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
-			string word = feature == Switches.Spare ? "spare" : "points";
+			string word = feature == Switches.Spare ? "spare" : feature == Switches.SteamOpenButton ? "steam" : "points";
 
 			if (on == false) {
 				Switches.Set(bot, feature, false);
@@ -131,7 +131,9 @@ public static partial class Commands {
 			}
 
 			if (on == true) {
-				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name) : bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
+				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name)
+					: feature == Switches.SteamOpenButton ? SteamOpen.On(bot.Cfg, bot.Name)
+					: bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
 
 				if (already) {
 					return $"{bot.Name}.{feature} = on";
@@ -151,6 +153,12 @@ public static partial class Commands {
 	/// from the prices already held, with the limits. English, as console replies are.
 	/// </summary>
 	public static async Task<string> SwitchPreviewAsync(Bot bot, string feature, CancellationToken ct) {
+		if (feature == Switches.SteamOpenButton) {
+			(string text, _) = await SwitchPreview.LookAsync(bot, feature, ct).ConfigureAwait(false);
+
+			return text + Environment.NewLine + "Pressing the button closes Steam, points its saved accounts at this one, and starts Steam again. It never stops nocat.farm farming this account.";
+		}
+
 		if (feature == Switches.Spare) {
 			string limits = SpareRun.Limits(bot);
 

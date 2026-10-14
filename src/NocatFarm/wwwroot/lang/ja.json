@@ -1,5 +1,37 @@
 {
   "ui": {
+    "signing your Steam app into {0} - it closes and opens again": "Steamアプリを {0} でサインインします - 一度閉じて開き直します",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} では「Steamで開く」がオンになっていません - まず設定でオンにしてください",
+    "Open in Steam only works on Windows for now": "「Steamで開く」は今のところWindowsでのみ使えます",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "このPCにSteamがインストールされていないようなので、開くものがありません",
+    "a game is open in Steam - close it first, then open {0}": "Steamでゲームが起動中です - 先に閉じてから {0} を開いてください",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "Steamで一度 {0} に「自動ログイン」にチェックを入れてサインインすると、このボタンが使えます",
+    "couldn't open {0} in Steam": "{0} をSteamで開けませんでした",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} の「Steamで開く」がオン：ボタン1つでSteamアプリをこの口座にサインインできます",
+    "Open in Steam is off for {0}: the button is hidden": "{0} の「Steamで開く」がオフ：ボタンは非表示です",
+    "couldn't change Steam's saved accounts - {0}": "Steamの保存済みアカウントを変更できませんでした - {0}",
+    "Steam didn't close - leaving it as it is, nothing started": "Steamが閉じませんでした - そのままにし、何も起動していません",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "ワンクリックでSteamアプリをこの口座にサインインします。Steamを閉じて開き直します。この口座のファームは続きます。",
+    "Open in Steam": "Steamで開く",
+    "Windows only for now": "今のところWindowsのみ",
+    "Turn on the Open in Steam button?": "「Steamで開く」ボタンをオンにしますか？",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "この口座に、ワンクリックでSteamアプリをサインインさせるボタンを表示します。押したときの動作はこの通りです。ここでオンを押すまでボタンは何もしません。",
+    "Closes your Steam app (the polite way, letting it finish).": "Steamアプリを閉じます（丁寧に、終了を待ちます）。",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Steamの保存済みアカウントのファイルをこの口座に向けます - この口座だけで、他の口座には触れません。",
+    "Starts Steam again, so it signs straight into this account.": "Steamを再び起動し、この口座にそのままサインインします。",
+    "Open in Steam only works on Windows for now.": "「Steamで開く」は今のところWindowsでのみ使えます。",
+    "Steam doesn't look installed on this PC.": "このPCにSteamがインストールされていないようです。",
+    "A game is open in Steam right now - the button won't switch while one is running.": "今Steamでゲームが起動中です - 起動中はボタンで切り替えできません。",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Steamアプリはまだこの口座を記憶していません。Steamで「自動ログイン」にチェックを入れて一度サインインすると、このボタンが使えます。",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Steamアプリはこの口座を記憶しているので、ボタンはパスワードなしでサインインできます。",
+    "It never types a password and never touches your login tokens.": "パスワードを入力することはなく、ログイントークンに触れることもありません。",
+    "It backs up the files it changes first, and keeps the last three backups.": "変更するファイルを先にバックアップし、直近3件のバックアップを保持します。",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "nocat.farm がこの口座をファームするのを止めることはありません - Steamは実際にゲームを起動したときだけファームを下げます。",
+    "What pressing it does": "押すと何が起きるか",
+    "Safe by design": "設計上安全",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Steamアプリを {0} にサインインしますか？ Steamは閉じて開き直します。",
+    "Signing Steam into {0}…": "Steamを {0} にサインイン中…",
+    "Done.": "完了。",
     "That's not a command - did you mean '{0}'?": "それはコマンドではありません - '{0}' のことですか？",
     "That's not a command - 'help' lists them.": "それはコマンドではありません - 'help' で一覧を表示できます。",
     "Overview": "概要",
@@ -2960,6 +2992,10 @@
     "couldn't look at the listings waiting on a confirmation: {0}": "確認待ちの出品を確認できませんでした: {0}"
   },
   "settings": {
+    "SteamOpenButton": {
+      "label": "「Steamで開く」ボタン",
+      "tip": "この口座に - カードとアプリのウィンドウに - パスワード入力なしでSteamアプリをサインインさせるボタンを表示します。押すとSteamを閉じ、Steamの保存済みアカウントのファイルをこの口座に向け、Steamを開き直すので、Steamがすでに記憶しているログインで直接サインインします。nocat.farm がこの口座をファームするのを止めることはありません：Steamはサインインを許可し、実際にゲームを起動したときだけファームを下げます。Windowsのみ。既定ではオフ。オンにするとき、まずボタンの動作を正確に表示し、確認を求めます。"
+    },
     "WebEnabled": {
       "label": "ウェブ・ダッシュボード",
       "tip": "ウェブ・ダッシュボードをオンにします。オフでもすべて動作し、コンソールにコマンドを入力して nocat.farm を操作できます。"

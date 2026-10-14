@@ -1855,6 +1855,22 @@ public sealed partial class WebHost : IAsyncDisposable {
 			return Results.Json(new { ok = true, said = Switches.Set(bot, which, on) });
 		});
 
+		// 1.8.2: press the Open in Steam button - sign this PC's Steam client into the account. Refuses unless the button
+		// is turned on for it, no game is running in the client, and the client already remembers it. Windows only.
+		app.MapPost("/api/bots/{name}/steam-open", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			(string code, string said) = await SteamOpen.OpenAsync(bot).ConfigureAwait(false);
+
+			return Results.Json(new { ok = code == SteamOpen.Ok, code, said });
+		});
+
 		// ── account lifecycle ──
 		// The walkthrough marks itself done. A one-line endpoint rather than a config round-trip, so finishing
 		// the tutorial cannot accidentally write back a whole settings object the user never edited.
@@ -3213,6 +3229,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Online = b.IsOnline,
 					Paused = b.Paused,
 					Blocked = b.PlayingBlocked,
+					// 1.8.2: the Open in Steam button - whether it's turned on for this account, and whether this PC can do it.
+					SteamOpen = Core.SteamOpen.On(b.Cfg, b.Name),
+					SteamOpenSupported = Core.SteamOpen.Supported,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,

@@ -1,5 +1,37 @@
 {
   "ui": {
+    "signing your Steam app into {0} - it closes and opens again": "正在让你的 Steam 应用登录 {0} - 它会关闭并重新打开",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} 的“在 Steam 中打开”未开启 - 请先在它的设置里开启",
+    "Open in Steam only works on Windows for now": "“在 Steam 中打开”目前仅支持 Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "这台电脑上似乎没有安装 Steam，没有可打开的内容",
+    "a game is open in Steam - close it first, then open {0}": "Steam 中正在运行一个游戏 - 请先关闭它，再打开 {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "在 Steam 中勾选“记住我”并登录 {0} 一次，之后这个按钮就能用了",
+    "couldn't open {0} in Steam": "无法在 Steam 中打开 {0}",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} 的“在 Steam 中打开”已开启：一个按钮可一键让你的 Steam 应用登录该账户",
+    "Open in Steam is off for {0}: the button is hidden": "{0} 的“在 Steam 中打开”已关闭：按钮已隐藏",
+    "couldn't change Steam's saved accounts - {0}": "无法更改 Steam 的已保存账户 - {0}",
+    "Steam didn't close - leaving it as it is, nothing started": "Steam 未关闭 - 保持原样，未启动任何程序",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "一键让你的 Steam 应用登录此账户。会关闭并重新打开 Steam。该账户会继续挂卡。",
+    "Open in Steam": "在 Steam 中打开",
+    "Windows only for now": "目前仅限 Windows",
+    "Turn on the Open in Steam button?": "开启“在 Steam 中打开”按钮？",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "这会在此账户上显示一个按钮，一键让你的 Steam 应用登录。按下时正是执行这些操作。在此按下开启之前，按钮不会有任何动作。",
+    "Closes your Steam app (the polite way, letting it finish).": "关闭你的 Steam 应用（以正常方式，让它完成退出）。",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "将 Steam 的已保存账户文件指向此账户 - 仅此一个；其他账户不受影响。",
+    "Starts Steam again, so it signs straight into this account.": "重新启动 Steam，使其直接登录此账户。",
+    "Open in Steam only works on Windows for now.": "“在 Steam 中打开”目前仅支持 Windows。",
+    "Steam doesn't look installed on this PC.": "这台电脑上似乎没有安装 Steam。",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Steam 中正运行一个游戏 - 游戏运行时按钮不会切换。",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "你的 Steam 应用还没有记住此账户。在 Steam 中勾选“记住我”并登录一次，之后这个按钮就能用了。",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "你的 Steam 应用已记住此账户，因此按钮无需密码即可登录。",
+    "It never types a password and never touches your login tokens.": "它从不输入密码，也从不触碰你的登录令牌。",
+    "It backs up the files it changes first, and keeps the last three backups.": "它会先备份要更改的文件，并保留最近三个备份。",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "它绝不会让 nocat.farm 停止挂这个账户 - 只有当你真的启动游戏时，Steam 才会让挂卡让步。",
+    "What pressing it does": "按下时的操作",
+    "Safe by design": "设计上安全",
+    "Sign your Steam app into {0}? Steam will close and open again.": "让你的 Steam 应用登录 {0}？Steam 将关闭并重新打开。",
+    "Signing Steam into {0}…": "正在让 Steam 登录 {0}…",
+    "Done.": "完成。",
     "That's not a command - did you mean '{0}'?": "这不是命令 - 你是想输入 '{0}' 吗？",
     "That's not a command - 'help' lists them.": "这不是命令 - 'help' 会列出所有命令。",
     "Overview": "概览",
@@ -2960,6 +2992,10 @@
     "couldn't look at the listings waiting on a confirmation: {0}": "无法查看等待确认的上架：{0}"
   },
   "settings": {
+    "SteamOpenButton": {
+      "label": "“在 Steam 中打开”按钮",
+      "tip": "在此账户上 - 在它的卡片和应用窗口中 - 显示一个按钮，无需输入密码即可让你的 Steam 应用登录。按下会关闭 Steam，将 Steam 的已保存账户文件指向此账户，并重新打开 Steam，于是它用 Steam 已记住的登录直接登录。它绝不会让 nocat.farm 停止挂这个账户：Steam 允许登录，只有当你真的启动游戏时才让挂卡让步。仅限 Windows。默认关闭。开启时会先准确显示按钮的操作，并请你确认。"
+    },
     "WebEnabled": {
       "label": "网页面板",
       "tip": "开启网页面板。关掉后一切照常运行，你可以在控制台里输入命令来操作 nocat.farm。"

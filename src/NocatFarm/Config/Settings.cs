@@ -1088,6 +1088,9 @@ public static class Settings {
 			Advanced: true, Group: "How it shows"),
 		new("StartPaused", "Start paused", SecAccount, SettingKind.Bool,
 			"Signs in but doesn't play, farm or comment until you press Resume. Good for an account you want online and doing nothing.", Advanced: true, Group: "Signing in"),
+		// ── Open in Steam (1.8.2) ──
+		new("SteamOpenButton", "Open in Steam button", SecAccount, SettingKind.Bool,
+			"Shows a one-click button on this account - on its card and in the app window - that signs your Steam desktop app into it, no password typing. Pressing it closes Steam, points Steam's saved-accounts files at this account, and starts Steam again, so it signs straight in from the login Steam already remembers. It never stops nocat.farm farming this account: Steam allows the sign-in and only backs the farm off when you actually launch a game. Windows only. Off by default. Turning it on first shows exactly what the button does, and asks you to confirm.", Group: "Signing in"),
 		new("Notes", "Notes", SecAccount, SettingKind.Text,
 			"A note to yourself about what this account is for. It shows on the account card and is never sent to Steam.",
 			Advanced: true, Placeholder: "main idler, don't touch", Group: "Signing in"),

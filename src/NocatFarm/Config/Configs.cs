@@ -1177,6 +1177,11 @@ public sealed class BotConfig {
 	// ── staying out of the way ──
 	public bool PauseWhenYouPlay { get; set; } = true;
 	public int ResumeDelayMinutes { get; set; } = 5;
+
+	// ── Open in Steam (1.8.2) ── whether the one-click "sign my Steam app into this account" button is shown. Off by
+	// default; its go-ahead lives outside the settings (SteamOpenLedger), so this alone can't switch it on - the
+	// preview's Turn on does. Windows only.
+	public bool SteamOpenButton { get; set; }
 }
 
 /// <summary>
@@ -2142,7 +2147,8 @@ public static class ConfigStore {
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
 		("state", "spare-", ".json"),
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
-		("state", "boosters-", ".json")   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
+		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
+		("state", "steamopen-", ".json")   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
 	];
 
 	/// <summary>

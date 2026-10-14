@@ -1,5 +1,37 @@
 {
   "ui": {
+    "signing your Steam app into {0} - it closes and opens again": "Steam uygulamanı {0} hesabına giriş yaptırıyorum - kapanıp yeniden açılır",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} için Steam'de aç açık değil - önce ayarlarından aç",
+    "Open in Steam only works on Windows for now": "Steam'de aç şimdilik yalnızca Windows'ta çalışır",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "Bu bilgisayarda Steam kurulu görünmüyor, yani açılacak bir şey yok",
+    "a game is open in Steam - close it first, then open {0}": "Steam'de bir oyun açık - önce onu kapat, sonra {0} hesabını aç",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "Steam'de bir kez \"Beni hatırla\" işaretli olarak {0} hesabına gir, sonra bu düğme çalışır",
+    "couldn't open {0} in Steam": "{0} Steam'de açılamadı",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} için Steam'de aç açık: bir düğme tek tıkla Steam uygulamanı bu hesaba giriş yaptırır",
+    "Open in Steam is off for {0}: the button is hidden": "{0} için Steam'de aç kapalı: düğme gizli",
+    "couldn't change Steam's saved accounts - {0}": "Steam'in kayıtlı hesapları değiştirilemedi - {0}",
+    "Steam didn't close - leaving it as it is, nothing started": "Steam kapanmadı - olduğu gibi bırakılıyor, hiçbir şey başlatılmadı",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Steam uygulamanı tek tıkla bu hesaba giriş yaptır. Steam'i kapatıp yeniden açar. Bu hesabı farmlamaya devam eder.",
+    "Open in Steam": "Steam'de aç",
+    "Windows only for now": "Şimdilik yalnızca Windows",
+    "Turn on the Open in Steam button?": "Steam'de aç düğmesi açılsın mı?",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Bu, bu hesapta Steam uygulamanı tek tıkla giriş yaptıran bir düğme gösterir. Basınca tam olarak bunu yapar. Burada Aç'a basana kadar düğme hiçbir şey yapmaz.",
+    "Closes your Steam app (the polite way, letting it finish).": "Steam uygulamanı kapatır (nazikçe, bitirmesine izin vererek).",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Steam'in kayıtlı hesap dosyalarını bu hesaba yönlendirir - yalnızca buna; diğer hesaplara dokunulmaz.",
+    "Starts Steam again, so it signs straight into this account.": "Steam'i yeniden başlatır, böylece doğrudan bu hesaba giriş yapar.",
+    "Open in Steam only works on Windows for now.": "Steam'de aç şimdilik yalnızca Windows'ta çalışır.",
+    "Steam doesn't look installed on this PC.": "Bu bilgisayarda Steam kurulu görünmüyor.",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Şu anda Steam'de bir oyun açık - bir oyun çalışırken düğme geçiş yapmaz.",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Steam uygulaman bu hesabı henüz hatırlamıyor. Steam'de \"Beni hatırla\" işaretli olarak bir kez giriş yap, sonra bu düğme çalışır.",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Steam uygulaman bu hesabı hatırlıyor, bu yüzden düğme parolasız giriş yapabilir.",
+    "It never types a password and never touches your login tokens.": "Asla parola yazmaz ve giriş jetonlarına asla dokunmaz.",
+    "It backs up the files it changes first, and keeps the last three backups.": "Değiştireceği dosyaları önce yedekler ve son üç yedeği saklar.",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "nocat.farm'ın bu hesabı farmlamasını asla durdurmaz - Steam yalnızca gerçekten bir oyun başlattığında farm'ı geri çeker.",
+    "What pressing it does": "Basınca ne yapar",
+    "Safe by design": "Tasarımı gereği güvenli",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Steam uygulamanı {0} hesabına giriş yaptır? Steam kapanıp yeniden açılacak.",
+    "Signing Steam into {0}…": "Steam {0} hesabına giriş yapılıyor…",
+    "Done.": "Tamam.",
     "That's not a command - did you mean '{0}'?": "Bu bir komut değil - '{0}' mi demek istediniz?",
     "That's not a command - 'help' lists them.": "Bu bir komut değil - 'help' hepsini listeler.",
     "Overview": "Genel bakış",
@@ -2960,6 +2992,10 @@
     "couldn't look at the listings waiting on a confirmation: {0}": "onay bekleyen ilanlara bakılamadı: {0}"
   },
   "settings": {
+    "SteamOpenButton": {
+      "label": "Steam'de aç düğmesi",
+      "tip": "Bu hesapta - kartında ve uygulama penceresinde - Steam uygulamanı parola yazmadan giriş yaptıran bir düğme gösterir. Basmak Steam'i kapatır, Steam'in kayıtlı hesap dosyalarını bu hesaba yönlendirir ve Steam'i yeniden açar, böylece Steam'in zaten hatırladığı girişle doğrudan oturum açar. nocat.farm'ın bu hesabı farmlamasını asla durdurmaz: Steam girişe izin verir ve yalnızca gerçekten bir oyun başlattığında farm'ı geri çeker. Yalnızca Windows. Varsayılan olarak kapalı. Açarken önce düğmenin tam olarak ne yaptığını gösterir ve onay ister."
+    },
     "WebEnabled": {
       "label": "Web panosu",
       "tip": "Web panosunu açar. Kapalıyken de her şey çalışır ve nocat.farm'ı konsola komut yazarak yönetirsin."

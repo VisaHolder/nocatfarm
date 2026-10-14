@@ -32,6 +32,16 @@ authenticators.
 **I sign into this one myself** (`IUseThisAccount`) is for an account you also use in your own Steam app. With it
 on, nocat.farm never changes that account's online status, so your own app keeps Friends & Chat.
 
+**Open in Steam** (`SteamOpenButton`, Windows only) adds a one-click button to an account - on its card and in the
+app window - that signs your own Steam desktop app into it, no password typing. Pressing it closes Steam, points
+Steam's saved-accounts files at that account, and starts Steam again, so Steam signs straight in from the login it
+already remembers. It never stops nocat.farm farming the account: Steam allows the sign-in and only backs the farm
+off when you actually launch a game. It's off until you turn it on - tick it in the account's settings, read the
+preview of exactly what the button does, and press Turn on; or `steam on myaccount`. Then press the button, or
+`steam open myaccount`. If Steam doesn't remember the account yet, sign into it once in Steam with *Remember me*
+ticked and it works after that. It backs up the two files it changes (keeping the last three backups) and never
+touches another account's entry or any login token.
+
 `disable myaccount` keeps the settings but never signs in, and `enable myaccount` undoes it. `remove myaccount`
 deletes the account and its login token. `nickname myaccount <name>` changes the profile name everybody sees, and
 `privacy myaccount` shows or sets its profile privacy (`privacy myaccount friends`, or parts like

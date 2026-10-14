@@ -24752,7 +24752,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		string mcApp = File.ReadAllText(Path.Combine(mcRepo, "src", "NocatFarm", "wwwroot", "app.js"));
 		Check("walkthrough: shows \"Your items are safe by default\" - in the finish step and in the last step of a replay",
 			mcApp.Contains("t('Your items are safe by default')", StringComparison.Ordinal) && System.Text.RegularExpressions.Regex.Matches(mcApp, @"\$\{safeItemsNote\(\)\}").Count == 2
-			&& mcApp.Contains("CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points' }", StringComparison.Ordinal));
+			&& mcApp.Contains("CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points', SteamOpenButton: 'steamopen' }", StringComparison.Ordinal));
 		Check("docs: README and start-here say items are safe by default, and nothing says 'spare ok' or 'points ok' any more",
 			new[] { "README.md", Path.Combine("docs", "start-here.md") }.All(f => File.ReadAllText(Path.Combine(mcRepo, f)).Contains("**Your items are safe by default.**", StringComparison.Ordinal))
 			&& new[] { "README.md", Path.Combine("docs", "start-here.md"), Path.Combine("docs", "cards-and-idling.md"), Path.Combine("docs", "settings.md") }
@@ -24855,10 +24855,11 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			&& !keptLimits.Contains("Also:", StringComparison.Ordinal) && popup.Contains("booster packs it doesn't open are sold", StringComparison.Ordinal),
 			soldLimits + " || " + sentLimits);
 
-		var confirmedOn = System.Text.RegularExpressions.Regex.Match(mcApp, @"CONFIRMED_ON = \{ SpareItems: '(\w+)', SpendPoints: '(\w+)' \}");
+		var confirmedOn = System.Text.RegularExpressions.Regex.Match(mcApp, @"CONFIRMED_ON = \{ SpareItems: '(\w+)', SpendPoints: '(\w+)', SteamOpenButton: '(\w+)' \}");
 		Check("switch preview: the words the dashboard asks the preview by ('spare', 'points') are understood - it answered 400 and the popup said \"No preview\"",
 			confirmedOn.Success && (NocatFarm.Core.Switches.FeatureOfWord(confirmedOn.Groups[1].Value) == NocatFarm.Core.Switches.Spare)
 			&& (NocatFarm.Core.Switches.FeatureOfWord(confirmedOn.Groups[2].Value) == NocatFarm.Core.Switches.Points)
+			&& (NocatFarm.Core.Switches.FeatureOfWord(confirmedOn.Groups[3].Value) == NocatFarm.Core.Switches.SteamOpenButton)
 			&& (NocatFarm.Core.Switches.FeatureOfWord("SpareItems") == NocatFarm.Core.Switches.Spare) && (NocatFarm.Core.Switches.FeatureOfWord("gems") == null)
 			&& File.ReadAllText(Path.Combine(mcRepo, "src", "NocatFarm", "Web", "WebHost.cs")).Contains("Switches.FeatureOfWord(feature)", StringComparison.Ordinal));
 
@@ -27362,6 +27363,142 @@ await CommandSweep.RunAsync(Check);
 
 		try {
 			Directory.Delete(hpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 1.8.2: Open in Steam ──
+{
+	const string vdf = """
+		"users"
+		{
+			"76561190000000001"
+			{
+				"AccountName"		"owner"
+				"PersonaName"		"Owner"
+				"RememberPassword"		"1"
+				"AllowAutoLogin"		"1"
+				"MostRecent"		"1"
+				"Timestamp"		"1700000000"
+			}
+			"76561190000000002"
+			{
+				"AccountName"		"farmer"
+				"PersonaName"		"Farmer"
+				"RememberPassword"		"0"
+				"MostRecent"		"0"
+				"Timestamp"		"1699000000"
+			}
+		}
+		""";
+
+	// The parser round-trips and finds a block's fields.
+	NocatFarm.Core.SteamVdf soParsed = NocatFarm.Core.SteamVdf.Parse(vdf);
+	NocatFarm.Core.SteamVdf? soUsers = soParsed.Child("users");
+	Check("steam open: vdf parses the users block", soUsers is { IsMap: true } && (soUsers.Children.Count == 2));
+	Check("steam open: vdf reads an account's name", soUsers?.Children[1].Value.Leaf("AccountName") == "farmer");
+	Check("steam open: vdf round-trips (re-parses to the same names)",
+		NocatFarm.Core.SteamVdf.Parse(soParsed.Serialize()).Child("users")?.Children[0].Value.Leaf("AccountName") == "owner");
+
+	// Decide: switching to an account the client remembers.
+	var soReady = new NocatFarm.Core.SteamOpen.Inputs(vdf, "owner", true, 0, true);
+	NocatFarm.Core.SteamOpen.Plan soPlan = NocatFarm.Core.SteamOpen.Decide("farmer", soReady);
+	Check("steam open: a remembered account gives an OK plan", soPlan.Code == NocatFarm.Core.SteamOpen.Ok);
+	Check("steam open: the plan points auto-login at the account", soPlan.NewAutoLoginUser == "farmer");
+
+	NocatFarm.Core.SteamVdf soAfter = NocatFarm.Core.SteamVdf.Parse(soPlan.NewVdf ?? "");
+	NocatFarm.Core.SteamVdf? soOwner = soAfter.Child("users")?.Children[0].Value;
+	NocatFarm.Core.SteamVdf? soFarmer = soAfter.Child("users")?.Children[1].Value;
+	Check("steam open: the chosen account becomes most-recent, remembered, auto-login",
+		(soFarmer?.Leaf("MostRecent") == "1") && (soFarmer?.Leaf("RememberPassword") == "1") && (soFarmer?.Leaf("AllowAutoLogin") == "1"));
+	Check("steam open: every other account only has MostRecent cleared - its name and remembered flag are untouched",
+		(soOwner?.Leaf("MostRecent") == "0") && (soOwner?.Leaf("AccountName") == "owner") && (soOwner?.Leaf("RememberPassword") == "1"));
+
+	// Decide: the refusals, each changing nothing.
+	Check("steam open: an account the client doesn't remember is refused", NocatFarm.Core.SteamOpen.Decide("stranger", soReady).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: no Steam installed is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { SteamInstalled = false }).Code == NocatFarm.Core.SteamOpen.NoSteam);
+	Check("steam open: a game running in the client is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { RunningAppId = 730 }).Code == NocatFarm.Core.SteamOpen.GameRunning);
+	Check("steam open: no saved-accounts file is refused", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { VdfText = null }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+	Check("steam open: an unreadable saved-accounts file is refused, not thrown", NocatFarm.Core.SteamOpen.Decide("farmer", soReady with { VdfText = "not a vdf {{{" }).Code == NocatFarm.Core.SteamOpen.NotRemembered);
+
+	// The outcome sentences name the account.
+	Check("steam open: the OK message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.Ok, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
+	Check("steam open: the not-remembered message names the account", NocatFarm.Core.SteamOpen.Message(NocatFarm.Core.SteamOpen.NotRemembered, "farmer").ToEnglish().Contains("farmer", StringComparison.Ordinal));
+
+	// The go-ahead lives outside the settings: the switch and Settle keep the two the same, as spare items do.
+	string soRealRoot = NocatFarm.Config.ConfigStore.Root;
+	string soTmpRoot = Path.Combine(Path.GetTempPath(), "nf-steamopen-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(soTmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(soTmpRoot);
+	NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+
+	try {
+		var soCfg = new NocatFarm.Config.BotConfig { SteamOpenButton = true };
+		Check("steam open: on in settings without its go-ahead does NOT count as on", !NocatFarm.Core.SteamOpen.On(soCfg, "farmer"));
+
+		NocatFarm.Core.SteamOpenLedger soLed = NocatFarm.Core.SteamOpenLedger.Load("farmer");
+		soLed.Approved = true;
+		soLed.Save();
+		Check("steam open: on in settings with its go-ahead counts as on", NocatFarm.Core.SteamOpen.On(soCfg, "farmer"));
+
+		// A settings file that says on, with no go-ahead (a backup soCopied from another PC): Settle puts it back off.
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		var soCopied = new NocatFarm.Config.BotConfig { SteamOpenButton = true };
+		bool soChanged = NocatFarm.Core.Switches.Settle(soCopied, "nobody");
+		Check("steam open: Settle turns off a button that has no go-ahead", soChanged && !soCopied.SteamOpenButton);
+
+		// Off in settings clears any soStale go-ahead.
+		NocatFarm.Core.SteamOpenLedger soStale = NocatFarm.Core.SteamOpenLedger.Load("farmer2");
+		soStale.Approved = true;
+		soStale.Save();
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		var soOffCfg = new NocatFarm.Config.BotConfig { SteamOpenButton = false };
+		NocatFarm.Core.Switches.Settle(soOffCfg, "farmer2");
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		Check("steam open: Settle clears a go-ahead left behind when the button is off", !NocatFarm.Core.SteamOpenLedger.Load("farmer2").Approved);
+
+		// An account with the button off: pressing it (dashboard, window or 'steam open') is refused, and nothing is touched.
+		var soMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var soBot = new NocatFarm.Core.Bot("so-acct", new NocatFarm.Config.BotConfig());
+		var soBots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(soMgr)!;
+		soBots[soBot.Name] = soBot;
+		NocatFarm.Config.ConfigStore.SaveBot(soBot.Name, soBot.Cfg);
+		bool soWasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+
+		try {
+			(string soCode, _) = await NocatFarm.Core.SteamOpen.OpenAsync(soBot);
+			Check("steam open: the button off - pressing it is refused before anything on the PC is read or changed", soCode == NocatFarm.Core.SteamOpen.Off, soCode);
+
+			string soOpenReply = await Commands.RunAsync(soMgr, "steam open so-acct");
+			Check("steam open: 'steam open' with the button off says to turn it on first", soOpenReply.Contains("isn't turned on", StringComparison.Ordinal), soOpenReply);
+
+			// 'set' can't switch it on behind the preview: it answers with the preview and leaves it off.
+			string soSet = await Commands.RunAsync(soMgr, "set so-acct SteamOpenButton on");
+			Check("steam open: 'set <account> SteamOpenButton on' only shows the preview - it stays off until 'steam on'",
+				!NocatFarm.Core.SteamOpen.On(soBot.Cfg, soBot.Name) && soSet.Contains("steam on so-acct", StringComparison.Ordinal), soSet);
+
+			await Commands.RunAsync(soMgr, "steam on so-acct");
+			bool soOnNow = NocatFarm.Core.SteamOpen.On(soBot.Cfg, soBot.Name) && (NocatFarm.Config.ConfigStore.LoadBot(soBot.Name)?.SteamOpenButton == true);
+			await Commands.RunAsync(soMgr, "steam off so-acct");
+			bool soOffNow = !NocatFarm.Core.SteamOpen.On(soBot.Cfg, soBot.Name) && !NocatFarm.Core.SteamOpenLedger.Load(soBot.Name).Approved;
+			Check("steam open: 'steam on' turns the button on (setting and go-ahead, saved); 'steam off' clears both", soOnNow && soOffNow, $"{soOnNow} {soOffNow}");
+
+			Check("steam open: never from Steam chat - it signs this PC's Steam app in", Commands.SteamChatRefuses("steam"));
+			Check("steam open: off by default on a new account", !new NocatFarm.Config.BotConfig().SteamOpenButton);
+		} finally {
+			NocatFarm.Log.Suppressed = soWasSuppressed;
+			await soBot.DisposeAsync();
+		}
+	} finally {
+		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+		NocatFarm.Config.ConfigStore.UseRoot(soRealRoot);
+
+		try {
+			Directory.Delete(soTmpRoot, true);
 		} catch (IOException) {
 			// temp - it goes when Windows tidies up
 		}

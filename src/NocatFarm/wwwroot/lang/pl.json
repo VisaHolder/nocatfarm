@@ -1,5 +1,37 @@
 {
   "ui": {
+    "signing your Steam app into {0} - it closes and opens again": "loguję Twoją aplikację Steam na {0} - zamknie się i otworzy ponownie",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "Otwórz w Steam nie jest włączone dla {0} - włącz je najpierw w ustawieniach",
+    "Open in Steam only works on Windows for now": "Otwórz w Steam na razie działa tylko w Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "Steam nie wygląda na zainstalowany na tym komputerze, więc nie ma czego otworzyć",
+    "a game is open in Steam - close it first, then open {0}": "w Steam jest otwarta gra - najpierw ją zamknij, potem otwórz {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "zaloguj się raz na {0} w Steam z zaznaczonym „Zapamiętaj mnie“, a wtedy ten przycisk zadziała",
+    "couldn't open {0} in Steam": "nie udało się otworzyć {0} w Steam",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "Otwórz w Steam jest włączone dla {0}: przycisk jednym kliknięciem loguje aplikację Steam na to konto",
+    "Open in Steam is off for {0}: the button is hidden": "Otwórz w Steam jest wyłączone dla {0}: przycisk jest ukryty",
+    "couldn't change Steam's saved accounts - {0}": "nie udało się zmienić zapisanych kont Steam - {0}",
+    "Steam didn't close - leaving it as it is, nothing started": "Steam się nie zamknął - zostawiam tak jak jest, nic nie uruchomiono",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Zaloguj aplikację Steam na to konto jednym kliknięciem. Zamyka Steam i otwiera go ponownie. To konto dalej farmi.",
+    "Open in Steam": "Otwórz w Steam",
+    "Windows only for now": "Na razie tylko Windows",
+    "Turn on the Open in Steam button?": "Włączyć przycisk Otwórz w Steam?",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "To pokaże na tym koncie przycisk, który jednym kliknięciem loguje aplikację Steam. Dokładnie to robi po naciśnięciu. Przycisk nic nie robi, dopóki nie naciśniesz tu Włącz.",
+    "Closes your Steam app (the polite way, letting it finish).": "Zamyka aplikację Steam (grzecznie, pozwalając jej dokończyć).",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Kieruje pliki zapisanych kont Steam na to konto - tylko na nie; inne konta pozostają nietknięte.",
+    "Starts Steam again, so it signs straight into this account.": "Ponownie uruchamia Steam, aby zalogował się prosto na to konto.",
+    "Open in Steam only works on Windows for now.": "Otwórz w Steam na razie działa tylko w Windows.",
+    "Steam doesn't look installed on this PC.": "Steam nie wygląda na zainstalowany na tym komputerze.",
+    "A game is open in Steam right now - the button won't switch while one is running.": "W Steam jest teraz otwarta gra - przycisk nie przełączy, dopóki gra działa.",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Twoja aplikacja Steam jeszcze nie pamięta tego konta. Zaloguj się raz w Steam z zaznaczonym „Zapamiętaj mnie“, a wtedy ten przycisk zadziała.",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Twoja aplikacja Steam pamięta to konto, więc przycisk może je zalogować bez hasła.",
+    "It never types a password and never touches your login tokens.": "Nigdy nie wpisuje hasła ani nie dotyka Twoich tokenów logowania.",
+    "It backs up the files it changes first, and keeps the last three backups.": "Najpierw tworzy kopię zapasową zmienianych plików i zachowuje trzy ostatnie kopie.",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "Nigdy nie zatrzymuje farmienia tego konta przez nocat.farm - Steam wstrzymuje farm dopiero, gdy naprawdę uruchomisz grę.",
+    "What pressing it does": "Co robi naciśnięcie",
+    "Safe by design": "Bezpieczne z założenia",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Zalogować aplikację Steam na {0}? Steam zamknie się i otworzy ponownie.",
+    "Signing Steam into {0}…": "Logowanie Steam na {0}…",
+    "Done.": "Gotowe.",
     "That's not a command - did you mean '{0}'?": "To nie jest polecenie - chodziło ci o '{0}'?",
     "That's not a command - 'help' lists them.": "To nie jest polecenie - 'help' wyświetla ich listę.",
     "Overview": "Przegląd",
@@ -2960,6 +2992,10 @@
     "couldn't look at the listings waiting on a confirmation: {0}": "nie udało się sprawdzić ofert czekających na potwierdzenie: {0}"
   },
   "settings": {
+    "SteamOpenButton": {
+      "label": "Przycisk Otwórz w Steam",
+      "tip": "Pokazuje na tym koncie przycisk - na jego karcie i w oknie aplikacji - który loguje aplikację Steam bez wpisywania hasła. Naciśnięcie zamyka Steam, kieruje pliki zapisanych kont Steam na to konto i ponownie uruchamia Steam, dzięki czemu loguje się od razu loginem, który Steam już pamięta. Nigdy nie zatrzymuje farmienia tego konta przez nocat.farm: Steam zezwala na logowanie i wstrzymuje farm dopiero, gdy naprawdę uruchomisz grę. Tylko Windows. Domyślnie wyłączone. Przy włączaniu najpierw pokazuje dokładnie, co robi przycisk, i prosi o potwierdzenie."
+    },
     "WebEnabled": {
       "label": "Panel webowy",
       "tip": "Włącza panel webowy. Bez niego wszystko dalej działa, a nocat.farm sterujesz, wpisując polecenia w konsoli."

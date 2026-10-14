@@ -98,6 +98,19 @@ public static class SwitchPreview {
 	public static async Task<(string Text, object Data)> LookAsync(Bot bot, string feature, CancellationToken ct) {
 		bool signedIn = bot.IsOnline && bot.Web.Ready;
 
+		// 1.8.2: Open in Steam - a read-only look at the local Steam client (no Steam network call), then the plain text
+		// for the console and the same facts as numbers for the pop-up.
+		if (feature == Switches.SteamOpenButton) {
+			SteamOpen.Numbers n = SteamOpen.Look(bot.Name);
+			string line = !n.Supported ? $"{bot.Name}: Open in Steam only works on Windows for now."
+				: !n.SteamFound ? $"{bot.Name}: Steam doesn't look installed on this PC."
+				: n.GameRunning ? $"{bot.Name}: a game is open in Steam right now - the button won't switch while one is running."
+				: n.Remembered ? $"{bot.Name}: your Steam app remembers this account, so the button can sign it in with no password."
+				: $"{bot.Name}: your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then the button works.";
+
+			return (line, n);
+		}
+
 		if (feature == Switches.Spare) {
 			string limits = SpareRun.Limits(bot);
 			int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;

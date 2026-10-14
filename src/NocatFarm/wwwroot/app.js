@@ -1280,6 +1280,9 @@ function renderAccounts() {
           : `<button data-tip="${esc(t('Log this account in.'))}" data-act="start" data-bot="${esc(b.Name)}">${esc(t('Start'))}</button>`}
         ${b.State !== 'Stopped' ? `<button class="ghost" data-tip="${esc(t('Log this account out. It stays configured.'))}" data-act="stop" data-bot="${esc(b.Name)}">${esc(t('Stop'))}</button>` : ''}
         <button class="ghost" data-tip="${esc(t('What this account still has left to farm.'))}" data-act="cards" data-bot="${esc(b.Name)}">${esc(t('Cards'))}</button>
+        ${b.SteamOpen ? (b.SteamOpenSupported
+          ? `<button class="ghost" data-tip="${esc(t('Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.'))}" data-act="steamopen" data-bot="${esc(b.Name)}">${esc(t('Open in Steam'))}</button>`
+          : `<button class="ghost" disabled data-tip="${esc(t('Windows only for now'))}">${esc(t('Open in Steam'))}</button>`) : ''}
         <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
       </div></div>`;
   });
@@ -4054,6 +4057,7 @@ document.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'start': case 'stop': case 'pause': case 'resume': act(name, el.dataset.act); break;
     case 'cards': openBot(name); break;
+    case 'steamopen': openInSteam(name); break;
     case 'settings': closeModal(); openBotSettings(name); break;
     case 'remove': removeBot(name); break;
     case 'postnow': postNow(name); break;
@@ -6070,13 +6074,18 @@ const GUARDED_OFF = {
 
 // Spare items and Steam Points are one switch each, saved straight away: turning one on first shows what it would do and
 // asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
-const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points' };
+const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points', SteamOpenButton: 'steamopen' };
 
 function confirmSwitch(name, account) {
+  const title = name === 'SpareItems' ? t('Turn on Spare items?')
+    : name === 'SpendPoints' ? t('Turn on spending Steam Points?')
+    : t('Turn on the Open in Steam button?');
+  const intro = name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
+    : name === 'SpendPoints' ? t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.')
+    : t('This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.');
   modal(`
-    <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : t('Turn on spending Steam Points?'))}</h2>
-    <p>${esc(name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
-      : t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'))}</p>
+    <h2>${esc(title)}</h2>
+    <p>${esc(intro)}</p>
     <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
     <div class="actions">
       <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
@@ -6085,9 +6094,44 @@ function confirmSwitch(name, account) {
     </div>`);
   const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
   const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
+  const draw = (d) => d.Kind === 'points' ? pointsPreviewHtml(d) : d.Kind === 'steamopen' ? steamOpenPreviewHtml(d) : sparePreviewHtml(d);
   api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => show(r && r.data ? (r.data.Kind === 'points' ? pointsPreviewHtml(r.data) : sparePreviewHtml(r.data)) : none))
+    .then((r) => show(r && r.data ? draw(r.data) : none))
     .catch(() => show(none));
+}
+
+// What the Open in Steam button does on the PC, and whether this PC and Steam are ready for it.
+function steamOpenPreviewHtml(d) {
+  const steps = [
+    t('Closes your Steam app (the polite way, letting it finish).'),
+    t("Points Steam's saved-accounts files at this account - only this one; other accounts are left alone."),
+    t('Starts Steam again, so it signs straight into this account.'),
+  ];
+  const note = [];
+  if (!d.Supported) note.push(`<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`);
+  else if (!d.SteamFound) note.push(`<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>`);
+  else if (d.GameRunning) note.push(`<p class="problem">${esc(t("A game is open in Steam right now - the button won't switch while one is running."))}</p>`);
+  else if (!d.Remembered) note.push(`<p class="problem">${esc(t('Your Steam app doesn\'t remember this account yet. Sign into it once in Steam with "Remember me" ticked, then this button works.'))}</p>`);
+  else note.push(`<p class="pricing">${esc(t('Your Steam app remembers this account, so the button can sign it in with no password.'))}</p>`);
+  const safe = [
+    t('It never types a password and never touches your login tokens.'),
+    t('It backs up the files it changes first, and keeps the last three backups.'),
+    t('It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.'),
+  ];
+  return `${note.join('')}<h4>${esc(t('What pressing it does'))}</h4><ul class="limits">${steps.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${safe.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// Press the Open in Steam button on an account card.
+async function openInSteam(name) {
+  if (!confirm(tf('Sign your Steam app into {0}? Steam will close and open again.', name))) return;
+  toast(tf('Signing Steam into {0}…', name));
+  try {
+    const r = await post(`/api/bots/${encodeURIComponent(name)}/steam-open`, {});
+    toast(r && r.said ? r.said : (r && r.ok ? t('Done.') : t("That didn't work")), !(r && r.ok));
+  } catch (e) {
+    toast(t("That didn't work"), true);
+  }
 }
 
 // One big figure in the pop-up: the number, what it is, and a small line under it.
