@@ -1566,13 +1566,13 @@ public sealed class Bot : IAsyncDisposable {
 		await Limiters.WaitForLoginSlotAsync(ct, wait => {
 			if (wait >= TimeSpan.FromSeconds(3)) {
 				int secs = (int) Math.Ceiling(wait.TotalSeconds);
-				Log.Info(said ? new Said("still waiting its turn to sign in - about {0}s", secs) : new Said("starting up - signs in in about {0}s (Gap between logins)", secs), Name);
+				Log.Info(said ? new Said("waiting to sign in · {0}s", secs) : new Said("starting · signs in in {0}s", secs), Name);
 				said = true;
 			}
 		}).ConfigureAwait(false);
 
 		if (!said) {
-			Log.Info("starting up", Name);
+			Log.Info("starting · signs in now", Name);
 		}
 
 		// The check and the connect under the stop lock. Apart, a stop landing between them disconnected nothing (there was
@@ -1647,7 +1647,7 @@ public sealed class Bot : IAsyncDisposable {
 				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
 				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
 				Stopping = true;
-				Log.Info(new Said("stopping - finishing up, logging off in about {0}s", secs), Name);
+				Log.Info(new Said("signing out in {0}s", secs), Name);
 
 				try {
 					await Task.Delay(TimeSpan.FromSeconds(secs)).ConfigureAwait(false);
@@ -1716,7 +1716,7 @@ public sealed class Bot : IAsyncDisposable {
 		Web.Invalidate();
 
 		if (wasRunning) {
-			Log.Info("stopped - logged out", Name);
+			Log.Info("signed out", Name);
 			Plugins.PluginHost.RaiseOffline(this);
 		}
 	}
@@ -2089,6 +2089,12 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Warn(new Said("login token rejected ({0}) - needs the password again", cb.Result), Name);
 			} else if (cb.Result is EResult.RateLimitExceeded or EResult.AccountLoginDeniedThrottle) {
 				Log.Warn("Steam is rate-limiting logins for this account", Name);
+			} else if (cb.Result is EResult.ServiceUnavailable or EResult.Busy or EResult.Timeout or EResult.ServiceReadOnly) {
+				// Steam's side is down - its Tuesday maintenance, or an outage - and nothing for you to do: it signs in
+				// again by itself. Logged as an error it went to Telegram as "needs you" in the middle of the maintenance.
+				Log.Warn(SteamMaintenance.LikelyNow
+					? new Said("Steam is down for its weekly maintenance ({0}) - it signs in again by itself", cb.Result)
+					: new Said("Steam isn't letting anyone sign in right now ({0}) - it tries again by itself", cb.Result), Name);
 			} else {
 				Log.Error(new Said("logon failed: {0}", cb.Result), Name);
 			}
@@ -2105,7 +2111,8 @@ public sealed class Bot : IAsyncDisposable {
 		OnlineSince = DateTime.UtcNow;
 		StatusText = "online";
 		_guardPrompt = null;
-		Log.Good(new Said("logged on as {0} ({1})", Cfg.SteamLogin, SteamId), Name);
+		Log.Good(new Said("signed in"), Name);
+		Log.Debug(new Said("signed in as {0} ({1})", Cfg.SteamLogin, SteamId), Name);
 		Plugins.PluginHost.RaiseOnline(this);
 		Library.NoteSignedIn();   // ask Steam who in the family is playing what now, rather than trust the old picture
 
@@ -2228,7 +2235,7 @@ public sealed class Bot : IAsyncDisposable {
 			// The owner just started playing on this account, so Steam handed them the session. Expected, not a
 			// fault - so it reads as Info, in plain language, and says it will come back. The actual rejoin is
 			// kept quiet in OnDisconnected so this is the only line the user sees for a normal step-aside.
-			Log.Info("you're on this account - waiting until you're done", Name);
+			Log.Info("you're on this account · waiting until you're done", Name);
 
 			if (Cfg.PauseWhenYouPlay) {
 				PlayingBlocked = true;
@@ -2497,7 +2504,7 @@ public sealed class Bot : IAsyncDisposable {
 		// A stand-down that was too fresh to trust at logon gets announced here, once, if it held.
 		if (PlayingBlocked && _blockWarnDue is { } due && (DateTime.UtcNow >= due)) {
 			_blockWarnDue = null;
-			Log.Info("you're on this account - waiting until you're done", Name);
+			Log.Info("you're on this account · waiting until you're done", Name);
 		}
 
 		// Re-assert the schedule's persona so it actually holds: online during active hours, invisible while
@@ -2716,7 +2723,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Debug(new Said("Steam reports another session on app {0} right after logon - probably our own, waiting before saying so", app), Name);
 			} else {
 				_blockWarnDue = null;
-				Log.Info("you're on this account - waiting until you're done", Name);
+				Log.Info("you're on this account · waiting until you're done", Name);
 			}
 		} else {
 			_blockWarnDue = null;
@@ -2724,7 +2731,7 @@ public sealed class Bot : IAsyncDisposable {
 			// The wait it actually rolled, not the setting: on a human-mode account that's anywhere up to three times it, and
 			// "in 5m" for a wait of 14 was simply wrong.
 			if (Cfg.ResumeDelayMinutes > 0) {
-				Log.Info(new Said("the account is free again - picking back up in {0}m", (int) Math.Ceiling((resumeAt - DateTime.UtcNow).TotalMinutes)), Name);
+				Log.Info(new Said("account free again · picking back up in {0}m", (int) Math.Ceiling((resumeAt - DateTime.UtcNow).TotalMinutes)), Name);
 			} else {
 				Log.Info("the account is free again - resuming", Name);
 			}
@@ -3610,7 +3617,7 @@ public sealed class Bot : IAsyncDisposable {
 				_lastRemint = now;
 			}
 
-			Log.Info("daily web refresh - getting a new web token", Name);
+			Log.Info("daily web refresh · getting a new web token", Name);
 
 			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true lets Steam rotate the
 			// long-lived refresh token before it ages out, so an unattended farmer keeps
@@ -3800,7 +3807,7 @@ public sealed class Bot : IAsyncDisposable {
 				}
 			});
 
-			Playing = label + $" (+{apps.Count})";
+			Playing = label + $" +{apps.Count}";
 
 			return;
 		}
@@ -3832,7 +3839,7 @@ public sealed class Bot : IAsyncDisposable {
 		// Names, not raw appIDs. Without the GameNames.Of the dashboard showed "730" instead of "Counter-Strike 2"
 		// whenever a real game was playing with no custom-name label over it (i.e. human mode mid-session).
 		Playing = !string.IsNullOrWhiteSpace(label)
-			? label + (apps.Count > 0 ? $" (+{apps.Count})" : "")
+			? label + (apps.Count > 0 ? $" +{apps.Count}" : "")
 			: apps.Count == 0 ? "" : string.Join(", ", apps.Take(3).Select(GameNames.Of));
 	}
 

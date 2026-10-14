@@ -7,7 +7,8 @@ namespace NocatFarm;
 
 /// <summary>
 /// 'points': Steam Points - the balance, and spending them on levels (Modules/PointsSpender.cs). Spending is permanent, so
-/// it previews first, and an account spends nothing until 'points ok &lt;account&gt;'.
+/// it previews first, and an account spends nothing until spending is turned on ('points on &lt;account&gt;', or its switch
+/// after the preview).
 /// </summary>
 public static partial class Commands {
 	internal const string PointsUsage = "points [account|all] | points spend preview [account|all] | points on|off|spend <account>";

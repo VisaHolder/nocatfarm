@@ -94,6 +94,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
+					_backoffUntil = DateTime.UtcNow + wait;
 				} else if (_moreToCraft) {
 					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
 				}
@@ -121,6 +122,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 					return;
 				}
 
+				// A set may have just been finished (automatic booster packs): look then, not after the day's wait.
+				if (_nextSweep < due) {
+					break;
+				}
+
 				if (Bot.Cfg.CraftBadges != crafting) {
 					// A fresh short wait from here. The day's wait was already set, so breaking out alone went straight
 					// back to sleeping it out at the top of the loop.
@@ -131,6 +137,49 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 		}
 	}
+
+	/// <summary>Pulled-forward looks (<see cref="LookSoon"/>) are at least this far apart - each one reads the badge pages again.</summary>
+	public static readonly TimeSpan PullGap = TimeSpan.FromHours(2);
+
+	/// <summary>
+	/// A set may be complete now (a booster pack made to finish it was just opened): the next look comes in 10-40 minutes
+	/// rather than at the day's round - at most one such look every <see cref="PullGap"/>, so a robot opening pack after
+	/// pack doesn't read the badge pages over and over. A human-mode account keeps the wait it already planned unless a set
+	/// is actually complete (<paramref name="setComplete"/>: the inventory holds a whole normal set); then it crafts at its
+	/// next chance in its own day (the loop's gate). A look already due sooner stays; Steam's back-off is never cut short.
+	/// </summary>
+	public void LookSoon(bool setComplete = false) {
+		if (Bot.Cfg.LegitMode && !setComplete) {
+			return;
+		}
+
+		DateTime soon = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 40) : Rng.Minutes(10, 40));
+
+		if ((_pulledTo != DateTime.MinValue) && (soon < _pulledTo + PullGap)) {
+			soon = _pulledTo + PullGap;
+		}
+
+		// Steam refused crafting: its back-off isn't cut short.
+		if (soon < _backoffUntil) {
+			return;
+		}
+
+		if ((_nextSweep == DateTime.MinValue) || (_nextSweep > soon)) {
+			_nextSweep = soon;
+			_pulledTo = soon;
+		}
+	}
+
+	private DateTime _backoffUntil = DateTime.MinValue;
+
+	/// <summary>When the last pulled-forward look was set for.</summary>
+	private DateTime _pulledTo = DateTime.MinValue;
+
+	/// <summary>Steam refused a foil badge: foils wait until then. Normal badges have their own back-off (<see cref="_backoffUntil"/>).</summary>
+	private DateTime _foilBackoffUntil = DateTime.MinValue;
+
+	/// <summary>When the next look is due (DateTime.MinValue: not set yet).</summary>
+	internal DateTime NextSweep => _nextSweep;
 
 	/// <summary>
 	/// One sweep. Returns how many badges were crafted, or -1 if Steam refused and we should back off.
@@ -159,6 +208,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		List<Craftable> ready = Parse(html);
 		List<(uint App, bool Foil)> linked = ReadyLinks(html);
 
+		// Foil badges: only with "Also craft foil badges" on, and not while Steam's refusal of one has foils waiting.
+		bool foils = Bot.Cfg.CraftFoilBadges && (DateTime.UtcNow >= _foilBackoffUntil);
+
 		// Steam paginates at ~60 badges. Reading only page 1 meant a big library never crafted anything past it.
 		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
 
@@ -183,7 +235,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		// The badges list only LINKS a finished set's craft button to the game's card page; the numbers the craft needs
 		// are on that page, in Profile_CraftGameBadge(...). Looking for them on the list alone found nothing to craft,
 		// ever. Each set still to read costs one page, a few seconds apart.
-		foreach ((uint app, bool foil) in CardPagesToRead(linked, ready)) {
+		foreach ((uint app, bool foil) in CardPagesToRead(linked.Where(l => foils || !l.Foil), ready)) {
 			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);
 
 			string? cards = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{app}/?l=english" + (foil ? "&border=1" : "")), ct).ConfigureAwait(false);
@@ -197,6 +249,8 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				Log.Debug($"{GameNames.Of(app)}: the card page has no craft button to read ({cards.Length} chars) - left for the next sweep", Bot.Name);
 			}
 		}
+
+		ready = ToCraft(ready, foils);
 
 		if (ready.Count == 0) {
 			_status = new Said("nothing ready to craft");
@@ -283,6 +337,10 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				_status = new Said("crafting ({0}/{1})", made, ready.Count);
 
 				if (!await CraftAsync(c, ct).ConfigureAwait(false)) {
+					if (!Refused(c, DateTime.UtcNow)) {
+						break;   // a foil: the foils wait, the normal sets (crafted first) aren't held back
+					}
+
 					Log.Warn(new Said("craft refused - backing off {0}h rather than retrying", BackoffHours), Bot.Name);
 					_status = new Said("rate-limited, backing off");
 
@@ -319,6 +377,27 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		_status = new Said("{0} crafted since start", _crafted);
 
 		return made;
+	}
+
+	/// <summary>
+	/// The sets to craft: normal ones first, so a foil refused can't hold one back, and foils only when <paramref name="foils"/>.
+	/// </summary>
+	internal static List<Craftable> ToCraft(List<Craftable> ready, bool foils) =>
+		[.. ready.Where(c => foils || (c.Border == 0)).OrderBy(static c => c.Border > 0 ? 1 : 0)];
+
+	/// <summary>
+	/// Steam refused a craft. A foil one backs off foils only - normal crafting isn't held back by it - and the sweep goes
+	/// on (false). A normal one backs everything off (true).
+	/// </summary>
+	internal bool Refused(Craftable c, DateTime now) {
+		if (c.Border == 0) {
+			return true;
+		}
+
+		_foilBackoffUntil = now + Rng.Minutes(BackoffHours * 50, BackoffHours * 80);
+		Log.Warn(new Said("foil badge craft refused - foil badges wait {0}h, normal badges carry on", BackoffHours), Bot.Name);
+
+		return false;
 	}
 
 	private async Task<bool> CraftAsync(Craftable c, CancellationToken ct) {

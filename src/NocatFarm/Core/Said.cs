@@ -28,6 +28,9 @@ public readonly struct Said(string english, params object?[] args) {
 
 	private object?[] Args { get; } = args ?? [];
 
+	/// <summary>One of its values as given, or null - for a view that adds lines up (Core/LogStack.cs).</summary>
+	public object? Arg(int index) => (Args is { } a) && (index >= 0) && (index < a.Length) ? a[index] : null;
+
 	/// <summary>True when nothing has been said yet - including on a default(Said).</summary>
 	public bool IsEmpty => string.IsNullOrEmpty(English);
 

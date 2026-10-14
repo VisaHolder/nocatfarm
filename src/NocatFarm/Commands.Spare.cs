@@ -68,7 +68,7 @@ public static partial class Commands {
 
 			// Pricing a few games goes through the market's queue - a few minutes on a first look. The reply says it's
 			// going; the log has the answer.
-			return await SlowAsync(new Slow("spare", "working out what's spare", Key: "spare preview"), bots, static b => SpareRun.RunAsync(b, act: false, CancellationToken.None),
+			return await SlowAsync(new Slow("spare", "working out what's spare", Key: "spare preview", Brief: SpareBrief), bots, static b => SpareRun.RunAsync(b, act: false, CancellationToken.None),
 				ReplyWithin, oneAtATime: true, cannot: static b => !b.IsOnline || !b.Web.Ready ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
 		}
 
@@ -107,8 +107,11 @@ public static partial class Commands {
 			return $"{bot.Name}: not logged in";
 		}
 
-		return await SlowAsync(new Slow("spare", "dealing with spare items", Key: "spare do"), [bot], static b => Modules.ScamWatch.AsYouAskedAsync(() => SpareRun.RunAsync(b, act: true, CancellationToken.None)), ReplyWithin).ConfigureAwait(false);
+		return await SlowAsync(new Slow("spare", "dealing with spare items", Key: "spare do", Brief: SpareBrief), [bot], static b => Modules.ScamWatch.AsYouAskedAsync(() => SpareRun.RunAsync(b, act: true, CancellationToken.None)), ReplyWithin).ConfigureAwait(false);
 	}
+
+	/// <summary>A spare look's answer in one line, for the log when it answers late (<see cref="SpareRun.Brief"/>).</summary>
+	private static string? SpareBrief(string account) => SpareRun.Briefs.TryRemove(account, out string? brief) ? brief : null;
 
 	/// <summary>
 	/// 'set': Spare items and Steam Points are only turned on after their preview. 'set &lt;account&gt; SpareItems on' answers

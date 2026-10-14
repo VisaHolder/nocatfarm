@@ -102,6 +102,11 @@ public static class MarketQuotes {
 
 		Keep(quote);
 
+		// Priced both ways - the dollar shortlist and now the wallet's own currency: the rate is learned from it.
+		if ((quote.Lowest is int wallet) && (SparePrices.UsdCents(hash) is int usd)) {
+			WalletRate.Observe(currency, hash, usd, wallet, DateTime.UtcNow);
+		}
+
 		return quote;
 	}
 
@@ -200,8 +205,8 @@ public static class ListingPrice {
 
 	/// <summary>
 	/// The buyer's price for one item, or null with the reason it's kept instead. <paramref name="strategy"/>: 0 a cent
-	/// under the real price (the default), 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
-	/// cheapest listing. <paramref name="dumpPct"/>: under the default, a cheapest listing this many percent or more under the
+	/// under the real price (the default), 1 the same as the cheapest listing, 2 the median sale price - anything else is
+	/// read as 0 (see <see cref="Choice"/>). <paramref name="dumpPct"/>: under the default, a cheapest listing this many percent or more under the
 	/// median with only one sale behind it is a contradiction, and the item is kept (0 = list it anyway). It never moves the
 	/// price itself: the price is the higher of the two, so a listing under the median never sets it.
 	/// </summary>
@@ -222,11 +227,9 @@ public static class ListingPrice {
 			return (null, new Said("nobody is selling it right now - kept, there's no price to go by"));
 		}
 
-		switch (strategy) {
+		switch (Choice(strategy)) {
 			case 1:
 				return (Math.Max(Floor, lowest), default);
-			case 3:
-				return (Seller.UndercutFor(lowest), default);
 			case 2:
 				// The median - but never under a cent below the cheapest listing: that would be giving it away.
 				return median > 0 ? (Math.Max(Math.Max(Floor, median), Seller.UndercutFor(lowest)), default)
@@ -248,6 +251,12 @@ public static class ListingPrice {
 
 		return (Math.Max(Floor, real - 1), default);
 	}
+
+	/// <summary>
+	/// The selling price choice as it may be: 0, 1 or 2. "A cent under the cheapest" (3, until 1.8.1) followed a dumped
+	/// listing down and sold under what an item really sells for - anything that isn't one of the three is the safe default.
+	/// </summary>
+	public static int Choice(int saved) => saved is >= 0 and <= 2 ? saved : 0;
 
 	/// <summary>What the item is worth, for the price limit and the day's value cap: the higher of the cheapest listing and the median.</summary>
 	public static int Worth(MarketPrice price) => Math.Max(price.Cents, price.Median ?? 0);

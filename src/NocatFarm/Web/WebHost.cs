@@ -560,8 +560,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 			// The parenthetical is a Said too. As a bare string it was a finished English phrase by the time the
 			// sentence around it was translated, so a Chinese log read "仪表盘:http://... (this PC only - no
 			// password set)" - which is the whole class of bug this pass exists to remove.
-			Log.Good(new Said("dashboard: {0}{1}", Url,
-				string.IsNullOrEmpty(_cfg.WebPassword) ? new Said("  (this PC only, no password)") : default));
+			// The address only - it's a link in the window. Who can open it is the dashboard's own to say, and the debug log's.
+			Log.Good(new Said("dashboard: {0}", Url));
+
+			if (string.IsNullOrEmpty(_cfg.WebPassword)) {
+				Log.Debug(new Said("dashboard: this PC only, no password"));
+			}
 
 			// Headless runs (Linux, Docker) are reached from another machine by definition, so a setup that can't
 			// be is worth more than the one-line hint above. Nothing is exposed either way - with no password the
@@ -1230,7 +1234,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 				Time = e.When.ToString("HH:mm:ss"),
 				Level = e.Level,
 				Source = e.Source,
-				Text = e.Text
+				Text = e.Text,
+				// Lines in a row of the same kind from one account show as one row there (Core/LogStack.cs).
+				Kind = LogStack.KindOf(e),
+				Value = LogStack.ValueOf(e.Said)
 			}))));
 
 		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names
@@ -1315,6 +1322,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			Bot = Settings.Bot,
 			GlobalDefaults = Settings.GlobalDefaults,
 			BotDefaults = Settings.BotDefaults,
+			GroupOrder = Settings.GroupOrder,   // the order of the titled boxes in a section
 
 			// Sent rather than repeated in app.js. The same palette paints the window, the console board and
 			// this page, and a second copy in JavaScript is precisely how the two "what is this account doing"
@@ -1821,9 +1829,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
 			}
 
-			string text = await Commands.SwitchPreviewAsync(bot, which, ctx.RequestAborted).ConfigureAwait(false);
+			// The console's text, and the same look as numbers (data) for the pop-up to draw in its own words.
+			(string text, object data) = await SwitchPreview.LookAsync(bot, which, ctx.RequestAborted).ConfigureAwait(false);
 
-			return Results.Json(new { ok = true, text });
+			return Results.Json(new { ok = true, text, data });
 		});
 
 		// "Turn on" in the popup: the switch and its go-ahead in one step. Off: both cleared.
@@ -2611,6 +2620,18 @@ public sealed partial class WebHost : IAsyncDisposable {
 		List<string> adjusted = [];
 
 		foreach (SettingDef def in defs) {
+			// A time of day is kept as minutes from midnight. Put back through Apply, 690 read as an hour of 690 and 11:30 went
+			// back to the default on every save - so it's checked as the number it is: a minute of the day, or the default.
+			if (def.Kind == SettingKind.Time) {
+				if ((Settings.Read(config, def.Name) is int minutes) && (minutes is < 0 or >= 24 * 60)) {
+					object? fallback = Settings.Read(defs == Settings.Global ? Settings.GlobalDefaults : Settings.BotDefaults, def.Name);
+					config.GetType().GetProperty(def.Name)?.SetValue(config, fallback);
+					adjusted.Add(new Said("{0} was {1}, reset to {2}", new Said(def.Label), minutes, Settings.Show(config, def)).ToString());
+				}
+
+				continue;
+			}
+
 			// Pick too (the language): an unknown code falls back to the default like a bad choice does.
 			if (def.Kind is not (SettingKind.Int or SettingKind.Hour or SettingKind.Float or SettingKind.Choice or SettingKind.Pick)) {
 				continue;
@@ -2720,13 +2741,13 @@ public sealed partial class WebHost : IAsyncDisposable {
 			}
 
 			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
-			// A skip changed in this same save is the owner's choice, and stays.
-			// Spending Steam Points follows human mode too (on for a robot, off for human mode) - unless changed in this same save.
-			bool pointsChosen = body.SpendPoints != current.SpendPoints, spendChosen = body.SpendPoints;
+			// A skip changed in this same save is the owner's choice, and stays. Steam Points and Spare items aren't touched by
+			// the mode at all - they're only ever changed through their own switch (Switches, below).
 			Settings.ApplyLegitMode(body, current.LegitMode, skipChosen: body.AchievementSkipMultiplayer != current.AchievementSkipMultiplayer);
 
-			if (pointsChosen) {
-				body.SpendPoints = spendChosen;
+			// Automatic booster packs keep gems loose ("Gems afterwards"), said once - unless this same save chose the gems too.
+			if (body.SpareGems == current.SpareGems) {
+				Modules.BoosterPick.Settle(body, current.BoosterMake, bot.Name);
 			}
 
 			// Spare items and Steam Points are turned on only through their confirm popup (/api/bots/{name}/switch), never by a
@@ -3174,6 +3195,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 					State = b.State.ToString(),
 					Group = GroupOf(b),
 					Status = Loc.T(Commands.StateWord(b)),
+					// The end of a human-mode break or night, so the chip can say "on a break · 5m to go" / "asleep · up ~09:30".
+					Until = StateTime.Until(b),
 					Detail = Loc.T(b.StatusText),
 					Persona = Loc.T(b.PersonaWord),
 					// The dashboard dims a hidden persona. It used to test Persona === 'invisible', which is
@@ -3230,6 +3253,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 					LibraryReady = b.Library.Ready,
 					// What "Learn from how I play" has picked up so far, for the Human mode panel - empty while it's off.
 					Learned = BotManager.ModuleOf<HumanMode>(b)?.LearnedLine() ?? "",
+					// Today's planned times for the Human mode panel, in minutes of the day - when it gets on and goes to bed. Null
+					// before a day is planned.
+					Day = BotManager.ModuleOf<HumanMode>(b)?.TodayTimes is { } day && b.Cfg.LegitMode ? new { day.Up, day.Bed } : null,
 					Rotation = BotManager.ModuleOf<Idler>(b)?.Rotating is { } rot
 						? new { Idling = rot.Now.Count, rot.Total, Next = IdleRotation.When(rot.MovesAt) }
 						: null,

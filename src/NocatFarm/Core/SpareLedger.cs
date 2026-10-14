@@ -10,13 +10,20 @@ namespace NocatFarm.Core;
 /// </summary>
 /// <remarks>
 /// Steam's inventory doesn't say when an item arrived. So the first time nocat.farm sees an item is taken as when it
-/// came in - which on the very first look means everything counts as new, and nothing is spare for the first days. That
-/// is the safe way round: an item that came in yesterday is never taken for an old one. An item that leaves and comes
-/// back (a listing taken down) gets a new id from Steam and starts its days again.
+/// came in. Except on the very first look at an account: everything already there counts as old - months-old cards
+/// waited a week otherwise - and only what comes in after that waits its days. After an update from 1.8.0, what its own
+/// first look saw counts as old the same way, and what it saw come in later keeps the day it came. An item that leaves and comes back (a listing taken down) gets a new id from Steam and
+/// starts its days again - unless it's one of ours, back to be listed a cent cheaper (<see cref="MarkOld"/>).
 /// </remarks>
 public sealed class SpareLedger {
 	/// <summary>Asset id -> unix seconds first seen.</summary>
 	public Dictionary<string, long> Seen { get; set; } = new(StringComparer.Ordinal);
+
+	/// <summary>
+	/// The first look has been made: everything held then counts as old, and only items seen after it wait. False in a
+	/// ledger from 1.8.0, whose first look counted everything as new - its next look counts that first look's items as old.
+	/// </summary>
+	public bool FirstLookDone { get; set; }
 
 	/// <summary>You typed <c>spare ok</c> for this account: it may act, not only preview.</summary>
 	public bool Approved { get; set; }
@@ -63,7 +70,7 @@ public sealed class SpareLedger {
 					read = JsonSerializer.Deserialize<SpareLedger>(File.ReadAllText(path));
 				}
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
-				// Started over: everything counts as new again, and gems ok has to be said again - the safe way round.
+				// Started over: the next look counts what's held as old, as a first look does, and it has to be turned on again.
 				Log.Failed("couldn't read what spare items remembers", e, account);
 			}
 
@@ -102,19 +109,50 @@ public sealed class SpareLedger {
 		}
 	}
 
-	/// <summary>Note the items held now: new ones are seen from <paramref name="now"/>, ones that left are forgotten.</summary>
+	/// <summary>When an item counts as seen long ago: 1 January 2000, older than any "new" rule.</summary>
+	private const long LongAgo = 946_684_800;
+
+	/// <summary>Seconds after the earliest time in a 1.8.0 ledger that still count as its first look (one look writes one time).</summary>
+	private const long FirstLookSpread = 60;
+
+	/// <summary>
+	/// Note the items held now: new ones are seen from <paramref name="now"/>, ones that left are forgotten. On the first
+	/// look (<see cref="FirstLookDone"/>) every item held counts as old.
+	/// </summary>
 	public void Observe(IEnumerable<ulong> held, DateTime now) {
 		HashSet<string> ids = [.. held.Select(static id => id.ToString(CultureInfo.InvariantCulture))];
 		long at = new DateTimeOffset(DateTime.SpecifyKind(now, DateTimeKind.Utc)).ToUnixTimeSeconds();
 
 		lock (Gate) {
+			// A ledger from 1.8.0: only what its own first look saw (the earliest time in it - one look, one time) counts as
+			// old. What it saw come in after that keeps its day, and what came in since its last look is new from now. Every
+			// item it held was made old once, and a card 1.8.0 had rightly seen arrive yesterday was spare straight away.
+			long? firstBatch = !FirstLookDone && (Seen.Count > 0) ? Seen.Values.Min() : null;
+
 			foreach (string id in ids) {
-				Seen.TryAdd(id, at);
+				if (FirstLookDone) {
+					Seen.TryAdd(id, at);
+				} else if (firstBatch is not long first) {
+					Seen[id] = LongAgo;
+				} else if (!Seen.TryGetValue(id, out long seen)) {
+					Seen[id] = at;
+				} else if (seen - first <= FirstLookSpread) {
+					Seen[id] = LongAgo;
+				}
 			}
+
+			FirstLookDone = true;
 
 			foreach (string gone in Seen.Keys.Where(k => !ids.Contains(k)).ToList()) {
 				Seen.Remove(gone);
 			}
+		}
+	}
+
+	/// <summary>Count this item as seen long ago: one of ours, back from a listing taken down to go up cheaper.</summary>
+	public void MarkOld(ulong asset) {
+		lock (Gate) {
+			Seen[asset.ToString(CultureInfo.InvariantCulture)] = LongAgo;
 		}
 	}
 
@@ -160,6 +198,24 @@ public sealed class SpareLedger {
 
 			DoneItems++;
 			DoneCents += Math.Max(0, cents);
+
+			return true;
+		}
+	}
+
+	/// <summary>
+	/// Count <paramref name="extraCents"/> more against today's value cap for an item already counted - its price went up
+	/// between the look and the listing - when it still fits. Under the same lock, so it can't race a reserve.
+	/// </summary>
+	public bool TryRaise(int extraCents, int maxCents, DateTime nowLocal) {
+		lock (Gate) {
+			Roll(nowLocal);
+
+			if (DoneCents + Math.Max(0, extraCents) > maxCents) {
+				return false;
+			}
+
+			DoneCents += Math.Max(0, extraCents);
 
 			return true;
 		}

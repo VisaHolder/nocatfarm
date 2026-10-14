@@ -181,6 +181,19 @@ public static class UserCount {
 				body["e"] = (long) Math.Max(0, Math.Floor((nowUtc - batch.Made).TotalSeconds));
 				body["n"] = Math.Clamp(batch.Accounts, 0, MaxAccounts);
 			}
+
+			// 1.8.1: g = items turned into gems, bd = badges crafted, p = packs opened, sd = items sold - each only when
+			// there's one, so a batch without them is the body it always was. An older nocat.lol reads none of them.
+			void Extra(string name, int n) {
+				if (n > 0) {
+					body[name] = n;
+				}
+			}
+
+			Extra("g", batch.Gems);
+			Extra("bd", batch.Badges);
+			Extra("p", batch.Packs);
+			Extra("sd", batch.Sold);
 		}
 
 		if (old != null) {

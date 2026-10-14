@@ -138,7 +138,7 @@ public static class DiscordPresence {
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
-						Log.Info(new Said("Discord profile now shows Playing nocat.farm"), "discord");
+						Log.Info(new Said("Discord: showing nocat.farm"), "discord");
 					}
 				}
 
@@ -544,7 +544,7 @@ public static class DiscordPresence {
 
 		if (_shown && !quietly) {
 			_shown = false;
-			Log.Info(new Said("Discord Rich Presence off"), "discord");
+			Log.Info(new Said("Discord: presence off"), "discord");
 		}
 
 		// Take the card down straight away rather than when Discord notices the pipe is gone - after any card being sent

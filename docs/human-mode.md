@@ -69,9 +69,24 @@ The main settings are up front and the fine detail is behind Show advanced. From
 set myaccount GameWeights "730:70, 440:20, 550:10"   # games and their share; the first is the main game
 set myaccount WeekdayHours 6                         # about 6 hours Monday to Friday
 set myaccount WeekendHours 9
-set myaccount DayStartHour 13                        # gets on around 1pm
-set myaccount BedHour 2                              # goes to bed around 2am
+set myaccount DayStartTime 11:00                     # gets on at 11:00...
+set myaccount DayStartVaryMinutes 30                 # ...give or take 30 minutes: always 10:30-11:30
+set myaccount BedTime 02:00                          # goes to bed at 2am, after the day
+set myaccount BedVaryMinutes 60                      # ...give or take an hour: always 01:00-03:00
 ```
+
+*Gets on at* and *Goes to bed at* are times to the minute (the console also takes `9:45pm` or a plain hour), and each
+has its own *Varies by up to (minutes)*: 2 hours for getting on and 1 hour for bed by default, 0 to 6 hours. That is
+a hard limit. Most days land near the set time and never on the same minute two days running, but nothing takes a
+day outside its window: weekends start a little earlier and Friday and Saturday nights go a little later (*Stays up
+later Fri/Sat*), both inside it; *Learn from how I play* leans toward your times only inside it; and a night too
+long for *Sleeps at least* to fit is cut short, so it gets on in the later half of the window rather than late. Set
+a variation of 0 and it's that exact minute every day. A bedtime at or before the time it gets on is the next
+morning's, so 02:00 is two in the morning after the day. A window that crosses midnight for getting on keeps to the
+day itself: 00:30 give or take an hour gets on between 00:00 and 01:30. An account set up before these settings
+keeps its times: the hour it had, 13, is 13:00, and the old names `DayStartHour` and `BedHour` still work at the
+console. `human myaccount` shows today's planned times and the windows ("up 10:47 · bed 01:12 · gets on
+10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard.
 
 Some days go on the main game alone (*Days on the main game only*, 25%), so side games show up in bursts. That
 lowers their weekly share, and the dashboard and `human` show the real weekly figure next to the one you set.
@@ -124,7 +139,7 @@ plays exactly as it did.
 
 *Learn from how I play* (off, a little, a lot) notes when you play on the account yourself, and which games. After 7
 days of that, its day leans toward yours: about 30% of the way (a little) or 70% (a lot) toward when you get on and
-when you stop, and toward how you split your time between the games in *Games and how often*. It never adds a game
+when you stop - only inside *Gets on at* and *Goes to bed at* and how much they vary, never outside them - and toward how you split your time between the games in *Games and how often*. It never adds a game
 that isn't in that list, and how long it plays still comes from the hours settings. It keeps the last 60 days, and
 older days count less and less: *Keeps up with changes* sets how fast - a day counts half as much after 7 days
 (quickly), 14 (normal) or 28 (slowly), so a new routine takes over in about a week, two weeks or a month.

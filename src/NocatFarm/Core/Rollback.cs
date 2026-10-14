@@ -421,7 +421,7 @@ public static partial class Rollback {
 	/// Open booster packs. One that's different now from the copy was changed on the older version - and that change wins:
 	/// put back, the copy's newer settings turned selling (or opening) on again after the owner had turned it off there.
 	/// Off: Spare items off, or packs never opened; on: as an older file is carried over (ConfigStore.MigrateSpare) -
-	/// Spare items on, which still waits for 'spare ok', or packs always opened. Only when the new setting is missing (the
+	/// Spare items on, which still waits for its go-ahead, or packs always opened. Only when the new setting is missing (the
 	/// older version dropped it); the rest come back from the copy as usual.
 	/// </summary>
 	private static void OldVersionChoices(JsonObject saved, JsonObject current, HashSet<string> there, List<string> added) {

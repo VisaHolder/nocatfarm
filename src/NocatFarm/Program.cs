@@ -764,7 +764,7 @@ TrayIcon StartTray(BotManager mgr, Func<string> url) {
 		}
 	};
 
-	Log.Info("running in the tray - right-click the icon for the menu");
+	Log.Info("in the tray · right-click for menu");
 
 	return icon;
 }

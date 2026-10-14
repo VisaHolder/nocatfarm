@@ -658,7 +658,8 @@ public static class SelfUpdate {
 			// The version noted, and the swap left nothing behind. The same version from a file ('update file ... force') whose files
 			// didn't copy in is this version too - read as done, it said "updated 1.7.3 → 1.7.3" and "Install complete".
 			if ((p[1] == Build.Version) && (swapCode == null)) {
-				Log.Good(new Said("updated {0} → {1} · {2}MB in {3}s", p[0], p[1], p[2], p[3]));
+				Log.Good(new Said("updated to {0}", p[1]));
+				Log.Debug(new Said("updated {0} → {1} · {2}MB in {3}s", p[0], p[1], p[2], p[3]));
 
 				// Back from an older version: a settings copy taken for going to it, with nothing it didn't know, is done now
 				// (see Rollback.CameForward).
@@ -966,7 +967,7 @@ public static class SelfUpdate {
 		int secs = online.Count == 0 ? 10 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
 
 		Log.Good(online.Count > 0
-			? new Said("update: {0} ready - signing accounts out, restart in {1}s", tag, secs)
+			? new Said("update · {0} ready, restart in {1}s", tag, secs)
 			: new Said("update: {0} ready - restarting in {1}s", tag, secs));
 
 		// Random moments, at least 3s apart, all done 3s before the restart.
@@ -996,7 +997,7 @@ public static class SelfUpdate {
 
 			while ((next < order.Length) && ((DateTime.UtcNow - start).TotalSeconds >= at[next])) {
 				Bot b = order[next++];
-				Log.Good(new Said("update: signing out {0} ({1} of {2}) - updating in {3}s", b.Name, next, order.Length, left));
+				Log.Good(new Said("update · signing out {0} {1}/{2}", b.Name, next, order.Length));
 				signedOut.Add(b);
 				stopping.Add(b.StopAsync(graceful: b.Cfg.LegitMode));
 			}
@@ -1004,7 +1005,7 @@ public static class SelfUpdate {
 			// The countdown in the log too, not only on the dashboard: every 10s, and once at 5s. A line a second
 			// for the last five was a wall of near-identical lines right under the sign-out ones.
 			if ((left < secs) && (((left % 10) == 0) || (left == 5))) {
-				Log.Info(new Said("update: updating in {0}s", left));
+				Log.Info(new Said("update in {0}s", left));
 			}
 
 			await Task.Delay(1000, ct).ConfigureAwait(false);
@@ -1091,7 +1092,8 @@ public static class SelfUpdate {
 
 				tag = inZip;
 				Progress = $"installing {tag} from a file";
-				Log.Good(new Said("installing nocat.farm {0} from {1}", tag, Path.GetFileName(fromFile)));
+				Log.Good(new Said("installing {0}", tag));
+				Log.Debug(new Said("installing from {0}", Path.GetFileName(fromFile)));
 			} else {
 				// Looked at again now it's this install's turn. The bedtime queue and "Update by itself" check for a skip and
 				// then start this on another thread, so an 'update skip' typed in between used to be too late.
@@ -1250,7 +1252,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: download stopped at {0} of {1}MB - try again", got / 1048576, size / 1048576));
 			}
 
-			Log.Good(fromFile != null ? new Said("update: {0}MB copied - unpacking", got / 1048576) : new Said("update: {0}MB downloaded - unpacking", got / 1048576));
+			Log.Good(fromFile != null ? new Said("update · {0}MB copied, unpacking", got / 1048576) : new Said("update · {0}MB downloaded, unpacking", got / 1048576));
 			Progress = "unpacking";
 			string staged = Path.Combine(work, "staged");
 
@@ -1449,7 +1451,7 @@ public static class SelfUpdate {
 				}
 
 				Progress = "restarting into " + tag;
-				Log.Good(new Said("update: all signed out - restarting into {0}", tag));
+				Log.Good(new Said("update · restarting into {0}", tag));
 
 				StartSwap(swap);
 				swapStarted = true;

@@ -325,7 +325,7 @@ public sealed class GlobalConfig {
 	/// <summary>The hourly "this copy is running" to nocat.lol behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
 	public bool CountMeAsUser { get; set; } = true;
 
-	/// <summary>The ping also carries the hours banked and cards dropped since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
+	/// <summary>The ping also carries the hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
 	public bool ShareFarmTotals { get; set; } = true;
 
 	public bool UpdateReminders { get; set; } = true;
@@ -673,6 +673,9 @@ public sealed class BotConfig {
 	public bool? ClaimFreeDlcBase { get; set; }
 	public bool CraftBadges { get; set; }
 
+	/// <summary>"Also craft foil badges" (1.8.1): with crafting on, foil sets too. Off levels with normal badges only.</summary>
+	public bool CraftFoilBadges { get; set; } = true;
+
 	/// <summary>
 	/// Retired "Open booster packs" switch - carried over to <see cref="OpenBoosterPacks"/> (ConfigStore.MigrateSpare). Still
 	/// written, as a mirror of it ("always" is on), so rolling back to 1.7.x keeps packs opening as they were; read only from
@@ -715,6 +718,31 @@ public sealed class BotConfig {
 
 	/// <summary>Which gems booster packs are made from when there are both kinds: 0 tradable first, 1 untradable first.</summary>
 	public int BoosterGems { get; set; }
+
+	// ── making booster packs (1.8.1) ──
+	/// <summary>
+	/// "Make booster packs": 0 off, 1 the games in <see cref="BoosterPackGames"/>, 2 automatic - the game whose normal
+	/// badge is closest to its next level (Modules.BoosterPick). A file from before has none: a list in it is "games I
+	/// pick", an empty one off (ConfigStore.MigrateBoosterMake).
+	/// </summary>
+	public int BoosterMake {
+		get => _boosterMake;
+		set {
+			_boosterMake = value;
+			_boosterMakeSet = true;
+		}
+	}
+
+	private int _boosterMake;
+
+	/// <summary>BoosterMake was in the file (or set since).</summary>
+	[JsonIgnore]
+	public bool BoosterMakeSet => _boosterMakeSet;
+
+	private bool _boosterMakeSet;
+
+	/// <summary>Gems a booster pack never takes the account below.</summary>
+	public int BoosterKeepGems { get; set; }
 	public bool ClaimEventItems { get; set; } = true;
 
 	/// <summary>0 off, 1 during sales, 2 every day.</summary>
@@ -752,9 +780,9 @@ public sealed class BotConfig {
 
 	/// <summary>
 	/// Spend Steam Points on badge levels by itself. Off by default on every account, robots too: nothing that uses up an
-	/// account's things happens on a freshly added one until it's turned on. Turning human mode on turns it off
-	/// (<see cref="Settings.ApplyLegitMode"/>); turning human mode off never turns it on. Nothing is ever spent before
-	/// 'points ok &lt;account&gt;' (<see cref="PointsOk"/>), whatever this says.
+	/// account's things happens on a freshly added one until it's turned on. Switching human mode on or off never changes it
+	/// (<see cref="Settings.ApplyLegitMode"/>): it was turned on through its popup, by its owner. Nothing is ever spent before
+	/// spending has its go-ahead ('points on &lt;account&gt;', or this switch after its preview - Modules.PointsLedger).
 	/// </summary>
 	public bool SpendPoints { get; set; }
 
@@ -777,7 +805,7 @@ public sealed class BotConfig {
 	public int PointsCheckEveryHours { get; set; } = 12;
 
 	/// <summary>
-	/// Where 'points ok &lt;account&gt;' used to be kept. It lives with the account's Steam Points spending now
+	/// Where the go-ahead to spend Steam Points used to be kept. It lives with the account's Steam Points spending now
 	/// (Modules.PointsLedger, state/points-&lt;account&gt;.json), so it never travels with a settings file or a backup: a
 	/// true here is moved over once (PointsLedger.Approved) and then cleared, and never read again. Not a setting.
 	/// </summary>
@@ -787,7 +815,7 @@ public sealed class BotConfig {
 	/// <summary>
 	/// Retired "Sell duplicate cards" switch - carried over to <see cref="SpareItems"/> (ConfigStore.MigrateSpare). Still
 	/// written, for a rollback to 1.7.x, whose seller lists cards straight away with no preview: true only when this version
-	/// would sell on the account too - Spare items on, an action that sells, and 'spare ok' given (worked out as it's saved,
+	/// would sell on the account too - Spare items on, an action that sells, and its go-ahead given (worked out as it's saved,
 	/// <see cref="SellMirror"/>). Read only from a file without SpareItems.
 	/// </summary>
 	public bool SellDuplicates {
@@ -803,7 +831,7 @@ public sealed class BotConfig {
 		set => _sellMirror = value;
 	}
 
-	/// <summary>Whether 1.7.x may sell on this account after a rollback: this version would sell too (needs the account's 'spare ok').</summary>
+	/// <summary>Whether 1.7.x may sell on this account after a rollback: this version would sell too (needs the account's go-ahead).</summary>
 	internal static bool SellsAfterRollback(BotConfig cfg, bool approved) => cfg.SpareItems && (cfg.SpareAction is 0 or 2) && approved;
 
 	/// <summary>The old switch as a file from before 1.8.0 had it - for the carry-over only.</summary>
@@ -813,7 +841,7 @@ public sealed class BotConfig {
 	public int SellPerRun { get; set; } = 5;
 
 	// ── spare items (1.8.0) ──
-	/// <summary>Spare items on: turn spare cards, backgrounds and emoticons into gems or sell them, after 'gems ok'.</summary>
+	/// <summary>Spare items on: turn spare cards, backgrounds and emoticons into gems or sell them, once turned on after its preview.</summary>
 	public bool SpareItems {
 		get => _spareItems;
 		set {
@@ -854,8 +882,8 @@ public sealed class BotConfig {
 	public int SpareGapSeconds { get; set; } = 40;
 	public int SparePriceMaxAgeHours { get; set; } = 24;
 
-	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
-	/// cheapest listing. 0 was "a cent under the cheapest" before 1.8.0 was out - it became the real price on purpose.</summary>
+	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price. 3 was "a cent under
+	/// the cheapest" until 1.8.1 - it followed dumps down, and a saved 3 becomes 0 (ConfigStore.MigrateSellPrice).</summary>
 	public int SpareSellPrice { get; set; }
 
 	/// <summary>A cheapest listing this many percent or more under the median sale price is a dump and doesn't set the price.</summary>
@@ -866,6 +894,24 @@ public sealed class BotConfig {
 	public int SpareGems { get; set; }
 	public string SpareGemsSendTo { get; set; } = "";
 	public int SpareKeepGems { get; set; }
+
+	// ── spare items (1.8.1) ──
+	/// <summary>Only sell when the account would get at least this, in its own wallet currency - below it the item goes to
+	/// gems when they're worth anything, and is kept otherwise.</summary>
+	public float SpareMinSale { get; set; } = 0.05f;
+
+	/// <summary>Days an item whose listing you declined on your phone isn't listed again; 0 never again.</summary>
+	public int SpareDeclinedDays { get; set; } = 30;
+
+	/// <summary>An unsold listing steps down a cent at a time, never under this percent of what it sold for.</summary>
+	public int SpareRelistFloorPct { get; set; } = 80;
+
+	/// <summary>Minutes between two items on a human-mode account, picked at random in between each time.</summary>
+	public int SpareHumanGapMinMinutes { get; set; } = 3;
+	public int SpareHumanGapMaxMinutes { get; set; } = 20;
+
+	/// <summary>Items one look does on a human-mode account; the rest wait for a later look in its day.</summary>
+	public int SpareHumanPerLook { get; set; } = 3;
 
 	// ── booster packs (1.8.0) ──
 	/// <summary>0 never, 1 only when the cards are worth more than the pack, 2 always.</summary>
@@ -924,8 +970,29 @@ public sealed class BotConfig {
 	public int WeekdayHours { get; set; } = 6;
 	public int WeekendHours { get; set; } = 9;
 	public int DayOffChancePct { get; set; } = 5;
-	public int DayStartHour { get; set; } = 13;
-	public int BedHour { get; set; } = 2;
+	// When it gets on and goes to bed: a time of day in minutes from midnight (11:30 is 690), and how far either way a
+	// day may land - a hard limit, nothing the day's roll does takes it outside. Bed at or before the time it gets on is
+	// the next morning's.
+	//
+	// DayStartHour and BedHour are the hour alone, from before minutes could be set. Still read, so a file written before
+	// means what it meant (DayStartHour 11 is 11:00), and still written, so an older version put back reads the hour.
+	// Declared before the time, so the time in the same file - read after it - keeps its minutes; setting the hour keeps
+	// the minutes too, so the order never matters.
+	public int DayStartHour {
+		get => DayStartTime / 60;
+		set => DayStartTime = (Math.Clamp(value, 0, 23) * 60) + (((DayStartTime % 60) + 60) % 60);
+	}
+
+	public int DayStartTime { get; set; } = 13 * 60;
+	public int DayStartVaryMinutes { get; set; } = 120;
+
+	public int BedHour {
+		get => BedTime / 60;
+		set => BedTime = (Math.Clamp(value, 0, 23) * 60) + (((BedTime % 60) + 60) % 60);
+	}
+
+	public int BedTime { get; set; } = 2 * 60;
+	public int BedVaryMinutes { get; set; } = 60;
 	public int LateNightExtraHours { get; set; } = 2;
 	public int SleepMinHours { get; set; } = 6;
 	public int SleepMaxHours { get; set; } = 9;
@@ -1614,6 +1681,21 @@ public static class ConfigStore {
 	}
 
 	/// <summary>
+	/// 1.8.1: "Make booster packs" became one choice. A file without it made packs for its list, so a list in it is "games I
+	/// pick" with that list, and an empty one is off. The list stays as it is either way.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateBoosterMake(BotConfig cfg) {
+		if (cfg.BoosterMakeSet) {
+			return false;
+		}
+
+		cfg.BoosterMake = cfg.BoosterPackGames.Any(static id => id != 0) ? 1 : 0;
+
+		return true;
+	}
+
+	/// <summary>
 	/// Carries the three free-game switches over to the one choice: "Claim free games" on is games, with "...free DLC too"
 	/// on as well it's games and DLC. The third switch ("...and its game, if that's free too") is part of games and DLC
 	/// now. "...free DLC too" on its own did nothing (it needed the first switch), so that stays off.
@@ -1650,8 +1732,8 @@ public static class ConfigStore {
 
 	/// <summary>
 	/// 1.8.0: "Sell duplicate cards" became part of Spare items, and the "Open booster packs" switch a choice. Sell duplicate
-	/// cards on carries over as Spare items on - which still only shows what it would do until 'spare ok', so nothing starts
-	/// converting by itself. Open booster packs on is "always", as it was; off stays off on a human-mode account (never
+	/// cards on doesn't carry over: Spare items stays off, and the log says once where to turn it on - its switch shows what
+	/// it would do first, so nothing starts converting by itself. Open booster packs on is "always", as it was; off stays off on a human-mode account (never
 	/// started silently there) and becomes "only when worth more" on the others.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back.</returns>
@@ -1675,6 +1757,25 @@ public static class ConfigStore {
 		}
 
 		return changed;
+	}
+
+	/// <summary>
+	/// 1.8.1: the selling price "a cent under the cheapest" is gone - it followed a dumped listing down and sold under what
+	/// an item really sells for. A saved choice of it becomes "a cent under the real price", the safe default, said once.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateSellPrice(BotConfig cfg, string name = "") {
+		if (cfg.SpareSellPrice is >= 0 and <= 2) {
+			return false;
+		}
+
+		cfg.SpareSellPrice = 0;
+
+		if (name.Length > 0) {
+			Log.Info(new Said("{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price", name), name);
+		}
+
+		return true;
 	}
 
 	/// <summary>
@@ -1846,7 +1947,9 @@ public static class ConfigStore {
 			migrated |= MigrateFarmWhen(cfg, name);
 			migrated |= MigrateFreeGames(cfg, name);
 			migrated |= MigrateBoosterGames(cfg);
+			migrated |= MigrateBoosterMake(cfg);
 			migrated |= MigrateSpare(cfg, name);
+			migrated |= MigrateSellPrice(cfg, name);
 			migrated |= SettleSwitches(cfg, name);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and
 			// saving the account drops OfflineIdleTopGames from the file, and the next update read that as a file from
@@ -1897,7 +2000,7 @@ public static class ConfigStore {
 			Directory.CreateDirectory(ConfigDir);
 
 			// The "Sell duplicate cards" mirror for a rollback: on only when this version would sell here too - which needs the
-			// account's 'spare ok', kept with its spare items (Core.SpareLedger), not in the settings.
+			// account's go-ahead, kept with its spare items (Core.SpareLedger), not in the settings.
 			bool sellMirror = BotConfig.SellsAfterRollback(cfg, Core.SpareLedger.Load(name).Approved);
 
 			lock (SaveGate) {
@@ -2038,7 +2141,8 @@ public static class ConfigStore {
 		("state", "scamwatch-", ".json"), ("state", "health-", ".json"),   // scam watch, account health
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
 		("state", "spare-", ".json"),
-		("state", "listed-", ".json")   // listings nocat.farm put up itself (Core/OurListings.cs)
+		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
+		("state", "boosters-", ".json")   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 	];
 
 	/// <summary>

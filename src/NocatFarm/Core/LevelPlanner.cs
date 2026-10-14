@@ -287,12 +287,14 @@ public static class LevelPlanner {
 	// ── cards held ───────────────────────────────────────────────────────────
 	/// <summary>Normal (not foil) trading cards in the account's Steam inventory: game -> market name -> copies.</summary>
 	private static async Task<Dictionary<uint, Dictionary<string, int>>> CardsAsync(Bot bot, CancellationToken ct) {
-		Dictionary<uint, Dictionary<string, int>> cards = [];
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
-		if (inventory == null) {
-			return cards;
-		}
+		return inventory == null ? [] : NormalCards(inventory);
+	}
+
+	/// <summary>Normal (not foil) trading cards in an inventory: game -> market name -> copies. Foils are never counted.</summary>
+	public static Dictionary<uint, Dictionary<string, int>> NormalCards(InventoryContents inventory) {
+		Dictionary<uint, Dictionary<string, int>> cards = [];
 
 		foreach (JsonElement asset in inventory.Assets) {
 			if (inventory.DescriptionOf(asset) is not { } d) {

@@ -263,7 +263,10 @@
     "Mostly {0}.": "Çoğunlukla {0}.",
     "Mostly {0}, with {1} in bursts rather than every day.": "Çoğunlukla {0}, ayrıca {1} her gün değil, dalgalar hâlinde.",
     "No games listed yet.": "Henüz oyun listelenmedi.",
-    "On around {0}, bed around {1} — both jittered daily.": "Yaklaşık {0} civarı açılır, {1} civarı yatar - ikisi de her gün oynatılır.",
+    "up {0} · bed {1} · gets on {2} · goes to bed {3}": "bugün girdi {0} · yatış {1} · girer {2} · yatar {3}",
+    "gets on {0} · goes to bed {1}": "girer {0} · yatar {1}",
+    "Gets on {0}, goes to bed {1}.": "Girer: {0}, yatar: {1}.",
+    "Today: up {0}, bed {1}.": "Bugün: {0} girer, {1} yatar.",
     "About {0} on a weekday and {1} at the weekend.": "Hafta içi yaklaşık {0}, hafta sonu {1}.",
     "Roughly {0} days off entirely.": "Kabaca {0} gün tamamen izinli.",
     "One game at a time, in sittings of {0}.": "Teker teker tek oyun, {0} süren oturumlarla.",
@@ -578,7 +581,6 @@
     "couldn't read the card-page check list: {0}": "kart sayfası kontrol listesi okunamadı: {0}",
     "couldn't save the card-page check list: {0}": "kart sayfası kontrol listesi kaydedilemedi: {0}",
     "asleep, the card farmer is working": "uyuyor, kart toplama sürüyor",
-    "last night's plan restored - {0}/{1} played, up about {2}": "dün geceki plan geri yüklendi - {0}/{1} oynandı, yaklaşık {2} kalkacak",
     "trade offer #{0}: couldn't check it as a card swap yet - {1}": "takas teklifi #{0}: henüz kart takası olarak kontrol edilemedi - {1}",
     "between sittings - {0} card(s) left": "oturumlar arası - {0} kart kaldı",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0} için kart toplanıyor · {1} kaldı · bugün {2}/{3}",
@@ -663,16 +665,12 @@
     "stood down": "geri çekildi",
     "stopped": "durduruldu",
     "switching game": "oyun değiştiriyor",
-    "waiting - you're playing on this account": "bekliyor - bu hesapta oynuyorsun",
     "waiting for a login slot": "giriş sırası bekleniyor",
     "you're playing": "sen oynuyorsun",
-    "{0} - your own Steam client is overriding this": "{0} - kendi Steam istemcin bunu geçersiz kılıyor",
     "{0} card(s) in {1} game(s)": "{1} oyunda {0} kart",
     "{0} card(s) left": "{0} kart kaldı",
     "{0} left": "{0} kaldı",
     "{0} to go": "{0} kaldı",
-    "still {0}": "hâlâ {0}",
-    "now {0}": "şimdi {0}",
     "rep4rep: {0} - next look in {1}": "rep4rep: {0} - sonraki kontrol {1} sonra",
     "playing {0}": "{0} oynuyor",
     "closing, then {0}": "kapatıyor, sonra {0}",
@@ -822,8 +820,9 @@
     "sign-in attempt failed: {0}": "oturum açma denemesi başarısız: {0}",
     "login failed: {0}": "giriş başarısız: {0}",
     "logon failed: {0}": "oturum açılamadı: {0}",
+    "Steam is down for its weekly maintenance ({0}) - it signs in again by itself": "Steam haftalık bakımda ({0}) - kendiliğinden yeniden oturum açar",
+    "Steam isn't letting anyone sign in right now ({0}) - it tries again by itself": "Steam şu anda kimsenin oturum açmasına izin vermiyor ({0}) - kendiliğinden yeniden dener",
     "logged off: {0}": "oturum kapatıldı: {0}",
-    "logged on as {0} ({1})": "{0} ({1}) olarak oturum açıldı",
     "Steam pushed {0} new item(s)": "Steam {0} yeni eşya bildirdi",
     "Steam rate-limit - backing off ~{0}m": "Steam sınırı - ~{0}dk geri çekiliyoruz",
     "Steam reports another session on app {0} right after logon - probably our own, waiting before saying so": "Steam, oturum açtıktan hemen sonra {0} uygulamasında başka bir oturum bildiriyor - muhtemelen bizimki, söylemeden önce bekliyoruz",
@@ -840,9 +839,6 @@
     "answered {0} ({1}) in {2}s": "{0} ({1}) {2}sn içinde yanıtlandı",
     "asleep - back around {0}": "uyuyor - {0} civarı döner",
     "auto-replied to {0} after {1}s": "{0} kişisine {1}sn sonra otomatik yanıt verildi",
-    "awake for the day - warming up for ~{0}": "gün için uyandı - ~{0} ısınıyor",
-    "back to banking hours quietly until {0}": "{0} saatine kadar yeniden sessizce saat biriktiriyor",
-    "last card dropped in {0} - that game's done": "{0} oyununda son kart düştü - o oyun tamam",
     "{0} is done - no cards left": "{0} tamam - kart kalmadı",
     "claimed {0}": "{0} alındı",
     "command from {0}: {1}": "{0} kişisinden komut: {1}",
@@ -853,9 +849,6 @@
     "commented on {0} and credited ({1}/{2} today)": "{0} yorumlandı ve sayıldı (bugün {1}/{2})",
     "retry posted on {0}": "{0} üzerinde yeniden denendi ve gönderildi",
     "{0} refused - trying another profile ({1}/{2})": "{0} reddedildi - başka bir profil deneniyor ({1}/{2})",
-    "{0} doesn't take comments - skipping": "{0} yorum kabul etmiyor - atlanıyor",
-    "until ~{0}": "~{0} saatine kadar",
-    "for now": "şimdilik",
     "daily limit found: {0}/24h": "günlük sınır bulundu: {0}/24sa",
     "rep4rep connected - {0} points": "rep4rep bağlandı - {0} puan",
     "rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure": "rep4rep imkânsız bir bakiye bildiriyor ({0} puan, {1} beklemede) - son makul değer korunuyor",
@@ -872,10 +865,8 @@
     "now showing {0}": "şimdi {0} gösteriyor",
     "now showing nothing": "artık hiçbir şey göstermiyor",
     "games-played sent: {0} entr(ies)": "oynanan oyunlar gönderildi: {0} kayıt",
-    "reconnected - put {0} game(s) back on": "yeniden bağlanıldı - {0} oyun geri kondu",
     "reusing web token (good for {0}h) - no new web session": "web jetonu yeniden kullanılıyor ({0}sa geçerli) - yeni web oturumu yok",
     "rejoining in ~{0}s, then standing down until you're done": "~{0}sn içinde yeniden katılıp sen bitirene kadar geri çekilecek",
-    "the account is free again - picking back up in {0}m": "hesap yeniden boş - {0}dk sonra devam",
     "leaving {0} alone - still refundable until {1}": "{0} rahat bırakılıyor - {1} tarihine kadar iade edilebilir",
     "refund protection is holding {0} game(s): {1}": "iade koruması {0} oyunu tutuyor: {1}",
     "plugin loaded: {0} {1}": "eklenti yüklendi: {0} {1}",
@@ -887,27 +878,19 @@
     "plugin {0} threw on unload: {1}": "{0} eklentisi kaldırılırken hata fırlattı: {1}",
     "plugins: couldn't load {0}: {1}: {2}": "eklentiler: {0} yüklenemedi: {1}: {2}",
     "plugins: nothing in {0}": "eklentiler: {0} içinde bir şey yok",
-    "disconnected - reconnecting in ~{0}s": "bağlantı koptu - ~{0}sn içinde yeniden bağlanılıyor",
     "moving to another Steam server in ~{0}s": "~{0} sn içinde başka bir Steam sunucusuna geçiliyor",
     "dashboard: {0} failed logins from {1} - locked out for {2}m": "panel: {1} adresinden {0} başarısız giriş - {2}dk kilitlendi",
-    "dashboard: {0}{1}": "panel: {0}{1}",
     "done - {0} achievement(s) unlocked across {1} game(s){2}": "tamam - {1} oyunda {0} başarım açıldı{2}",
     ", {0} game(s) refused": ", {0} oyun reddedildi",
     "still going - {0}/{1} apps checked, {2} unlocked so far": "devam ediyor - {0}/{1} uygulama denetlendi, şu ana kadar {2} açıldı",
     "unlocked all {0} in {1}": "{1} içindeki {0} başarımın tamamı açıldı",
     "today's farming: {0} sitting(s), {1} in total": "bugünün toplaması: {0} oturum, toplam {1}",
-    "no cards left - human mode carries on{0}": "kart kalmadı - insan modu devam ediyor{0}",
     "{0} game(s)": "{0} oyun",
     "your games": "oyunların",
-    "warming up for ~{0}": "~{0} ısınıyor",
     "{0} only today": "bugün yalnızca {0}",
     "{0} about {1}%, around {2} on the others": "{0} yaklaşık %{1}, diğerlerinde yaklaşık {2}",
-    "done for the day - {0} played, back around {1}": "bugünlük bitti - {0} oynandı, {1} civarı döner",
     "taking today off - back tomorrow around {0}": "bugün izin yapıyor - yarın {0} civarı döner",
-    "{0} - back in about {1}": "{0} - yaklaşık {1} sonra döner",
-    "{0} - going offline, back in about {1}": "{0} - çevrimdışı oluyor, yaklaşık {1} sonra döner",
     "resuming the grind of {0} - {1} left": "{0} grindi sürdürülüyor - {1} kaldı",
-    "stopping - finishing up, logging off in about {0}s": "durduruluyor - bitiriliyor, yaklaşık {0}sn içinde çıkılacak",
     "{0} licence(s) known": "bilinen {0} lisans",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "envanter şimdi {0}{1}, {2} oyuna yayılı, {3} eşyanın fiyatı belirsiz",
     "the market answered {0} - pausing price lookups until {1}": "pazar {0} yanıtı verdi - {1} saatine kadar fiyat sorguları duraklatıldı",
@@ -940,7 +923,6 @@
     "config removed - stopping": "yapılandırma kaldırıldı - durduruluyor",
     "connection went quiet - reconnecting": "bağlantı sessizleşti - yeniden bağlanılıyor",
     "disabled in config - not starting": "yapılandırmada devre dışı - başlatılmıyor",
-    "done grinding - back to the usual day": "grind bitti - normal güne dönülüyor",
     "every account has finished - closing down as configured": "tüm hesaplar bitirdi - ayarlandığı gibi kapatılıyor",
     "game list changed - restarting the session so the custom name stays on top": "oyun listesi değişti - özel adın üstte kalması için oturum yeniden başlatılıyor",
     "global settings saved from the dashboard": "genel ayarlar panelden kaydedildi",
@@ -949,7 +931,6 @@
     "paused for {0} - picks back up by itself at {1}": "{0} boyunca duraklatıldı - {1} saatinde kendiliğinden devam eder",
     "resumed": "sürdürüldü",
     "shutting down...": "kapatılıyor...",
-    "stopped - logged out": "durduruldu - oturum kapatıldı",
     "that Steam Guard code was wrong, try again": "o Steam Guard kodu yanlıştı, tekrar dene",
     "that email code was wrong, try again": "o e-posta kodu yanlıştı, tekrar dene",
     "the account is free again - resuming": "hesap yeniden boş - devam ediliyor",
@@ -1172,8 +1153,6 @@
     "Telegram is connected.": "Telegram bağlı.",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "Burada {0} düğmesine bas (token kaydedilince görünür), sonra Telegram'da {1} düğmesine bas. nocat.farm bağlanır ve merhaba der.",
     "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "Zaten bağlı. Özet için /status, komutlar için /help, penceredeki gibi komut yazmak için /console gönder.",
-    "update: signing out {0} ({1} of {2}) - updating in {3}s": "güncelleme: {0} hesabından çıkılıyor ({2} hesaptan {1}.) - {3} sn sonra güncelleniyor",
-    "update: updating in {0}s": "güncelleme: {0} sn sonra güncelleniyor",
     "nocat.farm {0} is ready": "nocat.farm {0} hazır",
     "Resting": "Dinleniyor",
     "Farming cards · {0} left": "Kart topluyor · {0} kaldı",
@@ -1215,9 +1194,7 @@
     "couldn't read the saved ban check: {0}": "kaydedilen yasak kontrolü okunamadı: {0}",
     "couldn't save the ban check: {0}": "yasak kontrolü kaydedilemedi: {0}",
     "offer {0} ({1}: {2}) - handling it in {3}": "{0} numaralı teklif ({1}: {2}) - {3} içinde işlenecek",
-    "accepted offer {0} from {1} - {2} item(s) in, {3} out": "{1} tarafından gönderilen {0} numaralı teklif kabul edildi - {2} eşya geldi, {3} gitti",
     "declined offer {0} from {1}": "{1} tarafından gönderilen {0} numaralı teklif reddedildi",
-    "{0} (one of your accounts)": "{0} (hesaplarından biri)",
     "{0} item(s): {1} and {2} more": "{0} eşya: {1} ve {2} tane daha",
     "{0} item(s): {1}": "{0} eşya: {1}",
     "couldn't read the announced offers: {0}": "duyurulan teklifler okunamadı: {0}",
@@ -1351,11 +1328,10 @@
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm Docker içinde kendini güncellemez - nocatfarm klasöründe git pull çalıştır, sonra docker compose up -d --build. config/ ve logs/ korunur",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build": "nocat.farm Docker içinde kendini güncellemez - nocatfarm klasöründe git fetch --tags çalıştır, sonra git checkout v{0}, sonra docker compose up -d --build. config/ ve logs/ korunur; geri dönmek için: git checkout main, sonra git pull, sonra docker compose up -d --build",
     "update: left out the {0} folder in the zip - yours stays as it is": "güncelleme: zip içindeki {0} klasörü dışarıda bırakıldı - seninki olduğu gibi kalıyor",
-    "Discord Rich Presence off": "Discord Rich Presence kapalı",
     "Pop-ups": "Bildirim balonları",
     "Inventory prices": "Envanter fiyatları",
     "Updates & plugins": "Güncellemeler ve eklentiler",
-    "Badges, boosters & selling": "Rozetler, paketler ve satış",
+    "Badges & selling": "Rozetler ve satış",
     "Inventory & bans": "Envanter ve yasaklar",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Discord profili altından değiştirebilirsin.",
     "Trades & items": "Takaslar ve eşyalar",
@@ -1688,14 +1664,9 @@
     "Or scan it: the dashboard's Phone page has QR codes.": "Ya da tara: panonun Telefon sayfasında QR kodları var.",
     "Sign in once and the phone stays signed in for {0} days.": "Bir kez giriş yap, telefon {0} gün oturumda kalır.",
     "{0} is waiting for your accounts to go to sleep - 'update now' installs it right away": "{0} hesaplarının uyumasını bekliyor - 'update now' hemen kurar",
-    "still waiting its turn to sign in - about {0}s": "giriş sırasını hâlâ bekliyor - yaklaşık {0}sn",
-    "starting up - signs in in about {0}s (Gap between logins)": "başlıyor - yaklaşık {0}sn sonra girer (Girişler arası boşluk)",
     "login token encrypted - an older version saved it as plain text": "giriş anahtarı şifrelendi - eski bir sürüm düz metin kaydetmişti",
     "key queue: {0}": "anahtar sırası: {0}",
     "Friends & comments": "Arkadaşlar ve yorumlar",
-    "update: {0}MB downloaded - unpacking": "güncelleme: {0}MB indirildi - açılıyor",
-    "achievement boost: {0} games to hunt ({1} shared)": "başarım avı: {0} oyun ({1} paylaşılan)",
-    "achievement boost: {0} games to hunt": "başarım avı: {0} oyun",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: {1} kart düşüşünün hepsi geldi - normale dönülüyor",
     "still going for {0}: {1} of {2} card drop(s)": "{0} sürüyor: {2} kart düşüşünden {1}",
     "confirmed trade offer {0} with its authenticator": "{0} numaralı teklif kendi doğrulayıcısıyla onaylandı",
@@ -1716,9 +1687,7 @@
     "signed in - login token saved, no password needed again": "girildi - token kaydedildi, şifre bir daha gerekmez",
     "login token rejected ({0}) - needs the password again": "giriş token'ı reddedildi ({0}) - şifre yine gerekli",
     "no Steam web session yet - farming and comments will retry": "Steam web oturumu yok - farm ve yorumlar yeniden dener",
-    "you're on this account - waiting until you're done": "bu hesaptasın - bitirmeni bekliyorum",
     "custom name slipped to {0} - setting it again": "özel ad {0} oldu - yeniden ayarlanıyor",
-    "daily web refresh - getting a new web token": "günlük web yenilemesi - yeni web token'ı alınıyor",
     "Steam Guard code sent from its authenticator": "Steam Guard kodu kendi doğrulayıcısından gönderildi",
     "Steam rejects its authenticator codes - check the secret": "Steam doğrulayıcı kodlarını reddediyor - sırrı kontrol et",
     "approve the login in the Steam app, or type the code below": "girişi Steam uygulamasında onayla ya da kodu aşağıya yaz",
@@ -1730,7 +1699,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep beklemesi kalktı - yorumlar sürüyor",
     "achievement ceiling is one figure now: 90%": "başarım tavanı artık tek değer: %90",
     "setting moved: when to farm cards = only at night": "ayar taşındı: kart farm zamanı = sadece gece",
-    "disconnected - Steam's weekly maintenance, back in ~{0}m": "bağlantı koptu - Steam haftalık bakımı, ~{0}dk sonra döner",
     "going for {0}: {1} of {2} card drop(s)": "{0} hedefleniyor: {2} kart düşüşünden {1}",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord botu: bağlamak için Ayarlar'da Discord'u Bağla'ya bas",
     "Discord bot: no / commands in a server - invite it again": "Discord botu: bir sunucuda / komutları yok - yeniden davet et",
@@ -1738,7 +1706,6 @@
     "token rejected - Developer Portal, Bot, Reset Token": "token reddedildi - Developer Portal, Bot, Reset Token",
     "refused (code {0}) - check the Developer Portal": "reddedildi (kod {0}) - Developer Portal'ı kontrol et",
     "too many connects today - retrying in {0} min": "bugün çok fazla bağlantı - {0} dk sonra yeniden",
-    "Discord profile now shows Playing nocat.farm": "Discord profili nocat.farm oynuyor gösteriyor",
     "gave up on a key after {0} tries - no account could use it": "anahtar {0} denemeden sonra bırakıldı - hiçbir hesap kullanamadı",
     "key queue unreadable (newer version or damaged) - left as is": "anahtar kuyruğu okunamıyor (yeni sürüm ya da bozuk) - olduğu gibi bırakıldı",
     "key queue changes aren't saved - fix or move keys.json, restart": "kuyruk değişiklikleri kaydedilmiyor - keys.json'u düzelt ya da taşı, yeniden başlat",
@@ -1775,7 +1742,6 @@
     "saved logins are plain text - key {0} unusable: {1}": "kayıtlı girişler düz metin - anahtar {0} kullanılamıyor: {1}",
     "saved logins are plain text - no AES-GCM on this system": "kayıtlı girişler düz metin - bu sistemde AES-GCM yok",
     "keep the config folder somewhere private": "config klasörünü gizli bir yerde tut",
-    "listed {0} duplicate card(s) - {1} if they all sell": "{0} kopya kart listelendi - hepsi satılırsa {1}",
     "{0} market listing(s) to confirm in the Steam app": "Steam uygulamasında onaylanacak {0} pazar ilanı",
     "Telegram bot in use elsewhere - commands may not arrive": "Telegram botu başka yerde kullanılıyor - komutlar gelmeyebilir",
     "only one program can read a Telegram bot - a second nocat.farm?": "bir Telegram botunu tek program okuyabilir - ikinci bir nocat.farm mı?",
@@ -1799,7 +1765,6 @@
     "plugin {0} failed to load: {1}: {2}": "eklenti {0} yüklenemedi: {1}: {2}",
     "couldn't load plugin {0} - built for another version?": "eklenti {0} yüklenemedi - başka sürüm için mi yapılmış?",
     "plugin {0}: {1}": "eklenti {0}: {1}",
-    "running in the tray - right-click the icon for the menu": "tepside çalışıyor - menü için simgeye sağ tıkla",
     "dashboard on {0} has no password - only this machine gets in": "{0} üzerindeki panelin şifresi yok - sadece bu makine girebilir",
     "set WebPassword (NOCATFARM_WEB_PASSWORD in Docker)": "WebPassword'ü ayarla (Docker'da NOCATFARM_WEB_PASSWORD)",
     "dashboard on {0} can't be reached from outside Docker": "{0} üzerindeki panele Docker dışından ulaşılamaz",
@@ -1817,22 +1782,14 @@
     "  the dashboard is switched off - 'set WebEnabled true' then restart": "  panel kapalı - 'set WebEnabled true' yazıp yeniden başlat",
     "  that line was typed while nocat.farm was asking something, so it wasn't run or kept - type it again if it was a command": "  bu satır nocat.farm bir şey sorarken yazıldı, bu yüzden ne çalıştırıldı ne de saklandı - bir komutsa yeniden yaz",
     "couldn't read the achievement list for {0}": "{0} başarım listesi okunamadı",
-    "{0}: {1}% done - next game, back in ~{2} day(s)": "{0}: %{1} tamam - sıradaki oyun, ~{2} gün sonra dönülür",
     "family member started {0} - moving on": "aileden biri {0} başlattı - devam ediliyor",
-    "achievement boost: {0} for {1} ({2}/{3})": "başarım avı: {0}, {1} ({2}/{3})",
-    "achievement boost: adding {0} for ~{1} ({2}/{3})": "başarım avı: {0} ekleniyor, ~{1} ({2}/{3})",
-    "achievement boost: adding {0} for ~{1}": "başarım avı: {0} ekleniyor, ~{1}",
     "{0}: achievements are server-side - nothing to grind": "{0}: başarımlar sunucu tarafında - kasılacak bir şey yok",
-    " ({0}% have it)": "(%{0} sahip)",
-    "unlocked \"{0}\" in {1}{2} ({3}/{4})": "{1} içinde \"{0}\" açıldı{2} ({3}/{4})",
     "carried on ASF's achievement pacing for {0} game(s)": "ASF'nin başarım temposu {0} oyunda sürdürüldü",
     "banned in {0} - skipping its items (cards still trade)": "{0} içinde banlı - eşyaları atlanıyor (kartlar yine takas edilir)",
     "NEW trade probation - trading is restricted": "YENİ takas denetimi - takas kısıtlı",
-    "made a {0} booster ({1} gems, {2} left)": "{0} takviye paketi yapıldı ({1} mücevher, {2} kaldı)",
     "nothing left to farm - logging out (as set)": "farm edilecek bir şey yok - çıkış yapılıyor (ayarlandığı gibi)",
     "{0}: no drop in {1}h ({2} left) - skipping it {3}h (strike {4})": "{0}: {1}s içinde düşüş yok ({2} kaldı) - {3}s atlanıyor ({4}. uyarı)",
     "all cards in - winding down on {0} for ~{1}": "tüm kartlar geldi - {0} üzerinde ~{1} yavaşlanıyor",
-    "farming {0} - {1} card(s) left · ~{2} in all": "{0} farm ediliyor - {1} kart kaldı · toplam ~{2}",
     "card dropped in {0} - {1} left · ~{2} in all": "{0} içinde kart düştü - {1} kaldı · toplam ~{2}",
     "drop run over - {0} has no drops left": "düşüş turu bitti - {0} için düşüş kalmadı",
     "drop run done - {0} has no drops left": "düşüş turu tamam - {0} için düşüş kalmadı",
@@ -1856,14 +1813,10 @@
     "couldn't join {0} - trying again next start": "{0} grubuna katılınamadı - sonraki açılışta yeniden",
     "day off - online, idle until bed ~{0}": "izin günü - çevrimiçi, uykuya kadar boşta ~{0}",
     "new plan for today from the current settings": "mevcut ayarlarla bugün için yeni plan",
-    "today's plan restored - {0}/{1} played, bed about {2}": "bugünün planı geri yüklendi - {0}/{1} oynandı, uyku {2} civarı",
     "today: ~{0} of play, up {1}, bed {2}": "bugün: ~{0} oyun, kalkış {1}, uyku {2}",
     "today's mix: {0}": "bugünün karışımı: {0}",
     "asleep until {0} - card farming through the night": "{0} saatine kadar uykuda - gece boyu kart farm",
     "human mode has no games - fill in \"Games and how often\"": "insan modunda oyun yok - \"Oyunlar ve sıklık\" alanını doldur",
-    "farming cards on {0} for ~{1} ({2}/{3} today)": "{0} üzerinde ~{1} kart farm (bugün {2}/{3})",
-    "playing {0} for ~{1} ({2}/{3} today)": "{0} oynanıyor ~{1} (bugün {2}/{3})",
-    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "yeniden başlatmadan sonra {0} devam ediyor - {1} kaldı (bugün {2}/{3})",
     "last card from {0} - playing on ~{1}, then a break": "{0} son kartı geldi - ~{1} daha oynanıyor, sonra mola",
     "rep4rep won't add this account - check the API token": "rep4rep bu hesabı eklemiyor - API token'ını kontrol et",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "henüz rep4rep'te değil - orada ekle ya da Rep4RepAutoAddProfiles'ı aç",
@@ -1875,24 +1828,15 @@
     "daily comment limit hit ({0} posted here) - resting ~24h": "günlük yorum sınırı doldu (buradan {0}) - ~24s mola",
     "rate-limited at {0}/{1} - comment gap, not the daily cap": "{0}/{1} noktasında sınır - yorum aralığı, günlük tavan değil",
     "still rate-limited at {0}/{1} - resting {2}, then starting fresh": "{0}/{1} noktasında hâlâ sınır - {2} mola, sonra baştan",
-    "hit the {0}/24h cap - resting {1}": "{0}/24s tavanı doldu - mola {1}",
     "can't read {0} ({1}) - no comments until it's fixed": "{0} okunamıyor ({1}) - düzelene kadar yorum yok",
     "sending items to your main every {0}, first around {1}": "eşyalar ana hesaba her {0} gönderiliyor, ilki {1} civarı",
     "ignored a friend request from {0} - new private profile": "{0} arkadaşlık isteği yok sayıldı - yeni gizli profil",
     "offer {0} no longer a fair swap ({1}) - left for you": "{0} numaralı teklif artık adil takas değil ({1}) - sana bırakıldı",
     "offer {0} isn't a fair swap ({1}) - left for you": "{0} numaralı teklif adil takas değil ({1}) - sana bırakıldı",
     "offer from {0} is gone (cancelled, answered or expired)": "{0} teklifi gitti (iptal, yanıtlandı ya da süresi doldu)",
-    "offer {0} from {1}: get {2}, give {3} - {4}": "{1} kişisinden {0} numaralı teklif: alacağın {2}, vereceğin {3} - {4}",
-    "donation - accepting when awake": "bağış - uyanınca kabul edilecek",
-    "donation - accepting in a few min": "bağış - birkaç dk içinde kabul",
-    "allowed sender - accepting when awake": "izinli gönderen - uyanınca kabul edilecek",
-    "allowed sender - accepting in a few min": "izinli gönderen - birkaç dk içinde kabul",
     "accepted if it's a fair card swap, else trade accept {0} {1}": "adil kart takasıysa kabul, değilse trade accept {0} {1}",
     "declining soon - trade accept {0} {1} keeps it": "yakında reddedilecek - trade accept {0} {1} tutar",
     "waiting for you - trade accept or decline {0} {1}": "seni bekliyor - trade accept ya da decline {0} {1}",
-    "offer {0} from {1} accepted - confirm it in Steam's email": "{1} kişisinin {0} numaralı teklifi kabul edildi - Steam e-postasında onayla",
-    "offer {0} from {1} accepted - confirm it ('confirmations {2}')": "{1} kişisinin {0} numaralı teklifi kabul edildi - onayla ('confirmations {2}')",
-    "offer {0} from {1} accepted - confirm it on your phone": "{1} kişisinin {0} numaralı teklifi kabul edildi - telefonda onayla",
     "update undone: {0} didn't start, back on {1} - 'update accept' retries": "güncelleme geri alındı: {0} başlamadı, yine {1} - 'update accept' yeniden dener",
     "update undone: {0} didn't start, back on {1} - 'update to {0}' tries it again": "güncelleme geri alındı: {0} başlamadı, yine {1} - 'update to {0}' yeniden dener",
     "updated {0} → {1} · {2}MB in {3}s": "güncellendi {0} → {1} · {2}MB, {3}sn",
@@ -1900,7 +1844,6 @@
     "update failed: files in use (a 2nd copy? antivirus?) - try again": "güncelleme başarısız: dosyalar kullanımda (2. kopya mı? antivirüs mü?) - yeniden dene",
     "update failed: copy error {0} (read-only? disk full?) - nothing changed": "güncelleme başarısız: kopyalama hatası {0} (salt okunur mu? disk dolu mu?) - hiçbir şey değişmedi",
     "update failed: {0} didn't start - still on {1}, try again": "güncelleme başarısız: {0} başlamadı - hâlâ {1}, yeniden dene",
-    "update: {0} ready - signing accounts out, restart in {1}s": "güncelleme: {0} hazır - hesaplardan çıkılıyor, {1}sn sonra yeniden başlar",
     "update: {0} ready - restarting in {1}s": "güncelleme: {0} hazır - {1}sn sonra yeniden başlıyor",
     "update failed: couldn't reach GitHub ({0}) - nothing changed": "güncelleme başarısız: GitHub'a ulaşılamadı ({0}) - hiçbir şey değişmedi",
     "update failed: GitHub gave no latest release - try again soon": "güncelleme başarısız: GitHub en son sürümü vermedi - birazdan yeniden dene",
@@ -1910,14 +1853,10 @@
     "update failed: download stopped at {0} of {1}MB - try again": "güncelleme başarısız: indirme {1}MB'nin {0}'ında durdu - yeniden dene",
     "update failed: couldn't unpack ({0}) - disk full?": "güncelleme başarısız: açılamadı ({0}) - disk dolu mu?",
     "update failed: couldn't back up the current version ({0})": "güncelleme başarısız: mevcut sürüm yedeklenemedi ({0})",
-    "update: all signed out - restarting into {0}": "güncelleme: hepsinden çıkıldı - {0} ile yeniden başlıyor",
     "update: signing the accounts back in": "güncelleme: hesaplara yeniden giriş yapılıyor",
     "update failed: {0} - nothing changed": "güncelleme başarısız: {0} - hiçbir şey değişmedi",
-    " · {0} by nocat.farm": "· nocat.farm ile {0}",
-    "no cards left - idling {0}{1}": "kart kalmadı - {0} boşta{1}",
     "{0}/{1}": "{0}/{1}",
     "asleep, idling {0} game(s)": "uykuda, {0} oyun boşta",
-    "  (this PC only, no password)": "(sadece bu bilgisayar, şifresiz)",
     "{0} games, {1} cards to farm - about {2} in all": "{0} oyun, farm edilecek {1} kart - toplam yaklaşık {2}",
     "Too many wrong passwords - try again in {0}.": "Çok fazla yanlış parola - {0} sonra tekrar dene.",
     "Or type dashboard unlock in the nocat.farm window.": "Ya da nocat.farm penceresine dashboard unlock yaz.",
@@ -1947,7 +1886,6 @@
     "in use now, but not saved to disk - see the Log": "şu an geçerli, ama diske kaydedilemedi - Günlük'e bak",
     "settings not saved - {0} didn't load; fix it or delete it": "ayarlar kaydedilmedi - {0} yüklenemedi; düzelt ya da sil",
     "couldn't read the saved sign-in: {0}": "kayıtlı giriş okunamadı: {0}",
-    "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) {2} fiyatla listelendi - eline {3} geçer",
     "couldn't read the trade page: {0}": "takas sayfası okunamadı: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "teklif gönderildi - Steam'in gönderdiği e-postadan onayla (Steam uygulaması doğrulayıcısı yok, bu yüzden Steam 15 güne kadar bekletir)",
     "send due - waiting a few minutes after another account's send": "gönderim zamanı - başka bir hesabın gönderiminden sonra birkaç dakika bekliyor",
@@ -1999,7 +1937,6 @@
     "this account is posting a comment right now - try again in a few minutes": "bu hesap şu anda yorum gönderiyor - birkaç dakika sonra tekrar dene",
     "already commented for that task - pick another": "o görev için zaten yorum yapıldı - başka birini seç",
     "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: eşyaları şu anda gönderiliyor ya da satılıyor - birkaç dakika sonra tekrar dene",
-    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: Steam bekleyen bir takasta hangi kartların olduğunu söylemiyor - biraz sonra tekrar dene",
     "offer {0} is already being answered": "{0} numaralı teklif zaten yanıtlanıyor",
     "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "pano kapalı (Ayarlar'da Web panosu) - önce açıp nocat.farm'ı yeniden başlatın",
     "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: “{1}” kaydedildi - insan modu kapanınca görünür; insan modu her zaman gerçek oyunu gösterir",
@@ -2104,7 +2041,6 @@
     "plugin {0} failed on {1}: {2}: {3}": "{0} eklentisi {1} sırasında başarısız oldu: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' Windows'un kendine ayırdığı bir ad (con, nul veya com1 gibi) - başka bir ad seç",
     "'all' means every account in a command - pick another name": "'all' bir komutta tüm hesaplar demek - başka bir ad seç",
-    "offer sent - confirm it in the Steam app on your phone": "teklif gönderildi - telefonundaki Steam uygulamasından onayla",
     "{0} invited you to play {1}": "{0} seni {1} oynamaya davet etti",
     "human mode spaces comments out - this account can post the next one from {0}": "insan modu yorumlar arasına boşluk koyar - bu hesap bir sonrakini {0} itibarıyla gönderebilir",
     "installing {0} by itself - all clear: {1}": "{0} kendiliğinden kuruluyor - her şey sakin: {1}",
@@ -2342,7 +2278,6 @@
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "uyuyor, oyun seçilmedi - en çok oynadığın {0} oyunda saat biriktiriyor: {1} · {2} kalkacak",
     "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "uyuyor · {0} kalkacak · gece biriktirecek bir şey yok - gece listesine oyun ekle",
     "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "uyuyor - {0} civarı döner. Gece biriktirecek bir şey yok: gece listesine oyun ekle",
-    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "uyuyor - oyun seçilmedi, bu yüzden {0} saatine kadar en çok oynadıklarında sessizce saat biriktiriyor: {1}",
     "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "Gece görünmez olur ve oyun seçilmediği için en çok oynadıklarında saat biriktirir: {0}.",
     "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "Gece henüz biriktirecek bir şey yok: “Gece için oyunlar” listesine oyun ekle.",
     "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} ücretsiz bir DLC - alınmadı (\"Ücretsiz oyunları al\" yalnızca oyunlarda)",
@@ -2466,9 +2401,7 @@
     "{0} isn't a nocat.farm zip - its {1} is another program": "{0} bir nocat.farm zip'i değil - içindeki {1} başka bir program",
     "couldn't read {0} as a zip ({1})": "{0} zip olarak okunamadı ({1})",
     "update undone: nocat.farm {0} from the file didn't start, back on {1}": "güncelleme geri alındı: dosyadaki nocat.farm {0} başlamadı, yeniden {1} sürümünde",
-    "installing nocat.farm {0} from {1}": "nocat.farm {0}, {1} dosyasından kuruluyor",
     "update failed: couldn't read {0} ({1}) - nothing changed": "güncelleme başarısız: {0} okunamadı ({1}) - hiçbir şey değişmedi",
-    "update: {0}MB copied - unpacking": "güncelleme: {0}MB kopyalandı - açılıyor",
     "Installing nocat.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.": "nocat.farm {0}, {1} dosyasından kuruluyor. Hesaplar tek tek çıkış yapar; yaklaşık bir dakikada geri gelir.",
     "it's paused - 'resume' it first": "duraklatılmış - önce 'resume'",
     "you're playing on it - human mode waits until you're done": "üzerinde sen oynuyorsun - insan modu bitirmeni bekler",
@@ -2687,14 +2620,11 @@
     "{0} left out - someone in your Steam Family is playing it (back {1} min after they stop)": "{0} dışarıda bırakıldı - Steam Ailendeki biri oynuyor (bıraktıktan {1} dk sonra geri gelir)",
     "{0}: {1}'s copy is in use - borrowing {2}'s free copy instead": "{0}: {1} kişisinin kopyası kullanımda - onun yerine {2} kişisinin boştaki kopyası ödünç alınıyor",
     "asleep, banking hours quietly on {0} · up {1}": "uyuyor, {0} ile sessizce saat biriktiriyor · {1} kalkacak",
-    "{0}: its copy is in use - switching to {1}'s free copy": "{0}: kopyası kullanımda - {1} kişisinin boştaki kopyasına geçiliyor",
     "{0} is back on the overnight list": "{0} gece listesine geri döndü",
     "{0} left out - held back so it can still be refunded": "{0} dışarıda bırakıldı - hâlâ iade edilebilsin diye bekletiliyor",
-    "asleep - banking hours quietly until {0} on {1}": "uyuyor - {0} saatine kadar {1} ile sessizce saat biriktiriyor",
     "couldn't read the software this account holds: {0}": "bu hesabın yazılımları okunamadı: {0}",
     "{0} left out - it's on \"Never touch these\"": "{0} dışarıda bırakıldı - \"Bunlara asla dokunma\" listesinde",
     "library: {0} piece(s) of software owned too ({1})": "kütüphane: ayrıca {0} yazılıma sahip ({1})",
-    "opened {0}: {1} - {2}": "{0} açıldı: {1} - {2}",
     "its cards are worth about {0}, the pack {1}": "kartları yaklaşık {0}, paket {1} değerinde",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "{0} fiyatla satılır, eline {1} geçer - {2} mücevherinin değerinden ({3}) fazla",
     "its gem value isn't known yet - kept": "mücevher değeri henüz bilinmiyor - tutulur",
@@ -2737,12 +2667,10 @@
     "the price of gems isn't known yet - kept": "mücevher fiyatı henüz bilinmiyor - tutulur",
     "worth more sealed: the pack {0}, its cards about {1}": "kapalıyken daha değerli: paket {0}, kartları yaklaşık {1}",
     "worth more sealed": "kapalıyken daha değerli",
-    "worth {0} - left for you to decide": "değeri {0} - kararı sana bırakıldı",
     "set to always open": "her zaman açacak şekilde ayarlı",
     "{0}: it can't send to itself - pick another account": "{0}: kendine gönderemez - başka bir hesap seç",
     "couldn't look at booster packs: {0}": "kart paketlerine bakılamadı: {0}",
     "sells for {0}, you get {1}": "{0} fiyatla satılır, eline {1} geçer",
-    "opened {0} - Steam didn't say what was in it - {1}": "{0} açıldı - Steam içinden ne çıktığını söylemedi - {1}",
     "couldn't read which listings nocat.farm made: {0}": "nocat.farm'ın açtığı ilanlar okunamadı: {0}",
     "couldn't write down a listing nocat.farm made: {0}": "nocat.farm'ın açtığı bir ilan kaydedilemedi: {0}",
     "stopped part way - human mode: its day ended or you're playing on it; the rest waits for a later look": "yarıda durdu - insan modu: günü bitti ya da üzerinde sen oynuyorsun; gerisi sonraki bir bakışı bekliyor",
@@ -2757,18 +2685,14 @@
     "Spare items & packs": "Fazla eşyalar ve paketler",
     "duplicate emoticons are switched off": "kopya ifadeler kapalı",
     "cards from finished badges are switched off": "tamamlanmış rozetlerin kartları kapalı",
-    "turned {0} ({1}) into {2} gems - {3}": "{0} ({1}) {2} mücevhere dönüştürüldü - {3}",
     "sack of gems": "mücevher çuvalı",
     "sells for {0}, you get {1} - no gems for it": "{0} fiyatla satılır, eline {1} geçer - mücevher vermez",
     "no fresh price for the pack or its cards yet - kept until there is": "paketin ya da kartlarının henüz güncel fiyatı yok - olana kadar tutulur",
     "live stats: a backup's history was put back - counting starts now, with no catch-up (that history isn't this install's)": "canlı istatistikler: bir yedeğin geçmişi geri yüklendi - sayım şimdi başlıyor, geçmiş telafisi yok (o geçmiş bu kuruluma ait değil)",
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "canlı istatistikler: gönderilmeyi bekleyen veri bozuktu - farm-totals.json.broken olarak saklandı; sayım şimdiden devam ediyor, geçmiş telafisi yok",
     "human mode (its day ended or you're playing on it)": "insan modu (günü bitti ya da sen onunla oynuyorsun)",
-    "no price in this account's own currency - kept": "bu hesabın kendi para biriminde fiyat yok - tutuldu",
     "nobody is selling it right now - kept, there's no price to go by": "şu an kimse satmıyor - tutuldu, dayanılacak bir fiyat yok",
     "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm hiçbir şeyi kendi kendine satmaz, değerli taşa çevirmez, açmaz ya da harcamaz. Fazla eşyalar, kart paketi açma ve yapma ve Steam Puanı harcama, bir hesabın ayarlarından açana kadar kapalıdır - satış, değerli taşlar ve Steam Puanları da önce ne yapacaklarını gösterip onay ister. Kendi kendine aldığı tek şeyler ücretsizdir: Steam indirimlerindeki etkinlik eşyaları ve açarsan ücretsiz oyunlar.",
-    "spare items preview for {0}: {1} to gems, {2} to sell, {3} left for you to decide. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each item and why.": "{0} için fazla eşya önizlemesi: {1} değerli taşa, {2} satışa, {3} senin kararına. Ayarlarından Fazla eşyaları açana kadar hiçbir şey olmaz - 'spare preview {0}' her eşyayı ve nedenini gösterir.",
-    "the market didn't say its price just now - kept": "pazar az önce fiyatını söylemedi - tutuldu",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: Steam bu hesabın cüzdan para birimini henüz söylemedi - hiçbir şey listelenmedi",
     "No preview - try again in a minute.": "Önizleme yok - bir dakika sonra tekrar dene.",
     "Not changed - try again.": "Değişmedi - tekrar dene.",
@@ -2793,15 +2717,247 @@
     "Turning it on shows what it would buy first, and asks you to confirm.": "Açınca önce ne alacağını gösterir ve onay ister.",
     "Working out what it would do...": "Ne yapacağı hesaplanıyor...",
     "Your items are safe by default": "Eşyaların varsayılan olarak güvende",
-    "its price went up to {0} since it was counted - it waits for the next look": "sayıldığından beri fiyatı {0} oldu - sonraki bakışı bekliyor",
+    "price went up to {0} · over today's value limit, not listed": "fiyat {0} oldu · bugünün değer sınırının üstünde, satışa konmadı",
     "its prices contradict each other (cheapest {0}, recent sales {1}) - kept": "fiyatları birbirini tutmuyor (en ucuz {0}, son satışlar {1}) - tutuldu",
-    "kept {0} ({1}) instead of listing it: {2}": "{0} ({1}) listelenmek yerine tutuldu: {2}",
     "no sale in the last day, so no median - kept": "son bir günde satış yok, yani medyan yok - tutuldu",
     "no sale in the last day, so no real price - kept": "son bir günde satış yok, yani gerçek fiyat yok - tutuldu",
-    "worth {0} now - left for you to decide": "şimdi {0} değerinde - karar sana bırakıldı",
     "{0}: Spare items is off until you turn it on in Settings - it shows what it would do first": "{0}: Fazla eşyalar Ayarlar'dan açana kadar kapalı - önce ne yapacağını gösterir",
     "{0}: Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do": "{0}: Fazla eşyalar, Kopya kartları sat'ın yerini aldı - ne yapacağını görmek için Ayarlar'dan aç",
-    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}: Steam Puanı harcama Ayarlar'dan açana kadar kapalı - önce ne alacağını gösterir"
+    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}: Steam Puanı harcama Ayarlar'dan açana kadar kapalı - önce ne alacağını gösterir",
+    "no game to make a booster pack for right now - {0} at badge level 5, {1} made in the last day": "şu an paket yapılacak oyun yok - {0} oyunun rozeti 5. seviyede, {1} oyun için son bir günde yapıldı",
+    "saving gems for a {0} booster pack - {1} needed with the gems kept, {2} here": "{0} paketi için mücevher biriktiriliyor - ayrılanlarla birlikte {1} gerekli, {2} var",
+    "a {0} booster pack is next - waiting for the account's day": "sıradaki {0} paketi - hesabın gününü bekliyor",
+    "{0} is closest to its next badge level: {1} of {2} cards, {3} missing": "{0} bir sonraki rozet seviyesine en yakın: {2} karttan {1}, {3} eksik",
+    "{0}: automatic booster packs need loose gems, so \"Gems afterwards\" is now \"keep them loose\"": "{0}: otomatik paketler için mücevherlerin gevşek olması gerekir, bu yüzden \"Sonra mücevherler\" artık \"gevşek bırak\"",
+    "booster packs wait: {0}": "paketler bekliyor: {0}",
+    "booster packs: couldn't read the badges or the whole inventory - trying again later": "paketler: rozetler ya da envanterin tamamı okunamadı - daha sonra yeniden denenecek",
+    "made a {0} booster pack - opening it soon": "{0} paketi yapıldı - birazdan açılacak",
+    "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "yaptığı {0} paketi artık envanterde değil - bir daha aranmayacak",
+    "couldn't open the {0} booster pack it made: {1}": "yaptığı {0} paketi açılamadı: {1}",
+    "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "paketler kart setlerini dolduruyor ama \"Kart setlerinden rozet üret\" kapalı - biten setler açılana kadar bekler",
+    "you declined its listing on your phone - not listed again for {0} more day(s)": "ilanını telefonunda reddettin - {0} gün daha yeniden listelenmez",
+    "couldn't read which listings you declined: {0}": "hangi ilanları reddettiğin okunamadı: {0}",
+    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: \"en ucuzun bir sent altı\" satış fiyatı artık yok - artık gerçek fiyatın bir sent altından listeleniyor",
+    "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam bekleyen bir takasta hangi eşyaların olduğunu söylemedi - biraz sonra tekrar dene",
+    "you'd get {0} - under your {1} minimum": "{0} alırdın - {1} olan alt sınırının altında",
+    "couldn't write down which listings you declined: {0}": "hangi ilanları reddettiğin kaydedilemedi: {0}",
+    "still pricing {0} item(s) - about {1} min": "hâlâ {0} eşya fiyatlanıyor - yaklaşık {1} dk",
+    "spread over its day: about {0} a look, next look ~{1}": "gününe yayılmış: bakış başına yaklaşık {0}, sonraki bakış ~{1}",
+    "spread over its day: about {0} a look - its last look today": "gününe yayılmış: bakış başına yaklaşık {0} - bugünkü son bakışı",
+    "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "hâlâ {0} eşya fiyatlanıyor - Steam yavaşlamamızı istedi, fiyatlama {1} civarında sürecek",
+    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} mücevher - satmak {1} getirirdi, {2} olan alt sınırının altında",
+    "{0} gems - nobody sells it on the market": "{0} değerli taş - pazarda kimse satmıyor",
+    "you declined its listing on your phone - never listed again": "ilanını telefonunda reddettin - bir daha asla listelenmez",
+    "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Mücevherler 1000'lik çuvallara doldurulur ve çuvallar {0} hesabına gönderilir",
+    "Daily backup": "Günlük yedek",
+    "up ~{0}": "~{0} yükseldi",
+    "to sell": "satışa",
+    "Value: at most {0} a day": "Değer: günde en fazla {0}",
+    "Booster packs it doesn't open are sent to {0}": "Açmadığı kart paketleri {0} hesabına gönderilir",
+    "Keep everything: it only reports, nothing changes": "Her şeyi tut: yalnızca bildirir, hiçbir şey değişmez",
+    "Your own accounts": "Kendi hesapların",
+    "Next Fest": "Next Fest",
+    "Making packs": "Paket yapma",
+    "New items are not held back": "Yeni eşyalar bekletilmez",
+    "Nothing that came in during the last {0} days": "Son {0} gün içinde gelen hiçbir şey",
+    "(no account set yet - nothing is sent until one is)": "(henüz hesap seçilmedi - seçilene kadar hiçbir şey gönderilmez)",
+    "Spends nothing: the weekly limit is 0": "Hiçbir şey harcamaz: haftalık sınır 0",
+    "{0} levels of {1} (level {2} to {3}) for {4} points": "{4} puana {1} rozetinden {0} seviye (seviye {2} → {3})",
+    "Sell only: nothing is turned into gems": "Yalnızca satış: hiçbir şey mücevhere çevrilmez",
+    "Spends at most {0} points a week ({1} spent this week)": "Haftada en fazla {0} puan harcar (bu hafta {1} harcandı)",
+    "Never anything worth more than {0}": "{0} üstünde değeri olan hiçbir şey asla",
+    "points now": "şu anki puan",
+    "Grinding": "Kasma",
+    "Learning from you": "Senden öğrenme",
+    "Points spent are gone for good": "Harcanan puanlar geri gelmez",
+    "What it buys": "Ne satın alır",
+    "{0} can be spent": "{0} harcanabilir",
+    "you get {0}": "eline geçen {0}",
+    "Gems only: nothing is sold": "Yalnızca mücevher: hiçbir şey satılmaz",
+    "Sittings and breaks": "Oturumlar ve molalar",
+    "Counting users": "Kullanıcı sayımı",
+    "Steam Awards": "Steam Ödülleri",
+    "Overnight": "Gece boyunca",
+    "Never touch": "Asla dokunma",
+    "What it does": "Ne yapar",
+    "Offers from others": "Başkalarından gelen teklifler",
+    "{0} points, +{1} XP": "{0} puan, +{1} XP",
+    "Folder and password": "Klasör ve parola",
+    "to gems": "mücevhere",
+    "Always keeps at least {0} points": "Her zaman en az {0} puan tutar",
+    "Tell me about": "Bana haber ver",
+    "Steam's notifications": "Steam bildirimleri",
+    "Booster packs it doesn't open are sold, within these limits": "Açmadığı kart paketleri bu sınırlar içinde satılır",
+    "levels to buy": "alınacak seviye",
+    "Donations and gifts": "Bağışlar ve hediyeler",
+    "Couldn't look at its points: {0}": "Puanlarına bakılamadı: {0}",
+    "How it shows": "Nasıl görünür",
+    "Messages": "Mesajlar",
+    "Items: at most {0} a look and {1} a day": "Eşyalar: bakış başına en fazla {0}, günde en fazla {1}",
+    "Opening packs": "Paket açma",
+    "Signing in": "Giriş yapma",
+    "Its settings show here once it is on.": "Açıldığında ayarları burada görünür.",
+    "Limits": "Sınırlar",
+    "Which games first": "Önce hangi oyunlar",
+    "Reacting": "Tepki verme",
+    "1 level of {0} (level {1} to {2}) for {3} points": "{3} puana {0} rozetinden 1 seviye (seviye {1} → {2})",
+    "Never a card a badge still needs, and never game items or CS2 skins": "Bir rozetin hâlâ ihtiyaç duyduğu kart asla, oyun eşyaları ya da CS2 kaplamaları da asla",
+    "nothing right now": "şu an hiçbir şey",
+    "Gems are packed into sacks of 1000 and one sack is sold each look, within these limits": "Mücevherler 1000'lik çuvallara doldurulur ve her bakışta bir çuval bu sınırlar içinde satılır",
+    "Proxy": "Proxy",
+    "Prices in {0}, this account's wallet currency": "Fiyatlar {0} cinsinden, bu hesabın cüzdan para birimi",
+    "It would buy": "Alacağı şey",
+    "Pace": "Hız",
+    "Still pricing {0} items - try again in a few minutes.": "{0} eşya hâlâ fiyatlanıyor - birkaç dakika sonra tekrar dene.",
+    "Sales": "İndirimler",
+    "Its wallet currency is not known yet - nothing is priced or sold until it is": "Cüzdan para birimi henüz bilinmiyor - bilinene kadar hiçbir şey fiyatlanmaz ya da satılmaz",
+    "Not signed in, so it can't look at its points yet. These are the limits it will keep to.": "Giriş yapılmadı, bu yüzden henüz puanlarına bakamıyor. Uyacağı sınırlar şunlar.",
+    "Couldn't look at the inventory: {0}": "Envantere bakılamadı: {0}",
+    "Nothing that came in during the last day": "Son bir gün içinde gelen hiçbir şey",
+    "How often": "Ne sıklıkla",
+    "Friends and groups": "Arkadaşlar ve gruplar",
+    "Which games": "Hangi oyunlar",
+    "Its day": "Günü",
+    "Selling": "Satış",
+    "On a warning": "Uyarı olunca",
+    "What it checks": "Neleri kontrol eder",
+    "Only during its day (human mode)": "Yalnızca kendi gününde (insan modu)",
+    "Still pricing 1 item - try again in a few minutes.": "1 eşya hâlâ fiyatlanıyor - birkaç dakika sonra tekrar dene.",
+    "Boost": "Hızlandırma",
+    "{0} gems, worth {1}": "{0} mücevher, değeri {1}",
+    "Sending items": "Eşya gönderme",
+    "Gems": "Mücevherler",
+    "level to buy": "alınacak seviye",
+    "What goes in": "Neler dahil",
+    "Not signed in, so it can't look at the inventory yet. These are the limits it will keep to.": "Giriş yapılmadı, bu yüzden henüz envantere bakamıyor. Uyacağı sınırlar şunlar.",
+    "Earning": "Kazanma",
+    "What counts as spare": "Neyin fazla sayıldığı",
+    "Packs it doesn't open": "Açmadığı paketler",
+    "\"Make booster packs\" isn't automatic any more - the {0} booster pack(s) it made and hadn't opened follow \"Open booster packs\" now, like any other": "\"Kart paketi yap\" artık otomatik değil - yaptığı ve henüz açmadığı {0} kart paketi artık diğerleri gibi \"Kart paketlerini aç\" ayarına uyuyor",
+    "the {0} booster pack wasn't made after all - it can be made again": "{0} kart paketi aslında yapılmamış - yeniden yapılabilir",
+    "the {0} booster pack it made has waited over 2 days to be opened - it follows \"Open booster packs\" now, like any other": "yaptığı {0} kart paketi 2 günden fazladır açılmayı bekliyor - artık diğerleri gibi \"Kart paketlerini aç\" ayarına uyuyor",
+    "Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another": "Steam {0} kart paketi hakkında yanıt vermedi - başka bir tane yapmadan önce envanterde arıyor",
+    "foil badge craft refused - foil badges wait {0}h, normal badges carry on": "parlak rozet üretimi reddedildi - parlak rozetler {0}sa bekliyor, normal rozetler devam ediyor",
+    "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} artık \"Bu oyunların paketlerini asla açma\" listesinde - onun için yaptığı kart paketi kapalı kalıyor",
+    "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "bir ilanı hâlâ telefonunda onay bekliyor - bu netleşene kadar başka kopyası listelenmez",
+    "worth {0} - over your price limit, never touched": "değeri {0} - fiyat sınırının üstünde, asla dokunulmaz",
+    "worth {0} now - over your price limit, not listed": "şimdi değeri {0} - fiyat sınırının üstünde, listelenmedi",
+    "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} için fazla eşya önizlemesi: {1} taşa, {2} satışa. Ayarlarında Fazla eşyaları açana kadar hiçbir şey olmaz - 'spare preview {0}' her birini gösterir.",
+    "lowered {0} from {2} to {3} - unsold {1} days": "{0} {2} fiyatından {3} fiyatına indirildi - {1} gündür satılmadı",
+    "{0} price lookups in the last hour - the next waits until {1}, so the market isn't asked too often": "son bir saatte {0} fiyat sorgusu - pazara çok sık sorulmasın diye bir sonraki {1} saatine kadar bekler",
+    "couldn't read the saved currency rates: {0}": "kaydedilen döviz kurları okunamadı: {0}",
+    "couldn't save the currency rates: {0}": "döviz kurları kaydedilemedi: {0}",
+    "Not all at once: the first {0} at its next look, then at most {1} a day": "Hepsi birden değil: bir sonraki bakışta ilk {0} tane, sonra günde en fazla {1}",
+    "Levels of the seasonal badge, then older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "Sezon rozetinin seviyeleri, sonra eski sezon rozetleri, her biri {0}. seviyeye kadar - her 1.000 puan için yaklaşık 100 XP",
+    "Only levels of the seasonal badge, up to level {0} - about 100 XP for every 1,000 points": "Yalnızca sezon rozetinin seviyeleri, {0}. seviyeye kadar - her 1.000 puan için yaklaşık 100 XP",
+    "Only levels of older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "Yalnızca eski sezon rozetlerinin seviyeleri, her biri {0}. seviyeye kadar - her 1.000 puan için yaklaşık 100 XP",
+    "Buys nothing: both badge switches are off": "Hiçbir şey almaz: iki rozet anahtarı da kapalı",
+    "{0} ({1}): {2} gems": "{0} ({1}): {2} mücevher",
+    "{0} ({1}): listed for {2}": "{0} ({1}): {2} fiyatla listelendi",
+    "{0} item(s) into {1} gems": "{0} eşya {1} mücevhere dönüştürüldü",
+    "{0} listed - you get {1}": "{0} listelendi - eline geçen {1}",
+    "opened {0} pack(s)": "{0} paket açıldı",
+    "made to level the {0} badge": "{0} rozetini yükseltmek için yapıldı",
+    "opened {0}: {1}": "{0} açıldı: {1}",
+    "why it opened {0}: {1}": "{0} neden açıldı: {1}",
+    "Steam's answer about {0} wasn't a yes ({1}) - but it's gone from the inventory and the gems are in, so it's done": "Steam'in {0} hakkındaki yanıtı evet değildi ({1}) - ama envanterden gitti ve mücevherler geldi, yani tamam",
+    "couldn't check whether {0} went through: {1}": "{0} işleminin gerçekleşip gerçekleşmediği kontrol edilemedi: {1}",
+    "waiting to sign in · {0}s": "oturum açmayı bekliyor · {0}sn",
+    "starting · signs in in {0}s": "başlıyor · {0}sn sonra oturum açar",
+    "starting · signs in now": "başlıyor · şimdi oturum açıyor",
+    "signing out in {0}s": "{0}sn sonra oturumu kapatıyor",
+    "signed in as {0} ({1})": "{0} ({1}) olarak oturum açıldı",
+    "account free again · picking back up in {0}m": "hesap yine boşta · {0}dk sonra devam",
+    "signed out": "oturum kapatıldı",
+    "you're on this account · waiting until you're done": "bu hesaptasın · işin bitene kadar bekliyor",
+    "daily web refresh · getting a new web token": "günlük web yenilemesi · yeni web anahtarı alınıyor",
+    "waiting · you're playing on it": "bekliyor · bu hesapta oynuyorsun",
+    "up in {0}": "{0} sonra uyanır",
+    "back in {0}": "{0} sonra döner",
+    "{0} (set by your own Steam client)": "{0} (kendi Steam istemcin ayarladı)",
+    "Discord: showing nocat.farm": "Discord: nocat.farm gösteriliyor",
+    "Discord: presence off": "Discord: durum gösterimi kapalı",
+    "{0}: copy in use · switching to {1}'s copy": "{0}: kopya kullanımda · {1} kopyasına geçiliyor",
+    "turned {0} items into {1} gems": "{0} eşya {1} mücevhere dönüştürüldü",
+    "offer sent · confirm it in the Steam app": "teklif gönderildi · Steam uygulamasında onayla",
+    "updated to {0}": "{0} sürümüne güncellendi",
+    "update · {0} ready, restart in {1}s": "güncelleme · {0} hazır, {1}sn sonra yeniden başlar",
+    "update · signing out {0} {1}/{2}": "güncelleme · {0} oturumu kapatılıyor {1}/{2}",
+    "update in {0}s": "{0}sn sonra güncelleme",
+    "installing {0}": "{0} kuruluyor",
+    "installing from {0}": "{0} dosyasından kuruluyor",
+    "update · {0}MB copied, unpacking": "güncelleme · {0}MB kopyalandı, açılıyor",
+    "update · {0}MB downloaded, unpacking": "güncelleme · {0}MB indirildi, açılıyor",
+    "update · restarting into {0}": "güncelleme · {0} ile yeniden başlıyor",
+    "no price in this account's currency, not listed": "bu hesabın para biriminde fiyat yok, satışa konmadı",
+    "no price yet, tries later": "henüz fiyat yok, sonra tekrar dener",
+    "not listed: you'd get {0}, under your {1} minimum": "satışa konmadı: {0} alırdın, {1} alt sınırının altında",
+    "listed {0} item(s) · {1} if they all sell": "{0} eşya satışa kondu · hepsi satılırsa {1}",
+    "turning {0} ({1}) into gems - {2}": "{0} ({1}) mücevhere dönüştürülüyor - {2}",
+    "opened {0} · Steam didn't say what was in it": "{0} açıldı · Steam içinden ne çıktığını söylemedi",
+    "{0} new": "{0} yeni",
+    "none new": "yeni yok",
+    "{0} pack": "{0} paketi",
+    "sold {0} ({1}) for {2} · you got {3}": "{0} ({1}) {2} fiyata satıldı · {3} aldın",
+    "sold {0} ({1}) · you got {2}": "{0} ({1}) satıldı · {2} aldın",
+    "{0} ({1}): listing declined or taken down · never listed again": "{0} ({1}): ilan reddedildi ya da kaldırıldı · bir daha satışa konmaz",
+    "{0} ({1}): listing declined or taken down · not listed again for {2} day(s)": "{0} ({1}): ilan reddedildi ya da kaldırıldı · {2} gün yeniden satışa konmaz",
+    "Steam maintenance · back in ~{0}m": "Steam bakımı · ~{0}dk sonra döner",
+    "disconnected · reconnecting in ~{0}s": "bağlantı koptu · ~{0}sn sonra yeniden bağlanıyor",
+    "achievements: {0} games to hunt": "başarımlar: avlanacak {0} oyun",
+    "achievements: {0} of them family-shared": "başarımlar: {0} tanesi aile paylaşımlı",
+    "achievements: {0} for {1} · {2}/{3}": "başarımlar: {0}, {1} boyunca · {2}/{3}",
+    "achievements: adding {0} for ~{1} · {2}/{3}": "başarımlar: {0} ~{1} için ekleniyor · {2}/{3}",
+    "achievements: adding {0} for ~{1}": "başarımlar: {0} ~{1} için ekleniyor",
+    "can't tell which achievements come with its DLC · {0} left alone": "hangi başarımların DLC ile geldiği belli değil · {0} tanesine dokunulmuyor",
+    "{0} achievement(s) from DLC it doesn't own · left alone": "sahip olmadığı DLC’den {0} başarım · dokunulmuyor",
+    "{0}% have it": "{0}% sahip",
+    "{0} pack cost {1} gems - {2}": "{0} paketi {1} mücevher tuttu - {2}",
+    "{0} pack cost {1} gems": "{0} paketi {1} mücevher tuttu",
+    " · {0} banked": " · {0} biriktirildi",
+    "no cards left · human mode carries on{0}": "kart kalmadı · insan modu sürüyor{0}",
+    "no cards left · idling {0}{1}": "kart kalmadı · {0} boşta{1}",
+    "farming {0} · {1} card(s) left · ~{2} in all": "{0} kasılıyor · {1} kart kaldı · toplam ~{2}",
+    "last card dropped in {0} · game done": "{0} için son kart düştü · oyun bitti",
+    "asleep · {0} games": "uyuyor · {0} oyun",
+    "done for the day · {0} played · up {1}": "bugünlük bitti · {0} oynandı · {1} uyanır",
+    "awake · warming up · {0}": "uyandı · ısınıyor · {0}",
+    "warming up · {0}": "ısınıyor · {0}",
+    "plan restored · {0}/{1} · up {2}": "plan geri yüklendi · {0}/{1} · {2} uyanır",
+    "plan restored · {0}/{1} · bed {2}": "plan geri yüklendi · {0}/{1} · {2} yatar",
+    "asleep · your {0} most-played · up {1}": "uyuyor · en çok oynadığın {0} · {1} uyanır",
+    "asleep · {0} games · up {1}": "uyuyor · {0} oyun · {1} uyanır",
+    "banking hours again · up {0}": "yine saat biriktiriyor · {0} uyanır",
+    "overnight: {0}": "gece boyunca: {0}",
+    "reconnected · {0} game(s) back on": "yeniden bağlandı · {0} oyun yeniden açık",
+    "farming cards on {0} for ~{1} · {2}/{3} today": "{0} için ~{1} kart kasılıyor · bugün {2}/{3}",
+    "playing {0} for ~{1} · {2}/{3} today": "~{1} {0} oynuyor · bugün {2}/{3}",
+    "{0} · back in ~{1}": "{0} · ~{1} sonra döner",
+    "{0} · offline, back in ~{1}": "{0} · çevrimdışı, ~{1} sonra döner",
+    "carrying on with {0} · {1} left · {2}/{3} today": "{0} ile devam · {1} kaldı · bugün {2}/{3}",
+    "rep4rep {0}/{0} · next ~{1}": "rep4rep {0}/{0} · sonraki ~{1}",
+    "rep4rep {0}/{0} · resting for now": "rep4rep {0}/{0} · şimdilik mola",
+    "{0} doesn't take comments · skipped": "{0} yorum kabul etmiyor · atlandı",
+    "accepted offer {0} from {1} · {2} in, {3} out": "{1} kişisinin {0} teklifi kabul edildi · {2} giriş, {3} çıkış",
+    "{0} (yours)": "{0} (senin)",
+    "offer {0} from {1}: get {2}, give {3} · {4}": "{1} kişisinden {0} teklifi: al {2}, ver {3} · {4}",
+    "donation · accepting when awake": "bağış · uyanınca kabul edilecek",
+    "donation · accepting in a few min": "bağış · birkaç dakika içinde kabul edilecek",
+    "allowed sender · accepting when awake": "izinli gönderen · uyanınca kabul edilecek",
+    "allowed sender · accepting in a few min": "izinli gönderen · birkaç dakika içinde kabul edilecek",
+    "offer {0} from {1} accepted · confirm it in Steam's email": "{1} kişisinin {0} teklifi kabul edildi · Steam e-postasından onayla",
+    "offer {0} from {1} accepted · confirm it ('confirmations {2}')": "{1} kişisinin {0} teklifi kabul edildi · onayla ('confirmations {2}')",
+    "offer {0} from {1} accepted · confirm it on your phone": "{1} kişisinin {0} teklifi kabul edildi · telefonundan onayla",
+    "in the tray · right-click for menu": "tepside · menü için sağ tıkla",
+    "dashboard: {0}": "pano: {0}",
+    "dashboard: this PC only, no password": "pano: yalnızca bu bilgisayar, parola yok",
+    "Click to hide each line": "Her satırı gizlemek için tıkla",
+    "Click to show each line": "Her satırı görmek için tıkla",
+    "{0}: {1}% done · next game, back in ~{2} day(s)": "{0}: %{1} bitti · sıradaki oyun, ~{2} gün sonra döner",
+    "done grinding · back to the usual day": "grind bitti · olağan güne dönülüyor",
+    "{0} is on the market · {1}": "{0} pazarda · {1}",
+    "{0} is on the market": "{0} pazarda",
+    "couldn't look at the listings waiting on a confirmation: {0}": "onay bekleyen ilanlara bakılamadı: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -3052,21 +3208,29 @@
       "label": "İzin günü olasılığı",
       "tip": "Herhangi bir gün hiç oynamama olasılığı, yüzde olarak. Gerçek insanlar her gün oyun oynamaz."
     },
-    "DayStartHour": {
-      "label": "Yaklaşık şu saatte girer",
-      "tip": "Genelde çevrimiçi olduğu saat. Gerçek saat bunun çevresinde değişir ve hafta sonları daha erken başlar."
+    "DayStartTime": {
+      "label": "Girdiği saat",
+      "tip": "Çevrimiçi olduğu saat, örneğin 11:00. Her gün bu saatin “En fazla sapma” kadar öncesi ya da sonrasında girer; çoğu gün bu saate yakın, hafta sonları biraz daha erken."
     },
-    "BedHour": {
-      "label": "Yaklaşık şu saatte yatar",
-      "tip": "Gece için bıraktığı saat. Gece yarısından sonrası da olur - uzun bir gece için sabaha karşı bir saat seç."
+    "DayStartVaryMinutes": {
+      "label": "En fazla sapma (dakika)",
+      "tip": "“Girdiği saat”ten ne kadar önce ya da sonra girebileceği, dakika olarak. Hiçbir şey onu bunun dışına itmez: 11:00 ve 30 ile her zaman 10:30 ile 11:30 arasında girer. 0 her gün aynı dakika demektir."
+    },
+    "BedTime": {
+      "label": "Yattığı saat",
+      "tip": "Gece için bıraktığı saat. Gece yarısından sonrası da olur: 02:00, girdiği günün ardından gece saat iki demektir. Her gece bu saatin “En fazla sapma” kadar öncesi ya da sonrasında yatar; cuma ve cumartesi biraz daha geç."
+    },
+    "BedVaryMinutes": {
+      "label": "En fazla sapma (dakika)",
+      "tip": "“Yattığı saat”ten ne kadar önce ya da sonra yatabileceği, dakika olarak. Hiçbir şey onu bunun dışına itmez: 02:00 ve 60 ile her zaman 01:00 ile 03:00 arasında yatar. 0 her gece aynı dakika demektir."
     },
     "LateNightExtraHours": {
       "label": "Cuma/Cumartesi daha geç yatar",
-      "tip": "Cuma ve cumartesi geceleri fazladan kaç saat ayakta kaldığı."
+      "tip": "Cuma ve cumartesi geceleri en fazla bu kadar saat daha geç yatar - ama asla “Yattığı saat” ve sapmasının ötesine geçmez."
     },
     "SleepMinHours": {
       "label": "En az uyur",
-      "tip": "Ertesi gün başlamadan önce bir gecenin kaç saat sürdüğü - bu değerle sonraki arasında, her gece farklı rastgele bir süre. Sabah 5'te yatsa da bu süre geçmeden dönmez."
+      "tip": "Ertesi gün başlamadan önce bir gecenin kaç saat sürdüğü - bu değerle sonraki arasında, her gece farklı rastgele bir süre. “Girdiği saat”in izin verdiği en geç saatten önce sığmayan bir gece kısaltılır: bundan daha geç asla girmez."
     },
     "SleepMaxHours": {
       "label": "...en fazla",
@@ -3420,11 +3584,11 @@
     },
     "YieldToFamily": {
       "label": "Paylaşılan oyunu istediklerinde geri ver",
-      "tip": "Ailedeki biri ödünç alınan bir aile oyununu başlatınca onu hemen geri verir ve devam eder. O kişi bıraktıktan sonra bir süre oyun sıraya girmez (aşağıdaki \"Bir aile üyesi bıraktıktan sonra bekle\")."
+      "tip": "Ailedeki biri ödünç alınan bir aile oyununu başlatınca onu hemen geri verir ve başka bir şeye geçer. Örneğin bu hesap Portal 2'de avlanırken kardeşin Portal 2'yi başlatır: Portal 2'yi kapatır ve başka bir şey oynar. O kişi bıraktıktan sonra bir süre oyun sıraya girmez (aşağıdaki \"Bir aile üyesi bıraktıktan sonra bekle\"). Kapalı: yol vermez."
     },
     "IncludeFamilyLibrary": {
       "label": "Aileyle paylaşılan oyunları dahil et",
-      "tip": "Bu hesapla Steam Ailesi üzerinden paylaşılan oyunlarda da başarım avlar. Bunlar bu hesapta sahip olunan oyunlar gibi sayılır. Sahip olunan oyunlar her zaman önce gelir."
+      "tip": "Başarım avının, bu hesapla Steam Ailesi üzerinden paylaşılan oyunları da kullanmasını sağlar. Örneğin 40 sahip olunan ve 200 paylaşılan oyunla 240'ın hepsinden seçebilir - sahip olunan oyunlar her zaman önce gelir. Açık: paylaşılan oyunlar sahip olunanlar gibi sayılır. Kapalı: yalnızca bu hesabın sahip olduğu oyunlar."
     },
     "AchievementGrindGapMinMinutes": {
       "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
@@ -3444,61 +3608,61 @@
     },
     "ClaimEventItems": {
       "label": "Ücretsiz etkinlik eşyalarını al",
-      "tip": "Steam indirimleri sırasında günlük ücretsiz çıkartmayı ve Puan Dükkânı'nda 0 puan tutan her şeyi alır."
+      "tip": "Steam indirimlerinde günlük ücretsiz çıkartmayı ve Puan Dükkânı'nda 0 puana mal olan her şeyi alır. Örneğin 14 günlük bir indirim 14 çıkartmaya kadar verir. Kapalı: hiçbir şey alınmaz."
     },
     "DiscoveryQueue": {
       "label": "Keşif kuyruğuna göz at",
-      "tip": "Mağazanın keşif kuyruğunu günde bir kez bir insan gibi gezer. İndirimlerde bu, etkinlik eşyaları ve rozet ilerlemesi kazandırır.",
+      "tip": "Mağazanın keşif kuyruğunu günde bir kez, bir insan gibi oyun oyun gezer. İndirimlerde bu, etkinlik eşyaları ve rozet ilerlemesi kazandırır - örneğin günde bir eşya veren bir indirimde günde bir eşya. Kapalı: asla. İndirimlerde: yalnızca bir indirim sürerken. Her gün: indirim olsun olmasın her gün.",
       "choices": "0 kapalı | 1 indirimlerde | 2 her gün"
     },
     "SaleEvents": {
       "label": "Steam etkinliklerine katıl",
-      "tip": "Aşağıdaki her şeyin anahtarı: Steam indirimleri, Steam Ödülleri ve Next Fest sırasında ücretsiz olanı alır - günlük çıkartma, Puan Dükkânı'ndaki ücretsiz eşyalar, keşif kuyruğu, ödül adaylıkları ve oyları. Etkinlik dışında sadece arada bir bakar. Kapalıyken bu hesapta bunların hiçbirini yapmaz."
+      "tip": "Aşağıdaki her şeyin ana anahtarı: Steam indirimlerinde, Steam Ödülleri'nde ve Next Fest'te ücretsiz olanları toplar - günlük çıkartma, Puan Dükkânı'ndaki ücretsiz eşyalar, keşif kuyruğu, ödül adaylıkları ve oyları. Örneğin 14 günlük bir kış indiriminde bu günde bir çıkartma, artı her ödül oyu için bir tane demek. Etkinlik dışında yalnızca ara sıra bakar. Kapalı: bu hesapta hiçbirini yapmaz."
     },
     "SaleEventsHumanToo": {
       "label": "İnsan modu hesapları da",
-      "tip": "Bu insan modundaki hesabın Steam Ödülleri'nde aday göstermesine ve oy vermesine, indirimin kuyruk eşyasını ve Next Fest eşyasını almasına izin verir - birer birer, kendi günü içinde, dakikalar arayla. Varsayılan olarak açık. İnsan modundaki bir hesabın yalnızca çıkartmayı ve kuyruğu yapması için kapat (aşağıda kendi anahtarları). Robot hesaplar her zaman katılır."
+      "tip": "Bu insan modu hesabının Steam Ödülleri'nde aday göstermesine ve oy vermesine, indirimin kuyruk eşyasını ve Next Fest'in eşyasını almasına izin verir - birer birer, kendi günü içinde, dakikalar arayla. Örneğin bir öğleden sonraya yayılmış bir düzine oy. Varsayılan olarak açık. Bir insan modu hesabı yalnızca çıkartmayı ve kuyruğu yapsın istiyorsan kapat (aşağıda kendi anahtarları var). Robot hesaplar her zaman katılır."
     },
     "SaleAwardsNominate": {
       "label": "Steam Ödülleri'nde aday göster",
-      "tip": "Kasım sonunda, adaylık rozeti için Steam Ödülleri'nin her kategorisinde bir oyunu aday gösterir. Sadece bu hesabın oynadığı oyunlar, aşağıdaki ayara göre seçilir; uygun oyunu olmayan kategori boş kalır."
+      "tip": "Kasım sonunda, adaylık rozeti için Steam Ödülleri'nin her kategorisinde bir oyunu aday gösterir. Örneğin bu hesabın 300 saat oynadığı bir oyun, Steam'in uyduğunu söylediği kategoriye girer. Yalnızca bu hesabın oynadığı oyunlar, \"Hangi oyun aday gösterilsin\" ayarına göre seçilir; bunlardan hiçbiri olmayan kategori boş kalır. Kapalı: adaylık yok."
     },
     "SaleAwardsVote": {
       "label": "Steam Ödülleri'nde oy ver",
-      "tip": "Kış indiriminde, her oyun verdiği çıkartma için Steam Ödülleri'nin her kategorisinde bir kez oy verir. Bu hesabın en çok oynadığı finalisti, hiçbirini oynamadıysa herhangi bir finalisti seçer."
+      "tip": "Kış indiriminde, her oyla gelen çıkartma için Steam Ödülleri'nin her kategorisinde bir kez oy verir - örneğin yaklaşık bir düzine kategori, yaklaşık bir düzine çıkartma. Bu hesabın en çok oynadığı finalisti seçer, hiçbirini oynamadıysa herhangi bir finalisti. Kapalı: oy yok."
     },
     "SaleQuests": {
       "label": "Kuyruk için indirimin eşyasını al",
-      "tip": "İndirim sırasında keşif kuyruğu biter bitmez, indirimin bunun için verdiği eşyayı bir sonraki çıkartma bakışını beklemeden hemen alır."
+      "tip": "İndirim sırasında keşif kuyruğu bitince, indirimin bunun için verdiği eşyayı bir sonraki çıkartma bakışını beklemeden hemen alır - örneğin birkaç saat daha erken. Kapalı: bir sonraki çıkartma bakışını bekler."
     },
     "SaleNextFest": {
       "label": "Next Fest eşyaları",
-      "tip": "Steam Next Fest sürerken, varsa ücretsiz eşyasını alır. Steam son Next Fest'lerde vermedi, bu yüzden genelde hiçbir şey olmaz - geri gelirse diye hazır bekler."
+      "tip": "Steam Next Fest sürerken, varsa ücretsiz eşyasını alır - örneğin bir profil çıkartması. Steam son Next Fest'lerde eşya vermedi, bu yüzden genelde hiçbir şey olmaz - geri gelirse diye hazır bekler. Kapalı: hiç bakmaz."
     },
     "SaleNominatePick": {
       "label": "Hangi oyun aday gösterilsin",
-      "tip": "Steam Ödülleri'nin her kategorisine hangi oyunun gireceği; bu hesabın oynadığı ve Steam'e göre uyan oyunlar arasından. En çok oynanan ya da aralarından rastgele biri. Aynı oyunu iki kez kullanmamaya çalışır.",
+      "tip": "Steam Ödülleri'nin her kategorisine hangi oyunun gireceği; bu hesabın oynadığı ve Steam'e göre uyan oyunlar arasından. En çok oynadığı oyun: örneğin 300 saat Terraria, 2 saat Celeste'i geçer. Oynadığı herhangi bir oyun: aralarından rastgele biri. İki durumda da aynı oyunu iki kez kullanmamaya çalışır.",
       "choices": "0 en çok oynadığı oyun | 1 oynadığı herhangi bir oyun"
     },
     "SaleGapMinSeconds": {
       "label": "Robot hesaplar adımlar arasında bekler (saniye)",
-      "tip": "Bir robot hesapta iki adaylık ya da oy arasındaki saniye, en kısa bekleme - örneğin 5."
+      "tip": "Robot hesapta iki adaylık ya da oy arasındaki saniye, en kısa bekleme - örneğin 5. En uzun 20 iken her bekleme rastgele 5 ile 20 saniye arasıdır."
     },
     "SaleGapMaxSeconds": {
       "label": "...en fazla (saniye)",
-      "tip": "Bir robot hesapta iki adım arasındaki en uzun bekleme, saniye cinsinden - örneğin 20. Her bekleme ikisi arasında rastgele seçilir."
+      "tip": "Robot hesapta iki adım arasındaki en uzun bekleme, saniye olarak - örneğin 20. En kısa 5 iken her bekleme rastgele 5 ile 20 saniye arasıdır."
     },
     "SaleHumanGapMinMinutes": {
       "label": "İnsan modu adımlar arasında bekler (dakika)",
-      "tip": "İnsan modu hesabında iki adaylık ya da oy arasındaki dakika, en kısa bekleme - örneğin 5. Sadece kendi günü içinde."
+      "tip": "İnsan modu hesabında iki adaylık ya da oy arasındaki dakika, en kısa bekleme - örneğin 5. En uzun 30 iken her bekleme rastgele 5 ile 30 dakika arasıdır. Yalnızca kendi günü içinde."
     },
     "SaleHumanGapMaxMinutes": {
       "label": "...en fazla (dakika)",
-      "tip": "İnsan modu hesabında iki adım arasındaki en uzun bekleme, dakika cinsinden - örneğin 30."
+      "tip": "İnsan modu hesabında iki adım arasındaki en uzun bekleme, dakika olarak - örneğin 30. En kısa 5 iken her bekleme rastgele 5 ile 30 dakika arasıdır."
     },
     "SaleCheckHours": {
       "label": "Etkinliklere bakma sıklığı (saat)",
-      "tip": "Bir Steam etkinliğinin başlayıp başlamadığına ne sıklıkla baktığı, saat cinsinden - örneğin 6. Etkinlik sürerken yaklaşık saatte bir bakar."
+      "tip": "Bir Steam etkinliğinin başlayıp başlamadığına ne sıklıkla baktığı, saat olarak - örneğin 6, günde yaklaşık 4 bakış. Bir etkinlik sürerken yaklaşık saatte bir bakar."
     },
     "SellPerRun": {
       "label": "Seferde kart sayısı",
@@ -3855,7 +4019,7 @@
     },
     "LearnFromOwner": {
       "label": "Nasıl oynadığımdan öğren",
-      "tip": "Bu hesapta kendin ne zaman ve hangi oyunları oynadığını not eder. Bunun 7 günü dolunca gününü seninkine yaklaştırır: ne zaman çevrimiçi olup yattığını ve zamanını “Oyunlar ve ne sıklıkta” listesindeki oyunlar arasında nasıl böldüğünü. Bu listede olmayan bir oyunu asla eklemez; ne kadar oynayacağı yine saat ayarlarından gelir. habits komutu ne öğrendiğini gösterir.",
+      "tip": "Bu hesapta kendin ne zaman ve hangi oyunları oynadığını not eder. Bunun 7 günü dolunca gününü seninkine yaklaştırır: ne zaman çevrimiçi olup yattığını ve zamanını “Oyunlar ve ne sıklıkta” listesindeki oyunlar arasında nasıl böldüğünü. Bu listede olmayan bir oyunu asla eklemez; ne kadar oynayacağı yine saat ayarlarından gelir. habits komutu ne öğrendiğini gösterir. Girdiği ve yattığı saati yalnızca “Girdiği saat” ve “Yattığı saat” ile sapmaları içinde kaydırır, asla dışına çıkmaz.",
       "choices": "0 kapalı | 1 biraz | 2 çok"
     },
     "LearnFollow": {
@@ -3916,11 +4080,11 @@
     },
     "CountMeAsUser": {
       "label": "Beni kullanıcı say",
-      "tip": "Saatte bir kez nocat.lol'a bu kopyanın çalıştığını söyler - bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının oturum açık olduğu (sadece sayı), paylaşıyorsan saat ve kart toplamları da (sonraki ayara bak), başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle oluşur. Kapalıyken hiçbir şey göndermez."
+      "tip": "Kullanıcıları sayabilsin diye nocat.lol'a saatte bir bu kopyanın çalıştığını söyler. Bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının giriş yaptığını (yalnızca sayı, örneğin 3) gönderir; paylaşıyorsan saat ve kart toplamlarını ve geri kalanını da (mücevherler, rozetler, paketler, satılan eşyalar) (sonraki ayar) - başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle çıkar. Kapalı: hiçbir şey göndermez."
     },
     "ShareFarmTotals": {
-      "label": "Saat ve kart toplamlarımı paylaş",
-      "tip": "Saatlik \"Beni kullanıcı say\" mesajına iki sayı ekler: hesaplarının biriktirdiği oyun saatleri ve son mesajdan beri aldıkları kartlar, örneğin 41,5 saat ve 12 kart. İlk açıldığında, bu kopyanın geçmişinde daha önceden kalan her şey için aynı iki sayıyı da bir kez gönderir. nocat.lol herkesinkini toplar ve toplamları nocat.farm sayfasında gösterir. Hangi hesap, oyun ya da kart olduğuna dair hiçbir şey yok. Yalnızca \"Beni kullanıcı say\" açıkken; kapalıyken iki sayıdan hiçbiri gönderilmez."
+      "label": "Farm toplamlarımı paylaş",
+      "tip": "Saatlik \"Beni kullanıcı say\" mesajına birkaç sayı ekler: bir öncekinden beri hesaplarının biriktirdiği oyun saati, aldıkları kartlar, mücevhere çevirdikleri eşyalar, ürettikleri rozetler (parlak olanlar da), açtıkları kart paketleri ve pazarda sattıkları eşyalar - örneğin 41.5 saat, 12 kart, mücevhere çevrilen 30 eşya, 2 rozet, 4 paket ve satılan 9 eşya. İlk açıldığında, bu kopyanın geçmişinde önceden olan saatleri ve kartları bir kez de gönderir. nocat.lol herkesinkini toplar ve toplamları nocat.farm sayfasında gösterir. Hangi hesap, oyun, kart ya da eşya olduğu hakkında hiçbir şey yok. Açık: sayılar saatlik mesajla gider. Kapalı: hiçbiri gitmez. Yalnızca \"Beni kullanıcı say\" açıkken."
     },
     "ReactionSpeed": {
       "label": "Tepki hızı",
@@ -3929,7 +4093,7 @@
     },
     "BoosterPackGames": {
       "label": "Kart paketi oluşturulacak oyunlar",
-      "tip": "Değerli taşların güçlendirici paketlere dönüştürüleceği oyunlar. Steam oyun başına günde bir paket verir, yalnızca hâlâ kart düşüren oyunlar için. Kapatmak için boş bırak."
+      "tip": "Mücevherlerin kart paketine çevrileceği oyunlar, oyun başına günde bir paket. Örneğin listede iki oyun: mücevherler yettikçe günde en fazla iki paket. Yalnızca Steam'in kart paketi oluşturucusundaki oyunlar yapılabilir - sahip olduğun ve kartı olan oyunlar."
     },
     "AchievementSkipMultiplayer": {
       "label": "Çok oyunculu başarımları atla",
@@ -3937,115 +4101,115 @@
     },
     "HealthAlertBans": {
       "label": "Yeni yasakta uyar",
-      "tip": "Bir yasak çıktığında sana haber verir. “Yasakları izle” açıkken o zaten haber verdiği için bu, iki kez söylememek adına sessiz kalır."
+      "tip": "Bir yasak ortaya çıkınca sana haber verir - örneğin VAC yasağı, oyun yasağı, takas ya da topluluk yasağı. \"Yasakları izle\" açıkken zaten o haber verir, bu yüzden iki kez söylememek için bu sessiz kalır. Kapalı: buradan yasak mesajı yok."
     },
     "HealthAlertDiscord": {
       "label": "Sağlık uyarıları Discord'a",
-      "tip": "Bir hesapla ilgili bir şey kötüleştiğinde Discord kanalına mesaj gönderir. Bildirimler altında Discord webhook'unun ayarlanmış olması gerekir."
+      "tip": "Bir hesapla ilgili bir şey kötüleşince Discord kanalına mesaj gönderir. Örneğin pazarın 7 günlüğüne kapanması tek bir mesaj gönderir. Açık: kötüye giden her değişiklik gönderilir. Kapalı: hiçbiri Discord'a gitmez - Sağlık satırı yine de gösterir. Bildirimler'de Discord webhook'unun kurulu olması gerekir."
     },
     "HealthAlertGuard": {
       "label": "Steam Guard zayıflayınca uyar",
-      "tip": "Steam Guard telefon uygulamasından e-postaya geçtiğinde ya da kapandığında sana haber verir."
+      "tip": "Steam Guard zayıflayınca sana haber verir - örneğin telefon uygulamasından e-posta kodlarına geçince ya da kapanınca. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthAlertLimited": {
       "label": "Sınırlı hesapta uyar",
-      "tip": "Steam bu hesabı sınırlı saymaya başladığında (arkadaş daveti yok, piyasa yok) sana haber verir. Hiç 5 dolar harcamamış bir hesap sınırlıdır."
+      "tip": "Steam bu hesaba sınırlı hesap gibi davranmaya başlayınca sana haber verir: arkadaş daveti yok, pazar yok. Örneğin hiç 5 dolar harcamamış bir hesap sınırlıdır. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthAlertMarket": {
       "label": "Piyasa kapanınca uyar",
-      "tip": "Steam bu hesabın Topluluk Pazarı'nı kullanmasını durdurduğunda sana haber verir - örneğin yeni bir cihazda giriş yaptıktan sonra 7 gün boyunca."
+      "tip": "Steam bu hesabın Topluluk Pazarı'nı kullanmasını durdurunca sana haber verir - örneğin yeni bir cihazda giriş yaptıktan sonra 7 gün. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthAlertPhone": {
       "label": "Telefon kaldırılınca uyar",
-      "tip": "Hesapta artık telefon numarası olmadığında sana haber verir."
+      "tip": "Hesapta artık telefon numarası olmayınca sana haber verir - örneğin Steam'in sitesinde kaldırıldıktan sonra. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthAlertPopup": {
       "label": "Sağlık uyarıları bildirim balonu olarak",
-      "tip": "“Bildirim balonlarını göster” açık olduğu sürece, bir hesapla ilgili bir şey kötüleştiğinde bu bilgisayarda bir bildirim balonu gösterir."
+      "tip": "Bir hesapla ilgili bir şey kötüleşince bu bilgisayarda bir bildirim balonu gösterir. Örneğin Steam Guard'ın telefon uygulamasından e-postaya geçmesi tek bir balon açar. Açık: her seferinde bir balon, \"Bildirim balonlarını göster\" açık olduğu sürece. Kapalı: balon yok - Sağlık satırı yine de gösterir."
     },
     "HealthAlertTelegram": {
       "label": "Sağlık uyarıları Telegram'a",
-      "tip": "Bir hesapla ilgili bir şey kötüleştiğinde Telegram sohbetine mesaj gönderir - bir yasak, bir takas bekletmesi, piyasanın kapanması, Steam Guard'ın kapatılması. Bildirimler altında Telegram'ın ayarlanmış olması gerekir."
+      "tip": "Bir hesapla ilgili bir şey kötüleşince Telegram sohbetine mesaj gönderir. Örneğin bir hesapta 15 günlük takas bekletmesinin başlaması tek bir mesaj gönderir. Açık: kötüye giden her değişiklik gönderilir. Kapalı: hiçbiri Telegram'a gitmez - hesabın Sağlık satırı yine de gösterir. Bildirimler'de Telegram'ın kurulu olması gerekir."
     },
     "HealthAlertTradeHold": {
       "label": "Takas bekletmesinde uyar",
-      "tip": "Bu hesabın takasları günlerce bekletilmeye başladığında sana haber verir - örneğin Steam Guard değiştikten sonra 15 gün."
+      "tip": "Bu hesabın takasları günlerce bekletilmeye başlayınca sana haber verir - örneğin Steam Guard değiştikten sonra 15 gün. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthMaxHours": {
       "label": "...en fazla (saat)",
-      "tip": "İki sağlık kontrolü arasındaki en uzun süre, saat olarak - örneğin 7. Her bekleme ikisi arasında rastgele bir süredir."
+      "tip": "İki sağlık kontrolü arasındaki en uzun süre, saat olarak - örneğin 7. En kısa 5 iken her 5 ila 7 saatte bir, rastgele bir kontrol gelir."
     },
     "HealthMinHours": {
       "label": "İki sağlık kontrolü arasındaki en kısa bekleme (saat)",
-      "tip": "İki sağlık kontrolü arasındaki en kısa süre, saat olarak - örneğin 5. Hesap giriş yaptığında her zaman bir kez kontrol eder."
+      "tip": "İki sağlık kontrolü arasındaki en kısa süre, saat olarak - örneğin 5. En uzun 7 iken her 5 ila 7 saatte bir, rastgele bir kontrol gelir. Hesap giriş yapınca her zaman bir kez kontrol eder."
     },
     "ScamAlertDiscord": {
       "label": "Dolandırıcılık uyarıları Discord'a",
-      "tip": "Dolandırıcılık takibi uyarılarını Discord kanalına gönderir. Bildirimler altında Discord webhook'unun ayarlanmış olması gerekir."
+      "tip": "Dolandırıcılık takibi uyarılarını Discord kanalına gönderir. Örneğin bir hesapta yeni bir API anahtarı, hesabı adıyla belirten tek bir mesaj gönderir. Açık: her uyarı oraya gider. Kapalı: hiçbiri Discord'a gitmez - günlük ve pano yine de gösterir. Bildirimler'de Discord webhook'unun kurulu olması gerekir."
     },
     "ScamAlertPopup": {
       "label": "Dolandırıcılık uyarıları bildirim balonu olarak",
-      "tip": "“Bildirim balonlarını göster” açık olduğu sürece, her dolandırıcılık takibi uyarısında bu bilgisayarda bir bildirim balonu gösterir."
+      "tip": "Her dolandırıcılık takibi uyarısı için bu bilgisayarda bir bildirim balonu gösterir. Örneğin bir hesapta e-postanın değişmesi, hesabı adıyla belirten tek bir balon açar. Açık: her uyarı için bir balon, \"Bildirim balonlarını göster\" açık olduğu sürece. Kapalı: balon yok - günlük ve pano yine de gösterir."
     },
     "ScamAlertTelegram": {
       "label": "Dolandırıcılık uyarıları Telegram'a",
-      "tip": "Dolandırıcılık takibi uyarılarını (yeni bir API anahtarı, yeni bir cihaz, değişen e-posta, telefon veya Steam Guard, tüm oturumların kapatılması) Telegram sohbetine gönderir. Bildirimler altında Telegram'ın ayarlanmış olması gerekir."
+      "tip": "Dolandırıcılık takibi uyarılarını Telegram sohbetine gönderir. Örneğin bir hesapta yeni bir cihazın giriş yapması, hesabı ve cihazı adıyla belirten tek bir mesaj gönderir. Açık: her uyarı oraya gider. Kapalı: hiçbiri Telegram'a gitmez - günlük ve pano yine de gösterir. Bildirimler'de Telegram'ın kurulu olması gerekir."
     },
     "ScamWatchApiKey": {
       "label": "API anahtarını kontrol et",
-      "tip": "Hesabın Steam Web API anahtarı sayfasına bakar. Senin haberin olmadan ortaya çıkan ya da değişen bir anahtar en yaygın takas dolandırıcılığıdır. Anahtarın yalnızca parmak izi saklanır, anahtarın kendisi asla."
+      "tip": "Hesabın Steam Web API anahtarı sayfasına bakar. Senden habersiz ortaya çıkan ya da değişen bir anahtar en yaygın takas dolandırıcılığıdır - örneğin giriş yaptığın sahte bir takas sitesinin oluşturduğu bir anahtar. Anahtarın kendisi asla değil, yalnızca bir parmak izi tutulur. Kapalı: anahtarlar kontrol edilmez."
     },
     "ScamWatchCancelOffers": {
       "label": "Uyarıda: gönderilen teklifleri geri al",
-      "tip": "Bir uyarıdan sonra, bu hesabın gönderdiği ve henüz gerçekleşmemiş takas tekliflerini iptal eder - API anahtarını ele geçiren bir dolandırıcı bunları sahteleriyle değiştirir."
+      "tip": "Bir uyarıdan sonra, bu hesabın gönderdiği ve henüz gerçekleşmemiş takas tekliflerini iptal eder - API anahtarını ele geçiren bir dolandırıcı onları sahteleriyle değiştirir. Örneğin diğer hesabına bekleyen 2 teklif geri alınır. Kapalı: gönderilen teklifler kalır."
     },
     "ScamWatchDetails": {
       "label": "E-posta, telefon ve Steam Guard'ı kontrol et",
-      "tip": "Hesap ayrıntıları sayfasına bakar ve e-posta adresi, telefon numarası veya Steam Guard değiştiğinde uyarır. Yalnızca Steam'in gösterdiği gizlenmiş biçimler (th***@gmail.com, 12 ile bitiyor gibi) saklanır."
+      "tip": "Hesap ayrıntıları sayfasına bakar ve e-posta adresi, telefon numarası ya da Steam Guard değişince uyarır. Yalnızca Steam'in gösterdiği gizlenmiş hâlleri tutulur - örneğin th***@gmail.com ya da 12 ile biten bir telefon. Kapalı: bunlar kontrol edilmez."
     },
     "ScamWatchDevices": {
       "label": "Yeni cihazları kontrol et",
-      "tip": "Hesabın yetkili cihazlar listesine bakar ve yeni olan, sana ya da nocat.farm'ın kendisine ait olmayan bir cihaz için uyarır."
+      "tip": "Hesabın yetkili cihazlar listesine bakar ve yeni olan, senin ya da nocat.farm'ın olmayan bir cihaz için uyarır - örneğin hiç görmediğin bir \"DESKTOP-8XQ2\". Kapalı: cihazlar kontrol edilmez."
     },
     "ScamWatchMaxMinutes": {
       "label": "...en fazla (dakika)",
-      "tip": "İki bakış arasındaki en uzun süre, dakika olarak - örneğin 60. Her bekleme ikisi arasında rastgele bir süredir."
+      "tip": "İki bakış arasındaki en uzun süre, dakika olarak - örneğin 60. En kısa 30 iken her bekleme rastgele 30 ile 60 dakika arasıdır."
     },
     "ScamWatchMinMinutes": {
       "label": "İki bakış arasındaki en kısa bekleme (dakika)",
-      "tip": "İki bakış arasındaki en kısa süre, dakika olarak - örneğin 30. Her bakış birkaç sayfa görüntülemesidir; onları bir tarayıcıda açmakla aynı şey."
+      "tip": "İki bakış arasındaki en kısa süre, dakika olarak - örneğin 30. En uzun 60 iken her bekleme rastgele 30 ile 60 dakika arasıdır. Her bakış birkaç sayfa görüntülemesidir, onları bir tarayıcıda açmakla aynı."
     },
     "ScamWatchRevokeKey": {
       "label": "Yeni API anahtarında: iptal et",
-      "tip": "Daha önce olmayan bir API anahtarı ortaya çıktığında Steam'in anahtar sayfasında hemen İptal Et'e basar. Varsayılan olarak kapalı: API anahtarlarını kendin oluşturuyorsan kapalı bırak (bazı takas siteleri bir tane ister)."
+      "tip": "Önceden olmayan bir API anahtarı ortaya çıkınca, Steam'in anahtar sayfasında hemen İptal Et'e basar, böylece bir dolandırıcılık sitesinin oluşturduğu anahtar çalışmaz olur - örneğin ortaya çıktığı saat içinde. Varsayılan olarak kapalı: o zaman yalnızca uyarır. API anahtarlarını kendin oluşturuyorsan kapalı bırak (bazı takas siteleri bir tane ister)."
     },
     "ScamWatchSessions": {
       "label": "Tüm oturumların kapatılmasını kontrol et",
-      "tip": "Hesaptaki tüm oturumlar kapatıldığı için Steam kayıtlı girişi reddettiğinde uyarır - bir hırsızın ilk yaptığı şey budur. Normal bir yeniden bağlanma ya da senin o hesapta oynaman asla sayılmaz."
+      "tip": "Hesaptaki tüm oturumlar kapatıldığı için Steam kayıtlı girişi reddedince uyarır - bir hırsızın ilk yaptığı şey, örneğin \"Diğer tüm cihazların yetkisini kaldır\" ile. Normal bir yeniden bağlanma ya da senin o hesapta oynaman asla sayılmaz. Kapalı: kontrol edilmez."
     },
     "ScamWatchStopTrades": {
       "label": "Uyarıda: takası durdur",
-      "tip": "Bir uyarıdan sonra bu hesap, sen scamwatch ok ve hesap adını yazana kadar takas tekliflerini kabul etmeyi ve kendiliğinden eşya göndermeyi bırakır. Tekliflere kendin yanıt vermen yine çalışır."
+      "tip": "Bir uyarıdan sonra bu hesap, sen scamwatch ok ve hesap adını yazana kadar takas tekliflerini kabul etmeyi ve kendiliğinden eşya göndermeyi bırakır. Örneğin kabul edilecek bir bağış seni bekler. Tekliflere kendin yanıt vermen yine çalışır. Kapalı: takas her zamanki gibi sürer."
     },
     "ScamWatchTrustedDevices": {
       "label": "Yok sayılacak cihazların",
-      "tip": "Kendi cihazlarının adları, virgülle ayrılmış, Steam'in Yetkili cihazlar altında listelediği şekliyle - örneğin: My Phone, LAPTOP-7. Bunlardan birinden yapılan yeni bir giriş asla bildirilmez. nocat.farm'ın kendi girişleri her zaman kendiliğinden tanınır."
+      "tip": "Kendi cihazların; girişleri asla yeni diye bildirilmez. Adlarını Steam'in Yetkili cihazlar listesinde göründüğü gibi, virgülle ayırarak yaz - örneğin: My Phone, LAPTOP-7. Boş: her yeni cihaz bildirilir. nocat.farm'ın kendi girişleri her zaman kendiliğinden tanınır."
     },
     "WatchForScams": {
       "label": "Dolandırıcılığa karşı izle",
-      "tip": "Yaklaşık yarım saatte bir çalınmış bir hesabın ya da takas dolandırıcılığının belirtilerini arar: daha önce olmayan bir API anahtarı, sana ait olmayan bir cihazdan giriş, e-postanın, telefonun veya Steam Guard'ın değişmesi ya da tüm oturumların kapatılması. Yalnızca bakar. Bir uyarıda günlükte kırmızı bir satır, bir bildirim balonu ve bir mesaj alırsın; sonra ne olacağı aşağıda ayarlanır."
+      "tip": "Yaklaşık yarım saatte bir, çalınmış bir hesabın ya da takas dolandırıcılığının işaretlerine bakar: önceden olmayan bir API anahtarı, senin olmayan bir cihazın giriş yapması, e-postanın, telefonun ya da Steam Guard'ın değişmesi veya tüm oturumların kapatılması. Örneğin sahte bir takas sitesinin 14:00'te oluşturduğu anahtar yaklaşık 14:30'a kadar bildirilir. Yalnızca bakar: uyarıda ne olacağı aşağıda ayarlanır. Kapalı: hiçbir şey kontrol edilmez."
     },
     "WatchHealth": {
       "label": "Hesap sağlığını takip et",
-      "tip": "Hesabın kartında tek bir Sağlık satırı gösterir: seviye, yasaklar, takas bekletmesi, piyasa erişimi, sınırlı hesap, Steam Guard ve telefon. Giriş yapınca ve birkaç saatte bir kontrol edilir. Yalnızca bakar ve bir şey kötüleştiği anda sana haber verir."
+      "tip": "Hesabın kartında tek bir Sağlık satırı gösterir - seviye, yasaklar, takas bekletmesi, pazar erişimi, sınırlı hesap, Steam Guard ve telefon - ve bir şey kötüleştiği anda sana haber verir. Örneğin bir takas bekletmesi başlayınca tek bir mesaj alırsın ve satır bunu yazar. Giriş yaptığında ve birkaç saatte bir kontrol edilir; yalnızca bakar. Kapalı: Sağlık satırı da uyarı da yok."
     },
     "PointsWeeklyCap": {
       "label": "Haftada en fazla harca",
-      "tip": "Herhangi bir 7 günde harcadığı en fazla puan, ör. 3000 (üç rozet seviyesi). 0 hiçbir şey harcamaz."
+      "tip": "Herhangi bir 7 günde harcadığı en fazla puan. Örneğin 3000: kaç puan olursa olsun haftada en fazla 3 rozet seviyesi. 0 hiçbir şey harcamaz."
     },
     "PointsBadgeMaxLevel": {
       "label": "Her rozeti şu seviyede durdur",
-      "tip": "Bir rozeti götürdüğü en yüksek seviye, ör. 40 (Steam'in izin verdiği en fazla). Başka bir şey için puan tutmak istersen düşür."
+      "tip": "Herhangi bir rozeti götürdüğü en yüksek seviye. Örneğin 10, her rozeti yaklaşık 10.000 puanla 10. seviyede durdurur; 40, Steam'in izin verdiği en yüksek seviye. Puanları başka bir şeye saklamak için düşür."
     },
     "SendPoints": {
       "label": "Steam Puanı harcamalarını gönder",
@@ -4053,92 +4217,92 @@
     },
     "PointsBuyOlderBadges": {
       "label": "Eski sezon rozetleri de",
-      "tip": "Şimdiki rozet bitince dükkânın hâlâ listelediği eski sezon rozetlerinin seviyelerini de alır. Steam bunların bazılarını reddetti, bu yüzden kapalı; ret yalnızca günlüğe yazılır."
+      "tip": "Güncel rozet bitince, dükkânın hâlâ listelediği eski sezonluk rozetlerin seviyelerini de alır - örneğin geçen kışınki. Steam bunların bazılarını reddetti, bu yüzden kapalı; bir ret yalnızca günlüğe yazılır. Kapalı: yalnızca güncel rozet."
     },
     "SpendPoints": {
       "label": "Steam Puanlarını seviyeye harca",
-      "tip": "Bu hesabın Steam Puanlarını Puan Dükkânı'nın sezonluk rozetinin seviyelerine harcar - oradaki Steam seviyeni yükselten tek şey, her 1.000 puan için yaklaşık 100 XP. Her hesapta varsayılan olarak kapalı. Açınca önce ne alacağını gösterir ve onay ister; kapatmak onu hemen durdurur."
+      "tip": "Bu hesabın Steam Puanlarını Puan Dükkânı'nın sezonluk rozetinin seviyelerine harcar - oradaki Steam seviyeni yükselten tek şey, her 1.000 puan için yaklaşık 100 XP. Örneğin 3.000 puan 3 seviye alır. Her hesapta varsayılan olarak kapalı. Açınca önce ne alacağını gösterir ve onay ister; kapatmak onu hemen durdurur."
     },
     "PointsKeepAtLeast": {
       "label": "Her zaman en az şu kadar tut",
-      "tip": "Hiç harcamadığı puanlar, sana biraz kalsın diye, ör. 1000. Bir rozet seviyesi 1.000 puandır."
+      "tip": "Asla harcamadığı puanlar, sana biraz kalsın diye. Örneğin 4.500 puanla 1000: 3.500 harcayabilir, bu da tanesi 1.000'den 3 rozet seviyesi eder. 0 hepsini harcamasına izin verir."
     },
     "PointsCheckEveryHours": {
       "label": "Şu sıklıkla bak (saat)",
-      "tip": "Puanlara ve dükkâna ne sıklıkla baktığı, saat olarak, ör. 12. İnsan modundaki hesap yalnızca kendi günü içinde bakar."
+      "tip": "Puanlara ve dükkâna ne sıklıkla baktığı, saat olarak - örneğin 12, günde iki kez. İnsan modundaki bir hesap yalnızca kendi gününde bakar."
     },
     "PointsBuySeasonalBadge": {
       "label": "Sezon rozetinin seviyelerini al",
-      "tip": "Puan Dükkânı'nın şu an sattığı rozetin (ör. Summer Collection) seviyelerini almasına izin verir. Büyük Steam indirimleriyle yenisi gelir."
+      "tip": "Puan Dükkânı'nın şu an sattığı rozetin seviyelerini almasına izin verir, örneğin Yaz Koleksiyonu - her büyük Steam indirimiyle yenisi gelir. Açık: o rozetin seviyesini yükseltir. Kapalı: onu almaz."
     },
     "BackupRetryMinutes": {
       "label": "Şu kadar sonra yeniden dene (dakika)",
-      "tip": "Bir yedek başarısız olunca o gün yeniden denemeden önce beklenecek dakika, örn. 60. 0 yarına kadar bekler."
+      "tip": "Bir yedek başarısız olunca, o gün yeniden denemeden önce ne kadar bekleneceği. Örneğin 60: sabah 4'te başarısız olan yedek 5'te yeniden dener. 0 yarına kadar bekler."
     },
     "SendBackups": {
       "label": "Yedekleri gönder",
-      "tip": "Bir yedek başarısız oldu ve neden - ya da Bana haber ver her yedekten sonra ise, kaydedilen her yedek."
+      "tip": "Bir yedek başarısız olunca nedeniyle birlikte bir mesaj - örneğin klasör yok. \"Bana haber ver\" her yedekten sonra olarak ayarlıysa, kaydedilen her yedek için de bir mesaj."
     },
     "BackupFolder": {
       "label": "Yedekleri şuraya kaydet",
-      "tip": "Günlük yedeğin gideceği klasör - bu PC'den sonra da kalsın diye bir OneDrive ya da Dropbox klasörü veya USB sürücü. Örnek: D:\\OneDrive\\nocat.farm. Boşsa nocat.farm'ın yanındaki backups klasörüne kaydeder."
+      "tip": "Günlük yedeklerin gittiği klasör. Bu bilgisayar giderse de kalsınlar diye bir OneDrive ya da Dropbox klasörü veya bir USB bellek seç - örneğin D:\\OneDrive\\nocat.farm. Boş: nocat.farm'ın yanındaki backups klasörü."
     },
     "BackupIncludeLogs": {
       "label": "Günlükleri dahil et",
-      "tip": "Son 7 günün günlük dosyalarını da yedeğe koyar. Yedeği büyütür. Sen açmadıkça kapalı."
+      "tip": "Son 7 günün günlük dosyalarını da yedeğe koyar; örneğin bir şeyin ters gittiği günden önceki gün bir hesabın ne yaptığına geri bakmak için. Her yedeği büyütür. Kapalı (varsayılan): günlük yok."
     },
     "BackupHour": {
       "label": "Yedekleme saati",
-      "tip": "Günlük yedeğin alındığı saat, örn. sabah 4. PC o sırada kapalıysa nocat.farm yeniden açılır açılmaz alınır."
+      "tip": "Günlük yedeğin alındığı saat - örneğin bilgisayarın sakin olduğu sabah 4. Bilgisayar o saatte kapalıysa, nocat.farm yeniden açılır açılmaz alınır."
     },
     "BackupPassword": {
       "label": "Yedek parolası",
-      "tip": "Yedeklerini kilitleyen parola - en az 12 karakter ve yalnızca sen seçersin. Bir yedeği yeni bir PC'de geri yüklemek için gerekir, bu yüzden güvenli bir yere yaz: o olmadan yedeği kimse açamaz, sen bile. Bu PC'de şifreli kalır ve hiçbir yere gönderilmez. Değiştirirsen yalnızca değişiklikten sonra yapılan yedekler yeni parolayla kilitlenir - eskileri hâlâ eski parolayı ister."
+      "tip": "Yedeklerini kilitleyen parola - en az 12 karakter, örneğin hatırlayacağın kısa bir cümle. Yeni bir bilgisayarda yedeği geri yüklemek için gerekir, o yüzden güvenli bir yere yaz: o olmadan kimse yedeği açamaz, sen bile. Bu bilgisayarda şifreli olarak kalır ve hiçbir yere gönderilmez. Değiştirmek yalnızca değişiklikten sonraki yedekleri kilitler - eskiler hâlâ eski parolayı ister."
     },
     "BackupLocalCopy": {
       "label": "Burada da bir kopya tut",
-      "tip": "Aynı yedekleri nocat.farm'ın yanındaki backups klasöründe de tutar; yedek klasörü yoksa biri elinin altında olur. Orada da aynı sayıda tutulur. Yedekleri şuraya kaydet boşsa hiçbir şey yapmaz."
+      "tip": "Aynı yedekleri nocat.farm'ın yanındaki backups klasöründe de tutar; böylece yedek klasörü kaybolursa elinin altında biri olur - örneğin takılmayı unutulmuş bir USB bellek. Orada da aynı sayıda tutulur. \"Yedekleri şuraya kaydet\" boşken hiçbir şey yapmaz."
     },
     "BackupIncludeSettings": {
       "label": "Ayarları dahil et",
-      "tip": "Genel ayarları yedeğe koyar: panel, bildirimler, bu sayfa."
+      "tip": "Genel ayarları yedeğe koyar: pano, bildirimler, bu sayfa - örneğin Telegram ve Discord kurulumun. Açık: geri yükleme onları geri getirir. Kapalı: geri yükleme yeni bilgisayarda zaten olan ayarları korur."
     },
     "BackupIncludeAccounts": {
       "label": "Hesapları ve kayıtlı girişleri dahil et",
-      "tip": "Her hesabın ayarlarını, kayıtlı Steam girişini ve ilerlemesini (insan modunun günü, başarım avı, rep4rep sayıları) yedeğe koyar. Bu olmadan geri yükleme hiçbir hesabı geri getirmez."
+      "tip": "Her hesabın ayarlarını, kayıtlı Steam girişini ve ilerlemesini (insan modunun günü, başarım avı, rep4rep sayıları) yedeğe koyar. Örneğin 3 hesap giriş yapmaya hazır geri gelir. Kapalı: geri yükleme hiçbir hesap getirmez."
     },
     "BackupNotify": {
       "label": "Bana haber ver",
-      "tip": "Telegram ve Discord'da yedekleri ne zaman duyacağın: yalnızca biri başarısız olunca (klasör yok, disk dolu, izin yok) ya da her yedekten sonra da. Bildirimler'de Yedekleri gönder açık olmalı.",
+      "tip": "Yedekleri Telegram ve Discord'da ne zaman duyacağın. Yalnızca bir yedek başarısız olunca: yalnızca biri alınamadıysa bir mesaj - örneğin klasör yok, disk dolu ya da izin yok. Her yedekten sonra: kaydedilen her yedek için de bir mesaj. Bildirimler'de \"Yedekleri gönder\" açık olmalı.",
       "choices": "0 yalnızca bir yedek başarısız olunca | 1 her yedekten sonra"
     },
     "PhoneInstallHint": {
       "label": "Telefona nasıl kurulacağını göster",
-      "tip": "Telefon sayfasında paneli bir uygulama gibi telefonunun ana ekranına koymak için kısa bir nasıl yapılır gösterir."
+      "tip": "Telefon sayfasında, panoyu telefonunun ana ekranına koymak için kısa bir nasıl yapılır gösterir; böylece bir uygulama gibi açılır - örneğin Chrome'da: menü, sonra Ana ekrana ekle. Açık: nasıl yapılır görünür. Kapalı: gizlenir, zaten telefonundaysa diye."
     },
     "BackupJitterMinutes": {
       "label": "En fazla bu kadar dakika sonra",
-      "tip": "Her gün yedek saatine eklenen rastgele dakika, en fazla bu kadar, örn. 30. 0 tam saatinde alır."
+      "tip": "Her gün yedek saatine eklenen, en fazla bu kadar olan rastgele bir dakika. Örneğin \"Yedekleme saati\" sabah 4 iken 30: 4:00 ile 4:30 arasında bir zaman. 0 tam saatinde alır."
     },
     "BackupKeep": {
       "label": "Son kaç tane tutulsun (yedek)",
-      "tip": "Klasörde kaç günlük yedek tutulacağı, örn. 7 bir haftayı tutar. Eskiler silinir, en yeniler kalır. Yalnızca kendi yedek dosyaları silinir."
+      "tip": "Klasörde kaç günlük yedeğin kalacağı. Örneğin 7 bir haftalık tutar: 8. yedek en eskisini siler. Yalnızca kendi yedek dosyaları silinir."
     },
     "BackupAuto": {
       "label": "Her gün yedekle",
-      "tip": "Günde bir kez her şeyi - ayarlar, hesaplar, kayıtlı girişler, kimlik doğrulayıcılar ve geçmiş - yedek parolanla kilitli tek bir dosyaya kaydeder; bu PC bozulsa bile her PC'ye geri konabilir. Önce bir yedek parolası gerekir. Sen açana kadar kapalı."
+      "tip": "Her şeyin günde bir yedeğini alır - ayarlar, hesaplar, kayıtlı girişler, kimlik doğrulayıcılar ve geçmiş - yedek parolanla kilitli tek bir dosyada; böylece bu bilgisayar bozulsa bile herhangi bir bilgisayara geri yüklenebilir. Örneğin \"Yedekleme saati\" sabah 4 ve \"Son kaç tane tutulsun\" 7 ise, her sabah yeni bir yedek olur ve klasörde bir haftalık yedek durur. Açık: bir yedek parolası ayarlanınca her gün. Kapalı (varsayılan): yalnızca kendi aldığın yedekler."
     },
     "BackupIncludeHistory": {
       "label": "Geçmişi ve istatistikleri dahil et",
-      "tip": "Grafiklerin ardındaki gün gün geçmişi, toplam biriken saatleri ve günlük ile haftalık raporları yedeğe koyar."
+      "tip": "Grafiklerin arkasındaki gün gün geçmişi, toplam biriktirilen saatleri ve günlük ve haftalık raporları yedeğe koyar - örneğin bir yıllık günlük grafikler. Açık: grafikler geri yüklemeden sonra devam eder. Kapalı: boştan yeniden başlarlar."
     },
     "BackupIncludeAuthenticators": {
       "label": "Kimlik doğrulayıcıları dahil et",
-      "tip": "Eklediysen Steam Guard kimlik doğrulayıcı dosyalarını (.maFile) yedeğe koyar. Takasları onaylayabildikleri için, onlar varken yedek parolası daha da önemlidir."
+      "tip": "Eklediysen Steam Guard kimlik doğrulayıcı dosyalarını (.maFile) yedeğe koyar - örneğin main.maFile. Açık: geri yüklemeden sonra hemen yine takasları onaylayabilirler - bu yüzden yedek parolası daha da önemli olur. Kapalı: onları elle yeniden eklersin."
     },
     "BorrowFamilyCopy": {
       "label": "Bir kopya kullanımdayken başka bir aile üyesinin kopyasını ödünç al",
-      "tip": "Steam Ailendeki biri paylaşılan bir oyunu bir üyenin kopyasında oynuyorsa ve başka bir üye de o oyuna sahipse, oyunu dışarıda bırakmak yerine o boştaki kopyaya geçip devam eder. Yalnızca o tek oyunun kimden ödünç alınacağı değişir - birinin kullandığı kopya asla alınmaz. Yalnızca aileyle paylaşılan oyunlar için (\"Aileyle paylaşılan oyunları dahil et\")."
+      "tip": "Steam Ailendeki biri paylaşılan bir oyunu bir üyenin kopyasında oynuyorsa ve başka bir üye de o oyuna sahipse, oyunu dışarıda bırakmak yerine o boştaki kopyaya geçip devam eder. Örneğin iki üyede Stardew Valley var ve biri onu oynuyor: diğer kopyayı ödünç alır. Yalnızca o tek oyunun kimden ödünç alınacağı değişir - birinin kullandığı kopya asla alınmaz. Kapalı: kopya boşalana kadar oyunu bırakır. Yalnızca aileyle paylaşılan oyunlar için (\"Aileyle paylaşılan oyunları dahil et\")."
     },
     "FamilyWaitMinutes": {
       "label": "Bir aile üyesi bıraktıktan sonra bekle (dakika)",
@@ -4146,144 +4310,181 @@
     },
     "SpareKeepGems": {
       "label": "En az bu kadar mücevheri gevşek tut",
-      "tip": "Asla çuvala konmayan, gönderilmeyen veya satılmayan mücevherler, ör. 500. 0 her dolu 1000'i paketler."
+      "tip": "Asla doldurulmayan, gönderilmeyen ya da satılmayan mücevherler. Örneğin 2.450 mücevherle 500: 1.950'si gidebilir, yani 1 çuval yapılır ve 1.450'si gevşek kalır. 0 her dolu 1000'i doldurur."
     },
     "SpareKeepBackgrounds": {
       "label": "Her arka plandan bu kadar tut",
-      "tip": "Her arka plandan her zaman tutulan kopya sayısı, örn. 1. 0 hiç tutmaz, yani son kopya da gidebilir."
+      "tip": "Her arka plandan her zaman tutulan kopya sayısı. Örneğin 1: 3 kopyadan 2'si gidebilir. 0 hiçbirini tutmaz, son kopya da gidebilir."
     },
     "SpareGems": {
       "label": "Sonra mücevherler",
-      "tip": "Mücevherlere ne olacağı. Otomatik, insan modundaki hesapta onları 1000'lik çuvallara doldurup takas edilebilir tutar, robot hesaplarda ise \"Kart paketi oluşturulacak oyunlar\" kullanabilsin diye gevşek bırakır - otomatik asla satmaz. \"Çuvalları sat\" her bakışta bir çuvalı, Fazla eşyaların günlük sınırları içinde ilana koyar.",
+      "tip": "Mücevherlere ne olacağı. Otomatik, insan modundaki hesapta onları 1000'lik çuvallara doldurup takas edilebilir tutar, robot hesaplarda ise onlardan kart paketi yapılabilsin diye gevşek bırakır - otomatik asla satmaz. Çuvallara doldur: örneğin 2.450 mücevher 2 çuval yapar ve 450'si gevşek kalır. Çuvalları gönder: aşağıda adı yazılı hesaba. \"Çuvalları sat\" her bakışta bir çuvalı, fazla eşyaların günlük sınırları içinde ilana koyar. \"Kart paketi yap\"ta otomatiği seçmek buradaki otomatiği ya da çuvalları \"gevşek bırak\" yapar, çünkü çuvaldaki mücevherlerden paket yapılamaz.",
       "choices": "0 otomatik | 1 gevşek bırak (kart paketleri kullanır) | 2 1000'lik çuvallara doldur ve takas edilebilir tut | 3 çuvalları başka bir hesabıma gönder | 4 çuvalları sat"
     },
     "SpareGapSeconds": {
       "label": "Eşyalar arası bekleme (saniye)",
-      "tip": "İki eşya arasındaki saniye, ör. 40 - her seferinde değişir, insan modundaki hesapta daha uzundur."
+      "tip": "Bir robot hesapta bir bakış içinde iki eşya arasındaki bekleme - her seferinde değişir. Örneğin 40: 5 eşya yaklaşık 3 dakika sürer. İnsan modundaki bir hesap bunun yerine \"Eşyalar arası bekleme, insan modu\"nu kullanır."
     },
     "SparePerRun": {
       "label": "Seferde eşya sayısı",
-      "tip": "Bir bakışta mücevhere çevrilen ya da satılan en fazla eşya, en değerlisinden başlayarak, ör. 5."
+      "tip": "Bir robot hesapta tek bir bakışın mücevhere çevirdiği ya da sattığı en fazla eşya, en değerliler önce. Örneğin 5: 40 fazla eşya bulan bir bakış 5 tanesini yapar, sonraki bakış 5 tane daha, günlük sınırlar içinde. İnsan modundaki bir hesap bunun yerine \"Bakış başına eşya, insan modu\"nu kullanır."
     },
     "SpareKeepItems": {
       "label": "Bu eşyalara asla dokunma",
-      "tip": "Envanterde göründüğü gibi tam eşya adları, virgülle ayrılmış, ör. Sans, Gordon Freeman (Foil). Bir ad o eşyayı her oyunda tutar. Bunlar hep tutulur."
+      "tip": "Envanterde göründüğü gibi tam eşya adları, virgülle ayrılmış, örn. Sans, Gordon Freeman (Foil). Bir ad o eşyayı her oyunda tutar. Bunlar her zaman tutulur. Boş: adıyla hiçbir şey tutulmaz."
     },
     "BoosterCheckHours": {
       "label": "Paketlere şu aralıkla bak (saat)",
-      "tip": "Kart paketlerine iki bakış arasındaki saat, ör. 24 - her seferinde biraz değişir."
+      "tip": "Kart paketlerine bakışlar arasındaki saat - her seferinde biraz değişir. Örneğin 24: günde yaklaşık bir kez."
     },
     "SpareKeepEmoticons": {
       "label": "Her ifadeden bu kadar tut",
-      "tip": "Her ifadeden her zaman tutulan kopya sayısı, örn. 1. 0 hiç tutmaz, yani son kopya da gidebilir."
+      "tip": "Her ifadeden her zaman tutulan kopya sayısı. Örneğin 1: 3 kopyadan 2'si gidebilir. 0 hiçbirini tutmaz, son kopya da gidebilir."
     },
     "BoosterUnopened": {
       "label": "Açmadığı paketler",
-      "tip": "Kapalıyken daha değerli oldukları, oyunları yukarıdaki listede olduğu ya da açma kapalı olduğu için kapalı kalan paketlere ne olacağı. Göndermek ya da satmak yalnızca Fazla eşyalar açıkken olur ve satış onun sınırlarına uyar. Yeni ya da pazardaki paketlere her zaman dokunulmaz.",
+      "tip": "Kapalıyken daha değerli oldukları, oyunları yukarıdaki listede olduğu ya da açma kapalı olduğu için kapalı kalan paketlere ne olacağı. Tut: kalırlar. Gönder: aşağıda adı yazılı hesaba, örneğin main. Sat: fazla eşyalar gibi ilana konur. Göndermek ya da satmak yalnızca Fazla eşyalar açıkken olur ve satış onun sınırlarına uyar. Yeni ya da pazardaki paketlere, ve \"Kart paketi yap\"taki otomatiğin yaptığı paketlere her zaman dokunulmaz.",
       "choices": "0 tut | 1 başka bir hesabıma gönder | 2 sat"
     },
     "SpareBackgrounds": {
       "label": "Kopya arka planlar",
-      "tip": "Bir profil arka planının fazla kopyalarını fazla sayar."
+      "tip": "Bir profil arka planının fazla kopyalarını fazla sayar. Örneğin 3 kopya ve tutulan 1: 2'si fazla. Kapalı: arka planlar kalır."
     },
     "SparePriceMaxAgeHours": {
       "label": "Fiyata güvenme süresi (saat)",
-      "tip": "Bir pazar fiyatının güncel sayıldığı saat, ör. 24. Fiyatı daha eski ya da bilinmeyen eşya yeniden fiyatlanana kadar tutulur."
+      "tip": "Bir pazar fiyatının ne kadar süre taze sayıldığı. Örneğin 24: dün sabah okunan bir fiyat bu sabah artık çok eskidir ve o eşya yeniden fiyatlanana kadar tutulur. Fiyatı bilinmeyen bir eşya her zaman tutulur."
     },
     "BoosterSendTo": {
       "label": "Açılmamış paketleri gönder",
-      "tip": "Buradaki diğer hesaplarından birinin adı, ör. main. Kimlik doğrulayıcı eklenmediyse gönderimin telefondan onaylanması gerekir."
+      "tip": "Buradaki diğer hesaplarından birinin adı, örn. main - paketler ona bir takasla gider. Kimlik doğrulayıcı eklenmediyse gönderme telefondan onay ister."
     },
     "SpareRunHours": {
       "label": "Şu aralıkla bak (saat)",
-      "tip": "Fazla eşyalara iki bakış arasındaki saat, ör. 12 - her seferinde biraz değişir. İnsan modundaki hesap yalnızca kendi gününde bakar."
+      "tip": "Fazla eşyalara bakışlar arasındaki saat - her seferinde biraz değişir. Örneğin 12: günde yaklaşık iki kez. İnsan modundaki bir hesap yalnızca kendi gününde bakar."
     },
     "SpareKeepGames": {
       "label": "Bu oyunların eşyalarına asla dokunma",
-      "tip": "Kartları, arka planları ve ifadeleri hep tutulan oyunlar."
+      "tip": "Kartları, arka planları ve ifadeleri her zaman tutulan oyunlar - örneğin setini topladığın bir oyun. Boş: hiçbir oyun bütünüyle tutulmaz."
     },
     "SpareSellPrice": {
       "label": "Satış fiyatı",
-      "tip": "Herhangi bir şeyin listelendiği fiyat - listelemeden hemen önce bu hesabın kendi Steam cüzdanı para biriminde yeniden fiyatlanır. \"Gerçek fiyatın bir sent altı\" (güvenli varsayılan): son bir günde satıldığı fiyat ya da daha yüksekse en ucuz ilan - çok aşağıya atılmış tek bir ilan yok sayılır, örn. 0.30'dan satılıyor ve 0.10'luk bir ilan varsa 0.29'dan listelenir. Son zamanlarda satış yoksa ya da kimse satmıyorsa: tutulur. Diğerleri: en ucuzla aynı, medyan (asla en ucuzun altında değil) ya da en ucuzun bir sent altı (en hızlı satar, atılan fiyatları aşağı takip eder).",
-      "choices": "0 gerçek fiyatın bir sent altı | 1 en ucuzla aynı | 2 medyan satış fiyatı | 3 en ucuzun bir sent altı"
+      "tip": "Herhangi bir şeyin listelendiği fiyat - listelemeden hemen önce bu hesabın kendi Steam cüzdanı para biriminde yeniden fiyatlanır. Örneğin bugün birkaç kez 0.30'dan satılmış ve 0.10'a atılmış tek bir ilanı olan bir eşya: gerçek fiyatın bir sent altı 0.29'dan, en ucuzla aynı 0.10'dan, medyan 0.30'dan listeler. \"Gerçek fiyatın bir sent altı\" (güvenli varsayılan): son bir günde satıldığı fiyat ya da daha yüksekse en ucuz ilan - çok aşağıya atılmış tek bir ilan yok sayılır. Son zamanlarda satış yoksa ya da kimse satmıyorsa: tutulur. Diğerleri: en ucuzla aynı ya da medyan (asla en ucuzun altında değil).",
+      "choices": "0 gerçek fiyatın bir sent altı | 1 en ucuzla aynı | 2 medyan satış fiyatı"
     },
     "SpareRelistDays": {
       "label": "Satılmayan ilanları kaldırma süresi (gün)",
-      "tip": "Gün, ör. 7: nocat.farm'ın kendi koyduğu bir ilan o zamana kadar satılmamışsa ve başkası daha ucuza satıyorsa kaldırılır ve o günün fiyatıyla yeniden konur. Senin kendi koyduğun ilanlara asla dokunulmaz."
+      "tip": "Satılmayan bir ilanın kaldırılıp biraz daha ucuza yeniden konmasından önceki gün sayısı. Örneğin 7: ayın 1'inde 0.30'dan listelenen ve 8'inde hâlâ satılmamış bir kart 0.29'dan yeniden konur - ya da başkası onu 0.26'dan satıyorsa 0.25'ten (atılmış bir ilan sayılmaz). Asla \"Asla şunun altına inme\"nin altına inmez; o fiyatta ilanda kalır. Yalnızca nocat.farm'ın kendi koyduğu ilanlar. Kendi koyduğun ilanlara asla dokunulmaz."
     },
     "SpareMaxPrice": {
       "label": "Bundan değerli eşyalara dokunma",
-      "tip": "Bu hesabın kendi Steam cüzdanı para biriminde, örn. dolar ya da euro için 0.25 - kendi para biriminde aynı değeri kullan, örn. yen için 40. Değer, en ucuz ilan ile son bir gündeki satış fiyatından yüksek olanıdır. Daha değerli olan her şey yalnızca spare preview'da listelenir, karar senin."
+      "tip": "Daha değerli hiçbir şeye asla dokunulmaz: asla taşa çevrilmez, asla satılmaz. Bu hesabın kendi Steam cüzdanı para biriminde, örn. dolar ya da euro için 0.25 - kendi para biriminde aynı değeri kullan, örn. yen için 40. Değer, en ucuz ilan ile son bir günde satıldığı fiyattan yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur."
     },
     "SpareGemMarginPct": {
       "label": "Mücevher satışı şu kadar geçmeli (%)",
-      "tip": "Yüzde olarak, ör. 20: bir eşya ancak mücevherleri, Steam ücretlerinden sonra satışın sana kazandıracağından en az %20 daha değerliyse mücevhere dönüşür. Yoksa satılır."
+      "tip": "Bir eşya mücevher olmadan önce mücevherlerin satıştan ne kadar daha değerli olması gerektiği, yüzde olarak. Örneğin 20: satış Steam'in kesintilerinden sonra eline 0.10 geçiriyorsa, 0.12 ya da daha değerli mücevherler kazanır ve eşya mücevher olur; 0.11 değerindeyse satılır. Yalnızca \"mücevher ya da satışın en iyisi\" için."
     },
     "SpareMaxedBadgeCards": {
       "label": "Tamamlanmış rozetlerin kartları",
-      "tip": "Rozeti zaten 5. seviyede olan (ya da parlak rozeti yapılmış) bir oyunun kartlarını fazla sayar, aşağıda ayarlanan kopyaları tutar."
+      "tip": "Rozeti zaten tamamlanmış bir oyunun kartlarını - seviye 5 ya da parlak rozet yapılmış - fazla sayar, \"Her karttan bu kadar tut\" ile ayarlanan kopyaları tutarak. Örneğin bir kartın 3 kopyası ve tutulan 1: 2'si fazla. Kapalı: tamamlanmış rozetlerin kartları kalır."
     },
     "SpareNewDays": {
       "label": "Yeni eşyalara dokunma süresi (gün)",
-      "tip": "Bir eşyanın geldikten sonra dokunulmadan kaldığı gün sayısı, ör. 7. nocat.farm eşyayı ilk gördüğü andan sayar, yani açtıktan hemen sonra her şey bu kadar bekler. 0 kuralı kapatır."
+      "tip": "Bir eşyanın geldikten sonra dokunulmadan kaldığı gün sayısı. Örneğin 7: pazartesi düşen bir kart bir sonraki pazartesiden itibaren gidebilir. nocat.farm eşyayı ilk gördüğü andan sayar. İlk baktığında envanterde zaten olan her şey eski sayılır ve hemen gidebilir - yalnızca ondan sonra gelen eşyalar bekler. 0 bu kuralı kapatır."
     },
     "SpareGemsSendTo": {
       "label": "Çuvalları gönder",
-      "tip": "Buradaki diğer hesaplarından birinin adı, ör. main. Yalnızca \"Sonra mücevherler\" çuvalları gönderirken kullanılır. Doğrulayıcı eklenmemişse göndermek telefon onayı ister."
+      "tip": "Buradaki diğer hesaplarından birinin adı, örn. main - çuvallar ona bir takasla gider. Yalnızca \"Sonra mücevherler\" çuvalları gönderirken kullanılır. Kimlik doğrulayıcı eklenmediyse gönderme telefondan onay ister."
     },
     "OpenBoosterPacks": {
       "label": "Kart paketlerini aç",
-      "tip": "Envanterdeki kart paketlerini açar, böylece kartları rozetlere sayılır (ya da fazla eşya olur). Varsayılan olarak asla - sen seçene kadar hiçbir şey açılmaz. \"Yalnızca kartlar daha değerliyse\", kartları pazarda kapalı paketten daha değerliyse paketi açar; fiyat bilinmiyorsa kapalı kalır. İnsan modundaki bir hesap paketleri yalnızca kendi gününde açar.",
+      "tip": "Envanterdeki kart paketlerini açar, böylece kartları rozetlere sayılır (ya da fazla eşya olur). Seviye atlamak için her zaman'ı seç. Varsayılan olarak asla - sen seçene kadar hiçbir şey açılmaz. \"Yalnızca kartlar daha değerliyse\", 3 kartı pazarda kapalı paketten daha değerliyse paketi açar - örneğin 0.08 + 0.05 + 0.05'lik kartlar 0.15'lik bir paketi geçer; fiyat bilinmiyorsa kapalı kalır. Her zaman: her paket. \"Kart paketi yap\"taki otomatiğin yaptığı paketleri, burada ne yazarsa yazsın otomatik kendisi açar. İnsan modundaki bir hesap paketleri yalnızca kendi gününde açar.",
       "choices": "0 asla | 1 yalnızca kartlar daha değerliyse | 2 her zaman"
     },
     "SpareAction": {
       "label": "Fazla eşyalarla ne yapılsın",
-      "tip": "\"Mücevher ya da satışın en iyisi\", mücevherler satıştan (aşağıdaki fark kadar) daha değerliyse eşyayı mücevhere çevirir, değilse satar. \"Her şeyi tut\" yalnızca neyin fazla olduğunu bildirir.",
+      "tip": "\"Mücevher ya da satışın en iyisi\", mücevherler satıştan (aşağıdaki fark kadar) daha değerliyse eşyayı mücevhere çevirir, değilse satar - örneğin 0.05 değerindeki mücevherler eline 0.02 geçiren bir satışı geçer. Yalnızca mücevher: asla satmaz. Yalnızca sat: asla mücevher yapmaz. Her şeyi tut: yalnızca neyin fazla olduğunu bildirir, hiçbir şey değişmez.",
       "choices": "0 mücevher ya da satışın en iyisi | 1 yalnızca mücevher | 2 yalnızca sat | 3 her şeyi tut (yalnızca bildir)"
     },
     "SpareEmoticons": {
       "label": "Kopya ifadeler",
-      "tip": "Bir ifadenin fazla kopyalarını fazla sayar."
+      "tip": "Bir ifadenin fazla kopyalarını fazla sayar. Örneğin 3 kopya ve tutulan 1: 2'si fazla. Kapalı: ifadeler kalır."
     },
     "BoosterNeverOpen": {
       "label": "Bu oyunların paketlerini asla açma",
-      "tip": "Kart paketleri hep kapalı kalan oyunlar."
+      "tip": "Kart paketleri her zaman kapalı kalan oyunlar - örneğin kapalı paketlerini takas ettiğin bir oyun. Boş: hiçbir oyun bekletilmez."
     },
     "SpareItems": {
       "label": "Fazla eşyalarla ilgilen",
-      "tip": "Fazla kartları, arka planları ve ifadeleri değerli taşa çevirir ya da satar, günde birkaç tane - hangisi daha çok kazandırırsa. Yalnızca Steam'in kendi eşyaları (kartlar, arka planlar, ifadeler) - asla oyun eşyaları ya da CS2 kaplamaları değil. Rozetlerinin hâlâ ihtiyaç duyduğu şeylere, yeni gelen hiçbir şeye ve fiyat sınırının üstündeki hiçbir şeye asla dokunmaz. Açınca önce ne yapacağını gösterir ve onay ister; kapatmak onu hemen durdurur."
+      "tip": "Fazla kartları, arka planları ve ifadeleri mücevhere çevirir ya da satar, günde birkaç tane - hangisi daha çok kazandırırsa. Örneğin 0.03 değerindeki bir kartın 4. kopyası, mücevherleri daha değerliyse mücevher olur. Yalnızca Steam'in kendi eşyaları (kartlar, arka planlar, ifadeler) - asla oyun eşyaları ya da CS2 kaplamaları değil. Rozetlerinin hâlâ ihtiyaç duyduğu şeylere, yeni gelen hiçbir şeye ve fiyat sınırının üstündeki hiçbir şeye asla dokunmaz. Açınca önce ne yapacağını gösterir ve onay ister; kapatmak onu hemen durdurur."
     },
     "SpareDailyValue": {
       "label": "Günde en fazla değer",
-      "tip": "Bir günün eşyalarının toplamda en fazla ne kadar edebileceği, bu hesabın kendi Steam cüzdanı para biriminde, örn. dolar ya da euro için 1.00 - kendi para biriminde aynı değeri kullan, örn. yen için 150."
+      "tip": "Bir günün eşyalarının toplamda en fazla ne kadar değerli olabileceği, bu hesabın kendi Steam cüzdanı para biriminde. Örneğin 1.00: 0.10'luk on eşya günü doldurur ve 11. yarını bekler. örn. dolar ya da euro için 1.00 - kendi para biriminde aynı değeri kullan, örn. yen için 150."
     },
     "SpareDailyItems": {
       "label": "Günde en fazla eşya",
-      "tip": "Bir günde mücevhere çevrilen ya da satılan en fazla eşya, ör. 10."
+      "tip": "Bir günde mücevhere çevrilen ya da satılan en fazla eşya. Örneğin 10: 5'lik iki bakış ve o gün iş biter. İnsan modundaki bir hesap ise bunları gününe yayar: örneğin 6 saatlik bir günde 50, saatte bir bakış, bakış başına yaklaşık 9 eder."
     },
     "SpareFoils": {
       "label": "Parlak kartlar da",
-      "tip": "Parlak kartların fazla sayılmasına izin verir. Varsayılan olarak kapalı: parlak kartlar daha nadir ve genelde daha değerli."
+      "tip": "Parlak kartların da fazla sayılmasına izin verir - örneğin parlak rozeti yapılmış bir parlak kartın 2. kopyası. Kapalı (varsayılan): parlak kartlar daha nadir ve çoğu zaman daha değerli olduğu için her zaman kalır."
     },
     "BoosterOpenNewDays": {
       "label": "Yeni paketlere dokunma süresi (gün)",
-      "tip": "Bir paketin geldikten sonra kapalı kaldığı gün sayısı, ör. 7. 0 hemen açar."
+      "tip": "Bir paketin geldikten sonra kapalı kaldığı gün sayısı. Örneğin 7: pazartesi gelen bir paket bir sonraki pazartesiden itibaren açılır. 0 onları hemen açar. nocat.farm'ın kendi yaptığı paketler bekletilmez - ilk fırsatta açılır."
     },
     "SpareExtraCards": {
       "label": "Fazla kart kopyaları",
-      "tip": "Rozetin hâlâ ihtiyacı olandan fazla kart kopyalarını fazla sayar. Örneğin rozet 2. seviyedeyse her karttan 3 tane tutar."
+      "tip": "Rozetin hâlâ ihtiyaç duyduğundan fazla kart kopyalarını fazla sayar. Örneğin rozet seviyesi 2'deyken her karttan 3 tane tutar (seviye 3, 4 ve 5 için), yani 4. kopya fazladır. Kapalı: fazla kopyalar kalır."
     },
     "SendItems": {
       "label": "Fazla eşyaları ve kart paketlerini gönder",
-      "tip": "Fazla eşyaların değerli taşa çevirdiği ya da listelediği eşyalar ve açılan kart paketleri."
+      "tip": "Fazla eşyaların ya da kart paketlerinin her bakışı için tek mesaj: kaç eşyanın mücevhere çevrildiği ya da ilana konduğu ve kaç paketin açıldığı, ilk 10'u adıyla - örneğin 14 eşya için 14 değil tek mesaj. Kapalı: bunların hiçbiri gönderilmez."
     },
     "SpareKeepCopies": {
       "label": "Her karttan bu kadar tut",
-      "tip": "Rozet bitmiş olsa bile her karttan her zaman tutulan kopya sayısı, örn. 1. 0 hiç tutmaz, yani son kopya da gidebilir. Bir rozetin hâlâ ihtiyaç duyduğu kartlar her zaman tutulur."
+      "tip": "Rozet tamamlanmış olsa bile her karttan her zaman tutulan kopya sayısı. Örneğin 1: 3 kopyadan 2'si gidebilir. 0 hiçbirini tutmaz, son kopya da gidebilir. Bir rozetin hâlâ ihtiyaç duyduğu kartlar her zaman tutulur."
     },
     "SpareDumpPct": {
       "label": "En ucuz ilan satışların bu kadar altındaysa eşyayı tut (%)",
-      "tip": "Yüzde olarak, örn. 50: en ucuz ilan son bir günde satıldığı fiyatın en az %50 altındaysa ve o fiyatı tek bir satış destekliyorsa, iki fiyat birbiriyle çelişir ve eşya listelenmez, tutulur. İki veya daha fazla satışta satıldığı fiyatın bir sent altına listelenir; bunun altındaki bir ilan zaten hiçbir zaman senin fiyatını belirlemez. 0 tek satışta da listeler. Yalnızca \"Gerçek fiyatın bir sent altı\" için."
+      "tip": "En ucuz ilanı satıldığı fiyatın bu kadar altındaysa ve o fiyatı yalnızca tek bir satış destekliyorsa eşyayı ilana koymak yerine tutar - iki fiyat birbiriyle çelişir. Örneğin 50: bir kez 0.30'dan satılmış, en ucuz ilan 0.12 (%60 altında): tutulur. İki ya da daha fazla satış varsa satıldığı fiyatın bir sent altından listelenir. 0 tek satışta da listeler. Yalnızca \"gerçek fiyatın bir sent altı\" için."
+    },
+    "BoosterMake": {
+      "label": "Kart paketi yap",
+      "tip": "Mücevherleri kart paketine çevirir, Steam'in izin verdiği gibi oyun başına günde bir paket. Kapalı: paket yapılmaz. Seçtiğim oyunlar: aşağıdaki listedeki oyunlar için paket. Otomatik: Steam'in paket yapmaya izin verdiği oyunlar arasından normal rozeti bir sonraki seviyesine en yakın oyun - sahip olduğun kartlar sayılınca en az kartı eksik olan; rozeti zaten 5. seviyede olan bir oyunu ve parlak kartları asla kullanmaz. Örneğin setinden 1 kartı eksik bir oyun, 4 kartı eksik olandan önce gelir. Otomatik, yaptığı paketleri \"Kart paketlerini aç\" ne derse desin kendisi açar, böylece kartlar rozete gider; biten setlerin seviyeye dönüşmesi için \"Kart setlerinden rozet üret\"i aç. Paketler çuvaldaki mücevherleri kullanamadığı için otomatik mücevherleri gevşek tutar (\"Sonra mücevherler\"). İnsan modundaki bir hesap paketleri yalnızca kendi günü içinde yapar ve açar. 'booster plan' otomatiğin sıradaki seçimini gösterir.",
+      "choices": "0 kapalı | 1 seçtiğim oyunlar | 2 otomatik - en yakın rozet"
+    },
+    "BoosterKeepGems": {
+      "label": "En az bu kadar mücevher tut",
+      "tip": "Bir kart paketinin hesabı asla altına düşürmediği mücevher sayısı. Paket yalnızca mücevherler fiyatını artı bu sayıyı karşıladıkça yapılır. Örneğin 1.500 mücevherle 1000: 400'lük bir paket yapılır ve 1.100 kalır, sonraki paket daha fazla mücevher bekler. 0 hepsini kullanabilir."
+    },
+    "SpareRelistFloorPct": {
+      "label": "Asla şunun altına inme (gerçek satış fiyatının %'si)",
+      "tip": "Satılmayan bir ilanın inebileceği en düşük fiyat, eşyanın son bir günde satıldığı fiyatın yüzdesi olarak. Örneğin 80: 0.30'dan satılmış bir kart asla 0.24'ün altına inmez - o fiyatta ilanda kalır ve yeniden konmaz. Son zamanlarda satış yoksa hiç düşürülmez."
+    },
+    "SpareHumanGapMinMinutes": {
+      "label": "Eşyalar arası bekleme, insan modu (dakika)",
+      "tip": "İnsan modundaki bir hesapta iki eşya arasındaki en kısa bekleme, dakika olarak. Her bekleme bununla aşağıdaki en uzun arasında rastgele seçilir. Örneğin 3 ve 20: bir eşyadan sonra bir sonrakine kadar 3 ile 20 dakika arası bekler."
+    },
+    "SpareDeclinedDays": {
+      "label": "Bir ilanı telefonunda reddedersen, tekrar dene (gün sonra)",
+      "tip": "Bir eşyanın ilanını Steam uygulamasında reddettikten sonra o eşyanın ne kadar beklediği. Örneğin 30: ayın 1'inde bir kartın ilanını reddedersin ve o kart - her kopyası - ayın 31'ine kadar yeniden listelenmez. Hiç yayına çıkmadan kaldırılan bir ilan da reddedilmiş sayılır, emin olamadığı bir ilan da öyle. 0 onu bir daha asla listelemez."
+    },
+    "SpareHumanPerLook": {
+      "label": "Bakış başına eşya, insan modu",
+      "tip": "İnsan modundaki bir hesapta tek bir bakışın mücevhere çevirdiği ya da sattığı en fazla eşya, en değerliler önce. Günün eşyalarını gününe yayar - bugün kalanın kalan bakışlara bölümü kadar, asla bundan fazla değil. Örneğin 6 saatlik bir günde günde 50, saatte bir bakış: bakış başına yaklaşık 9; bu 3 ise bakış başına 3 ve bakışlar daha sık gelir."
+    },
+    "SpareMinSale": {
+      "label": "Yalnızca en az şu kadar alırsan sat",
+      "tip": "Bir satışın Steam ücretlerinden sonra sana en az getirmesi gereken, bu hesabın kendi Steam cüzdanı para biriminde. Örneğin 0.05: sana 0.03 getirecek bir kart, mücevherleri bir şey ediyorsa mücevhere çevrilir, etmiyorsa tutulur. ör. dolar ya da euro için 0.05 - kendi para biriminde aynı değeri kullan, ör. yen için 5. 0 her şeyi satar."
+    },
+    "SpareHumanGapMaxMinutes": {
+      "label": "...en fazla (dakika)",
+      "tip": "İnsan modundaki bir hesapta iki eşya arasındaki en uzun bekleme, dakika olarak. Örneğin 20, en kısa 3 iken: her bekleme 3 ile 20 dakika arasındadır, yani 3 eşya en fazla yaklaşık 40 dakika sürer."
+    },
+    "CraftFoilBadges": {
+      "label": "Parlak rozetleri de üret",
+      "tip": "Tamamlanmış parlak kart setlerinden parlak rozet de üretir. Kapalıyken yalnızca normal rozet üretir ve parlak kartlara dokunmaz. Steam bir parlak rozeti reddederse yalnızca parlaklar bekler - normal rozetler devam eder."
     }
   }
 }

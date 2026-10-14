@@ -9,8 +9,9 @@ namespace NocatFarm.Core;
 /// <see cref="UserCount"/>) adds to the "hours of game time banked · cards farmed" totals on the download page.
 /// </summary>
 /// <remarks>
-/// Only two numbers ever leave: game-hours and cards, since the last time nocat.lol said it had them - with how long that
-/// covers and how many accounts this copy has, which nocat.lol caps them by. Nothing about which account, game or card.
+/// Only numbers ever leave: game-hours and cards (and from 1.8.1 items turned into gems, badges crafted, packs opened and
+/// items sold), since the last time nocat.lol said it had them - with how long that covers and how many accounts this copy
+/// has, which nocat.lol caps them by. Nothing about which account, game, card or item.
 ///
 /// A restored backup's history is the install's that made it: it never goes in this install's catch-up (see
 /// <see cref="Restoring"/>). A file that can't be read just now is tried again later; a broken one is kept aside and
@@ -35,7 +36,13 @@ namespace NocatFarm.Core;
 /// most 32 games for 24 hours, and <see cref="MaxCardsPerAccountDay"/> cards). An older nocat.lol never says "gotold":
 /// the catch-up simply keeps going with the pings, so it's counted the day nocat.lol can.
 ///
-/// "Count me as a user" or "Share my hours and cards totals" off: nothing is counted or sent, and the batches waiting
+/// The rest (1.8.1): items turned into gems, badges crafted (foil too), booster packs opened and items sold on the
+/// market (<see cref="Extra"/>) go in the same batches, each capped per account per hour
+/// (<see cref="MaxGemItemsPerAccountHour"/> and the others). The history didn't record them before 1.8.1, so there's no
+/// catch-up of them: they count from when this version runs, and the history records them from then on too. An older
+/// nocat.lol simply doesn't read them.
+///
+/// "Count me as a user" or "Share my farming totals" off: nothing is counted or sent, and the batches waiting
 /// are dropped. A catch-up already made is kept, not sent, until sharing is on again - it never overlaps the batches
 /// whenever it goes.
 /// </remarks>
@@ -51,6 +58,33 @@ public static class FarmTotals {
 
 	/// <summary>The most cards one account can get in a day, by the same "a card per game every half hour".</summary>
 	public const int MaxCardsPerAccountDay = MaxCardsPerAccountHour * 24;
+
+	/// <summary>Items one account turns into gems in an hour, at most.</summary>
+	public const int MaxGemItemsPerAccountHour = 60;
+
+	/// <summary>Badges (foil too) one account crafts in an hour, at most - Steam backs off long before that.</summary>
+	public const int MaxBadgesPerAccountHour = 10;
+
+	/// <summary>Booster packs one account opens in an hour, at most.</summary>
+	public const int MaxPacksPerAccountHour = 30;
+
+	/// <summary>Items of one account the market history says sold in an hour, at most.</summary>
+	public const int MaxSoldPerAccountHour = 60;
+
+	/// <summary>The other things counted besides hours and cards (1.8.1).</summary>
+	public enum Extra {
+		/// <summary>An item turned into gems.</summary>
+		Gems,
+
+		/// <summary>A badge level crafted, foil or not.</summary>
+		Badge,
+
+		/// <summary>A booster pack opened.</summary>
+		Pack,
+
+		/// <summary>An item of ours the market history says sold.</summary>
+		Sold
+	}
 
 	/// <summary>
 	/// A new batch is made at most this often, not with every hourly ping: each batch is a write on nocat.lol, and one an
@@ -68,9 +102,15 @@ public static class FarmTotals {
 	/// <summary>
 	/// One batch: its random name, the game-hours (one decimal) and cards in it, and when it was made - plus when the time
 	/// it covers began (<paramref name="Start"/>) and how many accounts this copy had (<paramref name="Accounts"/>), which
-	/// nocat.lol caps it by. A batch saved by a build before those has neither (default, 0) and goes without them.
+	/// nocat.lol caps it by. A batch saved by a build before those has neither (default, 0) and goes without them. And
+	/// (1.8.1) items turned into gems, badges crafted, packs opened and items sold - 0 in a batch saved before.
 	/// </summary>
-	public sealed record Batch(string B, double Hours, int Cards, DateTime Made, DateTime Start = default, int Accounts = 0);
+	public sealed record Batch(string B, double Hours, int Cards, DateTime Made, DateTime Start = default, int Accounts = 0,
+		int Gems = 0, int Badges = 0, int Packs = 0, int Sold = 0) {
+		/// <summary>Anything at all in it.</summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool Any => (Hours > 0) || (Cards > 0) || (Gems > 0) || (Badges > 0) || (Packs > 0) || (Sold > 0);
+	}
 
 	/// <summary>
 	/// The one-time catch-up: game-hours (one decimal) and cards from the history before counting started, from
@@ -90,6 +130,15 @@ public static class FarmTotals {
 
 		/// <summary>The catch-up waiting for nocat.lol's "gotold", or null (none, or taken).</summary>
 		public CatchUp? Old { get; set; }
+
+		/// <summary>Items turned into gems, badges crafted, packs opened and items sold, not in a batch yet (1.8.1).</summary>
+		public int FreshGems { get; set; }
+		public int FreshBadges { get; set; }
+		public int FreshPacks { get; set; }
+		public int FreshSold { get; set; }
+
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool AnyExtra => (FreshGems > 0) || (FreshBadges > 0) || (FreshPacks > 0) || (FreshSold > 0);
 	}
 
 	/// <summary>The history so far, added up: game-minutes, cards, accounts and days. <see cref="History.Past"/>; the checks swap it.</summary>
@@ -117,7 +166,7 @@ public static class FarmTotals {
 	/// <summary>The mark a restore leaves until it's settled. Not one of a backup's files, so it never travels.</summary>
 	private static string RestoredPath => Path.Combine(ConfigStore.ConfigDir, "state", "farm-totals.restored");
 
-	/// <summary>Whether the totals are shared: "Count me as a user" and "Share my hours and cards totals" both on.</summary>
+	/// <summary>Whether the totals are shared: "Count me as a user" and "Share my farming totals" both on.</summary>
 	public static bool Sharing(GlobalConfig g) => g.CountMeAsUser && g.ShareFarmTotals;
 
 	/// <summary>A batch's name: 16 lowercase hex characters.</summary>
@@ -169,6 +218,33 @@ public static class FarmTotals {
 		}
 	}
 
+	/// <summary>An item turned into gems, a badge crafted, a pack opened or an item sold - from the history.</summary>
+	public static void Note(Extra what) => Note(Live.Global, what, DateTime.UtcNow);
+
+	public static void Note(GlobalConfig g, Extra what, DateTime nowUtc) {
+		if (!Sharing(g)) {
+			return;
+		}
+
+		// Counting may start with this one - it goes in the counter all the same: no catch-up has these.
+		StartCounting(g, nowUtc);
+
+		lock (Gate) {
+			if (!Load(nowUtc)) {
+				return;
+			}
+
+			switch (what) {
+				case Extra.Gems: _state.FreshGems++; break;
+				case Extra.Badge: _state.FreshBadges++; break;
+				case Extra.Pack: _state.FreshPacks++; break;
+				case Extra.Sold: _state.FreshSold++; break;
+			}
+
+			SaveNow(nowUtc, soon: true);
+		}
+	}
+
 	/// <summary>
 	/// What goes with this ping: the batch still waiting for nocat.lol's "got", or a new one made from what's fresh - or
 	/// null when there's nothing to send (or sharing is off, which also drops anything waiting). A new batch is on disk
@@ -184,7 +260,7 @@ public static class FarmTotals {
 			}
 
 			if (!Sharing(g)) {
-				if ((_state.Pending != null) || (_state.FreshMinutes > 0) || (_state.FreshCards > 0)) {
+				if ((_state.Pending != null) || (_state.FreshMinutes > 0) || (_state.FreshCards > 0) || _state.AnyExtra) {
 					// The catch-up and when counting started stay: the catch-up never overlaps a batch, whenever it goes.
 					_state = new State { FreshSince = nowUtc, LiveSince = _state.LiveSince, Old = _state.Old };
 					SaveNow(nowUtc, soon: false);
@@ -211,7 +287,7 @@ public static class FarmTotals {
 			double hours = Math.Floor(_state.FreshMinutes / 6) / 10;   // whole tenths, never rounded up
 			int cards = _state.FreshCards;
 
-			if ((hours <= 0) && (cards <= 0)) {
+			if ((hours <= 0) && (cards <= 0) && !_state.AnyExtra) {
 				return null;
 			}
 
@@ -220,22 +296,36 @@ public static class FarmTotals {
 			double maxHours = Math.Floor(fleet * MaxGamesPerAccount * elapsed * 10) / 10;
 			int maxCards = (int) Math.Min(int.MaxValue, Math.Floor(fleet * MaxCardsPerAccountHour * elapsed));
 			bool capped = (hours > maxHours) || (cards > maxCards);
+			int Cap(int n, int perHour) => (int) Math.Min(n, Math.Floor(fleet * perHour * elapsed));
+			int gems = Cap(_state.FreshGems, MaxGemItemsPerAccountHour), badges = Cap(_state.FreshBadges, MaxBadgesPerAccountHour);
+			int packs = Cap(_state.FreshPacks, MaxPacksPerAccountHour), sold = Cap(_state.FreshSold, MaxSoldPerAccountHour);
 
-			State before = new() { FreshMinutes = _state.FreshMinutes, FreshCards = _state.FreshCards, FreshSince = _state.FreshSince, LiveSince = _state.LiveSince, Old = _state.Old };
+			State before = new() {
+				FreshMinutes = _state.FreshMinutes, FreshCards = _state.FreshCards, FreshSince = _state.FreshSince, LiveSince = _state.LiveSince, Old = _state.Old,
+				FreshGems = _state.FreshGems, FreshBadges = _state.FreshBadges, FreshPacks = _state.FreshPacks, FreshSold = _state.FreshSold
+			};
 			// The time it covers and the accounts go with it: nocat.lol caps it by those, not by how many are signed in when
 			// it arrives (none, right after a restart) or how long since it last heard (days, after it was down).
 			Batch batch = new(Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(8)), Math.Min(hours, maxHours), Math.Min(cards, maxCards), nowUtc,
-				_state.FreshSince, Math.Min(fleet, UserCount.MaxAccounts));
+				_state.FreshSince, Math.Min(fleet, UserCount.MaxAccounts), gems, badges, packs, sold);
 
 			if (capped) {
 				Log.Debug($"live stats: {hours:0.0} hours and {cards} cards in an hour's totals is more than {fleet} account(s) could do - sending {batch.Hours:0.0} and {batch.Cards}");
 			}
 
+			if ((gems < _state.FreshGems) || (badges < _state.FreshBadges) || (packs < _state.FreshPacks) || (sold < _state.FreshSold)) {
+				Log.Debug($"live stats: {_state.FreshGems} into gems, {_state.FreshBadges} badges, {_state.FreshPacks} packs and {_state.FreshSold} sold is more than {fleet} account(s) could do - sending {gems}, {badges}, {packs} and {sold}");
+			}
+
 			// What's left under a tenth of an hour carries over; anything over the cap is gone for good.
 			_state.FreshMinutes = capped ? 0 : Math.Max(0, _state.FreshMinutes - (hours * 60));
 			_state.FreshCards = 0;
+			_state.FreshGems = 0;
+			_state.FreshBadges = 0;
+			_state.FreshPacks = 0;
+			_state.FreshSold = 0;
 			_state.FreshSince = nowUtc;
-			_state.Pending = ((batch.Hours > 0) || (batch.Cards > 0)) ? batch : null;
+			_state.Pending = batch.Any ? batch : null;
 
 			if (!SaveNow(nowUtc, soon: false)) {
 				// Not on disk: sending it could mean sending it again under another name after a restart.
@@ -341,6 +431,10 @@ public static class FarmTotals {
 				_state.LiveSince = nowUtc;
 				_state.FreshMinutes = 0;
 				_state.FreshCards = 0;
+				_state.FreshGems = 0;
+				_state.FreshBadges = 0;
+				_state.FreshPacks = 0;
+				_state.FreshSold = 0;
 				_state.FreshSince = nowUtc;
 				_state.Pending = null;
 				_state.Old = ((hours > 0) || (capped > 0))
@@ -358,6 +452,13 @@ public static class FarmTotals {
 	public static (double FreshHours, int FreshCards, Batch? Waiting) Unsent() {
 		lock (Gate) {
 			return Load(DateTime.UtcNow) ? (_state.FreshMinutes / 60, _state.FreshCards, _state.Pending) : (0, 0, null);
+		}
+	}
+
+	/// <summary>The rest not in a batch yet: items turned into gems, badges crafted, packs opened and items sold.</summary>
+	public static (int Gems, int Badges, int Packs, int Sold) UnsentExtras() {
+		lock (Gate) {
+			return Load(DateTime.UtcNow) ? (_state.FreshGems, _state.FreshBadges, _state.FreshPacks, _state.FreshSold) : (0, 0, 0, 0);
 		}
 	}
 
@@ -472,12 +573,17 @@ public static class FarmTotals {
 				} else {
 					saved.FreshMinutes = double.IsFinite(saved.FreshMinutes) ? Math.Max(0, saved.FreshMinutes) : 0;
 					saved.FreshCards = Math.Max(0, saved.FreshCards);
+					saved.FreshGems = Math.Max(0, saved.FreshGems);
+					saved.FreshBadges = Math.Max(0, saved.FreshBadges);
+					saved.FreshPacks = Math.Max(0, saved.FreshPacks);
+					saved.FreshSold = Math.Max(0, saved.FreshSold);
 
 					if ((saved.FreshSince == default) || (saved.FreshSince > nowUtc)) {
 						saved.FreshSince = nowUtc;
 					}
 
-					if (saved.Pending is { } p && (!IsBatchName(p.B) || !double.IsFinite(p.Hours) || (p.Hours < 0) || (p.Cards < 0))) {
+					if (saved.Pending is { } p && (!IsBatchName(p.B) || !double.IsFinite(p.Hours) || (p.Hours < 0) || (p.Cards < 0)
+						|| (p.Gems < 0) || (p.Badges < 0) || (p.Packs < 0) || (p.Sold < 0))) {
 						saved.Pending = null;
 					}
 

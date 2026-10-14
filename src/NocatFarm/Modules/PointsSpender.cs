@@ -279,7 +279,7 @@ public sealed class PointsPlan {
 
 /// <summary>
 /// What spending has gone on, per account - for the weekly limit, and so it survives a restart - and whether the owner has
-/// said 'points ok' for it. Both in config/state/points-&lt;account&gt;.json.
+/// turned spending on for it (its go-ahead). Both in config/state/points-&lt;account&gt;.json.
 /// </summary>
 /// <remarks>
 /// The ok lives here, not in the account's settings, so a settings file or a backup can never bring it with it: a restore
@@ -305,7 +305,7 @@ public sealed class PointsLedger(string path) {
 	private bool _ok, _migrated, _onDisk;
 	private readonly Lock _gate = new();
 
-	/// <summary>One per account for the whole program, so 'points ok' typed while a look runs isn't saved over.</summary>
+	/// <summary>One per account for the whole program, so 'points on' typed while a look runs isn't saved over.</summary>
 	private static readonly Dictionary<string, PointsLedger> Loaded = new(StringComparer.OrdinalIgnoreCase);
 
 	public static PointsLedger Of(string account) {
@@ -332,7 +332,7 @@ public sealed class PointsLedger(string path) {
 	}
 
 	/// <summary>
-	/// Whether this account may really spend: the owner typed 'points ok'. An ok still in its settings from before is
+	/// Whether this account may really spend: the owner turned it on ('points on', or the switch after its preview). An ok still in its settings from before is
 	/// moved over the first time, then cleared there - and a settings file saying it later (an old one, restored) is never
 	/// read again.
 	/// </summary>
@@ -382,7 +382,7 @@ public sealed class PointsLedger(string path) {
 		}
 	}
 
-	/// <summary>'points ok' (true) or 'points hold' (false), saved.</summary>
+	/// <summary>Spending turned on (true) or off (false) - 'points on|off' or the switch - saved.</summary>
 	public void SetOk(bool ok) {
 		lock (_gate) {
 			Load();
@@ -550,7 +550,7 @@ internal sealed class SteamPoints(Bot bot) : IPointsSteam {
 /// </summary>
 /// <remarks>
 /// Points spent are gone for good, so every way in is careful. A preview ('points spend preview') reads and buys nothing. An
-/// account spends nothing at all until the owner types 'points ok &lt;account&gt;' - until then each look is a preview, said
+/// account spends nothing at all until the owner turns it on ('points on &lt;account&gt;' or its switch) - until then each look is a preview, said
 /// once in the log. It keeps "Always keep at least" points, spends no more than "Spend at most, a week" in any seven days,
 /// and reads the balance, the price and the level again just before buying, so nothing that changed in between is bought
 /// on an old figure. A human-mode account is off by default and, when on, only acts in its own day.
@@ -564,7 +564,7 @@ public sealed class PointsSpender(Bot bot, IPointsSteam? steam = null) : BotModu
 		/// <summary>The account's own loop: only with "Spend Steam Points on levels" on.</summary>
 		Auto,
 
-		/// <summary>'points spend &lt;account&gt;': now, by hand - still only after 'points ok'.</summary>
+		/// <summary>'points spend &lt;account&gt;': now, by hand - still only while spending is on.</summary>
 		Now
 	}
 
@@ -578,14 +578,15 @@ public sealed class PointsSpender(Bot bot, IPointsSteam? steam = null) : BotModu
 		/// <summary>Why it couldn't look or carry on (English, for the console). Empty when all went well.</summary>
 		public string Problem { get; set; } = "";
 
-		/// <summary>Spending would have happened, but the account hasn't had 'points ok' yet.</summary>
+		/// <summary>Spending would have happened, but the account hasn't had spending turned on yet.</summary>
 		public bool WaitingForOk { get; set; }
 	}
 
 	private readonly IPointsSteam _steam = steam ?? new SteamPoints(bot);
 	private readonly SemaphoreSlim _busy = new(1, 1);
 	private HumanGate? _gate;
-	private DateTime _next = DateTime.MinValue;
+	/// <summary>When the next look is - from "Look every (hours)" as it's set now, so changing it moves a look already planned.</summary>
+	internal LookTimer Timer { get; } = new(() => Math.Clamp(bot.Cfg.PointsCheckEveryHours, 1, 168), 1.0, 1.2);
 	private string? _lastPreview;
 	private Said _status = new("");
 
@@ -607,9 +608,8 @@ public sealed class PointsSpender(Bot bot, IPointsSteam? steam = null) : BotModu
 		}
 
 		while (!ct.IsCancellationRequested) {
-			if (Bot.Cfg.SpendPoints && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && (DateTime.UtcNow >= _next) && Gate.Open) {
-				int hours = Math.Clamp(Bot.Cfg.PointsCheckEveryHours, 1, 168);
-				_next = DateTime.UtcNow + TimeSpan.FromMinutes(Rng.Next(hours * 60, hours * 72));
+			if (Bot.Cfg.SpendPoints && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && Timer.Due(DateTime.UtcNow) && Gate.Open) {
+				Timer.Looked(DateTime.UtcNow);
 
 				bool waiting = false;
 
@@ -623,19 +623,18 @@ public sealed class PointsSpender(Bot bot, IPointsSteam? steam = null) : BotModu
 
 					if (result.Problem.Length > 0) {
 						// Steam not answering is a "try again in an hour", not the long wait.
-						_next = DateTime.UtcNow + Rng.Minutes(45, 90);
+						Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
 					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't look at the Steam Points: {0}", Log.Describe(e)), Bot.Name);
-					_next = DateTime.UtcNow + Rng.Minutes(45, 90);
+					Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
 				}
 
 				// Said on the account's card only when there's something to say: an account with no points to spend and no
 				// 'points ok' (most robots) shows nothing.
-				DateTime next = _next;
-				_status = PointsLedger.Approved(Bot) ? new Said("Steam Points: next look around {0}", (Func<string>) (() => Fmt.Clock(next)))
+				_status = PointsLedger.Approved(Bot) ? new Said("Steam Points: next look around {0}", (Func<string>) (() => Fmt.Clock(Timer.Next)))
 					: waiting ? new Said("Steam Points: spending is off - turn it on in Settings to see what it would buy")
 					: new Said("");
 			}

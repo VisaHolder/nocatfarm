@@ -308,7 +308,7 @@ public sealed partial class Library {
 			CopyState.JustStopped => new Said("{0} left out - someone in your Steam Family just stopped playing it (back at {1})", name,
 				(copy.BackAt ?? DateTime.UtcNow).ToLocalTime().ToString("HH:mm")),
 			CopyState.Unconfirmed => new Said("{0} left out - someone in your Steam Family was playing it before the reconnect; asking Steam again", name),
-			CopyState.Borrow or CopyState.Switching => new Said("{0}: its copy is in use - switching to {1}'s free copy", name, MemberName(copy.Lender, false)),
+			CopyState.Borrow or CopyState.Switching => new Said("{0}: copy in use · switching to {1}'s copy", name, MemberName(copy.Lender, false)),
 			CopyState.CantSwitch => new Said("{0} left out - its copy is in use and Steam wouldn't lend another family member's copy (tries again in a while)", name),
 			_ => default
 		};

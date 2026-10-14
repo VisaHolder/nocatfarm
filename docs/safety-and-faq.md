@@ -23,7 +23,7 @@ it, and the install ID isn't in backups. That's where "1,240 Steam accounts on n
 Discord card comes from. *Count me as a user* (*Global settings
 → Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
 
-With *Share my hours and cards totals* (*Global settings → Updates & plugins*, right under *Count me as a user*, on while that is) the same
+With *Share my farming totals* (*Global settings → Updates & plugins*, right under *Count me as a user*, on while that is) the same
 message also carries two numbers, about every 6 hours: the game-hours banked and the cards dropped since the last one. They're capped to
 what your accounts could really have done in that time, and each lot is sent under a random name until nocat.lol says
 it has it, so it's never counted twice. With them go how many hours that lot covers and how many accounts this copy
@@ -32,7 +32,12 @@ what this copy's history already held from before (up to about 400 days), so the
 too. That's added up the moment counting starts, so an hour is in it or in the 6-hourly numbers, never both, and it's
 capped to what your accounts could have done on those days. nocat.lol counts it once per install, ever. A history restored from a backup belongs to the copy that made the
 backup, so it's never sent from the copy it's restored on. That's the
-"hours of game time banked · cards farmed" on nocat.lol's nocat.farm page. Turn it off and neither number is sent.
+"hours of game time banked · cards farmed" on nocat.lol's nocat.farm page.
+
+From 1.8.1 the same lots also carry four more counts: items turned into gems, badges crafted (foil too), booster packs
+opened, and items the market history says sold. Each is counted only once Steam says it's done, and capped per account
+per hour (60 items into gems, 10 badges, 30 packs, 60 sold). There's nothing from before 1.8.1 for these: the history
+only started keeping them then. Turn the setting off and none of these numbers is sent.
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From

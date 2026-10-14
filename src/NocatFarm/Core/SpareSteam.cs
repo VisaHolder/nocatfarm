@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using NocatFarm.Config;
 
@@ -14,6 +15,13 @@ public interface ISpareSteam {
 
 	/// <summary>Turn one item into gems. Gems = what Steam says it gave.</summary>
 	Task<(bool Ok, int Gems, string? Why)> GrindAsync(SpareItem item, int expected, CancellationToken ct);
+
+	/// <summary>
+	/// After a turn into gems that got no clear yes (no answer, a timeout, an error): whether it went through anyway - the
+	/// inventory read again, the item gone and the gems up by at least <paramref name="expected"/>. The gems it gave, or null
+	/// when it's still there, the gems aren't in, or the inventory couldn't be read: then it's a failure.
+	/// </summary>
+	Task<int?> GemsIfGoneAsync(SpareItem item, int expected, CancellationToken ct) => Task.FromResult<int?>(null);
 
 	/// <summary>List these on the market; returns how many went up, and a line to say.</summary>
 	Task<(int Listed, string Said)> SellAsync(IReadOnlyList<SpareDecision> items, CancellationToken ct);
@@ -32,7 +40,7 @@ public interface ISpareSteam {
 
 	void Release(IEnumerable<ulong> ids);
 
-	/// <summary>The wait between two items: a few seconds to a minute, as a person working through an inventory.</summary>
+	/// <summary>The wait between two items: seconds on a robot account, minutes on a human-mode one (see <see cref="LiveSpareSteam.Gap"/>).</summary>
 	Task<bool> PauseAsync(CancellationToken ct);
 
 	/// <summary>
@@ -49,10 +57,18 @@ public interface ISpareSteam {
 	/// plan's figure - with the wallet's currency: the buyer's price and what you get. Null when it wasn't listed.
 	/// </summary>
 	(string Price, string YouGet)? ListedFor(ulong assetId) => null;
+
+	/// <summary>The same in cents of the wallet's currency: what you get, and the currency. Null when it wasn't listed.</summary>
+	(int YouGetCents, int Currency)? ListedCents(ulong assetId) => null;
 }
 
-/// <summary>The real Steam, for one account. <paramref name="mayAct"/>: the human-mode gate the run keeps to (none: always).</summary>
-public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareSteam {
+/// <summary>The real Steam, for one account. <paramref name="mayAct"/>: the human-mode gate the run keeps to (none: always).
+/// <paramref name="spread"/>: a human-mode look's spread through its day - its waits between items fill the time to the next look.
+/// <paramref name="gemsAtStart"/>: the loose gems the look's inventory held (-1: not known) - what an unclear answer is checked against.</summary>
+public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpread.Plan? spread = null, long gemsAtStart = -1) : ISpareSteam {
+	/// <summary>The loose gems there should be now: the look's start, plus what each yes gave.</summary>
+	private long _gems = gemsAtStart;
+
 	public bool MayAct => mayAct?.Invoke() ?? true;
 
 	private Uri Profile(string path) => new(WebSession.Community, $"/profiles/{bot.SteamId}/{path}");
@@ -86,9 +102,65 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareS
 			["contextid"] = "6",
 			["assetid"] = item.AssetId.ToString(CultureInfo.InvariantCulture),
 			["goo_value_expected"] = expected.ToString(CultureInfo.InvariantCulture)
-		}, Inventory, ct).ConfigureAwait(false);
+		}, Inventory, ct, errorVerdict: true).ConfigureAwait(false);
 
-		return SteamGems.ParseGrind(body);
+		// Steam's refusal comes with an error status and its reason in the body ("The item you selected has expired or no
+		// longer exists."): read, so the log says that instead of "no answer".
+		(bool Ok, int Gems, string? Why) result = SteamGems.ParseGrind(body);
+
+		if (result.Ok && (_gems >= 0)) {
+			_gems += result.Gems;
+		}
+
+		return Counted(bot.Name, result);
+	}
+
+	/// <summary>
+	/// Steam's answer to turning an item into gems, as it is - and a yes counted in the history and the live stats on
+	/// nocat.lol (1.8.1). Only a yes: a no, or no clear answer, counts nothing (an unclear one the inventory then shows went
+	/// through is counted by <see cref="GemsIfGoneAsync"/>).
+	/// </summary>
+	public static (bool Ok, int Gems, string? Why) Counted(string account, (bool Ok, int Gems, string? Why) result) {
+		if (result.Ok) {
+			History.Note(FarmTotals.Extra.Gems, account, DateTime.UtcNow);
+		}
+
+		return result;
+	}
+
+	/// <summary>Steam's answer to opening a booster pack, as it is - a yes counted in the history and the live stats (1.8.1).</summary>
+	public static (bool Ok, List<string> Cards, string? Why) Opened(string account, (bool Ok, List<string> Cards, string? Why) result) {
+		if (result.Ok) {
+			History.Note(FarmTotals.Extra.Pack, account, DateTime.UtcNow);
+		}
+
+		return result;
+	}
+
+	public async Task<int?> GemsIfGoneAsync(SpareItem item, int expected, CancellationToken ct) {
+		if ((_gems < 0) || (expected <= 0)) {
+			return null;   // nothing to compare with: a failure, as before
+		}
+
+		InventoryContents? inventory = await NocatFarm.Core.Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
+
+		if (inventory is not { Complete: true }) {
+			return null;
+		}
+
+		List<SpareItem> now = Spare.Read(inventory);
+		long gems = now.Where(static i => i.Kind == SpareKind.Gems).Sum(static i => (long) i.Amount);
+
+		// Gone, and the gems in: it went through. Gems spent meanwhile (a booster pack made) make it look like it didn't -
+		// counted as a failure then, which never counts against today's limit.
+		if (now.Exists(i => i.AssetId == item.AssetId) || (gems - _gems < expected)) {
+			return null;
+		}
+
+		_gems += expected;
+		Counted(bot.Name, (true, expected, null));   // it went through after all: counted like a clear yes
+
+		return expected;
 	}
 
 	public async Task<(int Listed, string Said)> SellAsync(IReadOnlyList<SpareDecision> items, CancellationToken ct) {
@@ -99,9 +171,16 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareS
 
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
-		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct, SpareRun.Repricer(items, SpareRules.From(bot.Cfg), currency),
+		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct,
+			SpareRun.Repricer(items, SpareRules.From(bot.Cfg), currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
+				hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name)),
 			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name),
-			o => _listed[o.AssetId] = (Spare.Money(o.BuyerCents, currency), Spare.Money(o.YouGetCents, currency))).ConfigureAwait(false);
+			o => {
+				_listed[o.AssetId] = (Spare.Money(o.BuyerCents, currency), Spare.Money(o.YouGetCents, currency));
+				_listedCents[o.AssetId] = (o.YouGetCents, currency);
+			},
+			// A human-mode account's listings are spread out like its gems; a robot keeps the market's own gap.
+			bot.Cfg.LegitMode ? async t => await PauseAsync(t).ConfigureAwait(false) : null).ConfigureAwait(false);
 
 		// "name: listed 3 of 5, ..." - the count is the first number after "listed".
 		int at = said.IndexOf("listed ", StringComparison.Ordinal);
@@ -125,6 +204,10 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareS
 
 	public (string Price, string YouGet)? ListedFor(ulong assetId) => _listed.TryGetValue(assetId, out (string Price, string YouGet) at) ? at : null;
 
+	private readonly System.Collections.Concurrent.ConcurrentDictionary<ulong, (int YouGetCents, int Currency)> _listedCents = new();
+
+	public (int YouGetCents, int Currency)? ListedCents(ulong assetId) => _listedCents.TryGetValue(assetId, out (int YouGetCents, int Currency) at) ? at : null;
+
 	public async Task<(bool Ok, string? Why)> PackSacksAsync(SpareItem gems, int sacks, CancellationToken ct) {
 		string? body = await bot.Web.PostAsync(Profile("ajaxexchangegoo/"), new Dictionary<string, string>(StringComparer.Ordinal) {
 			["appid"] = "753",
@@ -144,7 +227,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareS
 			["communityitemid"] = pack.AssetId.ToString(CultureInfo.InvariantCulture)
 		}, Inventory, ct).ConfigureAwait(false);
 
-		return SteamGems.ParseUnpack(body);
+		return Opened(bot.Name, SteamGems.ParseUnpack(body));
 	}
 
 	public Task<string> SendAsync(IReadOnlyList<SpareItem> items, string toAccount, CancellationToken ct) => Looting.SendTheseAsync(bot, toAccount, items, ct);
@@ -154,16 +237,35 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null) : ISpareS
 	public void Release(IEnumerable<ulong> ids) => bot.ReleaseItems(ids);
 
 	public async Task<bool> PauseAsync(CancellationToken ct) {
-		int gap = Math.Clamp(bot.Cfg.SpareGapSeconds, 3, 600);
+		(TimeSpan lo, TimeSpan hi) = Gap(bot.Cfg);
+
+		if (bot.Cfg.LegitMode && (spread != null)) {
+			(lo, hi) = SpareSpread.Gap(lo, hi, spread);
+		}
 
 		try {
-			// A human-mode account takes its time: up to four times as long, more often nearer the short end.
-			await Task.Delay(bot.Cfg.LegitMode ? Rng.Seconds(gap, gap * 4) : Rng.Seconds(Math.Max(2, gap / 2), gap + (gap / 2)), ct).ConfigureAwait(false);
+			await Task.Delay(TimeSpan.FromSeconds(Rng.Next((int) lo.TotalSeconds, (int) hi.TotalSeconds + 1)), ct).ConfigureAwait(false);
 
 			return true;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			return false;
 		}
+	}
+
+	/// <summary>
+	/// The shortest and longest wait between two items, picked at random in between each time: on a human-mode account
+	/// minutes ("Wait between items, human mode", 3 to 20), on a robot the seconds gap, half to one and a half times it.
+	/// </summary>
+	public static (TimeSpan Lo, TimeSpan Hi) Gap(BotConfig cfg) {
+		if (cfg.LegitMode) {
+			int lo = Math.Clamp(cfg.SpareHumanGapMinMinutes, 0, 240);
+
+			return (TimeSpan.FromMinutes(lo), TimeSpan.FromMinutes(Math.Max(lo, Math.Clamp(cfg.SpareHumanGapMaxMinutes, 0, 240))));
+		}
+
+		int gap = Math.Clamp(cfg.SpareGapSeconds, 3, 600);
+
+		return (TimeSpan.FromSeconds(Math.Max(2, gap / 2)), TimeSpan.FromSeconds(gap + (gap / 2)));
 	}
 }
 
@@ -241,7 +343,20 @@ public static class SteamGems {
 		return null;
 	}
 
-	private static string Why(string? body) => body == null ? "no answer" : Log.Scrub(body.Length > 150 ? body[..150] : body);
+	private static string Why(string? body) {
+		if (body == null) {
+			return "no answer";
+		}
+
+		// Steam's own words when it gives them ({"success":42,"message":"The item you selected has expired or no longer exists."}).
+		using (JsonDocument? doc = Json(body)) {
+			if ((doc != null) && doc.RootElement.TryGetProperty("message", out JsonElement m) && (m.ValueKind == JsonValueKind.String) && (m.GetString() is { Length: > 0 } said)) {
+				return Log.Scrub(said.Length > 150 ? said[..150] : said);
+			}
+		}
+
+		return Log.Scrub(body.Length > 150 ? body[..150] : body);
+	}
 
 	/// <summary>goo_value from a gem-value answer; null when it isn't one.</summary>
 	public static int? ParseGooValue(string? body) {
@@ -373,9 +488,14 @@ public static class SparePrices {
 
 	/// <summary>
 	/// An item's price in <paramref name="currency"/> (the account's own wallet currency) as held now, with when it was read
-	/// - null when it was never priced in it. Nobody selling it is the same in every currency: a newer shortlist that
-	/// doesn't have it on sale says so (0). A shortlist price is never handed out as this currency's.
+	/// - null when it was never priced in it. Nobody selling it is the same in every currency: a newer shortlist that lists
+	/// it with no listing at all says so (0). A shortlist price is never handed out as this currency's.
 	/// </summary>
+	/// <remarks>
+	/// Only the market saying so - a search result with no listing, or priceoverview's own answer - means nobody sells it.
+	/// An item that simply wasn't on the pages fetched has no price yet and gets a lookup of its own (<see cref="NotListed"/>):
+	/// taken as nobody selling, 93 items were kept on an account where single lookups had found 32 that morning.
+	/// </remarks>
 	public static MarketPrice? Of(SpareItem item, int currency) {
 		if (currency <= 0) {
 			return null;
@@ -384,20 +504,82 @@ public static class SparePrices {
 		MarketQuote? quote = MarketQuotes.Of(item.Hash, currency);
 		uint app = item.Kind is SpareKind.Gems or SpareKind.GemSack ? 753u : item.Game;
 
-		if ((Cached(app) is { } g) && (quote == null || g.When > quote.When) && (!g.Items.TryGetValue(item.Hash, out Row? row) || (row.Cents <= 0))) {
+		if ((Cached(app) is { } g) && (quote == null || g.When > quote.When) && (RowOf(g, item.Hash) is { Cents: <= 0 })) {
 			return new MarketPrice(0, g.When);   // priced, and nobody sells this one
 		}
 
 		return quote?.Price;
 	}
 
+	/// <summary>
+	/// An item's row on its game's shortlist - by its market name exactly, or written the way a page might write it
+	/// differently (an "&amp;" left in, other capitals). Null when the pages didn't have it.
+	/// </summary>
+	private static Row? RowOf(Game g, string hash) {
+		if (g.Items.TryGetValue(hash, out Row? row)) {
+			return row;
+		}
+
+		string plain = WebUtility.HtmlDecode(hash);
+
+		foreach ((string name, Row r) in g.Items) {
+			if (string.Equals(WebUtility.HtmlDecode(name), plain, StringComparison.OrdinalIgnoreCase)) {
+				return r;
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Its game's shortlist is fresh but doesn't have it at all - not on the pages fetched, which isn't the market saying
+	/// nobody sells it: it gets a lookup of its own in the wallet's currency.
+	/// </summary>
+	public static bool NotListed(SpareItem item) => (Cached(item.Game) is { } g) && (RowOf(g, item.Hash) == null);
+
+	/// <summary>An item's US-dollar price on its game's shortlist, by market name ("440-Scout") - null when not known or nobody sells it.</summary>
+	public static int? UsdCents(string hash) =>
+		(hash.IndexOf('-') is int dash and > 0) && uint.TryParse(hash.AsSpan(0, dash), NumberStyles.None, CultureInfo.InvariantCulture, out uint app)
+		&& (Cached(app) is { } g) && (RowOf(g, hash) is { Cents: > 0 } row) ? row.Cents : null;
+
+	/// <summary>
+	/// An item's price for DECIDING, in the wallet's currency: its dollar shortlist price at the learned rate (see
+	/// <see cref="WalletRate"/>), dated by the shortlist - one search page priced it, no request of its own. Null when there's
+	/// no shortlist price or no rate yet, and near the price limit (from 80% to 125% of it): a converted price could fall
+	/// either side, so that item is asked about in its own currency instead. Never a listing price: a sale is always priced
+	/// again in the real currency right before it goes up.
+	/// </summary>
+	public static MarketPrice? Estimate(SpareItem item, int currency, int maxCents) {
+		if ((Cached(item.Game) is not { } g) || (RowOf(g, item.Hash) is not { Cents: > 0 } row) || (WalletRate.ForDeciding(currency) is not double rate)) {
+			return null;
+		}
+
+		int cents = WalletRate.ToWallet(row.Cents, rate);
+
+		if (Borderline(cents, maxCents)) {
+			return null;
+		}
+
+		// The shortlist has the cheapest listing only: taken as the real price too, two sales behind it - the listing rule
+		// then reads it as it is. What it really sells for is asked right before listing.
+		return new MarketPrice(Math.Max(1, cents), g.When, Math.Max(1, cents), 2);
+	}
+
+	/// <summary>A converted price too close to the price limit to trust either way: 80% to 125% of it.</summary>
+	public static bool Borderline(int cents, int maxCents) => (cents * 5L >= maxCents * 4L) && (cents * 4L <= maxCents * 5L);
+
+	/// <summary>Whether an item's converted price is near the price limit, so it's asked about in its own currency.</summary>
+	public static bool NeedsOwnPrice(SpareItem item, int currency, int maxCents) =>
+		(Cached(item.Game) is { } g) && (RowOf(g, item.Hash) is { Cents: > 0 } row) && (WalletRate.ForDeciding(currency) is double rate)
+		&& Borderline(WalletRate.ToWallet(row.Cents, rate), maxCents);
+
 	/// <summary>What an item is worth in US dollars on the shortlist, for putting the most valuable first - 0 when not known.</summary>
 	public static int ShortlistCents(SpareItem item) =>
-		(Cached(item.Game) is { } g) && g.Items.TryGetValue(item.Hash, out Row? row) ? row.Cents : 0;
+		(Cached(item.Game) is { } g) && (RowOf(g, item.Hash) is { } row) ? row.Cents : 0;
 
-	/// <summary>Whether the shortlist says somebody sells this item (true when it doesn't know).</summary>
+	/// <summary>Whether somebody may sell this item: false only when the shortlist has it with no listing (true when it doesn't know).</summary>
 	public static bool MaySell(SpareItem item) =>
-		(Cached(item.Game) is not { } g) || (g.Items.TryGetValue(item.Hash, out Row? row) && (row.Cents > 0));
+		(Cached(item.Game) is not { } g) || (RowOf(g, item.Hash) is not { Cents: <= 0 });
 
 	/// <summary>A sack of gems' price in the account's own wallet currency, as held now.</summary>
 	public static MarketPrice? Sack(int currency) => currency > 0 ? MarketQuotes.Of(SackHash, currency)?.Price : null;
@@ -453,7 +635,7 @@ public static class SparePrices {
 	/// <summary>Price one item in the account's own wallet currency. False when the market didn't answer.</summary>
 	public static async Task<bool> QuoteAsync(SpareItem item, int currency, CancellationToken ct) => await MarketQuotes.FetchAsync(item.Hash, currency, ct).ConfigureAwait(false) != null;
 
-	internal static void Keep(Game game) {
+	public static void Keep(Game game) {
 		lock (Gate) {
 			Games()[Key(game.App)] = game;
 			Save();
@@ -480,7 +662,8 @@ public static class SparePrices {
 			Dictionary<string, Row> rows = new(StringComparer.Ordinal);
 
 			foreach (JsonElement r in results.EnumerateArray()) {
-				string hash = InventoryContents.Text(r, "hash_name");
+				// Written as the inventory writes it: "&amp;" on a page is the "&" in the item's own market name.
+				string hash = WebUtility.HtmlDecode(InventoryContents.Text(r, "hash_name"));
 
 				if (hash.Length == 0) {
 					continue;

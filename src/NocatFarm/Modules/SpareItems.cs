@@ -26,6 +26,21 @@ public sealed class SpareItems(Bot bot) : BotModule(bot) {
 	/// <summary>Whether the account's day lets it act now: any time without human mode, only in its own day with it.</summary>
 	public bool DayAllows => Gate.Open;
 
+	/// <summary>When the next look is - from "Look every (hours)" as it's set now, so changing it moves a look already planned.</summary>
+	internal LookTimer Timer => _timer ??= new LookTimer(() => Math.Clamp(Bot.Cfg.SpareRunHours, 1, 72), 0.75, 1.25);
+
+	private LookTimer? _timer;
+
+	/// <summary>
+	/// A human-mode account's next look that does items, by its spread through the day (see <see cref="SpareSpread"/>). A
+	/// look before then - one that comes back soon for items still waiting for a price - only prices: acting in it did the
+	/// next look's items early, a burst again.
+	/// </summary>
+	private DateTime _actAt = DateTime.MinValue;
+
+	/// <summary>When the market is next looked at for a listing of ours waiting on its confirmation (see <see cref="SpareRun.CheckPendingAsync"/>).</summary>
+	private DateTime _pendingAt = DateTime.MinValue;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		// Well clear of everything a sign-in does.
 		if (!await Sleep(Rng.Minutes(15, 40), ct).ConfigureAwait(false)) {
@@ -33,11 +48,27 @@ public sealed class SpareItems(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			TimeSpan wait = TimeSpan.FromMinutes(10);
-			if (Bot.Cfg.SpareItems && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && DayAllows
+			if (Bot.Cfg.SpareItems && Timer.Due(DateTime.UtcNow) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && DayAllows
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
+				SpareRun.Ran? ran = null;
+				bool acted = !Bot.Cfg.LegitMode || (DateTime.UtcNow >= _actAt);
+
 				try {
-					string said = await SpareRun.RunAsync(Bot, act: true, ct).ConfigureAwait(false);
+					// In the background it prices many items a look - one market request each - and comes back soon while
+					// some still wait for a price.
+					ran = await SpareRun.LookAndDoAsync(Bot, act: acted, SpareRun.QuotesBackground, ct).ConfigureAwait(false);
+
+					// A 'spare do' is working on the account: this look waits for it to finish - asked again in a minute.
+					if (ran.Busy) {
+						if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+							return;
+						}
+
+						continue;
+					}
+
+					// Its answer on one line - every item it did is already a line of its own.
+					string said = SpareRun.OneLine(ran.Said);
 					Log.Debug($"spare items: {Log.Scrub(said.Length > 300 ? said[..300] : said)}", Bot.Name);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
@@ -45,14 +76,50 @@ public sealed class SpareItems(Bot bot) : BotModule(bot) {
 					Log.Debug(new Said("couldn't look at spare items: {0}", Log.Describe(e)), Bot.Name);
 				}
 
-				int hours = Math.Clamp(Bot.Cfg.SpareRunHours, 1, 72);
-				wait = Rng.Minutes(hours * 45, hours * 75);
-				_gate!.Space(15, 90);
-				DateTime next = DateTime.Now + wait;
-				_status = new Said("next look at spare items around {0}", (Func<string>) (() => Fmt.Clock(next.ToUniversalTime())));
+				Timer.Looked(DateTime.UtcNow);
+
+				// A human-mode account spreads its items through its day: the next look that does any is the spread's time
+				// away, give or take a fifth. What's left waits for it.
+				if (Bot.Cfg.LegitMode && acted && (ran?.Spacing is TimeSpan spacing)) {
+					_actAt = DateTime.UtcNow + (spacing * (0.8 + (Random.Shared.NextDouble() * 0.4)));
+
+					if (ran.MoreToDo) {
+						Timer.LookAt(_actAt);
+					}
+				} else if ((ran?.MoreToDo == true) && Bot.Cfg.LegitMode) {
+					// No day to spread over yet: what's left waits for a later look in its day, not the next one.
+					Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 120));
+				}
+
+				if (ran?.StillPricing == true) {
+					Timer.LookAt(DateTime.UtcNow + Rng.Minutes(5, 10));
+				}
+
+				// Spaced after a look that did items; one that only priced did nothing anybody sees.
+				if (acted) {
+					_gate!.Space(15, 90);
+				}
+
+				_status = new Said("next look at spare items around {0}", (Func<string>) (() => Fmt.Clock(Timer.Next)));
 			}
 
-			if (!await Sleep(wait, ct).ConfigureAwait(false)) {
+			// A listing waiting on its confirmation in the Steam app: a light look at the market every 5 to 10 minutes, only
+			// while one waits, so "X is on the market" (or declined) is said minutes after - not at the next look, hours away.
+			if ((DateTime.UtcNow >= _pendingAt) && Bot.IsOnline && Bot.Web.Ready && OurListings.Undecided(Bot.Name)
+				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
+				_pendingAt = DateTime.UtcNow + Rng.Minutes(5, 10);
+
+				try {
+					await SpareRun.CheckPendingAsync(Bot, ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+					throw;
+				} catch (Exception e) {
+					Log.Debug(new Said("couldn't look at the listings waiting on a confirmation: {0}", Log.Describe(e)), Bot.Name);
+				}
+			}
+
+			// Asked again every minute, so a changed setting moves the next look straight away.
+			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 				return;
 			}
 		}
@@ -78,16 +145,20 @@ public sealed class PackOpener(Bot bot) : BotModule(bot) {
 	/// <summary>Whether the account's day lets it act now: any time without human mode, only in its own day with it.</summary>
 	public bool DayAllows => Gate.Open;
 
+	/// <summary>When the next look is - from "Look for packs every (hours)" as it's set now, so changing it moves a look already planned.</summary>
+	internal LookTimer Timer => _timer ??= new LookTimer(() => Math.Clamp(Bot.Cfg.BoosterCheckHours, 1, 168), 50 / 60d, 70 / 60d);
+
+	private LookTimer? _timer;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		if (!await Sleep(Rng.Minutes(20, 60), ct).ConfigureAwait(false)) {
 			return;
 		}
 
 		while (!ct.IsCancellationRequested) {
-			TimeSpan wait = TimeSpan.FromMinutes(10);
 			bool wanted = (Bot.Cfg.OpenBoosterPacks > 0) || (Bot.Cfg.BoosterUnopened > 0);
 
-			if (wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && DayAllows
+			if (wanted && Timer.Due(DateTime.UtcNow) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && DayAllows
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
 				try {
 					string said = await SpareRun.PacksAsync(Bot, act: true, ct).ConfigureAwait(false);
@@ -98,14 +169,13 @@ public sealed class PackOpener(Bot bot) : BotModule(bot) {
 					Log.Debug(new Said("couldn't look at booster packs: {0}", Log.Describe(e)), Bot.Name);
 				}
 
-				int hours = Math.Clamp(Bot.Cfg.BoosterCheckHours, 1, 168);
-				wait = Rng.Minutes(hours * 50, hours * 70);
+				Timer.Looked(DateTime.UtcNow);
 				_gate!.Space(15, 90);
-				DateTime next = DateTime.Now + wait;
-				_status = new Said("next look at booster packs around {0}", (Func<string>) (() => Fmt.Clock(next.ToUniversalTime())));
+				_status = new Said("next look at booster packs around {0}", (Func<string>) (() => Fmt.Clock(Timer.Next)));
 			}
 
-			if (!await Sleep(wait, ct).ConfigureAwait(false)) {
+			// Asked again every minute, so a changed setting moves the next look straight away.
+			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 				return;
 			}
 		}

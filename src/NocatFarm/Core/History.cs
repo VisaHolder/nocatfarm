@@ -33,6 +33,13 @@ public static class History {
 		public int Cards { get; set; }
 		public int Comments { get; set; }
 
+		/// <summary>Items turned into gems, badges crafted (foil too), booster packs opened and items the market history says
+		/// sold - recorded from 1.8.1 on, for the live stats on nocat.lol.</summary>
+		public int Gems { get; set; }
+		public int Badges { get; set; }
+		public int Packs { get; set; }
+		public int Sold { get; set; }
+
 		/// <summary>Minutes with at least one game running - clock time, whatever the number of games.</summary>
 		public double Minutes { get; set; }
 
@@ -108,6 +115,12 @@ public static class History {
 
 	/// <summary>A card drop or a rep4rep comment. Called from <see cref="Stats.Record"/>, so every caller is covered.</summary>
 	public static void Record(string kind, string bot, DateTime whenUtc) {
+		if (kind == Stats.KindBadge) {
+			Note(FarmTotals.Extra.Badge, bot, whenUtc);   // a badge level crafted, foil too (1.8.1)
+
+			return;
+		}
+
 		if ((kind is not (Stats.KindCard or Stats.KindComment)) || string.IsNullOrEmpty(bot)) {
 			return;
 		}
@@ -126,6 +139,34 @@ public static class History {
 				d.Comments++;
 			}
 
+			Dirty.Add(day[..7]);
+		}
+	}
+
+	/// <summary>
+	/// An item turned into gems, a badge crafted, a booster pack opened or an item sold (1.8.1) - only once Steam said it's
+	/// done. Kept in the day's totals and handed to the live stats on nocat.lol (nothing goes while sharing them is off).
+	/// </summary>
+	public static void Note(FarmTotals.Extra what, string bot, DateTime whenUtc) {
+		if (string.IsNullOrEmpty(bot)) {
+			return;
+		}
+
+		Load();
+
+		string day = Key(whenUtc.ToLocalTime());
+
+		lock (Gate) {
+			Day d = Get(day, bot);
+
+			switch (what) {
+				case FarmTotals.Extra.Gems: d.Gems++; break;
+				case FarmTotals.Extra.Badge: d.Badges++; break;
+				case FarmTotals.Extra.Pack: d.Packs++; break;
+				case FarmTotals.Extra.Sold: d.Sold++; break;
+			}
+
+			FarmTotals.Note(what);
 			Dirty.Add(day[..7]);
 		}
 	}
@@ -529,6 +570,10 @@ public static class History {
 	private static Day Copy(Day d) => new() {
 		Cards = d.Cards,
 		Comments = d.Comments,
+		Gems = d.Gems,
+		Badges = d.Badges,
+		Packs = d.Packs,
+		Sold = d.Sold,
 		Minutes = Math.Round(d.Minutes, 2),
 		Games = d.Games.Where(static g => g.Value > 0).ToDictionary(static g => g.Key, static g => Math.Round(g.Value, 2)),
 		Value = d.Value,
@@ -595,6 +640,10 @@ public static class History {
 					Day into = Get(day, bot);
 					into.Cards = Math.Max(0, d.Cards);
 					into.Comments = Math.Max(0, d.Comments);
+					into.Gems = Math.Max(0, d.Gems);
+					into.Badges = Math.Max(0, d.Badges);
+					into.Packs = Math.Max(0, d.Packs);
+					into.Sold = Math.Max(0, d.Sold);
 					into.Minutes = Math.Max(0, d.Minutes);
 					into.Games = d.Games ?? [];
 					into.Value = d.Value;

@@ -555,7 +555,7 @@ public static partial class Backup {
 	}
 
 	/// <summary>
-	/// Spending isn't something a backup can switch on. A restore never brings an ok with it - 'points ok' and 'spare ok'
+	/// Spending isn't something a backup can switch on. A restore never brings a go-ahead with it - Steam Points spending's and Spare items'
 	/// stay exactly as they are on this PC (none, on a new one), and an ok still in an old account file is dropped - while the
 	/// spending itself comes back added to what's here: the week's Steam Points from both, today's spare-items count the
 	/// higher of the two. Restoring an older backup can't reset a limit, and restoring onto another PC can't approve anything.

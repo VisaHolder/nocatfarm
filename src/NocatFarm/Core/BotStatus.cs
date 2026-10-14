@@ -29,6 +29,20 @@ public readonly record struct BotStatus(
 	public bool AtTheKeyboard { get; private init; }
 
 	/// <summary>
+	/// The day's count and the status say nothing new on a heartbeat: asleep or done for the day (the same "6h27m/6h27m
+	/// today" and "invisible" every half hour), or idling with nothing to farm (the "no cards left" line already said so).
+	/// Left off the log's line.
+	/// </summary>
+	public bool QuietToday { get; private init; }
+
+	/// <summary>The log's shorter words, where they differ: "asleep · 8 games", "8m left", "up in 2h10m", "2h10m today".</summary>
+	public Said LogDoing { get; private init; }
+
+	public Said LogSitting { get; private init; }
+
+	public Said LogToday { get; private init; }
+
+	/// <summary>
 	/// The courtesy wait after you stop playing, as it really is. "In a moment" was said for the whole of it - on a
 	/// human-mode account that can be three times the setting, so a quarter of an hour of "a moment" right after the
 	/// log had said "picking back up in 14m".
@@ -113,6 +127,8 @@ public readonly record struct BotStatus(
 		Said doing;
 		Said sitting = default;
 		Said today = default;
+		Said logDoing = default, logSitting = default, logToday = default;
+		bool quiet = false;
 		int done = 0, total = 0, dayDone = 0, dayTotal = 0;
 		bool playing = false;
 
@@ -133,7 +149,7 @@ public readonly record struct BotStatus(
 		} else if (bot.Paused) {
 			doing = new Said("paused");
 		} else if (bot.PlayingBlocked) {
-			doing = new Said("waiting - you're playing on this account");
+			doing = new Said("waiting · you're playing on it");
 		} else if (bot.InResumeGrace) {
 			// You've stopped, Steam freed the account, and we're sitting out the courtesy delay before picking
 			// back up. Saying "you're playing on this account" here (the human-mode StoodDown text, which is still
@@ -157,6 +173,22 @@ public readonly record struct BotStatus(
 
 			if (dayTotal > 0) {
 				today = new Said("{0}/{1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
+				logToday = new Said("{0} today", Fmt.Hm(dayDone));
+			}
+
+			// The log's line: what's left of the sitting, when it's up again or back - not two pairs of numbers.
+			HumanMode.Phase phase = human.Current;
+			quiet = phase is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff;
+			logDoing = human.LogDoing;
+
+			if (total > 0) {
+				logSitting = new Said("{0} left", Fmt.Hm(Math.Max(0, total - done)));
+			} else if (human.NextChange is { } wake) {
+				int left = (int) Math.Max(0, (wake - DateTime.UtcNow).TotalMinutes);
+				logSitting = left <= 0 ? new Said("any moment")
+					: quiet ? new Said("up in {0}", Fmt.Hm(left))
+					: phase is HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak ? new Said("back in {0}", Fmt.Hm(left))
+					: new Said("{0} to go", Fmt.Hm(left));
 			}
 		} else if (bot.IsFarming) {
 			doing = new Said("farming trading cards");
@@ -196,7 +228,7 @@ public readonly record struct BotStatus(
 		// has to keep matching in every language. It is translated here, at the point it becomes prose.
 		Said persona =
 			bot.Cfg.IUseThisAccount ? new Said("status left to your own Steam client") :
-			bot.PersonaOverridden ? new Said("{0} - your own Steam client is overriding this", new Said(bot.PersonaReallyWord)) :
+			bot.PersonaOverridden ? new Said("{0} (set by your own Steam client)", new Said(bot.PersonaReallyWord)) :
 			bot.PersonaWord is not "online" ? new Said(bot.PersonaWord) : default;
 
 		// Otherwise this failure is completely silent: the row keeps reporting the name we ASKED for while
@@ -206,7 +238,11 @@ public readonly record struct BotStatus(
 		string said = (comments != null) && bot.Cfg.Rep4Rep ? $"{comments.PostsToday}/{comments.Cap}" : "";
 
 		return new BotStatus(doing, persona, sitting, today, said, warning, done, total, dayDone, dayTotal) {
-			AtTheKeyboard = playing
+			AtTheKeyboard = playing,
+			QuietToday = quiet || (today.English == "nothing to farm"),
+			LogDoing = logDoing,
+			LogSitting = logSitting,
+			LogToday = logToday
 		};
 	}
 
@@ -217,8 +253,11 @@ public readonly record struct BotStatus(
 	/// in the language of the moment - which is the one thing the heartbeat, printed every few minutes for the
 	/// life of the process, must not do.
 	/// </remarks>
+	private static Said Pick(Said log, Said shown) => log.IsEmpty ? shown : log;
+
 	public Said Line() {
-		Said[] parts = [Doing, Persona, Sitting, Today, Warning];
+		// Asleep, "invisible" is a given; the day's count is the same all night.
+		Said[] parts = [Pick(LogDoing, Doing), QuietToday ? default : Persona, Pick(LogSitting, Sitting), QuietToday ? default : Pick(LogToday, Today), Warning];
 
 		return new Said("{0}", (Func<string>) (() => string.Join(" · ",
 			parts.Where(static p => !p.IsEmpty).Select(static p => p.ToString()))));

@@ -69,6 +69,116 @@ public static partial class PriceBook {
 	/// <summary>The checks run thousands of pretend lookups; at a second each they would take an hour.</summary>
 	internal static double? GapForTests { get; set; }
 
+	// â”€â”€ the hourly cap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	/// <summary>
+	/// The most market requests in any hour, on top of the gap: 360 - the gap's own pace, ten seconds apart.
+	/// </summary>
+	/// <remarks>
+	/// The gap alone is ten seconds - 360 an hour, kept up for as long as there is anything to price. Until 1.8.1 every
+	/// item in any currency but US dollars was its own request, and an inventory of several hundred items asked for that
+	/// way ran into the market's limit: 870 lookups and a refusal one day, about 720 overnight on 2026-10-12 and a pause
+	/// until late morning. Search pages price those too now (<see cref="SearchesFit"/>), so far fewer requests are needed;
+	/// the cap is what keeps whatever is left - single lookups while searches are refused, the level planner, a run of
+	/// listings - from ever running that long. A short run (a command, a few listings) still goes at the gap. It was 180
+	/// at first, then 120 the same day, when a CAD inventory was refused after about 90 minutes. Those refusals were the
+	/// headers (<see cref="Core.Browser.MarketHandler"/>): with them gone the market refused nothing all afternoon, and
+	/// 120 only kept a 0.13 sale waiting. So it's the gap that sets the pace; the cap is a backstop.
+	/// </remarks>
+	public const int DefaultHourCap = 360;
+
+	/// <summary>The checks' own cap; with a test gap set and no cap, there is none (they run thousands).</summary>
+	internal static int? HourCapForTests { get; set; }
+
+	private static int HourCap => HourCapForTests ?? (GapForTests != null ? int.MaxValue : DefaultHourCap);
+
+	/// <summary>When each request of the last hour was sent - the gate is held for both reading and writing.</summary>
+	private static readonly Queue<DateTime> SentTimes = new();
+
+	/// <summary>
+	/// True for the requests of the inventory value - a number to look at, never what anything is decided by. Those get a
+	/// quarter of the hour's cap (<see cref="BackgroundShare"/>), so selling, gems and the level planner always have room.
+	/// </summary>
+	/// <remarks>
+	/// Live, 2026-10-13: the inventory value of 300 unpriced items asked 120 times in 16 minutes, the whole hour's cap, and
+	/// the spare items look that came next couldn't price a thing for 45 minutes.
+	/// </remarks>
+	public static readonly AsyncLocal<bool> Background = new();
+
+	/// <summary>
+	/// True for the price asked right before something is listed, lowered or taken down - a sale waiting on it. The rest
+	/// of the pricing leaves <see cref="ListingReserve"/> of the hour's cap for these, so a listing never waits behind it.
+	/// </summary>
+	/// <remarks>Live, 2026-10-13: a 0.13 sale ready to list waited for the hour's cap, used up by pricing the rest.</remarks>
+	public static readonly AsyncLocal<bool> ForListing = new();
+
+	/// <summary>Requests an hour kept back for <see cref="ForListing"/>.</summary>
+	public const int ListingReserve = 15;
+
+	/// <summary>The background's requests in the last hour - the same clock as <see cref="SentTimes"/>.</summary>
+	private static readonly Queue<DateTime> BackgroundTimes = new();
+
+	/// <summary>The most background requests in any hour: a quarter of the cap.</summary>
+	public static int BackgroundShare => Math.Max(1, HourCap / 4);
+
+	/// <summary>"The hourly cap is reached" said once per hour it is, in the debug log.</summary>
+	private static DateTime _capSaidUntil = DateTime.MinValue;
+
+	/// <summary>For the checks: the last hour's requests forgotten.</summary>
+	internal static void ForgetSent() {
+		lock (SentTimes) {
+			SentTimes.Clear();
+		}
+	}
+
+	/// <summary>Whether another request fits in the last hour's cap.</summary>
+	private static bool RoomThisHour() {
+		lock (SentTimes) {
+			DateTime now = DateTime.UtcNow;
+
+			while ((SentTimes.Count > 0) && (now - SentTimes.Peek() >= TimeSpan.FromHours(1))) {
+				SentTimes.Dequeue();
+			}
+
+			while ((BackgroundTimes.Count > 0) && (now - BackgroundTimes.Peek() >= TimeSpan.FromHours(1))) {
+				BackgroundTimes.Dequeue();
+			}
+
+			// The inventory value waits once it has had its share - quietly, it's only a number.
+			if (Background.Value && (BackgroundTimes.Count >= BackgroundShare)) {
+				return false;
+			}
+
+			if (SentTimes.Count < (ForListing.Value ? HourCap : HourCap - Math.Min(ListingReserve, HourCap / 8))) {
+				return true;
+			}
+
+			if (now >= _capSaidUntil) {
+				_capSaidUntil = SentTimes.Peek().AddHours(1);
+				Log.Debug(new Said("{0} price lookups in the last hour - the next waits until {1}, so the market isn't asked too often", SentTimes.Count,
+					_capSaidUntil.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)));
+			}
+
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Seconds <paramref name="requests"/> market requests take: the first hour's worth at the gap, the rest at the cap's pace.
+	/// </summary>
+	public static long EtaSeconds(int requests, double gapSeconds, int hourCap) {
+		if (requests <= 0) {
+			return 0;
+		}
+
+		double gap = Math.Clamp(gapSeconds, 1, 60);
+		int first = Math.Min(requests, Math.Max(1, hourCap));
+
+		return (long) Math.Round((first * gap) + ((requests - first) * Math.Max(gap, 3600d / Math.Max(1, hourCap))));
+	}
+
+	/// <summary>The same at the gap set and the cap.</summary>
+	public static long EtaSeconds(int requests) => EtaSeconds(requests, Live.Global.MarketGapSeconds, DefaultHourCap);
+
 	/// <summary>How long a price is trusted before it is worth asking again. Fewer asks, fewer rate limits.</summary>
 	private static TimeSpan MaxAge => TimeSpan.FromHours(Math.Clamp(Live.Global.PriceCacheHours, 1, 168));
 
@@ -238,11 +348,18 @@ public static partial class PriceBook {
 	public static int CurrencyId => Currency;
 
 	/// <summary>
-	/// Whether search pages can price this book: only in US dollars. The market's search answers in US dollars whatever
-	/// currency is asked for ("$0.39" asked for euros and Canadian dollars alike, live 2026-10-12, where priceoverview said
-	/// "0,36€" and "CDN$ 0.57"), so in any other currency every price is asked for on its own.
+	/// Whether search pages can price this book: in US dollars, and in any currency with a rate (<see cref="WalletRate"/>).
+	/// The market's search answers in US dollars whatever currency is asked for ("$0.39" asked for euros and Canadian
+	/// dollars alike, live 2026-10-12, where priceoverview said "0,36€" and "CDN$ 0.57"). Pricing every item on its own in
+	/// another currency was one request an item, and a few hundred of them ran into the market's limit overnight
+	/// (2026-10-12): so a search page's dollars are turned into the book's currency at the rate - learned from the market,
+	/// or the fixed table until it is. These are the shown values only; nothing is sold at one.
 	/// </summary>
-	public static bool SearchesFit => Currency == 1;
+	public static bool SearchesFit => (Currency == 1) || (WalletRate.ForShowing(Currency) != null);
+
+	/// <summary>A search page's US-dollar cents in the book's currency, as money - null when there's no rate for it.</summary>
+	private static decimal? FromDollars(int usdCents) =>
+		Currency == 1 ? usdCents / 100m : WalletRate.ForShowing(Currency) is double rate ? WalletRate.ToWallet(usdCents, rate) / 100m : null;
 
 	/// <summary>The symbol to print. Steam uses "$" for several of these, which is exactly what people expect.</summary>
 	public static string Symbol => Currency switch {
@@ -567,9 +684,11 @@ public static partial class PriceBook {
 			_pageSize = page.PageSize;
 		}
 
-		// US dollars, whatever was asked: never kept as another currency's prices (NextAsk asks none then anyway).
-		foreach ((string hash, int cents) in SearchesFit ? page.Prices : []) {
-			Remember(ask.SearchApp, hash, cents / 100m);
+		// US dollars, whatever was asked: in another currency, turned into it at the rate.
+		foreach ((string hash, int cents) in page.Prices) {
+			if (FromDollars(cents) is decimal price) {
+				Remember(ask.SearchApp, hash, price);
+			}
 		}
 
 		lock (Pages) {
@@ -621,21 +740,23 @@ public static partial class PriceBook {
 	}
 
 	/// <summary>
-	/// Every price on a search page someone else asked for, kept in the book - when it is in the book's currency. The
+	/// Every price on a search page someone else asked for, kept in the book - in the book's currency, at the rate. The
 	/// level planner's card set pages are exactly the pages pricing would ask for a game's cards, so they are never
 	/// asked twice. Not the other way round: a set price needs to know the WHOLE set, which only the planner's own
 	/// search (and its count) says.
 	/// </summary>
 	public static void Learn(uint app, string json, int currency) {
-		// A search page is US dollars whatever it was asked for: only a US-dollar book learns from one.
-		if ((currency != Currency) || !SearchesFit || (ParseSearch(json) is not { } page)) {
+		// A search page is US dollars whatever it was asked for: turned into the book's currency at the rate.
+		if (!SearchesFit || (ParseSearch(json) is not { } page)) {
 			return;
 		}
 
 		Load();
 
 		foreach ((string hash, int cents) in page.Prices) {
-			Remember(app, hash, cents / 100m);
+			if (FromDollars(cents) is decimal price) {
+				Remember(app, hash, price);
+			}
 		}
 	}
 
@@ -672,6 +793,11 @@ public static partial class PriceBook {
 			return (null, false, false);
 		}
 
+		// The hour's cap reached: nothing sent - the caller stops as when the market pauses, and goes on next time.
+		if (!RoomThisHour()) {
+			return (null, false, false);
+		}
+
 		TimeSpan gap = NextGap();
 		TimeSpan since = DateTime.UtcNow - _lastCall;
 
@@ -690,6 +816,14 @@ public static partial class PriceBook {
 
 		_lastCall = DateTime.UtcNow;
 		Interlocked.Increment(ref Asked);
+
+		lock (SentTimes) {
+			SentTimes.Enqueue(_lastCall);
+
+			if (Background.Value) {
+				BackgroundTimes.Enqueue(_lastCall);
+			}
+		}
 
 		int way = _way;
 		using HttpResponseMessage response = await (way == 0 ? Http : HttpB).GetAsync("https://steamcommunity.com" + pathAndQuery, ct).ConfigureAwait(false);

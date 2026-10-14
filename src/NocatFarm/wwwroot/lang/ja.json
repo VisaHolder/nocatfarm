@@ -263,7 +263,10 @@
     "Mostly {0}.": "主に {0}。",
     "Mostly {0}, with {1} in bursts rather than every day.": "主に {0}。ほかに {1} を毎日ではなく波のように。",
     "No games listed yet.": "ゲームがまだ挙げられていません。",
-    "On around {0}, bed around {1} — both jittered daily.": "だいたい {0} に起きて、{1} 頃に就寝 - どちらも毎日ゆらぎます。",
+    "up {0} · bed {1} · gets on {2} · goes to bed {3}": "起床 {0} · 就寝 {1} · オンラインになる時間帯 {2} · 寝る時間帯 {3}",
+    "gets on {0} · goes to bed {1}": "オンラインになる時間帯 {0} · 寝る時間帯 {1}",
+    "Gets on {0}, goes to bed {1}.": "オンラインになるのは {0}、寝るのは {1}。",
+    "Today: up {0}, bed {1}.": "今日: {0} にオンライン、{1} に就寝。",
     "About {0} on a weekday and {1} at the weekend.": "平日はおよそ {0}、週末は {1}。",
     "Roughly {0} days off entirely.": "おおよそ {0} 日は完全に休み。",
     "One game at a time, in sittings of {0}.": "一度に 1 本、{0} のセッションで。",
@@ -578,7 +581,6 @@
     "couldn't read the card-page check list: {0}": "カードページ確認リストを読み込めませんでした: {0}",
     "couldn't save the card-page check list: {0}": "カードページ確認リストを保存できませんでした: {0}",
     "asleep, the card farmer is working": "就寝中、カード収集が稼働中",
-    "last night's plan restored - {0}/{1} played, up about {2}": "昨夜のプランを復元しました - {0}/{1} プレイ済み、{2}頃に起床",
     "trade offer #{0}: couldn't check it as a card swap yet - {1}": "トレードオファー #{0}: まだカード交換として確認できていません - {1}",
     "between sittings - {0} card(s) left": "セッションの合間 - 残りカード{0}枚",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0}でカード収集中 · 残り{1} · 今日 {2}/{3}",
@@ -663,16 +665,12 @@
     "stood down": "待機解除",
     "stopped": "停止中",
     "switching game": "ゲームを切り替え中",
-    "waiting - you're playing on this account": "待機中 - このアカウントでプレイ中です",
     "waiting for a login slot": "ログイン枠を待機中",
     "you're playing": "プレイ中です",
-    "{0} - your own Steam client is overriding this": "{0} - 自分のSteamクライアントが上書きしています",
     "{0} card(s) in {1} game(s)": "{1}本のゲームに{0}枚のカード",
     "{0} card(s) left": "残り{0}枚のカード",
     "{0} left": "残り{0}",
     "{0} to go": "あと{0}",
-    "still {0}": "引き続き{0}",
-    "now {0}": "現在{0}",
     "rep4rep: {0} - next look in {1}": "rep4rep: {0} - 次の確認は{1}後",
     "playing {0}": "{0}をプレイ中",
     "closing, then {0}": "終了して、次は{0}",
@@ -822,8 +820,9 @@
     "sign-in attempt failed: {0}": "サインインの試行が失敗しました: {0}",
     "login failed: {0}": "ログインに失敗しました: {0}",
     "logon failed: {0}": "ログオンに失敗しました: {0}",
+    "Steam is down for its weekly maintenance ({0}) - it signs in again by itself": "Steam は週次メンテナンス中です ({0}) - 自動でサインインし直します",
+    "Steam isn't letting anyone sign in right now ({0}) - it tries again by itself": "Steam は現在サインインを受け付けていません ({0}) - 自動で再試行します",
     "logged off: {0}": "ログオフしました: {0}",
-    "logged on as {0} ({1})": "{0} ({1}) としてログオンしました",
     "Steam pushed {0} new item(s)": "Steamが新しいアイテムを{0}件通知しました",
     "Steam rate-limit - backing off ~{0}m": "Steamのレート制限 - 約{0}分待機します",
     "Steam reports another session on app {0} right after logon - probably our own, waiting before saying so": "ログイン直後にSteamがアプリ{0}で別のセッションを報告しました - おそらく自分自身なので、断定する前に待ちます",
@@ -840,9 +839,6 @@
     "answered {0} ({1}) in {2}s": "{0} ({1}) に{2}秒で応答しました",
     "asleep - back around {0}": "就寝中 - {0}ごろ戻ります",
     "auto-replied to {0} after {1}s": "{0}に{1}秒後に自動返信しました",
-    "awake for the day - warming up for ~{0}": "本日の活動開始 - 約{0}かけて準備します",
-    "back to banking hours quietly until {0}": "{0}まで再び静かに時間を貯めます",
-    "last card dropped in {0} - that game's done": "{0}で最後のカードがドロップ - このゲームは完了です",
     "{0} is done - no cards left": "{0}は完了 - カードは残っていません",
     "claimed {0}": "{0}を受け取りました",
     "command from {0}: {1}": "{0}からのコマンド: {1}",
@@ -853,9 +849,6 @@
     "commented on {0} and credited ({1}/{2} today)": "{0}にコメントし、加算されました (本日{1}/{2})",
     "retry posted on {0}": "{0}に再投稿しました",
     "{0} refused - trying another profile ({1}/{2})": "{0}が拒否されました - 別のプロフィールを試します ({1}/{2})",
-    "{0} doesn't take comments - skipping": "{0}はコメントを受け付けていません - スキップします",
-    "until ~{0}": "約 {0} まで",
-    "for now": "当面",
     "daily limit found: {0}/24h": "日次上限を検出: {0}/24時間",
     "rep4rep connected - {0} points": "rep4repに接続 - {0}ポイント",
     "rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure": "rep4repがあり得ない残高を報告しています ({0}ポイント、保留{1}) - 直近の妥当な値を保持します",
@@ -872,10 +865,8 @@
     "now showing {0}": "現在{0}を表示中",
     "now showing nothing": "今は何も表示していません",
     "games-played sent: {0} entr(ies)": "プレイ中のゲームを送信: {0}件",
-    "reconnected - put {0} game(s) back on": "再接続 - ゲーム{0}本を再設定しました",
     "reusing web token (good for {0}h) - no new web session": "Webトークンを再利用します (残り{0}時間有効) - 新しいWebセッションは作りません",
     "rejoining in ~{0}s, then standing down until you're done": "約{0}秒後に再参加し、あなたが終わるまで待機します",
-    "the account is free again - picking back up in {0}m": "アカウントが再び空きました - {0}分後に再開します",
     "leaving {0} alone - still refundable until {1}": "{0}には手を出しません - {1}まで返金可能です",
     "refund protection is holding {0} game(s): {1}": "返金保護が{0}本のゲームを保留しています: {1}",
     "plugin loaded: {0} {1}": "プラグインを読み込みました: {0} {1}",
@@ -887,27 +878,19 @@
     "plugin {0} threw on unload: {1}": "プラグイン{0}がアンロード時に例外を投げました: {1}",
     "plugins: couldn't load {0}: {1}: {2}": "プラグイン: {0}を読み込めませんでした: {1}: {2}",
     "plugins: nothing in {0}": "プラグイン: {0}には何もありません",
-    "disconnected - reconnecting in ~{0}s": "接続が切れました - 約{0}秒後に再接続します",
     "moving to another Steam server in ~{0}s": "約 {0} 秒後に別の Steam サーバーへ移動",
     "dashboard: {0} failed logins from {1} - locked out for {2}m": "ダッシュボード: {1}から{0}回のログイン失敗 - {2}分間ロックします",
-    "dashboard: {0}{1}": "ダッシュボード: {0}{1}",
     "done - {0} achievement(s) unlocked across {1} game(s){2}": "完了 - {1}本のゲームで実績を{0}個解除しました{2}",
     ", {0} game(s) refused": "、{0} 件のゲームが拒否",
     "still going - {0}/{1} apps checked, {2} unlocked so far": "継続中 - アプリ{0}/{1}を確認、これまでに{2}個解除",
     "unlocked all {0} in {1}": "{1}の{0}個をすべて解除しました",
     "today's farming: {0} sitting(s), {1} in total": "本日の収集: {0}回、合計{1}",
-    "no cards left - human mode carries on{0}": "カードは残っていません - 人間モードは続きます{0}",
     "{0} game(s)": "{0} 本のゲーム",
     "your games": "あなたのゲーム",
-    "warming up for ~{0}": "約{0}かけて準備します",
     "{0} only today": "今日は {0} だけ",
     "{0} about {1}%, around {2} on the others": "{0} が約 {1}%、ほかのゲームに {2} ほど",
-    "done for the day - {0} played, back around {1}": "本日は終了 - {0}プレイ、{1}ごろ戻ります",
     "taking today off - back tomorrow around {0}": "本日は休みます - 明日{0}ごろ戻ります",
-    "{0} - back in about {1}": "{0} - 約{1}後に戻ります",
-    "{0} - going offline, back in about {1}": "{0} - オフラインになります。約{1}後に戻ります",
     "resuming the grind of {0} - {1} left": "{0}の周回を再開します - 残り{1}",
-    "stopping - finishing up, logging off in about {0}s": "停止します - 終了処理中、約{0}秒後にログオフします",
     "{0} licence(s) known": "既知のライセンス{0}件",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "インベントリは現在{0}{1}、{2}本のゲームにわたり、{3}件が未査定です",
     "the market answered {0} - pausing price lookups until {1}": "マーケットが{0}を返しました - {1}まで価格照会を停止します",
@@ -940,7 +923,6 @@
     "config removed - stopping": "設定が削除されました - 停止します",
     "connection went quiet - reconnecting": "接続が無反応になりました - 再接続します",
     "disabled in config - not starting": "設定で無効になっています - 起動しません",
-    "done grinding - back to the usual day": "周回が完了しました - 通常の一日に戻ります",
     "every account has finished - closing down as configured": "すべてのアカウントが完了しました - 設定どおり終了します",
     "game list changed - restarting the session so the custom name stays on top": "ゲーム一覧が変わりました - カスタム名が先頭に残るようセッションを再開します",
     "global settings saved from the dashboard": "ダッシュボードからグローバル設定を保存しました",
@@ -949,7 +931,6 @@
     "paused for {0} - picks back up by itself at {1}": "{0} 一時停止 - {1} に自動で再開します",
     "resumed": "再開しました",
     "shutting down...": "終了しています...",
-    "stopped - logged out": "停止しました - ログアウト済み",
     "that Steam Guard code was wrong, try again": "そのSteam Guardコードは違います。もう一度お試しください",
     "that email code was wrong, try again": "そのメールのコードは違います。もう一度お試しください",
     "the account is free again - resuming": "アカウントが再び空きました - 再開します",
@@ -1172,8 +1153,6 @@
     "Telegram is connected.": "Telegram は接続済みです。",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "ここで {0} を押し（トークンを保存すると表示されます）、Telegram で {1} を押します。nocat.farm が接続して、あいさつします。",
     "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "接続済みです。/status で概要、/help でコマンド一覧、/console でウィンドウと同じようにコマンドを入力できます。",
-    "update: signing out {0} ({1} of {2}) - updating in {3}s": "アップデート: {0} をサインアウト中 ({2}件中{1}件目) - {3}秒後に更新します",
-    "update: updating in {0}s": "アップデート: {0}秒後に更新します",
     "nocat.farm {0} is ready": "nocat.farm {0} が使えます",
     "Resting": "休憩中",
     "Farming cards · {0} left": "カード収集中 · 残り {0} 枚",
@@ -1215,9 +1194,7 @@
     "couldn't read the saved ban check: {0}": "保存された BAN チェックを読み込めませんでした: {0}",
     "couldn't save the ban check: {0}": "BAN チェックを保存できませんでした: {0}",
     "offer {0} ({1}: {2}) - handling it in {3}": "オファー {0} ({1}: {2}) - {3}後に処理します",
-    "accepted offer {0} from {1} - {2} item(s) in, {3} out": "{1} からのオファー {0} を承認しました - 受け取り {2}件、渡し {3}件",
     "declined offer {0} from {1}": "{1} からのオファー {0} を拒否しました",
-    "{0} (one of your accounts)": "{0} (あなたのアカウントの一つ)",
     "{0} item(s): {1} and {2} more": "アイテム{0}件: {1} ほか{2}種",
     "{0} item(s): {1}": "アイテム{0}件: {1}",
     "couldn't read the announced offers: {0}": "通知済みのオファーを読み込めませんでした: {0}",
@@ -1351,11 +1328,10 @@
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm は Docker 内では自動更新しません - nocatfarm フォルダーで git pull を実行し、続けて docker compose up -d --build。config/ と logs/ はそのまま残ります",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build": "nocat.farm は Docker 内では自動更新しません - nocatfarm フォルダーで git fetch --tags、続けて git checkout v{0}、そして docker compose up -d --build を実行してください。config/ と logs/ はそのまま残ります。最新版に戻すには git checkout main、続けて git pull、そして docker compose up -d --build を実行してください",
     "update: left out the {0} folder in the zip - yours stays as it is": "更新: zip 内の {0} フォルダーは除外しました - お使いのものはそのままです",
-    "Discord Rich Presence off": "Discord リッチプレゼンス オフ",
     "Pop-ups": "ポップアップ",
     "Inventory prices": "インベントリの価格",
     "Updates & plugins": "アップデートとプラグイン",
-    "Badges, boosters & selling": "バッジ・ブースター・販売",
+    "Badges & selling": "バッジ・販売",
     "Inventory & bans": "インベントリと BAN",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「Discord プロフィール」でいつでも変更できます。",
     "Trades & items": "トレードとアイテム",
@@ -1688,14 +1664,9 @@
     "Or scan it: the dashboard's Phone page has QR codes.": "または読み取り: ダッシュボードのスマホ ページに QR コードがあります。",
     "Sign in once and the phone stays signed in for {0} days.": "一度サインインすれば、スマホは {0} 日間サインインしたままです。",
     "{0} is waiting for your accounts to go to sleep - 'update now' installs it right away": "{0} はアカウントが寝るのを待っています - 'update now' ですぐ入れます",
-    "still waiting its turn to sign in - about {0}s": "まだサインインの順番待ち - 約 {0} 秒",
-    "starting up - signs in in about {0}s (Gap between logins)": "起動中 - 約 {0} 秒後にサインイン（ログインの間隔）",
     "login token encrypted - an older version saved it as plain text": "ログイントークンを暗号化しました - 古い版が平文で保存していました",
     "key queue: {0}": "キーのキュー: {0}",
     "Friends & comments": "フレンドとコメント",
-    "update: {0}MB downloaded - unpacking": "更新: {0}MB ダウンロード済み - 展開中",
-    "achievement boost: {0} games to hunt ({1} shared)": "実績狙い: {0} ゲーム（{1} 共有）",
-    "achievement boost: {0} games to hunt": "実績狙い: {0} ゲーム",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: カードドロップ {1} 個すべて獲得 - 通常に戻ります",
     "still going for {0}: {1} of {2} card drop(s)": "引き続き {0}: カードドロップ {1}/{2}",
     "confirmed trade offer {0} with its authenticator": "トレードオファー {0} を自身の認証で確認",
@@ -1716,9 +1687,7 @@
     "signed in - login token saved, no password needed again": "サインイン完了 - トークン保存、もうパスワード不要",
     "login token rejected ({0}) - needs the password again": "ログイントークンが拒否 ({0}) - パスワードが再度必要",
     "no Steam web session yet - farming and comments will retry": "Steam Web セッションなし - ファームとコメントは再試行します",
-    "you're on this account - waiting until you're done": "このアカウントを使用中 - 終わるまで待ちます",
     "custom name slipped to {0} - setting it again": "カスタム名が {0} にずれた - 再設定します",
-    "daily web refresh - getting a new web token": "1 日 1 回の Web 更新 - 新しい Web トークンを取得",
     "Steam Guard code sent from its authenticator": "自身の認証から Steam Guard コードを送信",
     "Steam rejects its authenticator codes - check the secret": "Steam が認証コードを拒否 - シークレットを確認",
     "approve the login in the Steam app, or type the code below": "Steam アプリでログインを承認するか、下にコードを入力",
@@ -1730,7 +1699,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep の保留を解除 - コメントを再開",
     "achievement ceiling is one figure now: 90%": "実績の上限は 1 つの値に: 90%",
     "setting moved: when to farm cards = only at night": "設定移動: カードをファームする時間 = 夜だけ",
-    "disconnected - Steam's weekly maintenance, back in ~{0}m": "切断 - Steam の週次メンテナンス、約 {0} 分で復帰",
     "going for {0}: {1} of {2} card drop(s)": "{0} を狙う: カードドロップ {1}/{2}",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord ボット: 連携するには設定で Discord を接続を押す",
     "Discord bot: no / commands in a server - invite it again": "Discord ボット: サーバーで / コマンドなし - もう一度招待を",
@@ -1738,7 +1706,6 @@
     "token rejected - Developer Portal, Bot, Reset Token": "トークン拒否 - Developer Portal、Bot、Reset Token",
     "refused (code {0}) - check the Developer Portal": "拒否 (コード {0}) - Developer Portal を確認",
     "too many connects today - retrying in {0} min": "今日は接続しすぎ - {0} 分後に再試行",
-    "Discord profile now shows Playing nocat.farm": "Discord プロフィールに nocat.farm をプレイ中と表示",
     "gave up on a key after {0} tries - no account could use it": "{0} 回試してキーを諦めた - どのアカウントも使えず",
     "key queue unreadable (newer version or damaged) - left as is": "キーキューが読めない（新しい版か破損）- そのまま残します",
     "key queue changes aren't saved - fix or move keys.json, restart": "キーキューの変更は保存されません - keys.json を直すか移動して再起動",
@@ -1775,7 +1742,6 @@
     "saved logins are plain text - key {0} unusable: {1}": "保存したログインは平文 - キー {0} が使えない: {1}",
     "saved logins are plain text - no AES-GCM on this system": "保存したログインは平文 - このシステムに AES-GCM なし",
     "keep the config folder somewhere private": "config フォルダは人目につかない場所に",
-    "listed {0} duplicate card(s) - {1} if they all sell": "重複カード {0} 枚を出品 - 全部売れたら {1}",
     "{0} market listing(s) to confirm in the Steam app": "マーケット出品 {0} 件 - Steam アプリで確認を",
     "Telegram bot in use elsewhere - commands may not arrive": "Telegram ボットが他で使用中 - コマンドが届かないかも",
     "only one program can read a Telegram bot - a second nocat.farm?": "Telegram ボットを読めるのは 1 つだけ - nocat.farm が 2 つ？",
@@ -1799,7 +1765,6 @@
     "plugin {0} failed to load: {1}: {2}": "プラグイン {0} の読み込み失敗: {1}: {2}",
     "couldn't load plugin {0} - built for another version?": "プラグイン {0} を読み込めず - 別バージョン用？",
     "plugin {0}: {1}": "プラグイン {0}: {1}",
-    "running in the tray - right-click the icon for the menu": "トレイで実行中 - アイコンを右クリックでメニュー",
     "dashboard on {0} has no password - only this machine gets in": "{0} のダッシュボードにパスワードなし - このマシンだけ入れます",
     "set WebPassword (NOCATFARM_WEB_PASSWORD in Docker)": "WebPassword を設定（Docker では NOCATFARM_WEB_PASSWORD）",
     "dashboard on {0} can't be reached from outside Docker": "{0} のダッシュボードは Docker の外から届きません",
@@ -1817,22 +1782,14 @@
     "  the dashboard is switched off - 'set WebEnabled true' then restart": "  ダッシュボードはオフです - 'set WebEnabled true' を実行してから再起動",
     "  that line was typed while nocat.farm was asking something, so it wasn't run or kept - type it again if it was a command": "  nocat.farm が質問している間に入力された行なので、実行も保存もしていません - コマンドだった場合はもう一度入力してください",
     "couldn't read the achievement list for {0}": "{0} の実績リストを読めず",
-    "{0}: {1}% done - next game, back in ~{2} day(s)": "{0}: {1}% 達成 - 次のゲームへ、約 {2} 日後に戻る",
     "family member started {0} - moving on": "家族が {0} を起動 - 次へ",
-    "achievement boost: {0} for {1} ({2}/{3})": "実績狙い: {0} を {1}（{2}/{3}）",
-    "achievement boost: adding {0} for ~{1} ({2}/{3})": "実績狙い: {0} を約 {1} 追加（{2}/{3}）",
-    "achievement boost: adding {0} for ~{1}": "実績狙い: {0} を約 {1} 追加",
     "{0}: achievements are server-side - nothing to grind": "{0}: 実績はサーバー側 - グラインドするものなし",
-    " ({0}% have it)": "（{0}% が所持）",
-    "unlocked \"{0}\" in {1}{2} ({3}/{4})": "{1} で「{0}」を解除{2}（{3}/{4}）",
     "carried on ASF's achievement pacing for {0} game(s)": "ASF の実績ペースを {0} ゲーム分引き継ぎ",
     "banned in {0} - skipping its items (cards still trade)": "{0} で BAN - そのアイテムは除外（カードは取引可）",
     "NEW trade probation - trading is restricted": "新規 トレード保護観察 - 取引が制限中",
-    "made a {0} booster ({1} gems, {2} left)": "{0} のブースターを作成（ジェム {1}、残り {2}）",
     "nothing left to farm - logging out (as set)": "ファームするものなし - サインアウト（設定どおり）",
     "{0}: no drop in {1}h ({2} left) - skipping it {3}h (strike {4})": "{0}: {1} 時間ドロップなし（残り {2}）- {3} 時間スキップ（{4} 回目）",
     "all cards in - winding down on {0} for ~{1}": "カード全部獲得 - {0} で約 {1} クールダウン",
-    "farming {0} - {1} card(s) left · ~{2} in all": "{0} をファーム中 - 残り {1} 枚 · 全部で約 {2}",
     "card dropped in {0} - {1} left · ~{2} in all": "{0} でカードドロップ - 残り {1} · 全部で約 {2}",
     "drop run over - {0} has no drops left": "ドロップ狙い終了 - {0} はもうドロップなし",
     "drop run done - {0} has no drops left": "ドロップ狙い完了 - {0} はもうドロップなし",
@@ -1856,14 +1813,10 @@
     "couldn't join {0} - trying again next start": "{0} に参加できず - 次回起動時に再試行",
     "day off - online, idle until bed ~{0}": "休みの日 - オンラインで待機、就寝 ~{0}",
     "new plan for today from the current settings": "現在の設定で今日の計画を作り直し",
-    "today's plan restored - {0}/{1} played, bed about {2}": "今日の計画を復元 - {0}/{1} プレイ済み、就寝 {2} 頃",
     "today: ~{0} of play, up {1}, bed {2}": "今日: プレイ約 {0}、起床 {1}、就寝 {2}",
     "today's mix: {0}": "今日の配分: {0}",
     "asleep until {0} - card farming through the night": "{0} まで就寝 - 夜通しカードをファーム",
     "human mode has no games - fill in \"Games and how often\"": "人間モードにゲームなし - 「ゲームと頻度」を入力",
-    "farming cards on {0} for ~{1} ({2}/{3} today)": "{0} で約 {1} カードをファーム（今日 {2}/{3}）",
-    "playing {0} for ~{1} ({2}/{3} today)": "{0} を約 {1} プレイ（今日 {2}/{3}）",
-    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "再起動後も {0} を続行 - 残り {1}（今日 {2}/{3}）",
     "last card from {0} - playing on ~{1}, then a break": "{0} の最後のカード - あと約 {1} 遊んで休憩",
     "rep4rep won't add this account - check the API token": "rep4rep がこのアカウントを追加しない - API トークンを確認",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "まだ rep4rep にない - そこで追加するか Rep4RepAutoAddProfiles をオン",
@@ -1875,24 +1828,15 @@
     "daily comment limit hit ({0} posted here) - resting ~24h": "1 日のコメント上限（ここで {0} 件）- 約 24 時間休み",
     "rate-limited at {0}/{1} - comment gap, not the daily cap": "{0}/{1} で制限 - コメント間隔で、1 日の上限ではない",
     "still rate-limited at {0}/{1} - resting {2}, then starting fresh": "{0}/{1} でまだ制限 - {2} 休んでからやり直し",
-    "hit the {0}/24h cap - resting {1}": "{0}/24h の上限 - 休み {1}",
     "can't read {0} ({1}) - no comments until it's fixed": "{0} を読めない ({1}) - 直るまでコメントなし",
     "sending items to your main every {0}, first around {1}": "{0} ごとにメインへアイテム送信、初回は {1} 頃",
     "ignored a friend request from {0} - new private profile": "{0} のフレンド申請を無視 - 新しい非公開プロフィール",
     "offer {0} no longer a fair swap ({1}) - left for you": "オファー {0} はもう公平な交換ではない（{1}）- あなた次第",
     "offer {0} isn't a fair swap ({1}) - left for you": "オファー {0} は公平な交換ではない（{1}）- あなた次第",
     "offer from {0} is gone (cancelled, answered or expired)": "{0} のオファーが消えた（取消・応答済み・期限切れ）",
-    "offer {0} from {1}: get {2}, give {3} - {4}": "{1} からオファー {0}: もらう {2}、渡す {3} - {4}",
-    "donation - accepting when awake": "寄付 - 起きたら受け取り",
-    "donation - accepting in a few min": "寄付 - 数分後に受け取り",
-    "allowed sender - accepting when awake": "許可した送り主 - 起きたら受け取り",
-    "allowed sender - accepting in a few min": "許可した送り主 - 数分後に受け取り",
     "accepted if it's a fair card swap, else trade accept {0} {1}": "公平なカード交換なら承認、違えば trade accept {0} {1}",
     "declining soon - trade accept {0} {1} keeps it": "まもなく拒否 - trade accept {0} {1} で残す",
     "waiting for you - trade accept or decline {0} {1}": "あなた待ち - trade accept か decline {0} {1}",
-    "offer {0} from {1} accepted - confirm it in Steam's email": "{1} のオファー {0} を承認 - Steam のメールで確認を",
-    "offer {0} from {1} accepted - confirm it ('confirmations {2}')": "{1} のオファー {0} を承認 - 確認を（'confirmations {2}'）",
-    "offer {0} from {1} accepted - confirm it on your phone": "{1} のオファー {0} を承認 - スマホで確認を",
     "update undone: {0} didn't start, back on {1} - 'update accept' retries": "更新を元に戻した: {0} が起動せず {1} に戻しました - 'update accept' で再試行",
     "update undone: {0} didn't start, back on {1} - 'update to {0}' tries it again": "更新を元に戻した: {0} が起動せず {1} に戻しました - 'update to {0}' で再試行",
     "updated {0} → {1} · {2}MB in {3}s": "更新完了 {0} → {1} · {2}MB を {3} 秒で",
@@ -1900,7 +1844,6 @@
     "update failed: files in use (a 2nd copy? antivirus?) - try again": "更新失敗: ファイル使用中（2 つ目？ウイルス対策？）- 再試行を",
     "update failed: copy error {0} (read-only? disk full?) - nothing changed": "更新失敗: コピーエラー {0}（読み取り専用？満杯？）- 変更なし",
     "update failed: {0} didn't start - still on {1}, try again": "更新失敗: {0} が起動せず - {1} のまま、再試行を",
-    "update: {0} ready - signing accounts out, restart in {1}s": "更新: {0} 準備完了 - アカウントをサインアウト、{1} 秒後に再起動",
     "update: {0} ready - restarting in {1}s": "更新: {0} 準備完了 - {1} 秒後に再起動",
     "update failed: couldn't reach GitHub ({0}) - nothing changed": "更新失敗: GitHub に接続できず ({0}) - 変更なし",
     "update failed: GitHub gave no latest release - try again soon": "更新失敗: GitHub が最新リリースを返さず - 少し後で再試行を",
@@ -1910,14 +1853,10 @@
     "update failed: download stopped at {0} of {1}MB - try again": "更新失敗: ダウンロードが {1}MB 中 {0} で停止 - 再試行を",
     "update failed: couldn't unpack ({0}) - disk full?": "更新失敗: 展開できず ({0}) - ディスクが満杯？",
     "update failed: couldn't back up the current version ({0})": "更新失敗: 現在の版をバックアップできず ({0})",
-    "update: all signed out - restarting into {0}": "更新: 全員サインアウト - {0} で再起動",
     "update: signing the accounts back in": "アップデート: アカウントをサインインし直しています",
     "update failed: {0} - nothing changed": "更新失敗: {0} - 変更なし",
-    " · {0} by nocat.farm": "· nocat.farm で {0}",
-    "no cards left - idling {0}{1}": "カードなし - {0} をアイドル中{1}",
     "{0}/{1}": "{0}/{1}",
     "asleep, idling {0} game(s)": "就寝中、{0} ゲームをアイドル",
-    "  (this PC only, no password)": "（この PC のみ、パスワードなし）",
     "{0} games, {1} cards to farm - about {2} in all": "{0} ゲーム、カード {1} 枚 - 全部で約 {2}",
     "Too many wrong passwords - try again in {0}.": "パスワードの間違いが多すぎます - {0} 後にもう一度どうぞ。",
     "Or type dashboard unlock in the nocat.farm window.": "または nocat.farm のウィンドウで dashboard unlock と入力してください。",
@@ -1947,7 +1886,6 @@
     "in use now, but not saved to disk - see the Log": "今は反映されていますが、ディスクに保存できませんでした - ログを確認してください",
     "settings not saved - {0} didn't load; fix it or delete it": "設定は保存されていません - {0} を読み込めませんでした。修正するか削除してください",
     "couldn't read the saved sign-in: {0}": "保存されたサインイン情報を読み込めません: {0}",
-    "listed {0} ({1}) for {2} - you get {3}": "{0}（{1}）を {2} で出品しました - 受け取りは {3}",
     "couldn't read the trade page: {0}": "トレードページを読めませんでした: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "オファーを送りました - Steam から届いたメールで確認してください（Steam アプリの認証がないため、Steam が最大15日間保留します）",
     "send due - waiting a few minutes after another account's send": "送信時刻 - 別のアカウントの送信から数分待っています",
@@ -1999,7 +1937,6 @@
     "this account is posting a comment right now - try again in a few minutes": "このアカウントは今コメントを投稿中です - 数分後にもう一度お試しください",
     "already commented for that task - pick another": "そのタスクにはもうコメント済みです - 別のものを選んでください",
     "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: アイテムを今送信中か出品中です - 数分後にもう一度お試しください",
-    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: 保留中のトレードに入っているカードを Steam が教えてくれません - しばらくしてからもう一度お試しください",
     "offer {0} is already being answered": "オファー {0} はすでに対応中です",
     "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "ダッシュボードがオフです（設定の「ウェブ・ダッシュボード」）- 先にオンにして nocat.farm を再起動してください",
     "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: 「{1}」を保存しました - 人間モードをオフにすると表示されます。人間モードでは常に実際のゲームが表示されます",
@@ -2104,7 +2041,6 @@
     "plugin {0} failed on {1}: {2}: {3}": "プラグイン {0} が {1} で失敗しました: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' は Windows が予約している名前です (con、nul、com1 など) - 別の名前にしてください",
     "'all' means every account in a command - pick another name": "'all' はコマンドで全アカウントを意味します - 別の名前にしてください",
-    "offer sent - confirm it in the Steam app on your phone": "オファー送信済み - スマホの Steam アプリで確認してください",
     "{0} invited you to play {1}": "{0} から {1} に招待されました",
     "human mode spaces comments out - this account can post the next one from {0}": "人間モードはコメントの間隔を空けます - このアカウントの次の投稿は {0} から",
     "installing {0} by itself - all clear: {1}": "{0} を自動でインストール中 - 問題なし: {1}",
@@ -2342,7 +2278,6 @@
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "就寝中、ゲーム未選択 - いちばん遊んでいる {0} 本を放置中: {1} · {2} に起床",
     "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "就寝中 · {0} に起床 · 夜間に貯めるものがありません - 夜間のリストにゲームを追加してください",
     "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "就寝中 - {0}ごろ戻ります。夜間に貯めるものがありません: 夜間のリストにゲームを追加してください",
-    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "就寝中 - ゲーム未選択のため、{0}までいちばん遊んでいるゲームで静かに時間を貯めます: {1}",
     "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "夜間はオフライン表示になり、ゲームが選ばれていないので、いちばん遊んでいるゲームを回します: {0}。",
     "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "まだ夜間に貯めるものがありません: 「夜間に回すゲーム」にゲームを追加してください。",
     "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} は無料DLC - 受け取らない(「無料ゲームを受け取る」がゲームのみ)",
@@ -2466,9 +2401,7 @@
     "{0} isn't a nocat.farm zip - its {1} is another program": "{0} は nocat.farm の zip ではありません - その {1} は別のプログラムです",
     "couldn't read {0} as a zip ({1})": "{0} を zip として読めませんでした ({1})",
     "update undone: nocat.farm {0} from the file didn't start, back on {1}": "アップデートを元に戻しました: ファイルからの nocat.farm {0} が起動しなかったため、{1} に戻りました",
-    "installing nocat.farm {0} from {1}": "{1} から nocat.farm {0} をインストール中",
     "update failed: couldn't read {0} ({1}) - nothing changed": "アップデート失敗: {0} を読めませんでした ({1}) - 何も変わっていません",
-    "update: {0}MB copied - unpacking": "アップデート: {0}MB コピー済み - 展開中",
     "Installing nocat.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.": "{1} から nocat.farm {0} をインストールしています。アカウントは一つずつサインアウトします。1分ほどで戻ります。",
     "it's paused - 'resume' it first": "一時停止中です - 先に 'resume' してください",
     "you're playing on it - human mode waits until you're done": "あなたがプレイ中です - 人間モードは終わるまで待ちます",
@@ -2687,14 +2620,11 @@
     "{0} left out - someone in your Steam Family is playing it (back {1} min after they stop)": "{0} を外しました - Steam ファミリーの誰かがプレイ中です (やめてから {1} 分後に戻します)",
     "{0}: {1}'s copy is in use - borrowing {2}'s free copy instead": "{0}: {1} のコピーは使用中です - 代わりに {2} の空いているコピーを借ります",
     "asleep, banking hours quietly on {0} · up {1}": "就寝中、{0} で静かに時間を貯めています · {1} に起床",
-    "{0}: its copy is in use - switching to {1}'s free copy": "{0}: そのコピーは使用中です - {1} の空いているコピーに切り替えます",
     "{0} is back on the overnight list": "{0} が夜のリストに戻りました",
     "{0} left out - held back so it can still be refunded": "{0} を外しました - まだ返金できるように取っておいています",
-    "asleep - banking hours quietly until {0} on {1}": "就寝中 - {0} まで {1} で静かに時間を貯めます",
     "couldn't read the software this account holds: {0}": "このアカウントのソフトウェアを読み込めませんでした: {0}",
     "{0} left out - it's on \"Never touch these\"": "{0} を外しました - 「これには絶対に触らない」に入っています",
     "library: {0} piece(s) of software owned too ({1})": "ライブラリ: ソフトウェアも {0} 本所有 ({1})",
-    "opened {0}: {1} - {2}": "{0} を開封しました：{1} - {2}",
     "its cards are worth about {0}, the pack {1}": "カードは約 {0}、パックは {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "{0} で売れ、受け取りは {1} - ジェム {2} 個の価値（{3}）より上です",
     "its gem value isn't known yet - kept": "ジェムの価値がまだ分かりません - 残します",
@@ -2737,12 +2667,10 @@
     "the price of gems isn't known yet - kept": "ジェムの価格がまだ分かりません - 残します",
     "worth more sealed: the pack {0}, its cards about {1}": "未開封の方が価値があります：パック {0}、カード約 {1}",
     "worth more sealed": "未開封の方が価値があります",
-    "worth {0} - left for you to decide": "{0} の価値 - 判断はあなたにお任せします",
     "set to always open": "常に開封する設定です",
     "{0}: it can't send to itself - pick another account": "{0}: 自分自身には送れません - 別のアカウントを選んでください",
     "couldn't look at booster packs: {0}": "ブースターパックを確認できませんでした：{0}",
     "sells for {0}, you get {1}": "{0} で売れ、受け取りは {1}",
-    "opened {0} - Steam didn't say what was in it - {1}": "{0} を開封しました - 中身を Steam が教えてくれませんでした - {1}",
     "couldn't read which listings nocat.farm made: {0}": "nocat.farm が出品したものを読み込めませんでした: {0}",
     "couldn't write down a listing nocat.farm made: {0}": "nocat.farm の出品を記録できませんでした: {0}",
     "stopped part way - human mode: its day ended or you're playing on it; the rest waits for a later look": "途中で止めました - 人間モード: その日が終わったか、あなたがプレイ中です。残りは後の確認で行います",
@@ -2757,18 +2685,14 @@
     "Spare items & packs": "余ったアイテムとパック",
     "duplicate emoticons are switched off": "重複した絵文字はオフです",
     "cards from finished badges are switched off": "完成したバッジのカードはオフです",
-    "turned {0} ({1}) into {2} gems - {3}": "{0}（{1}）をジェム {2} 個にしました - {3}",
     "sack of gems": "ジェムの袋",
     "sells for {0}, you get {1} - no gems for it": "{0} で売れ、受け取りは {1} - ジェムにはできません",
     "no fresh price for the pack or its cards yet - kept until there is": "パックかそのカードの新しい価格がまだありません - 分かるまで残します",
     "live stats: a backup's history was put back - counting starts now, with no catch-up (that history isn't this install's)": "ライブ統計: バックアップの履歴を戻しました - 集計は今から始まり、過去分の追加送信はありません（その履歴はこのインストールのものではありません）",
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "ライブ統計: 送信待ちのデータが壊れていました - farm-totals.json.broken として保管しました。集計は今から続け、過去分の追加送信はありません",
     "human mode (its day ended or you're playing on it)": "人間モード（その日が終わったか、あなたがプレイ中）",
-    "no price in this account's own currency - kept": "このアカウント自身の通貨での価格がない - 保持",
     "nobody is selling it right now - kept, there's no price to go by": "今は誰も売っていない - 保持、目安になる価格がない",
     "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm は自分から何かを売ったり、ジェムに変えたり、開封したり、使ったりすることはありません。余ったアイテム、ブースターパックの開封と作成、Steam ポイントの使用はすべて、アカウントの設定でオンにするまでオフです。売却・ジェム・Steam ポイントは、まず何をするかを見せて確認を求めます。自分から受け取るのは無料のものだけです：Steam セール中のイベントアイテムと、オンにした場合の無料ゲーム。",
-    "spare items preview for {0}: {1} to gems, {2} to sell, {3} left for you to decide. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each item and why.": "{0} の余ったアイテムのプレビュー：{1} 個をジェムに、{2} 個を売却、{3} 個はあなたの判断待ち。設定で「余ったアイテム」をオンにするまで何も起きません - 'spare preview {0}' で各アイテムと理由を表示。",
-    "the market didn't say its price just now - kept": "マーケットが今その価格を返さなかった - 保持",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: Steam がまだこのアカウントのウォレット通貨を伝えていない - 何も出品していません",
     "No preview - try again in a minute.": "プレビューなし - 1分後にもう一度お試しください。",
     "Not changed - try again.": "変更されませんでした - もう一度お試しください。",
@@ -2793,15 +2717,247 @@
     "Turning it on shows what it would buy first, and asks you to confirm.": "オンにすると、まず何を買うかを見せて確認を求めます。",
     "Working out what it would do...": "何をするか計算中...",
     "Your items are safe by default": "アイテムは初期設定で安全です",
-    "its price went up to {0} since it was counted - it waits for the next look": "数えた後に価格が {0} に上がった - 次の確認を待ちます",
+    "price went up to {0} · over today's value limit, not listed": "価格が {0} に上昇 · 今日の金額上限を超えるため出品しません",
     "its prices contradict each other (cheapest {0}, recent sales {1}) - kept": "価格が矛盾している（最安 {0}、最近の売却 {1}）- 保持",
-    "kept {0} ({1}) instead of listing it: {2}": "{0}（{1}）を出品せずに保持：{2}",
     "no sale in the last day, so no median - kept": "直近1日に売れていないので中央値がない - 保持",
     "no sale in the last day, so no real price - kept": "直近1日に売れていないので実際の価格がない - 保持",
-    "worth {0} now - left for you to decide": "現在 {0} の価値 - あなたの判断に任せます",
     "{0}: Spare items is off until you turn it on in Settings - it shows what it would do first": "{0}：設定でオンにするまで余ったアイテムはオフ - まず何をするかを見せます",
     "{0}: Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do": "{0}：余ったアイテムが「重複カードを売る」に代わりました - 設定でオンにすると何をするかが表示されます",
-    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}：設定でオンにするまで Steam ポイントの使用はオフ - まず何を買うかを見せます"
+    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}：設定でオンにするまで Steam ポイントの使用はオフ - まず何を買うかを見せます",
+    "no game to make a booster pack for right now - {0} at badge level 5, {1} made in the last day": "今はブースターパックを作れるゲームがありません - バッジがレベル5のもの{0}本、この1日で作ったもの{1}本",
+    "saving gems for a {0} booster pack - {1} needed with the gems kept, {2} here": "{0}のブースターパック用にジェムを貯めています - 残す分を含めて{1}個必要、今{2}個",
+    "a {0} booster pack is next - waiting for the account's day": "次は{0}のブースターパック - アカウントの1日が始まるのを待っています",
+    "{0} is closest to its next badge level: {1} of {2} cards, {3} missing": "{0}が次のバッジレベルに一番近い: カード{2}枚中{1}枚、残り{3}枚",
+    "{0}: automatic booster packs need loose gems, so \"Gems afterwards\" is now \"keep them loose\"": "{0}: 自動ブースターパックにはバラのジェムが必要なため、「その後のジェム」を「バラのまま」にしました",
+    "booster packs wait: {0}": "ブースターパックは待機中: {0}",
+    "booster packs: couldn't read the badges or the whole inventory - trying again later": "ブースターパック: バッジか在庫全体を読めませんでした - 後でもう一度試します",
+    "made a {0} booster pack - opening it soon": "{0}のブースターパックを作成 - まもなく開封します",
+    "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "作成した{0}のブースターパックが在庫にもうありません - これ以上探しません",
+    "couldn't open the {0} booster pack it made: {1}": "作成した{0}のブースターパックを開けませんでした: {1}",
+    "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "ブースターパックでカードセットを埋めていますが、「カードからバッジを作る」がオフです - 揃ったセットはオンになるまで待ちます",
+    "you declined its listing on your phone - not listed again for {0} more day(s)": "スマホでこの出品を拒否しました - あと {0} 日は出品しません",
+    "couldn't read which listings you declined: {0}": "拒否した出品の記録を読めませんでした: {0}",
+    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: 販売価格「最安より1セント安く」はなくなりました - 今は実際の価格より1セント安く出品します",
+    "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: 保留中のトレードに入っているアイテムを Steam が教えてくれません - しばらくしてからもう一度",
+    "you'd get {0} - under your {1} minimum": "受け取りは {0} - 最低額 {1} を下回ります",
+    "couldn't write down which listings you declined: {0}": "拒否した出品を記録できませんでした: {0}",
+    "still pricing {0} item(s) - about {1} min": "あと {0} 個の価格を確認中 - 約 {1} 分",
+    "spread over its day: about {0} a look, next look ~{1}": "その日のうちに分けて処理: 1 回の確認で約 {0} 個、次の確認は ~{1}",
+    "spread over its day: about {0} a look - its last look today": "その日のうちに分けて処理: 1 回の確認で約 {0} 個 - 今日の最後の確認です",
+    "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "あと {0} 個の価格を確認中 - Steam から間隔を空けるよう求められました。{1} ごろに再開します",
+    "{0} gems - selling would pay {1}, under your {2} minimum": "ジェム {0} 個 - 売っても {1} で、最低額 {2} を下回ります",
+    "{0} gems - nobody sells it on the market": "ジェム {0} 個 - マーケットで誰も売っていません",
+    "you declined its listing on your phone - never listed again": "スマホでこの出品を拒否しました - 二度と出品しません",
+    "Gems are packed into sacks of 1000 and the sacks sent to {0}": "ジェムを 1000 個入りの袋にまとめ、袋を {0} に送ります",
+    "Daily backup": "毎日のバックアップ",
+    "up ~{0}": "約 {0} 上昇",
+    "to sell": "売る",
+    "Value: at most {0} a day": "金額: 1 日に最大 {0}",
+    "Booster packs it doesn't open are sent to {0}": "開封しないブースターパックは {0} に送ります",
+    "Keep everything: it only reports, nothing changes": "すべて残す: 報告するだけで、何も変えません",
+    "Your own accounts": "自分のアカウント",
+    "Next Fest": "Next Fest",
+    "Making packs": "パックの作成",
+    "New items are not held back": "新しいアイテムも待たせません",
+    "Nothing that came in during the last {0} days": "直近 {0} 日に入ってきたものには触れません",
+    "(no account set yet - nothing is sent until one is)": "（送り先のアカウントが未設定 - 設定するまで何も送りません）",
+    "Spends nothing: the weekly limit is 0": "何も使いません: 1 週間の上限が 0 です",
+    "{0} levels of {1} (level {2} to {3}) for {4} points": "{1} を {0} レベル（レベル {2} → {3}）、{4} ポイント",
+    "Sell only: nothing is turned into gems": "販売のみ: 何もジェムにしません",
+    "Spends at most {0} points a week ({1} spent this week)": "1 週間に使うのは最大 {0} ポイント（今週は {1} 使用済み）",
+    "Never anything worth more than {0}": "{0} より価値の高いものには決して触れません",
+    "points now": "現在のポイント",
+    "Grinding": "集中周回",
+    "Learning from you": "あなたから学ぶ",
+    "Points spent are gone for good": "使ったポイントは戻りません",
+    "What it buys": "買うもの",
+    "{0} can be spent": "{0} 使えます",
+    "you get {0}": "受け取り {0}",
+    "Gems only: nothing is sold": "ジェムのみ: 何も売りません",
+    "Sittings and breaks": "セッションと休憩",
+    "Counting users": "ユーザー数のカウント",
+    "Steam Awards": "Steamアワード",
+    "Overnight": "夜間",
+    "Never touch": "触れないもの",
+    "What it does": "すること",
+    "Offers from others": "他の人からのオファー",
+    "{0} points, +{1} XP": "{0} ポイント、+{1} XP",
+    "Folder and password": "フォルダーとパスワード",
+    "to gems": "ジェムにする",
+    "Always keeps at least {0} points": "常に最低 {0} ポイントは残します",
+    "Tell me about": "知らせる内容",
+    "Steam's notifications": "Steam の通知",
+    "Booster packs it doesn't open are sold, within these limits": "開封しないブースターパックは、この上限内で売ります",
+    "levels to buy": "購入するレベル",
+    "Donations and gifts": "寄付とギフト",
+    "Couldn't look at its points: {0}": "ポイントを確認できませんでした: {0}",
+    "How it shows": "表示のしかた",
+    "Messages": "メッセージ",
+    "Items: at most {0} a look and {1} a day": "個数: 1 回の確認で最大 {0} 個、1 日に最大 {1} 個",
+    "Opening packs": "パックの開封",
+    "Signing in": "サインイン",
+    "Its settings show here once it is on.": "オンにすると、ここに設定が表示されます。",
+    "Limits": "上限",
+    "Which games first": "優先するゲーム",
+    "Reacting": "反応",
+    "1 level of {0} (level {1} to {2}) for {3} points": "{0} を 1 レベル（レベル {1} → {2}）、{3} ポイント",
+    "Never a card a badge still needs, and never game items or CS2 skins": "バッジにまだ必要なカード、ゲームのアイテムや CS2 スキンには決して触れません",
+    "nothing right now": "今はなし",
+    "Gems are packed into sacks of 1000 and one sack is sold each look, within these limits": "ジェムを 1000 個入りの袋にまとめ、この上限内で 1 回の確認につき 1 袋を売ります",
+    "Proxy": "プロキシ",
+    "Prices in {0}, this account's wallet currency": "価格はこのアカウントのウォレット通貨 {0} で表示",
+    "It would buy": "購入する予定",
+    "Pace": "ペース",
+    "Still pricing {0} items - try again in a few minutes.": "まだ {0} 個のアイテムの価格を調べています - 数分後にもう一度お試しください。",
+    "Sales": "セール",
+    "Its wallet currency is not known yet - nothing is priced or sold until it is": "ウォレット通貨がまだ分かりません - 分かるまで価格付けも販売もしません",
+    "Not signed in, so it can't look at its points yet. These are the limits it will keep to.": "サインインしていないため、まだポイントを確認できません。守る上限は次のとおりです。",
+    "Couldn't look at the inventory: {0}": "インベントリを確認できませんでした: {0}",
+    "Nothing that came in during the last day": "直近 1 日に入ってきたものには触れません",
+    "How often": "頻度",
+    "Friends and groups": "フレンドとグループ",
+    "Which games": "対象のゲーム",
+    "Its day": "一日の流れ",
+    "Selling": "販売",
+    "On a warning": "警告が出たとき",
+    "What it checks": "確認するもの",
+    "Only during its day (human mode)": "自分の一日の間だけ（人間モード）",
+    "Still pricing 1 item - try again in a few minutes.": "まだ 1 個のアイテムの価格を調べています - 数分後にもう一度お試しください。",
+    "Boost": "ブースト",
+    "{0} gems, worth {1}": "ジェム {0} 個（{1} 相当）",
+    "Sending items": "アイテムの送信",
+    "Gems": "ジェム",
+    "level to buy": "購入するレベル",
+    "What goes in": "含めるもの",
+    "Not signed in, so it can't look at the inventory yet. These are the limits it will keep to.": "サインインしていないため、まだインベントリを確認できません。守る上限は次のとおりです。",
+    "Earning": "獲得",
+    "What counts as spare": "余りとみなすもの",
+    "Packs it doesn't open": "開封しないパック",
+    "\"Make booster packs\" isn't automatic any more - the {0} booster pack(s) it made and hadn't opened follow \"Open booster packs\" now, like any other": "「ブースターパックを作成」が自動ではなくなりました - 作成してまだ開封していない {0} 個のブースターパックは、ほかのパックと同じく「ブースターパックを開封する」に従います",
+    "the {0} booster pack wasn't made after all - it can be made again": "{0} のブースターパックは結局作成されていませんでした - もう一度作成できます",
+    "the {0} booster pack it made has waited over 2 days to be opened - it follows \"Open booster packs\" now, like any other": "作成した {0} のブースターパックが開封を 2 日以上待っています - ほかのパックと同じく「ブースターパックを開封する」に従います",
+    "Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another": "{0} のブースターパックについて Steam から応答がありません - 次を作る前にインベントリで探します",
+    "foil badge craft refused - foil badges wait {0}h, normal badges carry on": "キラバッジの作成が拒否されました - キラバッジは {0} 時間待ち、通常のバッジは続けます",
+    "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} が「これらのゲームのパックは開封しない」に入りました - そのゲーム用に作成したブースターパックは開封しません",
+    "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "この出品はまだスマホでの確認待ちです - それが片付くまで同じアイテムは出品しません",
+    "worth {0} - over your price limit, never touched": "{0} の価値 - 価格の上限を超えているので、決して触れません",
+    "worth {0} now - over your price limit, not listed": "今は {0} の価値 - 価格の上限を超えたので出品しません",
+    "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} の余分なアイテムのプレビュー: ジェムに {1} 個、販売に {2} 個。設定で余分なアイテムをオンにするまで何も起きません - 'spare preview {0}' で一つずつ確認できます。",
+    "lowered {0} from {2} to {3} - unsold {1} days": "{0} を {2} から {3} に値下げ - {1} 日間売れず",
+    "{0} price lookups in the last hour - the next waits until {1}, so the market isn't asked too often": "直近 1 時間で価格の問い合わせが {0} 回 - マーケットに問い合わせすぎないよう、次は {1} まで待ちます",
+    "couldn't read the saved currency rates: {0}": "保存された為替レートを読み込めませんでした: {0}",
+    "couldn't save the currency rates: {0}": "為替レートを保存できませんでした: {0}",
+    "Not all at once: the first {0} at its next look, then at most {1} a day": "一度に全部ではありません: 次の確認で最初の {0} 個、その後は 1 日最大 {1} 個",
+    "Levels of the seasonal badge, then older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "シーズンバッジのレベル、その後は過去のシーズンバッジ、それぞれレベル {0} まで - 1,000 ポイントごとに約 100 XP",
+    "Only levels of the seasonal badge, up to level {0} - about 100 XP for every 1,000 points": "シーズンバッジのレベルのみ、レベル {0} まで - 1,000 ポイントごとに約 100 XP",
+    "Only levels of older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "過去のシーズンバッジのレベルのみ、それぞれレベル {0} まで - 1,000 ポイントごとに約 100 XP",
+    "Buys nothing: both badge switches are off": "何も買いません: バッジのスイッチが両方オフです",
+    "{0} ({1}): {2} gems": "{0}（{1}）：ジェム {2} 個",
+    "{0} ({1}): listed for {2}": "{0}（{1}）：{2} で出品",
+    "{0} item(s) into {1} gems": "{0} 個をジェム {1} 個に",
+    "{0} listed - you get {1}": "{0} 個を出品 - 受け取り {1}",
+    "opened {0} pack(s)": "パックを {0} 個開封",
+    "made to level the {0} badge": "{0} のバッジのレベル上げ用に作成",
+    "opened {0}: {1}": "{0} を開封しました：{1}",
+    "why it opened {0}: {1}": "{0} を開封した理由：{1}",
+    "Steam's answer about {0} wasn't a yes ({1}) - but it's gone from the inventory and the gems are in, so it's done": "{0} についての Steam の返事は「はい」ではありませんでした（{1}）- でもインベントリから消えてジェムが入っているので完了です",
+    "couldn't check whether {0} went through: {1}": "{0} が完了したか確認できませんでした：{1}",
+    "waiting to sign in · {0}s": "サインイン待ち · {0}秒",
+    "starting · signs in in {0}s": "起動中 · {0}秒後にサインイン",
+    "starting · signs in now": "起動中 · 今サインインします",
+    "signing out in {0}s": "{0}秒後にサインアウト",
+    "signed in as {0} ({1})": "{0}（{1}）としてサインイン",
+    "account free again · picking back up in {0}m": "アカウントが空きました · {0}分後に再開",
+    "signed out": "サインアウトしました",
+    "you're on this account · waiting until you're done": "このアカウントを使用中です · 終わるまで待ちます",
+    "daily web refresh · getting a new web token": "毎日のウェブ更新 · 新しいウェブトークンを取得中",
+    "waiting · you're playing on it": "待機中 · このアカウントでプレイ中",
+    "up in {0}": "{0}後に起床",
+    "back in {0}": "{0}後に戻ります",
+    "{0} (set by your own Steam client)": "{0}（あなたのSteamクライアントが設定）",
+    "Discord: showing nocat.farm": "Discord: nocat.farm を表示中",
+    "Discord: presence off": "Discord: 表示オフ",
+    "{0}: copy in use · switching to {1}'s copy": "{0}: コピー使用中 · {1} のコピーに切り替え",
+    "turned {0} items into {1} gems": "{0} 個のアイテムをジェム {1} 個にしました",
+    "offer sent · confirm it in the Steam app": "オファーを送信 · Steamアプリで承認してください",
+    "updated to {0}": "{0} に更新しました",
+    "update · {0} ready, restart in {1}s": "更新 · {0} の準備完了、{1}秒後に再起動",
+    "update · signing out {0} {1}/{2}": "更新 · {0} をサインアウト中 {1}/{2}",
+    "update in {0}s": "{0}秒後に更新",
+    "installing {0}": "{0} をインストール中",
+    "installing from {0}": "{0} からインストール中",
+    "update · {0}MB copied, unpacking": "更新 · {0}MBコピー済み、展開中",
+    "update · {0}MB downloaded, unpacking": "更新 · {0}MBダウンロード済み、展開中",
+    "update · restarting into {0}": "更新 · {0} で再起動中",
+    "no price in this account's currency, not listed": "このアカウントの通貨での価格がないため出品しません",
+    "no price yet, tries later": "まだ価格なし、あとで再試行",
+    "not listed: you'd get {0}, under your {1} minimum": "出品しません：受け取りは {0} で、最低額 {1} を下回ります",
+    "listed {0} item(s) · {1} if they all sell": "{0} 個出品 · すべて売れれば {1}",
+    "turning {0} ({1}) into gems - {2}": "{0}（{1}）をジェムにします - {2}",
+    "opened {0} · Steam didn't say what was in it": "{0} を開封 · 中身はSteamから返ってきませんでした",
+    "{0} new": "新規 {0}",
+    "none new": "新規なし",
+    "{0} pack": "{0} パック",
+    "sold {0} ({1}) for {2} · you got {3}": "{0}（{1}）が {2} で売れました · 受け取り {3}",
+    "sold {0} ({1}) · you got {2}": "{0}（{1}）が売れました · 受け取り {2}",
+    "{0} ({1}): listing declined or taken down · never listed again": "{0}（{1}）：出品が拒否されたか取り下げられました · 今後は出品しません",
+    "{0} ({1}): listing declined or taken down · not listed again for {2} day(s)": "{0}（{1}）：出品が拒否されたか取り下げられました · {2}日間は出品しません",
+    "Steam maintenance · back in ~{0}m": "Steamメンテナンス · 約{0}分後に復帰",
+    "disconnected · reconnecting in ~{0}s": "切断されました · 約{0}秒後に再接続",
+    "achievements: {0} games to hunt": "実績: 狙えるゲーム {0} 本",
+    "achievements: {0} of them family-shared": "実績: うち {0} 本はファミリー共有",
+    "achievements: {0} for {1} · {2}/{3}": "実績: {0} を {1} · {2}/{3}",
+    "achievements: adding {0} for ~{1} · {2}/{3}": "実績: {0} を約{1}追加 · {2}/{3}",
+    "achievements: adding {0} for ~{1}": "実績: {0} を約{1}追加",
+    "can't tell which achievements come with its DLC · {0} left alone": "どの実績がDLC由来か分かりません · {0} 個はそのまま",
+    "{0} achievement(s) from DLC it doesn't own · left alone": "所有していないDLCの実績 {0} 個 · そのまま",
+    "{0}% have it": "{0}% が獲得",
+    "{0} pack cost {1} gems - {2}": "{0} パックはジェム {1} 個 - {2}",
+    "{0} pack cost {1} gems": "{0} パックはジェム {1} 個",
+    " · {0} banked": " · {0} 蓄積",
+    "no cards left · human mode carries on{0}": "カードなし · 人間モードは続行{0}",
+    "no cards left · idling {0}{1}": "カードなし · {0} をアイドル中{1}",
+    "farming {0} · {1} card(s) left · ~{2} in all": "{0} をファーム中 · 残りカード {1} 枚 · 全体で約{2}",
+    "last card dropped in {0} · game done": "{0} の最後のカードがドロップ · このゲームは完了",
+    "asleep · {0} games": "就寝中 · {0} 本",
+    "done for the day · {0} played · up {1}": "今日は終了 · {0} プレイ · {1} に起床",
+    "awake · warming up · {0}": "起床 · ウォームアップ · {0}",
+    "warming up · {0}": "ウォームアップ · {0}",
+    "plan restored · {0}/{1} · up {2}": "予定を復元 · {0}/{1} · {2} に起床",
+    "plan restored · {0}/{1} · bed {2}": "予定を復元 · {0}/{1} · {2} に就寝",
+    "asleep · your {0} most-played · up {1}": "就寝中 · よく遊ぶ {0} 本 · {1} に起床",
+    "asleep · {0} games · up {1}": "就寝中 · {0} 本 · {1} に起床",
+    "banking hours again · up {0}": "また時間を蓄積中 · {0} に起床",
+    "overnight: {0}": "夜間: {0}",
+    "reconnected · {0} game(s) back on": "再接続 · {0} 本を再開",
+    "farming cards on {0} for ~{1} · {2}/{3} today": "{0} でカードをファーム · 約{1} · 今日 {2}/{3}",
+    "playing {0} for ~{1} · {2}/{3} today": "{0} を約{1}プレイ · 今日 {2}/{3}",
+    "{0} · back in ~{1}": "{0} · 約{1}後に戻ります",
+    "{0} · offline, back in ~{1}": "{0} · オフライン、約{1}後に戻ります",
+    "carrying on with {0} · {1} left · {2}/{3} today": "{0} を続行 · 残り {1} · 今日 {2}/{3}",
+    "rep4rep {0}/{0} · next ~{1}": "rep4rep {0}/{0} · 次は ~{1}",
+    "rep4rep {0}/{0} · resting for now": "rep4rep {0}/{0} · ひとまず休憩",
+    "{0} doesn't take comments · skipped": "{0} はコメントを受け付けていません · スキップ",
+    "accepted offer {0} from {1} · {2} in, {3} out": "{1} のオファー {0} を承認 · 受け取り {2}、渡し {3}",
+    "{0} (yours)": "{0}（あなたの）",
+    "offer {0} from {1}: get {2}, give {3} · {4}": "{1} からのオファー {0}：受け取り {2}、渡し {3} · {4}",
+    "donation · accepting when awake": "寄付 · 起きたら承認",
+    "donation · accepting in a few min": "寄付 · 数分後に承認",
+    "allowed sender · accepting when awake": "許可した送り主 · 起きたら承認",
+    "allowed sender · accepting in a few min": "許可した送り主 · 数分後に承認",
+    "offer {0} from {1} accepted · confirm it in Steam's email": "{1} のオファー {0} を承認 · Steamのメールで確認してください",
+    "offer {0} from {1} accepted · confirm it ('confirmations {2}')": "{1} のオファー {0} を承認 · 確認してください（'confirmations {2}'）",
+    "offer {0} from {1} accepted · confirm it on your phone": "{1} のオファー {0} を承認 · スマホで確認してください",
+    "in the tray · right-click for menu": "トレイにあります · 右クリックでメニュー",
+    "dashboard: {0}": "ダッシュボード: {0}",
+    "dashboard: this PC only, no password": "ダッシュボード: このPCのみ、パスワードなし",
+    "Click to hide each line": "クリックで各行を隠す",
+    "Click to show each line": "クリックで各行を表示",
+    "{0}: {1}% done · next game, back in ~{2} day(s)": "{0}: {1}% 完了 · 次のゲームへ、約{2}日後に戻ります",
+    "done grinding · back to the usual day": "グラインド終了 · いつもの一日に戻ります",
+    "{0} is on the market · {1}": "{0} がマーケットに出品中 · {1}",
+    "{0} is on the market": "{0} がマーケットに出品中",
+    "couldn't look at the listings waiting on a confirmation: {0}": "確認待ちの出品を確認できませんでした: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -3052,21 +3208,29 @@
       "label": "休む日の確率",
       "tip": "その日まったく遊ばない確率（%）です。本物の人は毎日ゲームをするわけではありません。"
     },
-    "DayStartHour": {
-      "label": "だいたい何時に始める",
-      "tip": "ふだんオンラインになる時刻です。実際の時刻はこの前後で変わり、週末は早めに始まります。"
+    "DayStartTime": {
+      "label": "オンラインになる時刻",
+      "tip": "オンラインになる時刻です（例: 11:00）。毎日この時刻から「ずれの最大」の範囲内でオンラインになり、たいていはこの時刻の近く、週末は少し早めです。"
     },
-    "BedHour": {
-      "label": "だいたい何時に寝る",
-      "tip": "夜にやめる時刻です。日付が変わった後でも大丈夫で、夜更かしなら早朝の時刻を選んでください。"
+    "DayStartVaryMinutes": {
+      "label": "ずれの最大（分）",
+      "tip": "「オンラインになる時刻」から前後どれだけずれてよいか（分）。この範囲を超えることはありません。11:00 と 30 なら、必ず 10:30〜11:30 の間にオンラインになります。0 なら毎日同じ分です。"
+    },
+    "BedTime": {
+      "label": "寝る時刻",
+      "tip": "夜にやめる時刻です。日付が変わった後でも大丈夫で、02:00 ならオンラインになった日の翌朝 2 時です。毎晩この時刻から「ずれの最大」の範囲内で寝て、金曜と土曜は少し遅めです。"
+    },
+    "BedVaryMinutes": {
+      "label": "ずれの最大（分）",
+      "tip": "「寝る時刻」から前後どれだけずれてよいか（分）。この範囲を超えることはありません。02:00 と 60 なら、必ず 01:00〜03:00 の間に寝ます。0 なら毎晩同じ分です。"
     },
     "LateNightExtraHours": {
       "label": "金・土は遅くまで起きている",
-      "tip": "金曜と土曜の夜に、追加で起きている時間数です。"
+      "tip": "金曜と土曜の夜に、最大でこの時間だけ遅くまで起きています。ただし「寝る時刻」とそのずれの範囲を超えることはありません。"
     },
     "SleepMinHours": {
       "label": "最低睡眠時間",
-      "tip": "翌日が始まるまでの夜の長さ（時間）。この値と次の値の間でランダムに、毎晩違う長さになります。朝5時に寝た場合も、この時間が過ぎるまでは戻りません。"
+      "tip": "翌日が始まるまでの夜の長さ（時間）。この値と次の値の間でランダムに、毎晩違う長さになります。「オンラインになる時刻」で許される最も遅い時刻までに収まらない夜は短くなり、それより遅くオンラインになることはありません。"
     },
     "SleepMaxHours": {
       "label": "…最大",
@@ -3420,11 +3584,11 @@
     },
     "YieldToFamily": {
       "label": "共有ゲームは求められたらすぐ返す",
-      "tip": "借りているファミリーのゲームを家族の誰かが起動したら、すぐに返して次へ移ります。相手がやめてからしばらくはローテーションから外します (下の「ファミリーメンバーがやめた後の待ち時間」)。"
+      "tip": "借りているファミリーのゲームを家族の誰かが起動したら、すぐに返して次へ移ります。例: このアカウントが Portal 2 で実績集めをしているときに弟が Portal 2 を起動すると、Portal 2 を閉じて別のゲームをします。相手がやめてからしばらくはローテーションから外します（下の「ファミリーメンバーがやめた後の待ち時間」）。オフ: 譲りません。"
     },
     "IncludeFamilyLibrary": {
       "label": "ファミリー共有のゲームも含める",
-      "tip": "Steam ファミリーでこのアカウントに共有されたゲームでも実績を狙います。所有するゲームと同じようにこのアカウントに記録されます。所有するゲームが常に先です。"
+      "tip": "Steam ファミリーでこのアカウントに共有されたゲームも、実績集めに使えるようにします。例: 持っているゲームが 40 本、共有が 200 本なら、240 本すべてから選べます - 持っているゲームが常に先です。オン: 共有ゲームも持っているゲームと同じに扱います。オフ: このアカウントが持っているゲームだけ。"
     },
     "AchievementGrindGapMinMinutes": {
       "label": "集中周回中は、この間隔で 1 つ",
@@ -3444,61 +3608,61 @@
     },
     "ClaimEventItems": {
       "label": "無料イベントアイテムを受け取る",
-      "tip": "Steam セール中の無料の日替わりステッカーと、ポイントショップで 0 ポイントのものを受け取ります。"
+      "tip": "Steam のセール中の毎日の無料ステッカーと、ポイントショップで 0 ポイントのものを受け取ります。例: 14 日間のセールで最大 14 枚のステッカー。オフ: 何も受け取りません。"
     },
     "DiscoveryQueue": {
       "label": "ディスカバリーキューを見る",
-      "tip": "1 日 1 回、人と同じようにストアのディスカバリーキューを最後まで見ます。セール中はイベントアイテムやバッジの進行がもらえます。",
+      "tip": "1 日 1 回、人と同じように 1 本ずつ、ストアのディスカバリーキューを最後まで見ます。セール中はイベントアイテムやバッジの進行がもらえます - 例: 1 日 1 個もらえるセールなら毎日 1 個。「オフ」: 見ません。「セール中」: セールの間だけ。「毎日」: セールに関係なく毎日。",
       "choices": "0 オフ | 1 セール中 | 2 毎日"
     },
     "SaleEvents": {
       "label": "Steamイベントに参加する",
-      "tip": "下のすべての項目のスイッチです: Steamセール、Steamアワード、Next Festの期間中、無料でもらえるもの(デイリーステッカー、ポイントショップの無料アイテム、ディスカバリーキュー、アワードのノミネートと投票)を受け取ります。イベント外ではときどき確認するだけです。オフならこのアカウントでは何もしません。"
+      "tip": "以下すべてのスイッチです: Steam のセール、Steamアワード、Next Fest の間、無料のものを受け取ります - 毎日のステッカー、ポイントショップの無料アイテム、ディスカバリーキュー、アワードのノミネートと投票。例: 14 日間のウィンターセールなら、毎日ステッカー 1 枚と、アワードの投票ごとに 1 枚。イベント以外のときはたまに確認するだけです。オフ: このアカウントでは何もしません。"
     },
     "SaleEventsHumanToo": {
       "label": "人間モードのアカウントも",
-      "tip": "この人間モードのアカウントで Steam アワードのノミネートと投票、セールのキューアイテムと Next Fest のアイテムの受け取りをします - 1つずつ、その日の中で、数分あけて。初期設定はオン。オフにすると、人間モードのアカウントはステッカーとキューだけを行います（下にそれぞれのスイッチ）。ロボットアカウントは常に参加します。"
+      "tip": "この人間モードのアカウントでも、Steamアワードのノミネートと投票、セールのキューのアイテムと Next Fest のアイテムの受け取りをします - 1 つずつ、自分の一日の中で、数分あけて。例: 十数回の投票を午後いっぱいに分けて。初期設定はオン。オフにすると、人間モードのアカウントはステッカーとキューだけを行います（下にそれぞれのスイッチがあります）。ロボットのアカウントは常に参加します。"
     },
     "SaleAwardsNominate": {
       "label": "Steamアワードでノミネートする",
-      "tip": "11月下旬に、Steamアワードの各部門にゲームを1つノミネートします(ノミネートバッジのため)。このアカウントが遊んだゲームだけを、下の設定どおりに選びます。該当するゲームがない部門は空のままにします。"
+      "tip": "11 月下旬に、Steamアワードの各部門にゲームをノミネートして、ノミネートのバッジをもらいます。例: このアカウントが 300 時間遊んだゲームを、Steam が合うとする部門に入れます。このアカウントが遊んだゲームだけを、「ノミネートするゲーム」の設定どおりに選びます。該当するゲームが無い部門は空のままです。オフ: ノミネートしません。"
     },
     "SaleAwardsVote": {
       "label": "Steamアワードで投票する",
-      "tip": "ウィンターセール中に、Steamアワードの各部門で1回ずつ投票します(1票ごとにもらえるステッカーのため)。このアカウントが最も遊んだ最終候補を選び、どれも遊んでいなければ最終候補のどれかを選びます。"
+      "tip": "ウィンターセールの間、Steamアワードの各部門に 1 回ずつ投票し、投票ごとにもらえるステッカーを受け取ります - 例: 部門が十数個あれば、ステッカーも十数枚。このアカウントが一番遊んだ最終候補を選び、どれも遊んでいなければどれかの候補を選びます。オフ: 投票しません。"
     },
     "SaleQuests": {
       "label": "キューに対するセールのアイテムを受け取る",
-      "tip": "セール中、ディスカバリーキューを終えたら、セールがその分としてくれるアイテムを次のステッカー確認を待たずにすぐ受け取ります。"
+      "tip": "セール中、ディスカバリーキューを終えたら、次のステッカーの確認を待たずに、セールがくれるアイテムをすぐ受け取ります - 例: 数時間早く。オフ: 次のステッカーの確認まで待ちます。"
     },
     "SaleNextFest": {
       "label": "Next Festのアイテム",
-      "tip": "Steam Next Festの期間中、無料アイテムがあれば受け取ります。最近のNext Festでは配布がなかったので、たいていは何も起きません - 復活したときのための準備です。"
+      "tip": "Steam Next Fest の間、無料アイテムがあれば受け取ります - 例: プロフィールのステッカー。最近の Next Fest では配られていないので、たいてい何も起きません - また配られたときのための設定です。オフ: 確認しません。"
     },
     "SaleNominatePick": {
       "label": "ノミネートするゲーム",
-      "tip": "Steamアワードの各部門に入れるゲームを、このアカウントが遊んだゲームのうちSteamが該当するとしたものから選びます。最も遊んだもの、またはその中からランダムに1つ。同じゲームを2回使わないようにします。",
+      "tip": "Steamアワードの各部門に入れるゲームを、このアカウントが遊んだゲームのうち Steam がその部門に合うとしたものから選びます。「最も遊んだゲーム」: 例えば Terraria 300 時間は Celeste 2 時間に勝ちます。「遊んだゲームのどれか」: その中からランダムに 1 つ。どちらでも、同じゲームを 2 回使わないようにします。",
       "choices": "0 最も遊んだゲーム | 1 遊んだゲームのどれか"
     },
     "SaleGapMinSeconds": {
       "label": "ロボットアカウントの手順の間隔 (秒)",
-      "tip": "ロボットアカウントでノミネートや投票の間にあける秒数の最短値 - 例: 5。"
+      "tip": "ロボットのアカウントで、ノミネートや投票の間に待つ最短の秒数です - 例: 5。最長が 20 なら、毎回 5〜20 秒のランダムな待ち時間です。"
     },
     "SaleGapMaxSeconds": {
       "label": "…最長 (秒)",
-      "tip": "ロボットアカウントで次の手順までに待つ最長の秒数 - 例: 20。毎回その間でランダムに決めます。"
+      "tip": "ロボットのアカウントで、手順の間に待つ最長の秒数です - 例: 20。最短が 5 なら、毎回 5〜20 秒のランダムな待ち時間です。"
     },
     "SaleHumanGapMinMinutes": {
       "label": "人間モードの手順の間隔 (分)",
-      "tip": "人間モードのアカウントでノミネートや投票の間にあける分数の最短値 - 例: 5。そのアカウントの1日の中だけです。"
+      "tip": "人間モードのアカウントで、ノミネートや投票の間に待つ最短の分数です - 例: 5。最長が 30 なら、毎回 5〜30 分のランダムな待ち時間です。自分の一日の中だけです。"
     },
     "SaleHumanGapMaxMinutes": {
       "label": "…最長 (分)",
-      "tip": "人間モードのアカウントで次の手順までに待つ最長の分数 - 例: 30。"
+      "tip": "人間モードのアカウントで、手順の間に待つ最長の分数です - 例: 30。最短が 5 なら、毎回 5〜30 分のランダムな待ち時間です。"
     },
     "SaleCheckHours": {
       "label": "イベントを確認する間隔 (時間)",
-      "tip": "Steamイベントが始まったかを確認する頻度(時間) - 例: 6。イベント中はおよそ1時間ごとに確認します。"
+      "tip": "Steam のイベントが始まったかを確認する間隔（時間）です - 例: 6 なら 1 日に約 4 回。イベント中は約 1 時間ごとに確認します。"
     },
     "SellPerRun": {
       "label": "1回の出品枚数",
@@ -3855,7 +4019,7 @@
     },
     "LearnFromOwner": {
       "label": "自分の遊び方から学ぶ",
-      "tip": "あなた自身がこのアカウントで遊んだ時間帯とゲームを記録します。7 日分たまると、1 日の過ごし方をあなたに寄せます。オンラインになる時間と寝る時間、そして「遊ぶゲームと頻度」のゲームへの時間配分です。このリストにないゲームを足すことはなく、遊ぶ長さは時間の設定のままです。学んだ内容は habits コマンドで見られます。",
+      "tip": "あなた自身がこのアカウントで遊んだ時間帯とゲームを記録します。7 日分たまると、1 日の過ごし方をあなたに寄せます。オンラインになる時間と寝る時間、そして「遊ぶゲームと頻度」のゲームへの時間配分です。このリストにないゲームを足すことはなく、遊ぶ長さは時間の設定のままです。学んだ内容は habits コマンドで見られます。 オンラインになる時間と寝る時間は「オンラインになる時刻」「寝る時刻」とそのずれの範囲内でだけ寄せ、その外に出ることはありません。",
       "choices": "0 オフ | 1 少し | 2 しっかり"
     },
     "LearnFollow": {
@@ -3916,11 +4080,11 @@
     },
     "CountMeAsUser": {
       "label": "ユーザーとして数える",
-      "tip": "1時間に1回、このコピーが動いていることをnocat.lolに伝えます - このインストール用に作ったランダムな番号、アプリのバージョン、プラットフォーム、サインイン中のSteamアカウントの数(数だけ)、共有している場合は時間とカードの合計(次の設定を参照)。それ以外は何も送りません: アカウント名、Steam ID、設定は送りません。Steamアカウント数はこれで作られます。オフなら何も送りません。"
+      "tip": "このコピーが動いていることを 1 時間に 1 回 nocat.lol に知らせ、ページでユーザー数を数えられるようにします。送るのは、このインストール用に作ったランダムな番号、アプリのバージョン、プラットフォーム、サインインしている Steam アカウントの数（数だけ、例: 3）、そして共有する場合は時間とカードの合計とその他（ジェム、バッジ、パック、売れたアイテム）（次の設定）です - それ以外は送りません: アカウント名、Steam ID、設定は送りません。Steam アカウント数はこれで数えています。オフ: 何も送りません。"
     },
     "ShareFarmTotals": {
-      "label": "時間とカードの合計を共有する",
-      "tip": "1時間ごとの「ユーザーとして数える」の送信に数字を2つ加えます: 前回以降にアカウントが稼いだゲーム時間と、手に入れたカードの数です(例: 41.5時間と12枚)。初めてオンになったときは、このコピーの履歴にそれ以前から残っている分の同じ2つの数字も一度だけ送ります。nocat.lolが全員分を合計し、nocat.farmのページに表示します。どのアカウント・ゲーム・カードかは一切送りません。「ユーザーとして数える」がオンの間だけ。オフならどちらの数字も送りません。"
+      "label": "ファームの合計を共有する",
+      "tip": "1 時間ごとの「ユーザーとして数える」のメッセージにいくつかの数を加えます: 前回からアカウントが稼いだゲームのプレイ時間、手に入れたカード、ジェムにしたアイテム、作ったバッジ（キラも含む）、開封したブースターパック、マーケットで売れたアイテムの数です - 例: 41.5 時間、カード 12 枚、ジェムにしたアイテム 30 個、バッジ 2 個、パック 4 個、売れたアイテム 9 個。初めてオンにしたときは、このコピーの履歴にあるそれ以前の時間とカードも一度だけ送ります。nocat.lol は全員の分を足して、nocat.farm のページに合計を表示します。どのアカウント、ゲーム、カード、アイテムかは送りません。オン: 数を毎時のメッセージと一緒に送ります。オフ: どれも送りません。「ユーザーとして数える」がオンのときだけ働きます。"
     },
     "ReactionSpeed": {
       "label": "反応の速さ",
@@ -3929,7 +4093,7 @@
     },
     "BoosterPackGames": {
       "label": "ブースターパックを作るゲーム",
-      "tip": "ジェムをブースターパックに変えるゲームです。Steam で作れるのは 1 ゲームにつき 1 日 1 パックで、まだカードがドロップするゲームだけです。空にするとオフになります。"
+      "tip": "ジェムをブースターパックに変えるゲームで、1 ゲームにつき 1 日 1 パックです。例えばリストに 2 つのゲームがあれば、ジェムがある限り 1 日に最大 2 パック作ります。作れるのは Steam のブースターパック作成ページにあるゲーム、つまり持っていてトレーディングカードのあるゲームだけです。"
     },
     "AchievementSkipMultiplayer": {
       "label": "マルチプレイの実績をスキップ",
@@ -3937,115 +4101,115 @@
     },
     "HealthAlertBans": {
       "label": "新しい BAN を知らせる",
-      "tip": "BAN が出たら知らせます。「BAN を監視」がオンのときはそちらがすでに知らせるので、二重にならないようこちらは黙っています。"
+      "tip": "BAN が出たら知らせます - 例: VAC BAN、ゲーム BAN、トレードやコミュニティの BAN。「BAN を監視」がオンならそちらがすでに知らせるので、二重にならないようこちらは黙っています。オフ: ここからは BAN のメッセージを送りません。"
     },
     "HealthAlertDiscord": {
       "label": "健康アラートを Discord に",
-      "tip": "アカウントの何かが悪化したとき、Discord チャンネルにメッセージを送ります。「通知」で Discord ウェブフックの設定が必要です。"
+      "tip": "アカウントの状態が悪くなったとき、Discord のチャンネルにメッセージを送ります。例: マーケットが 7 日間使えなくなると、メッセージが 1 通届きます。オン: 悪くなった変化をすべて送ります。オフ: Discord には送りません - 健康状態の行には表示されます。通知で Discord の Webhook を設定しておく必要があります。"
     },
     "HealthAlertGuard": {
       "label": "Steam Guard が弱くなったら知らせる",
-      "tip": "Steam Guard がスマホアプリからメールに変わったり、オフになったりしたら知らせます。"
+      "tip": "Steam Guard が弱くなったら知らせます - 例: スマホアプリからメールのコードへ、またはオフへ。オフ: 健康状態の行に表示されるだけです。"
     },
     "HealthAlertLimited": {
       "label": "制限付きアカウントになったら知らせる",
-      "tip": "Steam がこのアカウントを制限付きとして扱い始めたら知らせます (フレンド招待もマーケットも不可)。一度も 5 ドル使ったことのないアカウントは制限付きです。"
+      "tip": "Steam がこのアカウントを制限付きとして扱い始めたら知らせます: フレンド招待もマーケットも使えません。例: 5 ドルを使ったことのないアカウントは制限付きです。オフ: 健康状態の行に表示されるだけです。"
     },
     "HealthAlertMarket": {
       "label": "マーケットが使えなくなったら知らせる",
-      "tip": "Steam がこのアカウントのコミュニティマーケット利用を止めたら知らせます - たとえば新しい端末でサインインしてから 7 日間。"
+      "tip": "Steam がこのアカウントのコミュニティマーケットの利用を止めたら知らせます - 例: 新しい端末でサインインした後 7 日間。オフ: 健康状態の行に表示されるだけです。"
     },
     "HealthAlertPhone": {
       "label": "電話番号が外されたら知らせる",
-      "tip": "アカウントに電話番号が登録されていなくなったら知らせます。"
+      "tip": "アカウントに電話番号が無くなったら知らせます - 例: Steam のサイトで外された後。オフ: 健康状態の行に表示されるだけです。"
     },
     "HealthAlertPopup": {
       "label": "健康アラートをポップアップで",
-      "tip": "アカウントの何かが悪化したとき、このPCにポップアップを表示します (「ポップアップを表示」がオンの場合)。"
+      "tip": "アカウントの状態が悪くなったとき、この PC にポップアップを表示します。例: Steam Guard がスマホアプリからメールに変わると、ポップアップが 1 つ出ます。オン: 「ポップアップを表示」がオンなら、そのたびにポップアップを出します。オフ: ポップアップなし - 健康状態の行には表示されます。"
     },
     "HealthAlertTelegram": {
       "label": "健康アラートを Telegram に",
-      "tip": "アカウントの何かが悪化したとき、Telegram チャットにメッセージを送ります - BAN、トレード保留、マーケットの利用停止、Steam Guard のオフなど。「通知」で Telegram の設定が必要です。"
+      "tip": "アカウントの状態が悪くなったとき、Telegram のチャットにメッセージを送ります。例: あるアカウントで 15 日間のトレード保留が始まると、メッセージが 1 通届きます。オン: 悪くなった変化をすべて送ります。オフ: Telegram には送りません - アカウントの健康状態の行には表示されます。通知で Telegram を設定しておく必要があります。"
     },
     "HealthAlertTradeHold": {
       "label": "トレード保留を知らせる",
-      "tip": "このアカウントのトレードが数日間保留されるようになったら知らせます - たとえば Steam Guard を変更してから 15 日間。"
+      "tip": "このアカウントのトレードが何日も保留されるようになったら知らせます - 例: Steam Guard の変更後 15 日間。オフ: 健康状態の行に表示されるだけです。"
     },
     "HealthMaxHours": {
       "label": "…最長 (時間)",
-      "tip": "2 回の健康チェックの間の最長時間 (時間単位) - たとえば 7。毎回の待ち時間は 2 つの値の間のランダムな時間です。"
+      "tip": "2 回の健康チェックの間の最長時間（時間）です - 例: 7。最短が 5 なら、5〜7 時間ごとにランダムで確認します。"
     },
     "HealthMinHours": {
       "label": "健康チェックの最短間隔 (時間)",
-      "tip": "2 回の健康チェックの間の最短時間 (時間単位) - たとえば 5。アカウントがサインインしたときには必ず 1 回確認します。"
+      "tip": "2 回の健康チェックの間の最短時間（時間）です - 例: 5。最長が 7 なら、5〜7 時間ごとにランダムで確認します。アカウントがサインインしたときは必ず 1 回確認します。"
     },
     "ScamAlertDiscord": {
       "label": "詐欺の警告を Discord に",
-      "tip": "詐欺監視の警告を Discord チャンネルに送ります。「通知」で Discord ウェブフックの設定が必要です。"
+      "tip": "詐欺監視の警告を Discord のチャンネルに送ります。例: あるアカウントに新しい API キーができると、アカウント名を書いたメッセージが 1 通届きます。オン: すべての警告を送ります。オフ: Discord には送りません - ログとダッシュボードには表示されます。通知で Discord の Webhook を設定しておく必要があります。"
     },
     "ScamAlertPopup": {
       "label": "詐欺の警告をポップアップで",
-      "tip": "詐欺監視の警告が出るたびに、このPCにポップアップを表示します (「ポップアップを表示」がオンの場合)。"
+      "tip": "詐欺監視の警告ごとに、この PC にポップアップを表示します。例: あるアカウントのメールが変わると、アカウント名を書いたポップアップが 1 つ出ます。オン: 「ポップアップを表示」がオンなら、警告ごとにポップアップを出します。オフ: ポップアップなし - ログとダッシュボードには表示されます。"
     },
     "ScamAlertTelegram": {
       "label": "詐欺の警告を Telegram に",
-      "tip": "詐欺監視の警告 (新しい API キー、新しい端末、メール・電話・Steam Guard の変更、全セッションのサインアウト) を Telegram チャットに送ります。「通知」で Telegram の設定が必要です。"
+      "tip": "詐欺監視の警告を Telegram のチャットに送ります。例: あるアカウントで新しい端末がサインインすると、アカウントと端末の名前を書いたメッセージが 1 通届きます。オン: すべての警告を送ります。オフ: Telegram には送りません - ログとダッシュボードには表示されます。通知で Telegram を設定しておく必要があります。"
     },
     "ScamWatchApiKey": {
       "label": "API キーを確認",
-      "tip": "アカウントの Steam Web API キーのページを確認します。知らないうちにキーが現れたり変わったりするのは、最もよくあるトレード詐欺です。保存するのはキーの指紋だけで、キーそのものは保存しません。"
+      "tip": "アカウントの Steam Web API キーのページを確認します。あなたの知らないうちにキーが現れたり変わったりするのは、最もよくあるトレード詐欺です - 例: サインインした偽のトレードサイトが作ったもの。残すのはキーの指紋だけで、キーそのものは決して残しません。オフ: キーを確認しません。"
     },
     "ScamWatchCancelOffers": {
       "label": "警告時: 送ったオファーを取り消す",
-      "tip": "警告のあと、このアカウントが送ってまだ成立していないトレードオファーを取り消します - API キーを手にした詐欺師はそれを偽物にすり替えます。"
+      "tip": "警告のあと、このアカウントが送ってまだ成立していないトレードオファーを取り消します - あなたの API キーを持つ詐欺師は、それを偽物にすり替えます。例: 別のアカウントあてに待っている 2 件のオファーを取り消します。オフ: 送ったオファーはそのままです。"
     },
     "ScamWatchDetails": {
       "label": "メール・電話・Steam Guard を確認",
-      "tip": "アカウント詳細のページを確認し、メールアドレス、電話番号、Steam Guard が変わったら警告します。保存するのは Steam が表示する伏せ字の形 (th***@gmail.com、末尾 12 など) だけです。"
+      "tip": "アカウントの詳細ページを確認し、メールアドレス、電話番号、Steam Guard が変わったら警告します。残すのは Steam が表示する伏せ字の形だけです - 例: th***@gmail.com、末尾 12 の電話番号。オフ: これらを確認しません。"
     },
     "ScamWatchDevices": {
       "label": "新しい端末を確認",
-      "tip": "アカウントの承認済み端末の一覧を確認し、新しく現れた、あなたのものでも nocat.farm 自身のものでもない端末について警告します。"
+      "tip": "アカウントの承認済み端末の一覧を確認し、あなたのものでも nocat.farm 自身のものでもない新しい端末について警告します - 例: 見たことのない「DESKTOP-8XQ2」。オフ: 端末を確認しません。"
     },
     "ScamWatchMaxMinutes": {
       "label": "…最長 (分)",
-      "tip": "2 回の確認の間の最長時間 (分単位) - たとえば 60。毎回の待ち時間は 2 つの値の間のランダムな時間です。"
+      "tip": "2 回の確認の間の最長時間（分）です - 例: 60。最短が 30 なら、毎回 30〜60 分のランダムな待ち時間です。"
     },
     "ScamWatchMinMinutes": {
       "label": "確認の最短間隔 (分)",
-      "tip": "2 回の確認の間の最短時間 (分単位) - たとえば 30。1 回の確認はページを数回見るだけで、ブラウザで開くのと同じです。"
+      "tip": "2 回の確認の間の最短時間（分）です - 例: 30。最長が 60 なら、毎回 30〜60 分のランダムな待ち時間です。1 回の確認はページを数回見るだけで、ブラウザーで開くのと同じです。"
     },
     "ScamWatchRevokeKey": {
       "label": "新しい API キー: 取り消す",
-      "tip": "以前はなかった API キーが現れたら、すぐに Steam のキーのページで「取り消し」を押します。初期設定はオフ: 自分で API キーを作る場合 (一部のトレードサイトが求めます) はオフのままにしてください。"
+      "tip": "以前はなかった API キーが現れたら、すぐに Steam のキーのページで取り消しを押し、詐欺サイトが作ったキーを使えなくします - 例: 現れてから 1 時間以内に。初期設定はオフ: その場合は警告するだけです。自分で API キーを作る場合（キーを求めるトレードサイトもあります）はオフのままにしてください。"
     },
     "ScamWatchSessions": {
       "label": "全サインアウトを確認",
-      "tip": "アカウントのすべてのセッションがサインアウトされたために Steam が保存済みのログインを拒否したら警告します - 盗む人が最初にやることです。通常の再接続や、あなたがそのアカウントで遊んでいることは数えません。"
+      "tip": "アカウントのすべてのセッションがサインアウトされて、保存したサインインを Steam が拒否したときに警告します - 泥棒が最初にすることです、例:「ほかのすべてのデバイスの承認を解除」。ふつうの再接続や、あなたがそのアカウントで遊ぶことは数えません。オフ: 確認しません。"
     },
     "ScamWatchStopTrades": {
       "label": "警告時: トレードを止める",
-      "tip": "警告のあと、このアカウントは scamwatch ok とアカウント名を入力するまで、トレードオファーの承認とアイテムの自動送信を止めます。自分でオファーに応えることはできます。"
+      "tip": "警告のあと、このアカウントは scamwatch ok とアカウント名を入力するまで、トレードオファーの承認とアイテムの自動送信を止めます。例: 承認されるはずだった寄付はあなたを待ちます。自分でオファーに応えることはできます。オフ: いつもどおりトレードを続けます。"
     },
     "ScamWatchTrustedDevices": {
       "label": "無視する自分の端末",
-      "tip": "自分の端末の名前を、Steam の「承認済み端末」に表示されているとおりにカンマ区切りで - たとえば: My Phone, LAPTOP-7。これらからの新しいサインインは報告しません。nocat.farm 自身のサインインは常に自動で見分けます。"
+      "tip": "自分の端末です。これらのサインインは新しい端末として報告しません。Steam の「承認済みデバイス」に出ているとおりの名前を、カンマで区切って入力します - 例: My Phone, LAPTOP-7。空欄: 新しい端末はすべて報告します。nocat.farm 自身のサインインは、入力しなくても常に認識されます。"
     },
     "WatchForScams": {
       "label": "詐欺を監視",
-      "tip": "30 分ほどごとに、アカウントの乗っ取りやトレード詐欺の兆候を探します: 以前はなかった API キー、あなたのものではない端末のサインイン、メール・電話・Steam Guard の変更、全セッションのサインアウト。見るだけです。警告が出ると、赤いログ行、ポップアップ、メッセージが届き、その後どうするかは下で設定します。"
+      "tip": "30 分ほどごとに、アカウントの乗っ取りやトレード詐欺の兆候を探します: 以前はなかった API キー、あなたのものではない端末のサインイン、メール・電話・Steam Guard の変更、全セッションのサインアウト。例: 偽のトレードサイトが 14:00 に作ったキーは、14:30 ごろまでに報告されます。見るだけです: 警告が出たときどうするかは下で設定します。オフ: 何も確認しません。"
     },
     "WatchHealth": {
       "label": "アカウントの健康状態を見守る",
-      "tip": "アカウントのカードに健康状態の行を 1 つ表示します: レベル、BAN、トレード保留、マーケットの利用、制限付きアカウント、Steam Guard、電話。サインイン時と数時間ごとに確認します。見るだけで、何かが悪化したらすぐに知らせます。"
+      "tip": "アカウントのカードに健康状態の行を 1 つ表示します - レベル、BAN、トレード保留、マーケットの利用、制限付きアカウント、Steam Guard、電話番号 - そして何かが悪くなったらすぐ知らせます。例: トレード保留が始まると、メッセージが 1 通届き、行にもそう表示されます。サインイン時と数時間ごとに確認し、見るだけです。オフ: 健康状態の行もアラートもありません。"
     },
     "PointsWeeklyCap": {
       "label": "1 週間に使う上限",
-      "tip": "どの 7 日間でも使うポイントの上限。例: 3000 (バッジ 3 レベル)。0 なら何も使いません。"
+      "tip": "7 日間で使うポイントの上限です。例: 3000 なら、ポイントがいくらあっても 1 週間にバッジ 3 レベルまで。0 なら何も使いません。"
     },
     "PointsBadgeMaxLevel": {
       "label": "各バッジを止めるレベル",
-      "tip": "どのバッジもこのレベルまでしか上げません。例: 40 (Steam の上限)。ほかにポイントを残したいなら下げてください。"
+      "tip": "どのバッジもこのレベルまでしか上げません。例: 10 なら各バッジをレベル 10（約 10,000 ポイント）で止めます。Steam で上げられるのは最大 40 です。ポイントを他のことに残したいなら下げてください。"
     },
     "SendPoints": {
       "label": "Steam ポイントの使用を送る",
@@ -4053,92 +4217,92 @@
     },
     "PointsBuyOlderBadges": {
       "label": "古いシーズンバッジも",
-      "tip": "今のバッジが終わったら、ショップにまだ載っている古いシーズンバッジのレベルも買います。Steam に断られたものもあるのでオフです。断られてもログに残るだけです。"
+      "tip": "今のバッジが終わったら、ショップにまだある古い季節バッジのレベルも買います - 例: 去年の冬のもの。Steam が断ることがあるため初期設定はオフで、断られてもログに残すだけです。オフ: 今のバッジだけ。"
     },
     "SpendPoints": {
       "label": "Steam ポイントをレベルに使う",
-      "tip": "このアカウントの Steam ポイントを、ポイントショップの季節バッジのレベルに使います - Steam レベルを上げられる唯一のもので、1,000 ポイントで約 100 XP。すべてのアカウントで初期設定はオフ。オンにすると、まず何を買うかを見せて確認を求めます。オフにするとすぐ止まります。"
+      "tip": "このアカウントの Steam ポイントを、ポイントショップの季節バッジのレベルに使います - Steam レベルを上げられる唯一のもので、1,000 ポイントで約 100 XP。例: 3,000 ポイントで 3 レベル。すべてのアカウントで初期設定はオフ。オンにすると、まず何を買うかを見せて確認を求めます。オフにするとすぐ止まります。"
     },
     "PointsKeepAtLeast": {
       "label": "常に最低限残す",
-      "tip": "決して使わないポイント数。自分用に残せます。例: 1000。バッジ 1 レベルは 1,000 ポイントです。"
+      "tip": "決して使わず、あなたのために残すポイントです。例: 1000 で 4,500 ポイントあれば、使えるのは 3,500 - 1 レベル 1,000 でバッジ 3 レベル分です。0 なら全部使えます。"
     },
     "PointsCheckEveryHours": {
       "label": "確認の間隔（時間）",
-      "tip": "ポイントとショップを確認する間隔 (時間)。例: 12。ヒューマンモードのアカウントは自分の一日の間だけ確認します。"
+      "tip": "ポイントとショップを確認する間隔（時間）です - 例: 12 なら 1 日 2 回。人間モードのアカウントは自分の一日の間だけ確認します。"
     },
     "PointsBuySeasonalBadge": {
       "label": "シーズンバッジのレベルを買う",
-      "tip": "ポイントショップが今売っているバッジ (Summer Collection など) のレベルを買えるようにします。大型の Steam セールごとに新しいものが出ます。"
+      "tip": "ポイントショップで今売っているバッジのレベルを買えるようにします - 例: Summer Collection。大きな Steam セールごとに新しいものが出ます。オン: そのバッジのレベルを上げます。オフ: 買いません。"
     },
     "BackupRetryMinutes": {
       "label": "再試行までの時間 (分)",
-      "tip": "バックアップに失敗したあと、その日にもう一度試すまで待つ分数。例：60。0 なら翌日まで待ちます。"
+      "tip": "バックアップが失敗した後、その日のうちに再試行するまで待つ時間です。例: 60 なら、午前 4 時に失敗したバックアップを午前 5 時にもう一度試します。0 なら翌日まで待ちます。"
     },
     "SendBackups": {
       "label": "バックアップを送る",
-      "tip": "バックアップの失敗とその理由。「知らせるとき」が毎回のバックアップの後なら、保存したバックアップも毎回。"
+      "tip": "バックアップが失敗したとき、その理由とともにメッセージを送ります - 例: フォルダーが無い。「知らせるとき」が「毎回のバックアップの後」なら、保存したバックアップごとにも 1 通送ります。"
     },
     "BackupFolder": {
       "label": "バックアップの保存先",
-      "tip": "毎日のバックアップを入れるフォルダー。この PC が壊れても残るよう、OneDrive や Dropbox のフォルダー、USB ドライブなどに。例：D:\\OneDrive\\nocat.farm。空なら nocat.farm の横の backups フォルダーに保存します。"
+      "tip": "毎日のバックアップを保存するフォルダーです。この PC が壊れても残るよう、OneDrive や Dropbox のフォルダー、または USB ドライブを選びます - 例: D:\\OneDrive\\nocat.farm。空欄: nocat.farm の隣の backups フォルダー。"
     },
     "BackupIncludeLogs": {
       "label": "ログを含める",
-      "tip": "直近 7 日分のログファイルもバックアップに入れます。サイズが大きくなります。オンにしない限りオフです。"
+      "tip": "直近 7 日分のログファイルもバックアップに入れます。例えば、何かがおかしくなる前の日にアカウントが何をしたか振り返るために。バックアップが大きくなります。オフ（初期設定）: ログは入れません。"
     },
     "BackupHour": {
       "label": "バックアップの時刻",
-      "tip": "毎日のバックアップを行う時刻。例：午前 4 時。そのとき PC が切れていたら、nocat.farm がまた開いたらすぐ行います。"
+      "tip": "毎日のバックアップを行う時刻です - 例: PC が静かな午前 4 時。その時刻に PC が切れていたら、次に nocat.farm を開いたときにすぐ行います。"
     },
     "BackupPassword": {
       "label": "バックアップのパスワード",
-      "tip": "バックアップをロックするパスワード。12 文字以上で、決めるのはあなただけです。新しい PC でバックアップを復元するときに必要なので、安全な場所に書き留めてください。これが無いと誰も（あなたも）バックアップを開けません。この PC に暗号化して保存され、どこにも送られません。変更しても、変更後に作ったバックアップにしか使われません - それより古いものは古いパスワードが必要です。"
+      "tip": "バックアップに鍵をかけるパスワードです - 12 文字以上、例えば覚えやすい短い文。新しい PC でバックアップを戻すときに必要なので、安全な場所に書き留めてください: これが無いと誰も、あなた自身も、バックアップを開けません。この PC に暗号化して保存され、どこにも送られません。変更すると、それ以降のバックアップだけが新しいパスワードになります - 古いものは古いパスワードのままです。"
     },
     "BackupLocalCopy": {
       "label": "ここにもコピーを残す",
-      "tip": "同じバックアップを nocat.farm の横の backups フォルダーにも残し、保存先フォルダーが無いときでも手元に 1 つあるようにします。同じ数だけ残します。「バックアップの保存先」が空なら何もしません。"
+      "tip": "同じバックアップを nocat.farm の隣の backups フォルダーにも残します。保存先のフォルダーが見つからないときでも手元に 1 つあるように - 例: USB ドライブを抜いたまま。そこにも同じ数だけ残します。「バックアップの保存先」が空欄なら何もしません。"
     },
     "BackupIncludeSettings": {
       "label": "設定を含める",
-      "tip": "全体の設定をバックアップに入れます：ダッシュボード、通知、このページ。"
+      "tip": "全体の設定をバックアップに入れます: ダッシュボード、通知、このページ - 例: Telegram と Discord の設定。オン: 戻すと設定も戻ります。オフ: 戻しても新しい PC にある設定のままです。"
     },
     "BackupIncludeAccounts": {
       "label": "アカウントと保存したサインインを含める",
-      "tip": "各アカウントの設定、保存した Steam のサインイン、進み具合（人間モードの 1 日、実績ハント、rep4rep の回数）をバックアップに入れます。これが無いと復元してもアカウントは戻りません。"
+      "tip": "各アカウントの設定、保存した Steam のサインイン、進み具合（人間モードの一日、実績集め、rep4rep の回数）をバックアップに入れます。例: 3 つのアカウントが、すぐサインインできる状態で戻ります。オフ: 戻してもアカウントは戻りません。"
     },
     "BackupNotify": {
       "label": "知らせるとき",
-      "tip": "Telegram と Discord でバックアップについて知らせるタイミング：失敗したとき（フォルダーが無い、ディスクがいっぱい、権限が無い）だけか、毎回のバックアップの後もか。通知の「バックアップを送る」がオンである必要があります。",
+      "tip": "Telegram と Discord でバックアップについて知らせるタイミングです。「バックアップが失敗したときだけ」: 作れなかったときだけメッセージを送ります - 例: フォルダーが無い、ディスクがいっぱい、権限が無い。「毎回のバックアップの後」: 保存したバックアップごとにもメッセージを送ります。通知の「バックアップを送る」がオンである必要があります。",
       "choices": "0 バックアップが失敗したときだけ | 1 毎回のバックアップの後"
     },
     "PhoneInstallHint": {
       "label": "スマホへの入れ方を表示",
-      "tip": "スマホのページに、ダッシュボードをアプリのようにスマホのホーム画面に置く短い手順を表示します。"
+      "tip": "スマホのホーム画面にダッシュボードを置いてアプリのように開く方法を、スマホ ページに短く表示します - 例: Chrome ならメニューから「ホーム画面に追加」。オン: 説明を表示します。オフ: 隠します。もうスマホに入れてあるときに。"
     },
     "BackupJitterMinutes": {
       "label": "最大で何分遅らせるか",
-      "tip": "毎日バックアップの時刻に足すランダムな分数の上限。例：30。0 ならちょうどその時刻に行います。"
+      "tip": "毎日のバックアップの時刻に、この分数までのランダムな分を足します。例: 30 で「バックアップの時刻」が午前 4 時なら、4:00 から 4:30 の間のどこか。0 なら時刻ちょうどに行います。"
     },
     "BackupKeep": {
       "label": "残す数 (バックアップ)",
-      "tip": "フォルダーに残す毎日のバックアップの数。例：7 なら 1 週間分。古いものから消え、新しいものが残ります。消すのは自分のバックアップファイルだけです。"
+      "tip": "フォルダーに残す毎日のバックアップの数です。例: 7 なら 1 週間分を残し、8 個目のバックアップで一番古いものを削除します。削除するのは自分のバックアップファイルだけです。"
     },
     "BackupAuto": {
       "label": "毎日バックアップ",
-      "tip": "1 日 1 回、すべて（設定、アカウント、保存したサインイン、認証システム、履歴）をバックアップのパスワードでロックした 1 つのファイルに保存します。この PC が壊れても、どの PC にでも戻せます。先にバックアップのパスワードが必要です。オンにするまではオフです。"
+      "tip": "設定、アカウント、保存したサインイン、認証システム、履歴など、すべてのバックアップを 1 日 1 回、バックアップのパスワードで鍵をかけた 1 つのファイルに作ります。この PC が壊れても、どの PC にでも戻せます。例: 「バックアップの時刻」が午前 4 時、「残す数」が 7 なら、毎朝新しいバックアップができ、フォルダーには 1 週間分が残ります。オン: バックアップのパスワードを設定すれば毎日。オフ（初期設定）: 自分で作ったバックアップだけ。"
     },
     "BackupIncludeHistory": {
       "label": "履歴と統計を含める",
-      "tip": "グラフのもとになる日ごとの履歴、これまでに記録した時間、日報と週報をバックアップに入れます。"
+      "tip": "グラフのもとになる日ごとの履歴、稼いだ時間の合計、毎日と毎週のレポートをバックアップに入れます - 例: 1 年分の毎日のグラフ。オン: 戻した後もグラフが続きます。オフ: グラフは空からやり直しです。"
     },
     "BackupIncludeAuthenticators": {
       "label": "認証システムを含める",
-      "tip": "追加した Steam Guard 認証システムのファイル（.maFile）をバックアップに入れます。トレードを承認できるので、これが入るとバックアップのパスワードがさらに大事になります。"
+      "tip": "Steam Guard の認証システムのファイル（.maFile）を追加していれば、バックアップに入れます - 例: main.maFile。オン: 戻した後すぐにまたトレードを確認できます - なのでバックアップのパスワードがいっそう大切です。オフ: 手で追加し直します。"
     },
     "BorrowFamilyCopy": {
       "label": "コピーが使用中なら別のファミリーメンバーのコピーを借りる",
-      "tip": "Steam ファミリーの誰かがあるメンバーのコピーで共有ゲームをプレイ中で、別のメンバーもそのゲームを持っている場合、ゲームを外す代わりにその空いているコピーに切り替えて続けます。変えるのはそのゲーム 1 本の「借りる相手」だけで、誰かが使っているコピーは絶対に取りません。ファミリー共有のゲームのみ (「ファミリー共有のゲームも含める」)。"
+      "tip": "Steam ファミリーの誰かが、あるメンバーのコピーで共有ゲームを遊んでいて、別のメンバーもそのゲームを持っているときは、ゲームを外す代わりに空いているコピーに切り替えて続けます。例: 2 人のメンバーが Stardew Valley を持っていて、1 人が遊んでいるなら、もう 1 つのコピーを借ります。変えるのはそのゲームの「借りる相手」だけで、誰かが使っているコピーには決して切り替えません。オフ: コピーが空くまでそのゲームを外します。ファミリー共有のゲーム専用です（「ファミリー共有のゲームも含める」）。"
     },
     "FamilyWaitMinutes": {
       "label": "ファミリーメンバーがやめた後の待ち時間 (分)",
@@ -4146,144 +4310,181 @@
     },
     "SpareKeepGems": {
       "label": "バラで残すジェムの最低数",
-      "tip": "袋詰め・送信・販売を決してしないジェムの数（例: 500）。0 なら 1000 個ごとにすべてまとめます。"
+      "tip": "決して袋にまとめたり、送ったり、売ったりしないジェムの数です。例: 500 でジェムが 2,450 個なら、1,950 個を使えるので 1 袋作り、1,450 個がバラで残ります。0 なら 1000 個そろうごとに全部袋にします。"
     },
     "SpareKeepBackgrounds": {
       "label": "各背景を残す数",
-      "tip": "常に残す各背景の数、例：1。0 なら残さず、最後の1つも手放せます。"
+      "tip": "各背景を必ず残す数です。例: 1 なら、3 つのうち 2 つを使えます。0 なら何も残さず、最後の 1 つも使えます。"
     },
     "SpareGems": {
       "label": "その後のジェム",
-      "tip": "ジェムをどうするか。自動では、人間モードのアカウントでは 1000 個入りの袋にまとめてトレード可能なまま残し、ロボットのアカウントではバラのままにして「ブースターパックを作るゲーム」で使えるようにします。自動では決して売りません。「袋を売る」は 1 回の確認につき 1 袋を、余ったアイテムの 1 日の上限内で出品します。",
+      "tip": "ジェムをどうするか。「自動」では、人間モードのアカウントでは 1000 個入りの袋にまとめてトレード可能なまま残し、ロボットのアカウントではバラのままにしてブースターパックを作れるようにします - 自動では決して売りません。袋にまとめる: 例えばジェム 2,450 個なら 2 袋になり、450 個はバラで残ります。袋を送る: 下で指定したアカウントへ。「袋を売る」は 1 回の確認につき 1 袋を、余ったアイテムの 1 日の上限内で出品します。「ブースターパックを作成」で自動を選ぶと、ここの自動または袋は「バラのまま」に変わります。袋詰めのジェムではパックを作れないためです。",
       "choices": "0 自動 | 1 バラのまま（ブースターパックに使う） | 2 1000 個の袋にまとめてトレード可能なまま残す | 3 袋を自分の別アカウントに送る | 4 袋を売る"
     },
     "SpareGapSeconds": {
       "label": "アイテム間の待ち時間（秒）",
-      "tip": "2 つのアイテムの間の秒数（例: 40）。毎回変わり、人間モードのアカウントでは長くなります。"
+      "tip": "ロボットのアカウントで、1 回の確認の中でアイテムとアイテムの間に待つ時間です - 毎回変わります。例: 40 なら、5 個で約 3 分かかります。人間モードのアカウントでは代わりに「アイテム間の待ち時間、人間モード」を使います。"
     },
     "SparePerRun": {
       "label": "1 回に処理する数",
-      "tip": "1 回の確認でジェムにするか売るアイテムの最大数。価値の高いものから（例: 5）。"
+      "tip": "ロボットのアカウントで 1 回の確認でジェムにしたり売ったりする最大の数で、価値の高いものからです。例: 5 なら、余ったアイテムが 40 個見つかった確認では 5 個、次の確認でさらに 5 個を、1 日の上限内で処理します。人間モードのアカウントでは代わりに「1 回に処理する数、人間モード」を使います。"
     },
     "SpareKeepItems": {
       "label": "これらのアイテムには触れない",
-      "tip": "インベントリに表示されるとおりの完全なアイテム名をカンマ区切りで（例: Sans, Gordon Freeman (Foil)）。名前を書いたアイテムは、どのゲームのものでも残します。これらは必ず残します。"
+      "tip": "インベントリに表示されるとおりの完全なアイテム名を、カンマで区切って入力します、例: Sans, Gordon Freeman (Foil)。名前を入れると、どのゲームのそのアイテムも残します。これらは常に残します。空欄: 名前で残すものはありません。"
     },
     "BoosterCheckHours": {
       "label": "パックを確認する間隔（時間）",
-      "tip": "ブースターパックを確認する間隔（時間、例: 24）。毎回少しずつ変わります。"
+      "tip": "ブースターパックを確認する間隔（時間）です - 毎回少しずつ変わります。例: 24 なら約 1 日 1 回。"
     },
     "SpareKeepEmoticons": {
       "label": "各絵文字を残す数",
-      "tip": "常に残す各エモティコンの数、例：1。0 なら残さず、最後の1つも手放せます。"
+      "tip": "各エモティコンを必ず残す数です。例: 1 なら、3 つのうち 2 つを使えます。0 なら何も残さず、最後の 1 つも使えます。"
     },
     "BoosterUnopened": {
       "label": "開封しないパック",
-      "tip": "未開封の方が価値がある、ゲームが上のリストにある、または開封がオフのため未開封のまま残るパックをどうするか。送る・売るのは「余ったアイテム」がオンの間だけで、売却はその上限を守ります。新しいパックや出品中のパックには常に触れません。",
+      "tip": "未開封の方が価値がある、ゲームが上のリストにある、または開封がオフのため未開封のまま残るパックをどうするか。「残す」: そのまま残します。「自分の別アカウントに送る」: 下で指定したアカウントへ、例: main。「売る」: 余ったアイテムと同じように出品します。送る・売るのは「余ったアイテム」がオンの間だけで、売却はその上限を守ります。新しいパックや出品中のパック、そして「ブースターパックを作成」の自動で作ったパックには常に触れません。",
       "choices": "0 残す | 1 自分の別アカウントに送る | 2 売る"
     },
     "SpareBackgrounds": {
       "label": "重複した背景",
-      "tip": "プロフィール背景の余分な重複を余りとして数えます。"
+      "tip": "プロフィール背景の重複を余りとみなします。例: 3 つあって残す数が 1 なら、2 つが余りです。オフ: 背景は残します。"
     },
     "SparePriceMaxAgeHours": {
       "label": "価格を信用する期間（時間）",
-      "tip": "マーケット価格を新しいとみなす時間（例: 24）。価格が古いか分からないアイテムは、価格が付き直すまで残します。"
+      "tip": "マーケット価格を新しいとみなす時間です。例: 24 なら、昨日の朝に読んだ価格は今朝には古すぎるので、そのアイテムは価格を取り直すまで残します。価格の分からないアイテムは常に残します。"
     },
     "BoosterSendTo": {
       "label": "未開封パックの送り先",
-      "tip": "ここにある自分の別アカウントの名前（例: main）。認証情報を追加していない場合、送るにはスマートフォンでの確認が必要です。"
+      "tip": "ここにある自分の別アカウントの名前です、例: main - パックはトレードでそのアカウントに送られます。認証システムを追加していなければ、送るにはスマホでの確認が必要です。"
     },
     "SpareRunHours": {
       "label": "確認の間隔（時間）",
-      "tip": "余ったアイテムを確認する間隔（時間、例: 12）。毎回少しずつ変わります。人間モードのアカウントは自分の 1 日の間だけ確認します。"
+      "tip": "余ったアイテムを確認する間隔（時間）です - 毎回少しずつ変わります。例: 12 なら 1 日約 2 回。人間モードのアカウントは自分の一日の間だけ確認します。"
     },
     "SpareKeepGames": {
       "label": "これらのゲームのアイテムには触れない",
-      "tip": "カード、背景、絵文字を必ず残すゲーム。"
+      "tip": "カード、背景、エモティコンを常に残すゲームです - 例: セットを集めているゲーム。空欄: まるごと残すゲームはありません。"
     },
     "SpareSellPrice": {
       "label": "販売価格",
-      "tip": "出品価格。出品の直前に、このアカウント自身の Steam ウォレット通貨で価格を取り直します。「実際の価格より1セント安く」（安全な初期設定）：直近1日に売れた価格、または最安の出品の方が高ければそちら - かけ離れて安い投げ売りの出品1件は無視します。例：0.30 で売れていて 0.10 の出品が1件あれば 0.29 で出品。最近売れていない、または誰も売っていない場合は保持。ほかの選択肢：最安と同じ、中央値（最安より下にはしない）、最安より1セント安く（最も早く売れるが、投げ売りにつられて下がる）。",
-      "choices": "0 実際の価格より1セント安く | 1 最安と同じ | 2 売却価格の中央値 | 3 最安より1セント安く"
+      "tip": "出品価格です。出品の直前に、このアカウント自身の Steam ウォレット通貨で価格を取り直します。例: 今日 0.30 で何度か売れていて、0.10 の投げ売りの出品が 1 件あるアイテムなら、「実際の価格より1セント安く」は 0.29、「最安と同じ」は 0.10、「売却価格の中央値」は 0.30 で出品します。「実際の価格より1セント安く」（安全な初期設定）: 直近 1 日に売れた価格、または最安の出品の方が高ければそちら - かけ離れて安い投げ売りの出品 1 件は無視します。最近売れていない、または誰も売っていない場合は残します。ほかの選択肢: 最安と同じ、または中央値（最安より下にはしない）。",
+      "choices": "0 実際の価格より1セント安く | 1 最安と同じ | 2 売却価格の中央値"
     },
     "SpareRelistDays": {
       "label": "売れない出品を取り下げるまで（日）",
-      "tip": "日数（例: 7）。nocat.farm 自身が出した出品で、それまでに売れず、ほかの人がもっと安く出しているものは取り下げ、その日の価格で出品し直します。自分で出した出品には決して触れません。"
+      "tip": "売れない出品を取り下げて、少し安く出し直すまでの日数です。例: 7 なら、1 日に 0.30 で出品したカードが 8 日にまだ売れていなければ 0.29 で出し直します - ほかの人が 0.26 で売っていれば 0.25 で出し直します（投げ売りの出品は数えません）。「これより下げない」より下にはせず、その価格になったら出品したままにします。nocat.farm が自分で出したものだけです。あなたが自分で出品したものには決して触れません。"
     },
     "SpareMaxPrice": {
       "label": "これより高いアイテムには触れない",
-      "tip": "このアカウント自身の Steam ウォレット通貨で、例：ドルやユーロなら 0.25 - 自分の通貨では同じ価値の額、例：円なら 40。価値は最安の出品価格と直近1日の売却価格の高い方です。それより価値の高いものは spare preview に載るだけで、判断はあなたに任せます。"
+      "tip": "これより価値の高いものには決して触れません: ジェムにも変えず、売りもしません。このアカウント自身の Steam ウォレット通貨で、例: ドルやユーロなら 0.25 - 自分の通貨では同じ価値の額、例: 円なら 40。価値は最安の出品価格と直近 1 日の売却価格の高い方です: 0.20 で出品されていても 0.30 で売れていれば、価値は 0.30。"
     },
     "SpareGemMarginPct": {
       "label": "ジェムが販売を上回るべき割合（%）",
-      "tip": "パーセントで指定（例: 20）。ジェムの価値が、Steam の手数料を引いた販売額より 20% 以上高いときだけジェムにします。そうでなければ売ります。"
+      "tip": "アイテムをジェムにするには、ジェムの価値が販売よりどれだけ上回る必要があるか（%）です。例: 20 で、Steam の手数料を引いた販売の受け取りが 0.10 なら、0.12 以上の価値のジェムが勝ってジェムにします。0.11 なら売ります。「ジェムと販売の得な方」のときだけ。"
     },
     "SpareMaxedBadgeCards": {
       "label": "完成したバッジのカード",
-      "tip": "バッジがすでにレベル 5 のゲーム（またはキラバッジを作ったゲーム）のカードを余りとして数えます。下で設定した枚数は残します。"
+      "tip": "バッジがもう完成したゲーム（レベル 5、またはキラバッジを作成済み）のカードを、「各カードを残す枚数」の分を残して余りとみなします。例: 同じカードが 3 枚で残す枚数が 1 なら、2 枚が余りです。オフ: 完成したバッジのカードは残します。"
     },
     "SpareNewDays": {
       "label": "新しいアイテムに触れない期間（日）",
-      "tip": "アイテムが届いてから手を付けない日数（例: 7）。nocat.farm はそのアイテムを初めて見た時から数えるので、オンにした直後はすべてがこの日数だけ待ちます。0 でこのルールはオフです。"
+      "tip": "アイテムが入ってから触れずにおく日数です。例: 7 なら、月曜日に手に入ったカードは次の月曜日から使えます。nocat.farm はアイテムを初めて見たときから数えます。初めて確認したときにすでにインベントリにあるものはすべて古いものとみなし、すぐに処理できます - 待つのはその後に入ってきたアイテムだけです。0 でこのルールはオフです。"
     },
     "SpareGemsSendTo": {
       "label": "袋の送り先",
-      "tip": "ここにある自分の別アカウントの名前（例: main）。「その後のジェム」が袋を送るときだけ使います。認証アプリを追加していない場合、送信にはスマホでの承認が必要です。"
+      "tip": "ここにある自分の別アカウントの名前です、例: main - 袋はトレードでそのアカウントに送られます。「その後のジェム」で袋を送るときだけ使います。認証システムを追加していなければ、送るにはスマホでの確認が必要です。"
     },
     "OpenBoosterPacks": {
       "label": "ブースターパックを開封する",
-      "tip": "インベントリのブースターパックを開封し、カードをバッジに使えるようにします（または余ったアイテムにします）。初期設定は「開けない」- 選ぶまで何も開けません。「カードの方が価値がある時だけ」は、カードの市場価値が未開封パックより高い時だけ開けます。価格が不明なら開けません。人間モードのアカウントは自分の一日の間だけパックを開けます。",
+      "tip": "インベントリのブースターパックを開封し、カードをバッジに使えるようにします（または余ったアイテムにします）。レベル上げには「常に開封」を選んでください。初期設定は「開封しない」- 選ぶまで何も開けません。「カードの方が価値があるときだけ」は、3 枚のカードのマーケット価値が未開封パックより高いときだけ開けます - 例: 0.08 + 0.05 + 0.05 のカードは 0.15 のパックに勝ちます。価格が分からなければ開けません。「常に開封」: すべてのパック。「ブースターパックを作成」の自動で作ったパックは、ここの設定に関係なく自動が開けます。人間モードのアカウントは自分の一日の間だけパックを開けます。",
       "choices": "0 開封しない | 1 カードの方が価値があるときだけ | 2 常に開封"
     },
     "SpareAction": {
       "label": "余ったアイテムをどうするか",
-      "tip": "「ジェムと販売の得な方」は、ジェムの価値が販売より（下のマージン分）高いときはジェムにし、そうでなければ売ります。「すべて残す」は余っているものを報告するだけです。",
+      "tip": "「ジェムと販売の得な方」は、ジェムの価値が販売より（下のマージン分）高いときはジェムにし、そうでなければ売ります - 例: 0.05 相当のジェムは、受け取り 0.02 の販売に勝ちます。「ジェムのみ」: 決して売りません。「販売のみ」: 決してジェムにしません。「すべて残す」: 余っているものを報告するだけで、何も変えません。",
       "choices": "0 ジェムと販売の得な方 | 1 ジェムのみ | 2 販売のみ | 3 すべて残す（報告のみ）"
     },
     "SpareEmoticons": {
       "label": "重複した絵文字",
-      "tip": "絵文字の余分な重複を余りとして数えます。"
+      "tip": "エモティコンの重複を余りとみなします。例: 3 つあって残す数が 1 なら、2 つが余りです。オフ: エモティコンは残します。"
     },
     "BoosterNeverOpen": {
       "label": "これらのゲームのパックは開封しない",
-      "tip": "ブースターパックを常に未開封のままにするゲーム。"
+      "tip": "ブースターパックを常に未開封のままにするゲームです - 例: 未開封のパックをトレードしているゲーム。空欄: 開けずにおくゲームはありません。"
     },
     "SpareItems": {
       "label": "余ったアイテムを処理する",
-      "tip": "余ったカード、背景、エモティコンをジェムに変えるか売ります（1日に数個、得な方）。Steam 自身のアイテム（カード、背景、エモティコン）だけで、ゲームのアイテムや CS2 スキンには触れません。バッジにまだ必要なもの、新しいもの、価格上限を超えるものには決して触れません。オンにすると、まず何をするかを見せて確認を求めます。オフにするとすぐ止まります。"
+      "tip": "余ったカード、背景、エモティコンを、1 日に数個ずつ、ジェムにするか売ります - 得な方を選びます。例: 0.03 の価値のカードの 4 枚目は、ジェムの方が価値があればジェムにします。Steam 自身のアイテム（カード、背景、エモティコン）だけで、ゲームのアイテムや CS2 スキンには決して触れません。バッジにまだ必要なもの、新しいもの、価格上限を超えるものには決して触れません。オンにすると、まず何をするかを見せて確認を求めます。オフにするとすぐ止まります。"
     },
     "SpareDailyValue": {
       "label": "1 日の最大金額",
-      "tip": "1日のアイテムの合計価値の上限。このアカウント自身の Steam ウォレット通貨で、例：ドルやユーロなら 1.00 - 自分の通貨では同じ価値の額、例：円なら 150。"
+      "tip": "1 日に処理するアイテムの合計価値の上限で、このアカウント自身の Steam ウォレット通貨で指定します。例: 1.00 なら、0.10 のアイテム 10 個でその日はいっぱいで、11 個目は翌日まで待ちます。ドルやユーロなら 1.00 - 自分の通貨では同じ価値の額、例: 円なら 150。"
     },
     "SpareDailyItems": {
       "label": "1 日の最大個数",
-      "tip": "1 日にジェムにするか売るアイテムの最大数（例: 10）。"
+      "tip": "1 日にジェムにするか売るアイテムの最大数です。例: 10 なら、5 個ずつ 2 回の確認でその日は終わりです。人間モードのアカウントはその日のうちに分けて処理します。例: 6 時間の 1 日で 50 個、1 時間ごとの確認なら、1 回約 9 個です。"
     },
     "SpareFoils": {
       "label": "キラカードも",
-      "tip": "キラカードも余りとして数えます。初期設定はオフ：キラカードは珍しく、価値が高いことが多いからです。"
+      "tip": "キラカードも余りとみなせるようにします - 例: キラバッジを作成済みのキラカードの 2 枚目。オフ（初期設定）: キラカードはより珍しく価値が高いことが多いので、常に残します。"
     },
     "BoosterOpenNewDays": {
       "label": "新しいパックに触れない期間（日）",
-      "tip": "パックが届いてから開封しない日数（例: 7）。0 ならすぐ開封します。"
+      "tip": "パックが入ってから開けずにおく日数です。例: 7 なら、月曜日のパックは次の月曜日から開けます。0 ならすぐに開けます。 nocat.farm が自分で作ったパックは待たせず、次の機会に開けます。"
     },
     "SpareExtraCards": {
       "label": "余分なカード",
-      "tip": "バッジにもう必要ないカードの重複を余りとして数えます。たとえばバッジがレベル 2 なら各カードを 3 枚残します。"
+      "tip": "バッジにまだ必要な分を超えるカードを余りとみなします。例: バッジがレベル 2 なら、各カードを 3 枚（レベル 3、4、5 用）残すので、4 枚目は余りです。オフ: 余分なカードは残します。"
     },
     "SendItems": {
       "label": "余ったアイテムとブースターパックを送る",
-      "tip": "余ったアイテムがジェムに変えた、または出品したアイテムと、開封したブースターパック。"
+      "tip": "「余ったアイテム」やブースターパックの確認 1 回につきメッセージ 1 通: ジェムにした数・出品した数・開封したパックの数と、最初の 10 個の名前 - 例: 14 個でも 1 通で、14 通にはなりません。オフ: どれも送りません。"
     },
     "SpareKeepCopies": {
       "label": "各カードを残す枚数",
-      "tip": "バッジが完成していても常に残す各カードの枚数、例：1。0 なら残さず、最後の1枚も手放せます。バッジにまだ必要なカードは常に残します。"
+      "tip": "バッジが完成していても、各カードを必ず残す枚数です。例: 1 なら、3 枚のうち 2 枚を使えます。0 なら何も残さず、最後の 1 枚も使えます。バッジにまだ必要なカードは常に残します。"
     },
     "SpareDumpPct": {
       "label": "最安の出品が売却価格よりこれだけ安いときは保持（%）",
-      "tip": "パーセント、例：50。最安の出品が直近1日の売却価格より 50% 以上安く、その売却価格を裏付ける売却が1件しかないときは、2つの価格が矛盾しているので出品せずに保持します。売却が2件以上あれば売却価格の1セント下で出品します。それより安い出品があなたの価格を決めることはもともとありません。0 なら売却が1件でも出品します。「実際の価格より1セント安く」のときだけ。"
+      "tip": "最安の出品が売れた価格よりこれだけ安く、しかもその価格を裏付ける売却が 1 件だけのときは、出品せずに残します - 2 つの価格が食い違っているからです。例: 50 で、0.30 で 1 回売れて最安の出品が 0.12（60% 安い）なら残します。売却が 2 件以上なら、売れた価格より 1 セント安く出品します。0 なら売却 1 件でも出品します。「実際の価格より1セント安く」のときだけ。"
+    },
+    "BoosterMake": {
+      "label": "ブースターパックを作成",
+      "tip": "ジェムをブースターパックに変えます。Steamの決まりどおり1ゲームにつき1日1パックです。オフ: パックを作りません。選んだゲーム: 下のリストのゲームで作ります。自動: Steamがパック作成を許すゲームの中から、通常バッジが次のレベルに一番近いゲーム(持っているカードを数えて不足カードが一番少ないもの)を選びます。バッジがすでにレベル5のゲームやキラカードは使いません。例えば、セットのカードが 1 枚足りないゲームは、4 枚足りないゲームより先になります。自動で作ったパックは「ブースターパックを開封する」の設定に関係なく自分で開け、カードをバッジに回します。揃ったセットをレベルにするには「カードからバッジを作る」をオンにしてください。袋詰めのジェムはパックに使えないため、自動ではジェムをバラのままにします(「その後のジェム」)。人間モードのアカウントは1日の活動時間中だけパックを作って開けます。'booster plan' で自動が次に選ぶものを確認できます。",
+      "choices": "0 オフ | 1 選んだゲーム | 2 自動 - 一番近いバッジ"
+    },
+    "BoosterKeepGems": {
+      "label": "最低でも残すジェムの数",
+      "tip": "ブースターパックを作ってもこれより減らさないジェムの数です。ジェムがパックの価格とこの数の合計以上あるときだけ作ります。例: 1000 でジェムが 1,500 個なら、400 のパックを作って 1,100 個残り、次のパックはジェムが増えるまで待ちます。0 ならすべて使えます。"
+    },
+    "SpareRelistFloorPct": {
+      "label": "これより下げない（実際の売却価格の %）",
+      "tip": "売れない出品を下げていく下限で、そのアイテムが直近 1 日に売れた価格に対する % です。例: 80 なら、0.30 で売れたカードは 0.24 より下げません - その価格になったら出品したままにし、出し直しません。最近売れていなければ一切下げません。"
+    },
+    "SpareHumanGapMinMinutes": {
+      "label": "アイテム間の待ち時間、人間モード（分）",
+      "tip": "人間モードのアカウントで 2 つのアイテムの間に待つ最短の分数です。待ち時間は毎回、この値と下の最長の値の間でランダムに決まります。例: 3 と 20 なら、1 個処理した後、次まで 3〜20 分待ちます。"
+    },
+    "SpareDeclinedDays": {
+      "label": "スマホで出品を拒否したら、再挑戦まで（日）",
+      "tip": "Steam アプリで出品を拒否した後、そのアイテムを待たせる日数です。例: 30 なら、1 日にカードの出品を拒否すると、そのカード（すべてのコピー）は 31 日まで出品し直しません。出品される前に取り下げられたものも拒否とみなし、確かめられないものも同じです。0 なら二度と出品しません。"
+    },
+    "SpareHumanPerLook": {
+      "label": "1 回に処理する数、人間モード",
+      "tip": "人間モードのアカウントで 1 回の確認でジェムにしたり売ったりする最大の数で、価値の高いものからです。その日の分は 1 日のうちに分けて処理します - 今日の残りを残りの確認回数で割ったくらいで、この数を超えることはありません。例: 6 時間の 1 日で 1 日 50 個、1 時間ごとの確認なら 1 回約 9 個。これを 3 にすると 1 回 3 個で、確認の間隔が短くなります。"
+    },
+    "SpareMinSale": {
+      "label": "受け取りがこれ以上のときだけ売る",
+      "tip": "Steam の手数料を引いた後に最低限受け取る額で、このアカウント自身の Steam ウォレット通貨です。例: 0.05 なら、受取額が 0.03 になるカードは、ジェムに価値があればジェムにし、なければ保持します。ドルやユーロなら例: 0.05 - 自分の通貨で同じくらいの額を、円なら例: 5。0 なら何でも売ります。"
+    },
+    "SpareHumanGapMaxMinutes": {
+      "label": "...最長（分）",
+      "tip": "人間モードのアカウントで 2 つのアイテムの間に待つ最長の分数です。例: 20 で最短が 3 なら、毎回の待ち時間は 3〜20 分なので、3 個で最大およそ 40 分かかります。"
+    },
+    "CraftFoilBadges": {
+      "label": "キラバッジも作る",
+      "tip": "そろったキラカードのセットからキラバッジも作ります。オフにすると通常のバッジだけを作り、キラカードには手を付けません。Steam がキラバッジを拒否したときは、キラだけが待ち、通常のバッジは続けます。"
     }
   }
 }

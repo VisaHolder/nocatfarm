@@ -263,7 +263,10 @@
     "Mostly {0}.": "주로 {0}.",
     "Mostly {0}, with {1} in bursts rather than every day.": "주로 {0}, 그리고 {1}은(는) 매일이 아니라 몰아서.",
     "No games listed yet.": "아직 등록된 게임이 없습니다.",
-    "On around {0}, bed around {1} — both jittered daily.": "대략 {0}에 접속해 {1}쯤 잠듭니다 - 둘 다 매일 조금씩 흔들립니다.",
+    "up {0} · bed {1} · gets on {2} · goes to bed {3}": "오늘 접속 {0} · 취침 {1} · 접속 시간대 {2} · 취침 시간대 {3}",
+    "gets on {0} · goes to bed {1}": "접속 시간대 {0} · 취침 시간대 {1}",
+    "Gets on {0}, goes to bed {1}.": "접속은 {0}, 취침은 {1}.",
+    "Today: up {0}, bed {1}.": "오늘: {0}에 접속, {1}에 취침.",
     "About {0} on a weekday and {1} at the weekend.": "평일은 약 {0}, 주말은 {1}.",
     "Roughly {0} days off entirely.": "대략 {0}일은 아예 쉼.",
     "One game at a time, in sittings of {0}.": "한 번에 한 게임, {0} 단위 세션으로.",
@@ -578,7 +581,6 @@
     "couldn't read the card-page check list: {0}": "카드 페이지 확인 목록을 읽지 못했습니다: {0}",
     "couldn't save the card-page check list: {0}": "카드 페이지 확인 목록을 저장하지 못했습니다: {0}",
     "asleep, the card farmer is working": "취침 중, 카드 파밍 진행 중",
-    "last night's plan restored - {0}/{1} played, up about {2}": "어젯밤 계획 복원 - {0}/{1} 플레이, 약 {2}에 기상",
     "trade offer #{0}: couldn't check it as a card swap yet - {1}": "거래 제안 #{0}: 아직 카드 교환으로 확인하지 못했습니다 - {1}",
     "between sittings - {0} card(s) left": "세션 사이 - 카드 {0}장 남음",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0}에서 카드 파밍 중 · {1} 남음 · 오늘 {2}/{3}",
@@ -663,16 +665,12 @@
     "stood down": "대기 해제",
     "stopped": "중지됨",
     "switching game": "게임 전환 중",
-    "waiting - you're playing on this account": "대기 중 - 이 계정으로 플레이 중입니다",
     "waiting for a login slot": "로그인 순번 대기 중",
     "you're playing": "플레이 중입니다",
-    "{0} - your own Steam client is overriding this": "{0} - 본인의 Steam 클라이언트가 덮어쓰는 중",
     "{0} card(s) in {1} game(s)": "게임 {1}개에 카드 {0}장",
     "{0} card(s) left": "카드 {0}장 남음",
     "{0} left": "{0} 남음",
     "{0} to go": "{0} 남음",
-    "still {0}": "계속 {0}",
-    "now {0}": "지금 {0}",
     "rep4rep: {0} - next look in {1}": "rep4rep: {0} - {1} 후 다시 확인",
     "playing {0}": "{0} 플레이 중",
     "closing, then {0}": "종료 후 {0}",
@@ -822,8 +820,9 @@
     "sign-in attempt failed: {0}": "로그인 시도에 실패했습니다: {0}",
     "login failed: {0}": "로그인에 실패했습니다: {0}",
     "logon failed: {0}": "로그온에 실패했습니다: {0}",
+    "Steam is down for its weekly maintenance ({0}) - it signs in again by itself": "Steam이 주간 점검 중입니다 ({0}) - 자동으로 다시 로그인합니다",
+    "Steam isn't letting anyone sign in right now ({0}) - it tries again by itself": "지금은 Steam에 아무도 로그인할 수 없습니다 ({0}) - 자동으로 다시 시도합니다",
     "logged off: {0}": "로그오프됨: {0}",
-    "logged on as {0} ({1})": "{0}({1})(으)로 로그온했습니다",
     "Steam pushed {0} new item(s)": "Steam이 새 아이템 {0}개를 알렸습니다",
     "Steam rate-limit - backing off ~{0}m": "Steam 요청 제한 - 약 {0}분 물러납니다",
     "Steam reports another session on app {0} right after logon - probably our own, waiting before saying so": "로그온 직후 Steam이 앱 {0}의 다른 세션을 보고했습니다 - 아마 우리 것이므로 단정하기 전에 기다립니다",
@@ -840,9 +839,6 @@
     "answered {0} ({1}) in {2}s": "{0}({1})에 {2}초 만에 응답했습니다",
     "asleep - back around {0}": "취침 중 - {0}쯤 돌아옵니다",
     "auto-replied to {0} after {1}s": "{0}에게 {1}초 후 자동 응답했습니다",
-    "awake for the day - warming up for ~{0}": "오늘 기상 - 약 {0} 동안 예열합니다",
-    "back to banking hours quietly until {0}": "{0}까지 다시 조용히 시간을 적립합니다",
-    "last card dropped in {0} - that game's done": "{0}에서 마지막 카드 드롭 - 이 게임은 끝났습니다",
     "{0} is done - no cards left": "{0} 완료 - 남은 카드 없음",
     "claimed {0}": "{0}을(를) 받았습니다",
     "command from {0}: {1}": "{0}의 명령: {1}",
@@ -853,9 +849,6 @@
     "commented on {0} and credited ({1}/{2} today)": "{0}에 댓글을 달고 적립되었습니다 (오늘 {1}/{2})",
     "retry posted on {0}": "{0}에 재시도가 게시되었습니다",
     "{0} refused - trying another profile ({1}/{2})": "{0}이(가) 거부되었습니다 - 다른 프로필을 시도합니다 ({1}/{2})",
-    "{0} doesn't take comments - skipping": "{0}은(는) 댓글을 받지 않습니다 - 건너뜁니다",
-    "until ~{0}": "약 {0}까지",
-    "for now": "당분간",
     "daily limit found: {0}/24h": "일일 한도 확인: {0}/24시간",
     "rep4rep connected - {0} points": "rep4rep 연결됨 - {0}포인트",
     "rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure": "rep4rep이 불가능한 잔액을 보고합니다 ({0}포인트, 보류 {1}) - 마지막으로 타당한 값을 유지합니다",
@@ -872,10 +865,8 @@
     "now showing {0}": "현재 {0} 표시 중",
     "now showing nothing": "이제 아무것도 표시하지 않음",
     "games-played sent: {0} entr(ies)": "플레이 중 게임 전송: {0}개",
-    "reconnected - put {0} game(s) back on": "재연결 - 게임 {0}개를 다시 올렸습니다",
     "reusing web token (good for {0}h) - no new web session": "웹 토큰을 재사용합니다 ({0}시간 유효) - 새 웹 세션 없음",
     "rejoining in ~{0}s, then standing down until you're done": "약 {0}초 후 다시 접속하고, 끝날 때까지 물러나 있습니다",
-    "the account is free again - picking back up in {0}m": "계정이 다시 비었습니다 - {0}분 후 재개합니다",
     "leaving {0} alone - still refundable until {1}": "{0}은(는) 건드리지 않습니다 - {1}까지 환불 가능합니다",
     "refund protection is holding {0} game(s): {1}": "환불 보호가 게임 {0}개를 보류 중입니다: {1}",
     "plugin loaded: {0} {1}": "플러그인 로드됨: {0} {1}",
@@ -887,27 +878,19 @@
     "plugin {0} threw on unload: {1}": "플러그인 {0}이(가) 언로드 중 예외를 던졌습니다: {1}",
     "plugins: couldn't load {0}: {1}: {2}": "플러그인: {0}을(를) 로드하지 못했습니다: {1}: {2}",
     "plugins: nothing in {0}": "플러그인: {0}에 아무것도 없습니다",
-    "disconnected - reconnecting in ~{0}s": "연결이 끊겼습니다 - 약 {0}초 후 재연결합니다",
     "moving to another Steam server in ~{0}s": "약 {0}초 후 다른 Steam 서버로 이동",
     "dashboard: {0} failed logins from {1} - locked out for {2}m": "대시보드: {1}에서 로그인 {0}회 실패 - {2}분간 잠급니다",
-    "dashboard: {0}{1}": "대시보드: {0}{1}",
     "done - {0} achievement(s) unlocked across {1} game(s){2}": "완료 - 게임 {1}개에서 도전 과제 {0}개 해제{2}",
     ", {0} game(s) refused": ", 게임 {0}개 거부됨",
     "still going - {0}/{1} apps checked, {2} unlocked so far": "진행 중 - 앱 {0}/{1} 확인, 지금까지 {2}개 해제",
     "unlocked all {0} in {1}": "{1}의 {0}개를 모두 해제했습니다",
     "today's farming: {0} sitting(s), {1} in total": "오늘의 파밍: {0}회, 총 {1}",
-    "no cards left - human mode carries on{0}": "남은 카드 없음 - 사람 모드는 계속합니다{0}",
     "{0} game(s)": "게임 {0}개",
     "your games": "내 게임들",
-    "warming up for ~{0}": "약 {0} 동안 예열합니다",
     "{0} only today": "오늘은 {0}만",
     "{0} about {1}%, around {2} on the others": "{0} 약 {1}%, 나머지 게임에 {2} 정도",
-    "done for the day - {0} played, back around {1}": "오늘은 끝 - {0} 플레이, {1}쯤 돌아옵니다",
     "taking today off - back tomorrow around {0}": "오늘은 쉽니다 - 내일 {0}쯤 돌아옵니다",
-    "{0} - back in about {1}": "{0} - 약 {1} 후 돌아옵니다",
-    "{0} - going offline, back in about {1}": "{0} - 오프라인으로 전환합니다. 약 {1} 후 돌아옵니다",
     "resuming the grind of {0} - {1} left": "{0}의 집중 플레이를 재개합니다 - {1} 남음",
-    "stopping - finishing up, logging off in about {0}s": "중지합니다 - 마무리 중, 약 {0}초 후 로그오프합니다",
     "{0} licence(s) known": "알려진 라이선스 {0}개",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "인벤토리는 현재 {0}{1}, 게임 {2}개에 걸쳐 {3}개가 아직 가격 미확인입니다",
     "the market answered {0} - pausing price lookups until {1}": "마켓이 {0}을(를) 반환했습니다 - {1}까지 가격 조회를 멈춥니다",
@@ -940,7 +923,6 @@
     "config removed - stopping": "설정이 제거되었습니다 - 중지합니다",
     "connection went quiet - reconnecting": "연결이 조용해졌습니다 - 재연결합니다",
     "disabled in config - not starting": "설정에서 비활성화됨 - 시작하지 않습니다",
-    "done grinding - back to the usual day": "집중 플레이 완료 - 평소의 하루로 돌아갑니다",
     "every account has finished - closing down as configured": "모든 계정이 끝났습니다 - 설정대로 종료합니다",
     "game list changed - restarting the session so the custom name stays on top": "게임 목록이 바뀌었습니다 - 사용자 지정 이름이 맨 위에 남도록 세션을 다시 시작합니다",
     "global settings saved from the dashboard": "대시보드에서 전역 설정을 저장했습니다",
@@ -949,7 +931,6 @@
     "paused for {0} - picks back up by itself at {1}": "{0} 동안 일시 중지 - {1}에 알아서 다시 시작합니다",
     "resumed": "재개됨",
     "shutting down...": "종료하는 중...",
-    "stopped - logged out": "중지됨 - 로그아웃했습니다",
     "that Steam Guard code was wrong, try again": "그 Steam Guard 코드가 틀렸습니다. 다시 시도하세요",
     "that email code was wrong, try again": "그 이메일 코드가 틀렸습니다. 다시 시도하세요",
     "the account is free again - resuming": "계정이 다시 비었습니다 - 재개합니다",
@@ -1172,8 +1153,6 @@
     "Telegram is connected.": "Telegram이 연결되었습니다.",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "여기서 {0}을(를) 누르고(토큰을 저장하면 나타납니다) Telegram에서 {1}을(를) 누르세요. nocat.farm이 연결되고 인사를 보냅니다.",
     "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "이미 연결되어 있습니다. /status로 요약, /help로 명령어 목록, /console로 창에서처럼 명령을 입력할 수 있습니다.",
-    "update: signing out {0} ({1} of {2}) - updating in {3}s": "업데이트: {0} 로그아웃 중 ({2}개 중 {1}번째) - {3}초 후 업데이트",
-    "update: updating in {0}s": "업데이트: {0}초 후 업데이트",
     "nocat.farm {0} is ready": "nocat.farm {0} 준비됨",
     "Resting": "휴식 중",
     "Farming cards · {0} left": "카드 파밍 중 · {0}장 남음",
@@ -1215,9 +1194,7 @@
     "couldn't read the saved ban check: {0}": "저장된 차단 확인 기록을 읽지 못했습니다: {0}",
     "couldn't save the ban check: {0}": "차단 확인 기록을 저장하지 못했습니다: {0}",
     "offer {0} ({1}: {2}) - handling it in {3}": "제안 {0} ({1}: {2}) - {3} 후 처리합니다",
-    "accepted offer {0} from {1} - {2} item(s) in, {3} out": "{1}의 제안 {0} 수락 - 아이템 {2}개 수령, {3}개 전달",
     "declined offer {0} from {1}": "{1}의 제안 {0}을(를) 거절했습니다",
-    "{0} (one of your accounts)": "{0} (내 계정 중 하나)",
     "{0} item(s): {1} and {2} more": "아이템 {0}개: {1} 외 {2}종",
     "{0} item(s): {1}": "아이템 {0}개: {1}",
     "couldn't read the announced offers: {0}": "알린 제안 목록을 읽지 못했습니다: {0}",
@@ -1351,11 +1328,10 @@
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm는 Docker 안에서는 스스로 업데이트하지 않습니다 - nocatfarm 폴더에서 git pull을 실행한 뒤 docker compose up -d --build. config/와 logs/는 유지됩니다",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build": "nocat.farm는 Docker 안에서는 스스로 업데이트하지 않습니다 - nocatfarm 폴더에서 git fetch --tags, 이어서 git checkout v{0}, 그다음 docker compose up -d --build를 실행하세요. config/와 logs/는 유지됩니다. 최신 버전으로 돌아오려면 git checkout main, 이어서 git pull, 그다음 docker compose up -d --build를 실행하세요",
     "update: left out the {0} folder in the zip - yours stays as it is": "업데이트: zip 안의 {0} 폴더는 빼고 설치했습니다 - 기존 폴더는 그대로입니다",
-    "Discord Rich Presence off": "Discord Rich Presence 꺼짐",
     "Pop-ups": "팝업",
     "Inventory prices": "인벤토리 가격",
     "Updates & plugins": "업데이트와 플러그인",
-    "Badges, boosters & selling": "배지, 부스터, 판매",
+    "Badges & selling": "배지, 판매",
     "Inventory & bans": "인벤토리와 밴",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm이 열려 있는 동안 Discord에 게임처럼 Playing nocat.farm이 표시됩니다. 설정의 Discord 프로필에서 언제든 바꿀 수 있습니다.",
     "Trades & items": "거래와 아이템",
@@ -1688,14 +1664,9 @@
     "Or scan it: the dashboard's Phone page has QR codes.": "또는 스캔하세요: 대시보드의 휴대폰 페이지에 QR 코드가 있습니다.",
     "Sign in once and the phone stays signed in for {0} days.": "한 번 로그인하면 휴대폰은 {0}일 동안 로그인 상태로 유지됩니다.",
     "{0} is waiting for your accounts to go to sleep - 'update now' installs it right away": "{0}이(가) 계정이 잠들기를 기다립니다 - 'update now'로 바로 설치",
-    "still waiting its turn to sign in - about {0}s": "아직 로그인 차례를 기다림 - 약 {0}초",
-    "starting up - signs in in about {0}s (Gap between logins)": "시작 중 - 약 {0}초 뒤 로그인 (로그인 간격)",
     "login token encrypted - an older version saved it as plain text": "로그인 토큰 암호화됨 - 이전 버전이 평문으로 저장했습니다",
     "key queue: {0}": "키 대기열: {0}",
     "Friends & comments": "친구 및 댓글",
-    "update: {0}MB downloaded - unpacking": "업데이트: {0}MB 받음 - 압축 푸는 중",
-    "achievement boost: {0} games to hunt ({1} shared)": "업적 사냥: 게임 {0}개 ({1}개 공유)",
-    "achievement boost: {0} games to hunt": "업적 사냥: 게임 {0}개",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: 카드 드롭 {1}개 모두 완료 - 평소대로 복귀",
     "still going for {0}: {1} of {2} card drop(s)": "계속 {0}: 카드 드롭 {1}/{2}",
     "confirmed trade offer {0} with its authenticator": "교환 제안 {0}, 자체 인증기로 확인",
@@ -1716,9 +1687,7 @@
     "signed in - login token saved, no password needed again": "로그인됨 - 토큰 저장, 비밀번호 다시 필요 없음",
     "login token rejected ({0}) - needs the password again": "로그인 토큰 거부됨 ({0}) - 비밀번호가 다시 필요",
     "no Steam web session yet - farming and comments will retry": "Steam 웹 세션 없음 - 파밍과 댓글은 다시 시도",
-    "you're on this account - waiting until you're done": "이 계정을 쓰는 중 - 끝날 때까지 대기",
     "custom name slipped to {0} - setting it again": "사용자 이름이 {0}(으)로 바뀜 - 다시 설정",
-    "daily web refresh - getting a new web token": "하루 한 번 웹 갱신 - 새 웹 토큰 받는 중",
     "Steam Guard code sent from its authenticator": "자체 인증기로 Steam Guard 코드 전송",
     "Steam rejects its authenticator codes - check the secret": "Steam이 인증기 코드를 거부 - 시크릿 확인",
     "approve the login in the Steam app, or type the code below": "Steam 앱에서 로그인을 승인하거나 아래에 코드 입력",
@@ -1730,7 +1699,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep 보류 해제 - 댓글 재개",
     "achievement ceiling is one figure now: 90%": "업적 상한은 이제 하나의 값: 90%",
     "setting moved: when to farm cards = only at night": "설정 이동: 카드 파밍 시간 = 밤에만",
-    "disconnected - Steam's weekly maintenance, back in ~{0}m": "연결 끊김 - Steam 주간 점검, ~{0}분 후 복귀",
     "going for {0}: {1} of {2} card drop(s)": "{0} 노리는 중: 카드 드롭 {1}/{2}",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord 봇: 연결하려면 설정에서 Discord 연결을 누르세요",
     "Discord bot: no / commands in a server - invite it again": "Discord 봇: 서버에 / 명령 없음 - 다시 초대하세요",
@@ -1738,7 +1706,6 @@
     "token rejected - Developer Portal, Bot, Reset Token": "토큰 거부됨 - Developer Portal, Bot, Reset Token",
     "refused (code {0}) - check the Developer Portal": "거부됨 (코드 {0}) - Developer Portal 확인",
     "too many connects today - retrying in {0} min": "오늘 연결이 너무 많음 - {0}분 후 재시도",
-    "Discord profile now shows Playing nocat.farm": "Discord 프로필에 nocat.farm 플레이 중 표시",
     "gave up on a key after {0} tries - no account could use it": "{0}번 시도 후 키 포기 - 쓸 수 있는 계정 없음",
     "key queue unreadable (newer version or damaged) - left as is": "키 대기열 읽기 불가 (새 버전 또는 손상) - 그대로 둠",
     "key queue changes aren't saved - fix or move keys.json, restart": "키 대기열 변경이 저장 안 됨 - keys.json을 고치거나 옮기고 재시작",
@@ -1775,7 +1742,6 @@
     "saved logins are plain text - key {0} unusable: {1}": "저장된 로그인이 평문 - 키 {0} 사용 불가: {1}",
     "saved logins are plain text - no AES-GCM on this system": "저장된 로그인이 평문 - 이 시스템에 AES-GCM 없음",
     "keep the config folder somewhere private": "config 폴더는 비공개 장소에 두세요",
-    "listed {0} duplicate card(s) - {1} if they all sell": "중복 카드 {0}장 등록 - 다 팔리면 {1}",
     "{0} market listing(s) to confirm in the Steam app": "장터 등록 {0}건 - Steam 앱에서 확인하세요",
     "Telegram bot in use elsewhere - commands may not arrive": "Telegram 봇이 다른 곳에서 사용 중 - 명령이 안 올 수 있음",
     "only one program can read a Telegram bot - a second nocat.farm?": "Telegram 봇은 한 프로그램만 읽을 수 있음 - nocat.farm가 두 개?",
@@ -1799,7 +1765,6 @@
     "plugin {0} failed to load: {1}: {2}": "플러그인 {0} 로드 실패: {1}: {2}",
     "couldn't load plugin {0} - built for another version?": "플러그인 {0} 로드 불가 - 다른 버전용?",
     "plugin {0}: {1}": "플러그인 {0}: {1}",
-    "running in the tray - right-click the icon for the menu": "트레이에서 실행 중 - 아이콘 우클릭으로 메뉴",
     "dashboard on {0} has no password - only this machine gets in": "{0}의 대시보드에 비밀번호 없음 - 이 컴퓨터만 접속 가능",
     "set WebPassword (NOCATFARM_WEB_PASSWORD in Docker)": "WebPassword 설정 (Docker에서는 NOCATFARM_WEB_PASSWORD)",
     "dashboard on {0} can't be reached from outside Docker": "{0}의 대시보드는 Docker 밖에서 접근 불가",
@@ -1817,22 +1782,14 @@
     "  the dashboard is switched off - 'set WebEnabled true' then restart": "  대시보드가 꺼져 있습니다 - 'set WebEnabled true' 후 재시작",
     "  that line was typed while nocat.farm was asking something, so it wasn't run or kept - type it again if it was a command": "  nocat.farm이 무언가를 묻는 동안 입력된 줄이라 실행하지도 저장하지도 않았습니다 - 명령이었다면 다시 입력하세요",
     "couldn't read the achievement list for {0}": "{0} 업적 목록을 읽을 수 없음",
-    "{0}: {1}% done - next game, back in ~{2} day(s)": "{0}: {1}% 완료 - 다음 게임, ~{2}일 후 복귀",
     "family member started {0} - moving on": "가족이 {0} 시작 - 다음으로",
-    "achievement boost: {0} for {1} ({2}/{3})": "업적 사냥: {0} {1} ({2}/{3})",
-    "achievement boost: adding {0} for ~{1} ({2}/{3})": "업적 사냥: {0} 추가, ~{1} ({2}/{3})",
-    "achievement boost: adding {0} for ~{1}": "업적 사냥: {0} 추가, ~{1}",
     "{0}: achievements are server-side - nothing to grind": "{0}: 업적이 서버 측 - 그라인드할 것 없음",
-    " ({0}% have it)": "({0}% 보유)",
-    "unlocked \"{0}\" in {1}{2} ({3}/{4})": "{1}에서 \"{0}\" 해제{2} ({3}/{4})",
     "carried on ASF's achievement pacing for {0} game(s)": "ASF의 업적 속도를 게임 {0}개에서 이어받음",
     "banned in {0} - skipping its items (cards still trade)": "{0}에서 밴 - 아이템 제외 (카드는 계속 교환)",
     "NEW trade probation - trading is restricted": "새 교환 보호 관찰 - 교환 제한됨",
-    "made a {0} booster ({1} gems, {2} left)": "{0} 부스터 제작 (보석 {1}, {2} 남음)",
     "nothing left to farm - logging out (as set)": "파밍할 것 없음 - 로그아웃 (설정대로)",
     "{0}: no drop in {1}h ({2} left) - skipping it {3}h (strike {4})": "{0}: {1}시간 드롭 없음 ({2} 남음) - {3}시간 건너뜀 ({4}회째)",
     "all cards in - winding down on {0} for ~{1}": "카드 다 받음 - {0}에서 ~{1} 마무리",
-    "farming {0} - {1} card(s) left · ~{2} in all": "{0} 파밍 중 - {1}장 남음 · 총 ~{2}",
     "card dropped in {0} - {1} left · ~{2} in all": "{0}에서 카드 드롭 - {1} 남음 · 총 ~{2}",
     "drop run over - {0} has no drops left": "드롭 런 끝 - {0}에 남은 드롭 없음",
     "drop run done - {0} has no drops left": "드롭 런 완료 - {0}에 남은 드롭 없음",
@@ -1856,14 +1813,10 @@
     "couldn't join {0} - trying again next start": "{0} 가입 불가 - 다음 시작 때 재시도",
     "day off - online, idle until bed ~{0}": "쉬는 날 - 온라인 대기, 취침 ~{0}",
     "new plan for today from the current settings": "현재 설정으로 오늘 계획 새로 만듦",
-    "today's plan restored - {0}/{1} played, bed about {2}": "오늘 계획 복원 - {0}/{1} 플레이, 취침 약 {2}",
     "today: ~{0} of play, up {1}, bed {2}": "오늘: 플레이 ~{0}, 기상 {1}, 취침 {2}",
     "today's mix: {0}": "오늘의 구성: {0}",
     "asleep until {0} - card farming through the night": "{0}까지 수면 - 밤새 카드 파밍",
     "human mode has no games - fill in \"Games and how often\"": "휴먼 모드에 게임 없음 - \"게임과 빈도\" 입력",
-    "farming cards on {0} for ~{1} ({2}/{3} today)": "{0}에서 ~{1} 카드 파밍 (오늘 {2}/{3})",
-    "playing {0} for ~{1} ({2}/{3} today)": "{0} 플레이 ~{1} (오늘 {2}/{3})",
-    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "재시작 후 {0} 계속 - {1} 남음 (오늘 {2}/{3})",
     "last card from {0} - playing on ~{1}, then a break": "{0}의 마지막 카드 - ~{1} 더 하고 휴식",
     "rep4rep won't add this account - check the API token": "rep4rep가 이 계정을 추가하지 않음 - API 토큰 확인",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "아직 rep4rep에 없음 - 거기서 추가하거나 Rep4RepAutoAddProfiles 켜기",
@@ -1875,24 +1828,15 @@
     "daily comment limit hit ({0} posted here) - resting ~24h": "일일 댓글 한도 도달 (여기서 {0}개) - ~24시간 휴식",
     "rate-limited at {0}/{1} - comment gap, not the daily cap": "{0}/{1}에서 제한 - 댓글 간격이지 일일 한도 아님",
     "still rate-limited at {0}/{1} - resting {2}, then starting fresh": "{0}/{1}에서 계속 제한 - {2} 휴식 후 새로 시작",
-    "hit the {0}/24h cap - resting {1}": "{0}/24h 한도 도달 - 휴식 {1}",
     "can't read {0} ({1}) - no comments until it's fixed": "{0} 읽기 불가 ({1}) - 고칠 때까지 댓글 없음",
     "sending items to your main every {0}, first around {1}": "{0}마다 메인 계정으로 아이템 전송, 첫 전송 {1}쯤",
     "ignored a friend request from {0} - new private profile": "{0}의 친구 요청 무시 - 새 비공개 프로필",
     "offer {0} no longer a fair swap ({1}) - left for you": "제안 {0} 더 이상 공정한 교환 아님 ({1}) - 직접 처리",
     "offer {0} isn't a fair swap ({1}) - left for you": "제안 {0} 공정한 교환 아님 ({1}) - 직접 처리",
     "offer from {0} is gone (cancelled, answered or expired)": "{0}의 제안 사라짐 (취소, 응답 또는 만료)",
-    "offer {0} from {1}: get {2}, give {3} - {4}": "{1}의 제안 {0}: 받음 {2}, 줌 {3} - {4}",
-    "donation - accepting when awake": "기부 - 깨어나면 수락",
-    "donation - accepting in a few min": "기부 - 몇 분 후 수락",
-    "allowed sender - accepting when awake": "허용한 보낸 사람 - 깨어나면 수락",
-    "allowed sender - accepting in a few min": "허용한 보낸 사람 - 몇 분 후 수락",
     "accepted if it's a fair card swap, else trade accept {0} {1}": "공정한 카드 교환이면 수락, 아니면 trade accept {0} {1}",
     "declining soon - trade accept {0} {1} keeps it": "곧 거절 - trade accept {0} {1}로 유지",
     "waiting for you - trade accept or decline {0} {1}": "대기 중 - trade accept 또는 decline {0} {1}",
-    "offer {0} from {1} accepted - confirm it in Steam's email": "{1}의 제안 {0} 수락 - Steam 이메일에서 확인",
-    "offer {0} from {1} accepted - confirm it ('confirmations {2}')": "{1}의 제안 {0} 수락 - 확인하세요 ('confirmations {2}')",
-    "offer {0} from {1} accepted - confirm it on your phone": "{1}의 제안 {0} 수락 - 휴대폰에서 확인",
     "update undone: {0} didn't start, back on {1} - 'update accept' retries": "업데이트 취소: {0} 시작 안 됨, {1}(으)로 복귀 - 'update accept'로 재시도",
     "update undone: {0} didn't start, back on {1} - 'update to {0}' tries it again": "업데이트 취소: {0} 시작 안 됨, {1}(으)로 복귀 - 'update to {0}'로 재시도",
     "updated {0} → {1} · {2}MB in {3}s": "업데이트됨 {0} → {1} · {2}MB, {3}초",
@@ -1900,7 +1844,6 @@
     "update failed: files in use (a 2nd copy? antivirus?) - try again": "업데이트 실패: 파일 사용 중 (두 번째 복사본? 백신?) - 다시 시도",
     "update failed: copy error {0} (read-only? disk full?) - nothing changed": "업데이트 실패: 복사 오류 {0} (읽기 전용? 디스크 가득?) - 변경 없음",
     "update failed: {0} didn't start - still on {1}, try again": "업데이트 실패: {0} 시작 안 됨 - 아직 {1}, 다시 시도",
-    "update: {0} ready - signing accounts out, restart in {1}s": "업데이트: {0} 준비됨 - 계정 로그아웃, {1}초 후 재시작",
     "update: {0} ready - restarting in {1}s": "업데이트: {0} 준비됨 - {1}초 후 재시작",
     "update failed: couldn't reach GitHub ({0}) - nothing changed": "업데이트 실패: GitHub 연결 불가 ({0}) - 변경 없음",
     "update failed: GitHub gave no latest release - try again soon": "업데이트 실패: GitHub가 최신 릴리스를 안 알려줌 - 곧 다시 시도",
@@ -1910,14 +1853,10 @@
     "update failed: download stopped at {0} of {1}MB - try again": "업데이트 실패: 다운로드가 {1}MB 중 {0}에서 멈춤 - 다시 시도",
     "update failed: couldn't unpack ({0}) - disk full?": "업데이트 실패: 압축 해제 불가 ({0}) - 디스크 가득?",
     "update failed: couldn't back up the current version ({0})": "업데이트 실패: 현재 버전 백업 불가 ({0})",
-    "update: all signed out - restarting into {0}": "업데이트: 모두 로그아웃 - {0}(으)로 재시작",
     "update: signing the accounts back in": "업데이트: 계정에 다시 로그인하는 중",
     "update failed: {0} - nothing changed": "업데이트 실패: {0} - 변경 없음",
-    " · {0} by nocat.farm": "· nocat.farm로 {0}",
-    "no cards left - idling {0}{1}": "카드 없음 - {0} 대기 중{1}",
     "{0}/{1}": "{0}/{1}",
     "asleep, idling {0} game(s)": "수면 중, 게임 {0}개 대기",
-    "  (this PC only, no password)": "(이 PC만, 비밀번호 없음)",
     "{0} games, {1} cards to farm - about {2} in all": "게임 {0}개, 카드 {1}장 - 총 약 {2}",
     "Too many wrong passwords - try again in {0}.": "비밀번호를 너무 많이 틀렸습니다 - {0} 뒤에 다시 시도하세요.",
     "Or type dashboard unlock in the nocat.farm window.": "또는 nocat.farm 창에 dashboard unlock을 입력하세요.",
@@ -1947,7 +1886,6 @@
     "in use now, but not saved to disk - see the Log": "지금은 적용됐지만 디스크에 저장하지 못했습니다 - 로그를 확인하세요",
     "settings not saved - {0} didn't load; fix it or delete it": "설정이 저장되지 않았습니다 - {0}을(를) 불러오지 못했습니다. 고치거나 삭제하세요",
     "couldn't read the saved sign-in: {0}": "저장된 로그인 정보를 읽을 수 없습니다: {0}",
-    "listed {0} ({1}) for {2} - you get {3}": "{0}({1})을(를) {2}에 등록했습니다 - 받는 금액 {3}",
     "couldn't read the trade page: {0}": "거래 페이지를 읽지 못했습니다: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "제안을 보냈습니다 - Steam이 보낸 이메일에서 확인하세요 (Steam 앱 인증기가 없어 Steam이 최대 15일 동안 보류합니다)",
     "send due - waiting a few minutes after another account's send": "전송 시각 - 다른 계정의 전송 후 몇 분 기다리는 중",
@@ -1999,7 +1937,6 @@
     "this account is posting a comment right now - try again in a few minutes": "이 계정이 지금 댓글을 올리는 중입니다 - 몇 분 후 다시 시도하세요",
     "already commented for that task - pick another": "그 작업에는 이미 댓글을 달았습니다 - 다른 것을 고르세요",
     "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: 아이템을 지금 보내거나 판매하는 중입니다 - 몇 분 후 다시 시도하세요",
-    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: 대기 중인 거래에 어떤 카드가 들어 있는지 Steam이 알려 주지 않습니다 - 잠시 후 다시 시도하세요",
     "offer {0} is already being answered": "제안 {0}은(는) 이미 처리 중입니다",
     "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "대시보드가 꺼져 있습니다(설정의 웹 대시보드) - 먼저 켜고 nocat.farm을 다시 시작하세요",
     "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: “{1}” 저장됨 - 사람 모드를 끄면 표시됩니다. 사람 모드에서는 항상 실제 게임이 보입니다",
@@ -2104,7 +2041,6 @@
     "plugin {0} failed on {1}: {2}: {3}": "플러그인 {0}이(가) {1}에서 실패했습니다: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}'은(는) Windows가 예약한 이름입니다 (con, nul, com1 등) - 다른 이름을 고르세요",
     "'all' means every account in a command - pick another name": "'all'은 명령에서 모든 계정을 뜻합니다 - 다른 이름을 고르세요",
-    "offer sent - confirm it in the Steam app on your phone": "제안 보냄 - 휴대폰의 Steam 앱에서 확인하세요",
     "{0} invited you to play {1}": "{0}님이 {1} 게임에 초대했습니다",
     "human mode spaces comments out - this account can post the next one from {0}": "사람 모드는 댓글 간격을 둡니다 - 이 계정은 {0}부터 다음 댓글을 올릴 수 있습니다",
     "installing {0} by itself - all clear: {1}": "{0}을(를) 알아서 설치 중 - 모두 조용함: {1}",
@@ -2342,7 +2278,6 @@
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "취침 중, 고른 게임 없음 - 가장 많이 한 게임 {0}개로 시간 적립: {1} · {2}에 기상",
     "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "취침 중 · {0}에 기상 · 밤에 쌓을 게 없습니다 - 밤 목록에 게임을 추가하세요",
     "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "취침 중 - {0}쯤 돌아옵니다. 밤에 쌓을 게 없습니다: 밤 목록에 게임을 추가하세요",
-    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "취침 중 - 고른 게임이 없어 {0}까지 가장 많이 한 게임으로 조용히 시간을 적립합니다: {1}",
     "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "밤에는 오프라인으로 바뀌고, 고른 게임이 없어 가장 많이 한 게임을 돌립니다: {0}.",
     "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "아직 밤에 쌓을 게 없습니다: “밤에 돌릴 게임”에 게임을 추가하세요.",
     "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0}은(는) 무료 DLC - 받지 않음('무료 게임 받기'가 게임만으로 설정됨)",
@@ -2466,9 +2401,7 @@
     "{0} isn't a nocat.farm zip - its {1} is another program": "{0}은(는) nocat.farm zip이 아닙니다 - 그 안의 {1}은(는) 다른 프로그램입니다",
     "couldn't read {0} as a zip ({1})": "{0}을(를) zip으로 읽지 못했습니다 ({1})",
     "update undone: nocat.farm {0} from the file didn't start, back on {1}": "업데이트 취소됨: 파일의 nocat.farm {0}이(가) 시작되지 않아 {1}(으)로 돌아왔습니다",
-    "installing nocat.farm {0} from {1}": "{1}에서 nocat.farm {0} 설치 중",
     "update failed: couldn't read {0} ({1}) - nothing changed": "업데이트 실패: {0}을(를) 읽지 못했습니다 ({1}) - 아무것도 바뀌지 않았습니다",
-    "update: {0}MB copied - unpacking": "업데이트: {0}MB 복사됨 - 압축 푸는 중",
     "Installing nocat.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.": "{1}에서 nocat.farm {0}을(를) 설치합니다. 계정은 하나씩 로그아웃하며, 1분쯤 뒤에 돌아옵니다.",
     "it's paused - 'resume' it first": "일시 정지 상태입니다 - 먼저 'resume' 하세요",
     "you're playing on it - human mode waits until you're done": "직접 플레이 중입니다 - 사람 모드는 끝날 때까지 기다립니다",
@@ -2687,14 +2620,11 @@
     "{0} left out - someone in your Steam Family is playing it (back {1} min after they stop)": "{0} 제외 - Steam 가족 중 누군가 플레이 중입니다 (그만둔 뒤 {1}분 후 돌아옴)",
     "{0}: {1}'s copy is in use - borrowing {2}'s free copy instead": "{0}: {1}의 사본이 사용 중입니다 - 대신 {2}의 빈 사본을 빌립니다",
     "asleep, banking hours quietly on {0} · up {1}": "취침 중, {0}(으)로 조용히 시간 적립 · {1}에 기상",
-    "{0}: its copy is in use - switching to {1}'s free copy": "{0}: 사본이 사용 중입니다 - {1}의 빈 사본으로 바꿉니다",
     "{0} is back on the overnight list": "{0}이(가) 밤 목록에 다시 올라왔습니다",
     "{0} left out - held back so it can still be refunded": "{0} 제외 - 아직 환불할 수 있도록 남겨두었습니다",
-    "asleep - banking hours quietly until {0} on {1}": "취침 중 - {0}까지 {1}(으)로 조용히 시간을 적립합니다",
     "couldn't read the software this account holds: {0}": "이 계정의 소프트웨어를 읽지 못했습니다: {0}",
     "{0} left out - it's on \"Never touch these\"": "{0} 제외 - '절대 건드리지 않을 것'에 들어 있습니다",
     "library: {0} piece(s) of software owned too ({1})": "라이브러리: 소프트웨어도 {0}개 보유 ({1})",
-    "opened {0}: {1} - {2}": "{0}을(를) 열었습니다: {1} - {2}",
     "its cards are worth about {0}, the pack {1}": "카드는 약 {0}, 팩은 {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "{0}에 팔리고 받는 금액은 {1} - 보석 {2}개의 가치({3})보다 많습니다",
     "its gem value isn't known yet - kept": "보석 가치를 아직 모릅니다 - 보관합니다",
@@ -2737,12 +2667,10 @@
     "the price of gems isn't known yet - kept": "보석 가격을 아직 모릅니다 - 보관합니다",
     "worth more sealed: the pack {0}, its cards about {1}": "뜯지 않은 게 더 비쌉니다: 팩 {0}, 카드 약 {1}",
     "worth more sealed": "뜯지 않은 게 더 비쌉니다",
-    "worth {0} - left for you to decide": "{0}의 가치 - 결정은 직접 하세요",
     "set to always open": "항상 열기로 설정됨",
     "{0}: it can't send to itself - pick another account": "{0}: 자기 자신에게는 보낼 수 없습니다 - 다른 계정을 고르세요",
     "couldn't look at booster packs: {0}": "부스터 팩을 확인하지 못했습니다: {0}",
     "sells for {0}, you get {1}": "{0}에 팔리고 받는 금액은 {1}",
-    "opened {0} - Steam didn't say what was in it - {1}": "{0}을(를) 열었습니다 - Steam이 내용물을 알려주지 않았습니다 - {1}",
     "couldn't read which listings nocat.farm made: {0}": "nocat.farm가 올린 판매 목록을 읽지 못했습니다: {0}",
     "couldn't write down a listing nocat.farm made: {0}": "nocat.farm가 올린 판매를 기록하지 못했습니다: {0}",
     "stopped part way - human mode: its day ended or you're playing on it; the rest waits for a later look": "중간에 멈춤 - 사람 모드: 하루가 끝났거나 직접 플레이 중입니다. 나머지는 다음 확인 때 합니다",
@@ -2757,18 +2685,14 @@
     "Spare items & packs": "남는 아이템과 팩",
     "duplicate emoticons are switched off": "중복 이모티콘은 꺼져 있습니다",
     "cards from finished badges are switched off": "완성한 배지의 카드는 꺼져 있습니다",
-    "turned {0} ({1}) into {2} gems - {3}": "{0}({1})을(를) 보석 {2}개로 바꿨습니다 - {3}",
     "sack of gems": "보석 자루",
     "sells for {0}, you get {1} - no gems for it": "{0}에 팔리고 받는 금액은 {1} - 보석으로 바꿀 수 없음",
     "no fresh price for the pack or its cards yet - kept until there is": "팩이나 카드의 최신 가격이 아직 없습니다 - 생길 때까지 보관합니다",
     "live stats: a backup's history was put back - counting starts now, with no catch-up (that history isn't this install's)": "실시간 통계: 백업의 기록을 되돌렸습니다 - 집계는 지금부터 시작하며, 이전 분 일괄 전송은 없습니다(그 기록은 이 설치의 것이 아닙니다)",
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "실시간 통계: 보내려고 기다리던 데이터가 손상되었습니다 - farm-totals.json.broken으로 보관했습니다. 집계는 지금부터 계속되며, 이전 분 일괄 전송은 없습니다",
     "human mode (its day ended or you're playing on it)": "사람 모드 (하루가 끝났거나 당신이 플레이 중)",
-    "no price in this account's own currency - kept": "이 계정 자체 통화로 된 가격이 없음 - 보관",
     "nobody is selling it right now - kept, there's no price to go by": "지금 아무도 팔지 않음 - 보관, 기준이 될 가격이 없음",
     "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm은 스스로 아무것도 팔거나, 보석으로 바꾸거나, 열거나, 쓰지 않습니다. 남는 아이템, 부스터 팩 열기와 만들기, Steam 포인트 사용은 계정 설정에서 켜기 전까지 모두 꺼져 있고, 판매·보석·Steam 포인트는 먼저 무엇을 할지 보여 주고 확인을 받습니다. 스스로 받는 것은 무료인 것뿐입니다: Steam 세일 중 이벤트 아이템, 그리고 켜 두었다면 무료 게임.",
-    "spare items preview for {0}: {1} to gems, {2} to sell, {3} left for you to decide. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each item and why.": "{0}의 남는 아이템 미리보기: 보석으로 {1}개, 판매 {2}개, 당신이 결정할 것 {3}개. 설정에서 남는 아이템을 켜기 전까지 아무 일도 일어나지 않습니다 - 'spare preview {0}'로 각 아이템과 이유를 볼 수 있습니다.",
-    "the market didn't say its price just now - kept": "마켓이 방금 가격을 알려 주지 않음 - 보관",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: Steam이 아직 이 계정의 지갑 통화를 알려 주지 않음 - 아무것도 등록하지 않음",
     "No preview - try again in a minute.": "미리보기 없음 - 1분 뒤에 다시 시도하세요.",
     "Not changed - try again.": "바뀌지 않음 - 다시 시도하세요.",
@@ -2793,15 +2717,247 @@
     "Turning it on shows what it would buy first, and asks you to confirm.": "켜면 먼저 무엇을 살지 보여 주고 확인을 받습니다.",
     "Working out what it would do...": "무엇을 할지 계산하는 중...",
     "Your items are safe by default": "아이템은 기본적으로 안전합니다",
-    "its price went up to {0} since it was counted - it waits for the next look": "집계한 뒤 가격이 {0}(으)로 올랐음 - 다음 확인을 기다립니다",
+    "price went up to {0} · over today's value limit, not listed": "가격이 {0}(으)로 오름 · 오늘 금액 한도 초과, 등록 안 함",
     "its prices contradict each other (cheapest {0}, recent sales {1}) - kept": "가격이 서로 맞지 않음 (최저가 {0}, 최근 판매 {1}) - 보관",
-    "kept {0} ({1}) instead of listing it: {2}": "{0}({1})을(를) 등록하지 않고 보관: {2}",
     "no sale in the last day, so no median - kept": "지난 하루 동안 판매가 없어 중앙값이 없음 - 보관",
     "no sale in the last day, so no real price - kept": "지난 하루 동안 판매가 없어 실제 가격이 없음 - 보관",
-    "worth {0} now - left for you to decide": "지금 {0}의 가치 - 당신이 결정하도록 남겨 둠",
     "{0}: Spare items is off until you turn it on in Settings - it shows what it would do first": "{0}: 설정에서 켜기 전까지 남는 아이템은 꺼짐 - 먼저 무엇을 할지 보여 줍니다",
     "{0}: Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do": "{0}: 남는 아이템이 중복 카드 판매를 대신합니다 - 설정에서 켜면 무엇을 할지 보여 줍니다",
-    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}: 설정에서 켜기 전까지 Steam 포인트 사용은 꺼짐 - 먼저 무엇을 살지 보여 줍니다"
+    "{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first": "{0}: 설정에서 켜기 전까지 Steam 포인트 사용은 꺼짐 - 먼저 무엇을 살지 보여 줍니다",
+    "no game to make a booster pack for right now - {0} at badge level 5, {1} made in the last day": "지금은 부스터 팩을 만들 게임이 없습니다 - 배지 5레벨 {0}개, 최근 하루 안에 만든 것 {1}개",
+    "saving gems for a {0} booster pack - {1} needed with the gems kept, {2} here": "{0} 부스터 팩을 위해 보석을 모으는 중 - 남겨 둘 보석 포함 {1}개 필요, 현재 {2}개",
+    "a {0} booster pack is next - waiting for the account's day": "다음은 {0} 부스터 팩 - 계정의 하루를 기다리는 중",
+    "{0} is closest to its next badge level: {1} of {2} cards, {3} missing": "{0}이(가) 다음 배지 레벨에 가장 가깝습니다: 카드 {2}장 중 {1}장, {3}장 부족",
+    "{0}: automatic booster packs need loose gems, so \"Gems afterwards\" is now \"keep them loose\"": "{0}: 자동 부스터 팩에는 낱개 보석이 필요해서 \"그 다음 보석\"를 \"낱개로 두기\"으로 바꿨습니다",
+    "booster packs wait: {0}": "부스터 팩 대기 중: {0}",
+    "booster packs: couldn't read the badges or the whole inventory - trying again later": "부스터 팩: 배지나 인벤토리 전체를 읽지 못했습니다 - 나중에 다시 시도합니다",
+    "made a {0} booster pack - opening it soon": "{0} 부스터 팩 제작 - 곧 엽니다",
+    "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "만든 {0} 부스터 팩이 더 이상 인벤토리에 없습니다 - 다시 찾지 않습니다",
+    "couldn't open the {0} booster pack it made: {1}": "만든 {0} 부스터 팩을 열지 못했습니다: {1}",
+    "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "부스터 팩으로 카드 세트를 채우고 있지만 \"카드로 배지 제작\"이 꺼져 있습니다 - 완성된 세트는 켤 때까지 기다립니다",
+    "you declined its listing on your phone - not listed again for {0} more day(s)": "휴대폰에서 이 등록을 거절했습니다 - {0}일 더 등록하지 않습니다",
+    "couldn't read which listings you declined: {0}": "거절한 등록 기록을 읽지 못했습니다: {0}",
+    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: 판매 가격 \"최저가보다 1센트 낮게\"는 없어졌습니다 - 이제 실제 가격보다 1센트 낮게 등록합니다",
+    "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: 대기 중인 거래에 어떤 아이템이 있는지 Steam이 알려주지 않습니다 - 잠시 후 다시 해 보세요",
+    "you'd get {0} - under your {1} minimum": "받는 금액 {0} - 최소 금액 {1}보다 적습니다",
+    "couldn't write down which listings you declined: {0}": "거절한 등록을 기록하지 못했습니다: {0}",
+    "still pricing {0} item(s) - about {1} min": "아직 {0}개 가격 확인 중 - 약 {1}분",
+    "spread over its day: about {0} a look, next look ~{1}": "하루에 걸쳐 나눠서: 한 번 확인에 약 {0}개, 다음 확인 ~{1}",
+    "spread over its day: about {0} a look - its last look today": "하루에 걸쳐 나눠서: 한 번 확인에 약 {0}개 - 오늘 마지막 확인입니다",
+    "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "아직 {0}개 가격 확인 중 - Steam이 속도를 늦춰 달라고 해서 {1}쯤 다시 시작합니다",
+    "{0} gems - selling would pay {1}, under your {2} minimum": "보석 {0}개 - 팔면 {1}로 최소 금액 {2}보다 적습니다",
+    "{0} gems - nobody sells it on the market": "보석 {0}개 - 장터에서 아무도 팔지 않습니다",
+    "you declined its listing on your phone - never listed again": "휴대폰에서 이 등록을 거절했습니다 - 다시는 등록하지 않습니다",
+    "Gems are packed into sacks of 1000 and the sacks sent to {0}": "보석을 1000개짜리 자루로 묶어 {0}(으)로 보냅니다",
+    "Daily backup": "매일 백업",
+    "up ~{0}": "약 {0} 상승",
+    "to sell": "판매",
+    "Value: at most {0} a day": "가치: 하루 최대 {0}",
+    "Booster packs it doesn't open are sent to {0}": "열지 않는 부스터 팩은 {0}(으)로 보냅니다",
+    "Keep everything: it only reports, nothing changes": "모두 보관: 알리기만 하고 아무것도 바꾸지 않음",
+    "Your own accounts": "내 계정",
+    "Next Fest": "넥스트 페스트",
+    "Making packs": "팩 만들기",
+    "New items are not held back": "새 아이템도 기다리지 않음",
+    "Nothing that came in during the last {0} days": "지난 {0}일 동안 들어온 것은 건드리지 않음",
+    "(no account set yet - nothing is sent until one is)": "(아직 정한 계정이 없음 - 정하기 전까지 아무것도 보내지 않습니다)",
+    "Spends nothing: the weekly limit is 0": "쓰지 않음: 주간 한도가 0",
+    "{0} levels of {1} (level {2} to {3}) for {4} points": "{1} {0}레벨 (레벨 {2} → {3}), {4}포인트",
+    "Sell only: nothing is turned into gems": "판매만: 아무것도 보석으로 바꾸지 않음",
+    "Spends at most {0} points a week ({1} spent this week)": "일주일에 최대 {0}포인트 사용 (이번 주 {1} 사용)",
+    "Never anything worth more than {0}": "{0}보다 비싼 것은 절대 건드리지 않음",
+    "points now": "현재 포인트",
+    "Grinding": "집중 파밍",
+    "Learning from you": "나에게서 배우기",
+    "Points spent are gone for good": "쓴 포인트는 되돌릴 수 없음",
+    "What it buys": "살 것",
+    "{0} can be spent": "{0} 사용 가능",
+    "you get {0}": "받는 금액 {0}",
+    "Gems only: nothing is sold": "보석만: 아무것도 팔지 않음",
+    "Sittings and breaks": "플레이와 휴식",
+    "Counting users": "사용자 집계",
+    "Steam Awards": "Steam 어워드",
+    "Overnight": "밤사이",
+    "Never touch": "건드리지 않을 것",
+    "What it does": "하는 일",
+    "Offers from others": "다른 사람의 제안",
+    "{0} points, +{1} XP": "{0}포인트, +{1} XP",
+    "Folder and password": "폴더와 비밀번호",
+    "to gems": "보석으로",
+    "Always keeps at least {0} points": "항상 최소 {0}포인트는 남김",
+    "Tell me about": "알려 줄 것",
+    "Steam's notifications": "Steam 알림",
+    "Booster packs it doesn't open are sold, within these limits": "열지 않는 부스터 팩은 이 한도 안에서 팝니다",
+    "levels to buy": "살 레벨",
+    "Donations and gifts": "기부와 선물",
+    "Couldn't look at its points: {0}": "포인트를 확인하지 못했습니다: {0}",
+    "How it shows": "표시 방식",
+    "Messages": "메시지",
+    "Items: at most {0} a look and {1} a day": "아이템: 한 번 확인에 최대 {0}개, 하루 최대 {1}개",
+    "Opening packs": "팩 열기",
+    "Signing in": "로그인",
+    "Its settings show here once it is on.": "켜면 여기에 설정이 나타납니다.",
+    "Limits": "한도",
+    "Which games first": "먼저 할 게임",
+    "Reacting": "반응",
+    "1 level of {0} (level {1} to {2}) for {3} points": "{0} 1레벨 (레벨 {1} → {2}), {3}포인트",
+    "Never a card a badge still needs, and never game items or CS2 skins": "배지에 아직 필요한 카드, 게임 아이템, CS2 스킨은 절대 건드리지 않음",
+    "nothing right now": "지금은 없음",
+    "Gems are packed into sacks of 1000 and one sack is sold each look, within these limits": "보석을 1000개짜리 자루로 묶고, 이 한도 안에서 확인할 때마다 자루 하나를 팝니다",
+    "Proxy": "프록시",
+    "Prices in {0}, this account's wallet currency": "가격은 이 계정의 지갑 통화인 {0} 기준",
+    "It would buy": "살 것",
+    "Pace": "속도",
+    "Still pricing {0} items - try again in a few minutes.": "아이템 {0}개의 가격을 아직 확인 중입니다 - 몇 분 뒤에 다시 시도하세요.",
+    "Sales": "할인 행사",
+    "Its wallet currency is not known yet - nothing is priced or sold until it is": "아직 지갑 통화를 모릅니다 - 알기 전까지 가격을 매기거나 팔지 않습니다",
+    "Not signed in, so it can't look at its points yet. These are the limits it will keep to.": "로그인하지 않아서 아직 포인트를 볼 수 없습니다. 아래는 지킬 한도입니다.",
+    "Couldn't look at the inventory: {0}": "인벤토리를 확인하지 못했습니다: {0}",
+    "Nothing that came in during the last day": "지난 하루 동안 들어온 것은 건드리지 않음",
+    "How often": "빈도",
+    "Friends and groups": "친구와 그룹",
+    "Which games": "어떤 게임",
+    "Its day": "하루 일과",
+    "Selling": "판매",
+    "On a warning": "경고 시",
+    "What it checks": "확인할 것",
+    "Only during its day (human mode)": "자기 하루 동안에만 (사람 모드)",
+    "Still pricing 1 item - try again in a few minutes.": "아이템 1개의 가격을 아직 확인 중입니다 - 몇 분 뒤에 다시 시도하세요.",
+    "Boost": "부스트",
+    "{0} gems, worth {1}": "보석 {0}개, 가치 {1}",
+    "Sending items": "아이템 보내기",
+    "Gems": "보석",
+    "level to buy": "살 레벨",
+    "What goes in": "넣을 것",
+    "Not signed in, so it can't look at the inventory yet. These are the limits it will keep to.": "로그인하지 않아서 아직 인벤토리를 볼 수 없습니다. 아래는 지킬 한도입니다.",
+    "Earning": "얻기",
+    "What counts as spare": "남는 것으로 칠 것",
+    "Packs it doesn't open": "열지 않는 팩",
+    "\"Make booster packs\" isn't automatic any more - the {0} booster pack(s) it made and hadn't opened follow \"Open booster packs\" now, like any other": "\"부스터 팩 만들기\"가 더 이상 자동이 아닙니다 - 만들고 아직 열지 않은 부스터 팩 {0}개는 이제 다른 팩처럼 \"부스터 팩 열기\"를 따릅니다",
+    "the {0} booster pack wasn't made after all - it can be made again": "{0} 부스터 팩은 결국 만들어지지 않았습니다 - 다시 만들 수 있습니다",
+    "the {0} booster pack it made has waited over 2 days to be opened - it follows \"Open booster packs\" now, like any other": "만든 {0} 부스터 팩이 2일 넘게 열리기를 기다렸습니다 - 이제 다른 팩처럼 \"부스터 팩 열기\"를 따릅니다",
+    "Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another": "Steam이 {0} 부스터 팩에 대해 응답하지 않았습니다 - 다른 팩을 만들기 전에 인벤토리에서 찾아봅니다",
+    "foil badge craft refused - foil badges wait {0}h, normal badges carry on": "은박 배지 제작이 거부되었습니다 - 은박 배지는 {0}시간 기다리고, 일반 배지는 계속합니다",
+    "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0}이(가) 이제 \"이 게임의 팩은 열지 않기\"에 있습니다 - 이 게임용으로 만든 부스터 팩은 열지 않습니다",
+    "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "이 아이템의 판매 등록이 아직 휴대폰에서 대기 중입니다 - 처리될 때까지 다른 사본은 등록하지 않습니다",
+    "worth {0} - over your price limit, never touched": "가치 {0} - 가격 한도를 넘어서 절대 건드리지 않음",
+    "worth {0} now - over your price limit, not listed": "지금 가치 {0} - 가격 한도를 넘어서 등록하지 않음",
+    "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0}의 남는 아이템 미리보기: 젬으로 {1}개, 판매 {2}개. 설정에서 남는 아이템을 켤 때까지 아무 일도 일어나지 않습니다 - 'spare preview {0}'에서 하나씩 볼 수 있습니다.",
+    "lowered {0} from {2} to {3} - unsold {1} days": "{0}을(를) {2}에서 {3}(으)로 내림 - {1}일 동안 안 팔림",
+    "{0} price lookups in the last hour - the next waits until {1}, so the market isn't asked too often": "지난 한 시간 동안 가격 조회 {0}번 - 마켓에 너무 자주 묻지 않도록 다음은 {1}까지 기다립니다",
+    "couldn't read the saved currency rates: {0}": "저장된 환율을 읽지 못했습니다: {0}",
+    "couldn't save the currency rates: {0}": "환율을 저장하지 못했습니다: {0}",
+    "Not all at once: the first {0} at its next look, then at most {1} a day": "한 번에 전부가 아닙니다: 다음 확인 때 처음 {0}개, 그 뒤로는 하루 최대 {1}개",
+    "Levels of the seasonal badge, then older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "시즌 배지 레벨, 그다음 이전 시즌 배지, 각각 레벨 {0}까지 - 1,000포인트마다 약 100 XP",
+    "Only levels of the seasonal badge, up to level {0} - about 100 XP for every 1,000 points": "시즌 배지 레벨만, 레벨 {0}까지 - 1,000포인트마다 약 100 XP",
+    "Only levels of older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points": "이전 시즌 배지 레벨만, 각각 레벨 {0}까지 - 1,000포인트마다 약 100 XP",
+    "Buys nothing: both badge switches are off": "아무것도 사지 않음: 배지 스위치가 둘 다 꺼져 있음",
+    "{0} ({1}): {2} gems": "{0}({1}): 보석 {2}개",
+    "{0} ({1}): listed for {2}": "{0}({1}): {2}에 등록",
+    "{0} item(s) into {1} gems": "{0}개를 보석 {1}개로",
+    "{0} listed - you get {1}": "{0}개 등록 - 받는 금액 {1}",
+    "opened {0} pack(s)": "팩 {0}개를 열었습니다",
+    "made to level the {0} badge": "{0} 배지 레벨업용으로 만듦",
+    "opened {0}: {1}": "{0}을(를) 열었습니다: {1}",
+    "why it opened {0}: {1}": "{0}을(를) 연 이유: {1}",
+    "Steam's answer about {0} wasn't a yes ({1}) - but it's gone from the inventory and the gems are in, so it's done": "{0}에 대한 Steam의 답이 '예'가 아니었습니다({1}) - 하지만 인벤토리에서 사라졌고 보석이 들어왔으니 완료입니다",
+    "couldn't check whether {0} went through: {1}": "{0}이(가) 처리됐는지 확인하지 못했습니다: {1}",
+    "waiting to sign in · {0}s": "로그인 대기 중 · {0}초",
+    "starting · signs in in {0}s": "시작 중 · {0}초 후 로그인",
+    "starting · signs in now": "시작 중 · 지금 로그인합니다",
+    "signing out in {0}s": "{0}초 후 로그아웃",
+    "signed in as {0} ({1})": "{0}({1})(으)로 로그인됨",
+    "account free again · picking back up in {0}m": "계정이 다시 비었습니다 · {0}분 후 재개",
+    "signed out": "로그아웃됨",
+    "you're on this account · waiting until you're done": "이 계정을 사용 중입니다 · 끝날 때까지 기다립니다",
+    "daily web refresh · getting a new web token": "매일 웹 새로고침 · 새 웹 토큰을 받는 중",
+    "waiting · you're playing on it": "대기 중 · 이 계정으로 플레이 중",
+    "up in {0}": "{0} 후 기상",
+    "back in {0}": "{0} 후 복귀",
+    "{0} (set by your own Steam client)": "{0}(내 Steam 클라이언트가 설정함)",
+    "Discord: showing nocat.farm": "Discord: nocat.farm 표시 중",
+    "Discord: presence off": "Discord: 상태 표시 끔",
+    "{0}: copy in use · switching to {1}'s copy": "{0}: 사본 사용 중 · {1}의 사본으로 전환",
+    "turned {0} items into {1} gems": "아이템 {0}개를 보석 {1}개로 바꿨습니다",
+    "offer sent · confirm it in the Steam app": "제안 보냄 · Steam 앱에서 확인하세요",
+    "updated to {0}": "{0}(으)로 업데이트됨",
+    "update · {0} ready, restart in {1}s": "업데이트 · {0} 준비됨, {1}초 후 재시작",
+    "update · signing out {0} {1}/{2}": "업데이트 · {0} 로그아웃 중 {1}/{2}",
+    "update in {0}s": "{0}초 후 업데이트",
+    "installing {0}": "{0} 설치 중",
+    "installing from {0}": "{0}에서 설치 중",
+    "update · {0}MB copied, unpacking": "업데이트 · {0}MB 복사됨, 압축 해제 중",
+    "update · {0}MB downloaded, unpacking": "업데이트 · {0}MB 다운로드됨, 압축 해제 중",
+    "update · restarting into {0}": "업데이트 · {0}(으)로 재시작 중",
+    "no price in this account's currency, not listed": "이 계정의 통화로 된 가격이 없어 등록하지 않음",
+    "no price yet, tries later": "아직 가격 없음, 나중에 다시 시도",
+    "not listed: you'd get {0}, under your {1} minimum": "등록 안 함: 받는 금액 {0}이(가) 최소 {1}보다 적음",
+    "listed {0} item(s) · {1} if they all sell": "{0}개 등록 · 모두 팔리면 {1}",
+    "turning {0} ({1}) into gems - {2}": "{0}({1})을(를) 보석으로 바꾸는 중 - {2}",
+    "opened {0} · Steam didn't say what was in it": "{0} 개봉 · Steam이 내용물을 알려주지 않음",
+    "{0} new": "새 카드 {0}",
+    "none new": "새 카드 없음",
+    "{0} pack": "{0} 팩",
+    "sold {0} ({1}) for {2} · you got {3}": "{0}({1}) {2}에 판매됨 · 받은 금액 {3}",
+    "sold {0} ({1}) · you got {2}": "{0}({1}) 판매됨 · 받은 금액 {2}",
+    "{0} ({1}): listing declined or taken down · never listed again": "{0}({1}): 등록이 거절되었거나 내려감 · 다시 등록하지 않음",
+    "{0} ({1}): listing declined or taken down · not listed again for {2} day(s)": "{0}({1}): 등록이 거절되었거나 내려감 · {2}일 동안 다시 등록하지 않음",
+    "Steam maintenance · back in ~{0}m": "Steam 점검 · 약 {0}분 후 복귀",
+    "disconnected · reconnecting in ~{0}s": "연결 끊김 · 약 {0}초 후 재연결",
+    "achievements: {0} games to hunt": "도전 과제: 노릴 게임 {0}개",
+    "achievements: {0} of them family-shared": "도전 과제: 그중 {0}개는 가족 공유",
+    "achievements: {0} for {1} · {2}/{3}": "도전 과제: {0} {1} 동안 · {2}/{3}",
+    "achievements: adding {0} for ~{1} · {2}/{3}": "도전 과제: {0} 약 {1} 동안 추가 · {2}/{3}",
+    "achievements: adding {0} for ~{1}": "도전 과제: {0} 약 {1} 동안 추가",
+    "can't tell which achievements come with its DLC · {0} left alone": "어떤 도전 과제가 DLC에 딸렸는지 알 수 없음 · {0}개는 그대로 둠",
+    "{0} achievement(s) from DLC it doesn't own · left alone": "보유하지 않은 DLC의 도전 과제 {0}개 · 그대로 둠",
+    "{0}% have it": "{0}%가 달성",
+    "{0} pack cost {1} gems - {2}": "{0} 팩 비용 보석 {1}개 - {2}",
+    "{0} pack cost {1} gems": "{0} 팩 비용 보석 {1}개",
+    " · {0} banked": " · {0} 적립",
+    "no cards left · human mode carries on{0}": "카드 없음 · 사람 모드 계속{0}",
+    "no cards left · idling {0}{1}": "카드 없음 · {0} 대기 중{1}",
+    "farming {0} · {1} card(s) left · ~{2} in all": "{0} 파밍 중 · 남은 카드 {1}장 · 전체 약 {2}",
+    "last card dropped in {0} · game done": "{0}의 마지막 카드 드롭 · 게임 완료",
+    "asleep · {0} games": "자는 중 · 게임 {0}개",
+    "done for the day · {0} played · up {1}": "오늘은 끝 · {0} 플레이 · {1} 기상",
+    "awake · warming up · {0}": "기상 · 준비 중 · {0}",
+    "warming up · {0}": "준비 중 · {0}",
+    "plan restored · {0}/{1} · up {2}": "계획 복원 · {0}/{1} · {2} 기상",
+    "plan restored · {0}/{1} · bed {2}": "계획 복원 · {0}/{1} · {2} 취침",
+    "asleep · your {0} most-played · up {1}": "자는 중 · 가장 많이 한 {0}개 · {1} 기상",
+    "asleep · {0} games · up {1}": "자는 중 · 게임 {0}개 · {1} 기상",
+    "banking hours again · up {0}": "다시 시간 적립 중 · {0} 기상",
+    "overnight: {0}": "밤사이: {0}",
+    "reconnected · {0} game(s) back on": "재연결됨 · 게임 {0}개 다시 켬",
+    "farming cards on {0} for ~{1} · {2}/{3} today": "{0}에서 카드 파밍 · 약 {1} · 오늘 {2}/{3}",
+    "playing {0} for ~{1} · {2}/{3} today": "{0} 약 {1} 플레이 · 오늘 {2}/{3}",
+    "{0} · back in ~{1}": "{0} · 약 {1} 후 복귀",
+    "{0} · offline, back in ~{1}": "{0} · 오프라인, 약 {1} 후 복귀",
+    "carrying on with {0} · {1} left · {2}/{3} today": "{0} 계속 · {1} 남음 · 오늘 {2}/{3}",
+    "rep4rep {0}/{0} · next ~{1}": "rep4rep {0}/{0} · 다음 ~{1}",
+    "rep4rep {0}/{0} · resting for now": "rep4rep {0}/{0} · 당분간 휴식",
+    "{0} doesn't take comments · skipped": "{0}은(는) 댓글을 받지 않음 · 건너뜀",
+    "accepted offer {0} from {1} · {2} in, {3} out": "{1}의 제안 {0} 수락 · 받음 {2}, 줌 {3}",
+    "{0} (yours)": "{0}(내 계정)",
+    "offer {0} from {1}: get {2}, give {3} · {4}": "{1}의 제안 {0}: 받음 {2}, 줌 {3} · {4}",
+    "donation · accepting when awake": "기부 · 깨어나면 수락",
+    "donation · accepting in a few min": "기부 · 몇 분 후 수락",
+    "allowed sender · accepting when awake": "허용한 보낸 사람 · 깨어나면 수락",
+    "allowed sender · accepting in a few min": "허용한 보낸 사람 · 몇 분 후 수락",
+    "offer {0} from {1} accepted · confirm it in Steam's email": "{1}의 제안 {0} 수락 · Steam 이메일에서 확인하세요",
+    "offer {0} from {1} accepted · confirm it ('confirmations {2}')": "{1}의 제안 {0} 수락 · 확인하세요('confirmations {2}')",
+    "offer {0} from {1} accepted · confirm it on your phone": "{1}의 제안 {0} 수락 · 휴대폰에서 확인하세요",
+    "in the tray · right-click for menu": "트레이에 있음 · 오른쪽 클릭으로 메뉴",
+    "dashboard: {0}": "대시보드: {0}",
+    "dashboard: this PC only, no password": "대시보드: 이 PC만, 비밀번호 없음",
+    "Click to hide each line": "클릭하면 각 줄을 숨깁니다",
+    "Click to show each line": "클릭하면 각 줄을 보여줍니다",
+    "{0}: {1}% done · next game, back in ~{2} day(s)": "{0}: {1}% 완료 · 다음 게임으로, 약 {2}일 후 복귀",
+    "done grinding · back to the usual day": "그라인드 끝 · 평소 하루로 돌아감",
+    "{0} is on the market · {1}": "{0} 장터에 올라감 · {1}",
+    "{0} is on the market": "{0} 장터에 올라감",
+    "couldn't look at the listings waiting on a confirmation: {0}": "확인을 기다리는 등록을 볼 수 없음: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -3052,21 +3208,29 @@
       "label": "쉬는 날 확률",
       "tip": "하루 동안 전혀 플레이하지 않을 확률(%)입니다. 실제 사람은 매일 게임하지 않습니다."
     },
-    "DayStartHour": {
-      "label": "대략 접속하는 시각",
-      "tip": "보통 접속하는 시각입니다. 실제 시각은 이 근처에서 달라지고, 주말에는 더 일찍 시작합니다."
+    "DayStartTime": {
+      "label": "접속 시각",
+      "tip": "접속하는 시각입니다. 예: 11:00. 매일 이 시각에서 '최대 변동' 안에서 접속하며, 대부분 이 시각 가까이에, 주말에는 조금 일찍 접속합니다."
     },
-    "BedHour": {
-      "label": "대략 자는 시각",
-      "tip": "밤에 그만두는 시각입니다. 자정을 넘겨도 괜찮습니다. 늦게까지 하려면 이른 새벽 시각을 고르세요."
+    "DayStartVaryMinutes": {
+      "label": "최대 변동 (분)",
+      "tip": "'접속 시각'에서 앞뒤로 얼마나 벗어날 수 있는지(분)입니다. 이 범위를 넘는 일은 없습니다. 11:00과 30이면 항상 10:30~11:30 사이에 접속합니다. 0이면 매일 같은 분입니다."
+    },
+    "BedTime": {
+      "label": "자는 시각",
+      "tip": "밤에 그만두는 시각입니다. 자정을 넘겨도 괜찮습니다. 02:00은 접속한 날 다음 날 새벽 2시입니다. 매일 밤 이 시각에서 '최대 변동' 안에서 자며, 금요일과 토요일에는 조금 늦게 잡니다."
+    },
+    "BedVaryMinutes": {
+      "label": "최대 변동 (분)",
+      "tip": "'자는 시각'에서 앞뒤로 얼마나 벗어날 수 있는지(분)입니다. 이 범위를 넘는 일은 없습니다. 02:00과 60이면 항상 01:00~03:00 사이에 잡니다. 0이면 매일 밤 같은 분입니다."
     },
     "LateNightExtraHours": {
       "label": "금/토는 더 늦게까지",
-      "tip": "금요일과 토요일 밤에 더 늦게까지 깨어 있는 시간입니다."
+      "tip": "금요일과 토요일 밤에 최대 이만큼 더 늦게까지 깨어 있습니다. 단, '자는 시각'과 그 변동 범위를 넘지는 않습니다."
     },
     "SleepMinHours": {
       "label": "최소 수면 시간",
-      "tip": "다음 날이 시작되기 전까지 밤이 이어지는 시간(시간 단위)입니다. 이 값과 다음 값 사이에서 매일 밤 다르게 무작위로 정해집니다. 새벽 5시에 자도 이 시간이 지나기 전에는 돌아오지 않습니다."
+      "tip": "다음 날이 시작되기 전까지 밤이 이어지는 시간(시간 단위)입니다. 이 값과 다음 값 사이에서 매일 밤 다르게 무작위로 정해집니다. '접속 시각'이 허용하는 가장 늦은 시각 전에 끝나지 않는 밤은 짧아지며, 그보다 늦게 접속하는 일은 없습니다."
     },
     "SleepMaxHours": {
       "label": "...최대",
@@ -3420,11 +3584,11 @@
     },
     "YieldToFamily": {
       "label": "공유 게임은 원하면 바로 돌려줌",
-      "tip": "빌린 가족 게임을 가족 중 누군가 시작하면 바로 돌려주고 다음으로 넘어갑니다. 그 사람이 그만둔 뒤 한동안 순서에서 빠집니다 (아래의 '가족 구성원이 그만둔 뒤 기다리기')."
+      "tip": "빌린 가족 게임을 가족 중 누군가 시작하면 바로 돌려주고 다음으로 넘어갑니다. 예: 이 계정이 Portal 2에서 업적 사냥 중일 때 동생이 Portal 2를 시작하면, Portal 2를 닫고 다른 게임을 합니다. 그 사람이 그만둔 뒤 한동안 순서에서 빠집니다(아래의 \"가족 구성원이 그만둔 뒤 기다리기\"). 꺼짐: 양보하지 않습니다."
     },
     "IncludeFamilyLibrary": {
       "label": "가족 공유 게임도 포함",
-      "tip": "Steam 가족으로 이 계정에 공유된 게임에서도 도전 과제를 노립니다. 이 계정에서는 소유한 게임처럼 인정되며, 소유한 게임이 늘 먼저입니다."
+      "tip": "Steam 가족으로 이 계정에 공유된 게임에서도 업적 사냥을 하게 합니다. 예: 소유한 게임 40개와 공유된 게임 200개가 있으면 240개 모두에서 고를 수 있습니다 - 소유한 게임이 늘 먼저입니다. 켜짐: 공유 게임도 소유한 게임처럼 칩니다. 꺼짐: 이 계정이 소유한 게임만."
     },
     "AchievementGrindGapMinMinutes": {
       "label": "집중 파밍 중에는 이 간격으로 하나",
@@ -3444,61 +3608,61 @@
     },
     "ClaimEventItems": {
       "label": "무료 이벤트 아이템 받기",
-      "tip": "Steam 할인 행사 동안 무료 일일 스티커를 받고, 포인트 상점에서 0포인트인 것도 모두 받습니다."
+      "tip": "Steam 할인 동안 무료 일일 스티커를 받고, 포인트 상점에서 0포인트인 것도 모두 받습니다. 예: 14일짜리 할인이면 스티커를 최대 14개 받습니다. 꺼짐: 아무것도 받지 않습니다."
     },
     "DiscoveryQueue": {
       "label": "탐색 대기열 둘러보기",
-      "tip": "하루에 한 번 사람처럼 상점의 탐색 대기열을 넘겨 봅니다. 할인 행사 중에는 이벤트 아이템과 배지 진행도를 얻습니다.",
+      "tip": "하루에 한 번, 사람처럼 게임을 하나씩 넘기며 상점의 탐색 대기열을 둘러봅니다. 할인 중에는 이벤트 아이템과 배지 진행도를 얻습니다 - 예: 하루에 아이템 하나를 주는 할인이면 하루에 하나. 끔: 하지 않습니다. 할인 행사 중: 할인 중에만. 매일: 할인이든 아니든 매일.",
       "choices": "0 끔 | 1 할인 행사 중 | 2 매일"
     },
     "SaleEvents": {
       "label": "Steam 이벤트에 참여",
-      "tip": "아래 모든 항목의 스위치입니다: Steam 할인, Steam 어워드, 넥스트 페스트 기간에 무료로 주는 것을 받습니다 - 일일 스티커, 포인트 상점의 무료 아이템, 탐색 대기열, 어워드 후보 추천과 투표. 이벤트가 아닐 때는 가끔 확인만 합니다. 끄면 이 계정에서는 아무것도 하지 않습니다."
+      "tip": "아래 모든 항목의 스위치입니다: Steam 할인, Steam 어워드, 넥스트 페스트 기간에 무료로 주는 것을 받습니다 - 일일 스티커, 포인트 상점의 무료 아이템, 탐색 대기열, 어워드 후보 추천과 투표. 예: 14일짜리 겨울 할인이면 하루에 스티커 하나, 그리고 어워드 투표마다 하나씩. 이벤트가 아닐 때는 가끔 확인만 합니다. 끄면 이 계정에서는 아무것도 하지 않습니다."
     },
     "SaleEventsHumanToo": {
       "label": "사람 모드 계정도",
-      "tip": "이 사람 모드 계정이 Steam 어워드 후보 추천과 투표, 세일 대기열 아이템과 Next Fest 아이템 받기를 하게 합니다 - 하나씩, 자신의 하루 안에서, 몇 분 간격으로. 기본값은 켜짐. 끄면 사람 모드 계정은 스티커와 대기열만 합니다(아래에 각자의 스위치). 로봇 계정은 항상 참여합니다."
+      "tip": "이 사람 모드 계정이 Steam 어워드 후보 추천과 투표, 할인 대기열 아이템과 넥스트 페스트 아이템 받기를 하게 합니다 - 하나씩, 자기 하루 안에서, 몇 분 간격으로. 예: 투표 열두 개쯤을 오후 내내 나눠서. 기본값은 켜짐. 끄면 사람 모드 계정은 스티커와 대기열만 합니다(아래에 각자의 스위치). 로봇 계정은 항상 참여합니다."
     },
     "SaleAwardsNominate": {
       "label": "Steam 어워드 후보 추천",
-      "tip": "11월 말에 Steam 어워드의 각 부문에 게임을 하나씩 추천합니다(추천 배지용). 이 계정이 플레이한 게임만, 아래 설정대로 고릅니다. 해당하는 게임이 없는 부문은 비워 둡니다."
+      "tip": "11월 말에 Steam 어워드 각 부문에 게임을 하나씩 추천합니다(추천 배지용). 예: 이 계정이 300시간 플레이한 게임을 Steam이 맞다고 하는 부문에 넣습니다. 이 계정이 플레이한 게임만, \"추천할 게임\" 설정대로 고릅니다. 해당하는 게임이 없는 부문은 비워 둡니다. 꺼짐: 추천하지 않습니다."
     },
     "SaleAwardsVote": {
       "label": "Steam 어워드 투표",
-      "tip": "겨울 할인 때 Steam 어워드 각 부문에 한 번씩 투표합니다(투표마다 주는 스티커용). 이 계정이 가장 많이 플레이한 최종 후보를 고르고, 아무것도 플레이하지 않았다면 최종 후보 중 아무거나 고릅니다."
+      "tip": "겨울 할인 때 Steam 어워드 각 부문에 한 번씩 투표합니다(투표마다 주는 스티커용) - 예: 부문이 열두 개쯤이면 스티커도 열두 개쯤. 이 계정이 가장 많이 플레이한 최종 후보를 고르고, 아무것도 플레이하지 않았다면 최종 후보 중 아무거나 고릅니다. 꺼짐: 투표하지 않습니다."
     },
     "SaleQuests": {
       "label": "대기열에 대한 할인 아이템 받기",
-      "tip": "할인 중에 탐색 대기열을 마치면, 다음 스티커 확인을 기다리지 않고 할인이 그 대가로 주는 아이템을 바로 받습니다."
+      "tip": "할인 중에 탐색 대기열을 마치면, 다음 스티커 확인을 기다리지 않고 할인이 그 대가로 주는 아이템을 바로 받습니다 - 예: 몇 시간 더 일찍. 꺼짐: 다음 스티커 확인까지 기다립니다."
     },
     "SaleNextFest": {
       "label": "넥스트 페스트 아이템",
-      "tip": "Steam 넥스트 페스트 기간에 무료 아이템이 있으면 받습니다. 최근 넥스트 페스트에서는 주지 않았으니 보통은 아무 일도 없습니다 - 다시 생길 때를 위한 준비입니다."
+      "tip": "Steam 넥스트 페스트 기간에 무료 아이템이 있으면 받습니다 - 예: 프로필 스티커. 최근 넥스트 페스트에서는 주지 않았으니 보통은 아무 일도 없습니다 - 다시 생길 때를 위한 준비입니다. 꺼짐: 확인하지 않습니다."
     },
     "SaleNominatePick": {
       "label": "추천할 게임",
-      "tip": "Steam 어워드 각 부문에 넣을 게임을, 이 계정이 플레이했고 Steam이 해당한다고 한 게임 중에서 고릅니다. 가장 많이 플레이한 게임, 또는 그중 무작위로 하나. 같은 게임을 두 번 쓰지 않으려고 합니다.",
+      "tip": "Steam 어워드 각 부문에 넣을 게임을, 이 계정이 플레이했고 Steam이 해당한다고 한 게임 중에서 고릅니다. 가장 많이 플레이한 게임: 예를 들어 Terraria 300시간이 Celeste 2시간을 이깁니다. 플레이한 게임 아무거나: 그중 무작위로 하나. 어느 쪽이든 같은 게임을 두 번 쓰지 않으려고 합니다.",
       "choices": "0 가장 많이 플레이한 게임 | 1 플레이한 게임 아무거나"
     },
     "SaleGapMinSeconds": {
       "label": "로봇 계정의 단계 사이 대기(초)",
-      "tip": "로봇 계정에서 후보 추천이나 투표 사이의 가장 짧은 대기 시간(초) - 예: 5."
+      "tip": "로봇 계정에서 후보 추천이나 투표 사이의 가장 짧은 대기 시간(초)입니다 - 예: 5. 가장 긴 값이 20이면 매번 5~20초 중 무작위로 기다립니다."
     },
     "SaleGapMaxSeconds": {
       "label": "...최대(초)",
-      "tip": "로봇 계정에서 두 단계 사이의 가장 긴 대기 시간(초) - 예: 20. 매번 그 사이에서 무작위로 정합니다."
+      "tip": "로봇 계정에서 두 단계 사이의 가장 긴 대기 시간(초)입니다 - 예: 20. 가장 짧은 값이 5면 매번 5~20초 중 무작위로 기다립니다."
     },
     "SaleHumanGapMinMinutes": {
       "label": "사람 모드의 단계 사이 대기(분)",
-      "tip": "사람 모드 계정에서 후보 추천이나 투표 사이의 가장 짧은 대기 시간(분) - 예: 5. 그 계정의 하루 안에서만."
+      "tip": "사람 모드 계정에서 후보 추천이나 투표 사이의 가장 짧은 대기 시간(분)입니다 - 예: 5. 가장 긴 값이 30이면 매번 5~30분 중 무작위로 기다립니다. 자기 하루 안에서만."
     },
     "SaleHumanGapMaxMinutes": {
       "label": "...최대(분)",
-      "tip": "사람 모드 계정에서 두 단계 사이의 가장 긴 대기 시간(분) - 예: 30."
+      "tip": "사람 모드 계정에서 두 단계 사이의 가장 긴 대기 시간(분)입니다 - 예: 30. 가장 짧은 값이 5면 매번 5~30분 중 무작위로 기다립니다."
     },
     "SaleCheckHours": {
       "label": "이벤트 확인 간격(시간)",
-      "tip": "Steam 이벤트가 시작됐는지 확인하는 간격(시간) - 예: 6. 이벤트 중에는 대략 한 시간마다 확인합니다."
+      "tip": "Steam 이벤트가 시작됐는지 확인하는 간격(시간)입니다 - 예: 6이면 하루에 4번쯤. 이벤트 중에는 대략 한 시간마다 확인합니다."
     },
     "SellPerRun": {
       "label": "한 번에 올릴 카드 수",
@@ -3855,7 +4019,7 @@
     },
     "LearnFromOwner": {
       "label": "내가 노는 방식에서 배우기",
-      "tip": "당신이 직접 이 계정에서 언제, 어떤 게임을 하는지 기록합니다. 그렇게 7일이 쌓이면 하루를 당신 쪽으로 맞춥니다. 접속하고 잠자리에 드는 시간, 그리고 '플레이할 게임과 빈도'에 있는 게임들 사이의 시간 배분입니다. 그 목록에 없는 게임은 절대 추가하지 않고, 얼마나 오래 하는지는 여전히 시간 설정을 따릅니다. habits 명령으로 배운 내용을 볼 수 있습니다.",
+      "tip": "당신이 직접 이 계정에서 언제, 어떤 게임을 하는지 기록합니다. 그렇게 7일이 쌓이면 하루를 당신 쪽으로 맞춥니다. 접속하고 잠자리에 드는 시간, 그리고 '플레이할 게임과 빈도'에 있는 게임들 사이의 시간 배분입니다. 그 목록에 없는 게임은 절대 추가하지 않고, 얼마나 오래 하는지는 여전히 시간 설정을 따릅니다. habits 명령으로 배운 내용을 볼 수 있습니다. 접속하고 자는 시각은 '접속 시각'과 '자는 시각', 그리고 그 변동 범위 안에서만 맞추며, 그 밖으로 나가지 않습니다.",
       "choices": "0 끔 | 1 조금 | 2 많이"
     },
     "LearnFollow": {
@@ -3916,11 +4080,11 @@
     },
     "CountMeAsUser": {
       "label": "사용자로 집계",
-      "tip": "한 시간에 한 번 nocat.lol에 이 사본이 실행 중이라고 알립니다 - 이 설치용으로 만든 무작위 번호, 앱 버전, 플랫폼, 로그인한 Steam 계정 수(숫자만), 그리고 공유하는 경우 시간과 카드 합계(다음 설정 참고)뿐입니다. 계정 이름, Steam ID, 설정은 보내지 않습니다. Steam 계정 수는 이렇게 만들어집니다. 끄면 아무것도 보내지 않습니다."
+      "tip": "한 시간에 한 번 nocat.lol에 이 사본이 실행 중이라고 알려, 그 페이지가 사용자 수를 셀 수 있게 합니다. 보내는 것은 이 설치용으로 만든 무작위 번호, 앱 버전, 플랫폼, 로그인한 Steam 계정 수(숫자만, 예: 3), 그리고 공유하는 경우 시간과 카드 합계와 나머지(보석, 배지, 팩, 판매된 아이템)(다음 설정)뿐입니다. 계정 이름, Steam ID, 설정은 보내지 않습니다. Steam 계정 수는 이렇게 집계됩니다. 끄면 아무것도 보내지 않습니다."
     },
     "ShareFarmTotals": {
-      "label": "내 시간과 카드 합계 공유",
-      "tip": "매시간 보내는 \"사용자로 집계\" 메시지에 숫자 두 개를 더합니다: 지난번 이후 계정들이 쌓은 게임 시간과 받은 카드 수입니다(예: 41.5시간, 카드 12장). 처음 켜질 때는 이 사본의 기록에 이전부터 남아 있던 것에 대한 같은 두 숫자도 한 번만 보냅니다. nocat.lol이 모두의 숫자를 더해 nocat.farm 페이지에 합계를 보여 줍니다. 어떤 계정, 게임, 카드인지는 보내지 않습니다. \"사용자로 집계\"가 켜져 있을 때만이며, 끄면 두 숫자 모두 보내지 않습니다."
+      "label": "내 파밍 합계 공유",
+      "tip": "매시간 보내는 \"사용자로 집계\" 메시지에 숫자 몇 개를 더합니다: 지난번 이후 계정들이 쌓은 게임 시간, 받은 카드, 보석으로 바꾼 아이템, 제작한 배지(반짝이 포함), 연 부스터 팩, 장터에서 판매된 아이템 수입니다 - 예: 41.5시간, 카드 12장, 보석으로 바꾼 아이템 30개, 배지 2개, 팩 4개, 판매된 아이템 9개. 처음 켜질 때는 이 사본의 기록에 이전부터 남아 있던 시간과 카드도 한 번 보냅니다. nocat.lol은 모두의 숫자를 더해 nocat.farm 페이지에 합계를 보여 줍니다. 어떤 계정, 게임, 카드, 아이템인지는 보내지 않습니다. 켜짐: 숫자들이 매시간 메시지와 함께 갑니다. 꺼짐: 아무것도 보내지 않습니다. \"사용자로 집계\"가 켜져 있을 때만."
     },
     "ReactionSpeed": {
       "label": "반응 속도",
@@ -3929,7 +4093,7 @@
     },
     "BoosterPackGames": {
       "label": "부스터 팩을 만들 게임",
-      "tip": "보석을 부스터 팩으로 바꿀 게임입니다. Steam은 게임마다 하루에 한 팩, 아직 카드가 나오는 게임만 허용합니다. 비워 두면 꺼집니다."
+      "tip": "보석을 부스터 팩으로 바꿀 게임이며, 게임당 하루 한 팩입니다. 예를 들어 목록에 게임이 두 개면 보석이 남아 있는 동안 하루 최대 두 팩을 만듭니다. Steam 부스터 팩 제작기에 있는 게임, 즉 가지고 있고 트레이딩 카드가 있는 게임만 만들 수 있습니다."
     },
     "AchievementSkipMultiplayer": {
       "label": "멀티플레이 도전 과제 건너뛰기",
@@ -3937,115 +4101,115 @@
     },
     "HealthAlertBans": {
       "label": "새 차단 알림",
-      "tip": "차단이 생기면 알려 줍니다. 차단 감시가 켜져 있으면 그쪽에서 이미 알려 주므로, 두 번 말하지 않도록 이 설정은 조용히 있습니다."
+      "tip": "차단이 생기면 알려 줍니다 - 예: VAC 차단, 게임 차단, 거래 또는 커뮤니티 차단. 차단 감시가 켜져 있으면 그쪽에서 이미 알려 주므로, 두 번 말하지 않도록 이 설정은 조용히 있습니다. 꺼짐: 여기서는 차단 메시지를 보내지 않습니다."
     },
     "HealthAlertDiscord": {
       "label": "Discord로 상태 알림",
-      "tip": "계정에 무언가 나빠지면 Discord 채널로 메시지를 보냅니다. 알림에서 Discord 웹후크를 설정해야 합니다."
+      "tip": "계정에 무언가 나빠지면 Discord 채널로 메시지를 보냅니다. 예: 마켓이 7일 동안 막히면 메시지 하나를 보냅니다. 켜짐: 나빠진 변화마다 보냅니다. 꺼짐: Discord로는 보내지 않습니다 - 상태 줄에는 그대로 나옵니다. 알림에서 Discord 웹후크를 설정해야 합니다."
     },
     "HealthAlertGuard": {
       "label": "Steam Guard가 약해지면 알림",
-      "tip": "Steam Guard가 휴대폰 앱에서 이메일로 바뀌거나 꺼지면 알려 줍니다."
+      "tip": "Steam Guard가 약해지면 알려 줍니다 - 예: 휴대폰 앱에서 이메일 코드로 바뀌거나 꺼질 때. 꺼짐: 상태 줄에만 나옵니다."
     },
     "HealthAlertLimited": {
       "label": "제한된 계정이 되면 알림",
-      "tip": "Steam이 이 계정을 제한된 계정으로 취급하기 시작하면 알려 줍니다 (친구 초대 불가, 마켓 불가). 5달러를 한 번도 쓰지 않은 계정은 제한된 계정입니다."
+      "tip": "Steam이 이 계정을 제한된 계정으로 취급하기 시작하면 알려 줍니다: 친구 초대 불가, 마켓 불가. 예: 5달러를 한 번도 쓰지 않은 계정은 제한된 계정입니다. 꺼짐: 상태 줄에만 나옵니다."
     },
     "HealthAlertMarket": {
       "label": "마켓이 막히면 알림",
-      "tip": "Steam이 이 계정의 커뮤니티 마켓 이용을 막으면 알려 줍니다 - 예를 들어 새 기기에서 로그인한 뒤 7일 동안."
+      "tip": "Steam이 이 계정의 커뮤니티 마켓 이용을 막으면 알려 줍니다 - 예: 새 기기에서 로그인한 뒤 7일 동안. 꺼짐: 상태 줄에만 나옵니다."
     },
     "HealthAlertPhone": {
       "label": "전화번호가 제거되면 알림",
-      "tip": "계정에 더 이상 전화번호가 등록되어 있지 않으면 알려 줍니다."
+      "tip": "계정에 더 이상 전화번호가 없으면 알려 줍니다 - 예: Steam 사이트에서 제거된 뒤. 꺼짐: 상태 줄에만 나옵니다."
     },
     "HealthAlertPopup": {
       "label": "팝업으로 상태 알림",
-      "tip": "계정에 무언가 나빠지면 이 PC에 팝업을 띄웁니다 (팝업 표시가 켜져 있을 때)."
+      "tip": "계정에 무언가 나빠지면 이 PC에 팝업을 띄웁니다. 예: Steam Guard가 휴대폰 앱에서 이메일로 바뀌면 창 하나가 뜹니다. 켜짐: 그때마다 팝업 (팝업 표시가 켜져 있을 때). 꺼짐: 팝업 없음 - 상태 줄에는 그대로 나옵니다."
     },
     "HealthAlertTelegram": {
       "label": "Telegram으로 상태 알림",
-      "tip": "계정에 무언가 나빠지면 Telegram 채팅으로 메시지를 보냅니다 - 차단, 거래 보류, 마켓 막힘, Steam Guard 꺼짐 등. 알림에서 Telegram을 설정해야 합니다."
+      "tip": "계정에 무언가 나빠지면 Telegram 채팅으로 메시지를 보냅니다. 예: 한 계정에 15일 거래 보류가 시작되면 메시지 하나를 보냅니다. 켜짐: 나빠진 변화마다 보냅니다. 꺼짐: Telegram으로는 보내지 않습니다 - 계정의 상태 줄에는 그대로 나옵니다. 알림에서 Telegram을 설정해야 합니다."
     },
     "HealthAlertTradeHold": {
       "label": "거래 보류 알림",
-      "tip": "이 계정의 거래가 며칠씩 보류되기 시작하면 알려 줍니다 - 예를 들어 Steam Guard를 바꾼 뒤 15일 동안."
+      "tip": "이 계정의 거래가 며칠씩 보류되기 시작하면 알려 줍니다 - 예: Steam Guard를 바꾼 뒤 15일 동안. 꺼짐: 상태 줄에만 나옵니다."
     },
     "HealthMaxHours": {
       "label": "...최대(시간)",
-      "tip": "두 번의 상태 확인 사이 가장 긴 시간(시간 단위) - 예를 들어 7. 매번 기다리는 시간은 두 값 사이에서 무작위로 정해집니다."
+      "tip": "두 번의 상태 확인 사이 가장 긴 시간(시간)입니다 - 예: 7. 가장 짧은 값이 5면 5~7시간마다 무작위로 확인합니다."
     },
     "HealthMinHours": {
       "label": "상태 확인 사이 가장 짧은 대기(시간)",
-      "tip": "두 번의 상태 확인 사이 가장 짧은 시간(시간 단위) - 예를 들어 5. 계정이 로그인할 때는 항상 한 번 확인합니다."
+      "tip": "두 번의 상태 확인 사이 가장 짧은 시간(시간)입니다 - 예: 5. 가장 긴 값이 7이면 5~7시간마다 무작위로 확인합니다. 계정이 로그인할 때는 항상 한 번 확인합니다."
     },
     "ScamAlertDiscord": {
       "label": "Discord로 사기 경고",
-      "tip": "사기 감시 경고를 Discord 채널로 보냅니다. 알림에서 Discord 웹후크를 설정해야 합니다."
+      "tip": "사기 감시 경고를 Discord 채널로 보냅니다. 예: 한 계정에 새 API 키가 생기면 계정 이름을 담은 메시지 하나를 보냅니다. 켜짐: 모든 경고가 Discord로 갑니다. 꺼짐: Discord로는 하나도 가지 않습니다 - 로그와 대시보드에는 그대로 나옵니다. 알림에서 Discord 웹후크를 설정해야 합니다."
     },
     "ScamAlertPopup": {
       "label": "팝업으로 사기 경고",
-      "tip": "사기 감시 경고가 나올 때마다 이 PC에 팝업을 띄웁니다 (팝업 표시가 켜져 있을 때)."
+      "tip": "사기 감시 경고마다 이 PC에 팝업을 띄웁니다. 예: 한 계정의 이메일이 바뀌면 계정 이름을 담은 창 하나가 뜹니다. 켜짐: 경고마다 팝업 (팝업 표시가 켜져 있을 때). 꺼짐: 팝업 없음 - 로그와 대시보드에는 그대로 나옵니다."
     },
     "ScamAlertTelegram": {
       "label": "Telegram으로 사기 경고",
-      "tip": "사기 감시 경고(새 API 키, 새 기기, 이메일·전화·Steam Guard 변경, 모든 세션 로그아웃)를 Telegram 채팅으로 보냅니다. 알림에서 Telegram을 설정해야 합니다."
+      "tip": "사기 감시 경고를 Telegram 채팅으로 보냅니다. 예: 한 계정에 새 기기가 로그인하면 계정과 기기 이름을 담은 메시지 하나를 보냅니다. 켜짐: 모든 경고가 Telegram으로 갑니다. 꺼짐: Telegram으로는 하나도 가지 않습니다 - 로그와 대시보드에는 그대로 나옵니다. 알림에서 Telegram을 설정해야 합니다."
     },
     "ScamWatchApiKey": {
       "label": "API 키 확인",
-      "tip": "계정의 Steam Web API 키 페이지를 확인합니다. 모르는 사이에 키가 생기거나 바뀌는 것은 가장 흔한 거래 사기입니다. 키 자체는 저장하지 않고 키의 지문만 저장합니다."
+      "tip": "계정의 Steam Web API 키 페이지를 확인합니다. 모르는 사이에 키가 생기거나 바뀌는 것은 가장 흔한 거래 사기입니다 - 예: 로그인했던 가짜 거래 사이트가 만든 키. 키 자체는 저장하지 않고 키의 지문만 저장합니다. 꺼짐: 키를 확인하지 않습니다."
     },
     "ScamWatchCancelOffers": {
       "label": "경고 시: 보낸 제안 취소",
-      "tip": "경고가 나오면, 이 계정이 보냈지만 아직 성사되지 않은 거래 제안을 취소합니다 - API 키를 손에 넣은 사기꾼이 이를 가짜 제안으로 바꿔치기합니다."
+      "tip": "경고가 나오면, 이 계정이 보냈지만 아직 성사되지 않은 거래 제안을 취소합니다 - API 키를 손에 넣은 사기꾼이 이를 가짜 제안으로 바꿔치기합니다. 예: 다른 내 계정으로 보낸 대기 중인 제안 2개를 취소합니다. 꺼짐: 보낸 제안은 그대로 둡니다."
     },
     "ScamWatchDetails": {
       "label": "이메일, 전화, Steam Guard 확인",
-      "tip": "계정 정보 페이지를 확인하고 이메일 주소, 전화번호, Steam Guard가 바뀌면 경고합니다. Steam이 보여 주는 가려진 형태(th***@gmail.com, 끝자리 12 등)만 저장합니다."
+      "tip": "계정 정보 페이지를 확인하고 이메일 주소, 전화번호, Steam Guard가 바뀌면 경고합니다. Steam이 보여 주는 가려진 형태만 저장합니다 - 예: th***@gmail.com, 또는 끝자리가 12인 전화번호. 꺼짐: 확인하지 않습니다."
     },
     "ScamWatchDevices": {
       "label": "새 기기 확인",
-      "tip": "계정의 인증된 기기 목록을 확인하고, 새로 생긴 기기 중 내 것도 nocat.farm 자신의 것도 아닌 기기를 경고합니다."
+      "tip": "계정의 인증된 기기 목록을 확인하고, 새로 생긴 기기 중 내 것도 nocat.farm 자신의 것도 아닌 기기를 경고합니다 - 예: 처음 보는 \"DESKTOP-8XQ2\". 꺼짐: 기기를 확인하지 않습니다."
     },
     "ScamWatchMaxMinutes": {
       "label": "...최대(분)",
-      "tip": "두 번의 확인 사이 가장 긴 시간(분 단위) - 예를 들어 60. 매번 기다리는 시간은 두 값 사이에서 무작위로 정해집니다."
+      "tip": "두 번의 확인 사이 가장 긴 시간(분)입니다 - 예: 60. 가장 짧은 값이 30이면 매번 30~60분 중 무작위로 기다립니다."
     },
     "ScamWatchMinMinutes": {
       "label": "확인 사이 가장 짧은 대기(분)",
-      "tip": "두 번의 확인 사이 가장 짧은 시간(분 단위) - 예를 들어 30. 한 번 확인할 때 페이지를 몇 번 보는 정도로, 브라우저에서 여는 것과 같습니다."
+      "tip": "두 번의 확인 사이 가장 짧은 시간(분)입니다 - 예: 30. 가장 긴 값이 60이면 매번 30~60분 중 무작위로 기다립니다. 한 번 확인할 때 페이지를 몇 번 보는 정도로, 브라우저에서 여는 것과 같습니다."
     },
     "ScamWatchRevokeKey": {
       "label": "새 API 키: 해지",
-      "tip": "전에 없던 API 키가 생기면 바로 Steam 키 페이지에서 해지를 누릅니다. 기본값은 꺼짐: API 키를 직접 만든다면(일부 거래 사이트가 요구함) 꺼 두세요."
+      "tip": "전에 없던 API 키가 생기면 바로 Steam 키 페이지에서 해지를 눌러, 사기 사이트가 만든 키가 작동하지 않게 합니다 - 예: 키가 생긴 지 한 시간 안에. 기본값은 꺼짐: 그러면 경고만 합니다. API 키를 직접 만든다면(일부 거래 사이트가 요구함) 꺼 두세요."
     },
     "ScamWatchSessions": {
       "label": "전체 로그아웃 확인",
-      "tip": "계정의 모든 세션이 로그아웃되어 Steam이 저장된 로그인을 거부하면 경고합니다 - 도둑이 가장 먼저 하는 일입니다. 일반적인 재연결이나 본인이 그 계정으로 플레이하는 것은 해당하지 않습니다."
+      "tip": "계정의 모든 세션이 로그아웃되어 Steam이 저장된 로그인을 거부하면 경고합니다 - 도둑이 가장 먼저 하는 일입니다. 예: \"Deauthorize all other devices\"로. 일반적인 재연결이나 본인이 그 계정으로 플레이하는 것은 해당하지 않습니다. 꺼짐: 확인하지 않습니다."
     },
     "ScamWatchStopTrades": {
       "label": "경고 시: 거래 중지",
-      "tip": "경고가 나오면, scamwatch ok와 계정 이름을 입력할 때까지 이 계정은 거래 제안 수락과 아이템 자동 보내기를 멈춥니다. 직접 제안에 응답하는 것은 계속 됩니다."
+      "tip": "경고가 나오면, scamwatch ok와 계정 이름을 입력할 때까지 이 계정은 거래 제안 수락과 아이템 자동 보내기를 멈춥니다. 예: 수락될 기부도 당신을 기다립니다. 직접 제안에 응답하는 것은 계속 됩니다. 꺼짐: 거래는 평소대로 계속됩니다."
     },
     "ScamWatchTrustedDevices": {
       "label": "무시할 내 기기",
-      "tip": "내 기기 이름을 쉼표로 구분해, Steam의 인증된 기기 목록에 나온 그대로 적습니다 - 예: My Phone, LAPTOP-7. 이 기기들에서의 새 로그인은 알리지 않습니다. nocat.farm 자신의 로그인은 언제나 알아서 알아봅니다."
+      "tip": "내 기기들입니다. 이 기기들의 로그인은 새 기기로 알리지 않습니다. Steam의 인증된 기기 목록에 나온 이름 그대로, 쉼표로 구분해 적으세요 - 예: My Phone, LAPTOP-7. 비워 두면 새 기기는 모두 알립니다. nocat.farm 자신의 로그인은 언제나 알아서 알아봅니다."
     },
     "WatchForScams": {
       "label": "사기 감시",
-      "tip": "30분쯤마다 계정 도용이나 거래 사기의 징후를 찾습니다: 전에 없던 API 키, 내 것이 아닌 기기의 로그인, 이메일·전화·Steam Guard 변경, 모든 세션 로그아웃. 보기만 합니다. 경고가 나오면 빨간 로그 줄, 팝업, 메시지를 받으며, 그다음 동작은 아래에서 정합니다."
+      "tip": "30분쯤마다 계정 도용이나 거래 사기의 징후를 찾습니다: 전에 없던 API 키, 내 것이 아닌 기기의 로그인, 이메일·전화·Steam Guard 변경, 모든 세션 로그아웃. 예: 가짜 거래 사이트가 14:00에 만든 키는 14:30쯤까지 알려 줍니다. 보기만 합니다: 경고가 나왔을 때 할 일은 아래에서 정합니다. 꺼짐: 아무것도 확인하지 않습니다."
     },
     "WatchHealth": {
       "label": "계정 상태 지켜보기",
-      "tip": "계정 카드에 상태 한 줄을 보여 줍니다: 레벨, 차단, 거래 보류, 마켓 이용, 제한된 계정, Steam Guard, 전화. 로그인할 때와 몇 시간마다 확인합니다. 보기만 하며, 무언가 나빠지는 즉시 알려 줍니다."
+      "tip": "계정 카드에 상태 한 줄을 보여 주고(레벨, 차단, 거래 보류, 마켓 이용, 제한된 계정, Steam Guard, 전화), 무언가 나빠지는 즉시 알려 줍니다. 예: 거래 보류가 시작되면 메시지 하나를 받고 상태 줄에도 나옵니다. 로그인할 때와 몇 시간마다 확인하며, 보기만 합니다. 꺼짐: 상태 줄도 알림도 없습니다."
     },
     "PointsWeeklyCap": {
       "label": "일주일에 최대 사용",
-      "tip": "어느 7일 동안이든 쓰는 포인트의 최대치. 예: 3000 (배지 3레벨). 0이면 쓰지 않습니다."
+      "tip": "어느 7일 동안이든 쓰는 포인트의 최대치입니다. 예: 3000이면 포인트가 얼마나 있든 일주일에 배지 최대 3레벨. 0이면 쓰지 않습니다."
     },
     "PointsBadgeMaxLevel": {
       "label": "각 배지를 멈출 레벨",
-      "tip": "어떤 배지든 이 레벨까지만 올립니다. 예: 40 (Steam 최대). 다른 데 쓸 포인트를 남기려면 낮추세요."
+      "tip": "어떤 배지든 이 레벨까지만 올립니다. 예: 10이면 각 배지를 10레벨에서 멈춥니다(약 10,000포인트). Steam 최대는 40입니다. 다른 데 쓸 포인트를 남기려면 낮추세요."
     },
     "SendPoints": {
       "label": "Steam 포인트 사용 보내기",
@@ -4053,92 +4217,92 @@
     },
     "PointsBuyOlderBadges": {
       "label": "이전 시즌 배지도",
-      "tip": "현재 배지를 다 올리면, 상점에 아직 있는 이전 시즌 배지의 레벨도 삽니다. Steam이 일부를 거절한 적이 있어 꺼져 있습니다. 거절되면 로그에만 남습니다."
+      "tip": "현재 배지를 다 올리면, 상점에 아직 있는 이전 시즌 배지의 레벨도 삽니다 - 예: 지난 겨울 배지. Steam이 일부를 거절한 적이 있어 꺼져 있습니다. 거절되면 로그에만 남습니다. 꺼짐: 현재 배지만."
     },
     "SpendPoints": {
       "label": "Steam 포인트를 레벨에 쓰기",
-      "tip": "이 계정의 Steam 포인트를 포인트 상점의 시즌 배지 레벨에 씁니다 - Steam 레벨을 올려 주는 유일한 것으로, 1,000포인트당 약 100 XP. 모든 계정에서 기본적으로 꺼져 있습니다. 켜면 먼저 무엇을 살지 보여 주고 확인을 받으며, 끄면 바로 멈춥니다."
+      "tip": "이 계정의 Steam 포인트를 포인트 상점의 시즌 배지 레벨에 씁니다 - Steam 레벨을 올려 주는 유일한 것으로, 1,000포인트당 약 100 XP. 예: 3,000포인트로 3레벨을 삽니다. 모든 계정에서 기본적으로 꺼져 있습니다. 켜면 먼저 무엇을 살지 보여 주고 확인을 받으며, 끄면 바로 멈춥니다."
     },
     "PointsKeepAtLeast": {
       "label": "항상 최소한 남기기",
-      "tip": "절대 쓰지 않는 포인트로, 직접 쓸 몫이 남습니다. 예: 1000. 배지 1레벨은 1,000 포인트입니다."
+      "tip": "절대 쓰지 않는 포인트로, 직접 쓸 몫을 남깁니다. 예: 1000이고 포인트가 4,500이면 3,500까지 쓸 수 있어 배지 3레벨(레벨당 1,000)을 삽니다. 0이면 모두 쓸 수 있습니다."
     },
     "PointsCheckEveryHours": {
       "label": "확인 간격(시간)",
-      "tip": "포인트와 상점을 확인하는 간격(시간). 예: 12. 휴먼 모드 계정은 자기 하루 동안에만 확인합니다."
+      "tip": "포인트와 상점을 확인하는 간격(시간)입니다 - 예: 12면 하루에 두 번. 사람 모드 계정은 자기 하루 동안에만 확인합니다."
     },
     "PointsBuySeasonalBadge": {
       "label": "시즌 배지 레벨 사기",
-      "tip": "포인트 상점이 지금 파는 배지(예: Summer Collection)의 레벨을 살 수 있게 합니다. 큰 Steam 할인 때마다 새 배지가 나옵니다."
+      "tip": "포인트 상점이 지금 파는 배지의 레벨을 살 수 있게 합니다 - 예: Summer Collection. 큰 Steam 할인 때마다 새 배지가 나옵니다. 켜짐: 그 배지 레벨을 올립니다. 꺼짐: 사지 않습니다."
     },
     "BackupRetryMinutes": {
       "label": "다시 시도까지(분)",
-      "tip": "백업이 실패한 뒤 그날 다시 시도하기 전에 기다릴 분입니다. 예: 60. 0이면 내일까지 기다립니다."
+      "tip": "백업이 실패한 뒤 그날 다시 시도하기 전에 기다릴 시간입니다. 예: 60이면 오전 4시에 실패한 백업을 오전 5시에 다시 시도합니다. 0이면 내일까지 기다립니다."
     },
     "SendBackups": {
       "label": "백업 보내기",
-      "tip": "백업이 실패했고 그 이유 - 또는 알려 줄 때가 매번 백업한 뒤라면 저장된 백업마다."
+      "tip": "백업이 실패하면 그 이유와 함께 메시지를 보냅니다 - 예: 폴더가 없음. 알려 줄 때가 매번 백업한 뒤라면, 저장된 백업마다 하나씩도 보냅니다."
     },
     "BackupFolder": {
       "label": "백업 저장 위치",
-      "tip": "매일 백업이 들어갈 폴더입니다. 이 PC가 고장 나도 남도록 OneDrive나 Dropbox 폴더, USB 드라이브로 하세요. 예: D:\\OneDrive\\nocat.farm. 비워 두면 nocat.farm 옆의 backups 폴더에 저장합니다."
+      "tip": "매일 백업이 들어갈 폴더입니다. 이 PC가 고장 나도 남도록 OneDrive나 Dropbox 폴더, 또는 USB 드라이브를 고르세요 - 예: D:\\OneDrive\\nocat.farm. 비워 두면 nocat.farm 옆의 backups 폴더에 저장합니다."
     },
     "BackupIncludeLogs": {
       "label": "로그 포함",
-      "tip": "최근 7일의 로그 파일도 백업에 넣습니다. 크기가 커집니다. 켜지 않으면 꺼져 있습니다."
+      "tip": "최근 7일의 로그 파일도 백업에 넣습니다. 예: 문제가 생기기 전날 계정이 무엇을 했는지 다시 볼 때. 백업마다 크기가 커집니다. 꺼짐(기본값): 로그 없음."
     },
     "BackupHour": {
       "label": "백업 시각",
-      "tip": "매일 백업을 하는 시각입니다. 예: 오전 4시. 그때 PC가 꺼져 있었다면 nocat.farm이 다시 열리자마자 합니다."
+      "tip": "매일 백업을 하는 시각입니다 - 예: PC가 한가한 오전 4시. 그때 PC가 꺼져 있었다면 nocat.farm이 다시 열리자마자 합니다."
     },
     "BackupPassword": {
       "label": "백업 비밀번호",
-      "tip": "백업을 잠그는 비밀번호입니다. 12자 이상이며 오직 당신만 정합니다. 새 PC에서 백업을 복원할 때 필요하니 안전한 곳에 적어 두세요. 없으면 아무도, 당신조차 백업을 열 수 없습니다. 이 PC에 암호화되어 남고 어디로도 보내지지 않습니다. 바꾸면 그 뒤에 만든 백업만 새 비밀번호로 잠기고, 그 전의 백업은 여전히 예전 비밀번호가 필요합니다."
+      "tip": "백업을 잠그는 비밀번호입니다 - 12자 이상, 예를 들어 기억하기 쉬운 짧은 문장. 새 PC에서 백업을 복원할 때 필요하니 안전한 곳에 적어 두세요: 없으면 아무도, 당신조차 백업을 열 수 없습니다. 이 PC에 암호화되어 남고 어디로도 보내지지 않습니다. 바꾸면 그 뒤에 만든 백업만 새 비밀번호로 잠깁니다 - 이전 백업은 여전히 예전 비밀번호가 필요합니다."
     },
     "BackupLocalCopy": {
       "label": "여기에도 사본 보관",
-      "tip": "같은 백업을 nocat.farm 옆의 backups 폴더에도 남겨, 백업 폴더가 없을 때도 하나는 곁에 있게 합니다. 같은 개수만큼 보관합니다. 백업 저장 위치가 비어 있으면 아무것도 하지 않습니다."
+      "tip": "같은 백업을 nocat.farm 옆의 backups 폴더에도 남겨, 백업 폴더가 없어져도 하나는 곁에 있게 합니다 - 예: USB 드라이브를 뽑아 둔 경우. 같은 개수만큼 보관합니다. 백업 저장 위치가 비어 있으면 아무것도 하지 않습니다."
     },
     "BackupIncludeSettings": {
       "label": "설정 포함",
-      "tip": "전체 설정을 백업에 넣습니다: 대시보드, 알림, 이 페이지."
+      "tip": "전체 설정을 백업에 넣습니다: 대시보드, 알림, 이 페이지 - 예: Telegram과 Discord 설정. 켜짐: 복원하면 돌아옵니다. 꺼짐: 복원해도 새 PC에 이미 있는 설정을 그대로 둡니다."
     },
     "BackupIncludeAccounts": {
       "label": "계정과 저장된 로그인 포함",
-      "tip": "각 계정의 설정, 저장된 Steam 로그인, 진행 상황(사람 모드의 하루, 업적 사냥, rep4rep 횟수)을 백업에 넣습니다. 없으면 복원해도 계정이 돌아오지 않습니다."
+      "tip": "각 계정의 설정, 저장된 Steam 로그인, 진행 상황(사람 모드의 하루, 업적 사냥, rep4rep 횟수)을 백업에 넣습니다. 예: 계정 3개가 바로 로그인할 수 있는 상태로 돌아옵니다. 꺼짐: 복원해도 계정이 돌아오지 않습니다."
     },
     "BackupNotify": {
       "label": "알려 줄 때",
-      "tip": "Telegram과 Discord로 백업 소식을 받을 때: 실패했을 때만(폴더 없음, 디스크 가득 참, 권한 없음), 또는 매번 백업한 뒤에도. 알림에서 백업 보내기가 켜져 있어야 합니다.",
+      "tip": "Telegram과 Discord로 백업 소식을 받을 때입니다. 백업이 실패했을 때만: 백업을 만들지 못했을 때만 메시지 - 예: 폴더가 없음, 디스크가 가득 참, 권한 없음. 매번 백업한 뒤: 저장된 백업마다 메시지도 보냅니다. 알림에서 백업 보내기가 켜져 있어야 합니다.",
       "choices": "0 백업이 실패했을 때만 | 1 매번 백업한 뒤"
     },
     "PhoneInstallHint": {
       "label": "휴대폰에 설치하는 법 보이기",
-      "tip": "휴대폰 페이지에 대시보드를 앱처럼 휴대폰 홈 화면에 두는 짧은 방법을 보여 줍니다."
+      "tip": "휴대폰 페이지에, 대시보드를 휴대폰 홈 화면에 두어 앱처럼 여는 짧은 방법을 보여 줍니다 - 예: Chrome에서는 메뉴, 그다음 홈 화면에 추가. 켜짐: 방법이 보입니다. 꺼짐: 숨깁니다 - 이미 휴대폰에 두었을 때."
     },
     "BackupJitterMinutes": {
       "label": "최대 몇 분 늦출지",
-      "tip": "매일 백업 시각에 더하는 무작위 분의 최대치입니다. 예: 30. 0이면 정각에 합니다."
+      "tip": "매일 백업 시각에 무작위로 더하는 분이며, 최대 이만큼입니다. 예: 30이고 백업 시각이 오전 4시면 4:00에서 4:30 사이 어딘가. 0이면 정각에 합니다."
     },
     "BackupKeep": {
       "label": "최근 보관 개수(백업)",
-      "tip": "폴더에 남길 매일 백업 수입니다. 예: 7이면 일주일 분. 오래된 것은 지우고 새것을 남깁니다. 자기 백업 파일만 지웁니다."
+      "tip": "폴더에 남길 매일 백업 수입니다. 예: 7이면 일주일 분 - 8번째 백업이 가장 오래된 것을 지웁니다. 자기 백업 파일만 지웁니다."
     },
     "BackupAuto": {
       "label": "매일 백업",
-      "tip": "하루에 한 번 모든 것(설정, 계정, 저장된 로그인, 인증기, 기록)을 백업 비밀번호로 잠근 파일 하나에 저장합니다. 이 PC가 고장 나도 어느 PC에든 되돌릴 수 있습니다. 먼저 백업 비밀번호가 필요합니다. 켜기 전까지는 꺼져 있습니다."
+      "tip": "하루에 한 번 모든 것(설정, 계정, 저장된 로그인, 인증기, 기록)을 백업 비밀번호로 잠근 파일 하나로 백업합니다. 이 PC가 고장 나도 어느 PC에든 되돌릴 수 있습니다. 예: 백업 시각이 오전 4시, 최근 보관 개수가 7이면 매일 아침 새 백업이 생기고 폴더에는 일주일 분이 남습니다. 켜짐: 백업 비밀번호를 정하면 매일. 꺼짐(기본값): 직접 만드는 백업만."
     },
     "BackupIncludeHistory": {
       "label": "기록과 통계 포함",
-      "tip": "차트 뒤의 날짜별 기록, 지금까지 쌓은 시간, 일간·주간 보고서를 백업에 넣습니다."
+      "tip": "차트 뒤의 날짜별 기록, 지금까지 쌓은 시간, 일간·주간 보고서를 백업에 넣습니다 - 예: 일 년 치 일간 차트. 켜짐: 복원 뒤에도 차트가 이어집니다. 꺼짐: 빈 상태에서 다시 시작합니다."
     },
     "BackupIncludeAuthenticators": {
       "label": "인증기 포함",
-      "tip": "추가한 Steam Guard 인증기 파일(.maFile)을 백업에 넣습니다. 거래를 승인할 수 있으니, 이것이 들어가면 백업 비밀번호가 더욱 중요합니다."
+      "tip": "추가한 Steam Guard 인증기 파일(.maFile)이 있으면 백업에 넣습니다 - 예: main.maFile. 켜짐: 복원 뒤 바로 거래를 다시 승인할 수 있습니다 - 그래서 백업 비밀번호가 더욱 중요합니다. 꺼짐: 직접 다시 추가합니다."
     },
     "BorrowFamilyCopy": {
       "label": "사본이 사용 중이면 다른 가족 구성원의 사본 빌리기",
-      "tip": "Steam 가족 중 누군가 한 구성원의 사본으로 공유 게임을 플레이 중이고 다른 구성원도 그 게임을 가지고 있으면, 게임을 빼는 대신 그 빈 사본으로 바꿔서 계속합니다. 바뀌는 것은 그 게임 하나를 '누구에게서 빌릴지'뿐이며, 누가 쓰는 사본은 절대 가져오지 않습니다. 가족 공유 게임에만 해당 ('가족 공유 게임도 포함')."
+      "tip": "Steam 가족 중 누군가 한 구성원의 사본으로 공유 게임을 플레이 중이고 다른 구성원도 그 게임을 가지고 있으면, 게임을 빼는 대신 그 빈 사본으로 바꿔서 계속합니다. 예: 두 구성원이 Stardew Valley를 가지고 있고 한 명이 플레이 중이면 다른 사본을 빌립니다. 바뀌는 것은 그 게임 하나를 누구에게서 빌릴지뿐이며, 누가 쓰고 있는 사본은 절대 가져오지 않습니다. 꺼짐: 사본이 빌 때까지 그 게임을 뺍니다. 가족 공유 게임에만 해당합니다(\"가족 공유 게임도 포함\")."
     },
     "FamilyWaitMinutes": {
       "label": "가족 구성원이 그만둔 뒤 기다리기(분)",
@@ -4146,144 +4310,181 @@
     },
     "SpareKeepGems": {
       "label": "낱개로 남길 최소 보석 수",
-      "tip": "절대 묶거나 보내거나 팔지 않을 보석 수입니다(예: 500). 0이면 1000개가 찰 때마다 묶습니다."
+      "tip": "절대 묶거나 보내거나 팔지 않을 보석 수입니다. 예: 500이고 보석이 2,450개면 1,950개가 나갈 수 있어, 자루 1개를 만들고 1,450개는 낱개로 남습니다. 0이면 1000개가 찰 때마다 묶습니다."
     },
     "SpareKeepBackgrounds": {
       "label": "배경마다 보관할 수",
-      "tip": "항상 남겨 두는 배경별 개수, 예: 1. 0이면 하나도 남기지 않아 마지막 하나도 나갈 수 있습니다."
+      "tip": "항상 남겨 두는 배경별 개수입니다. 예: 1이면 3개 중 2개가 나갈 수 있습니다. 0이면 하나도 남기지 않아 마지막 하나도 나갈 수 있습니다."
     },
     "SpareGems": {
       "label": "그 다음 보석",
-      "tip": "보석을 어떻게 할지입니다. 자동은 사람 모드 계정에서는 1000개짜리 자루로 묶어 거래 가능하게 두고, 로봇 계정에서는 \"부스터 팩을 만들 게임\"이 쓸 수 있도록 낱개로 둡니다. 자동은 절대 팔지 않습니다. \"자루 팔기\"는 확인할 때마다 자루 하나를 남는 아이템 하루 한도 안에서 등록합니다.",
+      "tip": "보석을 어떻게 할지입니다. 자동은 사람 모드 계정에서는 1000개짜리 자루로 묶어 거래 가능하게 두고, 로봇 계정에서는 부스터 팩을 만들 수 있도록 낱개로 둡니다 - 자동은 절대 팔지 않습니다. 자루로 묶기: 예를 들어 보석 2,450개면 자루 2개가 되고 450개는 낱개로 남습니다. 자루 보내기: 아래에 적은 계정으로. \"자루 팔기\"는 확인할 때마다 자루 하나를 남는 아이템 하루 한도 안에서 등록합니다. \"부스터 팩 만들기\"에서 자동을 고르면 여기의 자동이나 자루는 \"낱개로 두기\"로 바뀝니다. 자루에 든 보석으로는 팩을 만들 수 없기 때문입니다.",
       "choices": "0 자동 | 1 낱개로 두기 (부스터 팩에 사용) | 2 1000개 자루로 묶어 거래 가능하게 보관 | 3 자루를 내 다른 계정으로 보내기 | 4 자루 팔기"
     },
     "SpareGapSeconds": {
       "label": "아이템 사이 대기(초)",
-      "tip": "두 아이템 사이의 초입니다(예: 40). 매번 달라지고, 사람 모드 계정에서는 더 깁니다."
+      "tip": "로봇 계정에서 한 번 확인할 때 두 아이템 사이의 대기 시간입니다. 매번 달라집니다. 예: 40이면 아이템 5개에 약 3분 걸립니다. 사람 모드 계정은 대신 \"아이템 사이 대기, 사람 모드\"를 씁니다."
     },
     "SparePerRun": {
       "label": "한 번에 처리할 아이템 수",
-      "tip": "한 번 확인할 때 보석으로 바꾸거나 파는 최대 아이템 수입니다. 비싼 것부터(예: 5)."
+      "tip": "로봇 계정에서 한 번 확인할 때 보석으로 바꾸거나 파는 최대 개수이며, 비싼 것부터입니다. 예: 5면 남는 아이템 40개를 찾은 확인에서 5개, 다음 확인에서 5개 더를 하루 한도 안에서 처리합니다. 사람 모드 계정은 대신 \"한 번에 처리할 아이템 수, 사람 모드\"를 씁니다."
     },
     "SpareKeepItems": {
       "label": "이 아이템은 건드리지 않기",
-      "tip": "인벤토리에 표시되는 전체 아이템 이름을 쉼표로 구분해 적습니다(예: Sans, Gordon Freeman (Foil)). 이름을 적은 아이템은 모든 게임에서 보관합니다. 이것들은 항상 보관합니다."
+      "tip": "인벤토리에 표시되는 전체 아이템 이름을 쉼표로 구분해 적습니다 - 예: Sans, Gordon Freeman (Foil). 이름을 적은 아이템은 모든 게임에서 보관합니다. 이것들은 항상 보관합니다. 비워 두면 이름으로 보관하는 것은 없습니다."
     },
     "BoosterCheckHours": {
       "label": "팩 확인 간격(시간)",
-      "tip": "부스터 팩을 확인하는 간격(시간, 예: 24)입니다. 매번 조금씩 달라집니다."
+      "tip": "부스터 팩을 확인하는 간격(시간)이며, 매번 조금씩 달라집니다. 예: 24면 하루에 한 번쯤."
     },
     "SpareKeepEmoticons": {
       "label": "이모티콘마다 보관할 수",
-      "tip": "항상 남겨 두는 이모티콘별 개수, 예: 1. 0이면 하나도 남기지 않아 마지막 하나도 나갈 수 있습니다."
+      "tip": "항상 남겨 두는 이모티콘별 개수입니다. 예: 1이면 3개 중 2개가 나갈 수 있습니다. 0이면 하나도 남기지 않아 마지막 하나도 나갈 수 있습니다."
     },
     "BoosterUnopened": {
       "label": "열지 않는 팩",
-      "tip": "미개봉이 더 비싸거나, 게임이 위 목록에 있거나, 열기가 꺼져 있어서 미개봉으로 남은 팩을 어떻게 할지. 보내거나 파는 것은 남는 아이템이 켜져 있을 때만 하고, 판매는 그 한도를 지킵니다. 새 팩이나 마켓에 올린 팩은 항상 그대로 둡니다.",
+      "tip": "미개봉이 더 비싸거나, 게임이 위 목록에 있거나, 열기가 꺼져 있어서 미개봉으로 남은 팩을 어떻게 할지입니다. 보관: 그대로 둡니다. 보내기: 아래에 적은 계정으로, 예: main. 팔기: 남는 아이템처럼 등록합니다. 보내거나 파는 것은 남는 아이템이 켜져 있을 때만 하고, 판매는 그 한도를 지킵니다. 새 팩이나 마켓에 올린 팩, 그리고 \"부스터 팩 만들기\"의 자동이 만든 팩은 항상 그대로 둡니다.",
       "choices": "0 보관 | 1 내 다른 계정으로 보내기 | 2 팔기"
     },
     "SpareBackgrounds": {
       "label": "중복 배경",
-      "tip": "프로필 배경의 여분 사본을 남는 것으로 칩니다."
+      "tip": "프로필 배경의 여분 사본을 남는 것으로 칩니다. 예: 3개이고 보관이 1이면 2개가 남는 것입니다. 꺼짐: 배경은 그대로 둡니다."
     },
     "SparePriceMaxAgeHours": {
       "label": "가격을 믿는 기간(시간)",
-      "tip": "장터 가격을 최신으로 보는 시간입니다(예: 24). 가격이 더 오래됐거나 모르는 아이템은 다시 가격이 매겨질 때까지 보관합니다."
+      "tip": "마켓 가격을 최신으로 보는 시간입니다. 예: 24면 어제 아침에 읽은 가격은 오늘 아침에는 너무 오래되어, 다시 가격이 매겨질 때까지 그 아이템을 보관합니다. 가격을 모르는 아이템은 항상 보관합니다."
     },
     "BoosterSendTo": {
       "label": "열지 않은 팩을 보낼 계정",
-      "tip": "여기 있는 다른 내 계정 이름입니다(예: main). 인증기를 추가하지 않았다면 보낼 때 휴대폰에서 확인해야 합니다."
+      "tip": "여기 있는 다른 내 계정 이름입니다(예: main) - 거래로 팩을 받습니다. 인증기를 추가하지 않았다면 보낼 때 휴대폰에서 확인해야 합니다."
     },
     "SpareRunHours": {
       "label": "확인 간격(시간)",
-      "tip": "남는 아이템을 확인하는 간격(시간, 예: 12)입니다. 매번 조금씩 달라집니다. 사람 모드 계정은 자기 하루 동안에만 확인합니다."
+      "tip": "남는 아이템을 확인하는 간격(시간)이며, 매번 조금씩 달라집니다. 예: 12면 하루에 두 번쯤. 사람 모드 계정은 자기 하루 동안에만 확인합니다."
     },
     "SpareKeepGames": {
       "label": "이 게임의 아이템은 건드리지 않기",
-      "tip": "카드, 배경, 이모티콘을 항상 보관할 게임입니다."
+      "tip": "카드, 배경, 이모티콘을 항상 보관할 게임입니다 - 예: 세트를 모으는 게임. 비워 두면 통째로 보관하는 게임은 없습니다."
     },
     "SpareSellPrice": {
       "label": "판매 가격",
-      "tip": "등록 가격. 등록 직전에 이 계정 자체의 Steam 지갑 통화로 가격을 다시 확인합니다. \"실제 가격보다 1센트 낮게\"(안전한 기본값): 지난 하루 동안 팔린 가격, 또는 최저 등록가가 더 높으면 그 가격 - 훨씬 싸게 던진 등록 하나는 무시합니다. 예: 0.30에 팔리고 0.10짜리 등록이 하나 있으면 0.29에 등록. 최근 판매가 없거나 아무도 팔지 않으면 보관. 다른 선택: 최저가와 같게, 중앙값(최저가보다 낮게는 안 함), 최저가보다 1센트 낮게(가장 빨리 팔리지만 던진 가격을 따라 내려감).",
-      "choices": "0 실제 가격보다 1센트 낮게 | 1 최저가와 같게 | 2 판매가 중앙값 | 3 최저가보다 1센트 낮게"
+      "tip": "등록할 가격이며, 올리기 직전에 이 계정 자체의 Steam 지갑 통화로 다시 확인합니다. 예: 오늘 0.30에 몇 번 팔렸고 0.10에 던진 등록이 하나 있으면: 실제 가격보다 1센트 낮게는 0.29, 최저가와 같게는 0.10, 판매가 중앙값은 0.30에 등록합니다. \"실제 가격보다 1센트 낮게\"(안전한 기본값): 지난 하루 동안 팔린 가격, 또는 최저 등록가가 더 높으면 그 가격 - 훨씬 싸게 던진 등록 하나는 무시합니다. 최근 판매가 없거나 아무도 팔지 않으면 보관합니다. 다른 선택: 최저가와 같게, 또는 중앙값(최저가보다 낮게는 안 함).",
+      "choices": "0 실제 가격보다 1센트 낮게 | 1 최저가와 같게 | 2 판매가 중앙값"
     },
     "SpareRelistDays": {
       "label": "안 팔린 등록 내리기까지(일)",
-      "tip": "일수입니다(예: 7). nocat.farm이 직접 올린 등록 중 그때까지 안 팔렸고 다른 사람이 더 싸게 파는 것은 내리고 그날 가격으로 다시 올립니다. 직접 올린 등록은 절대 건드리지 않습니다."
+      "tip": "안 팔린 등록을 내리고 조금 더 싸게 다시 올리기까지의 일수입니다. 예: 7이면 1일에 0.30으로 올린 카드가 8일에도 안 팔렸으면 0.29로 다시 올립니다 - 다른 사람이 0.26에 팔고 있으면 0.25로 올립니다(던진 등록은 세지 않음). \"이보다 낮추지 않음\" 아래로는 내리지 않으며, 그 가격이 되면 그대로 둡니다. nocat.farm이 직접 올린 등록만 해당합니다. 당신이 직접 올린 등록은 절대 건드리지 않습니다."
     },
     "SpareMaxPrice": {
       "label": "이보다 비싼 아이템은 건드리지 않기",
-      "tip": "이 계정 자체의 Steam 지갑 통화로, 예: 달러나 유로라면 0.25 - 자신의 통화로는 같은 가치의 금액, 예: 엔이라면 40. 가치는 최저 등록가와 지난 하루 판매가 중 높은 쪽입니다. 그보다 비싼 것은 spare preview에만 표시되고 결정은 당신에게 맡깁니다."
+      "tip": "이보다 비싼 것은 절대 건드리지 않습니다: 젬으로 바꾸지도, 팔지도 않습니다. 이 계정 자체의 Steam 지갑 통화로, 예: 달러나 유로라면 0.25 - 자신의 통화로는 같은 가치의 금액, 예: 엔이라면 40. 가치는 최저 등록가와 지난 하루 판매가 중 높은 쪽입니다: 0.20에 등록되어 있지만 0.30에 팔렸다면 가치는 0.30입니다."
     },
     "SpareGemMarginPct": {
       "label": "보석이 판매보다 나아야 하는 정도(%)",
-      "tip": "퍼센트입니다(예: 20). 보석 가치가 Steam 수수료를 뗀 판매 금액보다 20% 이상 높을 때만 보석으로 바꿉니다. 아니면 팝니다."
+      "tip": "아이템을 보석으로 바꾸려면 보석 가치가 판매보다 얼마나 더 높아야 하는지(퍼센트)입니다. 예: 20이고 Steam 수수료를 뗀 판매 금액이 0.10이면, 보석 가치가 0.12 이상일 때 보석으로 바꾸고, 0.11이면 팝니다. \"보석과 판매 중 나은 쪽\"에만 해당합니다."
     },
     "SpareMaxedBadgeCards": {
       "label": "완성한 배지의 카드",
-      "tip": "배지가 이미 5레벨인 게임(또는 foil 배지를 만든 게임)의 카드를 남는 것으로 칩니다. 아래에서 정한 사본은 보관합니다."
+      "tip": "배지를 이미 완성한 게임(5레벨, 또는 foil 배지를 만든 게임)의 카드를 남는 것으로 칩니다. \"카드마다 보관할 수\"에서 정한 사본은 남깁니다. 예: 한 카드가 3장이고 보관이 1이면 2장이 남는 것입니다. 꺼짐: 완성한 배지의 카드는 그대로 둡니다."
     },
     "SpareNewDays": {
       "label": "새 아이템을 건드리지 않는 기간(일)",
-      "tip": "아이템이 들어온 뒤 건드리지 않는 일수입니다(예: 7). nocat.farm은 그 아이템을 처음 본 때부터 세므로, 켠 직후에는 모든 것이 이만큼 기다립니다. 0이면 이 규칙이 꺼집니다."
+      "tip": "아이템이 들어온 뒤 건드리지 않는 일수입니다. 예: 7이면 월요일에 드롭된 카드는 다음 월요일부터 나갈 수 있습니다. nocat.farm은 그 아이템을 처음 본 때부터 셉니다. 처음 확인할 때 이미 인벤토리에 있는 것은 모두 오래된 것으로 보고 바로 나갈 수 있습니다 - 그 뒤에 들어온 아이템만 기다립니다. 0이면 이 규칙이 꺼집니다."
     },
     "SpareGemsSendTo": {
       "label": "자루를 보낼 계정",
-      "tip": "여기 있는 다른 내 계정 이름입니다(예: main). \"그 다음 보석\"이 자루를 보낼 때만 씁니다. 인증기를 추가하지 않았다면 보내기에 휴대폰 확인이 필요합니다."
+      "tip": "여기 있는 다른 내 계정 이름입니다(예: main) - 거래로 자루를 받습니다. \"그 다음 보석\"이 자루를 보낼 때만 씁니다. 인증기를 추가하지 않았다면 보내기에 휴대폰 확인이 필요합니다."
     },
     "OpenBoosterPacks": {
       "label": "부스터 팩 열기",
-      "tip": "인벤토리의 부스터 팩을 열어 카드가 배지에 쓰이게 합니다(또는 남는 아이템이 됩니다). 기본값은 열지 않음 - 선택하기 전까지 아무것도 열지 않습니다. \"카드가 더 비쌀 때만\"은 카드의 시장 가치가 미개봉 팩보다 높을 때만 엽니다. 가격을 모르면 열지 않습니다. 사람 모드 계정은 자신의 하루 동안에만 팩을 엽니다.",
+      "tip": "인벤토리의 부스터 팩을 열어 카드가 배지에 쓰이게 합니다(또는 남는 아이템이 됩니다). 레벨을 올리려면 항상을 고르세요. 기본값은 열지 않음 - 선택하기 전까지 아무것도 열지 않습니다. \"카드가 더 비쌀 때만\"은 카드 3장의 마켓 가치가 미개봉 팩보다 높을 때만 엽니다 - 예: 0.08 + 0.05 + 0.05짜리 카드가 0.15짜리 팩을 이깁니다. 가격을 모르면 열지 않습니다. 항상: 모든 팩을 엽니다. \"부스터 팩 만들기\"의 자동이 만든 팩은 여기 설정과 관계없이 자동이 직접 엽니다. 사람 모드 계정은 자기 하루 동안에만 팩을 엽니다.",
       "choices": "0 열지 않음 | 1 카드가 더 비쌀 때만 | 2 항상"
     },
     "SpareAction": {
       "label": "남는 아이템으로 할 일",
-      "tip": "\"보석과 판매 중 나은 쪽\"은 보석 가치가 판매보다 (아래 차이만큼) 높으면 보석으로 바꾸고, 아니면 팝니다. \"모두 보관\"은 남는 것만 알려줍니다.",
+      "tip": "보석과 판매 중 나은 쪽: 보석 가치가 판매보다 (아래 차이만큼) 높으면 보석으로 바꾸고, 아니면 팝니다 - 예: 0.05짜리 보석이 받는 금액 0.02인 판매를 이깁니다. 보석만: 절대 팔지 않습니다. 판매만: 절대 보석으로 바꾸지 않습니다. 모두 보관: 남는 것을 알리기만 하고 아무것도 바꾸지 않습니다.",
       "choices": "0 보석과 판매 중 나은 쪽 | 1 보석만 | 2 판매만 | 3 모두 보관 (알리기만)"
     },
     "SpareEmoticons": {
       "label": "중복 이모티콘",
-      "tip": "이모티콘의 여분 사본을 남는 것으로 칩니다."
+      "tip": "이모티콘의 여분 사본을 남는 것으로 칩니다. 예: 3개이고 보관이 1이면 2개가 남는 것입니다. 꺼짐: 이모티콘은 그대로 둡니다."
     },
     "BoosterNeverOpen": {
       "label": "이 게임의 팩은 열지 않기",
-      "tip": "부스터 팩을 항상 뜯지 않고 둘 게임입니다."
+      "tip": "부스터 팩을 항상 뜯지 않고 둘 게임입니다 - 예: 미개봉 팩으로 거래하는 게임. 비워 두면 제외하는 게임이 없습니다."
     },
     "SpareItems": {
       "label": "남는 아이템 처리하기",
-      "tip": "남는 카드, 배경, 이모티콘을 보석으로 바꾸거나 팝니다. 하루에 몇 개씩, 더 이득인 쪽으로. Steam 자체 아이템(카드, 배경, 이모티콘)만 다루고 게임 아이템이나 CS2 스킨은 절대 건드리지 않습니다. 배지에 아직 필요한 것, 새로 들어온 것, 가격 한도를 넘는 것은 절대 건드리지 않습니다. 켜면 먼저 무엇을 할지 보여 주고 확인을 받으며, 끄면 바로 멈춥니다."
+      "tip": "남는 카드, 배경, 이모티콘을 보석으로 바꾸거나 팝니다. 하루에 몇 개씩, 더 이득인 쪽으로. 예: 0.03짜리 카드의 4번째 사본은 보석 가치가 더 높으면 보석이 됩니다. Steam 자체 아이템(카드, 배경, 이모티콘)만 다루고 게임 아이템이나 CS2 스킨은 절대 건드리지 않습니다. 배지에 아직 필요한 것, 새로 들어온 것, 가격 한도를 넘는 것은 절대 건드리지 않습니다. 켜면 먼저 무엇을 할지 보여 주고 확인을 받으며, 끄면 바로 멈춥니다."
     },
     "SpareDailyValue": {
       "label": "하루 최대 가치",
-      "tip": "하루 아이템의 합계 가치 상한. 이 계정 자체의 Steam 지갑 통화로, 예: 달러나 유로라면 1.00 - 자신의 통화로는 같은 가치의 금액, 예: 엔이라면 150."
+      "tip": "하루에 처리하는 아이템의 합계 가치 상한이며, 이 계정 자체의 Steam 지갑 통화 기준입니다. 예: 1.00이면 0.10짜리 아이템 10개로 그날이 차고, 11번째는 내일까지 기다립니다. 달러나 유로라면 1.00 - 자신의 통화로는 같은 가치의 금액, 예: 엔이라면 150."
     },
     "SpareDailyItems": {
       "label": "하루 최대 아이템 수",
-      "tip": "하루에 보석으로 바꾸거나 파는 최대 아이템 수입니다(예: 10)."
+      "tip": "하루에 보석으로 바꾸거나 파는 최대 아이템 수입니다. 예: 10이면 5개씩 두 번 확인하고 그날은 끝입니다. 사람 모드 계정은 대신 하루에 걸쳐 나눠서 처리합니다. 예: 6시간짜리 하루에 50개, 한 시간마다 확인하면 한 번에 약 9개입니다."
     },
     "SpareFoils": {
       "label": "foil 카드도",
-      "tip": "foil 카드도 남는 것으로 칠 수 있게 합니다. 기본은 꺼짐: foil 카드는 더 드물고 보통 더 비쌉니다."
+      "tip": "foil 카드도 남는 것으로 칠 수 있게 합니다 - 예: foil 배지를 만든 foil 카드의 2번째 사본. 꺼짐(기본값): foil 카드는 더 드물고 보통 더 비싸서 항상 남깁니다."
     },
     "BoosterOpenNewDays": {
       "label": "새 팩을 건드리지 않는 기간(일)",
-      "tip": "팩이 들어온 뒤 열지 않는 일수입니다(예: 7). 0이면 바로 엽니다."
+      "tip": "팩이 들어온 뒤 열지 않는 일수입니다. 예: 7이면 월요일에 받은 팩은 다음 월요일부터 엽니다. 0이면 바로 엽니다. nocat.farm이 직접 만든 팩은 기다리지 않고 다음 기회에 엽니다."
     },
     "SpareExtraCards": {
       "label": "여분의 카드 사본",
-      "tip": "배지에 더 필요 없는 카드 사본을 남는 것으로 칩니다. 예를 들어 배지가 2레벨이면 카드마다 3장을 보관합니다."
+      "tip": "배지에 아직 필요한 것보다 많은 카드 사본을 남는 것으로 칩니다. 예: 배지가 2레벨이면 카드마다 3장(3, 4, 5레벨용)을 남기므로 4번째 사본은 남는 것입니다. 꺼짐: 여분 사본은 그대로 둡니다."
     },
     "SendItems": {
       "label": "남는 아이템과 부스터 팩 보내기",
-      "tip": "남는 아이템이 보석으로 바꾸거나 등록한 아이템, 그리고 연 부스터 팩."
+      "tip": "남는 아이템이나 부스터 팩을 한 번 확인할 때마다 메시지 하나: 보석으로 바꾸거나 등록한 아이템 수와 연 팩 수, 처음 10개의 이름 - 예: 아이템 14개면 메시지 14개가 아니라 하나. 끄면 이런 메시지는 보내지 않습니다."
     },
     "SpareKeepCopies": {
       "label": "카드마다 보관할 수",
-      "tip": "배지를 완성했어도 항상 남겨 두는 카드별 장수, 예: 1. 0이면 하나도 남기지 않아 마지막 한 장도 나갈 수 있습니다. 배지에 아직 필요한 카드는 항상 남깁니다."
+      "tip": "배지를 완성했어도 항상 남겨 두는 카드별 장수입니다. 예: 1이면 3장 중 2장이 나갈 수 있습니다. 0이면 하나도 남기지 않아 마지막 한 장도 나갈 수 있습니다. 배지에 아직 필요한 카드는 항상 남깁니다."
     },
     "SpareDumpPct": {
       "label": "최저 등록가가 판매가보다 이만큼 낮으면 보관 (%)",
-      "tip": "퍼센트, 예: 50. 최저 등록가가 지난 하루 판매가보다 50% 이상 낮고 그 판매가를 뒷받침하는 판매가 1건뿐이면 두 가격이 서로 맞지 않으므로 등록하지 않고 보관합니다. 판매가 2건 이상이면 판매가보다 1센트 낮게 등록합니다. 그보다 낮은 등록이 당신의 가격을 정하는 일은 원래 없습니다. 0이면 판매가 1건이어도 등록합니다. \"실제 가격보다 1센트 낮게\"일 때만."
+      "tip": "최저 등록가가 판매가보다 이만큼 낮고 그 판매가를 뒷받침하는 판매가 1건뿐이면, 두 가격이 서로 맞지 않으므로 등록하지 않고 보관합니다. 예: 50이고 0.30에 한 번 팔렸는데 최저 등록가가 0.12(60% 낮음)면 보관합니다. 판매가 2건 이상이면 판매가보다 1센트 낮게 등록합니다. 0이면 판매 1건으로도 등록합니다. \"실제 가격보다 1센트 낮게\"에만 해당합니다."
+    },
+    "BoosterMake": {
+      "label": "부스터 팩 만들기",
+      "tip": "보석을 부스터 팩으로 바꿉니다. Steam이 허용하는 대로 게임당 하루 한 팩입니다. 끄기: 팩을 만들지 않습니다. 내가 고른 게임: 아래 목록의 게임으로 만듭니다. 자동: Steam이 팩을 허용하는 게임 중에서 일반 배지가 다음 레벨에 가장 가까운 게임(가진 카드를 세어 부족한 카드가 가장 적은 게임)을 고릅니다. 배지가 이미 5레벨인 게임과 반짝이 카드는 절대 쓰지 않습니다. 예를 들어 세트에서 카드 1장이 부족한 게임이 4장 부족한 게임보다 먼저입니다. 자동은 \"부스터 팩 열기\" 설정과 관계없이 자신이 만든 팩을 직접 열어 카드가 배지에 쓰이게 합니다. 완성된 세트가 레벨이 되려면 \"카드로 배지 제작\"을 켜세요. 자루에 든 보석은 팩에 쓸 수 없어서 자동은 보석을 낱개로 둡니다(\"그 다음 보석\"). 사람 모드 계정은 자기 하루 동안에만 팩을 만들고 엽니다. 'booster plan'으로 자동이 다음에 무엇을 고를지 볼 수 있습니다.",
+      "choices": "0 끄기 | 1 내가 고른 게임 | 2 자동 - 가장 가까운 배지"
+    },
+    "BoosterKeepGems": {
+      "label": "최소한 남겨 둘 보석 수",
+      "tip": "부스터 팩을 만들어도 이 아래로는 줄이지 않는 보석 수입니다. 보석이 팩 가격에 이 수를 더한 만큼 있을 때만 팩을 만듭니다. 예: 1000이고 보석이 1,500개면 400짜리 팩을 만들어 1,100개가 남고, 다음 팩은 보석이 늘 때까지 기다립니다. 0이면 모두 쓸 수 있습니다."
+    },
+    "SpareRelistFloorPct": {
+      "label": "이보다 낮추지 않음(실제 판매가의 %)",
+      "tip": "안 팔린 등록을 내려가는 하한으로, 그 아이템이 지난 하루 동안 팔린 가격의 %입니다. 예: 80이면 0.30에 팔린 카드는 0.24 아래로 내리지 않습니다 - 그 가격이 되면 그대로 두고 다시 올리지 않습니다. 최근 판매가 없으면 전혀 내리지 않습니다."
+    },
+    "SpareHumanGapMinMinutes": {
+      "label": "아이템 사이 대기, 사람 모드(분)",
+      "tip": "사람 모드 계정에서 두 아이템 사이의 가장 짧은 대기 시간(분)입니다. 대기 시간은 매번 이 값과 아래의 가장 긴 값 사이에서 무작위로 정해집니다. 예: 3과 20이면 아이템 하나를 처리한 뒤 다음까지 3~20분 기다립니다."
+    },
+    "SpareDeclinedDays": {
+      "label": "휴대폰에서 등록을 거절하면 다시 시도까지(일)",
+      "tip": "Steam 앱에서 등록을 거절한 뒤 그 아이템이 기다리는 기간입니다. 예: 30이면 1일에 카드 등록을 거절하면 그 카드(모든 사본)는 31일까지 다시 올리지 않습니다. 올라가기 전에 내려간 등록도 거절로 보고, 확실히 알 수 없는 등록도 마찬가지입니다. 0이면 다시는 올리지 않습니다."
+    },
+    "SpareHumanPerLook": {
+      "label": "한 번에 처리할 아이템 수, 사람 모드",
+      "tip": "사람 모드 계정에서 한 번 확인할 때 보석으로 바꾸거나 파는 최대 개수이며, 비싼 것부터입니다. 그날의 아이템을 하루에 걸쳐 나눠서 처리합니다 - 오늘 남은 수를 남은 확인 횟수로 나눈 만큼이고, 이 값을 넘지 않습니다. 예: 6시간짜리 하루에 하루 50개, 한 시간마다 확인하면 한 번에 약 9개입니다. 이 값이 3이면 한 번에 3개이고 확인이 더 자주 옵니다."
+    },
+    "SpareMinSale": {
+      "label": "최소 이만큼 받을 때만 판매",
+      "tip": "Steam 수수료를 뺀 뒤 판매로 최소한 받아야 하는 금액으로, 이 계정 자체의 Steam 지갑 통화 기준입니다. 예: 0.05면 0.03을 받게 될 카드는 보석 가치가 있으면 보석으로 바꾸고, 없으면 보관합니다. 달러나 유로라면 예: 0.05 - 자기 통화로 같은 정도의 값을, 엔이라면 예: 5. 0이면 무엇이든 팝니다."
+    },
+    "SpareHumanGapMaxMinutes": {
+      "label": "...최대(분)",
+      "tip": "사람 모드 계정에서 두 아이템 사이의 가장 긴 대기 시간(분)입니다. 예: 20이고 가장 짧은 값이 3이면 매번 3~20분 기다리므로, 아이템 3개에 최대 약 40분 걸립니다."
+    },
+    "CraftFoilBadges": {
+      "label": "은박 배지도 제작",
+      "tip": "완성된 은박 카드 세트로 은박 배지도 만듭니다. 끄면 일반 배지만 만들고 은박 카드는 그대로 둡니다. Steam이 은박 배지를 거부하면 은박만 기다리고, 일반 배지는 계속합니다."
     }
   }
 }

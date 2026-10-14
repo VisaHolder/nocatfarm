@@ -20,7 +20,11 @@ top of the dashboard, with an *It was me* button (see [Scam watch](trades.md#sca
 authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
 phone (see [below](#using-the-dashboard-from-another-device)).
 
-**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. `clear`
+**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. Lines in a
+row of the same kind from one account are one row that updates in place: items into gems ("turned 14 items into 1,080
+gems"), an account's status every few minutes ("×6 playing Counter-Strike 2 · 8m left · 2h10m today"), rep4rep
+comments and an update's countdown. Click the row (▸) to see each line; any other line in between starts a new row,
+and an account's rows never mix with another's. Copy and the log file keep every line. `clear`
 (or `cls`) in the Console empties this tab and the Console on this screen only. The app window keeps its lines, and
 the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
 
@@ -30,7 +34,12 @@ goes through your history. A bare `help` opens a searchable command list.
 **Plugins** is always there, and says "off" until plugins are turned on. See [Plugins](plugins.md).
 
 **Settings** has search, **Show advanced**, **Only changed**, a "default" link beside anything you've changed, and a
-**Save N changes** button. Settings marked ⟳ need a restart.
+**Save N changes** button. Settings marked ⟳ need a restart. Each section is in small titled boxes, and the settings
+that only matter while a switch is on are indented under it and hidden while it's off.
+
+An account's state on the Overview and on its card says how long a human-mode break has left and when a sleeping
+account gets up: `on a break · 5m to go`, `asleep · up ~09:30` - and `any moment` once that time has come but it hasn't
+got up yet.
 
 You can open a tab by its address, like `http://127.0.0.1:7242/#settings`. The others are `#overview`,
 `#accounts`, `#rep4rep`, `#auth`, `#phone`, `#log`, `#console` and `#plugins`.
@@ -130,7 +139,9 @@ remembers its size and position.
 ## Mini mode
 
 Click *mini*, type `mini`, or use the tray menu. The window shrinks to a small panel with one line per account:
-what it's doing and a start/stop button. A farming account also shows cards left, time left and a progress bar.
+what it's doing and a start/stop button. A farming account also shows cards left, time left and a progress bar. A
+human-mode account on a break says how long is left (`meal break · 5m to go`), and asleep, when it gets up
+(`asleep · up ~09:30`).
 
 It shows 5 accounts. With more, a thin bar underneath counts the rest by what they're doing, like
 `+7 more · 6 idling · 1 asleep`. Click the bar to open the list: 10 accounts at a time, the wheel scrolls through the

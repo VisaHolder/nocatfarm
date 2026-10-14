@@ -968,8 +968,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Said once per count. "Can't tell" only for a game left alone ('dlc leave'): every other game earns anyway.
 		if (!saidHeld && (held > 0)) {
 			Log.Info(new Said("{0}: {1}", GameNames.Of(app), unmapped
-				? new Said("can't tell which achievements come with its DLC - {0} left alone", held)
-				: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", held)), Bot.Name);
+				? new Said("can't tell which achievements come with its DLC · {0} left alone", held)
+				: new Said("{0} achievement(s) from DLC it doesn't own · left alone", held)), Bot.Name);
 		}
 
 		// One ceiling, the one in the settings box.
@@ -1248,8 +1248,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.Strikes.Remove(pick.Name);
 		}
 
-		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
-		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
+		Said rarity = pick.GlobalPercent is { } percent ? new Said("{0}% have it", percent.ToString("0.#")) : default;
+		Log.Reward(UnlockedSaid(pick.Display, app, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
+		if (!rarity.IsEmpty) {
+			Log.Debug(new Said("{0}: {1}", pick.Display, rarity), Bot.Name);
+		}
+
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 		Stats.Record(Stats.KindAchievement, Bot.Name);
 
@@ -1394,8 +1398,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			foreach (Achievement m in metas) {
 				n++;
-				Said rarity = m.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
-				Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", m.Display, GameNames.Of(app), rarity, n, total), Bot.Name, topic: Topic.Achievements);
+				Said rarity = m.GlobalPercent is { } percent ? new Said("{0}% have it", percent.ToString("0.#")) : default;
+				Log.Reward(UnlockedSaid(m.Display, app, n, total), Bot.Name, topic: Topic.Achievements);
+				if (!rarity.IsEmpty) {
+					Log.Debug(new Said("{0}: {1}", m.Display, rarity), Bot.Name);
+				}
+
 				Remember(new Unlock(app, GameNames.Of(app), m.Display, m.GlobalPercent, DateTime.UtcNow, n, total));
 			}
 		} else {
@@ -1407,6 +1415,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		return changed;
 	}
+
+	/// <summary>"🏆 Slice &amp; Dice · Metro 2033 Redux · 40/49" - how rare it is goes to the debug log.</summary>
+	public static Said UnlockedSaid(string achievement, uint app, int unlocked, int total) =>
+		new("🏆 {0} · {1} · {2}/{3}", achievement, GameNames.Of(app), unlocked, total);
 
 	/// <summary>How long an achievement Steam refused to set is left alone before it is tried again.</summary>
 	private static readonly TimeSpan RefusedFor = TimeSpan.FromDays(7);
@@ -2984,8 +2996,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// Held back for DLC it doesn't own: said on every line but the one that is already about exactly that.
 			if ((g.DlcHeld > 0) && (now is not (Outcome.DlcOnly or Outcome.DlcUnmapped))) {
 				said = new Said("{0} ({1})", said, g.Unmapped
-					? new Said("can't tell which achievements come with its DLC - {0} left alone", g.DlcHeld)
-					: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", g.DlcHeld));
+					? new Said("can't tell which achievements come with its DLC · {0} left alone", g.DlcHeld)
+					: new Said("{0} achievement(s) from DLC it doesn't own · left alone", g.DlcHeld));
 			}
 
 			// The same for the multiplayer ones it skips.

@@ -7,7 +7,14 @@
 On the dashboard's Settings page, pick **Global settings** (things for the whole app) or an account on the left.
 Everyday switches show first; tick **Show advanced** for the rest. Search finds a setting by its name or its
 explanation, **Only changed** shows only what you've changed, and each changed field has a link back to its default.
-Tap or hover the ⓘ beside any setting for a plain explanation. Settings marked ⟳ need a restart.
+Tap or hover the ⓘ beside any setting for a plain explanation: what it does, an example with numbers, and what each
+choice changes. Settings marked ⟳ need a restart.
+
+Each section is split into small titled boxes - Spare items, for example, is *What it does*, *What counts as spare*,
+*Never touch*, *Limits*, *Selling* and *Gems*, and Booster packs is *Making packs*, *Opening packs* and *Packs it
+doesn't open*. A setting that only matters while a switch is on sits indented under
+that switch, and is hidden while the switch is off: with *Deal with spare items* off you see only that switch and one
+line saying what turning it on does.
 
 From the console:
 
@@ -40,7 +47,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Scam watch | where warnings go: Telegram, Discord, pop-up (all on) | *Devices of yours to ignore* (see [Scam watch](trades.md#scam-watch)) |
 | Account health | where alerts go: Telegram, Discord, pop-up (all on) | (see [Account health](trades.md#account-health)) |
 | rep4rep account | *Use rep4rep at all*, *API token* | *Hold commenting for (hours)*, *Register accounts automatically*, *Check points every* (15 minutes) |
-| Updates & plugins | *Updates*: install when I click, once everyone's asleep (the Update button waits until your accounts are asleep), install when I click (right away), or install by itself at night; *Count me as a user* (on: once an hour tells nocat.lol it's running and how many accounts are signed in, as a number only, see [Privacy and safety](safety-and-faq.md#privacy-and-safety)); right under it *Share my hours and cards totals* (on, only while *Count me as a user* is on: about every 6 hours the hourly message also carries the game-hours banked and cards dropped since the last one, as two numbers, for the totals on nocat.lol's nocat.farm page; the first time, it also sends once, the totals already in its history from before) | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
+| Updates & plugins | *Updates*: install when I click, once everyone's asleep (the Update button waits until your accounts are asleep), install when I click (right away), or install by itself at night; *Count me as a user* (on: once an hour tells nocat.lol it's running and how many accounts are signed in, as a number only, see [Privacy and safety](safety-and-faq.md#privacy-and-safety)); right under it *Share my farming totals* (on, only while *Count me as a user* is on: about every 6 hours the hourly message also carries the game-hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one, as numbers only, for the totals on nocat.lol's nocat.farm page; the first time, it also sends once, the totals already in its history from before - hours and cards, the only ones it kept before 1.8.1) | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
 | Backups | *Back up every day* (off), *Save backups in*, *Backup password* (see [Daily backups](dashboard.md#daily-backups-that-open-on-any-pc)) | *Keep the last (backups)* (7), *Back up at* (4 am), *Up to this many minutes later* (30), what's included, *Tell me* (only when it fails), *Also keep a copy here*, *Try again after (minutes)* (60) |
 | Phone app | *Show how to install it on a phone* (on, see [The phone app](phone-and-notifications.md#the-phone-app)) | |
 | Steam connection | | gap between logins, reconnect, timeout, *Farm at most* (accounts farming at once), rate-limit cooldown, web request gap, *Connect using*, proxy |
@@ -56,12 +63,12 @@ stay in the config file untouched, in case you take it back to Windows.
 | Group | Everyday | Behind Show advanced |
 |---|---|---|
 | Account | *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself* | QR sign-in, *Sign in as*, *Start paused*, notes, Family View PIN, device name, authenticator secrets, its own proxy, clearing Steam's notifications |
-| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Learn from how I play* (with *Keeps up with changes* and *Weekends separately* while it's on), *Reaction speed*, *Bank hours overnight* with its games (or its top games when none are chosen) | hour targets, day-off chance, *Stays up later Fri/Sat* (2 hours), *Sleeps at least* … *up to* (6 to 9 hours), sittings, breaks, meals, going Away or offline on breaks, how long it waits after waking or signing in, finishing up when stopped |
+| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, *Gets on at* and *Goes to bed at* with how much each *Varies by up to* (2 hours and 1 hour; the window is a hard limit), *Learn from how I play* (with *Keeps up with changes* and *Weekends separately* while it's on), *Reaction speed*, *Bank hours overnight* with its games (or its top games when none are chosen) | hour targets, day-off chance, *Stays up later Fri/Sat* (2 hours), *Sleeps at least* … *up to* (6 to 9 hours), sittings, breaks, meals, going Away or offline on breaks, how long it waits after waking or signing in, finishing up when stopped |
 | What it plays | *Protect refunds*; on robot accounts *Games to idle*, *Idle my whole library*, *Rotate the idle list*, *Show a custom game name*, *Show as* | *Rotate every*, *Keep the name while farming*, *Play as if on* |
 | Trading cards | *Farm trading cards*, *When to farm cards* (human mode; with *mixed*, its share of sittings) | order, priority list, blacklist, sittings and the clock window (robot accounts), give-up time, and more |
-| Badges, boosters & selling | *Craft badges from card sets* | booster packs made from gems, how many cards `sell` lists at a time |
-| Spare items | *Deal with spare items* (off; turning it on shows what it would do and asks you to confirm), *What to do with spare items*, *Gems afterwards* | what counts as spare, the price limit (0.25), new-item days (7), keep list, gems-vs-sell margin (20%), daily caps (10 items, 1.00) - all in each account's own Steam wallet currency, selling price (a cent under the real price), dump threshold (50%), timings - see [Spare items](cards-and-idling.md#spare-items-gems-sell-or-keep) |
-| Booster packs | *Open booster packs* (never by default on every account; or only when the cards are worth more, or always) | new-pack days (7), games never opened, what happens to packs it doesn't open, how often it looks |
+| Badges & selling | *Craft badges from card sets* | *Also craft foil badges* (on), how many cards `sell` lists at a time |
+| Spare items | *Deal with spare items* (off; turning it on shows what it would do and asks you to confirm), *What to do with spare items*, *Gems afterwards* | what counts as spare, the price limit (0.25), new-item days (7), keep list, gems-vs-sell margin (20%), daily caps (10 items, 1.00) - all in each account's own Steam wallet currency, selling price (a cent under the real price), dump threshold (50%), *Only sell if you get at least* (0.05), unsold listings stepping down a cent (never under 80% of what it sold for), declined listings left alone (30 days), human mode spacing (3-20 minutes between items, 3 a look), timings - see [Spare items](cards-and-idling.md#spare-items-gems-sell-or-keep) |
+| Booster packs | In the order it happens: *Make booster packs* (off, games I pick with its game list, or automatic - closest badge, see [Levelling with gems](cards-and-idling.md#levelling-with-gems)); *Open booster packs* (never by default on every account; or only when the cards are worth more, or always) | *Booster packs use* (tradable first), *Keep at least this many gems* (0), new-pack days (7), games never opened, what happens to packs it doesn't open (shown unless opening is always), how often it looks |
 | Achievements | *Earn achievements over time*, *How fast*, *Skip multiplayer achievements* | completion limit, *Quick bursts only for achievements at least* (10%: rarer ones never come a few minutes after another; 0 lets any burst, 100 turns bursts off), only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length) |
 | Free stuff | *Claim free games* (off, games, or games and DLC) | |
 | Sale events | *Take part in Steam events*, *Human-mode accounts too* (on), Steam Awards nominations and votes, event items, the discovery queue (see [Sale events](cards-and-idling.md#sale-events)) | the queue item, Next Fest items, how nominations are picked, the waits between steps, how often it looks |
@@ -147,11 +154,15 @@ You can also control an account by messaging it on Steam. Put your SteamID64 in 
 *Accept commands from* (`CommandMasters`), then send a message starting with `/` or `!`, like `/help` or `!status`.
 A bare command such as `/pause`, `/status` or `/2fa` acts on the account you messaged. Messages without `/` or `!` get
 the normal auto-reply, and commands from anyone not on the list are ignored. Replies are cut at 1,900 characters.
-Steam chat only reaches the account you messaged: a command that names another account, or `all`, is refused, and so
-are the ones that change the app itself: `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
-`answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `visitors`, `backup`, `report`, `stuck`,
-`exit` and `remove`, and leaving a game alone for achievements (`dlc leave`, `dlc undo` - looking with `dlc`
-is fine). Those are for the PC, the dashboard, Telegram or Discord.
+Steam chat only reaches the account you messaged: a command that names another account, or `all` for every account, is
+refused. A name it doesn't know (a typo) is answered with "there's no account called ...", never taken as the account you
+messaged. Also refused there are the ones that change the app itself or show every account: `set`, `anywhere`,
+`dashboard`, `update`, `import`, `redeem`, `keys`, `answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`,
+`theme`, `mini`, `visitors`, `backup`, `report`, `stuck`, `log`, `stats`, `owns`, `rep4rep`, `exit` and `remove`. And
+anything that spends, sells or decides for you: `sell ... do` and `sell ... relist`, making booster packs
+(`booster <appIDs>`), `booster open ... do`, `spare on` and `spare do`, `points on` and `points spend`, `scamwatch ok`,
+and `dlc leave` / `dlc undo`. Looking (`sell`, `booster`, `spare preview`, `points`, `dlc`) and turning things off
+(`spare off`, `points off`) are fine. Those are for the PC, the dashboard, Telegram or Discord.
 
 ---
 

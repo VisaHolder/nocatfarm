@@ -502,7 +502,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 				if (result == Accepted.Done) {
 					Interlocked.Increment(ref _accepted);   // the loop and a command both count
-					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), who, offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+					Log.Trade(new Said("accepted offer {0} from {1} · {2} in, {3} out", NumberOf(offer.Id), who, offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
 				} else {
 					// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
 					// so another swap can't be judged as if they were still here.
@@ -575,7 +575,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			}
 
 			Interlocked.Increment(ref _accepted);   // the loop and a command both count
-			Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), 0), Bot.Name, good: true);
+			Log.Trade(new Said("accepted offer {0} from {1} · {2} in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), 0), Bot.Name, good: true);
 			Finish(offer.Id);
 
 			return true;
@@ -689,7 +689,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			// The name is looked up outside the lock; a 'trade accept' that got there first has already named it.
 			string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
 			bool own = fleet.Contains(offer.Partner) || allowed.ContainsKey(offer.Partner);
-			string who = own ? new Said("{0} (one of your accounts)", name).ToString() : name;
+			string who = own ? new Said("{0} (yours)", name).ToString() : name;
 			int n = NumberOf(offer.Id);
 
 			lock (_announceLock) {
@@ -700,7 +700,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			changed = true;
 
-			Log.Trade(new Said("offer {0} from {1}: get {2}, give {3} - {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
+			Log.Trade(new Said("offer {0} from {1}: get {2}, give {3} · {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
 		}
 
 		if (changed) {
@@ -717,11 +717,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		if (Bot.Cfg.AcceptDonations && offer.IsPureDonation) {
-			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("donation - accepting when awake") : new Said("donation - accepting in a few min");
+			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("donation · accepting when awake") : new Said("donation · accepting in a few min");
 		}
 
 		if (Auto(offer, allowed)) {
-			return later ? new Said("allowed sender - accepting when awake") : new Said("allowed sender - accepting in a few min");
+			return later ? new Said("allowed sender · accepting when awake") : new Said("allowed sender · accepting in a few min");
 		}
 
 		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {
@@ -745,7 +745,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			.Select(static g => (Name: g.Key, Count: g.Sum(static i => i.Amount)))
 			.OrderByDescending(static g => g.Count)
 			.ToList();
-		string shown = string.Join(", ", names.Take(3).Select(static g => g.Count > 1 ? $"{g.Name} x{g.Count}" : g.Name));
+		string shown = string.Join(", ", names.Take(3).Select(static g => g.Count > 1 ? $"{g.Count}× {g.Name}" : g.Name));
 
 		return names.Count > 3
 			? new Said("{0} item(s): {1} and {2} more", total, shown, names.Count - 3)
@@ -754,10 +754,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	/// <param name="who">Who it's from, read with <see cref="Who"/> before <see cref="Finish"/> forgot the name.</param>
 	private Said NeedsConfirming(TradeOffers.Offer offer, Accepted result, string who) => result == Accepted.NeedsEmail
-		? new Said("offer {0} from {1} accepted - confirm it in Steam's email", NumberOf(offer.Id), who)
+		? new Said("offer {0} from {1} accepted · confirm it in Steam's email", NumberOf(offer.Id), who)
 		: Bot.CanConfirmTrades
-			? new Said("offer {0} from {1} accepted - confirm it ('confirmations {2}')", NumberOf(offer.Id), who, Bot.Name)
-			: new Said("offer {0} from {1} accepted - confirm it on your phone", NumberOf(offer.Id), who);
+			? new Said("offer {0} from {1} accepted · confirm it ('confirmations {2}')", NumberOf(offer.Id), who, Bot.Name)
+			: new Said("offer {0} from {1} accepted · confirm it on your phone", NumberOf(offer.Id), who);
 
 	private void Forget(ulong id) {
 		lock (_announceLock) {
@@ -866,7 +866,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				switch (result) {
 					case Accepted.Done:
 						Interlocked.Increment(ref _accepted);   // the loop and a command both count
-						Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", num, Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+						Log.Trade(new Said("accepted offer {0} from {1} · {2} in, {3} out", num, Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
 						Finish(offer.Id);
 						lines.Add(new Said("accepted offer {0}", num).ToString());
 

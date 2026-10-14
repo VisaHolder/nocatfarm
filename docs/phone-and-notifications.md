@@ -103,7 +103,7 @@ switch for each kind, under Show advanced:
 | Send achievements | off |
 | Send rep4rep comments | off |
 | Send Steam Points spending (badge levels bought) | on |
-| Send spare items and booster packs (gems made, items listed, packs opened, the first preview) | on |
+| Send spare items and booster packs (one message a look: gems made, items listed, packs opened; and the first preview) | on |
 | Send backups (a daily backup failed, or every backup with *Tell me* set to after every backup) | on |
 
 The weekly report has no switch here: when *Weekly report* is on, it's sent too.

@@ -76,7 +76,15 @@ public sealed partial class MainWindow : IDisposable {
 	private readonly BotManager _mgr;
 	private readonly Func<string> _url;
 	private readonly Action _exit;
-	private readonly List<LogLine> _log = [];
+	/// <summary>
+	/// The log pane's rows: lines in a row of one kind from one account are one row that updates in place - items into
+	/// gems, the "still ..." heartbeat, rep4rep comments - and a click opens it to show each line (Core/LogStack.cs). The
+	/// log file keeps every line.
+	/// </summary>
+	private readonly List<Core.LogStack.Row> _rows = [];
+
+	/// <summary>Where the stacked rows were drawn this time, for the click that opens or closes one.</summary>
+	private readonly List<(int Y, int H, Core.LogStack.Row Row)> _stackHits = [];
 
 	/// <summary>Consecutive failed paints, so a persistent one gets said out loud instead of only to the file.</summary>
 	private int _paintFailures;
@@ -293,29 +301,29 @@ public sealed partial class MainWindow : IDisposable {
 
 	/// <summary>Add a line to the log pane. Colour follows the level, the way the console did.</summary>
 	public void Append(Log.Entry entry) {
-		int colour = entry.Level switch {
-			"GOOD" => Green,
-			"WARN" => Amber,
-			"ERROR" => Red,
-			"DEBUG" => TextDim,
-			_ => TextNormal
-		};
-
 		lock (_logGate) {
-			// The three parts are kept apart so they can be drawn in fixed columns. Pre-joining them into one
-			// string is what makes a log look like a wall - the eye has nothing to line up on.
-			_log.Add(new LogLine(entry.When.ToString("HH:mm:ss"), entry.Source, entry.Said, colour));
+			// The entry is kept whole - time, account and line drawn in fixed columns at paint time. Pre-joining them into
+			// one string is what makes a log look like a wall - the eye has nothing to line up on.
+			Core.LogStack.Add(_rows, entry);
 
-			while (_log.Count > 200) {
-				_log.RemoveAt(0);
+			while (_rows.Count > 200) {
+				_rows.RemoveAt(0);
 			}
 		}
 	}
 
+	private static int ColourOf(string level) => level switch {
+		"GOOD" => Green,
+		"WARN" => Amber,
+		"ERROR" => Red,
+		"DEBUG" => TextDim,
+		_ => TextNormal
+	};
+
 	/// <summary>Empty the log pane - the 'clear' command. The log file is untouched.</summary>
 	public void ClearLog() {
 		lock (_logGate) {
-			_log.Clear();
+			_rows.Clear();
 			_logScroll = 0;
 		}
 
@@ -800,6 +808,17 @@ public sealed partial class MainWindow : IDisposable {
 					return IntPtr.Zero;
 				}
 
+				// A stacked row opens to show each of its lines, and closes again.
+				if (StackAt(my) is { } stack) {
+					lock (_logGate) {
+						stack.Open = !stack.Open;
+					}
+
+					Invalidate();
+
+					return IntPtr.Zero;
+				}
+
 				// Anywhere else on the title bar drags the window, since there is no system caption to grab.
 				if (my < (_mini ? MiniTitleH : TitleH)) {
 					ReleaseCapture();
@@ -849,7 +868,7 @@ public sealed partial class MainWindow : IDisposable {
 				int lines;
 
 				lock (_logGate) {
-					lines = _log.Count;
+					lines = Core.LogStack.Shown(_rows).Count();
 				}
 
 				_logScroll = Math.Clamp(_logScroll + notches, 0, Math.Max(0, lines - Math.Max(1, LogRoom())));
@@ -1224,6 +1243,7 @@ public sealed partial class MainWindow : IDisposable {
 		_buttons.Clear();
 		_hits.Clear();
 		_links.Clear();
+		_stackHits.Clear();
 
 		if (_mini) {
 			PaintMini(mem);
@@ -1548,18 +1568,21 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, top, _w, height, Panel);
 		Fill(dc, 0, top, _w, 1, Border);
 
-		List<LogLine> lines;
+		List<(Core.LogStack.Row Row, LogLine Line, bool Head)> lines;
 		int room = Math.Max(1, (height - 10) / LineH);
 		int total;
 
 		lock (_logGate) {
-			total = _log.Count;
+			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented.
+			List<(Core.LogStack.Row Row, Log.Entry Entry, int Depth, bool Head)> shown = [.. Core.LogStack.Shown(_rows)];
+			total = shown.Count;
 			_logScroll = Math.Clamp(_logScroll, 0, Math.Max(0, total - room));
 
 			// Scrolled back by N lines means dropping the last N and taking a window ending there.
 			int end = Math.Max(0, total - _logScroll);
 			int start = Math.Max(0, end - room);
-			lines = _log.GetRange(start, end - start);
+			lines = [.. shown.GetRange(start, end - start).Select(r => (r.Row, new LogLine(r.Entry.When.ToString("HH:mm:ss"), r.Entry.Source,
+				r.Head ? new Core.Said(r.Row.Header) : r.Depth > 0 ? new Core.Said("   " + r.Entry.Text) : r.Entry.Said, ColourOf(r.Entry.Level)), r.Head))];
 		}
 
 		// Fixed columns, and every line is clipped to the panel with an ellipsis rather than allowed to wrap or
@@ -1587,7 +1610,11 @@ public sealed partial class MainWindow : IDisposable {
 			shownTo = Math.Min(shownTo, bottom - 20);
 		}
 
-		foreach (LogLine line in lines) {
+		foreach ((Core.LogStack.Row row, LogLine line, bool head) in lines) {
+			if (head && (y + LineH <= shownTo)) {
+				_stackHits.Add((y, LineH, row));
+			}
+
 			Text(dc, line.Time, TimeX, y, _fontMono, TextDim);
 			Clipped(dc, line.Source, SourceX, y, 74, _fontMono, SourceColour(line.Source));
 			string text = line.Text;
@@ -1671,6 +1698,17 @@ public sealed partial class MainWindow : IDisposable {
 
 	[System.Text.RegularExpressions.GeneratedRegex(@"https?://[^\s<>""]+")]
 	private static partial System.Text.RegularExpressions.Regex LinkRegex();
+
+	/// <summary>The stacked row under the mouse, if a click there should open or close one.</summary>
+	private Core.LogStack.Row? StackAt(int my) {
+		foreach ((int y, int h, Core.LogStack.Row row) in _stackHits) {
+			if ((my >= y) && (my < y + h)) {
+				return row;
+			}
+		}
+
+		return null;
+	}
 
 	private string? LinkAt(int mx, int my) {
 		foreach ((int lx, int ly, int lw, int lh, string url) in _links) {
@@ -1998,7 +2036,19 @@ public sealed partial class MainWindow : IDisposable {
 			string doing = trouble is { } wrong ? wrong
 				: farming && (playing.Count > 0) ? new Said("farming {0}", GameNames.Of(playing[0]))
 				: BotStatus.Of(bot).Doing;
-			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, trouble != null ? Amber : farming ? TextNormal : TextMid);
+			// A break or a night says how long it has left, as the full window does: "meal break · 5m to go", "asleep · up
+			// ~09:30". The time keeps its place at the right end; the state gives way ("meal br… 5m to go") on a narrow row.
+			if ((trouble == null) && !farming && (StateTime.Mini(bot, DateTime.UtcNow) is { } state)) {
+				string when = " · " + state.When;
+				int whenW = TextWidth(dc, when, _fontSmall);
+				int room = buttonX - textX - 6;
+				string what = state.State;
+				int whatW = Math.Min(TextWidth(dc, what, _fontSmall), Math.Max(0, room - whenW));
+				Clipped(dc, what, textX, y + 8, whatW, _fontSmall, TextMid);
+				Clipped(dc, when, textX + whatW, y + 8, Math.Max(0, room - whatW), _fontSmall, TextNormal);
+			} else {
+				Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, trouble != null ? Amber : farming ? TextNormal : TextMid);
+			}
 
 			MiniRowButton(dc, bot.Running ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.Running ? Red : Green);
 

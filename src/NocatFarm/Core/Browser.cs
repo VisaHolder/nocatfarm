@@ -46,12 +46,15 @@ public static class Browser {
 	/// The name alone wasn't it: a request with no Accept header at all - which is what HttpClient sends unless told -
 	/// was refused every time whatever it called itself (4 of 4), and the same request with one answered (4 of 4).
 	/// Every browser and every tool sends one; a market request without it is what a bot looks like.
+	///
+	/// No Accept-Language: with "en-US,en;q=0.9" next to this name, priceoverview answered 429 every time on 2026-10-13,
+	/// and without it 200 (curl, back to back, the same minute). The browser way keeps Firefox's own "en-US,en;q=0.5",
+	/// which was answered.
 	/// </remarks>
 	public static HttpClient Market(TimeSpan timeout) {
-		HttpClient http = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }) { Timeout = timeout };
+		HttpClient http = new(MarketHandler()) { Timeout = timeout };
 		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", MarketAgent);
 		http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json, text/javascript, */*; q=0.01");
-		http.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
 
 		return http;
 	}
@@ -68,17 +71,27 @@ public static class Browser {
 	/// it wasn't, a missing Accept header was fine until it wasn't. When one way is refused the next request goes the
 	/// other way, and whichever last got an answer is the one used. Both carry an Accept header - the one thing every
 	/// refused request had in common. Live, 2026-10-05: this one answered 4 of 4, priceoverview and search pages both.
-	/// Accept-Encoding is spelled out to match what the handler decodes (no zstd, which it can't).
+	/// Neither asks for a compressed answer - see <see cref="MarketHandler"/>.
 	/// </remarks>
 	public static HttpClient MarketAsBrowser(TimeSpan timeout) {
-		HttpClient http = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }) { Timeout = timeout };
+		HttpClient http = new(MarketHandler()) { Timeout = timeout };
 		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", MarketBrowserAgent);
 		http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "*/*");
 		http.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.5");
-		http.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
 
 		return http;
 	}
+
+	/// <summary>
+	/// The handler both market ways use: no compression asked for, so no Accept-Encoding header at all.
+	/// </summary>
+	/// <remarks>
+	/// Live, 2026-10-13: priceoverview answered 429 to every request that carried "Accept-Encoding: gzip, deflate, br" -
+	/// this app's and curl's alike - and 200 to the same request without it (2 of 2 each way, back to back), while the
+	/// search pages answered both. Both ways sent it then, so after the first refusal every lookup was turned down
+	/// both ways and the pause climbed all day. The answers are a few hundred bytes; compression saves nothing here.
+	/// </remarks>
+	public static HttpClientHandler MarketHandler() => new() { AutomaticDecompression = DecompressionMethods.None };
 
 	/// <summary>Firefox 140 ESR on Windows, written exactly as it writes itself.</summary>
 	public const string MarketBrowserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0";

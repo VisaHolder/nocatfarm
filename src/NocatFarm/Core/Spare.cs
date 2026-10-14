@@ -64,7 +64,7 @@ public sealed record SpareBadges(Dictionary<uint, int> Levels, Dictionary<uint, 
 }
 
 /// <summary>The spare-items settings of one account, read once per look so a change halfway through can't mix two.</summary>
-public sealed class SpareRules {
+public sealed record SpareRules {
 	public bool On { get; init; }
 
 	/// <summary>0 best of gems or selling, 1 gems only, 2 sell only, 3 keep everything (just report).</summary>
@@ -88,8 +88,17 @@ public sealed class SpareRules {
 	public int DailyValueCents { get; init; } = 100;
 	public int PriceMaxAgeHours { get; init; } = 24;
 
-	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the cheapest.</summary>
+	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price.</summary>
 	public int SellPrice { get; init; }
+
+	/// <summary>Sold only when the account would get at least this many cents after fees (0: anything).</summary>
+	public int MinSaleCents { get; init; }
+
+	/// <summary>Days an item whose listing was declined isn't listed again - 0 never again.</summary>
+	public int DeclinedDays { get; init; } = 30;
+
+	/// <summary>An unsold listing steps down to no lower than this percent of what it sold for.</summary>
+	public int FloorPct { get; init; } = 80;
 
 	/// <summary>A cheapest listing this many percent or more under the median is a dump, and doesn't set the price.</summary>
 	public int DumpPct { get; init; } = 50;
@@ -112,12 +121,16 @@ public sealed class SpareRules {
 		KeepNames = Spare.Names(c.SpareKeepItems),
 		KeepGames = [.. c.SpareKeepGames],
 		MarginPct = Math.Clamp(c.SpareGemMarginPct, 0, 500),
-		PerRun = Math.Clamp(c.SparePerRun, 1, 50),
+		// A human-mode account does a few a look, spread out; the rest wait for a later look in its day.
+		PerRun = c.LegitMode ? Math.Clamp(c.SpareHumanPerLook, 1, 50) : Math.Clamp(c.SparePerRun, 1, 50),
 		DailyItems = Math.Clamp(c.SpareDailyItems, 1, 500),
 		DailyValueCents = Math.Clamp(Cents(Math.Clamp(c.SpareDailyValue, 0f, 1_000_000f)), 1, 100_000_000),
 		PriceMaxAgeHours = Math.Clamp(c.SparePriceMaxAgeHours, 1, 168),
-		SellPrice = Math.Clamp(c.SpareSellPrice, 0, 3),
-		DumpPct = Math.Clamp(c.SpareDumpPct, 0, 95)
+		SellPrice = ListingPrice.Choice(c.SpareSellPrice),
+		DumpPct = Math.Clamp(c.SpareDumpPct, 0, 95),
+		MinSaleCents = Math.Clamp(Cents(Math.Clamp(c.SpareMinSale, 0f, 1_000_000f)), 0, 100_000_000),
+		DeclinedDays = Math.Clamp(c.SpareDeclinedDays, 0, 365),
+		FloorPct = Math.Clamp(c.SpareRelistFloorPct, 1, 100)
 	};
 }
 
@@ -138,7 +151,7 @@ public enum SpareVerdict {
 	/// <summary>Spare by count, but one of the never-touch rules covers it (new, trade-locked, keep list, in an offer...).</summary>
 	Protected,
 
-	/// <summary>Worth more than the price limit - left for you to decide.</summary>
+	/// <summary>Worth more than the price limit: never touched, and never shown - not spare as far as you can tell.</summary>
 	OverLimit,
 
 	/// <summary>No known price, or one too old - kept until it's priced.</summary>
@@ -185,6 +198,12 @@ public sealed class SpareInput {
 	public Func<SpareItem, int?> GemValue { get; init; } = static _ => null;
 
 	public DateTime Now { get; init; } = DateTime.UtcNow;
+
+	/// <summary>Why an item isn't listed now - its listing was declined on the phone (see <see cref="SpareListings"/>) - or null.</summary>
+	public Func<SpareItem, Said?> Declined { get; init; } = static _ => null;
+
+	/// <summary>The step an unsold listing of this item was given when it was taken down to go up cheaper - or null.</summary>
+	public Func<SpareItem, SpareListings.Step?> StepOf { get; init; } = static _ => null;
 }
 
 /// <summary>
@@ -218,6 +237,7 @@ public static partial class Spare {
 			}
 
 			uint.TryParse(InventoryContents.Text(d, "market_fee_app"), NumberStyles.None, CultureInfo.InvariantCulture, out uint game);
+			LearnGameName(game, d);
 			uint amount = uint.TryParse(InventoryContents.Text(asset, "amount"), NumberStyles.None, CultureInfo.InvariantCulture, out uint a) ? Math.Max(1, a) : 1;
 			(int type, int border) = GooOf(d);
 
@@ -226,6 +246,25 @@ public static partial class Spare {
 		}
 
 		return items;
+	}
+
+	/// <summary>
+	/// The game's name as the item's own "Game" tag says it ("Spacebase DF-9") - free with the inventory, and there for games
+	/// the store no longer lists, which otherwise showed as "app 270310".
+	/// </summary>
+	internal static void LearnGameName(uint game, JsonElement description) {
+		if ((game == 0) || GameNames.IsKnown(game) || !description.TryGetProperty("tags", out JsonElement tags) || (tags.ValueKind != JsonValueKind.Array)) {
+			return;
+		}
+
+		foreach (JsonElement tag in tags.EnumerateArray()) {
+			if ((InventoryContents.Text(tag, "category") == "Game") && (InventoryContents.Text(tag, "internal_name") == $"app_{game}")) {
+				string name = InventoryContents.Text(tag, "localized_tag_name");
+				GameNames.Learn(game, name.Length > 0 ? name : InventoryContents.Text(tag, "name"));
+
+				return;
+			}
+		}
 	}
 
 	/// <summary>An item's kind, from its item-class tag - or, without tags, from the type line Steam writes for people.</summary>
@@ -432,7 +471,17 @@ public static partial class Spare {
 			return new SpareDecision(item, SpareVerdict.Unpriced, new Said("no fresh price yet - kept until it has one"));
 		}
 
+		// Nobody sells it: it can't be sold, but gems don't need a market - where gems are allowed (best of both, or gems
+		// only), it becomes gems. Live, 2026-10-13: 358 of one account's spare items sat "kept" for this alone.
 		if (price.Cents <= 0) {
+			if ((r.Action is 0 or 1) && (item.GooType > 0)) {
+				int? goo = input.GemValue(item);
+
+				return goo is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"))
+					: goo > 0 ? new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - nobody sells it on the market", goo), 0, goo.Value, 0, 0)
+					: new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
+			}
+
 			return new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
 		}
 
@@ -442,18 +491,29 @@ public static partial class Spare {
 		string Cash(decimal cents) => Money(cents, input.Currency);
 
 		if (worth > r.MaxPriceCents) {
-			return new SpareDecision(item, SpareVerdict.OverLimit, new Said("worth {0} - left for you to decide", Cash(worth)), worth);
+			return new SpareDecision(item, SpareVerdict.OverLimit, new Said("worth {0} - over your price limit, never touched", Cash(worth)), worth);
 		}
 
 		(int? listed, Said noPrice) = ListingPrice.For(price, r.SellPrice, r.DumpPct);
+
+		// An unsold listing taken down to go up cheaper: at the step it was given, while the market hasn't gone up since, and
+		// never under the floor.
+		if ((listed is int rule) && (input.StepOf(item) is { } step) && (SpareListings.Capped(rule, price, step, r.FloorPct) is int capped)) {
+			listed = capped;
+		}
+
 		int list = listed ?? 0;
 		int receive = item.Marketable && (listed != null) ? Seller.ReceiveFor(list) : 0;
 		int? gems = item.GooType > 0 ? input.GemValue(item) : 0;
 		bool sackKnown = (input.Sack is { } sack) && (sack.Cents > 0) && (input.Now - sack.At <= maxAge);
+		Said? declined = receive > 0 ? input.Declined(item) : null;
+		bool tooLittle = (receive > 0) && (receive < r.MinSaleCents);
 
 		SpareDecision Gems(Said why) => new(item, SpareVerdict.Gems, why, worth, gems ?? 0, 0, 0);
 		SpareDecision Sell(Said why) => new(item, SpareVerdict.Sell, why, worth, gems ?? 0, list, receive);
 		SpareDecision Keep(Said why) => new(item, SpareVerdict.Keep, why, worth, gems ?? 0);
+		SpareDecision NoGemValue() => new(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"), worth);
+		Said Little() => new("you'd get {0} - under your {1} minimum", Cash(receive), Cash(r.MinSaleCents));
 
 		// Sold, or weighed against gems, only at a price the market really pays: with none for certain, it waits.
 		if ((listed == null) && item.Marketable && (r.Action is 0 or 2)) {
@@ -464,35 +524,49 @@ public static partial class Spare {
 			case 3:
 				return Keep(new Said("you chose to keep everything - only reported"));
 			case 1:
-				return gems is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"), worth)
-					: gems > 0 ? Gems(new Said("{0} gems", gems)) : Keep(new Said("it doesn't turn into gems"));
+				return gems is null ? NoGemValue() : gems > 0 ? Gems(new Said("{0} gems", gems)) : Keep(new Said("it doesn't turn into gems"));
 			case 2:
-				return receive > 0 ? Sell(new Said("sells for {0}, you get {1}", Cash(list), Cash(receive))) : Keep(new Said("the market pays nothing for it"));
+				return declined is { } no ? Keep(no)
+					: tooLittle ? Keep(Little())
+					: receive > 0 ? Sell(new Said("sells for {0}, you get {1}", Cash(list), Cash(receive))) : Keep(new Said("the market pays nothing for it"));
 		}
+
+		// Selling would pay under the minimum: gems when they're worth anything, kept when they're not.
+		if (tooLittle && (declined == null)) {
+			return gems is null ? NoGemValue()
+				: gems > 0 ? Gems(new Said("{0} gems - selling would pay {1}, under your {2} minimum", gems, Cash(receive), Cash(r.MinSaleCents)))
+				: Keep(Little());
+		}
+
+		SpareDecision best = Best();
+
+		// Its listing was declined on the phone: not listed again for now - turned into gems only where gems won anyway.
+		return (declined is { } why) && (best.Verdict != SpareVerdict.Gems) ? Keep(why) : best;
 
 		// Best of the two.
-		if (gems is null) {
-			return receive > 0 ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"), worth)
-				: Keep(new Said("worth nothing on the market, gem value not known"));
+		SpareDecision Best() {
+			if (gems is null) {
+				return receive > 0 ? NoGemValue() : Keep(new Said("worth nothing on the market, gem value not known"));
+			}
+
+			if (gems == 0) {
+				return receive > 0 ? Sell(new Said("sells for {0}, you get {1} - no gems for it", Cash(list), Cash(receive))) : Keep(new Said("worth nothing as gems or on the market"));
+			}
+
+			if (receive == 0) {
+				return Gems(new Said("{0} gems - the market pays nothing for it", gems));
+			}
+
+			if (!sackKnown) {
+				return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
+			}
+
+			decimal gemsWorth = GemsWorth(gems.Value, input.Sack!.Value.Cents);
+
+			return GemsWin(gemsWorth, receive, r.MarginPct)
+				? Gems(new Said("{0} gems, worth {1} - beats selling ({2}) by {3}% or more", gems, Cash(gemsWorth), Cash(receive), r.MarginPct))
+				: Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)));
 		}
-
-		if (gems == 0) {
-			return receive > 0 ? Sell(new Said("sells for {0}, you get {1} - no gems for it", Cash(list), Cash(receive))) : Keep(new Said("worth nothing as gems or on the market"));
-		}
-
-		if (receive == 0) {
-			return Gems(new Said("{0} gems - the market pays nothing for it", gems));
-		}
-
-		if (!sackKnown) {
-			return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
-		}
-
-		decimal gemsWorth = GemsWorth(gems.Value, input.Sack!.Value.Cents);
-
-		return GemsWin(gemsWorth, receive, r.MarginPct)
-			? Gems(new Said("{0} gems, worth {1} - beats selling ({2}) by {3}% or more", gems, Cash(gemsWorth), Cash(receive), r.MarginPct))
-			: Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)));
 	}
 
 	/// <summary>What some gems are worth: their share of a sack of 1000, in cents.</summary>
@@ -527,8 +601,13 @@ public static partial class Spare {
 	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At);
 
 	/// <param name="choice">0 never, 1 only when the cards are worth more than the pack, 2 always.</param>
+	/// <param name="madeHere">Packs nocat.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
+	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
+	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next
+	/// chance, whatever "Open booster packs" says - only one on the market or in a trade offer is left.</param>
 	public static List<PackDecision> PlanPacks(IReadOnlyList<SpareItem> items, int choice, int newDays, IReadOnlyCollection<uint> neverGames,
-		Func<ulong, DateTime?> received, IReadOnlySet<ulong> busy, Func<uint, PackPrices?> prices, int maxAgeHours, DateTime now) {
+		Func<ulong, DateTime?> received, IReadOnlySet<ulong> busy, Func<uint, PackPrices?> prices, int maxAgeHours, DateTime now,
+		IReadOnlySet<ulong>? madeHere = null, IReadOnlySet<ulong>? own = null) {
 		List<PackDecision> found = [];
 
 		foreach (SpareItem pack in items.Where(static i => i.Kind == SpareKind.BoosterPack).OrderBy(static i => i.AssetId)) {
@@ -538,7 +617,13 @@ public static partial class Spare {
 				continue;
 			}
 
-			if (newDays > 0) {
+			if (own?.Contains(pack.AssetId) == true) {
+				found.Add(new PackDecision(pack, true, new Said("made to level the {0} badge", GameNames.Of(pack.Game))));
+
+				continue;
+			}
+
+			if ((newDays > 0) && (madeHere?.Contains(pack.AssetId) != true)) {
 				DateTime? came = received(pack.AssetId);
 
 				if ((came == null) || (now - came.Value < TimeSpan.FromDays(newDays))) {

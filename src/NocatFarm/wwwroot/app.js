@@ -369,6 +369,18 @@ function eta(secs) {
 
 // A time of day from an ISO time: "14:30".
 const clock = (iso) => { const d = new Date(iso); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+// An account's state for a chip, with how long a human-mode break or night has left: "on a break · 5m to go", "asleep ·
+// up ~09:30". The server sends when it ends (Until); everything else is the state word as it was.
+function stateText(b) {
+  if (!b.Until) return b.Status;
+  if (b.Group === 'break') {
+    const left = Math.ceil((new Date(b.Until).getTime() - Date.now()) / 60000);
+    return `${b.Status} · ${left > 0 ? tf('{0} to go', hm(left)) : t('any moment')}`;
+  }
+  if (b.Group === 'asleep' || b.Group === 'nightidle') return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
+  return b.Status;
+}
+
 // "14:20" today, "4 Oct 14:20" on an earlier day - in the dashboard's own language.
 const stamp = (iso) => {
   const d = new Date(iso);
@@ -738,7 +750,7 @@ function renderOverview() {
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the lowest price each item is listed for on the market. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th class="r4r">${esc(t('rep4rep'))}</th>` : ''}<th class="up">${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
-      <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
+      <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(stateText(b))}</span></td>
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
       <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryOn === false || b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
@@ -751,7 +763,9 @@ function renderOverview() {
   renderHistory();
   loadHistory();
 
-  const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
+  // Stacked as the Log tab is: a look's 14 items into gems is one line here, not the whole list.
+  const interesting = stackLog(logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG')).slice(-8).reverse()
+    .map((g) => { const lines = g.items.filter((x) => g.kind && x.Kind === g.kind); return lines.length < 2 ? g.items[g.items.length - 1] : { ...lines[lines.length - 1], Text: stackSummary(g) }; });
   paint('recent', interesting.length
     ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${linked(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
     : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`);
@@ -1231,7 +1245,7 @@ function renderAccounts() {
       ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragend="dragEnd()" ondrop="event.preventDefault();dragEnd()">
       <div class="bot-head">
         <span class="bot-name" title="${esc(b.Name)}" data-tip="${esc(t('Drag this card to move the account. The order is used everywhere - here, the app window and the console.'))}">${esc(b.Name)}</span>
-        <span class="chip ${b.Group}" data-tip="${esc(t(STATUS_META[b.Group].tip))}"><i class="dot"></i>${esc(b.Status)}</span>
+        <span class="chip ${b.Group}" data-tip="${esc(t(STATUS_META[b.Group].tip))}"><i class="dot"></i>${esc(stateText(b))}</span>
       </div>
       <div class="bot-login" title="${esc(b.Login)}">${esc(b.Login)}${b.SteamId !== '0' ? ' · ' + esc(b.SteamId) : ''}</div>
       ${b.Notes ? `<div class="bot-notes" title="${esc(b.Notes)}">${esc(b.Notes)}</div>` : ''}
@@ -3151,8 +3165,8 @@ async function startTutorialSetup(name, steps) {
   tutSetup = {
     name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '',
     routine: {
-      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartHour: d.DayStartHour ?? 11,
-      BedHour: d.BedHour ?? 1, DayOffChancePct: d.DayOffChancePct ?? 10,
+      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartTime: d.DayStartTime ?? 660,
+      BedTime: d.BedTime ?? 60, DayOffChancePct: d.DayOffChancePct ?? 10,
     },
   };
   tutShow({ key: 'setup-loading', at: tutBarSteps - 1, kicker: tf('SETTING UP {0}', name.toUpperCase()),
@@ -3221,7 +3235,9 @@ function renderTutorialSetup() {
     const def = (n) => (schema && schema.Bot || []).find((d) => d.Name === n);
     const field = (n, min, max) => {
       const d = def(n);
-      const box = d && d.Kind === 'Hour'
+      const box = d && d.Kind === 'Time'
+        ? timeSelect(`id="tut-${n}" onchange="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()"`, s.routine[n])
+        : d && d.Kind === 'Hour'
         ? hourSelect(`id="tut-${n}" onchange="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()"`, s.routine[n], min, max)
         : `<input id="tut-${n}" type="number" min="${min}" max="${max}" value="${s.routine[n]}" oninput="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()">`;
       return `<label for="tut-${n}">${esc(d ? tSetting(d, 'label') : n)}${d ? tipIcon(tSetting(d, 'tip')) : ''}</label>
@@ -3229,7 +3245,7 @@ function renderTutorialSetup() {
     };
     body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
       <div class="form2 tut-form2">
-        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartHour', 0, 23)}${field('BedHour', 0, 23)}${field('DayOffChancePct', 0, 90)}
+        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartTime', 0, 1439)}${field('BedTime', 0, 1439)}${field('DayOffChancePct', 0, 90)}
       </div>
       <p id="tutRoutinePreview" class="muted small" style="margin-top:12px"></p>`;
   } else {
@@ -3259,7 +3275,7 @@ function tutRoutinePreview() {
   const r = tutSetup.routine;
   const el = $('tutRoutinePreview');
   if (el) el.textContent = tf('About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.',
-    r.WeekdayHours, r.WeekendHours, hourLabel(Number(r.DayStartHour)), hourLabel(Number(r.BedHour)), r.DayOffChancePct);
+    r.WeekdayHours, r.WeekendHours, timeLabel(r.DayStartTime), timeLabel(r.BedTime), r.DayOffChancePct);
 }
 
 /// First tap is the main game; tapping the main again clears it; any other tap adds or removes a side game.
@@ -4337,10 +4353,57 @@ function renderLog() {
   const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
 
   body.innerHTML = rows.length
-    ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} data-log-source="${esc(l.Source)}">${esc(l.Source)}</span><span class="m">${linked(l.Text, q)}</span></div>`).join('')
+    ? stackLog(rows).map((g) => logGroupHtml(g, q)).join('')
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
+}
+
+// ── stacked rows ─────────────────────────────────────────────────────
+// Lines in a row of one kind from one account - items into gems, the "still ..." heartbeat, rep4rep comments - show
+// as ONE row that updates in place, and a click opens it to show each line. The server says each line's kind
+// (Core/LogStack.cs). Never across accounts; any other line in between ends the stack, except a DEBUG line from the same
+// account, which is tucked inside. Only the view stacks: the log file and 'Copy' keep every line.
+const openStacks = new Set();
+
+function stackLog(lines) {
+  const groups = [];
+  for (const l of lines) {
+    const last = groups[groups.length - 1];
+    if (last && last.kind && last.source === l.Source && (l.Kind === last.kind || (!l.Kind && l.Level === 'DEBUG'))) {
+      last.items.push(l);
+      continue;
+    }
+    groups.push({ kind: l.Kind || null, source: l.Source, items: [l] });
+  }
+  return groups;
+}
+
+// What a stack reads: "turned 14 items into 1,080 gems", or "×6 " and the newest line.
+function stackSummary(g) {
+  const lines = g.items.filter((x) => x.Kind === g.kind);
+  if (g.kind === 'gems') return tf('turned {0} items into {1} gems', lines.length, lines.reduce((n, x) => n + (x.Value || 0), 0).toLocaleString('en-US'));
+  return `×${lines.length} ${lines[lines.length - 1].Text}`;
+}
+
+function logLineHtml(l, q, cls = '', text = null, lead = '') {
+  return `<div class="l ${esc(l.Level)}${cls}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} data-log-source="${esc(l.Source)}">${esc(l.Source)}</span><span class="m">${lead}${linked(text === null ? l.Text : text, q)}</span></div>`;
+}
+
+function logGroupHtml(g, q) {
+  const lines = g.items.filter((x) => g.kind && x.Kind === g.kind);
+  if (lines.length < 2) return g.items.map((l) => logLineHtml(l, q)).join('');
+  const id = lines[0].Seq;
+  const open = openStacks.has(id);
+  const latest = lines[lines.length - 1];
+  const head = logLineHtml(latest, q, ' stack', stackSummary(g), `<span class="tog">${open ? '▾' : '▸'}</span> `)
+    .replace('<div class="l', `<div role="button" tabindex="0" title="${esc(open ? t('Click to hide each line') : t('Click to show each line'))}" onclick="toggleStack(${id})" onkeydown="if(event.key==='Enter')toggleStack(${id})" class="l`);
+  return head + (open ? g.items.map((l) => logLineHtml(l, q, ' sub')).join('') : '');
+}
+
+function toggleStack(id) {
+  if (openStacks.has(id)) openStacks.delete(id); else openStacks.add(id);
+  renderLog();
 }
 
 // The colour an account chose for itself, straight from the palette the server sent. Index 0 is "automatic",
@@ -4724,7 +4787,7 @@ function renderSettings() {
     const panelHit = intro && settingsTarget === GLOBAL && (q || onlyChanged) && defs.some((d) => d.Section === section
       && PANEL_ROWS.has(d.Name) && found(d) && (!onlyChanged || isChanged(d, values, defaults)));
     if (!fields.length && !panelHit && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
-    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
+    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${groupedFields(section, fields, values, defaults)}</div>`;
   }
 
   // Only on a real account, and only when nothing is being searched or filtered - it is not a setting and
@@ -5007,6 +5070,8 @@ function sectionIntro(section, values) {
   // shows what it would buy first and asks; off stops it at once.
   if (section === 'Steam Points' && settingsTarget !== GLOBAL) {
     const byItself = !!values.PointsOk && val('SpendPoints');
+    // Off, the switch's own line under it says what turning it on does - a box saying it again was the same words twice.
+    if (!val('SpendPoints')) return '';
     return `<div class="explain">
       <b>${esc(byItself ? t('On: it buys badge levels by itself, within the limits below.') : t('Off: nothing is spent.'))}</b>
       <p style="margin:6px 0 0">${esc(t('The only thing in the Points Shop that raises your Steam level is the seasonal badge: about 100 XP for every 1,000 points. Points spent are gone for good.'))}
@@ -5091,7 +5156,9 @@ function sectionIntro(section, values) {
     }
 
     const w = parseWeights(val('GameWeights'));
-    const from = val('DayStartHour'), to = val('BedHour');
+    // When it gets on and goes to bed: the windows from the settings as they stand (edits included), and today's planned
+    // times from the account once a day is planned.
+    const win = dayWindows(val('DayStartTime'), val('DayStartVaryMinutes'), val('BedTime'), val('BedVaryMinutes'));
     // The scheduler reads WeekdayHours/WeekendHours. This used to show DailyHoursTarget, which was retired —
     // so the preview quoted a number nothing used and that no control on the page could move.
     const weekday = val('WeekdayHours'), weekend = val('WeekendHours');
@@ -5135,8 +5202,8 @@ function sectionIntro(section, values) {
     }
 
     return `<div class="preview"><span class="k">${esc(t('A day looks like'))}</span>
-      ${tf('On around {0}, bed around {1} — both jittered daily.',
-        `<b>${esc(hourLabel(Number(from)))}</b>`, `<b>${esc(hourLabel(Number(to)))}</b>`)}
+      ${tf('Gets on {0}, goes to bed {1}.', `<b>${esc(win.on)}</b>`, `<b>${esc(win.bed)}</b>`)}
+      ${card && card.Day ? tf('Today: up {0}, bed {1}.', `<b>${esc(timeLabel(card.Day.Up))}</b>`, `<b>${esc(timeLabel(card.Day.Bed))}</b>`) : ''}
       ${tf('About {0} on a weekday and {1} at the weekend.', `<b>${weekday}h</b>`, `<b>${weekend}h</b>`)}
       ${dayOff > 0 ? tf('Roughly {0} days off entirely.', `<b>${dayOff} in 100</b>`) : ''}
       ${tf('One game at a time, in sittings of {0}.', `<b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>`)}
@@ -5553,7 +5620,27 @@ function liveValue(name, values) {
 // A setting with ShowWhen ("FarmCardsWhen=3", "SomeSwitch=true") shows only while that other setting has that value -
 // or, written "LearnFromOwner!=0", anything but it - including an edit not saved yet, since choices and switches redraw
 // the form.
-function shownWhen(def, values) {
+//
+// A chain counts too: a setting shown under another one that is itself hidden (its own switch off) is hidden with it -
+// "Send the sacks to" shows only while "Gems afterwards" sends them AND Spare items is on.
+function shownWhen(def, values, depth = 0) {
+  if (!shownByOwnAnswer(def, values)) return false;
+  const owner = def.ShowWhen ? settingDefOf(showWhenOwner(def)) : null;
+  return !owner || owner === def || depth > 8 || shownWhen(owner, values, depth + 1);
+}
+
+// The setting a ShowWhen names: "SpareItems" in "SpareItems=true", "LearnFromOwner" in "LearnFromOwner!=0".
+function showWhenOwner(def) {
+  const at = def.ShowWhen.indexOf('=');
+  return def.ShowWhen.slice(0, def.ShowWhen[at - 1] === '!' ? at - 1 : at);
+}
+
+function settingDefOf(name) {
+  return ((settingsTarget === GLOBAL ? schema.Global : schema.Bot) || []).find((d) => d.Name === name) || null;
+}
+
+// Its own answer only: the setting it names has the value it wants (or, with !=, anything but it).
+function shownByOwnAnswer(def, values) {
   if (!def.ShowWhen) return true;
   const at = def.ShowWhen.indexOf('=');
   const not = def.ShowWhen[at - 1] === '!';
@@ -5990,15 +6077,97 @@ function confirmSwitch(name, account) {
     <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : t('Turn on spending Steam Points?'))}</h2>
     <p>${esc(name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
       : t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'))}</p>
-    <pre class="switch-preview" id="switchPreview">${esc(t('Working out what it would do...'))}</pre>
+    <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
     <div class="actions">
       <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
       <button id="switchGo" data-setting="${esc(name)}" data-account="${esc(account)}"
               onclick="switchTo(this.dataset.setting, this.dataset.account, true)">${esc(t('Turn on'))}</button>
     </div>`);
+  const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
+  const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
   api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => { const el = $('switchPreview'); if (el) el.textContent = (r && r.text) || t('No preview - try again in a minute.'); })
-    .catch(() => { const el = $('switchPreview'); if (el) el.textContent = t('No preview - try again in a minute.'); });
+    .then((r) => show(r && r.data ? (r.data.Kind === 'points' ? pointsPreviewHtml(r.data) : sparePreviewHtml(r.data)) : none))
+    .catch(() => show(none));
+}
+
+// One big figure in the pop-up: the number, what it is, and a small line under it.
+function bigNumber(n, what, sub, dim) {
+  return `<div class="num${dim ? ' dim' : ''}"><b>${esc(grouped(n))}</b><span>${esc(what)}</span>${sub ? `<i>${esc(sub)}</i>` : ''}</div>`;
+}
+
+// What Spare items would do, from the server's numbers: "12 to gems (0.70 CAD) · 8 to sell (1.90 CAD)" - only what it
+// does, never what it leaves - how many of those go at a time, the limits in plain words, and what's still being priced.
+function sparePreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the inventory yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the inventory: {0}", d.Problem))}</p>`);
+
+  const big = d.SignedIn && !d.Problem ? `<div class="big">
+    ${bigNumber(d.GemItems, t('to gems'), d.GemsWorth ? tf('{0} gems, worth {1}', grouped(d.Gems), d.GemsWorth) : d.Gems ? tf('{0} gems', grouped(d.Gems)) : '', !d.GemItems)}
+    ${bigNumber(d.SellItems, t('to sell'), d.SellGet ? tf('you get {0}', d.SellGet) : '', !d.SellItems)}
+  </div>` : '';
+
+  // The big numbers are the whole inventory's; it does them a few at a time, inside the day's limit.
+  const todo = d.SignedIn && !d.Problem ? d.GemItems + d.SellItems : 0;
+  const pace = todo > d.PerRun
+    ? `<p class="pricing">${esc(tf('Not all at once: the first {0} at its next look, then at most {1} a day', d.PerRun, d.DailyItems))}</p>`
+    : '';
+
+  const nameOr = (who) => who || t('(no account set yet - nothing is sent until one is)');
+  const limits = [
+    tf('Items: at most {0} a look and {1} a day', d.PerRun, d.DailyItems),
+    tf('Value: at most {0} a day', d.DailyValue),
+    tf('Never anything worth more than {0}', d.MaxPrice),
+    d.NewDays === 0 ? t('New items are not held back') : d.NewDays === 1 ? t('Nothing that came in during the last day') : tf('Nothing that came in during the last {0} days', d.NewDays),
+    t('Never a card a badge still needs, and never game items or CS2 skins'),
+    d.Currency ? tf("Prices in {0}, this account's wallet currency", d.Currency) : t('Its wallet currency is not known yet - nothing is priced or sold until it is'),
+  ];
+  if (d.Action === 1) limits.push(t('Gems only: nothing is sold'));
+  if (d.Action === 2) limits.push(t('Sell only: nothing is turned into gems'));
+  if (d.Action === 3) limits.push(t('Keep everything: it only reports, nothing changes'));
+  if (d.Packs === 1) limits.push(tf("Booster packs it doesn't open are sent to {0}", nameOr(d.PacksTo)));
+  if (d.Packs === 2) limits.push(t("Booster packs it doesn't open are sold, within these limits"));
+  if (d.Sacks === 3) limits.push(tf('Gems are packed into sacks of 1000 and the sacks sent to {0}', nameOr(d.SacksTo)));
+  if (d.Sacks === 4) limits.push(t('Gems are packed into sacks of 1000 and one sack is sold each look, within these limits'));
+
+  const pricing = d.SignedIn && d.Pricing > 0
+    ? `<p class="pricing">${esc(d.Pricing === 1 ? t('Still pricing 1 item - try again in a few minutes.') : tf('Still pricing {0} items - try again in a few minutes.', grouped(d.Pricing)))}</p>`
+    : '';
+
+  return `${top.join('')}${big}${pace}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>${pricing}`;
+}
+
+// What spending Steam Points would buy, from the server's numbers.
+function pointsPreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at its points yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem && !d.Buys.length) top.push(`<p class="problem">${esc(tf("Couldn't look at its points: {0}", d.Problem))}</p>`);
+
+  const big = d.SignedIn && !(d.Problem && !d.Buys.length) ? `<div class="big">
+    ${bigNumber(d.Levels, d.Levels === 1 ? t('level to buy') : t('levels to buy'), d.Levels ? tf('{0} points, +{1} XP', grouped(d.Cost), grouped(d.Xp)) : t('nothing right now'), !d.Levels)}
+    ${bigNumber(d.Balance, t('points now'), tf('{0} can be spent', grouped(d.CanSpend)), true)}
+  </div>` : '';
+
+  const buys = d.Buys.length
+    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Buys.map((b) => `<li>${esc(b.Levels === 1
+      ? tf('1 level of {0} (level {1} to {2}) for {3} points', b.Badge, b.From, b.To, grouped(b.Cost))
+      : tf('{0} levels of {1} (level {2} to {3}) for {4} points', b.Levels, b.Badge, b.From, b.To, grouped(b.Cost)))}</li>`).join('')}</ul>`
+    : '';
+  const notes = d.Notes.length ? `<ul class="limits muted">${d.Notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+
+  const limits = [
+    tf('Always keeps at least {0} points', grouped(d.Keep)),
+    d.WeekCap > 0 ? tf('Spends at most {0} points a week ({1} spent this week)', grouped(d.WeekCap), grouped(d.WeekSpent)) : t('Spends nothing: the weekly limit is 0'),
+    // What it buys, from the account's own switches and its top level.
+    d.Seasonal && d.Older ? tf('Levels of the seasonal badge, then older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points', d.MaxLevel)
+      : d.Seasonal ? tf('Only levels of the seasonal badge, up to level {0} - about 100 XP for every 1,000 points', d.MaxLevel)
+      : d.Older ? tf('Only levels of older seasonal badges, up to level {0} each - about 100 XP for every 1,000 points', d.MaxLevel)
+      : t('Buys nothing: both badge switches are off'),
+  ];
+  if (d.OwnDayOnly) limits.push(t('Only during its day (human mode)'));
+  limits.push(t('Points spent are gone for good'));
+
+  return `${top.join('')}${big}${buys}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
 }
 
 async function switchTo(name, account, on) {
@@ -6150,7 +6319,95 @@ function hourLabel(h) {
   } catch { return `${((h + 11) % 12) + 1} ${h < 12 ? 'am' : 'pm'}`; }
 }
 
-function fieldHtml(def, values, defaults) {
+// A time of day from minutes since midnight, as the viewer reads one: "10:30 am" on a 12-hour clock, "10:30" otherwise.
+let timeClock = null;
+function timeLabel(m) {
+  const at = ((Math.round(Number(m) || 0) % 1440) + 1440) % 1440;
+  const h = Math.floor(at / 60), min = at % 60;
+  if (!twelveHourClock()) return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  try {
+    timeClock = timeClock || new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+    return timeClock.format(new Date(2000, 0, 1, h, min));
+  } catch { return `${((h + 11) % 12) + 1}:${String(min).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`; }
+}
+
+// Every quarter of an hour, in the viewer's own clock, with the current time picked (added in its place if it's in between).
+function timeSelect(attrs, cur) {
+  const c = Number(cur) || 0;
+  const times = [];
+  for (let m = 0; m < 1440; m += 15) times.push(m);
+  if (!times.includes(c)) { times.push(c); times.sort((a, b) => a - b); }
+  return `<select ${attrs}>${times.map((m) => `<option value="${m}" ${c === m ? 'selected' : ''}>${esc(timeLabel(m))}</option>`).join('')}</select>`;
+}
+
+// When it may get on and go to bed, as the server works it out (HumanMode.WakeWindow / BedWindow): "10:30-11:30", or the
+// one time when it doesn't vary.
+function dayWindows(start, startVary, bed, bedVary) {
+  const at = Math.max(0, Math.min(1439, Number(start) || 0));
+  const sv = Math.max(0, Math.min(360, Number(startVary) || 0));
+  const b = Math.max(0, Math.min(1439, Number(bed) || 0));
+  const bv = Math.max(0, Math.min(360, Number(bedVary) || 0));
+  const bedAt = b <= at ? b + 1440 : b;
+  const span = (lo, hi) => lo === hi ? timeLabel(lo) : `${timeLabel(lo)}–${timeLabel(hi)}`;
+  return { on: span(Math.max(0, at - sv), Math.min(1439, at + sv)), bed: span(Math.max(0, bedAt - bv), Math.min(2879, bedAt + bv)) };
+}
+
+// A section's settings in small titled boxes (each setting's Group: "What it does", "Limits", "Selling"...), the boxes
+// in the order the server gives for the section (GroupOrder), then any others as they first come. A setting shown only
+// under another one in the same box (its ShowWhen) is indented under it. A section with no groups is drawn as before.
+function groupedFields(section, fields, values, defaults) {
+  if (!fields.some((d) => d.Group)) return fields.map((d) => fieldHtml(d, values, defaults)).join('');
+
+  const order = ((schema && schema.GroupOrder) || {})[section] || [];
+  const boxes = new Map();
+  fields.forEach((d) => {
+    const key = d.Group || '';
+    if (!boxes.has(key)) boxes.set(key, []);
+    boxes.get(key).push(d);
+  });
+  const rank = (key) => (order.includes(key) ? order.indexOf(key) : order.length);
+  const keys = [...boxes.keys()].map((k, i) => ({ k, i })).sort((a, b) => (rank(a.k) - rank(b.k)) || (a.i - b.i)).map((x) => x.k);
+
+  return keys.map((key) => {
+    // Each setting right under the one it depends on ("Which game to nominate" under "Nominate", not under "Vote"
+    // that happens to come between them in the list), the rest in the list's order.
+    const flat = boxes.get(key);
+    const ownerIn = (d) => (d.ShowWhen ? flat.find((x) => x.Name === showWhenOwner(d) && x !== d) : null);
+    const list = [];
+    const place = (d, guard = 0) => {
+      if (list.includes(d) || guard > 4) return;
+      list.push(d);
+      flat.filter((c) => ownerIn(c) === d).forEach((c) => place(c, guard + 1));
+    };
+    flat.filter((d) => !ownerIn(d)).forEach((d) => place(d));
+    flat.forEach((d) => place(d));   // anything left (a loop) still shows
+    // How deep under a switch in this same box: "Keep this many of each background" sits under "Duplicate backgrounds".
+    const depth = (d) => {
+      let n = 0;
+      for (let at = d; at && at.ShowWhen && n < 4;) {
+        at = list.find((x) => x.Name === showWhenOwner(at) && x !== at);
+        if (at) n++;
+      }
+      return n;
+    };
+    // The box's title only where it says something the section's own heading doesn't.
+    const title = key && key !== section ? `<div class="sgtitle">${esc(t(key))}</div>` : '';
+    return `<div class="sgroup">${title}${list.map((d) => fieldHtml(d, values, defaults, depth(d))).join('')}</div>`;
+  }).join('');
+}
+
+// Under a switch that's off and has settings that only show while it's on: one line saying what turning it on does,
+// so a section reads "this switch, and what it's for" rather than a lone toggle.
+function offHint(def, values) {
+  if (def.Kind !== 'Bool' || liveValue(def.Name, values)) return '';
+  const own = (settingsTarget === GLOBAL ? schema.Global : schema.Bot) || [];
+  if (!own.some((d) => d.ShowWhen === `${def.Name}=true`)) return '';
+  const tip = tSetting(def, 'tip') || '';
+  const first = (sentenceEnd ? tip.split(sentenceEnd)[0] : tip).trim();
+  return `<div class="offhint">${esc(first)} <span>${esc(t('Its settings show here once it is on.'))}</span></div>`;
+}
+
+function fieldHtml(def, values, defaults, depth = 0) {
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
   const changed = pending[def.Name] !== undefined;
@@ -6164,6 +6421,12 @@ function fieldHtml(def, values, defaults) {
       // An hour of the day: a list of hours in the viewer's own clock ("9 am" or "09:00"). What's kept is the same number.
       ctl = hourSelect(`id="${id}" data-setting="${def.Name}" style="max-width:180px" onchange="editAndRender('${def.Name}',parseInt(this.value))"`,
         cur, def.Min > -1e300 ? def.Min : 0, def.Max < 1e300 ? def.Max : 23);
+      break;
+    }
+    case 'Time': {
+      // A time of day to the minute ("Gets on at"): a list of times every quarter of an hour in the viewer's own clock, and
+      // the one it's set to if that's in between. What's kept is minutes from midnight.
+      ctl = timeSelect(`id="${id}" data-setting="${def.Name}" style="max-width:180px" onchange="editAndRender('${def.Name}',parseInt(this.value))"`, cur);
       break;
     }
     case 'Int':
@@ -6223,8 +6486,11 @@ function fieldHtml(def, values, defaults) {
     }
     case 'Choice': {
       const opts = parseChoices(tSetting(def, 'choices'));
+      // Short answers side by side ("off · games · games and DLC"); long ones one under another, so a phrase never
+      // breaks across two lines in the middle of a row of buttons.
+      const stack = opts.some((o) => o.label.length > 22) || opts.reduce((n, o) => n + o.label.length, 0) > 54;
       ctl = opts.length <= 6
-        ? `<div class="pills" data-setting="${def.Name}">${opts.map((o) =>
+        ? `<div class="pills${stack ? ' stack' : ''}" data-setting="${def.Name}">${opts.map((o) =>
             `<span class="p ${Number(cur) === o.value ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${o.value})">${esc(o.label)}</span>`).join('')}</div>`
         : `<select id="${id}" data-setting="${def.Name}" onchange="editAndRender('${def.Name}',parseInt(this.value))">${opts.map((o) =>
             `<option value="${o.value}" ${Number(cur) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
@@ -6264,6 +6530,7 @@ function fieldHtml(def, values, defaults) {
     : def.Kind === 'Secret' ? ''
     : def.Kind === 'Bool' ? (def0 ? t('on') : t('off'))
     : def.Kind === 'Hour' ? hourLabel(Number(def0))
+    : def.Kind === 'Time' ? timeLabel(Number(def0))
     : (def.Kind === 'Choice' || def.Kind === 'Pick') ? (choiceName() || String(def0))
     // the Discord buttons' code word, and an empty account list, in the words the dropdowns use
     : /^DiscordButton[12]$/.test(def.Name) ? (String(def0).toLowerCase() === 'github' ? t('Get nocat.farm') : def0 ? String(def0) : t('none'))
@@ -6271,13 +6538,21 @@ function fieldHtml(def, values, defaults) {
     : def.Name === 'DiscordFeatured' && !def0 ? t('the first account shown')
     : String(def0);
 
-  return `<div class="field ${changed ? 'changed' : ''}">
-    <label for="${id}">${esc(tSetting(def, 'label'))}${tipIcon(tSetting(def, 'tip'))}</label>
+  return `<div class="field ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
+    <label for="${id}">${labelWithTip(tSetting(def, 'label'), tSetting(def, 'tip'))}</label>
     <div class="ctl">${ctl}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
       ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
-    </div></div>`;
+    </div>${offHint(def, values)}</div>`;
+}
+
+// A setting's label with its (i) kept on the same line as the label's last word, so a wrapped label never leaves the
+// (i) alone on a line of its own. A label with no spaces (Chinese, Japanese) wraps as before.
+function labelWithTip(label, tip) {
+  const cut = label.lastIndexOf(' ');
+  if (cut <= 0) return esc(label) + tipIcon(tip);
+  return `${esc(label.slice(0, cut + 1))}<span class="nw">${esc(label.slice(cut + 1))}${tipIcon(tip)}</span>`;
 }
 
 function parseChoices(choices) {

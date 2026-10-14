@@ -656,7 +656,7 @@ public static partial class Looting {
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
 						// To your phone too: nobody sees the offer until it's confirmed, and nothing else will say so.
-						Log.Attention(new Said("offer sent - confirm it in the Steam app on your phone"), bot.Name, Topic.Trades);
+						Log.Attention(new Said("offer sent · confirm it in the Steam app"), bot.Name, Topic.Trades);
 
 						return (true, "sent - waiting for you to confirm it in the Steam app on your phone");
 					}

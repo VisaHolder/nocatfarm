@@ -754,6 +754,9 @@ async function change(def, target) {
   } else if (kind === 'Hour') {
     // A list of hours: the next one along, so a from/until pair never crosses.
     await box.selectOption(String(nextInt(def, Number(cur) || 0)));
+  } else if (kind === 'Time') {
+    // A list of times every quarter of an hour: the next one along.
+    await box.selectOption(String(((Math.floor((Number(cur) || 0) / 15) + 1) * 15) % 1440));
   } else if (tag.startsWith('div') && /pills/.test(tag)) {
     // Choice pills, or the accounts shown on the Discord card.
     const want = CHOICE_VALUE[n];
@@ -863,6 +866,8 @@ async function putBack(def, orig, target, defaults) {
     await box.fill(String(orig)); await box.blur();
   } else if (def.Kind === 'Hour') {
     await box.selectOption(String(orig));
+  } else if (def.Kind === 'Time') {
+    await box.selectOption(String(orig));
   } else if (tag.startsWith('div') && /dbtnpick/.test(tag)) {
     const bots = await evalq(() => state.Bots.map((b) => b.Name.toLowerCase()));
     const v = String(orig || '');
@@ -906,6 +911,11 @@ async function confirmSwitchScenario(n, target, who) {
   const was = await saved();
   if (was) await tick();   // off first: off is off at once, no pop-up
   check(`settings ${who}: ${n} is off to start with`, (await saved()) === false && !(await modalOpen()));
+  // Off, its section is the switch and one line saying what turning it on does - its other settings are hidden.
+  const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(@class,"section")][1]');
+  const offRows = await sectionOf().locator('[data-setting]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null || e.closest('label.switch')).map((e) => e.dataset.setting));
+  check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
+    offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
 
   await tick();
   const asked = (await modalOpen()) && (await page.locator('#switchGo').count()) > 0;
@@ -915,7 +925,11 @@ async function confirmSwitchScenario(n, target, who) {
     await page.waitForFunction((t) => { const el = document.getElementById('switchPreview'); return el && el.textContent !== t; }, first, { timeout: 20000 }).catch(() => {});
     preview = (await page.locator('#switchPreview').textContent()) || '';
   }
-  check(`settings ${who}: ticking ${n} first shows what it would do, in a pop-up with Turn on and Cancel`, asked && preview.trim().length > 0 && /Limits:|points/i.test(preview), preview.slice(0, 200));
+  // The pop-up draws the server's numbers itself: big figures when it could look, and the limits as a list - never the
+  // console's text block.
+  const limitRows = asked ? await page.locator('#switchPreview ul.limits li').count() : 0;
+  check(`settings ${who}: ticking ${n} first shows what it would do, in a pop-up with Turn on and Cancel`, asked && preview.trim().length > 0 && limitRows >= 3, preview.slice(0, 200));
+  check(`settings ${who}: the ${n} pop-up has no raw text block`, asked && (await page.locator('#modalCard pre').count()) === 0);
   check(`settings ${who}: while it asks, ${n} still shows off`, !(await ticked()));
   if (asked) { await page.locator('#modal button.ghost').first().click(); await settle(300); }
   check(`settings ${who}: Cancel closes the pop-up and ${n} stays off`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
@@ -923,6 +937,12 @@ async function confirmSwitchScenario(n, target, who) {
   await tick();
   if (await page.locator('#switchGo').count()) { await page.click('#switchGo'); await settle(600); }
   check(`settings ${who}: ticked again and "Turn on" - ${n} is on (in /api/config too)`, !(await modalOpen()) && (await saved()) === true && await ticked());
+  // On, its settings show, in titled boxes, and the ones that depend on it in its own box are indented under it.
+  const onRows = await sectionOf().locator('.field [data-setting]').count();
+  const titles = await sectionOf().locator('.sgroup > .sgtitle').count();
+  const indented = await sectionOf().locator('.field.sub').count();
+  check(`settings ${who}: with ${n} on its settings show in titled boxes, the dependent ones indented`, onRows > 3 && titles >= 2 && (n !== 'SpareItems' || indented >= 1) && (await field(n).locator('.offhint').count()) === 0,
+    `${onRows} rows, ${titles} titles, ${indented} indented`);
 
   await tick();
   check(`settings ${who}: unticked - ${n} is off at once, no pop-up`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
@@ -940,19 +960,25 @@ async function settingsRound(target) {
   const orig = valuesOf(original, target);
   const origSecrets = secretsOf(original, target).slice().sort();
   const doneNames = new Set();
+  // The settings other settings show under (ShowWhen "SpareItems=true", "AchievementBoost!=0").
+  const owners = new Set(defs.filter((d) => d.ShowWhen).map((d) => d.ShowWhen.split('=')[0].replace(/!$/, '')));
+  const solo = (n) => MODE_SWITCHES.includes(n) || owners.has(n);
   const changed = [];   // in the order they were changed
   let lastSaved = null;
 
   // A section at a time: every setting in it changed, then one save for the lot. A mode switch goes on its own.
   for (let guard = 0; guard < 200; guard++) {
     let shown = await shownSettings();
-    const first = shown.find((x) => !doneNames.has(x.name) && !MODE_SWITCHES.includes(x.name)) || shown.find((x) => !doneNames.has(x.name));
+    // Settings first, then the switches others show under (each saved on its own - turning one off hides its settings and
+    // drops their unsaved edits), then the mode switches. A switch that's on keeps its settings on screen until they're done.
+    const first = shown.find((x) => !doneNames.has(x.name) && !solo(x.name))
+      || shown.find((x) => !doneNames.has(x.name) && !MODE_SWITCHES.includes(x.name)) || shown.find((x) => !doneNames.has(x.name));
     if (!first) break;
-    const mode = MODE_SWITCHES.includes(first.name);
+    const mode = solo(first.name);
     const batch = [];   // [{ def, before }]
     for (let inner = 0; inner < 80; inner++) {
       const x = inner === 0 ? first
-        : mode ? null : shown.find((y) => y.section === first.section && !doneNames.has(y.name) && !MODE_SWITCHES.includes(y.name));
+        : mode ? null : shown.find((y) => y.section === first.section && !doneNames.has(y.name) && !solo(y.name));
       if (!x) break;
       const n = x.name;
       doneNames.add(n);
@@ -1063,6 +1089,23 @@ async function settingsRound(target) {
       after = await api('/api/config');
     }
   }
+  // A setting shown only under another one can be left hidden when the server changed that other one by itself (human
+  // mode switched on takes "Open booster packs" back to never, and the packs' own settings go with it): it has no control
+  // on screen to put it back with, so it goes back through the page's own save, like the game list above.
+  const stuck = defs.filter((d) => d.ShowWhen && d.Kind !== 'Secret' && !same(valuesOf(after, target)[d.Name], orig[d.Name]));
+  if (stuck.length) {
+    const hidden = await evalq((names) => names.filter((n) => { const d = settingDefOf(n); return d && !shownWhen(d, settingsValues()); }), stuck.map((d) => d.Name));
+    if (hidden.length) {
+      note(`${who}: ${hidden.join(', ')} put back through the page's own save - hidden under a setting the server changed`);
+      const back = Object.fromEntries(hidden.map((n) => [n, orig[n]]));
+      await evalq(async ({ name, back }) => {
+        await loadConfig();
+        if (name) await postBot(name, { ...config.Bots[name], ...back }); else await postGlobal({ ...config.Global, ...back });
+        await loadConfig(); renderSettings();
+      }, { name: target, back });
+      after = await api('/api/config');
+    }
+  }
   const left = defs.filter((d) => d.Kind !== 'Secret' && !same(valuesOf(after, target)[d.Name], orig[d.Name]))
     .map((d) => `${d.Name}: ${JSON.stringify(valuesOf(after, target)[d.Name])} (was ${JSON.stringify(orig[d.Name])})`);
   const secretsNow = secretsOf(after, target).slice().sort();
@@ -1074,6 +1117,27 @@ async function settingsRound(target) {
 
 settingsCount.global = await settingsRound(null);
 for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bot] = await settingsRound(bot);
+
+// A switch's settings hide while it's off and come back, indented under it, when it's on - unsaved, then thrown away.
+{
+  await settingsOn('robot');
+  const has = (n) => page.locator(`#settingsBody [data-setting="${n}"]`).count();
+  check('settings: with "Watch for scams" on, what it checks shows', (await has('ScamWatchApiKey')) === 1);
+  check('settings: "Which game to nominate" is indented right under "Nominate in the Steam Awards"',
+    (await page.locator('#settingsBody .field.sub:has([data-setting="SaleNominatePick"])').count()) === 1
+    && await evalq(() => { const f = document.querySelector('#settingsBody .field:has([data-setting="SaleAwardsNominate"])'); return !!f && !!f.nextElementSibling && !!f.nextElementSibling.querySelector('[data-setting="SaleNominatePick"]'); }));
+  await evalq(() => { pending.WatchForScams = false; pending.SaleEvents = false; renderSettings(); });
+  await settle(200);
+  check('settings: with "Watch for scams" off, its settings hide and one line says what it does',
+    (await has('ScamWatchApiKey')) === 0 && (await has('ScamWatchMinMinutes')) === 0 && (await page.locator('#settingsBody .field:has([data-setting="WatchForScams"]) .offhint').count()) === 1);
+  check('settings: with "Take part in Steam events" off, a setting two levels under it hides too', (await has('SaleNominatePick')) === 0 && (await has('SaleAwardsNominate')) === 0);
+  await evalq(() => { pending = {}; renderSettings(); });
+  await settle(200);
+  check('settings: switched back, they show again', (await has('ScamWatchApiKey')) === 1 && (await has('SaleNominatePick')) === 1);
+  const wide = await evalq(() => document.documentElement.scrollWidth <= window.innerWidth);
+  check('settings: the boxes fit the window', wide);
+  await healthy('settings: hiding and showing the settings under a switch left the page healthy');
+}
 
 // A game list searched by name: the test accounts never sign in, so their libraries are empty - typing a name says so
 // and adds nothing, and the box keeps what was typed and its focus (only the little list under it is drawn).

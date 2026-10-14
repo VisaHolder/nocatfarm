@@ -163,7 +163,8 @@ The dashboard is where you do almost everything. Its tabs, in order:
 | Plugins | Add-ons. Off unless you turn them on. |
 | Settings | Every switch. Pick **Global settings** or an account on the left. |
 
-On Windows there's also the app window, with the log, a command line, and buttons to start or stop everything,
+On Windows there's also the app window, with the log (repeats stacked into one row, as on the Log tab - click a ▸ row to
+see each line), a command line, and buttons to start or stop everything,
 open the dashboard and list your accounts. **mini** shrinks it to a small panel with one line per account. The
 tray icon by the clock has a menu too: open the dashboard, show or hide the window, mini mode, start or stop all
 accounts, and exit. Closing the window leaves nocat.farm running in the tray.

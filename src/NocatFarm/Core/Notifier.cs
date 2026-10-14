@@ -131,7 +131,7 @@ public static partial class Notifier {
 		Topic.Security => G.SendSignIns,
 		Topic.BreakIn => G.SendBreakIns,
 		// scam watch and account health decide for themselves whether to alert at all; which channels get it
-		// is per channel (OnChannel), so a channel added later (phone push) gets them by its own switches.
+		// is per channel (OnChannel), so a channel added later gets them by its own switches.
 		Topic.ScamWatch or Topic.Health => true,
 		Topic.Points => G.SendPoints,
 		Topic.Backups => G.SendBackups,

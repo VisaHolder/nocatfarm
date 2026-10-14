@@ -671,14 +671,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// A Said, not a formatted string. It is passed as a VALUE into the sentence below, and a value that
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
-				Said been = lifetime > 0 ? new Said(" · {0} by nocat.farm", Fmt.Hm(lifetime)) : default;
+				Said been = lifetime > 0 ? new Said(" · {0} banked", Hours(lifetime)) : default;
 				// What is really playing now - when the idler could put its games on. Paused, or with you on the
 				// account, nothing of the idler's is playing, and the list is the best there is to go on.
 				int idling = Bot.CanPlay ? Bot.PlayingApps.Count : Bot.Cfg.IdleGames.Count;
 
 				Log.Info(Bot.HumanOwned
-					? new Said("no cards left - human mode carries on{0}", been)
-					: new Said("no cards left - idling {0}{1}", IdleSummary(Bot.CustomName, idling), been), Bot.Name);
+					? new Said("no cards left · human mode carries on{0}", been)
+					// The games by count: the custom name is on every status line already, and with it this ran past the window.
+					: new Said("no cards left · idling {0}{1}", IdleSummary(null, idling), been), Bot.Name);
 			}
 
 			// Nothing to farm changes only when a game is added, and that cuts this wait short (see RunAsync) - so the
@@ -844,6 +845,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		return 1;
 	}
+
+	/// <summary>Time for the log, short: "14,220h" past 100 hours (the minutes are noise by then), else "2h10m".</summary>
+	public static string Hours(int minutes) =>
+		minutes >= 6000 ? (minutes / 60).ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + "h" : Fmt.Hm(minutes);
 
 	/// <summary>Whether a game is currently set aside for producing nothing.</summary>
 	private bool IsParked(uint appId) {
@@ -1016,7 +1021,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("farming {0} ({1} left · ~{2} in all)", game.GameName, game.CardsRemaining, AllDoneIn);
-		Log.Info(new Said("farming {0} - {1} card(s) left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
+		Log.Info(new Said("farming {0} · {1} card(s) left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 
 		// Farming time since the last drop - the measure of this game's pace. Restarts with every call, so a pause,
 		// a break or the owner playing is never counted as waiting for a card. The first drop of a call isn't
@@ -1137,7 +1142,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					}
 
 					Bot.CountDropsFirst(game.AppId, before - game.CardsRemaining);
-					Log.Reward(new Said("last card dropped in {0} - that game's done", game.GameName), Bot.Name);
+					Log.Reward(new Said("last card dropped in {0} · game done", game.GameName), Bot.Name);
 					Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, 0);
 				} else {
 					Log.Reward(new Said("{0} is done - no cards left", game.GameName), Bot.Name);
@@ -1365,7 +1370,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	internal static Said IdleSummary(string? customName, int playing) =>
 		!string.IsNullOrWhiteSpace(customName)
-			? new Said("{0}", customName + (playing > 0 ? $" (+{playing})" : ""))
+			? new Said("{0}", customName + (playing > 0 ? $" +{playing}" : ""))
 			: playing > 0 ? new Said("{0} game(s)", playing) : new Said("your games");
 
 	/// <summary>

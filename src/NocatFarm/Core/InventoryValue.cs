@@ -415,7 +415,14 @@ public sealed partial class InventoryValue(Bot bot) {
 		// can, one item at a time where it can't. Each price that comes back is in the total and off the count already
 		// - the book tells every account holding the item (Priced) - so nothing here re-totals along the way.
 		if (wanted.Count > 0) {
-			await PriceBook.PriceAsync([.. RoundRobin(wanted)], RequestsPerSweep, ct).ConfigureAwait(false);
+			// Only a number to look at: it takes its quarter of the hour's market requests and leaves the rest to selling.
+			PriceBook.Background.Value = true;
+
+			try {
+				await PriceBook.PriceAsync([.. RoundRobin(wanted)], RequestsPerSweep, ct).ConfigureAwait(false);
+			} finally {
+				PriceBook.Background.Value = false;
+			}
 		}
 	}
 

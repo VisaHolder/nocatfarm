@@ -66,7 +66,7 @@ public static partial class Commands {
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
 		new("persona", "<account> [state]", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now."),
 		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'."),
-		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
+		new("grind", "<account|all> <appID> <hours> | <account|all> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
 		new("habits", "[account] [forget]", GroupPlaying, "What human mode has learned from you playing on the account yourself (days seen, the hours you're usually on, your top games), and whether \"Learn from how I play\" is using it yet. 'habits <account> forget' wipes it and it starts learning again."),
@@ -80,8 +80,8 @@ public static partial class Commands {
 			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
 		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
-		new("booster", "[account|all] | <account> <appIDs> | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs for\" setting does it by itself every day. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
-		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what would be turned into gems, sold or kept, and why - item by item, with the price limit, the new-item days and today's caps. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
+		new("booster", "[account|all] | <account> <appIDs> | plan [account|all] | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs\" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
+		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
@@ -117,7 +117,7 @@ public static partial class Commands {
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
-		new("rep4rep", "status|points|profiles|tasks|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
+		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all>", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
 
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
@@ -627,6 +627,13 @@ public static partial class Commands {
 			return line;
 		}
 
+		// This account named further on ('points off new', 'spare preview new'), or a word that is no account and none of the
+		// command's own (a mistyped name): left as typed. Filled in, the first answered with the usage and 'stop kylr0' stopped
+		// this account.
+		if (words.Skip(1).Any(w => mgr.Get(w) != null) || ((words.Length > 1) && !FillsInFront(words[1]))) {
+			return line;
+		}
+
 		// The rest as it was typed, not put back together a word at a time.
 		return $"{words[0]} {botName}" + (words.Length > 1 ? " " + Tail(line, 1) : "");
 	}
@@ -644,6 +651,7 @@ public static partial class Commands {
 			// Spending Steam Points, or agreeing to it, can't be undone - the owner's word too. 'points spend preview' is only a look.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "points") && PointsNeedsOwner(words[1..]))
 			|| SpareRefusesFromChat(words)
+			|| SpendsFromChat(words)
 			// 'scamwatch ok' lifts a scam watch hold - the owner's word, never a chat's: whoever took the account could send it.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "scamwatch") && words[1..].Any(static w => w.Equals("ok", StringComparison.OrdinalIgnoreCase)));
 	}
@@ -675,7 +683,7 @@ public static partial class Commands {
 		string[] words = Words(line);
 		int accountAt = Resolve(words.FirstOrDefault() ?? "")?.Name == "trade" ? 2 : 1;
 
-		if ((words.Length > accountAt) && words[accountAt].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+		if ((words.Length > accountAt) && words[accountAt].Equals("all", StringComparison.OrdinalIgnoreCase) && AllIsAccounts(words[0])) {
 			return true;
 		}
 
@@ -959,14 +967,14 @@ public static partial class Commands {
 				"health" => await HealthCommandAsync(mgr, rest).ConfigureAwait(false),   // 1.8.0
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
 				"levelup" or "lvlup" => LevelUp(mgr, rest),
-				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
-				"human" => Human(mgr, rest),
-				"habits" => Habits(mgr, rest),
+				"selfcheck" or "tells" => await SelfCheckAsync(mgr, AllIsEvery(rest)).ConfigureAwait(false),
+				"human" => Human(mgr, AllIsEvery(rest)),
+				"habits" => Habits(mgr, AllIsEvery(rest)),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
 				"redeem" => await RedeemAsync(mgr, rest, line).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
-				"2fa" or "guard" => TwoFactor(mgr, rest),
-				"confirmations" => await ConfirmationsAsync(mgr, rest).ConfigureAwait(false),
+				"2fa" or "guard" => TwoFactor(mgr, AllIsEvery(rest)),
+				"confirmations" => await ConfirmationsAsync(mgr, AllIsEvery(rest)).ConfigureAwait(false),
 				"confirm" => await AnswerConfirmationsAsync(mgr, rest, true).ConfigureAwait(false),
 				"deny" => await AnswerConfirmationsAsync(mgr, rest, false).ConfigureAwait(false),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
@@ -992,7 +1000,7 @@ public static partial class Commands {
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest, line).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest, atThisPc).ConfigureAwait(false),
-				"cards" => Cards(mgr, rest),
+				"cards" => Cards(mgr, AllIsEvery(rest)),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
@@ -1056,13 +1064,6 @@ public static partial class Commands {
 		? new Said("That's not a command - did you mean '{0}'?", near).ToString()
 		: new Said("That's not a command - 'help' lists them.").ToString();
 
-	/// <summary>
-	/// Check for a newer release, and on "now", install it.
-	///
-	/// The check is forced rather than daily-gated: somebody typing this has asked, and answering "I looked
-	/// this morning" is not an answer. Installing is always explicit - see SelfUpdate for why nothing here
-	/// ever happens on a schedule.
-	/// </summary>
 	/// <summary>
 	/// 'anywhere on|off': Open from anywhere in one go - the same as the Phone page. On opens the dashboard to other devices
 	/// if it isn't yet (restarting only the dashboard, so the accounts stay on), switches the router forward on, and waits a
@@ -1192,6 +1193,10 @@ public static partial class Commands {
 		return n > 0 ? new Said("dashboard unlocked - you can sign in again").ToString() : new Said("nothing was locked - the dashboard sign-in works").ToString();
 	}
 
+	/// <summary>
+	/// Check for a newer release, and on "accept" or "now", install it. The check is forced rather than daily-gated:
+	/// somebody typing this has asked.
+	/// </summary>
 	private static async Task<string> Update(string[] args) {
 		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
@@ -1678,13 +1683,6 @@ public static partial class Commands {
 			.Select(a => $"{bot.Name} doesn't own {GameNames.Of(a)} - add it to its Steam library first, or idling it banks nothing")];
 	}
 
-	/// <summary>
-	/// Add free packages by subID.
-	///
-	/// The same call the free-games watcher makes, exposed for the times you know the subID yourself - a
-	/// giveaway that has not been picked up yet, or a free weekend. Steam refuses anything that is not actually
-	/// free, so the worst case is a "no".
-	/// </summary>
 	/// <summary>One free app, the same request the free-games watcher makes - so the two can never drift apart.</summary>
 	private static async Task<string> AddFreeAppAsync(Bot bot, uint appId) {
 		FreeGames.ClaimResult result = await FreeGames.AddAppAsync(bot, appId, CancellationToken.None).ConfigureAwait(false);
@@ -1692,6 +1690,10 @@ public static partial class Commands {
 		return result.Added ? $"added {GameNames.Of(appId)}" : $"not granted - {result.Reason}";
 	}
 
+	/// <summary>
+	/// Add free packages by subID - the same call the free-games watcher makes, for when you know the subID yourself.
+	/// Steam refuses anything that is not actually free, so the worst case is a "no".
+	/// </summary>
 	private static async Task<string> AddLicense(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "addlicense <account|all> <IDs>     subIDs, or a/<appID> for a free app - comma or space separated";
@@ -1703,7 +1705,7 @@ public static partial class Commands {
 
 		if (targets.Count == 0) {
 			return args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
-				? "No account is online."
+				? "No account is logged in."
 				: NoSuchAccount(mgr, args[0]);
 		}
 
@@ -1785,7 +1787,7 @@ public static partial class Commands {
 			Key: "addlicense " + string.Join(',', wanted.Select(static w => (w.App ? "a/" : "") + w.Id.ToString(CultureInfo.InvariantCulture)).Order(StringComparer.Ordinal)));
 
 		return await SlowAsync(job, targets, Add, ReplyWithin, oneAtATime: true,
-			cannot: static b => b.IsOnline ? null : $"{b.Name}: not online").ConfigureAwait(false);
+			cannot: static b => b.IsOnline ? null : $"{b.Name}: not logged in").ConfigureAwait(false);
 	}
 
 	/// <summary>The licences an addlicense is asking for right now, by account - see AddLicense.</summary>
@@ -2427,7 +2429,10 @@ public static partial class Commands {
 		StringBuilder sb = new();
 
 		foreach (Bot bot in bots) {
-			if (BotManager.ModuleOf<HumanMode>(bot) is not { } human) {
+			// Named, an account without human mode still answers: 'habits robo' came back empty.
+			if (!bot.Cfg.LegitMode || (BotManager.ModuleOf<HumanMode>(bot) is not { } human)) {
+				sb.AppendLine($"{bot.Name}: human mode is off - it has nothing to learn");
+
 				continue;
 			}
 
@@ -2508,6 +2513,8 @@ public static partial class Commands {
 
 			sb.AppendLine($"{bot.Name}  ({bot.Cfg.SteamLogin})");
 			sb.AppendLine($"  right now   {human.Status}");
+			// Today's planned times and the windows they come from ("Gets on at" / "Goes to bed at", give or take).
+			sb.AppendLine($"  its day     {human.DayLine().ToEnglish()}");
 
 			if (human.TargetMinutesToday > 0) {
 				int pct = human.PlayedMinutesToday * 100 / human.TargetMinutesToday;
@@ -2884,6 +2891,11 @@ public static partial class Commands {
 				return NoSuchAccount(mgr, more[1]);
 			}
 
+			// Before its Steam ID is asked for: 'send robo to robo' said to start it first.
+			if (!all && recipient.Name.Equals(target, StringComparison.OrdinalIgnoreCase)) {
+				return "That's the same account both ways.";
+			}
+
 			if (recipient.SteamId == 0) {
 				return $"{recipient.Name} hasn't signed in yet this run, so its Steam ID isn't known - start it first.";
 			}
@@ -3120,7 +3132,7 @@ public static partial class Commands {
 
 			lines.Add($"{bot.Name}: {PriceBook.Symbol}{bot.Inventory.Total:N2}{moved}"
 				+ (bot.Inventory.Pricing > 0 ? $"   ({bot.Inventory.Pricing} item(s) still being priced{Left(bot.Inventory.RequestsLeft)})" : "")
-				+ (bot.Inventory.Ready ? "" : "   (reading it now)"));
+				+ (bot.Inventory.Ready ? "" : bot.IsOnline ? "   (reading it now)" : "   (not logged in - read once it is)"));
 
 			foreach (InventoryValue.GameValue game in bot.Inventory.ByGame.Take(6)) {
 				lines.Add(game.Blocked
@@ -4481,7 +4493,9 @@ public static partial class Commands {
 	/// for different things - two batches of keys, two offers. Without one, a second 'trade decline 5' while 'trade accept 3'
 	/// was going was turned away as "already", and offer 5 was never declined.
 	/// </summary>
-	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null);
+	/// <param name="Brief">For an answer that comes after the reply: the account's answer in one line for the log, by its
+	/// name - the whole answer goes to the debug log. Null, or nothing for that account: every line of it, as INFO.</param>
+	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null, Func<string, string?>? Brief = null);
 
 	/// <summary>
 	/// Run a slow command's work, account by account, and answer within <paramref name="wait"/>: what each finished account
@@ -4586,6 +4600,15 @@ public static partial class Commands {
 			Background.Run(job.What, () => task.ContinueWith(done => {
 				// Cut short or failed: Run has already said so in the log, the way it was.
 				if (done.Result.Logged) {
+					return;
+				}
+
+				// One line, where the command has one: 'spare preview' item by item was 25 INFO lines. The whole answer is in the
+				// debug log, and asking again answers with it straight away.
+				if (job.Brief?.Invoke(name) is { Length: > 0 } brief) {
+					Log.Info(MaskedReply(job.What, brief, typed), source);
+					Log.Debug(Columns.ClipChars(SpareRun.OneLine(MaskedReply(job.What, done.Result.Reply, typed)), 300, "..."), source);
+
 					return;
 				}
 
@@ -4984,6 +5007,11 @@ public static partial class Commands {
 			return await BoosterOpenAsync(mgr, open).ConfigureAwait(false);
 		}
 
+		// 'booster plan [account]' - and from Steam chat, 'booster <account> plan'.
+		if (PlanWords(mgr, args) is { } plan) {
+			return await BoosterPlanAsync(mgr, plan).ConfigureAwait(false);
+		}
+
 		// "booster all 730" used to list every account and quietly drop the appIDs - so it looked like it had
 		// done something it never tried. Packs cost gems per account, so making them is one account at a time.
 		if ((args.Length > 1) && args[0].Equals("all", StringComparison.OrdinalIgnoreCase)) {
@@ -5067,10 +5095,13 @@ public static partial class Commands {
 			} else if (gems < offer.Price) {
 				said.Add($"{offer.Name}: needs {offer.Price} gems, {gems} here");
 			} else {
-				(bool made, uint left, uint leftTradable, uint leftUntradable, string? why) = await Boosters.CreateAsync(maker, offer, tradable, untradable).ConfigureAwait(false);
+				Boosters.Made result = await Boosters.MakeAsync(maker, offer, tradable, untradable).ConfigureAwait(false);
+				(bool made, uint left, uint leftTradable, uint leftUntradable, string? why) = (result.Ok, result.Gems, result.Tradable, result.Untradable, result.Why);
 
 				if (made) {
 					(gems, tradable, untradable) = (left, leftTradable, leftUntradable);
+					// Written down as made here: never held back as a "new" pack - and opened soon (see Boosters.Remember).
+					Boosters.Remember(maker, offer.AppId, offer.Name, result.ItemId, 0, BoosterPick.SetSize(offer.Price));
 					said.Add($"{offer.Name}: made a booster pack for {offer.Price} gems - {gems} left");
 				} else {
 					said.Add($"{offer.Name}: Steam refused it {why}");
@@ -5564,6 +5595,7 @@ public static partial class Commands {
 			// back over this one, in memory and on disk.
 			lock (bot.CfgGate) {
 				bool wasLegit = bot.Cfg.LegitMode;
+				int wasMake = bot.Cfg.BoosterMake;
 				string? error = Settings.Apply(bot.Cfg, def, Unquote(value));
 
 				if (error != null) {
@@ -5571,6 +5603,12 @@ public static partial class Commands {
 				}
 
 				Settings.ApplyLegitMode(bot.Cfg, wasLegit);
+				Modules.BoosterPick.Settle(bot.Cfg, wasMake, bot.Name);
+
+				// 'set myaccount BoosterPackGames 730' with making packs off means those games: "games I pick".
+				if ((def.Name == nameof(BotConfig.BoosterPackGames)) && (bot.Cfg.BoosterMake == Modules.BoosterPick.Off) && (bot.Cfg.BoosterPackGames.Count > 0)) {
+					bot.Cfg.BoosterMake = Modules.BoosterPick.Pick;
+				}
 
 				// Spare items and Steam Points change only through their switch (SetAsync): whatever got here, on without
 				// its go-ahead goes back off, and off clears the go-ahead - as a dashboard save does.

@@ -43,7 +43,9 @@ public static class Log {
 	/// language it was written in, and nothing short of rewriting history could change that - a log that edited
 	/// its own past would be worth less than one that did not.
 	/// </remarks>
-	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said) {
+	/// <param name="Kind">What it stacks as in the views, when the sentence alone doesn't say (Core/LogStack.cs): the
+	/// heartbeat is the account's status line, any sentence at all.</param>
+	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said, string? Kind = null) {
 		/// <summary>
 		/// The line in whatever language is selected right now - always ONE line. A line break inside it took more
 		/// rows than the live board had counted, so every redraw scrolled and the header repeated down the screen,
@@ -267,6 +269,12 @@ public static class Log {
 	public static void Good(string text, string source = "nocat.farm") => Good(new Core.Said(text), source);
 	public static void Good(Core.Said text, string source = "nocat.farm") => Write("GOOD", source, text, ConsoleColor.Green);
 	public static void Warn(string text, string source = "nocat.farm") => Warn(new Core.Said(text), source);
+
+	/// <summary>
+	/// An account's status, said every so often (Modules/Heartbeat.cs): an INFO line that the window and the dashboard stack
+	/// into one row updating in place, rather than a new row every ten minutes.
+	/// </summary>
+	public static void Status(Core.Said text, string source) => Write("INFO", source, text, ConsoleColor.Gray, kind: Core.LogStack.Heartbeat);
 	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
 
 	/// <summary>A trade offer event: the log, the trades pop-up, and Discord/Telegram's Trades topic.</summary>
@@ -299,6 +307,13 @@ public static class Log {
 		Notify?.Invoke(NotifyKind.Earning, source, text.ToString());
 		Publish(topic, source, text);
 	}
+
+	/// <summary>
+	/// Something earned that's told once for a whole look - spare items into gems, booster packs opened: the log line now,
+	/// in the reward colour, and nothing else. The pop-up and Discord/Telegram get one message when the look ends
+	/// (Core/ItemsNote.cs) - one each was about 20 Telegram messages in 10 minutes.
+	/// </summary>
+	public static void Earned(Core.Said text, string source) => Write("GOOD", source, text, ConsoleColor.Yellow);
 
 	/// <summary>Something needs a human: a Steam Guard code, a password, a decision.</summary>
 	public static void Attention(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Attention(new Core.Said(text), source, topic);
@@ -548,9 +563,9 @@ public static class Log {
 		Append(file, lines.ToString(), debug: true);
 	}
 
-	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true) {
+	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true, string? kind = null) {
 		DateTime now = DateTime.Now;
-		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said);
+		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said, kind);
 
 		// Rendered once, here, for the console and the file. Both are written as it happens, in the language
 		// selected at that moment; only the entry in the ring can be re-rendered later.

@@ -649,10 +649,9 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		if (done >= Cap) {
 			// A Said, not a string. Built as English text it rode untranslated inside the translated sentence -
 			// "休息 until ~10:13" - and the clock is rendered lazily so "tomorrow" follows the language too.
-			Said frees = NextSlot is { } t
-				? new Said("until ~{0}", (Func<string>) (() => Fmt.Clock(t)))
-				: new Said("for now");
-			Said line = new("hit the {0}/24h cap - resting {1}", Cap, frees);
+			Said line = NextSlot is { } t
+				? new Said("rep4rep {0}/{0} · next ~{1}", Cap, (Func<string>) (() => Fmt.Clock(t)))
+				: new Said("rep4rep {0}/{0} · resting for now", Cap);
 
 			// The window is ROLLING, so once it is full every slot that frees gets one post and the cap is hit
 			// again - four or five times a day, each announced as news. The first one in a stretch is worth
@@ -930,7 +929,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 			_closedRun++;
 			_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
-			Log.Info(new Said("{0} doesn't take comments - skipping", task.TargetName), Bot.Name);
+			Log.Info(new Said("{0} doesn't take comments · skipped", task.TargetName), Bot.Name);
 
 			return true;
 		}

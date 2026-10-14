@@ -75,6 +75,6 @@ public static class SteamMaintenance {
 	/// <summary>The line to log when an account drops, so a weekly restart does not read like a fault.</summary>
 	public static Said Explain(TimeSpan wait) =>
 		LikelyNow
-			? new Said("disconnected - Steam's weekly maintenance, back in ~{0}m", (int) wait.TotalMinutes)
-			: new Said("disconnected - reconnecting in ~{0}s", (int) wait.TotalSeconds);
+			? new Said("Steam maintenance · back in ~{0}m", (int) wait.TotalMinutes)
+			: new Said("disconnected · reconnecting in ~{0}s", (int) wait.TotalSeconds);
 }

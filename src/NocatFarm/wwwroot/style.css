@@ -561,6 +561,11 @@ table.today tr.fleet td:first-child { color: var(--muted); }
 .out .l.ERROR { border-left-color: var(--bad); }
 .out .l.GOOD { border-left-color: var(--good); }
 .out .l.DEBUG { color: var(--muted); }
+/* A stack of lines of one kind (app.js stackLog): one row, a click opens it. */
+.out .l.stack { cursor: pointer; }
+.out .l.stack:hover .m { text-decoration: underline dotted; }
+.out .tog { color: var(--muted); }
+.out .l.sub .m { padding-left: 1.4em; opacity: .85; }
 .out .t { color: var(--muted); flex: 0 0 auto; }
 .out .s { color: var(--info); flex: 0 0 92px; cursor: pointer; }
 .out .m { flex: 1; min-width: 0; }
@@ -680,11 +685,6 @@ table.today tr.fleet td:first-child { color: var(--muted); }
   line-height: 1.6; margin: 0 0 var(--s3); max-width: 90ch;
 }
 
-/* Spare items / Steam Points "Turn on?" popup: what it would do, scrollable, in the console's own type. */
-.switch-preview {
-  background: var(--panel2); padding: var(--s3); font-size: 12px; line-height: 1.5; max-height: 45vh;
-  overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 0 0 var(--s3);
-}
 
 /* The notification set-up walkthroughs: folded until clicked, numbered, nothing else. */
 /* The Discord card preview - drawn in Discord's own colours, not ours, so it looks like what people will see. */
@@ -1651,3 +1651,56 @@ a.loglink:hover { color: #79b8ff; }
   .h2links .links a { padding: 6px 0; }
   .histbar select { padding: 7px 8px; }
 }
+
+/* ── settings: small titled boxes inside a section (1.8.1) ─────────────
+   Each setting's Group is a box: a small title, then its rows with a hairline between them. A setting that only
+   shows under a switch in the same box is indented under it, with a rule down its left so it reads as belonging. */
+.sgroup { border: 1px solid var(--line); background: var(--panel); padding: 2px var(--s4) 4px; margin: 0 0 var(--s3); max-width: 880px; }
+.sgroup > .sgtitle {
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  padding: 9px 0 7px; border-bottom: 1px solid var(--line);
+}
+.sgroup > .field + .field { border-top: 1px dashed var(--line); }
+.sgroup > .sgtitle + .field { border-top: 0; }
+.field > label .nw { white-space: nowrap; }
+/* A label that wraps keeps its (i) right after the last word, not out at the column's edge. */
+.sgroup .field > label { display: block; }
+.sgroup .field > label .info { margin-left: 5px; vertical-align: -2px; }
+.field.sub { margin-left: 14px; padding-left: 12px; border-left: 2px solid var(--line2); }
+.field.sub2 { margin-left: 28px; }
+.field.sub3 { margin-left: 42px; }
+.sgroup > .field.sub + .field.sub { border-top-color: transparent; }
+/* With 14px less room the label column shrinks by as much, so the controls still line up under each other. */
+.field.sub { grid-template-columns: 184px minmax(0, 320px) minmax(0, max-content); }
+.field.sub2 { grid-template-columns: 158px minmax(0, 320px) minmax(0, max-content); }
+.field.sub3 { grid-template-columns: 132px minmax(0, 320px) minmax(0, max-content); }
+/* What turning a switch on does, while it's off and its settings are hidden. */
+.field .offhint { grid-column: 1 / -1; font-size: 12px; color: var(--muted); line-height: 1.5; padding: 2px 0 4px; max-width: 80ch; }
+.field .offhint span { color: var(--text); opacity: .75; }
+/* Choice buttons with long answers: one under another, each a full line, instead of a ragged wrap. */
+.pills.stack { flex-direction: column; align-items: stretch; gap: 4px; }
+.pills.stack .p { text-align: left; }
+@media (max-width: 900px) {
+  .sgroup { padding: 2px var(--s3) 4px; }
+  .field.sub, .field.sub2, .field.sub3 { grid-template-columns: minmax(0, 1fr); }
+  .field.sub { margin-left: 6px; padding-left: 10px; }
+  .field.sub2 { margin-left: 14px; }
+  .field.sub3 { margin-left: 22px; }
+}
+
+/* ── the "Turn on?" pop-up for Spare items and Steam Points (1.8.1) ─── */
+.swpop .big { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 var(--s3); }
+.swpop .num { flex: 1 1 80px; min-width: 0; background: var(--panel2); border: 1px solid var(--line); padding: 10px 12px; }
+.swpop .num b { display: block; font-size: 22px; line-height: 1.15; color: var(--text); font-weight: 700; }
+.swpop .num span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.swpop .num i { display: block; font-style: normal; font-size: 12px; color: var(--text); margin-top: 2px; }
+.swpop .num.dim b { color: var(--muted); }
+.swpop h4 { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: var(--s3) 0 6px; font-weight: 400; }
+.swpop ul.limits { margin: 0; padding: 0 0 0 18px; font-size: 13px; line-height: 1.6; }
+.swpop ul.limits li::marker { color: var(--muted); }
+.swpop .pricing { margin: var(--s3) 0 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--panel2); font-size: 13px; }
+.swpop .problem { margin: 0 0 var(--s3); padding: 8px 12px; border-left: 3px solid var(--line2); background: var(--panel2); font-size: 13px; }
+.swpop .waiting { color: var(--muted); font-size: 13px; padding: 12px 0; }
+/* Turn on / Cancel stay in reach while a long preview scrolls on a phone. */
+#modalCard:has(.swpop) > .actions { position: sticky; bottom: -16px; background: var(--panel); padding: 10px 0 16px; margin-bottom: -16px; }
+@media (max-width: 420px) { .swpop .num { padding: 8px; } .swpop .num b { font-size: 19px; } }
