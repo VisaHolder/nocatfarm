@@ -94,6 +94,8 @@ Beyond that:
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
+- Card swaps with other nocat.farm users (off until you turn them on, per account): spare normal cards swapped one
+  for one with other people's accounts, paired by nocat.lol, checked by both sides, never a card your sets need.
 - For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
   and market listings to confirm or deny, like the Steam app.
 - A new VAC, game, trade or community ban is reported straight away, and that game's items are kept out of trades.

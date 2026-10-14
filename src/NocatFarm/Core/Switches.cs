@@ -16,6 +16,9 @@ public static class Switches {
 	public const string Spare = "SpareItems";
 	public const string Points = "SpendPoints";
 
+	/// <summary>1.8.2: card swaps with other nocat.farm users (Core/CardExchange.cs) - its go-ahead is in its own ledger.</summary>
+	public const string Swaps = "CardSwaps";
+
 	/// <summary>Whether this account's spare items are on: the switch and its go-ahead together.</summary>
 	public static bool SpareOn(BotConfig cfg, string account) => cfg.SpareItems && SpareLedger.Load(account).Approved;
 
@@ -25,7 +28,10 @@ public static class Switches {
 	/// </summary>
 	public static string Set(Bot bot, string feature, bool on) {
 		lock (bot.CfgGate) {
-			if (feature == Spare) {
+			if (feature == Swaps) {
+				bot.Cfg.CardSwaps = on;
+				CardExchange.Ledger.Load(bot.Name).Change(l => l.Approved = on);
+			} else if (feature == Spare) {
 				bot.Cfg.SpareItems = on;
 				SpareLedger ledger = SpareLedger.Load(bot.Name);
 				ledger.Approved = on;
@@ -41,7 +47,14 @@ public static class Switches {
 			}
 		}
 
+		// On or off, nocat.lol hears in a minute or two: an opt-out deletes this account's SteamID and trade link there.
+		if (feature == Swaps) {
+			CardExchange.Nudge();
+		}
+
 		Said said = (feature, on) switch {
+			(Swaps, true) => new Said("Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits", bot.Name),
+			(Swaps, false) => new Said("Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it", bot.Name),
 			(Spare, true) => new Said("Spare items is on for {0}: it turns spare items into gems or sells them, within its limits", bot.Name),
 			(Spare, false) => new Said("Spare items is off for {0}: nothing is turned into gems or sold", bot.Name),
 			(_, true) => new Said("Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits", bot.Name),
@@ -70,6 +83,16 @@ public static class Switches {
 			spare.Save();
 		}
 
+		CardExchange.Ledger swaps = CardExchange.Ledger.Load(account);
+
+		if (cfg.CardSwaps && !swaps.Approved) {
+			cfg.CardSwaps = false;
+			changed = true;
+		} else if (!cfg.CardSwaps && swaps.Approved) {
+			swaps.Change(static l => l.Approved = false);
+			CardExchange.Nudge();
+		}
+
 		Modules.PointsLedger points = Modules.PointsLedger.Of(account);
 		bool ok = points.Ok || cfg.PointsOk;   // an old ok still in the settings counts until it's moved over
 
@@ -93,9 +116,11 @@ public static class Switches {
 	/// the page sends it) or its setting's name. Null for anything else.
 	/// </summary>
 	public static string? FeatureOfWord(string word) =>
-		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare : word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points : FeatureOf(word);
+		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare : word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points
+			: word.Equals("swaps", StringComparison.OrdinalIgnoreCase) ? Swaps : FeatureOf(word);
 
 	/// <summary>The setting's name for the feature a word names ('spare', 'points'), or null.</summary>
 	public static string? FeatureOf(string setting) =>
-		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare : setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points : null;
+		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare : setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points
+			: setting.Equals(Swaps, StringComparison.OrdinalIgnoreCase) ? Swaps : null;
 }

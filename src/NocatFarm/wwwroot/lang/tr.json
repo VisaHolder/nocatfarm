@@ -2957,7 +2957,69 @@
     "done grinding · back to the usual day": "grind bitti · olağan güne dönülüyor",
     "{0} is on the market · {1}": "{0} pazarda · {1}",
     "{0} is on the market": "{0} pazarda",
-    "couldn't look at the listings waiting on a confirmation: {0}": "onay bekleyen ilanlara bakılamadı: {0}"
+    "couldn't look at the listings waiting on a confirmation: {0}": "onay bekleyen ilanlara bakılamadı: {0}",
+    "its cards have changed since": "kartları o zamandan beri değişti",
+    "no fresh price for some of its cards": "bazı kartlarının güncel fiyatı yok",
+    "it would set back a set now": "şimdi bir seti geriletirdi",
+    "it would lose more than your limit": "sınırından fazla kaybettirirdi",
+    "not a swap nocat.lol paired with this account": "nocat.lol'un bu hesapla eşleştirdiği bir takas değil",
+    "it has something that isn't a normal trading card": "normal bir koleksiyon kartı olmayan bir şey içeriyor",
+    "it isn't the swap nocat.lol paired": "nocat.lol'un eşleştirdiği takas değil",
+    "no fresh price yet for {0}": "{0} için henüz güncel fiyat yok",
+    "it's worth less than this account gives": "bu hesabın verdiğinden daha az değerli",
+    "card swaps: couldn't read its own trade link - not listed this time": "kart takası: kendi takas bağlantısı okunamadı - bu sefer listelenmedi",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} için kart takası açık: fazla kartları sınırları içinde diğer nocat.farm kullanıcılarıyla takas eder",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} için kart takası kapalı: hiçbir şey takas edilmez ve nocat.lol onu unutur",
+    "held by scam watch - no swaps until 'scamwatch ok'": "dolandırıcılık takibi tarafından durduruldu - 'scamwatch ok' gelene kadar takas yok",
+    "waiting for its day": "gününü bekliyor",
+    "{0} swaps today - the most for a day": "bugün {0} takas - bir günün en fazlası",
+    "next swap from about {0}": "sonraki takas yaklaşık {0} itibarıyla",
+    "no swap to send right now": "şu an gönderilecek takas yok",
+    "card swap with {0} done · {1} card(s) each way": "{0} ile kart takası tamam · her yöne {1} kart",
+    "card swap offer to {0} taken back · not accepted in 2 days": "{0} kişisine takas teklifi geri alındı · 2 günde kabul edilmedi",
+    "card swap with {0} didn't go through": "{0} ile kart takası gerçekleşmedi",
+    "card swap with {0} skipped · {1}": "{0} ile kart takası atlandı · {1}",
+    "Steam didn't say whether the trade would be held": "Steam takasın bekletilip bekletilmeyeceğini söylemedi",
+    "the trade would be held": "takas bekletilirdi",
+    "couldn't read its cards": "kartları okunamadı",
+    "Steam didn't say what's on its offers": "Steam tekliflerinde ne olduğunu söylemedi",
+    "Steam hasn't said its wallet currency yet": "Steam henüz cüzdan para birimini söylemedi",
+    "waiting for prices": "fiyatları bekliyor",
+    "nothing in it fits any more": "artık hiçbiri uymuyor",
+    "Steam refused the offer: {0}": "Steam teklifi reddetti: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "kart takası · {0} kişisine teklif gönderildi · her yöne {1} kart",
+    "card swap · you give {0} · you get {1}": "kart takası · verdiğin {0} · aldığın {1}",
+    "card swap · confirm the offer to {0} on your phone": "kart takası · {0} kişisine teklifi telefonunda onayla",
+    "sent a swap to {0}": "{0} kişisine takas gönderildi",
+    "a card swap nocat.lol paired": "nocat.lol'un eşleştirdiği kart takası",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol'un eşleştirdiği kart takası · kontrol edilir, sonra kabul ya da reddedilir",
+    "offer {0} is from an account that once sent a bad swap · left for you": "{0} numaralı teklif bir zamanlar kötü takas göndermiş bir hesaptan · sana bırakıldı",
+    "from an account that once sent a bad swap": "bir zamanlar kötü takas göndermiş bir hesaptan",
+    "not now": "şimdi değil",
+    "offer {0} isn't a good swap now ({1}) - declining": "{0} numaralı teklif şu an iyi bir takas değil ({1}) - reddediliyor",
+    "card swap · you'd give {0} · you'd get {1}": "kart takası · vereceğin {0} · alacağın {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "{0} numaralı takas teklifi eşleştirilen değil ({1}) · sana bırakıldı",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "{0} numaralı teklif nocat.lol'un eşleştirmediği bir kart takası olduğunu söylüyor · sana bırakıldı",
+    "Swaps with other users": "Diğer kullanıcılarla takas",
+    "Turn on card swaps?": "Kart takası açılsın mı?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Şu an takas edebileceği bu, uyduğu sınırlar da bunlar. Aç'a basana kadar hiçbir şey takas edilmez.",
+    "spare cards to swap": "takas edilecek fazla kart",
+    "in {0} games": "{0} oyunda",
+    "swaps a day, at most": "günde en fazla takas",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Yalnızca normal koleksiyon kartları - asla parlak kartlar, arka planlar ya da ifadeler değil",
+    "One for one, in the same game, and only when it helps your sets": "Bire bir, aynı oyunda ve yalnızca setlerine yardım ettiğinde",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Asla setlerinin ihtiyaç duyduğu bir kart, bir kartın son kopyası ya da dokunma listelerindeki bir şey değil",
+    "Each swap worth at most {0} less than what it gives": "Her takas, verdiğinden en fazla {0} daha az değerli",
+    "Never when Steam would hold the trade": "Steam takası bekletecekse asla",
+    "Also when Steam would hold the trade": "Steam takası bekletecek olsa da",
+    "Its offers are confirmed by its authenticator here": "Teklifleri buradaki doğrulayıcısı onaylar",
+    "Its offers wait for you to confirm them on your phone": "Teklifleri telefonunda onaylamanı bekler",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Açıkken nocat.lol bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "Cüzdan para birimi henüz bilinmiyor - bilinene kadar hiçbir şey takas edilmez",
+    "1 card still needs a price first.": "1 kartın önce hâlâ bir fiyata ihtiyacı var.",
+    "{0} cards still need a price first.": "{0} kartın önce hâlâ bir fiyata ihtiyacı var.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} kişisine takas teklifi nocat.lol'un söylediği gibi değildi · geri alındı",
+    "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla"
   },
   "settings": {
     "WebEnabled": {
@@ -4485,6 +4547,22 @@
     "CraftFoilBadges": {
       "label": "Parlak rozetleri de üret",
       "tip": "Tamamlanmış parlak kart setlerinden parlak rozet de üretir. Kapalıyken yalnızca normal rozet üretir ve parlak kartlara dokunmaz. Steam bir parlak rozeti reddederse yalnızca parlaklar bekler - normal rozetler devam eder."
+    },
+    "CardSwaps": {
+      "label": "Diğer nocat.farm kullanıcılarıyla kart takas et",
+      "tip": "Fazla normal koleksiyon kartlarını aynı oyunda diğer nocat.farm kullanıcılarıyla bire bir takas eder, böylece iki taraf da setlerini daha çabuk tamamlar. nocat.lol hesapları eşleştirir; bu hesap her takası önce yeniden kontrol eder. Setlerinin ihtiyaç duyduğu bir kartı ya da bir kartın son kopyasını, parlak kartları, arka planları, ifadeleri ve \"asla dokunma\" listelerindeki hiçbir şeyi asla vermez. Açıkken nocat.lol bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler. Açarken önce ne yapacağını gösterir ve onay ister."
+    },
+    "CardSwapMaxLoss": {
+      "label": "Bir takasın kaybedebileceği en fazla",
+      "tip": "Bir takasın verdiğinden ne kadar daha az değerli olabileceği; pazardaki en ucuz fiyata göre, bu hesabın Steam cüzdan para biriminde. Örneğin 0.01: 0.12 değerindeki kartları 0.11 değerindeki kartlarla takas etmek olur, 0.10 olmaz. 0: takas asla daha az değerli olmaz. Son günden fiyatı olmayan bir kart asla takas edilmez."
+    },
+    "CardSwapsPerDay": {
+      "label": "Günde en fazla takas",
+      "tip": "Bir günde gönderdiği ya da kabul ettiği en fazla takas sayısı - örneğin 5. İnsan modundaki bir hesapta ayrıca kendi gününe, 45 dakika ile 2 saat arayla yayılır."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Steam'in bekleteceği takasları atla",
+      "tip": "Steam takası günlerce bekletecekse o hesapla asla takas etmez - örneğin taraflardan biri Steam Guard uygulamasını yeni kullanmaya başladıysa. Açık olması en güvenlisi."
     }
   }
 }

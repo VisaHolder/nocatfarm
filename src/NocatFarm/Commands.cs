@@ -87,6 +87,7 @@ public static partial class Commands {
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
 		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "", "loot"),
+		new("swaps", "[account] | preview|on|off <account> | sync", GroupTrades, "Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and nocat.lol deletes its SteamID and trade link. 'swaps sync' asks nocat.lol for new matches now."),
 
 		new("2fa", "[account]", GroupGuard, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
 		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
@@ -997,6 +998,7 @@ public static partial class Commands {
 				"events" => Events(mgr, rest),
 				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
+				"swaps" => await SwapsAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest, line).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest, atThisPc).ConfigureAwait(false),

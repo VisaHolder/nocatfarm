@@ -62,6 +62,19 @@ public static class SwitchPreview {
 
 	public sealed record PointsBuy(string Badge, int From, int To, int Levels, long Cost, int Xp);
 
+	/// <summary>1.8.2 card swaps: spare cards it could swap now, and the limits it keeps to.</summary>
+	public sealed record SwapNumbers(bool SignedIn, string Problem, int Games, int Cards, int Unpriced, string Currency, string MaxLoss, int PerDay,
+		bool SkipHeld, bool Confirms, bool Human) {
+		public string Kind => "swaps";
+	}
+
+	public static SwapNumbers Swaps(CardExchange.Spares? spares, Bot bot, bool signedIn, string problem) {
+		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		return new SwapNumbers(signedIn, problem, spares?.Games ?? 0, spares?.Cards ?? 0, spares?.Unpriced ?? 0, currency > 0 ? MarketQuotes.Code(currency) : "",
+			Core.Spare.Money(CardExchange.MaxLossCents(bot.Cfg), currency), CardExchange.PerDay(bot.Cfg), bot.Cfg.CardSwapSkipHeld, bot.CanConfirmTrades, bot.Cfg.LegitMode);
+	}
+
 	/// <summary>The numbers of one spare-items look: counted from its plan, the limits from the account's settings.</summary>
 	public static SpareNumbers Spare(SparePlan? plan, BotConfig cfg, int currency, MarketPrice? sack, bool signedIn, string problem) {
 		SpareRules r = SpareRules.From(cfg);
@@ -97,6 +110,12 @@ public static class SwitchPreview {
 	/// </summary>
 	public static async Task<(string Text, object Data)> LookAsync(Bot bot, string feature, CancellationToken ct) {
 		bool signedIn = bot.IsOnline && bot.Web.Ready;
+
+		if (feature == Switches.Swaps) {
+			(string text, CardExchange.Spares? spares, string problem) = await CardExchange.PreviewAsync(bot, ct).ConfigureAwait(false);
+
+			return (text, Swaps(spares, bot, signedIn, problem));
+		}
 
 		if (feature == Switches.Spare) {
 			string limits = SpareRun.Limits(bot);
