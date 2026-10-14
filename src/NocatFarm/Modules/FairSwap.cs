@@ -116,6 +116,13 @@ internal static class FairSwap {
 			return (false, new Said("not one for one"));
 		}
 
+		// 1.8.2: cards of a game it just bought cards of for a badge stay until they're crafted.
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+
+		if (cards.Giving.Any(c => bought.Contains(c.Game))) {
+			return (false, new Said("it gives a card bought for a badge - kept until it's crafted"));
+		}
+
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
 		if (inventory is not { Complete: true }) {

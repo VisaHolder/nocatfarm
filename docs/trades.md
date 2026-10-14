@@ -100,6 +100,8 @@ What it never does:
 - Never foils, backgrounds, emoticons, gems or game items. Only normal trading cards.
 - Never a card your sets need, never the last copy of a card, never more than *Keep this many of each card* (Spare
   items) allows, and nothing on *Never touch these items* or *Never touch items from these games*.
+- Never a card of a game it bought cards of for a badge in the last week ([Buying cards](cards-and-idling.md#buying-cards)),
+  so nothing it paid for leaves before it's crafted.
 - Never worth more than *Most a swap may lose* (0.01 by default) less than what it gives, by the market's cheapest
   price in this account's own wallet currency. 0 means a swap is never worth less. A card with no price from the last
   day is never swapped. The log shows both sides' worth: `card swap · you give 0.10 USD · you get 0.11 USD`.
@@ -110,6 +112,11 @@ What it never does:
 
 An account whose authenticator is in nocat.farm confirms its own offers. Without one, the offer waits for you in the
 Steam app on your phone, and the log says so. An offer nobody accepted in 2 days is taken back.
+
+Cards promised to a swap stay for it: spare items and `sell` never sell them or turn them into gems while the swap is
+open. With [buying cards](cards-and-idling.md#buying-cards) on, a missing card a paired swap will bring is waited for
+instead of bought. Each has its own daily limit: swaps a day, spare items a day, money spent a day - one never uses up
+another's.
 
 `swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks nocat.lol for
 new matches now.

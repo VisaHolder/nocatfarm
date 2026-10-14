@@ -200,7 +200,7 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. CardExchange.Reserved(Bot.Name, Bot.SteamId, now)];
 		busy.ExceptWith(match.Pairs.Select(static p => p.GiveAsset));
 		List<CardExchange.OwnCard> cards = CardExchange.ReadCards(inventory);
-		CardExchange.Rules rules = CardExchange.Rules.From(Bot.Cfg);
+		CardExchange.Rules rules = CardExchange.RulesOf(Bot, now);
 		int currency = Bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) Bot.WalletCurrency;
 
 		if (currency == 0) {

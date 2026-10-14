@@ -327,8 +327,10 @@ public static partial class CardExchange {
 		public static Rules From(BotConfig c) => new(Math.Max(1, Math.Clamp(c.SpareKeepCopies, 0, 10)), [.. c.SpareKeepGames], Spare.Names(c.SpareKeepItems));
 
 		/// <summary>Whether this copy may go at all - tradable, one item, not on a keep list, not leaving already.</summary>
-		public bool MayGive(OwnCard c, IReadOnlySet<ulong> busy) => c.Tradable && (c.Amount == 1) && !busy.Contains(c.AssetId)
-			&& !KeepGames.Contains(c.Game) && !KeepNames.Contains(c.Name) && !KeepNames.Contains(c.Hash);
+		public bool MayGive(OwnCard c, IReadOnlySet<ulong> busy) => c.Tradable && (c.Amount == 1) && !busy.Contains(c.AssetId) && !Keeps(c.Game, c.Name, c.Hash);
+
+		/// <summary>A card that never goes: its game or its name on a keep list (games it bought cards of for a badge are on it too).</summary>
+		public bool Keeps(uint game, string name, string hash) => KeepGames.Contains(game) || KeepNames.Contains(name) || KeepNames.Contains(hash);
 	}
 
 	/// <summary>The copies of each card this account may give: never more than held less the copies kept.</summary>
@@ -608,8 +610,9 @@ public static partial class CardExchange {
 	/// </summary>
 	/// <param name="held">This account's cards now, less what's already leaving.</param>
 	/// <param name="price">A card's price in this account's wallet currency, null when there's no fresh one.</param>
+	/// <param name="rules">What never goes from this account (<see cref="RulesOf"/>): a swap giving one is declined.</param>
 	public static (Verdict Verdict, Said Why, long Give, long Get) Verify(TradeOffers.Offer offer, Match? match, IReadOnlyDictionary<SwapRules.Card, int> held,
-		Func<TradeOffers.Item, int?> price, long maxLossCents) {
+		Func<TradeOffers.Item, int?> price, long maxLossCents, Rules? rules = null) {
 		if ((match == null) || match.Send || (offer.Partner != match.You) || offer.Ours) {
 			return (Verdict.Unknown, new Said("not a swap nocat.lol paired with this account"), 0, 0);
 		}
@@ -628,6 +631,11 @@ public static partial class CardExchange {
 
 		if (!AsPaired(offer, match)) {
 			return (Verdict.Bad, new Said("it isn't the swap nocat.lol paired"), 0, 0);
+		}
+
+		// Kept since it was paired - put on a never-touch list, or its game's cards bought for a badge that isn't crafted yet.
+		if ((rules != null) && offer.Giving.Any(i => rules.Keeps(i.Game, i.Name, i.Hash))) {
+			return (Verdict.Decline, new Said("it gives a card this account keeps"), 0, 0);
 		}
 
 		if (!SwapRules.NeutralOrBetter(held, giving, receiving)) {

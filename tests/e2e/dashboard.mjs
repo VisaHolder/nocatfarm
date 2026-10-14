@@ -899,10 +899,13 @@ async function putBack(def, orig, target, defaults) {
   return true;
 }
 
-// Spare items and Steam Points (per account) are turned on only through a pop-up that shows what they'd do: ticked, the
-// pop-up comes up with a preview; Cancel leaves it off; ticked again and "Turn on" switches it on; unticked it's off at once.
-// Saved straight away by the pop-up (not by the Save button), so they're walked here on their own, outside the batches.
-const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints'];
+// Spare items, Steam Points, Open in Steam, buying cards and card swaps (per account) are turned on only through a pop-up
+// that shows what they'd do: ticked, the pop-up comes up with a preview; Cancel leaves it off; ticked again and "Turn on"
+// switches it on; unticked it's off at once. Saved straight away by the pop-up (not by the Save button), so they're walked
+// here on their own, outside the batches.
+const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'];
+// The ones whose section is all theirs: off, the section shows only the switch.
+const OWN_SECTION = ['SpareItems', 'SpendPoints', 'BuyCards'];
 
 async function confirmSwitchScenario(n, target, who) {
   const saved = async () => valuesOf(await api('/api/config'), target)[n];
@@ -914,8 +917,14 @@ async function confirmSwitchScenario(n, target, who) {
   // Off, its section is the switch and one line saying what turning it on does - its other settings are hidden.
   const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(@class,"section")][1]');
   const offRows = await sectionOf().locator('[data-setting]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null || e.closest('label.switch')).map((e) => e.dataset.setting));
-  check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
-    offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
+  const dependents = (schema.Bot || []).filter((d) => d.ShowWhen === `${n}=true`).map((d) => d.Name);
+  if (OWN_SECTION.includes(n)) {
+    check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
+      offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
+  } else {
+    check(`settings ${who}: with ${n} off the settings under it are hidden${dependents.length ? ', and a line says what it does' : ''}`,
+      offRows.includes(n) && !offRows.some((r) => dependents.includes(r)) && (await field(n).locator('.offhint').count()) === (dependents.length ? 1 : 0), offRows.join(', '));
+  }
 
   await tick();
   const asked = (await modalOpen()) && (await page.locator('#switchGo').count()) > 0;

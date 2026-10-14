@@ -204,6 +204,9 @@ public sealed class SpareInput {
 
 	/// <summary>The step an unsold listing of this item was given when it was taken down to go up cheaper - or null.</summary>
 	public Func<SpareItem, SpareListings.Step?> StepOf { get; init; } = static _ => null;
+
+	/// <summary>1.8.2: games whose cards buying cards bought for a badge lately - their normal cards stay until it's crafted.</summary>
+	public IReadOnlySet<uint> BoughtGames { get; init; } = new HashSet<uint>();
 }
 
 /// <summary>
@@ -378,6 +381,10 @@ public static partial class Spare {
 
 		if (r.KeepGames.Contains(item.Game) || r.KeepNames.Contains(item.Name) || r.KeepNames.Contains(item.Hash)) {
 			return new Said("on your keep list");
+		}
+
+		if ((item.Kind == SpareKind.Card) && input.BoughtGames.Contains(item.Game)) {
+			return new Said("bought for a badge - kept until it's crafted");
 		}
 
 		if ((item.Kind == SpareKind.FoilCard) && !r.Foils) {

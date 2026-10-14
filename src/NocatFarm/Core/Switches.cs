@@ -3,9 +3,10 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// Spare items and Steam Points are each ONE switch: off is off (nothing happens, and the go-ahead is cleared), and on
-/// means on - turned on only after its preview has been shown (the dashboard's confirm popup, or 'spare on' / 'points on'
-/// at the console), and approved in the same step. There is no "on but waiting for a command".
+/// Spare items, Steam Points, Open in Steam, buying cards and card swaps are each ONE switch (<see cref="All"/>): off is
+/// off (nothing happens, and the go-ahead is cleared), and on means on - turned on only after its preview has been shown
+/// (the dashboard's confirm popup, or 'spare on' / 'buy on' ... at the console), and approved in the same step. There is
+/// no "on but waiting for a command".
 /// </summary>
 /// <remarks>
 /// The go-ahead still lives beside the account's spending (SpareLedger, PointsLedger), never in its settings - so a settings
@@ -30,7 +31,7 @@ public static class Switches {
 	public static bool SpareOn(BotConfig cfg, string account) => cfg.SpareItems && SpareLedger.Load(account).Approved;
 
 	/// <summary>
-	/// Turn one of the two on (switch and go-ahead together) or off (both cleared), and save. The caller has shown what it
+	/// Turn one on (switch and go-ahead together) or off (both cleared), and save. The caller has shown what it
 	/// would do first. A line for the log and the reply.
 	/// </summary>
 	public static string Set(Bot bot, string feature, bool on) {
@@ -167,24 +168,38 @@ public static class Switches {
 		return changed;
 	}
 
+	/// <summary>One switch: its setting's name, the word the dashboard asks its preview by, and the console command that turns it on.</summary>
+	public sealed record Kind(string Setting, string Word, string Command);
+
+	/// <summary>Every switch turned on only through its preview - one row each, so the dashboard, the console and the API agree.</summary>
+	public static readonly IReadOnlyList<Kind> All = [
+		new(Spare, "spare", "spare"),
+		new(Points, "points", "points"),
+		new(SteamOpenButton, "steamopen", "steam"),
+		new(Buy, "buy", "buy"),
+		new(Swaps, "swaps", "swaps")
+	];
+
+	/// <summary>Whether a switch is on for this account: the setting and its go-ahead together.</summary>
+	public static bool IsOn(Bot bot, string feature) => feature switch {
+		Spare => SpareOn(bot.Cfg, bot.Name),
+		SteamOpenButton => SteamOpen.On(bot.Cfg, bot.Name),
+		Buy => Modules.CardBuyer.On(bot),
+		Swaps => CardExchange.On(bot.Cfg, bot.Name),
+		_ => bot.Cfg.SpendPoints && Modules.PointsLedger.Approved(bot)
+	};
+
+	/// <summary>The console command that turns a switch on ('spare on &lt;account&gt;', 'steam on &lt;account&gt;').</summary>
+	public static string CommandOf(string feature) => All.FirstOrDefault(k => k.Setting == feature)?.Command ?? feature;
+
 	/// <summary>
-	/// The feature in the dashboard's preview address (/api/bots/{name}/switch/spare/preview): its word ('spare', 'points', as
-	/// the page sends it) or its setting's name. Null for anything else.
+	/// The feature in the dashboard's preview address (/api/bots/{name}/switch/spare/preview): its word ('spare', 'points',
+	/// 'steamopen', 'buy', 'swaps', as the page sends it) or its setting's name. Null for anything else.
 	/// </summary>
 	public static string? FeatureOfWord(string word) =>
-		word.Equals("spare", StringComparison.OrdinalIgnoreCase) ? Spare
-		: word.Equals("points", StringComparison.OrdinalIgnoreCase) ? Points
-		: word.Equals("steamopen", StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
-		: word.Equals("buy", StringComparison.OrdinalIgnoreCase) ? Buy
-		: word.Equals("swaps", StringComparison.OrdinalIgnoreCase) ? Swaps
-		: FeatureOf(word);
+		All.FirstOrDefault(k => k.Word.Equals(word, StringComparison.OrdinalIgnoreCase))?.Setting ?? FeatureOf(word);
 
-	/// <summary>The setting's name for the feature a word names ('spare', 'points', 'steamopen'), or null.</summary>
+	/// <summary>The switch a setting's name is ('SpareItems', 'BuyCards'...), or null.</summary>
 	public static string? FeatureOf(string setting) =>
-		setting.Equals(Spare, StringComparison.OrdinalIgnoreCase) ? Spare
-		: setting.Equals(Points, StringComparison.OrdinalIgnoreCase) ? Points
-		: setting.Equals(SteamOpenButton, StringComparison.OrdinalIgnoreCase) ? SteamOpenButton
-		: setting.Equals(Buy, StringComparison.OrdinalIgnoreCase) ? Buy
-		: setting.Equals(Swaps, StringComparison.OrdinalIgnoreCase) ? Swaps
-		: null;
+		All.FirstOrDefault(k => k.Setting.Equals(setting, StringComparison.OrdinalIgnoreCase))?.Setting;
 }

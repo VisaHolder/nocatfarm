@@ -358,8 +358,16 @@ gems into booster packs (see [the numbers](#the-numbers)). A set is left out whe
 market, or when one card's cheapest listing is far under the rest (a "dumped" card - the set's real price is higher).
 To turn gems into money for this, set *Spare items* → *Gems afterwards* to sell the sacks: it lists one sack of 1,000 gems a look, inside the spare-items limits.
 
-**Card swaps.** For each missing card it takes the cheaper of buying it now or waiting for a card swap. Card swapping
-isn't in this version yet, so for now every missing card is bought.
+**Card swaps.** With [card swaps](trades.md#card-swaps-with-other-nocatfarm-users) on as well, a missing card that a
+swap nocat.lol has already paired will bring is waited for instead of bought - when the spare card it gives for it is
+worth less than the card costs to buy, or when the swap's offer is already out (buying it then would be a second
+copy). The whole set waits with it: never half a set. If no swap brings the card, swaps are off, or it isn't sure,
+the card is bought. A paired swap that doesn't happen lets go after 2 days, and the next look buys.
+
+**Bought cards stay for the craft.** For a week after it buys cards of a game, none of that game's cards are swapped
+(card swaps, fair card swaps), turned into gems, or sold (spare items, `sell`) - so nothing it paid for leaves before
+the badge is crafted. With buying cards on, `sell` also keeps every copy a badge still needs, as it does for a set
+that's held whole, since the missing cards will be bought.
 
 **How it buys.** Trading cards are bought the way Steam's new market buys them: one order for one card at the
 cheapest listing's price, which goes through at once - or, if somebody bought that card first, is taken back. Nothing

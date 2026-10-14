@@ -136,16 +136,16 @@ It also, without being asked:
 - checks for updates every 2 hours and tells you what's new, but only installs one by itself if you set *Updates*
   to *install by itself at night*
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, spending Steam Points and buying cards are all off until you switch them
-on in an account's settings - and selling, gems, Steam Points and buying cards show what they would do first and ask
-you to confirm. The only
-things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
+until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
+what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
+Steam sales, and free games if you turn that on.
 
 These stay **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
 achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
-Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, daily backups, Discord and
-Telegram, rep4rep, and plugins. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
+Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, card swaps with
+other nocat.farm users, daily backups, Discord and Telegram, rep4rep, and plugins. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
 added account - farm accounts too - until you turn it on.
 
 ## 4. Finding your way around

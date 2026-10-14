@@ -693,9 +693,8 @@ public static class SpareRun {
 			return (null, "Steam wouldn't say what's on the market - try again in a while");
 		}
 
-		HashSet<ulong> busy = [.. promised, .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
 		// 1.8.2: cards promised to a card swap nocat.lol paired stay for it - never sold or turned into gems meanwhile.
-		busy.UnionWith(CardExchange.Reserved(bot.Name, bot.SteamId, DateTime.UtcNow));
+		HashSet<ulong> busy = [.. CardExchange.NotForSale(bot, promised, DateTime.UtcNow), .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
 		List<SpareItem> items = Spare.Read(inventory);
 		DateTime now = DateTime.UtcNow;
 		SpareLedger ledger = SpareLedger.Load(bot.Name);
@@ -730,7 +729,8 @@ public static class SpareRun {
 
 		LiveSpareSteam steam = new(bot);
 		Func<SpareItem, Said?> waiting = OurListings.WaitingWhy(OurListings.Load(bot.Name));
-		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting);
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought);
 		SparePlan plan = priceThem
 			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action == 0) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
@@ -959,7 +959,7 @@ public static class SpareRun {
 	public const int QuotesAsked = 20, QuotesBackground = 60;
 
 	private static SparePlan Decide(IReadOnlyList<SpareItem> items, SpareBadges badges, SpareRules rules, SpareLedger ledger, IReadOnlySet<ulong> busy,
-		int currency, SpareListings memory, Func<SpareItem, Said?> waiting) {
+		int currency, SpareListings memory, Func<SpareItem, Said?> waiting, IReadOnlySet<uint> bought) {
 		DateTime now = DateTime.UtcNow;
 
 		return Spare.Plan(new SpareInput {
@@ -973,7 +973,8 @@ public static class SpareRun {
 			Sack = SparePrices.Sack(currency),
 			GemValue = static i => i.GooType > 0 ? SteamGems.KnownValue(i) : 0,
 			Declined = i => memory.DeclinedWhy(i, rules.DeclinedDays, now) ?? waiting(i),
-			StepOf = i => memory.StepOf(i.Hash, now)
+			StepOf = i => memory.StepOf(i.Hash, now),
+			BoughtGames = bought
 		});
 	}
 

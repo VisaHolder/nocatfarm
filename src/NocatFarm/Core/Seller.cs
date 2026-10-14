@@ -69,6 +69,12 @@ public static class Seller {
 	public static string Money(int cents, Bot bot) => (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture)
 		+ (bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? "" : " " + bot.WalletCurrency);
 
+	/// <summary>
+	/// Copies of each card 'sell' keeps: none of a finished badge's, every level's worth of a set it holds whole - or will,
+	/// with buying cards on (it buys the missing ones) - and otherwise one.
+	/// </summary>
+	public static int KeepCopies(int levelsLeft, bool wholeSet, bool buying) => levelsLeft <= 0 ? 0 : wholeSet || buying ? levelsLeft : 1;
+
 	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct) {
 		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant.
 		if (WalletCurrency(bot) is not int currency) {
@@ -93,9 +99,12 @@ public static class Seller {
 
 		// Cards promised in a trade that's still waiting aren't this account's to sell - and don't count towards its sets
 		// either, since they're about to leave. Not knowing is a reason to wait, not to guess: listing one breaks the trade.
-		if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+		if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } waiting) {
 			return new Plan([], 0, 0, "Steam wouldn't say which cards are in a waiting trade - try again in a while");
 		}
+
+		// 1.8.2: nor are its cards promised to a card swap nocat.lol paired.
+		HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 		// game -> card -> the copies held (asset ids), marketable normal cards only
 		Dictionary<uint, Dictionary<string, List<ulong>>> cards = [];
@@ -132,13 +141,19 @@ public static class Seller {
 		int unpriced = 0;
 		int lookups = 0;
 
+		// 1.8.2: with buying cards on, a set it's missing cards of will be finished by buying them, so its copies are kept for
+		// the levels still to come; a game it just bought cards of keeps them all until they're crafted.
+		bool buying = Modules.CardBuyer.On(bot);
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+
 		// The games with the most spare copies first - that's where a price lookup sells the most.
 		foreach ((uint game, Dictionary<string, List<ulong>> held) in cards.OrderByDescending(static c => c.Value.Values.Sum(static v => v.Count - 1))) {
 			int levelsLeft = MaxBadgeLevel - badges.GameLevels.GetValueOrDefault(game);
 			int spare = held.Values.Sum(v => Math.Max(0, v.Count - Math.Max(1, levelsLeft)));
 
-			if ((levelsLeft > 0) && (spare == 0)) {
-				continue;   // nothing spare even on the generous reading - no need to ask the market
+			// Bought for a badge, or nothing spare even on the generous reading - no need to ask the market.
+			if (bought.Contains(game) || ((levelsLeft > 0) && (spare == 0))) {
+				continue;
 			}
 
 			if (lookups >= MaxLookups) {
@@ -157,7 +172,7 @@ public static class Seller {
 			}
 
 			bool wholeSet = (set.Size > 0) && set.Cards.Keys.All(held.ContainsKey);
-			int keep = levelsLeft <= 0 ? 0 : wholeSet ? levelsLeft : 1;
+			int keep = KeepCopies(levelsLeft, wholeSet, buying);
 
 			foreach ((string hash, List<ulong> copies) in held) {
 				foreach (ulong asset in copies.Skip(keep)) {
@@ -319,9 +334,12 @@ public static class Seller {
 		HashSet<ulong> claimed = bot.ClaimItems(offers.Select(static o => o.AssetId));
 
 		try {
-			if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+			if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } waiting) {
 				return new Said("{0}: Steam wouldn't say which items are in a waiting trade - try again in a while", bot.Name).ToString();
 			}
+
+			// 1.8.2: never a card promised to a card swap nocat.lol paired, either.
+			HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 			return await SellClaimedAsync(bot, [.. offers.Where(o => claimed.Contains(o.AssetId) && !promised.Contains(o.AssetId))], ct, mayAct,
 				reprice ?? OwnRule(bot, currency), hold, onListed, pause).ConfigureAwait(false);

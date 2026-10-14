@@ -45,7 +45,7 @@ public static partial class CardExchange {
 
 		DateTime now = DateTime.UtcNow;
 		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. Reserved(bot.Name, bot.SteamId, now)];
-		Spares spares = Count(ReadCards(inventory), busy, Rules.From(bot.Cfg),
+		Spares spares = Count(ReadCards(inventory), busy, RulesOf(bot, now),
 			hash => (hash.IndexOf('-') is int dash and > 0) && uint.TryParse(hash.AsSpan(0, dash), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out uint app)
 				&& (SparePrices.Cached(app) is { } g) && (now - g.When <= PriceFor) && (SparePrices.UsdCents(hash) != null));
 		string what = spares.Cards == 0

@@ -104,7 +104,8 @@ public sealed partial class Trading {
 
 		CardExchange.Match? match = CardExchange.Find(Bot.SteamId, id);
 		long maxLoss = CardExchange.MaxLossCents(Bot.Cfg);
-		(CardExchange.Verdict verdict, Said why, long give, long get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, now), maxLoss);
+		CardExchange.Rules rules = CardExchange.RulesOf(Bot, now);
+		(CardExchange.Verdict verdict, Said why, long give, long get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, now), maxLoss, rules);
 
 		// No fresh price: the cards in it are asked about in the wallet's own currency, then judged again.
 		if (verdict == CardExchange.Verdict.Wait) {
@@ -112,7 +113,7 @@ public sealed partial class Trading {
 				await (PriceCard?.Invoke(item.Hash, currency, ct) ?? MarketQuotes.FetchAsync(item.Hash, currency, ct)).ConfigureAwait(false);
 			}
 
-			(verdict, why, give, get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, DateTime.UtcNow), maxLoss);
+			(verdict, why, give, get) = CardExchange.Verify(offer, match, held, i => CardExchange.WalletCents(i.Hash, currency, DateTime.UtcNow), maxLoss, rules);
 		}
 
 		switch (verdict) {

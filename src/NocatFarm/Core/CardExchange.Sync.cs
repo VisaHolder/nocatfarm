@@ -376,7 +376,7 @@ public static partial class CardExchange {
 		DateTime now = DateTime.UtcNow;
 		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. Reserved(bot.Name, bot.SteamId, now)];
 		List<OwnCard> cards = ReadCards(inventory);
-		Rules rules = Rules.From(bot.Cfg);
+		Rules rules = RulesOf(bot, now);   // its never-touch lists, and games it just bought cards of for a badge
 
 		// A few games a list whose market prices are old or missing are priced first - a search page each, through the
 		// market's own queue. The rest are priced on later lists; a card without a price is never paired.

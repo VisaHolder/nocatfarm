@@ -116,11 +116,11 @@ Beyond that:
   game really takes, so "finish the game" never lands 3 hours into a 20-hour game. An optional hunter picks games to
   earn them in.
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, spending Steam Points and buying cards are all off until you switch them
-on in an account's settings - and selling, gems, Steam Points and buying cards show what they would do first and ask
-you to confirm. The only
-things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
+until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
+what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
+Steam sales, and free games if you turn that on.
 
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
   or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's

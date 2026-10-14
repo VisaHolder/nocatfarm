@@ -215,8 +215,8 @@ public interface ICardMarket {
 
 /// <summary>
 /// Card swaps, as buying cards asks them: whether a missing card could come by a swap instead, and for how much. Card
-/// swapping answers through <see cref="SwapCost.Current"/> once it's there; until then there's no swap on offer and
-/// every missing card is bought.
+/// swapping answers through <see cref="SwapCost.Current"/> (Core/CardExchange.BuyCost.cs): a card is only waited for when
+/// a match nocat.lol made brings it - otherwise it's bought.
 /// </summary>
 public interface ICardSwaps {
 	/// <summary>
@@ -226,7 +226,7 @@ public interface ICardSwaps {
 	Task<long?> SwapCostAsync(Bot? bot, uint app, string hash, CancellationToken ct);
 }
 
-/// <summary>Where buying cards finds card swapping. None for now.</summary>
+/// <summary>Where buying cards finds card swapping.</summary>
 public static class SwapCost {
 	private sealed class NoSwaps : ICardSwaps {
 		public Task<long?> SwapCostAsync(Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult<long?>(null);
@@ -235,8 +235,8 @@ public static class SwapCost {
 	/// <summary>No swap on offer, ever.</summary>
 	public static readonly ICardSwaps None = new NoSwaps();
 
-	/// <summary>The swaps buying cards asks - card swapping sets this when it starts.</summary>
-	public static ICardSwaps Current { get; set; } = None;
+	/// <summary>The swaps buying cards asks: card swapping's own answer.</summary>
+	public static ICardSwaps Current { get; set; } = new CardExchange.BuyCosts();
 }
 
 /// <summary>One card to buy, at the cheapest listing's price (the buyer's price, fees in).</summary>
@@ -653,6 +653,13 @@ public sealed class BuyLedger(string path) {
 	public long SpentSince(DateTime utc) {
 		lock (_gate) {
 			return Load().Where(e => e.At >= utc).Sum(static e => e.Cents);
+		}
+	}
+
+	/// <summary>The games it bought cards of since then (a purchase Steam didn't answer about too) - their cards stay for the craft.</summary>
+	public HashSet<uint> GamesSince(DateTime utc) {
+		lock (_gate) {
+			return [.. Load().Where(e => (e.At >= utc) && (e.App != 0)).Select(static e => e.App)];
 		}
 	}
 

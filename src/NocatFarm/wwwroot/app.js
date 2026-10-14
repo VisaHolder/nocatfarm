@@ -3047,10 +3047,10 @@ function tutStepType() {
   };
 }
 
-/// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened or spent by default.
+/// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened, bought, swapped or spent by default.
 function safeItemsNote() {
   return `<div class="tut-note safe-items"><b>${esc(t('Your items are safe by default'))}</b>
-    <span>${esc(t("nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
+    <span>${esc(t("nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
 }
 
 function tutStepFinal() {
@@ -6078,14 +6078,37 @@ const GUARDED_OFF = {
   },
 };
 
-// Spare items and Steam Points are one switch each, saved straight away: turning one on first shows what it would do and
-// asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
-const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points', SteamOpenButton: 'steamopen', BuyCards: 'buy' };
-
-// 1.8.2: card swaps with other nocat.farm users - one switch like those, with its own pop-up.
-CONFIRMED_ON.CardSwaps = 'swaps';
+// Spare items, Steam Points, Open in Steam, buying cards and card swaps are one switch each, saved straight away: turning
+// one on first shows what it would do and asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step.
+// Off is off, at once, and clears it. One row each: the word its preview is asked by (/api/bots/{name}/switch/{word}/preview),
+// and the pop-up's title, its first line, and what it draws from the preview's numbers.
 const SWITCH_POPUPS = {
+  SpareItems: {
+    word: 'spare',
+    title: () => t('Turn on Spare items?'),
+    intro: () => t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.'),
+    html: (d) => sparePreviewHtml(d),
+  },
+  SpendPoints: {
+    word: 'points',
+    title: () => t('Turn on spending Steam Points?'),
+    intro: () => t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'),
+    html: (d) => pointsPreviewHtml(d),
+  },
+  SteamOpenButton: {
+    word: 'steamopen',
+    title: () => t('Turn on the Open in Steam button?'),
+    intro: () => t('This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.'),
+    html: (d) => steamOpenPreviewHtml(d),
+  },
+  BuyCards: {
+    word: 'buy',
+    title: () => t('Turn on buying cards?'),
+    intro: () => t("This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on."),
+    html: (d) => buyPreviewHtml(d),
+  },
   CardSwaps: {
+    word: 'swaps',
     title: () => t('Turn on card swaps?'),
     intro: () => t('This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.'),
     html: (d) => swapsPreviewHtml(d),
@@ -6093,18 +6116,11 @@ const SWITCH_POPUPS = {
 };
 
 function confirmSwitch(name, account) {
-  const own = SWITCH_POPUPS[name];
-  const title = own ? own.title() : name === 'SpareItems' ? t('Turn on Spare items?')
-    : name === 'SpendPoints' ? t('Turn on spending Steam Points?')
-    : name === 'BuyCards' ? t('Turn on buying cards?')
-    : t('Turn on the Open in Steam button?');
-  const intro = own ? own.intro() : name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
-    : name === 'SpendPoints' ? t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.')
-    : name === 'BuyCards' ? t("This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.")
-    : t('This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.');
+  const pop = SWITCH_POPUPS[name];
+  if (!pop) return;
   modal(`
-    <h2>${esc(title)}</h2>
-    <p>${esc(intro)}</p>
+    <h2>${esc(pop.title())}</h2>
+    <p>${esc(pop.intro())}</p>
     <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
     <div class="actions">
       <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
@@ -6113,9 +6129,8 @@ function confirmSwitch(name, account) {
     </div>`);
   const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
   const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
-  const draw = (d) => d.Kind === 'points' ? pointsPreviewHtml(d) : d.Kind === 'steamopen' ? steamOpenPreviewHtml(d) : d.Kind === 'buy' ? buyPreviewHtml(d) : sparePreviewHtml(d);
-  api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => show(r && r.data ? (own ? own.html(r.data) : draw(r.data)) : none))
+  api(`/api/bots/${encodeURIComponent(account)}/switch/${pop.word}/preview`)
+    .then((r) => show(r && r.data ? pop.html(r.data) : none))
     .catch(() => show(none));
 }
 
@@ -6317,7 +6332,7 @@ async function switchTo(name, account, on) {
 }
 
 function editBool(name, el) {
-  if (CONFIRMED_ON[name] && settingsTarget !== GLOBAL) {
+  if (SWITCH_POPUPS[name] && settingsTarget !== GLOBAL) {
     const on = el.checked;
     el.checked = !on;   // as it is, until it's done
     if (on) confirmSwitch(name, settingsTarget);
