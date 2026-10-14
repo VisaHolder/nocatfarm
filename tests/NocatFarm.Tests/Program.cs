@@ -27368,6 +27368,66 @@ await CommandSweep.RunAsync(Check);
 	}
 }
 
+// ── 1.8.2: the wake time while asleep, and the end of a sitting ──
+{
+	string wkRepo = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+	string WkSrc(string rel) => File.ReadAllText(Path.Combine(wkRepo, rel)).Replace("\r\n", "\n");
+	var wkCfg = new NocatFarm.Config.BotConfig { DayStartTime = 14 * 60, DayStartVaryMinutes = 45 };
+
+	// Asleep after bedtime: yesterday's wake (14:46) is gone and today's isn't rolled yet - the window says when.
+	DateTime wkNight = new(2026, 10, 14, 2, 30, 0, DateTimeKind.Local);
+	DateTime wkYesterdayWake = new(2026, 10, 13, 14, 46, 0, DateTimeKind.Local);
+	Check("wake time: asleep after bedtime shows the next window, not yesterday's wake",
+		NocatFarm.Modules.HumanMode.UpText(wkYesterdayWake, wkNight, wkCfg) == "13:15-14:45",
+		NocatFarm.Modules.HumanMode.UpText(wkYesterdayWake, wkNight, wkCfg));
+	Check("wake time: while today's planned wake is still ahead it's that time",
+		NocatFarm.Modules.HumanMode.UpText(wkNight.AddHours(11), wkNight, wkCfg) == "13:30");
+	Check("wake time: a window that doesn't vary is one time",
+		NocatFarm.Modules.HumanMode.UpText(wkYesterdayWake, wkNight, new NocatFarm.Config.BotConfig { DayStartTime = 14 * 60, DayStartVaryMinutes = 0 }) == "14:00");
+
+	var wkAfterBed = NocatFarm.Modules.HumanMode.UpWindow(wkYesterdayWake, wkNight, wkCfg);
+	Check("wake time: after midnight the window is today's",
+		wkAfterBed is { } wa && (wa.From == new DateTime(2026, 10, 14, 13, 15, 0)) && (wa.To == new DateTime(2026, 10, 14, 14, 45, 0)), $"{wkAfterBed}");
+	DateTime wkEvening = new(2026, 10, 14, 21, 30, 0, DateTimeKind.Local);
+	var wkDone = NocatFarm.Modules.HumanMode.UpWindow(new DateTime(2026, 10, 14, 13, 50, 0), wkEvening, wkCfg);
+	Check("wake time: done for the day in the evening, the window is tomorrow's",
+		wkDone is { } wd && (wd.From == new DateTime(2026, 10, 15, 13, 15, 0)), $"{wkDone}");
+	DateTime wkInWindow = new(2026, 10, 14, 13, 20, 0, DateTimeKind.Local);
+	var wkOff = NocatFarm.Modules.HumanMode.UpWindow(new DateTime(2026, 10, 14, 13, 16, 0), wkInWindow, wkCfg);
+	Check("wake time: a day off rolled this afternoon comes back in tomorrow's window, not today's",
+		wkOff is { } wo && (wo.From.Date == new DateTime(2026, 10, 15)), $"{wkOff}");
+	Check("wake time: no window while the planned wake is ahead", NocatFarm.Modules.HumanMode.UpWindow(wkNight.AddHours(11), wkNight, wkCfg) == null);
+
+	DateTime wkNowUtc = DateTime.UtcNow;
+	DateTime wkFrom = DateTime.Now.Date.AddDays(1).AddHours(13).AddMinutes(15), wkTo = wkFrom.AddMinutes(90);
+	Check("wake time: the chip and mini mode say the window",
+		NocatFarm.Core.StateTime.When("asleep", wkNowUtc.AddHours(5), wkNowUtc, (wkFrom, wkTo)).ToEnglish() == "up 13:15-14:45",
+		NocatFarm.Core.StateTime.When("asleep", wkNowUtc.AddHours(5), wkNowUtc, (wkFrom, wkTo)).ToEnglish());
+	Check("wake time: just past its wake it still says any moment",
+		NocatFarm.Core.StateTime.When("asleep", wkNowUtc.AddMinutes(-2), wkNowUtc, (wkFrom, wkTo)).ToEnglish() == "any moment");
+
+	string wkHuman = WkSrc("src/NocatFarm/Modules/HumanMode.cs");
+	string wkApp = WkSrc("src/NocatFarm/wwwroot/app.js");
+	Check("wake time: every \"up\" and \"back\" the account says goes through the window rule",
+		!wkHuman.Contains("(NextWakeTime()).ToString(\"HH:mm\")", StringComparison.Ordinal) && wkHuman.Contains("UpAt()", StringComparison.Ordinal)
+		&& WkSrc("src/NocatFarm/Core/BotStatus.cs").Contains("UpWindowNow", StringComparison.Ordinal)
+		&& WkSrc("src/NocatFarm/Web/WebHost.cs").Contains("UpFrom = ", StringComparison.Ordinal)
+		&& wkApp.Contains("b.UpFrom && b.UpTo", StringComparison.Ordinal));
+
+	// The end of a sitting
+	Check("end of a sitting: a sitting with under 2 minutes left isn't carried on after a restart",
+		!NocatFarm.Modules.HumanMode.CarriesOn(TimeSpan.FromSeconds(40)) && !NocatFarm.Modules.HumanMode.CarriesOn(TimeSpan.FromSeconds(110))
+		&& NocatFarm.Modules.HumanMode.CarriesOn(TimeSpan.FromMinutes(3)));
+	DateTime wkU = new(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc);
+	Check("end of a sitting: time left never reads 0m",
+		(NocatFarm.Modules.HumanMode.LeftWords(wkU.AddSeconds(20), wkU) == "1m") && (NocatFarm.Modules.HumanMode.LeftWords(wkU.AddSeconds(-5), wkU) == "1m")
+		&& (NocatFarm.Modules.HumanMode.LeftWords(wkU.AddMinutes(90), wkU) == "1h30m"),
+		NocatFarm.Modules.HumanMode.LeftWords(wkU.AddSeconds(20), wkU));
+	Check("end of a sitting: the cut-off sitting that's over ends the way a sitting does - a break or switching",
+		wkHuman.Contains("if (!CarriesOn(was.Ends - now))", StringComparison.Ordinal)
+		&& WkSrc("src/NocatFarm/Core/BotStatus.cs").Contains("Math.Max(1, total - done)", StringComparison.Ordinal));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();

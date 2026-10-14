@@ -377,7 +377,13 @@ function stateText(b) {
     const left = Math.ceil((new Date(b.Until).getTime() - Date.now()) / 60000);
     return `${b.Status} · ${left > 0 ? tf('{0} to go', hm(left)) : t('any moment')}`;
   }
-  if (b.Group === 'asleep' || b.Group === 'nightidle') return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
+  if (b.Group === 'asleep' || b.Group === 'nightidle') {
+    // After bedtime the next day isn't planned yet: the window it gets up in, not the day before's wake time.
+    if (b.UpFrom && b.UpTo && new Date(b.Until).getTime() > Date.now()) {
+      return `${b.Status} · ${tf('up {0}', clock(b.UpFrom) === clock(b.UpTo) ? clock(b.UpFrom) : `${clock(b.UpFrom)}-${clock(b.UpTo)}`)}`;
+    }
+    return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
+  
   return b.Status;
 }
 

@@ -3186,6 +3186,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
 				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
+				(DateTime From, DateTime To)? upWindow = StateTime.Window(b);
 
 				return new {
 					Name = b.Name,
@@ -3197,6 +3198,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Status = Loc.T(Commands.StateWord(b)),
 					// The end of a human-mode break or night, so the chip can say "on a break · 5m to go" / "asleep · up ~09:30".
 					Until = StateTime.Until(b),
+					// Asleep after bedtime, the next day isn't planned yet: the window it gets up in - "asleep · up 13:15-14:45".
+					UpFrom = upWindow?.From.ToUniversalTime(),
+					UpTo = upWindow?.To.ToUniversalTime(),
 					Detail = Loc.T(b.StatusText),
 					Persona = Loc.T(b.PersonaWord),
 					// The dashboard dims a hidden persona. It used to test Persona === 'invisible', which is
