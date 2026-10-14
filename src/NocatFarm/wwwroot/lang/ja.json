@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Open in Steam: sign your Steam app into this account": "Steamで開く：このアカウントでSteamアプリにサインイン",
     "signing your Steam app into {0} - it closes and opens again": "Steamアプリを {0} でサインインします - 一度閉じて開き直します",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} では「Steamで開く」がオンになっていません - まず設定でオンにしてください",
     "Open in Steam only works on Windows for now": "「Steamで開く」は今のところWindowsでのみ使えます",

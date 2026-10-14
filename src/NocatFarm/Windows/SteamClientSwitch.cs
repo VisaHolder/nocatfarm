@@ -191,8 +191,9 @@ public static class SteamClientSwitch {
 						return;   // the write failed, so don't start Steam onto a half-written change
 					}
 
+					// 1.8.2: the way a double-click starts it - through Explorer, so Steam isn't nocat.farm's child.
 					try {
-						Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true })?.Dispose();
+						Process.Start(SteamOpen.StartInfo(exe, Environment.GetFolderPath(Environment.SpecialFolder.Windows)))?.Dispose();
 					} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
 						Log.Failed("couldn't start Steam again", e, display);
 					}
@@ -224,10 +225,9 @@ public static class SteamClientSwitch {
 			return true;
 		}
 
+		// 1.8.2: through the shell too (no handles inherited, never elevated) - see SteamOpen.ShutdownInfo.
 		try {
-			ProcessStartInfo stop = new(exe) { UseShellExecute = false };
-			stop.ArgumentList.Add("-shutdown");
-			Process.Start(stop)?.Dispose();
+			Process.Start(SteamOpen.ShutdownInfo(exe))?.Dispose();
 		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
 			Log.Debug($"steam -shutdown wouldn't start: {Log.Describe(e)}");
 		}

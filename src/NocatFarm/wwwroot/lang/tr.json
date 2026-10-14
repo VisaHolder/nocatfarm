@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Open in Steam: sign your Steam app into this account": "Steam'de aç: Steam uygulamanı bu hesaba giriş yaptır",
     "signing your Steam app into {0} - it closes and opens again": "Steam uygulamanı {0} hesabına giriş yaptırıyorum - kapanıp yeniden açılır",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} için Steam'de aç açık değil - önce ayarlarından aç",
     "Open in Steam only works on Windows for now": "Steam'de aç şimdilik yalnızca Windows'ta çalışır",

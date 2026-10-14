@@ -28092,6 +28092,21 @@ await CardSwapCheatChecks.RunAsync(Check);
 	await scBot.DisposeAsync();
 }
 
+// ── 1.8.2: Open in Steam starts Steam like a double-click ──
+{
+	// Steam is started the way a double-click starts it: explorer.exe "<steam.exe>" through the shell, so Steam's parent is
+	// Explorer and not nocat.farm - nothing passed to Steam, nothing elevated.
+	System.Diagnostics.ProcessStartInfo sdStart = NocatFarm.Core.SteamOpen.StartInfo(@"C:\Program Files (x86)\Steam\steam.exe", @"C:\Windows");
+	Check("steam open: Steam is started through Explorer - explorer.exe \"<steam.exe>\" from the Windows folder",
+		(sdStart.FileName == Path.Combine(@"C:\Windows", "explorer.exe")) && (sdStart.Arguments == "\"C:\\Program Files (x86)\\Steam\\steam.exe\""), $"{sdStart.FileName} {sdStart.Arguments}");
+	Check("steam open: Steam is started through the shell, never elevated, with nothing passed to Steam",
+		sdStart.UseShellExecute && (sdStart.Verb.Length == 0) && (sdStart.ArgumentList.Count == 0) && !sdStart.Arguments.Contains(" -", StringComparison.Ordinal));
+
+	System.Diagnostics.ProcessStartInfo sdStop = NocatFarm.Core.SteamOpen.ShutdownInfo(@"C:\Program Files (x86)\Steam\steam.exe");
+	Check("steam open: Steam is asked to close with its own -shutdown, through the shell and never elevated",
+		(sdStop.FileName == @"C:\Program Files (x86)\Steam\steam.exe") && (sdStop.Arguments == "-shutdown") && sdStop.UseShellExecute && (sdStop.Verb.Length == 0));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();

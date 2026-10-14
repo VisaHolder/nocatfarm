@@ -27,6 +27,30 @@ public static class SteamOpen {
 	public const string SteamBusy = "steam-busy";        // Steam wouldn't close, so nothing was changed
 	public const string BackupFailed = "backup-failed";  // couldn't back the files up first, so nothing was changed
 
+	// ── how Steam is closed and started (1.8.2) ──
+	// nocat.farm never touches the Steam Client Service, never repairs or installs anything, and never runs anything
+	// elevated: no "runas", no admin rights asked for. It only asks the running Steam to close (steam.exe -shutdown, as
+	// Steam documents) and starts Steam again exactly as a double-click on it does.
+
+	/// <summary>
+	/// 1.8.2: how Steam is started - the way a double-click does: <c>explorer.exe "&lt;steam.exe&gt;"</c>, through the shell
+	/// (ShellExecute, no handles inherited). Explorer starts Steam, so Steam's parent is Explorer, not nocat.farm, and it
+	/// shares nothing with nocat.farm's process. Started as nocat.farm's own child, Steam showed "Steam Service Error: the
+	/// Steam Service on your machine requires some maintenance". Nothing is passed to Steam itself - no login, no switches.
+	/// </summary>
+	/// <param name="steamExe">The full path of steam.exe.</param>
+	/// <param name="windowsDir">The Windows folder, where explorer.exe is - a full path, never looked up on PATH.</param>
+	public static System.Diagnostics.ProcessStartInfo StartInfo(string steamExe, string windowsDir) =>
+		new(Path.Combine(windowsDir, "explorer.exe"), "\"" + steamExe + "\"") { UseShellExecute = true, Verb = "" };
+
+	/// <summary>
+	/// 1.8.2: how the running Steam is asked to close - <c>steam.exe -shutdown</c>, Steam's own documented switch, through the
+	/// shell (ShellExecute, no handles inherited, never elevated). This second steam.exe only tells the running one to close
+	/// and exits; it never runs Steam itself.
+	/// </summary>
+	public static System.Diagnostics.ProcessStartInfo ShutdownInfo(string steamExe) =>
+		new(steamExe, "-shutdown") { UseShellExecute = true, Verb = "" };
+
 	/// <summary>Whether Open in Steam can work on this machine at all. Windows only for now.</summary>
 	public static bool Supported => OperatingSystem.IsWindows();
 

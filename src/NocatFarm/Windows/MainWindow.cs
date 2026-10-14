@@ -667,6 +667,11 @@ public sealed partial class MainWindow : IDisposable {
 
 				return IntPtr.Zero;
 
+			case WmPrintClient:
+				PaintInto(wParam);
+
+				return IntPtr.Zero;
+
 			case WmCtlColorEdit: {
 				// An EDIT paints itself, so the only way to make it match is to hand back the colours and a
 				// background brush every time it asks. Without this it is a white box on a black window.
@@ -887,6 +892,24 @@ public sealed partial class MainWindow : IDisposable {
 					Invalidate();
 				}
 
+				// The account row's Steam button has a tooltip (its label is one word).
+				(int X, int Y, int W, int H)? steamTip = null;
+
+				if (_sheet && (id < 0)) {
+					int mx = LoWord(lParam), my = HiWord(lParam);
+
+					foreach ((int hx, int hy, int hw, int hh, _, char what) in _hits) {
+						if ((what == 'o') && (mx >= hx) && (mx < hx + hw) && (my >= hy) && (my < hy + hh)) {
+							steamTip = (hx, hy, hw, hh);
+						}
+					}
+				}
+
+				if (steamTip != _steamTip) {
+					_steamTip = steamTip;
+					Invalidate();
+				}
+
 				// Ask to be told when the cursor leaves, or the last button stays lit after the mouse has gone.
 				if (!_tracking) {
 					_tracking = true;
@@ -906,6 +929,7 @@ public sealed partial class MainWindow : IDisposable {
 				_tracking = false;
 				_overLink = false;
 				_hoverId = -1;
+				_steamTip = null;
 				Invalidate();
 
 				return IntPtr.Zero;
@@ -1143,6 +1167,7 @@ public sealed partial class MainWindow : IDisposable {
 	private void SetSheet(bool open) {
 		_sheet = open;
 		_accountScroll = 0;
+		_steamTip = null;
 
 		if (_input != IntPtr.Zero) {
 			ShowWindow(_input, open ? SwHide : SwShow);
@@ -1254,6 +1279,18 @@ public sealed partial class MainWindow : IDisposable {
 	private void Paint(IntPtr hwnd) {
 		IntPtr dc = BeginPaint(hwnd, out PaintStruct ps);
 
+		try {
+			PaintInto(dc);
+		} finally {
+			EndPaint(hwnd, ref ps);
+		}
+	}
+
+	/// <summary>
+	/// The whole frame into <paramref name="dc"/>: the screen's DC on WM_PAINT, or the one Windows hands over on
+	/// WM_PRINTCLIENT (PrintWindow, thumbnails), so a copy of the window looks exactly like the window.
+	/// </summary>
+	private void PaintInto(IntPtr dc) {
 		// Draw the whole frame into a bitmap and blit it once. Painting straight to the screen at one frame a
 		// second makes every text run visibly flash.
 		IntPtr mem = CreateCompatibleDC(dc);
@@ -1310,7 +1347,6 @@ public sealed partial class MainWindow : IDisposable {
 			SelectObject(mem, old);
 			DeleteObject(bmp);
 			DeleteDC(mem);
-			EndPaint(hwnd, ref ps);
 		}
 	}
 
@@ -1367,6 +1403,19 @@ public sealed partial class MainWindow : IDisposable {
 	/// </summary>
 	/// <summary>What the two button columns plus the right margin occupy, so the text lays out around them.</summary>
 	private const int ButtonBlock = 14 + (58 * 2) + 5;
+
+	/// <summary>
+	/// 1.8.2: with the Open in Steam button on some account, the buttons are a 3 x 2 grid of narrower, equal buttons -
+	/// [stop][pause][cards] / [profile][Steam] - so the row keeps its height. Every row keeps the same grid, the Steam
+	/// slot left empty on an account without it, so the columns line up down the list.
+	/// </summary>
+	private const int GridBtnW = 50;
+
+	/// <summary>The 3 x 2 grid plus the right margin.</summary>
+	private const int GridBlock = 14 + (GridBtnW * 3) + (5 * 2);
+
+	/// <summary>The account row's Steam button under the pointer, for its tooltip: where it is drawn. Null when none.</summary>
+	private (int X, int Y, int W, int H)? _steamTip;
 
 	/// <summary>
 	/// Every command, in a panel that scrolls by itself.
@@ -1431,10 +1480,10 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, TitleH, _w, _h - TitleH, Rgb(6, 6, 6));
 
 		List<Bot> all = _mgr.All.ToList();
-		// A taller row only when some account shows the Open in Steam button, so it has a third button line; otherwise
-		// the rows stay as compact as they were.
+		// The Open in Steam button on any account: the buttons become a 3 x 2 grid (GridBlock), the row the same height.
 		bool anySteamOpen = all.Any(b => Core.SteamOpen.On(b.Cfg, b.Name));
-		int SheetRow = anySteamOpen ? 78 : 54;
+		int buttonBlock = anySteamOpen ? GridBlock : ButtonBlock;
+		const int SheetRow = 54;
 		const int HeaderH = 38;
 		const int FooterH = 14;
 		const int MaxVisible = 6;
@@ -1480,7 +1529,7 @@ public sealed partial class MainWindow : IDisposable {
 			// small to finish a sentence the column is dropped and the space goes to what the account is doing.
 			const int MinDetail = 110;
 			int textLeft = x + 30;
-			int textRoom = (x + w - ButtonBlock) - textLeft;
+			int textRoom = (x + w - buttonBlock) - textLeft;
 			int detailW = (textRoom * 40) / 100;
 
 			if (detailW < MinDetail) {
@@ -1488,7 +1537,7 @@ public sealed partial class MainWindow : IDisposable {
 			}
 
 			int doingW = Math.Max(40, textRoom - detailW - (detailW > 0 ? 12 : 0));
-			int detailX = (x + w - ButtonBlock) - detailW;
+			int detailX = (x + w - buttonBlock) - detailW;
 
 			Clipped(dc, doing, textLeft, y + 22, doingW, _fontSmall, TextMid);
 
@@ -1529,19 +1578,32 @@ public sealed partial class MainWindow : IDisposable {
 			}
 
 			// Every action for this account, in fixed positions so they are in the same place on every row.
-			const int BtnW = 58;
 			const int BtnH = 20;
 			const int Gap = 5;
-			int bx = (x + w) - ButtonBlock;
+			int bx = (x + w) - buttonBlock;
+			string run = bot.Running ? "stop" : "start", pause = bot.Paused ? "resume" : "pause";
+			int runColour = bot.Running ? Red : Green;
 
-			RowButton(dc, bot.Running ? "stop" : "start", bx, y + 4, BtnW, BtnH, bot.Name, 'x', bot.Running ? Red : Green);
-			RowButton(dc, bot.Paused ? "resume" : "pause", bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
-			RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
-			RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
+			if (anySteamOpen) {
+				// [stop][pause][cards] / [profile][Steam]: one grid on every row, the Steam slot empty where it's off.
+				int Col(int i) => bx + (i * (GridBtnW + Gap));
+				int row2 = y + 4 + BtnH + Gap;
 
-			// 1.8.2: Open in Steam, on its own line, only for an account whose button is turned on.
-			if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
-				RowButton(dc, "open in Steam", bx, y + 4 + (2 * (BtnH + Gap)), (BtnW * 2) + Gap, BtnH, bot.Name, 'o', Accent);
+				RowButton(dc, run, Col(0), y + 4, GridBtnW, BtnH, bot.Name, 'x', runColour);
+				RowButton(dc, pause, Col(1), y + 4, GridBtnW, BtnH, bot.Name, 'p', Amber);
+				RowButton(dc, "cards", Col(2), y + 4, GridBtnW, BtnH, bot.Name, 'c', TextMid);
+				RowButton(dc, "profile", Col(0), row2, GridBtnW, BtnH, bot.Name, 'n', TextMid);
+
+				if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
+					RowButton(dc, "Steam", Col(1), row2, GridBtnW, BtnH, bot.Name, 'o', Accent);
+				}
+			} else {
+				const int BtnW = 58;
+
+				RowButton(dc, run, bx, y + 4, BtnW, BtnH, bot.Name, 'x', runColour);
+				RowButton(dc, pause, bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
+				RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
+				RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
 			}
 
 			y += SheetRow;
@@ -1551,6 +1613,22 @@ public sealed partial class MainWindow : IDisposable {
 		if (scrolls) {
 			Text(dc, $"showing {_accountScroll + 1}-{Math.Min(all.Count, _accountScroll + room)} of {all.Count}  ·  scroll for the rest",
 				x + 14, top + h - 16, _fontSmall, TextDim);
+		}
+
+		// The Steam button's tooltip, last so it sits over the rows: under the button, its right edge on the button's.
+		if (_steamTip is { } tip) {
+			string says = Core.Loc.T("Open in Steam: sign your Steam app into this account");
+			int tw = TextWidth(dc, says, _fontSmall) + 16;
+			int tx = Math.Clamp((tip.X + tip.W) - tw, 4, Math.Max(4, _w - tw - 4));
+			int ty = tip.Y + tip.H + 4;
+
+			if (ty + 22 > _h - 4) {
+				ty = tip.Y - 26;
+			}
+
+			Fill(dc, tx, ty, tw, 22, Panel);
+			Outline(dc, tx, ty, tw, 22, Border);
+			Text(dc, says, tx + 8, ty + 3, _fontSmall, TextBright);
 		}
 	}
 
@@ -2306,6 +2384,7 @@ public sealed partial class MainWindow : IDisposable {
 	// ── Win32 ───────────────────────────────────────────────────────────────
 	private const int WmDestroy = 0x0002;
 	private const int WmPaint = 0x000F;
+	private const int WmPrintClient = 0x0318;
 	private const int WmClose = 0x0010;
 	private const int WmEraseBkgnd = 0x0014;
 	private const int WmSetFont = 0x0030;

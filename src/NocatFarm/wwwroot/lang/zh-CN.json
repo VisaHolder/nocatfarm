@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Open in Steam: sign your Steam app into this account": "在 Steam 中打开：用这个账号登录你的 Steam 应用",
     "signing your Steam app into {0} - it closes and opens again": "正在让你的 Steam 应用登录 {0} - 它会关闭并重新打开",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} 的“在 Steam 中打开”未开启 - 请先在它的设置里开启",
     "Open in Steam only works on Windows for now": "“在 Steam 中打开”目前仅支持 Windows",

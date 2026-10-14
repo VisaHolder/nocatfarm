@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Open in Steam: sign your Steam app into this account": "Abrir en Steam: inicia sesión en tu app de Steam con esta cuenta",
     "signing your Steam app into {0} - it closes and opens again": "iniciando sesión de {0} en tu app de Steam - se cierra y se vuelve a abrir",
     "Open in Steam isn't turned on for {0} - turn it on in its settings first": "Abrir en Steam no está activado para {0} - actívalo primero en sus ajustes",
     "Open in Steam only works on Windows for now": "Abrir en Steam de momento solo funciona en Windows",
