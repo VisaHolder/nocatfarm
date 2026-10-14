@@ -168,7 +168,10 @@ public enum BuyBlock {
 	Email,
 
 	/// <summary>Every purchase confirmed in the Steam app, and its authenticator isn't in nocat.farm.</summary>
-	App
+	App,
+
+	/// <summary>Steam didn't say how its purchases are confirmed (the wallet page didn't answer): nothing is bought on a guess.</summary>
+	Unknown
 }
 
 /// <summary>How one card purchase went.</summary>
@@ -176,18 +179,21 @@ public enum BuyResult {
 	/// <summary>Bought.</summary>
 	Bought,
 
-	/// <summary>Nobody was selling at that price any more: the order was taken back, nothing bought.</summary>
+	/// <summary>The order's status says it closed with nothing bought (active 0, purchased 0): nothing spent.</summary>
 	Gone,
 
-	/// <summary>Steam said no - the reason is in the message. Nothing bought.</summary>
+	/// <summary>Steam said no, readably, with no order in its answer - the reason is in the message. Nothing bought.</summary>
 	Refused,
 
-	/// <summary>No answer: it may have been bought. Counted as spent.</summary>
-	NoAnswer
+	/// <summary>Not sure what happened: it may have been bought. Counted as spent at the order's price, and asked about again.</summary>
+	Unsure,
+
+	/// <summary>Never sent - it didn't leave this PC. Nothing bought.</summary>
+	NotSent
 }
 
-/// <summary>One purchase's answer: how it went, what it cost, and Steam's reason when it said no.</summary>
-public sealed record BuyAnswer(BuyResult Result, long Paid, string Message = "");
+/// <summary>One purchase's answer: how it went, what it cost, Steam's reason when it said no, and the order's id once there is one.</summary>
+public sealed record BuyAnswer(BuyResult Result, long Paid, string Message = "", string? Order = null);
 
 /// <summary>What buying cards needs from Steam. A fake in the tests - no test ever reaches Steam.</summary>
 public interface ICardMarket {
@@ -209,8 +215,15 @@ public interface ICardMarket {
 	/// <summary>A card's sell side, in the wallet's currency. Null when the market didn't answer.</summary>
 	Task<CardMarket.Book?> BookAsync(string hash, CancellationToken ct);
 
-	/// <summary>Buy one card for at most <paramref name="price"/> (the buyer's price, fees in), in <paramref name="currency"/>. Spends money.</summary>
-	Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, CancellationToken ct);
+	/// <summary>
+	/// Buy one card for at most <paramref name="price"/> (the buyer's price, fees in), in <paramref name="currency"/>. Spends
+	/// money. <paramref name="placed"/> hears the order's id the moment Steam gives it. <paramref name="ct"/> only stops it
+	/// before anything is sent (NotSent); once sent, it finds out and takes the order back on its own clock.
+	/// </summary>
+	Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, Action<string>? placed, CancellationToken ct);
+
+	/// <summary>An order it placed earlier whose outcome wasn't known: what it bought, or - still open - taken back.</summary>
+	Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct);
 }
 
 /// <summary>
@@ -276,6 +289,9 @@ public sealed class BuyPlan {
 	/// <summary>Why it couldn't look at all - empty when it could.</summary>
 	public string Problem { get; set; } = "";
 
+	/// <summary>The problem won't clear by itself (a setting, the spending list) - not worth asking again soon.</summary>
+	public bool Lasting { get; set; }
+
 	/// <summary>Why Steam won't let it buy by itself, or None: billing details first, or every purchase confirmed in a way it can't.</summary>
 	public BuyBlock Block { get; set; }
 
@@ -284,6 +300,7 @@ public sealed class BuyPlan {
 		BuyBlock.Billing => "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy",
 		BuyBlock.Email => "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do",
 		BuyBlock.App => "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases",
+		BuyBlock.Unknown => "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time",
 		_ => ""
 	};
 
@@ -292,11 +309,25 @@ public sealed class BuyPlan {
 		BuyBlock.Billing => new Said("Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy"),
 		BuyBlock.Email => new Said("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
 		BuyBlock.App => new Said("Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases"),
+		BuyBlock.Unknown => new Said("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time"),
 		_ => new Said("")
 	};
 
 	public long Cost => Steps.Sum(static s => s.Cost);
 	public int CardCount => Steps.Sum(static s => s.Cards.Count);
+
+	/// <summary>
+	/// Why Steam won't let it buy by itself, from the wallet page: billing details first, confirmed by email, or in the app
+	/// without its authenticator here - and anything it didn't say plainly (no answer, a type it doesn't know) buys nothing.
+	/// </summary>
+	public static BuyBlock BlockOf(CardMarket.Wallet wallet, bool canConfirm) =>
+		wallet.NeedsBilling ? BuyBlock.Billing
+			: wallet.Confirm switch {
+				0 => BuyBlock.None,
+				1 => BuyBlock.Email,
+				2 => canConfirm ? BuyBlock.None : BuyBlock.App,
+				_ => BuyBlock.Unknown
+			};
 
 	/// <summary>Market reads one plan may make: sets, and cards' prices.</summary>
 	internal const int MaxSetReads = 12, MaxBookReads = 30, MaxFullSetGames = 3;
@@ -318,13 +349,24 @@ public sealed class BuyPlan {
 	/// more than a day's or a week's limit is passed over (said why); one that doesn't fit what's left of today stops the plan
 	/// there - the closest goes first, not a cheaper one further away.
 	/// </summary>
-	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct) {
+	/// <param name="nowUtc">Now on Steam's clock - the limits' windows move with it, not with this PC's.</param>
+	/// <param name="stopWhenBlocked">Stop once the wallet says Steam won't let it buy by itself - for a look that would buy.</param>
+	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct, bool stopWhenBlocked = false) {
 		BuyPlan plan = new() {
 			DayLimit = Cents(cfg.BuyDailyLimit),
-			WeekLimit = Cents(cfg.BuyWeeklyLimit),
-			DaySpent = ledger.SpentSince(nowUtc.AddDays(-1)),
-			WeekSpent = ledger.SpentSince(nowUtc.AddDays(-7))
+			WeekLimit = Cents(cfg.BuyWeeklyLimit)
 		};
+
+		// A spending list that can't be read: nothing is bought, and no made-up number is shown for what was spent.
+		if (ledger.Unreadable) {
+			plan.Problem = ledger.UnreadableText;
+			plan.Lasting = true;
+
+			return plan;
+		}
+
+		plan.DaySpent = ledger.SpentSince(nowUtc.AddDays(-1));
+		plan.WeekSpent = ledger.SpentSince(nowUtc.AddDays(-7));
 
 		if (await market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet) {
 			plan.Problem = "Steam didn't say what's in its wallet";
@@ -341,10 +383,11 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		plan.Block = wallet.NeedsBilling ? BuyBlock.Billing
-			: wallet.Confirm == 1 ? BuyBlock.Email
-			: (wallet.Confirm == 2) && !(bot?.CanConfirmTrades ?? false) ? BuyBlock.App
-			: BuyBlock.None;
+		plan.Block = BlockOf(wallet, bot?.CanConfirmTrades ?? false);
+
+		if (stopWhenBlocked && (plan.Block != BuyBlock.None)) {
+			return plan;
+		}
 
 		plan.Room = Math.Max(0, Math.Min(Math.Min(plan.DayLimit - plan.DaySpent, plan.WeekLimit - plan.WeekSpent), wallet.Balance));
 
@@ -594,8 +637,11 @@ public sealed class BuyPlan {
 /// spending, never in its settings: a settings file or a backup can't bring the go-ahead with it.
 /// </summary>
 public sealed class BuyLedger(string path) {
-	/// <param name="Pending">Steam didn't answer: counted as spent, since it may have been bought.</param>
-	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false);
+	/// <param name="At">When, on Steam's clock.</param>
+	/// <param name="Pending">Not known yet whether it was bought: counted as spent, at the order's price, until a look finds out.</param>
+	/// <param name="Order">The buy order's id, once Steam gave one - the only orders a look ever takes back.</param>
+	/// <param name="Key">This purchase's own name in the list, so it's updated in place.</param>
+	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false, string? Order = null, string? Key = null);
 
 	internal sealed class Stored {
 		public bool Ok { get; set; }
@@ -603,7 +649,7 @@ public sealed class BuyLedger(string path) {
 	}
 
 	private List<Entry>? _entries;
-	private bool _ok, _onDisk;
+	private bool _ok, _onDisk, _unreadable;
 	private readonly Lock _gate = new();
 
 	private static readonly Dictionary<string, BuyLedger> Loaded = new(StringComparer.OrdinalIgnoreCase);
@@ -642,6 +688,23 @@ public sealed class BuyLedger(string path) {
 		}
 	}
 
+	/// <summary>
+	/// The file is there and can't be read. Nothing is bought - what was spent isn't known - and the file is never written
+	/// over, so it can be looked at; fixed or deleted, the next look reads it again.
+	/// </summary>
+	public bool Unreadable {
+		get {
+			lock (_gate) {
+				Load();
+
+				return _unreadable;
+			}
+		}
+	}
+
+	/// <summary><see cref="Unreadable"/> in plain words (English, for the console).</summary>
+	public string UnreadableText => $"the list of what it spent on cards (config/state/{Path.GetFileName(path)}) can't be read, so it buys nothing until that file is fixed or deleted";
+
 	public void SetOk(bool ok) {
 		lock (_gate) {
 			Load();
@@ -650,9 +713,12 @@ public sealed class BuyLedger(string path) {
 		}
 	}
 
+	/// <summary>What was spent since then, pending purchases included. An unreadable list counts as everything spent.</summary>
 	public long SpentSince(DateTime utc) {
 		lock (_gate) {
-			return Load().Where(e => e.At >= utc).Sum(static e => e.Cents);
+			List<Entry> all = Load();
+
+			return _unreadable ? long.MaxValue / 4 : all.Where(e => e.At >= utc).Sum(static e => e.Cents);
 		}
 	}
 
@@ -671,23 +737,62 @@ public sealed class BuyLedger(string path) {
 		}
 	}
 
-	public void Add(Entry entry) {
+	/// <summary>Purchases still not known, with an order id to ask about - the oldest first.</summary>
+	public IReadOnlyList<Entry> OpenOrders {
+		get {
+			lock (_gate) {
+				return [.. Load().Where(static e => e.Pending && !string.IsNullOrEmpty(e.Order)).OrderBy(static e => e.At)];
+			}
+		}
+	}
+
+	/// <summary>Write one down. False when it couldn't be saved (kept in memory either way).</summary>
+	public bool Add(Entry entry) {
 		lock (_gate) {
 			List<Entry> all = Load();
 			all.Add(entry);
 			all.RemoveAll(static e => e.At < DateTime.UtcNow.AddDays(-60));   // two months is plenty for a week's limit
-			Save();
+
+			return Save();
 		}
 	}
 
-	private void Save() {
+	/// <summary>Change one entry (found by its key), or take it out (null). False when it couldn't be saved.</summary>
+	public bool Replace(Entry old, Entry? now) {
+		lock (_gate) {
+			List<Entry> all = Load();
+			int at = all.FindIndex(e => old.Key != null ? e.Key == old.Key : e == old);
+
+			if (at < 0) {
+				return Save();
+			}
+
+			if (now == null) {
+				all.RemoveAt(at);
+			} else {
+				all[at] = now;
+			}
+
+			return Save();
+		}
+	}
+
+	private bool Save() {
+		if (_unreadable) {
+			return false;   // never written over: whatever is in it stays for the owner to look at
+		}
+
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(new Stored { Ok = _ok, Entries = _entries ?? [] }));
 			_onDisk = true;
+
+			return true;
 		} catch (Exception e) {
-			// Kept in memory either way, so this run's limits still hold.
+			// Kept in memory either way, so this run's limits still hold - and the buyer stops (it hears the false).
 			Log.Debug(new Said("couldn't save the card buying list: {0}", Log.Describe(e)));
+
+			return false;
 		}
 	}
 
@@ -704,7 +809,9 @@ public sealed class BuyLedger(string path) {
 		} catch (Exception e) {
 			// A list that can't be read counts the week as already spent, rather than nothing spent - and no go-ahead.
 			Log.Debug(new Said("couldn't read the card buying list: {0}", Log.Describe(e)));
-			_entries = [new Entry(DateTime.UtcNow, long.MaxValue / 4, 0, 0, "unreadable list")];
+			_entries = [];
+			_unreadable = true;
+			_onDisk = true;   // deleted, the next ask starts a fresh list
 			_ok = false;
 		}
 
@@ -719,13 +826,14 @@ public sealed class BuyLedger(string path) {
 /// <remarks>
 /// It spends real money, so every way in is careful. Off by default on every account; turned on only through its preview
 /// (the switch's pop-up, or 'buy on &lt;account&gt;'). It never spends more than "Spend at most, a day" in any 24 hours or
-/// "Spend at most, a week" in any 7 days, nor more than the wallet holds, and reads the wallet and each card's price again
-/// right before buying - a card dearer than planned isn't bought. Only whole sets: never 3 of 5 cards on purpose. Each card
-/// is one buy order at the cheapest listing's price for one card, which fills at once or is taken back. A human-mode
-/// account buys only in its own day, one set a look, spaced out. Bought cards are crafted by badge crafting (which has to
-/// be on - otherwise nothing is bought).
+/// "Spend at most, a week" in any 7 days (on Steam's clock), nor more than the wallet holds, and reads the wallet and every
+/// card's price again before buying - a set whose price moved isn't started, a card dearer than planned isn't bought. Each
+/// card is one buy order at the cheapest listing's price for one card, written down as spent before it's sent, which
+/// fills at once or is taken back; one whose outcome Steam didn't say stays counted and is asked about at the next look.
+/// A human-mode account buys only in its own day, one set a look, spaced out. Bought cards are crafted by badge crafting
+/// (which has to be on - otherwise nothing is bought).
 /// </remarks>
-public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? swaps = null) : BotModule(bot) {
+public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? swaps = null, Func<CancellationToken, Task<DateTime>>? clock = null) : BotModule(bot) {
 	/// <summary>How a look was asked for.</summary>
 	public enum Mode {
 		/// <summary>'buy preview': read only, whatever the settings say.</summary>
@@ -750,14 +858,24 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		/// <summary>Why it couldn't look or carry on (English). Empty when all went well.</summary>
 		public string Problem { get; set; } = "";
+
+		/// <summary>The problem won't clear by itself (a setting, a block, Steam saying no) - the next look is at the usual time.</summary>
+		public bool Lasting { get; set; }
 	}
+
+	/// <summary>One look at a time per account - across every copy of the module, so a restore can't make two buyers.</summary>
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> Busy = new(StringComparer.OrdinalIgnoreCase);
 
 	private readonly ICardMarket _market = market ?? new SteamCardMarket(bot);
 	private ICardSwaps Swaps => swaps ?? SwapCost.Current;
-	private readonly SemaphoreSlim _busy = new(1, 1);
+	private readonly Func<CancellationToken, Task<DateTime>> _clock = clock ?? SteamClockAsync;
 	private HumanGate? _gate;
 	private Said _status = new("");
 	private BuyBlock _saidBlocked = BuyBlock.None;
+	private bool _saidStopped;
+
+	/// <summary>The spending list couldn't be saved: nothing more is bought until nocat.farm starts again.</summary>
+	private bool _cantSave;
 
 	/// <summary>When the next look is - from "Look every (hours)" as it's set now.</summary>
 	internal LookTimer Timer { get; } = new(() => Math.Clamp(bot.Cfg.BuyCheckHours, 1, 168), 1.0, 1.2);
@@ -773,32 +891,55 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <summary>Whether this account buys: the switch and its go-ahead together.</summary>
 	public static bool On(Bot bot) => bot.Cfg.BuyCards && BuyLedger.Of(bot.Name).Ok;
 
+	/// <summary>Now on Steam's clock (this PC's until Steam's is known) - what the limits' windows go by.</summary>
+	internal static async Task<DateTime> SteamClockAsync(CancellationToken ct) =>
+		DateTimeOffset.FromUnixTimeSeconds(await Confirmations.SteamTimeAsync(ct).ConfigureAwait(false)).UtcDateTime;
+
+	private SemaphoreSlim BusyGate => Busy.GetOrAdd(Bot.Name, static _ => new SemaphoreSlim(1, 1));
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		if (!await Sleep(Rng.Minutes(10, 25), ct).ConfigureAwait(false)) {
 			return;
 		}
 
 		while (!ct.IsCancellationRequested) {
-			if (On(Bot) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && Timer.Due(DateTime.UtcNow) && Gate.Open) {
-				Timer.Looked(DateTime.UtcNow);
+			if (Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && Timer.Due(DateTime.UtcNow)) {
+				bool buying = On(Bot) && Gate.Open;
 
-				try {
-					Result result = await LookAsync(Mode.Auto, ct).ConfigureAwait(false);
+				// Off, or outside its day: an order it placed whose outcome isn't known is still asked about and taken back.
+				if (buying || (Ledger.OpenOrders.Count > 0)) {
+					Timer.Looked(DateTime.UtcNow);
 
-					if (result.Bought.Count > 0) {
-						Gate.Space(30, 120);
-					}
+					try {
+						if (buying) {
+							Result result = await LookAsync(Mode.Auto, ct).ConfigureAwait(false);
 
-					if (result.Problem.Length > 0) {
+							if (result.Bought.Count > 0) {
+								Gate.Space(30, 120);
+							}
+
+							// Something that clears by itself (no answer, a price that moved) is looked at again sooner;
+							// a setting, a block or Steam saying no waits for the usual time.
+							if ((result.Problem.Length > 0) && !result.Lasting) {
+								Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
+							}
+						} else {
+							await BusyGate.WaitAsync(ct).ConfigureAwait(false);
+
+							try {
+								await SweepLockedAsync(ct).ConfigureAwait(false);
+							} finally {
+								BusyGate.Release();
+							}
+						}
+
+						_status = new Said("buying cards: next look around {0}", (Func<string>) (() => Fmt.Clock(Timer.Next)));
+					} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+						throw;
+					} catch (Exception e) {
+						Log.Debug(new Said("couldn't look at buying cards: {0}", Log.Describe(e)), Bot.Name);
 						Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
 					}
-
-					_status = new Said("buying cards: next look around {0}", (Func<string>) (() => Fmt.Clock(Timer.Next)));
-				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-					throw;
-				} catch (Exception e) {
-					Log.Debug(new Said("couldn't look at buying cards: {0}", Log.Describe(e)), Bot.Name);
-					Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
 				}
 			}
 
@@ -810,63 +951,106 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 	/// <summary>Look, and - outside a preview, while it's on and the day allows - buy what the plan says. One look at a time.</summary>
 	public async Task<Result> LookAsync(Mode mode, CancellationToken ct) {
-		await _busy.WaitAsync(ct).ConfigureAwait(false);
+		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
 			return await LookLockedAsync(mode, ct).ConfigureAwait(false);
 		} finally {
-			_busy.Release();
+			BusyGate.Release();
 		}
+	}
+
+	/// <summary>
+	/// 'buy do': a look that buys, now - on this module's own run, so stopping the account (a restore, an update, signing
+	/// out) stops it too, and never beside a look already running.
+	/// </summary>
+	public Task<Result> BuyNowAsync() {
+		CancellationToken ct;
+
+		try {
+			ct = Cts?.Token ?? new CancellationToken(true);
+		} catch (ObjectDisposedException) {
+			ct = new CancellationToken(true);
+		}
+
+		return ct.IsCancellationRequested
+			? Task.FromResult(new Result { Problem = "buying cards isn't running on this account right now" })
+			: LookAsync(Mode.Now, ct);
+	}
+
+	/// <summary>Why a look can't buy now, before anything is read from the market - or null when it may. Lasting when it won't clear by itself.</summary>
+	private (string Problem, bool Lasting)? Stopped() {
+		if (!On(Bot)) {
+			return ("buying cards is off", true);
+		}
+
+		if (Ledger.Unreadable || _cantSave) {
+			if (!_saidStopped) {
+				_saidStopped = true;
+				Log.Attention(new Said("card buying stopped · its spending list can't be read or saved"), Bot.Name);
+			}
+
+			return (_cantSave ? "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again" : Ledger.UnreadableText, true);
+		}
+
+		if (!Bot.Cfg.CraftBadges) {
+			return ("\"Craft badges from card sets\" is off, so bought cards would only sit there - nothing bought", true);
+		}
+
+		if (Bot.Paused) {
+			return ("it's paused - nothing bought", true);
+		}
+
+		if (!Gate.Open) {
+			return ($"not now - {Gate.Waiting().ToEnglish()}", false);
+		}
+
+		return ScamWatch.HeldBack(Bot) is { } held ? (held, false) : null;
 	}
 
 	private async Task<Result> LookLockedAsync(Mode mode, CancellationToken ct) {
 		Result result = new();
-		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, DateTime.UtcNow, ct).ConfigureAwait(false);
+		bool buying = mode != Mode.Preview;
+
+		if (buying) {
+			if (Stopped() is { } stop) {
+				result.Problem = stop.Problem;
+				result.Lasting = stop.Lasting;
+
+				return result;
+			}
+
+			// Orders from before whose outcome wasn't known: asked about, and taken back if still open, before anything new.
+			await SweepLockedAsync(ct).ConfigureAwait(false);
+		}
+
+		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct, stopWhenBlocked: buying).ConfigureAwait(false);
 		result.Plan = plan;
 
 		if (plan.Problem.Length > 0) {
 			result.Problem = plan.Problem;
+			result.Lasting = plan.Lasting;
 
 			return result;
 		}
 
-		if ((mode == Mode.Preview) || (plan.Steps.Count == 0)) {
-			return result;
-		}
-
-		if (!On(Bot)) {
-			result.Problem = "buying cards is off";
-
-			return result;
-		}
-
-		if (!Bot.Cfg.CraftBadges) {
-			result.Problem = "\"Craft badges from card sets\" is off, so bought cards would only sit there - nothing bought";
-
-			return result;
-		}
-
-		if (plan.Blocked.Length > 0) {
+		if (buying && (plan.Blocked.Length > 0)) {
 			result.Problem = plan.Blocked;
 
-			// Said once with a notification, not every look.
-			if (_saidBlocked != plan.Block) {
-				_saidBlocked = plan.Block;
-				Log.Attention(plan.BlockedSaid, Bot.Name);
+			// Steam not saying is asked again soon; the rest is said once with a notification, not every look.
+			if (plan.Block != BuyBlock.Unknown) {
+				result.Lasting = true;
+
+				if (_saidBlocked != plan.Block) {
+					_saidBlocked = plan.Block;
+					Log.Attention(plan.BlockedSaid, Bot.Name);
+				}
 			}
 
 			return result;
 		}
 
-		if (!Gate.Open) {
-			result.Problem = $"not now - {Gate.Waiting().ToEnglish()}";
-
-			return result;
-		}
-
-		if (ScamWatch.HeldBack(Bot) is { } held) {
-			result.Problem = held;
-
+		if (!buying || (plan.Steps.Count == 0)) {
 			return result;
 		}
 
@@ -882,8 +1066,65 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		return result;
 	}
 
-	/// <summary>Buy one set's cards, each checked again first. False to stop there (said why in the result).</summary>
+	/// <summary>
+	/// The orders it placed whose outcome Steam didn't say: each asked about - and taken back if still open - and the list
+	/// set straight: bought at what it paid, gone off it, or still counted. Only ids it wrote down itself.
+	/// </summary>
+	private async Task SweepLockedAsync(CancellationToken ct) {
+		foreach (BuyLedger.Entry open in Ledger.OpenOrders.Take(10)) {
+			if (ct.IsCancellationRequested) {
+				return;
+			}
+
+			BuyAnswer answer;
+
+			try {
+				answer = await _market.CheckOrderAsync(open.Order!, open.Cents, ct).ConfigureAwait(false);
+			} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
+				Log.Debug(new Said("couldn't look at buying cards: {0}", Log.Describe(e)), Bot.Name);
+
+				continue;
+			}
+
+			if (!Record(open, answer, open.Cents)) {
+				CantSave();
+
+				return;
+			}
+
+			if (answer.Result == BuyResult.Bought) {
+				Log.Good(new Said("bought {0} · {1} · {2}", new BuyCard(open.Card, 0).Name, GameNames.Of(open.App), BuyPlan.Money(Paid(answer, open.Cents), open.Currency)), Bot.Name);
+			}
+		}
+	}
+
+	/// <summary>What a purchase cost: what Steam said it paid, else the order's price.</summary>
+	private static long Paid(BuyAnswer answer, long price) => answer.Paid > 0 ? answer.Paid : price;
+
+	/// <summary>Set the list straight after an answer: bought at what it paid, nothing spent off it, unsure still counted. False when it couldn't be saved.</summary>
+	private bool Record(BuyLedger.Entry pending, BuyAnswer answer, long price) => answer.Result switch {
+		BuyResult.Bought => Ledger.Replace(pending, pending with { Cents = Paid(answer, price), Pending = false, Order = answer.Order ?? pending.Order }),
+		BuyResult.Gone or BuyResult.Refused or BuyResult.NotSent => Ledger.Replace(pending, null),
+		_ => Ledger.Replace(pending, pending with { Order = answer.Order ?? pending.Order })
+	};
+
+	private void CantSave() {
+		_cantSave = true;
+		Stopped();   // says it, once
+	}
+
+	/// <summary>Buy one set's cards, every price checked again first. False to stop the look there (said why in the result).</summary>
 	private async Task<bool> BuyStepAsync(BuyStep step, int currency, Result result, CancellationToken ct) {
+		// The whole set priced again before its first card: anything dearer or gone since the plan, and the set isn't
+		// started - the next set may still go.
+		foreach (BuyCard card in step.Cards) {
+			if (await _market.BookAsync(card.Hash, ct).ConfigureAwait(false) is not { } now || (now.Lowest <= 0) || (now.Currency != currency) || (now.Lowest > card.Price)) {
+				result.Problem = $"{step.Game}: the price of {card.Name} moved since the plan - the set waits for the next look";
+
+				return true;
+			}
+		}
+
 		int got = 0;
 
 		foreach (BuyCard card in step.Cards) {
@@ -893,14 +1134,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			// The rules once more, on what's true now - the last word before anything is spent.
-			if (!On(Bot)) {
-				result.Problem = "buying cards was turned off - stopped";
-
-				return false;
-			}
-
-			if (!Gate.Open) {
-				result.Problem = $"not now - {Gate.Waiting().ToEnglish()}";
+			if (Stopped() is { } stop) {
+				result.Problem = stop.Problem == "buying cards is off" ? "buying cards was turned off - stopped" : stop.Problem;
+				result.Lasting = stop.Lasting;
 
 				return false;
 			}
@@ -917,15 +1153,15 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				return false;
 			}
 
-			if (await _market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet || (wallet.Currency != currency)) {
-				result.Problem = "Steam didn't say what's in its wallet";
+			if (await _market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet || (wallet.Currency != currency) || (BuyPlan.BlockOf(wallet, Bot.CanConfirmTrades) != BuyBlock.None)) {
+				result.Problem = "Steam didn't say what's in its wallet, or how its purchases are confirmed - nothing more bought";
 
 				return false;
 			}
 
-			DateTime now = DateTime.UtcNow;
-			long dayLeft = BuyPlan.Cents(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(now.AddDays(-1));
-			long weekLeft = BuyPlan.Cents(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(now.AddDays(-7));
+			DateTime at = await _clock(ct).ConfigureAwait(false);
+			long dayLeft = BuyPlan.Cents(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(at.AddDays(-1));
+			long weekLeft = BuyPlan.Cents(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(at.AddDays(-7));
 
 			if ((book.Lowest > dayLeft) || (book.Lowest > weekLeft) || (book.Lowest > wallet.Balance)) {
 				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";
@@ -933,39 +1169,77 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				return false;
 			}
 
+			// Written down as spent BEFORE it's sent: whatever happens next - a stop, a disconnect, an update - the money
+			// counts against the limits until a look finds out what really happened.
+			BuyLedger.Entry pending = new(at, book.Lowest, currency, step.App, card.Hash, Pending: true, Key: Guid.NewGuid().ToString("N"));
+
+			if (!Ledger.Add(pending)) {
+				Ledger.Replace(pending, null);
+				CantSave();
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Lasting = true;
+
+				return false;
+			}
+
 			BuyAnswer answer;
 
 			try {
-				answer = await _market.BuyAsync(step.App, card.Hash, book.Lowest, currency, ct).ConfigureAwait(false);
-			} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
-				answer = new BuyAnswer(BuyResult.NoAnswer, book.Lowest, Log.Describe(e));
+				answer = await _market.BuyAsync(step.App, card.Hash, book.Lowest, currency, order => {
+					BuyLedger.Entry noted = pending with { Order = order };
+
+					if (!Ledger.Replace(pending, noted)) {
+						_cantSave = true;
+					}
+
+					pending = noted;
+				}, ct).ConfigureAwait(false);
+			} catch (Exception e) {
+				// Whatever broke, it may have been sent: it stays counted until a look finds out.
+				answer = new BuyAnswer(BuyResult.Unsure, book.Lowest, Log.Describe(e));
 			}
+
+			bool saved = Record(pending, answer, book.Lowest);
 
 			switch (answer.Result) {
 				case BuyResult.Bought:
-					long paid = answer.Paid > 0 ? Math.Min(answer.Paid, book.Lowest) : book.Lowest;
-					Ledger.Add(new BuyLedger.Entry(DateTime.UtcNow, paid, currency, step.App, card.Hash));
+					long paid = Paid(answer, book.Lowest);
 					result.Bought.Add((step, card, paid));
 					got++;
 					Log.Good(new Said("bought {0} · {1} · {2}", card.Name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
 
 					break;
-				case BuyResult.NoAnswer:
-					// It may have gone through: counted as spent, never bought a second time meanwhile.
-					Ledger.Add(new BuyLedger.Entry(DateTime.UtcNow, book.Lowest, currency, step.App, card.Hash, Pending: true));
-					Log.Warn(new Said("no answer buying {0} · counted as spent", card.Name), Bot.Name);
-					result.Problem = $"Steam didn't answer about buying {card.Name} - counted as spent";
+				case BuyResult.Unsure:
+					Log.Warn(new Said("unsure if {0} was bought · counted as spent", card.Name), Bot.Name);
+					result.Problem = $"Steam didn't say for sure whether {card.Name} was bought ({answer.Message}) - counted as spent, and asked about again at the next look";
 
-					return false;
+					break;
 				case BuyResult.Gone:
 					result.Problem = $"{card.Name} was bought by someone else first - it looks again next time";
 
-					return false;
+					break;
+				case BuyResult.NotSent:
+					result.Problem = $"buying {card.Name} couldn't be sent to Steam - nothing bought, it looks again soon";
+
+					break;
 				default:
 					Log.Warn(answer.Message.Length > 0 ? new Said("buying {0} turned down · {1}", card.Name, answer.Message) : new Said("buying {0} turned down", card.Name), Bot.Name);
 					result.Problem = $"Steam turned it down{(answer.Message.Length > 0 ? $": {answer.Message}" : "")}";
+					result.Lasting = true;
 
-					return false;
+					break;
+			}
+
+			if (!saved || _cantSave) {
+				CantSave();
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Lasting = true;
+
+				return false;
+			}
+
+			if ((answer.Result != BuyResult.Bought) || ct.IsCancellationRequested) {
+				return false;
 			}
 		}
 

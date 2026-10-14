@@ -182,9 +182,10 @@ public sealed partial class WebSession : IDisposable {
 	/// session, no sessionid cookie, the host shut for a rate limit - so whatever it was for didn't happen. With Sent true
 	/// and no body, Steam may well have acted on it: the answer just never came back.
 	/// </summary>
-	public async Task<(string? Body, bool Sent)> PostTrackedAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
+	/// <param name="errorVerdict">Hand back a JSON body that came with an error status, as <see cref="PostAsync"/> does.</param>
+	public async Task<(string? Body, bool Sent)> PostTrackedAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default, bool errorVerdict = false) {
 		SendNote note = new();
-		string? body = await SendAsync(url, form, referer, true, ct, note: note).ConfigureAwait(false);
+		string? body = await SendAsync(url, form, referer, true, ct, errorVerdict: errorVerdict, note: note).ConfigureAwait(false);
 
 		return (body, note.Sent || (body != null));
 	}

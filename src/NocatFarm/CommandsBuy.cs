@@ -93,6 +93,10 @@ public static partial class Commands {
 				return $"{bot.Name}: buying cards is off. 'buy preview {bot.Name}' shows what it would buy; 'buy on {bot.Name}' turns it on.";
 			}
 
+			if (bot.Paused) {
+				return $"{bot.Name}: it's paused - nothing is bought. 'resume {bot.Name}' first.";
+			}
+
 			if (HumanWaits(bot, BotManager.ModuleOf<CardBuyer>(bot)?.Gate) is { } waits) {
 				return waits;
 			}
@@ -112,14 +116,19 @@ public static partial class Commands {
 	}
 
 	/// <summary>Whether and how an account buys cards, in a few words.</summary>
-	internal static string BuyingState(Bot b) {
+	public static string BuyingState(Bot b) {
 		if (!CardBuyer.On(b)) {
 			return "buying cards is off";
 		}
 
 		BuyLedger ledger = BuyLedger.Of(b.Name);
+
+		if (ledger.Unreadable) {
+			return ledger.UnreadableText;
+		}
+
 		int cur = b.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) b.WalletCurrency;
-		DateTime now = DateTime.UtcNow;
+		DateTime now = DateTimeOffset.FromUnixTimeSeconds(Confirmations.SteamTimeNow).UtcDateTime;   // the limits go by Steam's clock
 
 		return $"buys cards: {BuyPlan.Money(ledger.SpentSince(now.AddDays(-1)), cur)} of {BuyPlan.Money(BuyPlan.Cents(b.Cfg.BuyDailyLimit), cur)} today, "
 			+ $"{BuyPlan.Money(ledger.SpentSince(now.AddDays(-7)), cur)} of {BuyPlan.Money(BuyPlan.Cents(b.Cfg.BuyWeeklyLimit), cur)} this week";
@@ -137,9 +146,10 @@ public static partial class Commands {
 	private static Task<string> BuyLookAsync(IReadOnlyList<Bot> bots, CardBuyer.Mode mode) {
 		async Task<string> Look(Bot b) {
 			CardBuyer buyer = BotManager.ModuleOf<CardBuyer>(b)!;
+			// Buying now runs on the module's own run (stopped with the account), never beside a look already going.
 			CardBuyer.Result result = mode == CardBuyer.Mode.Preview
 				? await buyer.LookAsync(mode, CancellationToken.None).ConfigureAwait(false)
-				: await ScamWatch.AsYouAskedAsync(() => buyer.LookAsync(mode, CancellationToken.None)).ConfigureAwait(false);
+				: await ScamWatch.AsYouAskedAsync(buyer.BuyNowAsync).ConfigureAwait(false);
 
 			return string.Join(Environment.NewLine, BuySaid(b, mode, result));
 		}
@@ -156,7 +166,7 @@ public static partial class Commands {
 		List<string> lines = [];
 
 		if (result.Plan is not { } plan || (plan.Problem.Length > 0)) {
-			lines.Add($"{name}: {(result.Problem.Length > 0 ? result.Problem : "couldn't look")} - try again in a minute");
+			lines.Add(result.Lasting ? $"{name}: {result.Problem}" : $"{name}: {(result.Problem.Length > 0 ? result.Problem : "couldn't look")} - try again in a minute");
 			lines.Add(BuyLimits(b));
 
 			return lines;
