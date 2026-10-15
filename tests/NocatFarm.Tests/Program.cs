@@ -28285,6 +28285,21 @@ await CardSwapCheatChecks.RunAsync(Check);
 	}
 }
 
+// ── 1.8.2: the window's account list reaches the bottom and scrolls ──
+if (OperatingSystem.IsWindows()) {
+	// The owner's window (580x320, a 34px title bar): the panel runs from just under the title bar to 40px above the
+	// bottom - the same as its side margins - and its rows keep their height, starting at the top.
+	(int alTop, int alH, int alShown, bool alScrolls) = NocatFarm.Windows.MainWindow.SheetLayout(320, 34, 3);
+	Check("window accounts: the list reaches down to the same margin at the bottom as at the sides, three accounts all shown",
+		(alTop == 46) && (alTop + alH == 320 - 40) && (alShown == 3) && !alScrolls, $"{alTop} {alH} {alShown} {alScrolls}");
+	(_, int alH8, int alShown8, bool alScrolls8) = NocatFarm.Windows.MainWindow.SheetLayout(320, 34, 8);
+	Check("window accounts: more accounts than fit scroll inside the same panel", (alH8 == alH) && (alShown8 == 3) && alScrolls8, $"{alH8} {alShown8} {alScrolls8}");
+	(int alTopBig, int alHBig, int alShownBig, bool alScrollsBig) = NocatFarm.Windows.MainWindow.SheetLayout(450, 34, 3);
+	Check("window accounts: a bigger window - the panel still reaches the bottom margin, the rows aren't stretched",
+		(alTopBig + alHBig == 450 - 40) && (alShownBig == 3) && !alScrollsBig, $"{alTopBig} {alHBig} {alShownBig}");
+	Check("window accounts: one account shows one row", NocatFarm.Windows.MainWindow.SheetLayout(320, 34, 1) is { Visible: 1, Scrolls: false });
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
