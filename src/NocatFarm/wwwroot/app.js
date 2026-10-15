@@ -5655,12 +5655,15 @@ function settingDefOf(name) {
   return ((settingsTarget === GLOBAL ? schema.Global : schema.Bot) || []).find((d) => d.Name === name) || null;
 }
 
-// Its own answer only: the setting it names has the value it wants (or, with !=, anything but it).
+// Its own answer only: the setting it names has the value it wants (or, with !=, anything but it). "SpareSellPrice=0|3":
+// any of those answers.
 function shownByOwnAnswer(def, values) {
   if (!def.ShowWhen) return true;
   const at = def.ShowWhen.indexOf('=');
   const not = def.ShowWhen[at - 1] === '!';
-  const same = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values)) === def.ShowWhen.slice(at + 1);
+  const want = def.ShowWhen.slice(at + 1);
+  const value = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values));
+  const same = want.split('|').includes(value);
   return not ? !same : same;
 }
 

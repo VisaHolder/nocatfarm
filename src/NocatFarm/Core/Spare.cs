@@ -501,7 +501,7 @@ public static partial class Spare {
 			return new SpareDecision(item, SpareVerdict.OverLimit, new Said("worth {0} - over your price limit, never touched", Cash(worth)), worth);
 		}
 
-		(int? listed, Said noPrice) = ListingPrice.For(price, r.SellPrice, r.DumpPct);
+		(int? listed, Said noPrice) = ListingPrice.For(price, r.SellPrice, r.DumpPct, r.MinSaleCents, r.FloorPct);
 
 		// An unsold listing taken down to go up cheaper: at the step it was given, while the market hasn't gone up since, and
 		// never under the floor.

@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "paketler kart setlerini dolduruyor ama \"Kart setlerinden rozet üret\" kapalı - biten setler açılana kadar bekler",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "ilanını telefonunda reddettin - {0} gün daha yeniden listelenmez",
     "couldn't read which listings you declined: {0}": "hangi ilanları reddettiğin okunamadı: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: \"en ucuzun bir sent altı\" satış fiyatı artık yok - artık gerçek fiyatın bir sent altından listeleniyor",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: satış fiyatı ayarı seçeneklerinden biri değildi - artık gerçek fiyatın bir sent altından listeleniyor",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam bekleyen bir takasta hangi eşyaların olduğunu söylemedi - biraz sonra tekrar dene",
     "you'd get {0} - under your {1} minimum": "{0} alırdın - {1} olan alt sınırının altında",
     "couldn't write down which listings you declined: {0}": "hangi ilanları reddettiğin kaydedilemedi: {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Satış fiyatı",
-      "tip": "Herhangi bir şeyin listelendiği fiyat - listelemeden hemen önce bu hesabın kendi Steam cüzdanı para biriminde yeniden fiyatlanır. Örneğin bugün birkaç kez 0.30'dan satılmış ve 0.10'a atılmış tek bir ilanı olan bir eşya: gerçek fiyatın bir sent altı 0.29'dan, en ucuzla aynı 0.10'dan, medyan 0.30'dan listeler. \"Gerçek fiyatın bir sent altı\" (güvenli varsayılan): son bir günde satıldığı fiyat ya da daha yüksekse en ucuz ilan - çok aşağıya atılmış tek bir ilan yok sayılır. Son zamanlarda satış yoksa ya da kimse satmıyorsa: tutulur. Diğerleri: en ucuzla aynı ya da medyan (asla en ucuzun altında değil).",
-      "choices": "0 gerçek fiyatın bir sent altı | 1 en ucuzla aynı | 2 medyan satış fiyatı"
+      "tip": "Herhangi bir şeyin listelendiği fiyat - listelemeden hemen önce bu hesabın kendi Steam cüzdanı para biriminde yeniden fiyatlanır. Örneğin bugün birkaç kez 0.30'dan satılmış ve 0.10'a atılmış tek bir ilanı olan bir eşya: gerçek fiyatın bir sent altı 0.29'dan, en ucuzla aynı 0.10'dan, medyan 0.30'dan listeler. \"Gerçek fiyatın bir sent altı\" (güvenli varsayılan): son bir günde satıldığı fiyat ya da daha yüksekse en ucuz ilan - çok aşağıya atılmış tek bir ilan yok sayılır. Son zamanlarda satış yoksa ya da kimse satmıyorsa: tutulur. \"En ucuzun bir sent altı\" seninkini en ucuz yapar, böylece önce satılır: en ucuz 0.12 → 0.11'den listeler. Atılmış bir ilanı da yok sayar (yukarıdaki 0.10: 0.29'dan listeler), kendi ilanın zaten en ucuzsa onun altına inmez, \"Asla şunun altına inme\" sınırının altına da, \"Yalnızca en az şu kadar alırsan sat\" değerinden az alacağın kadar da düşmez. Diğerleri: en ucuzla aynı ya da medyan (asla en ucuzun altında değil).",
+      "choices": "0 gerçek fiyatın bir sent altı | 1 en ucuzla aynı | 2 medyan satış fiyatı | 3 en ucuzun bir sent altı"
     },
     "SpareRelistDays": {
       "label": "Satılmayan ilanları kaldırma süresi (gün)",
@@ -4654,8 +4654,8 @@
       "tip": "Rozet tamamlanmış olsa bile her karttan her zaman tutulan kopya sayısı. Örneğin 1: 3 kopyadan 2'si gidebilir. 0 hiçbirini tutmaz, son kopya da gidebilir. Bir rozetin hâlâ ihtiyaç duyduğu kartlar her zaman tutulur."
     },
     "SpareDumpPct": {
-      "label": "En ucuz ilan satışların bu kadar altındaysa eşyayı tut (%)",
-      "tip": "En ucuz ilanı satıldığı fiyatın bu kadar altındaysa ve o fiyatı yalnızca tek bir satış destekliyorsa eşyayı ilana koymak yerine tutar - iki fiyat birbiriyle çelişir. Örneğin 50: bir kez 0.30'dan satılmış, en ucuz ilan 0.12 (%60 altında): tutulur. İki ya da daha fazla satış varsa satıldığı fiyatın bir sent altından listelenir. 0 tek satışta da listeler. Yalnızca \"gerçek fiyatın bir sent altı\" için."
+      "label": "Satışların bu kadar altındaki en ucuz ilan atılmıştır (%)",
+      "tip": "Bir eşyanın en ucuz ilanının, son bir günde satıldığı fiyatın ne kadar altında olursa atılmış sayılacağı. Örneğin 50: 0.30'dan satılmış, 0.12'deki en ucuz ilan (%60 altında) atılmıştır. \"Gerçek fiyatın bir sent altı\", o fiyatı yalnızca tek bir satış destekliyorsa eşyayı tutar - iki fiyat birbiriyle çelişir; iki ya da daha fazla satış varsa satıldığı fiyatın bir sent altından, 0.29'dan listeler. \"En ucuzun bir sent altı\" atılmış ilanı yok sayar ve o da 0.29'dan listeler. 0: hiçbir ilan atılmış sayılmaz."
     },
     "BoosterMake": {
       "label": "Kart paketi yap",

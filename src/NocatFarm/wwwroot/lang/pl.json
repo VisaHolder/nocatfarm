@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "boostery uzupełniają zestawy kart, ale „Twórz odznaki z kart” jest wyłączone - pełne zestawy czekają, aż je włączysz",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "odrzuciłeś jego ofertę na telefonie - nie będzie wystawiony jeszcze przez {0} dni",
     "couldn't read which listings you declined: {0}": "nie udało się odczytać, które oferty odrzuciłeś: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: cena sprzedaży „cent poniżej najtańszej” już nie istnieje - teraz wystawia cent poniżej prawdziwej ceny",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: ustawienie ceny sprzedaży nie było żadną z jego opcji - teraz wystawia cent poniżej prawdziwej ceny",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam nie powiedział, które przedmioty są w oczekującej wymianie - spróbuj za chwilę",
     "you'd get {0} - under your {1} minimum": "dostałbyś {0} - poniżej twojego minimum {1}",
     "couldn't write down which listings you declined: {0}": "nie udało się zapisać, które oferty odrzuciłeś: {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Cena sprzedaży",
-      "tip": "Za ile cokolwiek jest wystawiane - wyceniane ponownie w walucie portfela Steam tego konta tuż przed wystawieniem. Na przykład przedmiot, który dziś kilka razy sprzedał się za 0.30, z jedną ofertą rzuconą za 0.10: „cent poniżej prawdziwej ceny” wystawia za 0.29, „tyle co najtańsza” za 0.10, mediana za 0.30. „Cent poniżej prawdziwej ceny” (bezpieczne domyślne): za ile sprzedawał się w ostatnim dniu, albo najtańsza oferta, jeśli jest wyższa - jedna oferta rzucona dużo niżej jest pomijana. Brak ostatnich sprzedaży albo nikt nie sprzedaje: zostaje. Pozostałe: tyle co najtańsza albo mediana (nigdy poniżej najtańszej).",
-      "choices": "0 cent poniżej prawdziwej ceny | 1 tyle co najtańsza | 2 mediana ceny sprzedaży"
+      "tip": "Za ile cokolwiek jest wystawiane - wyceniane ponownie w walucie portfela Steam tego konta tuż przed wystawieniem. Na przykład przedmiot, który dziś kilka razy sprzedał się za 0.30, z jedną ofertą rzuconą za 0.10: „cent poniżej prawdziwej ceny” wystawia za 0.29, „tyle co najtańsza” za 0.10, mediana za 0.30. „Cent poniżej prawdziwej ceny” (bezpieczne domyślne): za ile sprzedawał się w ostatnim dniu, albo najtańsza oferta, jeśli jest wyższa - jedna oferta rzucona dużo niżej jest pomijana. Brak ostatnich sprzedaży albo nikt nie sprzedaje: zostaje. „Cent poniżej najtańszej” sprawia, że twoja oferta jest najtańsza i sprzedaje się pierwsza: najtańsza 0.12 → wystawia za 0.11. Pomija też rzuconą ofertę (ta za 0.10 wyżej: wystawia za 0.29), nigdy nie schodzi poniżej twojej własnej oferty, gdy ta już jest najtańsza, ani poniżej „Nigdy niżej niż”, ani tak nisko, że dostaniesz mniej niż w „Sprzedawaj tylko, jeśli dostaniesz co najmniej”. Pozostałe: tyle co najtańsza albo mediana (nigdy poniżej najtańszej).",
+      "choices": "0 cent poniżej prawdziwej ceny | 1 tyle co najtańsza | 2 mediana ceny sprzedaży | 3 cent poniżej najtańszej"
     },
     "SpareRelistDays": {
       "label": "Zdejmij niesprzedane oferty po (dniach)",
@@ -4654,8 +4654,8 @@
       "tip": "Kopie każdej karty, które zawsze zostają, nawet gdy odznaka jest ukończona. Na przykład 1: z 3 kopii 2 mogą pójść. 0 nic nie zostawia, więc ostatnia kopia też może pójść. Karty, których odznaka jeszcze potrzebuje, zawsze zostają."
     },
     "SpareDumpPct": {
-      "label": "Zatrzymaj przedmiot, gdy najtańsza oferta jest tak daleko poniżej sprzedaży (%)",
-      "tip": "Zatrzymuje przedmiot zamiast go wystawiać, gdy jego najtańsza oferta jest o tyle niższa od ceny sprzedaży, a tę cenę potwierdza tylko jedna sprzedaż - obie ceny sobie przeczą. Na przykład 50: sprzedany raz za 0.30, najtańsza oferta 0.12 (60% niżej): zostaje. Przy dwóch lub więcej sprzedażach jest wystawiany cent poniżej ceny sprzedaży. 0 wystawia go także po jednej sprzedaży. Tylko dla „cent poniżej prawdziwej ceny”."
+      "label": "Najtańsza oferta tak daleko poniżej sprzedaży jest rzucona (%)",
+      "tip": "O ile najtańsza oferta musi być niższa od ceny, za jaką przedmiot sprzedawał się w ostatnim dniu, żeby liczyła się jako rzucona. Na przykład 50: sprzedany za 0.30, najtańsza oferta za 0.12 (60% niżej) jest rzucona. „Cent poniżej prawdziwej ceny” zatrzymuje przedmiot, gdy tę cenę potwierdza tylko jedna sprzedaż - obie ceny sobie przeczą; przy dwóch lub więcej sprzedażach wystawia go cent poniżej ceny sprzedaży, za 0.29. „Cent poniżej najtańszej” pomija rzuconą ofertę i też wystawia za 0.29. 0: żadna oferta nie liczy się jako rzucona."
     },
     "BoosterMake": {
       "label": "Rób boostery",

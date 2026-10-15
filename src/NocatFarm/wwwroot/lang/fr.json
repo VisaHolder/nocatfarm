@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "les boosters complètent des séries de cartes, mais « Fabriquer des badges avec les cartes » est désactivé - les séries complètes attendent qu'il soit activé",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "vous avez refusé son annonce sur votre téléphone - pas remis en vente avant encore {0} jour(s)",
     "couldn't read which listings you declined: {0}": "impossible de lire quelles annonces vous avez refusées : {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0} : le prix de vente « un centime sous le moins cher » n'existe plus - c'est maintenant un centime sous le vrai prix",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0} : le réglage du prix de vente n'était pas l'un de ses choix - c'est maintenant un centime sous le vrai prix",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0} : Steam n'a pas dit quels objets sont dans un échange en attente - réessayez dans un moment",
     "you'd get {0} - under your {1} minimum": "vous recevriez {0} - sous votre minimum de {1}",
     "couldn't write down which listings you declined: {0}": "impossible de noter quelles annonces vous avez refusées : {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Prix de vente",
-      "tip": "Le prix de mise en vente de tout objet, recalculé dans la devise du porte-monnaie Steam de ce compte juste avant sa mise en vente. Par exemple, un objet vendu 0.30 plusieurs fois aujourd'hui, avec une annonce bradée à 0.10 : un centime sous le vrai prix le met à 0.29, au même prix que le moins cher à 0.10, la médiane à 0.30. « Un centime sous le vrai prix » (le choix sûr par défaut) : ce à quoi il s'est vendu le dernier jour, ou l'annonce la moins chère si elle est plus haute - une annonce bradée très en dessous est ignorée. Pas de vente récente ou personne ne vend : gardé. Les autres : au même prix que le moins cher, ou la médiane (jamais sous le moins cher).",
-      "choices": "0 un centime sous le vrai prix | 1 au même prix que le moins cher | 2 le prix de vente médian"
+      "tip": "Le prix de mise en vente de tout objet, recalculé dans la devise du porte-monnaie Steam de ce compte juste avant sa mise en vente. Par exemple, un objet vendu 0.30 plusieurs fois aujourd'hui, avec une annonce bradée à 0.10 : un centime sous le vrai prix le met à 0.29, au même prix que le moins cher à 0.10, la médiane à 0.30. « Un centime sous le vrai prix » (le choix sûr par défaut) : ce à quoi il s'est vendu le dernier jour, ou l'annonce la moins chère si elle est plus haute - une annonce bradée très en dessous est ignorée. Pas de vente récente ou personne ne vend : gardé. « Un centime sous le moins cher » rend le vôtre le moins cher, pour qu'il se vende en premier : le moins cher à 0.12 → mis en vente à 0.11. Il ignore aussi une annonce bradée (celle à 0.10 plus haut : il le met à 0.29), ne descend jamais sous votre propre annonce si elle est déjà la moins chère, ni sous « Jamais plus bas que », ni si bas que vous recevriez moins que « Vendre seulement si vous recevez au moins ». Les autres : au même prix que le moins cher, ou la médiane (jamais sous le moins cher).",
+      "choices": "0 un centime sous le vrai prix | 1 au même prix que le moins cher | 2 le prix de vente médian | 3 un centime sous le moins cher"
     },
     "SpareRelistDays": {
       "label": "Retirer les annonces invendues après (jours)",
@@ -4654,8 +4654,8 @@
       "tip": "Copies de chaque carte toujours gardées, même quand le badge est terminé. Par exemple 1 : sur 3 copies, 2 peuvent partir. 0 n'en garde aucune, la dernière copie peut donc partir aussi. Les cartes dont un badge a encore besoin sont toujours gardées."
     },
     "SpareDumpPct": {
-      "label": "Garder un objet si son annonce la moins chère est aussi loin sous ses ventes (%)",
-      "tip": "Garde un objet au lieu de le mettre en vente quand son annonce la moins chère est aussi loin sous ce à quoi il s'est vendu, et qu'une seule vente appuie ce prix - les deux prix se contredisent. Par exemple 50 : vendu une fois à 0.30, annonce la moins chère à 0.12 (60 % en dessous) : gardé. Avec deux ventes ou plus, il est mis en vente un centime sous ce à quoi il s'est vendu. 0 le met en vente même sur une seule vente. Seulement pour « un centime sous le vrai prix »."
+      "label": "Une annonce la moins chère aussi loin sous ses ventes est bradée (%)",
+      "tip": "À quel point l'annonce la moins chère doit être sous ce à quoi l'objet s'est vendu le dernier jour pour compter comme bradée. Par exemple 50 : vendu à 0.30, une annonce la moins chère à 0.12 (60 % en dessous) est bradée. « Un centime sous le vrai prix » garde l'objet quand une seule vente appuie ce prix - les deux prix se contredisent ; avec deux ventes ou plus, il le met en vente un centime sous ce à quoi il s'est vendu, à 0.29. « Un centime sous le moins cher » ignore l'annonce bradée et le met aussi à 0.29. 0 : aucune annonce ne compte comme bradée."
     },
     "BoosterMake": {
       "label": "Créer des boosters",

@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "los sobres van completando colecciones, pero «Crear insignias con los cromos» está desactivado - las colecciones completas esperan hasta que se active",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "rechazaste su anuncio en el móvil - no se vuelve a poner a la venta durante {0} día(s) más",
     "couldn't read which listings you declined: {0}": "no se pudo leer qué anuncios rechazaste: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: el precio de venta «un céntimo bajo el más barato» ya no existe - ahora se pone a la venta un céntimo bajo el precio real",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: el ajuste del precio de venta no era una de sus opciones - ahora se pone a la venta un céntimo bajo el precio real",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam no dijo qué objetos están en un intercambio pendiente - inténtalo de nuevo en un rato",
     "you'd get {0} - under your {1} minimum": "recibirías {0} - por debajo de tu mínimo de {1}",
     "couldn't write down which listings you declined: {0}": "no se pudo anotar qué anuncios rechazaste: {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Precio de venta",
-      "tip": "A qué precio se pone a la venta cualquier cosa, recalculado en la moneda propia del monedero de Steam de esta cuenta justo antes de ponerlo. Por ejemplo, un objeto que se vendió a 0.30 unas cuantas veces hoy, con un anuncio tirado a 0.10: un céntimo bajo el precio real lo pone a 0.29, igual que el más barato a 0.10, la mediana a 0.30. «Un céntimo bajo el precio real» (el valor seguro por defecto): lo que se vendió el último día, o el anuncio más barato si es mayor - se ignora un anuncio tirado muy por debajo. Sin ventas recientes o sin nadie vendiendo: se queda. Los demás: igual que el más barato, o la mediana (nunca bajo el más barato).",
-      "choices": "0 un céntimo bajo el precio real | 1 igual que el más barato | 2 el precio de venta mediano"
+      "tip": "A qué precio se pone a la venta cualquier cosa, recalculado en la moneda propia del monedero de Steam de esta cuenta justo antes de ponerlo. Por ejemplo, un objeto que se vendió a 0.30 unas cuantas veces hoy, con un anuncio tirado a 0.10: un céntimo bajo el precio real lo pone a 0.29, igual que el más barato a 0.10, la mediana a 0.30. «Un céntimo bajo el precio real» (el valor seguro por defecto): lo que se vendió el último día, o el anuncio más barato si es mayor - se ignora un anuncio tirado muy por debajo. Sin ventas recientes o sin nadie vendiendo: se queda. «Un céntimo bajo el más barato» hace que el tuyo sea el más barato, así se vende primero: el más barato a 0.12 → lo pone a 0.11. También ignora un anuncio tirado (el de 0.10 de arriba: lo pone a 0.29), nunca baja de tu propio anuncio si ya es el más barato, y nunca baja de «Nunca por debajo de» ni tanto que recibas menos que en «Vender solo si recibes al menos». Los demás: igual que el más barato, o la mediana (nunca bajo el más barato).",
+      "choices": "0 un céntimo bajo el precio real | 1 igual que el más barato | 2 el precio de venta mediano | 3 un céntimo bajo el más barato"
     },
     "SpareRelistDays": {
       "label": "Retirar anuncios sin vender tras (días)",
@@ -4654,8 +4654,8 @@
       "tip": "Copias de cada cromo que siempre se conservan, aunque la insignia esté terminada. Por ejemplo 1: de 3 copias, pueden irse 2. 0 no conserva ninguna, así que también puede irse la última. Los cromos que una insignia aún necesita siempre se conservan."
     },
     "SpareDumpPct": {
-      "label": "Quedarse un objeto si su anuncio más barato está así de por debajo de sus ventas (%)",
-      "tip": "Se queda un objeto en vez de ponerlo a la venta cuando su anuncio más barato está así de por debajo de lo que se vendió, y solo una venta respalda ese precio - los dos precios se contradicen. Por ejemplo 50: vendido una vez a 0.30, anuncio más barato 0.12 (un 60 % por debajo): se queda. Con dos o más ventas se pone un céntimo bajo lo que se vendió. 0 lo pone a la venta también con una sola venta. Solo para «un céntimo bajo el precio real»."
+      "label": "Un anuncio más barato así de por debajo de sus ventas está tirado (%)",
+      "tip": "Cuánto por debajo de lo que se vendió un objeto el último día tiene que estar su anuncio más barato para contar como tirado. Por ejemplo 50: vendido a 0.30, un anuncio más barato a 0.12 (un 60 % por debajo) está tirado. «Un céntimo bajo el precio real» se queda el objeto cuando solo una venta respalda ese precio - los dos precios se contradicen; con dos o más ventas lo pone un céntimo bajo lo que se vendió, a 0.29. «Un céntimo bajo el más barato» ignora el anuncio tirado y también lo pone a 0.29. 0: ningún anuncio cuenta como tirado."
     },
     "BoosterMake": {
       "label": "Crear sobres",

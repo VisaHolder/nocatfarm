@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "os pacotes estão completando conjuntos de cartas, mas \"Criar emblemas com as cartas\" está desligado - conjuntos completos esperam até ligar",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "você recusou o anúncio dele no celular - não é anunciado de novo por mais {0} dia(s)",
     "couldn't read which listings you declined: {0}": "não deu para ler quais anúncios você recusou: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: o preço de venda \"um centavo abaixo do mais barato\" não existe mais - agora anuncia um centavo abaixo do preço real",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: a configuração do preço de venda não era uma das opções - agora anuncia um centavo abaixo do preço real",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: a Steam não disse quais itens estão numa troca pendente - tente de novo daqui a pouco",
     "you'd get {0} - under your {1} minimum": "você receberia {0} - abaixo do seu mínimo de {1}",
     "couldn't write down which listings you declined: {0}": "não deu para anotar quais anúncios você recusou: {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Preço de venda",
-      "tip": "Por quanto qualquer coisa é anunciada, com o preço recalculado na moeda da carteira Steam desta conta logo antes de entrar no mercado. Por exemplo, um item que foi vendido a 0.30 algumas vezes hoje, com um anúncio jogado a 0.10: um centavo abaixo do preço real anuncia a 0.29, igual ao mais barato a 0.10, a mediana a 0.30. \"Um centavo abaixo do preço real\" (o padrão seguro): o preço de venda do último dia, ou o anúncio mais barato se for maior - um anúncio jogado muito abaixo é ignorado. Sem vendas recentes ou ninguém vendendo: mantido. Os outros: igual ao mais barato, ou a mediana (nunca abaixo do mais barato).",
-      "choices": "0 um centavo abaixo do preço real | 1 igual ao mais barato | 2 o preço de venda mediano"
+      "tip": "Por quanto qualquer coisa é anunciada, com o preço recalculado na moeda da carteira Steam desta conta logo antes de entrar no mercado. Por exemplo, um item que foi vendido a 0.30 algumas vezes hoje, com um anúncio jogado a 0.10: um centavo abaixo do preço real anuncia a 0.29, igual ao mais barato a 0.10, a mediana a 0.30. \"Um centavo abaixo do preço real\" (o padrão seguro): o preço de venda do último dia, ou o anúncio mais barato se for maior - um anúncio jogado muito abaixo é ignorado. Sem vendas recentes ou ninguém vendendo: mantido. \"Um centavo abaixo do mais barato\" deixa o seu como o mais barato, para vender primeiro: mais barato a 0.12 → anuncia a 0.11. Também ignora um anúncio jogado (o de 0.10 acima: anuncia a 0.29), nunca fica abaixo do seu próprio anúncio quando ele já é o mais barato, nem abaixo de \"Nunca abaixo de\" ou tão baixo que você receba menos que \"Só vender se você receber pelo menos\". Os outros: igual ao mais barato, ou a mediana (nunca abaixo do mais barato).",
+      "choices": "0 um centavo abaixo do preço real | 1 igual ao mais barato | 2 o preço de venda mediano | 3 um centavo abaixo do mais barato"
     },
     "SpareRelistDays": {
       "label": "Tirar anúncios não vendidos depois de (dias)",
@@ -4654,8 +4654,8 @@
       "tip": "Cópias de cada carta sempre mantidas, mesmo com a insígnia completa. Por exemplo 1: de 3 cópias, 2 podem ir. 0 não mantém nenhuma, então a última cópia também pode ir. Cartas que uma insígnia ainda precisa são sempre mantidas."
     },
     "SpareDumpPct": {
-      "label": "Manter um item se o anúncio mais barato estiver tão abaixo das vendas (%)",
-      "tip": "Mantém um item em vez de anunciá-lo quando o anúncio mais barato está tão abaixo do preço de venda, e só uma venda sustenta esse preço - os dois preços se contradizem. Por exemplo 50: vendido uma vez a 0.30, anúncio mais barato a 0.12 (60% abaixo): mantido. Com duas ou mais vendas, é anunciado um centavo abaixo do preço de venda. 0 anuncia também com uma só venda. Só para \"um centavo abaixo do preço real\"."
+      "label": "Um anúncio mais barato tão abaixo das vendas está jogado (%)",
+      "tip": "Quanto abaixo do preço de venda do último dia o anúncio mais barato precisa estar para contar como jogado. Por exemplo 50: vendido a 0.30, um anúncio mais barato a 0.12 (60% abaixo) está jogado. \"Um centavo abaixo do preço real\" mantém o item quando só uma venda sustenta esse preço - os dois preços se contradizem; com duas ou mais vendas, anuncia um centavo abaixo do preço de venda, a 0.29. \"Um centavo abaixo do mais barato\" ignora o anúncio jogado e também anuncia a 0.29. 0: nenhum anúncio conta como jogado."
     },
     "BoosterMake": {
       "label": "Criar pacotes de cartas",

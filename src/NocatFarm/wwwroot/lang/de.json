@@ -2834,7 +2834,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "Booster-Packs füllen Kartensätze, aber „Abzeichen aus Kartensätzen herstellen“ ist aus - fertige Sets warten, bis es an ist",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "du hast sein Angebot auf dem Handy abgelehnt - noch {0} Tag(e) nicht wieder eingestellt",
     "couldn't read which listings you declined: {0}": "konnte nicht lesen, welche Angebote du abgelehnt hast: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: Der Verkaufspreis „einen Cent unter dem günstigsten“ gibt es nicht mehr - es wird jetzt einen Cent unter dem echten Preis eingestellt",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: Die Einstellung Verkaufspreis war keine ihrer Auswahlmöglichkeiten - es wird jetzt einen Cent unter dem echten Preis eingestellt",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam sagt nicht, welche Gegenstände in einem wartenden Tausch stecken - versuch es später noch mal",
     "you'd get {0} - under your {1} minimum": "du bekämst {0} - unter deinem Minimum von {1}",
     "couldn't write down which listings you declined: {0}": "konnte nicht festhalten, welche Angebote du abgelehnt hast: {0}",
@@ -4576,8 +4576,8 @@
     },
     "SpareSellPrice": {
       "label": "Verkaufspreis",
-      "tip": "Wofür etwas eingestellt wird - direkt davor neu bepreist, in der eigenen Steam-Geldbörsen-Währung dieses Kontos. Ein Beispiel: ein Gegenstand, der heute ein paar Mal für 0.30 verkauft wurde, mit einem einzelnen Schleuderangebot bei 0.10: einen Cent unter dem echten Preis stellt ihn für 0.29 ein, genauso wie das günstigste für 0.10, der Median für 0.30. „Einen Cent unter dem echten Preis“ (die sichere Voreinstellung): wofür es am letzten Tag verkauft wurde, oder das günstigste Angebot, wenn das höher ist - ein einzelnes, weit darunter verschleudertes Angebot wird ignoriert. Kein Verkauf zuletzt oder niemand verkauft: behalten. Die anderen: genauso wie das günstigste, oder der Median (nie unter dem günstigsten).",
-      "choices": "0 einen Cent unter dem echten Preis | 1 genauso wie das günstigste | 2 der mittlere Verkaufspreis (Median)"
+      "tip": "Wofür etwas eingestellt wird - direkt davor neu bepreist, in der eigenen Steam-Geldbörsen-Währung dieses Kontos. Ein Beispiel: ein Gegenstand, der heute ein paar Mal für 0.30 verkauft wurde, mit einem einzelnen Schleuderangebot bei 0.10: einen Cent unter dem echten Preis stellt ihn für 0.29 ein, genauso wie das günstigste für 0.10, der Median für 0.30. „Einen Cent unter dem echten Preis“ (die sichere Voreinstellung): wofür es am letzten Tag verkauft wurde, oder das günstigste Angebot, wenn das höher ist - ein einzelnes, weit darunter verschleudertes Angebot wird ignoriert. Kein Verkauf zuletzt oder niemand verkauft: behalten. „Einen Cent unter dem günstigsten“ macht deins zum günstigsten, damit es zuerst verkauft wird: günstigstes 0.12 → eingestellt für 0.11. Ein Schleuderangebot ignoriert es auch (die 0.10 oben: es stellt für 0.29 ein), es geht nie unter dein eigenes Angebot, wenn das schon das günstigste ist, und nie unter „Nie tiefer als“ oder so tief, dass du weniger bekommst als bei „Nur verkaufen, wenn du mindestens bekommst“. Die anderen: genauso wie das günstigste, oder der Median (nie unter dem günstigsten).",
+      "choices": "0 einen Cent unter dem echten Preis | 1 genauso wie das günstigste | 2 der mittlere Verkaufspreis (Median) | 3 einen Cent unter dem günstigsten"
     },
     "SpareRelistDays": {
       "label": "Unverkaufte Angebote zurückziehen nach (Tagen)",
@@ -4654,8 +4654,8 @@
       "tip": "Kopien jeder Karte, die immer behalten werden, auch wenn das Abzeichen fertig ist. Zum Beispiel 1: von 3 Kopien können 2 gehen. 0 behält keine, dann kann auch die letzte Kopie gehen. Karten, die ein Abzeichen noch braucht, werden immer behalten."
     },
     "SpareDumpPct": {
-      "label": "Gegenstand behalten, wenn das günstigste Angebot so weit unter den Verkäufen liegt (%)",
-      "tip": "Behält einen Gegenstand, statt ihn einzustellen, wenn sein günstigstes Angebot so weit unter dem liegt, wofür er verkauft wurde, und nur ein einziger Verkauf diesen Preis stützt - die beiden Preise widersprechen sich. Zum Beispiel 50: einmal für 0.30 verkauft, günstigstes Angebot 0.12 (60 % darunter): behalten. Bei zwei oder mehr Verkäufen wird er einen Cent unter dem Verkaufspreis eingestellt. 0 stellt ihn auch bei einem einzigen Verkauf ein. Nur für „Einen Cent unter dem echten Preis“."
+      "label": "Ein günstigstes Angebot so weit unter den Verkäufen ist verschleudert (%)",
+      "tip": "Wie weit das günstigste Angebot unter dem liegen muss, wofür ein Gegenstand am letzten Tag verkauft wurde, damit es als verschleudert zählt. Zum Beispiel 50: für 0.30 verkauft, ein günstigstes Angebot bei 0.12 (60 % darunter) ist verschleudert. „Einen Cent unter dem echten Preis“ behält den Gegenstand, wenn nur ein einziger Verkauf diesen Preis stützt - die beiden Preise widersprechen sich; bei zwei oder mehr Verkäufen stellt es ihn einen Cent unter dem Verkaufspreis ein, für 0.29. „Einen Cent unter dem günstigsten“ ignoriert das verschleuderte Angebot und stellt ebenfalls für 0.29 ein. 0: kein Angebot zählt als verschleudert."
     },
     "BoosterMake": {
       "label": "Booster-Packs erstellen",

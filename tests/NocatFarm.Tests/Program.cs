@@ -11090,7 +11090,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string js = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
 	Check("settings page: a ShowWhen setting is drawn only under that answer, unsaved edits included",
 		js.Contains("if (!shownWhen(d, values)) return false;", StringComparison.Ordinal)
-		&& js.Contains("const same = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values)) === def.ShowWhen.slice(at + 1);", StringComparison.Ordinal));
+		&& js.Contains("const value = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values));", StringComparison.Ordinal));
 }
 
 // ── simpler commands: one listed name each, older names still work, the hand tools last ───────────────────────────
@@ -20746,7 +20746,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("selling price: the same as the cheapest", strategy.Actions[0].ListCents == 10);
 		int? LP(int lowest, int? median, int strategy) => NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(lowest, now, median, 20), strategy, 50).Cents;
 		Check("selling price: the median when known - and with none it's kept, never the cheapest instead",
-			LP(10, 14, 2) == 14 && LP(10, null, 2) == null && LP(3, 3, 3) == 3 && LP(10, null, 3) == null);
+			LP(10, 14, 2) == 14 && LP(10, null, 2) == null && LP(3, 3, 0) == 3 && LP(10, null, 0) == null);
 		var mixed = Plan([SCard(1), SCard(2), SCard(3), SCard(4, "Heavy"), SCard(5, "Heavy"), new(60, G, NocatFarm.Core.SpareKind.Background, $"{G}-Sky", "Sky", true, true), new(61, G, NocatFarm.Core.SpareKind.Background, $"{G}-Sky", "Sky", true, true)], rules);
 		Check("one decision per item - nothing decided twice", mixed.Decisions.Count == 7 && mixed.Decisions.Select(static d => d.Item.AssetId).Distinct().Count() == 7);
 
@@ -22647,7 +22647,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			&& !fcDocs.Contains("gems ok", StringComparison.Ordinal));
 		Check("the selling price says what each choice is", Def("SpareSellPrice").Tooltip.Contains("\"A cent under the real price\" (the safe default)", StringComparison.Ordinal)
 			&& Def("SpareSellPrice").Tooltip.Contains("the same as the cheapest, or the median (never under the cheapest)", StringComparison.Ordinal)
-			&& !Def("SpareSellPrice").Tooltip.Contains("a cent under the cheapest", StringComparison.Ordinal));
+			&& Def("SpareSellPrice").Tooltip.Contains("\"A cent under the cheapest\" makes yours the cheapest", StringComparison.Ordinal));
 		Check("Steam Points notifications are only real purchases", Def("SendPoints").Tooltip.EndsWith("Only real purchases are sent.", StringComparison.Ordinal));
 		Check("the units are in the labels",
 			(Def("SpareRunHours").Label == "Look every (hours)") && (Def("PointsCheckEveryHours").Label == "Look every (hours)") && (Def("SpareGapSeconds").Label == "Wait between items (seconds)")
@@ -24585,7 +24585,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			new[] { 0, 1, 2 }.All(st => For(57, 58, 16, st) is >= 56) && (For(4, 4, 3) == 3) && (For(3, 3, 3) == 3));
 		Check("listing price: \"a cent under the real price\" is the default, the same as the cheapest and the median are still there",
 			(NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig()).SellPrice == 0) && (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareSellPrice = 2 }).SellPrice == 2)
-			&& (NocatFarm.Config.Settings.FindBot("SpareSellPrice")!.Choices == "0 a cent under the real price | 1 the same as the cheapest | 2 the median sale price")
+			&& (NocatFarm.Config.Settings.FindBot("SpareSellPrice")!.Choices == "0 a cent under the real price | 1 the same as the cheapest | 2 the median sale price | 3 a cent under the cheapest")
 			&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig()).DumpPct == 50));
 
 		// ── the limit, the cap and gems-or-sell, all in the wallet's currency
@@ -25509,25 +25509,25 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("step down: spare items steps only its own listings (never one you listed by hand)",
 			sellerSrc.Contains("OurListings.OursWithRecords(listings, OurListings.Load(bot.Name))", StringComparison.Ordinal) && runSrc.Contains("Seller.StepDownAsync(bot,", StringComparison.Ordinal));
 
-		// ── the risky selling price is gone
-		var oldChoice = new NocatFarm.Config.BotConfig { SpareSellPrice = 3 };
+		// ── a selling price that isn't a choice
+		var oldChoice = new NocatFarm.Config.BotConfig { SpareSellPrice = 4 };
 		bool sellMigrated = NocatFarm.Config.ConfigStore.MigrateSellPrice(oldChoice, "sr-sell");
-		Check("selling price: a saved \"a cent under the cheapest\" becomes \"a cent under the real price\", once",
+		Check("selling price: a saved choice that isn't one becomes \"a cent under the real price\", once",
 			sellMigrated && (oldChoice.SpareSellPrice == 0) && !NocatFarm.Config.ConfigStore.MigrateSellPrice(oldChoice, "sr-sell")
 			&& !NocatFarm.Config.ConfigStore.MigrateSellPrice(new NocatFarm.Config.BotConfig { SpareSellPrice = 2 }, "sr-sell"));
-		Check("selling price: only the three choices are offered, and anything else lists a cent under the real price",
-			(NocatFarm.Config.Settings.FindBot("SpareSellPrice")!.Choices!.Split('|').Length == 3) && (NocatFarm.Core.ListingPrice.Choice(3) == 0)
-			&& (NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, srNow, 30, 5), 3, 50).Cents == 29)
-			&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareSellPrice = 3 }).SellPrice == 0));
+		Check("selling price: only the four choices are offered, and anything else lists a cent under the real price",
+			(NocatFarm.Config.Settings.FindBot("SpareSellPrice")!.Choices!.Split('|').Length == 4) && (NocatFarm.Core.ListingPrice.Choice(4) == 0)
+			&& (NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, srNow, 30, 5), 4, 50).Cents == 29)
+			&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareSellPrice = 4 }).SellPrice == 0));
 		var srLang = new List<string>();
 		foreach (string f in Directory.GetFiles(Path.Combine(srRepo, "src", "NocatFarm", "wwwroot", "lang"), "*.json")) {
 			using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(f));
 			string choices = doc.RootElement.GetProperty("settings").GetProperty("SpareSellPrice").GetProperty("choices").GetString() ?? "";
-			if (choices.Contains("| 3", StringComparison.Ordinal) || (choices.Split('|').Length != 3)) {
+			if (choices.Contains("| 4", StringComparison.Ordinal) || (choices.Split('|').Length != 4)) {
 				srLang.Add(Path.GetFileName(f));
 			}
 		}
-		Check("selling price: every language offers the same three choices", srLang.Count == 0, string.Join(",", srLang));
+		Check("selling price: every language offers the same four choices", srLang.Count == 0, string.Join(",", srLang));
 
 		// ── human mode: spread out, a few a look
 		var humanCfg = new NocatFarm.Config.BotConfig { LegitMode = true };
@@ -25998,9 +25998,9 @@ await CommandSweep.RunAsync(Check);
 	string[] lkWindowsOnly = ["ScamAlertPopup", "HealthAlertPopup"];
 	List<string> lkNoExample = [.. lk180.Where(n => NocatFarm.Config.Settings.Find(n) is { } d && !(d.Tooltip.Contains("for example", StringComparison.OrdinalIgnoreCase) || d.Tooltip.Contains("e.g.", StringComparison.Ordinal)))];
 	Check("tooltips: every 1.8.0 setting's (i) gives a real example", lkNoExample.Count == 0, string.Join(", ", lkNoExample));
-	Check("tooltips: the selling price shows each choice on one example, and \"a cent under the cheapest\" is gone",
+	Check("tooltips: the selling price shows each choice on one example",
 		LkDef("SpareSellPrice").Tooltip.Contains("a cent under the real price lists at 0.29, the same as the cheapest at 0.10, the median at 0.30.", StringComparison.Ordinal)
-		&& !LkDef("SpareSellPrice").Tooltip.Contains("cent under the cheapest", StringComparison.Ordinal) && !LkDef("SpareSellPrice").Choices!.Contains("cent under the cheapest", StringComparison.Ordinal));
+		&& LkDef("SpareSellPrice").Tooltip.Contains("(the 0.10 above: it lists at 0.29)", StringComparison.Ordinal));
 	List<string> lkStale = [];
 
 	foreach (string lang in new[] { "de", "es", "fr", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-CN" }) {
@@ -28298,6 +28298,121 @@ if (OperatingSystem.IsWindows()) {
 	Check("window accounts: a bigger window - the panel still reaches the bottom margin, the rows aren't stretched",
 		(alTopBig + alHBig == 450 - 40) && (alShownBig == 3) && !alScrollsBig, $"{alTopBig} {alHBig} {alShownBig}");
 	Check("window accounts: one account shows one row", NocatFarm.Windows.MainWindow.SheetLayout(320, 34, 1) is { Visible: 1, Scrolls: false });
+}
+
+// ── 1.8.2: selling price - a cent under the cheapest ──
+{
+	DateTime ucNow = DateTime.UtcNow;
+	int? Uc(int lowest, int? median, int sales, int dumpPct = 50, int minReceive = 0, int floorPct = 80, int ours = 0) =>
+		NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(lowest, ucNow, median, sales), 3, dumpPct, minReceive, floorPct, ours).Cents;
+
+	Check("a cent under the cheapest: cheapest 0.12 lists at 0.11, so it's the cheapest and sells first", (Uc(12, 12, 5) == 11) && (Uc(40, 30, 5) == 39), $"{Uc(12, 12, 5)} {Uc(40, 30, 5)}");
+	Check("a cent under the cheapest: no sale lately - still a cent under the cheapest; nobody selling - kept",
+		(Uc(12, null, 0) == 11) && (Uc(0, 30, 5) == null) && (Uc(0, null, 0) == null));
+	Check("a cent under the cheapest: one listing dumped at 0.10 while it sells for 0.30 is ignored - lists at 0.29, a cent under the sale price",
+		(Uc(10, 30, 1) == 29) && (Uc(10, 30, 5) == 29), $"{Uc(10, 30, 1)} {Uc(10, 30, 5)}");
+	Check("a cent under the cheapest: a listing under the sale price that isn't a dump is undercut", Uc(25, 30, 5) == 24);
+	Check("a cent under the cheapest: never under \"Never go lower than\" - cheapest 0.20 while it sold for 0.30 lists at 0.24 (80%)",
+		(Uc(20, 30, 5) == 24) && (Uc(20, 30, 5, floorPct: 50) == 19) && (Uc(10, 30, 5, dumpPct: 0) == 24), $"{Uc(20, 30, 5)} {Uc(20, 30, 5, floorPct: 50)} {Uc(10, 30, 5, dumpPct: 0)}");
+	Check("a cent under the cheapest: a cent under would pay under your minimum - it lists at the cheapest instead",
+		(Uc(7, null, 0, minReceive: 5) == 7) && (NocatFarm.Core.Seller.ReceiveFor(7) == 5) && (Uc(8, null, 0, minReceive: 5) == 7));
+	Check("a cent under the cheapest: when even the cheapest pays under your minimum, the minimum decides (gems or kept), never a higher listing",
+		Uc(6, null, 0, minReceive: 5) == 5);
+	Check("a cent under the cheapest: 1-cent items - never under the market's 0.03, so you always get at least 0.01",
+		(Uc(3, 3, 5) == 3) && (Uc(4, null, 0) == 3) && (Uc(4, 4, 5) == 4) && (Uc(1, null, 0) == 3) && (Uc(2, null, 0, floorPct: 1) == 3) && (NocatFarm.Core.Seller.ReceiveFor(3) == 1));
+	Check("a cent under the cheapest: your own listing is already the cheapest - it lists at the same price, never under yourself",
+		(Uc(11, 12, 5, ours: 11) == 11) && (Uc(11, null, 0, ours: 11) == 11));
+	Check("a cent under the cheapest: someone went under your listing - a cent under them; yours not in the market's answer yet - a cent under the cheapest",
+		(Uc(10, null, 0, ours: 11) == 9) && (Uc(12, null, 0, ours: 11) == 11));
+
+	// The other choices are as they were.
+	Check("a cent under the cheapest: the other three choices don't change",
+		(NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, ucNow, 30, 5), 0, 50, 5, 80, 10).Cents == 29)
+		&& (NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, ucNow, 30, 5), 1, 50, 5, 80, 10).Cents == 10)
+		&& (NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, ucNow, 30, 5), 2, 50, 5, 80, 10).Cents == 30)
+		&& (NocatFarm.Core.ListingPrice.For(new NocatFarm.Core.MarketPrice(10, ucNow, 30, 1), 0, 50).Cents == null));
+
+	// Which of our own listings is up, by market name.
+	List<NocatFarm.Core.OurListings.Entry> ucOurs = [
+		new(1, "440-UcHat", 9, ucNow, Tracked: true, Active: true, BuyerCents: 11),
+		new(2, "440-UcHat", 10, ucNow, Tracked: true, BuyerCents: 13),
+		new(3, "440-UcHat", 7, ucNow, Tracked: true, Active: true, Settled: true, BuyerCents: 9),
+		new(4, "440-UcCoat", 7, ucNow, Tracked: true, Active: true, BuyerCents: 9)];
+	Check("a cent under the cheapest: your cheapest listing still up is known per item - one that sold or came down doesn't count",
+		(NocatFarm.Core.OurListings.UpFor(ucOurs, "440-UcHat") == 11) && (NocatFarm.Core.OurListings.UpFor(ucOurs, "440-UcCoat") == 9)
+		&& (NocatFarm.Core.OurListings.UpFor(ucOurs, "440-UcBoots") == 0));
+
+	// Right before listing: priced again, and our own listing kept level with.
+	var ucGet = NocatFarm.Core.SparePrices.Get;
+	NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("UcHat", StringComparison.Ordinal)
+		? "{\"success\":true,\"lowest_price\":\"$0.12\",\"volume\":\"5\",\"median_price\":\"$0.12\"}" : null, true));
+	var ucOffer = new NocatFarm.Core.Seller.Offer(8801, "Team Fortress 2", "Hat", 12, 12, 10, "440-UcHat");
+	var (ucListed, _) = await NocatFarm.Core.Seller.RepriceAsync(ucOffer, 1, 3, 50, null, null, CancellationToken.None, floorPct: 80);
+	var (ucLevel, _) = await NocatFarm.Core.Seller.RepriceAsync(ucOffer, 1, 3, 50, null, null, CancellationToken.None, floorPct: 80, ours: 12);
+	Check("a cent under the cheapest: right before listing - cheapest 0.12 goes up at 0.11; with your own at 0.12 already the cheapest, at 0.12",
+		(ucListed is { BuyerCents: 11 }) && (ucLevel is { BuyerCents: 12 }), $"{ucListed?.BuyerCents} {ucLevel?.BuyerCents}");
+	var ucItem = new NocatFarm.Core.SpareItem(8801, 440, NocatFarm.Core.SpareKind.Card, "440-UcHat", "Hat", true, true);
+	var ucRules = new NocatFarm.Core.SpareRules { On = true, SellPrice = 3, MaxPriceCents = 100, MinSaleCents = 5, FloorPct = 80 };
+	var ucDecision = new NocatFarm.Core.SpareDecision(ucItem, NocatFarm.Core.SpareVerdict.Sell, new NocatFarm.Core.Said("x"), 12, 0, 11, 9);
+	var (ucOwn, _) = await NocatFarm.Core.SpareRun.Repricer([ucDecision], ucRules, 1, oursOf: static _ => 12)(ucOffer, CancellationToken.None);
+	var (ucFresh, _) = await NocatFarm.Core.SpareRun.Repricer([ucDecision], ucRules, 1, oursOf: static _ => 0)(ucOffer, CancellationToken.None);
+	Check("a cent under the cheapest: spare items asks for your own listing of the item - level with it, not under it",
+		(ucOwn is { BuyerCents: 12 }) && (ucFresh is { BuyerCents: 11 }), $"{ucOwn?.BuyerCents} {ucFresh?.BuyerCents}");
+	NocatFarm.Core.SparePrices.Get = ucGet;
+
+	// A listing of ours that is the cheapest isn't taken down to undercut itself; one somebody went under is.
+	var ucUp = new NocatFarm.Core.Seller.Listing(1, 8801, "440-UcHat", NocatFarm.Core.Seller.ReceiveFor(11), ucNow.AddDays(-8), false);
+	NocatFarm.Core.MarketQuote UcQuote(int lowest, int? median, int sales) => new("440-UcHat", 1, lowest, median, sales, ucNow.Ticks);
+	Check("a cent under the cheapest: your listing at the cheapest stays up; somebody under it - taken down to go under them",
+		!NocatFarm.Core.Seller.Undercut(ucUp, UcQuote(11, 12, 5), 3, 50, 80) && NocatFarm.Core.Seller.Undercut(ucUp, UcQuote(10, null, 0), 3, 50, 80));
+
+	// Unsold: steps down from the new price, as before.
+	var ucPrice = new NocatFarm.Core.MarketPrice(11, ucNow, 12, 5);
+	Check("a cent under the cheapest: an unsold listing at 0.11 steps down to 0.10, never under 80% of what it sold for",
+		(NocatFarm.Core.SpareListings.StepTo(11, ucPrice, 80, 50) == 10) && (NocatFarm.Core.SpareListings.StepTo(10, ucPrice, 80, 50) == null)
+		&& (NocatFarm.Core.SpareListings.Capped(Uc(11, 12, 5)!.Value, ucPrice, new NocatFarm.Core.SpareListings.Step("440-UcHat", 11, 10, ucNow), 80) == 10));
+
+	// The plan agrees: a cent under that would pay under the minimum lists at the cheapest; the cheapest itself under it is kept.
+	NocatFarm.Core.SparePlan UcPlan(int lowest) => NocatFarm.Core.Spare.Plan(new NocatFarm.Core.SpareInput {
+		Items = [ucItem, ucItem with { AssetId = 8802 }], Badges = new NocatFarm.Core.SpareBadges(new Dictionary<uint, int> { [440] = 5 }, []),
+		Rules = ucRules with { NewDays = 0, Action = 2 }, Received = _ => ucNow.AddDays(-30), Price = _ => new NocatFarm.Core.MarketPrice(lowest, ucNow, null, 0),
+		GemValue = _ => 40, Now = ucNow });
+	var ucAt7 = UcPlan(7);
+	var ucAt6 = UcPlan(6);
+	Check("a cent under the cheapest: the plan lists at the cheapest when a cent under would pay under your minimum, and keeps it when even that does",
+		(ucAt7.Actions.Count > 0) && ucAt7.Actions.All(static a => a.ListCents == 7) && (ucAt6.Actions.Count == 0),
+		string.Join(" | ", ucAt7.Decisions.Concat(ucAt6.Decisions).Select(static d => $"{d.Verdict} {d.ListCents} {d.Why.ToEnglish()}")));
+
+	// The choice itself.
+	var ucSaved = new NocatFarm.Config.BotConfig { SpareSellPrice = 3 };
+	var ucOdd = new NocatFarm.Config.BotConfig { SpareSellPrice = 7 };
+	Check("a cent under the cheapest: choice 3 is kept as chosen; anything that isn't a choice is the safe default",
+		(NocatFarm.Core.ListingPrice.Choice(3) == 3) && (NocatFarm.Core.ListingPrice.Choice(4) == 0) && (NocatFarm.Core.ListingPrice.Choice(-1) == 0)
+		&& !NocatFarm.Config.ConfigStore.MigrateSellPrice(ucSaved, "uc") && (ucSaved.SpareSellPrice == 3)
+		&& NocatFarm.Config.ConfigStore.MigrateSellPrice(ucOdd, "uc") && (ucOdd.SpareSellPrice == 0)
+		&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareSellPrice = 3 }).SellPrice == 3)
+		&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig()).SellPrice == 0));
+	NocatFarm.Config.SettingDef ucDef = NocatFarm.Config.Settings.FindBot("SpareSellPrice")!;
+	Check("a cent under the cheapest: offered as the fourth choice, explained with an example",
+		(ucDef.Choices == "0 a cent under the real price | 1 the same as the cheapest | 2 the median sale price | 3 a cent under the cheapest")
+		&& ucDef.Tooltip.Contains("cheapest 0.12 → lists at 0.11", StringComparison.Ordinal), ucDef.Tooltip);
+	Check("a cent under the cheapest: the dump threshold shows for it too", NocatFarm.Config.Settings.FindBot("SpareDumpPct")!.ShowWhen == "SpareSellPrice=0|3");
+	string ucJs = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
+	Check("settings page: a ShowWhen can name more than one answer (\"SpareSellPrice=0|3\")", ucJs.Contains("const same = want.split('|').includes(value);", StringComparison.Ordinal));
+	List<string> ucLang = [];
+
+	foreach (string f in Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "lang"), "*.json")) {
+		using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(f));
+		System.Text.Json.JsonElement s = doc.RootElement.GetProperty("settings").GetProperty("SpareSellPrice");
+		string choices = s.GetProperty("choices").GetString() ?? "";
+		string tip = s.GetProperty("tip").GetString() ?? "";
+
+		if (!choices.Contains("| 3 ", StringComparison.Ordinal) || (choices.Split('|').Length != 4) || !tip.Contains("0.12", StringComparison.Ordinal) || !tip.Contains("0.11", StringComparison.Ordinal)) {
+			ucLang.Add(Path.GetFileName(f));
+		}
+	}
+
+	Check("a cent under the cheapest: every language offers the four choices and the example", ucLang.Count == 0, string.Join(",", ucLang));
 }
 
 // SETTINGSCOUNT

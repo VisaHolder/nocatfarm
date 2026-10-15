@@ -313,6 +313,14 @@ public static class OurListings {
 		: listing.BuyerCents > 0 ? listing.BuyerCents
 		: listing.YouGetCents + Seller.FeesFor(listing.YouGetCents);
 
+	/// <summary>
+	/// What a buyer pays for our own cheapest listing of an item that's still up or waiting on the phone, by market name - 0
+	/// when there's none. "A cent under the cheapest" keeps level with it instead of going under it (1.8.2).
+	/// </summary>
+	public static int UpFor(IReadOnlyList<Entry> ours, string hash) =>
+		hash.Length == 0 ? 0
+		: ours.Where(e => e.Tracked && !e.Settled && (e.BuyerCents > 0) && (e.Hash == hash)).Select(static e => e.BuyerCents).DefaultIfEmpty(0).Min();
+
 	/// <summary>Each listing of ours with its record.</summary>
 	public static List<(Seller.Listing Listing, Entry Entry)> OursWithRecords(IEnumerable<Seller.Listing> listings, IReadOnlyList<Entry> ours) =>
 		[.. Pair(listings, ours).Select(p => (p.Value, ours[p.Key]))];

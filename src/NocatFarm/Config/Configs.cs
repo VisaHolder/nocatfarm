@@ -908,8 +908,9 @@ public sealed class BotConfig {
 	public int SpareGapSeconds { get; set; } = 40;
 	public int SparePriceMaxAgeHours { get; set; } = 24;
 
-	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price. 3 was "a cent under
-	/// the cheapest" until 1.8.1 - it followed dumps down, and a saved 3 becomes 0 (ConfigStore.MigrateSellPrice).</summary>
+	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
+	/// cheapest (back in 1.8.2, never following a dumped listing down - see ListingPrice.UnderCheapest). Anything else becomes 0
+	/// (ConfigStore.MigrateSellPrice).</summary>
 	public int SpareSellPrice { get; set; }
 
 	/// <summary>A cheapest listing this many percent or more under the median sale price is a dump and doesn't set the price.</summary>
@@ -1811,19 +1812,20 @@ public static class ConfigStore {
 	}
 
 	/// <summary>
-	/// 1.8.1: the selling price "a cent under the cheapest" is gone - it followed a dumped listing down and sold under what
-	/// an item really sells for. A saved choice of it becomes "a cent under the real price", the safe default, said once.
+	/// A selling price that isn't one of the choices (a hand edit, a newer version's) becomes "a cent under the real price",
+	/// the safe default, said once. 3 is a choice again since 1.8.2: "a cent under the cheapest", which no longer follows a
+	/// dumped listing down - 1.8.1 had turned every saved 3 into 0 already.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back.</returns>
 	public static bool MigrateSellPrice(BotConfig cfg, string name = "") {
-		if (cfg.SpareSellPrice is >= 0 and <= 2) {
+		if (cfg.SpareSellPrice is >= 0 and <= 3) {
 			return false;
 		}
 
 		cfg.SpareSellPrice = 0;
 
 		if (name.Length > 0) {
-			Log.Info(new Said("{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price", name), name);
+			Log.Info(new Said("{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price", name), name);
 		}
 
 		return true;

@@ -297,8 +297,10 @@ public static class SpareRun {
 	/// <param name="stepGone">The market went up since that step, by market name: the step is forgotten.</param>
 	/// <param name="ledger">Today's caps: a price that went up since it was counted is listed while their value has room
 	/// for it (<see cref="Fits"/>). None: only at or under what was counted.</param>
+	/// <param name="oursOf">Our own cheapest listing of an item still up, by market name (0 none): "a cent under the cheapest"
+	/// keeps level with it when it's the cheapest (see <see cref="OurListings.UpFor"/>).</param>
 	public static Seller.Reprice Repricer(IReadOnlyList<SpareDecision> items, SpareRules rules, int currency, Func<string, SpareListings.Step?>? stepOf = null,
-		Action<string>? stepGone = null, SpareLedger? ledger = null) {
+		Action<string>? stepGone = null, SpareLedger? ledger = null, Func<string, int>? oursOf = null) {
 		Dictionary<ulong, SpareDecision> byAsset = [];
 
 		foreach (SpareDecision d in items) {
@@ -311,7 +313,7 @@ public static class SpareRun {
 			int counted = d?.PriceCents ?? 0;
 
 			return Seller.RepriceAsync(offer, currency, rules.SellPrice, rules.DumpPct, limited ? rules.MaxPriceCents : null, worth => Fits(ledger, rules, counted, worth, DateTime.Now), ct,
-				stepOf?.Invoke(offer.Hash), rules.MinSaleCents, rules.FloorPct, stepGone == null ? null : () => stepGone(offer.Hash));
+				stepOf?.Invoke(offer.Hash), rules.MinSaleCents, rules.FloorPct, stepGone == null ? null : () => stepGone(offer.Hash), oursOf?.Invoke(offer.Hash) ?? 0);
 		};
 	}
 
@@ -650,7 +652,7 @@ public static class SpareRun {
 		MarketPrice? p = SparePrices.Of(item, currency);
 
 		if ((p is not { Cents: > 0 } price) || (DateTime.UtcNow - price.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))
-			|| (ListingPrice.For(price, rules.SellPrice, rules.DumpPct).Cents is not int list)) {
+			|| (ListingPrice.For(price, rules.SellPrice, rules.DumpPct, rules.MinSaleCents, rules.FloorPct).Cents is not int list)) {
 			return null;
 		}
 

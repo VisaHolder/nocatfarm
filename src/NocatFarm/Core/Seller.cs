@@ -249,8 +249,10 @@ public static class Seller {
 	/// under what the listing had - never under <paramref name="floorPct"/> percent of the real price (see <see cref="SpareListings.Capped"/>).</param>
 	/// <param name="minReceive">Kept when the account would get less than this ("Only sell if you get at least").</param>
 	/// <param name="stepGone">Called when the market went up since the step: the step is stale and goes.</param>
+	/// <param name="ours">What a buyer pays for our own cheapest listing of this item still up, 0 none: "a cent under the
+	/// cheapest" never goes under it when it's the cheapest (see <see cref="ListingPrice.UnderCheapest"/>).</param>
 	public static async Task<(Offer? Offer, Said Why)> RepriceAsync(Offer offer, int currency, int strategy, int dumpPct, int? maxWorth,
-		Func<int, bool>? fits, CancellationToken ct, SpareListings.Step? step = null, int minReceive = 0, int floorPct = 80, Action? stepGone = null) {
+		Func<int, bool>? fits, CancellationToken ct, SpareListings.Step? step = null, int minReceive = 0, int floorPct = 80, Action? stepGone = null, int ours = 0) {
 		if ((currency <= 0) || (offer.Hash.Length == 0)) {
 			return (null, new Said("no price in this account's currency, not listed"));
 		}
@@ -259,7 +261,7 @@ public static class Seller {
 			return (null, new Said("no price yet, tries later"));
 		}
 
-		(int? list, Said why) = ListingPrice.For(quote.Price, strategy, dumpPct);
+		(int? list, Said why) = ListingPrice.For(quote.Price, strategy, dumpPct, minReceive, floorPct, ours);
 
 		if (list is not int buyer) {
 			return (null, why);
@@ -304,8 +306,9 @@ public static class Seller {
 	/// <summary>The account's own selling price rule, for anything that has no other: 'sell', and stale listings put up again.</summary>
 	public static Reprice OwnRule(Bot bot, int currency) {
 		int strategy = ListingPrice.Choice(bot.Cfg.SpareSellPrice), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		int floorPct = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100);
 
-		return (o, ct) => RepriceAsync(o, currency, strategy, dump, null, null, ct);
+		return (o, ct) => RepriceAsync(o, currency, strategy, dump, null, null, ct, floorPct: floorPct, ours: OurListings.UpFor(OurListings.Load(bot.Name), o.Hash));
 	}
 
 	/// <summary>List them, a little apart, then confirm them if this account can. Returns a summary.</summary>
@@ -749,14 +752,15 @@ public static class Seller {
 	/// default rule a listing can sit a cent under what it sells for, above a dump; taken down for that, it went straight
 	/// back up at the same price every week, each time with a phone confirmation. No price for certain: left up.
 	/// </summary>
-	public static bool Undercut(Listing listing, MarketQuote? quote, int strategy, int dumpPct) {
+	/// <param name="floorPct">"Never go lower than", for "a cent under the cheapest" (see <see cref="ListingPrice.UnderCheapest"/>).</param>
+	public static bool Undercut(Listing listing, MarketQuote? quote, int strategy, int dumpPct, int floorPct = 0) {
 		int lowest = quote?.Lowest ?? 0;
 
 		if ((lowest <= 0) || (listing.YouGetCents + FeesFor(listing.YouGetCents) <= lowest)) {
 			return false;
 		}
 
-		return (ListingPrice.For(quote!.Price, strategy, dumpPct).Cents is int buyer) && (ReceiveFor(buyer) is int receive and > 0) && (receive < listing.YouGetCents);
+		return (ListingPrice.For(quote!.Price, strategy, dumpPct, floorPct: floorPct).Cents is int buyer) && (ReceiveFor(buyer) is int receive and > 0) && (receive < listing.YouGetCents);
 	}
 
 	/// <summary>
@@ -782,6 +786,7 @@ public static class Seller {
 		List<Listing> stale = [];
 		int lookups = 0;
 		int strategy = ListingPrice.Choice(bot.Cfg.SpareSellPrice), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		int floorPct = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100);
 
 		// A week old (or the days set under Spare items), and somebody now sells the same card for less than the buyer would pay for ours.
 		foreach (Listing l in listings.Where(l => !l.AwaitingConfirmation && !l.OnHold && (l.Game != 0) && (DateTime.UtcNow - l.Created > TimeSpan.FromDays(Math.Max(1, days))))) {
@@ -793,7 +798,7 @@ public static class Seller {
 			// took every week-old Canadian listing for undercut, and put it up again a quarter cheaper.
 			lookups++;
 
-			if (Undercut(l, await FetchForListingAsync(l.Hash, currency, ct).ConfigureAwait(false), strategy, dump)) {
+			if (Undercut(l, await FetchForListingAsync(l.Hash, currency, ct).ConfigureAwait(false), strategy, dump, floorPct)) {
 				stale.Add(l);
 			}
 		}

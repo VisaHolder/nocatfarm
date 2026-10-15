@@ -173,7 +173,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 		int currency = (int) bot.WalletCurrency;
 		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct,
 			SpareRun.Repricer(items, SpareRules.From(bot.Cfg), currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
-				hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name)),
+				hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash)),
 			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name),
 			o => {
 				_listed[o.AssetId] = (Spare.Money(o.BuyerCents, currency), Spare.Money(o.YouGetCents, currency));

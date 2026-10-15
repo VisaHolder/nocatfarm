@@ -476,6 +476,13 @@ for 0.30 with one at 0.10, it lists at 0.29. No sale in the last day, nobody sel
 other (a listing 50% or more under the median with only one sale behind it): kept, never a guess. It's never under the highest buy order either - a buy order is always
 under the cheapest listing. The log says each price with its currency: "sells for 0.57 CAD".
 
+*A cent under the cheapest* (choice 3) makes yours the cheapest so it sells first: cheapest 0.12, it lists at 0.11. A
+listing dumped 50% or more under what it sold for is ignored - it lists a cent under the sale price instead (0.29 in the
+example above). If your own listing is already the cheapest, the next copy goes up at the same price, never under it.
+It never goes under *Never go lower than* (80% of what it sold for), nor so low you'd get less than *Only sell if you
+get at least* - then it lists at the cheapest's price, and if even that pays too little, the item goes to gems or is
+kept. With no sale lately it still lists a cent under the cheapest; with nobody selling it's kept.
+
 **Only what it does.** `spare preview`, a look's answer and the popup say only what it will do or did: items to gems
 and items to sell, with the gems and the money, today's count against the daily limit, and how many items are still
 being priced. Never the items it leaves alone (a copy you keep, a card a badge needs, no price yet, over the price
@@ -601,9 +608,9 @@ the log says once: turn it on in Settings to see what it would do.
 | Wait between items (seconds) | Robot accounts | 40 |
 | Wait between items, human mode (minutes) | Shortest and longest, random in between each time | 3 to 20 |
 | Trust a price for (hours) | Hours a price counts as fresh | 24 |
-| Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, or the median (never under the cheapest; no median - kept). Priced again in the wallet's currency right before each listing. "A cent under the cheapest" is gone - it followed dumps down; a saved choice of it is now a cent under the real price | a cent under the real price |
+| Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, the median (never under the cheapest; no median - kept), or a cent under the cheapest (cheapest 0.12 lists at 0.11; ignores a dump, never under your own cheapest listing, *Never go lower than* or *Only sell if you get at least*). Priced again in the wallet's currency right before each listing | a cent under the real price |
 | Only sell if you get at least | The least you'd get after fees, in the wallet's own currency. Less: gems if they're worth anything, otherwise kept. 0 sells anything | 0.05 |
-| Keep an item whose cheapest listing is this far under its sales (%) | With only one sale in the last day and the cheapest listing this far under it, the prices contradict each other and the item is kept. 0 lists it anyway. A listing under the median never sets the price either way | 50 |
+| A cheapest listing this far under its sales is a dump (%) | A cent under the real price: with only one sale in the last day and the cheapest listing this far under it, the prices contradict each other and the item is kept. A cent under the cheapest: that listing is ignored and it lists a cent under the sale price. 0: nothing counts as a dump | 50 |
 | Take down unsold listings after (days) | Only listings nocat.farm put up itself: still unsold, it comes down and goes up again a cent cheaper, or a cent under a cheaper real listing. Yours are never touched | 7 |
 | Never go lower than (% of the real sale price) | The floor for those steps, a percent of what it sold for over the last day. At the floor it stays up | 80 |
 | If you decline a listing on your phone, try again after (days) | That item, every copy, isn't listed again for this long. 0 never again | 30 |
