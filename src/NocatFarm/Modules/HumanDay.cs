@@ -76,6 +76,12 @@ public sealed class HumanDay {
 	public string Break { get; set; } = "";
 	public DateTime BreakEnds { get; set; }
 
+	/// <summary>
+	/// The next day's wake time (local), picked as this day ended, so "asleep · up 13:52" is when it really gets up - a
+	/// restart included. Unset (MinValue) before it's picked, and in older files.
+	/// </summary>
+	public DateTime NextWake { get; set; }
+
 	public bool IsFor(DateTime when) => (DayOfYear == when.DayOfYear) && (Year == when.Year);
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"human-{bot}.json");

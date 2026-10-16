@@ -374,6 +374,8 @@ const clock = (iso) => { const d = new Date(iso); return String(d.getHours()).pa
 function stateText(b) {
   if (!b.Until) return b.Status;
   if (b.Group === 'break') {
+    // Bedtime comes in the middle of the break: it isn't back tonight.
+    if (b.IntoBed) return `${b.Status} · ${t('then off for the night')}`;
     const left = Math.ceil((new Date(b.Until).getTime() - Date.now()) / 60000);
     return `${b.Status} · ${left > 0 ? tf('{0} to go', hm(left)) : t('any moment')}`;
   }

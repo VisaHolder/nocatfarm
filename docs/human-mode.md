@@ -86,9 +86,19 @@ morning's, so 02:00 is two in the morning after the day. A window that crosses m
 day itself: 00:30 give or take an hour gets on between 00:00 and 01:30. An account set up before these settings
 keeps its times: the hour it had, 13, is 13:00, and the old names `DayStartHour` and `BedHour` still work at the
 console. `human myaccount` shows today's planned times and the windows ("up 10:47 · bed 01:12 · gets on
-10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard. After bedtime, until it
-wakes and plans the next day, it shows when it gets up next as that window instead ("next up 10:30-11:30"), never
-the day before's time - the same in the log, the dashboard and mini mode ("asleep · up 10:30-11:30").
+10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard.
+
+When the day ends - bedtime, done for today, or a day off - it picks the next day's wake time there and then, by
+the same rules (a different minute each day, earlier at weekends, after a night's sleep, inside the window), and
+saves it. So all night it says the real time ("asleep · up 13:52", "next up 13:52", "back tomorrow around 13:52"),
+a restart keeps it, and it gets up at that very time. The rest of the day (its hours, bedtime) is still planned when
+it wakes. Before a time is picked - the first start after bedtime - it shows the window instead ("up 13:15-14:45").
+`human reroll` picks it again, and so does changing *Gets on at* so the time no longer fits.
+
+No break runs into bed. A short break or a meal has to be over at least 12 minutes before bedtime; if it wouldn't
+be, the account goes to bed then instead, a little early, and the night and the next wake count from then. If
+bedtime still comes in the middle of a break (the day was planned again during it), it says "short break · then off
+for the night" rather than "back in ...".
 
 A sitting cut off by a restart is carried on after the warm-up only if at least 2 minutes of it are left; with less,
 it ends there the way any sitting does - a break, or the next game - rather than "carrying on" for a moment.

@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "Steam 的回应不是登录",
     "Steam's answer was for another account": "Steam 的回应属于另一个账户",
     "Steam's answer was too long": "Steam 的回应太长",
-    "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价"
+    "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价",
+    "then off for the night": "然后就睡了",
+    "short break · then off for the night": "短暂休息 · 然后就睡了",
+    "meal break · then off for the night": "吃饭休息 · 然后就睡了"
   },
   "settings": {
     "SteamOpenEveryAccount": {

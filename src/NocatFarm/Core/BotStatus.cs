@@ -195,6 +195,8 @@ public readonly record struct BotStatus(
 					// After bedtime the next day isn't planned yet: when it gets up is a window, not the day before's time.
 					: quiet && (human.UpWindowNow is { } window) ? new Said("up {0}", HumanMode.WindowWords(window.From, window.To))
 					: quiet ? new Said("up in {0}", Fmt.Hm(left))
+					// Bedtime comes in the middle of the break: it isn't back tonight.
+					: human.BreakIntoBed ? new Said("then off for the night")
 					: phase is HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak ? new Said("back in {0}", Fmt.Hm(left))
 					: new Said("{0} to go", Fmt.Hm(left));
 			}

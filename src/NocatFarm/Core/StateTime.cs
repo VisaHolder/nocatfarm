@@ -17,12 +17,16 @@ public static class StateTime {
 	/// <param name="next">When it next changes (<see cref="HumanMode.NextChange"/>), in UTC.</param>
 	/// <param name="window">When the next day's wake isn't planned yet (asleep after bedtime): its window, local times -
 	/// "up 13:15-14:45", rather than the day before's wake time standing in.</param>
-	public static Said When(string group, DateTime? next, DateTime nowUtc, (DateTime From, DateTime To)? window = null) {
+	/// <param name="intoBed">On a break that bedtime comes in the middle of: "then off for the night", not a time to go.</param>
+	public static Said When(string group, DateTime? next, DateTime nowUtc, (DateTime From, DateTime To)? window = null, bool intoBed = false) {
 		if (next is not { } at) {
 			return default;
 		}
 
 		switch (group) {
+			case "break" when intoBed:
+				return new Said("then off for the night");
+
 			case "break": {
 				int left = (int) Math.Ceiling((at - nowUtc).TotalMinutes);
 
@@ -56,7 +60,7 @@ public static class StateTime {
 			return null;
 		}
 
-		Said when = When(group, human.NextChange, nowUtc, human.UpWindowNow);
+		Said when = When(group, human.NextChange, nowUtc, human.UpWindowNow, human.BreakIntoBed);
 
 		if (when.IsEmpty) {
 			return null;
@@ -71,6 +75,10 @@ public static class StateTime {
 	/// </summary>
 	public static (DateTime From, DateTime To)? Window(Bot bot) =>
 		(Until(bot) != null) && (BotStatus.Group(bot) is "asleep" or "nightidle") && (BotManager.ModuleOf<HumanMode>(bot) is { } human) ? human.UpWindowNow : null;
+
+	/// <summary>On a break that bedtime comes in the middle of, for the dashboard's chip to say "then off for the night".</summary>
+	public static bool IntoBed(Bot bot) =>
+		(Until(bot) != null) && (BotStatus.Group(bot) == "break") && (BotManager.ModuleOf<HumanMode>(bot) is { BreakIntoBed: true });
 
 	/// <summary>When the dashboard's chip should count to: the next change of a human-mode break or night, else null.</summary>
 	public static DateTime? Until(Bot bot) {

@@ -2499,7 +2499,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Set(fh, "_mealCap", 3);
 	Set(fh, "_mealsUsed", 0);
 	NocatFarm.Log.Suppressed = true;
-	HCall(fh, "MealBreak");
+	HCall(fh, "MealBreak", 35);
 	NocatFarm.Log.Suppressed = false;
 	Check("a meal is saved as it starts, so a restart can't give the day another", NocatFarm.Modules.HumanDay.Load(fname, DateTime.Now)?.MealsUsed == 1);
 
@@ -27960,12 +27960,12 @@ await CommandSweep.RunAsync(Check);
 	Check("wake time: past bedtime the window returns even within three hours",
 		NocatFarm.Modules.HumanMode.WindowWhenWaking(wkPlanned, wkPlanned.AddMinutes(10), wkPlanned.AddMinutes(20), wkCfg) is { });
 
-	// finding 11: a day off says "back tomorrow" as tomorrow's wake WINDOW, not today's single wake time.
-	Check("wake time: a day off's back-tomorrow is tomorrow's window, not one time",
-		NocatFarm.Modules.HumanMode.DayAfterUpText(new DateTime(2026, 10, 14), wkCfg) == "13:15-14:45",
-		NocatFarm.Modules.HumanMode.DayAfterUpText(new DateTime(2026, 10, 14), wkCfg));
-	Check("wake time: the day-off log line uses tomorrow's window",
-		WkSrc("src/NocatFarm/Modules/HumanMode.cs").Contains("back tomorrow around {0}\", TomorrowUpAt()", StringComparison.Ordinal));
+	// finding 11: a day off says "back tomorrow" as tomorrow's wake, not today's - its window until the time is picked.
+	Check("wake time: a day off's back-tomorrow, before tomorrow's wake is picked, is tomorrow's window",
+		NocatFarm.Modules.HumanMode.NextUpText(null, new DateTime(2026, 10, 14), new DateTime(2026, 10, 14, 13, 20, 0), wkCfg) == "13:15-14:45",
+		NocatFarm.Modules.HumanMode.NextUpText(null, new DateTime(2026, 10, 14), new DateTime(2026, 10, 14, 13, 20, 0), wkCfg));
+	Check("wake time: the day-off log line picks tomorrow's wake and says it",
+		WkSrc("src/NocatFarm/Modules/HumanMode.cs").Contains("PickNextWake();\n\t\t\tLog.Info(new Said(\"taking today off - back tomorrow around {0}\", UpAt())", StringComparison.Ordinal));
 
 	// finding 7 + 10: the Sitting column / chip past bedtime shows the window or any-moment, never a wrong-day countdown.
 	Check("wake time: the Sitting column shows the window when asleep, else is left empty",
@@ -28413,6 +28413,254 @@ if (OperatingSystem.IsWindows()) {
 	}
 
 	Check("a cent under the cheapest: every language offers the four choices and the example", ucLang.Count == 0, string.Join(",", ucLang));
+}
+
+// ── 1.8.2: the next wake time picked at bedtime, and no break into bed ──
+{
+	const BindingFlags NwInst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags NwStat = BindingFlags.NonPublic | BindingFlags.Static;
+	Type nwT = typeof(NocatFarm.Modules.HumanMode);
+	FieldInfo NwF(string f) => nwT.GetField(f, NwInst) ?? throw new MissingFieldException(f);
+	T NwGet<T>(object h, string f) => (T) NwF(f).GetValue(h)!;
+	void NwSet(object h, string f, object? v) => NwF(f).SetValue(h, v);
+	object? NwCall(object h, string m, params object?[] args) => nwT.GetMethod(m, NwInst)!.Invoke(h, args);
+	MethodInfo nwRoll = nwT.GetMethod("RollDayWith", NwStat)!;
+	MethodInfo nwRollWaking = nwT.GetMethod("RollDayWaking", NwStat)!;
+	int NwI(object d, string n) => (int) d.GetType().GetProperty(n)!.GetValue(d)!;
+	string nwRepo = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+	string NwSrc(string rel) => File.ReadAllText(Path.Combine(nwRepo, rel)).Replace("\r\n", "\n");
+	string Hm(DateTime t) => t.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+	string nwRealRoot = NocatFarm.Config.ConfigStore.Root;
+	string nwRoot = Path.Combine(Path.GetTempPath(), "nf-wake-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(nwRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(nwRoot);
+	bool nwWasSuppressed = NocatFarm.Log.Suppressed;
+	NocatFarm.Log.Suppressed = true;
+	List<NocatFarm.Core.Bot> nwBots = [];
+
+	try {
+		// Gets on at 14:00 give or take 45 minutes: up somewhere in 13:15-14:45.
+		NocatFarm.Config.BotConfig NwCfg() => new() { LegitMode = true, GameWeights = "730:100", DayStartTime = 14 * 60, DayStartVaryMinutes = 45, DayOffChancePct = 0 };
+		NocatFarm.Modules.HumanMode NwMode(string name, NocatFarm.Config.BotConfig cfg, int seed) {
+			var bot = new NocatFarm.Core.Bot(name, cfg);
+			var mode = new NocatFarm.Modules.HumanMode(bot);
+			bot.AddModule(mode);
+			NwSet(mode, "_rng", new Random(seed));
+			nwBots.Add(bot);
+
+			return mode;
+		}
+
+		// A plan whose bedtime was a few minutes ago, its day played: asleep, the next day not rolled yet.
+		DateTime now = DateTime.Now;
+		DateTime planDate = now.Date.AddDays(-1);
+		DateTime bed = now.AddMinutes(-5);
+		void AfterBed(NocatFarm.Modules.HumanMode m) {
+			int bedAt = (int) (bed - planDate).TotalMinutes;
+			NwSet(m, "_dayStamp", planDate.DayOfYear);
+			NwSet(m, "_wakeMinuteOfDay", 10 * 60);
+			NwSet(m, "_bedIsTomorrow", bedAt >= 24 * 60);
+			NwSet(m, "_bedHour", bedAt / 60 % 24);
+			NwSet(m, "_bedMinute", bedAt % 60);
+			NwSet(m, "_targetMinutes", 300);
+			NwSet(m, "_playedMinutesToday", 300);
+			NwSet(m, "_stayUpUntil", DateTime.MinValue);
+			NwSet(m, "_phase", NocatFarm.Modules.HumanMode.Phase.Asleep);
+		}
+
+		var nwCfg = NwCfg();
+		string modeName = "harness-wake-" + Guid.NewGuid().ToString("N")[..6];
+		var mode = NwMode(modeName, nwCfg, 1821);
+		AfterBed(mode);
+		DateTime nextDay = NocatFarm.Modules.HumanMode.NextDayFor(planDate, now, nwCfg);
+
+		// Nothing picked yet (the first start): the window, as before.
+		Check("next wake: before one is picked, asleep says the window it gets up in",
+			mode.Status.Contains("up 13:15-14:45", StringComparison.Ordinal), mode.Status);
+
+		NwCall(mode, "PickNextWake");
+		DateTime picked = NwGet<DateTime>(mode, "_nextWake");
+		int pickedMin = (int) (picked - nextDay).TotalMinutes;
+		Check("next wake: picked at bedtime, on the next day, inside its window",
+			(picked.Date == nextDay) && (pickedMin >= (13 * 60) + 15) && (pickedMin <= (14 * 60) + 45), $"{picked:yyyy-MM-dd HH:mm} for {nextDay:yyyy-MM-dd}");
+		Check("next wake: asleep says that time, not the window",
+			mode.Status.Contains("up " + Hm(picked), StringComparison.Ordinal) && !mode.Status.Contains("13:15-14:45", StringComparison.Ordinal), mode.Status);
+		Check("next wake: the chips, the columns and mini mode get the one time too",
+			(mode.UpWindowNow is { } upw) && (upw.From == picked) && (upw.To == picked) && (mode.NextChange == picked.ToUniversalTime())
+			&& (NocatFarm.Core.StateTime.When("asleep", mode.NextChange, DateTime.UtcNow, mode.UpWindowNow).ToEnglish() == "up " + Hm(picked)),
+			$"{mode.UpWindowNow} {mode.NextChange}");
+
+		NwCall(mode, "PickNextWake");
+		Check("next wake: picked once - asking again keeps it", NwGet<DateTime>(mode, "_nextWake") == picked);
+
+		// The same seed, the same pick: it's the day's own dice, nothing else.
+		var again = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], NwCfg(), 1821);
+		AfterBed(again);
+		NwCall(again, "PickNextWake");
+		Check("next wake: a seeded run picks the same time", NwGet<DateTime>(again, "_nextWake") == picked, $"{NwGet<DateTime>(again, "_nextWake"):HH:mm}");
+
+		// A restart: the saved day brings the picked time back.
+		NocatFarm.Modules.HumanDay? saved = NocatFarm.Modules.HumanDay.Load(modeName, planDate);
+		var restarted = NwMode(modeName, NwCfg(), 99);
+		NwCall(restarted, "Restore", saved);
+		NwSet(restarted, "_dayStamp", planDate.DayOfYear);
+		NwSet(restarted, "_phase", NocatFarm.Modules.HumanMode.Phase.Asleep);
+		NwCall(restarted, "PickNextWake");
+		Check("next wake: a restart keeps the picked time",
+			(saved?.NextWake == picked) && (NwGet<DateTime>(restarted, "_nextWake") == picked) && restarted.Status.Contains("up " + Hm(picked), StringComparison.Ordinal),
+			$"{saved?.NextWake:HH:mm} {restarted.Status}");
+
+		// The day starts: it gets up at the very time it said, and the pick is used up.
+		NwCall(restarted, "RollFor", nextDay, bed, null);
+		Check("next wake: the day starts at the picked time",
+			(NwGet<int>(restarted, "_wakeMinuteOfDay") == pickedMin) && (NwGet<DateTime>(restarted, "_nextWake") == DateTime.MinValue),
+			$"{NwGet<int>(restarted, "_wakeMinuteOfDay")} vs {pickedMin}");
+
+		// Settings changed since: a time outside the window as set now isn't kept.
+		Check("next wake: a pick outside the window as set now is picked again",
+			!NocatFarm.Modules.HumanMode.PickHolds(picked, nextDay, new NocatFarm.Config.BotConfig { DayStartTime = 9 * 60, DayStartVaryMinutes = 15 })
+			&& NocatFarm.Modules.HumanMode.PickHolds(picked, nextDay, nwCfg) && !NocatFarm.Modules.HumanMode.PickHolds(picked, nextDay.AddDays(1), nwCfg));
+
+		// A 'wake' after bedtime moves bed: the pick goes, and is made again when it gets there.
+		var woken = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], NwCfg(), 5);
+		AfterBed(woken);
+		NwCall(woken, "PickNextWake");
+		woken.WakeNow();
+		Check("next wake: a 'wake' after bedtime never keeps a pick made against the old bedtime", NwGet<DateTime>(woken, "_nextWake") == DateTime.MinValue);
+
+		// Done for today in the evening, and a day off: "back" at the picked time too.
+		var done = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], NwCfg(), 6);
+		AfterBed(done);
+		NwSet(done, "_phase", NocatFarm.Modules.HumanMode.Phase.DoneForToday);
+		NwCall(done, "PickNextWake");
+		DateTime donePick = NwGet<DateTime>(done, "_nextWake");
+		NwSet(done, "_phase", NocatFarm.Modules.HumanMode.Phase.DayOff);
+		Check("next wake: done for today and a day off say the picked time",
+			(donePick != DateTime.MinValue) && done.Status.Contains("back " + Hm(donePick), StringComparison.Ordinal), done.Status);
+
+		// Over a thousand seeded days: the pick, rolled by the day's own rules, is always the day's wake.
+		int moved = 0, outside = 0;
+
+		for (int d = 0; d < 1000; d++) {
+			DateTime date = new DateTime(2026, 1, 5).AddDays(d);
+			DateTime lastBed = date.AddMinutes(-((24 * 60) - 60 - (d % 240)));   // 01:00-05:00 the night before... or the evening
+			Random dice = new(d);
+			object pickRoll = nwRoll.Invoke(null, [nwCfg, date, 70, true, lastBed, dice, null])!;
+			int w = NwI(pickRoll, "WakeMinute");
+			object day = nwRollWaking.Invoke(null, [nwCfg, date, 70, true, lastBed, new Random(d + 7), null, (int?) w])!;
+			moved += NwI(day, "WakeMinute") != w ? 1 : 0;
+			outside += (w < (13 * 60) + 15) || (w > (14 * 60) + 45) ? 1 : 0;
+		}
+
+		Check("next wake: over 1000 seeded days the picked time is the day's wake, always inside the window", (moved == 0) && (outside == 0), $"{moved} moved, {outside} outside");
+
+		// ── no break into bed ──
+		Check("no break into bed: a break must be over 12 minutes before bedtime",
+			NocatFarm.Modules.HumanMode.BreakFitsBeforeBed(10, 40) && !NocatFarm.Modules.HumanMode.BreakFitsBeforeBed(21, 10)
+			&& !NocatFarm.Modules.HumanMode.BreakFitsBeforeBed(1, 12) && !NocatFarm.Modules.HumanMode.BreakFitsBeforeBed(20, 31));
+
+		// Thousands of sittings ending at every distance from bed, through the real end-of-sitting code.
+		var cfgB = NwCfg();
+		cfgB.SignOutOnBreakChancePct = 0;
+		var breaker = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], cfgB, 1847);
+		int crossed = 0, nearBed = 0, breaks = 0, beds = 0, bedWithRoom = 0, notBedInLastMinutes = 0;
+
+		for (int i = 0; i < 3000; i++) {
+			DateTime t = DateTime.Now;
+			int toBed = i % 240;   // 0 to 4 hours to bedtime
+			DateTime bedAt = t.AddMinutes(toBed).AddSeconds(30);
+			int bedMin = (int) (bedAt - t.Date).TotalMinutes;
+			NwSet(breaker, "_dayStamp", t.DayOfYear);
+			NwSet(breaker, "_wakeMinuteOfDay", 0);
+			NwSet(breaker, "_bedIsTomorrow", bedMin >= 24 * 60);
+			NwSet(breaker, "_bedHour", bedMin / 60 % 24);
+			NwSet(breaker, "_bedMinute", bedMin % 60);
+			NwSet(breaker, "_targetMinutes", 900);
+			NwSet(breaker, "_playedMinutesToday", 0);
+			NwSet(breaker, "_mealCap", 2);
+			NwSet(breaker, "_mealsUsed", i % 3 == 0 ? 0 : 2);
+			NwSet(breaker, "_stayUpUntil", DateTime.MinValue);
+			NwSet(breaker, "_nextWake", DateTime.MinValue);
+			NwSet(breaker, "_game", 730u);
+			NwSet(breaker, "_phase", NocatFarm.Modules.HumanMode.Phase.Playing);
+			NwCall(breaker, "EndSession");
+
+			var phase = NwGet<NocatFarm.Modules.HumanMode.Phase>(breaker, "_phase");
+
+			if (phase is NocatFarm.Modules.HumanMode.Phase.ShortBreak or NocatFarm.Modules.HumanMode.Phase.MealBreak) {
+				breaks++;
+				DateTime ends = NwGet<DateTime>(breaker, "_phaseEnds").ToLocalTime();
+				crossed += ends > bedAt ? 1 : 0;
+				nearBed += ends > bedAt.AddMinutes(-12) ? 1 : 0;
+				notBedInLastMinutes += toBed < 12 ? 1 : 0;
+			} else if (breaker.InBed) {
+				beds++;
+				// Early only for a break that wouldn't have fitted: never with more room than the longest break (meal: 35+40) and 12 minutes.
+				bedWithRoom += toBed > 35 + 40 + 12 + 1 ? 1 : 0;
+			}
+		}
+
+		Check("no break into bed: over 3000 seeded sittings no break ends after bedtime, or within 12 minutes of it",
+			(crossed == 0) && (nearBed == 0) && (breaks > 1000), $"{breaks} breaks, {crossed} crossed bedtime, {nearBed} within 12m of it");
+		Check("no break into bed: in the last minutes before bedtime it just goes to bed, and never early with room for a break",
+			(notBedInLastMinutes == 0) && (bedWithRoom == 0) && (beds > 0), $"{beds} to bed, {notBedInLastMinutes} breaks in the last minutes, {bedWithRoom} early with room");
+
+		// Going to bed early moves bedtime to then, so the night and the next wake count from it - and says when it's up.
+		DateTime soonBed = DateTime.Now.AddMinutes(5);
+		int soonMin = (int) (soonBed - DateTime.Now.Date).TotalMinutes;
+		NwSet(breaker, "_dayStamp", DateTime.Now.DayOfYear);
+		NwSet(breaker, "_bedIsTomorrow", soonMin >= 24 * 60);
+		NwSet(breaker, "_bedHour", soonMin / 60 % 24);
+		NwSet(breaker, "_bedMinute", soonMin % 60);
+		NwSet(breaker, "_nextWake", DateTime.MinValue);
+		NwSet(breaker, "_game", 730u);
+		NwSet(breaker, "_phase", NocatFarm.Modules.HumanMode.Phase.Playing);
+		NwCall(breaker, "EndSession");
+		Check("no break into bed: five minutes from bed it goes now, bedtime moves to now, and it says when it's up",
+			breaker.InBed && (breaker.TodayTimes == null) && (NwGet<DateTime>(breaker, "_nextWake") != DateTime.MinValue) && breaker.Status.Contains("up " + Hm(NwGet<DateTime>(breaker, "_nextWake")), StringComparison.Ordinal),
+			breaker.Status);
+
+		// A break that bedtime comes in the middle of anyway (the plan rolled again during it): it isn't back tonight.
+		var late = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], NwCfg(), 8);
+		AfterBed(late);
+		DateTime lateBed = DateTime.Now.AddMinutes(10);
+		int lateMin = (int) (lateBed - planDate).TotalMinutes;
+		NwSet(late, "_bedIsTomorrow", lateMin >= 24 * 60);
+		NwSet(late, "_bedHour", lateMin / 60 % 24);
+		NwSet(late, "_bedMinute", lateMin % 60);
+		NwSet(late, "_phaseEnds", DateTime.UtcNow.AddMinutes(21));
+		NwSet(late, "_phase", NocatFarm.Modules.HumanMode.Phase.ShortBreak);
+		string shortLine = late.Status;
+		bool shortInto = late.BreakIntoBed;
+		DateTime? shortNext = late.NextChange;
+		NwSet(late, "_phase", NocatFarm.Modules.HumanMode.Phase.MealBreak);
+		string mealLine = late.Status;
+		NwSet(late, "_phaseEnds", DateTime.UtcNow.AddMinutes(5));
+		string fitsLine = late.Status;
+		Check("no break into bed: a break bedtime comes in says \"then off for the night\", not \"back in\"",
+			(shortLine == "short break · then off for the night") && (mealLine == "meal break · then off for the night") && fitsLine.StartsWith("meal break · back in", StringComparison.Ordinal),
+			$"{shortLine} | {mealLine} | {fitsLine}");
+		Check("no break into bed: ...and counts to bedtime, the next change",
+			shortInto && (shortNext is { } sn) && (Math.Abs((sn - lateBed.ToUniversalTime()).TotalMinutes) < 1.01), $"{shortNext}");
+		Check("no break into bed: the chip and mini mode say it too",
+			(NocatFarm.Core.StateTime.When("break", DateTime.UtcNow.AddMinutes(9), DateTime.UtcNow, null, true).ToEnglish() == "then off for the night")
+			&& (NocatFarm.Core.StateTime.When("break", DateTime.UtcNow.AddMinutes(9), DateTime.UtcNow).ToEnglish() == "9m to go")
+			&& NwSrc("src/NocatFarm/Web/WebHost.cs").Contains("IntoBed = StateTime.IntoBed(b),", StringComparison.Ordinal)
+			&& NwSrc("src/NocatFarm/wwwroot/app.js").Contains("if (b.IntoBed) return `${b.Status} · ${t('then off for the night')}`;", StringComparison.Ordinal)
+			&& NwSrc("src/NocatFarm/Core/BotStatus.cs").Contains(": human.BreakIntoBed ? new Said(\"then off for the night\")", StringComparison.Ordinal));
+		Check("next wake: the wording - the picked time, or the window before there is one",
+			(NocatFarm.Modules.HumanMode.NextUpText(new DateTime(2026, 10, 15, 13, 52, 0), new DateTime(2026, 10, 14), new DateTime(2026, 10, 15, 2, 0, 0), nwCfg) == "13:52")
+			&& (NocatFarm.Modules.HumanMode.NextUpText(null, new DateTime(2026, 10, 14), new DateTime(2026, 10, 15, 2, 0, 0), nwCfg) == "13:15-14:45"));
+	} finally {
+		foreach (NocatFarm.Core.Bot b in nwBots) {
+			b.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		}
+
+		NocatFarm.Log.Suppressed = nwWasSuppressed;
+		NocatFarm.Config.ConfigStore.UseRoot(nwRealRoot);
+		TestTemp.Gone(nwRoot);
+	}
 }
 
 // SETTINGSCOUNT

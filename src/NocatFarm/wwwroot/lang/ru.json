@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "ответ Steam не был входом",
     "Steam's answer was for another account": "ответ Steam был для другого аккаунта",
     "Steam's answer was too long": "ответ Steam слишком длинный",
-    "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam"
+    "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam",
+    "then off for the night": "потом спать",
+    "short break · then off for the night": "короткий перерыв · потом спать",
+    "meal break · then off for the night": "перерыв на еду · потом спать"
   },
   "settings": {
     "SteamOpenEveryAccount": {

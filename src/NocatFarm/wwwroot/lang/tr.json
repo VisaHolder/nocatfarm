@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "Steam'in yanıtı bir oturum açma değildi",
     "Steam's answer was for another account": "Steam'in yanıtı başka bir hesap içindi",
     "Steam's answer was too long": "Steam'in yanıtı çok uzundu",
-    "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla"
+    "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla",
+    "then off for the night": "sonra yatıyor",
+    "short break · then off for the night": "kısa mola · sonra yatıyor",
+    "meal break · then off for the night": "yemek molası · sonra yatıyor"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "odpowiedź Steam nie była logowaniem",
     "Steam's answer was for another account": "odpowiedź Steam dotyczyła innego konta",
     "Steam's answer was too long": "odpowiedź Steam była za długa",
-    "card swap · confirm the offer to {0} from Steam's email": "wymiana kart · potwierdź ofertę do {0} w e-mailu od Steam"
+    "card swap · confirm the offer to {0} from Steam's email": "wymiana kart · potwierdź ofertę do {0} w e-mailu od Steam",
+    "then off for the night": "potem już spać",
+    "short break · then off for the night": "krótka przerwa · potem już spać",
+    "meal break · then off for the night": "przerwa na posiłek · potem już spać"
   },
   "settings": {
     "SteamOpenEveryAccount": {

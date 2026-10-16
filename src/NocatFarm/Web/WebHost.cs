@@ -3266,6 +3266,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 					// Asleep after bedtime, the next day isn't planned yet: the window it gets up in - "asleep · up 13:15-14:45".
 					UpFrom = upWindow?.From.ToUniversalTime(),
 					UpTo = upWindow?.To.ToUniversalTime(),
+					// On a break that bedtime comes in the middle of: "on a break · then off for the night".
+					IntoBed = StateTime.IntoBed(b),
 					Detail = Loc.T(b.StatusText),
 					Persona = Loc.T(b.PersonaWord),
 					// The dashboard dims a hidden persona. It used to test Persona === 'invisible', which is

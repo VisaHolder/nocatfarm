@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "Steam의 응답이 로그인이 아니었습니다",
     "Steam's answer was for another account": "Steam의 응답이 다른 계정의 것이었습니다",
     "Steam's answer was too long": "Steam의 응답이 너무 깁니다",
-    "card swap · confirm the offer to {0} from Steam's email": "카드 교환 · {0}에게 보낸 제안을 Steam 이메일에서 확인하세요"
+    "card swap · confirm the offer to {0} from Steam's email": "카드 교환 · {0}에게 보낸 제안을 Steam 이메일에서 확인하세요",
+    "then off for the night": "그대로 취침",
+    "short break · then off for the night": "짧은 휴식 · 그대로 취침",
+    "meal break · then off for the night": "식사 휴식 · 그대로 취침"
   },
   "settings": {
     "SteamOpenEveryAccount": {

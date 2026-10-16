@@ -39,8 +39,9 @@ that only matter while a switch is on are indented under it and hidden while it'
 
 An account's state on the Overview and on its card says how long a human-mode break has left and when a sleeping
 account gets up: `on a break · 5m to go`, `asleep · up ~09:30` - and `any moment` once that time has come but it hasn't
-got up yet. After bedtime the next day isn't planned yet (it's planned when it wakes), so it shows the window it gets
-up in instead - `asleep · up 13:15-14:45`, from *Gets on at* give or take *Varies by up to* - never the day before's time.
+got up yet. After bedtime it's the next day's wake time, picked when it went to bed (`asleep · up 13:52`); only before
+one is picked, after a first start, the window it gets up in (`asleep · up 13:15-14:45`). A break that bedtime comes
+in the middle of says `on a break · then off for the night`.
 
 You can open a tab by its address, like `http://127.0.0.1:7242/#settings`. The others are `#overview`,
 `#accounts`, `#rep4rep`, `#auth`, `#phone`, `#log`, `#console` and `#plugins`.
@@ -142,7 +143,7 @@ remembers its size and position.
 Click *mini*, type `mini`, or use the tray menu. The window shrinks to a small panel with one line per account:
 what it's doing and a start/stop button. A farming account also shows cards left, time left and a progress bar. A
 human-mode account on a break says how long is left (`meal break · 5m to go`), and asleep, when it gets up
-(`asleep · up ~09:30`, or `asleep · up 13:15-14:45` after bedtime, before the next day is planned).
+(`asleep · up 13:52`).
 
 It shows 5 accounts. With more, a thin bar underneath counts the rest by what they're doing, like
 `+7 more · 6 idling · 1 asleep`. Click the bar to open the list: 10 accounts at a time, the wheel scrolls through the

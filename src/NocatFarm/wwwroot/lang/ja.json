@@ -3137,7 +3137,10 @@
     "Steam's answer wasn't a sign-in": "Steamの応答はサインインではありませんでした",
     "Steam's answer was for another account": "Steamの応答は別のアカウントのものでした",
     "Steam's answer was too long": "Steamの応答が長すぎました",
-    "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して"
+    "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して",
+    "then off for the night": "そのまま就寝",
+    "short break · then off for the night": "小休憩 · そのまま就寝",
+    "meal break · then off for the night": "食事休憩 · そのまま就寝"
   },
   "settings": {
     "SteamOpenEveryAccount": {
