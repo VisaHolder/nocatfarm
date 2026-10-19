@@ -1112,9 +1112,11 @@ public sealed class BuyPlan {
 
 			List<string> missing = [.. set.Cards.Where(c => cards.GetValueOrDefault(c) <= complete)];
 
-			if ((missing.Count > 0) && (missing.Count < set.Cards.Count)) {
+			// 1.8.2: every card missing again after the whole sets held (one copy of each, say) is a whole set more - its next level
+			// past the ones the held sets make, ranked with the rest; before, it waited for crafting to use them up first.
+			if (missing.Count > 0) {
 				(string Skip, string Note)? busy = Busy(app, set.Game) ?? Pending(set.Game, missing);
-				candidates.Add(new Candidate(set, level + complete, missing, false, missing.Sum(h => (long) set.Usd.GetValueOrDefault(h)), busy?.Skip, busy?.Note));
+				candidates.Add(new Candidate(set, level + complete, missing, missing.Count == set.Cards.Count, missing.Sum(h => (long) set.Usd.GetValueOrDefault(h)), busy?.Skip, busy?.Note));
 			}
 		}
 
