@@ -37139,8 +37139,8 @@ static class MoneyFixChecks {
 					CancellationToken.None, finder: x.Finder);
 			var tiny = await Finder(150, [6, 21, 22, 23, 24]);   // a 0.30 set, then sets of 1.05 and more: only 16 of the 100 cheapest checked yet
 			var warming = await FinderPlan(tiny);
-			Check("warm-up: a small known pool (16 of the 100 cheapest checked) and dear sets - only the cheapest known is bought, the dear ones wait, and it says why plainly",
-				(tiny.Finder.WarmUp(DateTime.UtcNow) is (> 0 and < 100, 100)) && (warming.Steps.Count == 1) && (warming.Steps[0].App == 20_000)
+			Check("warm-up: a small known pool (14 of the 30 cheapest checked) and dear sets - only the cheapest known is bought, the dear ones wait, and it says why plainly",
+				(tiny.Finder.WarmUp(DateTime.UtcNow) is (> 0 and < 30, 30)) && (warming.Steps.Count == 1) && (warming.Steps[0].App == 20_000)
 				&& warming.WarmUp.Contains("of 30 cheapest sets checked", StringComparison.Ordinal) && warming.Notes.Contains(warming.WarmUp)
 				&& warming.Skipped.Any(static s => s.Contains("the set finder is still checking the cheapest sets", StringComparison.Ordinal)),
 				$"{tiny.Finder.WarmUp(DateTime.UtcNow)} steps {string.Join(",", warming.Steps.Select(static s => $"{s.App}={s.Cost}"))} ; {warming.WarmUp}");
