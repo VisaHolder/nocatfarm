@@ -295,15 +295,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// A grind that ends is the same: the status read "standing by - grinding Team Fortress 2" for up to five minutes
 			// after 'grind off', on an account already back to idling.
 			bool grinding = Bot.Grinding;
+			uint dropsFirst = Bot.DropsFirstApp;
+			bool protecting = Bot.Cfg.SkipRefundableGames;
 
 			for (int slept = 0; slept < waitMinutes; slept++) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 					return;
 				}
 
-				// Farming switched off, a game just added to the account (it may have cards), or the grind over - look now,
-				// not in hours.
-				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)) {
+				// Farming switched off, a game just added to the account (it may have cards), the grind over, a game put first
+				// with 'drops', or "Protect refunds" changed (a game it held may have cards) - look now, not in hours.
+				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)
+					|| (Bot.DropsFirstApp != dropsFirst) || (Bot.Cfg.SkipRefundableGames != protecting)) {
 					break;
 				}
 			}

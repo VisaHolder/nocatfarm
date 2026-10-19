@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "보석: Steam이 지난 등록을 거부했습니다 - {0}쯤부터 다시 등록합니다",
     "Steam didn't answer - looking for the offer at the next look": "Steam이 응답하지 않았습니다 - 다음 확인 때 제안을 찾습니다",
     "card swap · found the offer sent to {0} before the restart": "카드 교환 · 재시작 전에 {0}에게 보낸 제안을 찾았습니다",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다",
+    "{0} · {1} of {2} card drop(s)": "{0} · 카드 드롭 {1}/{2}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "ジェム: Steam が前回の出品を拒否しました - {0} ごろから再び出品します",
     "Steam didn't answer - looking for the offer at the next look": "Steam から応答がありません - 次の確認でオファーを探します",
     "card swap · found the offer sent to {0} before the restart": "カード交換 · 再起動前に {0} に送ったオファーを見つけました",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} に別のことをしました - 人間モードは間をあけます。{1} ごろから進められます"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} に別のことをしました - 人間モードは間をあけます。{1} ごろから進められます",
+    "{0} · {1} of {2} card drop(s)": "{0} · カードドロップ {1}/{2}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

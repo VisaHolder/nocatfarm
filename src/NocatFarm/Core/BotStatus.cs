@@ -144,9 +144,11 @@ public readonly record struct BotStatus(
 				// Rounded up, never below a minute: the last seconds of a grind read "1m left", not "0m left".
 				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(1, Math.Ceiling((until - DateTime.UtcNow).TotalMinutes))));
 			}
-		} else if (bot.DropsFirstActive && !bot.Paused) {
+		} else if (bot.DropsFirstActive && !bot.Paused && bot.IsFarming && human is not { Current: not HumanMode.Phase.Off }) {
+			// Only while its game is really on: between sittings (warming up, a break, another game) the line below says what
+			// is true, and "going for" read as if it were playing it.
 			doing = new Said("going for {0}: {1} of {2} card drop(s)", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
-			playing = bot.IsFarming;
+			playing = true;
 		} else if (bot.Paused) {
 			doing = new Said("paused");
 		} else if (bot.PlayingBlocked) {
@@ -185,6 +187,12 @@ public readonly record struct BotStatus(
 			// The log's line: what's left of the sitting, when it's up again or back - not two pairs of numbers.
 			HumanMode.Phase phase = human.Current;
 			logDoing = human.LogDoing;
+
+			// Card drops it was told to go for ('drops'): the same line as any sitting, with how many have dropped.
+			if (bot.DropsFirstActive && (human.PlayingNow == bot.DropsFirstApp)) {
+				doing = new Said("{0} · {1} of {2} card drop(s)", doing, bot.DropsFirstGot, bot.DropsFirstWant);
+				logDoing = new Said("{0} · {1} of {2} card drop(s)", logDoing, bot.DropsFirstGot, bot.DropsFirstWant);
+			}
 
 			if (total > 0) {
 				// Never "0m left": the last minute of a sitting is still a minute, and then it ends with a break or the next game.

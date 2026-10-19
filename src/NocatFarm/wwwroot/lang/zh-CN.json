@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "宝石：Steam 拒绝了上一次上架 - 大约 {0} 起再次上架",
     "Steam didn't answer - looking for the offer at the next look": "Steam 没有回应 - 下次查看时寻找该报价",
     "card swap · found the offer sent to {0} before the restart": "卡牌交换 · 找到了重启前发给 {0} 的报价",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续",
+    "{0} · {1} of {2} card drop(s)": "{0} · 卡牌掉落 {1}/{2}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

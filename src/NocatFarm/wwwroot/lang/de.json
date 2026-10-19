@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "Edelsteine: Steam hat das letzte Angebot abgelehnt - neuer Versuch ab etwa {0}",
     "Steam didn't answer - looking for the offer at the next look": "Steam hat nicht geantwortet - beim nächsten Blick wird nach dem Angebot gesucht",
     "card swap · found the offer sent to {0} before the restart": "Kartentausch · das vor dem Neustart an {0} gesendete Angebot gefunden",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "es hat um {0} etwas anderes gemacht - der menschliche Modus verteilt die Dinge; ab etwa {1} kann es loslegen"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "es hat um {0} etwas anderes gemacht - der menschliche Modus verteilt die Dinge; ab etwa {1} kann es loslegen",
+    "{0} · {1} of {2} card drop(s)": "{0} · {1} von {2} Kartendrop(s)"
   },
   "settings": {
     "SteamOpenEveryAccount": {

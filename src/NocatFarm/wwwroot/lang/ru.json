@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "самоцветы: Steam отклонил последний лот - новая попытка примерно с {0}",
     "Steam didn't answer - looking for the offer at the next look": "Steam не ответил - предложение будет найдено при следующем заходе",
     "card swap · found the offer sent to {0} before the restart": "обмен карточками · найдено предложение, отправленное {0} до перезапуска",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "он сделал что-то другое в {0} - человеческий режим растягивает действия по времени; сможет продолжить примерно с {1}"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "он сделал что-то другое в {0} - человеческий режим растягивает действия по времени; сможет продолжить примерно с {1}",
+    "{0} · {1} of {2} card drop(s)": "{0} · {1} из {2} карт"
   },
   "settings": {
     "SteamOpenEveryAccount": {

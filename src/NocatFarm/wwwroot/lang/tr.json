@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "mücevherler: Steam son ilanı reddetti - yaklaşık {0} saatinden itibaren yeniden denenir",
     "Steam didn't answer - looking for the offer at the next look": "Steam yanıt vermedi - teklif bir sonraki bakışta aranacak",
     "card swap · found the offer sent to {0} before the restart": "kart takası · yeniden başlatmadan önce {0} kişisine gönderilen teklif bulundu",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} saatinde başka bir şey yaptı - insan modu işleri aralıklı yapar; yaklaşık {1} itibarıyla devam edebilir"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} saatinde başka bir şey yaptı - insan modu işleri aralıklı yapar; yaklaşık {1} itibarıyla devam edebilir",
+    "{0} · {1} of {2} card drop(s)": "{0} · {2} karttan {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {
