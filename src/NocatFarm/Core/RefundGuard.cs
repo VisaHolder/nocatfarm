@@ -49,6 +49,9 @@ public sealed partial class RefundGuard(Bot bot) {
 	private DateTime Since(uint app, IReadOnlyDictionary<uint, AppOwnership> owned) =>
 		owned.TryGetValue(app, out AppOwnership o) ? o.Since : bot.Library.Find(app)?.Acquired ?? DateTime.UtcNow;
 
+	/// <summary>Goes up each time the games held change - the card farmer reads its badges again when it does.</summary>
+	public int Generation { get; private set; }
+
 	private HashSet<uint> _held = [];
 	private DateTime _refreshedAt = DateTime.MinValue;
 	private bool _announced;
@@ -193,6 +196,10 @@ public sealed partial class RefundGuard(Bot bot) {
 					Log.Debug(freed.Count == 1
 						? new Said("{0} is past the refund window - free to play again", Names(freed))
 						: new Said("{0} are past the refund window - free to play again", Names(freed)), bot.Name);
+				}
+
+				if (!held.SetEquals(_held)) {
+					Generation++;   // the card farmer looks again: a game let go may have cards
 				}
 
 				_held = held;

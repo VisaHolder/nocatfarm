@@ -297,6 +297,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			bool grinding = Bot.Grinding;
 			uint dropsFirst = Bot.DropsFirstApp;
 			bool protecting = Bot.Cfg.SkipRefundableGames;
+			int refundHeld = Bot.Refunds.Generation;
 
 			for (int slept = 0; slept < waitMinutes; slept++) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
@@ -306,7 +307,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// Farming switched off, a game just added to the account (it may have cards), the grind over, a game put first
 				// with 'drops', or "Protect refunds" changed (a game it held may have cards) - look now, not in hours.
 				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)
-					|| (Bot.DropsFirstApp != dropsFirst) || (Bot.Cfg.SkipRefundableGames != protecting)) {
+					|| (Bot.DropsFirstApp != dropsFirst) || (Bot.Cfg.SkipRefundableGames != protecting) || (Bot.Refunds.Generation != refundHeld)) {
 					break;
 				}
 			}
