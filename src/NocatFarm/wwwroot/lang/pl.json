@@ -4868,7 +4868,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Ile najwyżej może stracić wymiana",
-      "tip": "O ile mniej może być warta wymiana niż to, co oddaje, według najniższej ceny na rynku, w walucie portfela Steam tego konta. Na przykład 0.01: karty warte 0.12 za karty warte 0.11 są w porządku, za 0.10 już nie. 0: wymiana nigdy nie jest warta mniej. Karta bez ceny z ostatniego dnia nigdy nie jest wymieniana."
+      "tip": "O ile mniej może być warta wymiana niż to, co oddaje, według najniższej ceny na rynku, w walucie portfela Steam tego konta. Na przykład 0.03: karty warte 0.12 za karty warte 0.09 są w porządku, za 0.08 już nie. 0: wymiana nigdy nie jest warta mniej. Karta bez ceny z ostatniego dnia nigdy nie jest wymieniana."
     },
     "CardSwapsPerDay": {
       "label": "Wymian dziennie, najwyżej",

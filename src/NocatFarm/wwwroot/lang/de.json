@@ -4868,7 +4868,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Höchstens so viel darf ein Tausch verlieren",
-      "tip": "Wie viel weniger ein Tausch wert sein darf als das, was er hergibt, nach dem günstigsten Marktpreis, in der Steam-Wallet-Währung dieses Kontos. Zum Beispiel 0.01: Karten im Wert von 0.12 gegen Karten im Wert von 0.11 sind in Ordnung, gegen 0.10 nicht. 0: ein Tausch ist nie weniger wert. Eine Karte ohne Preis vom letzten Tag wird nie getauscht."
+      "tip": "Wie viel weniger ein Tausch wert sein darf als das, was er hergibt, nach dem günstigsten Marktpreis, in der Steam-Wallet-Währung dieses Kontos. Zum Beispiel 0.03: Karten im Wert von 0.12 gegen Karten im Wert von 0.09 sind in Ordnung, gegen 0.08 nicht. 0: ein Tausch ist nie weniger wert. Eine Karte ohne Preis vom letzten Tag wird nie getauscht."
     },
     "CardSwapsPerDay": {
       "label": "Tausche pro Tag, höchstens",

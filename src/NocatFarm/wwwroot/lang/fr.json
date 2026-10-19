@@ -4868,7 +4868,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Le maximum qu'un échange peut perdre",
-      "tip": "De combien un échange peut valoir moins que ce qu'il donne, selon le prix le plus bas du marché, dans la devise du portefeuille Steam de ce compte. Par exemple 0.01 : des cartes à 0.12 contre des cartes à 0.11, c'est bon ; contre 0.10, non. 0 : un échange ne vaut jamais moins. Une carte sans prix de la dernière journée n'est jamais échangée."
+      "tip": "De combien un échange peut valoir moins que ce qu'il donne, selon le prix le plus bas du marché, dans la devise du portefeuille Steam de ce compte. Par exemple 0.03 : des cartes à 0.12 contre des cartes à 0.09, c'est bon ; contre 0.08, non. 0 : un échange ne vaut jamais moins. Une carte sans prix de la dernière journée n'est jamais échangée."
     },
     "CardSwapsPerDay": {
       "label": "Échanges par jour, au maximum",

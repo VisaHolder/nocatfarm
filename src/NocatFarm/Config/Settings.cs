@@ -1595,7 +1595,7 @@ public static partial class Settings {
 			"Swaps spare normal trading cards one for one with other nocat.farm users, same game, so both sides finish sets sooner. nocat.lol pairs the accounts; this account checks every swap again first. It never gives a card your sets need or the last copy of one, never foils, backgrounds or emoticons, and nothing on your \"never touch\" lists. While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them. Turning it on first shows what it would do, and asks you to confirm.",
 			Group: "Card swaps"),
 		new("CardSwapMaxLoss", "Most a swap may lose", SecTrading, SettingKind.Float,
-			"How much less a swap may be worth than what it gives, by the market's cheapest price, in this account's own Steam wallet currency. For example 0.01: cards worth 0.12 for cards worth 0.11 is fine, for 0.10 it isn't. 0: a swap is never worth less. A card with no price from the last day is never swapped.",
+			"How much less a swap may be worth than what it gives, by the market's cheapest price, in this account's own Steam wallet currency. For example 0.03: cards worth 0.12 for cards worth 0.09 is fine, for 0.08 it isn't. 0: a swap is never worth less. A card with no price from the last day is never swapped.",
 			Min: 0, Max: 1_000_000, ShowWhen: "CardSwaps=true", Group: "Card swaps", Unit: "wallet currency"),
 		new("CardSwapsPerDay", "Swaps a day, at most", SecTrading, SettingKind.Int,
 			"The most swaps it sends or accepts in one day - for example 5. On a human-mode account they're also spread through its own day, 45 minutes to 2 hours apart.",

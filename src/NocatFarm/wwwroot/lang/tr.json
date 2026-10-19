@@ -4868,7 +4868,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Bir takasın kaybedebileceği en fazla",
-      "tip": "Bir takasın verdiğinden ne kadar daha az değerli olabileceği; pazardaki en ucuz fiyata göre, bu hesabın Steam cüzdan para biriminde. Örneğin 0.01: 0.12 değerindeki kartları 0.11 değerindeki kartlarla takas etmek olur, 0.10 olmaz. 0: takas asla daha az değerli olmaz. Son günden fiyatı olmayan bir kart asla takas edilmez."
+      "tip": "Bir takasın verdiğinden ne kadar daha az değerli olabileceği; pazardaki en ucuz fiyata göre, bu hesabın Steam cüzdan para biriminde. Örneğin 0.03: 0.12 değerindeki kartları 0.09 değerindeki kartlarla takas etmek olur, 0.08 olmaz. 0: takas asla daha az değerli olmaz. Son günden fiyatı olmayan bir kart asla takas edilmez."
     },
     "CardSwapsPerDay": {
       "label": "Günde en fazla takas",
