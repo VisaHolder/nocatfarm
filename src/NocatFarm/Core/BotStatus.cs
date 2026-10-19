@@ -147,7 +147,7 @@ public readonly record struct BotStatus(
 		} else if (bot.DropsFirstActive && !bot.Paused && bot.IsFarming && human is not { Current: not HumanMode.Phase.Off }) {
 			// Only while its game is really on: between sittings (warming up, a break, another game) the line below says what
 			// is true, and "going for" read as if it were playing it.
-			doing = new Said("going for {0}: {1} of {2} card drop(s)", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
+			doing = new Said("{0} · {1} of {2} card drop(s)", new Said("playing {0}", GameNames.Of(bot.DropsFirstApp)), bot.DropsFirstGot, bot.DropsFirstWant);
 			playing = true;
 		} else if (bot.Paused) {
 			doing = new Said("paused");
