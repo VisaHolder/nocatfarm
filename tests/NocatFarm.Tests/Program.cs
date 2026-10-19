@@ -31634,7 +31634,7 @@ static class BuySmartChecks {
 			phoneMarket.ResumeAnswers.Enqueue(new NocatFarm.Modules.BuyAnswer(NocatFarm.Modules.BuyResult.Bought, 9, "", "o1"));
 			phoneMarket.Held[100]["100-B"] = 1;   // in the inventory now
 			var third = await phoneBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
-			var settled = phoneBuyer.Ledger.All.Single();
+			var settled = phoneBuyer.Ledger.All.Single(static e => e.Order == "o1");   // 1.8.2: the set it finished may be bought again for its next level the same look
 			Check("phone: confirmed - bought at the next look, settled at what it paid, and said",
 				(third.Confirmed == 1) && settled is { Pending: false, Cents: 9, Order: "o1", Confirm: null } && (phoneBuyer.Ledger.OnPhone.Count == 0)
 				&& Commands.BuySaid(phoneBot, NocatFarm.Modules.CardBuyer.Mode.Now, third).Any(static l => l.Contains("confirmed in the Steam app - bought", StringComparison.Ordinal)),
