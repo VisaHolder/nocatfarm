@@ -362,12 +362,18 @@ public static class GemsChoice {
 	/// What a buying look found the next badge levels cost, cheapest first: none when it couldn't tell (a problem, Steam not
 	/// saying how purchases are confirmed, the market stopping part way); empty when the money can't be spent by itself
 	/// (billing details, email). Only the levels past what the wallet already pays for: money from gems buys those
-	/// (<see cref="BuyPlan.BeyondWallet"/>).
+	/// (<see cref="BuyPlan.BeyondWallet"/>) - none known (the wallet pays for every one priced) is not known either.
 	/// </summary>
 	public static void NoteCosts(string account, BuyPlan plan, DateTime now) {
 		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
 			: plan.Block != BuyBlock.None ? []
 			: [.. BuyPlan.BeyondWallet(plan.Ranked.Select(static s => s.Cost), plan.Wallet)];
+
+		// The wallet already pays for every level priced: what more money buys isn't known (the levels past them weren't
+		// priced) - not "nothing", or opening packs would look better than a sack that buys several cheap sets later.
+		if (costs is { Length: 0 } && (plan.Block == BuyBlock.None) && (plan.Ranked.Count > 0)) {
+			costs = null;
+		}
 
 		Costs[account] = (now, plan.Currency, costs);
 	}

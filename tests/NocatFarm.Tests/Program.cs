@@ -33762,6 +33762,12 @@ static class SweepWalletChecks {
 			var costs = NocatFarm.Modules.GemsChoice.CostsOf("sw-gems", 20, DateTime.UtcNow);
 			Check("sweep wallet: the gems maths too - 0.40 in the wallet pays the 0.24 level and 0.16 of the 0.30 one, so money from gems buys from 0.14 on",
 				costs is [14], costs == null ? "null" : string.Join(",", costs));
+			plan.Wallet = 344;
+			NocatFarm.Modules.GemsChoice.NoteCosts("sw-gems", plan, DateTime.UtcNow);
+			var covered = NocatFarm.Modules.GemsChoice.CostsOf("sw-gems", 20, DateTime.UtcNow);
+			var coveredPick = NocatFarm.Modules.GemsChoice.Decide([new(NocatFarm.Modules.GemsChoice.Way.Badge, 603750, "Arcane Raise", 1200, 0, 0, 0.5)], true, covered, 20);
+			Check("sweep wallet: the wallet pays for every level priced (3.44 against 0.54) - what money buys isn't known, so the gems stay loose, never opened for half a level",
+				(covered == null) && (coveredPick.Way == NocatFarm.Modules.GemsChoice.Way.Keep), $"{(covered == null ? "null" : string.Join(",", covered))} {coveredPick.Way}");
 		} finally {
 			foreach (var bot in bots) {
 				await bot.DisposeAsync();
