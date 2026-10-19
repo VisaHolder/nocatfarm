@@ -3393,7 +3393,8 @@
     "Steam didn't answer - looking for the offer at the next look": "Steam 没有回应 - 下次查看时寻找该报价",
     "card swap · found the offer sent to {0} before the restart": "卡牌交换 · 找到了重启前发给 {0} 的报价",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续",
-    "{0} · {1} of {2} card drop(s)": "{0} · 卡牌掉落 {1}/{2}"
+    "{0} · {1} of {2} card drop(s)": "{0} · 卡牌掉落 {1}/{2}",
+    "every game": "所有游戏"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4962,6 +4963,10 @@
     "BuyHumanGapMaxMinutes": {
       "label": "两次查看之间最长等待（真人模式）",
       "tip": "真人模式账户两次购买查看之间的最长等待（分钟）。例如最短 30、最长 90：16 小时的一天中约 16 次查看。"
+    },
+    "RefundProtectMinPrice": {
+      "label": "只为高于此价格的游戏保护退款",
+      "tip": "只有花费高于此金额的游戏才会在仍可退款期间被保留不动；更便宜的会立即挂卡。若 Steam 购买记录显示了你实际支付的金额就按它，否则按商店常规价格（促销不会让它变低）；找不到价格的游戏会受到保护。使用此账户的 Steam 钱包货币。例如 5.00：刚买的 0.99 游戏会立即挂卡；20.00 的游戏会一直保留，直到不能再退款。0 表示保护所有游戏。"
     }
   }
 }

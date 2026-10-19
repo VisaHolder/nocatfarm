@@ -28763,6 +28763,9 @@ await QuickSetsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 // ── 1.8.2 review fixes (safe half): the market hold, Steam's refusals, retries that back off, the market's own 429 wait and hourly cap, human mode spacing, restarts mid-send; fakes only ──
 await SafeChecks182.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 "Protect refunds only for games over": what was paid, else the store's regular price; not known - protected; fakes only ──
+await RefundPriceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -36891,6 +36894,122 @@ static class SafeChecks182 {
 			NocatFarm.Core.MarketHold.ForgetLoaded();
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Core.CardExchange.Ledger.Reset();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 "Protect refunds only for games over" (Core/RefundGuard.Price.cs). Fakes only - nothing reaches Steam.</summary>
+static class RefundPriceChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-refundprice-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		List<NocatFarm.Core.Bot> bots = [];
+
+		try {
+			// ── prices as Steam writes them ──
+			Check("refund price: Steam's prices read in cents, whatever the money's way of writing them",
+				(NocatFarm.Core.RefundGuard.Money("$0.99") == 99) && (NocatFarm.Core.RefundGuard.Money("4,99€") == 499) && (NocatFarm.Core.RefundGuard.Money("CDN$ 12.50") == 1250)
+				&& (NocatFarm.Core.RefundGuard.Money("1.299,00 pуб.") == 129900) && (NocatFarm.Core.RefundGuard.Money("1,299") == 129900) && (NocatFarm.Core.RefundGuard.Money("Free") == 0)
+				&& (NocatFarm.Core.RefundGuard.Money("-") == null));
+
+			// ── the purchase history ──
+			const string History = """
+				<table class="wallet_history_table"><tbody>
+				<tr class="wallet_table_row wallet_table_row_amt_change"><td class="wht_date">17 Oct, 2026</td><td class="wht_items"><div>SOS OPS!</div></td><td class="wht_type "><div>Purchase</div><div class="wth_payment">Visa</div></td><td class="wht_total ">$0.99</td></tr>
+				<tr class="wallet_table_row"><td class="wht_date">16 Oct, 2026</td><td class="wht_items"><div>Hades</div><div class="wth_payment">Gift sent to a friend</div></td><td class="wht_type "><div>Gift Purchase</div></td><td class="wht_total ">$24.99</td></tr>
+				<tr class="wallet_table_row"><td class="wht_date">15 Oct, 2026</td><td class="wht_items"><div>Portal</div><div>Portal 2</div></td><td class="wht_type "><div>Purchase</div></td><td class="wht_total ">$9.99</td></tr>
+				<tr class="wallet_table_row"><td class="wht_date">14 Oct, 2026</td><td class="wht_items"><div>Sale Game</div></td><td class="wht_type "><div>Purchase</div></td><td class="wht_total ">$5.00</td></tr>
+				</tbody></table>
+				""";
+			var rows = NocatFarm.Core.RefundGuard.ParseHistory(History)!;
+			Check("refund price: the purchase history read - each purchase's type, items and total",
+				(rows.Count == 4) && rows[0] is { Type: "Purchase", Cents: 99 } && rows[0].Items.SequenceEqual(["SOS OPS!"]) && rows[1] is { Type: "Gift Purchase" } && (rows[2].Items.Count == 2)
+				&& (NocatFarm.Core.RefundGuard.ParseHistory("<html>sign in</html>") == null),
+				string.Join(" | ", rows.Select(r => $"{r.Type}:{string.Join("+", r.Items)}:{r.Cents}")));
+			Check("refund price: paid is a plain purchase of that game alone (by name, any case or punctuation) - a gift, a bundle or a game not in it isn't known",
+				(NocatFarm.Core.RefundGuard.PaidFor(rows, "sos ops") == 99) && (NocatFarm.Core.RefundGuard.PaidFor(rows, "Hades") == null)
+				&& (NocatFarm.Core.RefundGuard.PaidFor(rows, "Portal 2") == null) && (NocatFarm.Core.RefundGuard.PaidFor(rows, "Tunic") == null));
+
+			// ── the store ──
+			Check("refund price: the store - the higher of the regular and today's price (a sale never lowers it); free is 0; no answer isn't known",
+				(NocatFarm.Core.RefundGuard.ParseStorePrice("{\"9\":{\"success\":true,\"data\":{\"price_overview\":{\"currency\":\"USD\",\"initial\":700,\"final\":400}}}}", 9) == (700, "USD"))
+				&& (NocatFarm.Core.RefundGuard.ParseStorePrice("{\"9\":{\"success\":true,\"data\":[]}}", 9) == (0, ""))
+				&& (NocatFarm.Core.RefundGuard.ParseStorePrice("{\"9\":{\"success\":false}}", 9) == null) && (NocatFarm.Core.RefundGuard.ParseStorePrice(null, 9) == null)
+				&& (NocatFarm.Core.RefundGuard.ParseStorePrice("not json", 9) == null));
+
+			// ── the guard: what it lets go ──
+			var bot = new NocatFarm.Core.Bot("rp-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { RefundProtectMinPrice = 5.00f });
+			bots.Add(bot);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(bot, SteamKit2.ECurrencyCode.USD);
+			typeof(NocatFarm.Core.Bot).GetProperty("Country")!.SetValue(bot, "US");
+			var guard = bot.Refunds;
+			int historyReads = 0;
+			List<uint> storeAsks = [];
+			string Store(uint app, long initial, long final) => $"{{\"{app}\":{{\"success\":true,\"data\":{{\"price_overview\":{{\"currency\":\"USD\",\"initial\":{initial},\"final\":{final}}}}}}}}}";
+			typeof(NocatFarm.Core.RefundGuard).GetProperty("ReadHistory", Inst)!.SetValue(guard, (Func<CancellationToken, Task<string?>>) (_ => { historyReads++; return Task.FromResult<string?>(History); }));
+			typeof(NocatFarm.Core.RefundGuard).GetProperty("ReadStore", Inst)!.SetValue(guard, (Func<uint, string, CancellationToken, Task<string?>>) ((app, cc, _) => {
+				storeAsks.Add(app);
+				return Task.FromResult<string?>(cc != "US" ? null : app switch {
+					1 => Store(1, 1999, 1999),   // SOS OPS! in the store today - but 0.99 was paid
+					2 => Store(2, 2000, 2000),   // 20.00, not in the history
+					3 => Store(3, 700, 400),     // on sale for 4.00, regularly 7.00
+					4 => Store(4, 700, 700),     // bought on sale for 5.00 (the history), 7.00 now
+					_ => null                    // the store doesn't say
+				});
+			}));
+			MethodInfo cheapOf = typeof(NocatFarm.Core.RefundGuard).GetMethod("CheapOfAsync", Inst)!;
+			async Task<HashSet<uint>> CheapOf(params (uint, string, bool)[] games) =>
+				await (Task<HashSet<uint>>) cheapOf.Invoke(guard, [games.ToList(), DateTime.UtcNow, CancellationToken.None])!;
+			var cheap = await CheapOf((1, "SOS OPS!", false), (2, "Expensive", false), (3, "On Sale", false), (4, "Sale Game", false), (5, "Unknown", false));
+			Check("refund guard: 0.99 paid (SOS OPS!) and 5.00 paid on a sale now 7.00 - farmed; 20.00, regularly 7.00 on sale for 4.00, and a price it can't find - protected",
+				cheap.SetEquals([1u, 4u]) && guard.Cheap(1) && guard.Cheap(4) && !guard.Cheap(2) && !guard.Cheap(3) && !guard.Cheap(5) && (guard.KnownPrice(1, DateTime.UtcNow) == 99),
+				$"cheap {string.Join(",", cheap)}; store asked {string.Join(",", storeAsks)}");
+			Check("refund guard: the history read once; the store asked only for what the history didn't know",
+				(historyReads == 1) && storeAsks.Order().SequenceEqual([2u, 3u, 5u]), $"{historyReads} history, store {string.Join(",", storeAsks)}");
+			storeAsks.Clear();
+			await CheapOf((1, "SOS OPS!", false), (2, "Expensive", false), (5, "Unknown", false), (6, "New", false));
+			Check("refund guard: the history at most once a day; store prices kept - only what's still unknown is asked again",
+				(historyReads == 1) && storeAsks.Order().SequenceEqual([5u, 6u]), $"{historyReads} history, store {string.Join(",", storeAsks)}");
+			var shared = await CheapOf((7, "Borrowed", true));
+			Check("refund guard: a game shared with the account goes by the store's price (the history is this account's own purchases)", (shared.Count == 0) && storeAsks.Contains(7u));
+			bot.Cfg.RefundProtectMinPrice = 0;
+			storeAsks.Clear();
+			var none = await CheapOf((1, "SOS OPS!", false));
+			Check("refund guard: 0 (the default) protects every refundable game, as before, and asks nothing",
+				(none.Count == 0) && !guard.Cheap(1) && (storeAsks.Count == 0) && (new NocatFarm.Config.BotConfig().RefundProtectMinPrice == 0));
+			Check("refund guard: what it learned is kept on disk, and goes with the account", File.Exists(Path.Combine(root, "config", "state", $"refundprices-{bot.Name}.json"))
+				&& NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "refundprices-", ".json")) && NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "markethold-", ".json")));
+
+			// ── where it's used, the setting ──
+			Check("refund guard: the hold, the card farmer and a new game's trying-out all go by it",
+				Src("src/NocatFarm/Core/RefundGuard.cs").Contains("held.ExceptWith(await CheapOfAsync(", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/CardFarmer.cs").Contains("&& !Bot.Refunds.Cheap(appId)) {", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/HumanMode.cs").Contains("HumanHabits.TrialStartOf(own, Bot.Cfg, Bot.Refunds.Cheap(game.AppId));", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/RefundGuard.Price.cs").Contains("GameCatalog.StoreGetAsync($\"https://store.steampowered.com/api/appdetails?appids={app}&filters=price_overview&cc={country}\"", StringComparison.Ordinal));
+			var def = NocatFarm.Config.Settings.FindBot("RefundProtectMinPrice");
+			var all = NocatFarm.Config.Settings.Bot.ToList();
+			Check("setting: \"Protect refunds only for games over\" - right under Protect refunds while it's on, wallet currency, 0 = every game, with the example; copied as it is",
+				(def is { ShowWhen: "SkipRefundableGames=true", Zero: "every game", Unit: "wallet currency" })
+				&& def.Tooltip.Contains("For example 5.00: a 0.99 game you just bought is farmed right away; a 20.00 one is left alone until it can't be refunded.", StringComparison.Ordinal)
+				&& def.Tooltip.Contains("what you paid", StringComparison.Ordinal)
+				&& (all.FindIndex(d => d.Name == "RefundProtectMinPrice") == all.FindIndex(d => d.Name == "SkipRefundableGames") + 1)
+				&& NocatFarm.Core.SettingsCopy.CopiedAcross.Contains("RefundProtectMinPrice"),
+				$"{def}");
+		} finally {
+			foreach (NocatFarm.Core.Bot b in bots) {
+				await b.DisposeAsync();
+			}
+			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}

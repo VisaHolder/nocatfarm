@@ -1333,6 +1333,9 @@ public static partial class Settings {
 		// behind Show advanced under Trading cards, while it guards idling, grinds and the achievement hunt just as much.
 		new("SkipRefundableGames", "Protect refunds", SecPlaying, SettingKind.Bool,
 			"Leaves a game alone while it can still be refunded, so nothing idles, farms, grinds or hunts it past Steam's 2 hours. That covers games bought or gifted in the last 14 days, and games new to the family library for their first 14 days."),
+		new("RefundProtectMinPrice", "Protect refunds only for games over", SecPlaying, SettingKind.Float,
+			"Only games that cost more than this are left alone while they can be refunded; a cheaper one is farmed right away. It goes by what you paid when Steam's purchase history shows it, otherwise the store's regular price (a sale never lowers it); a price it can't find is protected. In this account's own Steam wallet currency. For example 5.00: a 0.99 game you just bought is farmed right away; a 20.00 one is left alone until it can't be refunded. 0 protects every game.",
+			Advanced: true, Min: 0, Max: 1_000_000, ShowWhen: "SkipRefundableGames=true", Unit: "wallet currency", Zero: "every game"),
 		new("BlacklistedGames", "Never play these games", SecPlaying, SettingKind.AppIds,
 			"Games this account never farms, idles, grinds or hunts - by name, or the number in its store link."),
 		new("CustomGameNameEnabled", "Show a custom game name", SecPlaying, SettingKind.Bool,

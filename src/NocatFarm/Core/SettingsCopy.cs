@@ -82,7 +82,7 @@ public static class SettingsCopy {
 		nameof(BotConfig.QuietThingsWaitForDay), nameof(BotConfig.WakeDelayMinMinutes), nameof(BotConfig.WakeDelayMaxMinutes),
 		nameof(BotConfig.QuietDelayMinMinutes), nameof(BotConfig.QuietDelayMaxMinutes), nameof(BotConfig.LegitStopMaxSeconds),
 		// Playing
-		nameof(BotConfig.IdleGames), nameof(BotConfig.IdleWholeLibrary), nameof(BotConfig.SkipRefundableGames), nameof(BotConfig.RotateIdleGames),
+		nameof(BotConfig.IdleGames), nameof(BotConfig.IdleWholeLibrary), nameof(BotConfig.SkipRefundableGames), nameof(BotConfig.RefundProtectMinPrice), nameof(BotConfig.RotateIdleGames),
 		nameof(BotConfig.RotateEveryHours), nameof(BotConfig.CustomGameNameEnabled), nameof(BotConfig.CustomGameName), nameof(BotConfig.PlayWhileFarming),
 		nameof(BotConfig.GameDevice),
 		// Cards

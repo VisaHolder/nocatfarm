@@ -756,8 +756,11 @@ internal static class HumanHabits {
 	/// When the trying-out starts: the day it arrived - or, for a game refund protection is holding, the day that hold
 	/// ends, since it can't be touched before then anyway.
 	/// </summary>
-	internal static DateTime TrialStart(AppOwnership owned, BotConfig cfg) =>
-		cfg.SkipRefundableGames && owned.Refundable ? owned.Since.AddDays(Core.RefundGuard.HoldDays) : owned.Since;
+	internal static DateTime TrialStart(AppOwnership owned, BotConfig cfg) => TrialStartOf(owned, cfg, cheap: false);
+
+	/// <param name="cheap">1.8.2: it cost no more than "Protect refunds only for games over" - not held, so no later start.</param>
+	internal static DateTime TrialStartOf(AppOwnership owned, BotConfig cfg, bool cheap) =>
+		cfg.SkipRefundableGames && owned.Refundable && !cheap ? owned.Since.AddDays(Core.RefundGuard.HoldDays) : owned.Since;
 
 	/// <summary>How keen on it today: all in on its first day, less each day after, nothing once its days are up.</summary>
 	internal static double TrialStrength(DateTime start, DateTime now, int days) {

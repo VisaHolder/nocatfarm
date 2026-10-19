@@ -3393,7 +3393,8 @@
     "Steam didn't answer - looking for the offer at the next look": "Steam から応答がありません - 次の確認でオファーを探します",
     "card swap · found the offer sent to {0} before the restart": "カード交換 · 再起動前に {0} に送ったオファーを見つけました",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} に別のことをしました - 人間モードは間をあけます。{1} ごろから進められます",
-    "{0} · {1} of {2} card drop(s)": "{0} · カードドロップ {1}/{2}"
+    "{0} · {1} of {2} card drop(s)": "{0} · カードドロップ {1}/{2}",
+    "every game": "すべてのゲーム"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4962,6 +4963,10 @@
     "BuyHumanGapMaxMinutes": {
       "label": "確認の最長間隔（人間モード）",
       "tip": "人間モードのアカウントで買う確認どうしの最長の間隔（分）。たとえば最短 30 で 90: 16 時間の 1 日でおよそ 16 回。"
+    },
+    "RefundProtectMinPrice": {
+      "label": "この価格を超えるゲームだけ返金を保護",
+      "tip": "これより高かったゲームだけ、返金できる間はそっとしておきます。安いゲームはすぐにファームします。Steam の購入履歴に出ていれば実際に払った額、出ていなければストアの通常価格を使います (セールで下がることはありません)。価格がわからないゲームは保護されます。このアカウントの Steam ウォレットの通貨で。例えば 5.00: 買ったばかりの 0.99 のゲームはすぐにファームし、20.00 のゲームは返金できなくなるまで手を付けません。0 ならすべてのゲームを保護します。"
     }
   }
 }

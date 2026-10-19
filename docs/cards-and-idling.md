@@ -50,6 +50,12 @@ and give up if the drops stop coming.
 gifted in the last 14 days with under 2 hours played, so it can still be refunded, and a game new to the family
 library for its first 14 days. Farming, idling, grinds and the hunter all skip it.
 
+*Protect refunds only for games over* (advanced, 0 by default = every game) protects only games that cost more than
+that, in the wallet's own money. With 5.00, a 0.99 game you just bought is farmed straight away, and a 20.00 one is
+left alone until it can't be refunded. It goes by what you actually paid when Steam's purchase history shows it (read
+at most once a day), otherwise by the store's price - the higher of the regular and today's price, so a sale never
+lowers it. A game whose price it can't find is protected.
+
 ## Idling and a custom game name
 
 This part is for farm accounts. Human-mode accounts don't have it.
