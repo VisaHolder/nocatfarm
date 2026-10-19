@@ -1115,10 +1115,7 @@ public sealed class BuyPlan {
 			// 1.8.2: every card missing again after the whole sets held (one copy of each, say) is a whole set more - its next level
 			// past the ones the held sets make, ranked with the rest; before, it waited for crafting to use them up first.
 			if (missing.Count > 0) {
-				// A whole set more: thin listings are left out, as for any whole set.
-				string? thin = (missing.Count == set.Cards.Count) && knownBy.TryGetValue(app, out SetFinder.KnownSet? again) && (again.Depth < 2)
-					? $"{set.Game}: a card of it has fewer than 2 on the market" : null;
-				(string Skip, string Note)? busy = thin != null ? (thin, thin) : Busy(app, set.Game) ?? Pending(set.Game, missing);
+				(string Skip, string Note)? busy = Busy(app, set.Game) ?? Pending(set.Game, missing);
 				candidates.Add(new Candidate(set, level + complete, missing, missing.Count == set.Cards.Count, missing.Sum(h => (long) set.Usd.GetValueOrDefault(h)), busy?.Skip, busy?.Note));
 			}
 		}
