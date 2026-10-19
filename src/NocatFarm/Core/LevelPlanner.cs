@@ -524,6 +524,20 @@ public static class LevelPlanner {
 		}
 	}
 
+	/// <summary>
+	/// 1.8.2: a game's set as last read when it was read whole (US cents, by market name), and when - however old, never a
+	/// request. Null when it was never read whole.
+	/// </summary>
+	internal static (Dictionary<string, int> Cards, DateTime At)? HeldWhole(uint app) {
+		lock (SetsGate) {
+			_sets ??= LoadSets();
+
+			return _sets.TryGetValue(Key(app, UsDollar), out SetPrice? set) && (set.Size > 0) && (set.Cards.Count == set.Size)
+				? (new Dictionary<string, int>(set.Cards, StringComparer.Ordinal), new DateTime(set.At, DateTimeKind.Utc))
+				: null;
+		}
+	}
+
 	private static Dictionary<string, SetPrice> LoadSets() {
 		try {
 			if (File.Exists(SetsPath) && JsonSerializer.Deserialize<List<SetPrice>>(File.ReadAllText(SetsPath)) is { } list) {

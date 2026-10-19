@@ -191,7 +191,7 @@ public sealed class SpareInput {
 	/// <summary>Steam's id of the wallet currency the prices are in - only for saying so ("0.57 CAD"); 0 says nothing.</summary>
 	public int Currency { get; init; }
 
-	/// <summary>A sack of 1000 gems' lowest listing, in the wallet's currency.</summary>
+	/// <summary>What a sack of 1000 gems pays after Steam's fee, in the wallet's currency (1.8.2: not its buyer price - see <see cref="SparePrices.SackPays"/>).</summary>
 	public MarketPrice? Sack { get; init; }
 
 	/// <summary>Gems an item turns into: 0 none, null not known.</summary>

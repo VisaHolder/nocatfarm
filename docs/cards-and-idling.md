@@ -304,15 +304,28 @@ The rules it keeps:
   before it goes up, and kept back if it would pay less. A pack's price, or every card of a set, is also read again just
   before the gems are spent; if the pick changed, it waits for the next look.
 - **Like any listing.** Every listing needs confirming in the Steam app (or the account's authenticator, as any listing
-  does), at most 10 a day, one kind a look, through the same slow price queue as everything else, and on a human-mode
-  account only during its day.
+  does), at most 10 a day, one kind a look, through the same slow price queue as everything else. On a human-mode
+  account only during its day and never while you're playing on it, one thing at a time - a pack made or opened, a sack
+  packed, one listing - with the same random wait between them as spare items (*Wait between items, human mode*).
 - **Only tradable gems.** A sack, or a pack made to sell, uses tradable gems only - a pack made from untradable ones
   couldn't be sold, nor its cards. Untradable gems still make packs for the closest badge.
 - **Its own packs.** A pack made to sell sealed is never opened, sent or sold by anything else; one made to open is
-  opened by automatic, and its 3 cards listed at the next looks (cards it can't find any more - crafted or swapped - are
-  let go of, and any it hasn't listed after 3 days are ordinary spare cards again). Neither stops buying cards for that
-  game.
-- Prices it doesn't know yet are learned a few a look (4 at most), the cheapest packs first.
+  opened by automatic, and its 3 cards listed at the next looks - even when the account holds other cards of that game
+  or is levelling its badge: they were made for the money (cards it can't find any more - crafted or swapped - are let
+  go of, and any it hasn't listed after 3 days are ordinary spare cards again). Neither stops buying cards for that game.
+- **Your keep list.** A game on *Never touch items from these games* is never made into a pack to sell or to open and
+  sell, and its cards are never sold. *Never touch items worth more than* doesn't hold back the cards of a pack made to
+  sell: they were made for money, and that limit is for what the account already had.
+- **Gems are worth what a sack pays.** Everywhere gems are weighed against selling - here and in spare items - a sack
+  counts at what it pays you after Steam's fee (about 0.81 for a sack listed at 0.94), not at its buyer's price.
+- Prices it doesn't know yet are learned a few a look (4 at most), the most promising packs first - the games whose
+  packs or cards are known to be dear for their gems, from anything priced before. A pack or set priced in the last
+  3 days is always weighed.
+
+`booster plan myaccount` also weighs the sealed packs that came in - drops, trades - three ways: sold sealed, its 3 cards
+sold, or opened for a badge you're levelling (its cards at what buying them would cost). It says which is best and what
+your settings do with it: by default *Open booster packs* is never and *Packs it doesn't open* keeps them, so nothing
+touches them until you choose.
 
 Sources:
 [1] [Steam trading cards FAQ](https://steamcommunity.com/tradingcards/faq) ·
@@ -559,7 +572,8 @@ badge still needs (at level 2 it keeps 3 of each), and second copies of backgrou
 - trade-locked items;
 - anything worth more than the price limit (0.25 in this account's own Steam wallet currency - for yen, won or
   rupiah set the same value in your own currency, e.g. 40 for yen) - never turned into gems, never sold, and not
-  shown either: as far as the preview goes, it simply isn't spare;
+  shown either: as far as the preview goes, it simply isn't spare. Once a day the log says how many there are and what
+  they're worth together ("2 item(s) worth 3.54 CAD are over your 0.75 price limit - raise it to sell them");
 - anything with no known price, or a price older than 24 hours - it waits for a fresh one;
 - anything with no sale in the last day, or nobody selling it - there's no real price to go by;
 - anything on the market or in a trade offer;
@@ -599,7 +613,8 @@ show at all (they come ten at a time and can shift between pages) has no price y
 own on a later look, inside the hourly limit. Names written differently on the page ("&amp;" for "&") still match.
 
 **Gems or sell - gems never lose money.** An item is sold only when selling pays you at least 0.01 more (after
-Steam's fees) than its gems are worth (gems are priced from a sack of 1000, in the wallet's currency); otherwise it
+Steam's fees) than its gems are worth (gems are priced at what a sack of 1000 pays you after Steam's fee, in the wallet's
+currency - not its buyer's price, which made them look about a sixth dearer); otherwise it
 becomes gems. Selling pays 0.07: gems worth 0.06 or less, it's sold; worth more, gems. So it never makes gems worth
 less than the sale, and never makes a sale that pays less than the gems - each sale needs your phone, and Steam's fee
 eats tiny ones. An item nobody lists right now but that sold lately is kept when that sale would pay more than its

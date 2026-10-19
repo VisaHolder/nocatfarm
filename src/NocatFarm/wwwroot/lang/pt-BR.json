@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} está agora em \"Nunca abrir pacotes destes jogos\" - o pacote que ele criou para o jogo fica fechado",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "um anúncio dele ainda está esperando no seu celular - nenhuma outra cópia é anunciada até isso ser resolvido",
     "worth {0} - over your price limit, never touched": "vale {0} - acima do seu limite de preço, nunca é tocado",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} item(ns) no valor de {1} estão acima do seu limite de preço de {2} - aumente-o para vendê-los",
     "worth {0} now - over your price limit, not listed": "agora vale {0} - acima do seu limite de preço, não foi anunciado",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "prévia de itens sobrando de {0}: {1} para gemas, {2} para vender. Nada acontece até você ligar Itens sobrando nas configurações dela - 'spare preview {0}' mostra cada um.",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} baixado de {2} para {3} - {1} dias sem vender",
@@ -3325,6 +3326,7 @@
     "couldn't read the open buy orders: {0}": "não conseguiu ler as ordens de compra abertas: {0}",
     "worth {0} now - over your price limit, kept": "agora vale {0} - acima do seu limite de preço, mantido",
     "on your keep list - never sold": "na sua lista de manter - nunca vendido",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "feito para vender: as cartas são vendidas não importa o que seu limite de preço diga; jogos na sua lista de manter nunca são tocados",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: já há uma ordem de compra aberta no mercado · a própria é retirada, uma que você criou fica como está",
     "{0}: not crafted yet · {1}": "{0}: ainda não criado · {1}",
     "it asks for a card promised to a card swap": "pede uma carta prometida a uma troca de cartas",
@@ -4749,7 +4751,7 @@
     },
     "SpareMaxPrice": {
       "label": "Não mexer em itens que valham mais de",
-      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta: 0.25 serve para dólares ou euros; para ienes use uns 40. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30."
+      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta: 0.25 serve para dólares ou euros; para ienes use uns 40. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30. Cartas de pacotes que ele faz para vender são vendidas não importa o que este limite diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
     },
     "SpareGemMarginPct": {
       "label": "As gemas precisam superar a venda em",
@@ -4884,7 +4886,7 @@
     },
     "GemsForLevels": {
       "label": "Usar as gemas para o máximo de níveis",
-      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de emblema 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o emblema mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o emblema mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o emblema mais próximo. 'booster plan' mostra os números."
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de emblema 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o emblema mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o emblema mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o emblema mais próximo. 'booster plan' mostra os números. Cartas de pacotes que ele faz para vender são vendidas não importa o que o limite de preço dos itens sobrando diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
     },
     "SendScamWarnings": {
       "label": "Enviar alertas de golpe",

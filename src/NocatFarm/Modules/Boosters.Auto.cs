@@ -177,7 +177,7 @@ public sealed partial class Boosters {
 		// Opened after a short while, like somebody looking at what they made; a robot then goes on to the next game.
 		_openNext = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(3, 20) : Rng.Minutes(1, 3));
 		_autoNext = DateTime.UtcNow + Rng.Minutes(1, 2);
-		_dayGate!.Space(5, 30);
+		SpaceOut();
 		_autoStatus = new Said("made a {0} booster pack - opening it soon", offer.Name);
 	}
 
@@ -270,7 +270,7 @@ public sealed partial class Boosters {
 		_openNext = AutoMemory.CountOwed() > 0 ? DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(5, 30) : Rng.Minutes(10, 20)) : DateTime.MinValue;
 
 		if (opened) {
-			_dayGate!.Space(5, 30);
+			SpaceOut();
 			CraftSoon();
 		}
 	}

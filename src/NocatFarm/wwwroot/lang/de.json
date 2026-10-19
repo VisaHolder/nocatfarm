@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} steht jetzt auf „Packs dieser Spiele nie öffnen“ - das Booster-Pack, das es dafür gemacht hat, bleibt zu",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "ein Angebot davon wartet noch auf deinem Handy - kein weiteres Exemplar wird eingestellt, bis das geklärt ist",
     "worth {0} - over your price limit, never touched": "{0} wert - über deiner Preisgrenze, wird nie angerührt",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} Gegenstand/Gegenstände im Wert von {1} liegen über deiner Preisgrenze von {2} - erhöhe sie, um sie zu verkaufen",
     "worth {0} now - over your price limit, not listed": "jetzt {0} wert - über deiner Preisgrenze, nicht eingestellt",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "Vorschau übrige Gegenstände für {0}: {1} zu Edelsteinen, {2} zum Verkaufen. Nichts passiert, bis du Übrige Gegenstände in seinen Einstellungen einschaltest - 'spare preview {0}' zeigt jeden einzeln.",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} von {2} auf {3} gesenkt - {1} Tage unverkauft",
@@ -3325,6 +3326,7 @@
     "couldn't read the open buy orders: {0}": "konnte die offenen Kaufaufträge nicht lesen: {0}",
     "worth {0} now - over your price limit, kept": "jetzt {0} wert - über deinem Preislimit, wird behalten",
     "on your keep list - never sold": "auf deiner Behalten-Liste - wird nie verkauft",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "zum Verkaufen gemacht: seine Karten werden verkauft, egal was deine Preisgrenze sagt; Spiele auf deiner Behalten-Liste werden nie angerührt",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: dafür ist schon ein Kaufauftrag auf dem Markt offen · ein eigener wird zurückgenommen, einen von dir gestellten lässt es in Ruhe",
     "{0}: not crafted yet · {1}": "{0}: noch nicht hergestellt · {1}",
     "it asks for a card promised to a card swap": "es verlangt eine Karte, die einem Kartentausch versprochen ist",
@@ -4749,7 +4751,7 @@
     },
     "SpareMaxPrice": {
       "label": "Nichts anrühren, was mehr wert ist als",
-      "tip": "Alles, was mehr wert ist, wird nie angefasst: nie zu Edelsteinen, nie verkauft. In der Steam-Geldbörsen-Währung dieses Kontos: 0.25 passt für Dollar oder Euro, für Yen nimm etwa 40. Der Wert ist das Höhere aus dem günstigsten Angebot und dem Verkaufspreis des letzten Tages: angeboten für 0.20, aber verkauft für 0.30, ist 0.30 wert."
+      "tip": "Alles, was mehr wert ist, wird nie angefasst: nie zu Edelsteinen, nie verkauft. In der Steam-Geldbörsen-Währung dieses Kontos: 0.25 passt für Dollar oder Euro, für Yen nimm etwa 40. Der Wert ist das Höhere aus dem günstigsten Angebot und dem Verkaufspreis des letzten Tages: angeboten für 0.20, aber verkauft für 0.30, ist 0.30 wert. Karten aus Packungen, die es zum Verkaufen herstellt, werden verkauft, egal was diese Grenze sagt - sie wurden für Geld gemacht. Spiele auf deiner Behalten-Liste werden nie angerührt."
     },
     "SpareGemMarginPct": {
       "label": "Edelsteine müssen den Verkauf schlagen um",
@@ -4884,7 +4886,7 @@
     },
     "GemsForLevels": {
       "label": "Edelsteine für die meisten Stufen nutzen",
-      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor die automatischen Booster-Packs ein Pack erstellen, rechnet es zu den heutigen Marktpreisen aus, wie viele Abzeichenstufen 1.000 Edelsteine wert sind, auf vier Wegen: einen Edelsteinsack verkaufen und das Geld vom Kartenkauf ausgeben lassen, ein Pack erstellen und versiegelt verkaufen, ein Pack erstellen und seine 3 Karten verkaufen, oder wie bisher Packs für das nächstgelegene Abzeichen öffnen - und nimmt den Weg, der am meisten bringt. Zum Beispiel kauft ein Sack, der 0,45 einbringt, etwa 1,8 Stufen günstiger Sätze, während Packs für das nächstgelegene Abzeichen etwa 0,3 bringen. Ein Weg über den Markt muss einen sichereren klar schlagen (um 15 %); sind die Preise nicht bekannt, bleiben die Edelsteine lose. Es verkauft nie für weniger, als die Edelsteine wert sind, stellt höchstens 10 Dinge am Tag ein, und du bestätigst jedes Angebot in der Steam-App wie jedes andere. Nur handelbare Edelsteine werden verkauft; nicht handelbare gehen weiter an das nächstgelegene Abzeichen. 'booster plan' zeigt die Zahlen."
+      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor die automatischen Booster-Packs ein Pack erstellen, rechnet es zu den heutigen Marktpreisen aus, wie viele Abzeichenstufen 1.000 Edelsteine wert sind, auf vier Wegen: einen Edelsteinsack verkaufen und das Geld vom Kartenkauf ausgeben lassen, ein Pack erstellen und versiegelt verkaufen, ein Pack erstellen und seine 3 Karten verkaufen, oder wie bisher Packs für das nächstgelegene Abzeichen öffnen - und nimmt den Weg, der am meisten bringt. Zum Beispiel kauft ein Sack, der 0,45 einbringt, etwa 1,8 Stufen günstiger Sätze, während Packs für das nächstgelegene Abzeichen etwa 0,3 bringen. Ein Weg über den Markt muss einen sichereren klar schlagen (um 15 %); sind die Preise nicht bekannt, bleiben die Edelsteine lose. Es verkauft nie für weniger, als die Edelsteine wert sind, stellt höchstens 10 Dinge am Tag ein, und du bestätigst jedes Angebot in der Steam-App wie jedes andere. Nur handelbare Edelsteine werden verkauft; nicht handelbare gehen weiter an das nächstgelegene Abzeichen. 'booster plan' zeigt die Zahlen. Karten aus Packungen, die es zum Verkaufen herstellt, werden verkauft, egal was die Preisgrenze der übrigen Gegenstände sagt - sie wurden für Geld gemacht. Spiele auf deiner Behalten-Liste werden nie angerührt."
     },
     "SendScamWarnings": {
       "label": "Betrugswarnungen senden",

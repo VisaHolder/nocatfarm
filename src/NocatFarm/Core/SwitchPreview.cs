@@ -237,7 +237,7 @@ public static class SwitchPreview {
 			}
 
 			return (SpareRun.Preview(bot.Name, look) + Environment.NewLine + limits,
-				Spare(look.Plan, bot.Cfg, look.Currency, SparePrices.Sack(look.Currency), true, ""));
+				Spare(look.Plan, bot.Cfg, look.Currency, SparePrices.SackPays(look.Currency, look.Rules.DumpPct), true, ""));
 		}
 
 		if (feature == Switches.Buy) {

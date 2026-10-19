@@ -182,16 +182,29 @@ public static class GemsChoice {
 
 		/// <summary>US cents to the wallet's money, as learned from the market - null until it is (never guessed for a decision).</summary>
 		double? Rate(int currency);
+
+		/// <summary>
+		/// 1.8.2: roughly what a game's pack holds - sealed, or 3 of its cards - in US cents, from anything held however old (a
+		/// search, a set, the inventory's prices): only which packs to price first. Never a request; null when nothing is held.
+		/// </summary>
+		int? Promise(uint app) => null;
 	}
 
-	/// <summary>Everything a look weighs: the wallet's money, the booster creator, automatic's ranking, the level costs, the games never opened.</summary>
+	/// <summary>
+	/// Everything a look weighs: the wallet's money, the booster creator, automatic's ranking, the level costs, the games never
+	/// opened - and (1.8.2) the games on the keep list ("Never touch items from these games": nothing of theirs is ever sold,
+	/// so no pack is made of them to sell). Not the price limit: the cards of a pack made to sell are sold whatever it says -
+	/// they were made for money, and the limit is for what the account already had - so each counts at its real value.
+	/// </summary>
 	public sealed record Inputs(int Currency, Boosters.Page Page, BoosterPick.Ranking Ranking, IReadOnlyList<long>? Costs, int DumpPct,
-		IReadOnlyCollection<uint> NeverOpen, DateTime Now);
+		IReadOnlyCollection<uint> NeverOpen, DateTime Now, IReadOnlyCollection<uint>? Keep = null);
 
 	/// <summary>
 	/// Every way weighed with today's prices, and the pick. A sack's price is read again when it's over
-	/// <see cref="SackFresh"/> old; packs' and sets' prices it doesn't hold are learned a few a look (<paramref name="learn"/>),
-	/// the cheapest packs first - the rest wait for later looks. Reads only: nothing is made, listed or bought.
+	/// <see cref="SackFresh"/> old. Every pack whose price (and set) is held fresh enough is weighed; those it doesn't hold
+	/// are learned a few a look (<paramref name="learn"/>) - 1.8.2: the most promising first, by what's known of what the
+	/// pack holds however old, for its gems (<see cref="IMarket.Promise"/>), then the cheapest; the rest wait for later
+	/// looks. Never a game on the keep list. Reads only: nothing is made, listed or bought.
 	/// </summary>
 	public static async Task<Choice> WeighAsync(Inputs x, IMarket market, int learn, CancellationToken ct) {
 		int cur = x.Currency;
@@ -219,55 +232,70 @@ public static class GemsChoice {
 		bool sackKnown = (sackQuote != null) && (x.Now - sackQuote.When <= SackFresh) && (sackQuote.Sales >= MinSackSales) && (Receive(sackQuote, x.DumpPct) > 0);
 		int sack = sackKnown ? Receive(sackQuote, x.DumpPct) : 0;
 
-		if (sackKnown) {
-			options.Add(new Option(Way.Sack, 0, "Sack of Gems", Per, sack, sack, LevelsFor(sack, costs)));
+		if (!sackKnown) {
+			return Decide(options, sackKnown, x.Costs, cur);   // nothing to check the packs against
 		}
 
-		// (b) and (c): every game the booster creator offers today, the cheapest packs first.
+		options.Add(new Option(Way.Sack, 0, "Sack of Gems", Per, sack, sack, LevelsFor(sack, costs)));
+
+		// (b) and (c): every game the booster creator offers today - 1.8.2: never one on the keep list, whose pack and cards
+		// would never be sold.
+		IReadOnlyCollection<uint> keep = x.Keep ?? [];
+		List<Boosters.Offer> offers = [.. x.Page.Offers.Values.Where(o => !o.Unavailable && (o.Price > 0) && !keep.Contains(o.AppId))
+			.OrderBy(static o => o.Price).ThenBy(static o => o.AppId)];
+		double? rate = market.Rate(cur);
+		Dictionary<uint, MarketQuote?> packs = [];
+		Dictionary<uint, CardSet?> sets = [];
+
+		// (c) only for a game whose packs may be opened, and with a rate to read its set's US prices by.
+		bool Opens(Boosters.Offer o) => !x.NeverOpen.Contains(o.AppId) && (rate != null);
+		bool Stale(MarketQuote? q) => (q == null) || (x.Now - q.When > ChooseFresh);
+
+		foreach (Boosters.Offer offer in offers) {
+			packs[offer.AppId] = market.Known(PackHash(offer.AppId, offer.Name), cur);
+			sets[offer.AppId] = Opens(offer) ? market.KnownSet(offer.AppId) : null;
+		}
+
+		// What it doesn't hold, learned a few a look: the packs whose contents look worth the most for their gems first.
 		int learned = 0;
 
-		foreach (Boosters.Offer offer in x.Page.Offers.Values.Where(static o => !o.Unavailable && (o.Price > 0)).OrderBy(static o => o.Price).ThenBy(static o => o.AppId)) {
-			if (!sackKnown) {
-				break;   // nothing to check them against
+		foreach (Boosters.Offer offer in offers.Where(o => Stale(packs[o.AppId]) || (Opens(o) && (sets[o.AppId] == null)))
+			.OrderByDescending(o => market.Promise(o.AppId) is int p and > 0 ? p / (double) o.Price : -1).ThenBy(static o => o.Price).ThenBy(static o => o.AppId)) {
+			if (learned >= learn) {
+				break;
 			}
 
-			// The pack's gems as a sack would pay: a way that doesn't beat this loses money.
-			decimal worth = Spare.GemsWorth((int) offer.Price, sack);
-
-			// (b): the pack sealed.
-			string packHash = PackHash(offer.AppId, offer.Name);
-			MarketQuote? pack = market.Known(packHash, cur);
-
-			if (((pack == null) || (x.Now - pack.When > ChooseFresh)) && (learned < learn)) {
+			if (Stale(packs[offer.AppId])) {
 				learned++;
-				pack = await market.QuoteAsync(packHash, cur, ct).ConfigureAwait(false) ?? pack;
+				packs[offer.AppId] = await market.QuoteAsync(PackHash(offer.AppId, offer.Name), cur, ct).ConfigureAwait(false) ?? packs[offer.AppId];
 			}
 
-			if ((pack != null) && (x.Now - pack.When <= ChooseFresh) && (pack.Sales >= MinPackSales) && (Receive(pack, x.DumpPct) is int paid and > 0) && (paid >= worth + 1m)) {
-				long per = paid * (long) Per / offer.Price;
-				options.Add(new Option(Way.PackSell, offer.AppId, offer.Name, (int) offer.Price, paid, per, LevelsFor(per, costs)));
-			}
-
-			// (c): opened, its 3 cards sold - never a game whose packs stay sealed.
-			if (x.NeverOpen.Contains(offer.AppId) || (market.Rate(cur) is not double rate)) {
-				continue;
-			}
-
-			CardSet? set = market.KnownSet(offer.AppId);
-
-			if ((set == null) && (learned < learn)) {
-				(set, bool asked) = await market.SetAsync(offer.AppId, ct).ConfigureAwait(false);
+			if (Opens(offer) && (sets[offer.AppId] == null) && (learned < learn)) {
+				(CardSet? set, bool asked) = await market.SetAsync(offer.AppId, ct).ConfigureAwait(false);
+				sets[offer.AppId] = set;
 
 				if (asked) {
 					learned++;
 				}
 			}
+		}
 
-			if ((set == null) || (set.Cards.Count == 0) || (set.Cards.Count != BoosterPick.SetSize(offer.Price))) {
+		foreach (Boosters.Offer offer in offers) {
+			// The pack's gems as a sack would pay: a way that doesn't beat this loses money.
+			decimal worth = Spare.GemsWorth((int) offer.Price, sack);
+
+			// (b): the pack sealed.
+			if ((packs[offer.AppId] is { } pack) && !Stale(pack) && (pack.Sales >= MinPackSales) && (Receive(pack, x.DumpPct) is int paid and > 0) && (paid >= worth + 1m)) {
+				long per = paid * (long) Per / offer.Price;
+				options.Add(new Option(Way.PackSell, offer.AppId, offer.Name, (int) offer.Price, paid, per, LevelsFor(per, costs)));
+			}
+
+			// (c): opened, its 3 cards sold - never a game whose packs stay sealed.
+			if (!Opens(offer) || (sets[offer.AppId] is not { Cards.Count: > 0 } set) || (set.Cards.Count != BoosterPick.SetSize(offer.Price))) {
 				continue;
 			}
 
-			long ev = OpenedWorth(set, cur, rate, market, x.Now, x.DumpPct, live: false);
+			long ev = OpenedWorth(set, cur, rate!.Value, market, x.Now, x.DumpPct, live: false);
 
 			if ((ev > 0) && (ev >= worth + 1m)) {
 				long per = ev * Per / offer.Price;
@@ -283,20 +311,24 @@ public static class GemsChoice {
 	/// own price in the wallet's money when one is held (<see cref="ChooseFresh"/>) - a card that sold fewer than
 	/// <see cref="MinCardSales"/> times in the last day counts as nothing - else, while choosing, its US price at the learned
 	/// rate. <paramref name="live"/>: only prices held in the wallet's money count (right before acting, every card is priced).
+	/// 1.8.2: a card worth more than <paramref name="maxCents"/> ("Never touch items worth more than", 0: none) counts as
+	/// nothing too - for a pack that came in, whose cards are spare items and never sold over the limit. Never for a pack
+	/// made to sell: its cards are sold whatever the limit.
 	/// </summary>
-	public static long OpenedWorth(CardSet set, int cur, double rate, IMarket market, DateTime now, int dumpPct, bool live) {
+	public static long OpenedWorth(CardSet set, int cur, double rate, IMarket market, DateTime now, int dumpPct, bool live, int maxCents = 0) {
 		long total = 0;
+		bool Over(int worth) => (maxCents > 0) && (worth > maxCents);
 
 		foreach (string hash in set.Cards) {
 			MarketQuote? q = market.Known(hash, cur);
 
 			if ((q != null) && (now - q.When <= (live ? ActFresh : ChooseFresh))) {
-				total += q.Sales >= MinCardSales ? Receive(q, dumpPct) : 0;
+				total += (q.Sales >= MinCardSales) && !Over(ListingPrice.Worth(q.Price)) ? Receive(q, dumpPct) : 0;
 			} else if (live) {
 				return 0;
 			} else if (set.Usd.GetValueOrDefault(hash) is int usd and > 0) {
 				int wallet = WalletRate.ToWallet(usd, rate);
-				total += Seller.ReceiveFor(Seller.UndercutFor(wallet));
+				total += Over(wallet) ? 0 : Seller.ReceiveFor(Seller.UndercutFor(wallet));
 			}
 		}
 
@@ -350,6 +382,102 @@ public static class GemsChoice {
 
 		return (again.Way == pick.Way) && (again.Pick?.App == pick.App) ? again
 			: new Choice(Way.Keep, null, options, $"the price moved since it was weighed - {Words(pick, cur)} waits for the next look", cur);
+	}
+
+	// ── a pack that came in (a drop, a trade), weighed ─────────────────────────
+	/// <summary>1.8.2: what a sealed pack in the inventory is best used for.</summary>
+	public enum PackUse { Unknown, OpenBadge, SellSealed, OpenSell }
+
+	/// <summary>
+	/// 1.8.2: one sealed pack weighed three ways, in the wallet's money: <paramref name="Sealed"/> - sold sealed, after the fee;
+	/// <paramref name="Cards"/> - opened and its 3 cards sold, after the fee; <paramref name="Badge"/> - opened for its badge,
+	/// the 3 cards at what buying them would cost (only for a badge it's levelling). 0: not known, or not a way for it.
+	/// </summary>
+	public sealed record PackWorth(uint App, string Game, long Sealed, long Cards, long Badge) {
+		/// <summary>
+		/// The best: the most money - a way that relies on the market more (the badge none, a sealed pack, then 3 loose cards)
+		/// only when it beats every safer one by <see cref="MarginPct"/> percent, as for gems.
+		/// </summary>
+		public PackUse Best {
+			get {
+				List<(PackUse Use, long Worth)> ways = [(PackUse.OpenBadge, Badge), (PackUse.SellSealed, Sealed), (PackUse.OpenSell, Cards)];
+				ways.RemoveAll(static w => w.Worth <= 0);
+
+				foreach ((PackUse use, long worth) in ways.OrderByDescending(static w => w.Worth).ThenBy(static w => w.Use)) {
+					if (ways.Where(s => s.Use < use).All(s => worth * 100 >= s.Worth * (100 + MarginPct))) {
+						return use;
+					}
+				}
+
+				return PackUse.Unknown;
+			}
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2: a sealed pack weighed (<see cref="PackWorth"/>) from what's held: the pack's own price in the wallet's money
+	/// (<see cref="ChooseFresh"/>, enough sales), and its game's set (<paramref name="set"/>, null: not known) - each card at
+	/// its own price when held, else its US price at the learned rate. <paramref name="levelling"/>: its badge is one the
+	/// account is levelling, so its cards would otherwise be bought. Never a request.
+	/// </summary>
+	public static PackWorth WeighPack(uint app, string game, string packHash, CardSet? set, bool levelling, IMarket market, int cur, DateTime now, int dumpPct, int maxCents) {
+		long sealedPays = (market.Known(packHash, cur) is { } q) && (now - q.When <= ChooseFresh) && (q.Sales >= MinPackSales) ? Receive(q, dumpPct) : 0;
+
+		if ((set is not { Cards.Count: > 0 }) || (market.Rate(cur) is not double rate)) {
+			return new PackWorth(app, game, sealedPays, 0, 0);
+		}
+
+		long cards = OpenedWorth(set, cur, rate, market, now, dumpPct, live: false, maxCents);
+		long badge = 0;
+
+		if (levelling) {
+			// What 3 of its cards cost to buy: each card's cheapest listing in the wallet's money, or its US price at the rate.
+			List<int> buy = [.. set.Cards.Select(h => market.Known(h, cur) is { Lowest: > 0 } c && (now - c.When <= ChooseFresh) ? c.Lowest!.Value
+				: set.Usd.GetValueOrDefault(h) is int usd and > 0 ? WalletRate.ToWallet(usd, rate) : 0).Where(static c => c > 0)];
+			badge = buy.Count > 0 ? (long) Math.Round(3 * buy.Average(), MidpointRounding.ToZero) : 0;
+		}
+
+		return new PackWorth(app, game, sealedPays, cards, badge);
+	}
+
+	/// <summary>A pack's best use in plain words: "open it for its badge", "sell it sealed", "open it and sell its cards".</summary>
+	public static string Words(PackUse use) => use switch {
+		PackUse.OpenBadge => "open it for its badge",
+		PackUse.SellSealed => "sell it sealed",
+		PackUse.OpenSell => "open it and sell its cards",
+		_ => "not known yet - no prices for it"
+	};
+
+	/// <summary>
+	/// 1.8.2: what an account's settings do with a sealed pack that came in (not one automatic made), in plain words, and
+	/// whether that's <paramref name="best"/> - with the setting that would do it when it isn't. English, like every console
+	/// answer.
+	/// </summary>
+	public static string Fate(BotConfig cfg, PackWorth w, PackUse best) {
+		bool never = cfg.BoosterNeverOpen.Contains(w.App);
+		int open = never ? 0 : Math.Clamp(cfg.OpenBoosterPacks, 0, 2);
+		bool opens = (open == 2) || ((open == 1) && (w.Cards > 0) && (w.Cards > w.Sealed));
+		int unopened = Math.Clamp(cfg.BoosterUnopened, 0, 2);
+		string does = opens ? "open it"
+			: unopened == 2 ? (cfg.SpareItems ? "sell it sealed" : "sell it sealed once Spare items is on")
+			: unopened == 1 ? "send it to another of your accounts"
+			: never ? "keep it sealed (its game is on \"Never open packs from these games\")"
+			: "keep it sealed";
+		bool same = best switch {
+			PackUse.OpenBadge or PackUse.OpenSell => opens,
+			PackUse.SellSealed => !opens && (unopened == 2) && cfg.SpareItems,
+			_ => true
+		};
+
+		if (same) {
+			return $"your settings {does}";
+		}
+
+		string how = best == PackUse.SellSealed ? "\"Packs it doesn't open\": sell them, with Spare items on"
+			: never ? "take its game off \"Never open packs from these games\""
+			: "\"Open booster packs\": always";
+
+		return $"your settings {does} - {how} would {Words(best)}";
 	}
 
 	// ── what buying cards priced last, per account ────────────────────────────

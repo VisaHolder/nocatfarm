@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} 现在在“永不打开这些游戏的补充包”里 —— 为它制作的补充包保持不打开",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "它的一个上架还在手机上等待确认 - 处理完之前不会上架其他副本",
     "worth {0} - over your price limit, never touched": "价值 {0} - 超过你的价格上限，绝不动它",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} 件物品（共 {1}）超过你的价格上限 {2} - 提高上限才能卖掉它们",
     "worth {0} now - over your price limit, not listed": "现在价值 {0} - 超过你的价格上限，不上架",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} 的多余物品预览：{1} 件转成宝石，{2} 件出售。在它的设置里打开多余物品之前什么都不会发生 - 'spare preview {0}' 会逐个列出。",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} 从 {2} 降到 {3} - {1} 天没卖出",
@@ -3325,6 +3326,7 @@
     "couldn't read the open buy orders: {0}": "无法读取未完成的购买订单：{0}",
     "worth {0} now - over your price limit, kept": "现在价值 {0} - 超过你的价格上限，留着",
     "on your keep list - never sold": "在你的保留列表里 - 绝不出售",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "为出售而制作：它的卡牌不管你的价格上限是多少都会卖掉；保留列表里的游戏绝不会动",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}：市场上已有它的购买订单 · 撤回自己的订单，你自己下的订单不动",
     "{0}: not crafted yet · {1}": "{0}：暂不合成 · {1}",
     "it asks for a card promised to a card swap": "它要的卡已经许给了一次换卡",
@@ -4749,7 +4751,7 @@
     },
     "SpareMaxPrice": {
       "label": "价值超过此数的物品绝不动",
-      "tip": "价值更高的东西永远不碰：不换宝石，也不出售。用这个账号的 Steam 钱包货币：美元或欧元用 0.25 合适，日元用约 40。价值取最低挂单价和最近一天成交价中较高的那个：挂 0.20 但成交 0.30，就算 0.30。"
+      "tip": "价值更高的东西永远不碰：不换宝石，也不出售。用这个账号的 Steam 钱包货币：美元或欧元用 0.25 合适，日元用约 40。价值取最低挂单价和最近一天成交价中较高的那个：挂 0.20 但成交 0.30，就算 0.30。 为出售而制作的补充包里的卡牌，不管这个上限是多少都会卖掉 - 它们本来就是为了赚钱做的。保留列表里的游戏绝不会动。"
     },
     "SpareGemMarginPct": {
       "label": "宝石须比出售高出",
@@ -4884,7 +4886,7 @@
     },
     "GemsForLevels": {
       "label": "把宝石用在最多的等级上",
-      "tip": "只在“购买缺少的卡牌”开启时起作用。自动补充包制作补充包之前，会按今天的市场价格用四种方式算出 1,000 个宝石值多少徽章等级：卖掉一袋宝石，让购买卡牌花掉这笔钱；制作补充包并原封出售；制作补充包并卖掉其中 3 张卡；或像以前一样为最接近的徽章打开补充包——然后选得到最多的那种。例如，一袋卖 0.45 的宝石约能买 1.8 级便宜的卡组，而为最接近的徽章开补充包约为 0.3 级。用到市场的方式必须明显（高出 15%）胜过更稳妥的方式；价格未知时，宝石保持散装。它绝不会以低于宝石价值的价格出售，每天最多上架 10 件，每次上架都像其他上架一样在 Steam 应用中确认。只出售可交易宝石；不可交易的宝石仍用于最接近的徽章。'booster plan' 会显示这些数字。"
+      "tip": "只在“购买缺少的卡牌”开启时起作用。自动补充包制作补充包之前，会按今天的市场价格用四种方式算出 1,000 个宝石值多少徽章等级：卖掉一袋宝石，让购买卡牌花掉这笔钱；制作补充包并原封出售；制作补充包并卖掉其中 3 张卡；或像以前一样为最接近的徽章打开补充包——然后选得到最多的那种。例如，一袋卖 0.45 的宝石约能买 1.8 级便宜的卡组，而为最接近的徽章开补充包约为 0.3 级。用到市场的方式必须明显（高出 15%）胜过更稳妥的方式；价格未知时，宝石保持散装。它绝不会以低于宝石价值的价格出售，每天最多上架 10 件，每次上架都像其他上架一样在 Steam 应用中确认。只出售可交易宝石；不可交易的宝石仍用于最接近的徽章。'booster plan' 会显示这些数字。 为出售而制作的补充包里的卡牌，不管多余物品的价格上限是多少都会卖掉 - 它们本来就是为了赚钱做的。保留列表里的游戏绝不会动。"
     },
     "SendScamWarnings": {
       "label": "发送诈骗警告",
