@@ -28768,6 +28768,17 @@ await SafeChecks182.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..",
 // ── 1.8.2 "Protect refunds only for games over": what was paid, else the store's regular price; not known - protected; fakes only ──
 await RefundPriceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: the status row is one per thing it's doing - settling in, then a sitting, each its own row ──
+{
+	var stRows = new List<NocatFarm.Core.LogStack.Row>();
+	NocatFarm.Log.Entry St(string text) => new(0, DateTime.Now, "INFO", "new", new NocatFarm.Core.Said("{0}", text), NocatFarm.Core.LogStack.Heartbeat);
+	NocatFarm.Core.LogStack.Add(stRows, St("settling in · 11m to go · 55m today"));
+	NocatFarm.Core.LogStack.Add(stRows, St("settling in · 1m to go · 55m today"));
+	NocatFarm.Core.LogStack.Add(stRows, St("farming cards on SOS OPS! · 0 of 2 card drop(s) · 1h34m left · 1h05m today"));
+	NocatFarm.Core.LogStack.Add(stRows, St("farming cards on SOS OPS! · 0 of 2 card drop(s) · 1h24m left · 1h15m today"));
+	Check("status rows: settling in and the sitting after it are two rows, each stacking its own check-ins", (stRows.Count == 2) && (stRows[0].Entries.Count == 2) && (stRows[1].Entries.Count == 2), $"{stRows.Count}");
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
