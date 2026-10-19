@@ -202,7 +202,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	/// An order bought earlier that Steam didn't settle: what it bought, or - still open - taken back. Only ever an order
 	/// this program placed (its id was written down when it was), never one the owner placed by hand.
 	/// </summary>
-	public async Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+	public async Task<BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) {
 		if (ct.IsCancellationRequested) {
 			return new BuyAnswer(BuyResult.Unsure, price, "", orderId);
 		}
@@ -210,7 +210,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		using CancellationTokenSource own = new(AfterSending);
 
 		try {
-			return await SettleAsync(orderId, price, null, looks: 1, own.Token).ConfigureAwait(false);
+			return await SettleAsync(orderId, price, string.IsNullOrEmpty(hash) ? null : Page(hash), looks: 1, own.Token).ConfigureAwait(false);
 		} catch (Exception e) {
 			return new BuyAnswer(BuyResult.Unsure, price, Log.Describe(e), orderId);
 		}

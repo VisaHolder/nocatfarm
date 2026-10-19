@@ -29795,6 +29795,7 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 	/// <summary>What asking about an earlier order says, by its id; the orders asked about.</summary>
 	public Dictionary<string, NocatFarm.Modules.BuyAnswer> Checks { get; } = [];
 	public List<string> Checked { get; } = [];
+	public List<string> CheckedHashes { get; } = [];
 
 	/// <summary>Every price read so far.</summary>
 	public int Reads => _reads;
@@ -29852,8 +29853,9 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 			Answer == NocatFarm.Modules.BuyResult.Waiting ? ConfirmId : null));
 	}
 
-	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) {
 		Checked.Add(orderId);
+		CheckedHashes.Add(hash);
 
 		return Task.FromResult(Checks.GetValueOrDefault(orderId) ?? new NocatFarm.Modules.BuyAnswer(NocatFarm.Modules.BuyResult.Unsure, price, "", orderId));
 	}
@@ -30805,10 +30807,10 @@ static class BuySafetyChecks {
 			var checkWeb = new FakeMarketWeb();
 			checkWeb.Statuses.Enqueue(Open);
 			checkWeb.AfterCancel = Closed;
-			var checkAnswer = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkWeb).CheckOrderAsync("6001", 9, CancellationToken.None);
+			var checkAnswer = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkWeb).CheckOrderAsync("6001", 9, "753-Card", CancellationToken.None);
 			var checkFilledWeb = new FakeMarketWeb();
 			checkFilledWeb.Statuses.Enqueue(Filled);
-			var checkFilled = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkFilledWeb).CheckOrderAsync("6002", 9, CancellationToken.None);
+			var checkFilled = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkFilledWeb).CheckOrderAsync("6002", 9, "753-Card", CancellationToken.None);
 			Check("an earlier order: still open is taken back by its own id; filled is bought",
 				(checkAnswer.Result == NocatFarm.Modules.BuyResult.Gone) && checkWeb.Calls.Contains("cancel:6001") && (checkFilled is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }),
 				$"{checkAnswer} {checkFilled} {string.Join(",", checkWeb.Calls)}");
@@ -30891,6 +30893,26 @@ static class BuySafetyChecks {
 				&& swept.Any(static e => e is { Key: "k3", Pending: true, Cents: 9 }) && swept.Any(static e => e is { Key: "k4", Pending: true })
 				&& swept.Any(static e => e is { Key: "k5", Pending: false }),
 				string.Join(",", sweepMarket.Checked) + " / " + string.Join(" | ", swept));
+			Check("sweep: each order is asked about with its own card (Steam answers only from the card's page)",
+				sweepMarket.CheckedHashes.SequenceEqual(["100-Card 2", "100-Card 2", "100-Card 2"]), string.Join(",", sweepMarket.CheckedHashes));
+
+			// Asked for hours with no answer: not asked again. With nothing to prove it by, counted as bought at its price;
+			// with what was held before, left to the inventory.
+			var staleBot = NewBot();
+			var staleMarket = Market();
+			var staleLedger = NocatFarm.Modules.BuyLedger.Of(staleBot.Name);
+			DateTime tOld = DateTime.UtcNow.AddHours(-7);
+			staleLedger.Add(new(tOld, 4, 20, 100, "100-Card 2", Pending: true, Order: "s1", Key: "s1"));
+			staleLedger.Add(new(tOld, 4, 20, 100, "100-Card 2", Pending: true, Order: "s2", Key: "s2", Before: []));
+			staleLedger.Add(new(DateTime.UtcNow.AddHours(-5), 4, 20, 100, "100-Card 2", Pending: true, Order: "s3", Key: "s3"));
+			staleMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(1000, 20, false, 1);
+			await Buyer(staleBot, staleMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var stale = staleLedger.All;
+			Check("sweep: an order Steam left unsure for 6 hours isn't asked about again - counted as bought (never less spent), or left to the inventory",
+				staleMarket.Checked.SequenceEqual(["s3"])
+				&& stale.Any(static e => e is { Key: "s1", Pending: false, Cents: 4 }) && stale.Any(static e => e is { Key: "s2", Pending: true, Cents: 4 })
+				&& stale.Any(static e => e is { Key: "s3", Pending: true }),
+				string.Join(",", staleMarket.Checked) + " / " + string.Join(" | ", stale));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
 				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {", StringComparison.Ordinal)
@@ -32525,9 +32547,10 @@ static class BuyFixChecks {
 			var earlierInner = new FakeMarketWeb();
 			earlierInner.Statuses.Enqueue(Filled);
 			var earlierWeb = new PageMarketWeb(earlierInner);
-			var earlier = await new NocatFarm.Core.SteamCardMarket(NewBot(), earlierWeb).CheckOrderAsync("6001", 9, CancellationToken.None);
-			Check("order status: an earlier order is asked about from the market's buy orders page",
-				(earlier.Result == NocatFarm.Modules.BuyResult.Bought) && earlierWeb.Referers.SequenceEqual(["https://steamcommunity.com/market/buyorders"]),
+			var earlier = await new NocatFarm.Core.SteamCardMarket(NewBot(), earlierWeb).CheckOrderAsync("6001", 9, "753-Card", CancellationToken.None);
+			Check("order status: an earlier order is asked about from its card's page (Steam answers 400 [] from anywhere else)",
+				(earlier.Result == NocatFarm.Modules.BuyResult.Bought) && (earlierWeb.Referers.Count > 0)
+				&& earlierWeb.Referers.All(static r => r == "https://steamcommunity.com/market/listings/753/753-Card"),
 				string.Join(",", earlierWeb.Referers));
 			string marketSrc = Src("src/NocatFarm/Core/SteamCardMarket.cs");
 			Check("order status: the real web session sends the page with it",
@@ -32846,7 +32869,7 @@ sealed class ProofMarket(FakeCardMarket inner) : NocatFarm.Modules.ICardMarket {
 	public Task<IReadOnlyList<uint>?> CheapestGamesAsync(CancellationToken ct) => inner.CheapestGamesAsync(ct);
 	public Task<NocatFarm.Modules.CardMarket.Book?> BookAsync(string hash, CancellationToken ct) => inner.BookAsync(hash, ct);
 	public Task<NocatFarm.Modules.BuyAnswer> BuyAsync(NocatFarm.Modules.BuyOrder order, Action<string>? placed, CancellationToken ct) => inner.BuyAsync(order, placed, ct);
-	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, hash, ct);
 	public Task<NocatFarm.Modules.BuyAnswer> ResumeAsync(NocatFarm.Modules.BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct) => inner.ResumeAsync(order, confirmation, placed, ct);
 	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => inner.QuoteAsync(hash, currency, ct);
 }

@@ -388,8 +388,11 @@ public interface ICardMarket {
 	/// </summary>
 	Task<BuyAnswer> BuyAsync(BuyOrder order, Action<string>? placed, CancellationToken ct);
 
-	/// <summary>An order it placed earlier whose outcome wasn't known: what it bought, or - still open - taken back.</summary>
-	Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct);
+	/// <summary>
+	/// An order it placed earlier whose outcome wasn't known: what it bought, or - still open - taken back. <paramref name="hash"/>:
+	/// the card's market name - Steam answers about an order only when asked from its card's page.
+	/// </summary>
+	Task<BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct);
 
 	/// <summary>
 	/// A purchase left for the owner to confirm in the Steam app: the order sent again with that confirmation, as Steam's
@@ -1228,6 +1231,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <summary>How long a purchase Steam never said the end of is still looked for in the inventory.</summary>
 	internal static readonly TimeSpan ProofFor = TimeSpan.FromDays(7);
 
+	/// <summary>How long an order Steam leaves unsure is asked about again; after that it's counted as bought (see SweepLockedAsync).</summary>
+	internal static readonly TimeSpan AskFor = TimeSpan.FromHours(6);
+
 	/// <summary>When the next look is - from "Look every (hours)" as it's set now.</summary>
 	internal LookTimer Timer { get; } = new(() => Math.Clamp(bot.Cfg.BuyCheckHours, 1, 168), 1.0, 1.2);
 
@@ -1588,15 +1594,34 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	private async Task SweepLockedAsync(CancellationToken ct, bool resume, Result? result = null) {
 		bool unsure = false;
 
-		foreach (BuyLedger.Entry open in Ledger.OpenOrders.Take(10)) {
+		IReadOnlyList<BuyLedger.Entry> orders = Ledger.OpenOrders;
+		DateTime now = orders.Count > 0 ? await _clock(ct).ConfigureAwait(false) : default;
+
+		foreach (BuyLedger.Entry open in orders.Take(10)) {
 			if (ct.IsCancellationRequested) {
 				return;
+			}
+
+			// Asked for hours with no answer: Steam won't say any more. It stays counted as spent - never less than it may
+			// have cost - and the inventory still decides when it knows what was held before.
+			if (now - open.At >= AskFor) {
+				if (open.Before != null) {
+					unsure = true;
+				} else if (!Ledger.Replace(open, open with { Pending = false, Confirm = null })) {
+					CantSave();
+
+					return;
+				} else {
+					Log.Debug(new Said("buy order {0} · Steam never said · counted as bought", open.Order!), Bot.Name);
+				}
+
+				continue;
 			}
 
 			BuyAnswer answer;
 
 			try {
-				answer = await _market.CheckOrderAsync(open.Order!, open.Cents, ct).ConfigureAwait(false);
+				answer = await _market.CheckOrderAsync(open.Order!, open.Cents, open.Card, ct).ConfigureAwait(false);
 			} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
 				Log.Debug(new Said("couldn't look at buying cards: {0}", Log.Describe(e)), Bot.Name);
 
