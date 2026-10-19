@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "satılacak bir {0} paketi için takas edilebilir mücevher biriktiriliyor",
     "the {0} pack's price moved · weighed again later": "{0} paketinin fiyatı değişti · daha sonra yeniden tartılacak",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "açıp kartlarını satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "açıp kartlarını satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye",
+    "buy order {0} · Steam never said · counted as bought": "alış emri {0} · Steam hiç söylemedi · alınmış sayıldı",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} son bir günde yalnızca {1} kez satıldı - bekliyor, set {2} değerinde ({3} seviye)",
+    "the market stopped answering before what its money buys was priced": "parayla ne alınacağı fiyatlanmadan önce pazar yanıt vermeyi bıraktı",
+    "it has no Steam wallet to spend the money from": "parayı harcayacak bir Steam cüzdanı yok",
+    "{0}: not crafted yet · {1}": "{0}: henüz üretilmedi · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: henüz üretilmedi · {1} · kartlarının değeri bilinmiyor"
   },
   "settings": {
     "SteamOpenEveryAccount": {

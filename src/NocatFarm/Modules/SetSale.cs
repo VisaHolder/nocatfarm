@@ -37,8 +37,10 @@ public static partial class SetSale {
 	/// </summary>
 	/// <param name="Unsure">Not decided: a price or the market didn't answer - crafted only when its cards aren't known to be worth much (<see cref="ChooseAsync"/>).</param>
 	/// <param name="Top">The dearest card's cheapest listing seen while weighing it, in the wallet's currency (0: none seen).</param>
+	/// <param name="Hold">1.8.2: neither sold nor crafted - worth more than crafting is (it would buy 2 levels or more), but a
+	/// card of it hardly sells; it waits for the next look rather than being crafted.</param>
 	public sealed record Verdict(uint App, string Game, int Currency, bool Sell, long Proceeds, int Levels, int About, string Why, IReadOnlyList<SalePrice> Prices,
-		bool Unsure = false, long Top = 0) {
+		bool Unsure = false, long Top = 0, bool Hold = false) {
 		/// <summary>What selling brings in, written out ("4.97 CAD").</summary>
 		public string Money => BuyPlan.Money(Proceeds, Currency);
 
@@ -60,6 +62,8 @@ public static partial class SetSale {
 	/// The decision, on its own. <paramref name="cards"/>: every card of the set with its price now (null: no answer).
 	/// <paramref name="levelCosts"/>: what each next badge level buying cards would buy costs, cheapest first - this set's
 	/// own game left out. Sold only when it clearly wins: at least 2 levels, or 1 with a quarter of the money left over.
+	/// A card that sold fewer than <see cref="MinSales"/> times in the last day: crafted when selling would buy 1 level at
+	/// most; worth more than that, it waits (Hold) - a listing could hang, and a craft would throw the money away.
 	/// </summary>
 	public static Verdict Decide(uint app, string game, int currency, IReadOnlyList<(string Hash, MarketQuote? Quote)> cards, IEnumerable<long> levelCosts, int dumpPct) {
 		long top = cards.Where(c => c.Quote?.Currency == currency).Select(static c => (long) (c.Quote!.Lowest ?? 0)).DefaultIfEmpty(0).Max();
@@ -70,6 +74,7 @@ public static partial class SetSale {
 		}
 
 		List<SalePrice> prices = [];
+		(string Name, int Sales)? thin = null;
 
 		foreach ((string hash, MarketQuote? quote) in cards) {
 			string name = new BuyCard(hash, 0).Name;
@@ -78,8 +83,9 @@ public static partial class SetSale {
 				return Craft(new Said("no market price for {0} right now", name), unsure: true);
 			}
 
-			if (quote.Sales < MinSales) {
-				return Craft(new Said("{0} sold only {1} time(s) in the last day", name, quote.Sales));
+			// Hardly selling: weighed all the same - whether it's crafted depends on what the set is worth.
+			if ((quote.Sales < MinSales) && (thin == null)) {
+				thin = (name, quote.Sales);
 			}
 
 			(int? buyer, _) = ListingPrice.For(quote.Price, 3, dumpPct);
@@ -118,8 +124,23 @@ public static partial class SetSale {
 
 		// Past the levels priced today, the rest at the dearest of them: about how many in all (never counted on to decide).
 		int about = levels + ((!more && (last > 0)) ? (int) Math.Min(1000, left / last) : 0);
-		bool sell = (levels >= 2) || ((levels == 1) && (left * 4 >= proceeds));
 		string money = BuyPlan.Money(proceeds, currency);
+
+		// A card that hardly sells: a set worth 1 level at most is crafted as before; worth more, it waits - never crafted
+		// away, never listed to hang.
+		if (thin is { } few) {
+			Said slow = new("{0} sold only {1} time(s) in the last day", few.Name, few.Sales);
+
+			if (levels < 2) {
+				return Craft(slow);
+			}
+
+			Said held = new("{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)", few.Name, few.Sales, money, levels);
+
+			return new Verdict(app, game, currency, false, proceeds, levels, about, held.ToEnglish(), prices, false, top, Hold: true) { Reason = held };
+		}
+
+		bool sell = (levels >= 2) || ((levels == 1) && (left * 4 >= proceeds));
 		Said reason = sell ? new Said("{0} buys about {1} levels", money, about)
 			: levels == 0 ? new Said("set worth {0} buys no badge level today", money) : new Said("set worth {0} buys only {1} level", money, levels);
 
@@ -143,7 +164,12 @@ public static partial class SetSale {
 			return Decide(set.App, set.Game, plan.Currency, [.. cards, .. set.Cards.Skip(cards.Count).Select(static h => (h, (MarketQuote?) null))], [], 0);
 		}
 
-		return Decide(set.App, set.Game, plan.Currency, cards, plan.Ranked.Where(s => s.App != set.App).Select(static s => s.Cost), Math.Clamp(cfg.SpareDumpPct, 0, 95));
+		Verdict v = Decide(set.App, set.Game, plan.Currency, cards, plan.Ranked.Where(s => s.App != set.App).Select(static s => s.Cost), Math.Clamp(cfg.SpareDumpPct, 0, 95));
+
+		// The plan's prices stopped part way: what the money buys isn't known for sure - never sold or crafted on half a list.
+		return plan.Short && !v.Unsure && !v.Hold
+			? Crafted(set.App, set.Game, plan.Currency, new Said("the market stopped answering before what its money buys was priced"), unsure: true, top: v.Top)
+			: v;
 	}
 
 	/// <summary>Every marketable copy of each normal card of the game, by market name - asset ids, as a listing takes them.</summary>

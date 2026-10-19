@@ -28689,6 +28689,9 @@ await SetShareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".."
 // ── 1.8.2: the gems maths - each way winning in turn, the margin, kept loose when unsure, never losing money; fakes only ──
 await GemsChoiceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 sweep: a set not known for sure waits - the market stopping part way, nothing known of its worth, a card hardly selling; fakes only ──
+await SweepSetChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31658,9 +31661,12 @@ static class BuySmartChecks {
 			List<(string, NocatFarm.Core.MarketQuote?)> silent = [.. arcane.Take(4), ("603750-Skull (Arcane Raise)", null)];
 			var slowSet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, Enumerable.Repeat(40L, 6), 50);
 			var silentSet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, silent, Enumerable.Repeat(40L, 6), 50);
-			Check("sell or craft: a card that hardly sold in the last day, or no price at all - crafted",
-				!slowSet.Sell && slowSet.Why.Contains("sold only 3", StringComparison.Ordinal) && !silentSet.Sell && silentSet.Why.Contains("no market price", StringComparison.Ordinal),
-				$"{slowSet.Why} / {silentSet.Why}");
+			var slowSmall = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, [400L], 50);
+			Check("sell or craft: a card that hardly sold in the last day - a set worth 6 levels waits (neither sold nor crafted), one worth 1 level at most is crafted; no price at all - not sure",
+				slowSet is { Sell: false, Hold: true, Unsure: false, Levels: 6 } && slowSet.Why.Contains("sold only 3", StringComparison.Ordinal)
+				&& slowSmall is { Sell: false, Hold: false, Unsure: false } && slowSmall.Why.Contains("sold only 3", StringComparison.Ordinal)
+				&& silentSet is { Sell: false, Unsure: true } && silentSet.Why.Contains("no market price", StringComparison.Ordinal),
+				$"{slowSet.Why} / {slowSmall.Why} / {silentSet.Why}");
 			Check("sell or craft: foil badges are always crafted, and only normal ones one level at a time are weighed",
 				!NocatFarm.Modules.SetSale.Considered(1, 1) && NocatFarm.Modules.SetSale.Considered(0, 1) && !NocatFarm.Modules.SetSale.Considered(0, 2)
 				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("ready.Where(static c => SetSale.Considered(c.Border, c.Levels))", StringComparison.Ordinal)
@@ -31878,6 +31884,8 @@ static class CraftSellChecks {
 			foreach (string c in arcaneCards.Skip(1)) { unsureMarket.Quotes[A(c)] = null; }   // the market stops answering after the first card
 			foreach (string c in sboxCards) { unsureMarket.Quotes[S(c)] = null; }
 			unsure.AddModule(new NocatFarm.Modules.CardBuyer(unsure, unsureMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			// s&box's cards are known to be worth little (a price kept from before): crafted when not sure.
+			typeof(NocatFarm.Core.MarketQuotes).GetMethod("Keep", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Q(S("Box"), 18)]);
 			at = Mark();
 			(crafted, listed, bool more) = await SellInstead(unsure, inventory);
 			lines = Said(unsure, at);
@@ -31907,8 +31915,8 @@ static class CraftSellChecks {
 			// Buying cards on but its module not running, and a game with two sets ready: said, never silent.
 			var lone = NewAccount();
 			var lonePicks = await NocatFarm.Modules.SetSale.ChooseAsync(lone, [new(590830, 0, 1), new(603750, 0, 2), new(440, 1, 1)], inventory, CancellationToken.None);
-			Check("skipped: buying cards not running, two sets of a game ready, a foil set - each crafted with its reason, nothing left waiting without one",
-				(lonePicks.Count == 3) && lonePicks[0] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: false } && (lonePicks[0].Reason.ToEnglish() == "buying cards isn't running")
+			Check("skipped: buying cards not running (and the wallet's money not known) - waits with its reason; two sets of a game ready, a foil set - each crafted with its reason",
+				(lonePicks.Count == 3) && lonePicks[0] is { Choice: NocatFarm.Modules.SetSale.Choice.Wait, Quiet: false, Worth: "" } && (lonePicks[0].Reason.ToEnglish() == "buying cards isn't running")
 				&& (lonePicks[1].Reason.ToEnglish() == "2 sets ready, crafted together") && !lonePicks[1].Quiet
 				&& lonePicks[2] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true },
 				string.Join(" | ", lonePicks.Select(static p => $"{p.Choice} {p.Reason.ToEnglish()}")));
@@ -33559,4 +33567,108 @@ sealed class FakeGemsMarket : NocatFarm.Modules.GemsChoice.IMarket {
 	private readonly HashSet<uint> _read = [];
 
 	public double? Rate(int currency) => RateValue;
+}
+
+/// <summary>1.8.2 sweep: sets sold instead of crafted - never crafted away on half an answer. Fakes only, nothing reaches Steam.</summary>
+static class SweepSetChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepset-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		string[] arcaneCards = ["Heart", "Ribbon", "Shield", "Rose", "Skull"];
+		int[] arcaneLowest = [197, 127, 85, 96, 72];
+		string A(string card) => $"603750-{card} (Arcane Raise)";
+		NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales = 150) => new(hash, 20, lowest, lowest + 2, sales, DateTime.UtcNow.Ticks);
+		NocatFarm.Config.BotConfig PlanCfg() => new() { BuyDailyLimit = 1.5f, BuyFullSets = false };
+
+		// An account levelling Arcane Raise (its set held whole) and another game one card short, buying cards on.
+		(NocatFarm.Core.Bot Bot, FakeCardMarket Market, NocatFarm.Modules.CardBuyer Buyer) Account(string name) {
+			var b = new NocatFarm.Core.Bot(name + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true, SellSetsForLevels = true, BuyDailyLimit = 1.5f, BuyFullSets = false });
+			bots.Add(b);
+			var m = new FakeCardMarket();
+			m.Sets[603750] = new(603750, "Arcane Raise", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
+			m.Held[603750] = arcaneCards.ToDictionary(A, static _ => 1);
+			m.Held[100] = new Dictionary<string, int> { ["100-a"] = 1 };
+			m.Sets[100] = new(100, "Cheap", ["100-a", "100-b"], new Dictionary<string, int> { ["100-a"] = 10, ["100-b"] = 10 });
+			m.Books["100-b"] = FakeCardMarket.B(20);
+
+			for (int i = 0; i < arcaneCards.Length; i++) {
+				m.Quotes[A(arcaneCards[i])] = Q(A(arcaneCards[i]), arcaneLowest[i]);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			b.AddModule(buyer);
+
+			return (b, m, buyer);
+		}
+
+		try {
+			// ── the plan's prices stopping part way: every set weighed is not sure, never "buys no level today" ──
+			var (_, fine, fineBuyer) = Account("ss-fine");
+			var whole = await fineBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			var (_, cut, cutBuyer) = Account("ss-cut");
+			cut.Sets.Remove(100);   // the market stops answering when the second set is read
+			var stopped = await cutBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			var cutPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), cut, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-cutplan"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep sets: the market answering whole - the set is decided (not 'not sure')",
+				whole.Single() is { Unsure: false }, whole.Single().Why);
+			Check("sweep sets: the market stopping part way marks the plan short - and the set weighed on it is 'not sure', its dearest card still known",
+				cutPlan.Short && stopped.Single() is { Unsure: true, Sell: false, Top: 197 } && stopped[0].Why.Contains("stopped answering", StringComparison.Ordinal),
+				$"{cutPlan.Short} / {stopped.Single().Why} / top {stopped.Single().Top}");
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Modules.GemsChoice.NoteCosts("ss-short", cutPlan, DateTime.UtcNow);
+			Check("sweep sets: the gems maths never takes a short list for what money buys - not known",
+				NocatFarm.Modules.GemsChoice.CostsOf("ss-short", 20, DateTime.UtcNow) == null);
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+
+			// A card's price not answered, or answered in another money: short too.
+			var (_, silent, _) = Account("ss-silent");
+			silent.Books.Remove("100-b");
+			var silentPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), silent, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-silentplan"), null, DateTime.UtcNow, CancellationToken.None);
+			var (_, euro, _) = Account("ss-euro");
+			euro.Books["100-b"] = new(20, 3, 10, [(20L, 10)]);
+			var euroPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), euro, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-europlan"), null, DateTime.UtcNow, CancellationToken.None);
+			var fullPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), fine, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-fullplan"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep sets: a card's price not answered, or answered in another money - short; everything answered - not short",
+				silentPlan.Short && euroPlan.Short && !fullPlan.Short && (fullPlan.Ranked.Count == 1), $"{silentPlan.Short} {euroPlan.Short} {fullPlan.Short} {fullPlan.Ranked.Count}");
+
+			// No wallet at all: the money could never be spent - crafted, decided.
+			var (_, nowallet, nwBuyer) = Account("ss-nowallet");
+			nowallet.Wallet = new(0, 0, false, 0);
+			var noWallet = await nwBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			Check("sweep sets: an account with no Steam wallet - crafted as before (decided, not left waiting for ever)",
+				noWallet.Single() is { Unsure: false, Sell: false, Hold: false } && noWallet[0].Why.Contains("no Steam wallet", StringComparison.Ordinal), noWallet.Single().Why);
+
+			// ── a card hardly selling, the set worth 2 levels or more: waits; worth 1 level at most: crafted ──
+			List<(string, NocatFarm.Core.MarketQuote?)> slow = [.. arcaneCards.Select((c, i) => (A(c), (NocatFarm.Core.MarketQuote?) Q(A(c), arcaneLowest[i], c == "Skull" ? 0 : 150)))];
+			var held = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, Enumerable.Repeat(40L, 6), 50);
+			var small = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, [300L, 300L], 50);
+			Check("sweep sets: a card with no sales in the last day (Steam leaves the volume out) - the set worth 6 levels waits, said plainly",
+				held is { Hold: true, Sell: false, Unsure: false, Levels: 6 } && held.Why.Contains("sold only 0 time(s) in the last day - waiting, the set is worth", StringComparison.Ordinal), held.Why);
+			Check("sweep sets: ...a set it would sell for 1 level at most is crafted as before",
+				small is { Hold: false, Sell: false, Unsure: false } && small.Why.Contains("sold only 0", StringComparison.Ordinal), small.Why);
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
 }

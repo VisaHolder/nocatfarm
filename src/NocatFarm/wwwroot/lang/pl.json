@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "zbiera wymienialne klejnoty na booster {0} do sprzedania",
     "the {0} pack's price moved · weighed again later": "cena boostera {0} się zmieniła · zostanie przeliczona później",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "zrobiono booster {0} do sprzedania · około {1} poziomów na 1000 klejnotów",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "zrobiono booster {0} do otwarcia i sprzedania kart · około {1} poziomów na 1000 klejnotów"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "zrobiono booster {0} do otwarcia i sprzedania kart · około {1} poziomów na 1000 klejnotów",
+    "buy order {0} · Steam never said · counted as bought": "zlecenie kupna {0} · Steam nigdy nie odpowiedział · liczone jako kupione",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} sprzedała się tylko {1} raz(y) w ostatnim dniu - czeka, zestaw jest wart {2} ({3} poziomów)",
+    "the market stopped answering before what its money buys was priced": "rynek przestał odpowiadać, zanim wyceniono, co kupią te pieniądze",
+    "it has no Steam wallet to spend the money from": "nie ma portfela Steam, z którego wydałby te pieniądze",
+    "{0}: not crafted yet · {1}": "{0}: jeszcze nie stworzony · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: jeszcze nie stworzony · {1} · nie wiadomo, ile są warte jego karty"
   },
   "settings": {
     "SteamOpenEveryAccount": {

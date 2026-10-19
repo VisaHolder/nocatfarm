@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "팔 {0} 팩을 위해 거래 가능한 보석을 모으는 중",
     "the {0} pack's price moved · weighed again later": "{0} 팩 가격이 바뀜 · 나중에 다시 비교",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "팔기 위한 {0} 팩 제작 · 보석 1,000개당 약 {1}레벨",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "열어서 카드를 팔기 위한 {0} 팩 제작 · 보석 1,000개당 약 {1}레벨"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "열어서 카드를 팔기 위한 {0} 팩 제작 · 보석 1,000개당 약 {1}레벨",
+    "buy order {0} · Steam never said · counted as bought": "구매 주문 {0} · Steam이 끝내 답하지 않음 · 구매한 것으로 계산",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0}은(는) 지난 하루 동안 {1}번만 팔렸습니다 - 기다립니다. 세트 가치는 {2}입니다 ({3}레벨)",
+    "the market stopped answering before what its money buys was priced": "그 돈으로 무엇을 살 수 있는지 가격을 알기 전에 마켓이 응답을 멈췄습니다",
+    "it has no Steam wallet to spend the money from": "그 돈을 쓸 Steam 지갑이 없습니다",
+    "{0}: not crafted yet · {1}": "{0}: 아직 제작 안 함 · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: 아직 제작 안 함 · {1} · 카드 가치를 모름"
   },
   "settings": {
     "SteamOpenEveryAccount": {

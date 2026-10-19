@@ -35,7 +35,9 @@ public sealed partial class BadgeCraft {
 					// Not crafted: it may well be worth more sold. The next look weighs it again.
 					left.RemoveAll(c => (c.AppId == pick.App) && (c.Border == 0));
 					_moreToCraft = true;
-					Log.Info(new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
+					Log.Info(pick.Verdict is { Hold: true } ? new Said("{0}: not crafted yet · {1}", pick.Game, pick.Reason)
+						: pick.Worth.Length == 0 ? new Said("{0}: not crafted yet · {1} · what its cards are worth isn't known", pick.Game, pick.Reason)
+						: new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
 
 					continue;
 			}

@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "копит обмениваемые самоцветы на набор {0} для продажи",
     "the {0} pack's price moved · weighed again later": "цена набора {0} изменилась · пересчитает позже",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "сделан набор {0} для продажи · около {1} уровней на 1 000 самоцветов",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "сделан набор {0}, чтобы открыть и продать карточки · около {1} уровней на 1 000 самоцветов"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "сделан набор {0}, чтобы открыть и продать карточки · около {1} уровней на 1 000 самоцветов",
+    "buy order {0} · Steam never said · counted as bought": "заявка на покупку {0} · Steam так и не ответил · считается купленной",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} продали всего {1} раз(а) за последний день - ждёт, набор стоит {2} ({3} ур.)",
+    "the market stopped answering before what its money buys was priced": "рынок перестал отвечать, прежде чем стало ясно, что можно купить на эти деньги",
+    "it has no Steam wallet to spend the money from": "у него нет кошелька Steam, чтобы потратить эти деньги",
+    "{0}: not crafted yet · {1}": "{0}: пока не собран · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: пока не собран · {1} · неизвестно, сколько стоят его карточки"
   },
   "settings": {
     "SteamOpenEveryAccount": {

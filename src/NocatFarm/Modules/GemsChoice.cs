@@ -360,10 +360,11 @@ public static class GemsChoice {
 
 	/// <summary>
 	/// What a buying look found the next badge levels cost, cheapest first: none when it couldn't tell (a problem, Steam not
-	/// saying how purchases are confirmed); empty when the money can't be spent by itself (billing details, email).
+	/// saying how purchases are confirmed, the market stopping part way); empty when the money can't be spent by itself
+	/// (billing details, email).
 	/// </summary>
 	public static void NoteCosts(string account, BuyPlan plan, DateTime now) {
-		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) ? null
+		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
 			: plan.Block != BuyBlock.None ? []
 			: [.. plan.Ranked.Select(static s => s.Cost).Where(static c => c > 0).Order()];
 

@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "正在为要出售的 {0} 补充包攒可交易宝石",
     "the {0} pack's price moved · weighed again later": "{0} 补充包的价格变了 · 稍后重新比较",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于出售 · 每 1,000 个宝石约 {1} 级",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级",
+    "buy order {0} · Steam never said · counted as bought": "购买订单 {0} · Steam 始终没有答复 · 按已购买计算",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} 过去一天只卖出 {1} 次 - 先等等，这套卡价值 {2}（{3} 级）",
+    "the market stopped answering before what its money buys was priced": "还没算出这笔钱能买什么，市场就不再响应了",
+    "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
+    "{0}: not crafted yet · {1}": "{0}：暂不合成 · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少"
   },
   "settings": {
     "SteamOpenEveryAccount": {

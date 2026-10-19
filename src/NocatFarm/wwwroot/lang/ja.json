@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "売る{0}のパックのために取引可能なジェムを貯めています",
     "the {0} pack's price moved · weighed again later": "{0}のパックの価格が動きました · 後でもう一度比べます",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "開けてカードを売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "開けてカードを売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル",
+    "buy order {0} · Steam never said · counted as bought": "購入注文 {0} · Steam から返事がありませんでした · 購入済みとして数えます",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} は過去1日に {1} 回しか売れていません - 待ちます。このセットは {2} の価値があります（{3} レベル分）",
+    "the market stopped answering before what its money buys was priced": "お金で買えるものの値段がわかる前に、マーケットが応答しなくなりました",
+    "it has no Steam wallet to spend the money from": "その代金を使うための Steam ウォレットがありません",
+    "{0}: not crafted yet · {1}": "{0}: まだ作りません · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: まだ作りません · {1} · カードの価値がわかりません"
   },
   "settings": {
     "SteamOpenEveryAccount": {

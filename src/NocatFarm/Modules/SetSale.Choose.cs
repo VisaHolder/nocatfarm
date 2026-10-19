@@ -13,7 +13,8 @@ public static partial class SetSale {
 	public sealed record Ready(uint App, int Border, int Levels);
 
 	/// <summary>
-	/// The word on one finished set and why. <paramref name="Worth"/>: for one left waiting, its dearest card's known price.
+	/// The word on one finished set and why. <paramref name="Worth"/>: for one left waiting, its dearest card's known price
+	/// (empty: nothing is known about what its cards are worth).
 	/// <paramref name="Quiet"/>: selling instead isn't in play at all (its setting, buying cards off) or it's a foil set -
 	/// nothing worth a log line.
 	/// </summary>
@@ -24,9 +25,10 @@ public static partial class SetSale {
 	/// on, normal sets one level at a time, <see cref="MaxSetsALook"/> a look. Weighed on the cards in
 	/// <paramref name="inventory"/> - the one badge crafting just read - never a second read of it a second later, which Steam
 	/// refuses as a duplicate ("The request is a duplicate"), and every set was crafted unweighed. Anything not known for
-	/// sure (no price, the market or the wallet not answering) is crafted only when no card of the set is known to be
-	/// worth more than "Never touch items worth more than"; otherwise it waits for the next look. Reads only: nothing is
-	/// listed or crafted here.
+	/// sure (no price, the market or the wallet not answering) is crafted only when its cards are known to be worth little -
+	/// none worth more than "Never touch items worth more than"; one worth more, or nothing known about what they're worth
+	/// (no price kept, the wallet's money not known yet), waits for the next look. Reads only: nothing is listed or
+	/// crafted here.
 	/// </summary>
 	public static async Task<IReadOnlyList<Pick>> ChooseAsync(Bot bot, IReadOnlyList<Ready> ready, InventoryContents inventory, CancellationToken ct) {
 		Pick[] picks = new Pick[ready.Count];   // in the order the badges page gave them
@@ -57,13 +59,16 @@ public static partial class SetSale {
 		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
 		long most = BuyPlan.Cents(bot.Cfg.SpareMaxPrice);
 
-		// Not known for sure: crafted, unless a card of it is known to be worth more than the price limit - then the next look.
+		// Not known for sure: crafted only when its cards are known to be worth little. A card worth more than the price limit,
+		// or nothing known at all about what they're worth (no price kept, the wallet's money not known): the next look.
 		Pick Unsure(Ready r, Said why, Verdict? v) {
 			int cur = v is { Currency: > 0 } ? v.Currency : currency;
-			long top = Math.Max(v?.Top ?? 0, KnownTop(r.App, inventory, cur));
+			long top = cur <= 0 ? 0 : Math.Max(v?.Top ?? 0, KnownTop(r.App, inventory, cur));
 			string game = v?.Game ?? GameOf(r.App, inventory);
 
-			return top > most ? new Pick(r.App, game, Choice.Wait, why, v, BuyPlan.Money(top, cur)) : new Pick(r.App, game, Choice.Craft, why, v);
+			return top <= 0 ? new Pick(r.App, game, Choice.Wait, why, v)
+				: top > most ? new Pick(r.App, game, Choice.Wait, why, v, BuyPlan.Money(top, cur))
+				: new Pick(r.App, game, Choice.Craft, why, v);
 		}
 
 		List<int> now = [.. weigh.Take(MaxSetsALook)];
@@ -99,6 +104,7 @@ public static partial class SetSale {
 			picks[i] = v switch {
 				null => Unsure(r, new Said("couldn't price its cards"), null),
 				{ Sell: true } => new Pick(r.App, v.Game, Choice.Sell, v.Reason, v),
+				{ Hold: true } => new Pick(r.App, v.Game, Choice.Wait, v.Reason, v, BuyPlan.Money(v.Top, v.Currency)),
 				{ Unsure: true } => Unsure(r, v.Reason, v),
 				_ => new Pick(r.App, v.Game, Choice.Craft, v.Reason, v)
 			};

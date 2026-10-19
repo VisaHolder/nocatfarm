@@ -3237,7 +3237,13 @@
     "saving tradable gems for a {0} pack to sell": "spart handelbare Edelsteine für ein {0}-Pack zum Verkaufen",
     "the {0} pack's price moved · weighed again later": "der Preis des {0}-Packs hat sich bewegt · wird später neu abgewogen",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "{0}-Pack zum Verkaufen erstellt · etwa {1} Stufen pro 1.000 Edelsteine",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "{0}-Pack zum Öffnen und Verkaufen der Karten erstellt · etwa {1} Stufen pro 1.000 Edelsteine"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "{0}-Pack zum Öffnen und Verkaufen der Karten erstellt · etwa {1} Stufen pro 1.000 Edelsteine",
+    "buy order {0} · Steam never said · counted as bought": "Kaufauftrag {0} · Steam hat es nie gesagt · als gekauft gezählt",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} wurde am letzten Tag nur {1} Mal verkauft - wartet, das Set ist {2} wert ({3} Stufen)",
+    "the market stopped answering before what its money buys was priced": "der Markt antwortete nicht mehr, bevor feststand, was das Geld kaufen würde",
+    "it has no Steam wallet to spend the money from": "es hat keine Steam-Geldbörse, um das Geld auszugeben",
+    "{0}: not crafted yet · {1}": "{0}: noch nicht hergestellt · {1}",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: noch nicht hergestellt · {1} · was seine Karten wert sind, ist nicht bekannt"
   },
   "settings": {
     "SteamOpenEveryAccount": {

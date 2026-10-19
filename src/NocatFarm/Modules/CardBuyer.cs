@@ -496,6 +496,15 @@ public sealed class BuyPlan {
 	/// <summary>The problem won't clear by itself (a setting, the spending list) - not worth asking again soon.</summary>
 	public bool Lasting { get; set; }
 
+	/// <summary>
+	/// 1.8.2: the market stopped answering part way (or answered in another money), so <see cref="Ranked"/> may be missing
+	/// levels - what money buys is not known for sure this look, and is never read as "it buys no level".
+	/// </summary>
+	public bool Short { get; set; }
+
+	/// <summary>1.8.2: Steam said the account has no wallet at all - money from selling could never be spent.</summary>
+	public bool NoWallet { get; set; }
+
 	/// <summary>Why Steam won't let it buy by itself, or None: billing details first, or every purchase confirmed in a way it can't.</summary>
 	public BuyBlock Block { get; set; }
 
@@ -594,6 +603,7 @@ public sealed class BuyPlan {
 
 		if (wallet.Currency <= 0) {
 			plan.Problem = "it has no Steam wallet to buy with";
+			plan.NoWallet = true;
 
 			return plan;
 		}
@@ -633,7 +643,7 @@ public sealed class BuyPlan {
 			return plan;
 		}
 		int books = 0;
-		bool stopped = false;
+		bool stopped = false, capped = false;
 		Dictionary<string, CardMarket.Book> read = new(StringComparer.Ordinal);
 
 		// The price of every card in a list, read now - null when the market stopped answering, or this look has read
@@ -645,6 +655,7 @@ public sealed class BuyPlan {
 				if (!read.TryGetValue(hash, out CardMarket.Book? book)) {
 					if (books >= MaxBookReads) {
 						plan.Notes.Add("that's enough prices for one look - the rest waits for the next one");
+						capped = true;
 
 						return null;
 					}
@@ -653,6 +664,7 @@ public sealed class BuyPlan {
 
 					if (await market.BookAsync(hash, ct).ConfigureAwait(false) is not { } fresh) {
 						plan.Notes.Add("the market stopped answering - the rest waits for the next look");
+						plan.Short = true;
 
 						return null;
 					}
@@ -660,6 +672,7 @@ public sealed class BuyPlan {
 					// Prices in another currency than the wallet's are never compared with its limits.
 					if ((fresh.Lowest > 0) && (fresh.Currency != plan.Currency)) {
 						plan.Notes.Add($"the market answered in {MarketQuotes.Code(fresh.Currency)}, not the wallet's {MarketQuotes.Code(plan.Currency)} - nothing is planned on that");
+						plan.Short = true;
 
 						return null;
 					}
@@ -728,6 +741,7 @@ public sealed class BuyPlan {
 			if (await market.SetAsync(app, ct).ConfigureAwait(false) is not { } set) {
 				plan.Notes.Add("the market stopped answering - the rest waits for the next look");
 				stopped = true;
+				plan.Short = true;
 
 				break;
 			}
@@ -798,6 +812,7 @@ public sealed class BuyPlan {
 			// The set finder hasn't a whole set yet (it has only just started): the games of the cheapest single cards.
 			if (await market.CheapestGamesAsync(ct).ConfigureAwait(false) is not { } cheapest) {
 				plan.Notes.Add("the market didn't say which sets are cheapest - full sets wait for the next look");
+				plan.Short = true;
 			} else {
 				List<CardSet> found = [];
 				int looked = 0;
@@ -811,6 +826,8 @@ public sealed class BuyPlan {
 					looked++;
 
 					if (await market.SetAsync(app, ct).ConfigureAwait(false) is not { } set) {
+						plan.Short = true;
+
 						break;
 					}
 
@@ -871,6 +888,11 @@ public sealed class BuyPlan {
 			}
 
 			priced.Add(new BuyStep(set.App, set.Game, full, level, set.Cards.Count, [.. prices.Select(static p => new BuyCard(p.Hash, p.Book.Lowest))]));
+		}
+
+		// Enough prices read for one look, and not one level priced: what money buys isn't known at all this look.
+		if (capped && (priced.Count == 0)) {
+			plan.Short = true;
 		}
 
 		// ── smart levelling: whatever makes the next badge level cheapest goes first - the most XP for the money ──
@@ -1437,6 +1459,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
 				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory)).ConfigureAwait(false);
 			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
+
+			// No wallet at all: the money from a set sold could never be spent - crafted, as without buying cards.
+			if (plan.NoWallet) {
+				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), 0, new Said("it has no Steam wallet to spend the money from")))];
+			}
 
 			if ((plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown)) {
 				Log.Debug($"weighing sets: {(plan.Problem.Length > 0 ? plan.Problem : plan.Blocked)}", Bot.Name);
