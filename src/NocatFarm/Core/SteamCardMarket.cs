@@ -51,7 +51,43 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is { } badges ? badges.GameLevels : null;
 
 	public async Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) =>
-		await Inventory.ReadAsync(bot, CardMarket.SteamItems, "6", ct).ConfigureAwait(false) is { Complete: true } inventory ? LevelPlanner.NormalCards(inventory) : null;
+		await ReadInventoryAsync(ct).ConfigureAwait(false) is { } inventory ? LevelPlanner.NormalCards(inventory) : null;
+
+	/// <summary>
+	/// 1.8.2: every item held by market name, with its copies' ids - to see a bought card arrive. Not fresh: the inventory read
+	/// a few minutes ago (the plan's) will do. Fresh: read now, never sooner than 20 seconds after the last read - Steam turns
+	/// a quick second read down as a duplicate, and an inventory is read gently.
+	/// </summary>
+	public async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>?> AssetsAsync(bool fresh, CancellationToken ct) {
+		InventoryContents? inventory = !fresh && (_inventory is { } kept) && (DateTime.UtcNow - _inventoryAt < KeptInventory) ? kept : null;
+
+		if (inventory == null) {
+			TimeSpan since = DateTime.UtcNow - _inventoryAt;
+
+			if (since < InventoryGap) {
+				await Task.Delay(InventoryGap - since, ct).ConfigureAwait(false);
+			}
+
+			inventory = await ReadInventoryAsync(ct).ConfigureAwait(false);
+		}
+
+		return inventory == null ? null : CardMarket.AssetsOf(inventory);
+	}
+
+	/// <summary>How long an inventory read stands in for a fresh one, and the least time between two reads.</summary>
+	internal static readonly TimeSpan KeptInventory = TimeSpan.FromMinutes(5), InventoryGap = TimeSpan.FromSeconds(20);
+
+	private InventoryContents? _inventory;
+	private DateTime _inventoryAt = DateTime.MinValue;
+
+	/// <summary>The Steam inventory read whole now, and kept for <see cref="AssetsAsync"/>. Null when it couldn't be read whole.</summary>
+	private async Task<InventoryContents?> ReadInventoryAsync(CancellationToken ct) {
+		InventoryContents? read = await Inventory.ReadAsync(bot, CardMarket.SteamItems, "6", ct).ConfigureAwait(false);
+		_inventoryAt = DateTime.UtcNow;
+		_inventory = read is { Complete: true } ? read : null;
+
+		return _inventory;
+	}
 
 	public async Task<CardSet?> SetAsync(uint app, CancellationToken ct) {
 		(LevelPlanner.SetPrice? set, _) = await LevelPlanner.PriceAsync(bot, app, ct).ConfigureAwait(false);
@@ -226,6 +262,9 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 
 	private static Uri Page(string hash) => new(WebSession.Community, $"/market/listings/{CardMarket.SteamItems}/{Uri.EscapeDataString(hash)}");
 
+	/// <summary>The market's page of one's own buy orders - where an earlier order is asked about from.</summary>
+	private static readonly Uri OrdersPage = new(WebSession.Community, "/market/buyorders");
+
 	/// <summary>
 	/// The createbuyorder form, field for field as Steam's own buy-order dialog sends it (October 2026): one card at the
 	/// order's price, the tax on the fee worked out from the wallet page, and the billing details saved on the account -
@@ -267,8 +306,16 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 				await _web.DelayAsync(Rng.Seconds(2, 3), t).ConfigureAwait(false);
 			}
 
-			if (Settled(await StatusAsync(orderId, t).ConfigureAwait(false), orderId, price) is { } done) {
+			OrderStatus? status = await StatusAsync(orderId, page, t).ConfigureAwait(false);
+
+			if (Settled(status, orderId, price) is { } done) {
 				return done;
+			}
+
+			// No answer (an error, a rate limit): asking again at once only makes it worse - it's taken back now, and the
+			// inventory says later whether the card came (CardBuyer).
+			if (status == null) {
+				break;
 			}
 		}
 
@@ -279,15 +326,15 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		// Filled between the last look and taking it back is bought after all - so it's asked once more, whatever the
 		// cancel said.
 		for (int again = 0; again < 2; again++) {
-			await _web.DelayAsync(Rng.Seconds(1, 2), t).ConfigureAwait(false);
-			OrderStatus? after = await StatusAsync(orderId, t).ConfigureAwait(false);
+			await _web.DelayAsync(Rng.Seconds(2, 3), t).ConfigureAwait(false);
+			OrderStatus? after = await StatusAsync(orderId, page, t).ConfigureAwait(false);
 
 			if (Settled(after, orderId, price) is { } done) {
 				return done;
 			}
 
-			if (after is { Active: > 0 }) {
-				break;   // still open: asking again won't change that
+			if (after is null or { Active: > 0 }) {
+				break;   // no answer, or still open: asking again at once won't change that
 			}
 		}
 
@@ -302,10 +349,14 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		_ => null
 	};
 
-	/// <summary>What a buy order has done. Null when Steam didn't say.</summary>
-	private async Task<OrderStatus?> StatusAsync(string orderId, CancellationToken t) {
-		string? json = await _web.GetAsync(new Uri(WebSession.Community,
-			$"/market/getbuyorderstatus/?sessionid={Uri.EscapeDataString(_web.SessionId)}&buy_orderid={Uri.EscapeDataString(orderId)}"), t).ConfigureAwait(false);
+	/// <summary>
+	/// What a buy order has done. Null when Steam didn't say. Asked as Steam's own market page asks it (October 2026): GET
+	/// /market/getbuyorderstatus/?sessionid=&amp;buy_orderid= from the card's page - with the page it's asked from, as a
+	/// browser always sends it. Asked without one, Steam answered 400 [] every time (October 2026, the owner's account).
+	/// </summary>
+	private async Task<OrderStatus?> StatusAsync(string orderId, Uri? page, CancellationToken t) {
+		string? json = await _web.GetFromAsync(new Uri(WebSession.Community,
+			$"/market/getbuyorderstatus/?sessionid={Uri.EscapeDataString(_web.SessionId)}&buy_orderid={Uri.EscapeDataString(orderId)}"), page ?? OrdersPage, t).ConfigureAwait(false);
 
 		return ReadStatus(json);
 	}
@@ -466,6 +517,9 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 public interface IMarketWeb {
 	Task<string?> GetAsync(Uri url, CancellationToken ct);
 
+	/// <summary>GET from a page, as a browser does - the market answers some reads only then. Without one here: a plain GET.</summary>
+	Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct) => GetAsync(url, ct);
+
 	/// <summary>POST a form. Sent is false only when it never left this PC; a failed answer's JSON body (Steam's reason) comes back.</summary>
 	Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct);
 
@@ -484,6 +538,8 @@ public interface IMarketWeb {
 /// <summary>The account's own web session and authenticator.</summary>
 internal sealed class BotMarketWeb(Bot bot) : IMarketWeb {
 	public Task<string?> GetAsync(Uri url, CancellationToken ct) => bot.Web.GetAsync(url, ct);
+
+	public Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct) => bot.Web.GetFromAsync(url, referer, ct);
 
 	public Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct) =>
 		bot.Web.PostTrackedAsync(url, form, referer, ct, errorVerdict: true);

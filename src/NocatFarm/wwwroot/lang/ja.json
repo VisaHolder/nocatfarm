@@ -2687,7 +2687,6 @@
     "needed for the badge": "バッジに必要です",
     "on your keep list": "残すリストに入っています",
     "it doesn't turn into gems": "ジェムにできません",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "ジェム {0} 個（{1} 相当）- 販売（{2}）より {3}% 以上お得",
     "unopened booster packs: listed {0} - {1}": "未開封のブースターパック：{0} 個出品 - {1}",
     "next look at booster packs around {0}": "次にブースターパックを見るのは {0} ごろ",
     "today's limit of {0} in value is reached": "今日の金額上限 {0} に達しました",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "カード購入リストを読めませんでした: {0}",
     "buying cards: next look around {0}": "カードの購入: 次の確認は {0} ごろ",
     "couldn't look at buying cards: {0}": "カードの購入を確認できませんでした: {0}",
-    "bought {0} · {1} · {2}": "購入: {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "{0} が買えたか不明 · 使ったものとして数えます",
     "card buying stopped · its spending list can't be read or saved": "カードの購入を停止 · 支出の記録を読めないか保存できません",
     "buying {0} turned down · {1}": "{0} の購入が拒否されました · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "その日のうちに分けて処理: 1 回の確認で約 {0} 個、次の確認は ~{1}",
     "spread over its day: about {0} a look - its last look today": "その日のうちに分けて処理: 1 回の確認で約 {0} 個 - 今日の最後の確認です",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "あと {0} 個の価格を確認中 - Steam から間隔を空けるよう求められました。{1} ごろに再開します",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "ジェム {0} 個 - 売っても {1} で、最低額 {2} を下回ります",
     "{0} gems - nobody sells it on the market": "ジェム {0} 個 - マーケットで誰も売っていません",
     "you declined its listing on your phone - never listed again": "スマホでこの出品を拒否しました - 二度と出品しません",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "ジェムを 1000 個入りの袋にまとめ、袋を {0} に送ります",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "セット探し · {0} をスキップ · robots.txt が許可していません",
     "set finder · {0} skipped · it didn't answer ({1})": "セット探し · {0} をスキップ · 応答がありませんでした ({1})",
     "set finder · {0} skipped · its list couldn't be read": "セット探し · {0} をスキップ · リストを読めませんでした",
-    "set finder · {0} games to look at first, from {1}": "セット探し · 先に確認するゲーム {0} 件 ({1} から)"
+    "set finder · {0} games to look at first, from {1}": "セット探し · 先に確認するゲーム {0} 件 ({1} から)",
+    "{0} was paused - stopped before the next item": "{0} が一時停止されました - 次のアイテムの前で止めました",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "売れば {0} で、ジェム {1} 個の価値（{2}）より上 - 保持",
+    "{0} · found in the inventory after its order": "{0} · 注文の後にインベントリで見つかりました",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "{0} で売れ、受け取りは {1} - 最低額 {2} 未満ですが、ジェム {3} 個の価値（{4}）より上です",
+    "{0} gems, worth {1} - selling would pay {2}": "ジェム {0} 個（{1} 相当）- 売れば {2}",
+    "worth {0}, over your price limit now - skipped": "{0} の価値で、今の価格の上限を超えています - スキップ",
+    "more cards wait · confirm the ones in the Steam app first": "ほかのカードは待機中 · 先に Steam アプリで確認してください",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "ジェム {0} 個（{1} 相当）- 売っても {2} で、最低額 {3} を下回ります",
+    "bought {0} ({1}) · {2}": "購入: {0}（{1}）· {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "今は誰も売っていませんが、最近 {0} で売れました - ジェムより高いので保持",
+    "on your keep list now - skipped": "今は保持リストに入っています - スキップ"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "ジェムが販売を上回るべき割合（%）",
-      "tip": "アイテムをジェムにするには、ジェムの価値が販売よりどれだけ上回る必要があるか（%）です。例: 20 で、Steam の手数料を引いた販売の受け取りが 0.10 なら、0.12 以上の価値のジェムが勝ってジェムにします。0.11 なら売ります。「ジェムと販売の得な方」のときだけ。"
+      "tip": "現在は使われていません。1.8.2 から、販売で（Steam の手数料を引いて）ジェムの価値より 0.01 以上多く受け取れる場合だけアイテムを売り、それ以外はジェムにします。例えば販売で 0.10 受け取れるなら、ジェムの価値が 0.09 以下なら売り、それより高ければジェムにします。このルールだけで決まるので、ジェムで損をすることはありません。古い設定ファイルを読み込めるように残しています。"
     },
     "SpareMaxedBadgeCards": {
       "label": "完成したバッジのカード",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "余ったアイテムをどうするか",
-      "tip": "「ジェムと販売の得な方」は、ジェムの価値が販売より（下のマージン分）高いときはジェムにし、そうでなければ売ります - 例: 0.05 相当のジェムは、受け取り 0.02 の販売に勝ちます。「ジェムのみ」: 決して売りません。「販売のみ」: 決してジェムにしません。「すべて残す」: 余っているものを報告するだけで、何も変えません。",
+      "tip": "「ジェムと販売の良い方」は、販売で（Steam の手数料を引いて）ジェムの価値より 0.01 以上多く受け取れる場合だけアイテムを売り、それ以外はジェムにします。だからジェムで損をすることはなく、1 件ごとにスマホが必要な小さな販売もしません。例えば受け取りが 0.07 の販売なら、ジェムの価値が 0.06 以下なら売り、それより高ければジェムにします。ジェムのみ: 売りません。ジェムより 0.01 以上高く売れるアイテムは保持します。販売のみ: ジェムにしません。すべて保持: 余ったものを報告するだけで、何も変えません。",
       "choices": "0 ジェムと販売の得な方 | 1 ジェムのみ | 2 販売のみ | 3 すべて残す（報告のみ）"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "受け取りがこれ以上のときだけ売る",
-      "tip": "Steam の手数料を引いた後に最低限受け取る額で、このアカウント自身の Steam ウォレット通貨です。例: 0.05 なら、受取額が 0.03 になるカードは、ジェムに価値があればジェムにし、なければ保持します。ドルやユーロなら例: 0.05 - 自分の通貨で同じくらいの額を、円なら例: 5。0 なら何でも売ります。"
+      "tip": "販売で Steam の手数料を引いた後に最低限受け取るべき額（このアカウントの Steam ウォレットの通貨）。例えば 0.05: 受け取りが 0.03 のカードは、ジェムの価値が 0.02 より高ければジェムにし、ジェムにならなければ保持します。販売額から 0.01 を引いた額より価値の低いジェムには決してしません。ジェムの価値が 0.02 以下なら、そのカードはそれでも 0.03 で売ります。「販売のみ」では保持します。例: ドルやユーロなら 0.05 - 自分の通貨で同じ価値を、例えば円なら 5。0 なら何でも売ります。"
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...最長（分）",

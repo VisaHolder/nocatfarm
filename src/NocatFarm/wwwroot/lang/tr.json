@@ -2687,7 +2687,6 @@
     "needed for the badge": "rozet için gerekli",
     "on your keep list": "saklama listende",
     "it doesn't turn into gems": "mücevhere dönüşmez",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} mücevher, değeri {1} - satıştan ({2}) en az %{3} iyi",
     "unopened booster packs: listed {0} - {1}": "açılmamış kart paketleri: {0} listelendi - {1}",
     "next look at booster packs around {0}": "kart paketlerine bir sonraki bakış {0} civarı",
     "today's limit of {0} in value is reached": "bugünkü {0} değer sınırına ulaşıldı",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "kart satın alma listesi okunamadı: {0}",
     "buying cards: next look around {0}": "kart satın alma: sonraki bakış {0} civarında",
     "couldn't look at buying cards: {0}": "kart satın almaya bakılamadı: {0}",
-    "bought {0} · {1} · {2}": "alındı {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "{0} alındı mı belli değil · harcanmış sayıldı",
     "card buying stopped · its spending list can't be read or saved": "kart alımı durduruldu · harcama listesi okunamıyor ya da kaydedilemiyor",
     "buying {0} turned down · {1}": "{0} alımı reddedildi · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "gününe yayılmış: bakış başına yaklaşık {0}, sonraki bakış ~{1}",
     "spread over its day: about {0} a look - its last look today": "gününe yayılmış: bakış başına yaklaşık {0} - bugünkü son bakışı",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "hâlâ {0} eşya fiyatlanıyor - Steam yavaşlamamızı istedi, fiyatlama {1} civarında sürecek",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} mücevher - satmak {1} getirirdi, {2} olan alt sınırının altında",
     "{0} gems - nobody sells it on the market": "{0} değerli taş - pazarda kimse satmıyor",
     "you declined its listing on your phone - never listed again": "ilanını telefonunda reddettin - bir daha asla listelenmez",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Mücevherler 1000'lik çuvallara doldurulur ve çuvallar {0} hesabına gönderilir",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "set bulucu · {0} atlandı · robots.txt izin vermiyor",
     "set finder · {0} skipped · it didn't answer ({1})": "set bulucu · {0} atlandı · yanıt vermedi ({1})",
     "set finder · {0} skipped · its list couldn't be read": "set bulucu · {0} atlandı · listesi okunamadı",
-    "set finder · {0} games to look at first, from {1}": "set bulucu · önce bakılacak {0} oyun, kaynak: {1}"
+    "set finder · {0} games to look at first, from {1}": "set bulucu · önce bakılacak {0} oyun, kaynak: {1}",
+    "{0} was paused - stopped before the next item": "{0} duraklatıldı - sonraki eşyadan önce durdu",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "satmak {0} getirirdi, {1} mücevherinin değerinden ({2}) fazla - tutuldu",
+    "{0} · found in the inventory after its order": "{0} · siparişten sonra envanterde bulundu",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "{0} fiyatla satılır, eline {1} geçer - {2} olan alt sınırının altında ama {3} mücevherinin değerinden ({4}) fazla",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} mücevher, değeri {1} - satmak {2} getirirdi",
+    "worth {0}, over your price limit now - skipped": "değeri {0}, artık fiyat sınırının üstünde - atlandı",
+    "more cards wait · confirm the ones in the Steam app first": "diğer kartlar bekliyor · önce Steam uygulamasındakileri onayla",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} mücevher, değeri {1} - satmak {2} getirirdi, {3} olan alt sınırının altında",
+    "bought {0} ({1}) · {2}": "alındı {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "şu an kimse satmıyor ama son zamanlarda {0} fiyatla satıldı - mücevherlerinden fazla - tutuldu",
+    "on your keep list now - skipped": "artık saklama listende - atlandı"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "Mücevher satışı şu kadar geçmeli (%)",
-      "tip": "Bir eşya mücevher olmadan önce mücevherlerin satıştan ne kadar daha değerli olması gerektiği, yüzde olarak. Örneğin 20: satış Steam'in kesintilerinden sonra eline 0.10 geçiriyorsa, 0.12 ya da daha değerli mücevherler kazanır ve eşya mücevher olur; 0.11 değerindeyse satılır. Yalnızca \"mücevher ya da satışın en iyisi\" için."
+      "tip": "Artık kullanılmıyor. 1.8.2'den beri bir eşya yalnızca satış sana (Steam'in kesintilerinden sonra) mücevherlerinin değerinden en az 0.01 fazla getirdiğinde satılır, yoksa mücevher olur - örneğin satış 0.10 getirir: mücevherler 0.09 ya da daha az ederse satılır; daha fazla ederse mücevher. Bu kural tek başına karar verir, böylece mücevherler sana asla para kaybettirmez. Eski ayar dosyaları hâlâ yüklensin diye duruyor."
     },
     "SpareMaxedBadgeCards": {
       "label": "Tamamlanmış rozetlerin kartları",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "Fazla eşyalarla ne yapılsın",
-      "tip": "\"Mücevher ya da satışın en iyisi\", mücevherler satıştan (aşağıdaki fark kadar) daha değerliyse eşyayı mücevhere çevirir, değilse satar - örneğin 0.05 değerindeki mücevherler eline 0.02 geçiren bir satışı geçer. Yalnızca mücevher: asla satmaz. Yalnızca sat: asla mücevher yapmaz. Her şeyi tut: yalnızca neyin fazla olduğunu bildirir, hiçbir şey değişmez.",
+      "tip": "Mücevher ya da satıştan iyisi, bir eşyayı yalnızca satış sana (Steam'in kesintilerinden sonra) mücevherlerinin değerinden en az 0.01 fazla getirdiğinde satar, yoksa mücevhere çevirir - böylece mücevherler sana asla para kaybettirmez ve her biri telefonunu gerektiren minicik satışlar yapılmaz. Örneğin sana 0.07 getiren bir satış: mücevherler 0.06 ya da daha az ederse satılır; daha fazla ederse mücevher olur. Yalnızca mücevher: asla satmaz ve mücevherlerinden en az 0.01 fazlaya satılacak bir eşyayı tutar. Yalnızca sat: asla mücevher yapmaz. Hepsini tut: yalnızca fazlaları bildirir, hiçbir şey değişmez.",
       "choices": "0 mücevher ya da satışın en iyisi | 1 yalnızca mücevher | 2 yalnızca sat | 3 her şeyi tut (yalnızca bildir)"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "Yalnızca en az şu kadar alırsan sat",
-      "tip": "Bir satışın Steam ücretlerinden sonra sana en az getirmesi gereken, bu hesabın kendi Steam cüzdanı para biriminde. Örneğin 0.05: sana 0.03 getirecek bir kart, mücevherleri bir şey ediyorsa mücevhere çevrilir, etmiyorsa tutulur. ör. dolar ya da euro için 0.05 - kendi para biriminde aynı değeri kullan, ör. yen için 5. 0 her şeyi satar."
+      "tip": "Bir satışın Steam kesintilerinden sonra sana getirmesi gereken en az tutar, bu hesabın kendi Steam cüzdanı para biriminde. Örneğin 0.05: sana 0.03 getirecek bir kart, mücevherleri 0.02'den fazla ederse mücevher olur, mücevhere dönüşmüyorsa tutulur. Bir eşya asla satıştan 0.01 eksiğinden daha az eden mücevhere çevrilmez: mücevherleri 0.02 ya da daha az ederse o kart yine de 0.03'e satılır. \"Yalnızca sat\" seçiliyse tutulur. ör. dolar ya da euro için 0.05 - kendi para biriminde aynı değeri kullan, ör. yen için 5. 0 her şeyi satar."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...en fazla (dakika)",

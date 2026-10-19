@@ -53,6 +53,12 @@ public interface ISpareSteam {
 	bool Held => false;
 
 	/// <summary>
+	/// 1.8.2: whether this item may still go, right before it's turned into gems, listed or sent - by the settings as they are
+	/// now (<see cref="SpareRun.StillOk"/>). Null when it may; All: the look stops there.
+	/// </summary>
+	(Said Why, bool All)? StillOk(SpareItem item, int worthCents) => null;
+
+	/// <summary>
 	/// What an item really went up for in the last <see cref="SellAsync"/> - priced again just before listing, so not the
 	/// plan's figure - with the wallet's currency: the buyer's price and what you get. Null when it wasn't listed.
 	/// </summary>
@@ -70,6 +76,13 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 	private long _gems = gemsAtStart;
 
 	public bool MayAct => mayAct?.Invoke() ?? true;
+
+	/// <summary>By the settings as they are now; the price limit against the freshest price known for it, or the look's.</summary>
+	public (Said Why, bool All)? StillOk(SpareItem item, int worthCents) {
+		MarketPrice? fresh = SpareRun.PriceFor((int) bot.WalletCurrency, SpareRules.From(bot.Cfg))(item);
+
+		return SpareRun.StillOk(bot, item, fresh is { } p ? Math.Max(worthCents, ListingPrice.Worth(p)) : worthCents);
+	}
 
 	private Uri Profile(string path) => new(WebSession.Community, $"/profiles/{bot.SteamId}/{path}");
 
@@ -171,10 +184,10 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
-		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct,
-			SpareRun.Repricer(items, SpareRules.From(bot.Cfg), currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
-				hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash)),
-			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name),
+		Seller.Reprice reprice = SpareRun.Guarded(bot, items, rules => SpareRun.Repricer(items, rules, currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
+			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash)));
+		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct, reprice,
+			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name) ?? SpareRun.Halted(bot),
 			o => {
 				_listed[o.AssetId] = (Spare.Money(o.BuyerCents, currency), Spare.Money(o.YouGetCents, currency));
 				_listedCents[o.AssetId] = (o.YouGetCents, currency);

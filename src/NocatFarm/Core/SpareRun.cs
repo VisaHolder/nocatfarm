@@ -126,6 +126,22 @@ public static class SpareRun {
 					break;
 				}
 
+				// The settings as they are now, right before it goes: turned off, paused, on the keep list, over the price limit.
+				if (steam.StillOk(d.Item, d.PriceCents) is { } no) {
+					ledger.Unreserve(d.PriceCents, nowLocal());
+
+					if (no.All) {
+						stopped = no.Why;
+						limited = false;
+
+						break;
+					}
+
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), no.Why), account);
+
+					continue;
+				}
+
 				HashSet<ulong> claimed = steam.Claim([d.Item.AssetId]);
 
 				if (claimed.Count == 0) {
@@ -287,6 +303,57 @@ public static class SpareRun {
 		ledger.Approved ? null : new Said("Spare items was turned off on {0} - stopped before the next item", account);
 
 	/// <summary>
+	/// 1.8.2: why the account must stop now, asked right before each turn into gems, listing or send - a look takes minutes
+	/// and the owner can change things meanwhile: Spare items turned off, the account paused, or scam watch holding it. Null
+	/// while it may go on.
+	/// </summary>
+	public static Said? Halted(Bot bot) =>
+		!Switches.SpareOn(bot.Cfg, bot.Name) ? new Said("Spare items was turned off on {0} - stopped before the next item", bot.Name)
+			: bot.Paused ? new Said("{0} was paused - stopped before the next item", bot.Name)
+			: Modules.ScamWatch.HeldBack(bot) != null ? Modules.ScamWatch.OnHold(bot.Name)
+			: null;
+
+	/// <summary>
+	/// 1.8.2: whether this one item may still go, by the settings as they are NOW, not as they were when the look planned
+	/// it: <see cref="Halted"/> (All: the look stops), then the keep list (items and games), then - for cards, backgrounds
+	/// and emoticons - the price limit against <paramref name="worthCents"/>, the freshest price known. Null when it may go.
+	/// </summary>
+	public static (Said Why, bool All)? StillOk(Bot bot, SpareItem item, int worthCents) {
+		if (Halted(bot) is { } halted) {
+			return (halted, true);
+		}
+
+		SpareRules now = SpareRules.From(bot.Cfg);
+
+		if (now.KeepGames.Contains(item.Game) || now.KeepNames.Contains(item.Name) || now.KeepNames.Contains(item.Hash)) {
+			return (new Said("on your keep list now - skipped"), false);
+		}
+
+		if ((item.Kind is SpareKind.Card or SpareKind.FoilCard or SpareKind.Background or SpareKind.Emoticon) && (worthCents > now.MaxPriceCents)) {
+			return (new Said("worth {0}, over your price limit now - skipped", Spare.Money(worthCents, (int) bot.WalletCurrency)), false);
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// 1.8.2: each listing by the settings as they are right then, not as they were when the look planned it: the keep list
+	/// first (<see cref="StillOk"/>), then priced by <paramref name="priced"/> with the rules read again for this one - so
+	/// the price limit is the one set now, against the fresh price. Turned off, paused or held stops the listing loop itself.
+	/// </summary>
+	public static Seller.Reprice Guarded(Bot bot, IReadOnlyList<SpareDecision> items, Func<SpareRules, Seller.Reprice> priced) {
+		Dictionary<ulong, SpareItem> byAsset = [];
+
+		foreach (SpareDecision d in items) {
+			byAsset[d.Item.AssetId] = d.Item;
+		}
+
+		return (offer, ct) => byAsset.TryGetValue(offer.AssetId, out SpareItem? item) && (StillOk(bot, item, 0) is { All: false } no)
+			? Task.FromResult<(Seller.Offer?, Said)>((null, no.Why))
+			: priced(SpareRules.From(bot.Cfg))(offer, ct);
+	}
+
+	/// <summary>
 	/// How each spare-items listing is priced just before it goes up: again from the market, in the account's own wallet
 	/// currency, by the selling price setting. Kept instead when it can't be priced for certain, when a card, background or
 	/// emoticon is now worth more than the price limit, or when it's now worth more than was counted for it against the
@@ -375,14 +442,15 @@ public static class SpareRun {
 		}
 
 		// The look's number, the wait before it, then whether it may still go: off, held, or human mode's day over.
-		async Task<bool> MayGo() => ((budget == null) || await budget.TakeAsync(steam.PauseAsync, ct).ConfigureAwait(false))
-			&& ledger.Approved && steam.MayAct && !steam.Held;
+		// 1.8.2: and the settings as they are now (turned off, paused, the keep list) - right before it goes.
+		async Task<bool> MayGo(SpareItem item) => ((budget == null) || await budget.TakeAsync(steam.PauseAsync, ct).ConfigureAwait(false))
+			&& ledger.Approved && steam.MayAct && !steam.Held && (steam.StillOk(item, 0) is null);
 
 		if (items.Where(static i => (i.Kind == SpareKind.Gems) && i.Tradable).OrderByDescending(static i => i.Amount).FirstOrDefault() is { } stack) {
 			int sacks = (int) ((Math.Max(0, (long) stack.Amount - Math.Max(0, keepGems))) / 1000);
 
 			if (sacks > 0) {
-				if (!await MayGo().ConfigureAwait(false)) {
+				if (!await MayGo(stack).ConfigureAwait(false)) {
 					return Told(said, account);
 				}
 
@@ -392,14 +460,14 @@ public static class SpareRun {
 		}
 
 		if ((choice == 3) && (sacksHeld.Count > 0) && (sendTo.Trim().Length > 0)) {
-			if (await MayGo().ConfigureAwait(false)) {
+			if (await MayGo(sacksHeld[0]).ConfigureAwait(false)) {
 				string sent = await steam.SendAsync(sacksHeld, sendTo, ct).ConfigureAwait(false);
 
 				if (sent.Length > 0) {
 					said.Add(new Said("sacks of gems: {0}", sent));
 				}
 			}
-		} else if ((choice == 4) && (sacksHeld.FirstOrDefault(static s => s.Marketable) is { } sack) && (sackSale(sack) is { } sale) && await MayGo().ConfigureAwait(false)
+		} else if ((choice == 4) && (sacksHeld.FirstOrDefault(static s => s.Marketable) is { } sack) && (sackSale(sack) is { } sale) && await MayGo(sack).ConfigureAwait(false)
 			&& ledger.TryReserve(sale.PriceCents, rules.DailyItems, rules.DailyValueCents, nowLocal())) {
 			ledger.Save();
 			(int listed, string text) = await steam.SellAsync([sale], ct).ConfigureAwait(false);
@@ -734,7 +802,7 @@ public static class SpareRun {
 		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
 		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought);
 		SparePlan plan = priceThem
-			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action == 0) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
+			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
 
 		return (new Look(plan, currency, items, busy, ledger, rules, StillToPrice(plan, currency, rules), spread, PricingMinutesLeft(plan, currency, rules)), null);
@@ -749,7 +817,7 @@ public static class SpareRun {
 	/// </summary>
 	/// <param name="plan">Decides from the prices as they're held now.</param>
 	/// <param name="packGames">Booster packs are opened "only when the cards are worth more": their games' shortlists too.</param>
-	/// <param name="sackWanted">A sack of gems' price is needed (best of gems or selling, or selling sacks).</param>
+	/// <param name="sackWanted">A sack of gems' price is needed (best of gems or selling, gems only - gems are never made of what sells for more - or selling sacks).</param>
 	public static async Task<SparePlan> PriceAsync(Func<SparePlan> plan, IReadOnlyList<SpareItem> items, SpareRules rules, int currency, int quotes, bool packGames,
 		bool sackWanted, ISpareSteam steam, CancellationToken ct) {
 		SparePlan now = plan();

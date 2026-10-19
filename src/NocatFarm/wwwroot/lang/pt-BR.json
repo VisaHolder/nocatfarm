@@ -2687,7 +2687,6 @@
     "needed for the badge": "necessária para a insígnia",
     "on your keep list": "está na sua lista para guardar",
     "it doesn't turn into gems": "não vira gemas",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} gemas, valendo {1} - supera vender ({2}) em {3}% ou mais",
     "unopened booster packs: listed {0} - {1}": "pacotes de cartas fechados: {0} anunciado(s) - {1}",
     "next look at booster packs around {0}": "próxima olhada nos pacotes de cartas por volta de {0}",
     "today's limit of {0} in value is reached": "o limite de valor de hoje de {0} foi atingido",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "não foi possível ler a lista de compras de cartas: {0}",
     "buying cards: next look around {0}": "comprar cartas: próxima olhada por volta de {0}",
     "couldn't look at buying cards: {0}": "não foi possível olhar a compra de cartas: {0}",
-    "bought {0} · {1} · {2}": "comprou {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "não se sabe se {0} foi comprado · contado como gasto",
     "card buying stopped · its spending list can't be read or saved": "compra de cartas parada · a lista de gastos não pode ser lida nem salva",
     "buying {0} turned down · {1}": "compra de {0} recusada · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "espalhado pelo dia dela: cerca de {0} por olhada, próxima olhada ~{1}",
     "spread over its day: about {0} a look - its last look today": "espalhado pelo dia dela: cerca de {0} por olhada - é a última olhada de hoje",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "ainda precificando {0} item(ns) - a Steam pediu para ir mais devagar, a precificação volta por volta de {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} gemas - vender pagaria {1}, abaixo do seu mínimo de {2}",
     "{0} gems - nobody sells it on the market": "{0} gemas - ninguém vende no mercado",
     "you declined its listing on your phone - never listed again": "você recusou o anúncio dele no celular - nunca mais é anunciado",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "As gemas são empacotadas em sacos de 1000 e os sacos enviados para {0}",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "buscador de conjuntos · {0} ignorado · o robots.txt não permite",
     "set finder · {0} skipped · it didn't answer ({1})": "buscador de conjuntos · {0} ignorado · não respondeu ({1})",
     "set finder · {0} skipped · its list couldn't be read": "buscador de conjuntos · {0} ignorado · a lista não pôde ser lida",
-    "set finder · {0} games to look at first, from {1}": "buscador de conjuntos · {0} jogos para olhar primeiro, de {1}"
+    "set finder · {0} games to look at first, from {1}": "buscador de conjuntos · {0} jogos para olhar primeiro, de {1}",
+    "{0} was paused - stopped before the next item": "{0} foi pausado - parou antes do próximo item",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "vender pagaria {0}, mais do que valem as {1} gemas ({2}) - mantido",
+    "{0} · found in the inventory after its order": "{0} · encontrado no inventário depois da ordem",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "vende por {0}, você recebe {1} - abaixo do seu mínimo de {2}, mas mais do que valem as {3} gemas ({4})",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} gemas, valendo {1} - vender pagaria {2}",
+    "worth {0}, over your price limit now - skipped": "vale {0}, agora acima do seu limite de preço - pulado",
+    "more cards wait · confirm the ones in the Steam app first": "mais cartas esperam · confirme primeiro as do app da Steam",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} gemas, valendo {1} - vender pagaria {2}, abaixo do seu mínimo de {3}",
+    "bought {0} ({1}) · {2}": "comprou {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "ninguém vende agora, mas vendeu por {0} há pouco - mais que as gemas - mantido",
+    "on your keep list now - skipped": "agora está na sua lista de manter - pulado"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "As gemas precisam superar a venda em (%)",
-      "tip": "Quanto as gemas precisam valer a mais do que a venda para um item virar gemas, em porcentagem. Por exemplo 20: se vender te paga 0.10 depois das taxas da Steam, gemas que valem 0.12 ou mais ganham e ele vira gemas; valendo 0.11, é vendido. Só para \"o melhor entre gemas ou venda\"."
+      "tip": "Não é mais usado. Desde a 1.8.2 um item só é vendido quando a venda te paga (depois das taxas da Steam) pelo menos 0.01 a mais do que valem as gemas dele, e senão vira gemas - por exemplo, a venda paga 0.10: com gemas valendo 0.09 ou menos, é vendido; valendo mais, gemas. Essa regra decide sozinha, assim as gemas nunca te fazem perder dinheiro. Mantido para que arquivos de configuração antigos ainda carreguem."
     },
     "SpareMaxedBadgeCards": {
       "label": "Cartas de insígnias completas",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "O que fazer com itens sobrando",
-      "tip": "O melhor entre gemas ou venda transforma um item em gemas quando as gemas valem mais do que vendê-lo (pela margem abaixo), e o vende caso contrário - por exemplo, gemas que valem 0.05 ganham de uma venda que te paga 0.02. Só gemas: nunca vende. Só vender: nunca faz gemas. Guardar tudo: só informa o que sobra, nada muda.",
+      "tip": "O melhor entre gemas ou vender só vende um item quando a venda te paga (depois das taxas da Steam) pelo menos 0.01 a mais do que valem as gemas dele, e senão o transforma em gemas - assim as gemas nunca te fazem perder dinheiro, e vendas minúsculas, que precisam cada uma do seu celular, não acontecem. Por exemplo, uma venda que te paga 0.07: com gemas valendo 0.06 ou menos, é vendido; valendo mais, vira gemas. Só gemas: nunca vende, e mantém um item que venderia por pelo menos 0.01 a mais que as gemas. Só vender: nunca faz gemas. Manter tudo: só informa o que sobra, nada muda.",
       "choices": "0 o melhor entre gemas ou venda | 1 só gemas | 2 só vender | 3 guardar tudo (só informar)"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "Só vender se você receber pelo menos",
-      "tip": "O mínimo que uma venda precisa te render depois das taxas da Steam, na moeda da carteira Steam desta conta. Por exemplo 0.05: uma carta que te renderia 0.03 vira gemas se as gemas dela valem alguma coisa, e se não, é mantida. por ex. 0.05 para dólares ou euros - use o mesmo valor na sua própria moeda, por ex. 5 para ienes. 0 vende qualquer coisa."
+      "tip": "O mínimo que uma venda deve te pagar depois das taxas da Steam, na própria moeda da carteira Steam desta conta. Por exemplo 0.05: uma carta que te pagaria 0.03 vira gemas quando as gemas dela valem mais de 0.02, e é mantida quando não vira gemas. Um item nunca vira gemas que valem menos que a venda menos 0.01: com gemas valendo 0.02 ou menos, essa carta é vendida pelos 0.03 mesmo assim. Em \"só vender\" ela é mantida. ex.: 0.05 para dólares ou euros - use o mesmo valor na sua moeda, ex.: 5 para ienes. 0 vende qualquer coisa."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...até (minutos)",

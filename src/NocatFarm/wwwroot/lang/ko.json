@@ -2687,7 +2687,6 @@
     "needed for the badge": "배지에 필요합니다",
     "on your keep list": "보관 목록에 있습니다",
     "it doesn't turn into gems": "보석으로 바꿀 수 없습니다",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "보석 {0}개, {1}의 가치 - 판매({2})보다 {3}% 이상 낫습니다",
     "unopened booster packs: listed {0} - {1}": "열지 않은 부스터 팩: {0}개 등록 - {1}",
     "next look at booster packs around {0}": "다음 부스터 팩 확인은 {0}쯤",
     "today's limit of {0} in value is reached": "오늘 가치 한도인 {0}에 도달했습니다",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "카드 구매 목록을 읽지 못했습니다: {0}",
     "buying cards: next look around {0}": "카드 구매: 다음 확인은 {0}쯤",
     "couldn't look at buying cards: {0}": "카드 구매를 확인하지 못했습니다: {0}",
-    "bought {0} · {1} · {2}": "구매함 {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "{0}을(를) 샀는지 불확실 · 쓴 것으로 계산",
     "card buying stopped · its spending list can't be read or saved": "카드 구매 중지 · 지출 목록을 읽거나 저장할 수 없음",
     "buying {0} turned down · {1}": "{0} 구매가 거절됨 · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "하루에 걸쳐 나눠서: 한 번 확인에 약 {0}개, 다음 확인 ~{1}",
     "spread over its day: about {0} a look - its last look today": "하루에 걸쳐 나눠서: 한 번 확인에 약 {0}개 - 오늘 마지막 확인입니다",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "아직 {0}개 가격 확인 중 - Steam이 속도를 늦춰 달라고 해서 {1}쯤 다시 시작합니다",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "보석 {0}개 - 팔면 {1}로 최소 금액 {2}보다 적습니다",
     "{0} gems - nobody sells it on the market": "보석 {0}개 - 장터에서 아무도 팔지 않습니다",
     "you declined its listing on your phone - never listed again": "휴대폰에서 이 등록을 거절했습니다 - 다시는 등록하지 않습니다",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "보석을 1000개짜리 자루로 묶어 {0}(으)로 보냅니다",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "세트 찾기 · {0} 건너뜀 · robots.txt가 허용하지 않음",
     "set finder · {0} skipped · it didn't answer ({1})": "세트 찾기 · {0} 건너뜀 · 응답 없음 ({1})",
     "set finder · {0} skipped · its list couldn't be read": "세트 찾기 · {0} 건너뜀 · 목록을 읽지 못함",
-    "set finder · {0} games to look at first, from {1}": "세트 찾기 · 먼저 볼 게임 {0}개, 출처: {1}"
+    "set finder · {0} games to look at first, from {1}": "세트 찾기 · 먼저 볼 게임 {0}개, 출처: {1}",
+    "{0} was paused - stopped before the next item": "{0}이(가) 일시 정지됨 - 다음 아이템 전에 멈췄습니다",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "팔면 {0}로 보석 {1}개의 가치({2})보다 많음 - 보관",
+    "{0} · found in the inventory after its order": "{0} · 주문 후 인벤토리에서 찾음",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "{0}에 팔리고 받는 금액은 {1} - 최소 금액 {2}보다 적지만 보석 {3}개의 가치({4})보다 많습니다",
+    "{0} gems, worth {1} - selling would pay {2}": "보석 {0}개, {1}의 가치 - 팔면 {2}",
+    "worth {0}, over your price limit now - skipped": "가치 {0}, 이제 가격 한도를 넘음 - 건너뜀",
+    "more cards wait · confirm the ones in the Steam app first": "다른 카드는 대기 중 · 먼저 Steam 앱에서 확인하세요",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "보석 {0}개, {1}의 가치 - 팔면 {2}로 최소 금액 {3}보다 적습니다",
+    "bought {0} ({1}) · {2}": "구매함 {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "지금은 파는 사람이 없지만 최근 {0}에 팔렸습니다 - 보석보다 많아서 보관",
+    "on your keep list now - skipped": "이제 보관 목록에 있음 - 건너뜀"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "보석이 판매보다 나아야 하는 정도(%)",
-      "tip": "아이템을 보석으로 바꾸려면 보석 가치가 판매보다 얼마나 더 높아야 하는지(퍼센트)입니다. 예: 20이고 Steam 수수료를 뗀 판매 금액이 0.10이면, 보석 가치가 0.12 이상일 때 보석으로 바꾸고, 0.11이면 팝니다. \"보석과 판매 중 나은 쪽\"에만 해당합니다."
+      "tip": "더 이상 쓰이지 않습니다. 1.8.2부터 판매로 (Steam 수수료를 뗀 뒤) 보석 가치보다 최소 0.01 더 받을 때만 아이템을 팔고, 아니면 보석으로 바꿉니다 - 예를 들어 판매로 0.10을 받는다면, 보석 가치가 0.09 이하면 팔고, 그보다 크면 보석입니다. 이 규칙만으로 정해지므로 보석으로 손해 보는 일이 없습니다. 예전 설정 파일을 계속 불러올 수 있도록 남겨 둡니다."
     },
     "SpareMaxedBadgeCards": {
       "label": "완성한 배지의 카드",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "남는 아이템으로 할 일",
-      "tip": "보석과 판매 중 나은 쪽: 보석 가치가 판매보다 (아래 차이만큼) 높으면 보석으로 바꾸고, 아니면 팝니다 - 예: 0.05짜리 보석이 받는 금액 0.02인 판매를 이깁니다. 보석만: 절대 팔지 않습니다. 판매만: 절대 보석으로 바꾸지 않습니다. 모두 보관: 남는 것을 알리기만 하고 아무것도 바꾸지 않습니다.",
+      "tip": "보석 또는 판매 중 나은 쪽은 판매로 (Steam 수수료를 뗀 뒤) 보석 가치보다 최소 0.01 더 받을 때만 아이템을 팔고, 아니면 보석으로 바꿉니다 - 그래서 보석으로 손해 보는 일이 없고, 건마다 휴대폰이 필요한 아주 작은 판매는 하지 않습니다. 예를 들어 받는 금액이 0.07인 판매라면, 보석 가치가 0.06 이하면 팔고, 그보다 크면 보석으로 바꿉니다. 보석만: 팔지 않으며, 보석보다 최소 0.01 더 받고 팔 수 있는 아이템은 보관합니다. 판매만: 보석을 만들지 않습니다. 모두 보관: 남는 것을 알려주기만 하고 아무것도 바꾸지 않습니다.",
       "choices": "0 보석과 판매 중 나은 쪽 | 1 보석만 | 2 판매만 | 3 모두 보관 (알리기만)"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "최소 이만큼 받을 때만 판매",
-      "tip": "Steam 수수료를 뺀 뒤 판매로 최소한 받아야 하는 금액으로, 이 계정 자체의 Steam 지갑 통화 기준입니다. 예: 0.05면 0.03을 받게 될 카드는 보석 가치가 있으면 보석으로 바꾸고, 없으면 보관합니다. 달러나 유로라면 예: 0.05 - 자기 통화로 같은 정도의 값을, 엔이라면 예: 5. 0이면 무엇이든 팝니다."
+      "tip": "판매로 Steam 수수료를 뗀 뒤 최소한 받아야 하는 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 0.05: 받는 금액이 0.03인 카드는 보석 가치가 0.02보다 크면 보석으로 바꾸고, 보석이 되지 않으면 보관합니다. 판매 금액에서 0.01을 뺀 것보다 가치가 낮은 보석으로는 절대 바꾸지 않습니다. 보석 가치가 0.02 이하라면 그 카드는 그래도 0.03에 팝니다. \"판매만\"에서는 보관합니다. 예: 달러나 유로는 0.05 - 자기 통화로 같은 가치를, 예를 들어 엔화는 5. 0이면 무엇이든 팝니다."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...최대(분)",

@@ -423,12 +423,22 @@ purchase with the account's authenticator when that's in nocat.farm - only that 
 it can't confirm it, it denies that same confirmation so nothing is left waiting in your Steam app. By email, it buys
 nothing and tells you once.
 
+**Did it buy?** It asks Steam about the order the way Steam's own market page does (from the card's page - asked any
+other way, Steam answers with an error). A few questions a few seconds apart at most; with no answer it doesn't keep
+asking, it takes the order back. If Steam still hasn't said, the purchase stays counted as spent and the inventory
+decides: a copy of the card that wasn't there before the order proves it was bought (each copy proves one purchase,
+never two). The inventory is read gently - a little after the purchase, and once a minute at most.
+
 **Confirming on your phone.** Without the authenticator in nocat.farm, a purchase Steam wants confirmed in the Steam
 app waits for you, like a market listing: the log says *confirm the card purchase in the Steam app* (once for the
-set), and you confirm it on your phone. Until then it counts as spent against the limits. At the next look (within
-about an hour or two) it sends the order again with your confirmation, as Steam's page does - that's when the card is
-bought. Turned down on the phone, the money is free again; still not confirmed after about a day, it's let go and
-nothing is bought. Only one set waits on your phone at a time - nothing new is bought until it's done.
+set), and you confirm it on your phone. Until then it counts as spent against the limits. While it waits, it sends
+the order again with your confirmation every couple of minutes, as Steam's page does (that asks Steam, it doesn't
+make a new prompt on your phone) - so the card is bought within minutes of you confirming: "bought Apex Scientist
+(Starbound) · 0.04 CAD". Every 5 minutes after the first half hour, every 10 to 15 after a few hours. It does this
+outside a human-mode account's day too, since you already said yes - but it never starts a new purchase outside it.
+Turned down on the phone, the money is free again; still not confirmed after about a day, it's let go and nothing is
+bought. Only one set waits on your phone at a time - nothing new is bought until it's done. When Steam says too many
+purchases are waiting for a confirmation, it stops trying more until those are confirmed or let go, and says so once.
 
 `buy` shows what each account has spent today and this week; `buy do myaccount` buys the next ones now, inside the
 same limits (not while the account is paused, and never beside a look that's already buying). Something that won't
@@ -506,8 +516,9 @@ badge still needs (at level 2 it keeps 3 of each), and second copies of backgrou
 On top of that it stops for the day after 10 items or 1.00 worth of items, whichever comes first.
 
 **Too little to sell.** *Only sell if you get at least* (0.05 by default, in the wallet's own currency) is the least
-you'd get after Steam's fees. An item that would pay less becomes gems if its gems are worth anything, and is kept if
-not (on *sell only* it's kept).
+you'd get after Steam's fees. An item that would pay less becomes gems - unless its gems are worth less than the sale
+less a cent: then it's sold all the same, since gems would lose money. With no gems for it, it's kept (on *sell only*
+it's kept).
 
 **Prices in each account's own currency.** Every price that decides anything - the price limit, the daily value
 cap, gems or selling - is in that account's own Steam wallet currency, so two accounts in different countries never
@@ -521,7 +532,7 @@ into the market's limit overnight. An account whose wallet currency Steam hasn't
 
 **A sale is never priced from a converted number.** Right before an item is listed it's priced again in the wallet's
 own currency (see below). Turning an item into gems needs no exact price: one whose converted price is clearly under
-*Only sell if you get at least* simply becomes gems.
+*Only sell if you get at least* becomes gems, as long as its gems are worth at least that sale less a cent.
 
 **Pricing takes a while.** The first look reads each game's search page, a few games a look; while some wait,
 `spare preview` says how far it has to go ("still pricing 146 items - about 25 min") and it looks again every few
@@ -535,10 +546,19 @@ listing, or its own price lookup finding none - keeps an item as *nobody sells i
 show at all (they come ten at a time and can shift between pages) has no price yet, and gets a price lookup of its
 own on a later look, inside the hourly limit. Names written differently on the page ("&amp;" for "&") still match.
 
-**Gems or sell.** An item becomes gems when its gems are worth at least 20% more than selling it would pay you
-after Steam's fees (gems are priced from a sack of 1000, in the wallet's currency). Otherwise it's sold. If neither
+**Gems or sell - gems never lose money.** An item is sold only when selling pays you at least 0.01 more (after
+Steam's fees) than its gems are worth (gems are priced from a sack of 1000, in the wallet's currency); otherwise it
+becomes gems. Selling pays 0.07: gems worth 0.06 or less, it's sold; worth more, gems. So it never makes gems worth
+less than the sale, and never makes a sale that pays less than the gems - each sale needs your phone, and Steam's fee
+eats tiny ones. An item nobody lists right now but that sold lately is kept when that sale would pay more than its
+gems. *Gems only* never sells, and keeps an item that would sell for at least 0.01 more than its gems. If neither
 pays anything it's kept. Turning items into gems needs no phone confirmation; selling does, unless the authenticator
 is in nocat.farm.
+
+**Settings changed while a look runs count at once.** Right before each item is turned into gems, listed or sent,
+the settings are read again: Spare items turned off, the account paused or held by scam watch stops the look; an item
+or game added to the keep list, or a price limit lowered under the item's price, skips that item with one line in the
+log.
 
 **What it's listed at.** Right before each listing the item is priced again. By default (*a cent under the real
 price*) the real price is what it sold for over the last day - the median - and it's listed a cent under that or
@@ -671,7 +691,7 @@ the log says once: turn it on in Settings to see what it would do.
 | Never touch items worth more than | In this account's own Steam wallet currency, e.g. 0.25 for dollars or euros - the same value in your own currency, e.g. 40 for yen. Worth is the higher of the cheapest listing and the last day's median | 0.25 |
 | Leave new items alone for (days) | 0 to 30 | 7 |
 | Never touch these items / items from these games | Your keep list: full item names as the inventory shows them, e.g. Sans, Gordon Freeman (Foil) - a name keeps that item in every game | empty |
-| Gems must beat selling by (%) | Percent | 20 |
+| Gems must beat selling by (%) | Not used any more: an item is sold only when selling pays at least 0.01 more than its gems, otherwise it becomes gems | 20 |
 | Items at a time | The most in one look (robot accounts) | 5 |
 | Items per look, human mode | The most in one look on a human-mode account, which spreads the day's items through its day (about what's left today over the looks left) | 3 |
 | Items a day, at most / Value a day, at most | The daily caps (the value in this account's own Steam wallet currency). A human-mode account spreads them through its day | 10 / 1.00 |
@@ -680,7 +700,7 @@ the log says once: turn it on in Settings to see what it would do.
 | Wait between items, human mode (minutes) | Shortest and longest, random in between each time | 3 to 20 |
 | Trust a price for (hours) | Hours a price counts as fresh | 24 |
 | Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, the median (never under the cheapest; no median - kept), or a cent under the cheapest (cheapest 0.12 lists at 0.11; ignores a dump, never under your own cheapest listing, *Never go lower than* or *Only sell if you get at least*). Priced again in the wallet's currency right before each listing | a cent under the real price |
-| Only sell if you get at least | The least you'd get after fees, in the wallet's own currency. Less: gems if they're worth anything, otherwise kept. 0 sells anything | 0.05 |
+| Only sell if you get at least | The least you'd get after fees, in the wallet's own currency. Less: gems - but never gems worth less than the sale less 0.01 (then it's sold); no gems for it, kept. 0 sells anything | 0.05 |
 | A cheapest listing this far under its sales is a dump (%) | A cent under the real price: with only one sale in the last day and the cheapest listing this far under it, the prices contradict each other and the item is kept. A cent under the cheapest: that listing is ignored and it lists a cent under the sale price. 0: nothing counts as a dump | 50 |
 | Take down unsold listings after (days) | Only listings nocat.farm put up itself: still unsold, it comes down and goes up again a cent cheaper, or a cent under a cheaper real listing. Yours are never touched | 7 |
 | Never go lower than (% of the real sale price) | The floor for those steps, a percent of what it sold for over the last day. At the floor it stays up | 80 |

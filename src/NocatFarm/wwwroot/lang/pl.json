@@ -2687,7 +2687,6 @@
     "needed for the badge": "potrzebne do odznaki",
     "on your keep list": "na twojej liście do zachowania",
     "it doesn't turn into gems": "nie da się go zamienić na klejnoty",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} klejnotów, wartych {1} - lepsze od sprzedaży ({2}) o {3}% lub więcej",
     "unopened booster packs: listed {0} - {1}": "nieotwarte paczki kart: wystawiono {0} - {1}",
     "next look at booster packs around {0}": "następne sprawdzenie paczek kart około {0}",
     "today's limit of {0} in value is reached": "osiągnięto dzisiejszy limit wartości {0}",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "nie udało się odczytać listy zakupów kart: {0}",
     "buying cards: next look around {0}": "kupowanie kart: następne sprawdzenie około {0}",
     "couldn't look at buying cards: {0}": "nie udało się sprawdzić kupowania kart: {0}",
-    "bought {0} · {1} · {2}": "kupiono {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "nie wiadomo, czy kupiono {0} · liczone jako wydane",
     "card buying stopped · its spending list can't be read or saved": "kupowanie kart zatrzymane · nie można odczytać ani zapisać listy wydatków",
     "buying {0} turned down · {1}": "kupno {0} odrzucone · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "rozłożone na jego dzień: około {0} na sprawdzenie, następne sprawdzenie ~{1}",
     "spread over its day: about {0} a look - its last look today": "rozłożone na jego dzień: około {0} na sprawdzenie - to jego ostatnie sprawdzenie dzisiaj",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "jeszcze wycenia {0} przedmiot(ów) - Steam poprosił o zwolnienie, wycena wraca około {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} klejnotów - sprzedaż dałaby {1}, poniżej twojego minimum {2}",
     "{0} gems - nobody sells it on the market": "{0} klejnotów - nikt tego nie sprzedaje na rynku",
     "you declined its listing on your phone - never listed again": "odrzuciłeś jego ofertę na telefonie - już nigdy nie będzie wystawiony",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Klejnoty są pakowane w worki po 1000, a worki wysyłane do {0}",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "wyszukiwarka zestawów · pominięto {0} · jej robots.txt na to nie pozwala",
     "set finder · {0} skipped · it didn't answer ({1})": "wyszukiwarka zestawów · pominięto {0} · brak odpowiedzi ({1})",
     "set finder · {0} skipped · its list couldn't be read": "wyszukiwarka zestawów · pominięto {0} · nie da się odczytać listy",
-    "set finder · {0} games to look at first, from {1}": "wyszukiwarka zestawów · gier do sprawdzenia najpierw: {0}, z {1}"
+    "set finder · {0} games to look at first, from {1}": "wyszukiwarka zestawów · gier do sprawdzenia najpierw: {0}, z {1}",
+    "{0} was paused - stopped before the next item": "{0} wstrzymano - zatrzymano przed następnym przedmiotem",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "sprzedaż dałaby {0}, więcej niż warte są jego {1} klejnoty ({2}) - zatrzymane",
+    "{0} · found in the inventory after its order": "{0} · znaleziono w ekwipunku po zamówieniu",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "sprzedaje się za {0}, dostaniesz {1} - poniżej twojego minimum {2}, ale więcej niż warte są jego {3} klejnoty ({4})",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} klejnotów, wartych {1} - sprzedaż dałaby {2}",
+    "worth {0}, over your price limit now - skipped": "warte {0}, teraz powyżej twojego limitu ceny - pominięte",
+    "more cards wait · confirm the ones in the Steam app first": "kolejne karty czekają · najpierw potwierdź te w aplikacji Steam",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} klejnotów, wartych {1} - sprzedaż dałaby {2}, poniżej twojego minimum {3}",
+    "bought {0} ({1}) · {2}": "kupiono {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "teraz nikt tego nie sprzedaje, ale ostatnio poszło za {0} - więcej niż jego klejnoty - zatrzymane",
+    "on your keep list now - skipped": "teraz na twojej liście do zachowania - pominięte"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "Klejnoty muszą być lepsze od sprzedaży o (%)",
-      "tip": "O ile więcej klejnoty muszą być warte niż sprzedaż, zanim przedmiot stanie się klejnotami, w procentach. Na przykład 20: jeśli sprzedaż daje ci 0.10 po opłatach Steam, klejnoty warte 0.12 lub więcej wygrywają i przedmiot staje się klejnotami; przy 0.11 jest sprzedawany. Tylko dla „lepsze z klejnotów lub sprzedaży”."
+      "tip": "Już nieużywane. Od 1.8.2 przedmiot jest sprzedawany tylko wtedy, gdy sprzedaż da ci (po opłatach Steam) co najmniej 0.01 więcej, niż warte są jego klejnoty, a w przeciwnym razie staje się klejnotami - na przykład sprzedaż daje 0.10: przy klejnotach wartych 0.09 lub mniej jest sprzedawany; przy wartych więcej - klejnoty. Ta reguła decyduje sama, więc klejnoty nigdy nie tracą twoich pieniędzy. Zostaje, żeby starsze pliki ustawień nadal się wczytywały."
     },
     "SpareMaxedBadgeCards": {
       "label": "Karty z ukończonych odznak",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "Co robić ze zbędnymi przedmiotami",
-      "tip": "„Lepsze z klejnotów lub sprzedaży” zamienia przedmiot na klejnoty, gdy klejnoty są warte więcej niż sprzedaż (o marżę poniżej), a w przeciwnym razie go sprzedaje - na przykład klejnoty warte 0.05 wygrywają ze sprzedażą, która daje ci 0.02. „Tylko klejnoty”: nigdy nie sprzedaje. „Tylko sprzedaż”: nigdy nie robi klejnotów. „Zachowaj wszystko”: tylko raportuje, co jest zbędne, nic się nie zmienia.",
+      "tip": "Najlepsze z klejnotów lub sprzedaży sprzedaje przedmiot tylko wtedy, gdy sprzedaż da ci (po opłatach Steam) co najmniej 0.01 więcej, niż warte są jego klejnoty, a w przeciwnym razie zamienia go w klejnoty - więc klejnoty nigdy nie tracą twoich pieniędzy, a drobnych sprzedaży, z których każda wymaga telefonu, nie ma. Na przykład sprzedaż, która daje ci 0.07: przy klejnotach wartych 0.06 lub mniej przedmiot jest sprzedawany; przy wartych więcej staje się klejnotami. Tylko klejnoty: nigdy nie sprzedaje, a przedmiot, który sprzedałby się za co najmniej 0.01 więcej niż jego klejnoty, zostaje zatrzymany. Tylko sprzedaż: nigdy nie robi klejnotów. Zatrzymaj wszystko: tylko zgłasza, co jest zbędne, nic się nie zmienia.",
       "choices": "0 lepsze z klejnotów lub sprzedaży | 1 tylko klejnoty | 2 tylko sprzedaż | 3 zachowaj wszystko (tylko raport)"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "Sprzedawaj tylko, jeśli dostaniesz co najmniej",
-      "tip": "Najmniej, ile sprzedaż musi ci dać po opłatach Steam, w walucie portfela Steam tego konta. Na przykład 0.05: karta, która dałaby ci 0.03, jest zamieniana na klejnoty, jeśli jej klejnoty są coś warte, a jeśli nie - zostaje. np. 0.05 dla dolarów lub euro - wpisz tę samą wartość we własnej walucie, np. 5 dla jenów. 0 sprzedaje wszystko."
+      "tip": "Najmniej, ile sprzedaż musi ci dać po opłatach Steam, we własnej walucie portfela Steam tego konta. Na przykład 0.05: karta, która dałaby ci 0.03, staje się klejnotami, gdy jej klejnoty są warte więcej niż 0.02, a zostaje zatrzymana, gdy nie zamienia się w klejnoty. Przedmiot nigdy nie zamienia się w klejnoty warte mniej niż sprzedaż minus 0.01: przy klejnotach wartych 0.02 lub mniej ta karta i tak zostanie sprzedana za 0.03. Przy „tylko sprzedaż” zostaje zatrzymana. np. 0.05 dla dolarów lub euro - użyj tej samej wartości we własnej walucie, np. 5 dla jenów. 0 sprzedaje wszystko."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...do (minut)",

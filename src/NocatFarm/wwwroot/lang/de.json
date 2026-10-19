@@ -2687,7 +2687,6 @@
     "needed for the badge": "für das Abzeichen nötig",
     "on your keep list": "steht auf deiner Behalten-Liste",
     "it doesn't turn into gems": "es lässt sich nicht in Edelsteine verwandeln",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} Edelsteine, {1} wert - schlägt Verkaufen ({2}) um {3}% oder mehr",
     "unopened booster packs: listed {0} - {1}": "ungeöffnete Booster-Packs: {0} eingestellt - {1}",
     "next look at booster packs around {0}": "nächster Blick auf Booster-Packs gegen {0}",
     "today's limit of {0} in value is reached": "das heutige Wertlimit von {0} ist erreicht",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "konnte die Liste der Kartenkäufe nicht lesen: {0}",
     "buying cards: next look around {0}": "Karten kaufen: nächster Blick gegen {0}",
     "couldn't look at buying cards: {0}": "konnte nicht nach den Kartenkäufen sehen: {0}",
-    "bought {0} · {1} · {2}": "gekauft: {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "unklar, ob {0} gekauft wurde · als ausgegeben gezählt",
     "card buying stopped · its spending list can't be read or saved": "Kartenkauf gestoppt · die Ausgabenliste lässt sich nicht lesen oder speichern",
     "buying {0} turned down · {1}": "Kauf von {0} abgelehnt · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "über seinen Tag verteilt: etwa {0} pro Blick, nächster Blick ~{1}",
     "spread over its day: about {0} a look - its last look today": "über seinen Tag verteilt: etwa {0} pro Blick - sein letzter Blick heute",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "noch {0} Gegenstand/Gegenstände zu bepreisen - Steam hat um eine Pause gebeten, die Preise gehen gegen {1} weiter",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} Edelsteine - Verkaufen brächte {1}, unter deinem Minimum von {2}",
     "{0} gems - nobody sells it on the market": "{0} Edelsteine - niemand verkauft es auf dem Markt",
     "you declined its listing on your phone - never listed again": "du hast sein Angebot auf dem Handy abgelehnt - wird nie wieder eingestellt",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Edelsteine werden in Säcke zu 1000 gepackt und die Säcke an {0} gesendet",
@@ -3184,7 +3181,18 @@
     "set finder · {0} skipped · its robots.txt doesn't allow it": "Satzsuche · {0} übersprungen · die robots.txt erlaubt es nicht",
     "set finder · {0} skipped · it didn't answer ({1})": "Satzsuche · {0} übersprungen · keine Antwort ({1})",
     "set finder · {0} skipped · its list couldn't be read": "Satzsuche · {0} übersprungen · die Liste ließ sich nicht lesen",
-    "set finder · {0} games to look at first, from {1}": "Satzsuche · {0} Spiele zuerst ansehen, von {1}"
+    "set finder · {0} games to look at first, from {1}": "Satzsuche · {0} Spiele zuerst ansehen, von {1}",
+    "{0} was paused - stopped before the next item": "{0} wurde pausiert - vor dem nächsten Gegenstand angehalten",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "Verkaufen brächte {0}, mehr als seine {1} Edelsteine wert sind ({2}) - behalten",
+    "{0} · found in the inventory after its order": "{0} · nach der Bestellung im Inventar gefunden",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "verkauft sich für {0}, du bekommst {1} - unter deinem Minimum von {2}, aber mehr als seine {3} Edelsteine wert sind ({4})",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} Edelsteine, {1} wert - Verkaufen brächte {2}",
+    "worth {0}, over your price limit now - skipped": "{0} wert, jetzt über deiner Preisgrenze - übersprungen",
+    "more cards wait · confirm the ones in the Steam app first": "weitere Karten warten · bestätige zuerst die in der Steam-App",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} Edelsteine, {1} wert - Verkaufen brächte {2}, unter deinem Minimum von {3}",
+    "bought {0} ({1}) · {2}": "gekauft: {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "gerade verkauft es niemand, aber es ging zuletzt für {0} weg - mehr als seine Edelsteine - behalten",
+    "on your keep list now - skipped": "jetzt auf deiner Behalten-Liste - übersprungen"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4636,7 +4644,7 @@
     },
     "SpareGemMarginPct": {
       "label": "Edelsteine müssen Verkaufen schlagen um (%)",
-      "tip": "Wie viel mehr die Edelsteine wert sein müssen als der Verkauf, bevor ein Gegenstand zu Edelsteinen wird, in Prozent. Zum Beispiel 20: bringt dir der Verkauf nach Steams Gebühren 0.10, gewinnen Edelsteine im Wert von 0.12 oder mehr und er wird zu Edelsteinen; bei 0.11 wird er verkauft. Nur für „das Beste aus Edelsteinen oder Verkaufen“."
+      "tip": "Wird nicht mehr verwendet. Seit 1.8.2 wird ein Gegenstand nur verkauft, wenn der Verkauf dir (nach Steams Gebühren) mindestens 0.01 mehr bringt, als seine Edelsteine wert sind, und sonst zu Edelsteinen - zum Beispiel bringt der Verkauf 0.10: Edelsteine im Wert von 0.09 oder weniger, er wird verkauft; mehr wert, Edelsteine. Diese Regel entscheidet allein, so kosten dich Edelsteine nie Geld. Bleibt, damit ältere Einstellungsdateien noch laden."
     },
     "SpareMaxedBadgeCards": {
       "label": "Karten von fertigen Abzeichen",
@@ -4657,7 +4665,7 @@
     },
     "SpareAction": {
       "label": "Was mit übrigen Gegenständen passiert",
-      "tip": "„Das Beste aus Edelsteinen oder Verkaufen“ verwandelt einen Gegenstand in Edelsteine, wenn die Edelsteine mehr wert sind als sein Verkauf (um die Spanne unten), und verkauft ihn sonst - zum Beispiel schlagen Edelsteine im Wert von 0.05 einen Verkauf, der dir 0.02 bringt. Nur Edelsteine: verkauft nie. Nur verkaufen: macht nie Edelsteine. Alles behalten: meldet nur, was übrig ist, nichts ändert sich.",
+      "tip": "„Das Beste aus Edelsteinen oder Verkaufen“ verkauft einen Gegenstand nur, wenn der Verkauf dir (nach Steams Gebühren) mindestens 0.01 mehr bringt, als seine Edelsteine wert sind, und macht ihn sonst zu Edelsteinen - so kosten dich Edelsteine nie Geld, und winzige Verkäufe, die jeweils dein Handy brauchen, gibt es nicht. Zum Beispiel ein Verkauf, der dir 0.07 bringt: Edelsteine im Wert von 0.06 oder weniger, er wird verkauft; mehr wert, er wird zu Edelsteinen. Nur Edelsteine: verkauft nie, und behält einen Gegenstand, der für mindestens 0.01 mehr als seine Edelsteine verkauft würde. Nur verkaufen: macht nie Edelsteine. Alles behalten: meldet nur, was übrig ist, nichts ändert sich.",
       "choices": "0 das Beste aus Edelsteinen oder Verkaufen | 1 nur Edelsteine | 2 nur verkaufen | 3 alles behalten (nur melden)"
     },
     "SpareEmoticons": {
@@ -4731,7 +4739,7 @@
     },
     "SpareMinSale": {
       "label": "Nur verkaufen, wenn du mindestens bekommst",
-      "tip": "Das Mindeste, was ein Verkauf dir nach den Steam-Gebühren bringen muss, in der eigenen Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 0.05: eine Karte, die dir 0.03 brächte, wird zu Edelsteinen, wenn ihre Edelsteine etwas wert sind, sonst wird sie behalten. z. B. 0.05 für Dollar oder Euro - nimm denselben Wert in deiner eigenen Währung, z. B. 5 für Yen. 0 verkauft alles."
+      "tip": "Das Mindeste, was ein Verkauf dir nach den Steam-Gebühren bringen muss, in der eigenen Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 0.05: eine Karte, die dir 0.03 brächte, wird zu Edelsteinen, wenn ihre Edelsteine mehr als 0.02 wert sind, und wird behalten, wenn sie keine Edelsteine ergibt. Ein Gegenstand wird nie zu Edelsteinen, die weniger wert sind als der Verkauf minus 0.01: bei Edelsteinen im Wert von 0.02 oder weniger wird diese Karte trotzdem für die 0.03 verkauft. Bei „Nur verkaufen“ wird sie behalten. z. B. 0.05 für Dollar oder Euro - nimm denselben Wert in deiner eigenen Währung, z. B. 5 für Yen. 0 verkauft alles."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...bis zu (Minuten)",
