@@ -28669,6 +28669,9 @@ if (OperatingSystem.IsWindows()) {
 // ── 1.8.2: buying cards - billing details, the owner's phone, the cheapest level first, sets sold instead of crafted; fakes only ──
 await BuySmartChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: sell-instead-of-craft really runs - the live state on the owner's account, then each unclear case; fakes only ──
+await CraftSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -29398,6 +29401,7 @@ static class CommandSweep {
 		["booster"] = ["robo", "robo 440", "open", "open robo", "open robo do", "plan", "plan all", "robo plan"],
 		["spare"] = ["preview", "preview robo", "preview all", "on robo", "off robo", "do robo", "bogus"],
 		["levelup"] = ["robo", "robo 10", "robo abc"],
+		["craft"] = ["now robo", "preview robo", "robo preview", "robo", "preview", "now preview robo"],
 		["offers"] = ["robo"],
 		["trade"] = ["accept robo 1", "decline robo all", "cancel robo 123", "cancel robo all", "accept", "bogus robo 1"],
 		["send"] = ["robo", "robo to person", "robo to", "robo cards", "robo person", "robo to robo"],
@@ -29738,7 +29742,17 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 
 	public Task<NocatFarm.Modules.CardMarket.Wallet?> WalletAsync(CancellationToken ct) => Task.FromResult(Wallet);
 	public Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<uint, int>?>(Levels);
-	public Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<uint, Dictionary<string, int>>?>(Held);
+	public Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) {
+		CardsReads++;
+
+		return Task.FromResult<IReadOnlyDictionary<uint, Dictionary<string, int>>?>(CardsFail ? null : Held);
+	}
+
+	/// <summary>Reading the inventory fails - Steam refusing a second read a second after the first ("The request is a duplicate").</summary>
+	public bool CardsFail { get; set; }
+
+	/// <summary>How many times the inventory was read.</summary>
+	public int CardsReads { get; private set; }
 	public Task<NocatFarm.Modules.CardSet?> SetAsync(uint app, CancellationToken ct) => Task.FromResult(Sets.GetValueOrDefault(app));
 	public Task<IReadOnlyList<uint>?> CheapestGamesAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<uint>?>(Cheapest);
 
@@ -31654,6 +31668,238 @@ static class BuySmartChecks {
 				await b.DisposeAsync();
 			}
 
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(root, true);
+			} catch (IOException) {
+				// temp - it goes when Windows tidies up
+			}
+		}
+	}
+}
+
+/// <summary>
+/// Sell-instead-of-craft as it ran on the owner's account: buying cards turned on through 'buy on' and read back after a
+/// restart, a robot (no human mode), two finished sets - one worth selling, one not - and Steam refusing a second
+/// inventory read a second after the first. Then every case it can't decide, each said in the log.
+/// </summary>
+static class CraftSellChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-craftsell-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+		Type craftT = typeof(NocatFarm.Modules.BadgeCraft).GetNestedType("Craftable", BindingFlags.NonPublic)!;
+		string[] arcaneCards = ["Heart", "Ribbon", "Shield", "Rose", "Skull"];
+		int[] arcaneLowest = [197, 127, 85, 96, 72];
+		string[] sboxCards = ["Box", "Hammer", "Wrench"];
+
+		string A(string card) => $"603750-{card} (Arcane Raise)";
+		string S(string card) => $"590830-{card}";
+		NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales = 150) => new(hash, 20, lowest, lowest + 2, sales, DateTime.UtcNow.Ticks);
+
+		// The account as it was: buying turned on through its preview ('buy on new'), then nocat.farm restarted.
+		NocatFarm.Core.Bot NewAccount() {
+			var b = new NocatFarm.Core.Bot("new" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig {
+				CraftBadges = true, SellSetsForLevels = true, BuyFullSets = true, LegitMode = false, BuyDailyLimit = 1.5f
+			});
+			bots.Add(b);
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();   // the restart: the go-ahead is read back from its file
+			return b;
+		}
+
+		// Both sets on the market, priced: Arcane Raise about 5.00 after the fee, s&box about 0.45; three cheap new sets at 0.40.
+		FakeCardMarket Market() {
+			var m = new FakeCardMarket { CardsFail = true };
+			m.Sets[603750] = new(603750, "- Arcane Raise -", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
+			m.Sets[590830] = new(590830, "s&box", [.. sboxCards.Select(S).Order(StringComparer.Ordinal)], sboxCards.ToDictionary(S, static _ => 15));
+
+			for (int i = 0; i < arcaneCards.Length; i++) {
+				m.Quotes[A(arcaneCards[i])] = Q(A(arcaneCards[i]), arcaneLowest[i]);
+			}
+
+			foreach (string c in sboxCards) {
+				m.Quotes[S(c)] = Q(S(c), 18);
+			}
+
+			foreach (uint app in new uint[] { 600, 601, 602 }) {
+				m.Cheapest.Add(app);
+				m.Sets[app] = new(app, $"Cheap {app}", [$"{app}-X", $"{app}-Y", $"{app}-Z"], new Dictionary<string, int> { [$"{app}-X"] = 5, [$"{app}-Y"] = 5, [$"{app}-Z"] = 5 });
+				m.Books[$"{app}-X"] = FakeCardMarket.B(13);
+				m.Books[$"{app}-Y"] = FakeCardMarket.B(13);
+				m.Books[$"{app}-Z"] = FakeCardMarket.B(14);
+			}
+
+			return m;
+		}
+
+		// The inventory badge crafting read: one of each card of both sets.
+		async Task<NocatFarm.Core.InventoryContents> Inventory() {
+			List<string> assets = [], descriptions = [];
+			int n = 0;
+
+			void Card(string hash, uint app, string game) {
+				n++;
+				assets.Add($"{{\"assetid\":\"{1000 + n}\",\"classid\":\"{n}\",\"instanceid\":\"0\",\"amount\":\"1\"}}");
+				descriptions.Add($"{{\"classid\":\"{n}\",\"instanceid\":\"0\",\"type\":\"{game} Trading Card\",\"marketable\":1,\"market_fee_app\":\"{app}\",\"market_hash_name\":\"{hash}\"}}");
+			}
+
+			foreach (string c in arcaneCards) { Card(A(c), 603750, "- Arcane Raise -"); }
+			foreach (string c in sboxCards) { Card(S(c), 590830, "s&box"); }
+
+			string json = $"{{\"success\":1,\"assets\":[{string.Join(",", assets)}],\"descriptions\":[{string.Join(",", descriptions)}],\"more_items\":0}}";
+			return (await NocatFarm.Core.Inventory.ReadAsync((_, _) => Task.FromResult<string?>(json), 1, 753, "6", CancellationToken.None))!;
+		}
+
+		// The sweep's own step, as it runs before crafting: the sets left to craft, and the sets it listed.
+		async Task<(List<uint> Crafted, List<uint> Listed, bool More)> SellInstead(NocatFarm.Core.Bot b, NocatFarm.Core.InventoryContents inventory) {
+			var craft = new NocatFarm.Modules.BadgeCraft(b);
+			List<uint> listed = [];
+			typeof(NocatFarm.Modules.BadgeCraft).GetField("_listSet", Inst)!.SetValue(craft,
+				(Func<NocatFarm.Core.Bot, NocatFarm.Modules.SetSale.Verdict, NocatFarm.Core.InventoryContents, CancellationToken, Task<int>>) ((_, v, _, _) => {
+					listed.Add(v.App);
+					return Task.FromResult(v.Prices.Count);
+				}));
+			var ready = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(craftT))!;
+			ready.Add(Activator.CreateInstance(craftT, [603750u, 1, 0, 1])!);
+			ready.Add(Activator.CreateInstance(craftT, [590830u, 1, 0, 1])!);
+			var task = (Task) typeof(NocatFarm.Modules.BadgeCraft).GetMethod("SellInsteadAsync", Inst)!.Invoke(craft, [ready, inventory, CancellationToken.None])!;
+			await task;
+			var left = (IList) task.GetType().GetProperty("Result")!.GetValue(task)!;
+			bool more = (bool) typeof(NocatFarm.Modules.BadgeCraft).GetField("_moreToCraft", Inst)!.GetValue(craft)!;
+			return ([.. left.Cast<object>().Select(c => (uint) craftT.GetProperty("AppId")!.GetValue(c)!)], listed, more);
+		}
+
+		List<string> Said(NocatFarm.Core.Bot b, long since) =>
+			[.. NocatFarm.Log.Recent(500).Where(e => (e.Seq > since) && (e.Source == b.Name)).Select(static e => $"{e.Level} {e.Said.ToEnglish()}")];
+		long Mark() => NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+		try {
+			var inventory = await Inventory();
+
+			// ── the live state: buying approved and read back after a restart, a robot, two sets, Steam refusing a second inventory read ──
+			var live = NewAccount();
+			var liveMarket = Market();
+			live.AddModule(new NocatFarm.Modules.CardBuyer(live, liveMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			Check("sell instead: buying turned on through 'buy on' is still on after a restart - read back from its own list",
+				NocatFarm.Modules.CardBuyer.On(live) && live.Cfg.BuyCards && !live.Cfg.LegitMode
+				&& File.ReadAllText(Path.Combine(root, "config", "state", $"buy-{live.Name}.json")).Contains("\"Ok\":true", StringComparison.Ordinal));
+
+			// What went wrong live: the plan read the inventory again a second after the craft had - Steam said "duplicate" - and
+			// every set came back with no word, so both were crafted and nothing was said.
+			var old = await NocatFarm.Core.BotManager.ModuleOf<NocatFarm.Modules.CardBuyer>(live)!.WeighSalesAsync([603750u, 590830u], CancellationToken.None);
+			Check("sell instead: an inventory Steam won't read a second time is said as 'couldn't price its cards' for each set, never no word at all",
+				(old.Count == 2) && old.All(static v => v is { Unsure: true, Sell: false } && (v.Why == "couldn't price its cards")) && (liveMarket.CardsReads == 1),
+				string.Join(" | ", old.Select(static v => v.Why)));
+
+			long at = Mark();
+			(List<uint> crafted, List<uint> listed, _) = await SellInstead(live, inventory);
+			List<string> lines = Said(live, at);
+			Check("sell instead: the live state - the valuable set (Arcane Raise) is sold, s&box is crafted",
+				crafted.SequenceEqual([590830u]) && listed.SequenceEqual([603750u]) && NocatFarm.Modules.BuyLedger.Of(live.Name).SoldSince(DateTime.UtcNow.AddMinutes(-5)).Contains(603750u),
+				$"crafted {string.Join(",", crafted)} listed {string.Join(",", listed)} / {string.Join(" / ", lines)}");
+			Check("sell instead: weighed on the inventory crafting just read - not read a second time (Steam refuses that as a duplicate)",
+				(liveMarket.CardsReads == 1) && Src("src/NocatFarm/Modules/SetSale.Choose.cs").Contains("buyer.WeighSalesAsync([.. now.Select(i => ready[i].App)], ct, inventory)", StringComparison.Ordinal),
+				$"{liveMarket.CardsReads}");
+			Check("sell instead: each set gets an INFO line - sold, with what it buys; crafted, with why",
+				lines.Any(static l => l.StartsWith("INFO selling the - Arcane Raise - set instead of crafting: ", StringComparison.Ordinal) && l.Contains(" buys about ", StringComparison.Ordinal))
+				&& lines.Any(static l => l.StartsWith("INFO s&box: crafted · set worth ", StringComparison.Ordinal) && l.Contains(" buys only 1 level", StringComparison.Ordinal)),
+				string.Join(" / ", lines));
+
+			// ── 'craft preview': the same word, and nothing done ──
+			var look = NewAccount();
+			var lookMarket = Market();
+			look.AddModule(new NocatFarm.Modules.CardBuyer(look, lookMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			var picks = await NocatFarm.Modules.SetSale.ChooseAsync(look, [new(603750, 0, 1), new(590830, 0, 1)], inventory, CancellationToken.None);
+			string preview = Commands.CraftPreviewSaid(look.Name, picks);
+			Check("craft preview: each set with craft or sell and why - 'sell - 4.xx buys about N levels', 'craft - set worth 0.xx buys only 1 level'",
+				System.Text.RegularExpressions.Regex.IsMatch(preview, @": - Arcane Raise -: sell - \d+\.\d\d CAD buys about \d+ levels")
+				&& System.Text.RegularExpressions.Regex.IsMatch(preview, @": s&box: craft - set worth 0\.\d\d CAD buys only 1 level")
+				&& preview.Contains("nothing was crafted or listed", StringComparison.Ordinal),
+				preview);
+			Check("craft preview: reads only - nothing listed, bought or written down as sold",
+				(lookMarket.Bought.Count == 0) && (NocatFarm.Modules.BuyLedger.Of(look.Name).SoldSince(DateTime.MinValue).Count == 0)
+				&& (Commands.CraftPreviewSaid("x", []) == "x: no finished sets to craft."));
+
+			// ── can't decide, and a card known to be worth more than the price limit: not crafted, the next look weighs it again ──
+			var unsure = NewAccount();
+			var unsureMarket = Market();
+			foreach (string c in arcaneCards.Skip(1)) { unsureMarket.Quotes[A(c)] = null; }   // the market stops answering after the first card
+			foreach (string c in sboxCards) { unsureMarket.Quotes[S(c)] = null; }
+			unsure.AddModule(new NocatFarm.Modules.CardBuyer(unsure, unsureMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			at = Mark();
+			(crafted, listed, bool more) = await SellInstead(unsure, inventory);
+			lines = Said(unsure, at);
+			Check("can't decide: a set with a card known to be worth more than \"Never touch items worth more than\" waits for the next look - not crafted, not sold",
+				crafted.SequenceEqual([590830u]) && (listed.Count == 0) && more
+				&& lines.Any(static l => l.StartsWith("INFO - Arcane Raise -: not crafted yet · no market price for ", StringComparison.Ordinal) && l.EndsWith("a card is worth 1.97 CAD", StringComparison.Ordinal)),
+				string.Join(" / ", lines));
+			Check("can't decide: a set with nothing known to be worth much is crafted as before - and the log says why",
+				lines.Any(static l => l.StartsWith("INFO s&box: crafted · no market price for ", StringComparison.Ordinal)), string.Join(" / ", lines));
+
+			// The wallet not answering: nothing priced at all - a price kept from before still says the set is worth something.
+			var blind = NewAccount();
+			var blindMarket = Market();
+			blindMarket.Wallet = null;
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(blind, SteamKit2.ECurrencyCode.CAD);
+			typeof(NocatFarm.Core.MarketQuotes).GetMethod("Keep", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Q(A("Heart"), 197)]);
+			blind.AddModule(new NocatFarm.Modules.CardBuyer(blind, blindMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			at = Mark();
+			(crafted, listed, more) = await SellInstead(blind, inventory);
+			lines = Said(blind, at);
+			Check("can't decide: the wallet not answering - a price known from before keeps the valuable set back; the other is crafted, both said",
+				crafted.SequenceEqual([590830u]) && (listed.Count == 0) && more
+				&& lines.Contains("INFO - Arcane Raise -: not crafted yet · couldn't price its cards · a card is worth 1.97 CAD")
+				&& lines.Contains("INFO s&box: crafted · couldn't price its cards"),
+				string.Join(" / ", lines));
+
+			// Buying cards on but its module not running, and a game with two sets ready: said, never silent.
+			var lone = NewAccount();
+			var lonePicks = await NocatFarm.Modules.SetSale.ChooseAsync(lone, [new(590830, 0, 1), new(603750, 0, 2), new(440, 1, 1)], inventory, CancellationToken.None);
+			Check("skipped: buying cards not running, two sets of a game ready, a foil set - each crafted with its reason, nothing left waiting without one",
+				(lonePicks.Count == 3) && lonePicks[0] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: false } && (lonePicks[0].Reason.ToEnglish() == "buying cards isn't running")
+				&& (lonePicks[1].Reason.ToEnglish() == "2 sets ready, crafted together") && !lonePicks[1].Quiet
+				&& lonePicks[2] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true },
+				string.Join(" | ", lonePicks.Select(static p => $"{p.Choice} {p.Reason.ToEnglish()}")));
+
+			// More sets than one look weighs: the rest aren't crafted unweighed when they're known to be worth something.
+			var many = NewAccount();
+			var manyMarket = Market();
+			many.AddModule(new NocatFarm.Modules.CardBuyer(many, manyMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(many, SteamKit2.ECurrencyCode.CAD);
+			var manyPicks = await NocatFarm.Modules.SetSale.ChooseAsync(many, [new(590830, 0, 1), new(700, 0, 1), new(701, 0, 1), new(603750, 0, 1)], inventory, CancellationToken.None);
+			Check("skipped: past the 3 sets a look weighs, a set known to be worth something waits for the next look",
+				manyPicks[3] is { Choice: NocatFarm.Modules.SetSale.Choice.Wait, App: 603750 } && (manyPicks[3].Reason.ToEnglish() == "only 3 sets are weighed a look"),
+				string.Join(" | ", manyPicks.Select(static p => $"{p.App} {p.Choice} {p.Reason.ToEnglish()}")));
+
+			// Off: buying cards off - every set crafted, and nothing to say about it.
+			var offBot = new NocatFarm.Core.Bot("craftoff" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(offBot);
+			var offPicks = await NocatFarm.Modules.SetSale.ChooseAsync(offBot, [new(603750, 0, 1)], inventory, CancellationToken.None);
+			Check("off: with buying cards off every set is crafted as before, quietly - selling needs the money to be spent",
+				offPicks.Single() is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true } && (offPicks[0].Reason.ToEnglish() == "buying cards is off"));
+
+			Check("craft preview: a command with its help - 'craft preview <account>' next to 'craft now <account>'",
+				Commands.All.Single(static c => c.Name == "craft").Args.Contains("preview <account>", StringComparison.Ordinal)
+				&& Src("docs/COMMANDS.md").Contains("craft now <account> \\| preview <account>", StringComparison.Ordinal));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Core.MarketQuotes.Reset();
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);

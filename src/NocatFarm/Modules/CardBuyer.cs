@@ -523,8 +523,9 @@ public sealed class BuyPlan {
 	/// <param name="nowUtc">Now on Steam's clock - the limits' windows move with it, not with this PC's.</param>
 	/// <param name="stopWhenBlocked">Stop once the wallet says Steam won't let it buy by itself - for a look that would buy.</param>
 	/// <param name="boosting">Games automatic booster packs is saving gems for or has a pack waiting for (<see cref="BoosterPick.Busy"/>): not bought.</param>
+	/// <param name="heldCards">The cards held, from an inventory the caller has just read - not read again.</param>
 	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct,
-		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null) {
+		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null, IReadOnlyDictionary<uint, Dictionary<string, int>>? heldCards = null) {
 		BuyPlan plan = new() {
 			DayLimit = Cents(cfg.BuyDailyLimit),
 			WeekLimit = Cents(cfg.BuyWeeklyLimit)
@@ -570,7 +571,8 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		if (await market.CardsAsync(ct).ConfigureAwait(false) is not { } held) {
+		// The cards held: as the caller just read them (badge crafting), or read now.
+		if ((heldCards ?? await market.CardsAsync(ct).ConfigureAwait(false)) is not { } held) {
 			plan.Problem = "couldn't read all of its inventory";
 
 			return plan;
@@ -1220,28 +1222,38 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <summary>
 	/// For badge crafting (smart levelling, <see cref="SetSale"/>): each of these games' whole normal set weighed - sold, or
 	/// crafted - against what the money would buy, ranked as buying ranks it, at today's prices. Nothing is bought or listed
-	/// here. Empty when the market or the wallet didn't say, or Steam won't let this account buy (the money couldn't be spent):
-	/// then every set is crafted.
+	/// here. One verdict per game (up to <see cref="SetSale.MaxSetsALook"/>): when the market or the wallet didn't say, it's
+	/// marked not known for sure (Unsure); when Steam won't let this account buy (the money couldn't be spent), crafted.
+	/// <paramref name="inventory"/>: the inventory badge crafting just read - its cards are used, not read again a second
+	/// later (Steam refuses that as a duplicate request).
 	/// </summary>
-	public async Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<uint> apps, CancellationToken ct) {
+	public async Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<uint> apps, CancellationToken ct, InventoryContents? inventory = null) {
+		List<uint> asked = [.. apps.Distinct().Take(SetSale.MaxSetsALook)];
+		string Game(uint app) => inventory == null ? GameNames.Of(app) : SetSale.GameOf(app, inventory);
 		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
 			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
-				boosting: BoosterPick.Busy(Bot)).ConfigureAwait(false);
+				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory)).ConfigureAwait(false);
 
-			if ((plan.Problem.Length > 0) || (plan.Block != BuyBlock.None)) {
-				return [];
+			if ((plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown)) {
+				Log.Debug($"weighing sets: {(plan.Problem.Length > 0 ? plan.Problem : plan.Blocked)}", Bot.Name);
+
+				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), plan.Currency, new Said("couldn't price its cards"), unsure: true))];
+			}
+
+			if (plan.Block != BuyBlock.None) {
+				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), plan.Currency, new Said("Steam won't let it buy cards, so the money couldn't be spent")))];
 			}
 
 			List<SetSale.Verdict> weighed = [];
 
-			foreach (uint app in apps.Distinct().Take(SetSale.MaxSetsALook)) {
+			foreach (uint app in asked) {
 				CardSet? set = plan.Complete.Select(static c => c.Set).FirstOrDefault(s => s.App == app) ?? await _market.SetAsync(app, ct).ConfigureAwait(false);
 
-				if (set is { Cards.Count: > 0 }) {
-					weighed.Add(await SetSale.WeighAsync(set, plan, _market, Bot.Cfg, ct).ConfigureAwait(false));
-				}
+				weighed.Add(set is { Cards.Count: > 0 }
+					? await SetSale.WeighAsync(set, plan, _market, Bot.Cfg, ct).ConfigureAwait(false)
+					: SetSale.Crafted(app, set?.Game ?? Game(app), plan.Currency, new Said("its set isn't known whole on the market"), unsure: true));
 			}
 
 			return weighed;

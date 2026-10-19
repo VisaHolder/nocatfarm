@@ -18,7 +18,7 @@ namespace NocatFarm.Modules;
 /// Every listing waits for the owner's phone like any listing. Its cards may go above "Never sell above" - this path only.
 /// The game isn't bought back for <see cref="NotBoughtFor"/>.
 /// </remarks>
-public static class SetSale {
+public static partial class SetSale {
 	/// <summary>Each card of the set sold at least this many times in the last day (Steam's priceoverview volume).</summary>
 	public const int MinSales = 10;
 
@@ -35,10 +35,20 @@ public static class SetSale {
 	/// The word on one set: sold or crafted, what selling brings in after Steam's fee, the levels that buys counted at
 	/// today's prices, about how many in all, and why - in plain English for the console and the preview.
 	/// </summary>
-	public sealed record Verdict(uint App, string Game, int Currency, bool Sell, long Proceeds, int Levels, int About, string Why, IReadOnlyList<SalePrice> Prices) {
+	/// <param name="Unsure">Not decided: a price or the market didn't answer - crafted only when its cards aren't known to be worth much (<see cref="ChooseAsync"/>).</param>
+	/// <param name="Top">The dearest card's cheapest listing seen while weighing it, in the wallet's currency (0: none seen).</param>
+	public sealed record Verdict(uint App, string Game, int Currency, bool Sell, long Proceeds, int Levels, int About, string Why, IReadOnlyList<SalePrice> Prices,
+		bool Unsure = false, long Top = 0) {
 		/// <summary>What selling brings in, written out ("4.97 CAD").</summary>
 		public string Money => BuyPlan.Money(Proceeds, Currency);
+
+		/// <summary><see cref="Why"/> for the log, translated.</summary>
+		public Said Reason { get; init; } = new(Why);
 	}
+
+	/// <summary>A set crafted: decided (<paramref name="unsure"/> false), or not known for sure.</summary>
+	public static Verdict Crafted(uint app, string game, int currency, Said reason, bool unsure = false, long top = 0) =>
+		new(app, game, currency, false, 0, 0, 0, reason.ToEnglish(), [], unsure, top) { Reason = reason };
 
 	/// <summary>Whether sets are weighed at all: the setting, badge crafting, and buying cards on to spend the money.</summary>
 	public static bool Applies(BotConfig cfg, bool buying) => cfg.SellSetsForLevels && cfg.CraftBadges && buying;
@@ -52,10 +62,11 @@ public static class SetSale {
 	/// own game left out. Sold only when it clearly wins: at least 2 levels, or 1 with a quarter of the money left over.
 	/// </summary>
 	public static Verdict Decide(uint app, string game, int currency, IReadOnlyList<(string Hash, MarketQuote? Quote)> cards, IEnumerable<long> levelCosts, int dumpPct) {
-		Verdict Craft(string why) => new(app, game, currency, false, 0, 0, 0, why, []);
+		long top = cards.Where(c => c.Quote?.Currency == currency).Select(static c => (long) (c.Quote!.Lowest ?? 0)).DefaultIfEmpty(0).Max();
+		Verdict Craft(Said why, bool unsure = false) => Crafted(app, game, currency, why, unsure, top);
 
 		if ((currency <= 0) || (cards.Count == 0)) {
-			return Craft("no price in this account's wallet currency - crafted");
+			return Craft(new Said("no price in its wallet's currency"), unsure: true);
 		}
 
 		List<SalePrice> prices = [];
@@ -64,23 +75,23 @@ public static class SetSale {
 			string name = new BuyCard(hash, 0).Name;
 
 			if ((quote == null) || (quote.Currency != currency) || (quote.Lowest is not int lowest)) {
-				return Craft($"no market price for {name} right now - crafted");
+				return Craft(new Said("no market price for {0} right now", name), unsure: true);
 			}
 
 			if (quote.Sales < MinSales) {
-				return Craft($"{name} sold only {quote.Sales} time(s) in the last day - crafted, a listing could hang");
+				return Craft(new Said("{0} sold only {1} time(s) in the last day", name, quote.Sales));
 			}
 
-			(int? buyer, Said why) = ListingPrice.For(quote.Price, 3, dumpPct);
+			(int? buyer, _) = ListingPrice.For(quote.Price, 3, dumpPct);
 
 			if (buyer is not int pays) {
-				return Craft($"{name}: {why.ToEnglish()} - crafted");
+				return Craft(new Said("{0}: its price isn't clear right now", name), unsure: true);
 			}
 
 			int receive = Seller.ReceiveFor(pays);
 
 			if (receive <= 0) {
-				return Craft($"{name} pays nothing on the market - crafted");
+				return Craft(new Said("{0} pays nothing on the market", name));
 			}
 
 			prices.Add(new SalePrice(hash, lowest, pays, receive));
@@ -109,11 +120,10 @@ public static class SetSale {
 		int about = levels + ((!more && (last > 0)) ? (int) Math.Min(1000, left / last) : 0);
 		bool sell = (levels >= 2) || ((levels == 1) && (left * 4 >= proceeds));
 		string money = BuyPlan.Money(proceeds, currency);
+		Said reason = sell ? new Said("{0} buys about {1} levels", money, about)
+			: levels == 0 ? new Said("set worth {0} buys no badge level today", money) : new Said("set worth {0} buys only {1} level", money, levels);
 
-		return new Verdict(app, game, currency, sell, proceeds, levels, about,
-			sell ? $"{money} buys about {about} levels - more than the 1 crafting makes"
-				: levels == 0 ? $"{money} buys no badge level today - crafted" : $"{money} buys only {levels} level - crafted",
-			prices);
+		return new Verdict(app, game, currency, sell, proceeds, levels, about, reason.ToEnglish(), prices, false, top) { Reason = reason };
 	}
 
 	/// <summary>One set weighed: each card's price now, against what the plan's ranked levels cost (this game left out).</summary>

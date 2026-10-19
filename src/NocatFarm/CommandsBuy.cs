@@ -61,12 +61,20 @@ public static partial class Commands {
 	internal static bool BuyNeedsOwner(string[] args) =>
 		args.Any(static a => a.ToLowerInvariant() is "on" or "do" or "now");
 
-	/// <summary>'craft now &lt;account&gt;': the badge look right away.</summary>
-	private static string CraftNow(BotManager mgr, string[] args) {
-		string[] who = [.. args.Where(static a => !a.Equals("now", StringComparison.OrdinalIgnoreCase))];
+	internal const string CraftUsage = "craft now <account> | craft preview <account>";
 
-		if ((who.Length != 1) || (mgr.Get(who[0]) is not { } bot)) {
-			return "craft now <account> - one account.";
+	/// <summary>'craft now &lt;account&gt;': the badge look right away. 'craft preview &lt;account&gt;': what it would craft or sell, and why.</summary>
+	private static async Task<string> CraftAsync(BotManager mgr, string[] args) {
+		bool preview = args.Any(static a => a.Equals("preview", StringComparison.OrdinalIgnoreCase));
+		string[] who = [.. args.Where(static a => !a.Equals("now", StringComparison.OrdinalIgnoreCase) && !a.Equals("preview", StringComparison.OrdinalIgnoreCase))];
+
+		// One account, and at most one of 'now' or 'preview' ('craft <account>' alone is 'now').
+		if ((who.Length != 1) || (args.Length > 2)) {
+			return CraftUsage + " - one account.";
+		}
+
+		if (mgr.Get(who[0]) is not { } bot) {
+			return NoSuchAccount(mgr, who[0]);
 		}
 
 		if (!bot.Cfg.CraftBadges) {
@@ -77,9 +85,33 @@ public static partial class Commands {
 			return $"{bot.Name}: not running.";
 		}
 
+		if (preview) {
+			return await SlowAsync(new Slow("craft", "looking at its finished sets", Key: "craft preview"), [bot], async b => {
+				(IReadOnlyList<SetSale.Pick> picks, string problem) = await craft.PreviewAsync(CancellationToken.None).ConfigureAwait(false);
+
+				return problem.Length > 0 ? $"{b.Name}: {problem}" : CraftPreviewSaid(b.Name, picks);
+			}, ReplyWithin, oneAtATime: true, cannot: static b => !b.IsOnline || !b.Web.Ready ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
+		}
+
 		craft.LookNow();
 
 		return $"{bot.Name}: looking at its badges now - the log says what it does.";
+	}
+
+	/// <summary>'craft preview', written out: each finished set, craft or sell or wait, and why. English, like every console reply.</summary>
+	public static string CraftPreviewSaid(string name, IReadOnlyList<SetSale.Pick> picks) {
+		if (picks.Count == 0) {
+			return $"{name}: no finished sets to craft.";
+		}
+
+		List<string> lines = [.. picks.Select(p => p.Choice switch {
+			SetSale.Choice.Sell => $"{name}: {p.Game}: sell - {p.Reason.ToEnglish()}",
+			SetSale.Choice.Wait => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}, and a card is worth {p.Worth}; not crafted until it's priced",
+			_ => $"{name}: {p.Game}: craft - {p.Reason.ToEnglish()}"
+		})];
+		lines.Add($"{name}: nothing was crafted or listed - 'craft now {name}' does it.");
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	private static async Task<string> BuyCardsAsync(BotManager mgr, string[] args) {

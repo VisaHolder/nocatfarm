@@ -433,7 +433,13 @@ crafting crafts a normal badge:
   the next badge levels cost, ranked the same way buying ranks them, at today's prices.
 - **Only when it clearly wins:** at least 2 levels, or 1 level with a quarter of the money left over. Otherwise the set
   is crafted as before. So is a set with a card that sold fewer than 10 times in the last day (a listing could hang),
-  one with no price right now, and any game with more than one set ready.
+  and any game with more than one set ready.
+- **Not sure:** when it can't price a set right now (the market or the wallet doesn't answer), it crafts it only if
+  none of its cards is known to be worth more than *Never touch items worth more than*. If one is, the set waits for
+  the next look (a few hours later) instead of being crafted: *Arcane Raise: not crafted yet · couldn't price its
+  cards · a card is worth 1.97 CAD*. It weighs 3 sets a look; the rest follow the same rule.
+- **Always said:** every set it weighs gets a line in the log - sold, or *s&box: crafted · set worth 0.40 CAD buys
+  only 1 level*.
 - **Foil sets are always crafted.**
 - **Then:** it doesn't craft, lists one copy of each card (these may go above *Never sell above* - this path only), and
   says so: *selling the Arcane Raise set instead of crafting: 4.97 CAD buys about 12 levels*. Each listing needs your
@@ -442,7 +448,8 @@ crafting crafts a normal badge:
   back for a month.
 
 `buy preview myaccount` (and the popup when you turn buying on) shows any set it would sell instead of crafting, and
-what that money buys.
+what that money buys. `craft preview myaccount` goes through every finished set the account has now - craft, sell or
+wait, and why - and crafts and sells nothing. `craft now myaccount` does it.
 
 ## Spare items: gems, sell or keep
 

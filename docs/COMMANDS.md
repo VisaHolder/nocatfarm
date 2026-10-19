@@ -16,7 +16,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` `steam` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
-| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `buy` `levelup` |
+| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `craft` `buy` `levelup` |
 | **[Trades & items](#trades--items)** | `offers` `trade` `send` `swaps` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-84 commands in all.
+85 commands in all.
 
 ## Accounts
 
@@ -72,6 +72,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. "Deal with spare items" does it by itself (see 'spare'). |
 | `booster [account\|all] \| <account> <appIDs> \| plan [account\|all] \| open [account\|all] \| open <account> do` <br>also `boosters` | Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the "Make booster packs" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. "Open booster packs" does it by itself. |
 | `spare preview [account\|all] \| on\|off <account> \| do <account>` <br>also `gems` | Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day). |
+| `craft now <account> \| preview <account>` | 'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing. |
 | `buy [account\|all] \| preview [account\|all] \| on\|off\|do <account>` | Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent. |
 | `levelup <account> <level>` <br>also `lvlup` | What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background. |
 

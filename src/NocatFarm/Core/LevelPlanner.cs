@@ -486,6 +486,15 @@ public static class LevelPlanner {
 		return games;
 	}
 
+	/// <summary>A game's card prices as last read (US cents, by market name), however old - never a request. Null when never read.</summary>
+	internal static Dictionary<string, int>? KnownSet(uint app) {
+		lock (SetsGate) {
+			_sets ??= LoadSets();
+
+			return _sets.TryGetValue(Key(app, UsDollar), out SetPrice? set) ? new Dictionary<string, int>(set.Cards, StringComparer.Ordinal) : null;
+		}
+	}
+
 	private static Dictionary<string, SetPrice> LoadSets() {
 		try {
 			if (File.Exists(SetsPath) && JsonSerializer.Deserialize<List<SetPrice>>(File.ReadAllText(SetsPath)) is { } list) {
