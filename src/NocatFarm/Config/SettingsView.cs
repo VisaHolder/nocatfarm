@@ -30,7 +30,9 @@ public static partial class Settings {
 	/// place in the list is the row's.
 	/// </summary>
 	public static readonly IReadOnlyDictionary<string, string[]> ChipRows = new Dictionary<string, string[]> {
-		["What counts as spare"] = ["SpareExtraCards", "SpareMaxedBadgeCards", "SpareFoils", "SpareBackgrounds", "SpareEmoticons"]
+		["What counts as spare"] = ["SpareExtraCards", "SpareMaxedBadgeCards", "SpareFoils", "SpareBackgrounds", "SpareEmoticons"],
+		// 1.8.2: which kinds of line the window and the dashboard's Log tab show - the log file keeps them all (Core/LogShow.cs).
+		["Show in the app's log"] = Core.LogShow.All
 	};
 
 	/// <summary>

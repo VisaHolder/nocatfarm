@@ -1238,7 +1238,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 				Text = e.Text,
 				// Lines in a row of the same kind from one account show as one row there (Core/LogStack.cs).
 				Kind = LogStack.KindOf(e),
-				Value = LogStack.ValueOf(e.Said)
+				Value = LogStack.ValueOf(e.Said),
+				// What it's about, as the "Show in the app's log" chip that shows it (Core/LogShow.cs) - null for a warning or an
+				// error, which always show, and for a line no rule knows. The page hides it while that chip is off.
+				Show = e.Level is "WARN" or "ERROR" ? null : LogShow.KindOf(e)
 			}))));
 
 		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names

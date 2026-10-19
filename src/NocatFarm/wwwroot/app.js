@@ -4531,7 +4531,14 @@ function renderLog() {
     $('logBot').value = who;
   }
 
-  const rows = logLines.filter((l) => logLevels[l.Level] !== false && (!who || l.Source === who) &&
+  // "Show in the app's log" (Settings, Logging): a kind whose chip is off stays out of here - the log file and Copy keep it.
+  const kept = logLines.filter(logChipShows);
+  const chipHidden = logLines.length - kept.length;
+  if (chipHidden > 0) {
+    $('logLevels').insertAdjacentHTML('beforeend', `<span class="muted small" style="margin-left:8px">${esc(tf("{0} hidden by Show in the app's log", chipHidden))}</span>`);
+  }
+
+  const rows = kept.filter((l) => logLevels[l.Level] !== false && (!who || l.Source === who) &&
     (!q || l.Text.toLowerCase().includes(q) || l.Source.toLowerCase().includes(q)));
 
   const body = $('logBody');
@@ -4542,6 +4549,13 @@ function renderLog() {
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
+}
+
+// A line's "Show in the app's log" chip, as the server says it (Core/LogShow.cs): Show names the setting, and the line stays
+// out while that is off. Warnings, errors and lines of no known kind come with none and always show.
+function logChipShows(l) {
+  const g = (config && config.Global) || {};
+  return !l.Show || g[l.Show] !== false;
 }
 
 // ── stacked rows ─────────────────────────────────────────────────────
@@ -7034,6 +7048,17 @@ function chipWord(name) {
     case 'SpareFoils': return t('foils');
     case 'SpareBackgrounds': return t('backgrounds');
     case 'SpareEmoticons': return t('emoticons');
+    case 'LogShowDoing': return t("what it's doing");
+    case 'LogShowDrops': return t('card drops and farming');
+    case 'LogShowBadges': return t('badges, crafting, level');
+    case 'LogShowBuying': return t('buying cards');
+    case 'LogShowSelling': return t('selling, spare items, gems');
+    case 'LogShowTrades': return t('trades and card swaps');
+    case 'LogShowComments': return t('comments, friends, rep4rep');
+    case 'LogShowAchievements': return t('achievements');
+    case 'LogShowFree': return t('free games, items, Points');
+    case 'LogShowAnswers': return t('answers to commands');
+    case 'LogShowApp': return t('updates and app messages');
     default: return name;
   }
 }

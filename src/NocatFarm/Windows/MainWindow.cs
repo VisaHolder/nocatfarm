@@ -83,6 +83,15 @@ public sealed partial class MainWindow : IDisposable {
 	/// </summary>
 	private readonly List<Core.LogStack.Row> _rows = [];
 
+	/// <summary>
+	/// Every line it was given, shown or not - so turning a "Show in the app's log" chip back on brings its lines back, and
+	/// turning one off takes them away, without a restart (Core/LogShow.cs). <see cref="_rows"/> is built from these.
+	/// </summary>
+	private readonly List<Log.Entry> _given = [];
+
+	/// <summary>The chips that were off when <see cref="_rows"/> was built.</summary>
+	private string _shownOff = Core.LogShow.Off(Config.Live.Global);
+
 	/// <summary>Where the stacked rows were drawn this time, for the click that opens or closes one.</summary>
 	private readonly List<(int Y, int H, Core.LogStack.Row Row)> _stackHits = [];
 
@@ -304,12 +313,50 @@ public sealed partial class MainWindow : IDisposable {
 		lock (_logGate) {
 			// The entry is kept whole - time, account and line drawn in fixed columns at paint time. Pre-joining them into
 			// one string is what makes a log look like a wall - the eye has nothing to line up on.
-			Core.LogStack.Add(_rows, entry);
+			_given.Add(entry);
 
-			while (_rows.Count > 200) {
-				_rows.RemoveAt(0);
+			while (_given.Count > 1000) {
+				_given.RemoveAt(0);
+			}
+
+			// Under chips changed since: built again from every line, and this one is in it.
+			if (!FollowChips() && Core.LogShow.Shows(entry)) {
+				Core.LogStack.Add(_rows, entry);
+				TrimRows();
 			}
 		}
+	}
+
+	private void TrimRows() {
+		while (_rows.Count > 200) {
+			_rows.RemoveAt(0);
+		}
+	}
+
+	/// <summary>
+	/// The rows again from every line given, when the "Show in the app's log" chips changed since they were built. Returns
+	/// whether it did. Under <see cref="_logGate"/>.
+	/// </summary>
+	private bool FollowChips() {
+		string off = Core.LogShow.Off(Config.Live.Global);
+
+		if (string.Equals(off, _shownOff, StringComparison.Ordinal)) {
+			return false;
+		}
+
+		_shownOff = off;
+		_rows.Clear();
+		_logScroll = 0;
+
+		foreach (Log.Entry e in _given) {
+			if (Core.LogShow.Shows(e)) {
+				Core.LogStack.Add(_rows, e);
+			}
+		}
+
+		TrimRows();
+
+		return true;
 	}
 
 	private static int ColourOf(string level) => level switch {
@@ -324,6 +371,7 @@ public sealed partial class MainWindow : IDisposable {
 	public void ClearLog() {
 		lock (_logGate) {
 			_rows.Clear();
+			_given.Clear();
 			_logScroll = 0;
 		}
 
@@ -873,6 +921,7 @@ public sealed partial class MainWindow : IDisposable {
 				int lines;
 
 				lock (_logGate) {
+					FollowChips();
 					lines = Core.LogStack.Shown(_rows).Count();
 				}
 
@@ -1688,7 +1737,9 @@ public sealed partial class MainWindow : IDisposable {
 		int total;
 
 		lock (_logGate) {
-			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented.
+			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented. Under the
+			// "Show in the app's log" chips as they are now.
+			FollowChips();
 			List<(Core.LogStack.Row Row, Log.Entry Entry, int Depth, bool Head)> shown = [.. Core.LogStack.Shown(_rows)];
 			total = shown.Count;
 			_logScroll = Math.Clamp(_logScroll, 0, Math.Max(0, total - room));

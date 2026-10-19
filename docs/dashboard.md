@@ -28,6 +28,13 @@ and an account's rows never mix with another's. Copy and the log file keep every
 (or `cls`) in the Console empties this tab and the Console on this screen only. The app window keeps its lines, and
 the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
 
+*Settings → Logging → Show in the app's log* (with *Show advanced* on) picks which kinds of line the app window and
+this tab show: what it's doing, card drops, badges, buying, selling and gems, trades, comments and rep4rep,
+achievements, free stuff, answers to commands, and app messages. All are on to begin with; tap a chip off and its lines
+leave the window and this tab at once (on again, they come back). The log file and Copy still keep every line,
+warnings and errors always show, a line that fits no kind always shows, and what you type in the window is always
+answered there. The tab says how many lines the chips hide.
+
 **Console** runs the same commands as the app window. Tab completes commands and then account names, and up/down
 goes through your history. A bare `help` opens a searchable command list.
 
