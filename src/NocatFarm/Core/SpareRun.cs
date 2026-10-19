@@ -371,7 +371,7 @@ public static class SpareRun {
 	/// 0.30 card look like gems. Ones that can't go to the market aren't asked about.
 	/// </summary>
 	public static Said? BeforeGems(SpareDecision d, MarketQuote? now, MarketPrice? sack, SpareRules rules, int currency, DateTime utcNow) {
-		if (!d.Item.Marketable || (d.Verdict != SpareVerdict.Gems)) {
+		if (!d.Item.Sellable || (d.Verdict != SpareVerdict.Gems)) {
 			return null;
 		}
 
@@ -433,7 +433,7 @@ public static class SpareRun {
 	/// the market, unless its own price in the wallet's money was read in the last hour.
 	/// </summary>
 	public static bool NeedsPriceBeforeGems(SpareDecision d, int currency, DateTime utcNow) =>
-		d.Item.Marketable && (d.Verdict == SpareVerdict.Gems)
+		d.Item.Sellable && (d.Verdict == SpareVerdict.Gems)
 		&& ((d.PriceCents <= 0) || (MarketQuotes.Of(d.Item.Hash, currency) is not { } own) || (utcNow - own.When > Modules.GemsChoice.ActFresh) || (utcNow < own.When.AddMinutes(-5)));
 
 	/// <summary>
