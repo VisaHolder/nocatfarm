@@ -103,7 +103,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
 					_backoffUntil = DateTime.UtcNow + wait;
 				} else if (_moreToCraft) {
-					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
+					wait = Rng.HumanMinutes(25, 75);   // the rest of the sets within the hour or so, like somebody crafting a few now and then
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -230,7 +230,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		// A human-mode account crafts a few and gets on with its day - the rest wait for a later sweep. Twenty badges
 		// a few seconds apart is a burst nobody makes by hand.
-		int most = Bot.Cfg.LegitMode ? Rng.Next(1, 4) : ready.Count;
+		int most = Bot.Cfg.LegitMode ? Rng.Next(2, 5) : ready.Count;
 		_moreToCraft = ready.Count > most;
 		ready = [.. ready.Take(most)];
 
