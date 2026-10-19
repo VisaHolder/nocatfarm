@@ -7009,6 +7009,7 @@ function zeroWord(z) {
     case 'never again': return t('never again');
     case 'never': return t('never');
     case 'automatic': return t('automatic');
+    case 'every game': return t('every game');
     default: return z || '';
   }
 }

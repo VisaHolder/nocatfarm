@@ -13,7 +13,9 @@ namespace NocatFarm.Core;
 ///   - the account is set to protect refunds (<c>SkipRefundableGames</c>, per account),
 ///   - the account BOUGHT it - free-to-play and claimed freebies are never held,
 ///   - it was bought (or gifted to it) less than <see cref="HoldDays"/> ago, and
-///   - it has under two hours on it, which is the line Steam actually draws.
+///   - it has under two hours on it, which is the line Steam actually draws, and
+///   - 1.8.2: it cost more than "Protect refunds only for games over", when that's set (see RefundGuard.Price.cs) - what
+///     was paid, else the store's regular price; a price not known is protected.
 ///
 /// Family-shared games are the exception, and are judged on arrival alone: a borrowed
 /// game is left alone for its first fortnight in the shared library, because whoever paid for it might still be
@@ -23,7 +25,7 @@ namespace NocatFarm.Core;
 /// played two hours of it yourself. A failed lookup holds nothing NEW - holding an entire library over one failed
 /// lookup is worse than the thing it protects against - but keeps what was already held until Steam answers again.
 /// </summary>
-public sealed class RefundGuard(Bot bot) {
+public sealed partial class RefundGuard(Bot bot) {
 	/// <summary>Steam's own line. Not configurable, because it isn't ours to move.</summary>
 	private const double RefundHours = 2.0;
 
@@ -133,6 +135,15 @@ public sealed class RefundGuard(Bot bot) {
 				} else if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
 					held.Add(game.AppId);
 				}
+			}
+
+			// 1.8.2: "Protect refunds only for games over" - a game that cost that or less is farmed right away (its price not
+			// known yet: still held).
+			if ((ThresholdCents(bot.Cfg) > 0) && (held.Count > 0)) {
+				held.ExceptWith(await CheapOfAsync([.. held.Select(a => (a, Name(a), shared.Contains(a)))], DateTime.UtcNow, ct).ConfigureAwait(false));
+				shared.IntersectWith(held);
+			} else {
+				_cheap = [];
 			}
 
 			// The FIRST list of a session is a state of affairs, not an event.

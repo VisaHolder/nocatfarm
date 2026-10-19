@@ -3072,7 +3072,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 					continue;
 				}
 
-				DateTime start = HumanHabits.TrialStart(own, Bot.Cfg);
+				DateTime start = HumanHabits.TrialStartOf(own, Bot.Cfg, Bot.Refunds.Cheap(game.AppId));
 				int days = HumanHabits.TrialDays(Bot.Name, game.AppId);
 				double strength = HumanHabits.TrialStrength(start, now, days);
 

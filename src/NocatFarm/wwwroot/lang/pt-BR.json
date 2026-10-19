@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "gemas: a Steam recusou o último anúncio - nova tentativa por volta das {0}",
     "Steam didn't answer - looking for the offer at the next look": "a Steam não respondeu - a oferta será procurada na próxima olhada",
     "card swap · found the offer sent to {0} before the restart": "troca de cartas · encontrada a oferta enviada para {0} antes do reinício",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "fez outra coisa às {0} - o modo humano espaça as coisas; pode seguir por volta das {1}"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "fez outra coisa às {0} - o modo humano espaça as coisas; pode seguir por volta das {1}",
+    "every game": "todos os jogos"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4961,6 +4962,10 @@
     "BuyHumanGapMaxMinutes": {
       "label": "Espera mais longa entre olhadas, modo humano",
       "tip": "A espera mais longa entre duas olhadas que compram numa conta em modo humano, em minutos. Por exemplo 90, com 30 como a mais curta: umas 16 olhadas num dia de 16 horas."
+    },
+    "RefundProtectMinPrice": {
+      "label": "Proteger reembolsos só para jogos acima de",
+      "tip": "Só os jogos que custaram mais que isso ficam de lado enquanto podem ser reembolsados; um mais barato é farmado na hora. Usa o que você pagou quando o histórico de compras da Steam mostra; senão, o preço normal da loja (uma promoção nunca o abaixa); um preço que não encontra fica protegido. Na moeda da carteira Steam desta conta. Por exemplo 5,00: um jogo de 0,99 que você acabou de comprar é farmado na hora; um de 20,00 fica de lado até não poder mais ser reembolsado. 0 protege todos os jogos."
     }
   }
 }

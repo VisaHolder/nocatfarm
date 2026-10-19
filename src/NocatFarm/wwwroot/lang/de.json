@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "Edelsteine: Steam hat das letzte Angebot abgelehnt - neuer Versuch ab etwa {0}",
     "Steam didn't answer - looking for the offer at the next look": "Steam hat nicht geantwortet - beim nächsten Blick wird nach dem Angebot gesucht",
     "card swap · found the offer sent to {0} before the restart": "Kartentausch · das vor dem Neustart an {0} gesendete Angebot gefunden",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "es hat um {0} etwas anderes gemacht - der menschliche Modus verteilt die Dinge; ab etwa {1} kann es loslegen"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "es hat um {0} etwas anderes gemacht - der menschliche Modus verteilt die Dinge; ab etwa {1} kann es loslegen",
+    "every game": "jedes Spiel"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4961,6 +4962,10 @@
     "BuyHumanGapMaxMinutes": {
       "label": "Längste Pause zwischen Blicken, menschlicher Modus",
       "tip": "Die längste Pause zwischen zwei Blicken, die auf einem Konto im Menschen-Modus kaufen, in Minuten. Zum Beispiel 90, mit 30 als kürzester: etwa 16 Blicke an einem 16-Stunden-Tag."
+    },
+    "RefundProtectMinPrice": {
+      "label": "Erstattungen nur schützen für Spiele über",
+      "tip": "Nur Spiele, die mehr als das gekostet haben, bleiben in Ruhe, solange sie erstattet werden können; ein günstigeres wird sofort gefarmt. Es zählt, was du bezahlt hast, wenn Steams Kaufverlauf es zeigt, sonst der reguläre Shop-Preis (ein Angebot senkt ihn nie); ein Preis, den es nicht findet, ist geschützt. In der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 5,00: Ein gerade gekauftes Spiel für 0,99 wird sofort gefarmt; eines für 20,00 bleibt in Ruhe, bis es nicht mehr erstattet werden kann. 0 schützt jedes Spiel."
     }
   }
 }

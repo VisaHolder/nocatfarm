@@ -1629,8 +1629,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
-			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays)) {
+			// Free games carry today's date too, and no amount of playing one costs anybody a refund. 1.8.2: nor one that cost no
+			// more than "Protect refunds only for games over" (Bot.Refunds.Cheap - not known yet: left alone).
+			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays) && !Bot.Refunds.Cheap(appId)) {
 				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(RefundableForDays)).ToString("d")), Bot.Name);
 				byApp.Remove(appId);
 			}

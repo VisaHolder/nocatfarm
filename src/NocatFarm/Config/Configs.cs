@@ -553,6 +553,13 @@ public sealed class BotConfig {
 	/// </summary>
 	public bool SkipRefundableGames { get; set; } = true;
 
+	/// <summary>
+	/// 1.8.2: "Protect refunds only for games over", in the wallet's own currency: a refundable game that cost this or less
+	/// isn't held - it's farmed right away (<see cref="Core.RefundGuard"/>). What it cost is what was paid when the purchase
+	/// history shows it, else the store's regular price; not known - protected. 0: every refundable game, as before.
+	/// </summary>
+	public float RefundProtectMinPrice { get; set; }
+
 	/// <summary>When a human-mode account farms cards - <see cref="Modules.FarmWhen"/>. The day's sittings by default.</summary>
 	public int FarmCardsWhen { get; set; }
 
@@ -2340,7 +2347,9 @@ public static partial class ConfigStore {
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
 		("state", "cardswaps-", ".json"),   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)
-		("state", "gems-", ".json")   // 1.8.2 "Use gems for the most levels": what it still has to list (Modules/GemsChoice.cs)
+		("state", "gems-", ".json"),   // 1.8.2 "Use gems for the most levels": what it still has to list (Modules/GemsChoice.cs)
+		("state", "markethold-", ".json"),   // 1.8.2 the market hold (Core/MarketHold.cs)
+		("state", "refundprices-", ".json")   // 1.8.2 what its refundable games cost (Core/RefundGuard.Price.cs)
 	];
 
 	/// <summary>

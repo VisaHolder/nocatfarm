@@ -3392,7 +3392,8 @@
     "gems: Steam refused the last listing - listing again from about {0}": "보석: Steam이 지난 등록을 거부했습니다 - {0}쯤부터 다시 등록합니다",
     "Steam didn't answer - looking for the offer at the next look": "Steam이 응답하지 않았습니다 - 다음 확인 때 제안을 찾습니다",
     "card swap · found the offer sent to {0} before the restart": "카드 교환 · 재시작 전에 {0}에게 보낸 제안을 찾았습니다",
-    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다"
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다",
+    "every game": "모든 게임"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4961,6 +4962,10 @@
     "BuyHumanGapMaxMinutes": {
       "label": "확인 사이 가장 긴 대기, 사람 모드",
       "tip": "사람 모드 계정에서 사는 확인 사이의 가장 긴 대기(분). 예: 가장 짧은 값 30에 90이면 16시간 하루에 약 16번."
+    },
+    "RefundProtectMinPrice": {
+      "label": "이 가격보다 비싼 게임만 환불 보호",
+      "tip": "이보다 비쌌던 게임만 환불할 수 있는 동안 그대로 둡니다. 더 싼 게임은 바로 파밍합니다. Steam 구매 내역에 나오면 실제로 낸 금액을, 아니면 상점의 정가를 씁니다 (할인으로 낮아지지 않습니다). 가격을 찾지 못한 게임은 보호됩니다. 이 계정의 Steam 지갑 통화로. 예를 들어 5.00: 방금 산 0.99 게임은 바로 파밍하고, 20.00 게임은 환불할 수 없게 될 때까지 그대로 둡니다. 0이면 모든 게임을 보호합니다."
     }
   }
 }
