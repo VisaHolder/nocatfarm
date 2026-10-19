@@ -52,7 +52,7 @@ public static class SettingsCopy {
 		nameof(BotConfig.BuyDailyLimit), nameof(BotConfig.BuyWeeklyLimit), nameof(BotConfig.CardSwapMaxLoss), nameof(BotConfig.SpareMaxPrice), nameof(BotConfig.SpareDailyValue),
 		nameof(BotConfig.SpareMinSale),
 		// trades
-		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.CardSwapsPerDay), nameof(BotConfig.AcceptFromMasters), nameof(BotConfig.TradeMasters),
+		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.CardSwapsPerDay), nameof(BotConfig.TradeMasters),
 		nameof(BotConfig.AutoTradeWith), nameof(BotConfig.DeclineOtherTrades), nameof(BotConfig.AcceptDonations), nameof(BotConfig.DonationsWhileAsleep),
 		// sends items away
 		nameof(BotConfig.SendItemTypes), nameof(BotConfig.SendOnFarmingFinished), nameof(BotConfig.SendEveryHours), nameof(BotConfig.SendAroundHour),
@@ -95,8 +95,8 @@ public static class SettingsCopy {
 		nameof(BotConfig.CraftBadges), nameof(BotConfig.CraftFoilBadges), nameof(BotConfig.SellPerRun),
 		// Spare
 		nameof(BotConfig.SpareAction), nameof(BotConfig.SpareKeepGems), nameof(BotConfig.SpareMaxedBadgeCards), nameof(BotConfig.SpareExtraCards),
-		nameof(BotConfig.SpareKeepCopies), nameof(BotConfig.SpareFoils), nameof(BotConfig.SpareBackgrounds), nameof(BotConfig.SpareKeepBackgrounds),
-		nameof(BotConfig.SpareEmoticons), nameof(BotConfig.SpareKeepEmoticons), nameof(BotConfig.SpareNewDays), nameof(BotConfig.SpareKeepItems),
+		nameof(BotConfig.SpareKeepCopies), nameof(BotConfig.SpareFoils), nameof(BotConfig.SpareBackgrounds),
+		nameof(BotConfig.SpareEmoticons), nameof(BotConfig.SpareNewDays), nameof(BotConfig.SpareKeepItems),
 		nameof(BotConfig.SpareKeepGames), nameof(BotConfig.SpareGemMarginPct), nameof(BotConfig.SparePerRun), nameof(BotConfig.SpareDailyItems),
 		nameof(BotConfig.SpareRunHours), nameof(BotConfig.SpareGapSeconds), nameof(BotConfig.SparePriceMaxAgeHours), nameof(BotConfig.SpareSellPrice),
 		nameof(BotConfig.SpareDumpPct), nameof(BotConfig.SpareRelistDays), nameof(BotConfig.SpareRelistFloorPct), nameof(BotConfig.SpareDeclinedDays),
@@ -126,7 +126,7 @@ public static class SettingsCopy {
 		// Buy
 		nameof(BotConfig.BuyCheckHours),
 		// Inventory
-		nameof(BotConfig.ShowInventoryValue), nameof(BotConfig.InventoryIgnoreGames), nameof(BotConfig.WatchBans),
+		nameof(BotConfig.ShowInventoryValue), nameof(BotConfig.InventoryIgnoreGames),
 		// ScamWatch
 		nameof(BotConfig.WatchForScams), nameof(BotConfig.ScamWatchStopTrades), nameof(BotConfig.ScamWatchCancelOffers),
 		nameof(BotConfig.ScamWatchRevokeKey), nameof(BotConfig.ScamWatchApiKey), nameof(BotConfig.ScamWatchDevices), nameof(BotConfig.ScamWatchDetails),
