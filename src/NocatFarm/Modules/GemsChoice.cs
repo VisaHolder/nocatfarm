@@ -390,6 +390,9 @@ public static class GemsChoice {
 		public int Day { get; set; }
 		public int ListedToday { get; set; }
 
+		/// <summary>1.8.2: when a sack was last put up without a clear yes (UTC ticks, 0 none) - looked for among the listings before another goes up.</summary>
+		public long SackTriedAt { get; set; }
+
 		/// <summary>The latest word, for 'booster plan' and the status line.</summary>
 		public string Last { get; set; } = "";
 		public long LastAt { get; set; }

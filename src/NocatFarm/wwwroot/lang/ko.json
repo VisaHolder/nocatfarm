@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "등록 안 함: 받는 금액 {0}이(가) 보석 가치({1})보다 많지 않음",
     "no price right now - kept until it has one": "지금은 가격이 없음 - 가격이 나올 때까지 보관",
     "worth {0} now - over your price limit, kept": "지금 가치 {0} - 가격 한도를 넘어서 보관",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "지금 팔면 {0}로, 보석 {1}개의 가치({2})보다 많음 - 보관"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "지금 팔면 {0}로, 보석 {1}개의 가치({2})보다 많음 - 보관",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "보석: 보석 자루의 최신 가격이 없음 - 이번에는 아무것도 등록하지 않음"
   },
   "settings": {
     "SteamOpenEveryAccount": {

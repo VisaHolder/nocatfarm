@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "nie wystawiono: dostałbyś {0}, nie więcej niż warte są jego klejnoty ({1})",
     "no price right now - kept until it has one": "teraz brak ceny - zachowany, dopóki jej nie będzie",
     "worth {0} now - over your price limit, kept": "teraz warte {0} - powyżej Twojego limitu ceny, zachowany",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "sprzedaż teraz da {0}, więcej niż warte są jego {1} klejnoty ({2}) - zachowany"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "sprzedaż teraz da {0}, więcej niż warte są jego {1} klejnoty ({2}) - zachowany",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "klejnoty: brak świeżej ceny worka klejnotów - tym razem nic nie zostaje wystawione"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "nicht eingestellt: du bekämst {0}, nicht mehr als seine Edelsteine wert sind ({1})",
     "no price right now - kept until it has one": "gerade kein Preis - wird behalten, bis es einen hat",
     "worth {0} now - over your price limit, kept": "jetzt {0} wert - über deinem Preislimit, wird behalten",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "ein Verkauf brächte jetzt {0}, mehr als seine {1} Edelsteine wert sind ({2}) - wird behalten"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "ein Verkauf brächte jetzt {0}, mehr als seine {1} Edelsteine wert sind ({2}) - wird behalten",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "Edelsteine: kein frischer Preis für einen Sack Edelsteine - in diesem Durchgang wird nichts eingestellt"
   },
   "settings": {
     "SteamOpenEveryAccount": {

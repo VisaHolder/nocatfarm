@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "не выставлено: вы получили бы {0}, не больше, чем стоят его самоцветы ({1})",
     "no price right now - kept until it has one": "сейчас цены нет - остаётся, пока она не появится",
     "worth {0} now - over your price limit, kept": "сейчас стоит {0} - выше вашего лимита цены, остаётся",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "продажа сейчас даст {0}, больше, чем стоят его {1} самоцветов ({2}) - остаётся"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "продажа сейчас даст {0}, больше, чем стоят его {1} самоцветов ({2}) - остаётся",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "самоцветы: нет свежей цены мешка самоцветов - в этот раз ничего не выставляется"
   },
   "settings": {
     "SteamOpenEveryAccount": {

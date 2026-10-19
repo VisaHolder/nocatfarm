@@ -250,19 +250,27 @@ public sealed partial class Boosters {
 			return false;
 		}
 
-		// What a sack pays now: what every listing here has to beat to keep the rule that gems never lose money.
-		int sack = GemsChoice.Receive(MarketQuotes.Of(SparePrices.SackHash, cur), Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95));
+		// What a sack pays now: what every listing here has to beat to keep the rule that gems never lose money. 1.8.2: only a
+		// price at most SackFresh old - read again when it's older; with none that fresh, nothing is listed this look (an old
+		// price set the minimums of packs and cards).
+		MarketQuote? sackQuote = MarketQuotes.Of(SparePrices.SackHash, cur);
 
-		if ((sack <= 0) || (DateTime.UtcNow - (MarketQuotes.Of(SparePrices.SackHash, cur)?.When ?? DateTime.MinValue) > GemsChoice.SackFresh)) {
-			if (await new LiveMarket(Bot).QuoteAsync(SparePrices.SackHash, cur, ct).ConfigureAwait(false) is { } q) {
-				sack = GemsChoice.Receive(q, Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95));
-			}
+		if ((sackQuote == null) || (DateTime.UtcNow - sackQuote.When > GemsChoice.SackFresh)) {
+			sackQuote = await new LiveMarket(Bot).QuoteAsync(SparePrices.SackHash, cur, ct).ConfigureAwait(false);
+		}
+
+		int sack = (sackQuote != null) && (DateTime.UtcNow - sackQuote.When <= GemsChoice.SackFresh) ? GemsChoice.Receive(sackQuote, Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95)) : 0;
+
+		if (sack <= 0) {
+			Log.DebugOnChange($"gemsack:{Bot.Name}", "gems: no fresh price for a sack of gems - nothing listed this look", Bot.Name);
+
+			return false;
 		}
 
 		List<SpareItem> items = Spare.Read(inventory);
 		int floor = Math.Clamp(Bot.Cfg.SpareRelistFloorPct, 1, 100), dump = Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95);
 
-		Seller.Reprice Priced(int minReceive) => (o, token) => Seller.RepriceAsync(o, cur, 3, dump, null, null, token, minReceive: minReceive, floorPct: floor,
+		Seller.Reprice Priced(int minReceive, int? maxWorth = null) => (o, token) => Seller.RepriceAsync(o, cur, 3, dump, maxWorth, null, token, minReceive: minReceive, floorPct: floor,
 			ours: OurListings.UpFor(OurListings.Load(Bot.Name), o.Hash));
 
 		async Task<int> ListAsync(IReadOnlyList<Seller.Offer> offers, Seller.Reprice reprice, Action<Seller.Offer>? each = null) {
@@ -274,8 +282,27 @@ public sealed partial class Boosters {
 			return listed;
 		}
 
-		// Its sacks: a sack is the gems' own worth, so only the market's floor.
+		// Its sacks: a sack is the gems' own worth, so only the market's floor. Only as many as it packed - and a listing
+		// whose answer wasn't a clear yes may be up all the same: the listings are looked at before another goes up.
 		if (mem.Sacks > 0) {
+			if (mem.SackTriedAt > 0) {
+				if (await Seller.ListingsAsync(Bot, ct).ConfigureAwait(false) is not { } up) {
+					return true;   // not known whether the last one went up: nothing more this look
+				}
+
+				DateTime tried = new(mem.SackTriedAt, DateTimeKind.Utc);
+				mem.SackTriedAt = 0;
+
+				if (up.Any(l => (l.Hash == SparePrices.SackHash) && (l.Created >= tried.AddMinutes(-2)))) {
+					mem.Sacks--;   // it went up after all
+					mem.Save(Bot.Name);
+
+					return true;
+				}
+
+				mem.Save(Bot.Name);
+			}
+
 			SpareItem? held = items.FirstOrDefault(static i => (i.Kind == SpareKind.GemSack) && i.Tradable && i.Marketable);
 
 			if (held == null) {
@@ -287,8 +314,12 @@ public sealed partial class Boosters {
 				return false;
 			}
 
+			mem.SackTriedAt = DateTime.UtcNow.Ticks;
+			mem.Save(Bot.Name);
+
 			if (await ListAsync([new Seller.Offer(held.AssetId, "Steam", "Sack of Gems", 0, 0, 0, SparePrices.SackHash)], Priced(1)).ConfigureAwait(false) > 0) {
 				mem.Sacks--;
+				mem.SackTriedAt = 0;
 				mem.Save(Bot.Name);
 			}
 
@@ -333,9 +364,14 @@ public sealed partial class Boosters {
 			return false;
 		}
 
-		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth when that's known.
+		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth. 1.8.2: by the
+		// spare items rules too - never a card of a game (or a card) on the keep list, never one worth more than "Never touch
+		// items worth more than", one whose gem value isn't known is kept for now, and never a card of a set the account is
+		// levelling or buying cards for (cards of it held besides the pack's, bought for a badge, or packs working on it).
 		HashSet<ulong> taken = [];
 		List<(Seller.Offer Offer, GemsChoice.Memory.OpenedCard Card, int Min)> rows = [];
+		SpareRules rules = SpareRules.From(Bot.Cfg);
+		HashSet<uint> working = [.. CardExchange.BoughtGames(Bot.Name, DateTime.UtcNow), .. BoosterPick.Busy(Bot)];
 
 		foreach (GemsChoice.Memory.OpenedCard card in cards) {
 			SpareItem? item = items.FirstOrDefault(i => (i.Kind == SpareKind.Card) && (i.Game == card.App) && i.Marketable && !taken.Contains(i.AssetId)
@@ -346,8 +382,19 @@ public sealed partial class Boosters {
 				continue;
 			}
 
+			if (rules.KeepGames.Contains(card.App) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)
+				|| Levelling(card.App, items, cards, working)) {
+				mem.RemoveCard(card);   // kept: a spare card like any other from now on
+				Log.Debug($"gems: {item.Name} ({GameNames.Of(card.App)}) kept - on the keep list, or its set is being levelled", Bot.Name);
+				continue;
+			}
+
+			if (SteamGems.KnownValue(item) is not int goo) {
+				continue;   // what its gems are worth isn't known yet: not sold for now
+			}
+
 			taken.Add(item.AssetId);
-			int min = (sack > 0) && (SteamGems.KnownValue(item) is int goo and > 0) ? (int) Math.Ceiling(Spare.GemsWorth(goo, sack)) + 1 : 1;
+			int min = goo > 0 ? (int) Math.Ceiling(Spare.GemsWorth(goo, sack)) + 1 : 1;
 			rows.Add((new Seller.Offer(item.AssetId, GameNames.Of(card.App), item.Name, 0, 0, 0, item.Hash), card, min));
 		}
 
@@ -359,13 +406,20 @@ public sealed partial class Boosters {
 
 		rows = [.. rows.Take(left)];
 		Dictionary<ulong, int> mins = rows.ToDictionary(static r => r.Offer.AssetId, static r => r.Min);
-		await ListAsync([.. rows.Select(static r => r.Offer)], (o, token) => Priced(mins.GetValueOrDefault(o.AssetId, 1))(o, token),
+		await ListAsync([.. rows.Select(static r => r.Offer)], (o, token) => Priced(mins.GetValueOrDefault(o.AssetId, 1), rules.MaxPriceCents)(o, token),
 			o => { if (rows.FirstOrDefault(r => r.Offer.AssetId == o.AssetId) is { Card: { } c }) { mem.RemoveCard(c); } }).ConfigureAwait(false);
 		mem.Save(Bot.Name);
 		_dayGate!.Space(5, 30);
 
 		return true;
 	}
+
+	/// <summary>
+	/// 1.8.2: whether the account is levelling a game's set, so a card of it from a pack opened to sell is needed: cards of it
+	/// held besides the ones from packs opened to sell, cards of it bought for a badge, or automatic's packs working on it.
+	/// </summary>
+	internal static bool Levelling(uint app, IReadOnlyList<SpareItem> items, IReadOnlyList<GemsChoice.Memory.OpenedCard> opened, IReadOnlySet<uint> working) =>
+		working.Contains(app) || (items.Count(i => (i.Kind == SpareKind.Card) && (i.Game == app)) > opened.Count(c => c.App == app));
 
 	/// <summary>A pack automatic opened to sell its cards: the cards noted, to be listed at the next looks.</summary>
 	internal static void OpenedToSell(Bot bot, BoosterPick.OwnPack own, IReadOnlyList<string> cards) {

@@ -28707,6 +28707,9 @@ await SweepKeepChecks.RunAsync(Check);
 // ── 1.8.2 sweep: a price read right before listing or turning into gems is weighed against the gems and the price limit too; fakes only ──
 await SweepGemsRuleChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 sweep: what the gems were turned into, listed - a fresh sack price, one sack at a time, cards by the spare items rules ──
+await SweepGemsSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -34247,5 +34250,54 @@ static class SweepGemsRuleChecks {
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}
+	}
+}
+
+/// <summary>1.8.2 sweep: what the gems were turned into, listed - only on a fresh sack price, one sack at a time, cards by the spare items rules. Fakes only.</summary>
+static class SweepGemsSellChecks {
+	public static Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepgemsell-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+
+		try {
+			string gems = Src("src/NocatFarm/Modules/Boosters.Gems.cs");
+			Check("sweep gems sell: a sack price older than 6 hours is never used - read again, and with none that fresh nothing is listed this look",
+				gems.Contains("int sack = (sackQuote != null) && (DateTime.UtcNow - sackQuote.When <= GemsChoice.SackFresh) ? GemsChoice.Receive(sackQuote", StringComparison.Ordinal)
+				&& gems.Contains("if (sack <= 0) {\n\t\t\tLog.DebugOnChange(", StringComparison.Ordinal) && (NocatFarm.Modules.GemsChoice.SackFresh == TimeSpan.FromHours(6)));
+			Check("sweep gems sell: one sack at a time - a listing without a clear yes is looked for among the listings before another goes up",
+				gems.Contains("mem.SackTriedAt = DateTime.UtcNow.Ticks;", StringComparison.Ordinal) && gems.Contains("if (mem.SackTriedAt > 0) {", StringComparison.Ordinal)
+				&& gems.Contains("return true;   // not known whether the last one went up: nothing more this look", StringComparison.Ordinal));
+			Check("sweep gems sell: cards from packs opened to sell - the keep list, the price limit, an unknown gem value keeps them",
+				gems.Contains("rules.KeepGames.Contains(card.App) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)", StringComparison.Ordinal)
+				&& gems.Contains("Priced(mins.GetValueOrDefault(o.AssetId, 1), rules.MaxPriceCents)", StringComparison.Ordinal)
+				&& gems.Contains("if (SteamGems.KnownValue(item) is not int goo) {", StringComparison.Ordinal));
+
+			var mem = NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem");
+			mem.SackTriedAt = 638_000_000_000_000_000;
+			mem.Save("sgs-mem");
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			Check("sweep gems sell: a sack put up without a clear yes is remembered across a restart",
+				NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem").SackTriedAt == 638_000_000_000_000_000);
+
+			// A set it's levelling: cards of it held besides the pack's, or bought, or packs working on it - those cards stay.
+			MethodInfo levelling = typeof(NocatFarm.Modules.Boosters).GetMethod("Levelling", BindingFlags.NonPublic | BindingFlags.Static)!;
+			NocatFarm.Core.SpareItem Card(ulong id, uint app) => new(id, app, NocatFarm.Core.SpareKind.Card, $"{app}-C{id}", $"C{id}", true, true, 1, 2, 0);
+			List<NocatFarm.Modules.GemsChoice.Memory.OpenedCard> opened = [new(600, "C1", DateTime.UtcNow), new(600, "C2", DateTime.UtcNow), new(600, "C3", DateTime.UtcNow)];
+			bool Is(List<NocatFarm.Core.SpareItem> items, HashSet<uint> working) => (bool) levelling.Invoke(null, [600u, items, opened, working])!;
+			List<NocatFarm.Core.SpareItem> onlyPack = [Card(1, 600), Card(2, 600), Card(3, 600), Card(4, 700)];
+			Check("sweep gems sell: only the pack's own cards of a game - sold; a card of it held besides - its set is being levelled, kept; bought for a badge or packs on it - kept",
+				!Is(onlyPack, []) && Is([.. onlyPack, Card(5, 600)], []) && Is(onlyPack, [600u]));
+		} finally {
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+
+		return Task.CompletedTask;
 	}
 }

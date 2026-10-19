@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "no se pone a la venta: recibirías {0}, no más de lo que valen sus gemas ({1})",
     "no price right now - kept until it has one": "sin precio ahora mismo - se guarda hasta que tenga uno",
     "worth {0} now - over your price limit, kept": "ahora vale {0} - por encima de tu límite de precio, se guarda",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "venderlo ahora da {0}, más de lo que valen sus {1} gemas ({2}) - se guarda"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "venderlo ahora da {0}, más de lo que valen sus {1} gemas ({2}) - se guarda",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "gemas: no hay un precio reciente de un saco de gemas - esta vez no se pone nada a la venta"
   },
   "settings": {
     "SteamOpenEveryAccount": {

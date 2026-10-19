@@ -3253,7 +3253,8 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "listelenmedi: {0} alırdın, mücevherlerinin değerinden ({1}) fazla değil",
     "no price right now - kept until it has one": "şu an fiyatı yok - bir fiyatı olana kadar tutuluyor",
     "worth {0} now - over your price limit, kept": "şimdi {0} değerinde - fiyat sınırının üstünde, tutuluyor",
-    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "şimdi satmak {0} getirir, {1} mücevherinin değerinden ({2}) fazla - tutuluyor"
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "şimdi satmak {0} getirir, {1} mücevherinin değerinden ({2}) fazla - tutuluyor",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "mücevherler: bir mücevher çuvalı için güncel fiyat yok - bu bakışta hiçbir şey listelenmiyor"
   },
   "settings": {
     "SteamOpenEveryAccount": {
