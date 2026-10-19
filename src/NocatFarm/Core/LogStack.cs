@@ -153,11 +153,6 @@ public static class LogStack {
 		: kind == Gems ? new Said("turned {0} items into {1} gems", lines.Count, lines.Sum(ValueOf).ToString("N0", CultureInfo.InvariantCulture))
 		: lines[^1];
 
-	/// <summary>
-	/// Adds a line to the rows: onto the last row when it's the same kind from the same account (or a DEBUG line from the
-	/// account of a row that stacks), else as a row of its own. A line that stacks finds its row past status rows, and an
-	/// answer's line its answer past anything a few rows up. Returns whether it went onto a row already there.
-	/// </summary>
 	/// <summary>Two status lines saying the same thing: what it's doing - the part before the first " · " ("farming cards on
 	/// SOS OPS!", "settling in", "playing Counter-Strike 2") - minutes and counts aside.</summary>
 	private static bool SameDoing(Said a, Said b) => string.Equals(Doing(a), Doing(b), StringComparison.Ordinal);
@@ -169,6 +164,11 @@ public static class LogStack {
 		return dot < 0 ? text : text[..dot];
 	}
 
+	/// <summary>
+	/// Adds a line to the rows: onto the last row when it's the same kind from the same account (or a DEBUG line from the
+	/// account of a row that stacks), else as a row of its own. A line that stacks finds its row past status rows, and an
+	/// answer's line its answer past anything a few rows up. Returns whether it went onto a row already there.
+	/// </summary>
 	public static bool Add(List<Row> rows, Log.Entry entry) {
 		string? kind = KindOf(entry);
 
@@ -189,7 +189,9 @@ public static class LogStack {
 			// Only while it's doing the same thing (the same sentence about the same game): settling in, then farming SOS OPS!,
 			// then a break are each their own row - the one before stays where it was, so the day reads in order (1.8.2).
 			if ((at >= 0) && !SameDoing(rows[at].Latest.Said, entry.Said)) {
-				at = -1;
+				rows.Add(new Row(entry, kind));
+
+				return false;
 			}
 
 			if (at >= 0) {
