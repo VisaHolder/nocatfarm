@@ -4549,64 +4549,26 @@ function renderLog() {
 // as ONE row that updates in place, and a click opens it to show each line. The server says each line's kind
 // (Core/LogStack.cs). Never across accounts; any other line in between ends the stack, except a DEBUG line from the same
 // account, which is tucked inside. Only the view stacks: the log file and 'Copy' keep every line.
-// 1.8.2: an account's status row moves down with each new status line - one per account, at the bottom, updating in place;
-// status rows are see-through - a line finds its row past them - and an answer's line finds its answer past anything a few
-// rows up. A row with a head reads as it: an answer someone asked for (a 'buy preview' answering in the log) as its
-// first line, a look's total ("bought 5 card(s) · ...") as its last - and a total ends its stack.
 const openStacks = new Set();
-const isAnswer = (kind) => !!kind && kind.startsWith('answer#');
-
-function stackHead(g) {
-  const lines = g.items.filter((x) => g.kind && x.Kind === g.kind);
-  return isAnswer(g.kind) ? lines.find((x) => x.Head) : [...lines].reverse().find((x) => x.Head);
-}
 
 function stackLog(lines) {
   const groups = [];
   for (const l of lines) {
     const last = groups[groups.length - 1];
-    if (last && last.kind && last.source === l.Source && !l.Kind && l.Level === 'DEBUG') {
+    if (last && last.kind && last.source === l.Source && (l.Kind === last.kind || (!l.Kind && l.Level === 'DEBUG'))) {
       last.items.push(l);
       continue;
-    }
-    if (l.Kind === 'status') {
-      let at = -1;
-      for (let i = groups.length - 1; i >= 0; i--) if (groups[i].kind === 'status' && groups[i].source === l.Source) { at = i; break; }
-      if (at >= 0) {
-        const [g] = groups.splice(at, 1);
-        g.items.push(l);
-        groups.push(g);
-        continue;
-      }
-    }
-    if (l.Kind) {
-      let home = null;
-      for (let i = groups.length - 1; i >= 0 && i >= groups.length - 20; i--) {
-        const g = groups[i];
-        if (g.kind === l.Kind && g.source === l.Source && (isAnswer(g.kind) || !stackHead(g))) { home = g; break; }
-        if (!isAnswer(l.Kind) && g.kind !== 'status') break;
-      }
-      if (home) { home.items.push(l); continue; }
     }
     groups.push({ kind: l.Kind || null, source: l.Source, items: [l] });
   }
   return groups;
 }
 
-// What a stack reads: "turned 14 items into 1,080 gems", its head, or "×6 " and the newest line.
+// What a stack reads: "turned 14 items into 1,080 gems", or "×6 " and the newest line.
 function stackSummary(g) {
   const lines = g.items.filter((x) => x.Kind === g.kind);
-  const head = stackHead(g);
-  if (head) return head.Text;
   if (g.kind === 'gems') return tf('turned {0} items into {1} gems', lines.length, lines.reduce((n, x) => n + (x.Value || 0), 0).toLocaleString('en-US'));
   return `×${lines.length} ${lines[lines.length - 1].Text}`;
-}
-
-// A row with a head takes the most serious level in it - a daily summary with something to look at is yellow.
-const levelRank = { ERROR: 4, WARN: 3, GOOD: 2, INFO: 1 };
-function stackLevel(g, lines) {
-  if (!stackHead(g)) return lines[lines.length - 1].Level;
-  return lines.reduce((worst, x) => (levelRank[x.Level] || 0) > (levelRank[worst] || 0) ? x.Level : worst, lines[0].Level);
 }
 
 function logLineHtml(l, q, cls = '', text = null, lead = '') {
@@ -4618,12 +4580,10 @@ function logGroupHtml(g, q) {
   if (lines.length < 2) return g.items.map((l) => logLineHtml(l, q)).join('');
   const id = lines[0].Seq;
   const open = openStacks.has(id);
-  const latest = { ...lines[lines.length - 1], Level: stackLevel(g, lines) };
-  const first = stackHead(g);
+  const latest = lines[lines.length - 1];
   const head = logLineHtml(latest, q, ' stack', stackSummary(g), `<span class="tog">${open ? '▾' : '▸'}</span> `)
     .replace('<div class="l', `<div role="button" tabindex="0" title="${esc(open ? t('Click to hide each line') : t('Click to show each line'))}" onclick="toggleStack(${id})" onkeydown="if(event.key==='Enter')toggleStack(${id})" class="l`);
-  // Opened, each line under it - but the head, which the row already reads as.
-  return head + (open ? g.items.filter((l) => l !== first).map((l) => logLineHtml(l, q, ' sub')).join('') : '');
+  return head + (open ? g.items.map((l) => logLineHtml(l, q, ' sub')).join('') : '');
 }
 
 function toggleStack(id) {

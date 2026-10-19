@@ -967,7 +967,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		// Said once per count. "Can't tell" only for a game left alone ('dlc leave'): every other game earns anyway.
 		if (!saidHeld && (held > 0)) {
-			Log.Debug(new Said("{0}: {1}", GameNames.Of(app), unmapped
+			Log.Info(new Said("{0}: {1}", GameNames.Of(app), unmapped
 				? new Said("can't tell which achievements come with its DLC · {0} left alone", held)
 				: new Said("{0} achievement(s) from DLC it doesn't own · left alone", held)), Bot.Name);
 		}
@@ -1031,7 +1031,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			if (grind && (already < total)) {
-				Log.Debug(countersOnly ? new Said("{0}: what's left waits for the game's own counters - nothing to grind", GameNames.Of(app))
+				Log.Info(countersOnly ? new Said("{0}: what's left waits for the game's own counters - nothing to grind", GameNames.Of(app))
 					: multiplayerOnly ? new Said("{0}: what's left is multiplayer, which this account skips - nothing to grind", GameNames.Of(app))
 					: !dlcOnly ? new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app))
 					: unmapped ? new Said("{0}: can't tell which achievements come with its DLC - nothing to grind", GameNames.Of(app))

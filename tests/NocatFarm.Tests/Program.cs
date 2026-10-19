@@ -13482,9 +13482,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("rep4rep look: the scheduled post looks first, inside its turn, and a skip posts nothing",
 		(lookCheck > lookStep) && (lookPost > lookCheck) && (r4look.IndexOf("await _posting.WaitAsync(ct)", lookStep, StringComparison.Ordinal) < lookCheck)
 		&& r4look[lookCheck..lookPost].Contains("return Rng.Next(60, 4 * 60);", StringComparison.Ordinal));
-	Check("rep4rep look: a skip is no strike - the profile is set aside like a refused one, one Debug line (1.8.2: not the window's), one GET",
+	Check("rep4rep look: a skip is no strike - the profile is set aside like a refused one, one Info line, one GET",
 		(lookBody.Length > 0) && !lookBody.Contains("Strikes", StringComparison.Ordinal) && lookBody.Contains("MarkDeadTarget(task.TargetSteamId", StringComparison.Ordinal)
-		&& lookBody.Contains("Log.Debug(new Said(\"{0} doesn't take comments · skipped\"", StringComparison.Ordinal)
+		&& lookBody.Contains("Log.Info(new Said(\"{0} doesn't take comments · skipped\"", StringComparison.Ordinal)
 		&& (System.Text.RegularExpressions.Regex.Matches(lookBody, @"Bot\.Web\.\w+Async\(").Count == 1) && lookBody.Contains("Bot.Web.GetAsync(", StringComparison.Ordinal));
 	Check("rep4rep look: an unreadable page only asks the friends list in memory, and still posts",
 		lookBody.Contains("Bot.Friends?.GetFriendRelationship(", StringComparison.Ordinal) && lookBody.Contains("return false;", StringComparison.Ordinal));
@@ -17316,15 +17316,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string reply = string.Join("\n", Enumerable.Range(1, 250).Select(static i => $"line {i}"));
 	echo.Invoke(null, ["status", reply, "echo-count"]);
 	List<Log.Entry> echoed = [.. Log.Since(seq).Where(static e => e.Source == "echo-count")];
-	Check("echo: 250 lines, 40 on screen, '… and 210 more' - not 161 - all one row under \"answer · 250 line(s)\" (1.8.2)",
-		(echoed.Count == 42) && echoed[0].Head && (echoed[0].Said.ToEnglish() == "answer · 250 line(s)") && (echoed[^1].Text == "  ... and 210 more line(s)"),
-		echoed.LastOrDefault()?.Text ?? "");
+	Check("echo: 250 lines, 40 on screen, '… and 210 more' - not 161",
+		(echoed.Count == 41) && (echoed[^1].Text == "  ... and 210 more line(s)"), echoed.LastOrDefault()?.Text ?? "");
 
 	long seq2 = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
 	echo.Invoke(null, ["status", "one\n\ntwo", "echo-short"]);
-	List<Log.Entry> echoShort = [.. Log.Since(seq2).Where(static e => e.Source == "echo-short")];
-	Check("echo: a short reply has no 'more' line - its row and its two lines",
-		(echoShort.Count == 3) && echoShort[0].Head && !echoShort.Any(static e => e.Text.Contains("more line", StringComparison.Ordinal)));
+	Check("echo: a short reply has no 'more' line", Log.Since(seq2).Count(static e => e.Source == "echo-short") == 2);
 }
 
 // ── table widths: the emoji a terminal draws two wide ─────────────────────────────────────────────────────────────
@@ -26818,11 +26815,10 @@ await CommandSweep.RunAsync(Check);
 	Check("short lines: what a look did in one line - \"spare: 18 → 510 gems, 0 listed\"", lsDid.StartsWith("spare: 18 → 510 gems, 0 listed", StringComparison.Ordinal), lsDid);
 	Check("short lines: nothing to do says why - still pricing",
 		NocatFarm.Core.SpareRun.Brief(lsLook with { Plan = new NocatFarm.Core.SparePlan([]) }, null) == "spare: nothing to do · still pricing 351");
-	Check("short lines: a 'spare preview' or 'spare do' answering late is ONE row (1.8.2) - its one line on it, the whole answer under it when opened",
+	Check("short lines: a 'spare preview' or 'spare do' answering late logs that one line, the whole answer only in the debug log",
 		LsSrc("Commands.Spare.cs").Contains("Key: \"spare preview\", Brief: SpareBrief", StringComparison.Ordinal)
 		&& LsSrc("Commands.Spare.cs").Contains("Key: \"spare do\", Brief: SpareBrief", StringComparison.Ordinal)
-		&& LsSrc("Commands.cs").Contains("string? brief = job.Brief?.Invoke(name) is { Length: > 0 } b ? MaskedReply(job.What, b, typed) : null;", StringComparison.Ordinal)
-		&& LsSrc("Commands.cs").Contains("Log.Answer(new Said(LateHead(job, name, brief)), lines, source);", StringComparison.Ordinal));
+		&& LsSrc("Commands.cs").Contains("if (job.Brief?.Invoke(name) is { Length: > 0 } brief) {", StringComparison.Ordinal));
 	Check("short lines: the \"spare items left alone\" debug line is cut at 300 characters",
 		(NocatFarm.Core.SpareRun.LeftAloneMax == 300) && LsSrc("Core/SpareRun.cs").Contains("Columns.ClipChars(left, LeftAloneMax, \"...\")", StringComparison.Ordinal));
 
@@ -27999,7 +27995,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Modules.HumanMode.NextUpText(null, new DateTime(2026, 10, 14), new DateTime(2026, 10, 14, 13, 20, 0), wkCfg) == "13:15-14:45",
 		NocatFarm.Modules.HumanMode.NextUpText(null, new DateTime(2026, 10, 14), new DateTime(2026, 10, 14, 13, 20, 0), wkCfg));
 	Check("wake time: the day-off log line picks tomorrow's wake and says it",
-		WkSrc("src/NocatFarm/Modules/HumanMode.cs").Contains("PickNextWake();\n\t\t\tLog.Debug(new Said(\"taking today off - back tomorrow around {0}\", UpAt())", StringComparison.Ordinal));
+		WkSrc("src/NocatFarm/Modules/HumanMode.cs").Contains("PickNextWake();\n\t\t\tLog.Info(new Said(\"taking today off - back tomorrow around {0}\", UpAt())", StringComparison.Ordinal));
 
 	// finding 7 + 10: the Sitting column / chip past bedtime shows the window or any-moment, never a wrong-day countdown.
 	Check("wake time: the Sitting column shows the window when asleep, else is left empty",
@@ -28755,8 +28751,6 @@ await SweepListingChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, 
 await DearCardsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 // ── 1.8.2: gems fixes - packs made to sell agree with the seller, pack prices the most promising first, gems worth what a sack pays, gem values kept, sealed packs weighed, the price limit said once a day; fakes only ──
 await GemsFixChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-// ── 1.8.2: a clean log window - an answer asked for is one row, an automatic look that did nothing says nothing, reasoning is DEBUG; fakes only ──
-await LogCleanChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 // ── 1.8.2 quick sets: the cheapest lists read whole and fast, the cheapest level first, looks sooner while money is left, the most to pay for a level; fakes only ──
 await QuickSetsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 // ── 1.8.2 money fixes: a steady most per level, money's worth never overstated, dear cards and sets kept to the gems and the minimum, bought cards protected, unsure purchases settled; fakes only ──
@@ -31963,9 +31957,9 @@ static class CraftSellChecks {
 			Check("sell instead: weighed on the inventory crafting just read - not read a second time (Steam refuses that as a duplicate)",
 				(liveMarket.CardsReads == 1) && Src("src/NocatFarm/Modules/SetSale.Choose.cs").Contains("buyer.WeighSalesAsync([.. now.Select(i => ready[i])], ct, inventory, note: !preview)", StringComparison.Ordinal),
 				$"{liveMarket.CardsReads}");
-			Check("sell instead: each set gets a line - sold, with what it buys; crafted, with why - DEBUG, the log file's (1.8.2: the window shows the listings)",
-				lines.Any(static l => l.StartsWith("DEBUG selling the - Arcane Raise - set instead of crafting: ", StringComparison.Ordinal) && l.Contains(" buys about ", StringComparison.Ordinal))
-				&& lines.Any(static l => l.StartsWith("DEBUG s&box: crafted · set worth ", StringComparison.Ordinal) && l.Contains(" buys only 1 level", StringComparison.Ordinal)),
+			Check("sell instead: each set gets an INFO line - sold, with what it buys; crafted, with why",
+				lines.Any(static l => l.StartsWith("INFO selling the - Arcane Raise - set instead of crafting: ", StringComparison.Ordinal) && l.Contains(" buys about ", StringComparison.Ordinal))
+				&& lines.Any(static l => l.StartsWith("INFO s&box: crafted · set worth ", StringComparison.Ordinal) && l.Contains(" buys only 1 level", StringComparison.Ordinal)),
 				string.Join(" / ", lines));
 
 			// ── 'craft preview': the same word, and nothing done ──
@@ -31996,10 +31990,10 @@ static class CraftSellChecks {
 			lines = Said(unsure, at);
 			Check("can't decide: a set with a card known to be worth more than \"Never touch items worth more than\" waits for the next look - not crafted, not sold",
 				crafted.SequenceEqual([590830u]) && (listed.Count == 0) && more
-				&& lines.Any(static l => l.StartsWith("DEBUG - Arcane Raise -: not crafted yet · no market price for ", StringComparison.Ordinal) && l.EndsWith("a card is worth 1.97 CAD", StringComparison.Ordinal)),
+				&& lines.Any(static l => l.StartsWith("INFO - Arcane Raise -: not crafted yet · no market price for ", StringComparison.Ordinal) && l.EndsWith("a card is worth 1.97 CAD", StringComparison.Ordinal)),
 				string.Join(" / ", lines));
-			Check("can't decide: a set with nothing known to be worth much is crafted as before - and the log file says why (DEBUG)",
-				lines.Any(static l => l.StartsWith("DEBUG s&box: crafted · no market price for ", StringComparison.Ordinal)), string.Join(" / ", lines));
+			Check("can't decide: a set with nothing known to be worth much is crafted as before - and the log says why",
+				lines.Any(static l => l.StartsWith("INFO s&box: crafted · no market price for ", StringComparison.Ordinal)), string.Join(" / ", lines));
 
 			// The wallet not answering: nothing priced at all - a price kept from before still says the set is worth something.
 			var blind = NewAccount();
@@ -32013,8 +32007,8 @@ static class CraftSellChecks {
 			lines = Said(blind, at);
 			Check("can't decide: the wallet not answering - a price known from before keeps the valuable set back; the other is crafted, both said",
 				crafted.SequenceEqual([590830u]) && (listed.Count == 0) && more
-				&& lines.Contains("DEBUG - Arcane Raise -: not crafted yet · couldn't price its cards · a card is worth 1.97 CAD")
-				&& lines.Contains("DEBUG s&box: crafted · couldn't price its cards"),
+				&& lines.Contains("INFO - Arcane Raise -: not crafted yet · couldn't price its cards · a card is worth 1.97 CAD")
+				&& lines.Contains("INFO s&box: crafted · couldn't price its cards"),
 				string.Join(" / ", lines));
 
 			// Buying cards on but its module not running, and a game with two sets ready: said, never silent.
@@ -35719,257 +35713,6 @@ sealed class GemValueSteam : NocatFarm.Core.ISpareSteam {
 	public HashSet<ulong> Claim(IEnumerable<ulong> ids) => [.. ids];
 	public void Release(IEnumerable<ulong> ids) { }
 	public Task<bool> PauseAsync(CancellationToken ct) => Task.FromResult(true);
-}
-
-/// <summary>
-/// 1.8.2: a clean log window - an answer somebody asked for is ONE row that opens to its lines, a look's total heads the
-/// cards or listings before it, an account's status is one row at the bottom, an automatic buying look that did nothing says
-/// nothing there, and reasoning is DEBUG (still in the log file). Fakes only - nothing talks to Steam.
-/// </summary>
-static class LogCleanChecks {
-	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
-		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
-		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
-		NocatFarm.Log.Entry Line(string source, NocatFarm.Core.Said said, string level = "INFO", string? kind = null) => new(0, DateTime.Now, level, source, said, kind);
-		NocatFarm.Core.Said S(string english, params object[] args) => new(english, args);
-
-		string realRoot = NocatFarm.Config.ConfigStore.Root;
-		string root = Path.Combine(Path.GetTempPath(), "nf-logclean-" + Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(Path.Combine(root, "config"));
-		NocatFarm.Config.ConfigStore.UseRoot(root);
-		bool wasSuppressed = NocatFarm.Log.Suppressed;
-		NocatFarm.Log.Suppressed = true;
-		NocatFarm.Modules.BuyLedger.ForgetLoaded();
-		List<NocatFarm.Log.Entry> heard = [];
-		void Heard(NocatFarm.Log.Entry e) {
-			lock (heard) {
-				heard.Add(e);
-			}
-		}
-
-		List<NocatFarm.Log.Entry> From(string source) {
-			lock (heard) {
-				return [.. heard.Where(e => e.Source == source)];
-			}
-		}
-
-		NocatFarm.Log.Written += Heard;
-		List<NocatFarm.Core.Bot> bots = [];
-
-		try {
-			// ── an answer asked for: its head first, every line under it, one row that opens ──
-			NocatFarm.Log.Answer(S("buy preview lc1 · 4 set(s) for 1.76 CAD"), ["wallet 5.45 CAD · 0.00 CAD of 2.50 CAD spent today", "would buy 9 of 15 cards for Starbound for 0.36 CAD",
-				"  Apex Scientist 0.04 CAD, Avian Grounded 0.04 CAD"], "lc1");
-			List<NocatFarm.Log.Entry> one = From("lc1");
-			Check("clean log: an answer is its head and then its lines, all INFO, one kind of its own, only the head marked",
-				(one.Count == 4) && one[0].Head && one.Skip(1).All(static e => !e.Head) && one.All(static e => e.Level == "INFO")
-				&& NocatFarm.Core.LogStack.IsAnswer(one[0].Kind) && one.All(e => e.Kind == one[0].Kind), string.Join(" | ", one.Select(static e => $"{e.Level} {e.Kind} {e.Head} {e.Text}")));
-
-			var rows = new List<NocatFarm.Core.LogStack.Row>();
-			NocatFarm.Core.LogStack.Add(rows, Line("old", S("signed in"), "GOOD"));
-
-			foreach (NocatFarm.Log.Entry e in one) {
-				NocatFarm.Core.LogStack.Add(rows, e);
-			}
-
-			Check("clean log: closed, the answer is one row that reads as what was asked - \"▸ buy preview lc1 · 4 set(s) for 1.76 CAD\"",
-				(rows.Count == 2) && rows[1].Stacked && (NocatFarm.Core.LogStack.Shown(rows).Count() == 2)
-				&& (rows[1].Header == "▸ buy preview lc1 · 4 set(s) for 1.76 CAD"), rows[^1].Header);
-			rows[1].Open = true;
-			var opened = NocatFarm.Core.LogStack.Shown(rows).Skip(1).ToList();
-			Check("clean log: opened, each of its lines shows under it - the head isn't said twice",
-				(opened.Count == 4) && opened[0].Head && opened.Skip(1).All(static r => r.Depth == 1)
-				&& (opened[1].Entry.Text == "wallet 5.45 CAD · 0.00 CAD of 2.50 CAD spent today") && rows[1].Header.StartsWith("▾", StringComparison.Ordinal),
-				string.Join(" | ", opened.Select(static r => r.Entry.Text)));
-
-			// Two answers in a row are two rows; a line from another account written in the middle of one doesn't split it.
-			NocatFarm.Log.Answer(S("booster plan lc1"), ["211 gems (211 tradable)", "Automatic would pick - Arcane Raise -"], "lc1");
-			List<NocatFarm.Log.Entry> two = [.. From("lc1").Skip(4)];
-			var rows2 = new List<NocatFarm.Core.LogStack.Row>();
-
-			foreach (NocatFarm.Log.Entry e in one) {
-				NocatFarm.Core.LogStack.Add(rows2, e);
-			}
-
-			NocatFarm.Core.LogStack.Add(rows2, two[0]);
-			NocatFarm.Core.LogStack.Add(rows2, Line("old", S("signed in"), "GOOD"));
-			NocatFarm.Core.LogStack.Add(rows2, two[1]);
-			NocatFarm.Core.LogStack.Add(rows2, two[2]);
-			Check("clean log: two answers are two rows, and a line from another account in the middle of one doesn't cut it in two",
-				(rows2.Count == 3) && (rows2[1].Header == "▸ booster plan lc1") && (rows2[1].Lines.Count() == 3) && (rows2[2].Source == "old"),
-				string.Join(" | ", rows2.Select(static r => r.Stacked ? r.Header : r.Latest.Text)));
-
-			// An answer of one line with nothing to add is that line, as it was - no row to open.
-			NocatFarm.Log.Answer(S("lc2: nothing to buy"), Array.Empty<string>(), "lc2");
-			Check("clean log: an answer with no lines under it is its one line, not a row to open",
-				From("lc2") is [{ Head: false, Kind: null } only] && (only.Text == "lc2: nothing to buy"));
-
-			// The row is as serious as the worst line in it: a daily summary with an alert in it is yellow.
-			NocatFarm.Log.Answer(S("── Daily summary ──"), [("INFO", S("◈ new: 5h played")), ("WARN", S("◈ new: 1 trade waiting !"))], "lc3", "GOOD");
-			var rows3 = new List<NocatFarm.Core.LogStack.Row>();
-
-			foreach (NocatFarm.Log.Entry e in From("lc3")) {
-				NocatFarm.Core.LogStack.Add(rows3, e);
-			}
-
-			Check("clean log: the daily summary is one row, yellow when something in it wants a look",
-				(rows3.Count == 1) && (rows3[0].Header == "▸ ── Daily summary ──") && (rows3[0].Level == "WARN"), $"{rows3.Count} {rows3[0].Header} {rows3[0].Level}");
-			Check("clean log: the daily and weekly summaries are written as one answer; chat commands' replies too",
-				Src("src/NocatFarm/Core/ReportCard.cs").Contains("Log.Answer(lines[0].Line, [.. lines.Skip(1).Select(static l => (l.Row is { Alert: true } ? \"WARN\" : \"INFO\", l.Line))], source, \"GOOD\");", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Core/TelegramCommands.cs").Contains("Log.Answer(new Said(\"answer · {0} line(s)\", total), shown, source);", StringComparison.Ordinal));
-
-			// A chat command's reply: one row in the window, all of it in the file and the chat.
-			var echo = typeof(NocatFarm.Core.Notifier).GetMethod("EchoToLog", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
-			echo.Invoke(null, ["config new", "new: a\nnew: b\nnew: c", "lc4"]);
-			List<NocatFarm.Log.Entry> chat = From("lc4");
-			Check("clean log: a reply sent to Telegram or Discord is one row in the window - \"answer · 3 line(s)\" over its lines",
-				(chat.Count == 4) && chat[0].Head && (chat[0].Said.ToEnglish() == "answer · 3 line(s)") && (chat[1].Text == "  new: a"), string.Join(" | ", chat.Select(static e => e.Text)));
-			echo.Invoke(null, ["pause new", "new: paused", "lc5"]);
-			Check("clean log: ...and a one-line reply is just that line", From("lc5") is [{ Head: false, Kind: null } single] && (single.Text == "  new: paused"));
-
-			// ── a slow command answering after its reply: what was asked, and its answer under it when opened ──
-			var gate = new TaskCompletionSource();
-			var job = new NocatFarm.Commands.Slow("buy", "looking at which cards to buy", Key: "buy preview lc6", Brief: static _ => "4 set(s) for 1.76 CAD");
-			string reply = await NocatFarm.Commands.SlowAsync(job, async () => {
-				await gate.Task;
-				return "wallet 5.45 CAD\nwould buy 9 of 15 cards for Starbound for 0.36 CAD\n  Apex Scientist 0.04 CAD";
-			}, TimeSpan.FromMilliseconds(50));
-			gate.SetResult();
-			List<NocatFarm.Log.Entry> late = [];
-
-			for (int i = 0; (i < 100) && (late.Count < 4); i++) {
-				await Task.Delay(50);
-				late = [.. From("nocat.farm").SkipWhile(static e => !(e.Head && e.Text.StartsWith("buy preview lc6", StringComparison.Ordinal))).Take(4)];
-			}
-
-			Check("clean log: a 'buy preview' that answers late says \"the log says when it's done\" in its reply...",
-				reply.Contains("still looking at which cards to buy - the log says when it's done", StringComparison.Ordinal), reply);
-			Check("clean log: ...and its answer comes as ONE row: \"buy preview lc6 · 4 set(s) for 1.76 CAD\", the three lines under it",
-				(late.Count == 4) && (late[0].Text == "buy preview lc6 · 4 set(s) for 1.76 CAD") && late.All(e => e.Kind == late[0].Kind)
-				&& (late[1].Text == "wallet 5.45 CAD") && (late[3].Text == "  Apex Scientist 0.04 CAD"), string.Join(" | ", late.Select(static e => e.Text)));
-			Check("clean log: the row says what was asked and for which account, and the few words of its brief",
-				(NocatFarm.Commands.LateHead(new("booster", "x", Key: "booster plan"), "new", null) == "booster plan new")
-				&& (NocatFarm.Commands.LateHead(new("spare", "x", Key: "spare preview"), "new", "29 → gems, 1 to sell") == "spare preview new · 29 → gems, 1 to sell")
-				&& (NocatFarm.Commands.LateHead(new("restart", "x", Key: "restart new"), "", null) == "restart new"));
-
-			// ── a look's total heads the lines before it, and ends them ──
-			var rows4 = new List<NocatFarm.Core.LogStack.Row>();
-			NocatFarm.Core.LogStack.Add(rows4, Line("new", S("bought {0} ({1}) · {2}", "Crusher", "Earth 2150", "0.07 CAD"), "GOOD"));
-			NocatFarm.Core.LogStack.Add(rows4, Line("new", S("{0}", "grinding Portal · 1h41m left"), kind: NocatFarm.Core.LogStack.Heartbeat));
-			NocatFarm.Core.LogStack.Add(rows4, Line("new", S("bought {0} ({1}) · {2}", "TMP Unit", "Earth 2150", "0.07 CAD"), "GOOD"));
-			NocatFarm.Core.LogStack.Add(rows4, Line("new", S(NocatFarm.Core.LogStack.BoughtTotal, 2, "0.14 CAD", 0), "GOOD"));
-			NocatFarm.Core.LogStack.Add(rows4, Line("new", S("bought {0} ({1}) · {2}", "Ami", "Steep", "0.08 CAD"), "GOOD"));
-			Check("clean log: a buying look is one row read as its total - a status line in the middle doesn't cut it - and the total ends it",
-				(rows4.Count == 3) && (rows4[0].Header == "▸ bought 2 card(s) · 0.14 CAD · 0 set(s) to craft") && rows4[0].Closed
-				&& (rows4[1].Kind == NocatFarm.Core.LogStack.Heartbeat) && !rows4[2].Stacked,
-				string.Join(" | ", rows4.Select(static r => r.Stacked ? r.Header : r.Latest.Text)));
-
-			var rows5 = new List<NocatFarm.Core.LogStack.Row>();
-
-			foreach (string card in new[] { "Oskar", "Theon", "Arrivals" }) {
-				NocatFarm.Core.LogStack.Add(rows5, Line("new", S("listed {0} ({1}) for {2} · you get {3}", card, "Black Sand Drift", "0.03 CAD", "0.01 CAD"), "GOOD"));
-			}
-
-			NocatFarm.Core.LogStack.Add(rows5, Line("new", S(NocatFarm.Core.LogStack.ListedTotal, 3, "0.03 CAD")));
-			Check("clean log: a selling look is one row - \"▸ listed 3 item(s) · 0.03 CAD if they all sell\"",
-				(rows5.Count == 1) && (rows5[0].Header == "▸ listed 3 item(s) · 0.03 CAD if they all sell"), rows5[0].Header);
-			Check("clean log: the totals are the sentences the buyer and the seller write",
-				Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("Log.Reward(new Said(\"" + NocatFarm.Core.LogStack.BoughtTotal + "\"", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Core/Seller.cs").Contains("Log.Info(new Said(\"" + NocatFarm.Core.LogStack.ListedTotal + "\"", StringComparison.Ordinal));
-
-			// ── each account's status is one row at the bottom, updating in place ──
-			var rows6 = new List<NocatFarm.Core.LogStack.Row>();
-
-			foreach (int left in new[] { 40, 30, 20 }) {
-				NocatFarm.Core.LogStack.Add(rows6, Line("new", S("🏆 {0} · {1} · {2}", "Camera Shy", "Portal", $"{left / 10}/15"), "GOOD"));
-				NocatFarm.Core.LogStack.Add(rows6, Line("new", S("{0}", $"grinding Portal · {left}m left"), kind: NocatFarm.Core.LogStack.Heartbeat));
-				NocatFarm.Core.LogStack.Add(rows6, Line("old", S("{0}", "idling 8 games"), kind: NocatFarm.Core.LogStack.Heartbeat));
-			}
-
-			Check("clean log: status lines are one row per account at the bottom, newest line showing - events stay rows of their own",
-				(rows6.Count == 5) && rows6.Take(3).All(static r => !r.Stacked && (r.Kind == null))
-				&& (rows6[3].Source == "new") && (rows6[3].Header == "▸ ×3 grinding Portal · 20m left") && (rows6[4].Source == "old") && (rows6[4].Lines.Count() == 3),
-				string.Join(" | ", rows6.Select(static r => r.Stacked ? r.Header : r.Latest.Text)));
-
-			Check("clean log: the dashboard's Log tab stacks the same way - heads, answers, status rows that move down, see-through status",
-				Src("src/NocatFarm/Web/WebHost.cs").Contains("Head = LogStack.IsHead(e)", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/wwwroot/app.js").Contains("const isAnswer = (kind) => !!kind && kind.startsWith('answer#');", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/wwwroot/app.js").Contains("const [g] = groups.splice(at, 1);", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/wwwroot/app.js").Contains("if (!isAnswer(l.Kind) && g.kind !== 'status') break;", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/wwwroot/app.js").Contains("g.items.filter((l) => l !== first)", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Windows/MainWindow.cs").Contains("ColourOf(r.Head ? r.Row.Level : r.Entry.Level)", StringComparison.Ordinal));
-
-			// ── an automatic buying look that did nothing says nothing in the window ──
-			NocatFarm.Core.Bot NewBot() {
-				var b = new NocatFarm.Core.Bot("lc-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
-				bots.Add(b);
-				NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
-				return b;
-			}
-
-			NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m) =>
-				new(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, SendGap = static () => TimeSpan.Zero, ProofGap = TimeSpan.Zero };
-
-			// What the window showed from the account since buying was switched on - turning it on says so, once, as it should.
-			Dictionary<string, int> said = [];
-			List<NocatFarm.Log.Entry> Shown(NocatFarm.Core.Bot b) => [.. From(b.Name).Where(static e => e.Level != "DEBUG").Skip(said.GetValueOrDefault(b.Name))];
-
-			var quiet = NewBot();
-			said[quiet.Name] = Shown(quiet).Count;
-			var idle = Buyer(quiet, new FakeCardMarket());
-			var r1 = await idle.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Auto, CancellationToken.None);
-			await idle.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Auto, CancellationToken.None);
-			Check("clean log: an automatic buying look with nothing to buy writes no line in the window - twice, not a word",
-				(r1.Bought.Count == 0) && (Shown(quiet).Count == 0), string.Join(" | ", Shown(quiet).Select(static e => e.Text)));
-
-			var billing = NewBot();
-			said[billing.Name] = Shown(billing).Count;
-			var blocked = Buyer(billing, new FakeCardMarket { Wallet = new(1000, 20, true, 0) });
-			await blocked.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Auto, CancellationToken.None);
-			await blocked.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Auto, CancellationToken.None);
-			Check("clean log: a block the owner must fix (billing details) is said once, not every look",
-				Shown(billing) is [{ Level: "WARN" }], string.Join(" | ", Shown(billing).Select(static e => $"{e.Level} {e.Text}")));
-
-			// ── reasoning and plans are DEBUG: a sample of the lines that were INFO in the window ──
-			(string File, string Debug)[] demoted = [
-				("src/NocatFarm/Core/Bot.cs", "Log.Debug(\"daily web refresh · getting a new web token\", Name);"),
-				("src/NocatFarm/Core/Bot.cs", "Log.Debug(showing, Name);"),
-				("src/NocatFarm/Core/Bot.cs", "Log.Debug(new Said(\"now appearing {0}\", new Said(Word(state))), Name);"),
-				("src/NocatFarm/Modules/AchievementBoost.cs", "Log.Debug(new Said(\"achievements: {0} games to hunt\", found.Count), Bot.Name);"),
-				("src/NocatFarm/Modules/BadgeCraft.cs", "Log.Debug(new Said(\"{0} completed card set(s) ready to craft\", ready.Count), Bot.Name);"),
-				("src/NocatFarm/Modules/BadgeCraft.Sell.cs", "Log.Debug(new Said(\"{0}: crafted · {1}\", pick.Game, pick.Reason), Bot.Name);"),
-				("src/NocatFarm/Modules/HumanMode.cs", "Log.Debug(new Said(\"plan restored · {0}/{1} · up {2}\""),
-				("src/NocatFarm/Modules/CardFarmer.cs", "Log.Debug(new Said(\"farming {0} · {1} card(s) left · ~{2} in all\""),
-				("src/NocatFarm/Core/Seller.cs", "Log.Debug(KeptSaid(offer, why), bot.Name);"),
-				("src/NocatFarm/Core/SpareRun.cs", "Log.Debug(new Said(\"{0} ({1}): {2}\", d.Item.Name, GameNames.Of(d.Item.Game), no.Why), account);"),
-				("src/NocatFarm/Core/Family.cs", "Log.Debug(new Said(\"{0}: {1}'s copy is in use - borrowing {2}'s free copy (already set that way)\""),
-				("src/NocatFarm/Core/DiscordPresence.cs", "Log.Debug(new Said(\"Discord: showing nocat.farm\"), \"discord\");"),
-				("src/NocatFarm/Program.cs", "Log.Debug(\"in the tray · right-click for menu\");"),
-				("src/NocatFarm/Modules/Rep4RepModule.cs", "Log.Debug(new Said(\"daily limit found: {0}/24h\", posted), Bot.Name);"),
-				("src/NocatFarm/Modules/Trading.cs", "Log.Debug(new Said(\"offer {0} ({1}: {2}) - handling it in {3}\", NumberOf(offer.Id), what"),
-				("src/NocatFarm/Modules/Boosters.Gems.cs", "Log.Debug(why, Bot.Name);\n\t\t_autoStatus = why;"),
-			];
-			string[] wrong = [.. demoted.Where(d => !Src(d.File).Contains(d.Debug, StringComparison.Ordinal)
-				|| Src(d.File).Contains(d.Debug.Replace("Log.Debug(", "Log.Info(", StringComparison.Ordinal), StringComparison.Ordinal)).Select(static d => $"{d.File}: {d.Debug}")];
-			Check($"clean log: reasoning, plans and narration are DEBUG - in the log file, not the window ({demoted.Length} sampled)", wrong.Length == 0, string.Join(" || ", wrong));
-			Check("clean log: a 'buy do' answer says each set once, never each card a second time - the cards were lines as they were bought",
-				Src("src/NocatFarm/CommandsBuy.cs").Contains("result.Bought.GroupBy(static x => x.Step.Game).Select(g => $\"{name}: bought {g.Key} · {g.Count()} card(s) · {M(g.Sum(static x => x.Paid))}\")", StringComparison.Ordinal)
-				&& !Src("src/NocatFarm/CommandsBuy.cs").Contains("$\"{name}: bought {x.Card.Name}", StringComparison.Ordinal));
-			Check("clean log: \"signed out\" during an update is DEBUG - the update's own row says who it signed out",
-				Src("src/NocatFarm/Core/Bot.cs").Contains("if (SelfUpdate.Busy) {\n\t\t\t\tLog.Debug(\"signed out\", Name);", StringComparison.Ordinal));
-		} finally {
-			NocatFarm.Log.Written -= Heard;
-
-			foreach (var b in bots) {
-				await b.DisposeAsync();
-			}
-
-			NocatFarm.Log.Suppressed = wasSuppressed;
-			NocatFarm.Modules.BuyLedger.ForgetLoaded();
-			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
-			TestTemp.Gone(root);
-		}
-	}
 }
 
 /// <summary>

@@ -45,9 +45,7 @@ public static class Log {
 	/// </remarks>
 	/// <param name="Kind">What it stacks as in the views, when the sentence alone doesn't say (Core/LogStack.cs): the
 	/// heartbeat is the account's status line, any sentence at all.</param>
-	/// <param name="Head">The first line of an answer (<see cref="Answer(Said, IReadOnlyList{ValueTuple{string, Said}}, string, string)"/>):
-	/// the row the views show it as, its other lines under it when it's opened.</param>
-	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said, string? Kind = null, bool Head = false) {
+	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said, string? Kind = null) {
 		/// <summary>
 		/// The line in whatever language is selected right now - always ONE line. A line break inside it took more
 		/// rows than the live board had counted, so every redraw scrolled and the header repeated down the screen,
@@ -278,45 +276,6 @@ public static class Log {
 	/// </summary>
 	public static void Status(Core.Said text, string source) => Write("INFO", source, text, ConsoleColor.Gray, kind: Core.LogStack.Heartbeat);
 	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
-
-	private static readonly Lock AnswerGate = new();
-
-	/// <summary>
-	/// An answer somebody asked for that comes in the log - a 'buy preview' or 'booster plan' that took longer than the reply
-	/// waits, the daily summary - as ONE row in the window and the dashboard's Log tab: <paramref name="head"/>, and each of
-	/// <paramref name="lines"/> under it when it's clicked open (Core/LogStack.cs). The log file has every line, the head
-	/// first. A preview's ten lines used to be ten rows, each a reason or a price nobody had to act on.
-	/// </summary>
-	public static void Answer(Core.Said head, IReadOnlyList<(string Level, Core.Said Line)> lines, string source, string headLevel = "INFO") {
-		if (lines.Count == 0) {
-			Write(headLevel, source, head, ColourOf(headLevel));
-
-			return;
-		}
-
-		string kind = Core.LogStack.NewAnswer();
-
-		// One answer at a time, so two answering together don't come out shuffled.
-		lock (AnswerGate) {
-			Write(headLevel, source, head, ColourOf(headLevel), kind: kind, head: true);
-
-			foreach ((string level, Core.Said line) in lines) {
-				Write(level, source, line, ColourOf(level), kind: kind);
-			}
-		}
-	}
-
-	/// <summary>The same for plain lines of a command's answer, every one INFO.</summary>
-	public static void Answer(Core.Said head, IEnumerable<string> lines, string source) =>
-		Answer(head, [.. lines.Select(static l => ("INFO", new Core.Said(l)))], source);
-
-	private static ConsoleColor ColourOf(string level) => level switch {
-		"GOOD" => ConsoleColor.Green,
-		"WARN" => ConsoleColor.DarkYellow,
-		"ERROR" => ConsoleColor.Red,
-		"DEBUG" => ConsoleColor.DarkGray,
-		_ => ConsoleColor.Gray
-	};
 
 	/// <summary>A trade offer event: the log, the trades pop-up, and Discord/Telegram's Trades topic.</summary>
 	public static void Trade(Core.Said text, string source, bool good = false) {
@@ -615,9 +574,9 @@ public static class Log {
 		Append(file, lines.ToString(), debug: true);
 	}
 
-	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true, string? kind = null, bool head = false) {
+	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true, string? kind = null) {
 		DateTime now = DateTime.Now;
-		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said, kind, head);
+		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said, kind);
 
 		// Rendered once, here, for the console and the file. Both are written as it happens, in the language
 		// selected at that moment; only the entry in the ring can be re-rendered later.

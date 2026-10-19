@@ -225,7 +225,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
-		Log.Debug(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
+		Log.Info(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
 		int made = 0;
 		List<string> craftedNames = [];
 
@@ -275,7 +275,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 				}
 
 				if (ClaimSet(Bot, cards) is not { } claimed) {
-					Log.Debug(new Said("{0}: its cards are being sent or sold right now - crafted later", GameNames.Of(c.AppId)), Bot.Name);
+					Log.Info(new Said("{0}: its cards are being sent or sold right now - crafted later", GameNames.Of(c.AppId)), Bot.Name);
 					_moreToCraft = true;
 
 					continue;
@@ -296,7 +296,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 					_moreToCraft = true;
 
 					if (promised != null) {
-						Log.Debug(new Said("{0}: its cards are in a trade offer that's waiting - crafted later", GameNames.Of(c.AppId)), Bot.Name);
+						Log.Info(new Said("{0}: its cards are in a trade offer that's waiting - crafted later", GameNames.Of(c.AppId)), Bot.Name);
 					}
 				}
 

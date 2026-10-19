@@ -32,7 +32,7 @@ public sealed partial class BadgeCraft {
 			switch (pick.Choice) {
 				case SetSale.Choice.Craft:
 					if (!pick.Quiet) {
-						Log.Debug(new Said("{0}: crafted · {1}", pick.Game, pick.Reason), Bot.Name);
+						Log.Info(new Said("{0}: crafted · {1}", pick.Game, pick.Reason), Bot.Name);
 					}
 
 					continue;
@@ -46,7 +46,7 @@ public sealed partial class BadgeCraft {
 						continue;
 					}
 
-					Log.Debug(pick.Verdict is { Hold: true } ? new Said("{0}: not crafted yet · {1}", pick.Game, pick.Reason)
+					Log.Info(pick.Verdict is { Hold: true } ? new Said("{0}: not crafted yet · {1}", pick.Game, pick.Reason)
 						: pick.Worth.Length == 0 ? new Said("{0}: not crafted yet · {1} · what its cards are worth isn't known", pick.Game, pick.Reason)
 						: new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
 
@@ -67,7 +67,7 @@ public sealed partial class BadgeCraft {
 			}
 
 			sold = true;
-			Log.Debug(verdict.Foil ? new Said("selling the {0} foil set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About)
+			Log.Info(verdict.Foil ? new Said("selling the {0} foil set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About)
 				: verdict.Sets > 1 ? new Said("selling {0} {1} sets instead of crafting: {2} buys about {3} levels", verdict.Sets, verdict.Game, verdict.Money, verdict.About)
 				: new Said("selling the {0} set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About), Bot.Name);
 			int listed = await _listSet(Bot, verdict, inventory, ct).ConfigureAwait(false);

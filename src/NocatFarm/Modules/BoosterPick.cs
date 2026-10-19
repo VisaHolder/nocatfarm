@@ -379,7 +379,7 @@ public static class BoosterPick {
 					continue;
 				}
 
-				Log.Debug(why == Let.TooOld
+				Log.Info(why == Let.TooOld
 					? new Said("the {0} booster pack it made has waited over 2 days to be opened - it follows \"Open booster packs\" now, like any other", own.Name)
 					: new Said("{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut", own.Name), name);
 			}

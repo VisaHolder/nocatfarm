@@ -112,7 +112,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		int days = _rng.Next(lo, hi + 1);
 		int next = Math.Min(100, Math.Max(PlanFor(app).SwitchAtPct, pct) + _rng.Next(8, 16));
 		_plans[app] = new GamePlan(next, DateTime.UtcNow.AddDays(days).AddMinutes(_rng.Next(0, 24 * 60)).Ticks);
-		Log.Debug(new Said("{0}: {1}% done · next game, back in ~{2} day(s)", GameNames.Of(app), pct, days), Bot.Name);
+		Log.Info(new Said("{0}: {1}% done · next game, back in ~{2} day(s)", GameNames.Of(app), pct, days), Bot.Name);
 	}
 
 	/// <summary>
@@ -230,7 +230,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 					// full two hours after the setting said off - and the status line cheerfully said "off" while
 					// it did. A manual grind is somebody else's and is left alone.
 					if (_ours && Bot.Grinding) {
-						Log.Debug(new Said("achievement boost switched off - leaving {0}", GameNames.Of(Bot.GrindGame)), Bot.Name);
+						Log.Info(new Said("achievement boost switched off - leaving {0}", GameNames.Of(Bot.GrindGame)), Bot.Name);
 						Bot.StopGrind();
 					}
 
@@ -563,7 +563,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		if (changed) {
 			int shared = found.Count(a => Bot.Library.Find(a)?.Shared == true);
 
-			Log.Debug(new Said("achievements: {0} games to hunt", found.Count), Bot.Name);
+			Log.Info(new Said("achievements: {0} games to hunt", found.Count), Bot.Name);
 
 			if (shared > 0) {
 				Log.Debug(new Said("achievements: {0} of them family-shared", shared), Bot.Name);
@@ -643,7 +643,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// earning nothing and looking like it is. Hand it back and move down the list; the twenty-minute grace
 			// in the library keeps it out of the rotation until they are actually finished with it.
 			if (_ours && Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(Bot.GrindGame)) {
-				Log.Debug(new Said("family member started {0} - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
+				Log.Info(new Said("family member started {0} - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
 				Bot.StopGrind();
 
 				return;   // the next tick sees the grind gone and starts the rest before the following game
@@ -652,7 +652,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// Everything worth earning here is earned - up to the ceiling, or all that a client can set. The rest of
 			// the sitting would be hours on a game with nothing left in it; close it and move on, like a person would.
 			if (_ours && (BotManager.ModuleOf<AchievementPacer>(Bot)?.NothingLeft(Bot.GrindGame) == true)) {
-				Log.Debug(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
+				Log.Info(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
 				Bot.StopGrind();
 
 				return;
@@ -752,7 +752,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_ours = true;
 		_grindTick = DateTime.UtcNow;
 		_status = new Said("hunting {0}", GameNames.Of(target));
-		Log.Debug(new Said("achievements: {0} for {1} · {2}/{3}", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
+		Log.Info(new Said("achievements: {0} for {1} · {2}/{3}", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
 	}
 
 	/// <summary>
@@ -780,7 +780,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		if ((HuntTarget == 0) || !targets.Contains(HuntTarget) || nothingLeft || enough || Resting(HuntTarget) || (_huntMinutes >= _huntGoal)) {
 			if (nothingLeft) {
-				Log.Debug(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(HuntTarget)), Bot.Name);
+				Log.Info(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(HuntTarget)), Bot.Name);
 			} else if (enough) {
 				RestGame(HuntTarget, pct);
 			}
@@ -814,7 +814,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
 		_huntGoal = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
 
-		Log.Debug(listed > 0
+		Log.Info(listed > 0
 			? new Said("achievements: adding {0} for ~{1} · {2}/{3}", GameNames.Of(game), Fmt.Hm(_huntGoal), ((_index - 1 + listed) % listed) + 1, listed)
 			: new Said("achievements: adding {0} for ~{1}", GameNames.Of(game), Fmt.Hm(_huntGoal)), Bot.Name);
 		SaveHunt();

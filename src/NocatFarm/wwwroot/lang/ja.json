@@ -1618,7 +1618,6 @@
     "Running in Docker": "Docker で実行中",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Docker の中からは、Wi-Fi 上のこのコンピューターのアドレスが見えません。スマホでこのコンピューターのアドレスと Docker が公開するポートを開くか、docker-compose.yml の NOCATFARM_HOME_ADDRESS に書いてください。ここにリンクと読み取り用のコードが出ます。",
     "  ... and {0} more line(s)": "  ... ほか {0} 行",
-    "answer · {0} line(s)": "返答 · {0} 行",
     "couldn't encrypt a login token in place: {0}": "ログイントークンをその場で暗号化できませんでした: {0}",
     "set a dashboard password": "ダッシュボードのパスワードを設定する",
     "turn on Open to other devices": "「他の端末に開く」をオンにする",

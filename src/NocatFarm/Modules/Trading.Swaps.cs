@@ -150,7 +150,7 @@ public sealed partial class Trading {
 				Log.Info(new Said("offer {0} isn't a good swap now ({1}) - declining", n, why), Bot.Name);
 
 				if ((give > 0) && (get > 0)) {
-					Log.Debug(new Said("card swap · you'd give {0} · you'd get {1}", Spare.Money(give, currency), Spare.Money(get, currency)), Bot.Name);
+					Log.Info(new Said("card swap · you'd give {0} · you'd get {1}", Spare.Money(give, currency), Spare.Money(get, currency)), Bot.Name);
 				}
 
 				return Remember(false, why);

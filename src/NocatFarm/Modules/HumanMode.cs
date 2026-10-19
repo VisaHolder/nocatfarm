@@ -456,7 +456,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				_nextWake = DateTime.MinValue;   // bed moved: the next wake is picked again when it gets there
 
 				// In its planned hours (a day off, or the day's hours played) it doesn't go to bed after it - it's done for today.
-				Log.Debug(lastNight || !InPlannedHours(now) || bedClose
+				Log.Info(lastNight || !InPlannedHours(now) || bedClose
 					? new Said("up late - one more sitting, then bed around {0}", _stayUpUntil.ToString("HH:mm"))
 					: new Said("up for one sitting until about {0}, then done for today", _stayUpUntil.ToString("HH:mm")), Bot.Name);
 				Persist();   // a restart during the sitting keeps it, rather than putting the account back to bed
@@ -825,7 +825,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			_phase = Phase.Off;
 			_gateArmedFor = default;
 			_settleFromNow = true;
-			Log.Debug("done grinding · back to the usual day", Bot.Name);
+			Log.Info("done grinding · back to the usual day", Bot.Name);
 		}
 
 		// In bed and the clock has gone back behind bedtime (summer time ending repeats an hour): still in bed. It got
@@ -875,7 +875,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.StopPlaying();
 				ShowAs(null);
 				PickNextWake();
-				Log.Debug(new Said("day off - online, idle until bed ~{0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("day off - online, idle until bed ~{0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -892,7 +892,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.StopPlaying();
 				ShowAs(null);
 				PickNextWake();
-				Log.Debug(new Said("done for the day · {0} played · up {1}", Fmt.Hm(_playedMinutesToday), UpAt()), Bot.Name);
+				Log.Info(new Said("done for the day · {0} played · up {1}", Fmt.Hm(_playedMinutesToday), UpAt()), Bot.Name);
 			}
 
 			return;
@@ -1155,7 +1155,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		if (!_announcedWarmUp) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
-			Log.Debug(_wokeUp
+			Log.Info(_wokeUp
 				? new Said("awake · warming up · {0}", Fmt.Hm(wait))
 				: new Said("warming up · {0}", Fmt.Hm(wait)), Bot.Name);
 		}
@@ -1265,7 +1265,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			_lastGame = 0;
 			_switchingTo = 0;
 
-			Log.Debug("new plan for today from the current settings", Bot.Name);
+			Log.Info("new plan for today from the current settings", Bot.Name);
 			RollFor(date, lastBed, carry);
 
 			if (wasUp && (now < PlanWake())) {
@@ -1320,7 +1320,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			_dayStamp = now.AddDays(-1).DayOfYear;
 
 			if (!NewDayMayStart(now, EarliestWakeToday(), PlanEnds())) {
-				Log.Debug(new Said("plan restored · {0}/{1} · up {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), UpAt()), Bot.Name);
+				Log.Info(new Said("plan restored · {0}/{1} · up {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), UpAt()), Bot.Name);
 
 				return;
 			}
@@ -1345,7 +1345,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		// session.
 		if (HumanDay.Load(Bot.Name, date) is { } saved) {
 			Restore(saved);
-			Log.Debug(new Said("plan restored · {0}/{1} · bed {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (PlanBed()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("plan restored · {0}/{1} · bed {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (PlanBed()).ToString("HH:mm")), Bot.Name);
 
 			return;
 		}
@@ -1402,7 +1402,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		if (_targetMinutes == 0) {
 			// "back tomorrow" is tomorrow's wake time, picked here and now - not today's.
 			PickNextWake();
-			Log.Debug(new Said("taking today off - back tomorrow around {0}", UpAt()), Bot.Name);
+			Log.Info(new Said("taking today off - back tomorrow around {0}", UpAt()), Bot.Name);
 
 			return;
 		}
@@ -1411,13 +1411,13 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			? new Said("{0} only today", GameName(MainGame()))
 			: new Said("{0} about {1}%, around {2} on the others", GameName(MainGame()), MainShareAimed, Fmt.Hm(SideExpected(_targetMinutes, MainShareAimed)));
 
-		Log.Debug(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
+		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
 		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
 
 		if (_quietDay) {
-			Log.Debug(new Said("a quiet spell - shorter days for a while"), Bot.Name);
+			Log.Info(new Said("a quiet spell - shorter days for a while"), Bot.Name);
 		} else if (_lateNight) {
-			Log.Debug(new Said("a late one tonight - bed around {0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("a late one tonight - bed around {0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
 		}
 	}
 
@@ -1984,7 +1984,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				_game = 0;
 				_switchingTo = 0;
 				_nightFarming = true;
-				Log.Debug(new Said("asleep until {0} - card farming through the night", UpAt()), Bot.Name);
+				Log.Info(new Said("asleep until {0} - card farming through the night", UpAt()), Bot.Name);
 			}
 
 			return;
@@ -2009,7 +2009,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.SetPlaying(night);
 
 				if (_phase == want) {
-					Log.Debug(new Said("banking hours again · up {0}", UpAt()), Bot.Name);
+					Log.Info(new Said("banking hours again · up {0}", UpAt()), Bot.Name);
 				}
 			}
 		}
@@ -2024,19 +2024,16 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 
 		if (banking) {
 			// The games by name go to the debug log: eight of them ran the line to 140 characters.
-			Log.Debug(NightPicked is { Count: > 0 } picked
+			Log.Info(NightPicked is { Count: > 0 } picked
 				? new Said("asleep · your {0} most-played · up {1}", picked.Count, UpAt())
 				: new Said("asleep · {0} games · up {1}", NightGames().Count, UpAt()), Bot.Name);
 			Log.Debug(new Said("overnight: {0}", NightPicked is { Count: > 0 } named ? NightPickedNames(named) : NightItems()), Bot.Name);
 			SayNightChanges();
 		} else {
 			Bot.StopPlaying();
-			// Only the one that needs you shows in the window; the day's narration is in the log file (1.8.2).
-			if (NothingToBank) {
-				Log.Info(new Said("asleep - back around {0}. Nothing to bank overnight: add games to the overnight list", UpAt()), Bot.Name);
-			} else {
-				Log.Debug(new Said("asleep - back around {0}", UpAt()), Bot.Name);
-			}
+			Log.Info(NothingToBank
+				? new Said("asleep - back around {0}. Nothing to bank overnight: add games to the overnight list", UpAt())
+				: new Said("asleep - back around {0}", UpAt()), Bot.Name);
 			SayNightChanges();   // every listed game left out: say why, rather than only "nothing to bank"
 		}
 	}
@@ -2065,7 +2062,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying(games);
 
 		if (_assertedOnce) {
-			Log.Debug(new Said("reconnected · {0} game(s) back on", games.Count), Bot.Name);
+			Log.Info(new Said("reconnected · {0} game(s) back on", games.Count), Bot.Name);
 		}
 
 		_assertedOnce = true;
@@ -2099,7 +2096,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.StopPlaying();
 				ShowAs(null);
 				PickNextWake();
-				Log.Debug(new Said("done for the day · {0} played · up {1}", Fmt.Hm(_playedMinutesToday), UpAt()), Bot.Name);
+				Log.Info(new Said("done for the day · {0} played · up {1}", Fmt.Hm(_playedMinutesToday), UpAt()), Bot.Name);
 			}
 
 			return;
@@ -2169,7 +2166,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying([game]);   // ONE game. Six at once is the tell.
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
-		Log.Debug(_farmSession
+		Log.Good(_farmSession
 			? new Said("farming cards on {0} for ~{1} · {2}/{3} today", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
 			: new Said("playing {0} for ~{1} · {2}/{3} today", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
@@ -2306,7 +2303,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 
 		_sessionEnds = DateTime.UtcNow.AddMinutes(minutes);
 		_playOnPending = true;   // the game is (re)put on once the farmer has let go
-		Log.Debug(new Said("last card from {0} - playing on ~{1}, then a break", GameName(_game), Fmt.Hm(minutes)), Bot.Name);
+		Log.Info(new Said("last card from {0} - playing on ~{1}, then a break", GameName(_game), Fmt.Hm(minutes)), Bot.Name);
 	}
 
 	private void EndSession() {
@@ -2407,7 +2404,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		int after = Rng(Math.Max(0, awayLo), Math.Max(awayLo, awayHi));
 
 		if (minutes <= after + 2) {
-			Log.Debug(new Said("{0} · back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
+			Log.Info(new Said("{0} · back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
 
 			return;
 		}
@@ -2421,13 +2418,13 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
 			// everyone on the friends list is the same thing and costs nothing in login rate limit.
-			Log.Debug(new Said("{0} · offline, back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
+			Log.Info(new Said("{0} · offline, back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
 
 			return;
 		}
 
 		_breakPersona = awayPersona;
-		Log.Debug(new Said("{0} · back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
+		Log.Info(new Said("{0} · back in ~{1}", what, Fmt.Hm(minutes)), Bot.Name);
 	}
 
 	/// <summary>When a grind's game may go on, after the game before it was closed.</summary>
@@ -2687,7 +2684,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		// Over, or only moments of it left: that sitting is done. It ends as any sitting does - a break, or the next game -
 		// rather than snapping straight into a fresh one (which is what an already-ended sitting used to do).
 		if (!CarriesOn(was.Ends - now)) {
-			Log.Debug(new Said("{0} · that sitting's over", GameName(was.Game)), Bot.Name);
+			Log.Info(new Said("{0} · that sitting's over", GameName(was.Game)), Bot.Name);
 			EndSession();
 
 			return true;
@@ -2712,7 +2709,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying([game]);   // ONE game, as ever
 		_playingAssertedFor = Bot.OnlineSince ?? now;
 
-		Log.Debug(new Said("carrying on with {0} · {1} left · {2}/{3} today", GameName(game), Left(was.Ends), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
+		Log.Good(new Said("carrying on with {0} · {1} left · {2}/{3} today", GameName(game), Left(was.Ends), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 
 		return true;
 	}
@@ -2881,7 +2878,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				: new Said("noted you on the account for {0}", Fmt.Hm(sitting.Minutes)), Bot.Name);
 
 			if (!wasReady && Habits.Ready) {
-				Log.Debug(new Said("seen you play on {0} days - its day now leans toward yours", Habits.DaysSeen), Bot.Name);
+				Log.Info(new Said("seen you play on {0} days - its day now leans toward yours", Habits.DaysSeen), Bot.Name);
 			}
 		}
 	}
@@ -2948,7 +2945,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			_friendJoins++;
 			_joinedToday = $"{friend.Name} in {LibName(friend.App)}";
 			Persist();
-			Log.Debug(new Said("{0} is playing {1} - joining in for a sitting", friend.Name, LibName(friend.App)), Bot.Name);
+			Log.Info(new Said("{0} is playing {1} - joining in for a sitting", friend.Name, LibName(friend.App)), Bot.Name);
 
 			return friend.App;
 		}
@@ -2959,7 +2956,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 				: WeightedPick([.. trials.Select(static t => (t.App, Math.Max(1, (int) Math.Round(t.Strength * 100))))]);
 			_newGameSittings++;
 			Persist();
-			Log.Debug(new Said("trying out {0} - it's new here", LibName(game)), Bot.Name);
+			Log.Info(new Said("trying out {0} - it's new here", LibName(game)), Bot.Name);
 
 			return game;
 		}

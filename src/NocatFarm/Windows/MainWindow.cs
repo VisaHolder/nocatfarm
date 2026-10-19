@@ -1688,8 +1688,7 @@ public sealed partial class MainWindow : IDisposable {
 		int total;
 
 		lock (_logGate) {
-			// What shows: a stack is one row (its newest line's time, and its colour - an answer's the most serious of its
-			// lines), opened its lines under it, indented.
+			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented.
 			List<(Core.LogStack.Row Row, Log.Entry Entry, int Depth, bool Head)> shown = [.. Core.LogStack.Shown(_rows)];
 			total = shown.Count;
 			_logScroll = Math.Clamp(_logScroll, 0, Math.Max(0, total - room));
@@ -1698,7 +1697,7 @@ public sealed partial class MainWindow : IDisposable {
 			int end = Math.Max(0, total - _logScroll);
 			int start = Math.Max(0, end - room);
 			lines = [.. shown.GetRange(start, end - start).Select(r => (r.Row, new LogLine(r.Entry.When.ToString("HH:mm:ss"), r.Entry.Source,
-				r.Head ? new Core.Said(r.Row.Header) : r.Depth > 0 ? new Core.Said("   " + r.Entry.Text) : r.Entry.Said, ColourOf(r.Head ? r.Row.Level : r.Entry.Level)), r.Head))];
+				r.Head ? new Core.Said(r.Row.Header) : r.Depth > 0 ? new Core.Said("   " + r.Entry.Text) : r.Entry.Said, ColourOf(r.Entry.Level)), r.Head))];
 		}
 
 		// Fixed columns, and every line is clipped to the panel with an ellipsis rather than allowed to wrap or

@@ -459,9 +459,8 @@ public static partial class Notifier {
 
 	/// <summary>
 	/// The reply in the log too, masked as the log file masks a command's reply (Steam Guard codes, keys, tokens): the
-	/// first 40 lines in the log, so one long answer doesn't bury everything else, and the rest - up to the log file's
-	/// own limit - in the file alone. More than one line is ONE row in the window and the dashboard (1.8.2), "answer · 12
-	/// line(s)", that opens to them - the chat it was asked from has the whole answer already.
+	/// first 40 lines on screen, so one long answer doesn't bury everything else, and the rest - up to the log file's
+	/// own limit - in the file alone.
 	/// </summary>
 	internal static void EchoToLog(string line, string output, string source) {
 		const int MaxLines = 40;
@@ -471,24 +470,13 @@ public static partial class Notifier {
 		// those said 161 more of a reply with thousands.
 		int total = output.ReplaceLineEndings("\n").Split('\n').Count(static l => l.Trim().Length > 0);
 
-		if ((lines.Count <= 1) && (total <= MaxLines)) {
-			foreach (string outLine in lines) {
-				Log.Info(new Said("  " + outLine), source);
-			}
-
-			return;
+		foreach (string outLine in lines.Take(MaxLines)) {
+			Log.Info(new Said("  " + outLine), source);
 		}
-
-		List<(string, Said)> shown = [.. lines.Take(MaxLines).Select(static l => ("INFO", new Said("  " + l)))];
-
-		if (total > MaxLines) {
-			shown.Add(("INFO", new Said("  ... and {0} more line(s)", total - MaxLines)));
-		}
-
-		Log.Answer(new Said("answer · {0} line(s)", total), shown, source);
 
 		if (total > MaxLines) {
 			Log.FileLines("INFO", source, lines.Skip(MaxLines).Select(static l => "  " + l));
+			Log.Info(new Said("  ... and {0} more line(s)", total - MaxLines), source);
 		}
 	}
 

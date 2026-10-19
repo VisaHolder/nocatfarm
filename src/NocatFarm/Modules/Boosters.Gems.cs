@@ -267,7 +267,7 @@ public sealed partial class Boosters {
 			AutoMemory.NoteMade(offer.AppId, DateTime.UtcNow);
 			AutoMemory.Add(new BoosterPick.OwnPack(offer.AppId, offer.Name, 0, after, DateTime.UtcNow, Maybe: true, SetSize: BoosterPick.SetSize(offer.Price), For: purpose));
 			AutoMemory.Save(Bot.Name);
-			Log.Debug(new Said("Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another", offer.Name), Bot.Name);
+			Log.Info(new Said("Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another", offer.Name), Bot.Name);
 			_openNext = DateTime.UtcNow + Rng.Minutes(1, 3);
 			_autoNext = DateTime.UtcNow + Rng.Minutes(4, 8);
 
@@ -291,7 +291,7 @@ public sealed partial class Boosters {
 		Log.Reward(MadeSaid(offer.Name, made.Gems), Bot.Name);
 		Said why = sealedPack ? new Said("{0} pack made to sell · about {1} levels per 1,000 gems", offer.Name, levels)
 			: new Said("{0} pack made to open and sell its cards · about {1} levels per 1,000 gems", offer.Name, levels);
-		Log.Debug(why, Bot.Name);
+		Log.Info(why, Bot.Name);
 		_autoStatus = why;
 
 		// A sealed one is listed at a later look, once the inventory shows it; one to open is opened like automatic's own.

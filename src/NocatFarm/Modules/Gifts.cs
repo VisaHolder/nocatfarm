@@ -458,7 +458,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 		Waiting what = _waiting.TryGetValue(key, out Waiting? w) ? w : new Waiting("", false);
 		Func<string> at = () => Fmt.Clock(due);
 
-		Log.Debug(key.Kind == Kind.Card ? new Said("wallet gift card waiting - accepting around {0}", at)
+		Log.Info(key.Kind == Kind.Card ? new Said("wallet gift card waiting - accepting around {0}", at)
 			: what.GiftedGame ? new Said("{0} was gifted - adding it around {1}", Named(what.Name), at)
 			: what.Name.Length > 0 ? new Said("guest pass for {0} - accepting around {1}", what.Name, at)
 			: new Said("guest pass waiting - accepting around {0}", at), Bot.Name);
@@ -518,7 +518,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 				if (PassRetry(answer.Result, tries) is { } wait) {
 					DateTime again = DateTime.UtcNow + wait;
 					_passRetry[gid] = (tries, again);
-					Log.Debug(new Said("{0} - trying again around {1}", failed, (Func<string>) (() => Fmt.Clock(again))), Bot.Name);
+					Log.Info(new Said("{0} - trying again around {1}", failed, (Func<string>) (() => Fmt.Clock(again))), Bot.Name);
 
 					return false;   // not done - asked for again once its wait is up
 				}

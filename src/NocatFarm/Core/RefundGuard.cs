@@ -189,11 +189,11 @@ public sealed partial class RefundGuard(Bot bot) {
 				}
 
 				if (borrowed.Count > 0) {
-					Log.Debug(new Said("leaving {0} alone - only just shared with this account", Names(borrowed)), bot.Name);
+					Log.Info(new Said("leaving {0} alone - only just shared with this account", Names(borrowed)), bot.Name);
 				}
 
 				if (freed.Count > 0) {
-					Log.Debug(freed.Count == 1
+					Log.Info(freed.Count == 1
 						? new Said("{0} is past the refund window - free to play again", Names(freed))
 						: new Said("{0} are past the refund window - free to play again", Names(freed)), bot.Name);
 				}

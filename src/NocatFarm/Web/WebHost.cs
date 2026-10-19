@@ -1238,9 +1238,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				Text = e.Text,
 				// Lines in a row of the same kind from one account show as one row there (Core/LogStack.cs).
 				Kind = LogStack.KindOf(e),
-				Value = LogStack.ValueOf(e.Said),
-				// The line its row reads as: an answer's first line, a look's total.
-				Head = LogStack.IsHead(e)
+				Value = LogStack.ValueOf(e.Said)
 			}))));
 
 		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names

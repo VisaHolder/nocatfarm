@@ -145,7 +145,7 @@ public static class SpareRun {
 						break;
 					}
 
-					Log.Debug(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), no.Why), account);
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), no.Why), account);
 
 					continue;
 				}
@@ -155,7 +155,7 @@ public static class SpareRun {
 				// it's kept.
 				if (await steam.BeforeGemsAsync(d, ct).ConfigureAwait(false) is { } wait) {
 					ledger.Unreserve(d.PriceCents, nowLocal());
-					Log.Debug(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), wait), account);
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), wait), account);
 
 					continue;
 				}
