@@ -3247,7 +3247,44 @@
     "rep4rep commenting carries on": "rep4rep sigue comentando",
     "Disconnect": "Desconectar",
     "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Olvida este chat. Vuelve a aparecer Conectar Telegram para conectar otro.",
-    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Olvida esta cuenta de Discord: el bot no obedece a nadie hasta que vuelvas a conectar."
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Olvida esta cuenta de Discord: el bot no obedece a nadie hasta que vuelvas a conectar.",
+    "to": "a",
+    "0 = {0}": "0 = {0}",
+    "seconds": "segundos",
+    "days": "días",
+    "ms": "ms",
+    "wallet currency": "en la moneda del monedero",
+    "points": "puntos",
+    "backups": "copias",
+    "reviews": "reseñas",
+    "times a day": "veces al día",
+    "no limit": "sin límite",
+    "spend nothing": "no gastar nada",
+    "keep forever": "guardar para siempre",
+    "never again": "nunca más",
+    "Settle in after signing in": "Acomodarse tras iniciar sesión",
+    "Sittings": "Sesiones",
+    "Breaks": "Descansos",
+    "On a break, go Away after": "En un descanso, pasar a Ausente tras",
+    "Sleeps": "Duerme",
+    "After waking, wait": "Al despertar, esperar",
+    "Background jobs wait after signing in": "Las tareas de fondo esperan tras iniciar sesión",
+    "After the last card, keep playing": "Tras la última carta, seguir jugando",
+    "Farm cards only between": "Conseguir cartas solo entre",
+    "While grinding, one achievement every": "Al grindear, un logro cada",
+    "Move to another game at": "Pasar a otro juego al",
+    "Come back to a game after": "Volver a un juego tras",
+    "Wait between items, human mode": "Espera entre objetos, modo humano",
+    "Wait between steps": "Espera entre pasos",
+    "Wait between steps, human mode": "Espera entre pasos, modo humano",
+    "Look for scams every": "Buscar estafas cada",
+    "Check health every": "Revisar el estado cada",
+    "Accept a gift after": "Aceptar un regalo tras",
+    "Answer a trade offer after": "Responder a una oferta tras",
+    "Accept a friend request after": "Aceptar una solicitud de amistad tras",
+    "Gap between comments": "Intervalo entre comentarios",
+    "Only post between": "Publicar solo entre",
+    "Install by itself between": "Instalar sola entre"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -3404,7 +3441,7 @@
       "tip": "Cada cuántos minutos esta cuenta anota en el registro lo que hace mientras tiene un juego abierto. 0 usa el ajuste general de registro y -1 la deja en silencio."
     },
     "StatusQuietEveryMinutes": {
-      "label": "Y mientras descansa, cada",
+      "label": "En reposo, decir lo que hace cada",
       "tip": "Lo mismo, pero para cuando esta cuenta duerme, descansa, está en pausa o desconectada. 0 usa el ajuste general de registro y -1 la deja en silencio."
     },
     "Language": {
@@ -3479,7 +3516,7 @@
       "tip": "Solo en modo humano. Cuántos minutos de descanso pasan antes de que su estado cambie a ausente o desconectado, como un cliente de Steam real inactivo. Los descansos más cortos siguen conectados."
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "...hasta",
+      "label": "En un descanso, pasar a Ausente tras como mucho",
       "tip": "Los minutos máximos de descanso antes de que su estado cambie a ausente o desconectado."
     },
     "LegitStopMaxSeconds": {
@@ -3511,7 +3548,7 @@
       "tip": "La hora a la que se conecta, por ejemplo 11:00. Cada día se conecta dentro de «Varía hasta» alrededor de esta hora, casi siempre cerca de ella y un poco antes los fines de semana."
     },
     "DayStartVaryMinutes": {
-      "label": "Varía hasta (minutos)",
+      "label": "Se conecta, más o menos",
       "tip": "Cuánto puede alejarse de «Se conecta a las», antes o después, en minutos. Nada lo saca de ahí: con 11:00 y 30 siempre se conecta entre las 10:30 y las 11:30. 0 es el mismo minuto todos los días."
     },
     "BedTime": {
@@ -3519,7 +3556,7 @@
       "tip": "La hora a la que para por la noche. Pasada la medianoche también vale: 02:00 son las dos de la madrugada, después del día en que se conectó. Cada noche se acuesta dentro de «Varía hasta» alrededor de esta hora, un poco más tarde el viernes y el sábado."
     },
     "BedVaryMinutes": {
-      "label": "Varía hasta (minutos)",
+      "label": "Se acuesta, más o menos",
       "tip": "Cuánto puede alejarse de «Se acuesta a las», antes o después, en minutos. Nada lo saca de ahí: con 02:00 y 60 siempre se acuesta entre la 01:00 y las 03:00. 0 es el mismo minuto todas las noches."
     },
     "LateNightExtraHours": {
@@ -3531,7 +3568,7 @@
       "tip": "Cuánto dura una noche antes de que pueda empezar el día siguiente, en horas: una duración al azar entre este valor y el siguiente, distinta cada noche. Una noche que no cabe antes de lo más tarde que permite «Se conecta a las» se acorta: nunca se conecta más tarde."
     },
     "SleepMaxHours": {
-      "label": "...hasta",
+      "label": "Duerme como mucho",
       "tip": "El máximo de ese rango, en horas."
     },
     "PureMainDayChancePct": {
@@ -3543,7 +3580,7 @@
       "tip": "La espera más corta tras iniciar sesión antes de empezar un juego, en minutos. También se aplica al activar «Modo humano», para que no lance un juego al instante."
     },
     "WarmUpMaxMinutes": {
-      "label": "Y como mucho",
+      "label": "Acomodarse como mucho",
       "tip": "La espera más larga tras iniciar sesión, en minutos. Nunca empieza en los 3 primeros minutos tras iniciar sesión, así no puede quitarte la cuenta si ya estás jugando en ella."
     },
     "SessionMinMinutes": {
@@ -3591,7 +3628,7 @@
       "tip": "Farmea cromos de Steam. Los juegos a los que les quedan cromos se juegan hasta que dejan de caer, antes que nada."
     },
     "HoursUntilCardDrops": {
-      "label": "Horas antes de que caigan cromos",
+      "label": "Jugar cada juego este tiempo antes de que caigan cartas",
       "tip": "Cuántas horas necesita un juego antes de que Steam suelte sus cromos. Pon 0 si esta cuenta ha gastado más de 5 $ en Steam, para que nada se juegue más de lo necesario."
     },
     "FarmingOrder": {
@@ -3613,11 +3650,11 @@
       "choices": "0 prudente (el doble de lento) | 1 normal | 2 rápido (el doble de rápido)"
     },
     "AchievementMaxCompletionPct": {
-      "label": "No completar más de",
+      "label": "No completar nunca más de un juego que",
       "tip": "Lo máximo que completará de un juego, en porcentaje. Dejar unos cuantos sin conseguir parece una biblioteca real. Cuando un juego llega ahí, la caza lo deja para siempre; si subes este valor, vuelve. El comando grind lo ignora."
     },
     "AchievementBurstMinPct": {
-      "label": "Ráfagas rápidas solo para logros de al menos",
+      "label": "Rachas rápidas solo para logros que tengan al menos",
       "tip": "A veces llegan 2 o 3 logros con pocos minutos de diferencia, como al terminar un nivel. Solo los logros que tiene al menos este porcentaje de jugadores pueden llegar así; los más raros siempre llegan solos, con la espera completa. 0 deja que cualquier logro llegue en ráfaga; 100 desactiva las ráfagas."
     },
     "CraftBadges": {
@@ -3633,11 +3670,11 @@
       "tip": "El máximo de comentarios que publica esta cuenta en 24 horas. Steam permite unos 10 a quien no es amigo, y pasarse puede hacer que bloqueen los comentarios de la cuenta."
     },
     "Rep4RepGapMinMinutes": {
-      "label": "Separación mínima",
+      "label": "Intervalo más corto entre comentarios",
       "tip": "El tiempo más corto entre dos comentarios de esta cuenta, en minutos."
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "Separación máxima",
+      "label": "Intervalo más largo entre comentarios",
       "tip": "El tiempo más largo entre comentarios, en minutos. Cada separación se elige al azar entre los dos."
     },
     "Rep4RepStartHour": {
@@ -3645,7 +3682,7 @@
       "tip": "La hora más temprana del día a la que comenta esta cuenta. Comentar en plena madrugada delata a un bot."
     },
     "Rep4RepEndHour": {
-      "label": "Hasta",
+      "label": "Publicar solo hasta",
       "tip": "La hora más tardía del día a la que comenta esta cuenta. Ponla igual que «Publicar solo desde» para comentar a todas horas."
     },
     "AcceptFriendRequests": {
@@ -3674,11 +3711,11 @@
       "tip": "Envía la respuesta como mucho una vez al día a cada persona, para que nadie reciba la misma frase dos veces."
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "Esperar al menos",
+      "label": "Aceptar una solicitud de amistad tras al menos",
       "tip": "La espera más corta antes de aceptar una solicitud de amistad, en minutos. Aceptar en el mismo segundo en que llega delata a un bot."
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "Y como mucho",
+      "label": "Aceptar una solicitud de amistad tras como mucho",
       "tip": "La espera más larga antes de aceptar una solicitud de amistad, en minutos. Cada solicitud recibe una espera al azar, normalmente más cerca de la corta."
     },
     "ActOnlyWhileAwake": {
@@ -3694,15 +3731,15 @@
       "tip": "Solo en modo humano. Cuántos minutos tras despertarse o iniciar sesión pasan antes de hacer cosas que otros pueden ver, como intercambios, comentarios o respuestas. Cada tipo tiene su propia espera al azar."
     },
     "WakeDelayMaxMinutes": {
-      "label": "...hasta",
+      "label": "Al despertar, esperar como mucho",
       "tip": "La espera más larga tras despertarse o iniciar sesión, en minutos."
     },
     "QuietDelayMinMinutes": {
-      "label": "Tras iniciar sesión, lo de segundo plano espera al menos",
+      "label": "Las tareas de fondo esperan tras iniciar sesión, al menos",
       "tip": "Solo en modo humano. Cuántos minutos tras iniciar sesión pasan antes de que empiecen las tareas en segundo plano, como insignias, juegos gratis y sobres de refuerzo. Cada una tiene su propia espera al azar para que no arranquen todas a la vez."
     },
     "QuietDelayMaxMinutes": {
-      "label": "...hasta",
+      "label": "Las tareas de fondo esperan tras iniciar sesión, como mucho",
       "tip": "La espera más larga tras iniciar sesión antes de que empiecen las tareas en segundo plano, en minutos."
     },
     "OneTradeAtATime": {
@@ -3742,11 +3779,11 @@
       "tip": "Rechaza todas las demás ofertas de intercambio en vez de dejarlas. Desactivado, deja las ofertas no aceptadas para que las revises tú."
     },
     "TradeDelayMinMinutes": {
-      "label": "Esperar al menos",
+      "label": "Responder a una oferta tras al menos",
       "tip": "La espera más corta antes de responder a una oferta de intercambio, en minutos. Aceptar segundos después de que llegue parece un bot."
     },
     "TradeDelayMaxMinutes": {
-      "label": "Y como mucho",
+      "label": "Responder a una oferta tras como mucho",
       "tip": "La espera más larga antes de responder a una oferta de intercambio, en minutos. Cada oferta recibe una espera al azar, normalmente más cerca de la corta."
     },
     "GiftDelayMinMinutes": {
@@ -3754,7 +3791,7 @@
       "tip": "La espera más corta antes de aceptar un regalo, como un juego, una tarjeta regalo o un pase de invitado, en minutos."
     },
     "GiftDelayMaxMinutes": {
-      "label": "Y como mucho",
+      "label": "Aceptar un regalo tras como mucho",
       "tip": "La espera más larga antes de aceptar un regalo, en minutos. Cada regalo recibe una espera al azar, normalmente más cerca de la corta."
     },
     "PauseWhenYouPlay": {
@@ -3837,7 +3874,7 @@
       "tip": "Farmea cromos solo a partir de esta hora. Deja esto y «...hasta» los dos en medianoche para farmear a cualquier hora."
     },
     "FarmUntilHour": {
-      "label": "...hasta",
+      "label": "Conseguir cartas solo hasta",
       "tip": "Farmea cromos hasta esta hora. Ponla antes que la hora de inicio para pasar de medianoche: de la noche a la madrugada farmea de noche."
     },
     "PostFarmWindDownMinMinutes": {
@@ -3845,7 +3882,7 @@
       "tip": "Solo en modo humano. Cuando un juego suelta su último cromo, sigue jugándolo unos minutos y luego descansa. Pon los dos en 0 para parar al momento."
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...hasta",
+      "label": "Tras la última carta, seguir jugando como mucho",
       "tip": "Los minutos máximos que sigue jugando tras el último cromo."
     },
     "FarmingDelayMinutes": {
@@ -3853,7 +3890,7 @@
       "tip": "Cada cuántos minutos vuelve a comprobar un juego mientras farmea. Steam avisa de los cromos en cuanto caen, así que esto es solo un respaldo."
     },
     "MaxFarmingHoursPerGame": {
-      "label": "Rendirse tras",
+      "label": "Dejar un juego tras",
       "tip": "Se rinde con un juego tras estas horas y pasa al siguiente, para que un juego atascado no bloquee al resto."
     },
     "StopWhenFarmingDone": {
@@ -3877,7 +3914,7 @@
       "tip": "Solo deja que «todos los de un jugador» cace juegos que esta cuenta ya ha abierto. La forma más estricta de limitarlo a juegos que encajen con el historial de la cuenta."
     },
     "InventoryIgnoreGames": {
-      "label": "...pero no estos juegos",
+      "label": "Dejar estos juegos fuera del valor del inventario y de los intercambios",
       "tip": "IDs de juegos (el número del enlace de la tienda) que dejar fuera del valor del inventario y de todos los intercambios, separados por comas. Los juegos en los que la cuenta está baneada nunca se pueden intercambiar - la vigilancia de baneos los añade sola cuando puede verlos, y tú también puedes ponerlos aquí."
     },
     "YieldToFamily": {
@@ -3889,11 +3926,11 @@
       "tip": "Deja que la caza de logros use también los juegos compartidos con esta cuenta a través de Steam Family. Por ejemplo, con 40 juegos propios y 200 compartidos, puede elegir entre los 240 - los propios siempre van primero. Activado: los compartidos cuentan como propios. Desactivado: solo los juegos que tiene esta cuenta."
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "Al machacar, un logro cada",
+      "label": "Al grindear, intervalo más corto entre logros",
       "tip": "Cada cuántos minutos se desbloquean logros durante un machaque. Un machaque se queda en un solo juego, así que es un ritmo más rápido y activo. Los más fáciles van primero."
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...hasta",
+      "label": "Al grindear, intervalo más largo entre logros",
       "tip": "La separación más larga entre desbloqueos del machaque, en minutos."
     },
     "AchievementNeverGames": {
@@ -3943,23 +3980,23 @@
       "choices": "0 el juego que más jugó | 1 cualquier juego que haya jugado"
     },
     "SaleGapMinSeconds": {
-      "label": "Las cuentas robot esperan entre pasos (segundos)",
+      "label": "Espera más corta entre pasos",
       "tip": "Segundos entre dos nominaciones o votos en una cuenta robot, la espera más corta - por ejemplo 5. Con la más larga en 20, cada espera es de 5 a 20 segundos al azar."
     },
     "SaleGapMaxSeconds": {
-      "label": "...hasta (segundos)",
+      "label": "Espera más larga entre pasos",
       "tip": "La espera más larga entre dos pasos en una cuenta robot, en segundos - por ejemplo 20. Con la más corta en 5, cada espera es de 5 a 20 segundos al azar."
     },
     "SaleHumanGapMinMinutes": {
-      "label": "El modo humano espera entre pasos (minutos)",
+      "label": "Espera más corta entre pasos, modo humano",
       "tip": "Minutos entre dos nominaciones o votos en una cuenta en modo humano, la espera más corta - por ejemplo 5. Con la más larga en 30, cada espera es de 5 a 30 minutos al azar. Solo dentro de su día."
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...hasta (minutos)",
+      "label": "Espera más larga entre pasos, modo humano",
       "tip": "La espera más larga entre dos pasos en una cuenta en modo humano, en minutos - por ejemplo 30. Con la más corta en 5, cada espera es de 5 a 30 minutos al azar."
     },
     "SaleCheckHours": {
-      "label": "Buscar eventos cada (horas)",
+      "label": "Buscar eventos cada",
       "tip": "Cada cuánto mira si ha empezado un evento de Steam, en horas - por ejemplo 6, unas 4 veces al día. Mientras hay uno en marcha mira más o menos cada hora."
     },
     "SellPerRun": {
@@ -4135,7 +4172,7 @@
       "tip": "Farmea cromos en unos pocos bloques al día con descansos entre ellos, en vez de sin parar. Solo cambia algo de verdad en una cuenta que no tiene nada más que dejar en segundo plano."
     },
     "FarmHoursPerDay": {
-      "label": "Horas al día farmeando",
+      "label": "Conseguir cartas este tiempo al día",
       "tip": "Más o menos cuántas horas al día suman los bloques de farmeo. Varía cada día y dura más los fines de semana. Solo se usa si «Farmear en sesiones, no sin parar» está activado."
     },
     "MarketGapSeconds": {
@@ -4147,7 +4184,7 @@
       "tip": "Cuántas horas se reutiliza un precio antes de volver a comprobarlo. Los objetos baratos se comprueban menos. Más tiempo significa menos peticiones, pero los valores se actualizan más despacio."
     },
     "Rep4RepPauseHours": {
-      "label": "Pausar comentarios durante (horas)",
+      "label": "Pausar los comentarios durante",
       "tip": "Pausa los comentarios de rep4rep en todas las cuentas durante estas horas, y luego vuelven solos. La cuenta atrás sigue aunque reinicies. Pon 0 para no pausar."
     },
     "DiscordPresence": {
@@ -4215,11 +4252,11 @@
       "tip": "Solo en modo humano. El juego que se caza se suma a los juegos que juega, y esto es cada cuánto sale: un peso como los de «Juegos y cada cuánto». Se juega en sesiones normales, con descansos y hora de dormir, y nunca corta otro juego."
     },
     "AutoUpdateFromHour": {
-      "label": "...entre las",
+      "label": "Instalar sola desde",
       "tip": "La hora más temprana en que puede instalarse solo."
     },
     "AutoUpdateUntilHour": {
-      "label": "...y las",
+      "label": "Instalar sola hasta",
       "tip": "La hora en que deja de intentarlo esa noche. Antes que la hora de inicio pasa la medianoche, así que de la noche a primera hora de la mañana funciona."
     },
     "AutoUpdateWaitHours": {
@@ -4271,23 +4308,23 @@
       "tip": "Cuántos juegos tiene la caza a la vez. Se turna entre ellos y, cuando uno descansa o termina, entra el siguiente de la lista."
     },
     "BoostHoursPerDay": {
-      "label": "Cazar como mucho, horas al día",
+      "label": "Cazar como mucho al día",
       "tip": "El máximo de tiempo al día para el juego que caza. En una cuenta en modo humano, el juego sale de sus juegos el resto del día; si no, la caza para por hoy. 0 es sin límite."
     },
     "BoostSwitchFromPct": {
-      "label": "Pasa a otro juego hacia el",
+      "label": "Pasar a otro juego desde",
       "tip": "Cuando un juego tiene más o menos este porcentaje de logros (un punto al azar entre este y el siguiente ajuste, distinto en cada juego), pasa a otro, como alguien que ya se cansó de él por ahora. En porcentaje."
     },
     "BoostSwitchToPct": {
-      "label": "...hasta el",
+      "label": "Pasar a otro juego como tarde al",
       "tip": "El tope de ese rango. El mismo número que arriba lo hace exacto."
     },
     "BoostRestDaysMin": {
-      "label": "Vuelve a un juego tras",
+      "label": "Volver a un juego tras al menos",
       "tip": "Cuántos días pasan antes de volver a un juego que dejó: un número al azar entre este y el siguiente ajuste. Cada vez que vuelve se detiene un poco más adelante, hasta «No completar más del»."
     },
     "BoostRestDaysMax": {
-      "label": "...hasta",
+      "label": "Volver a un juego tras como mucho",
       "tip": "El tope de ese rango, en días."
     },
     "AchievementRealLength": {
@@ -4300,7 +4337,7 @@
       "choices": "3 cuentas de Steam en nocat.farm | 0 cromos hoy | 1 horas la última semana | 2 horas el último mes"
     },
     "SendAroundHour": {
-      "label": "...hacia las",
+      "label": "Enviar objetos hacia las",
       "tip": "La hora del día para enviar, por ejemplo de madrugada. Sale en un minuto al azar de esa hora, los días que permite «Enviar objetos cada». Sin hora fija: cada tantas horas desde que se activó."
     },
     "IdleWholeLibrary": {
@@ -4363,7 +4400,7 @@
       "tip": "La hora a la que llega el informe semanal, en hora local."
     },
     "OfflineIdleTopGames": {
-      "label": "...o, si no hay ninguno, sus juegos más jugados",
+      "label": "Juegos más jugados por la noche",
       "tip": "Con «Juegos para la noche» vacío, de noche deja en segundo plano esta cantidad de sus juegos más jugados. 1 o 2 es lo más natural - muchos a la vez es lo primero que señala selfcheck."
     },
     "ClaimFree": {
@@ -4434,11 +4471,11 @@
       "tip": "Te avisa cuando los intercambios de esta cuenta empiezan a retenerse varios días - por ejemplo 15 días después de cambiar Steam Guard. Desactivado: solo lo muestra la línea de Salud."
     },
     "HealthMaxHours": {
-      "label": "...hasta (horas)",
+      "label": "Espera más larga entre revisiones del estado",
       "tip": "El tiempo más largo entre dos comprobaciones de salud, en horas - por ejemplo 7. Con el más corto en 5, hay una comprobación cada 5 a 7 horas, al azar."
     },
     "HealthMinHours": {
-      "label": "Espera más corta entre comprobaciones de salud (horas)",
+      "label": "Espera más corta entre revisiones del estado",
       "tip": "El tiempo más corto entre dos comprobaciones de salud, en horas - por ejemplo 5. Con el más largo en 7, hay una comprobación cada 5 a 7 horas, al azar. Siempre comprueba una vez cuando la cuenta inicia sesión."
     },
     "ScamAlertDiscord": {
@@ -4470,11 +4507,11 @@
       "tip": "Mira la lista de dispositivos autorizados de la cuenta y avisa de uno nuevo que no sea tuyo ni del propio nocat.farm - por ejemplo un «DESKTOP-8XQ2» que nunca has visto. Desactivado: no se revisan los dispositivos."
     },
     "ScamWatchMaxMinutes": {
-      "label": "...hasta (minutos)",
+      "label": "Espera más larga entre revisiones de estafas",
       "tip": "El tiempo más largo entre dos revisiones, en minutos - por ejemplo 60. Con el más corto en 30, cada espera es de 30 a 60 minutos al azar."
     },
     "ScamWatchMinMinutes": {
-      "label": "Espera más corta entre revisiones (minutos)",
+      "label": "Espera más corta entre revisiones de estafas",
       "tip": "El tiempo más corto entre dos revisiones, en minutos - por ejemplo 30. Con el más largo en 60, cada espera es de 30 a 60 minutos al azar. Cada revisión son unas pocas páginas, lo mismo que abrirlas en un navegador."
     },
     "ScamWatchRevokeKey": {
@@ -4502,7 +4539,7 @@
       "tip": "Muestra una línea de Salud en la tarjeta de la cuenta - nivel, baneos, bloqueo de intercambio, acceso al mercado, cuenta limitada, Steam Guard y teléfono - y te avisa en cuanto algo empeora. Por ejemplo, cuando empieza un bloqueo de intercambio recibes un mensaje y la línea lo indica. Se revisa al iniciar sesión y cada pocas horas; solo mira. Desactivado: sin línea de Salud y sin avisos."
     },
     "PointsWeeklyCap": {
-      "label": "Gastar como mucho, por semana",
+      "label": "Puntos a la semana, como mucho",
       "tip": "Lo máximo que gasta en puntos en cualquier periodo de 7 días. Por ejemplo 3000: como mucho 3 niveles de insignia a la semana, tenga los puntos que tenga. 0 no gasta nada."
     },
     "PointsBadgeMaxLevel": {
@@ -4526,7 +4563,7 @@
       "tip": "Puntos que nunca gasta, para que te queden algunos. Por ejemplo 1000 con 4,500 puntos: puede gastar 3,500, que son 3 niveles de insignia a 1,000 cada uno. 0 le deja gastarlos todos."
     },
     "PointsCheckEveryHours": {
-      "label": "Mirar cada (horas)",
+      "label": "Mirar los puntos cada",
       "tip": "Cada cuánto mira los puntos y la tienda, en horas - por ejemplo 12, dos veces al día. Una cuenta en modo humano solo mira durante su día."
     },
     "BuyCards": {
@@ -4538,15 +4575,15 @@
       "tip": "También compra colecciones completas de cromos de juegos de los que no tiene ninguno, las más baratas primero, un nivel de insignia (100 PE) cada una. Se dejan fuera las colecciones en las que un cromo tiene menos de 2 en el mercado, o un cromo muy barato hace que la colección parezca más barata de lo que es. Desactivado: solo cromos para insignias ya empezadas."
     },
     "BuyDailyLimit": {
-      "label": "Gastar como mucho, por día",
+      "label": "Gastar como mucho al día",
       "tip": "Lo máximo que gasta en 24 horas, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 1,50: una colección de 0,60 y otra de 0,70 llenan el día; la siguiente espera a mañana. Nunca gasta más de lo que hay en el monedero."
     },
     "BuyWeeklyLimit": {
-      "label": "Gastar como mucho, por semana",
+      "label": "Gastar como mucho a la semana",
       "tip": "Lo máximo que gasta en 7 días, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 8,00 con 1,50 al día: unos 5 días completos de compras a la semana. 0 no compra nada."
     },
     "BuyCheckHours": {
-      "label": "Mirar cada (horas)",
+      "label": "Buscar cartas para comprar cada",
       "tip": "Cada cuánto busca cromos que comprar, en horas - por ejemplo 12, dos veces al día. Una cuenta en modo humano solo mira durante su día, y compra una colección cada vez."
     },
     "PointsBuySeasonalBadge": {
@@ -4554,7 +4591,7 @@
       "tip": "Le deja comprar niveles de la insignia que vende ahora la tienda de puntos, por ejemplo la Colección de verano - sale una nueva con cada gran rebaja de Steam. Activado: sube de nivel esa insignia. Desactivado: no la compra."
     },
     "BackupRetryMinutes": {
-      "label": "Reintentar tras (minutos)",
+      "label": "Reintentar tras",
       "tip": "Tras fallar una copia, cuánto esperar antes de volver a intentarlo ese día. Por ejemplo 60: una copia que falló a las 4 vuelve a intentarlo a las 5. 0 espera hasta mañana."
     },
     "SendBackups": {
@@ -4603,7 +4640,7 @@
       "tip": "Un número de minutos al azar que se suma cada día a la hora de la copia, hasta este máximo. Por ejemplo 30 con «Hacer copia a las» 4: en algún momento entre las 4:00 y las 4:30. 0 la hace a la hora en punto."
     },
     "BackupKeep": {
-      "label": "Conservar las últimas (copias)",
+      "label": "Conservar las últimas",
       "tip": "Cuántas copias diarias se quedan en la carpeta. Por ejemplo 7 guarda una semana: la 8.ª copia borra la más antigua. Solo se borran sus propios archivos de copia."
     },
     "BackupAuto": {
@@ -4623,7 +4660,7 @@
       "tip": "Cuando alguien de tu Familia de Steam está jugando a un juego compartido con la copia de un miembro y otro miembro también lo tiene, cambia a esa copia libre y sigue, en vez de dejar el juego fuera. Por ejemplo, dos miembros tienen Stardew Valley y uno está jugando: toma prestada la otra copia. Solo se cambia el miembro del que «toma prestado» ese juego, nunca una copia que alguien esté usando. Desactivado: deja el juego hasta que la copia esté libre. Solo para juegos compartidos en familia («Incluir juegos compartidos en familia»)."
     },
     "FamilyWaitMinutes": {
-      "label": "Esperar después de que un miembro de la familia pare (minutos)",
+      "label": "Esperar cuando un familiar deja de jugar",
       "tip": "Minutos que se deja tranquilo un juego compartido en familia después de que alguien de tu Familia de Steam deje de jugarlo, por ejemplo 20 - a menudo vuelven a empezar. 0 lo usa enseguida."
     },
     "SpareKeepGems": {
@@ -4640,7 +4677,7 @@
       "choices": "0 automático | 1 dejarlas sueltas (los sobres las usan) | 2 empaquetar en sacos de 1000 y mantenerlas intercambiables | 3 enviar los sacos a otra de mis cuentas | 4 vender los sacos"
     },
     "SpareGapSeconds": {
-      "label": "Espera entre objetos (segundos)",
+      "label": "Espera entre objetos",
       "tip": "La espera entre dos objetos en una revisión en una cuenta robot - varía cada vez. Por ejemplo 40: 5 objetos tardan unos 3 minutos. Una cuenta en modo humano usa «Espera entre objetos, modo humano» en su lugar."
     },
     "SparePerRun": {
@@ -4652,7 +4689,7 @@
       "tip": "Nombres completos de objetos tal como los muestra el inventario, separados por comas, p. ej. Sans, Gordon Freeman (Foil). Un nombre conserva ese objeto en todos los juegos. Estos siempre se conservan. Vacío: no se conserva nada por nombre."
     },
     "BoosterCheckHours": {
-      "label": "Buscar sobres cada (horas)",
+      "label": "Buscar sobres cada",
       "tip": "Horas entre búsquedas de sobres - varía un poco cada vez. Por ejemplo 24: más o menos una vez al día."
     },
     "SpareKeepEmoticons": {
@@ -4669,7 +4706,7 @@
       "tip": "Cuenta como sobrantes las copias de más de un fondo de perfil. Por ejemplo, 3 copias con conservar 1: 2 sobran. Desactivado: los fondos se quedan."
     },
     "SparePriceMaxAgeHours": {
-      "label": "Fiarse de un precio durante (horas)",
+      "label": "Confiar en un precio durante",
       "tip": "Cuánto tiempo cuenta como reciente un precio del mercado. Por ejemplo 24: un precio leído ayer por la mañana ya es viejo esta mañana, y ese objeto se queda hasta que se vuelva a consultar su precio. Un objeto sin precio conocido siempre se queda."
     },
     "BoosterSendTo": {
@@ -4677,7 +4714,7 @@
       "tip": "El nombre de otra de tus cuentas de aquí, p. ej. main - los sobres van a ella en un intercambio. Enviar necesita confirmación en el móvil salvo que el autenticador esté añadido."
     },
     "SpareRunHours": {
-      "label": "Revisar cada (horas)",
+      "label": "Buscar objetos sobrantes cada",
       "tip": "Horas entre revisiones de objetos sobrantes - varía un poco cada vez. Por ejemplo 12: unas dos veces al día. Una cuenta en modo humano solo revisa durante su día."
     },
     "SpareKeepGames": {
@@ -4690,7 +4727,7 @@
       "choices": "0 un céntimo bajo el precio real | 1 igual que el más barato | 2 el precio de venta mediano | 3 un céntimo bajo el más barato"
     },
     "SpareRelistDays": {
-      "label": "Retirar anuncios sin vender tras (días)",
+      "label": "Retirar anuncios sin vender tras",
       "tip": "Días antes de que un anuncio sin vender se retire y se vuelva a poner un poco más barato. Por ejemplo 7: un cromo puesto a 0.30 el día 1, aún sin vender el día 8, vuelve a ponerse a 0.29 - o a 0.25 cuando otro lo vende a 0.26 (un anuncio tirado no cuenta). Nunca baja de «Nunca por debajo de»; a ese precio se queda puesto. Solo anuncios que puso nocat.farm. Los anuncios que pusiste tú nunca se tocan."
     },
     "SpareMaxPrice": {
@@ -4698,7 +4735,7 @@
       "tip": "Todo lo que valga más nunca se toca: nunca se convierte en gemas ni se vende. En la moneda propia del monedero de Steam de esta cuenta, p. ej. 0.25 para dólares o euros - usa el mismo valor en tu moneda, p. ej. 40 para yenes. El valor es lo más alto entre el anuncio más barato y lo que se vendió el último día: anunciado a 0.20 pero vendido a 0.30 vale 0.30."
     },
     "SpareGemMarginPct": {
-      "label": "Las gemas deben superar a vender en (%)",
+      "label": "Las gemas deben superar a la venta en",
       "tip": "Ya no se usa. Desde la 1.8.2 un objeto solo se vende cuando venderlo te paga (tras las comisiones de Steam) al menos 0.01 más de lo que valen sus gemas, y si no se convierte en gemas - por ejemplo, la venta paga 0.10: con gemas que valen 0.09 o menos, se vende; si valen más, gemas. Esa regla decide por sí sola, así las gemas nunca te hacen perder dinero. Se mantiene para que los archivos de ajustes antiguos sigan cargando."
     },
     "SpareMaxedBadgeCards": {
@@ -4706,7 +4743,7 @@
       "tip": "Cuenta como sobrantes los cromos de un juego cuya insignia ya está terminada - nivel 5, o la insignia brillante hecha - conservando las copias que indique «Conservar esta cantidad de cada cromo». Por ejemplo, 3 copias de un cromo con conservar 1: 2 sobran. Desactivado: los cromos de insignias terminadas se quedan."
     },
     "SpareNewDays": {
-      "label": "Dejar en paz los objetos nuevos durante (días)",
+      "label": "Dejar en paz los objetos nuevos durante",
       "tip": "Días que un objeto se queda sin tocar después de llegar. Por ejemplo 7: un cromo que cae un lunes puede irse a partir del lunes siguiente. nocat.farm cuenta desde que vio el objeto por primera vez. Todo lo que ya está en el inventario la primera vez que mira cuenta como viejo y puede irse enseguida - solo esperan los objetos que llegan después. 0 desactiva la regla."
     },
     "SpareGemsSendTo": {
@@ -4748,7 +4785,7 @@
       "tip": "Deja que los cromos brillantes también cuenten como sobrantes - por ejemplo una 2.ª copia de un brillante cuya insignia brillante está hecha. Desactivado (por defecto): los brillantes siempre se quedan, porque son más raros y a menudo valen más."
     },
     "BoosterOpenNewDays": {
-      "label": "Dejar en paz los sobres nuevos durante (días)",
+      "label": "Dejar en paz los sobres nuevos durante",
       "tip": "Días que un sobre se queda cerrado después de llegar. Por ejemplo 7: un sobre de un lunes se abre a partir del lunes siguiente. 0 los abre enseguida. Los sobres que nocat.farm creó por sí mismo no se retienen: se abren en la próxima ocasión."
     },
     "SpareExtraCards": {
@@ -4764,7 +4801,7 @@
       "tip": "Copias de cada cromo que siempre se conservan, aunque la insignia esté terminada. Por ejemplo 1: de 3 copias, pueden irse 2. 0 no conserva ninguna, así que también puede irse la última. Los cromos que una insignia aún necesita siempre se conservan."
     },
     "SpareDumpPct": {
-      "label": "Un anuncio más barato así de por debajo de sus ventas está tirado (%)",
+      "label": "Ignorar anuncios tan por debajo de las ventas",
       "tip": "Cuánto por debajo de lo que se vendió un objeto el último día tiene que estar su anuncio más barato para contar como tirado. Por ejemplo 50: vendido a 0.30, un anuncio más barato a 0.12 (un 60 % por debajo) está tirado. «Un céntimo bajo el precio real» se queda el objeto cuando solo una venta respalda ese precio - los dos precios se contradicen; con dos o más ventas lo pone un céntimo bajo lo que se vendió, a 0.29. «Un céntimo bajo el más barato» ignora el anuncio tirado y también lo pone a 0.29. 0: ningún anuncio cuenta como tirado."
     },
     "BoosterMake": {
@@ -4777,15 +4814,15 @@
       "tip": "Gemas por debajo de las que un sobre nunca deja la cuenta. Solo se crea un sobre mientras las gemas cubren su precio más esto. Por ejemplo 1000 con 1,500 gemas: se crea un sobre de 400 y quedan 1,100, y el siguiente espera a tener más gemas. Con 0 puede usarlas todas."
     },
     "SpareRelistFloorPct": {
-      "label": "Nunca por debajo de (% del precio real de venta)",
+      "label": "Precio mínimo al volver a anunciar, del precio de venta reciente",
       "tip": "Lo más bajo que baja un anuncio sin vender, en porcentaje de lo que el objeto se vendió el último día. Por ejemplo 80: un cromo que se vendió a 0.30 nunca baja de 0.24 - a ese precio se queda puesto y no se vuelve a poner. Sin ventas recientes no se baja nada."
     },
     "SpareHumanGapMinMinutes": {
-      "label": "Espera entre objetos, modo humano (minutos)",
+      "label": "Espera más corta entre objetos, modo humano",
       "tip": "La espera más corta entre dos objetos en una cuenta en modo humano, en minutos. Cada espera se elige al azar entre esta y la más larga de abajo. Por ejemplo 3 y 20: tras un objeto espera entre 3 y 20 minutos antes del siguiente."
     },
     "SpareDeclinedDays": {
-      "label": "Si rechazas un anuncio en el móvil, volver a intentarlo tras (días)",
+      "label": "Tras rechazar un anuncio, esperar",
       "tip": "Cuánto espera un objeto después de que rechazas su anuncio en la app de Steam. Por ejemplo 30: rechazas el anuncio de un cromo el día 1, y ese cromo - cada copia - no se vuelve a poner hasta el día 31. Un anuncio retirado antes de llegar a publicarse también cuenta como rechazado, igual que uno del que no está seguro. Con 0 no se vuelve a poner nunca."
     },
     "SpareHumanPerLook": {
@@ -4797,7 +4834,7 @@
       "tip": "Lo mínimo que una venta debe pagarte tras las comisiones de Steam, en la propia moneda del monedero de Steam de esta cuenta. Por ejemplo 0.05: un cromo que te pagaría 0.03 se convierte en gemas cuando sus gemas valen más de 0.02, y se conserva cuando no se convierte en gemas. Un objeto nunca se convierte en gemas que valen menos que la venta menos 0.01: con gemas que valen 0.02 o menos, ese cromo se vende por los 0.03 de todos modos. Con \"solo vender\" se conserva. p. ej. 0.05 para dólares o euros - usa el mismo valor en tu propia moneda, p. ej. 5 para yenes. 0 vende cualquier cosa."
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "...hasta (minutos)",
+      "label": "Espera más larga entre objetos, modo humano",
       "tip": "La espera más larga entre dos objetos en una cuenta en modo humano, en minutos. Por ejemplo 20, con 3 como la más corta: cada espera está entre 3 y 20 minutos, así que 3 objetos tardan hasta unos 40 minutos."
     },
     "CraftFoilBadges": {

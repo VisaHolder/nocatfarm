@@ -1900,12 +1900,19 @@ public static partial class Commands {
 			sb.AppendLine($"  One of: {def.Choices}");
 		}
 
+		// The unit the dashboard draws after the box - the label no longer says it.
+		string unit = Settings.UnitOf(def) is { } u ? (u == "%" ? "%" : " " + u) : "";
+
 		if (def.Min > double.MinValue || def.Max < double.MaxValue) {
-			sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}.");
+			sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}{unit}.");
+		}
+
+		if (def.Zero != null) {
+			sb.AppendLine($"  0 = {def.Zero}.");
 		}
 
 		object? fallback = Settings.Read(defaults, def.Name);
-		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}");
+		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}{(fallback is int or float or double ? unit : "")}");
 
 		if (def.NeedsRestart) {
 			sb.AppendLine("  Takes effect the next time nocat.farm starts.");

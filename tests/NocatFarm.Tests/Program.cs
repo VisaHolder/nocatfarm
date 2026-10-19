@@ -10613,7 +10613,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	var burstDef = NocatFarm.Config.Settings.FindBot("AchievementBurstMinPct");
 	var burstCfg = new NocatFarm.Config.BotConfig();
 	Check("bursts: a per-account setting under Achievements, behind Show advanced, 0 to 100, 10 by default",
-		burstDef is { Section: NocatFarm.Config.Settings.SecAchievements, Advanced: true, Kind: NocatFarm.Config.SettingKind.Int, Min: 0.0, Max: 100.0, Label: "Quick bursts only for achievements at least" }
+		burstDef is { Section: NocatFarm.Config.Settings.SecAchievements, Advanced: true, Kind: NocatFarm.Config.SettingKind.Int, Min: 0.0, Max: 100.0, Label: "Quick bursts only for achievements held by at least" }
+		&& (NocatFarm.Config.Settings.UnitOf(burstDef) == "%")
 		&& (burstCfg.AchievementBurstMinPct == 10) && (NocatFarm.Config.Settings.Apply(burstCfg, burstDef!, "0") == null) && (burstCfg.AchievementBurstMinPct == 0)
 		&& (NocatFarm.Config.Settings.Apply(burstCfg, burstDef!, "100") == null) && (burstCfg.AchievementBurstMinPct == 100)
 		&& (NocatFarm.Config.Settings.Apply(burstCfg, burstDef!, "101") != null) && (burstCfg.AchievementBurstMinPct == 100));
@@ -21898,7 +21899,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	Check("settings: borrow a family copy - a basic switch in the Steam Family group",
 		(eBorrow != null) && !eBorrow.Advanced && (eBorrow.Kind == NocatFarm.Config.SettingKind.Bool) && (eBorrow.Section == "Steam Family"));
 	Check("settings: the wait after a family member stops - minutes, 0 to 240, advanced, with an example",
-		(eWait != null) && eWait.Advanced && (eWait.Min == 0) && (eWait.Max == 240) && eWait.Label.Contains("(minutes)", StringComparison.Ordinal) && eWait.Tooltip.Contains("e.g. 20", StringComparison.Ordinal));
+		(eWait != null) && eWait.Advanced && (eWait.Min == 0) && (eWait.Max == 240) && (NocatFarm.Config.Settings.UnitOf(eWait) == "minutes") && eWait.Tooltip.Contains("e.g. 20", StringComparison.Ordinal));
 	string eHelp = await Commands.RunAsync(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false }), "help FamilyWaitMinutes");
 	Check("settings: 'help FamilyWaitMinutes' explains it", eHelp.Contains("left alone after someone in your Steam Family stops playing it", StringComparison.Ordinal), eHelp);
 }
@@ -22653,11 +22654,13 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			&& Def("SpareSellPrice").Tooltip.Contains("the same as the cheapest, or the median (never under the cheapest)", StringComparison.Ordinal)
 			&& Def("SpareSellPrice").Tooltip.Contains("\"A cent under the cheapest\" makes yours the cheapest", StringComparison.Ordinal));
 		Check("Steam Points notifications are only real purchases", Def("SendPoints").Tooltip.EndsWith("Only real purchases are sent.", StringComparison.Ordinal));
-		Check("the units are in the labels",
-			(Def("SpareRunHours").Label == "Look every (hours)") && (Def("PointsCheckEveryHours").Label == "Look every (hours)") && (Def("SpareGapSeconds").Label == "Wait between items (seconds)")
-			&& (Def("SparePriceMaxAgeHours").Label == "Trust a price for (hours)") && (Def("SpareNewDays").Label == "Leave new items alone for (days)")
-			&& (Def("BoosterOpenNewDays").Label == "Leave new packs alone for (days)") && (Def("SpareGemMarginPct").Label == "Gems must beat selling by (%)")
-			&& (Def("SpareRelistDays").Label == "Take down unsold listings after (days)") && (Def("BoosterCheckHours").Label == "Look for packs every (hours)"));
+		// 1.8.2: the unit is drawn after the box (Settings.UnitOf), so the label reads alone without it.
+		Check("the units follow the box, the labels read alone",
+			(Def("SpareRunHours").Label == "Look for spare items every") && (Def("PointsCheckEveryHours").Label == "Look at the points every") && (Def("SpareGapSeconds").Label == "Wait between items")
+			&& (Def("SparePriceMaxAgeHours").Label == "Trust a price for") && (Def("SpareNewDays").Label == "Leave new items alone for")
+			&& (Def("BoosterOpenNewDays").Label == "Leave new packs alone for") && (Def("SpareGemMarginPct").Label == "Gems must beat selling by")
+			&& (Def("SpareRelistDays").Label == "Take down unsold listings after") && (Def("BoosterCheckHours").Label == "Look for packs every")
+			&& new[] { "SpareRunHours", "SpareGapSeconds", "SpareNewDays", "SpareRelistDays", "BoosterCheckHours", "SpareGemMarginPct" }.All(n => NocatFarm.Config.Settings.UnitOf(Def(n)) != null));
 		Check("relisting's description says only its own listings", Def("SpareRelistDays").Tooltip.Contains("Listings you made yourself are never touched.", StringComparison.Ordinal));
 		string fcPointsHelp = Commands.Resolve("points")!.Help;
 		Check("Steam Points with a capital P", fcPointsHelp.StartsWith("Steam Points each account", StringComparison.Ordinal) && !fcPointsHelp.Contains("Steam points", StringComparison.Ordinal));
@@ -22924,7 +22927,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		ftRailLine.Contains("t('rep4rep points')", StringComparison.Ordinal) && !ftApp.Contains("t('Points')", StringComparison.Ordinal), ftRailLine);
 
 	// 2. one name for non-human accounts: robot accounts
-	Check("readability: \"Robot accounts wait between steps (seconds)\"", FtBot("SaleGapMinSeconds").Label == "Robot accounts wait between steps (seconds)", FtBot("SaleGapMinSeconds").Label);
+	// 1.8.2: robot mode only, and hidden - nobody needs to tune it.
+	Check("readability: the robot-account wait between steps is robot mode only", FtBot("SaleGapMinSeconds") is { Mode: "rage", Hidden: true, Label: "Shortest wait between steps" }, FtBot("SaleGapMinSeconds").Label);
 	Check("readability: human-mode sale events say \"a human-mode account\", not \"your main\"",
 		FtBot("SaleEventsHumanToo").Tooltip.Contains("so a human-mode account only does", StringComparison.Ordinal) && FtBot("SaleEventsHumanToo").Tooltip.Contains("Robot accounts always take part", StringComparison.Ordinal));
 	string[] ftNew = ["SendPoints", "SendItems", "ScamAlertTelegram", "ScamAlertDiscord", "ScamAlertPopup", "ScamWatchTrustedDevices", "HealthAlertTelegram", "HealthAlertDiscord", "HealthAlertPopup",
@@ -22942,21 +22946,21 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		.Select(static d => d.Name)];
 	Check("readability: no new 1.8.0 setting calls them \"farm accounts\", \"the others\" or \"your main\"", ftOddNames.Count == 0, string.Join(", ", ftOddNames));
 
-	// 3 + 4. min/max read the right way round, and every new number setting says its unit in the label
+	// 3 + 4. min/max read the right way round, each reading alone, and every new number setting has its unit (after the box since 1.8.2)
 	(string Name, string Label)[] ftLabels = [
-		("ScamWatchMinMinutes", "Shortest wait between looks (minutes)"), ("ScamWatchMaxMinutes", "...up to (minutes)"),
-		("HealthMinHours", "Shortest wait between health checks (hours)"), ("HealthMaxHours", "...up to (hours)"),
-		("BackupKeep", "Keep the last (backups)"), ("BackupRetryMinutes", "Try again after (minutes)"), ("BackupJitterMinutes", "Up to this many minutes later"),
-		("FamilyWaitMinutes", "Wait after a family member stops (minutes)"),
-		("SaleGapMaxSeconds", "...up to (seconds)"), ("SaleHumanGapMinMinutes", "Human mode waits between steps (minutes)"), ("SaleHumanGapMaxMinutes", "...up to (minutes)"),
-		("SaleCheckHours", "Look for events every (hours)")];
+		("ScamWatchMinMinutes", "Shortest wait between scam looks"), ("ScamWatchMaxMinutes", "Longest wait between scam looks"),
+		("HealthMinHours", "Shortest wait between health checks"), ("HealthMaxHours", "Longest wait between health checks"),
+		("BackupKeep", "Keep the last"), ("BackupRetryMinutes", "Try again after"), ("BackupJitterMinutes", "Up to this many minutes later"),
+		("FamilyWaitMinutes", "Wait after a family member stops"),
+		("SaleGapMaxSeconds", "Longest wait between steps"), ("SaleHumanGapMinMinutes", "Shortest wait between steps, human mode"), ("SaleHumanGapMaxMinutes", "Longest wait between steps, human mode"),
+		("SaleCheckHours", "Look for events every")];
 	List<string> ftWrong = [.. ftLabels.Where(static p => NocatFarm.Config.Settings.Find(p.Name)!.Label != p.Label).Select(static p => p.Name + ": " + NocatFarm.Config.Settings.Find(p.Name)!.Label)];
 	Check("readability: wait labels read shortest/up to, and each says its unit", ftWrong.Count == 0, string.Join(" | ", ftWrong));
 	List<string> ftNoUnit = [.. ftNew.Select(static n => NocatFarm.Config.Settings.Find(n)!)
 		.Where(static d => d.Kind is NocatFarm.Config.SettingKind.Int or NocatFarm.Config.SettingKind.Float)
-		.Where(static d => !System.Text.RegularExpressions.Regex.IsMatch(d.Label, @"\((minutes|hours|seconds|days|backups)\)$|minutes"))
+		.Where(static d => NocatFarm.Config.Settings.UnitOf(d) == null)
 		.Select(static d => d.Name)];
-	Check("readability: every new 1.8.0 number setting (outside spare items, packs, points) has its unit in the label", ftNoUnit.Count == 0, string.Join(", ", ftNoUnit));
+	Check("readability: every new 1.8.0 number setting (outside spare items, packs, points) has its unit", ftNoUnit.Count == 0, string.Join(", ", ftNoUnit));
 	string ftTrades = FtRead("docs", "trades.md");
 	Check("readability: docs/trades.md uses the shortest/up to labels",
 		ftTrades.Contains("| Shortest wait between looks / ...up to (minutes) | 30 / 60 minutes |", StringComparison.Ordinal)
@@ -23013,7 +23017,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			"SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes", "SaleCheckHours"]) {
 			string label = s.GetProperty(n).GetProperty("label").GetString() ?? "";
 
-			if (!label.Contains('(') && !label.Contains('（')) {
+			// The unit is after the box now: the label reads alone, without it and without a leading "...".
+			if ((label.Trim().Length == 0) || label.StartsWith("...", StringComparison.Ordinal) || label.Contains("(min", StringComparison.OrdinalIgnoreCase)) {
 				ftLangBad.Add($"{Path.GetFileName(file)} {n}: {label}");
 			}
 		}
@@ -23023,7 +23028,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		}
 	}
 
-	Check("readability: every language pack has the units in the changed labels and the new backup line", ftLangBad.Count == 0, string.Join(" | ", ftLangBad));
+	Check("readability: every language pack has the changed labels, reading alone, and the new backup line", ftLangBad.Count == 0, string.Join(" | ", ftLangBad));
 
 	// upgrade: an old config without "Share my hours and cards totals" takes it from "Count me as a user" - someone who had
 	// counting off never starts sending totals by turning counting on later
@@ -25507,7 +25512,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			new NocatFarm.Core.SpareListings.Step($"{SG}-Ninja", 31, 30, srNow), 0);
 		Check("step down: priced again just before listing, it still goes up at the step", stepPriced?.BuyerCents == 30, $"{stepPriced?.BuyerCents}");
 		Check("step down: the floor is 80% by default", (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig()).FloorPct == 80)
-			&& NocatFarm.Config.Settings.FindBot("SpareRelistFloorPct")!.Label == "Never go lower than (% of the real sale price)");
+			&& NocatFarm.Config.Settings.FindBot("SpareRelistFloorPct")!.Label == "Lowest relist price, of the recent sale price");
 		string sellerSrc = File.ReadAllText(Path.Combine(srRepo, "src", "NocatFarm", "Core", "Seller.cs"));
 		string runSrc = File.ReadAllText(Path.Combine(srRepo, "src", "NocatFarm", "Core", "SpareRun.cs"));
 		Check("step down: spare items steps only its own listings (never one you listed by hand)",
@@ -27113,10 +27118,11 @@ await CommandSweep.RunAsync(Check);
 		gbDefs.All(static d => d is { Section: NocatFarm.Config.Settings.SecHuman, Mode: "legit", Group: "Its day", Advanced: false })
 		&& (gbOrder.IndexOf("DayStartVaryMinutes") == gbOrder.IndexOf("DayStartTime") + 1) && (gbOrder.IndexOf("BedVaryMinutes") == gbOrder.IndexOf("BedTime") + 1),
 		string.Join(", ", gbDefs.Select(static d => $"{d?.Name}:{d?.Group}:{d?.Mode}")));
-	Check("gets on / bed: 'Gets on at' and 'Goes to bed at' are times of day; the two 'Varies by up to (minutes)' are 0 to 360",
+	Check("gets on / bed: 'Gets on at' and 'Goes to bed at' are times of day; each 'give or take' is minutes, 0 to 360",
 		gbDefs[0] is { Kind: NocatFarm.Config.SettingKind.Time, Label: "Gets on at" } && gbDefs[2] is { Kind: NocatFarm.Config.SettingKind.Time, Label: "Goes to bed at" }
-		&& gbDefs[1] is { Kind: NocatFarm.Config.SettingKind.Int, Label: "Varies by up to (minutes)", Min: 0, Max: 360 }
-		&& gbDefs[3] is { Kind: NocatFarm.Config.SettingKind.Int, Label: "Varies by up to (minutes)", Min: 0, Max: 360 });
+		&& gbDefs[1] is { Kind: NocatFarm.Config.SettingKind.Int, Label: "Gets on, give or take", Min: 0, Max: 360 }
+		&& gbDefs[3] is { Kind: NocatFarm.Config.SettingKind.Int, Label: "Goes to bed, give or take", Min: 0, Max: 360 }
+		&& (NocatFarm.Config.Settings.UnitOf(gbDefs[1]!) == "minutes") && (NocatFarm.Config.Settings.UnitOf(gbDefs[3]!) == "minutes"));
 	var gbFresh = new NocatFarm.Config.BotConfig();
 	Check("gets on / bed: by default on at 13:00 give or take 2 hours, bed at 02:00 give or take 1",
 		(gbFresh.DayStartTime == 13 * 60) && (gbFresh.DayStartVaryMinutes == 120) && (gbFresh.BedTime == 2 * 60) && (gbFresh.BedVaryMinutes == 60));
@@ -33614,7 +33620,68 @@ static class SettingsCleanupChecks {
 				Src("src/NocatFarm/wwwroot/app.js").Contains("function rep4repHoldPanel(values)", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('TelegramChatId')", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('DiscordOwnerId')", StringComparison.Ordinal));
-			//STEP2
+			// ── ranges on one row ──
+			List<string> pairProblems = [];
+
+			foreach ((string lo, string hi) in NocatFarm.Config.Settings.RowPairs) {
+				var a = B(lo) ?? G(lo);
+				var z = B(hi) ?? G(hi);
+
+				if ((a == null) || (z == null)) {
+					pairProblems.Add($"{lo}/{hi} missing");
+					continue;
+				}
+
+				if (string.IsNullOrWhiteSpace(a.Range) || (z.Range != null)) {
+					pairProblems.Add($"{lo}: the row's label belongs on the first only");
+				}
+
+				if ((a.Section != z.Section) || (a.Group != z.Group) || (a.Advanced != z.Advanced) || (a.Hidden != z.Hidden) || (a.Mode != z.Mode)
+					|| (a.ShowWhen != z.ShowWhen) || (a.Kind != z.Kind) || (NocatFarm.Config.Settings.UnitOf(a) != NocatFarm.Config.Settings.UnitOf(z))) {
+					pairProblems.Add($"{lo}/{hi} don't match");
+				}
+			}
+
+			Check("settings: every \"shortest / longest\" pair is one row - the row's label on the first, both halves alike",
+				(pairProblems.Count == 0) && (NocatFarm.Config.Settings.RowPairs.Count >= 23)
+				&& NocatFarm.Config.Settings.RowPairs.Contains(("FarmFromHour", "FarmUntilHour")) && NocatFarm.Config.Settings.RowPairs.Contains(("BreakMinMinutes", "BreakMaxMinutes")),
+				string.Join("; ", pairProblems));
+			Check("settings: a range of hours (from/until) is never put in order - it may run past midnight",
+				!NocatFarm.Config.Settings.RangePairs.Any(p => p.Min.EndsWith("Hour", StringComparison.Ordinal)));
+
+			// Every label reads on its own: in 'help', a search, "Only changed" and a message ("Longest break moved to 5").
+			string[] orphans = [.. bot.Concat(global).Where(d => d.Label.StartsWith("...", StringComparison.Ordinal) || d.Label.StartsWith("And ", StringComparison.Ordinal)
+				|| (d.Label is "Until" or "...to" or "...and") || d.Label.Contains("(minutes)", StringComparison.Ordinal) || d.Label.Contains("(hours)", StringComparison.Ordinal)
+				|| d.Label.Contains("(days)", StringComparison.Ordinal) || d.Label.Contains("(seconds)", StringComparison.Ordinal)).Select(d => $"{d.Name} \"{d.Label}\"")];
+			Check("settings: no label is a continuation of the one above (\"...up to\", \"And at most\") or says its unit in brackets", orphans.Length == 0, string.Join(", ", orphans));
+			Check("settings: no two settings of one list share a label",
+				bot.GroupBy(d => d.Label).All(g => g.Count() == 1) && global.GroupBy(d => d.Label).All(g => g.Count() == 1),
+				string.Join(", ", bot.Concat(global).GroupBy(d => d.Label).Where(g => g.Count() > 1).Select(g => g.Key)));
+
+			var fix = new NocatFarm.Config.BotConfig { BreakMinMinutes = 20, BreakMaxMinutes = 30 };
+			NocatFarm.Config.Settings.Apply(fix, B("BreakMaxMinutes")!, "5");
+			string moved = string.Join(" | ", NocatFarm.Config.Settings.FixRanges(fix, "BreakMaxMinutes").Select(s => s.ToEnglish()));
+			Check("settings: a range put back in order says so in words that read alone", moved == "Shortest break moved to 5 to match", moved);
+
+			// The unit after the box, worked out from the name; money and points say which.
+			Check("settings: each number shows its unit - from the name, or said where the name can't",
+				(NocatFarm.Config.Settings.UnitOf(B("BreakMinMinutes")!) == "minutes") && (NocatFarm.Config.Settings.UnitOf(B("BoostRestDaysMax")!) == "days")
+				&& (NocatFarm.Config.Settings.UnitOf(B("DayOffChancePct")!) == "%") && (NocatFarm.Config.Settings.UnitOf(B("SpareMaxPrice")!) == "wallet currency")
+				&& (NocatFarm.Config.Settings.UnitOf(B("PointsWeeklyCap")!) == "points") && (NocatFarm.Config.Settings.UnitOf(B("WeekdayHours")!) == null)
+				&& (NocatFarm.Config.Settings.UnitOf(B("FarmFromHour")!) == null)
+				&& bot.Concat(global).All(d => NocatFarm.Config.Settings.UnitOf(d) is not { } u || NocatFarm.Config.Settings.UnitWords.Contains(u)));
+			Check("settings: money limits still say 0 spends nothing, right by the box",
+				(B("PointsWeeklyCap")!.Zero == "spend nothing") && (B("BuyWeeklyLimit")!.Zero == "spend nothing") && (B("BuyDailyLimit")!.Zero == "spend nothing"));
+			string help = await NocatFarm.Commands.RunAsync(mgr, "help BreakMinMinutes");
+			Check("settings: 'help' gives the unit too", help.Contains("Between 1 and 180 minutes.", StringComparison.Ordinal) && help.Contains("Default: 2 minutes", StringComparison.Ordinal), help);
+			string js = Src("src/NocatFarm/wwwroot/app.js");
+			Check("settings: the page draws a pair as one row and a unit after the box, from what the schema sends",
+				js.Contains("function pairHtml(lo, hi, values, defaults, depth)", StringComparison.Ordinal) && js.Contains("if (pairShortest(d)) return false;", StringComparison.Ordinal)
+				&& js.Contains("function unitHtml(def)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Pairs = Settings.RowPairs.Select(", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Units = Settings.Units(),", StringComparison.Ordinal)
+				&& NocatFarm.Config.Settings.UnitWords.Where(u => u != "%").All(u => js.Contains($"case '{u}': return t('{u}');", StringComparison.Ordinal)));
+			//STEP3
 		} finally {
 			foreach (NocatFarm.Core.Bot b in made) {
 				await b.DisposeAsync();

@@ -1324,6 +1324,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			GlobalDefaults = Settings.GlobalDefaults,
 			BotDefaults = Settings.BotDefaults,
 			GroupOrder = Settings.GroupOrder,   // the order of the titled boxes in a section
+			Pairs = Settings.RowPairs.Select(static p => new[] { p.Min, p.Max }),   // "shortest / longest" drawn as one row
+			Units = Settings.Units(),   // "minutes" after the box, the label doesn't say it
 
 			// Sent rather than repeated in app.js. The same palette paints the window, the console board and
 			// this page, and a second copy in JavaScript is precisely how the two "what is this account doing"

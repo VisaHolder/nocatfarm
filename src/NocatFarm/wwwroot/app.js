@@ -4886,14 +4886,20 @@ function renderSettings() {
   const sections = [...new Set(defs.map((d) => d.Section))];
   let html = '';
   let hiddenAdvanced = 0;
-  const found = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
-    || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q);
+  const foundOne = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
+    || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q)
+    || (!!d.Range && (t(d.Range).toLowerCase().includes(q) || d.Range.toLowerCase().includes(q)));
+  // A "shortest / longest" pair is one row, so either half found or changed shows it.
+  const found = (d) => foundOne(d) || (!!pairLongest(d) && foundOne(pairLongest(d)));
+  const changedRow = (d) => isChanged(d, values, defaults) || (!!pairLongest(d) && isChanged(pairLongest(d), values, defaults));
 
   for (const section of sections) {
     const legitOn = settingsTarget !== GLOBAL && !!liveValue('LegitMode', values);
 
     const fields = defs.filter((d) => {
       if (d.Section !== section) return false;
+      // The "longest" of a pair is drawn in the row of its "shortest" ("Breaks: 2 to 30 minutes").
+      if (pairShortest(d)) return false;
       // Human mode hides the settings that would give the account away, and the human-only settings stay out
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
@@ -4905,7 +4911,7 @@ function renderSettings() {
       if (settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name)) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
       if (!found(d)) return false;
-      if (onlyChanged && !isChanged(d, values, defaults)) return false;
+      if (onlyChanged && !changedRow(d)) return false;
       return true;
     });
 
@@ -6829,7 +6835,90 @@ function offHint(def, values) {
   return `<div class="offhint">${esc(first)} <span>${esc(t('Its settings show here once it is on.'))}</span></div>`;
 }
 
+// The "shortest / longest" pairs the server draws as one row (Settings.RowPairs): the longest of a shortest, and the
+// shortest of a longest - only when both are settings of what's open.
+function pairLongest(def) {
+  const pair = ((schema && schema.Pairs) || []).find((p) => p[0] === def.Name);
+  return pair ? settingDefOf(pair[1]) : null;
+}
+
+function pairShortest(def) {
+  const pair = ((schema && schema.Pairs) || []).find((p) => p[1] === def.Name);
+  return pair && settingDefOf(pair[0]) ? settingDefOf(pair[0]) : null;
+}
+
+// What a number is counted in, after its box ("minutes", "wallet currency") - Settings.UnitOf, sent with the schema. Each
+// word written out so the translation check sees it.
+function unitWord(u) {
+  switch (u) {
+    case 'minutes': return t('minutes');
+    case 'hours': return t('hours');
+    case 'seconds': return t('seconds');
+    case 'days': return t('days');
+    case 'ms': return t('ms');
+    case 'wallet currency': return t('wallet currency');
+    case 'points': return t('points');
+    case 'backups': return t('backups');
+    case 'reviews': return t('reviews');
+    case 'times a day': return t('times a day');
+    default: return u || '';
+  }
+}
+
+function unitOf(def) { return ((schema && schema.Units) || {})[def.Name] || ''; }
+
+// What 0 means where it means something of its own - "0 = no limit" by the box, not only in the (i).
+function zeroWord(z) {
+  switch (z) {
+    case 'no limit': return t('no limit');
+    case 'spend nothing': return t('spend nothing');
+    case 'off': return t('off');
+    case 'keep forever': return t('keep forever');
+    case 'never again': return t('never again');
+    case 'never': return t('never');
+    default: return z || '';
+  }
+}
+
+function unitHtml(def) {
+  const u = unitOf(def);
+  const zero = def.Zero ? tf('0 = {0}', zeroWord(def.Zero)) : '';
+  return (u ? `<span class="unit">${esc(unitWord(u))}</span>` : '') + (zero ? `<span class="unit zero">${esc(zero)}</span>` : '');
+}
+
+// One box of a pair: a number, or an hour of the day in the viewer's own clock. Each keeps its own data-setting.
+function pairBox(def, values) {
+  const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
+  const id = 'f-' + def.Name;
+  if (def.Kind === 'Hour') {
+    return hourSelect(`id="${id}" data-setting="${def.Name}" style="max-width:150px" onchange="editAndRender('${def.Name}',parseInt(this.value))"`,
+      cur, def.Min > -1e300 ? def.Min : 0, def.Max < 1e300 ? def.Max : 23);
+  }
+  return `<input type="number" id="${id}" data-setting="${def.Name}" class="pairnum" value="${esc(cur)}"
+    ${def.Min > -1e300 ? `min="${def.Min}"` : ''} ${def.Max < 1e300 ? `max="${def.Max}"` : ''}
+    aria-label="${esc(tSetting(def, 'label'))}" onchange="editAndRender('${def.Name}',parseInt(this.value)||0)">`;
+}
+
+// "Breaks: [2] to [30] minutes" - the two settings of a pair in one row, under the row's own label. Its (i) explains both.
+function pairHtml(lo, hi, values, defaults, depth) {
+  const changed = pending[lo.Name] !== undefined || pending[hi.Name] !== undefined;
+  const shown = (d) => (d.Kind === 'Hour' ? hourLabel(Number(defaults[d.Name])) : String(defaults[d.Name]));
+  const tip = `${tSetting(lo, 'tip')} ${tSetting(hi, 'tip')}`;
+  const revert = `editAndRender('${lo.Name}',${JSON.stringify(defaults[lo.Name])});editAndRender('${hi.Name}',${JSON.stringify(defaults[hi.Name])})`;
+  return `<div class="field pair ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
+    <label for="f-${lo.Name}">${labelWithTip(t(lo.Range), tip)}</label>
+    <div class="ctl"><span class="pairctl">${pairBox(lo, values)}<span class="pairto">${esc(t('to'))}</span>${pairBox(hi, values)}${unitHtml(lo)}</span></div>
+    <div class="meta">
+      ${lo.NeedsRestart || hi.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
+      <span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="${esc(revert)}">${esc(tf('default {0}', `${shown(lo)} - ${shown(hi)}`))}</span>
+    </div></div>`;
+}
+
 function fieldHtml(def, values, defaults, depth = 0) {
+  // The shortest of a pair draws the row for both.
+  const longest = def.Range ? pairLongest(def) : null;
+  if (longest) return pairHtml(def, longest, values, defaults, depth);
+
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
   const changed = pending[def.Name] !== undefined;
@@ -6852,11 +6941,15 @@ function fieldHtml(def, values, defaults, depth = 0) {
       break;
     }
     case 'Int':
-    case 'Float':
-      ctl = `<input type="number" id="${id}" data-setting="${def.Name}" style="max-width:140px" value="${esc(cur)}"
+    case 'Float': {
+      const box = `<input type="number" id="${id}" data-setting="${def.Name}" style="max-width:140px" value="${esc(cur)}"
              ${def.Min > -1e300 ? `min="${def.Min}"` : ''} ${def.Max < 1e300 ? `max="${def.Max}"` : ''} ${def.Kind === 'Float' ? 'step="any"' : ''}
              onchange="editAndRender('${def.Name}',${def.Kind === 'Float' ? 'parseFloat' : 'parseInt'}(this.value)||0)">`;
+      // The unit after the box ("minutes"), and what 0 means where it means something of its own.
+      const after = unitHtml(def);
+      ctl = after ? `<span class="withunit">${box}${after}</span>` : box;
       break;
+    }
     case 'Secret': {
       const isSet = secretIsSet(def.Name);
       const cleared = cur === CLEAR_SECRET;

@@ -3247,7 +3247,44 @@
     "rep4rep commenting carries on": "rep4rep yorum yapmaya devam ediyor",
     "Disconnect": "Bağlantıyı kes",
     "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Bu sohbeti unutur. Başka birini bağlamak için Telegram'ı bağla düğmesi geri gelir.",
-    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Bu Discord hesabını unutur - yeniden bağlayana kadar bot kimseyi dinlemez."
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Bu Discord hesabını unutur - yeniden bağlayana kadar bot kimseyi dinlemez.",
+    "to": "ile",
+    "0 = {0}": "0 = {0}",
+    "seconds": "saniye",
+    "days": "gün",
+    "ms": "ms",
+    "wallet currency": "cüzdan para biriminde",
+    "points": "puan",
+    "backups": "yedek",
+    "reviews": "inceleme",
+    "times a day": "kez günde",
+    "no limit": "sınır yok",
+    "spend nothing": "hiç harcama",
+    "keep forever": "sonsuza dek sakla",
+    "never again": "bir daha asla",
+    "Settle in after signing in": "Girişten sonra yerleşme",
+    "Sittings": "Oturumlar",
+    "Breaks": "Molalar",
+    "On a break, go Away after": "Molada Uzakta'ya geç",
+    "Sleeps": "Uyur",
+    "After waking, wait": "Uyandıktan sonra bekle",
+    "Background jobs wait after signing in": "Arka plan işleri girişten sonra bekler",
+    "After the last card, keep playing": "Son karttan sonra oynamaya devam et",
+    "Farm cards only between": "Kartları yalnızca şu saatler arasında topla",
+    "While grinding, one achievement every": "Kasarken her başarım arası",
+    "Move to another game at": "Başka oyuna geçiş oranı",
+    "Come back to a game after": "Bir oyuna dönüş",
+    "Wait between items, human mode": "Eşyalar arası bekleme, insan modu",
+    "Wait between steps": "Adımlar arası bekleme",
+    "Wait between steps, human mode": "Adımlar arası bekleme, insan modu",
+    "Look for scams every": "Dolandırıcılık kontrolü aralığı",
+    "Check health every": "Durum kontrolü aralığı",
+    "Accept a gift after": "Hediyeyi kabul etmeden önce bekle",
+    "Answer a trade offer after": "Takas teklifine yanıt vermeden önce bekle",
+    "Accept a friend request after": "Arkadaşlık isteğini kabul etmeden önce bekle",
+    "Gap between comments": "Yorumlar arası süre",
+    "Only post between": "Yalnızca şu saatler arasında paylaş",
+    "Install by itself between": "Kendiliğinden kurma saatleri"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -3404,7 +3441,7 @@
       "tip": "Bir oyun açıkken bu hesabın ne yaptığını günlüğe ne sıklıkla yazdığı, dakika cinsinden. 0 ana Günlük ayarını kullanır, -1 sessiz tutar."
     },
     "StatusQuietEveryMinutes": {
-      "label": "Dinlenirken ise",
+      "label": "Dinlenirken ne yaptığını söyleme aralığı",
       "tip": "Aynısı, ama bu hesap uyurken, moladayken, duraklatılmışken veya çıkış yapmışken. 0 ana Günlük ayarını kullanır, -1 sessiz tutar."
     },
     "Language": {
@@ -3479,7 +3516,7 @@
       "tip": "Yalnızca insan modunda. Molaya girdikten kaç dakika sonra durumun Uzakta veya çevrimdışına geçtiği, gerçek bir boşta Steam istemcisi gibi. Daha kısa molalar çevrimiçi kalır."
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "...en fazla",
+      "label": "Molada en geç şu kadar sonra Uzakta'ya geç",
       "tip": "Durum Uzakta veya çevrimdışına geçmeden önce molada geçen en fazla dakika."
     },
     "LegitStopMaxSeconds": {
@@ -3511,7 +3548,7 @@
       "tip": "Çevrimiçi olduğu saat, örneğin 11:00. Her gün bu saatin “En fazla sapma” kadar öncesi ya da sonrasında girer; çoğu gün bu saate yakın, hafta sonları biraz daha erken."
     },
     "DayStartVaryMinutes": {
-      "label": "En fazla sapma (dakika)",
+      "label": "Giriş saati, artı eksi",
       "tip": "“Girdiği saat”ten ne kadar önce ya da sonra girebileceği, dakika olarak. Hiçbir şey onu bunun dışına itmez: 11:00 ve 30 ile her zaman 10:30 ile 11:30 arasında girer. 0 her gün aynı dakika demektir."
     },
     "BedTime": {
@@ -3519,7 +3556,7 @@
       "tip": "Gece için bıraktığı saat. Gece yarısından sonrası da olur: 02:00, girdiği günün ardından gece saat iki demektir. Her gece bu saatin “En fazla sapma” kadar öncesi ya da sonrasında yatar; cuma ve cumartesi biraz daha geç."
     },
     "BedVaryMinutes": {
-      "label": "En fazla sapma (dakika)",
+      "label": "Yatma saati, artı eksi",
       "tip": "“Yattığı saat”ten ne kadar önce ya da sonra yatabileceği, dakika olarak. Hiçbir şey onu bunun dışına itmez: 02:00 ve 60 ile her zaman 01:00 ile 03:00 arasında yatar. 0 her gece aynı dakika demektir."
     },
     "LateNightExtraHours": {
@@ -3531,7 +3568,7 @@
       "tip": "Ertesi gün başlamadan önce bir gecenin kaç saat sürdüğü - bu değerle sonraki arasında, her gece farklı rastgele bir süre. “Girdiği saat”in izin verdiği en geç saatten önce sığmayan bir gece kısaltılır: bundan daha geç asla girmez."
     },
     "SleepMaxHours": {
-      "label": "...en fazla",
+      "label": "En çok uyur",
       "tip": "Bu aralığın üst sınırı, saat olarak."
     },
     "PureMainDayChancePct": {
@@ -3543,7 +3580,7 @@
       "tip": "Giriş yaptıktan sonra bir oyunu başlatmadan önceki en kısa bekleme, dakika cinsinden. “İnsan modu”nu açtığında da geçerlidir, böylece hemen oyun başlatmaz."
     },
     "WarmUpMaxMinutes": {
-      "label": "Ve en fazla",
+      "label": "En çok şu kadar yerleş",
       "tip": "Giriş yaptıktan sonraki en uzun bekleme, dakika cinsinden. Girişten sonraki 3 dakika içinde asla başlamaz. Böylece bu hesapta zaten oynuyorsan araya giremez."
     },
     "SessionMinMinutes": {
@@ -3591,7 +3628,7 @@
       "tip": "Steam koleksiyon kartlarını toplar. Kartı kalan oyunlar, her şeyden önce kart düşmesi bitene kadar oynanır."
     },
     "HoursUntilCardDrops": {
-      "label": "Kart düşene kadar saat",
+      "label": "Kart düşebilmeden önce her oyunu bu kadar oyna",
       "tip": "Steam'in kartlarını düşürmesi için bir oyunun kaç saate ihtiyacı olduğu. Bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yaz, böylece hiçbir oyun gerektiğinden uzun oynanmaz."
     },
     "FarmingOrder": {
@@ -3613,11 +3650,11 @@
       "choices": "0 temkinli (iki kat yavaş) | 1 normal | 2 hızlı (iki kat hızlı)"
     },
     "AchievementMaxCompletionPct": {
-      "label": "Şundan fazlasını tamamlama",
+      "label": "Bir oyunun en fazla şu kadarını tamamla",
       "tip": "Herhangi bir oyunu en fazla yüzde kaç tamamlayacağı. Birkaçını kazanılmamış bırakmak gerçek bir kütüphane gibi görünür. Bir oyun oraya ulaşınca av onu kalıcı olarak bırakır - bu değeri yükseltirsen geri gelir. grind komutu bunu yok sayar."
     },
     "AchievementBurstMinPct": {
-      "label": "Hızlı seriler yalnızca en az şu orandaki başarımlar için",
+      "label": "Hızlı seriler yalnızca en az şu kadarının sahip olduğu başarımlar için",
       "tip": "Bazen bir bölümü bitirmek gibi 2 ya da 3 başarım birkaç dakika arayla gelir. Yalnızca oyuncuların en az bu yüzdesinin sahip olduğu başarımlar böyle gelebilir - daha nadir olanlar her zaman tek başına, tam bekleme süresiyle gelir. 0 her başarımın seri halinde gelmesine izin verir; 100 serileri kapatır."
     },
     "CraftBadges": {
@@ -3633,11 +3670,11 @@
       "tip": "Bu hesabın herhangi bir 24 saatte gönderdiği en fazla yorum. Steam arkadaş olmayanlara yaklaşık 10 yoruma izin verir. Bunu aşmak hesaba yorum yasağı getirebilir."
     },
     "Rep4RepGapMinMinutes": {
-      "label": "En kısa boşluk",
+      "label": "Yorumlar arası en kısa süre",
       "tip": "Bu hesabın iki yorumu arasındaki en kısa süre, dakika cinsinden."
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "En uzun boşluk",
+      "label": "Yorumlar arası en uzun süre",
       "tip": "Yorumlar arasındaki en uzun süre, dakika cinsinden. Her aralık ikisi arasında rastgele seçilir."
     },
     "Rep4RepStartHour": {
@@ -3645,7 +3682,7 @@
       "tip": "Bu hesabın yorum yazdığı günün en erken saati. Gece yarısı yazılan yorumlar botu kolayca ele verir."
     },
     "Rep4RepEndHour": {
-      "label": "Şu saate kadar",
+      "label": "Yalnızca şu saate kadar paylaş",
       "tip": "Bu hesabın yorum yazdığı günün en geç saati. Gece gündüz yorum yazması için “Yalnızca şu saatten sonra yaz” ile aynı yap."
     },
     "AcceptFriendRequests": {
@@ -3674,11 +3711,11 @@
       "tip": "Yanıtı her kişiye günde en fazla bir kez gönderir, böylece kimse aynı satırı iki kez almaz."
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "En az bekle",
+      "label": "Arkadaşlık isteğini en erken şu kadar sonra kabul et",
       "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika cinsinden. Geldiği saniye kabul etmek botu kolayca ele verir."
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "Ve en fazla",
+      "label": "Arkadaşlık isteğini en geç şu kadar sonra kabul et",
       "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en uzun bekleme, dakika cinsinden. Her istek rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "ActOnlyWhileAwake": {
@@ -3694,15 +3731,15 @@
       "tip": "Yalnızca insan modunda. Uyandıktan veya giriş yaptıktan ne kadar sonra takaslar, yorumlar veya yanıtlar gibi başkalarının görebildiği şeyleri yaptığı, dakika cinsinden. Her tür kendi rastgele beklemesini alır."
     },
     "WakeDelayMaxMinutes": {
-      "label": "...en fazla",
+      "label": "Uyandıktan sonra en çok bekle",
       "tip": "Uyandıktan veya giriş yaptıktan sonraki en uzun bekleme, dakika cinsinden."
     },
     "QuietDelayMinMinutes": {
-      "label": "Girişten sonra arka plan işleri en az bekler",
+      "label": "Arka plan işleri girişten sonra en az bekler",
       "tip": "Yalnızca insan modunda. Girişten ne kadar sonra rozetler, ücretsiz oyunlar ve kart paketleri gibi arka plan işlerinin başladığı, dakika cinsinden. Her biri kendi rastgele beklemesini alır, böylece hepsi aynı anda başlamaz."
     },
     "QuietDelayMaxMinutes": {
-      "label": "...en fazla",
+      "label": "Arka plan işleri girişten sonra en çok bekler",
       "tip": "Girişten sonra arka plan işleri başlamadan önceki en uzun bekleme, dakika cinsinden."
     },
     "OneTradeAtATime": {
@@ -3742,11 +3779,11 @@
       "tip": "Diğer tüm takas tekliflerini bırakmak yerine reddeder. Kapalıyken kabul edilmeyen teklifler sen kontrol edesin diye bekler."
     },
     "TradeDelayMinMinutes": {
-      "label": "En az bekle",
+      "label": "Takas teklifine en erken şu kadar sonra yanıt ver",
       "tip": "Bir takas teklifine yanıt vermeden önceki en kısa bekleme, dakika cinsinden. Geldikten saniyeler sonra kabul etmek bot gibi görünür."
     },
     "TradeDelayMaxMinutes": {
-      "label": "Ve en fazla",
+      "label": "Takas teklifine en geç şu kadar sonra yanıt ver",
       "tip": "Bir takas teklifine yanıt vermeden önceki en uzun bekleme, dakika cinsinden. Her teklif rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "GiftDelayMinMinutes": {
@@ -3754,7 +3791,7 @@
       "tip": "Oyun, hediye kartı veya misafir kartı gibi bir hediyeyi kabul etmeden önceki en kısa bekleme, dakika cinsinden."
     },
     "GiftDelayMaxMinutes": {
-      "label": "Ve en fazla",
+      "label": "Hediyeyi en geç şu kadar sonra kabul et",
       "tip": "Bir hediyeyi kabul etmeden önceki en uzun bekleme, dakika cinsinden. Her hediye rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "PauseWhenYouPlay": {
@@ -3837,7 +3874,7 @@
       "tip": "Kartları yalnızca bu saatten itibaren toplar. Her an toplamak için bunu ve “...şu saate kadar” ayarını gece yarısında bırak."
     },
     "FarmUntilHour": {
-      "label": "...şu saate kadar",
+      "label": "Kartları yalnızca şu saate kadar topla",
       "tip": "Kartları bu saate kadar toplar. Gece yarısını geçmek için başlangıç saatinden erken bir saat seç - gece geç saatten sabah erkene kadar gece boyunca toplar."
     },
     "PostFarmWindDownMinMinutes": {
@@ -3845,7 +3882,7 @@
       "tip": "Yalnızca insan modunda. Bir oyun son kartını düşürdükten sonra birkaç dakika oynamaya devam eder, sonra mola verir. Hemen durması için ikisini de 0 yap."
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...şu kadara kadar",
+      "label": "Son karttan sonra en çok oyna",
       "tip": "Son karttan sonra oynamaya devam ettiği en fazla dakika."
     },
     "FarmingDelayMinutes": {
@@ -3853,7 +3890,7 @@
       "tip": "Kart toplarken bir oyunu ne sıklıkla yeniden kontrol ettiği, dakika cinsinden. Steam kart düşüşlerini anında bildirir, yani bu sadece bir yedektir."
     },
     "MaxFarmingHoursPerGame": {
-      "label": "Şu kadar saat sonra vazgeç",
+      "label": "Bir oyundan şu kadar sonra vazgeç",
       "tip": "Bu kadar saatten sonra bir oyundan vazgeçer ve devam eder, böylece takılan bir oyun diğerlerini engelleyemez."
     },
     "StopWhenFarmingDone": {
@@ -3877,7 +3914,7 @@
       "tip": "“Tüm tek oyunculu oyunlar”ın yalnızca bu hesabın daha önce açtığı oyunları avlamasına izin verir. Hesabın geçmişine uyan oyunlarla sınırlamanın en sıkı yolu."
     },
     "InventoryIgnoreGames": {
-      "label": "...ama bu oyunlar hariç",
+      "label": "Bu oyunları envanter değerinden ve takaslardan çıkar",
       "tip": "Envanter değerinin ve her takasın dışında bırakılacak oyun kimlikleri (mağaza bağlantısındaki sayı), virgülle ayrılmış. Hesabın yasaklı olduğu oyunlar asla takas edilemez - yasak izleme bunları görebildiğinde kendisi ekler, sen de buraya ekleyebilirsin."
     },
     "YieldToFamily": {
@@ -3889,11 +3926,11 @@
       "tip": "Başarım avının, bu hesapla Steam Ailesi üzerinden paylaşılan oyunları da kullanmasını sağlar. Örneğin 40 sahip olunan ve 200 paylaşılan oyunla 240'ın hepsinden seçebilir - sahip olunan oyunlar her zaman önce gelir. Açık: paylaşılan oyunlar sahip olunanlar gibi sayılır. Kapalı: yalnızca bu hesabın sahip olduğu oyunlar."
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
+      "label": "Kasarken başarımlar arası en kısa süre",
       "tip": "Başarım kasarken başarımların kaç dakika arayla açıldığı. Kasma tek bir oyunda kalır, yani bu daha hızlı, aktif bir tempodur. En kolaylar önce gelir."
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...şu kadara kadar",
+      "label": "Kasarken başarımlar arası en uzun süre",
       "tip": "Kasma sırasında açılışlar arasındaki en uzun aralık, dakika cinsinden."
     },
     "AchievementNeverGames": {
@@ -3943,23 +3980,23 @@
       "choices": "0 en çok oynadığı oyun | 1 oynadığı herhangi bir oyun"
     },
     "SaleGapMinSeconds": {
-      "label": "Robot hesaplar adımlar arasında bekler (saniye)",
+      "label": "Adımlar arası en kısa bekleme",
       "tip": "Robot hesapta iki adaylık ya da oy arasındaki saniye, en kısa bekleme - örneğin 5. En uzun 20 iken her bekleme rastgele 5 ile 20 saniye arasıdır."
     },
     "SaleGapMaxSeconds": {
-      "label": "...en fazla (saniye)",
+      "label": "Adımlar arası en uzun bekleme",
       "tip": "Robot hesapta iki adım arasındaki en uzun bekleme, saniye olarak - örneğin 20. En kısa 5 iken her bekleme rastgele 5 ile 20 saniye arasıdır."
     },
     "SaleHumanGapMinMinutes": {
-      "label": "İnsan modu adımlar arasında bekler (dakika)",
+      "label": "Adımlar arası en kısa bekleme, insan modu",
       "tip": "İnsan modu hesabında iki adaylık ya da oy arasındaki dakika, en kısa bekleme - örneğin 5. En uzun 30 iken her bekleme rastgele 5 ile 30 dakika arasıdır. Yalnızca kendi günü içinde."
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...en fazla (dakika)",
+      "label": "Adımlar arası en uzun bekleme, insan modu",
       "tip": "İnsan modu hesabında iki adım arasındaki en uzun bekleme, dakika olarak - örneğin 30. En kısa 5 iken her bekleme rastgele 5 ile 30 dakika arasıdır."
     },
     "SaleCheckHours": {
-      "label": "Etkinliklere bakma sıklığı (saat)",
+      "label": "Etkinlik kontrolü aralığı",
       "tip": "Bir Steam etkinliğinin başlayıp başlamadığına ne sıklıkla baktığı, saat olarak - örneğin 6, günde yaklaşık 4 bakış. Bir etkinlik sürerken yaklaşık saatte bir bakar."
     },
     "SellPerRun": {
@@ -4135,7 +4172,7 @@
       "tip": "Kartları aralıksız değil, günde birkaç blok halinde ve aralarında molalarla toplar. Yalnızca saat biriktirecek başka bir şeyi olmayan bir hesapta gerçek bir fark yaratır."
     },
     "FarmHoursPerDay": {
-      "label": "Günde kaç saat toplansın",
+      "label": "Günde bu kadar kart topla",
       "tip": "Toplama bloklarının günde kabaca kaç saat ettiği. Her gün değişir ve hafta sonları daha uzun sürer. Yalnızca “Aralıksız değil, oturumlar halinde topla” açıkken kullanılır."
     },
     "MarketGapSeconds": {
@@ -4147,7 +4184,7 @@
       "tip": "Bir fiyatın yeniden kontrol edilmeden önce kaç saat kullanılacağı. Ucuz eşyalar daha seyrek kontrol edilir. Uzun süre daha az istek demek, ama değerler daha yavaş güncellenir."
     },
     "Rep4RepPauseHours": {
-      "label": "Yorumları şu kadar beklet (saat)",
+      "label": "Yorumları şu kadar beklet",
       "tip": "rep4rep yorumlarını her hesapta bu kadar saat duraklatır, sonra kendiliğinden yeniden başlar. Geri sayım yeniden başlatmalarda da devam eder. Duraklatma istemiyorsan 0 yaz."
     },
     "DiscordPresence": {
@@ -4215,11 +4252,11 @@
       "tip": "Yalnızca insan modunda. Avlanan oyun, oynadığı oyunlara katılır ve bu, ne sıklıkla geldiğidir - \"Oyunlar ve sıklığı\"ndaki gibi bir ağırlık. Molalar ve uyku saatiyle normal oturumlarda oynanır, başka bir oyunu asla yarıda kesmez."
     },
     "AutoUpdateFromHour": {
-      "label": "...arasında (başlangıç)",
+      "label": "Kendiliğinden kurma başlangıcı",
       "tip": "Kendiliğinden kurabileceği en erken saat."
     },
     "AutoUpdateUntilHour": {
-      "label": "...arasında (bitiş)",
+      "label": "Kendiliğinden kurma bitişi",
       "tip": "O gece denemeyi bıraktığı saat. Başlangıçtan erken bir saat gece yarısını geçer, yani gece geç saatten sabah erkene kadar olur."
     },
     "AutoUpdateWaitHours": {
@@ -4271,23 +4308,23 @@
       "tip": "Avın aynı anda kaç oyunu sürdürdüğü. Aralarında sırayla oynar; biri dinlenince veya bitince listedeki sonraki oyun yerine geçer."
     },
     "BoostHoursPerDay": {
-      "label": "Günde en fazla av saati",
+      "label": "Günde en çok şu kadar avla",
       "tip": "Avlanan oyuna günde harcanacak en fazla süre. İnsan modundaki hesapta oyun günün geri kalanında oyunlarından çıkar; değilse av o günlük durur. 0 sınırsızdır."
     },
     "BoostSwitchFromPct": {
-      "label": "Başka oyuna geçme noktası",
+      "label": "Başka oyuna en erken geçiş",
       "tip": "Bir oyunun başarımları yaklaşık bu orana gelince - bu değerle sonraki arasında, her oyun için farklı rastgele bir nokta - şimdilik yeterince oynamış biri gibi başka bir oyuna geçer. Yüzde olarak."
     },
     "BoostSwitchToPct": {
-      "label": "...kadar",
+      "label": "Başka oyuna en geç geçiş",
       "tip": "Bu aralığın üst ucu. Yukarıdakiyle aynı sayı onu kesinleştirir."
     },
     "BoostRestDaysMin": {
-      "label": "Bir oyuna dönme süresi",
+      "label": "Bir oyuna en erken dönüş",
       "tip": "Bıraktığı bir oyuna dönmeden önceki gün sayısı - bununla sonraki değer arasında rastgele. Her dönüşte biraz daha ileride durur, \"En fazla tamamla\"ya kadar."
     },
     "BoostRestDaysMax": {
-      "label": "...kadar",
+      "label": "Bir oyuna en geç dönüş",
       "tip": "Bu aralığın üst ucu, gün olarak."
     },
     "AchievementRealLength": {
@@ -4300,7 +4337,7 @@
       "choices": "3 nocat.farm'daki Steam hesapları | 0 bugünkü kartlar | 1 son bir haftadaki saatler | 2 son bir aydaki saatler"
     },
     "SendAroundHour": {
-      "label": "...civarında",
+      "label": "Eşyaları şu saat civarında gönder",
       "tip": "Gönderim saati - örneğin sabaha karşı. O saatin rastgele bir dakikasında, \"Eşyaları şu aralıkla gönder\" ayarının izin verdiği günlerde gider. Belirli saat yok: açıldığı andan itibaren her şu kadar saatte bir."
     },
     "IdleWholeLibrary": {
@@ -4363,7 +4400,7 @@
       "tip": "Haftalık raporun geldiği saat, yerel saatle."
     },
     "OfflineIdleTopGames": {
-      "label": "...ya da hiçbiri seçilmemişse en çok oynananlar",
+      "label": "Gece için en çok oynanan oyunlar",
       "tip": "“Gece için oyunlar” boşsa, gece hesabın en çok oynadığı bu kadar oyunda saat biriktirir. 1 ya da 2 en doğal görünür - aynı anda çok sayıda oyun, selfcheck'in ilk yakaladığı şeydir."
     },
     "ClaimFree": {
@@ -4434,11 +4471,11 @@
       "tip": "Bu hesabın takasları günlerce bekletilmeye başlayınca sana haber verir - örneğin Steam Guard değiştikten sonra 15 gün. Kapalı: yalnızca Sağlık satırı gösterir."
     },
     "HealthMaxHours": {
-      "label": "...en fazla (saat)",
+      "label": "Durum kontrolleri arası en uzun bekleme",
       "tip": "İki sağlık kontrolü arasındaki en uzun süre, saat olarak - örneğin 7. En kısa 5 iken her 5 ila 7 saatte bir, rastgele bir kontrol gelir."
     },
     "HealthMinHours": {
-      "label": "İki sağlık kontrolü arasındaki en kısa bekleme (saat)",
+      "label": "Durum kontrolleri arası en kısa bekleme",
       "tip": "İki sağlık kontrolü arasındaki en kısa süre, saat olarak - örneğin 5. En uzun 7 iken her 5 ila 7 saatte bir, rastgele bir kontrol gelir. Hesap giriş yapınca her zaman bir kez kontrol eder."
     },
     "ScamAlertDiscord": {
@@ -4470,11 +4507,11 @@
       "tip": "Hesabın yetkili cihazlar listesine bakar ve yeni olan, senin ya da nocat.farm'ın olmayan bir cihaz için uyarır - örneğin hiç görmediğin bir \"DESKTOP-8XQ2\". Kapalı: cihazlar kontrol edilmez."
     },
     "ScamWatchMaxMinutes": {
-      "label": "...en fazla (dakika)",
+      "label": "Dolandırıcılık kontrolleri arası en uzun bekleme",
       "tip": "İki bakış arasındaki en uzun süre, dakika olarak - örneğin 60. En kısa 30 iken her bekleme rastgele 30 ile 60 dakika arasıdır."
     },
     "ScamWatchMinMinutes": {
-      "label": "İki bakış arasındaki en kısa bekleme (dakika)",
+      "label": "Dolandırıcılık kontrolleri arası en kısa bekleme",
       "tip": "İki bakış arasındaki en kısa süre, dakika olarak - örneğin 30. En uzun 60 iken her bekleme rastgele 30 ile 60 dakika arasıdır. Her bakış birkaç sayfa görüntülemesidir, onları bir tarayıcıda açmakla aynı."
     },
     "ScamWatchRevokeKey": {
@@ -4502,7 +4539,7 @@
       "tip": "Hesabın kartında tek bir Sağlık satırı gösterir - seviye, yasaklar, takas bekletmesi, pazar erişimi, sınırlı hesap, Steam Guard ve telefon - ve bir şey kötüleştiği anda sana haber verir. Örneğin bir takas bekletmesi başlayınca tek bir mesaj alırsın ve satır bunu yazar. Giriş yaptığında ve birkaç saatte bir kontrol edilir; yalnızca bakar. Kapalı: Sağlık satırı da uyarı da yok."
     },
     "PointsWeeklyCap": {
-      "label": "Haftada en fazla harca",
+      "label": "Haftada en çok puan",
       "tip": "Herhangi bir 7 günde harcadığı en fazla puan. Örneğin 3000: kaç puan olursa olsun haftada en fazla 3 rozet seviyesi. 0 hiçbir şey harcamaz."
     },
     "PointsBadgeMaxLevel": {
@@ -4526,7 +4563,7 @@
       "tip": "Asla harcamadığı puanlar, sana biraz kalsın diye. Örneğin 4.500 puanla 1000: 3.500 harcayabilir, bu da tanesi 1.000'den 3 rozet seviyesi eder. 0 hepsini harcamasına izin verir."
     },
     "PointsCheckEveryHours": {
-      "label": "Şu sıklıkla bak (saat)",
+      "label": "Puan kontrolü aralığı",
       "tip": "Puanlara ve dükkâna ne sıklıkla baktığı, saat olarak - örneğin 12, günde iki kez. İnsan modundaki bir hesap yalnızca kendi gününde bakar."
     },
     "BuyCards": {
@@ -4538,15 +4575,15 @@
       "tip": "Hiç kartı olmayan oyunlar için tam kart setlerini de en ucuzdan başlayarak alır, her biri bir rozet seviyesi (100 XP). Bir kartının pazarda 2’den az ilanı olan ya da çok ucuz tek bir kart yüzünden olduğundan ucuz görünen setler dışarıda bırakılır. Kapalı: yalnızca başlanmış rozetlerin kartları."
     },
     "BuyDailyLimit": {
-      "label": "Günde en fazla harca",
+      "label": "Günde en çok harca",
       "tip": "24 saat içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin 1,50: 0,60’lık bir set ve 0,70’lik başka biri günü doldurur; sonraki set yarını bekler. Asla cüzdandakinden fazla harcamaz."
     },
     "BuyWeeklyLimit": {
-      "label": "Haftada en fazla harca",
+      "label": "Haftada en çok harca",
       "tip": "7 gün içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin günde 1,50 ile 8,00: haftada yaklaşık 5 tam gün alışveriş. 0 hiçbir şey almaz."
     },
     "BuyCheckHours": {
-      "label": "Şu sıklıkla bak (saat)",
+      "label": "Alınacak kart kontrolü aralığı",
       "tip": "Satın alınacak kartlara ne sıklıkla baktığı, saat olarak - örneğin 12, günde iki kez. İnsan modundaki bir hesap yalnızca kendi gününde bakar ve her bakışta bir set alır."
     },
     "PointsBuySeasonalBadge": {
@@ -4554,7 +4591,7 @@
       "tip": "Puan Dükkânı'nın şu an sattığı rozetin seviyelerini almasına izin verir, örneğin Yaz Koleksiyonu - her büyük Steam indirimiyle yenisi gelir. Açık: o rozetin seviyesini yükseltir. Kapalı: onu almaz."
     },
     "BackupRetryMinutes": {
-      "label": "Şu kadar sonra yeniden dene (dakika)",
+      "label": "Yeniden deneme süresi",
       "tip": "Bir yedek başarısız olunca, o gün yeniden denemeden önce ne kadar bekleneceği. Örneğin 60: sabah 4'te başarısız olan yedek 5'te yeniden dener. 0 yarına kadar bekler."
     },
     "SendBackups": {
@@ -4603,7 +4640,7 @@
       "tip": "Her gün yedek saatine eklenen, en fazla bu kadar olan rastgele bir dakika. Örneğin \"Yedekleme saati\" sabah 4 iken 30: 4:00 ile 4:30 arasında bir zaman. 0 tam saatinde alır."
     },
     "BackupKeep": {
-      "label": "Son kaç tane tutulsun (yedek)",
+      "label": "Son yedekleri tut",
       "tip": "Klasörde kaç günlük yedeğin kalacağı. Örneğin 7 bir haftalık tutar: 8. yedek en eskisini siler. Yalnızca kendi yedek dosyaları silinir."
     },
     "BackupAuto": {
@@ -4623,7 +4660,7 @@
       "tip": "Steam Ailendeki biri paylaşılan bir oyunu bir üyenin kopyasında oynuyorsa ve başka bir üye de o oyuna sahipse, oyunu dışarıda bırakmak yerine o boştaki kopyaya geçip devam eder. Örneğin iki üyede Stardew Valley var ve biri onu oynuyor: diğer kopyayı ödünç alır. Yalnızca o tek oyunun kimden ödünç alınacağı değişir - birinin kullandığı kopya asla alınmaz. Kapalı: kopya boşalana kadar oyunu bırakır. Yalnızca aileyle paylaşılan oyunlar için (\"Aileyle paylaşılan oyunları dahil et\")."
     },
     "FamilyWaitMinutes": {
-      "label": "Bir aile üyesi bıraktıktan sonra bekle (dakika)",
+      "label": "Bir aile üyesi bıraktıktan sonra bekle",
       "tip": "Steam Ailendeki biri paylaşılan bir oyunu oynamayı bıraktıktan sonra o oyunun kaç dakika rahat bırakılacağı, örn. 20 - çoğu zaman yeniden başlarlar. 0 hemen kullanır."
     },
     "SpareKeepGems": {
@@ -4640,7 +4677,7 @@
       "choices": "0 otomatik | 1 gevşek bırak (kart paketleri kullanır) | 2 1000'lik çuvallara doldur ve takas edilebilir tut | 3 çuvalları başka bir hesabıma gönder | 4 çuvalları sat"
     },
     "SpareGapSeconds": {
-      "label": "Eşyalar arası bekleme (saniye)",
+      "label": "Eşyalar arası bekleme",
       "tip": "Bir robot hesapta bir bakış içinde iki eşya arasındaki bekleme - her seferinde değişir. Örneğin 40: 5 eşya yaklaşık 3 dakika sürer. İnsan modundaki bir hesap bunun yerine \"Eşyalar arası bekleme, insan modu\"nu kullanır."
     },
     "SparePerRun": {
@@ -4652,7 +4689,7 @@
       "tip": "Envanterde göründüğü gibi tam eşya adları, virgülle ayrılmış, örn. Sans, Gordon Freeman (Foil). Bir ad o eşyayı her oyunda tutar. Bunlar her zaman tutulur. Boş: adıyla hiçbir şey tutulmaz."
     },
     "BoosterCheckHours": {
-      "label": "Paketlere şu aralıkla bak (saat)",
+      "label": "Paket kontrolü aralığı",
       "tip": "Kart paketlerine bakışlar arasındaki saat - her seferinde biraz değişir. Örneğin 24: günde yaklaşık bir kez."
     },
     "SpareKeepEmoticons": {
@@ -4669,7 +4706,7 @@
       "tip": "Bir profil arka planının fazla kopyalarını fazla sayar. Örneğin 3 kopya ve tutulan 1: 2'si fazla. Kapalı: arka planlar kalır."
     },
     "SparePriceMaxAgeHours": {
-      "label": "Fiyata güvenme süresi (saat)",
+      "label": "Bir fiyata şu kadar güven",
       "tip": "Bir pazar fiyatının ne kadar süre taze sayıldığı. Örneğin 24: dün sabah okunan bir fiyat bu sabah artık çok eskidir ve o eşya yeniden fiyatlanana kadar tutulur. Fiyatı bilinmeyen bir eşya her zaman tutulur."
     },
     "BoosterSendTo": {
@@ -4677,7 +4714,7 @@
       "tip": "Buradaki diğer hesaplarından birinin adı, örn. main - paketler ona bir takasla gider. Kimlik doğrulayıcı eklenmediyse gönderme telefondan onay ister."
     },
     "SpareRunHours": {
-      "label": "Şu aralıkla bak (saat)",
+      "label": "Fazla eşya kontrolü aralığı",
       "tip": "Fazla eşyalara bakışlar arasındaki saat - her seferinde biraz değişir. Örneğin 12: günde yaklaşık iki kez. İnsan modundaki bir hesap yalnızca kendi gününde bakar."
     },
     "SpareKeepGames": {
@@ -4690,7 +4727,7 @@
       "choices": "0 gerçek fiyatın bir sent altı | 1 en ucuzla aynı | 2 medyan satış fiyatı | 3 en ucuzun bir sent altı"
     },
     "SpareRelistDays": {
-      "label": "Satılmayan ilanları kaldırma süresi (gün)",
+      "label": "Satılmayan ilanları şu kadar sonra kaldır",
       "tip": "Satılmayan bir ilanın kaldırılıp biraz daha ucuza yeniden konmasından önceki gün sayısı. Örneğin 7: ayın 1'inde 0.30'dan listelenen ve 8'inde hâlâ satılmamış bir kart 0.29'dan yeniden konur - ya da başkası onu 0.26'dan satıyorsa 0.25'ten (atılmış bir ilan sayılmaz). Asla \"Asla şunun altına inme\"nin altına inmez; o fiyatta ilanda kalır. Yalnızca nocat.farm'ın kendi koyduğu ilanlar. Kendi koyduğun ilanlara asla dokunulmaz."
     },
     "SpareMaxPrice": {
@@ -4698,7 +4735,7 @@
       "tip": "Daha değerli hiçbir şeye asla dokunulmaz: asla taşa çevrilmez, asla satılmaz. Bu hesabın kendi Steam cüzdanı para biriminde, örn. dolar ya da euro için 0.25 - kendi para biriminde aynı değeri kullan, örn. yen için 40. Değer, en ucuz ilan ile son bir günde satıldığı fiyattan yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur."
     },
     "SpareGemMarginPct": {
-      "label": "Mücevher satışı şu kadar geçmeli (%)",
+      "label": "Taşların satışı geçmesi gereken oran",
       "tip": "Artık kullanılmıyor. 1.8.2'den beri bir eşya yalnızca satış sana (Steam'in kesintilerinden sonra) mücevherlerinin değerinden en az 0.01 fazla getirdiğinde satılır, yoksa mücevher olur - örneğin satış 0.10 getirir: mücevherler 0.09 ya da daha az ederse satılır; daha fazla ederse mücevher. Bu kural tek başına karar verir, böylece mücevherler sana asla para kaybettirmez. Eski ayar dosyaları hâlâ yüklensin diye duruyor."
     },
     "SpareMaxedBadgeCards": {
@@ -4706,7 +4743,7 @@
       "tip": "Rozeti zaten tamamlanmış bir oyunun kartlarını - seviye 5 ya da parlak rozet yapılmış - fazla sayar, \"Her karttan bu kadar tut\" ile ayarlanan kopyaları tutarak. Örneğin bir kartın 3 kopyası ve tutulan 1: 2'si fazla. Kapalı: tamamlanmış rozetlerin kartları kalır."
     },
     "SpareNewDays": {
-      "label": "Yeni eşyalara dokunma süresi (gün)",
+      "label": "Yeni eşyalara şu kadar dokunma",
       "tip": "Bir eşyanın geldikten sonra dokunulmadan kaldığı gün sayısı. Örneğin 7: pazartesi düşen bir kart bir sonraki pazartesiden itibaren gidebilir. nocat.farm eşyayı ilk gördüğü andan sayar. İlk baktığında envanterde zaten olan her şey eski sayılır ve hemen gidebilir - yalnızca ondan sonra gelen eşyalar bekler. 0 bu kuralı kapatır."
     },
     "SpareGemsSendTo": {
@@ -4748,7 +4785,7 @@
       "tip": "Parlak kartların da fazla sayılmasına izin verir - örneğin parlak rozeti yapılmış bir parlak kartın 2. kopyası. Kapalı (varsayılan): parlak kartlar daha nadir ve çoğu zaman daha değerli olduğu için her zaman kalır."
     },
     "BoosterOpenNewDays": {
-      "label": "Yeni paketlere dokunma süresi (gün)",
+      "label": "Yeni paketlere şu kadar dokunma",
       "tip": "Bir paketin geldikten sonra kapalı kaldığı gün sayısı. Örneğin 7: pazartesi gelen bir paket bir sonraki pazartesiden itibaren açılır. 0 onları hemen açar. nocat.farm'ın kendi yaptığı paketler bekletilmez - ilk fırsatta açılır."
     },
     "SpareExtraCards": {
@@ -4764,7 +4801,7 @@
       "tip": "Rozet tamamlanmış olsa bile her karttan her zaman tutulan kopya sayısı. Örneğin 1: 3 kopyadan 2'si gidebilir. 0 hiçbirini tutmaz, son kopya da gidebilir. Bir rozetin hâlâ ihtiyaç duyduğu kartlar her zaman tutulur."
     },
     "SpareDumpPct": {
-      "label": "Satışların bu kadar altındaki en ucuz ilan atılmıştır (%)",
+      "label": "Satışların bu kadar altındaki ilanları yok say",
       "tip": "Bir eşyanın en ucuz ilanının, son bir günde satıldığı fiyatın ne kadar altında olursa atılmış sayılacağı. Örneğin 50: 0.30'dan satılmış, 0.12'deki en ucuz ilan (%60 altında) atılmıştır. \"Gerçek fiyatın bir sent altı\", o fiyatı yalnızca tek bir satış destekliyorsa eşyayı tutar - iki fiyat birbiriyle çelişir; iki ya da daha fazla satış varsa satıldığı fiyatın bir sent altından, 0.29'dan listeler. \"En ucuzun bir sent altı\" atılmış ilanı yok sayar ve o da 0.29'dan listeler. 0: hiçbir ilan atılmış sayılmaz."
     },
     "BoosterMake": {
@@ -4777,15 +4814,15 @@
       "tip": "Bir kart paketinin hesabı asla altına düşürmediği mücevher sayısı. Paket yalnızca mücevherler fiyatını artı bu sayıyı karşıladıkça yapılır. Örneğin 1.500 mücevherle 1000: 400'lük bir paket yapılır ve 1.100 kalır, sonraki paket daha fazla mücevher bekler. 0 hepsini kullanabilir."
     },
     "SpareRelistFloorPct": {
-      "label": "Asla şunun altına inme (gerçek satış fiyatının %'si)",
+      "label": "Yeniden listelemede en düşük fiyat, son satış fiyatının",
       "tip": "Satılmayan bir ilanın inebileceği en düşük fiyat, eşyanın son bir günde satıldığı fiyatın yüzdesi olarak. Örneğin 80: 0.30'dan satılmış bir kart asla 0.24'ün altına inmez - o fiyatta ilanda kalır ve yeniden konmaz. Son zamanlarda satış yoksa hiç düşürülmez."
     },
     "SpareHumanGapMinMinutes": {
-      "label": "Eşyalar arası bekleme, insan modu (dakika)",
+      "label": "Eşyalar arası en kısa bekleme, insan modu",
       "tip": "İnsan modundaki bir hesapta iki eşya arasındaki en kısa bekleme, dakika olarak. Her bekleme bununla aşağıdaki en uzun arasında rastgele seçilir. Örneğin 3 ve 20: bir eşyadan sonra bir sonrakine kadar 3 ile 20 dakika arası bekler."
     },
     "SpareDeclinedDays": {
-      "label": "Bir ilanı telefonunda reddedersen, tekrar dene (gün sonra)",
+      "label": "Bir ilanı reddettikten sonra bekle",
       "tip": "Bir eşyanın ilanını Steam uygulamasında reddettikten sonra o eşyanın ne kadar beklediği. Örneğin 30: ayın 1'inde bir kartın ilanını reddedersin ve o kart - her kopyası - ayın 31'ine kadar yeniden listelenmez. Hiç yayına çıkmadan kaldırılan bir ilan da reddedilmiş sayılır, emin olamadığı bir ilan da öyle. 0 onu bir daha asla listelemez."
     },
     "SpareHumanPerLook": {
@@ -4797,7 +4834,7 @@
       "tip": "Bir satışın Steam kesintilerinden sonra sana getirmesi gereken en az tutar, bu hesabın kendi Steam cüzdanı para biriminde. Örneğin 0.05: sana 0.03 getirecek bir kart, mücevherleri 0.02'den fazla ederse mücevher olur, mücevhere dönüşmüyorsa tutulur. Bir eşya asla satıştan 0.01 eksiğinden daha az eden mücevhere çevrilmez: mücevherleri 0.02 ya da daha az ederse o kart yine de 0.03'e satılır. \"Yalnızca sat\" seçiliyse tutulur. ör. dolar ya da euro için 0.05 - kendi para biriminde aynı değeri kullan, ör. yen için 5. 0 her şeyi satar."
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "...en fazla (dakika)",
+      "label": "Eşyalar arası en uzun bekleme, insan modu",
       "tip": "İnsan modundaki bir hesapta iki eşya arasındaki en uzun bekleme, dakika olarak. Örneğin 20, en kısa 3 iken: her bekleme 3 ile 20 dakika arasındadır, yani 3 eşya en fazla yaklaşık 40 dakika sürer."
     },
     "CraftFoilBadges": {

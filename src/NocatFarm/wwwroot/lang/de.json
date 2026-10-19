@@ -3247,7 +3247,44 @@
     "rep4rep commenting carries on": "rep4rep kommentiert weiter",
     "Disconnect": "Trennen",
     "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Vergisst diesen Chat. „Telegram verbinden“ erscheint wieder, um einen anderen zu verbinden.",
-    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Vergisst dieses Discord-Konto - der Bot gehorcht niemandem, bis du wieder verbindest."
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Vergisst dieses Discord-Konto - der Bot gehorcht niemandem, bis du wieder verbindest.",
+    "to": "bis",
+    "0 = {0}": "0 = {0}",
+    "seconds": "Sekunden",
+    "days": "Tage",
+    "ms": "ms",
+    "wallet currency": "in der Wallet-Währung",
+    "points": "Punkte",
+    "backups": "Sicherungen",
+    "reviews": "Rezensionen",
+    "times a day": "Mal am Tag",
+    "no limit": "kein Limit",
+    "spend nothing": "nichts ausgeben",
+    "keep forever": "für immer behalten",
+    "never again": "nie wieder",
+    "Settle in after signing in": "Nach dem Anmelden ankommen",
+    "Sittings": "Sitzungen",
+    "Breaks": "Pausen",
+    "On a break, go Away after": "In der Pause auf Abwesend nach",
+    "Sleeps": "Schläft",
+    "After waking, wait": "Nach dem Aufwachen warten",
+    "Background jobs wait after signing in": "Hintergrundaufgaben warten nach dem Anmelden",
+    "After the last card, keep playing": "Nach der letzten Karte weiterspielen",
+    "Farm cards only between": "Karten nur farmen zwischen",
+    "While grinding, one achievement every": "Beim Grinden ein Erfolg alle",
+    "Move to another game at": "Zum nächsten Spiel wechseln bei",
+    "Come back to a game after": "Zu einem Spiel zurückkehren nach",
+    "Wait between items, human mode": "Pause zwischen Gegenständen, menschlicher Modus",
+    "Wait between steps": "Pause zwischen Schritten",
+    "Wait between steps, human mode": "Pause zwischen Schritten, menschlicher Modus",
+    "Look for scams every": "Nach Betrug sehen alle",
+    "Check health every": "Zustand prüfen alle",
+    "Accept a gift after": "Geschenk annehmen nach",
+    "Answer a trade offer after": "Auf ein Tauschangebot antworten nach",
+    "Accept a friend request after": "Freundschaftsanfrage annehmen nach",
+    "Gap between comments": "Abstand zwischen Kommentaren",
+    "Only post between": "Nur posten zwischen",
+    "Install by itself between": "Selbst installieren zwischen"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -3404,7 +3441,7 @@
       "tip": "Wie oft dieses Konto ins Protokoll schreibt, was es gerade tut, solange ein Spiel läuft, in Minuten. 0 nimmt die allgemeine Protokoll-Einstellung, -1 hält es still."
     },
     "StatusQuietEveryMinutes": {
-      "label": "Und in Ruhe alle",
+      "label": "In Ruhe sagen, was es tut, alle",
       "tip": "Dasselbe, aber für die Zeit, in der dieses Konto schläft, Pause macht, pausiert oder abgemeldet ist. 0 nimmt die allgemeine Protokoll-Einstellung, -1 hält es still."
     },
     "Language": {
@@ -3479,7 +3516,7 @@
       "tip": "Nur im menschlichen Modus. Nach wie vielen Minuten einer Pause der Status auf abwesend oder offline wechselt, wie bei einem echten untätigen Steam-Client. Kürzere Pausen bleiben online."
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "...bis zu",
+      "label": "In der Pause auf Abwesend nach höchstens",
       "tip": "Nach wie vielen Minuten einer Pause der Status spätestens auf abwesend oder offline wechselt."
     },
     "LegitStopMaxSeconds": {
@@ -3511,7 +3548,7 @@
       "tip": "Die Uhrzeit, zu der es online kommt, z. B. 11:00. Jeden Tag kommt es innerhalb von „Schwankt um bis zu“ um diese Zeit online, meist nah dran und am Wochenende etwas früher."
     },
     "DayStartVaryMinutes": {
-      "label": "Schwankt um bis zu (Minuten)",
+      "label": "Kommt online, plus/minus",
       "tip": "Wie weit vor oder nach „Kommt online um“ es online kommen darf, in Minuten. Nichts schiebt es darüber hinaus: mit 11:00 und 30 kommt es immer zwischen 10:30 und 11:30 online. 0 ist jeden Tag dieselbe Minute."
     },
     "BedTime": {
@@ -3519,7 +3556,7 @@
       "tip": "Die Uhrzeit, zu der es für die Nacht aufhört. Nach Mitternacht geht auch: 02:00 ist zwei Uhr morgens nach dem Tag, an dem es online kam. Jede Nacht geht es innerhalb von „Schwankt um bis zu“ um diese Zeit schlafen, freitags und samstags etwas später."
     },
     "BedVaryMinutes": {
-      "label": "Schwankt um bis zu (Minuten)",
+      "label": "Geht schlafen, plus/minus",
       "tip": "Wie weit vor oder nach „Geht schlafen um“ es schlafen gehen darf, in Minuten. Nichts schiebt es darüber hinaus: mit 02:00 und 60 geht es immer zwischen 01:00 und 03:00 schlafen. 0 ist jede Nacht dieselbe Minute."
     },
     "LateNightExtraHours": {
@@ -3531,7 +3568,7 @@
       "tip": "Wie lange eine Nacht dauert, bevor der nächste Tag beginnen kann, in Stunden - eine zufällige Länge zwischen diesem und dem nächsten Wert, jede Nacht anders. Passt eine Nacht nicht vor die späteste Zeit, die „Kommt online um“ erlaubt, wird sie gekürzt: später kommt es nie online."
     },
     "SleepMaxHours": {
-      "label": "...bis",
+      "label": "Schläft höchstens",
       "tip": "Das obere Ende dieses Bereichs, in Stunden."
     },
     "PureMainDayChancePct": {
@@ -3543,7 +3580,7 @@
       "tip": "Die kürzeste Wartezeit nach der Anmeldung, bevor es ein Spiel startet, in Minuten. Gilt auch, wenn du „Menschlicher Modus“ einschaltest, damit es nicht sofort ein Spiel startet."
     },
     "WarmUpMaxMinutes": {
-      "label": "Und höchstens",
+      "label": "Ankommen für höchstens",
       "tip": "Die längste Wartezeit nach der Anmeldung, in Minuten. Es startet nie innerhalb von 3 Minuten nach der Anmeldung. So kann es nicht übernehmen, wenn du auf diesem Konto schon spielst."
     },
     "SessionMinMinutes": {
@@ -3591,7 +3628,7 @@
       "tip": "Farmt Steam-Sammelkarten. Spiele mit übrigen Karten werden vor allem anderen gespielt, bis keine mehr fallen."
     },
     "HoursUntilCardDrops": {
-      "label": "Stunden bis Karten fallen",
+      "label": "Jedes Spiel so lange spielen, bevor Karten fallen können",
       "tip": "Wie viele Stunden ein Spiel braucht, bevor Steam seine Karten fallen lässt. Stell 0 ein, wenn dieses Konto über 5 $ bei Steam ausgegeben hat, damit nichts länger läuft als nötig."
     },
     "FarmingOrder": {
@@ -3613,11 +3650,11 @@
       "choices": "0 vorsichtig (halb so schnell) | 1 normal | 2 zügig (doppelt so schnell)"
     },
     "AchievementMaxCompletionPct": {
-      "label": "Nicht mehr abschließen als",
+      "label": "Nie mehr von einem Spiel abschließen als",
       "tip": "Wie viel Prozent eines Spiels es höchstens abschließt. Ein paar offene Errungenschaften wirken wie eine echte Bibliothek. Hat ein Spiel das erreicht, lässt die Jagd es endgültig - erhöhst du den Wert, kommt es zurück. Der Befehl grind ignoriert das."
     },
     "AchievementBurstMinPct": {
-      "label": "Schnell hintereinander nur bei Errungenschaften ab",
+      "label": "Schnelle Serien nur für Erfolge, die mindestens so viele haben",
       "tip": "Manchmal kommen 2 oder 3 Errungenschaften wenige Minuten nacheinander, wie beim Abschluss eines Levels. Nur Errungenschaften, die mindestens so viel Prozent der Spieler haben, können so kommen - seltenere kommen immer allein, mit der vollen Wartezeit. 0 lässt jede Errungenschaft so kommen; 100 schaltet das ab."
     },
     "CraftBadges": {
@@ -3633,11 +3670,11 @@
       "tip": "Wie viele Kommentare dieses Konto in 24 Stunden höchstens postet. Steam erlaubt etwa 10 bei Nicht-Freunden. Mehr kann dem Konto eine Kommentarsperre einbringen."
     },
     "Rep4RepGapMinMinutes": {
-      "label": "Kürzester Abstand",
+      "label": "Kürzester Abstand zwischen Kommentaren",
       "tip": "Die kürzeste Zeit zwischen zwei Kommentaren dieses Kontos, in Minuten."
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "Längster Abstand",
+      "label": "Längster Abstand zwischen Kommentaren",
       "tip": "Die längste Zeit zwischen Kommentaren, in Minuten. Jeder Abstand wird zufällig zwischen beiden Werten gewählt."
     },
     "Rep4RepStartHour": {
@@ -3645,7 +3682,7 @@
       "tip": "Die früheste Stunde des Tages, zu der dieses Konto kommentiert. Kommentare mitten in der Nacht verraten einen Bot sofort."
     },
     "Rep4RepEndHour": {
-      "label": "Bis",
+      "label": "Nur posten bis",
       "tip": "Die späteste Stunde des Tages, zu der dieses Konto kommentiert. Stell es gleich wie „Erst posten ab“ ein, um rund um die Uhr zu kommentieren."
     },
     "AcceptFriendRequests": {
@@ -3674,11 +3711,11 @@
       "tip": "Schickt die Antwort jeder Person höchstens einmal am Tag, damit niemand dieselbe Zeile zweimal bekommt."
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "Mindestens warten",
+      "label": "Freundschaftsanfrage annehmen nach mindestens",
       "tip": "Die kürzeste Wartezeit, bevor eine Freundschaftsanfrage angenommen wird, in Minuten. Sofort annehmen verrät einen Bot schnell."
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "Und höchstens",
+      "label": "Freundschaftsanfrage annehmen nach höchstens",
       "tip": "Die längste Wartezeit, bevor eine Freundschaftsanfrage angenommen wird, in Minuten. Jede Anfrage bekommt eine zufällige Wartezeit, meist näher am kurzen Ende."
     },
     "ActOnlyWhileAwake": {
@@ -3694,15 +3731,15 @@
       "tip": "Nur im menschlichen Modus. Wie lange nach dem Aufwachen oder der Anmeldung, bevor es Dinge tut, die andere sehen, etwa Handel, Kommentare oder Antworten, in Minuten. Jede Art bekommt ihre eigene zufällige Wartezeit."
     },
     "WakeDelayMaxMinutes": {
-      "label": "...bis zu",
+      "label": "Nach dem Aufwachen höchstens warten",
       "tip": "Die längste Wartezeit nach dem Aufwachen oder der Anmeldung, in Minuten."
     },
     "QuietDelayMinMinutes": {
-      "label": "Nach der Anmeldung warten Hintergrund-Dinge mindestens",
+      "label": "Hintergrundaufgaben warten nach dem Anmelden mindestens",
       "tip": "Nur im menschlichen Modus. Wie lange nach der Anmeldung, bevor Hintergrund-Aufgaben wie Abzeichen, Gratisspiele und Booster-Packs starten, in Minuten. Jede bekommt ihre eigene zufällige Wartezeit, damit nicht alle auf einmal loslegen."
     },
     "QuietDelayMaxMinutes": {
-      "label": "...bis zu",
+      "label": "Hintergrundaufgaben warten nach dem Anmelden höchstens",
       "tip": "Die längste Wartezeit nach der Anmeldung, bevor Hintergrund-Aufgaben starten, in Minuten."
     },
     "OneTradeAtATime": {
@@ -3742,11 +3779,11 @@
       "tip": "Lehnt jedes andere Handelsangebot ab, statt es liegen zu lassen. Aus lässt nicht angenommene Angebote liegen, damit du sie selbst prüfen kannst."
     },
     "TradeDelayMinMinutes": {
-      "label": "Mindestens warten",
+      "label": "Auf ein Tauschangebot antworten nach mindestens",
       "tip": "Die kürzeste Wartezeit, bevor ein Handelsangebot beantwortet wird, in Minuten. Sekunden nach dem Eingang anzunehmen, wirkt wie ein Bot."
     },
     "TradeDelayMaxMinutes": {
-      "label": "Und höchstens",
+      "label": "Auf ein Tauschangebot antworten nach höchstens",
       "tip": "Die längste Wartezeit, bevor ein Handelsangebot beantwortet wird, in Minuten. Jedes Angebot bekommt eine zufällige Wartezeit, meist näher am kurzen Ende."
     },
     "GiftDelayMinMinutes": {
@@ -3754,7 +3791,7 @@
       "tip": "Die kürzeste Wartezeit, bevor ein Geschenk angenommen wird, etwa ein Spiel, eine Guthabenkarte oder ein Gastpass, in Minuten."
     },
     "GiftDelayMaxMinutes": {
-      "label": "Und höchstens",
+      "label": "Geschenk annehmen nach höchstens",
       "tip": "Die längste Wartezeit, bevor ein Geschenk angenommen wird, in Minuten. Jedes Geschenk bekommt eine zufällige Wartezeit, meist näher am kurzen Ende."
     },
     "PauseWhenYouPlay": {
@@ -3837,7 +3874,7 @@
       "tip": "Farmt Karten erst ab dieser Stunde. Lass dies und „...bis“ beide auf Mitternacht, um jederzeit zu farmen."
     },
     "FarmUntilHour": {
-      "label": "...bis",
+      "label": "Karten nur farmen bis",
       "tip": "Farmt Karten bis zu dieser Stunde. Stell sie früher als die Startstunde ein, um über Mitternacht zu laufen - von spätabends bis frühmorgens farmt über Nacht."
     },
     "PostFarmWindDownMinMinutes": {
@@ -3845,7 +3882,7 @@
       "tip": "Nur im menschlichen Modus. Nachdem ein Spiel seine letzte Karte hat fallen lassen, spielt es noch ein paar Minuten weiter und macht dann Pause. Stell beide auf 0, um sofort aufzuhören."
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...bis zu",
+      "label": "Nach der letzten Karte höchstens weiterspielen",
       "tip": "Wie viele Minuten es nach der letzten Karte höchstens weiterspielt."
     },
     "FarmingDelayMinutes": {
@@ -3853,7 +3890,7 @@
       "tip": "Wie oft es ein Spiel beim Farmen erneut prüft, in Minuten. Steam meldet Drops sofort, das hier ist nur eine Absicherung."
     },
     "MaxFarmingHoursPerGame": {
-      "label": "Aufgeben nach",
+      "label": "Ein Spiel aufgeben nach",
       "tip": "Gibt ein Spiel nach so vielen Stunden auf und macht weiter. So kann ein hängendes Spiel die anderen nicht blockieren."
     },
     "StopWhenFarmingDone": {
@@ -3877,7 +3914,7 @@
       "tip": "Lässt „Alle Einzelspieler-Titel“ nur Spiele jagen, die dieses Konto schon gestartet hat. Der strengste Weg, bei Spielen zu bleiben, die zum Verlauf des Kontos passen."
     },
     "InventoryIgnoreGames": {
-      "label": "...aber diese Spiele nicht",
+      "label": "Diese Spiele aus Inventarwert und Tausch heraushalten",
       "tip": "Spiel-IDs (die Zahl im Store-Link), die beim Inventarwert und bei jedem Handel ausgelassen werden, getrennt durch Kommas. Spiele, in denen das Konto gebannt ist, können nie gehandelt werden - die Bann-Überwachung trägt sie von selbst ein, wenn sie sie sehen kann, und du kannst sie auch hier eintragen."
     },
     "YieldToFamily": {
@@ -3889,11 +3926,11 @@
       "tip": "Lässt die Erfolgsjagd auch Spiele nutzen, die über die Steam-Familie mit diesem Konto geteilt werden. Mit 40 eigenen und 200 geteilten Spielen kann es zum Beispiel aus allen 240 wählen - eigene Spiele kommen immer zuerst. An: geteilte Spiele zählen wie eigene. Aus: nur Spiele, die diesem Konto gehören."
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "Beim Grinden eine Errungenschaft alle",
+      "label": "Beim Grinden kürzester Abstand zwischen Erfolgen",
       "tip": "Wie weit auseinander Errungenschaften beim Grinden freigeschaltet werden, in Minuten. Ein Grind bleibt bei einem Spiel, das Tempo ist also schneller und aktiver. Die leichtesten kommen zuerst."
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...bis zu",
+      "label": "Beim Grinden längster Abstand zwischen Erfolgen",
       "tip": "Der längste Abstand zwischen Freischaltungen beim Grinden, in Minuten."
     },
     "AchievementNeverGames": {
@@ -3943,23 +3980,23 @@
       "choices": "0 das meistgespielte Spiel | 1 irgendein gespieltes Spiel"
     },
     "SaleGapMinSeconds": {
-      "label": "Roboter-Konten warten zwischen Schritten (Sekunden)",
+      "label": "Kürzeste Pause zwischen Schritten",
       "tip": "Sekunden zwischen zwei Nominierungen oder Stimmen auf einem Roboter-Konto, die kürzeste Wartezeit - zum Beispiel 5. Mit der längsten bei 20 ist jede Wartezeit zufällig 5 bis 20 Sekunden."
     },
     "SaleGapMaxSeconds": {
-      "label": "...bis zu (Sekunden)",
+      "label": "Längste Pause zwischen Schritten",
       "tip": "Die längste Wartezeit zwischen zwei Schritten auf einem Roboter-Konto, in Sekunden - zum Beispiel 20. Mit der kürzesten bei 5 ist jede Wartezeit zufällig 5 bis 20 Sekunden."
     },
     "SaleHumanGapMinMinutes": {
-      "label": "Menschen-Modus wartet zwischen Schritten (Minuten)",
+      "label": "Kürzeste Pause zwischen Schritten, menschlicher Modus",
       "tip": "Minuten zwischen zwei Nominierungen oder Stimmen auf einem Konto im Menschen-Modus, die kürzeste Wartezeit - zum Beispiel 5. Mit der längsten bei 30 ist jede Wartezeit zufällig 5 bis 30 Minuten. Nur innerhalb seines Tages."
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...bis zu (Minuten)",
+      "label": "Längste Pause zwischen Schritten, menschlicher Modus",
       "tip": "Die längste Wartezeit zwischen zwei Schritten auf einem Konto im Menschen-Modus, in Minuten - zum Beispiel 30. Mit der kürzesten bei 5 ist jede Wartezeit zufällig 5 bis 30 Minuten."
     },
     "SaleCheckHours": {
-      "label": "Nach Events schauen alle (Stunden)",
+      "label": "Nach Events sehen alle",
       "tip": "Wie oft es nachschaut, ob ein Steam-Event begonnen hat, in Stunden - zum Beispiel 6, etwa 4 Blicke am Tag. Während eines Events schaut es etwa jede Stunde."
     },
     "SellPerRun": {
@@ -4135,7 +4172,7 @@
       "tip": "Farmt Karten in ein paar Blöcken pro Tag mit Pausen dazwischen, statt am Stück. Macht nur bei einem Konto einen echten Unterschied, das sonst nichts zu sammeln hat."
     },
     "FarmHoursPerDay": {
-      "label": "Stunden pro Tag zum Farmen",
+      "label": "So lange am Tag farmen",
       "tip": "Ungefähr wie viele Stunden pro Tag die Farm-Blöcke zusammen ergeben. Das schwankt täglich und ist am Wochenende länger. Gilt nur, wenn „In Sitzungen farmen, nicht am Stück“ an ist."
     },
     "MarketGapSeconds": {
@@ -4147,7 +4184,7 @@
       "tip": "Wie viele Stunden ein Preis weiterverwendet wird, bevor er neu abgefragt wird. Billige Gegenstände werden seltener geprüft. Länger heißt weniger Anfragen, aber Werte aktualisieren sich langsamer."
     },
     "Rep4RepPauseHours": {
-      "label": "Kommentare anhalten für (Stunden)",
+      "label": "Kommentieren pausieren für",
       "tip": "Hält rep4rep-Kommentare auf allen Konten für so viele Stunden an, danach geht es von selbst weiter. Der Countdown läuft auch über Neustarts weiter. 0 heißt keine Pause."
     },
     "DiscordPresence": {
@@ -4215,11 +4252,11 @@
       "tip": "Nur im Menschen-Modus. Das gejagte Spiel kommt zu den Spielen, die es spielt, und das hier ist, wie oft es drankommt - ein Gewicht wie bei „Spiele und wie oft“. Es läuft in normalen Sitzungen, mit Pausen und Schlafenszeit, und bricht nie ein anderes Spiel ab."
     },
     "AutoUpdateFromHour": {
-      "label": "...zwischen",
+      "label": "Selbst installieren ab",
       "tip": "Die früheste Stunde, in der es von selbst installieren darf."
     },
     "AutoUpdateUntilHour": {
-      "label": "...und",
+      "label": "Selbst installieren bis",
       "tip": "Die Stunde, ab der es für die Nacht aufhört. Früher als die Startstunde geht über Mitternacht, also klappt auch spätabends bis frühmorgens."
     },
     "AutoUpdateWaitHours": {
@@ -4271,23 +4308,23 @@
       "tip": "Wie viele Spiele die Jagd gleichzeitig laufen hat. Es wechselt zwischen ihnen, und wenn eines pausiert oder fertig ist, rückt das nächste von der Liste nach."
     },
     "BoostHoursPerDay": {
-      "label": "Höchstens so viele Stunden am Tag jagen",
+      "label": "Höchstens so lange am Tag jagen",
       "tip": "Die meiste Zeit am Tag für das gejagte Spiel. Bei einem Konto im Menschen-Modus verlässt das Spiel für den Rest des Tages die Spieleliste; sonst endet die Jagd für heute. 0 ist unbegrenzt."
     },
     "BoostSwitchFromPct": {
-      "label": "Wechselt das Spiel bei etwa",
+      "label": "Zum nächsten Spiel wechseln ab",
       "tip": "Hat ein Spiel etwa so viel seiner Erfolge - ein zufälliger Punkt zwischen diesem und dem nächsten Wert, für jedes Spiel anders - wechselt es zu einem anderen, wie jemand, der erst mal genug davon hat. In Prozent."
     },
     "BoostSwitchToPct": {
-      "label": "...bis",
+      "label": "Zum nächsten Spiel wechseln spätestens bei",
       "tip": "Das obere Ende dieses Bereichs. Dieselbe Zahl wie oben macht ihn genau."
     },
     "BoostRestDaysMin": {
-      "label": "Kehrt zu einem Spiel zurück nach",
+      "label": "Zu einem Spiel zurückkehren nach mindestens",
       "tip": "Wie viele Tage, bis es zu einem Spiel zurückkehrt, von dem es gewechselt hat - eine Zufallszahl zwischen diesem und dem nächsten Wert. Bei jeder Rückkehr hört es etwas weiter drin auf, bis „Höchstens so viel abschließen“."
     },
     "BoostRestDaysMax": {
-      "label": "...bis",
+      "label": "Zu einem Spiel zurückkehren nach höchstens",
       "tip": "Das obere Ende dieses Bereichs, in Tagen."
     },
     "AchievementRealLength": {
@@ -4300,7 +4337,7 @@
       "choices": "3 Steam-Konten auf nocat.farm | 0 Karten heute | 1 Stunden letzte Woche | 2 Stunden letzter Monat"
     },
     "SendAroundHour": {
-      "label": "...gegen",
+      "label": "Gegenstände senden gegen",
       "tip": "Die Stunde des Tages für den Versand - etwa frühmorgens. Er geht zu einer zufälligen Minute in dieser Stunde raus, an den Tagen, die „Gegenstände senden alle“ erlaubt. Keine feste Zeit: alle so viele Stunden ab dem Einschalten."
     },
     "IdleWholeLibrary": {
@@ -4363,7 +4400,7 @@
       "tip": "Die Stunde, zu der der Wochenbericht kommt, in Ortszeit."
     },
     "OfflineIdleTopGames": {
-      "label": "...oder, wenn keine gewählt sind, seine Top-Spiele",
+      "label": "Top-Spiele für die Nacht",
       "tip": "Ist „Spiele für die Nacht“ leer, sammelt es nachts in so vielen seiner meistgespielten Spiele. 1 oder 2 wirkt am natürlichsten - viele auf einmal ist das Erste, was selfcheck bemängelt."
     },
     "ClaimFree": {
@@ -4434,11 +4471,11 @@
       "tip": "Sagt dir, wenn die Tauschgeschäfte dieses Kontos tagelang zurückgehalten werden - zum Beispiel 15 Tage, nachdem Steam Guard geändert wurde. Aus: nur die Zustandszeile zeigt es."
     },
     "HealthMaxHours": {
-      "label": "...bis zu (Stunden)",
+      "label": "Längste Pause zwischen Zustandsprüfungen",
       "tip": "Die längste Zeit zwischen zwei Zustandsprüfungen, in Stunden - zum Beispiel 7. Mit der kürzesten bei 5 kommt alle 5 bis 7 Stunden eine Prüfung, zufällig."
     },
     "HealthMinHours": {
-      "label": "Kürzeste Wartezeit zwischen zwei Zustandsprüfungen (Stunden)",
+      "label": "Kürzeste Pause zwischen Zustandsprüfungen",
       "tip": "Die kürzeste Zeit zwischen zwei Zustandsprüfungen, in Stunden - zum Beispiel 5. Mit der längsten bei 7 kommt alle 5 bis 7 Stunden eine Prüfung, zufällig. Bei der Anmeldung des Kontos wird immer einmal geprüft."
     },
     "ScamAlertDiscord": {
@@ -4470,11 +4507,11 @@
       "tip": "Sieht sich die Liste der autorisierten Geräte des Kontos an und warnt vor einem neuen, das weder dir noch nocat.farm selbst gehört - zum Beispiel ein „DESKTOP-8XQ2“, das du nie gesehen hast. Aus: Geräte werden nicht geprüft."
     },
     "ScamWatchMaxMinutes": {
-      "label": "...bis zu (Minuten)",
+      "label": "Längste Pause zwischen Betrugsprüfungen",
       "tip": "Die längste Zeit zwischen zwei Blicken, in Minuten - zum Beispiel 60. Mit der kürzesten bei 30 ist jede Wartezeit zufällig 30 bis 60 Minuten."
     },
     "ScamWatchMinMinutes": {
-      "label": "Kürzeste Wartezeit zwischen zwei Blicken (Minuten)",
+      "label": "Kürzeste Pause zwischen Betrugsprüfungen",
       "tip": "Die kürzeste Zeit zwischen zwei Blicken, in Minuten - zum Beispiel 30. Mit der längsten bei 60 ist jede Wartezeit zufällig 30 bis 60 Minuten. Jeder Blick sind ein paar Seitenaufrufe, genau wie wenn du sie im Browser öffnest."
     },
     "ScamWatchRevokeKey": {
@@ -4502,7 +4539,7 @@
       "tip": "Zeigt eine Zustandszeile auf der Karte des Kontos - Level, Banns, Handelssperre, Marktzugang, eingeschränktes Konto, Steam Guard und Telefon - und sagt dir sofort, wenn etwas schlechter wird. Beginnt zum Beispiel eine Handelssperre, bekommst du eine Nachricht und die Zeile zeigt es. Geprüft bei der Anmeldung und alle paar Stunden; es sieht nur nach. Aus: keine Zustandszeile und keine Meldungen."
     },
     "PointsWeeklyCap": {
-      "label": "Höchstens ausgeben, pro Woche",
+      "label": "Punkte pro Woche, höchstens",
       "tip": "Die meisten Punkte, die es in 7 Tagen ausgibt. Zum Beispiel 3000: höchstens 3 Abzeichenstufen pro Woche, egal wie viele Punkte da sind. 0 gibt nichts aus."
     },
     "PointsBadgeMaxLevel": {
@@ -4526,7 +4563,7 @@
       "tip": "Punkte, die es nie ausgibt, damit dir welche bleiben. Zum Beispiel 1000 bei 4.500 Punkten: es darf 3.500 ausgeben, das sind 3 Abzeichenstufen zu je 1.000. 0 lässt es alle ausgeben."
     },
     "PointsCheckEveryHours": {
-      "label": "Nachsehen alle (Stunden)",
+      "label": "Nach den Punkten sehen alle",
       "tip": "Wie oft es nach den Punkten und dem Shop sieht, in Stunden - zum Beispiel 12, zweimal am Tag. Ein Konto im Menschen-Modus sieht nur während seines Tages nach."
     },
     "BuyCards": {
@@ -4538,15 +4575,15 @@
       "tip": "Kauft außerdem ganze Kartensätze für Spiele, von denen es keine Karten hat, die günstigsten zuerst, je eine Abzeichenstufe (100 EP). Sätze, bei denen eine Karte weniger als 2 Mal auf dem Markt ist oder eine sehr billige Karte den Satz günstiger aussehen lässt, als er ist, werden ausgelassen. Aus: nur Karten für angefangene Abzeichen."
     },
     "BuyDailyLimit": {
-      "label": "Höchstens ausgeben, pro Tag",
+      "label": "Höchstens ausgeben pro Tag",
       "tip": "Das Höchste, was es in 24 Stunden ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 1,50: ein Satz für 0,60 und einer für 0,70 füllen den Tag; der nächste Satz wartet bis morgen. Es gibt nie mehr aus, als in der Geldbörse ist."
     },
     "BuyWeeklyLimit": {
-      "label": "Höchstens ausgeben, pro Woche",
+      "label": "Höchstens ausgeben pro Woche",
       "tip": "Das Höchste, was es in 7 Tagen ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 8,00 bei 1,50 am Tag: etwa 5 volle Tage Kaufen pro Woche. 0 kauft nichts."
     },
     "BuyCheckHours": {
-      "label": "Nachsehen alle (Stunden)",
+      "label": "Nach Karten zum Kaufen sehen alle",
       "tip": "Wie oft es nach Karten zum Kaufen sieht, in Stunden - zum Beispiel 12, zweimal am Tag. Ein Konto im Menschen-Modus sieht nur während seines Tages nach und kauft einen Satz pro Blick."
     },
     "PointsBuySeasonalBadge": {
@@ -4554,7 +4591,7 @@
       "tip": "Lässt es Stufen des Abzeichens kaufen, das der Punkteshop gerade verkauft, zum Beispiel die Summer Collection - mit jedem großen Steam-Sale kommt ein neues. An: es levelt dieses Abzeichen. Aus: es kauft es nicht."
     },
     "BackupRetryMinutes": {
-      "label": "Erneut versuchen nach (Minuten)",
+      "label": "Erneut versuchen nach",
       "tip": "Wie lange es nach einem fehlgeschlagenen Backup wartet, bevor es es an dem Tag erneut versucht. Zum Beispiel 60: ein Backup, das um 4 Uhr fehlschlug, versucht es um 5 Uhr noch mal. 0 wartet bis morgen."
     },
     "SendBackups": {
@@ -4603,7 +4640,7 @@
       "tip": "Eine zufällige Anzahl Minuten, die jeden Tag zur Backup-Zeit dazukommt, höchstens so viele. Zum Beispiel 30 mit Sichern um 4 Uhr: irgendwann zwischen 4:00 und 4:30. 0 sichert genau zur vollen Stunde."
     },
     "BackupKeep": {
-      "label": "Behalte die letzten (Backups)",
+      "label": "Die letzten behalten",
       "tip": "Wie viele tägliche Backups im Ordner bleiben. Zum Beispiel 7 behält eine Woche: das 8. Backup löscht das älteste. Gelöscht werden immer nur seine eigenen Backup-Dateien."
     },
     "BackupAuto": {
@@ -4623,7 +4660,7 @@
       "tip": "Wenn jemand aus deiner Steam-Familie ein geteiltes Spiel auf der Kopie eines Mitglieds spielt und ein anderes Mitglied es auch besitzt, wechselt es zu dieser freien Kopie und macht weiter, statt das Spiel auszulassen. Besitzen zum Beispiel zwei Mitglieder Stardew Valley und einer spielt es: es leiht die andere Kopie. Geändert wird nur, von wem dieses eine Spiel geliehen wird - nie eine Kopie, die gerade jemand nutzt. Aus: es lässt das Spiel aus, bis die Kopie frei ist. Nur für familiengeteilte Spiele („Familiengeteilte Spiele einbeziehen“)."
     },
     "FamilyWaitMinutes": {
-      "label": "Warten, nachdem ein Familienmitglied aufhört (Minuten)",
+      "label": "Warten, nachdem ein Familienmitglied aufhört",
       "tip": "Minuten, die ein familiengeteiltes Spiel in Ruhe gelassen wird, nachdem jemand aus deiner Steam-Familie aufgehört hat, es zu spielen, z. B. 20 - oft fangen sie gleich wieder an. 0 nimmt es sofort."
     },
     "SpareKeepGems": {
@@ -4640,7 +4677,7 @@
       "choices": "0 automatisch | 1 lose lassen (Booster-Packs nutzen sie) | 2 in 1000er-Säcke packen und handelbar behalten | 3 die Säcke an ein anderes meiner Konten senden | 4 die Säcke verkaufen"
     },
     "SpareGapSeconds": {
-      "label": "Pause zwischen Gegenständen (Sekunden)",
+      "label": "Pause zwischen Gegenständen",
       "tip": "Die Pause zwischen zwei Gegenständen in einem Blick auf einem Roboter-Konto - sie schwankt jedes Mal. Zum Beispiel 40: 5 Gegenstände dauern etwa 3 Minuten. Ein Konto im Menschen-Modus nutzt stattdessen „Pause zwischen Gegenständen, Menschen-Modus“."
     },
     "SparePerRun": {
@@ -4652,7 +4689,7 @@
       "tip": "Vollständige Gegenstandsnamen, wie das Inventar sie zeigt, durch Kommas getrennt, z. B. Sans, Gordon Freeman (Foil). Ein Name behält diesen Gegenstand in jedem Spiel. Diese bleiben immer. Leer: nichts wird nach Namen behalten."
     },
     "BoosterCheckHours": {
-      "label": "Nach Packs sehen alle (Stunden)",
+      "label": "Nach Packungen sehen alle",
       "tip": "Stunden zwischen zwei Blicken nach Booster-Packs - es schwankt jedes Mal etwas. Zum Beispiel 24: etwa einmal am Tag."
     },
     "SpareKeepEmoticons": {
@@ -4669,7 +4706,7 @@
       "tip": "Zählt zusätzliche Kopien eines Profilhintergrunds als übrig. Zum Beispiel 3 Kopien mit 1 behalten: 2 sind übrig. Aus: Hintergründe bleiben."
     },
     "SparePriceMaxAgeHours": {
-      "label": "Einem Preis trauen für (Stunden)",
+      "label": "Einem Preis vertrauen für",
       "tip": "Wie lange ein Marktpreis als aktuell gilt. Zum Beispiel 24: ein Preis von gestern Morgen ist heute Morgen zu alt, und der Gegenstand bleibt, bis er neu bepreist ist. Ein Gegenstand ohne bekannten Preis bleibt immer."
     },
     "BoosterSendTo": {
@@ -4677,7 +4714,7 @@
       "tip": "Der Name eines deiner anderen Konten hier, z. B. main - die Packs gehen per Tausch dorthin. Senden muss am Handy bestätigt werden, außer der Authenticator ist hinzugefügt."
     },
     "SpareRunHours": {
-      "label": "Nachsehen alle (Stunden)",
+      "label": "Nach übrigen Gegenständen sehen alle",
       "tip": "Stunden zwischen zwei Blicken auf übrige Gegenstände - es schwankt jedes Mal etwas. Zum Beispiel 12: etwa zweimal am Tag. Ein Konto im Menschen-Modus sieht nur während seines Tages nach."
     },
     "SpareKeepGames": {
@@ -4690,7 +4727,7 @@
       "choices": "0 einen Cent unter dem echten Preis | 1 genauso wie das günstigste | 2 der mittlere Verkaufspreis (Median) | 3 einen Cent unter dem günstigsten"
     },
     "SpareRelistDays": {
-      "label": "Unverkaufte Angebote zurückziehen nach (Tagen)",
+      "label": "Unverkaufte Angebote abnehmen nach",
       "tip": "Tage, bevor ein unverkauftes Angebot zurückgezogen und etwas günstiger neu eingestellt wird. Zum Beispiel 7: eine Karte, am 1. für 0.30 eingestellt und am 8. noch unverkauft, geht für 0.29 neu rein - oder für 0.25, wenn jemand anderes sie für 0.26 verkauft (ein Schleuderangebot zählt nicht). Nie unter „Nie tiefer als“; bei diesem Preis bleibt es stehen. Nur Angebote, die nocat.farm selbst eingestellt hat. Angebote, die du selbst eingestellt hast, werden nie angerührt."
     },
     "SpareMaxPrice": {
@@ -4698,7 +4735,7 @@
       "tip": "Alles, was mehr wert ist, wird nie angerührt: nie zu Edelsteinen gemacht, nie verkauft. In der eigenen Steam-Geldbörsen-Währung dieses Kontos, z. B. 0.25 für Dollar oder Euro - nimm in deiner eigenen Währung einen gleichwertigen Betrag, z. B. 40 für Yen. Der Wert ist das Höhere aus dem günstigsten Angebot und dem, wofür es am letzten Tag verkauft wurde: angeboten für 0.20, aber verkauft für 0.30, ist 0.30 wert."
     },
     "SpareGemMarginPct": {
-      "label": "Edelsteine müssen Verkaufen schlagen um (%)",
+      "label": "Edelsteine müssen den Verkauf schlagen um",
       "tip": "Wird nicht mehr verwendet. Seit 1.8.2 wird ein Gegenstand nur verkauft, wenn der Verkauf dir (nach Steams Gebühren) mindestens 0.01 mehr bringt, als seine Edelsteine wert sind, und sonst zu Edelsteinen - zum Beispiel bringt der Verkauf 0.10: Edelsteine im Wert von 0.09 oder weniger, er wird verkauft; mehr wert, Edelsteine. Diese Regel entscheidet allein, so kosten dich Edelsteine nie Geld. Bleibt, damit ältere Einstellungsdateien noch laden."
     },
     "SpareMaxedBadgeCards": {
@@ -4706,7 +4743,7 @@
       "tip": "Zählt Karten eines Spiels als übrig, dessen Abzeichen schon fertig ist - Stufe 5 oder das Folien-Abzeichen hergestellt - und behält die Kopien, die unter „So viele von jeder Karte behalten“ eingestellt sind. Zum Beispiel 3 Kopien einer Karte mit 1 behalten: 2 sind übrig. Aus: Karten fertiger Abzeichen bleiben."
     },
     "SpareNewDays": {
-      "label": "Neue Gegenstände in Ruhe lassen für (Tage)",
+      "label": "Neue Gegenstände in Ruhe lassen für",
       "tip": "Tage, die ein Gegenstand nach seiner Ankunft unberührt bleibt. Zum Beispiel 7: eine Karte, die an einem Montag droppt, darf ab dem nächsten Montag gehen. nocat.farm zählt ab dem ersten Mal, dass es den Gegenstand sieht. Alles, was beim ersten Blick schon im Inventar ist, zählt als alt und darf sofort gehen - nur Gegenstände, die danach kommen, warten. 0 schaltet die Regel aus."
     },
     "SpareGemsSendTo": {
@@ -4748,7 +4785,7 @@
       "tip": "Lässt auch Folienkarten als übrig zählen - zum Beispiel eine 2. Kopie einer Folienkarte, deren Folien-Abzeichen hergestellt ist. Aus (Standard): Folienkarten bleiben immer, weil sie seltener und oft mehr wert sind."
     },
     "BoosterOpenNewDays": {
-      "label": "Neue Packs in Ruhe lassen für (Tage)",
+      "label": "Neue Packungen in Ruhe lassen für",
       "tip": "Tage, die ein Pack nach seiner Ankunft zu bleibt. Zum Beispiel 7: ein Pack von einem Montag wird ab dem nächsten Montag geöffnet. 0 öffnet sie sofort. Packs, die nocat.farm selbst erstellt hat, werden nicht zurückgehalten - sie werden bei der nächsten Gelegenheit geöffnet."
     },
     "SpareExtraCards": {
@@ -4764,7 +4801,7 @@
       "tip": "Kopien jeder Karte, die immer behalten werden, auch wenn das Abzeichen fertig ist. Zum Beispiel 1: von 3 Kopien können 2 gehen. 0 behält keine, dann kann auch die letzte Kopie gehen. Karten, die ein Abzeichen noch braucht, werden immer behalten."
     },
     "SpareDumpPct": {
-      "label": "Ein günstigstes Angebot so weit unter den Verkäufen ist verschleudert (%)",
+      "label": "Angebote so weit unter den Verkäufen ignorieren",
       "tip": "Wie weit das günstigste Angebot unter dem liegen muss, wofür ein Gegenstand am letzten Tag verkauft wurde, damit es als verschleudert zählt. Zum Beispiel 50: für 0.30 verkauft, ein günstigstes Angebot bei 0.12 (60 % darunter) ist verschleudert. „Einen Cent unter dem echten Preis“ behält den Gegenstand, wenn nur ein einziger Verkauf diesen Preis stützt - die beiden Preise widersprechen sich; bei zwei oder mehr Verkäufen stellt es ihn einen Cent unter dem Verkaufspreis ein, für 0.29. „Einen Cent unter dem günstigsten“ ignoriert das verschleuderte Angebot und stellt ebenfalls für 0.29 ein. 0: kein Angebot zählt als verschleudert."
     },
     "BoosterMake": {
@@ -4777,15 +4814,15 @@
       "tip": "Edelsteine, unter die ein Booster-Pack das Konto nie bringt. Ein Pack wird nur gemacht, solange die Edelsteine seinen Preis plus diesen Wert decken. Zum Beispiel 1000 bei 1.500 Edelsteinen: ein Pack für 400 wird gemacht und 1.100 bleiben, und das nächste wartet auf mehr Edelsteine. 0 darf alle nutzen."
     },
     "SpareRelistFloorPct": {
-      "label": "Nie tiefer als (% des echten Verkaufspreises)",
+      "label": "Niedrigster neuer Preis, vom letzten Verkaufspreis",
       "tip": "Der tiefste Preis, auf den ein unverkauftes Angebot heruntergeht, in Prozent dessen, wofür der Gegenstand am letzten Tag verkauft wurde. Zum Beispiel 80: eine Karte, die für 0.30 verkauft wurde, geht nie unter 0.24 - bei diesem Preis bleibt sie stehen und wird nicht neu eingestellt. Ohne Verkauf zuletzt wird gar nicht gesenkt."
     },
     "SpareHumanGapMinMinutes": {
-      "label": "Pause zwischen Gegenständen, Menschen-Modus (Minuten)",
+      "label": "Kürzeste Pause zwischen Gegenständen, menschlicher Modus",
       "tip": "Die kürzeste Pause zwischen zwei Gegenständen auf einem Konto im Menschen-Modus, in Minuten. Jede Pause wird zufällig zwischen diesem Wert und dem längsten darunter gewählt. Zum Beispiel 3 und 20: nach einem Gegenstand wartet es irgendwo zwischen 3 und 20 Minuten bis zum nächsten."
     },
     "SpareDeclinedDays": {
-      "label": "Wenn du ein Angebot auf dem Handy ablehnst, wieder versuchen nach (Tagen)",
+      "label": "Nach einem abgelehnten Angebot warten",
       "tip": "Wie lange ein Gegenstand wartet, nachdem du sein Angebot in der Steam-App abgelehnt hast. Zum Beispiel 30: du lehnst das Angebot einer Karte am 1. ab, und diese Karte - jedes Exemplar davon - wird erst am 31. wieder eingestellt. Ein Angebot, das zurückgezogen wurde, bevor es je online ging, zählt auch als abgelehnt, und ebenso eines, bei dem es sich nicht sicher ist. 0 stellt es nie wieder ein."
     },
     "SpareHumanPerLook": {
@@ -4797,7 +4834,7 @@
       "tip": "Das Mindeste, was ein Verkauf dir nach den Steam-Gebühren bringen muss, in der eigenen Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 0.05: eine Karte, die dir 0.03 brächte, wird zu Edelsteinen, wenn ihre Edelsteine mehr als 0.02 wert sind, und wird behalten, wenn sie keine Edelsteine ergibt. Ein Gegenstand wird nie zu Edelsteinen, die weniger wert sind als der Verkauf minus 0.01: bei Edelsteinen im Wert von 0.02 oder weniger wird diese Karte trotzdem für die 0.03 verkauft. Bei „Nur verkaufen“ wird sie behalten. z. B. 0.05 für Dollar oder Euro - nimm denselben Wert in deiner eigenen Währung, z. B. 5 für Yen. 0 verkauft alles."
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "...bis zu (Minuten)",
+      "label": "Längste Pause zwischen Gegenständen, menschlicher Modus",
       "tip": "Die längste Pause zwischen zwei Gegenständen auf einem Konto im Menschen-Modus, in Minuten. Zum Beispiel 20, mit 3 als kürzester: jede Pause liegt irgendwo zwischen 3 und 20 Minuten, 3 Gegenstände dauern also bis zu etwa 40 Minuten."
     },
     "CraftFoilBadges": {
