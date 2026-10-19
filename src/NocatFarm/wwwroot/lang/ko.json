@@ -3249,7 +3249,11 @@
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} 주문이 마켓에 열린 채 남아 있었습니다 · 취소함, 구매한 것 없음",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: 마켓에 이미 구매 주문이 열려 있습니다 · 자신의 주문은 취소하고, 직접 넣은 주문은 그대로 둡니다",
     "on your keep list - never sold": "보관 목록에 있음 - 절대 팔지 않음",
-    "on your keep list - its set is crafted, never sold": "보관 목록에 있음 - 세트는 제작하고 절대 팔지 않음"
+    "on your keep list - its set is crafted, never sold": "보관 목록에 있음 - 세트는 제작하고 절대 팔지 않음",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "등록 안 함: 받는 금액 {0}이(가) 보석 가치({1})보다 많지 않음",
+    "no price right now - kept until it has one": "지금은 가격이 없음 - 가격이 나올 때까지 보관",
+    "worth {0} now - over your price limit, kept": "지금 가치 {0} - 가격 한도를 넘어서 보관",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "지금 팔면 {0}로, 보석 {1}개의 가치({2})보다 많음 - 보관"
   },
   "settings": {
     "SteamOpenEveryAccount": {

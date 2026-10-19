@@ -3249,7 +3249,11 @@
     "an order for {0} was left open on the market · taken back, nothing bought": "ein Kaufauftrag für {0} war noch auf dem Markt offen · zurückgenommen, nichts gekauft",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: dafür ist schon ein Kaufauftrag auf dem Markt offen · ein eigener wird zurückgenommen, einen von dir gestellten lässt es in Ruhe",
     "on your keep list - never sold": "auf deiner Behalten-Liste - wird nie verkauft",
-    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft"
+    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "nicht eingestellt: du bekämst {0}, nicht mehr als seine Edelsteine wert sind ({1})",
+    "no price right now - kept until it has one": "gerade kein Preis - wird behalten, bis es einen hat",
+    "worth {0} now - over your price limit, kept": "jetzt {0} wert - über deinem Preislimit, wird behalten",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "ein Verkauf brächte jetzt {0}, mehr als seine {1} Edelsteine wert sind ({2}) - wird behalten"
   },
   "settings": {
     "SteamOpenEveryAccount": {

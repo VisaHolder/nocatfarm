@@ -3249,7 +3249,11 @@
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} の注文がマーケットに残っていました · 取り消しました。何も買っていません",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: マーケットにすでに購入注文があります · 自分の注文は取り消し、あなたが出した注文はそのままにします",
     "on your keep list - never sold": "残すリストにあります - 売りません",
-    "on your keep list - its set is crafted, never sold": "残すリストにあります - セットは作り、売りません"
+    "on your keep list - its set is crafted, never sold": "残すリストにあります - セットは作り、売りません",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "出品しません: 受け取りは {0} で、ジェムの価値（{1}）を上回りません",
+    "no price right now - kept until it has one": "今は値段がわかりません - わかるまで残します",
+    "worth {0} now - over your price limit, kept": "今は {0} の価値 - 価格の上限を超えるので残します",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "今売ると {0} で、{1} ジェムの価値（{2}）より多いので残します"
   },
   "settings": {
     "SteamOpenEveryAccount": {

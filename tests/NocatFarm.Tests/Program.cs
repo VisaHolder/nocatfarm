@@ -28704,6 +28704,9 @@ await SweepOrderChecks.RunAsync(Check);
 // ── 1.8.2 sweep: a game on the keep list is never sold - its set crafted, the listing path refusing it; fakes only ──
 await SweepKeepChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: a price read right before listing or turning into gems is weighed against the gems and the price limit too; fakes only ──
+await SweepGemsRuleChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -34113,6 +34116,134 @@ static class SweepKeepChecks {
 
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>A pretend Steam for spare items whose last check before gems answers what it's told (<see cref="NocatFarm.Core.ISpareSteam.BeforeGemsAsync"/>).</summary>
+sealed class BeforeGemsSpareSteam : NocatFarm.Core.ISpareSteam {
+	public List<ulong> Ground { get; } = [];
+	public Func<NocatFarm.Core.SpareDecision, NocatFarm.Core.Said?> Before { get; set; } = static _ => null;
+	public Task<NocatFarm.Core.Said?> BeforeGemsAsync(NocatFarm.Core.SpareDecision d, CancellationToken ct) => Task.FromResult(Before(d));
+	public Task<int?> GemValueAsync(NocatFarm.Core.SpareItem item, CancellationToken ct) => Task.FromResult<int?>(40);
+
+	public Task<(bool Ok, int Gems, string? Why)> GrindAsync(NocatFarm.Core.SpareItem item, int expected, CancellationToken ct) {
+		Ground.Add(item.AssetId);
+		return Task.FromResult((true, expected, (string?) null));
+	}
+
+	public Task<(int Listed, string Said)> SellAsync(IReadOnlyList<NocatFarm.Core.SpareDecision> items, CancellationToken ct) => Task.FromResult((0, ""));
+	public Task<(bool Ok, string? Why)> PackSacksAsync(NocatFarm.Core.SpareItem gems, int sacks, CancellationToken ct) => Task.FromResult((true, (string?) null));
+	public Task<(bool Ok, List<string> Cards, string? Why)> UnpackAsync(NocatFarm.Core.SpareItem pack, CancellationToken ct) => Task.FromResult((true, new List<string>(), (string?) null));
+	public Task<string> SendAsync(IReadOnlyList<NocatFarm.Core.SpareItem> items, string toAccount, CancellationToken ct) => Task.FromResult("");
+	public HashSet<ulong> Claim(IEnumerable<ulong> ids) => [.. ids];
+
+	public void Release(IEnumerable<ulong> ids) {
+	}
+
+	public Task<bool> PauseAsync(CancellationToken ct) => Task.FromResult(true);
+}
+
+/// <summary>1.8.2 sweep: a price read right before listing or turning into gems is weighed against the gems and the price limit too. Fakes only.</summary>
+static class SweepGemsRuleChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepgems-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		var realGet = NocatFarm.Core.SparePrices.Get;
+		List<NocatFarm.Core.Bot> bots = [];
+		const int Cad = 20;
+		DateTime now = DateTime.UtcNow;
+		void KeepQuote(NocatFarm.Core.MarketQuote q) => typeof(NocatFarm.Core.MarketQuotes).GetMethod("Keep", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [q]);
+
+		try {
+			// Every price asked for: 0.12 for the card, nothing else.
+			NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("SgCard", StringComparison.Ordinal)
+				? "{\"success\":true,\"lowest_price\":\"CDN$ 0.12\",\"volume\":\"50\",\"median_price\":\"CDN$ 0.12\"}" : null, true));
+			var offer = new NocatFarm.Core.Seller.Offer(9101, "Some Game", "SgCard", 12, 12, 10, "440-SgCard");
+
+			// ── right before listing: today's price against what the gems are worth ──
+			var (gemsWin, gemsWhy) = await NocatFarm.Core.Seller.RepriceAsync(offer, Cad, 3, 50, null, null, CancellationToken.None, gemsWorth: 9.5m);
+			var (sellWins, _) = await NocatFarm.Core.Seller.RepriceAsync(offer, Cad, 3, 50, null, null, CancellationToken.None, gemsWorth: 7m);
+			Check("sweep gems: right before listing - 0.09 for the seller against gems worth 0.095 isn't a cent more: kept; against gems worth 0.07 it's listed",
+				(gemsWin == null) && gemsWhy.ToEnglish().Contains("not more than its gems are worth", StringComparison.Ordinal) && sellWins is { YouGetCents: 9 },
+				gemsWhy.ToEnglish());
+
+			// Spare items' own rule: best of both weighs the gems, by the look's sack price; with none fresh, kept.
+			var item = new NocatFarm.Core.SpareItem(9101, 440, NocatFarm.Core.SpareKind.Card, "440-SgCard", "SgCard", true, true, 1, 2, 0);
+			var sell = new NocatFarm.Core.SpareDecision(item, NocatFarm.Core.SpareVerdict.Sell, new NocatFarm.Core.Said("x"), 12, 40, 11, 9);
+			var best = new NocatFarm.Core.SpareRules { On = true, Action = 0, SellPrice = 3, MaxPriceCents = 100 };
+			var (overGems, overGemsWhy) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad, sack: new NocatFarm.Core.MarketPrice(300, now))(offer, CancellationToken.None);
+			var (noSack, noSackWhy) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad)(offer, CancellationToken.None);
+			var (cheapGems, _) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad, sack: new NocatFarm.Core.MarketPrice(100, now))(offer, CancellationToken.None);
+			var (sellOnly, _) = await NocatFarm.Core.SpareRun.Repricer([sell], best with { Action = 2 }, Cad, sack: new NocatFarm.Core.MarketPrice(300, now))(offer, CancellationToken.None);
+			Check("sweep gems: spare items' listing - 40 gems at a 3.00 sack (0.12) beat a 0.09 sale: kept, the next look makes gems; no sack price - kept; at a 1.00 sack it's listed; 'sell only' isn't weighed",
+				(overGems == null) && overGemsWhy.ToEnglish().Contains("gems are worth", StringComparison.Ordinal) && (noSack == null) && noSackWhy.ToEnglish().Contains("price of gems", StringComparison.Ordinal)
+				&& cheapGems is { YouGetCents: 9 } && sellOnly is { YouGetCents: 9 },
+				$"{overGemsWhy.ToEnglish()} / {noSackWhy.ToEnglish()}");
+
+			// ── right before turning into gems an item that had no price at all ──
+			var unpriced = new NocatFarm.Core.SpareDecision(item, NocatFarm.Core.SpareVerdict.Gems, new NocatFarm.Core.Said("40 gems - nobody sells it on the market"), 0, 40);
+			var rules = new NocatFarm.Core.SpareRules { On = true, Action = 0, MaxPriceCents = 100 };
+			var sack = new NocatFarm.Core.MarketPrice(300, now);
+			NocatFarm.Core.MarketQuote Quote(int? lowest, int? median) => new("440-SgCard", Cad, lowest, median, 5, now.Ticks);
+			Check("sweep gems: before gems - no price now: kept until it has one", NocatFarm.Core.SpareRun.BeforeGems(unpriced, null, sack, rules, Cad, now)?.ToEnglish().Contains("no price right now", StringComparison.Ordinal) == true);
+			Check("sweep gems: before gems - still nobody selling it and no sale lately: gems", NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(null, null), sack, rules, Cad, now) == null);
+			Check("sweep gems: before gems - someone sells it now for 5.00, over the 1.00 price limit: kept, never touched",
+				NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(500, 500), sack, rules, Cad, now)?.ToEnglish().Contains("over your price limit", StringComparison.Ordinal) == true);
+			Check("sweep gems: before gems - selling now (0.30) pays more than its gems (0.12): kept; with no fresh sack price to tell - kept",
+				(NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(30, 30), sack, rules, Cad, now)?.ToEnglish().Contains("more than its 40 gems", StringComparison.Ordinal) == true)
+				&& (NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(30, 30), new NocatFarm.Core.MarketPrice(300, now.AddDays(-3)), rules, Cad, now)?.ToEnglish().Contains("price of gems", StringComparison.Ordinal) == true));
+			Check("sweep gems: before gems - selling now (0.05) pays less than its gems: gems; an item it had a price for isn't asked about",
+				(NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(6, 6), sack, rules, Cad, now) == null)
+				&& (NocatFarm.Core.SpareRun.BeforeGems(unpriced with { PriceCents = 5 }, null, sack, rules, Cad, now) == null));
+
+			// ...and the look asks it right before each one, after the other checks.
+			var b = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Spare, true);
+			var steam = new BeforeGemsSpareSteam { Before = static d => d.Item.AssetId == 2 ? new NocatFarm.Core.Said("selling now pays more") : null };
+			NocatFarm.Core.SpareItem It(ulong id) => new(id, 440, NocatFarm.Core.SpareKind.Card, $"440-Sg{id}", $"Sg{id}", true, true, 1, 2, 0);
+			var plan = new NocatFarm.Core.SparePlan([.. new ulong[] { 1, 2, 3 }.Select(id => new NocatFarm.Core.SpareDecision(It(id), NocatFarm.Core.SpareVerdict.Gems, new NocatFarm.Core.Said("x"), 0, 40))]);
+			var ledger = NocatFarm.Core.SpareLedger.Load(b.Name);
+			var run = await NocatFarm.Core.SpareRun.ActAsync(plan, new NocatFarm.Core.SpareRules { On = true, PerRun = 10, DailyItems = 10, DailyValueCents = 1000 }, ledger, steam, b.Name,
+				static () => DateTime.Now, CancellationToken.None);
+			Check("sweep gems: the look checks each unpriced item right before it becomes gems - the one selling would pay more for is kept, and not counted",
+				steam.Ground.SequenceEqual([1ul, 3ul]) && (run.GemItems == 2) && (ledger.DoneItems == 2), string.Join(",", steam.Ground));
+
+			// ── 'sell do': the same price limit, minimum and gems rule ──
+			KeepQuote(new NocatFarm.Core.MarketQuote(NocatFarm.Core.SparePrices.SackHash, Cad, 300, 300, 50, now.Ticks));
+			var s = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareMaxPrice = 1f });
+			bots.Add(s);
+			var cheapCap = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareMaxPrice = 0.10f });
+			bots.Add(cheapCap);
+			var (noGoo, noGooWhy) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?>())(offer, CancellationToken.None);
+			var (gooWins, gooWhy) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?> { [9101] = 40 })(offer, CancellationToken.None);
+			var (noGems, _) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?> { [9101] = 0 })(offer, CancellationToken.None);
+			var (capped, cappedWhy) = await NocatFarm.Core.Seller.OwnRule(cheapCap, Cad, new Dictionary<ulong, int?> { [9101] = 0 })(offer, CancellationToken.None);
+			Check("sweep gems: 'sell do' - its gem value not known: kept; gems worth more than the sale: kept; no gems: listed; over the price limit: kept",
+				(noGoo == null) && noGooWhy.ToEnglish().Contains("gem value", StringComparison.Ordinal) && (gooWins == null) && gooWhy.ToEnglish().Contains("gems are worth", StringComparison.Ordinal)
+				&& noGems is { YouGetCents: 9 } && (capped == null) && cappedWhy.ToEnglish().Contains("price limit", StringComparison.Ordinal),
+				$"{noGooWhy.ToEnglish()} / {gooWhy.ToEnglish()} / {cappedWhy.ToEnglish()}");
+			Check("sweep gems: 'sell do' lists by that rule, with the plan's gems",
+				Src("src/NocatFarm/Commands.cs").Contains("reprice: Seller.OwnRule(bot, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, plan.Gems", StringComparison.Ordinal));
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
+			}
+
+			NocatFarm.Core.SparePrices.Get = realGet;
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Core.SpareLedger.ForgetLoaded();
+			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}

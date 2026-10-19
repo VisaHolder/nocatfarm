@@ -142,6 +142,16 @@ public static class SpareRun {
 					continue;
 				}
 
+				// 1.8.2: an item that had no price at all (nobody selling it, no sale lately) is priced now, in the wallet's money,
+				// before it becomes gems: no answer, worth more than the price limit, or selling now paying more than its gems -
+				// it's kept.
+				if (await steam.BeforeGemsAsync(d, ct).ConfigureAwait(false) is { } wait) {
+					ledger.Unreserve(d.PriceCents, nowLocal());
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), wait), account);
+
+					continue;
+				}
+
 				HashSet<ulong> claimed = steam.Claim([d.Item.AssetId]);
 
 				if (claimed.Count == 0) {
@@ -337,6 +347,52 @@ public static class SpareRun {
 	}
 
 	/// <summary>
+	/// 1.8.2: whether an item the look had no price for at all (nobody selling it, no sale lately - see <see cref="Spare"/>)
+	/// may become gems, with its price read again right before (<paramref name="now"/>, in the wallet's money): no answer -
+	/// kept until it has one; worth more than the price limit - kept; selling now paying at least a cent more than its gems
+	/// (<see cref="Spare.SellingPays"/>) - kept, no fresh sack price to tell - kept. Null when it may become gems. Items it
+	/// had a price for, and ones that can't go to the market, aren't asked about.
+	/// </summary>
+	public static Said? BeforeGems(SpareDecision d, MarketQuote? now, MarketPrice? sack, SpareRules rules, int currency, DateTime utcNow) {
+		if (!d.Item.Marketable || (d.PriceCents > 0) || (d.Verdict != SpareVerdict.Gems)) {
+			return null;
+		}
+
+		if ((now == null) || (now.Currency != currency)) {
+			return new Said("no price right now - kept until it has one");
+		}
+
+		MarketPrice price = now.Price;
+		int worth = ListingPrice.Worth(price);
+
+		if (worth <= 0) {
+			return null;   // still nobody selling it, and no sale lately: gems
+		}
+
+		if (worth > rules.MaxPriceCents) {
+			return new Said("worth {0} now - over your price limit, kept", Spare.Money(worth, currency));
+		}
+
+		// What selling would pay now: at the price it would list for, or - with no sure price - the most it's worth, so it's
+		// never turned into gems on a low guess.
+		int sale = price.Cents > 0 && (ListingPrice.For(price, rules.SellPrice, rules.DumpPct, 0, rules.FloorPct).Cents is int list) ? Seller.ReceiveFor(list) : Seller.ReceiveFor(worth);
+
+		if ((sale <= 0) || (d.GemValue <= 0)) {
+			return null;
+		}
+
+		if ((sack is not { Cents: > 0 } s) || (utcNow - s.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+			return new Said("the price of gems isn't known yet - kept");
+		}
+
+		decimal gems = Spare.GemsWorth(d.GemValue, s.Cents);
+
+		return Spare.SellingPays(gems, sale)
+			? new Said("selling now pays {0}, more than its {1} gems are worth ({2}) - kept", Spare.Money(sale, currency), d.GemValue, Spare.Money(gems, currency))
+			: null;
+	}
+
+	/// <summary>
 	/// 1.8.2: each listing by the settings as they are right then, not as they were when the look planned it: the keep list
 	/// first (<see cref="StillOk"/>), then priced by <paramref name="priced"/> with the rules read again for this one - so
 	/// the price limit is the one set now, against the fresh price. Turned off, paused or held stops the listing loop itself.
@@ -366,8 +422,11 @@ public static class SpareRun {
 	/// for it (<see cref="Fits"/>). None: only at or under what was counted.</param>
 	/// <param name="oursOf">Our own cheapest listing of an item still up, by market name (0 none): "a cent under the cheapest"
 	/// keeps level with it when it's the cheapest (see <see cref="OurListings.UpFor"/>).</param>
+	/// <param name="sack">1.8.2: a sack of gems' price, as the look weighs gems by: with "best of gems or selling", an item
+	/// with gems is listed only when today's price pays at least a cent more than its gems are worth - else it's kept, and
+	/// the next look turns it into gems by the same rule. No fresh sack price: kept.</param>
 	public static Seller.Reprice Repricer(IReadOnlyList<SpareDecision> items, SpareRules rules, int currency, Func<string, SpareListings.Step?>? stepOf = null,
-		Action<string>? stepGone = null, SpareLedger? ledger = null, Func<string, int>? oursOf = null) {
+		Action<string>? stepGone = null, SpareLedger? ledger = null, Func<string, int>? oursOf = null, MarketPrice? sack = null) {
 		Dictionary<ulong, SpareDecision> byAsset = [];
 
 		foreach (SpareDecision d in items) {
@@ -378,9 +437,18 @@ public static class SpareRun {
 			SpareDecision? d = byAsset.GetValueOrDefault(offer.AssetId);
 			bool limited = d?.Item.Kind is SpareKind.Card or SpareKind.FoilCard or SpareKind.Background or SpareKind.Emoticon;
 			int counted = d?.PriceCents ?? 0;
+			decimal? gemsWorth = null;
+
+			if ((rules.Action == 0) && (d?.GemValue is int gems and > 0)) {
+				if ((sack is not { Cents: > 0 } s) || (DateTime.UtcNow - s.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+					return Task.FromResult<(Seller.Offer?, Said)>((null, new Said("the price of gems isn't known yet - kept")));
+				}
+
+				gemsWorth = Spare.GemsWorth(gems, s.Cents);
+			}
 
 			return Seller.RepriceAsync(offer, currency, rules.SellPrice, rules.DumpPct, limited ? rules.MaxPriceCents : null, worth => Fits(ledger, rules, counted, worth, DateTime.Now), ct,
-				stepOf?.Invoke(offer.Hash), rules.MinSaleCents, rules.FloorPct, stepGone == null ? null : () => stepGone(offer.Hash), oursOf?.Invoke(offer.Hash) ?? 0);
+				stepOf?.Invoke(offer.Hash), rules.MinSaleCents, rules.FloorPct, stepGone == null ? null : () => stepGone(offer.Hash), oursOf?.Invoke(offer.Hash) ?? 0, gemsWorth);
 		};
 	}
 

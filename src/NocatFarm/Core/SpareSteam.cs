@@ -59,6 +59,12 @@ public interface ISpareSteam {
 	(Said Why, bool All)? StillOk(SpareItem item, int worthCents) => null;
 
 	/// <summary>
+	/// 1.8.2: right before an item the look had no price for at all becomes gems - its price read now, and the price limit
+	/// and the gems rule checked again (<see cref="SpareRun.BeforeGems"/>). Null when it may become gems.
+	/// </summary>
+	Task<Said?> BeforeGemsAsync(SpareDecision d, CancellationToken ct) => Task.FromResult<Said?>(null);
+
+	/// <summary>
 	/// What an item really went up for in the last <see cref="SellAsync"/> - priced again just before listing, so not the
 	/// plan's figure - with the wallet's currency: the buyer's price and what you get. Null when it wasn't listed.
 	/// </summary>
@@ -82,6 +88,29 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 		MarketPrice? fresh = SpareRun.PriceFor((int) bot.WalletCurrency, SpareRules.From(bot.Cfg))(item);
 
 		return SpareRun.StillOk(bot, item, fresh is { } p ? Math.Max(worthCents, ListingPrice.Worth(p)) : worthCents);
+	}
+
+	public async Task<Said?> BeforeGemsAsync(SpareDecision d, CancellationToken ct) {
+		if (!d.Item.Marketable || (d.PriceCents > 0) || (d.Verdict != SpareVerdict.Gems)) {
+			return null;
+		}
+
+		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		if (currency <= 0) {
+			return new Said("no price right now - kept until it has one");
+		}
+
+		SpareRules rules = SpareRules.From(bot.Cfg);
+		MarketQuote? now = await MarketQuotes.FetchAsync(d.Item.Hash, currency, ct).ConfigureAwait(false);
+
+		if ((SparePrices.Sack(currency) is not { Cents: > 0 } sack) || (DateTime.UtcNow - sack.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+			if ((now != null) && (ListingPrice.Worth(now.Price) > 0)) {
+				await SparePrices.PriceSackAsync(currency, ct).ConfigureAwait(false);
+			}
+		}
+
+		return SpareRun.BeforeGems(d, now, SparePrices.Sack(currency), rules, currency, DateTime.UtcNow);
 	}
 
 	private Uri Profile(string path) => new(WebSession.Community, $"/profiles/{bot.SteamId}/{path}");
@@ -185,7 +214,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
 		Seller.Reprice reprice = SpareRun.Guarded(bot, items, rules => SpareRun.Repricer(items, rules, currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
-			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash)));
+			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash), SparePrices.Sack(currency)));
 		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct, reprice,
 			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name) ?? SpareRun.Halted(bot),
 			o => {

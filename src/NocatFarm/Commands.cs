@@ -4993,7 +4993,9 @@ public static partial class Commands {
 		}
 
 		if (what == "do") {
-			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None).ConfigureAwait(false);
+			// Priced again right before each goes up by the same rule: the price limit, the minimum, never under its gems.
+			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None,
+				reprice: Seller.OwnRule(bot, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, plan.Gems ?? new Dictionary<ulong, int?>())).ConfigureAwait(false);
 		}
 
 		StringBuilder sb = new();

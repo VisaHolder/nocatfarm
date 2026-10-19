@@ -3249,7 +3249,11 @@
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} için bir emir pazarda açık kalmıştı · geri alındı, hiçbir şey alınmadı",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: bunun için pazarda zaten açık bir alış emri var · kendi emri geri alınır, sizin verdiğiniz emre dokunulmaz",
     "on your keep list - never sold": "saklama listende - asla satılmaz",
-    "on your keep list - its set is crafted, never sold": "saklama listende - seti üretilir, asla satılmaz"
+    "on your keep list - its set is crafted, never sold": "saklama listende - seti üretilir, asla satılmaz",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "listelenmedi: {0} alırdın, mücevherlerinin değerinden ({1}) fazla değil",
+    "no price right now - kept until it has one": "şu an fiyatı yok - bir fiyatı olana kadar tutuluyor",
+    "worth {0} now - over your price limit, kept": "şimdi {0} değerinde - fiyat sınırının üstünde, tutuluyor",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "şimdi satmak {0} getirir, {1} mücevherinin değerinden ({2}) fazla - tutuluyor"
   },
   "settings": {
     "SteamOpenEveryAccount": {
