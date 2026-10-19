@@ -190,6 +190,12 @@ games that Steam gives away free-to-keep get added to the account.
 **I sign into this one myself**: *Account → I sign into this one myself*. Turn it on for any account you also use in
 your own Steam app.
 
+**A second account like the first**: in **+ Add account**, pick the first one under *Copy settings from*, or open an
+account's settings and press **Copy settings from...** (`copy settings myaccount myaccount2`). It shows what would
+change first. Its sign-in and what belongs to that account alone are never copied, and Spare items, Steam Points,
+buying cards, card swaps and Open in Steam stay off until you turn them on. See
+[Copying settings](accounts.md#copying-settings-from-another-account).
+
 **Notifications on your phone**: *Global settings → Notifications*. Paste a Discord webhook or connect a Telegram
 bot; [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) has the steps.
 

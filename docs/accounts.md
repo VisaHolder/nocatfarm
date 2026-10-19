@@ -62,6 +62,42 @@ won't close, it changes nothing and says *Steam wouldn't close - if it shows a m
 again*. If the backup fails, it changes nothing and says so. It never touches another account's entry or any login
 token.
 
+## Copying settings from another account
+
+A second account doesn't have to be set up again by hand. In **+ Add account**, pick an account under **Copy settings
+from**, and the new one starts with that account's settings instead of the defaults. Human or robot is still asked -
+it starts as the account you copy from, and you can change it. From the console:
+
+```
+add new2 mysteamlogin2 from new          # new2 starts with new's settings
+add new2 mysteamlogin2 human from new    # the same, in human mode whatever new is in
+```
+
+For an account you already have, open its settings and press **Copy settings from...**, or type
+`copy settings new new2`. Both first show every setting that would change on new2, from what to what, and change
+nothing. Press **Copy settings**, or type `copy settings new new2 yes`, to copy them. The account you copy from
+is never changed. The log says it in one line: *new2: settings copied from new · 3 switches left off for you to turn
+on*.
+
+**Never copied** - these belong to one account alone, and the account keeps its own:
+
+- its sign-in: the Steam login name, the password, *Sign in with a QR code* and the Family View PIN
+- its authenticator secrets
+- its proxy (address, user name and password) and the device name Steam sees
+- its notes and its colour in the log
+- whether it's switched on, *Start paused*, and *I sign into this one myself*
+- the trade link token of your other account
+- the games you left alone for achievements (`dlc leave`)
+
+**Always off after a copy:** Spare items, Steam Points, buying cards, card swaps and Open in Steam. Each one is only
+ever turned on after its own preview, on that account. If the account you copy from has one on, the copy leaves it
+off and tells you to turn it on yourself after its preview (`spare on new2`, or the switch in its settings).
+
+A setting that names accounts loses the account itself: copying new's *Trade by itself with* `new2:to, old` onto new2
+leaves `old`, and *Send the sacks to* `new2` becomes empty. Everything else comes across as it is, human mode
+included - a robot copied onto an account you sign into yourself stays a robot until you change it. Numbers out of
+range are put back the way a save does it, and the preview says so.
+
 `disable myaccount` keeps the settings but never signs in, and `enable myaccount` undoes it. `remove myaccount`
 deletes the account and its login token. `nickname myaccount <name>` changes the profile name everybody sees, and
 `privacy myaccount` shows or sets its profile privacy (`privacy myaccount friends`, or parts like

@@ -1092,6 +1092,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	// ── endpoints ───────────────────────────────────────────────────────────
 	private void MapApi(WebApplication app) {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
+		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,
@@ -2130,15 +2131,36 @@ public sealed partial class WebHost : IAsyncDisposable {
 				? new() { SteamLogin = body.Name, SignInWithQr = true }
 				: new() { SteamLogin = body.SteamLogin!, SteamPassword = body.Password ?? "" };
 
-			// Set before it's added, so its very first sign-in already behaves the way it was asked to - an
-			// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
-			if (body.Human) {
+			// 1.8.2: "Copy settings from" - everything but what's this account's own comes from the other one, its switches with
+			// a go-ahead left off. The human or robot picked here still decides the mode.
+			SettingsCopy.Plan? copied = null;
+
+			if (!string.IsNullOrWhiteSpace(body.CopyFrom)) {
+				if (_mgr.Get(body.CopyFrom) is not { } source) {
+					return Results.Json(new { ok = false, error = Loc.T("No such account.") }, statusCode: 400);
+				}
+
+				copied = SettingsCopy.ForNewAccount(source, cfg, body.Name, body.Human);
+
+				if (copied.Error is { } copyError) {
+					return Results.Json(new { ok = false, error = copyError }, statusCode: 400);
+				}
+
+				cfg = copied.Result;
+				Switches.Settle(cfg, body.Name);
+			} else if (body.Human) {
+				// Set before it's added, so its very first sign-in already behaves the way it was asked to - an
+				// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
 				cfg.LegitMode = true;
 				Settings.ApplyLegitMode(cfg, false);
 			}
 
 			cfg.IUseThisAccount = body.SelfSignIn;
 			Bot? bot = await _mgr.AddAsync(body.Name, cfg).ConfigureAwait(false);
+
+			if ((bot != null) && (copied != null)) {
+				SettingsCopy.LogCopied(bot.Name, body.CopyFrom!, copied);
+			}
 
 			return bot == null
 				? Results.Json(new { ok = false, error = "Couldn't add that account." }, statusCode: 500)
@@ -3505,6 +3527,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 		/// <summary>You sign into it from your own Steam client as well (<see cref="BotConfig.IUseThisAccount"/>).</summary>
 		public bool SelfSignIn { get; set; }
+
+		/// <summary>1.8.2: the account whose settings it starts with (<see cref="SettingsCopy"/>), or empty for the defaults.</summary>
+		public string? CopyFrom { get; set; }
 	}
 
 	public async ValueTask DisposeAsync() => await StopListeningAsync().ConfigureAwait(false);

@@ -82,6 +82,7 @@ const DENY_HANDLER = {
   authAct: 'confirms or denies on Steam',
   startTutorial: 'walked through step by step on its own below',
   tutorialOpenImport: 'the walkthrough, walked through on its own',
+  doCopySettings: "copies another account's settings over this one - walked through on its own below",
 };
 const DENY_ACT = {
   start: 'signs in to Steam',
@@ -1307,6 +1308,66 @@ if (PING_STUB) {
     pills.length === 4 && pills[0] === 'Steam accounts on nocat.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
   check('discord card: Steam accounts on nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
     && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
+}
+
+// ── 1.8.2: copy settings from another account ────────────────────────────────
+// Add account offers it (and picks the source's kind); an account's Settings page has "Copy settings from...", which shows
+// every change first, changes nothing on Cancel, and copies on "Copy settings" - the account's own things kept and the
+// switches with a go-ahead off. The account is put back afterwards.
+{
+  await gotoView('accounts');
+  await evalq(() => showAddAccount());
+  await settle(300);
+  const offered = await page.locator('#a-copy option').allTextContents();
+  check('copy settings: Add account offers "Copy settings from" - none, or each account', offered.length === 4 && ['human', 'robot', 'authbot'].every((n) => offered.includes(n)), offered.join(', '));
+  await page.selectOption('#a-copy', 'human');
+  await settle(200);
+  check('copy settings: picking an account to copy from picks its kind too, and says where the settings come from',
+    await page.locator('#a-type-human.on').count() === 1 && await page.locator('#a-copy-note:not(.hidden)').count() === 1);
+  await page.selectOption('#a-copy', 'robot');
+  await settle(200);
+  check('copy settings: ...a robot picks robot', await page.locator('#a-type-robot.on').count() === 1);
+  await closeModalIfOpen();
+
+  const before = (await api('/api/config')).Bots.robot;
+  await settingsOn('robot');
+  check('copy settings: an account\'s settings have "Copy settings from..."', await page.locator('#copySettingsBtn').isVisible());
+  await page.click('#copySettingsBtn');
+  await settle(300);
+  check('copy settings: it asks which account first, with Copy settings not pressable yet', (await modalOpen()) && await page.locator('#copyGo').isDisabled());
+  await page.selectOption('#copyFrom', 'human');
+  await page.waitForSelector('#copyPreview table tr:nth-child(2)', { timeout: 10000 }).catch(() => {});
+  const rows = await page.locator('#copyPreview table tr').count();
+  const preview = (await page.locator('#copyPreview').textContent()) || '';
+  check('copy settings: the preview lists each change (human mode among them) and what is never copied',
+    rows > 2 && preview.includes('Human mode') && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
+  await page.locator('#modal button.ghost').first().click();
+  await settle(300);
+  check('copy settings: Cancel changes nothing', !(await modalOpen()) && same((await api('/api/config')).Bots.robot, before));
+
+  await page.click('#copySettingsBtn');
+  await settle(300);
+  await page.selectOption('#copyFrom', 'human');
+  await page.waitForFunction(() => { const b = document.getElementById('copyGo'); return b && !b.disabled; }, null, { timeout: 10000 }).catch(() => {});
+  await page.click('#copyGo');
+  await settle(800);
+  const after = (await api('/api/config')).Bots.robot;
+  const human = (await api('/api/config')).Bots.human;
+  check('copy settings: Copy settings copies them - human mode and its games come across',
+    !(await modalOpen()) && after.LegitMode === true && after.GameWeights === human.GameWeights && after.Rep4Rep === human.Rep4Rep, JSON.stringify({ LegitMode: after.LegitMode, GameWeights: after.GameWeights }));
+  check("copy settings: ...the account's own sign-in and notes are kept, and the switches with a go-ahead are off",
+    after.SteamLogin === before.SteamLogin && after.Notes === before.Notes && after.Enabled === before.Enabled
+    && ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'].every((n) => after[n] === false));
+  check('copy settings: the account copied from is unchanged', human.Notes === 'e2e human' && human.SteamLogin === 'not_a_real_account');
+  await healthy('copy settings: the page is healthy after copying');
+
+  // Put the robot back as it was, through the same save the page makes.
+  const back = await api('/api/bots/robot/config', 'POST', before);
+  const restored = (await api('/api/config')).Bots.robot;
+  check('copy settings: the robot is put back as it was', back.ok && restored.LegitMode === false && same(restored.IdleGames, before.IdleGames) && restored.Rep4Rep === before.Rep4Rep,
+    JSON.stringify({ LegitMode: restored.LegitMode, IdleGames: restored.IdleGames }));
+  await evalq(() => loadConfig().then(() => renderSettings()));
+  await settle(300);
 }
 
 // ── 6. the keyboard ──────────────────────────────────────────────────────────

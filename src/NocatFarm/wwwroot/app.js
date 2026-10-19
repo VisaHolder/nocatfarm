@@ -1439,6 +1439,7 @@ function showAddAccount() {
       <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
       <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
     </div>
+    ${copySourcePick()}
     <p style="margin:14px 0 8px"><b>${esc(t('What kind of account is it?'))}</b></p>
     <div class="pickcards">
       <div class="pickcard" id="a-type-human" role="button" tabindex="0" onclick="addPickType(true)">
@@ -1466,12 +1467,121 @@ function addPickType(human) {
 
 async function createBot() {
   if (addType === null) { $('addError').textContent = t('Pick one first'); return; }
-  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: addType });
+  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: addType,
+    CopyFrom: ($('a-copy') && $('a-copy').value) || '' });
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();
   // The page's settings copy learns about the new account now, so its Settings button opens it (not Global).
   loadConfig().catch(() => {});
+}
+
+// ── 1.8.2: copy settings from another account ──────────────────────────
+// On Add account ("Copy settings from"), and on an account's Settings page ("Copy settings from..."): everything but what
+// belongs to that account alone comes across. The switches turned on after a preview always end up off.
+function copyAccounts(except) {
+  const names = config && config.Bots ? Object.keys(config.Bots) : (state && state.Bots ? state.Bots.map((b) => b.Name) : []);
+  return names.filter((n) => n !== except);
+}
+
+function copySourcePick() {
+  const names = copyAccounts(null);
+  if (!names.length) return '';
+  return `<div class="form2" style="margin-top:10px">
+      <label for="a-copy">${esc(t('Copy settings from'))}${tipIcon(t("Start with another account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview."))}</label>
+      <select id="a-copy" onchange="addCopyPicked(this.value)"><option value="">${esc(t('none - the defaults'))}</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
+    </div>
+    <p id="a-copy-note" class="muted small hidden"></p>`;
+}
+
+// Picking an account to copy from picks its kind too - human or robot can still be changed below.
+function addCopyPicked(name) {
+  const note = $('a-copy-note');
+  if (!name) { note.classList.add('hidden'); return; }
+  const src = config && config.Bots ? config.Bots[name] : null;
+  if (src) addPickType(!!src.LegitMode);
+  note.textContent = tf('Its settings come from {0}. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on.', name);
+  note.classList.remove('hidden');
+}
+
+function openCopySettings(to) {
+  if (Object.keys(pending).length && !confirm(t('You have unsaved changes here. Discard them?'))) return;
+  const names = copyAccounts(to);
+  modal(`
+    <h2>${esc(tf('Copy settings onto {0}', to))}</h2>
+    <p>${esc(t('Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.'))}</p>
+    <div class="form2">
+      <label for="copyFrom">${esc(t('Copy settings from'))}</label>
+      <select id="copyFrom" data-to="${esc(to)}" onchange="copyPreview(this.dataset.to, this.value)"><option value="">${esc(t('Pick an account'))}</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
+    </div>
+    <div class="swpop" id="copyPreview"></div>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button id="copyGo" data-to="${esc(to)}" disabled onclick="doCopySettings(this.dataset.to)">${esc(t('Copy settings'))}</button>
+    </div>`);
+  if (names.length === 1) { $('copyFrom').value = names[0]; copyPreview(to, names[0]); }
+}
+
+async function copyPreview(to, from) {
+  const box = $('copyPreview');
+  $('copyGo').disabled = true;
+  if (!from) { box.innerHTML = ''; return; }
+  box.innerHTML = `<p class="waiting">${esc(t('Working out what it would change...'))}</p>`;
+  let r = null;
+  try { r = await api(`/api/bots/${encodeURIComponent(to)}/copy-settings/preview?from=${encodeURIComponent(from)}`); } catch { r = null; }
+  if (!$('copyFrom') || $('copyFrom').value !== from) return;   // another account picked meanwhile
+  if (!r || !r.ok || !r.data) { box.innerHTML = `<p class="problem">${esc((r && r.error) || t('No preview - try again in a minute.'))}</p>`; return; }
+  box.innerHTML = copyPreviewHtml(r.data);
+  $('copyGo').disabled = !r.data.Changes.length;
+}
+
+// A switch or setting by its label, in the page's language.
+function copyLabel(name) {
+  const def = (schema && schema.Bot || []).find((d) => d.Name === name);
+  return def ? tSetting(def, 'label') : name;
+}
+
+// A value as the settings page would say it.
+function copyValueText(name, v) {
+  const def = (schema && schema.Bot || []).find((d) => d.Name === name);
+  if (Array.isArray(v)) return v.length ? v.join(', ') : t('none');
+  if (!def) return String(v);
+  if (def.Kind === 'Bool') return v ? t('on') : t('off');
+  if (def.Kind === 'Hour') return hourLabel(Number(v));
+  if (def.Kind === 'Time') return timeLabel(Number(v));
+  if (def.Kind === 'Choice') return (parseChoices(tSetting(def, 'choices')).find((o) => o.value === Number(v)) || {}).label || String(v);
+  if (v === '' || v === null || v === undefined) return t('none');
+  return String(v);
+}
+
+function copyPreviewHtml(d) {
+  const rows = d.Changes.map((c) => `<tr><td>${esc(copyLabel(c.Name))}</td><td class="muted">${esc(copyValueText(c.Name, c.Before))}</td><td>${esc(copyValueText(c.Name, c.After))}</td></tr>`).join('');
+  const list = (items) => `<ul class="limits">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  return `${d.Changes.length
+      ? `<h4>${esc(d.Changes.length === 1 ? t('One setting changes') : tf('{0} settings change', d.Changes.length))}</h4>
+        <div class="tablewrap copylist"><table><tr><th>${esc(t('Setting'))}</th><th>${esc(t('Now'))}</th><th>${esc(t('After'))}</th></tr>${rows}</table></div>`
+      : `<p>${esc(tf('{0} already has the same settings - nothing to copy.', d.To))}</p>`}
+    ${d.LeftOff.length ? `<h4>${esc(t('Stays off - turn it on yourself after its preview'))}</h4>${list(d.LeftOff.map(copyLabel))}` : ''}
+    ${d.TurnedOff.length ? `<h4>${esc(t('Goes off, as on the account copied from'))}</h4>${list(d.TurnedOff.map(copyLabel))}` : ''}
+    ${d.Cleared.length ? `<h4>${esc(tf('With {0} itself taken out', d.To))}</h4>${list(d.Cleared.map(copyLabel))}` : ''}
+    ${d.Adjusted.length ? `<h4>${esc(t('Put right'))}</h4>${list(d.Adjusted)}` : ''}
+    <h4>${esc(t('Never copied'))}</h4>${list([t('the sign-in, password and authenticator'), t('the proxy and the device name'), t('notes and log colour'),
+      t('whether it runs, and whether you sign into it yourself'), t('the trade link token')])}`;
+}
+
+async function doCopySettings(to) {
+  const from = $('copyFrom') ? $('copyFrom').value : '';
+  if (!from) return;
+  $('copyGo').disabled = true;
+  let r = null;
+  try { r = await post(`/api/bots/${encodeURIComponent(to)}/copy-settings`, { From: from }); } catch { r = null; }
+  if (!r || !r.ok) { toast((r && r.error) || t('Not changed - try again.'), true); if ($('copyGo')) $('copyGo').disabled = false; return; }
+  pending = {};
+  closeModal();
+  await loadConfig();
+  renderSettings();
+  const left = (r.data && r.data.LeftOff) || [];
+  toast(left.length ? tf('Settings copied from {0}. Turn these on yourself after their preview: {1}', from, left.map(copyLabel).join(', ')) : tf('Settings copied from {0}', from));
 }
 
 // ── importing from another idler ─────────────────────────────────────
@@ -4768,6 +4878,7 @@ function renderSettings() {
         <span class="muted small">config/${esc(settingsTarget)}.json</span>
         <span class="spacer"></span>
         ${botActions(settingsTarget)}
+        ${copyAccounts(settingsTarget).length ? `<button class="ghost" id="copySettingsBtn" data-bot="${esc(settingsTarget)}" onclick="openCopySettings(this.dataset.bot)" data-tip="${esc(t("Copy another account's settings onto this one. Shows what changes first."))}">${esc(t('Copy settings from…'))}</button>` : ''}
         <button class="danger" data-act="remove" data-bot="${esc(settingsTarget)}">${esc(t('Remove'))}</button></div>`;
 
   const sections = [...new Set(defs.map((d) => d.Section))];
