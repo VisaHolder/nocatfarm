@@ -9288,7 +9288,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& Src("Core/Bot.cs").Contains("if ((pages == null) || !result.Complete) {", StringComparison.Ordinal)
 		&& Src("Core/DlcAchievements.cs").Contains("if (info.Failed || (info.Results == null) || !info.Complete) {", StringComparison.Ordinal)
 		// A grind that ends has the card farmer look again within the minute, not after its whole wait.
-		&& Src("Modules/CardFarmer.cs").Contains("|| (grinding && !Bot.Grinding)) {", StringComparison.Ordinal)
+		&& Src("Modules/CardFarmer.cs").Contains("|| (grinding && !Bot.Grinding)", StringComparison.Ordinal)
 		// dlcach with nothing left to hold says so, not "0 achievement(s) ... are left alone".
 		&& Src("Commands.cs").Contains("? new Said(\"Held: {0} is missing DLC", StringComparison.Ordinal)
 		&& Src("Commands.cs").Contains("so there's nothing to hold.\", bot.Name)", StringComparison.Ordinal)
