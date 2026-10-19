@@ -3327,6 +3327,7 @@
     "couldn't read the open buy orders: {0}": "nie udało się odczytać otwartych zleceń kupna: {0}",
     "worth {0} now - over your price limit, kept": "teraz warte {0} - powyżej Twojego limitu ceny, zachowany",
     "on your keep list - never sold": "na Twojej liście do zachowania - nigdy nie sprzedawany",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "zrobiona na sprzedaż: jej karty są sprzedawane bez względu na Twój limit ceny; gry z Twojej listy do zachowania nigdy nie są ruszane",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: na rynku jest już otwarte zlecenie kupna · własne zostaje wycofane, Twoje zostaje nietknięte",
     "{0}: not crafted yet · {1}": "{0}: jeszcze nie stworzony · {1}",
     "it asks for a card promised to a card swap": "prosi o kartę obiecaną do wymiany kart",
@@ -4730,7 +4731,7 @@
     },
     "SpareMaxPrice": {
       "label": "Nie ruszaj przedmiotów wartych więcej niż",
-      "tip": "Nic, co jest warte więcej, nie jest ruszane: nigdy nie zmienia się w klejnoty, nigdy nie jest sprzedawane. W walucie portfela Steam tego konta: 0.25 pasuje do dolarów lub euro; dla jenów użyj około 40. Wartość to wyższa z najtańszej oferty i ceny sprzedaży z ostatniego dnia: wystawione za 0.20, ale sprzedane za 0.30, jest warte 0.30."
+      "tip": "Nic, co jest warte więcej, nie jest ruszane: nigdy nie zmienia się w klejnoty, nigdy nie jest sprzedawane. W walucie portfela Steam tego konta: 0.25 pasuje do dolarów lub euro; dla jenów użyj około 40. Wartość to wyższa z najtańszej oferty i ceny sprzedaży z ostatniego dnia: wystawione za 0.20, ale sprzedane za 0.30, jest warte 0.30. Karty z paczek, które robi na sprzedaż, są sprzedawane bez względu na ten limit - zrobiono je dla pieniędzy. Gry z Twojej listy do zachowania nigdy nie są ruszane."
     },
     "SpareGemMarginPct": {
       "label": "Klejnoty muszą pobić sprzedaż o",
@@ -4865,7 +4866,7 @@
     },
     "GemsForLevels": {
       "label": "Używaj klejnotów na jak najwięcej poziomów",
-      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Zanim automatyczne boostery zrobią booster, liczy, ile poziomów odznak jest wartych 1000 klejnotów po dzisiejszych cenach rynkowych, na cztery sposoby: sprzedać worek klejnotów i pozwolić kupowaniu kart wydać pieniądze, zrobić booster i sprzedać go zamknięty, zrobić booster i sprzedać jego 3 karty, albo jak dotąd otwierać boostery dla najbliższej odznaki - i wybiera ten, który daje najwięcej. Na przykład worek, który daje 0,45, kupuje około 1,8 poziomu tanich zestawów, a boostery dla najbliższej odznaki dają około 0,3. Sposób przez rynek musi wyraźnie (o 15%) pokonać bezpieczniejszy; jeśli ceny nie są znane, klejnoty zostają luzem. Nigdy nie sprzedaje taniej, niż są warte klejnoty, wystawia najwyżej 10 rzeczy dziennie, a każde wystawienie potwierdzasz w aplikacji Steam jak każde inne. Sprzedawane są tylko wymienialne klejnoty; niewymienialne nadal idą na najbliższą odznakę. 'booster plan' pokazuje liczby."
+      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Zanim automatyczne boostery zrobią booster, liczy, ile poziomów odznak jest wartych 1000 klejnotów po dzisiejszych cenach rynkowych, na cztery sposoby: sprzedać worek klejnotów i pozwolić kupowaniu kart wydać pieniądze, zrobić booster i sprzedać go zamknięty, zrobić booster i sprzedać jego 3 karty, albo jak dotąd otwierać boostery dla najbliższej odznaki - i wybiera ten, który daje najwięcej. Na przykład worek, który daje 0,45, kupuje około 1,8 poziomu tanich zestawów, a boostery dla najbliższej odznaki dają około 0,3. Sposób przez rynek musi wyraźnie (o 15%) pokonać bezpieczniejszy; jeśli ceny nie są znane, klejnoty zostają luzem. Nigdy nie sprzedaje taniej, niż są warte klejnoty, wystawia najwyżej 10 rzeczy dziennie, a każde wystawienie potwierdzasz w aplikacji Steam jak każde inne. Sprzedawane są tylko wymienialne klejnoty; niewymienialne nadal idą na najbliższą odznakę. 'booster plan' pokazuje liczby. Karty z paczek, które robi na sprzedaż, są sprzedawane bez względu na limit ceny zbędnych przedmiotów - zrobiono je dla pieniędzy. Gry z Twojej listy do zachowania nigdy nie są ruszane."
     },
     "SendScamWarnings": {
       "label": "Wysyłaj ostrzeżenia o oszustwach",

@@ -3327,6 +3327,7 @@
     "couldn't read the open buy orders: {0}": "no pudo leer las órdenes de compra abiertas: {0}",
     "worth {0} now - over your price limit, kept": "ahora vale {0} - por encima de tu límite de precio, se guarda",
     "on your keep list - never sold": "en tu lista de conservar - nunca se vende",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "hecho para vender: sus cartas se venden diga lo que diga tu límite de precio; los juegos de tu lista de conservar nunca se tocan",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: ya hay una orden de compra abierta en el mercado · la suya se retira, una que pusiste tú se deja",
     "{0}: not crafted yet · {1}": "{0}: aún sin crear · {1}",
     "it asks for a card promised to a card swap": "pide una carta prometida a un intercambio de cartas",
@@ -4730,7 +4731,7 @@
     },
     "SpareMaxPrice": {
       "label": "No tocar objetos que valgan más de",
-      "tip": "Lo que valga más nunca se toca: ni se convierte en gemas ni se vende. En la moneda del monedero de Steam de esta cuenta: 0.25 sirve para dólares o euros; para yenes usa unos 40. El valor es el mayor entre el anuncio más barato y lo que se vendió el último día: anunciado a 0.20 pero vendido a 0.30 vale 0.30."
+      "tip": "Lo que valga más nunca se toca: ni se convierte en gemas ni se vende. En la moneda del monedero de Steam de esta cuenta: 0.25 sirve para dólares o euros; para yenes usa unos 40. El valor es el mayor entre el anuncio más barato y lo que se vendió el último día: anunciado a 0.20 pero vendido a 0.30 vale 0.30. Las cartas de los sobres que crea para vender se venden diga lo que diga este límite: se hicieron para ganar dinero. Los juegos de tu lista de conservar nunca se tocan."
     },
     "SpareGemMarginPct": {
       "label": "Las gemas deben superar a la venta en",
@@ -4865,7 +4866,7 @@
     },
     "GemsForLevels": {
       "label": "Usar las gemas para el mayor número de niveles",
-      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de que los sobres automáticos creen un sobre, calcula cuántos niveles de insignia valen 1.000 gemas a los precios de hoy del mercado, de cuatro maneras: vender un saco de gemas y dejar que la compra de cromos gaste el dinero, crear un sobre y venderlo cerrado, crear un sobre y vender sus 3 cromos, o abrir sobres para la insignia más cercana como antes - y hace la que más da. Por ejemplo, un saco que paga 0,45 compra unos 1,8 niveles de colecciones baratas, mientras que los sobres para la insignia más cercana dan unos 0,3. Una manera que usa el mercado tiene que ganar con claridad (por un 15 %) a una más segura; si no se conocen los precios, las gemas se quedan sueltas. Nunca vende por menos de lo que valen las gemas, pone a la venta como mucho 10 cosas al día, y confirmas cada venta en la app de Steam como cualquier otra. Solo se venden gemas intercambiables; las no intercambiables siguen yendo a la insignia más cercana. 'booster plan' muestra los números."
+      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de que los sobres automáticos creen un sobre, calcula cuántos niveles de insignia valen 1.000 gemas a los precios de hoy del mercado, de cuatro maneras: vender un saco de gemas y dejar que la compra de cromos gaste el dinero, crear un sobre y venderlo cerrado, crear un sobre y vender sus 3 cromos, o abrir sobres para la insignia más cercana como antes - y hace la que más da. Por ejemplo, un saco que paga 0,45 compra unos 1,8 niveles de colecciones baratas, mientras que los sobres para la insignia más cercana dan unos 0,3. Una manera que usa el mercado tiene que ganar con claridad (por un 15 %) a una más segura; si no se conocen los precios, las gemas se quedan sueltas. Nunca vende por menos de lo que valen las gemas, pone a la venta como mucho 10 cosas al día, y confirmas cada venta en la app de Steam como cualquier otra. Solo se venden gemas intercambiables; las no intercambiables siguen yendo a la insignia más cercana. 'booster plan' muestra los números. Las cartas de los sobres que crea para vender se venden diga lo que diga el límite de precio de los objetos sobrantes: se hicieron para ganar dinero. Los juegos de tu lista de conservar nunca se tocan."
     },
     "SendScamWarnings": {
       "label": "Enviar avisos de estafa",

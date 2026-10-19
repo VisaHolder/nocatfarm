@@ -3327,6 +3327,7 @@
     "couldn't read the open buy orders: {0}": "açık alış emirleri okunamadı: {0}",
     "worth {0} now - over your price limit, kept": "şimdi {0} değerinde - fiyat sınırının üstünde, tutuluyor",
     "on your keep list - never sold": "saklama listende - asla satılmaz",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "satmak için yapıldı: kartları fiyat sınırın ne derse desin satılır; saklama listendeki oyunlara asla dokunulmaz",
     "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: bunun için pazarda zaten açık bir alış emri var · kendi emri geri alınır, sizin verdiğiniz emre dokunulmaz",
     "{0}: not crafted yet · {1}": "{0}: henüz üretilmedi · {1}",
     "it asks for a card promised to a card swap": "bir kart takasına söz verilmiş bir kartı istiyor",
@@ -4730,7 +4731,7 @@
     },
     "SpareMaxPrice": {
       "label": "Bundan değerli eşyalara dokunma",
-      "tip": "Daha değerli olan hiçbir şeye dokunulmaz: asla mücevhere çevrilmez, asla satılmaz. Bu hesabın Steam cüzdanı para biriminde: dolar ya da avro için 0.25 uygundur; yen için yaklaşık 40 kullan. Değer, en ucuz ilanla son bir günün satış fiyatından yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur."
+      "tip": "Daha değerli olan hiçbir şeye dokunulmaz: asla mücevhere çevrilmez, asla satılmaz. Bu hesabın Steam cüzdanı para biriminde: dolar ya da avro için 0.25 uygundur; yen için yaklaşık 40 kullan. Değer, en ucuz ilanla son bir günün satış fiyatından yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur. Satmak için yaptığı paketlerin kartları bu sınır ne derse desin satılır - para için yapıldılar. Saklama listendeki oyunlara asla dokunulmaz."
     },
     "SpareGemMarginPct": {
       "label": "Taşların satışı geçmesi gereken oran",
@@ -4865,7 +4866,7 @@
     },
     "GemsForLevels": {
       "label": "Mücevherleri en çok seviye için kullan",
-      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Otomatik kart paketleri bir paket yapmadan önce, 1.000 mücevherin bugünün pazar fiyatlarıyla kaç rozet seviyesi ettiğini dört yoldan hesaplar: bir mücevher çuvalı satıp parayı kart satın almanın harcamasına bırakmak, bir paket yapıp kapalı satmak, bir paket yapıp 3 kartını satmak ya da eskisi gibi en yakın rozet için paket açmak - ve en çok getireni yapar. Örneğin 0,45 kazandıran bir çuval yaklaşık 1,8 seviyelik ucuz set alır, en yakın rozet için paketler ise yaklaşık 0,3 verir. Pazarı kullanan bir yol daha güvenli olanı açıkça (%15) geçmelidir; fiyatlar bilinmiyorsa mücevherler serbest kalır. Asla mücevherlerin değerinden ucuza satmaz, günde en fazla 10 şey listeler ve her listelemeyi diğerleri gibi Steam uygulamasında onaylarsın. Yalnızca takas edilebilir mücevherler satılır; takas edilemeyenler yine en yakın rozete gider. 'booster plan' sayıları gösterir."
+      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Otomatik kart paketleri bir paket yapmadan önce, 1.000 mücevherin bugünün pazar fiyatlarıyla kaç rozet seviyesi ettiğini dört yoldan hesaplar: bir mücevher çuvalı satıp parayı kart satın almanın harcamasına bırakmak, bir paket yapıp kapalı satmak, bir paket yapıp 3 kartını satmak ya da eskisi gibi en yakın rozet için paket açmak - ve en çok getireni yapar. Örneğin 0,45 kazandıran bir çuval yaklaşık 1,8 seviyelik ucuz set alır, en yakın rozet için paketler ise yaklaşık 0,3 verir. Pazarı kullanan bir yol daha güvenli olanı açıkça (%15) geçmelidir; fiyatlar bilinmiyorsa mücevherler serbest kalır. Asla mücevherlerin değerinden ucuza satmaz, günde en fazla 10 şey listeler ve her listelemeyi diğerleri gibi Steam uygulamasında onaylarsın. Yalnızca takas edilebilir mücevherler satılır; takas edilemeyenler yine en yakın rozete gider. 'booster plan' sayıları gösterir. Satmak için yaptığı paketlerin kartları fazla eşyaların fiyat sınırı ne derse desin satılır - para için yapıldılar. Saklama listendeki oyunlara asla dokunulmaz."
     },
     "SendScamWarnings": {
       "label": "Dolandırıcılık uyarılarını gönder",

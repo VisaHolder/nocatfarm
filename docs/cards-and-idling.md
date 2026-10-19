@@ -304,17 +304,18 @@ The rules it keeps:
   before it goes up, and kept back if it would pay less. A pack's price, or every card of a set, is also read again just
   before the gems are spent; if the pick changed, it waits for the next look.
 - **Like any listing.** Every listing needs confirming in the Steam app (or the account's authenticator, as any listing
-  does), at most 10 a day, one kind a look, through the same slow price queue as everything else, and on a human-mode
-  account only during its day.
+  does), at most 10 a day, one kind a look, through the same slow price queue as everything else. On a human-mode
+  account only during its day and never while you're playing on it, one thing at a time - a pack made or opened, a sack
+  packed, one listing - with the same random wait between them as spare items (*Wait between items, human mode*).
 - **Only tradable gems.** A sack, or a pack made to sell, uses tradable gems only - a pack made from untradable ones
   couldn't be sold, nor its cards. Untradable gems still make packs for the closest badge.
 - **Its own packs.** A pack made to sell sealed is never opened, sent or sold by anything else; one made to open is
   opened by automatic, and its 3 cards listed at the next looks - even when the account holds other cards of that game
   or is levelling its badge: they were made for the money (cards it can't find any more - crafted or swapped - are let
   go of, and any it hasn't listed after 3 days are ordinary spare cards again). Neither stops buying cards for that game.
-- **Your keep list and price limit.** A game on *Never touch items from these games* is never made into a pack to sell
-  or to open and sell; a card worth more than *Never touch items worth more than* is never sold, so it counts as nothing
-  when a pack's cards are weighed.
+- **Your keep list.** A game on *Never touch items from these games* is never made into a pack to sell or to open and
+  sell, and its cards are never sold. *Never touch items worth more than* doesn't hold back the cards of a pack made to
+  sell: they were made for money, and that limit is for what the account already had.
 - **Gems are worth what a sack pays.** Everywhere gems are weighed against selling - here and in spare items - a sack
   counts at what it pays you after Steam's fee (about 0.81 for a sack listed at 0.94), not at its buyer's price.
 - Prices it doesn't know yet are learned a few a look (4 at most), the most promising packs first - the games whose

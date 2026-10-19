@@ -115,13 +115,13 @@ public sealed partial class Boosters {
 	private GemsChoice.Inputs GemsInputs(Page page, BoosterPick.Ranking ranking, IReadOnlyList<long>? costs) => InputsOf(Bot, WalletCurrency, page, ranking, costs);
 
 	/// <summary>
-	/// Everything one weighing needs, for an account: 1.8.2 with its keep list and price limit, which the listing keeps to -
-	/// so the maths never picks a pack or cards that would then never be sold.
+	/// Everything one weighing needs, for an account: 1.8.2 with its keep list, which the listing keeps to - so the maths
+	/// never picks a pack or cards that would then never be sold.
 	/// </summary>
 	private static GemsChoice.Inputs InputsOf(Bot bot, int currency, Page page, BoosterPick.Ranking ranking, IReadOnlyList<long>? costs) {
 		SpareRules rules = SpareRules.From(bot.Cfg);
 
-		return new(currency, page, ranking, costs, Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95), bot.Cfg.BoosterNeverOpen, DateTime.UtcNow, rules.KeepGames, rules.MaxPriceCents);
+		return new(currency, page, ranking, costs, Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95), bot.Cfg.BoosterNeverOpen, DateTime.UtcNow, rules.KeepGames);
 	}
 
 	/// <summary>
@@ -205,7 +205,7 @@ public sealed partial class Boosters {
 		Log.Info(new Said("packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems", levels), Bot.Name);
 		_autoStatus = new Said("packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems", levels);
 		_autoNext = DateTime.UtcNow + Rng.Minutes(5, 15);
-		_dayGate!.Space(5, 30);
+		SpaceOut();
 
 		return true;
 	}
@@ -292,7 +292,7 @@ public sealed partial class Boosters {
 		}
 
 		_autoNext = DateTime.UtcNow + Rng.Minutes(5, 15);
-		_dayGate!.Space(5, 30);
+		SpaceOut();
 
 		return true;
 	}
@@ -388,7 +388,7 @@ public sealed partial class Boosters {
 				mem.Save(Bot.Name);
 			}
 
-			_dayGate!.Space(5, 30);
+			SpaceOut();
 
 			return true;
 		}
@@ -432,7 +432,7 @@ public sealed partial class Boosters {
 					AutoMemory.Save(Bot.Name);
 				}
 
-				_dayGate!.Space(5, 30);
+				SpaceOut();
 
 				return true;
 			}
@@ -442,9 +442,10 @@ public sealed partial class Boosters {
 
 		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth. 1.8.2: they were
 		// made for money, so they're sold even when the account holds other cards of the game or is levelling it - kept as
-		// "being levelled", they undid the best way the gems maths had found (Arcane Raise on new). Never a card on the keep
-		// list (its game, or itself - the maths never picks a keep-listed game), never one worth more than "Never touch items
-		// worth more than" (the maths counts those as nothing), and one whose gem value isn't known is asked about first.
+		// "being levelled", they undid the best way the gems maths had found (Arcane Raise on new). Sold whatever "Never touch
+		// items worth more than" says too: that limit protects what the account already had, and these were made for money
+		// (the maths counts them at their real value). Never a card on the keep list (its game, or itself - the maths never
+		// picks a keep-listed game), and one whose gem value isn't known is asked about first.
 		HashSet<ulong> taken = [];
 		List<(Seller.Offer Offer, GemsChoice.Memory.OpenedCard Card, int Min)> rows = [];
 		LiveSpareSteam? steam = null;
@@ -486,14 +487,36 @@ public sealed partial class Boosters {
 			return false;
 		}
 
-		rows = [.. rows.Take(left)];
+		// A human-mode account lists one a look, then waits its gap - never a run of listings at once.
+		rows = [.. rows.Take(Bot.Cfg.LegitMode ? 1 : left)];
 		Dictionary<ulong, int> mins = rows.ToDictionary(static r => r.Offer.AssetId, static r => r.Min);
-		await ListAsync([.. rows.Select(static r => r.Offer)], (o, token) => Priced(mins.GetValueOrDefault(o.AssetId, 1), rules.MaxPriceCents)(o, token),
+		await ListAsync([.. rows.Select(static r => r.Offer)], (o, token) => Priced(mins.GetValueOrDefault(o.AssetId, 1))(o, token),
 			o => { if (rows.FirstOrDefault(r => r.Offer.AssetId == o.AssetId) is { Card: { } c }) { mem.RemoveCard(c); } }).ConfigureAwait(false);
 		mem.Save(Bot.Name);
-		_dayGate!.Space(5, 30);
+		SpaceOut();
 
 		return true;
+	}
+
+	/// <summary>1.8.2: what's made to sell, in a few words - for 'booster plan' and the preview.</summary>
+	public static Said MadeToSellSaid => new("made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched");
+
+	/// <summary>
+	/// 1.8.2, human mode: the wait after anything gems or packs did that shows on the account (a pack made or opened, a sack
+	/// packed, a listing) - the same jittered gap spare items keep between items ("Wait between items, human mode", 3 to 20
+	/// minutes). Only one thing goes at a time: the gate stays shut until then, and it's the account's own day and you not
+	/// playing on it besides (<see cref="HumanGate.OwnDay"/>). No effect on a robot.
+	/// </summary>
+	private void SpaceOut() {
+		(int lo, int hi) = HumanGap(Bot.Cfg);
+		_dayGate!.Space(lo, hi);
+	}
+
+	/// <summary>The human-mode gap, in minutes: spare items' own "Wait between items, human mode".</summary>
+	public static (int Lo, int Hi) HumanGap(BotConfig cfg) {
+		int lo = Math.Clamp(cfg.SpareHumanGapMinMinutes, 0, 240);
+
+		return (lo, Math.Max(lo, Math.Clamp(cfg.SpareHumanGapMaxMinutes, 0, 240)));
 	}
 
 	/// <summary>Gem values of opened cards one look may ask Steam for (a pack's 3 cards).</summary>
@@ -637,6 +660,9 @@ public sealed partial class Boosters {
 		GemsChoice.Inputs x = InputsOf(bot, cur, page, ranking, costs);
 		GemsChoice.Choice choice = await GemsChoice.WeighAsync(x, new LiveMarket(bot), GemsChoice.LearnALook, ct).ConfigureAwait(false);
 
-		return $"Use gems for the most levels ({page.TradableGems:N0} tradable gems): {GemsChoice.Line(choice)}";
+		// What's made to sell, said plainly: its cards go whatever the price limit says, never a game on the keep list.
+		string sold = choice.Pick is { Way: GemsChoice.Way.PackSell or GemsChoice.Way.PackOpen } ? $" ({MadeToSellSaid.ToEnglish()})" : "";
+
+		return $"Use gems for the most levels ({page.TradableGems:N0} tradable gems): {GemsChoice.Line(choice)}{sold}";
 	}
 }

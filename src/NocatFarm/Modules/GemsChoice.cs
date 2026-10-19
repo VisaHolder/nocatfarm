@@ -193,11 +193,11 @@ public static class GemsChoice {
 	/// <summary>
 	/// Everything a look weighs: the wallet's money, the booster creator, automatic's ranking, the level costs, the games never
 	/// opened - and (1.8.2) the games on the keep list ("Never touch items from these games": nothing of theirs is ever sold,
-	/// so no pack is made of them to sell) and the price limit (<paramref name="MaxCents"/>, "Never touch items worth more
-	/// than": a card over it is never sold, so it counts as nothing; 0 none).
+	/// so no pack is made of them to sell). Not the price limit: the cards of a pack made to sell are sold whatever it says -
+	/// they were made for money, and the limit is for what the account already had - so each counts at its real value.
 	/// </summary>
 	public sealed record Inputs(int Currency, Boosters.Page Page, BoosterPick.Ranking Ranking, IReadOnlyList<long>? Costs, int DumpPct,
-		IReadOnlyCollection<uint> NeverOpen, DateTime Now, IReadOnlyCollection<uint>? Keep = null, int MaxCents = 0);
+		IReadOnlyCollection<uint> NeverOpen, DateTime Now, IReadOnlyCollection<uint>? Keep = null);
 
 	/// <summary>
 	/// Every way weighed with today's prices, and the pick. A sack's price is read again when it's over
@@ -295,7 +295,7 @@ public static class GemsChoice {
 				continue;
 			}
 
-			long ev = OpenedWorth(set, cur, rate!.Value, market, x.Now, x.DumpPct, live: false, x.MaxCents);
+			long ev = OpenedWorth(set, cur, rate!.Value, market, x.Now, x.DumpPct, live: false);
 
 			if ((ev > 0) && (ev >= worth + 1m)) {
 				long per = ev * Per / offer.Price;
@@ -312,7 +312,8 @@ public static class GemsChoice {
 	/// <see cref="MinCardSales"/> times in the last day counts as nothing - else, while choosing, its US price at the learned
 	/// rate. <paramref name="live"/>: only prices held in the wallet's money count (right before acting, every card is priced).
 	/// 1.8.2: a card worth more than <paramref name="maxCents"/> ("Never touch items worth more than", 0: none) counts as
-	/// nothing too - it's never sold, so it brings nothing in.
+	/// nothing too - for a pack that came in, whose cards are spare items and never sold over the limit. Never for a pack
+	/// made to sell: its cards are sold whatever the limit.
 	/// </summary>
 	public static long OpenedWorth(CardSet set, int cur, double rate, IMarket market, DateTime now, int dumpPct, bool live, int maxCents = 0) {
 		long total = 0;
@@ -363,7 +364,7 @@ public static class GemsChoice {
 				}
 			}
 
-			long ev = OpenedWorth(set, cur, market.Rate(cur) ?? 0, market, x.Now, x.DumpPct, live: true, x.MaxCents);
+			long ev = OpenedWorth(set, cur, market.Rate(cur) ?? 0, market, x.Now, x.DumpPct, live: true);
 
 			if ((ev > 0) && (ev >= worth + 1m)) {
 				long per = ev * Per / pick.PackGems;
