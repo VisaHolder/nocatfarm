@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} jest teraz na liście „Nigdy nie otwieraj paczek z tych gier” - paczka kart zrobiona dla tej gry zostaje zamknięta",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "jej wystawienie wciąż czeka na twoim telefonie - żadna inna kopia nie zostanie wystawiona, dopóki to się nie rozstrzygnie",
     "worth {0} - over your price limit, never touched": "warte {0} - powyżej twojego limitu ceny, nigdy nie jest ruszane",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} przedmiot(ów) wartych {1} przekracza twój limit ceny {2} - podnieś go, żeby je sprzedać",
     "worth {0} now - over your price limit, not listed": "teraz warte {0} - powyżej twojego limitu ceny, nie wystawione",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "podgląd zbędnych przedmiotów dla {0}: {1} na klejnoty, {2} do sprzedaży. Nic się nie dzieje, dopóki nie włączysz Zbędnych przedmiotów w jego ustawieniach - 'spare preview {0}' pokazuje każdy z nich.",
     "lowered {0} from {2} to {3} - unsold {1} days": "obniżono {0} z {2} do {3} - niesprzedane od {1} dni",

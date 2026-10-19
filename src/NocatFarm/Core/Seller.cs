@@ -387,7 +387,7 @@ public static class Seller {
 						return Task.FromResult<(Offer?, Said)>((null, new Said("the price of gems isn't known yet - kept")));
 					}
 
-					gemsWorth = Spare.GemsWorth(goo.Value, SparePrices.Sack(currency)!.Value.Cents);
+					gemsWorth = Spare.GemsWorth(goo.Value, SparePrices.SackPays(currency, rules.DumpPct)!.Value.Cents);
 				}
 			}
 

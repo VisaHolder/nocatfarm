@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} が「これらのゲームのパックは開封しない」に入りました - そのゲーム用に作成したブースターパックは開封しません",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "この出品はまだスマホでの確認待ちです - それが片付くまで同じアイテムは出品しません",
     "worth {0} - over your price limit, never touched": "{0} の価値 - 価格の上限を超えているので、決して触れません",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} 個のアイテム（合計 {1}）が価格の上限 {2} を超えています - 売るには上限を上げてください",
     "worth {0} now - over your price limit, not listed": "今は {0} の価値 - 価格の上限を超えたので出品しません",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} の余分なアイテムのプレビュー: ジェムに {1} 個、販売に {2} 個。設定で余分なアイテムをオンにするまで何も起きません - 'spare preview {0}' で一つずつ確認できます。",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} を {2} から {3} に値下げ - {1} 日間売れず",

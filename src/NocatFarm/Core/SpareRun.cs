@@ -938,11 +938,15 @@ public static class SpareRun {
 
 		now = plan();
 
+		// Gem values a few a look (kept on disk since 1.8.2, so a restart doesn't start over), the ones the most items wait on
+		// first. One Steam didn't answer waits a while, so the same few never take every turn while the rest wait.
 		if (rules.Action is 0 or 1) {
 			int asked = 0;
+			DateTime at = DateTime.UtcNow;
 
 			foreach (SpareItem item in now.Decisions.Where(static d => d.Verdict is SpareVerdict.Unpriced or SpareVerdict.Gems or SpareVerdict.Sell or SpareVerdict.Keep)
-				.Select(static d => d.Item).Where(static i => (i.GooType > 0) && (SteamGems.KnownValue(i) == null)).DistinctBy(static i => i.GooKey)) {
+				.Select(static d => d.Item).Where(i => (i.GooType > 0) && SteamGems.Ask(i, at)).GroupBy(static i => i.GooKey)
+				.OrderByDescending(static g => g.Count()).Select(static g => g.First())) {
 				if (asked++ >= GemValuesPerLook) {
 					break;
 				}
@@ -1139,7 +1143,7 @@ public static class SpareRun {
 			Busy = busy,
 			Price = PriceFor(currency, rules),
 			Currency = currency,
-			Sack = SparePrices.Sack(currency),
+			Sack = SparePrices.SackPays(currency, rules.DumpPct),
 			GemValue = static i => i.GooType > 0 ? SteamGems.KnownValue(i) : 0,
 			Declined = i => memory.DeclinedWhy(i, rules.DeclinedDays, now) ?? waiting(i),
 			StepOf = i => memory.StepOf(i.Hash, now),
@@ -1214,6 +1218,13 @@ public static class SpareRun {
 
 		if (LeftAlone(look.Plan) is { Length: > 0 } left) {
 			Log.Debug($"spare items left alone: {Columns.ClipChars(left, LeftAloneMax, "...")}", bot.Name);
+		}
+
+		// 1.8.2: items over the price limit are never touched - the owner's rule. Said once a day, in one line with what
+		// they're worth together, so raising the limit is a choice; every hour it was a line nobody needed again.
+		if ((OverLimitSaid(look.Plan, look.Rules.MaxPriceCents, look.Currency) is { } over) && look.Ledger.OverLimitDue(DateTime.Now)) {
+			look.Ledger.Save();
+			Log.Info(over, bot.Name);
 		}
 
 		if (!act) {
@@ -1475,6 +1486,18 @@ public static class SpareRun {
 	public static string LeftAlone(SparePlan plan) =>
 		string.Join(", ", plan.Decisions.Where(static d => d.Verdict is not (SpareVerdict.Gems or SpareVerdict.Sell))
 			.GroupBy(static d => d.Why.ToEnglish()).OrderByDescending(static g => g.Count()).Select(static g => $"{g.Count()} {g.Key}{Named(g)}"));
+
+	/// <summary>
+	/// 1.8.2: "2 item(s) worth 3.54 CAD are over your 0.75 price limit - raise it to sell them": the items a look never
+	/// touches for being worth more than "Never touch items worth more than", in one line - null when there are none.
+	/// </summary>
+	public static Said? OverLimitSaid(SparePlan plan, int maxCents, int currency) {
+		List<SpareDecision> over = [.. plan.Decisions.Where(static d => d.Verdict == SpareVerdict.OverLimit)];
+
+		return over.Count == 0 ? null
+			: new Said("{0} item(s) worth {1} are over your {2} price limit - raise it to sell them", over.Count,
+				Spare.Money(over.Sum(static d => (long) d.PriceCents), currency), Spare.Money(maxCents));
+	}
 
 	/// <summary>The "spare items left alone" debug line is cut at this many characters - it ran to 2,500 with every name.</summary>
 	public const int LeftAloneMax = 300;

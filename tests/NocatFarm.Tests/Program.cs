@@ -28747,6 +28747,9 @@ await SweepSwapChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 // ── 1.8.2 sweep: listings - the price a buyer is really charged written down; an unreadable answer never 'no listings'; fakes only ──
 await SweepListingChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: gems fixes - packs made to sell agree with the seller, pack prices the most promising first, gems worth what a sack pays, gem values kept, sealed packs weighed, the price limit said once a day; fakes only ──
+await GemsFixChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -34755,10 +34758,12 @@ static class SweepGemsSellChecks {
 			Check("sweep gems sell: one sack at a time - a listing without a clear yes is looked for among the listings before another goes up",
 				gems.Contains("mem.SackTriedAt = DateTime.UtcNow.Ticks;", StringComparison.Ordinal) && gems.Contains("if (mem.SackTriedAt > 0) {", StringComparison.Ordinal)
 				&& gems.Contains("return true;   // not known whether the last one went up: nothing more this look", StringComparison.Ordinal));
-			Check("sweep gems sell: cards from packs opened to sell - the keep list, the price limit, an unknown gem value keeps them",
-				gems.Contains("rules.KeepGames.Contains(card.App) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)", StringComparison.Ordinal)
+			Check("sweep gems sell: cards from packs opened to sell - the keep list, the price limit, an unknown gem value (asked first) keeps them",
+				gems.Contains("rules.KeepGames.Contains(app) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)", StringComparison.Ordinal)
+				&& gems.Contains("if (KeepsOpened(card.App, item, rules)) {", StringComparison.Ordinal)
 				&& gems.Contains("Priced(mins.GetValueOrDefault(o.AssetId, 1), rules.MaxPriceCents)", StringComparison.Ordinal)
-				&& gems.Contains("if (SteamGems.KnownValue(item) is not int goo) {", StringComparison.Ordinal));
+				&& gems.Contains("known = await (steam ??= new LiveSpareSteam(Bot)).GemValueAsync(item, ct).ConfigureAwait(false);", StringComparison.Ordinal)
+				&& gems.Contains("if (known is not int goo) {", StringComparison.Ordinal));
 
 			var mem = NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem");
 			mem.SackTriedAt = 638_000_000_000_000_000;
@@ -34767,14 +34772,10 @@ static class SweepGemsSellChecks {
 			Check("sweep gems sell: a sack put up without a clear yes is remembered across a restart",
 				NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem").SackTriedAt == 638_000_000_000_000_000);
 
-			// A set it's levelling: cards of it held besides the pack's, or bought, or packs working on it - those cards stay.
-			MethodInfo levelling = typeof(NocatFarm.Modules.Boosters).GetMethod("Levelling", BindingFlags.NonPublic | BindingFlags.Static)!;
-			NocatFarm.Core.SpareItem Card(ulong id, uint app) => new(id, app, NocatFarm.Core.SpareKind.Card, $"{app}-C{id}", $"C{id}", true, true, 1, 2, 0);
-			List<NocatFarm.Modules.GemsChoice.Memory.OpenedCard> opened = [new(600, "C1", DateTime.UtcNow), new(600, "C2", DateTime.UtcNow), new(600, "C3", DateTime.UtcNow)];
-			bool Is(List<NocatFarm.Core.SpareItem> items, HashSet<uint> working) => (bool) levelling.Invoke(null, [600u, items, opened, working])!;
-			List<NocatFarm.Core.SpareItem> onlyPack = [Card(1, 600), Card(2, 600), Card(3, 600), Card(4, 700)];
-			Check("sweep gems sell: only the pack's own cards of a game - sold; a card of it held besides - its set is being levelled, kept; bought for a badge or packs on it - kept",
-				!Is(onlyPack, []) && Is([.. onlyPack, Card(5, 600)], []) && Is(onlyPack, [600u]));
+			// 1.8.2 gems fixes: the cards of a pack made to sell are sold even when the account holds other cards of the game or
+			// is levelling it - only the keep list keeps them (see GemsFixChecks).
+			Check("sweep gems sell: cards of a pack made to sell aren't kept for a set being levelled any more",
+				(typeof(NocatFarm.Modules.Boosters).GetMethod("Levelling", BindingFlags.NonPublic | BindingFlags.Static) == null) && !gems.Contains("its set is being levelled", StringComparison.Ordinal));
 		} finally {
 			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -34964,4 +34965,274 @@ static class SweepListingChecks {
 			NocatFarm.Core.MarketQuotes.Reset();
 		}
 	}
+}
+
+/// <summary>
+/// 1.8.2 gems fixes: a pack made to sell is never picked for a game whose pack or cards wouldn't be sold, and its cards are
+/// sold; pack prices learned the most promising first, held ones always weighed; gems worth what a sack pays; gem values
+/// kept over a restart; sealed packs that came in weighed; items over the price limit said once a day. Fakes only.
+/// </summary>
+static class GemsFixChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-gemsfix-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		var realGet = NocatFarm.Core.SparePrices.Get;
+
+		try {
+			const int Cad = 20;
+			DateTime now = new(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc);
+			NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales, double hoursOld = 0) => new(hash, Cad, lowest, lowest, sales, now.AddHours(-hoursOld).Ticks);
+			string sack = NocatFarm.Core.SparePrices.SackHash;
+			IReadOnlyList<long> costs = [24, 24, 24, 24, 30, 30];
+			NocatFarm.Modules.Boosters.Page Page() => new(5000, 5000, 0, new Dictionary<uint, NocatFarm.Modules.Boosters.Offer> {
+				[500] = new(500, "Crypt", 1, 400, false, ""),
+				[600] = new(600, "Arcane Raise", 1, 1200, false, ""),
+				[700] = new(700, "Closest", 1, 1000, false, ""),
+			});
+			var ranking = new NocatFarm.Modules.BoosterPick.Ranking([new NocatFarm.Modules.BoosterPick.Candidate(700, "Closest", 1000, 6, 1, 3, 3, 0)], 0, 0, 0, 0);
+			NocatFarm.Modules.GemsChoice.Inputs In(IReadOnlyCollection<uint>? keep = null, int maxCents = 0) => new(Cad, Page(), ranking, costs, 0, [], now, keep, maxCents);
+			var arcane = new NocatFarm.Modules.CardSet(600, "Arcane Raise", ["600-A", "600-B", "600-C", "600-D", "600-E"],
+				new Dictionary<string, int> { ["600-A"] = 60, ["600-B"] = 60, ["600-C"] = 60, ["600-D"] = 60, ["600-E"] = 60 });
+			FakeGemsMarket Market() {
+				var m = new FakeGemsMarket();
+				m.Live[sack] = Q(sack, 50, 500);
+				m.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 30, 20);
+				m.KnownSets[600] = arcane;
+				return m;
+			}
+			bool Weighed(NocatFarm.Modules.GemsChoice.Choice c, uint app) =>
+				c.Options.Any(o => (o.App == app) && (o.Way is NocatFarm.Modules.GemsChoice.Way.PackSell or NocatFarm.Modules.GemsChoice.Way.PackOpen));
+
+			// ── 1. the maths and the seller agree ──
+			var all = await NocatFarm.Modules.GemsChoice.WeighAsync(In(), Market(), 4, CancellationToken.None);
+			var kept = Market();
+			var keptChoice = await NocatFarm.Modules.GemsChoice.WeighAsync(In(keep: [500u, 600u]), kept, 4, CancellationToken.None);
+			Check("gems fix: a game on the keep list is never a pack to sell nor one to open and sell - nor priced for it",
+				Weighed(all, 500) && Weighed(all, 600) && !Weighed(keptChoice, 500) && !Weighed(keptChoice, 600)
+				&& !kept.Asked.Contains("500-Crypt Booster Pack") && (keptChoice.Way != NocatFarm.Modules.GemsChoice.Way.PackOpen),
+				NocatFarm.Modules.GemsChoice.Line(keptChoice));
+
+			var limited = await NocatFarm.Modules.GemsChoice.WeighAsync(In(maxCents: 50), Market(), 4, CancellationToken.None);
+			var lim = Market();
+			long under = NocatFarm.Modules.GemsChoice.OpenedWorth(arcane, Cad, 1, lim, now, 0, live: false);
+			long over = NocatFarm.Modules.GemsChoice.OpenedWorth(arcane, Cad, 1, lim, now, 0, live: false, maxCents: 50);
+			lim.Held["600-A"] = Q("600-A", 40, 20);
+			long mixed = NocatFarm.Modules.GemsChoice.OpenedWorth(arcane, Cad, 1, lim, now, 0, live: false, maxCents: 50);
+			Check("gems fix: a card worth more than the price limit is never sold, so it counts as nothing - the maths doesn't pick a pack for cards it would keep",
+				(under > 0) && (over == 0) && (mixed == 3 * NocatFarm.Modules.GemsChoice.Receive(Q("600-A", 40, 20), 0) / 5)
+				&& !limited.Options.Any(static o => o.Way == NocatFarm.Modules.GemsChoice.Way.PackOpen), $"{under} {over} {mixed}");
+
+			var rules = new NocatFarm.Core.SpareRules { KeepGames = [800u], KeepNames = ["Kept Card"] };
+			NocatFarm.Core.SpareItem C(uint app, string name) => new(1, app, NocatFarm.Core.SpareKind.Card, $"{app}-{name}", name, true, true, 1, 2, 0);
+			Check("gems fix: a card from a pack made to sell is sold even when its game's badge is being levelled - only the keep list (game or name) keeps it",
+				!NocatFarm.Modules.Boosters.KeepsOpened(600, C(600, "A"), rules) && NocatFarm.Modules.Boosters.KeepsOpened(800, C(800, "A"), rules)
+				&& NocatFarm.Modules.Boosters.KeepsOpened(600, C(600, "Kept Card"), rules));
+			string boostersGems = Src("src/NocatFarm/Modules/Boosters.Gems.cs");
+			Check("gems fix: the seller and the maths read the same rules - the keep list and the price limit go into every weighing; a pack made to sell whose game went on the keep list is let go of",
+				boostersGems.Contains("bot.Cfg.BoosterNeverOpen, DateTime.UtcNow, rules.KeepGames, rules.MaxPriceCents);", StringComparison.Ordinal)
+				&& boostersGems.Contains("GemsChoice.Inputs x = InputsOf(bot, cur, page, ranking, costs);", StringComparison.Ordinal)
+				&& boostersGems.Contains("if (rules.KeepGames.Contains(own.App)) {\n\t\t\t\t\tAutoMemory.Remove(own);", StringComparison.Ordinal)
+				&& !boostersGems.Contains("Levelling(", StringComparison.Ordinal));
+
+			// ── 2. pack prices: the most promising first, held ones always weighed ──
+			var many = new PromiseGemsMarket();
+			many.Inner.Live[sack] = Q(sack, 50, 500);
+			var big = new Dictionary<uint, NocatFarm.Modules.Boosters.Offer>();
+			for (uint app = 1; app <= 12; app++) {
+				big[app] = new(app, "G" + app, 1, 300 + app, false, "");
+				many.Inner.Live[$"{app}-G{app} Booster Pack"] = new($"{app}-G{app} Booster Pack", Cad, null, null, 0, now.Ticks);
+			}
+			many.Promises[9] = 200;   // its cards are known to be dear
+			many.Promises[4] = 30;
+			many.Promises[11] = 5;
+			await NocatFarm.Modules.GemsChoice.WeighAsync(new(Cad, new(5000, 5000, 0, big), ranking, costs, 0, [], now), many, NocatFarm.Modules.GemsChoice.LearnALook, CancellationToken.None);
+			Check("gems fix: prices it doesn't hold are learned the most promising packs first (what's known of their cards or pack, for their gems), not the cheapest",
+				many.Inner.Asked.SequenceEqual([sack, "9-G9 Booster Pack", "set:9", "4-G4 Booster Pack", "set:4"]), string.Join(",", many.Inner.Asked));
+
+			var held = new FakeGemsMarket();
+			held.Live[sack] = Q(sack, 50, 500);
+			held.Held["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 30, 20, hoursOld: 30);
+			held.KnownSets[600] = arcane;
+			var heldChoice = await NocatFarm.Modules.GemsChoice.WeighAsync(In(), held, 0, CancellationToken.None);
+			Check("gems fix: a pack or set price held fresh enough is weighed whatever the look's lookups - none left, both still count",
+				Weighed(heldChoice, 500) && Weighed(heldChoice, 600) && held.Asked.SequenceEqual([sack]), $"{NocatFarm.Modules.GemsChoice.Line(heldChoice)} | {string.Join(",", held.Asked)}");
+			Check("gems fix: the app's market holds sets read for buying cards and the spare-items shortlists, and knows what a pack promises",
+				boostersGems.Contains("LevelPlanner.HeldWhole(app) is { } held", StringComparison.Ordinal) && boostersGems.Contains("ShortlistCards(app, GemsChoice.ChooseFresh)", StringComparison.Ordinal)
+				&& boostersGems.Contains("public int? Promise(uint app) {", StringComparison.Ordinal));
+
+			// ── 3. gems are worth what a sack pays, not its buyer price ──
+			var sackPrice = new NocatFarm.Core.MarketPrice(94, now, 94, 500);
+			int pays = NocatFarm.Core.SparePrices.Pays(sackPrice, 50).Cents;
+			NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("Sack", StringComparison.Ordinal)
+				? "{\"success\":true,\"lowest_price\":\"CDN$ 0.94\",\"volume\":\"4000\",\"median_price\":\"CDN$ 0.94\"}" : null, true));
+			await NocatFarm.Core.SparePrices.PriceSackAsync(Cad, CancellationToken.None);
+			Check("gems fix: a sack at 0.94 pays 0.81 after the fee - what gems are worth; the buyer's price is no longer used",
+				(pays == NocatFarm.Core.Seller.ReceiveFor(93)) && (pays == 81) && (NocatFarm.Core.SparePrices.SackPays(Cad, 50)?.Cents == 81)
+				&& (NocatFarm.Core.SparePrices.Sack(Cad)?.Cents == 94) && (NocatFarm.Core.SparePrices.SackPays(3, 50) == null)
+				&& (pays == NocatFarm.Modules.GemsChoice.Receive(Q(sack, 94, 500), 50)), $"{pays}");
+			var spareRules = new NocatFarm.Core.SpareRules { MaxPriceCents = 500 };
+			var card = new NocatFarm.Core.SpareItem(5, 900, NocatFarm.Core.SpareKind.Card, "900-X", "X", true, true, 1, 2, 0);
+			var toGems = new NocatFarm.Core.SpareDecision(card, NocatFarm.Core.SpareVerdict.Gems, new NocatFarm.Core.Said("x"), 0, 100);
+			var nowQuote = new NocatFarm.Core.MarketQuote("900-X", Cad, 13, 13, 10, DateTime.UtcNow.Ticks);
+			var byBuyer = NocatFarm.Core.SpareRun.BeforeGems(toGems, nowQuote, new NocatFarm.Core.MarketPrice(94, DateTime.UtcNow), spareRules, Cad, DateTime.UtcNow);
+			var byPays = NocatFarm.Core.SpareRun.BeforeGems(toGems, nowQuote, NocatFarm.Core.SparePrices.Pays(new NocatFarm.Core.MarketPrice(94, DateTime.UtcNow, 94, 500), 50), spareRules, Cad, DateTime.UtcNow);
+			Check("gems fix: an item whose sale pays 0.10 and whose 100 gems are worth 0.081 by what a sack pays is sold - by the sack's buyer price (0.094) it became gems",
+				(byBuyer == null) && (byPays != null), byPays?.ToEnglish() ?? "-");
+			Check("gems fix: every place that weighs gems against selling takes what a sack pays",
+				Src("src/NocatFarm/Core/SpareRun.cs").Contains("Sack = SparePrices.SackPays(currency, rules.DumpPct),", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/Seller.cs").Contains("gemsWorth = Spare.GemsWorth(goo.Value, SparePrices.SackPays(currency, rules.DumpPct)!.Value.Cents);", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/SpareSteam.cs").Contains("SpareRun.BeforeGems(d, now, SparePrices.SackPays(currency, rules.DumpPct)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/SpareSteam.cs").Contains("SparePrices.SackPays(currency, SpareRules.From(bot.Cfg).DumpPct)));", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/SwitchPreview.cs").Contains("SparePrices.SackPays(look.Currency, look.Rules.DumpPct)", StringComparison.Ordinal));
+			NocatFarm.Core.SparePrices.Reset();
+
+			// ── 4. gem values: kept over a restart; one Steam didn't answer waits; the ones the most items wait on first ──
+			NocatFarm.Core.SteamGems.ForgetLoaded();
+			NocatFarm.Core.SpareItem G(ulong id, uint app, int type) => new(id, app, NocatFarm.Core.SpareKind.Card, $"{app}-C{id}", $"C{id}", true, true, 1, type, 0);
+			NocatFarm.Core.SteamGems.Remember(G(1, 4400, 2), 40);
+			NocatFarm.Core.SteamGems.ForgetLoaded();   // as after a restart
+			bool kept1 = NocatFarm.Core.SteamGems.KnownValue(G(2, 4400, 2)) == 40;
+			Check("gems fix: a gem value learned is kept over a restart (config/state/gemvalues.json) - every update forgot them all",
+				kept1 && File.Exists(Path.Combine(root, "config", "state", "gemvalues.json")) && (NocatFarm.Core.SteamGems.KnownValue(G(3, 4401, 2)) == null));
+			NocatFarm.Core.SteamGems.NoAnswer(G(4, 4402, 2), DateTime.UtcNow);
+			Check("gems fix: one Steam didn't answer isn't asked again for a while; one known isn't asked at all",
+				!NocatFarm.Core.SteamGems.Ask(G(4, 4402, 2), DateTime.UtcNow.AddHours(1)) && NocatFarm.Core.SteamGems.Ask(G(4, 4402, 2), DateTime.UtcNow.AddHours(7))
+				&& !NocatFarm.Core.SteamGems.Ask(G(1, 4400, 2), DateTime.UtcNow) && NocatFarm.Core.SteamGems.Ask(G(3, 4401, 2), DateTime.UtcNow));
+
+			NocatFarm.Core.SteamGems.ForgetLoaded();
+			NocatFarm.Core.SparePrices.Get = static (_, _) => Task.FromResult<(string?, bool)>((null, false));
+			List<NocatFarm.Core.SpareItem> items = [G(10, 5000, 2)];   // the one Steam won't say
+			for (uint g = 1; g <= 24; g++) {
+				items.Add(G(10 + g, 5000 + g, 2));
+			}
+			for (ulong n = 0; n < 5; n++) {
+				items.Add(G(100 + n, 5099, 2));   // five copies wait on this one
+			}
+			var plan = new NocatFarm.Core.SparePlan([.. items.Select(static i => new NocatFarm.Core.SpareDecision(i, NocatFarm.Core.SpareVerdict.Unpriced, new NocatFarm.Core.Said("its gem value isn't known yet - kept")))]);
+			var steam = new GemValueSteam { NoAnswerGame = 5000 };
+			var gemRules = new NocatFarm.Core.SpareRules { On = true };
+			await NocatFarm.Core.SpareRun.PriceAsync(() => plan, items, gemRules, 1, 0, false, false, steam, CancellationToken.None);
+			List<uint> first = [.. steam.Asked];
+			steam.Asked.Clear();
+			await NocatFarm.Core.SpareRun.PriceAsync(() => plan, items, gemRules, 1, 0, false, false, steam, CancellationToken.None);
+			List<uint> second = [.. steam.Asked];
+			steam.Asked.Clear();
+			NocatFarm.Core.SteamGems.ForgetLoaded();   // a restart
+			await NocatFarm.Core.SpareRun.PriceAsync(() => plan, items, gemRules, 1, 0, false, false, steam, CancellationToken.None);
+			List<uint> third = [.. steam.Asked];
+			Check("gems fix: 20 gem values a look, the one the most items wait on first; the next look asks only the ones still unknown, not the one Steam didn't answer; after a restart only that one again",
+				(first.Count == 20) && (first[0] == 5099) && first.Contains(5000u) && (second.Count == 6) && !second.Intersect(first).Any() && third.SequenceEqual([5000u]),
+				$"{string.Join(",", first)} | {string.Join(",", second)} | {string.Join(",", third)}");
+			NocatFarm.Core.SparePrices.Reset();
+			NocatFarm.Core.SteamGems.ForgetLoaded();
+
+			// ── 5. sealed packs that came in, weighed ──
+			var pm = new FakeGemsMarket();
+			pm.Held["600-Arcane Raise Booster Pack"] = Q("600-Arcane Raise Booster Pack", 100, 20);
+			var forBadge = NocatFarm.Modules.GemsChoice.WeighPack(600, "Arcane Raise", "600-Arcane Raise Booster Pack", arcane, true, pm, Cad, now, 0, 0);
+			var notLevelling = NocatFarm.Modules.GemsChoice.WeighPack(600, "Arcane Raise", "600-Arcane Raise Booster Pack", arcane, false, pm, Cad, now, 0, 0);
+			var noSet = NocatFarm.Modules.GemsChoice.WeighPack(600, "Arcane Raise", "600-Arcane Raise Booster Pack", null, true, pm, Cad, now, 0, 0);
+			var nothing = NocatFarm.Modules.GemsChoice.WeighPack(601, "Nothing", "601-Nothing Booster Pack", null, false, pm, Cad, now, 0, 0);
+			Check("gems fix: a sealed pack weighed three ways - sold sealed, its 3 cards sold, opened for a badge it's levelling (its cards at what buying them costs)",
+				(forBadge.Sealed == NocatFarm.Modules.GemsChoice.Receive(Q("x", 100, 20), 0)) && (forBadge.Cards == 3 * NocatFarm.Core.Seller.ReceiveFor(NocatFarm.Core.Seller.UndercutFor(60)))
+				&& (forBadge.Badge == 180) && (forBadge.Best == NocatFarm.Modules.GemsChoice.PackUse.OpenBadge)
+				&& (notLevelling.Badge == 0) && (notLevelling.Best == NocatFarm.Modules.GemsChoice.PackUse.OpenSell)
+				&& (noSet.Best == NocatFarm.Modules.GemsChoice.PackUse.SellSealed) && (nothing.Best == NocatFarm.Modules.GemsChoice.PackUse.Unknown),
+				$"{forBadge} {notLevelling.Best} {noSet.Best}");
+			var close = new NocatFarm.Modules.GemsChoice.PackWorth(1, "x", 100, 110, 0);
+			Check("gems fix: as for gems, a way that relies on the market more has to win clearly - 3 cards at 1.10 don't beat a sealed pack at 1.00",
+				close.Best == NocatFarm.Modules.GemsChoice.PackUse.SellSealed);
+			var defaults = new NocatFarm.Config.BotConfig();
+			string fateDefault = NocatFarm.Modules.GemsChoice.Fate(defaults, forBadge, NocatFarm.Modules.GemsChoice.PackUse.OpenBadge);
+			string fateAlways = NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = 2 }, forBadge, NocatFarm.Modules.GemsChoice.PackUse.OpenBadge);
+			string fateSell = NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { BoosterUnopened = 2, SpareItems = true }, noSet, NocatFarm.Modules.GemsChoice.PackUse.SellSealed);
+			Check("gems fix: 'booster plan' says what the settings do with it - by default kept sealed, and which setting would do the best",
+				(defaults.OpenBoosterPacks == 0) && (defaults.BoosterUnopened == 0)
+				&& (fateDefault == "your settings keep it sealed - \"Open booster packs\": always would open it for its badge") && (fateAlways == "your settings open it")
+				&& (fateSell == "your settings sell it sealed"), $"{fateDefault} | {fateAlways} | {fateSell}");
+			Check("gems fix: 'booster plan' weighs the sealed packs that came in",
+				Src("src/NocatFarm/Commands.Booster.cs").Contains("await Boosters.PacksPreviewAsync(b, inventory, badges.Levels, CancellationToken.None)", StringComparison.Ordinal));
+
+			// ── 6. items over the price limit: one line, once a day ──
+			NocatFarm.Core.SpareItem I(ulong id, string name) => new(id, 730, NocatFarm.Core.SpareKind.Other, "730-" + name, name, true, true);
+			var overPlan = new NocatFarm.Core.SparePlan([
+				new(I(1, "crown"), NocatFarm.Core.SpareVerdict.OverLimit, new NocatFarm.Core.Said("worth {0} - over your price limit, never touched", "2.78"), 278),
+				new(I(2, "toilet"), NocatFarm.Core.SpareVerdict.OverLimit, new NocatFarm.Core.Said("worth {0} - over your price limit, never touched", "0.76"), 76),
+				new(I(3, "other"), NocatFarm.Core.SpareVerdict.Keep, new NocatFarm.Core.Said("x"), 5)]);
+			string overLine = NocatFarm.Core.SpareRun.OverLimitSaid(overPlan, 75, Cad)?.ToEnglish() ?? "";
+			Check("gems fix: items over the price limit in one short line with what they're worth together",
+				(overLine == "2 item(s) worth 3.54 CAD are over your 0.75 price limit - raise it to sell them")
+				&& (NocatFarm.Core.SpareRun.OverLimitSaid(new NocatFarm.Core.SparePlan([]), 75, Cad) == null), overLine);
+			var ledger = NocatFarm.Core.SpareLedger.Load("gemsfix-acct");
+			DateTime morning = new(2026, 10, 19, 9, 0, 0, DateTimeKind.Local);
+			bool d1 = ledger.OverLimitDue(morning), d2 = ledger.OverLimitDue(morning.AddHours(1));
+			ledger.Save();
+			NocatFarm.Core.SpareLedger.ForgetLoaded();   // a restart
+			var back = NocatFarm.Core.SpareLedger.Load("gemsfix-acct");
+			bool d3 = back.OverLimitDue(morning.AddHours(5)), d4 = back.OverLimitDue(morning.AddDays(1));
+			Check("gems fix: said once a day, not every hour - and not again after a restart the same day", d1 && !d2 && !d3 && d4, $"{d1} {d2} {d3} {d4}");
+			string spareRun = Src("src/NocatFarm/Core/SpareRun.cs");
+			Check("gems fix: the line goes to the log at Info once a day; the hourly reasons stay in the debug line",
+				spareRun.Contains("if ((OverLimitSaid(look.Plan, look.Rules.MaxPriceCents, look.Currency) is { } over) && look.Ledger.OverLimitDue(DateTime.Now)) {", StringComparison.Ordinal)
+				&& spareRun.Contains("Log.Info(over, bot.Name);", StringComparison.Ordinal)
+				&& spareRun.Contains("Log.Debug($\"spare items left alone: {Columns.ClipChars(left, LeftAloneMax, \"...\")}\", bot.Name);", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Core.SparePrices.Get = realGet;
+			NocatFarm.Core.SparePrices.Reset();
+			NocatFarm.Core.SteamGems.ForgetLoaded();
+			NocatFarm.Core.SpareLedger.ForgetLoaded();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>The gems maths' pretend market with what each game's pack promises (US cents) - everything else the plain fake's.</summary>
+sealed class PromiseGemsMarket : NocatFarm.Modules.GemsChoice.IMarket {
+	public FakeGemsMarket Inner { get; } = new();
+	public Dictionary<uint, int> Promises { get; } = [];
+
+	public NocatFarm.Core.MarketQuote? Known(string hash, int currency) => Inner.Known(hash, currency);
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => Inner.QuoteAsync(hash, currency, ct);
+	public NocatFarm.Modules.CardSet? KnownSet(uint app) => Inner.KnownSet(app);
+	public Task<(NocatFarm.Modules.CardSet? Set, bool Asked)> SetAsync(uint app, CancellationToken ct) => Inner.SetAsync(app, ct);
+	public double? Rate(int currency) => Inner.Rate(currency);
+	public int? Promise(uint app) => Promises.TryGetValue(app, out int p) ? p : null;
+}
+
+/// <summary>A pretend Steam for gem values: notes each game asked about, and answers as the real one is noted (one game it won't say).</summary>
+sealed class GemValueSteam : NocatFarm.Core.ISpareSteam {
+	public List<uint> Asked { get; } = [];
+	public uint NoAnswerGame { get; init; }
+
+	public Task<int?> GemValueAsync(NocatFarm.Core.SpareItem item, CancellationToken ct) {
+		Asked.Add(item.Game);
+
+		if (item.Game == NoAnswerGame) {
+			NocatFarm.Core.SteamGems.NoAnswer(item, DateTime.UtcNow);
+
+			return Task.FromResult<int?>(null);
+		}
+
+		NocatFarm.Core.SteamGems.Remember(item, 40);
+
+		return Task.FromResult<int?>(40);
+	}
+
+	public Task<(bool Ok, int Gems, string? Why)> GrindAsync(NocatFarm.Core.SpareItem item, int expected, CancellationToken ct) => Task.FromResult((false, 0, (string?) "no"));
+	public Task<(int Listed, string Said)> SellAsync(IReadOnlyList<NocatFarm.Core.SpareDecision> items, CancellationToken ct) => Task.FromResult((0, ""));
+	public Task<(bool Ok, string? Why)> PackSacksAsync(NocatFarm.Core.SpareItem gems, int sacks, CancellationToken ct) => Task.FromResult((false, (string?) "no"));
+	public Task<(bool Ok, List<string> Cards, string? Why)> UnpackAsync(NocatFarm.Core.SpareItem pack, CancellationToken ct) => Task.FromResult((false, new List<string>(), (string?) "no"));
+	public Task<string> SendAsync(IReadOnlyList<NocatFarm.Core.SpareItem> items, string toAccount, CancellationToken ct) => Task.FromResult("");
+	public HashSet<ulong> Claim(IEnumerable<ulong> ids) => [.. ids];
+	public void Release(IEnumerable<ulong> ids) { }
+	public Task<bool> PauseAsync(CancellationToken ct) => Task.FromResult(true);
 }

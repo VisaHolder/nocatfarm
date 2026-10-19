@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -37,8 +38,63 @@ public sealed partial class Boosters {
 
 		private Dictionary<uint, SetFinder.KnownSet>? _known;
 
-		public CardSet? KnownSet(uint app) =>
-			(_known ??= SetFinder.Shared.Known(DateTime.UtcNow).ToDictionary(static k => k.App)).TryGetValue(app, out SetFinder.KnownSet? k) ? k.ToCardSet() : null;
+		/// <summary>The set finder's whole sets, read once a weighing.</summary>
+		private Dictionary<uint, SetFinder.KnownSet> Finder => _known ??= SetFinder.Shared.Known(DateTime.UtcNow).ToDictionary(static k => k.App);
+
+		/// <summary>
+		/// A game's whole set held without asking: the set finder's - 1.8.2: or one read whole for buying cards or the level
+		/// plan, or the game's shortlist from spare items, either in the last <see cref="GemsChoice.ChooseFresh"/>. Only the
+		/// set finder's counted before, so a set read a day ago was asked for again or not weighed at all once a look's
+		/// lookups were used.
+		/// </summary>
+		public CardSet? KnownSet(uint app) {
+			if (Finder.TryGetValue(app, out SetFinder.KnownSet? k)) {
+				return k.ToCardSet();
+			}
+
+			if ((LevelPlanner.HeldWhole(app) is { } held) && (DateTime.UtcNow - held.At <= GemsChoice.ChooseFresh)) {
+				return new CardSet(app, GameNames.Of(app), [.. held.Cards.Keys.Order(StringComparer.Ordinal)], held.Cards);
+			}
+
+			return ShortlistCards(app, GemsChoice.ChooseFresh) is { Count: > 0 } cards
+				? new CardSet(app, GameNames.Of(app), [.. cards.Keys.Order(StringComparer.Ordinal)], cards) : null;
+		}
+
+		/// <summary>A game's normal cards on its spare-items shortlist (US cents), when it's at most <paramref name="age"/> old - else null.</summary>
+		private static Dictionary<string, int>? ShortlistCards(uint app, TimeSpan age) =>
+			(SparePrices.Cached(app) is { } g) && (DateTime.UtcNow - g.When <= age)
+				? g.Items.Where(static r => r.Value.Kind == SpareKind.Card).ToDictionary(static r => r.Key, static r => r.Value.Cents, StringComparer.Ordinal) : null;
+
+		/// <summary>
+		/// 1.8.2: what a game's pack holds, roughly, in US cents - the pack on its shortlist, or 3 of its cards on average from
+		/// the shortlist or any set read - however old. Only which packs to price first.
+		/// </summary>
+		public int? Promise(uint app) {
+			int best = 0;
+
+			void Cards(IEnumerable<int> cents) {
+				List<int> listed = [.. cents.Where(static c => c > 0)];
+
+				if (listed.Count > 0) {
+					best = Math.Max(best, (int) Math.Min(int.MaxValue, 3 * listed.Average()));
+				}
+			}
+
+			if (SparePrices.Cached(app) is { } g) {
+				best = Math.Max(best, g.Items.Values.Where(static r => r.Kind == SpareKind.BoosterPack).Select(static r => r.Cents).DefaultIfEmpty(0).Max());
+				Cards(g.Items.Values.Where(static r => r.Kind == SpareKind.Card).Select(static r => r.Cents));
+			}
+
+			if (Finder.TryGetValue(app, out SetFinder.KnownSet? k)) {
+				Cards(k.Usd.Values);
+			}
+
+			if (LevelPlanner.KnownSet(app) is { } any) {
+				Cards(any.Values);
+			}
+
+			return best > 0 ? best : null;
+		}
 
 		public async Task<(CardSet? Set, bool Asked)> SetAsync(uint app, CancellationToken ct) {
 			PriceBook.Background.Value = true;
@@ -56,8 +112,17 @@ public sealed partial class Boosters {
 		?? (BotManager.ModuleOf<CardBuyer>(Bot) is { } buyer ? await buyer.LevelCostsAsync(currency, LevelPlanner.NormalCards(inventory), ct).ConfigureAwait(false) : null);
 
 	/// <summary>Everything one weighing needs.</summary>
-	private GemsChoice.Inputs GemsInputs(Page page, BoosterPick.Ranking ranking, IReadOnlyList<long>? costs) =>
-		new(WalletCurrency, page, ranking, costs, Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95), Bot.Cfg.BoosterNeverOpen, DateTime.UtcNow);
+	private GemsChoice.Inputs GemsInputs(Page page, BoosterPick.Ranking ranking, IReadOnlyList<long>? costs) => InputsOf(Bot, WalletCurrency, page, ranking, costs);
+
+	/// <summary>
+	/// Everything one weighing needs, for an account: 1.8.2 with its keep list and price limit, which the listing keeps to -
+	/// so the maths never picks a pack or cards that would then never be sold.
+	/// </summary>
+	private static GemsChoice.Inputs InputsOf(Bot bot, int currency, Page page, BoosterPick.Ranking ranking, IReadOnlyList<long>? costs) {
+		SpareRules rules = SpareRules.From(bot.Cfg);
+
+		return new(currency, page, ranking, costs, Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95), bot.Cfg.BoosterNeverOpen, DateTime.UtcNow, rules.KeepGames, rules.MaxPriceCents);
+	}
 
 	/// <summary>
 	/// One look's gems step: first whatever it made to sell and hasn't listed yet, then the maths and what it says. Handled:
@@ -328,6 +393,8 @@ public sealed partial class Boosters {
 			return true;
 		}
 
+		SpareRules rules = SpareRules.From(Bot.Cfg);
+
 		// Its sealed packs: never for less than their gems would pay as a sack.
 		if (packs.Count > 0) {
 			if (AutoMemory.Locate(BadgeCraft.Packs(inventory, []))) {
@@ -341,6 +408,15 @@ public sealed partial class Boosters {
 
 			foreach (BoosterPick.OwnPack own in packs) {
 				if ((own.Asset == 0) || (items.FirstOrDefault(i => i.AssetId == own.Asset) is not { Marketable: true } item)) {
+					continue;
+				}
+
+				// 1.8.2: its game went on the keep list since: never listed (the listing would refuse it every look) - let go of,
+				// a pack like any other.
+				if (rules.KeepGames.Contains(own.App)) {
+					AutoMemory.Remove(own);
+					AutoMemory.Save(Bot.Name);
+					Log.Debug($"gems: the {own.Name} pack made to sell isn't listed - its game is on the keep list", Bot.Name);
 					continue;
 				}
 
@@ -364,14 +440,15 @@ public sealed partial class Boosters {
 			return false;
 		}
 
-		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth. 1.8.2: by the
-		// spare items rules too - never a card of a game (or a card) on the keep list, never one worth more than "Never touch
-		// items worth more than", one whose gem value isn't known is kept for now, and never a card of a set the account is
-		// levelling or buying cards for (cards of it held besides the pack's, bought for a badge, or packs working on it).
+		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth. 1.8.2: they were
+		// made for money, so they're sold even when the account holds other cards of the game or is levelling it - kept as
+		// "being levelled", they undid the best way the gems maths had found (Arcane Raise on new). Never a card on the keep
+		// list (its game, or itself - the maths never picks a keep-listed game), never one worth more than "Never touch items
+		// worth more than" (the maths counts those as nothing), and one whose gem value isn't known is asked about first.
 		HashSet<ulong> taken = [];
 		List<(Seller.Offer Offer, GemsChoice.Memory.OpenedCard Card, int Min)> rows = [];
-		SpareRules rules = SpareRules.From(Bot.Cfg);
-		HashSet<uint> working = [.. CardExchange.BoughtGames(Bot.Name, DateTime.UtcNow), .. BoosterPick.Busy(Bot)];
+		LiveSpareSteam? steam = null;
+		int gemAsks = 0;
 
 		foreach (GemsChoice.Memory.OpenedCard card in cards) {
 			SpareItem? item = items.FirstOrDefault(i => (i.Kind == SpareKind.Card) && (i.Game == card.App) && i.Marketable && !taken.Contains(i.AssetId)
@@ -382,14 +459,19 @@ public sealed partial class Boosters {
 				continue;
 			}
 
-			if (rules.KeepGames.Contains(card.App) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)
-				|| Levelling(card.App, items, cards, working)) {
+			if (KeepsOpened(card.App, item, rules)) {
 				mem.RemoveCard(card);   // kept: a spare card like any other from now on
-				Log.Debug($"gems: {item.Name} ({GameNames.Of(card.App)}) kept - on the keep list, or its set is being levelled", Bot.Name);
+				Log.Debug($"gems: {item.Name} ({GameNames.Of(card.App)}) kept - on the keep list", Bot.Name);
 				continue;
 			}
 
-			if (SteamGems.KnownValue(item) is not int goo) {
+			int? known = SteamGems.KnownValue(item);
+
+			if ((known == null) && (gemAsks++ < GemAsksALook)) {
+				known = await (steam ??= new LiveSpareSteam(Bot)).GemValueAsync(item, ct).ConfigureAwait(false);
+			}
+
+			if (known is not int goo) {
 				continue;   // what its gems are worth isn't known yet: not sold for now
 			}
 
@@ -414,12 +496,16 @@ public sealed partial class Boosters {
 		return true;
 	}
 
+	/// <summary>Gem values of opened cards one look may ask Steam for (a pack's 3 cards).</summary>
+	private const int GemAsksALook = 3;
+
 	/// <summary>
-	/// 1.8.2: whether the account is levelling a game's set, so a card of it from a pack opened to sell is needed: cards of it
-	/// held besides the ones from packs opened to sell, cards of it bought for a badge, or automatic's packs working on it.
+	/// 1.8.2: whether a card from a pack opened to sell is kept instead: only when it's on the keep list - its game ("Never
+	/// touch items from these games") or itself by name. Cards of the game held besides, or its badge being levelled, don't
+	/// keep it: the pack was made for the money its cards bring.
 	/// </summary>
-	internal static bool Levelling(uint app, IReadOnlyList<SpareItem> items, IReadOnlyList<GemsChoice.Memory.OpenedCard> opened, IReadOnlySet<uint> working) =>
-		working.Contains(app) || (items.Count(i => (i.Kind == SpareKind.Card) && (i.Game == app)) > opened.Count(c => c.App == app));
+	public static bool KeepsOpened(uint app, SpareItem item, SpareRules rules) =>
+		rules.KeepGames.Contains(app) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash);
 
 	/// <summary>A pack automatic opened to sell its cards: the cards noted, to be listed at the next looks.</summary>
 	internal static void OpenedToSell(Bot bot, BoosterPick.OwnPack own, IReadOnlyList<string> cards) {
@@ -433,6 +519,76 @@ public sealed partial class Boosters {
 	}
 
 	// ── 'booster plan' and 'buy preview' ────────────────────────────────────
+	/// <summary>Games whose sealed packs 'booster plan' weighs, at most.</summary>
+	private const int PacksShown = 10;
+
+	/// <summary>
+	/// 1.8.2, for 'booster plan': the sealed packs in the inventory that automatic didn't make (drops, trades, "games I
+	/// pick") - each game's weighed three ways (<see cref="GemsChoice.WeighPack"/>), the best of them, and what the account's
+	/// settings do with it. By default "Open booster packs" is never and "Packs it doesn't open" keeps them, so a dropped pack
+	/// is never used for levels or money - this says what it would be worth. Prices a few it doesn't know yet (pack prices
+	/// and sets, <see cref="GemsChoice.LearnALook"/>); nothing is opened, sent or sold. Null when there are no such packs.
+	/// </summary>
+	public static async Task<string?> PacksPreviewAsync(Bot bot, InventoryContents inventory, IReadOnlyDictionary<uint, int> levels, CancellationToken ct) {
+		BoosterPick.Memory memory = BotManager.ModuleOf<Boosters>(bot)?.AutoMemory ?? BoosterPick.Memory.Load(bot.Name);
+		HashSet<ulong> own = [.. memory.Ids(), .. memory.ForSaleIds()];
+		List<IGrouping<uint, SpareItem>> games = [.. Spare.Read(inventory).Where(i => (i.Kind == SpareKind.BoosterPack) && !own.Contains(i.AssetId))
+			.GroupBy(static i => i.Game).OrderByDescending(static g => g.Count()).ThenBy(static g => g.Key)];
+
+		if (games.Count == 0) {
+			return null;
+		}
+
+		int cur = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		if (cur <= 0) {
+			return $"Sealed packs ({games.Sum(static g => g.Count())}): Steam hasn't said this account's wallet currency yet - nothing weighed.";
+		}
+
+		LiveMarket market = new(bot);
+		SpareRules rules = SpareRules.From(bot.Cfg);
+		int dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		Dictionary<uint, Dictionary<string, int>> normal = LevelPlanner.NormalCards(inventory);
+		int learned = 0;
+		List<GemsChoice.PackWorth> weighed = [];
+
+		foreach (IGrouping<uint, SpareItem> g in games.Take(PacksShown)) {
+			SpareItem pack = g.First();
+			CardSet? set = market.KnownSet(g.Key);
+
+			// A few it doesn't know yet: the pack's price, then its set.
+			if ((learned < GemsChoice.LearnALook) && (MarketQuotes.Of(pack.Hash, cur) is not { } q || (DateTime.UtcNow - q.When > GemsChoice.ChooseFresh)) && pack.Marketable) {
+				learned++;
+				await market.QuoteAsync(pack.Hash, cur, ct).ConfigureAwait(false);
+			}
+
+			if ((set == null) && (learned < GemsChoice.LearnALook)) {
+				(set, bool asked) = await market.SetAsync(g.Key, ct).ConfigureAwait(false);
+				learned += asked ? 1 : 0;
+			}
+
+			int level = levels.GetValueOrDefault(g.Key);
+			bool levelling = (level < BuyPlan.MaxLevel) && ((level > 0) || normal.ContainsKey(g.Key));
+			weighed.Add(GemsChoice.WeighPack(g.Key, GameNames.Of(g.Key), pack.Hash, set, levelling, market, cur, DateTime.UtcNow, dump, rules.MaxPriceCents));
+		}
+
+		StringBuilder sb = new($"Sealed packs that came in ({games.Sum(static g => g.Count())}) - each weighed: sold sealed, its 3 cards sold, or opened for its badge:");
+
+		foreach (GemsChoice.PackWorth w in weighed.OrderByDescending(static w => Math.Max(w.Sealed, Math.Max(w.Cards, w.Badge)))) {
+			string Part(string what, long cents) => $"{what} {(cents > 0 ? BuyPlan.Money(cents, cur) : "-")}";
+			GemsChoice.PackUse best = w.Best;
+			int count = games.First(g => g.Key == w.App).Count();
+			sb.AppendLine().Append(CultureInfo.InvariantCulture,
+				$"  {w.Game}{(count > 1 ? $" x{count}" : "")}: {Part("sealed pays", w.Sealed)} · {Part("its cards about", w.Cards)} · {Part("toward its badge about", w.Badge)} → {GemsChoice.Words(best)}; {GemsChoice.Fate(bot.Cfg, w, best)}");
+		}
+
+		if (games.Count > PacksShown) {
+			sb.AppendLine().Append(CultureInfo.InvariantCulture, $"  ...and {games.Count - PacksShown} more game(s)");
+		}
+
+		return sb.ToString();
+	}
+
 	/// <summary>
 	/// The gems maths for the previews, in one line - or why it isn't in play. Reads the booster creator, the badges and the
 	/// inventory when the caller hasn't; prices a few things it doesn't know yet. Nothing is made, listed or bought.
@@ -478,7 +634,7 @@ public sealed partial class Boosters {
 		int cur = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
 		IReadOnlyList<long>? costs = GemsChoice.CostsOf(bot.Name, cur, DateTime.UtcNow)
 			?? (BotManager.ModuleOf<CardBuyer>(bot) is { } buyer ? await buyer.LevelCostsAsync(cur, LevelPlanner.NormalCards(inventory), ct).ConfigureAwait(false) : null);
-		GemsChoice.Inputs x = new(cur, page, ranking, costs, Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95), bot.Cfg.BoosterNeverOpen, DateTime.UtcNow);
+		GemsChoice.Inputs x = InputsOf(bot, cur, page, ranking, costs);
 		GemsChoice.Choice choice = await GemsChoice.WeighAsync(x, new LiveMarket(bot), GemsChoice.LearnALook, ct).ConfigureAwait(false);
 
 		return $"Use gems for the most levels ({page.TradableGems:N0} tradable gems): {GemsChoice.Line(choice)}";

@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} 现在在“永不打开这些游戏的补充包”里 —— 为它制作的补充包保持不打开",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "它的一个上架还在手机上等待确认 - 处理完之前不会上架其他副本",
     "worth {0} - over your price limit, never touched": "价值 {0} - 超过你的价格上限，绝不动它",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} 件物品（共 {1}）超过你的价格上限 {2} - 提高上限才能卖掉它们",
     "worth {0} now - over your price limit, not listed": "现在价值 {0} - 超过你的价格上限，不上架",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} 的多余物品预览：{1} 件转成宝石，{2} 件出售。在它的设置里打开多余物品之前什么都不会发生 - 'spare preview {0}' 会逐个列出。",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} 从 {2} 降到 {3} - {1} 天没卖出",

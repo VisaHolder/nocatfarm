@@ -2912,6 +2912,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} artık \"Bu oyunların paketlerini asla açma\" listesinde - onun için yaptığı kart paketi kapalı kalıyor",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "bir ilanı hâlâ telefonunda onay bekliyor - bu netleşene kadar başka kopyası listelenmez",
     "worth {0} - over your price limit, never touched": "değeri {0} - fiyat sınırının üstünde, asla dokunulmaz",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{1} değerindeki {0} eşya {2} fiyat sınırının üstünde - satmak için sınırı yükselt",
     "worth {0} now - over your price limit, not listed": "şimdi değeri {0} - fiyat sınırının üstünde, listelenmedi",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} için fazla eşya önizlemesi: {1} taşa, {2} satışa. Ayarlarında Fazla eşyaları açana kadar hiçbir şey olmaz - 'spare preview {0}' her birini gösterir.",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} {2} fiyatından {3} fiyatına indirildi - {1} gündür satılmadı",
