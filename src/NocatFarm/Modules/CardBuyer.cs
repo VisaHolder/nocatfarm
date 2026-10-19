@@ -2679,8 +2679,16 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			List<SetSale.Verdict> weighed = [];
+			HashSet<uint> bought = CardExchange.BoughtGames(Bot.Name, DateTime.UtcNow);
 
 			foreach (SetSale.Ready r in asked) {
+				// Cards were bought to finish it - for the level: crafted, never sold (as badge crafting decides - SetSale.ChooseAsync).
+				if ((r.Border == 0) && bought.Contains(r.App)) {
+					weighed.Add(As(r, SetSale.Crafted(r.App, Game(r.App), plan.Currency, new Said("cards were bought to finish it - crafted, never sold"))));
+
+					continue;
+				}
+
 				CardSet? set = plan.Complete.Select(static c => c.Set).FirstOrDefault(s => s.App == r.App) ?? await _market.SetAsync(r.App, ct).ConfigureAwait(false);
 				bool foil = r.Border > 0;
 
