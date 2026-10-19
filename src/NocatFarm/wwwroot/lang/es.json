@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "su colección no se conoce entera en el mercado",
     "selling sets instead of crafting is off": "vender colecciones en vez de crearlas está desactivado",
     "buying cards is off": "comprar cartas está desactivado",
-    "a foil set is always crafted": "una colección metálica siempre se crea",
     "{0} sets ready, crafted together": "{0} colecciones listas, creadas juntas",
     "only {0} sets are weighed a look": "solo se comparan {0} colecciones por vistazo",
     "buying cards isn't running": "comprar cartas no está en marcha",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "el mercado dejó de responder antes de saber qué compraría el dinero",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} solo se vendió {1} vez/veces en el último día - espera, el set vale {2} ({3} niveles)",
     "it has no Steam wallet to spend the money from": "no tiene cartera de Steam en la que gastar el dinero",
-    "on your keep list - its set is crafted, never sold": "en tu lista de conservar - su set se crea, nunca se vende"
+    "on your keep list - its set is crafted, never sold": "en tu lista de conservar - su set se crea, nunca se vende",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "cartas que valen más vendidas que guardadas: el inventario no está a mano para ponerlas a la venta - en la próxima revisión",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: {1} de {2} cartas a la venta · el resto espera a la próxima revisión",
+    "selling buys about {0} levels, keeping makes {1}": "vender compra unos {0} niveles, guardar da {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "guardar da {0} nivel(es), vender compra unos {1}",
+    "cards worth more sold than kept: not weighed · {0}": "cartas que valen más vendidas que guardadas: no se valoró · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: cartas guardadas - no es seguro que valgan más vendidas · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: sus cartas vuelven a valer más guardadas · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas valen más que sus niveles - se venden por unos {2} ≈ {3} niveles baratos",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · lo más barato {3} · recibes {4} por cada una",
+    "its price fell since it was weighed - not listed": "su precio bajó desde que se valoró - no se puso a la venta",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "vendiendo el set brillante de {0} en vez de crearlo: {1} compra unos {2} niveles",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "vendiendo {0} sets de {1} en vez de crearlos: {2} compra unos {3} niveles",
+    "sets worth more sold than crafted wait uncrafted · {0}": "los sets que valen más vendidos que creados esperan sin crearse · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "lo que queda de un set vendido en vez de creado - paga {0}",
+    "what's left of a set sold instead of crafted pays nothing": "lo que queda de un set vendido en vez de creado no paga nada",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "no se sabe ahora qué compra el dinero - la compra de cartas aún no ha puesto precio a sus próximos niveles",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas brillantes valen más que su nivel - se venden por unos {2} ≈ {3} niveles baratos",
+    "its cards are being sold - worth more than the levels they'd make": "sus cartas se están vendiendo - valen más que los niveles que darían",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} compra unos {1} niveles · {2} apenas se vende, pero el set ya esperó bastante - se pone a la venta igualmente",
+    "{0} sets worth {1} buy only {2} levels": "{0} sets que valen {1} compran solo {2} niveles",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra unos {1} niveles, pero Steam no le deja comprar cartas por sí sola - espera hasta que pueda"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vender un set en vez de crearlo cuando el dinero compra más niveles",
-      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de crear una insignia normal, mira por cuánto se vende la colección en el mercado, tras la comisión de Steam. Si ese dinero compra claramente más niveles de insignia que el 1 que da crearla, pone la colección a la venta en su lugar, y la compra de cromos gasta el dinero dentro de sus límites. Por ejemplo, una colección que deja 5,00 cuando los niveles más baratos cuestan unos 0,40 cada uno compra unos 12 niveles en vez de 1. Confirmas cada anuncio en la app de Steam, como cualquier anuncio. Las colecciones brillantes siempre se crean."
+      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de crear una insignia normal, mira por cuánto se vende la colección en el mercado, tras la comisión de Steam. Si ese dinero compra claramente más niveles de insignia que el 1 que da crearla, pone la colección a la venta en su lugar, y la compra de cromos gasta el dinero dentro de sus límites. Por ejemplo, una colección que deja 5,00 cuando los niveles más baratos cuestan unos 0,40 cada uno compra unos 12 niveles en vez de 1. Confirmas cada anuncio en la app de Steam, como cualquier anuncio. Las colecciones y los cromos brillantes se valoran igual: una insignia brillante es un nivel. También vende cromos guardados para una insignia que valen más vendidos que los niveles que darían: 7 cromos que dan unos 5,70 compran unos 14 niveles a 0,40, en vez de los 1 o 2 que darían guardados. Mientras se venden, no se compra ni se crean sobres para ese juego."
     },
     "CardSwaps": {
       "label": "Cambiar cromos sobrantes con otros usuarios de nocat.farm",

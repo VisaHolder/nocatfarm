@@ -420,6 +420,19 @@ public interface ICardMarket {
 	/// </summary>
 	Task<IReadOnlyDictionary<string, IReadOnlyList<string>>?> AssetsAsync(bool fresh, CancellationToken ct) =>
 		Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<string>>?>(null);
+
+	/// <summary>
+	/// 1.8.2: the inventory the plan read a few minutes ago, whole - never read again for this (Steam turns a quick second
+	/// read down as a duplicate). What a dear game's cards are listed from (<see cref="DearCards"/>). Null when there's none
+	/// at hand (or it isn't known here).
+	/// </summary>
+	Task<InventoryContents?> InventoryAsync(CancellationToken ct) => Task.FromResult<InventoryContents?>(null);
+
+	/// <summary>
+	/// 1.8.2: each game's foil badge level (0 or 1), from the badges the plan read - for weighing foil cards. Null when not
+	/// known (or not known here): foil cards aren't weighed then.
+	/// </summary>
+	Task<IReadOnlyDictionary<uint, int>?> FoilLevelsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<uint, int>?>(null);
 }
 
 /// <summary>
@@ -494,6 +507,12 @@ public sealed class BuyPlan {
 
 	/// <summary>The preview's word on each whole set: sold instead of crafted, or crafted (<see cref="SetSale"/>).</summary>
 	public List<SetSale.Verdict> Sales { get; } = [];
+
+	/// <summary>1.8.2: the normal cards held, game -> market name -> copies, as the plan read them (empty until it has).</summary>
+	public IReadOnlyDictionary<uint, Dictionary<string, int>> Held { get; set; } = new Dictionary<uint, Dictionary<string, int>>();
+
+	/// <summary>1.8.2: each game badge's normal level, as the plan read them (empty until it has).</summary>
+	public IReadOnlyDictionary<uint, int> Levels { get; set; } = new Dictionary<uint, int>();
 
 	/// <summary>Why something wasn't bought, in plain words (English - console replies stay English).</summary>
 	public List<string> Notes { get; } = [];
@@ -660,6 +679,8 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
+		plan.Levels = levels;
+
 		// The set finder's cheapest whole sets, for badges it can still level - on this PC's clock, like the finder's own.
 		finder ??= SetFinder.Shared;
 		IReadOnlyList<SetFinder.KnownSet> known = finder.Known(DateTime.UtcNow);
@@ -671,6 +692,8 @@ public sealed class BuyPlan {
 
 			return plan;
 		}
+
+		plan.Held = held;
 
 		long left = plan.Room;
 		long most = Math.Min(plan.DayLimit, plan.WeekLimit);
@@ -749,11 +772,18 @@ public sealed class BuyPlan {
 		List<(CardSet Set, int Level, List<string> Missing, bool Full)> candidates = [];
 		HashSet<uint> packs = boosting is null ? [] : [.. boosting];
 		HashSet<uint> sold = ledger.SoldSince(nowUtc - SetSale.NotBoughtFor);
+		HashSet<uint> dear = ledger.DearSince(nowUtc - SetSale.NotBoughtFor);
 		int sets = 0;
 
 		// A game automatic booster packs is saving gems for, or has a pack waiting to open for: its cards come from the packs.
-		// A set it just sold instead of crafting isn't bought back either.
+		// A set it just sold instead of crafting isn't bought back either, nor a game whose cards are worth more sold (1.8.2).
 		bool Boosting(CardSet set) {
+			if (dear.Contains(set.App)) {
+				plan.Notes.Add($"{set.Game}: its cards are worth more sold than the levels they'd make - not bought");
+
+				return true;
+			}
+
 			if (sold.Contains(set.App)) {
 				plan.Notes.Add($"{set.Game}: its set was just sold instead of crafted - not bought back");
 
@@ -984,16 +1014,26 @@ public sealed class BuyLedger(string path) {
 	}
 
 	/// <summary>A set sold instead of crafted (<see cref="SetSale"/>): its cards aren't bought back for a while.</summary>
-	public sealed record SoldSet(DateTime At, uint App);
+	/// <param name="Dear">1.8.2: not a set - the game's cards were worth more sold than the levels they'd make (<see cref="DearCards"/>).
+	/// Written when that's decided, so buying and booster packs leave the game alone while its cards are sold.</param>
+	public sealed record SoldSet(DateTime At, uint App, bool Dear = false);
+
+	/// <summary>
+	/// 1.8.2: a game's cards (its foil ones, <paramref name="Foil"/>) waiting since then to be sold - a card of them hardly
+	/// sells. After <see cref="SetSale.WaitAtMost"/> they're listed all the same: a slow sale beats one that never happens.
+	/// </summary>
+	public sealed record Waiting(DateTime Since, uint App, bool Foil = false);
 
 	internal sealed class Stored {
 		public bool Ok { get; set; }
 		public List<Entry> Entries { get; set; } = [];
 		public List<SoldSet> Sold { get; set; } = [];
+		public List<Waiting> Waits { get; set; } = [];
 	}
 
 	private List<Entry>? _entries;
 	private List<SoldSet> _sold = [];
+	private List<Waiting> _waits = [];
 	private bool _ok, _onDisk, _unreadable;
 	private readonly Lock _gate = new();
 
@@ -1121,6 +1161,55 @@ public sealed class BuyLedger(string path) {
 		}
 	}
 
+	/// <summary>1.8.2: the games whose cards were found worth more sold than kept since then (<see cref="DearCards"/>).</summary>
+	public HashSet<uint> DearSince(DateTime utc) {
+		lock (_gate) {
+			Load();
+
+			return [.. _sold.Where(e => e.Dear && (e.At >= utc)).Select(static e => e.App)];
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2: a game weighed again and found worth keeping after all - no longer left alone by buying and booster packs. True
+	/// when there was a mark to take off and it was saved.
+	/// </summary>
+	public bool ForgetDear(uint app) {
+		lock (_gate) {
+			Load();
+
+			return (_sold.RemoveAll(e => e.Dear && (e.App == app)) > 0) && Save();
+		}
+	}
+
+	/// <summary>1.8.2: since when the game's cards (or foil cards) have waited to be sold - null when they aren't waiting.</summary>
+	public DateTime? WaitingSince(uint app, bool foil) {
+		lock (_gate) {
+			Load();
+
+			return _waits.FirstOrDefault(w => (w.App == app) && (w.Foil == foil))?.Since;
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2: the game's cards wait to be sold from now (<paramref name="waiting"/>), or no longer wait. The first time they
+	/// wait is kept; how long they've waited is what lets them go at last. Saved only when it changes.
+	/// </summary>
+	public void Wait(uint app, bool foil, bool waiting, DateTime now) {
+		lock (_gate) {
+			Load();
+			bool was = _waits.Exists(w => (w.App == app) && (w.Foil == foil));
+
+			if (waiting && !was) {
+				_waits.Add(new Waiting(now, app, foil));
+				Save();
+			} else if (!waiting && was) {
+				_waits.RemoveAll(w => (w.App == app) && (w.Foil == foil));
+				Save();
+			}
+		}
+	}
+
 	/// <summary>A set sold instead of crafted, written down. False when it couldn't be saved.</summary>
 	public bool AddSold(SoldSet sold) {
 		lock (_gate) {
@@ -1170,7 +1259,7 @@ public sealed class BuyLedger(string path) {
 
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			AtomicFile.Write(path, JsonSerializer.Serialize(new Stored { Ok = _ok, Entries = _entries ?? [], Sold = _sold }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(new Stored { Ok = _ok, Entries = _entries ?? [], Sold = _sold, Waits = _waits }));
 			_onDisk = true;
 
 			return true;
@@ -1192,6 +1281,7 @@ public sealed class BuyLedger(string path) {
 			_onDisk = read != null;
 			_entries = read?.Entries ?? [];
 			_sold = read?.Sold ?? [];
+			_waits = read?.Waits ?? [];
 			_ok = read?.Ok ?? false;
 		} catch (Exception e) {
 			// A list that can't be read counts the week as already spent, rather than nothing spent - and no go-ahead.
@@ -1268,6 +1358,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		/// <summary>The problem won't clear by itself (a setting, a block, Steam saying no) - the next look is at the usual time.</summary>
 		public bool Lasting { get; set; }
+
+		/// <summary>1.8.2: games whose cards were found worth more sold than kept this look (<see cref="DearCards"/>) - listed once the look is done.</summary>
+		public List<DearCards.Verdict> Dear { get; } = [];
+
+		/// <summary>1.8.2: their cards that went up on the market.</summary>
+		public int DearListed { get; set; }
 	}
 
 	/// <summary>One look at a time per account - across every copy of the module, so a restore can't make two buyers.</summary>
@@ -1444,15 +1540,110 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		return result;
 	}
 
-	/// <summary>Look, and - outside a preview, while it's on and the day allows - buy what the plan says. One look at a time.</summary>
+	/// <summary>
+	/// Look, and - outside a preview, while it's on and the day allows - buy what the plan says. One look at a time. 1.8.2:
+	/// then the cards of games found worth more sold than kept are listed - after the look, so purchases waiting on the
+	/// owner's phone aren't held up by listings minutes apart.
+	/// </summary>
 	public async Task<Result> LookAsync(Mode mode, CancellationToken ct) {
+		Result result;
 		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
-			return await LookLockedAsync(mode, ct).ConfigureAwait(false);
+			result = await LookLockedAsync(mode, ct).ConfigureAwait(false);
 		} finally {
 			BusyGate.Release();
 		}
+
+		if ((mode != Mode.Preview) && (result.Dear.Count > 0)) {
+			await SellDearAsync(result, ct).ConfigureAwait(false);
+		}
+
+		return result;
+	}
+
+	/// <summary>Lists a dear game's cards - how many went up. The checks give their own.</summary>
+	public Func<Bot, DearCards.Verdict, InventoryContents, CancellationToken, Task<int>> ListDear { get; set; } = DearCards.ListAsync;
+
+	/// <summary>
+	/// 1.8.2: the cards of the games this look found dear, listed from the inventory the plan read: one line a game, each
+	/// card at Debug. One game a look on a human-mode account, the others at later looks (they stay marked meanwhile).
+	/// </summary>
+	private async Task SellDearAsync(Result result, CancellationToken ct) {
+		if (await _market.InventoryAsync(ct).ConfigureAwait(false) is not { } inventory) {
+			Log.Debug(new Said("cards worth more sold than kept: the inventory isn't at hand to list them - the next look"), Bot.Name);
+
+			return;
+		}
+
+		foreach (DearCards.Verdict v in DearCards.ThisLook(result.Dear, Bot.Cfg.LegitMode)) {
+			if (ct.IsCancellationRequested) {
+				return;
+			}
+
+			Log.Info(DearCards.SellingSaid(v), Bot.Name);
+
+			foreach (DearCards.Card c in v.Cards) {
+				Log.Debug(DearCards.CardSaid(v, c), Bot.Name);
+			}
+
+			int listed = await ListDear(Bot, v, inventory, ct).ConfigureAwait(false);
+			result.DearListed += listed;
+
+			if (listed < v.Listing) {
+				Log.Debug(new Said("{0}: {1} of {2} cards listed · the rest wait for the next look", v.Game, listed, v.Listing), Bot.Name);
+			}
+
+			if (listed > 0) {
+				Gate.Space(30, 120);
+			}
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2, for the previews ('sell &lt;account&gt; preview'): the games whose cards are worth more sold than kept, weighed
+	/// now as a look would - nothing listed, bought, written down or logged. <paramref name="inventory"/>: one the caller
+	/// just read - its cards are used, not read again. Off (its setting, or buying cards): why, and nothing weighed.
+	/// </summary>
+	public async Task<(DearCards.Look Look, string Off)> WeighDearAsync(InventoryContents? inventory, CancellationToken ct) {
+		if (!Bot.Cfg.SellSetsForLevels) {
+			return (new DearCards.Look([]), "\"Sell a set instead of crafting it when the money buys more levels\" is off");
+		}
+
+		if (!Bot.Cfg.CraftBadges || !On(Bot)) {
+			return (new DearCards.Look([]), "buying cards is off - the money from selling couldn't be spent");
+		}
+
+		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
+				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory)).ConfigureAwait(false);
+			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
+
+			if ((plan.Problem.Length > 0) || (plan.Block != BuyBlock.None)) {
+				return (new DearCards.Look([]), plan.Problem.Length > 0 ? plan.Problem : plan.Blocked);
+			}
+
+			return (await WeighDearLockedAsync(plan, inventory, ct).ConfigureAwait(false), "");
+		} finally {
+			BusyGate.Release();
+		}
+	}
+
+	/// <summary>
+	/// The games worth more sold than kept, on a plan just made (and its level costs noted): the foil cards and foil badges
+	/// from the inventory and badges it read, what's left of sets sold lately, and how long each has waited. Reads only.
+	/// </summary>
+	private async Task<DearCards.Look> WeighDearLockedAsync(BuyPlan plan, InventoryContents? inventory, CancellationToken ct) {
+		DateTime now = DateTime.UtcNow;
+		inventory ??= await _market.InventoryAsync(ct).ConfigureAwait(false);
+		HashSet<uint> dear = Ledger.DearSince(now - SetSale.NotBoughtFor);
+		DearCards.Extra extra = new(inventory == null ? null : LevelPlanner.FoilCards(inventory), await _market.FoilLevelsAsync(ct).ConfigureAwait(false),
+			[.. Ledger.SoldSince(now - SetSale.NotBoughtFor).Where(a => !dear.Contains(a))], Ledger.WaitingSince);
+
+		return await DearCards.WeighAsync(plan, _market, Bot.Cfg, CardExchange.BoughtGames(Bot.Name, now), dear,
+			GemsChoice.CostsOf(Bot.Name, plan.Currency, now), ct, extra).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -1497,13 +1688,24 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// For badge crafting (smart levelling, <see cref="SetSale"/>): each of these games' whole normal set weighed - sold, or
 	/// crafted - against what the money would buy, ranked as buying ranks it, at today's prices. Nothing is bought or listed
 	/// here. One verdict per game (up to <see cref="SetSale.MaxSetsALook"/>): when the market or the wallet didn't say, it's
-	/// marked not known for sure (Unsure); when Steam won't let this account buy (the money couldn't be spent), crafted.
+	/// marked not known for sure (Unsure).
 	/// <paramref name="inventory"/>: the inventory badge crafting just read - its cards are used, not read again a second
 	/// later (Steam refuses that as a duplicate request).
 	/// </summary>
-	public async Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<uint> apps, CancellationToken ct, InventoryContents? inventory = null) {
-		List<uint> asked = [.. apps.Distinct().Take(SetSale.MaxSetsALook)];
+	public Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<uint> apps, CancellationToken ct, InventoryContents? inventory = null) =>
+		WeighSalesAsync([.. apps.Distinct().Select(static a => new SetSale.Ready(a, 0, 1))], ct, inventory, note: false);
+
+	/// <summary>
+	/// 1.8.2: each finished set weighed - a foil set too (Border 1: the game's foil cards), a game's several sets together.
+	/// When Steam won't let this account buy by itself (billing details, email), a set worth more sold isn't crafted
+	/// meanwhile: it waits (Hold), and the owner is told once. A set held back because a card of it hardly sells is noted
+	/// with when it began to wait (<paramref name="note"/>: never by a preview) - after <see cref="SetSale.WaitAtMost"/>
+	/// it's sold all the same.
+	/// </summary>
+	public async Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<SetSale.Ready> ready, CancellationToken ct, InventoryContents? inventory, bool note) {
+		List<SetSale.Ready> asked = [.. ready.DistinctBy(static r => (r.App, r.Border > 0)).Take(SetSale.MaxSetsALook)];
 		string Game(uint app) => inventory == null ? GameNames.Of(app) : SetSale.GameOf(app, inventory);
+		SetSale.Verdict As(SetSale.Ready r, SetSale.Verdict v) => v with { Sets = Math.Max(1, r.Levels), Foil = r.Border > 0 };
 		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
@@ -1513,27 +1715,52 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			// No wallet at all: the money from a set sold could never be spent - crafted, as without buying cards.
 			if (plan.NoWallet) {
-				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), 0, new Said("it has no Steam wallet to spend the money from")))];
+				return [.. asked.Select(r => As(r, SetSale.Crafted(r.App, Game(r.App), 0, new Said("it has no Steam wallet to spend the money from"))))];
 			}
 
 			if ((plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown)) {
 				Log.Debug($"weighing sets: {(plan.Problem.Length > 0 ? plan.Problem : plan.Blocked)}", Bot.Name);
 
-				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), plan.Currency, new Said("couldn't price its cards"), unsure: true))];
-			}
-
-			if (plan.Block != BuyBlock.None) {
-				return [.. asked.Select(a => SetSale.Crafted(a, Game(a), plan.Currency, new Said("Steam won't let it buy cards, so the money couldn't be spent")))];
+				return [.. asked.Select(r => As(r, SetSale.Crafted(r.App, Game(r.App), plan.Currency, new Said("couldn't price its cards"), unsure: true)))];
 			}
 
 			List<SetSale.Verdict> weighed = [];
 
-			foreach (uint app in asked) {
-				CardSet? set = plan.Complete.Select(static c => c.Set).FirstOrDefault(s => s.App == app) ?? await _market.SetAsync(app, ct).ConfigureAwait(false);
+			foreach (SetSale.Ready r in asked) {
+				CardSet? set = plan.Complete.Select(static c => c.Set).FirstOrDefault(s => s.App == r.App) ?? await _market.SetAsync(r.App, ct).ConfigureAwait(false);
+				bool foil = r.Border > 0;
 
-				weighed.Add(set is { Cards.Count: > 0 }
-					? await SetSale.WeighAsync(set, plan, _market, Bot.Cfg, ct).ConfigureAwait(false)
-					: SetSale.Crafted(app, set?.Game ?? Game(app), plan.Currency, new Said("its set isn't known whole on the market"), unsure: true));
+				if (set is not { Cards.Count: > 0 }) {
+					weighed.Add(As(r, SetSale.Crafted(r.App, set?.Game ?? Game(r.App), plan.Currency, new Said("its set isn't known whole on the market"), unsure: true)));
+
+					continue;
+				}
+
+				SetSale.Verdict v = await SetSale.WeighAsync(foil ? SetSale.FoilSet(set) : set, plan, _market, Bot.Cfg, ct, Math.Max(1, r.Levels), foil,
+					Ledger.WaitingSince(r.App, foil)).ConfigureAwait(false);
+
+				// Steam won't let it buy by itself: what the set sells for couldn't be spent yet - it waits rather than being
+				// crafted away, and the owner is told once what to fix.
+				if ((plan.Block != BuyBlock.None) && v.Sell) {
+					Said why = new Said("{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can", v.Money, v.About);
+					v = v with { Sell = false, Hold = true, Why = why.ToEnglish(), Reason = why };
+
+					if (note && (_saidSetsBlocked != plan.Block)) {
+						_saidSetsBlocked = plan.Block;
+						Log.Attention(new Said("sets worth more sold than crafted wait uncrafted · {0}", plan.BlockedSaid), Bot.Name);
+					}
+				}
+
+				// How long it has waited for a card that hardly sells: kept while it waits, let go once it doesn't.
+				if (note && !v.Unsure) {
+					Ledger.Wait(r.App, foil, v.Slow, DateTime.UtcNow);
+				}
+
+				weighed.Add(v);
+			}
+
+			if (plan.Block == BuyBlock.None) {
+				_saidSetsBlocked = BuyBlock.None;
 			}
 
 			return weighed;
@@ -1541,6 +1768,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			BusyGate.Release();
 		}
 	}
+
+	/// <summary>1.8.2: the block last told about for sets waiting uncrafted - told once, until it clears.</summary>
+	private BuyBlock _saidSetsBlocked = BuyBlock.None;
 
 	/// <summary>
 	/// Why a look can't buy now, before anything is read from the market - or null when it may. Lasting when it won't clear by
@@ -1634,6 +1864,18 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			return result;
+		}
+
+		// 1.8.2: games whose cards are worth more sold than the levels they'd make - written down now (nothing bought or packed
+		// for them from here), listed once the look is done.
+		if (buying && DearCards.Applies(Bot.Cfg, buying: true)) {
+			try {
+				DearCards.Look dear = await WeighDearLockedAsync(plan, null, ct).ConfigureAwait(false);
+				result.Dear.AddRange(DearCards.Note(Bot.Name, dear));
+				plan.Steps.RemoveAll(s => result.Dear.Exists(d => !d.Foil && (d.App == s.App)));
+			} catch (Exception e) when (!(e is OperationCanceledException && ct.IsCancellationRequested)) {
+				Log.Debug($"couldn't weigh cards worth more sold than kept: {Log.Describe(e)}", Bot.Name);
+			}
 		}
 
 		if (!buying || (plan.Steps.Count == 0)) {

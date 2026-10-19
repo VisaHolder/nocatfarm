@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "o conjunto dele não é conhecido inteiro no mercado",
     "selling sets instead of crafting is off": "vender conjuntos em vez de criar está desligado",
     "buying cards is off": "comprar cartas está desligado",
-    "a foil set is always crafted": "um conjunto brilhante é sempre criado",
     "{0} sets ready, crafted together": "{0} conjuntos prontos, criados juntos",
     "only {0} sets are weighed a look": "só {0} conjuntos são comparados por olhada",
     "buying cards isn't running": "comprar cartas não está rodando",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "o mercado parou de responder antes de saber o que o dinheiro compraria",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} só vendeu {1} vez(es) no último dia - esperando, o conjunto vale {2} ({3} níveis)",
     "it has no Steam wallet to spend the money from": "não tem carteira Steam para gastar o dinheiro",
-    "on your keep list - its set is crafted, never sold": "na sua lista de manter - o conjunto é criado, nunca vendido"
+    "on your keep list - its set is crafted, never sold": "na sua lista de manter - o conjunto é criado, nunca vendido",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "cartas que valem mais vendidas do que guardadas: o inventário não está à mão para anunciá-las - na próxima olhada",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: {1} de {2} cartas anunciadas · o resto espera a próxima olhada",
+    "selling buys about {0} levels, keeping makes {1}": "vender compra cerca de {0} níveis, guardar dá {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "guardar dá {0} nível(is), vender compra cerca de {1}",
+    "cards worth more sold than kept: not weighed · {0}": "cartas que valem mais vendidas do que guardadas: não comparado · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: cartas guardadas - não é certo que valham mais vendidas · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: suas cartas voltaram a valer mais guardadas · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas valem mais que seus níveis - vendendo por cerca de {2} ≈ {3} níveis baratos",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · menor {3} · você recebe {4} por cada",
+    "its price fell since it was weighed - not listed": "o preço caiu desde que foi comparado - não anunciado",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "vendendo o conjunto brilhante de {0} em vez de criar: {1} compra cerca de {2} níveis",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "vendendo {0} conjuntos de {1} em vez de criar: {2} compra cerca de {3} níveis",
+    "sets worth more sold than crafted wait uncrafted · {0}": "conjuntos que valem mais vendidos do que criados esperam sem ser criados · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "o que sobrou de um conjunto vendido em vez de criado - rende {0}",
+    "what's left of a set sold instead of crafted pays nothing": "o que sobrou de um conjunto vendido em vez de criado não rende nada",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "não se sabe agora o que o dinheiro compra - a compra de cartas ainda não precificou os próximos níveis",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas brilhantes valem mais que seu nível - vendendo por cerca de {2} ≈ {3} níveis baratos",
+    "its cards are being sold - worth more than the levels they'd make": "suas cartas estão sendo vendidas - valem mais que os níveis que dariam",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} compra cerca de {1} níveis · {2} quase não vende, mas o conjunto já esperou o bastante - anunciado mesmo assim",
+    "{0} sets worth {1} buy only {2} levels": "{0} conjuntos que valem {1} compram só {2} níveis",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra cerca de {1} níveis, mas a Steam não deixa a conta comprar cartas sozinha - esperando até poder"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vender um conjunto em vez de criar quando o dinheiro compra mais níveis",
-      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos laminados são sempre criados."
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um emblema laminado é um nível. Também vende cartas guardadas para um emblema que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo."
     },
     "CardSwaps": {
       "label": "Trocar cartas sobrando com outros usuários do nocat.farm",

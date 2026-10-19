@@ -611,7 +611,8 @@ public static partial class Backup {
 				return JsonSerializer.SerializeToUtf8Bytes(new Modules.BuyLedger.Stored {
 					Ok = mineBuy?.Ok ?? false,
 					Entries = [.. (cameBuy.Entries ?? []).Select(static e => e with { Confirm = null }).Concat(mineBuy?.Entries ?? []).DistinctBy(static e => (e.At, e.Card, e.Cents)).OrderBy(static e => e.At)],
-					Sold = [.. (cameBuy.Sold ?? []).Concat(mineBuy?.Sold ?? []).Distinct().OrderBy(static e => e.At)]
+					Sold = [.. (cameBuy.Sold ?? []).Concat(mineBuy?.Sold ?? []).Distinct().OrderBy(static e => e.At)],
+					Waits = [.. (mineBuy?.Waits ?? cameBuy.Waits ?? [])]
 				});
 			}
 

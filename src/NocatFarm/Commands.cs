@@ -81,7 +81,7 @@ public static partial class Commands {
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
 			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
-		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
+		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees - and, with buying cards on, games whose cards are worth more sold than the levels they'd make (buying cards sells those), 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
 		new("booster", "[account|all] | <account> <appIDs> | plan [account|all] | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs\" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
 		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
 		new("craft", "now <account> | preview <account>", GroupCards, "'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing."),
@@ -4989,14 +4989,22 @@ public static partial class Commands {
 			return stale == 0 ? $"{bot.Name}: no week-old listing the market has gone under." : $"{bot.Name}: took down {removed} of {stale} stale listing(s) - the next sell lists them again at today's price.";
 		}
 
-		Seller.Plan plan = await Seller.PlanAsync(bot, count, CancellationToken.None).ConfigureAwait(false);
+		InventoryContents? inventory = null;
+		Seller.Plan plan = await Seller.PlanAsync(bot, count, CancellationToken.None, read: i => inventory = i).ConfigureAwait(false);
 
 		if (plan.Problem != null) {
 			return $"{bot.Name}: {plan.Problem}";
 		}
 
-		if (plan.Offers.Count == 0) {
+		if ((plan.Offers.Count == 0) && (what == "do")) {
 			return plan.Duplicates == 0 ? $"{bot.Name}: no spare cards - every copy is still useful for a badge." : $"{bot.Name}: {plan.Duplicates} spare card(s), but none with a price to go under yet.";
+		}
+
+		if (plan.Offers.Count == 0) {
+			// 1.8.2: a copy kept for a badge may still be worth more sold than the levels it makes - said with the cards that are.
+			string none = plan.Duplicates == 0 ? $"{bot.Name}: no spare cards - every copy is still useful for a badge." : $"{bot.Name}: {plan.Duplicates} spare card(s), but none with a price to go under yet.";
+
+			return string.Join(Environment.NewLine, [none, .. await DearPreviewAsync(bot, inventory).ConfigureAwait(false)]);
 		}
 
 		if (what == "do") {
@@ -5018,9 +5026,25 @@ public static partial class Commands {
 			sb.AppendLine($"  already on the market: {up.Count(static l => !l.AwaitingConfirmation)} listing(s), {up.Count(static l => l.AwaitingConfirmation)} waiting on a confirmation");
 		}
 
-		sb.Append($"  'sell {bot.Name} do' lists them{(bot.CanConfirmTrades ? " and confirms them on its authenticator" : " - then confirm them in the Steam app")}.");
+		sb.AppendLine($"  'sell {bot.Name} do' lists them{(bot.CanConfirmTrades ? " and confirms them on its authenticator" : " - then confirm them in the Steam app")}.");
+		sb.AppendJoin(Environment.NewLine, await DearPreviewAsync(bot, inventory).ConfigureAwait(false));
 
 		return sb.ToString();
+	}
+
+	/// <summary>
+	/// 1.8.2, 'sell &lt;account&gt; preview': the games whose cards are worth more sold than the levels they'd make
+	/// (<see cref="DearCards"/>) - each card, its price, what selling pays, the levels kept against the levels sold, and the
+	/// word. Read only; on the inventory the preview just read.
+	/// </summary>
+	private static async Task<List<string>> DearPreviewAsync(Bot bot, InventoryContents? inventory) {
+		if (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer) {
+			return DearCards.PreviewLines(bot.Name, new DearCards.Look([]), "buying cards isn't running");
+		}
+
+		(DearCards.Look look, string off) = await buyer.WeighDearAsync(inventory, CancellationToken.None).ConfigureAwait(false);
+
+		return DearCards.PreviewLines(bot.Name, look, off);
 	}
 
 	private static async Task<string> QueueAsync(BotManager mgr, string[] args) {

@@ -76,7 +76,8 @@ public static class Seller {
 	/// </summary>
 	public static int KeepCopies(int levelsLeft, bool wholeSet, bool buying) => levelsLeft <= 0 ? 0 : wholeSet || buying ? levelsLeft : 1;
 
-	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct) {
+	/// <param name="read">1.8.2: hears the inventory once it's read whole - so a preview after it uses the same read, not a second one.</param>
+	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct, Action<InventoryContents>? read = null) {
 		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant.
 		if (WalletCurrency(bot) is not int currency) {
 			return new Plan([], 0, 0, "Steam hasn't said this account's wallet currency yet - try again in a minute");
@@ -97,6 +98,8 @@ public static class Seller {
 		if (!inventory.Complete) {
 			return new Plan([], 0, 0, "couldn't read all of its inventory - Steam stopped part way; try again in a while");
 		}
+
+		read?.Invoke(inventory);
 
 		// Cards promised in a trade that's still waiting aren't this account's to sell - and don't count towards its sets
 		// either, since they're about to leave. Not knowing is a reason to wait, not to guess: listing one breaks the trade.

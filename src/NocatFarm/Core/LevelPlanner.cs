@@ -249,7 +249,8 @@ public static class LevelPlanner {
 	}
 
 	// ── badges ───────────────────────────────────────────────────────────────
-	internal sealed record BadgeState(int Level, int Xp, Dictionary<uint, int> GameLevels);
+	/// <param name="FoilLevels">1.8.2: each game's foil badge (0 or 1) - a level of its own, apart from the normal badge.</param>
+	internal sealed record BadgeState(int Level, int Xp, Dictionary<uint, int> GameLevels, Dictionary<uint, int>? FoilLevels = null);
 
 	internal static async Task<BadgeState?> BadgesAsync(Bot bot, CancellationToken ct) {
 		string? json = await bot.Web.ApiGetAsync("IPlayerService", "GetBadges", new Dictionary<string, string> {
@@ -268,20 +269,19 @@ public static class LevelPlanner {
 			return null;
 		}
 
-		Dictionary<uint, int> games = [];
+		Dictionary<uint, int> games = [], foils = [];
 
 		if (res.TryGetProperty("badges", out JsonElement list)) {
 			foreach (JsonElement b in list.EnumerateArray()) {
 				// Game badges carry an appid; border_color 1 is the foil badge, which is a separate, single level.
-				if (b.TryGetProperty("appid", out JsonElement a) && a.TryGetUInt32(out uint app)
-					&& (!b.TryGetProperty("border_color", out JsonElement border) || (border.GetInt32() == 0))
-					&& b.TryGetProperty("level", out JsonElement lv)) {
-					games[app] = lv.GetInt32();
+				if (b.TryGetProperty("appid", out JsonElement a) && a.TryGetUInt32(out uint app) && b.TryGetProperty("level", out JsonElement lv)) {
+					bool foil = b.TryGetProperty("border_color", out JsonElement border) && (border.GetInt32() != 0);
+					(foil ? foils : games)[app] = lv.GetInt32();
 				}
 			}
 		}
 
-		return new BadgeState(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games);
+		return new BadgeState(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games, foils);
 	}
 
 	// ── cards held ───────────────────────────────────────────────────────────
@@ -290,6 +290,35 @@ public static class LevelPlanner {
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
 		return inventory == null ? [] : NormalCards(inventory);
+	}
+
+	/// <summary>1.8.2: foil trading cards in an inventory: game -> market name -> copies - for weighing what they're worth sold.</summary>
+	public static Dictionary<uint, Dictionary<string, int>> FoilCards(InventoryContents inventory) {
+		Dictionary<uint, Dictionary<string, int>> cards = [];
+
+		foreach (JsonElement asset in inventory.Assets) {
+			if (inventory.DescriptionOf(asset) is not { } d) {
+				continue;
+			}
+
+			string type = InventoryContents.Text(d, "type");
+
+			if (!type.EndsWith("Trading Card", StringComparison.OrdinalIgnoreCase) || !type.Contains("Foil", StringComparison.OrdinalIgnoreCase)
+				|| !uint.TryParse(InventoryContents.Text(d, "market_fee_app"), out uint app) || (app == 0)) {
+				continue;
+			}
+
+			string hash = InventoryContents.Text(d, "market_hash_name");
+			int amount = int.TryParse(InventoryContents.Text(asset, "amount"), out int n) ? Math.Max(1, n) : 1;
+
+			if (!cards.TryGetValue(app, out Dictionary<string, int>? game)) {
+				cards[app] = game = new Dictionary<string, int>(StringComparer.Ordinal);
+			}
+
+			game[hash] = game.GetValueOrDefault(hash) + amount;
+		}
+
+		return cards;
 	}
 
 	/// <summary>Normal (not foil) trading cards in an inventory: game -> market name -> copies. Foils are never counted.</summary>

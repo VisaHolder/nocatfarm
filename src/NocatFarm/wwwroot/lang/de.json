@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "sein Satz ist auf dem Markt nicht vollständig bekannt",
     "selling sets instead of crafting is off": "Sätze verkaufen statt herstellen ist aus",
     "buying cards is off": "Karten kaufen ist aus",
-    "a foil set is always crafted": "ein Folien-Satz wird immer hergestellt",
     "{0} sets ready, crafted together": "{0} Sätze fertig, zusammen hergestellt",
     "only {0} sets are weighed a look": "nur {0} Sätze werden pro Blick abgewogen",
     "buying cards isn't running": "Karten kaufen läuft nicht",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "der Markt antwortete nicht mehr, bevor feststand, was das Geld kaufen würde",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} wurde am letzten Tag nur {1} Mal verkauft - wartet, das Set ist {2} wert ({3} Stufen)",
     "it has no Steam wallet to spend the money from": "es hat keine Steam-Geldbörse, um das Geld auszugeben",
-    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft"
+    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "Karten, die verkauft mehr wert sind als behalten: das Inventar ist nicht zur Hand, um sie anzubieten - beim nächsten Blick",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: {1} von {2} Karten angeboten · der Rest wartet auf den nächsten Blick",
+    "selling buys about {0} levels, keeping makes {1}": "Verkaufen kauft etwa {0} Stufen, Behalten bringt {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "Behalten bringt {0} Stufe(n), Verkaufen kauft etwa {1}",
+    "cards worth more sold than kept: not weighed · {0}": "Karten, die verkauft mehr wert sind als behalten: nicht abgewogen · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: Karten behalten - nicht sicher, ob sie verkauft mehr wert sind · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: seine Karten sind es wieder wert, behalten zu werden · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} Karten mehr wert als ihre Stufen - Verkauf für etwa {2} ≈ {3} günstige Stufen",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · am günstigsten {3} · du bekommst je {4}",
+    "its price fell since it was weighed - not listed": "sein Preis ist gefallen, seit er abgewogen wurde - nicht angeboten",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "verkaufe das Foil-Set von {0}, statt es herzustellen: {1} kauft etwa {2} Stufen",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "verkaufe {0} Sets von {1}, statt sie herzustellen: {2} kauft etwa {3} Stufen",
+    "sets worth more sold than crafted wait uncrafted · {0}": "Sets, die verkauft mehr wert sind als hergestellt, warten unhergestellt · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "was von einem verkauften statt hergestellten Set übrig ist - es bringt {0}",
+    "what's left of a set sold instead of crafted pays nothing": "was von einem verkauften statt hergestellten Set übrig ist, bringt nichts",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "was Geld kauft, ist gerade nicht bekannt - das Kartenkaufen hat seine nächsten Stufen noch nicht bepreist",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} Foil-Karten mehr wert als ihre Stufe - Verkauf für etwa {2} ≈ {3} günstige Stufen",
+    "its cards are being sold - worth more than the levels they'd make": "seine Karten werden verkauft - mehr wert als die Stufen, die sie bringen würden",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} kauft etwa {1} Stufen · {2} verkauft sich kaum, aber das Set hat lange genug gewartet - trotzdem angeboten",
+    "{0} sets worth {1} buy only {2} levels": "{0} Sets im Wert von {1} kaufen nur {2} Stufen",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} kauft etwa {1} Stufen, aber Steam lässt es nicht selbst Karten kaufen - wartet, bis es das kann"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "Ein Set verkaufen statt herstellen, wenn das Geld mehr Level kauft",
-      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor es ein normales Abzeichen herstellt, schaut es, was der Satz auf dem Markt nach der Steam-Gebühr bringt. Kauft das Geld deutlich mehr Abzeichenstufen als die 1, die das Herstellen bringt, bietet es den Satz stattdessen zum Verkauf an, und das Kartenkaufen gibt das Geld innerhalb seiner Grenzen aus. Zum Beispiel: Ein Satz, der 5,00 bringt, wenn die günstigsten Stufen je etwa 0,40 kosten, kauft etwa 12 Stufen statt 1. Jedes Angebot bestätigst du in der Steam-App, wie jedes Angebot. Foil-Sätze werden immer hergestellt."
+      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor es ein normales Abzeichen herstellt, schaut es, was der Satz auf dem Markt nach der Steam-Gebühr bringt. Kauft das Geld deutlich mehr Abzeichenstufen als die 1, die das Herstellen bringt, bietet es den Satz stattdessen zum Verkauf an, und das Kartenkaufen gibt das Geld innerhalb seiner Grenzen aus. Zum Beispiel: Ein Satz, der 5,00 bringt, wenn die günstigsten Stufen je etwa 0,40 kosten, kauft etwa 12 Stufen statt 1. Jedes Angebot bestätigst du in der Steam-App, wie jedes Angebot. Foil-Sätze und Foil-Karten werden genauso abgewogen: ein Foil-Abzeichen ist eine Stufe. Es verkauft auch Karten, die für ein Abzeichen gehalten werden, wenn sie verkauft mehr wert sind als die Stufen, die sie bringen würden: 7 Karten, die etwa 5,70 bringen, kaufen bei 0,40 etwa 14 Stufen statt der 1 oder 2, die sie behalten bringen würden. Für dieses Spiel wird nichts gekauft oder als Paket hergestellt, solange sie verkauft werden."
     },
     "CardSwaps": {
       "label": "Übrige Karten mit anderen nocat.farm-Nutzern tauschen",

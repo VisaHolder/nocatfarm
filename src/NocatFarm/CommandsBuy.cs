@@ -104,8 +104,12 @@ public static partial class Commands {
 			return $"{name}: no finished sets to craft.";
 		}
 
-		List<string> lines = [.. picks.Select(p => p.Choice switch {
+		// 1.8.2: a foil set is said as one, several sets of a game sold together say so, and a game whose cards are being sold
+		// as worth more than their levels waits for that.
+		List<string> lines = [.. picks.Select(static p => p.Border > 0 ? p with { Game = $"{p.Game} (foil)" } : p).Select(p => p.Choice switch {
+			SetSale.Choice.Sell when p.Verdict is { Sets: > 1 } v => $"{name}: {p.Game}: sell all {v.Sets} sets - {p.Reason.ToEnglish()}",
 			SetSale.Choice.Sell => $"{name}: {p.Game}: sell - {p.Reason.ToEnglish()}",
+			SetSale.Choice.Wait when p.Quiet => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}; not crafted while they sell",
 			SetSale.Choice.Wait when p.Verdict is { Hold: true } => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}; not crafted - it's worth more sold, so it waits for its cards to sell more",
 			SetSale.Choice.Wait when p.Worth.Length == 0 => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}, and what its cards are worth isn't known; not crafted until it's priced",
 			SetSale.Choice.Wait => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}, and a card is worth {p.Worth}; not crafted until it's priced",
