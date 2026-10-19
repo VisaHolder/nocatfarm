@@ -56,7 +56,8 @@ public static partial class Commands {
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
-		new("add", "<name> <steamLogin|qr> [human|robot]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made."),
+		new("add", "<name> <steamLogin|qr> [human|robot] [from <account>]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. 'from <account>' starts it with that account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone; Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview."),
+		new("copy", "settings <from> <to> [yes]", GroupAccounts, "Copy every setting from one account onto another, so you don't set it up twice. 'copy settings new new2' shows what would change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
@@ -298,7 +299,8 @@ public static partial class Commands {
 
 			// 'add <name> <login> [human|robot|qr]' takes no password - one typed on the end anyway stays out.
 			case "add":
-				return Slots(line, parts, (w, i) => (i < 3) || (w.ToLowerInvariant() is "human" or "robot" or "qr") ? null : "***");
+				return Slots(line, parts, (w, i) => (i < 3) || (w.ToLowerInvariant() is "human" or "robot" or "qr" or "from")
+					|| parts[i - 1].Equals("from", StringComparison.OrdinalIgnoreCase) ? null : "***");
 
 			// 'redeem [account] <key|file> [key...]': a key in any shape it takes. A path is where the keys are, not one; anything
 			// else - a key half typed ('AAAA-BBBB-CCCC'), a password pasted in the wrong place - is masked as well.
@@ -671,6 +673,8 @@ public static partial class Commands {
 	public static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
 			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini"
+			// 1.8.2: another account's settings written over this one's - as 'set' is.
+			or "copy"
 			// Open in Steam signs this PC's Steam client in - it only makes sense at the PC, never from a chat.
 			or "steam"
 			// Who has been at the dashboard (addresses, devices, and signing everybody out), a zip of every saved login,
@@ -1016,6 +1020,7 @@ public static partial class Commands {
 				"cards" => Cards(mgr, AllIsEvery(rest)),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
+				"copy" => CopySettings(mgr, rest),
 				"steam" => await SteamAsync(mgr, rest).ConfigureAwait(false),
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
 				"enable" => Enable(mgr, rest, true),
@@ -2304,7 +2309,7 @@ public static partial class Commands {
 
 	private static async Task<string> AddAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "add <name> <steamLogin|qr> [human|robot]\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password\n  human      your main: human mode, it keeps a believable day\n  robot      a spare or farm account: full speed, around the clock (the default)";
+			return "add <name> <steamLogin|qr> [human|robot] [from <account>]\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password\n  human      your main: human mode, it keeps a believable day\n  robot      a spare or farm account: full speed, around the clock (the default)\n  from       start with another account's settings instead of the defaults";
 		}
 
 		string name = args[0];
@@ -2324,18 +2329,23 @@ public static partial class Commands {
 		}
 
 		bool qr = args[1].Equals("qr", StringComparison.OrdinalIgnoreCase);
-		string? kind = args.Length > 2 ? args[2].ToLowerInvariant() : null;
 
-		if (kind is not (null or "human" or "robot")) {
-			return "The last word is 'human' (your main - human mode) or 'robot' (a farm account, full speed).";
+		// 1.8.2: 'human' or 'robot', and 'from <account>' to start with that account's settings (Commands.Copy.cs).
+		NewAccount made = AddConfig(mgr, name, args);
+
+		if (made.Wrong != null) {
+			return made.Wrong;
 		}
 
-		BotConfig cfg = qr ? new BotConfig { SteamLogin = name, SignInWithQr = true } : new BotConfig { SteamLogin = args[1] };
-		cfg.LegitMode = kind == "human";
+		(BotConfig cfg, string? kind, string? copyFrom, SettingsCopy.Plan? copied) = (made.Cfg!, made.Kind, made.CopiedFrom, made.Copied);
 		Bot? bot = await mgr.AddAsync(name, cfg).ConfigureAwait(false);
 
 		if (bot == null) {
 			return $"Couldn't add '{name}'.";
+		}
+
+		if (copied != null) {
+			SettingsCopy.LogCopied(bot.Name, copyFrom!, copied);
 		}
 
 		// A brand new account plays nothing until it is told what to. The app window has no form for that, so
@@ -2349,7 +2359,8 @@ public static partial class Commands {
 		}
 
 		// Always say which it became: leaving the word off used to make a robot without a word about it.
-		string kindNote = kind == "human" ? " It's in human mode."
+		string kindNote = copied != null ? CopiedNote(name, copyFrom!, copied)
+			: kind == "human" ? " It's in human mode."
 			: $" It's a robot account (full speed). For your main, add 'human' at the end instead - or type: set {name} LegitMode true";
 
 		return qr

@@ -14,7 +14,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 
 | | |
 |---|---|
-| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` `steam` |
+| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `copy` `remove` `enable` `disable` `stuck` `steam` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
 | **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `craft` `buy` `levelup` |
 | **[Trades & items](#trades--items)** | `offers` `trade` `send` `swaps` |
@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-85 commands in all.
+86 commands in all.
 
 ## Accounts
 
@@ -39,7 +39,8 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `restart <account\|all>` | Stop then start again. |
 | `pause <account\|all> [minutes]` | Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself. |
 | `resume <account\|all>` | Undo a pause. |
-| `add <name> <steamLogin\|qr> [human\|robot]` | Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. |
+| `add <name> <steamLogin\|qr> [human\|robot] [from <account>]` | Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. 'from <account>' starts it with that account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone; Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview. |
+| `copy settings <from> <to> [yes]` | Copy every setting from one account onto another, so you don't set it up twice. 'copy settings new new2' shows what would change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed. |
 | `remove <account>` <br>also `delete` | Delete an account and its stored login token. |
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep the account configured but never log it in. |

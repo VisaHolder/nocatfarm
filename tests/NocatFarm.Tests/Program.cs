@@ -28672,6 +28672,9 @@ await BuySmartChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".."
 // ── 1.8.2: sell-instead-of-craft really runs - the live state on the owner's account, then each unclear case; fakes only ──
 await CraftSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: copy settings from another account - never the account's own, the switches left off, human mode, Add account and 'copy settings'; fakes only ──
+await CopySettingsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31902,6 +31905,219 @@ static class CraftSellChecks {
 			NocatFarm.Core.MarketQuotes.Reset();
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(root, true);
+			} catch (IOException) {
+				// temp - it goes when Windows tidies up
+			}
+		}
+	}
+}
+
+/// <summary>1.8.2: copying one account's settings onto another - what's never copied, the switches left off, the mode, Add account and 'copy settings'. Fakes only.</summary>
+static class CopySettingsChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		string Json(object o) => System.Text.Json.JsonSerializer.Serialize(o);
+		string Shown(NocatFarm.Config.BotConfig c, string n) => NocatFarm.Config.Settings.Show(c, NocatFarm.Config.Settings.FindBot(n)!);
+		bool Same(object? a, object? b) => Json(a!) == Json(b!);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-copyset-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		List<NocatFarm.Core.Bot> made = [];
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var managed = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+
+		// Never started, never signed in: only its settings, on disk as an added account's are.
+		NocatFarm.Core.Bot NewBot(string name, NocatFarm.Config.BotConfig cfg, ulong id) {
+			var bot = new NocatFarm.Core.Bot(name, cfg);
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(bot, id);
+			made.Add(bot);
+			managed[name] = bot;
+			NocatFarm.Config.ConfigStore.SaveBot(name, cfg);
+			return bot;
+		}
+
+		var all = NocatFarm.Core.Switches.All;
+		bool On(NocatFarm.Config.BotConfig c, string s) => (bool) typeof(NocatFarm.Config.BotConfig).GetProperty(s)!.GetValue(c)!;
+
+		try {
+			// ── what belongs to one account alone is never copied ──
+			const ulong NewTwoId = 76561198000000002UL;
+			var src = new NocatFarm.Config.BotConfig {
+				SteamLogin = "src_login", SteamPassword = "src-pass", SignInWithQr = true, SteamParentalCode = "1234",
+				SharedSecret = "c2VjcmV0c2VjcmV0c2VjcmV0", IdentitySecret = "aWRlbnRpdHk=", AccountProxy = "http://10.0.0.1:8080",
+				AccountProxyUsername = "srcuser", AccountProxyPassword = "srcproxypw", MachineName = "SRC-PC", Notes = "the source", LogColour = 3,
+				Enabled = false, StartPaused = true, IUseThisAccount = true, TradeMasterToken = "srcTok1",
+				IdleGames = [440, 570], CustomGameName = "nocat.lol", FarmingOrder = 2, HoursUntilCardDrops = 2, WeekdayHours = 4, DiscoveryQueue = 2,
+				AutoTradeWith = "cp-new2:to, old", TradeMasters = "76561198000000777, 76561198000000002", SpareGemsSendTo = "cp-new2", BoosterSendTo = "old",
+				AchievementDlcLeft = new() { [440] = "x" }
+			};
+			var dst = new NocatFarm.Config.BotConfig { SteamLogin = "dst_login", Notes = "the target", LogColour = 5, MachineName = "DST-PC", TradeMasterToken = "dstTok" };
+			string srcWas = Json(src), dstWas = Json(dst);
+			var plan = NocatFarm.Core.SettingsCopy.Build(src, dst, "cp-new2", NewTwoId);
+			var never = NocatFarm.Core.SettingsCopy.NeverCopied;
+
+			Check("copy settings: the per-account list is the sign-in, the authenticator, the proxy, the device name, notes, log colour, running, signing in yourself and the trade token",
+				never.Order().SequenceEqual(new[] { "AccountProxy", "AccountProxyPassword", "AccountProxyUsername", "Enabled", "IdentitySecret", "IUseThisAccount", "LogColour",
+					"MachineName", "Notes", "SharedSecret", "SignInWithQr", "StartPaused", "SteamLogin", "SteamParentalCode", "SteamPassword", "TradeMasterToken" }.Order()),
+				string.Join(", ", never));
+			Check("copy settings: every secret setting is on the never-copied list", NocatFarm.Config.Settings.Bot
+				.Where(static d => d.Kind == NocatFarm.Config.SettingKind.Secret).All(d => never.Contains(d.Name)));
+			List<string> leaked = [.. never.Where(n => !Same(NocatFarm.Config.Settings.Read(plan.Result, n), NocatFarm.Config.Settings.Read(dst, n)))];
+			Check("copy settings: none of them comes across - the account keeps its own", plan.Error == null && leaked.Count == 0, string.Join(", ", leaked));
+			Check("copy settings: the games left alone for achievements ('dlc leave') are the account's own too", plan.Result.AchievementDlcLeft.Count == 0);
+			List<string> missed = [.. NocatFarm.Config.Settings.Bot
+				.Where(d => NocatFarm.Core.SettingsCopy.Copied(d) && !NocatFarm.Core.SettingsCopy.NamesAccounts.Contains(d.Name))
+				.Where(d => Shown(plan.Result, d.Name) != Shown(src, d.Name)).Select(static d => d.Name)];
+			Check("copy settings: every other setting comes across as the source has it", missed.Count == 0 && plan.Result.IdleGames.SequenceEqual([440u, 570u])
+				&& (plan.Result.CustomGameName == "nocat.lol") && (plan.Result.DiscoveryQueue == 2), string.Join(", ", missed));
+			Check("copy settings: what names the account itself is taken out - trading with itself, itself as one of your accounts, sending to itself",
+				(plan.Result.AutoTradeWith == "old") && (plan.Result.TradeMasters == "76561198000000777") && (plan.Result.SpareGemsSendTo == "")
+				&& (plan.Result.BoosterSendTo == "old") && plan.Cleared.Order().SequenceEqual(new[] { "AutoTradeWith", "SpareGemsSendTo", "TradeMasters" }.Order()),
+				$"{plan.Result.AutoTradeWith} | {plan.Result.TradeMasters} | {string.Join(",", plan.Cleared)}");
+			Check("copy settings: working it out changes neither account, and shares no list with the source",
+				(Json(src) == srcWas) && (Json(dst) == dstWas) && !ReferenceEquals(plan.Result.IdleGames, src.IdleGames));
+			Check("copy settings: each change says what it was and what it becomes", plan.Changes.Any(static c => (c.Name == "DiscoveryQueue") && c.AfterText.StartsWith("2", StringComparison.Ordinal))
+				&& plan.Changes.All(c => !never.Contains(c.Name)), string.Join(", ", plan.Changes.Select(static c => c.Name)));
+
+			// ── the switches turned on after a preview: never copied, always off on the account copied to ──
+			var a = NewBot("cp-src", new NocatFarm.Config.BotConfig { SteamLogin = "a_login", IdleGames = [730], CustomGameName = "x", DiscoveryQueue = 2, CraftBadges = true }, 76561198000000101UL);
+			var b = NewBot("cp-dst", new NocatFarm.Config.BotConfig { SteamLogin = "b_login", Notes = "keep me" }, 76561198000000102UL);
+
+			foreach (var k in all) {
+				NocatFarm.Core.Switches.Set(a, k.Setting, true);
+			}
+
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Spare, true);   // the target's own, given on it
+			string aWas = Json(a.Cfg);
+			long seq = NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+			var done = NocatFarm.Core.SettingsCopy.Copy(a, b);
+			Check("go-aheads: all five on in the source - after the copy every one is off on the target, setting and go-ahead",
+				done.Plan.Error == null && done.Saved && all.All(k => !On(b.Cfg, k.Setting) && !NocatFarm.Core.Switches.IsOn(b, k.Setting)),
+				string.Join(", ", all.Where(k => NocatFarm.Core.Switches.IsOn(b, k.Setting)).Select(static k => k.Setting)));
+			Check("go-aheads: the five are listed to turn on yourself, and the target's own spare items as going off",
+				done.Plan.LeftOff.SequenceEqual(all.Select(static k => k.Setting)) && done.Plan.TurnedOff.SequenceEqual(["SpareItems"]));
+			Check("go-aheads: the source keeps all five on, its settings untouched", all.All(k => NocatFarm.Core.Switches.IsOn(a, k.Setting)) && (Json(a.Cfg) == aWas));
+			Check("go-aheads: the rest came across and was saved - the target's own notes and login kept",
+				b.Cfg.IdleGames.SequenceEqual([730u]) && (b.Cfg.DiscoveryQueue == 2) && b.Cfg.CraftBadges && (b.Cfg.Notes == "keep me") && (b.Cfg.SteamLogin == "b_login")
+				&& File.ReadAllText(Path.Combine(root, "config", "cp-dst.json")).Contains("\"DiscoveryQueue\": 2", StringComparison.Ordinal));
+			Check("go-aheads: turning one on from the settings file alone can't happen - a copy's on stays off after the settings are settled",
+				!NocatFarm.Core.Switches.Settle(b.Cfg, b.Name) && all.All(k => !NocatFarm.Core.Switches.IsOn(b, k.Setting)));
+			var logged = NocatFarm.Log.Since(seq).Where(static e => e.Source == "cp-dst").Select(static e => e.Said.ToEnglish()).ToList();
+			Check("go-aheads: logged plainly on the target", logged.Contains("settings copied from cp-src · 5 switches left off for you to turn on"), string.Join(" | ", logged));
+			Check("go-aheads: the log line has one for one switch and none without",
+				Src("src/NocatFarm/Core/SettingsCopy.cs").Contains("\"settings copied from {0} · 1 switch left off for you to turn on\"", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/SettingsCopy.cs").Contains("0 => new Said(\"settings copied from {0}\", from)", StringComparison.Ordinal));
+
+			// ── human mode and robots ──
+			var human = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", LegitBackup = "IdleGames=440", OpenBoosterPacks = 1, AchievementSkipMultiplayer = true };
+			var h1 = NocatFarm.Core.SettingsCopy.Build(human, new NocatFarm.Config.BotConfig { IdleGames = [570] }, "cp-r", 0).Result;
+			Check("human mode: a human-mode source onto a robot - human mode, its games, its stash of robot games, nothing idled, as the source has it",
+				h1.LegitMode && (h1.IdleGames.Count == 0) && (h1.GameWeights == "730:70, 440:30") && (h1.LegitBackup == "IdleGames=440") && h1.AchievementSkipMultiplayer
+				&& (h1.OpenBoosterPacks == 1), $"{h1.LegitBackup} | {h1.OpenBoosterPacks}");
+			var robot = new NocatFarm.Config.BotConfig { IdleGames = [440, 730], CustomGameName = "nocat.lol", OpenBoosterPacks = 1 };
+			var mine = new NocatFarm.Config.BotConfig { LegitMode = true, IUseThisAccount = true, LegitBackup = "IdleGames=999", GameWeights = "730:100" };
+			var h2 = NocatFarm.Core.SettingsCopy.Build(robot, mine, "cp-mine", 0).Result;
+			Check("human mode: a robot copied onto your own account is copied as it is - a robot, its games, not your old stash - and you still sign into it yourself",
+				!h2.LegitMode && h2.IUseThisAccount && h2.IdleGames.SequenceEqual([440u, 730u]) && (h2.LegitBackup == "") && (h2.GameWeights == "") && !h2.AchievementSkipMultiplayer,
+				$"{string.Join(",", h2.IdleGames)} | {h2.LegitBackup}");
+			var h3 = NocatFarm.Core.SettingsCopy.Build(robot, new NocatFarm.Config.BotConfig(), "cp-h", 0, human: true).Result;
+			var asSaved = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Config.BotConfig>(Json(robot))!;
+			asSaved.LegitMode = true;
+			NocatFarm.Config.Settings.ApplyLegitMode(asSaved, false);
+			Check("human mode: human picked as well - switched the way a save switching it does (games to the weights, the stash, multiplayer skipped, packs held)",
+				h3.LegitMode && (h3.IdleGames.Count == 0) && (h3.GameWeights == asSaved.GameWeights) && (h3.GameWeights == "440:70, 730:30")
+				&& (h3.LegitBackup == "IdleGames=440,730") && h3.AchievementSkipMultiplayer && (h3.OpenBoosterPacks == 0), $"{h3.GameWeights} | {h3.LegitBackup}");
+			var h4 = NocatFarm.Core.SettingsCopy.Build(human, new NocatFarm.Config.BotConfig(), "cp-h2", 0, human: false).Result;
+			Check("human mode: robot picked for a human-mode source - its robot games come back from the stash",
+				!h4.LegitMode && h4.IdleGames.SequenceEqual([440u]) && (h4.LegitBackup == "") && !h4.AchievementSkipMultiplayer);
+			var bad = new NocatFarm.Config.BotConfig { WeekdayHours = 999, BreakMinMinutes = 40, BreakMaxMinutes = 5 };
+			var badWas = Json(bad);
+			var h5 = NocatFarm.Core.SettingsCopy.Build(bad, new NocatFarm.Config.BotConfig(), "cp-bad", 0);
+			Check("checked like a save: a number out of range goes back to its default, a longest below its shortest is put right, and it says so",
+				h5.Error == null && (h5.Result.WeekdayHours == new NocatFarm.Config.BotConfig().WeekdayHours) && (h5.Result.BreakMaxMinutes >= h5.Result.BreakMinMinutes)
+				&& (h5.Adjusted.Count >= 2) && (Json(bad) == badWas), string.Join(" | ", h5.Adjusted));
+
+			// ── adding an account with "Copy settings from" ──
+			var stale = NocatFarm.Core.SpareLedger.Load("cp-new3");
+			stale.Approved = true;   // left behind by an account of the same name removed earlier
+			stale.Save();
+			var n3 = Commands.AddConfig(mgr, "cp-new3", ["cp-new3", "new3_login", "from", "cp-src"]);
+			Check("add from: 'add cp-new3 new3_login from cp-src' - its own login, the source's settings, the source's mode",
+				n3.Wrong == null && (n3.Cfg!.SteamLogin == "new3_login") && n3.Cfg.IdleGames.SequenceEqual([730u]) && (n3.Cfg.DiscoveryQueue == 2) && !n3.Cfg.LegitMode
+				&& n3.Cfg.Enabled && (n3.CopiedFrom == "cp-src"), n3.Wrong ?? "");
+			Check("add from: every switch with a go-ahead off, and a go-ahead left under its name from before cleared",
+				all.All(k => !On(n3.Cfg!, k.Setting)) && !NocatFarm.Core.SpareLedger.Load("cp-new3").Approved && (n3.Copied!.LeftOff.Count == 5));
+			Check("add from: nothing is added or saved until it's added", !File.Exists(Path.Combine(root, "config", "cp-new3.json")) && (mgr.Get("cp-new3") == null));
+			var n4 = Commands.AddConfig(mgr, "cp-new4", ["cp-new4", "login4", "from", "cp-src", "human"]);
+			Check("add from: 'human' as well, in either order - human mode, the source's games moved into its weights",
+				n4.Wrong == null && n4.Cfg!.LegitMode && (n4.Cfg.IdleGames.Count == 0) && (n4.Cfg.GameWeights == "730:70"), n4.Cfg?.GameWeights ?? n4.Wrong ?? "");
+			var qr = Commands.AddConfig(mgr, "cp-qr", ["cp-qr", "qr", "robot", "from", "cp-src"]);
+			Check("add from: a QR sign-in keeps signing in by QR", qr.Wrong == null && qr.Cfg!.SignInWithQr && (qr.Cfg.SteamLogin == "cp-qr") && (qr.Cfg.IdleGames.Count == 1));
+			Check("add from: an account that isn't there is refused, by name", Commands.AddConfig(mgr, "cp-x", ["cp-x", "l", "from", "nobody"]).Wrong?.Contains("nobody", StringComparison.Ordinal) == true);
+			Check("add from: 'from' with no account says what goes there", Commands.AddConfig(mgr, "cp-x", ["cp-x", "l", "from"]).Wrong?.Contains("from <account>", StringComparison.Ordinal) == true);
+			var plain = Commands.AddConfig(mgr, "cp-p", ["cp-p", "l", "human"]);
+			Check("add from: without it an account starts as before - the defaults, human or robot as asked",
+				plain.Wrong == null && plain.Cfg!.LegitMode && (plain.Copied == null) && (plain.Cfg.IdleGames.Count == 0) && (plain.Cfg.DiscoveryQueue == 1));
+			Check("add from: a word that's neither is still refused", Commands.AddConfig(mgr, "cp-p", ["cp-p", "l", "maybe"]).Wrong?.Contains("'human'", StringComparison.Ordinal) == true);
+			Check("add from: the log shows 'from' and the account, and still hides a password typed on the end",
+				(Commands.LineForLog("add cp-new3 new3_login robot from cp-src") == "add cp-new3 new3_login robot from cp-src")
+				&& !Commands.LineForLog("add cp-n l hunter2pass").Contains("hunter2pass", StringComparison.Ordinal));
+			var web = NocatFarm.Core.SettingsCopy.ForNewAccount(a, new NocatFarm.Config.BotConfig { SteamLogin = "web_login" }, "cp-web", false);
+			Check("add from on the dashboard: the source's settings on a new account's sign-in, its mode as picked",
+				web.Error == null && (web.Result.SteamLogin == "web_login") && web.Result.IdleGames.SequenceEqual([730u]) && !web.Result.LegitMode && all.All(k => !On(web.Result, k.Setting)));
+			string host = Src("src/NocatFarm/Web/WebHost.cs");
+			string add = host[host.IndexOf("app.MapPost(\"/api/bots\", ", StringComparison.Ordinal)..];
+			add = add[..add.IndexOf("app.MapDelete(", StringComparison.Ordinal)];
+			string page = Src("src/NocatFarm/wwwroot/app.js");
+			Check("add from on the dashboard: Add account sends the pick, and the server copies, settles the switches and logs it",
+				add.Contains("SettingsCopy.ForNewAccount(source, cfg, body.Name, body.Human)", StringComparison.Ordinal) && add.Contains("Switches.Settle(cfg, body.Name);", StringComparison.Ordinal)
+				&& add.Contains("SettingsCopy.LogCopied(", StringComparison.Ordinal) && page.Contains("CopyFrom: ($('a-copy') && $('a-copy').value) || ''", StringComparison.Ordinal)
+				&& page.Contains("${copySourcePick()}", StringComparison.Ordinal));
+
+			// ── 'copy settings <from> <to>': the preview, then the copy ──
+			var c2 = NewBot("cp-c2", new NocatFarm.Config.BotConfig { SteamLogin = "c2_login", IdleGames = [10], Notes = "c2 notes" }, 76561198000000202UL);
+			string c2Was = Json(c2.Cfg);
+			string preview = await Commands.RunAsync(mgr, "copy settings cp-src cp-c2");
+			Check("copy command: the preview lists each change, what stays off, what's never copied, and the word that copies",
+				preview.Contains("Copying cp-src's settings onto cp-c2 changes", StringComparison.Ordinal) && preview.Contains("Games to idle: 10 -> 730", StringComparison.Ordinal)
+				&& preview.Contains("Spare items stays off on cp-c2: turn it on yourself after its preview ('spare on cp-c2'", StringComparison.Ordinal)
+				&& preview.Contains("Never copied:", StringComparison.Ordinal) && preview.Contains("cp-src's settings stay as they are.", StringComparison.Ordinal)
+				&& preview.Contains("To copy them, type: copy settings cp-src cp-c2 yes", StringComparison.Ordinal), preview);
+			Check("copy command: the preview changes nothing", Json(c2.Cfg) == c2Was);
+			string copied = await Commands.RunAsync(mgr, "copy settings cp-src cp-c2 yes");
+			Check("copy command: 'yes' copies them and says what to turn on yourself",
+				copied.StartsWith("cp-c2: settings copied from cp-src - ", StringComparison.Ordinal) && copied.Contains("Buying cards stays off on cp-c2", StringComparison.Ordinal)
+				&& c2.Cfg.IdleGames.SequenceEqual([730u]) && (c2.Cfg.Notes == "c2 notes") && all.All(k => !NocatFarm.Core.Switches.IsOn(c2, k.Setting)), copied);
+			string again = await Commands.RunAsync(mgr, "copy cp-src cp-c2");
+			Check("copy command: asked again, there's nothing left to copy ('settings' can be left out)",
+				again.Contains("cp-c2 already has cp-src's settings", StringComparison.Ordinal) && again.Contains("Nothing to copy.", StringComparison.Ordinal), again);
+			Check("copy command: the same account twice, an unknown one, or a word that isn't 'yes' change nothing",
+				((await Commands.RunAsync(mgr, "copy settings cp-src cp-src")) == "Pick two different accounts.")
+				&& (await Commands.RunAsync(mgr, "copy settings cp-src nobody")).Contains("nobody", StringComparison.Ordinal)
+				&& (await Commands.RunAsync(mgr, "copy settings cp-src cp-c2 maybe")).StartsWith("copy settings <from> <to> [yes]", StringComparison.Ordinal));
+			Check("copy command: never from Steam chat, as 'set' isn't; listed under Accounts; in the commands page",
+				Commands.SteamChatRefuses("copy") && Commands.All.Any(static c => (c.Name == "copy") && (c.Group == "Accounts"))
+				&& Src("docs/COMMANDS.md").Contains("copy settings <from> <to> [yes]", StringComparison.Ordinal));
+		} finally {
+			foreach (var bot in made) {
+				await bot.DisposeAsync();
+			}
+
+			NocatFarm.Core.CardExchange.Ledger.Reset();
+			NocatFarm.Core.SpareLedger.ForgetLoaded();
+			NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
 			try {
