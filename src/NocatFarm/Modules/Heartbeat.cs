@@ -69,6 +69,16 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 	/// <summary>Whether this tick's time goes to the account's hours: its own games are on, and nobody else's session is playing.</summary>
 	public static bool Banks(Bot bot) => (bot.PlayingApps.Count > 0) && (bot.OtherSessionApp == 0);
 
+	/// <summary>What the status said it was doing last tick - the part before the first " · ".</summary>
+	private string? _lastDoing;
+
+	private static string DoingOf(BotStatus status) {
+		string text = status.Line().ToEnglish();
+		int dot = text.IndexOf(" · ", StringComparison.Ordinal);
+
+		return dot < 0 ? text : text[..dot];
+	}
+
 	private void Beat() {
 		BotStatus status = BotStatus.Of(Bot);
 
@@ -125,7 +135,13 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 			_next = latest;
 		}
 
-		if (now < _next) {
+		// 1.8.2: what it's doing changed (settling in → a sitting, a break, the next game) - said now, as its own row, not up
+		// to a whole interval later. Same thing, the usual pace.
+		string doing = DoingOf(status);
+		bool changed = (_lastDoing != null) && !string.Equals(doing, _lastDoing, StringComparison.Ordinal);
+		_lastDoing = doing;
+
+		if ((now < _next) && !changed) {
 			return;
 		}
 
