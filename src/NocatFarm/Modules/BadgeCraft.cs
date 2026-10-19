@@ -231,7 +231,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		// A human-mode account crafts a few and gets on with its day - the rest wait for a later sweep. Twenty badges
 		// a few seconds apart is a burst nobody makes by hand.
-		int most = Bot.Cfg.LegitMode ? Rng.Next(2, 5) : ready.Count;
+		int most = ready.Count;   // 1.8.2: every ready set - somebody on the badges page crafts them all, one after another
 		_moreToCraft = ready.Count > most;
 		ready = [.. ready.Take(most)];
 
@@ -334,7 +334,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 					BuyLedger.Of(Bot.Name).Crafted(c.AppId, DateTime.UtcNow);
 				}
 
-				bool more = await Sleep(Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);
+				bool more = await Sleep(Bot.Cfg.LegitMode ? Rng.Seconds(15, 45) : Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);   // human mode: a click, the page, the next
 
 				// Handed back after the gap, not the moment it's crafted: a send that read the inventory just before the
 				// craft still lists the copies it ate, and finding them claimed a few seconds longer keeps them out of its
