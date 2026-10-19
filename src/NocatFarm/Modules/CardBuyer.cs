@@ -457,6 +457,12 @@ public sealed class BuyPlan {
 	/// <summary>Why something wasn't bought, in plain words (English - console replies stay English).</summary>
 	public List<string> Notes { get; } = [];
 
+	/// <summary>
+	/// The cheapest whole sets on the market for badges it can still level, from the set finder (<see cref="SetFinder"/>) -
+	/// what the preview shows beside what it would buy. Only shown: every card is priced again before anything is bought.
+	/// </summary>
+	public List<SetFinder.Row> Market { get; } = [];
+
 	/// <summary>Why it couldn't look at all - empty when it could.</summary>
 	public string Problem { get; set; } = "";
 
@@ -502,6 +508,12 @@ public sealed class BuyPlan {
 	/// <summary>Market reads one plan may make: sets, and cards' prices.</summary>
 	internal const int MaxSetReads = 12, MaxBookReads = 30, MaxFullSetGames = 3;
 
+	/// <summary>Whole sets from the set finder priced in one look, at most - the cheapest first.</summary>
+	internal const int MaxFinderSets = 4;
+
+	/// <summary>The cheapest sets on the market the preview shows.</summary>
+	internal const int MarketShown = 5;
+
 	/// <summary>A normal game badge's top level.</summary>
 	internal const int MaxLevel = 5;
 
@@ -514,7 +526,7 @@ public sealed class BuyPlan {
 	/// <summary>
 	/// The plan - smart levelling. What could be bought: for each badge the account is levelling (cards of its set held, badge
 	/// under level 5), the cards its next level still needs; and, with "Buy the cheapest full sets" on, whole sets for games
-	/// it has none of. All of them ranked together by what the next badge level costs, cheapest first - the most XP for the
+	/// it has none of - the set finder's cheapest on the market (<see cref="SetFinder"/>), any game, played or not. All of them ranked together by what the next badge level costs, cheapest first - the most XP for the
 	/// money - so a whole new set for 0.40 goes before a started badge whose one missing card costs 2.00. A set is only ever
 	/// planned whole: every missing card on the market, and all of it inside what may be spent now. One that costs more than
 	/// a day's or a week's limit is passed over (said why); one that doesn't fit what's left of today stops the plan there.
@@ -524,8 +536,10 @@ public sealed class BuyPlan {
 	/// <param name="stopWhenBlocked">Stop once the wallet says Steam won't let it buy by itself - for a look that would buy.</param>
 	/// <param name="boosting">Games automatic booster packs is saving gems for or has a pack waiting for (<see cref="BoosterPick.Busy"/>): not bought.</param>
 	/// <param name="heldCards">The cards held, from an inventory the caller has just read - not read again.</param>
+	/// <param name="finder">Where the cheapest whole sets on the market come from: the app's set finder unless the checks give their own.</param>
 	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct,
-		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null, IReadOnlyDictionary<uint, Dictionary<string, int>>? heldCards = null) {
+		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null, IReadOnlyDictionary<uint, Dictionary<string, int>>? heldCards = null,
+		SetFinder? finder = null) {
 		BuyPlan plan = new() {
 			DayLimit = Cents(cfg.BuyDailyLimit),
 			WeekLimit = Cents(cfg.BuyWeeklyLimit)
@@ -570,6 +584,11 @@ public sealed class BuyPlan {
 
 			return plan;
 		}
+
+		// The set finder's cheapest whole sets, for badges it can still level - on this PC's clock, like the finder's own.
+		finder ??= SetFinder.Shared;
+		IReadOnlyList<SetFinder.KnownSet> known = finder.Known(DateTime.UtcNow);
+		plan.Market.AddRange(finder.Cheapest(levels, plan.Currency, MarketShown, DateTime.UtcNow));
 
 		// The cards held: as the caller just read them (badge crafting), or read now.
 		if ((heldCards ?? await market.CardsAsync(ct).ConfigureAwait(false)) is not { } held) {
@@ -711,7 +730,45 @@ public sealed class BuyPlan {
 			}
 		}
 
-		if (cfg.BuyFullSets && !stopped) {
+		if (cfg.BuyFullSets && !stopped && (known.Count > 0)) {
+			// The set finder's: whole sets for any game - played, owned or not - the cheapest on the market first. Each in the
+			// wallet's money at the rate learned from the market, only to leave out what costs more than a limit before a
+			// single price is read; every card is priced for real below, in the wallet's currency, and again before buying.
+			double? rate = WalletRate.ForDeciding(plan.Currency);
+			int taken = 0;
+
+			foreach (SetFinder.KnownSet k in known) {
+				if (taken >= MaxFinderSets) {
+					break;
+				}
+
+				// Games it holds cards of are the missing cards' business, above; a maxed badge has nothing to give; a card
+				// with fewer than 2 on the market is no whole set to buy.
+				if ((levels.GetValueOrDefault(k.App) >= MaxLevel) || (held.TryGetValue(k.App, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))
+					|| (k.Depth < 2)) {
+					continue;
+				}
+
+				// The cheapest first: once one costs more than a day's or a week's limit, so does every one after it.
+				if ((rate is double r) && (WalletRate.ToWallet(k.UsdCents, r) is int about) && (about > most)) {
+					if (taken == 0) {
+						plan.Notes.Add($"the cheapest whole set on the market ({k.Game}, about {Money(about, plan.Currency)}) costs more than a {(plan.DayLimit <= plan.WeekLimit ? "day's" : "week's")} limit ({Money(most, plan.Currency)})");
+					}
+
+					break;
+				}
+
+				CardSet set = k.ToCardSet();
+
+				if (Boosting(set)) {
+					continue;
+				}
+
+				candidates.Add((set, levels.GetValueOrDefault(k.App), [.. set.Cards], true));
+				taken++;
+			}
+		} else if (cfg.BuyFullSets && !stopped) {
+			// The set finder hasn't a whole set yet (it has only just started): the games of the cheapest single cards.
 			if (await market.CheapestGamesAsync(ct).ConfigureAwait(false) is not { } cheapest) {
 				plan.Notes.Add("the market didn't say which sets are cheapest - full sets wait for the next look");
 			} else {

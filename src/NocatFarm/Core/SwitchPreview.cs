@@ -80,10 +80,18 @@ public static class SwitchPreview {
 		bool FullSets,
 		bool CraftOff,
 		bool OwnDayOnly,
-		IReadOnlyList<SellSet>? Sells = null
+		IReadOnlyList<SellSet>? Sells = null,
+		IReadOnlyList<MarketSet>? Market = null,
+		FinderNumbers? Finder = null
 	) {
 		public string Kind => "buy";
 	}
+
+	/// <summary>1.8.2 set finder: one of the cheapest whole sets on the market - the game, its cards, the badge's level, the price (the wallet's money at the learned rate, else US dollars) and XP for each whole unit of it.</summary>
+	public sealed record MarketSet(string Game, int Cards, int Level, string Cost, long XpPerUnit);
+
+	/// <summary>1.8.2 set finder: cards it has looked at today, of how many on the market, whole sets known, and its last look ("" when none yet).</summary>
+	public sealed record FinderNumbers(int Walked, int Total, int Known, string LastLook);
 
 	/// <summary>One set it would buy: the game, the cards, its cost and XP for each whole unit of money.</summary>
 	public sealed record BuySet(string Game, bool FullSet, int Level, int Cards, int SetSize, string Cost, long XpPerUnit, IReadOnlyList<string> Names);
@@ -100,8 +108,14 @@ public static class SwitchPreview {
 		return new BuyNumbers(signedIn, problem, (int) (plan?.Block ?? BuyBlock.None), cur > 0 ? MarketQuotes.Code(cur) : "", plan == null ? "" : M(plan.Wallet),
 			M(BuyPlan.Cents(cfg.BuyDailyLimit)), M(plan?.DaySpent ?? 0), M(BuyPlan.Cents(cfg.BuyWeeklyLimit)), M(plan?.WeekSpent ?? 0),
 			M(plan?.Cost ?? 0), plan?.CardCount ?? 0, sets, plan?.Notes.ToList() ?? [], cfg.BuyFullSets, !cfg.CraftBadges, cfg.LegitMode,
-			plan == null ? [] : [.. plan.Sales.Where(static v => v.Sell).Select(static v => new SellSet(v.Game, v.Money, v.About))]);
+			plan == null ? [] : [.. plan.Sales.Where(static v => v.Sell).Select(static v => new SellSet(v.Game, v.Money, v.About))],
+			plan == null ? [] : [.. plan.Market.Select(r => new MarketSet(r.Game, r.Cards, r.Level, BuyPlan.Money(r.Shown, r.Wallet == null ? LevelPlanner.UsDollar : cur), r.XpPerUnit))],
+			Finder(SetFinder.Shared.Covered(DateTime.UtcNow)));
 	}
+
+	/// <summary>The set finder's progress, for the preview.</summary>
+	internal static FinderNumbers Finder(SetFinder.Coverage c) =>
+		new(c.Walked, c.MarketTotal, c.Known, c.LastLook is { } last ? Fmt.Clock(last) : "");
 
 	/// <summary>1.8.2 card swaps: spare cards it could swap now, and the limits it keeps to.</summary>
 	public sealed record SwapNumbers(bool SignedIn, string Problem, int Games, int Cards, int Unpriced, string Currency, string MaxLoss, int PerDay,

@@ -6437,6 +6437,7 @@ function buyPreviewHtml(d) {
     ? `<h4>${esc(t('It would sell instead of crafting'))}</h4><ul class="limits">${d.Sells.map((s) => `<li>${esc(tf("The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes", s.Game, s.Money, grouped(s.Levels)))}</li>`).join('')}</ul>`
     : '';
   const notes = d.Notes.length ? `<ul class="limits muted">${d.Notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+  const market = d.SignedIn && !d.Problem ? buyMarketHtml(d) : '';
 
   const limits = [
     tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
@@ -6449,7 +6450,22 @@ function buyPreviewHtml(d) {
   if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));
   limits.push(t('Badge crafting turns each finished set into a level'));
 
-  return `${top.join('')}${big}${sets}${sells}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+  return `${top.join('')}${big}${sets}${sells}${notes}${market}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// 1.8.2 set finder: the cheapest whole sets on the market for badges it can still level, and how far the finder has got.
+// Only shown - every card is priced again on the market before anything is bought.
+function buyMarketHtml(d) {
+  const rows = d.Market || [];
+  const f = d.Finder;
+  const table = rows.length
+    ? `<div class="tablewrap"><table class="marketsets"><tr><th>${esc(t('Game'))}</th><th>${esc(t('Set price'))}</th><th>${esc(t('Cards'))}</th><th>${esc(t('XP per 1.00'))}</th></tr>${rows.map((r) => `<tr><td>${esc(r.Game)}</td><td>${esc(r.Cost)}</td><td>${r.Cards}</td><td>${grouped(r.XpPerUnit)}</td></tr>`).join('')}</table></div>`
+    : `<p class="muted small finder">${esc(t('No whole sets known yet - the set finder reads the market a little at a time.'))}</p>`;
+  const covered = f && f.LastLook
+    ? `<p class="muted small finder">${esc(tf('The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.', grouped(f.Walked), grouped(f.Total), grouped(f.Known), f.LastLook))}</p>`
+    : '';
+  const off = rows.length && !d.FullSets ? `<p class="muted small finder">${esc(t('It buys these only with "Buy the cheapest full sets" on.'))}</p>` : '';
+  return `<h4>${esc(t('Cheapest whole sets on the market'))}</h4>${table}${off}${covered}`;
 }
 
 async function switchTo(name, account, on) {

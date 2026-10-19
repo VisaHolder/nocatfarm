@@ -28672,6 +28672,9 @@ await BuySmartChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".."
 // ── 1.8.2: sell-instead-of-craft really runs - the live state on the owner's account, then each unclear case; fakes only ──
 await CraftSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: the set finder - the cheapest whole sets on the market; fakes only ──
+await SetFinderChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31910,5 +31913,534 @@ static class CraftSellChecks {
 				// temp - it goes when Windows tidies up
 			}
 		}
+	}
+}
+
+/// <summary>The set finder against a pretend market search: its walk, its sets, buying's ranking and 'sets'.</summary>
+static class SetFinderChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-setfinder-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		NocatFarm.Core.WalletRate.Reset();
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		string State(string name) => Path.Combine(root, "config", "state", name + "-" + Guid.NewGuid().ToString("N") + ".json");
+
+		try {
+			DateTime t0 = new(2026, 10, 19, 6, 0, 0, DateTimeKind.Utc);
+
+			// ── the walk: page by page, cheapest first, a few pages a batch, on from where it stopped ──
+			var big = new FakeSetMarket();
+			for (int i = 0; i < 250; i++) {
+				big.Add((uint) (1000 + (i / 5)), $"G{i / 5}", $"C{i % 5}", 3 + (i / 50), 10);
+			}
+			var walker = new NocatFarm.Core.SetFinder(State("walk"), big.Get);
+			var first = await walker.BatchAsync(t0, CancellationToken.None);
+			List<int> starts = [.. big.Asked.Where(static a => !a.Contains("tag_app_", StringComparison.Ordinal)).Select(FakeSetMarket.Start)];
+			Check("set finder: a batch reads a few pages of the cheapest cards, paging by what came back, cheapest first",
+				(first.Pages == NocatFarm.Core.SetFinder.PagesABatch) && starts.SequenceEqual(Enumerable.Range(0, NocatFarm.Core.SetFinder.PagesABatch).Select(static i => i * 10))
+				&& big.Asked.All(static a => a.Contains("sort_column=price&sort_dir=asc", StringComparison.Ordinal) || a.Contains("tag_app_", StringComparison.Ordinal))
+				&& big.Asked.All(static a => a.Contains("currency=1", StringComparison.Ordinal) && a.Contains("cardborder_0", StringComparison.Ordinal)),
+				string.Join(",", starts));
+			Check("set finder: then a couple of the most promising sets, read whole with the game's own search",
+				(first.Sets == NocatFarm.Core.SetFinder.FillsABatch) && (big.Asked.Count(static a => a.Contains("tag_app_", StringComparison.Ordinal)) == NocatFarm.Core.SetFinder.FillsABatch),
+				$"{first}");
+			big.Asked.Clear();
+			await walker.BatchAsync(t0.AddMinutes(20), CancellationToken.None);
+			int next = big.Asked.Where(static a => !a.Contains("tag_app_", StringComparison.Ordinal)).Select(FakeSetMarket.Start).First();
+			Check("set finder: the next batch goes on where the last one stopped", next == NocatFarm.Core.SetFinder.PagesABatch * 10, $"{next}");
+
+			// The market says slow down: the batch stops at once, and the next goes on from the same place.
+			big.Asked.Clear();
+			big.FailFrom = 1;
+			var slowed = await walker.BatchAsync(t0.AddMinutes(40), CancellationToken.None);
+			int afterSlow = walker.Covered(t0.AddMinutes(40)).Walked;
+			int askedWhileSlow = big.Asked.Count;
+			big.FailFrom = null;
+			big.Asked.Clear();
+			await walker.BatchAsync(t0.AddMinutes(60), CancellationToken.None);
+			int resumed = big.Asked.Select(FakeSetMarket.Start).First();
+			Check("set finder: the market not answering ends the batch at once - nothing more asked - and the next batch goes on from there",
+				slowed.Stopped && (slowed.Pages == 1) && (slowed.Sets == 0) && (askedWhileSlow == 2) && (resumed == afterSlow), $"{slowed} asked {askedWhileSlow} walked {afterSlow} resumed {resumed}");
+
+			// The day's cards, then nothing more of the walk until tomorrow - when it starts from the top again.
+			var huge = new FakeSetMarket();
+			for (int i = 0; i < NocatFarm.Core.SetFinder.DailyCards + 200; i++) {
+				huge.Add((uint) (5000 + (i / 5)), $"H{i / 5}", $"C{i % 5}", 3 + (i / 1000), 10);
+			}
+			var daily = new NocatFarm.Core.SetFinder(State("daily"), huge.Get);
+			int batches = 0;
+			while ((daily.Covered(t0).Walked < NocatFarm.Core.SetFinder.DailyCards) && (batches < 100)) {
+				await daily.BatchAsync(t0, CancellationToken.None);
+				batches++;
+			}
+			huge.Asked.Clear();
+			var capped = await daily.BatchAsync(t0.AddHours(1), CancellationToken.None);
+			int walkedToday = daily.Covered(t0.AddHours(1)).Walked;
+			huge.Asked.Clear();
+			await daily.BatchAsync(t0.AddDays(1), CancellationToken.None);
+			Check("set finder: at most the day's cards a day, then only sets until tomorrow - and a new day walks from the top again",
+				(capped.Pages == 0) && (walkedToday == NocatFarm.Core.SetFinder.DailyCards)
+				&& (batches == NocatFarm.Core.SetFinder.DailyCards / 10 / NocatFarm.Core.SetFinder.PagesABatch + 1)
+				&& (huge.Asked.Select(FakeSetMarket.Start).First() == 0),
+				$"{capped} after {batches} batches, walked {walkedToday}, then {string.Join(",", huge.Asked.Take(3).Select(FakeSetMarket.Start))}");
+			string finderSrc = Src("src/NocatFarm/Core/SetFinder.cs");
+			Check("set finder: every request goes through the price book's queue (its gap, the hourly cap, its pause), as the background",
+				finderSrc.Contains("PriceBook.Background.Value = true;\n\t\t(string? json, _) = await PriceBook.MarketGetAsync(pathAndQuery, ct)", StringComparison.Ordinal)
+				&& finderSrc.Contains("(PriceBook.PausedUntil == null) && (PriceBook.SearchesBackAt == null)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Program.cs").Contains("NocatFarm.Core.SetFinder.Start(manager);", StringComparison.Ordinal));
+			Check("set finder: a batch every 15 to 30 minutes, and only while an account buys full sets or 'sets' was asked in the last day",
+				Enumerable.Range(0, 50).Select(static _ => NocatFarm.Core.SetFinder.BatchGap()).All(static g => (g >= TimeSpan.FromMinutes(15)) && (g <= TimeSpan.FromMinutes(30)))
+				&& !daily.Looking([], t0) && AskedLooks(daily, t0) && !daily.Looking([], t0.AddDays(2)));
+
+			// ── a set is known only when every card of it was seen ──
+			var small = new FakeSetMarket();
+			small.AddSet(100, "Cheap", 5, 4, 10);                    // 0.20, every card listed 10 times
+			small.AddSet(200, "Thin", 4, 4, 10);
+			small.Add(200, "Thin", "Card 5", 30, 1);                  // one dearer card, listed once
+			small.AddSet(300, "Stray", 6, 9, 10);
+			small.GameExtras[300] = 1;                               // its own search says there's one more than it hands back
+			small.AddSet(400, "Unsold", 4, 5, 10);
+			small.Add(400, "Unsold", "Card 5", 0, 0);                // nobody selling it
+			var sf = new NocatFarm.Core.SetFinder(State("sets"), small.Get);
+			var seenOnly = new NocatFarm.Core.SetFinder(State("seen"), small.Get);
+			small.WalkOnly = true;
+			await seenOnly.BatchAsync(t0, CancellationToken.None);
+			small.WalkOnly = false;
+			Check("set finder: cards seen in the walk alone aren't a set - its size has to be known",
+				seenOnly.Known(t0).Count == 0);
+			for (int i = 0; i < 6; i++) {
+				await sf.BatchAsync(t0.AddMinutes(i), CancellationToken.None);
+			}
+			var known = sf.Known(t0.AddMinutes(10));
+			Check("set finder: a set is known when every card of it was seen - the sum of each card's cheapest listing, the fewest listings of any card",
+				known.Any(static k => (k.App == 100) && (k.UsdCents == 20) && (k.Cards.Count == 5) && (k.Depth == 10) && (k.Game == "Cheap"))
+				&& known.Any(static k => (k.App == 200) && (k.UsdCents == 46) && (k.Depth == 1)),
+				string.Join(" | ", known.Select(static k => $"{k.App}:{k.UsdCents}/{k.Cards.Count}/{k.Depth}")));
+			Check("set finder: never a set its search didn't hand back whole, nor one with a card nobody sells",
+				known.All(static k => k.App is not (300 or 400)), string.Join(",", known.Select(static k => k.App)));
+			Check("set finder: the cheapest first", known.Select(static k => k.UsdCents).SequenceEqual(known.Select(static k => k.UsdCents).Order()));
+			Check("set finder: a card not seen for two days and the set isn't known any more",
+				sf.Known(t0.AddHours(49)).Count == 0);
+			string kept = Path.Combine(root, "config", "state", "kept.json");
+			var reread = new NocatFarm.Core.SetFinder(kept, small.Get);
+			for (int i = 0; i < 6; i++) {
+				await reread.BatchAsync(t0.AddMinutes(i), CancellationToken.None);
+			}
+			var again = new NocatFarm.Core.SetFinder(kept, small.Get);
+			Check("set finder: what it knows is kept across a restart",
+				(again.Known(t0.AddMinutes(10)).Count > 0) && again.Known(t0.AddMinutes(10)).Select(static k => k.App).SequenceEqual(reread.Known(t0.AddMinutes(10)).Select(static k => k.App)));
+
+			// ── what was known before only says which game to read first, never a price ──
+			DateTime t1 = t0.AddHours(50);
+			small.Cards.Clear();
+			small.AddSet(700, "Pricier", 5, 9, 10);                  // the walk sees these: 0.45
+			small.AddSet(100, "Cheap", 5, 4, 10, walk: false);       // 100's cards aren't among the cheapest the walk reads any more
+			small.WalkOnly = true;
+			await sf.BatchAsync(t1, CancellationToken.None);         // the walk only: no set read yet
+			small.WalkOnly = false;
+			var order = sf.ToFill(t1);
+			Check("set finder: a set known cheap before is read again first - its old price only orders it, it isn't known",
+				(order.Count >= 2) && (order[0] == 100) && order.Contains(700u) && sf.Known(t1).All(static k => k.App != 100),
+				string.Join(",", order));
+
+			// ── its sets as plain records, and outside ones taken in as candidates to read - never trusted ──
+			var recs = sf.Records(t0.AddMinutes(10));
+			Check("set finder: what it knows as plain, versioned records - the game, each card's market name, cheapest US cents, listings and when seen",
+				recs.Any(static r => (r.Version == NocatFarm.Core.SetFinder.RecordVersion) && (r.App == 100) && (r.UsdCents == 20) && (r.Cards.Count == 5)
+					&& r.Cards.All(static c => c.Hash.StartsWith("100-", StringComparison.Ordinal) && (c.Listings == 10) && (c.SeenUtc.Kind == DateTimeKind.Utc))),
+				string.Join(" | ", recs.Select(static r => $"{r.App}:{r.UsdCents}")));
+			var outside = new FakeSetMarket();
+			outside.AddSet(777, "Outside", 5, 6, 10);                // really 0.30
+			var merged = new NocatFarm.Core.SetFinder(State("merged"), outside.Get);
+			NocatFarm.Core.SetFinder.RecordCard Rc(string h, int c, DateTime at) => new(h, c, 10, at);
+			DateTime tm = t0;
+			int took = merged.Merge([
+				new(1, 777, [.. Enumerable.Range(1, 5).Select(i => Rc($"777-Card {i}", 1, tm))]),                  // says 0.05
+				new(2, 778, [.. Enumerable.Range(1, 5).Select(i => Rc($"778-Card {i}", 1, tm))]),                  // another version
+				new(1, 779, [.. Enumerable.Range(1, 5).Select(i => Rc($"123-Card {i}", 1, tm))]),                  // another game's cards
+				new(1, 780, [.. Enumerable.Range(1, 5).Select(i => Rc($"780-Card {i}", 1, tm.AddDays(1)))]),       // seen in the future
+				new(1, 781, [.. Enumerable.Range(1, 5).Select(i => Rc($"781-Card {i}", 1, tm.AddDays(-3)))]),      // too old
+			], tm);
+			Check("set finder: an outside set is only a candidate - never known, never a price - and a wrong or stale one isn't taken at all",
+				(took == 1) && (merged.Known(tm).Count == 0) && merged.ToFill(tm).SequenceEqual([777u]), $"{took} {string.Join(",", merged.ToFill(tm))}");
+			await merged.BatchAsync(tm, CancellationToken.None);
+			Check("set finder: read on the real market, the outside set is known at the market's price, not the one it was said to cost",
+				merged.Known(tm).SingleOrDefault() is { App: 777, UsdCents: 30 } && (outside.Asked.Count(static a => a.Contains("tag_app_777", StringComparison.Ordinal)) == 1),
+				string.Join(",", merged.Known(tm).Select(static k => $"{k.App}:{k.UsdCents}")));
+
+			// ── buying: the cheapest next level, a whole new set or a started badge ──
+			var mkt = new FakeSetMarket();
+			mkt.AddSet(900, "Never Played", 5, 4, 10);
+			mkt.Cards.RemoveAll(static c => c.Hash == "900-Card 1");
+			mkt.Add(900, "Never Played", "Card 1", 7, 10);            // 0.23 in all
+			mkt.AddSet(901, "Maxed", 5, 3, 10);
+			mkt.AddSet(902, "Started", 5, 3, 10);
+			mkt.AddSet(903, "One Listing", 5, 3, 1);
+			mkt.AddSet(904, "Just Sold", 5, 3, 10);
+			mkt.AddSet(905, "Packs", 5, 3, 10);
+			mkt.AddSet(906, "Next", 5, 6, 10);
+			var finder = new NocatFarm.Core.SetFinder(State("buy"), mkt.Get);
+			for (int i = 0; i < 8; i++) {
+				await finder.BatchAsync(DateTime.UtcNow, CancellationToken.None);
+			}
+			var m = new FakeCardMarket();
+			m.Sets[100] = new NocatFarm.Modules.CardSet(100, "Nearly", [.. Enumerable.Range(1, 5).Select(static i => $"100-Card {i}")], Enumerable.Range(1, 5).ToDictionary(static i => $"100-Card {i}", static _ => 100));
+			m.Held[100] = Enumerable.Range(1, 4).ToDictionary(static i => $"100-Card {i}", static _ => 1);
+			m.Books["100-Card 5"] = FakeCardMarket.B(150);
+			m.Sets[902] = new NocatFarm.Modules.CardSet(902, "Started", [.. Enumerable.Range(1, 5).Select(static i => $"902-Card {i}")], Enumerable.Range(1, 5).ToDictionary(static i => $"902-Card {i}", static _ => 3));
+			m.Held[902] = new() { ["902-Card 1"] = 1 };
+			m.Levels[901] = 5;
+			foreach (uint app in new uint[] { 900, 901, 902, 903, 904, 905, 906 }) {
+				for (int i = 1; i <= 5; i++) {
+					m.Books[$"{app}-Card {i}"] = FakeCardMarket.B(app == 900 ? (i == 1 ? 7 : 4) : 6, app == 903 ? 1 : 10);
+				}
+			}
+			m.Cheapest.Add(950);   // the old way's game: never asked once the finder knows sets
+			m.Sets[950] = new NocatFarm.Modules.CardSet(950, "Old Way", ["950-A"], new Dictionary<string, int> { ["950-A"] = 1 });
+			m.Books["950-A"] = FakeCardMarket.B(1);
+			var ledger = new NocatFarm.Modules.BuyLedger(State("buy-ledger"));
+			ledger.AddSold(new NocatFarm.Modules.BuyLedger.SoldSet(DateTime.UtcNow, 904));
+			var cfg = new NocatFarm.Config.BotConfig { CraftBadges = true, BuyFullSets = true, BuyDailyLimit = 1.75f };
+			var plan = await NocatFarm.Modules.BuyPlan.MakeAsync(cfg, m, NocatFarm.Modules.SwapCost.None, ledger, null, DateTime.UtcNow, CancellationToken.None,
+				boosting: [905], finder: finder);
+			string ranked = string.Join(" | ", plan.Ranked.Select(static s => $"{s.App}{(s.FullSet ? "F" : "")}={s.Cost}"));
+			Check("buying: a 0.23 set for a game never played goes before finishing a 1.50 badge - the cheapest next level first",
+				(plan.Ranked.Count >= 2) && (plan.Ranked[0].App == 900) && plan.Ranked[0].FullSet && (plan.Ranked[0].Cost == 23)
+				&& plan.Ranked.Any(static s => (s.App == 100) && !s.FullSet && (s.Cost == 150)) && (plan.Steps.FirstOrDefault()?.App == 900),
+				ranked + " ; " + string.Join("; ", plan.Notes));
+			Check("buying: the set finder's sets, not the old cheapest-cards list, once it knows any",
+				plan.Ranked.All(static s => s.App != 950), ranked);
+			Check("buying: never a maxed badge, a whole set of a game it holds cards of, a card listed once, a set just sold, nor a game the packs are working on",
+				plan.Ranked.All(static s => (s.App is not (901 or 903 or 904 or 905)) && !((s.App == 902) && s.FullSet))
+				&& plan.Notes.Any(static n => n.Contains("Just Sold", StringComparison.Ordinal)) && plan.Notes.Any(static n => n.Contains("Packs", StringComparison.Ordinal)),
+				ranked + " ; " + string.Join("; ", plan.Notes));
+			Check("buying: every card still priced on the real market, in the wallet's currency - not at the finder's dollars",
+				plan.Ranked.First(static s => s.App == 900).Cards.Select(static c => c.Price).SequenceEqual([7L, 4, 4, 4, 4]) && (plan.Currency == 20));
+			m.Books["900-Card 1"] = new NocatFarm.Modules.CardMarket.Book(1, 20, 11, [(1, 1), (6, 10)]);
+			var dumpPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(cfg, m, NocatFarm.Modules.SwapCost.None, ledger, null, DateTime.UtcNow, CancellationToken.None, boosting: [905], finder: finder);
+			Check("buying: the dump rule still leaves out a set that only looks cheap",
+				dumpPlan.Ranked.All(static s => s.App != 900) && dumpPlan.Notes.Any(static n => n.Contains("Never Played", StringComparison.Ordinal) && n.Contains("cheap listing", StringComparison.Ordinal)),
+				string.Join("; ", dumpPlan.Notes));
+			m.Books["900-Card 1"] = FakeCardMarket.B(7);
+
+			// The finder's dollars in the wallet's money at the learned rate: a set dearer than the day's limit isn't priced at all.
+			foreach ((string h, int usdCents, int cad) in new[] { ("a", 100, 140), ("b", 200, 280), ("c", 50, 70) }) {
+				NocatFarm.Core.WalletRate.Observe(20, h, usdCents, cad, DateTime.UtcNow);
+			}
+			int readsBefore = m.Reads;
+			var tight = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyFullSets = true, BuyDailyLimit = 0.25f },
+				m, NocatFarm.Modules.SwapCost.None, ledger, null, DateTime.UtcNow, CancellationToken.None, boosting: [905], finder: finder);
+			Check("buying: the finder's price in the wallet's money at the learned rate - a set over the day's limit isn't even priced, and it says so",
+				tight.Ranked.All(static s => !s.FullSet) && (m.Reads - readsBefore == 5)   // only the started badges' 1 + 4 missing cards
+				&& tight.Notes.Any(static n => n.Contains("Never Played", StringComparison.Ordinal) && n.Contains("0.32 CAD", StringComparison.Ordinal) && n.Contains("day's limit", StringComparison.Ordinal)),
+				$"{m.Reads - readsBefore} reads; " + string.Join("; ", tight.Notes));
+
+			// ── 'sets' ──
+			var rows = finder.Cheapest(new Dictionary<uint, int> { [901] = 5, [906] = 2 }, 20, 20, DateTime.UtcNow);
+			string said = NocatFarm.Commands.SetsSaid("new", rows, 20, new NocatFarm.Core.SetFinder.Coverage(2400, 180000, rows.Count, DateTime.UtcNow));
+			Check("sets: the cheapest sets for badges it can still level (never one with a card listed once), in the wallet's money, with cards and XP per 1.00",
+				rows.All(static r => r.App is not (901 or 903)) && rows.Any(static r => (r.App == 900) && (r.Wallet == 32)) && rows.Any(static r => (r.App == 906) && (r.Level == 2))
+				&& said.Contains("new:  1. 0.21 CAD  Started - 5 cards, badge level 0, about 476 XP per 1.00", StringComparison.Ordinal)
+				&& said.Contains(". 0.32 CAD  Never Played - 5 cards, badge level 0, about 312 XP per 1.00", StringComparison.Ordinal)
+				&& said.Contains("prices in CAD at the rate learned from the market", StringComparison.Ordinal),
+				said);
+			Check("sets: how much of the market it has looked at, and when",
+				said.Contains("set finder: looked at the 2,400 cheapest cards of 180,000 (1.3%) today", StringComparison.Ordinal) && said.Contains("last look", StringComparison.Ordinal), said);
+			NocatFarm.Core.WalletRate.Reset();
+			File.Delete(Path.Combine(root, "config", "state", "wallet-rates.json"));
+			var usd = finder.Cheapest(null, 20, 20, DateTime.UtcNow);
+			string saidUsd = NocatFarm.Commands.SetsSaid("new", usd, 20, new NocatFarm.Core.SetFinder.Coverage(0, 0, 0, null));
+			Check("sets: no rate learned yet - US dollars, and said so; nothing known yet is said plainly",
+				saidUsd.Contains("0.23 USD", StringComparison.Ordinal) && saidUsd.Contains("the CAD rate isn't learned yet", StringComparison.Ordinal)
+				&& NocatFarm.Commands.SetsSaid("new", [], 20, new NocatFarm.Core.SetFinder.Coverage(0, 0, 0, null)).Contains("no whole sets known yet", StringComparison.Ordinal),
+				saidUsd);
+			string setsSrc = Src("src/NocatFarm/Commands.Sets.cs");
+			Check("sets: a command in the help, read-only, and Steam chat fills in its own account",
+				(NocatFarm.Commands.Resolve("sets")?.Name == "sets") && NocatFarm.Commands.DefaultsToThisBot("sets")
+				&& !setsSrc.Contains("BuyAsync", StringComparison.Ordinal) && !setsSrc.Contains("Switches.Set", StringComparison.Ordinal) && !setsSrc.Contains("LookAsync", StringComparison.Ordinal));
+			var nums = NocatFarm.Core.SwitchPreview.Buy(plan, cfg, true, "");
+			Check("dashboard: the buying preview carries the cheapest sets and how far the finder has got",
+				(nums.Market is { Count: > 0 } ms) && ms.Any(static r => (r.Game == "Never Played") && (r.Cost == "0.23 USD")) && (nums.Finder != null)
+				&& Src("src/NocatFarm/wwwroot/app.js").Contains("function buyMarketHtml(d)", StringComparison.Ordinal));
+			await SeedsAsync(check, root);
+
+			await PacingAsync(check, root);
+		} finally {
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Core.WalletRate.Reset();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+
+	/// <summary>
+	/// The set finder through the real price book (its own signed-out client answered here - nothing reaches Steam): a
+	/// refusal stops it at once and the market's pause holds it; it only ever has the background's share of the hour, so
+	/// the listings' reserve and everything else stay free.
+	/// </summary>
+	public static async Task PacingAsync(Action<string, bool, string> check, string root) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		const System.Reflection.BindingFlags All = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+		Type pb = typeof(NocatFarm.PriceBook);
+		System.Reflection.FieldInfo F(string n) => pb.GetField(n, All)!;
+		System.Reflection.PropertyInfo gapP = pb.GetProperty("GapForTests", All)!, capP = pb.GetProperty("HourCapForTests", All)!;
+		object httpBefore = F("Http").GetValue(null)!, httpBBefore = F("HttpB").GetValue(null)!;
+		string host = NocatFarm.Core.WebSession.Community.Host;
+
+		void Fresh() {
+			((System.Collections.IDictionary) typeof(NocatFarm.Core.Limiters).GetField("WebBackoff", All)!.GetValue(null)!).Remove(host);
+			NocatFarm.Core.Limiters.Remember(host, DateTime.MinValue, 0);
+			F("_coolLoaded").SetValue(null, true);
+			F("_coolUntil").SetValue(null, DateTime.MinValue);
+			F("_coolSeconds").SetValue(null, 0);
+			F("_saidRefused").SetValue(null, false);
+			F("_way").SetValue(null, 0);
+			F("_goodWay").SetValue(null, 0);
+			F("_refusedInRow").SetValue(null, 0);
+			F("_checkFirst").SetValue(null, false);
+			F("_searchOffUntil").SetValue(null, DateTime.MinValue);
+			F("_searchOffMinutes").SetValue(null, 0);
+			F("_searchDoubt").SetValue(null, -1);
+			F("_lastCall").SetValue(null, DateTime.MinValue);
+			Array.Fill((DateTime[]) F("AnsweredAt").GetValue(null)!, DateTime.UtcNow);
+			pb.GetMethod("ForgetSent", All)!.Invoke(null, null);
+			((System.Collections.Generic.Queue<DateTime>) F("BackgroundTimes").GetValue(null)!).Clear();
+		}
+
+		// A page of the cheapest cards, none for sale (so nothing goes in the price book), from a market of thousands.
+		bool refuse = false;
+		FakePing market = new((_, _) => Task.FromResult(refuse
+			? new HttpResponseMessage(System.Net.HttpStatusCode.TooManyRequests)
+			: new HttpResponseMessage(System.Net.HttpStatusCode.OK) {
+				Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new {
+					success = true, start = 0, pagesize = 10, total_count = 100000,
+					results = Enumerable.Range(0, 10).Select(static i => new { hash_name = $"1{i}-Card", sell_listings = 0, sell_price = 0 })
+				}))
+			}));
+
+		try {
+			F("Http").SetValue(null, new HttpClient(market));
+			F("HttpB").SetValue(null, new HttpClient(market));
+			gapP.SetValue(null, 0d);
+			DateTime now = DateTime.UtcNow;
+
+			// ── refused: one request, then nothing until the market's pause is over ──
+			Fresh();
+			var finder = new NocatFarm.Core.SetFinder(Path.Combine(root, "config", "state", "pacing.json"));
+			await finder.BatchAsync(now, CancellationToken.None);
+			int walked = finder.Covered(now).Walked;
+			int before = market.Calls;
+			refuse = true;
+			var refusedFirst = await finder.BatchAsync(now, CancellationToken.None);
+			int afterFirst = market.Calls;
+			var held = await finder.BatchAsync(now, CancellationToken.None);
+			Check("set finder: a refused page ends the batch after that one request - no second try, and nothing more while the market is in doubt",
+				refusedFirst.Stopped && (refusedFirst.Pages == 0) && (afterFirst - before == 1) && held.Stopped && (market.Calls == afterFirst),
+				$"{refusedFirst} then {held}; {afterFirst - before} sent, then {market.Calls - afterFirst}");
+
+			// Refused again once the ladder has started: the pause steps up, and every batch sends nothing until it's over.
+			Fresh();
+			F("_coolSeconds").SetValue(null, 90);
+			before = market.Calls;
+			var stepped = await finder.BatchAsync(now, CancellationToken.None);
+			int afterStep = market.Calls;
+			var paused = await finder.BatchAsync(now, CancellationToken.None);
+			Check("set finder: refused while the market's pause ladder is on - it pauses longer (the price book's ladder), and nothing is sent until the pause is over",
+				stepped.Stopped && (afterStep - before == 1) && (NocatFarm.PriceBook.PausedUntil is { } until) && (until > DateTime.UtcNow.AddMinutes(4))
+				&& paused.Stopped && (market.Calls == afterStep) && (finder.Covered(now).Walked == walked),
+				$"{afterStep - before} sent, paused until {NocatFarm.PriceBook.PausedUntil}, then {market.Calls - afterStep}");
+
+			// Over, and the market answers: it goes on from where it was, by itself.
+			Fresh();
+			refuse = false;
+			var resumed = await finder.BatchAsync(now, CancellationToken.None);
+			Check("set finder: once the pause is over it carries on from where it stopped",
+				!resumed.Stopped && (resumed.Pages > 0) && (finder.Covered(now).Walked == walked + (resumed.Pages * 10)), $"{resumed} walked {finder.Covered(now).Walked}");
+
+			// ── the background's share of the hour only: listings, purchases and everything else keep their room ──
+			Fresh();
+			capP.SetValue(null, 40);
+			before = market.Calls;
+			var greedy = new NocatFarm.Core.SetFinder(Path.Combine(root, "config", "state", "pacing-share.json"));
+			for (int i = 0; i < 6; i++) {
+				await greedy.BatchAsync(now, CancellationToken.None);
+			}
+			int finderSent = market.Calls - before;
+
+			static async Task<bool> AsListing() {
+				NocatFarm.PriceBook.ForListing.Value = true;
+				return (await NocatFarm.PriceBook.MarketGetAsync("/market/priceoverview/?appid=753&currency=1&market_hash_name=10-Card", CancellationToken.None)).Asked;
+			}
+
+			bool listing = await AsListing();
+			bool other = (await NocatFarm.PriceBook.MarketGetAsync("/market/priceoverview/?appid=753&currency=1&market_hash_name=11-Card", CancellationToken.None)).Asked;
+			Check("set finder: only the background's share of the hour (a quarter of the cap) - the listings' reserve and the rest stay free",
+				(finderSent == NocatFarm.PriceBook.BackgroundShare) && (NocatFarm.PriceBook.BackgroundShare == 10) && listing && other,
+				$"the finder sent {finderSent} of a cap of 40; a listing {(listing ? "went" : "waited")}, another request {(other ? "went" : "waited")}");
+		} finally {
+			capP.SetValue(null, null);
+			gapP.SetValue(null, null);
+			F("Http").SetValue(null, httpBefore);
+			F("HttpB").SetValue(null, httpBBefore);
+			Fresh();
+			Array.Fill((DateTime[]) F("AnsweredAt").GetValue(null)!, DateTime.MinValue);
+			NocatFarm.Core.Limiters.Remember("market", DateTime.MinValue, 0);
+		}
+	}
+
+	/// <summary>The public cheapest-sets lists: read politely, once a day, only as which games to read first.</summary>
+	public static async Task SeedsAsync(Action<string, bool, string> check, string root) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		DateTime now = new(2026, 10, 19, 8, 0, 0, DateTimeKind.Utc);
+		string NewState() => Path.Combine(root, "config", "state", "seeds-" + Guid.NewGuid().ToString("N") + ".json");
+
+		// A saved sample of each list, as the sites sent them (October 2026), cut down.
+		const string Sce = """{"data":[[["603750","- Arcane Raise -"],5,"$3.49",1792385898,1],[["730","Counter-Strike 2"],5,"$0.21",1792381037,1],[["1714080","---Red---Tether--&gt;"],9,"$5.53",1792372087,1],[["4242","Nobody Sells"],6,"$0.01",1792372087,0],[["1181000","UBERMOSH:OMEGA"],5,"$0.26",1792376497,1],[["99","Big"],7,"$1,234.50",1792376497,1]]}""";
+		const string Tools = """{"game_count":3,"sets":[{"added":1411060529,"normal":{"count":9,"std":"0.01","price":"0.48","avg":"0.05","quantity":788},"appid":"221540","game":"Defense Grid 2","true_count":9},{"normal":{"count":8,"price":"1.35"},"appid":"1575980","game":"UsoNatsu"},{"normal":{"count":5,"price":"0.20"},"appid":"730","game":"Counter-Strike 2"}]}""";
+		Check("seeds: steamcardexchange.net's list read - games on the market, the cheapest set first, at most so many",
+			NocatFarm.Core.SetSeeds.ParseCardExchange(Sce, 1000)!.SequenceEqual(new uint[] { 730, 1181000, 603750, 1714080, 99 }) && NocatFarm.Core.SetSeeds.ParseCardExchange(Sce, 2)!.SequenceEqual(new uint[] { 730, 1181000 }),
+			string.Join(",", NocatFarm.Core.SetSeeds.ParseCardExchange(Sce, 1000)!));
+		Check("seeds: steam.tools' list read the same way, and a page that isn't a list is nothing",
+			NocatFarm.Core.SetSeeds.ParseSteamTools(Tools, 1000)!.SequenceEqual(new uint[] { 730, 221540, 1575980 })
+			&& (NocatFarm.Core.SetSeeds.ParseCardExchange("""{"error":"nope"}""", 10) == null) && (NocatFarm.Core.SetSeeds.ParseSteamTools("[]", 10) == null));
+
+		// robots.txt, as each site has it, and the rules it's read by.
+		const string SceRobots = "User-agent: SEOkicks-Robot\nDisallow: /\n\nUser-agent: SemrushBot\nDisallow: /";
+		const string ToolsRobots = "User-agent: *\nDisallow: /cards/*\nAllow: /cards/$\nAllow: /cards/index.html\n\nDisallow: /itemvalue/*\nAllow: /itemvalue/$";
+		Check("seeds: robots.txt followed - steamcardexchange.net's lets it read the list; steam.tools' keeps it off its /cards/ files",
+			NocatFarm.Core.SetSeeds.Allowed(SceRobots, "nocat.farm", "/api/request.php?GetBadgePrices_Guest")
+			&& !NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "nocat.farm", "/cards/set_data.json") && NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "nocat.farm", "/cards/"));
+		Check("seeds: a group naming nocat.farm is the one it follows, the longest rule wins, and Allow on a tie",
+			!NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nAllow: /\n\nUser-agent: nocat.farm\nDisallow: /api/", "nocat.farm", "/api/request.php")
+			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /api/\nAllow: /api/request.php", "nocat.farm", "/api/request.php?x")
+			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow:", "nocat.farm", "/anything")
+			&& !NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /", "nocat.farm", "/api/request.php"));
+
+		// Read through a pretend web: what's asked, and what each answer does.
+		string big = System.Text.Json.JsonSerializer.Serialize(new { data = Enumerable.Range(1, 120).Select(static i => new object[] { new[] { (5000 + i).ToString(System.Globalization.CultureInfo.InvariantCulture), $"G{i}" }, 5, "$" + (i / 100.0).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), 1792385898, 1 }) });
+		NocatFarm.Core.SetSeeds.Source sce = NocatFarm.Core.SetSeeds.Sources.Single(static x => x.Name == "steamcardexchange.net");
+		NocatFarm.Core.SetSeeds.Source tools = NocatFarm.Core.SetSeeds.Sources.Single(static x => x.Name == "steam.tools");
+		List<string> asked = [];
+		Dictionary<string, (int Status, string? Body)> web = [];
+		Task<(int Status, string? Body)> Fetch(Uri u, CancellationToken ct) {
+			asked.Add(u.ToString());
+			return Task.FromResult(web.TryGetValue(u.ToString(), out var a) ? a : (0, (string?) null));
+		}
+		string Robots(NocatFarm.Core.SetSeeds.Source x) => new Uri(x.List, "/robots.txt").ToString();
+
+		web[Robots(sce)] = (200, SceRobots);
+		web[sce.List.ToString()] = (200, big);
+		web[Robots(tools)] = (403, null);   // cdn.steam.tools, October 2026
+		var finder = new NocatFarm.Core.SetFinder(NewState());
+		int given = await NocatFarm.Core.SetSeeds.ReadAsync(finder, Fetch, now, CancellationToken.None);
+		var order = finder.ToFill(now);
+		Check("seeds: robots.txt first, then the list - and a site whose robots.txt won't answer is left alone (steam.tools today)",
+			asked.SequenceEqual(new[] { Robots(sce), sce.List.ToString(), Robots(tools) }), string.Join(" | ", asked));
+		Check("seeds: the games go to the finder as the ones to read first, in the list's order - never a known set, no price kept",
+			(given == 120) && order.Take(3).SequenceEqual(new uint[] { 5001, 5002, 5003 }) && (finder.Known(now).Count == 0) && (finder.Records(now).Count == 0),
+			$"{given}: {string.Join(",", order.Take(5))}");
+		asked.Clear();
+		await NocatFarm.Core.SetSeeds.ReadAsync(finder, Fetch, now.AddHours(20), CancellationToken.None);
+		Check("seeds: at most once a day", asked.Count == 0, string.Join(" | ", asked));
+
+		var refusing = new NocatFarm.Core.SetFinder(NewState());
+		web[Robots(sce)] = (200, "User-agent: *\nDisallow: /api/");
+		asked.Clear();
+		int none = await NocatFarm.Core.SetSeeds.ReadAsync(refusing, Fetch, now, CancellationToken.None, [sce]);
+		Check("seeds: robots.txt saying no - the list is never asked for", (none == 0) && asked.SequenceEqual(new[] { Robots(sce) }) && (refusing.ToFill(now).Count == 0), string.Join(" | ", asked));
+
+		web.Clear();   // nothing answers, and steam.tools says slow down
+		web[Robots(tools)] = (429, null);
+		asked.Clear();
+		var down = new NocatFarm.Core.SetFinder(NewState());
+		int nothing = await NocatFarm.Core.SetSeeds.ReadAsync(down, Fetch, now, CancellationToken.None);
+		var market = new FakeSetMarket();
+		market.AddSet(100, "Cheap", 5, 4, 10);
+		var stillWorks = new NocatFarm.Core.SetFinder(NewState(), market.Get);
+		await NocatFarm.Core.SetSeeds.ReadAsync(stillWorks, Fetch, now, CancellationToken.None);
+		await stillWorks.BatchAsync(now, CancellationToken.None);
+		Check("seeds: a site down, or saying slow down, is skipped at its robots.txt - and the finder works on by itself",
+			(nothing == 0) && (asked.Count == 4) && asked.All(static a => a.EndsWith("/robots.txt", StringComparison.Ordinal)) && (stillWorks.Known(now).SingleOrDefault()?.App == 100),
+			string.Join(" | ", asked));
+
+		web[Robots(sce)] = (200, SceRobots);
+		web[sce.List.ToString()] = (200, "<!DOCTYPE html><title>Maintenance</title>");
+		var garbled = new NocatFarm.Core.SetFinder(NewState());
+		int unread = await NocatFarm.Core.SetSeeds.ReadAsync(garbled, Fetch, now, CancellationToken.None, [sce]);
+		web[sce.List.ToString()] = (200, Sce);   // a real list, but too short to trust it's whole
+		var shortList = new NocatFarm.Core.SetFinder(NewState());
+		int tooShort = await NocatFarm.Core.SetSeeds.ReadAsync(shortList, Fetch, now, CancellationToken.None, [sce]);
+		Check("seeds: a page that can't be read reliably is skipped", (unread == 0) && (tooShort == 0) && (garbled.ToFill(now).Count == 0) && (shortList.ToFill(now).Count == 0));
+		Check("seeds: an honest name - nocat.farm set finder",
+			NocatFarm.Core.SetSeeds.Agent.StartsWith("nocat.farm set finder/", StringComparison.Ordinal) && (NocatFarm.Core.SetSeeds.RobotName == "nocat.farm"));
+	}
+
+	/// <summary>'sets' asked: it looks for the next day.</summary>
+	private static bool AskedLooks(NocatFarm.Core.SetFinder f, DateTime at) {
+		f.Asked(at);
+		return f.Looking([], at.AddHours(23));
+	}
+}
+
+/// <summary>A pretend market search for the set finder: normal trading cards, ten a page, cheapest first or one game's.</summary>
+sealed class FakeSetMarket {
+	public List<(string Hash, string Game, int Price, int Listings, bool Walk)> Cards { get; } = [];
+	public List<string> Asked { get; } = [];
+
+	/// <summary>Once this many requests have been asked, no answer - the market saying slow down.</summary>
+	public int? FailFrom { get; set; }
+
+	/// <summary>Only the walk answers; a game's own search doesn't.</summary>
+	public bool WalkOnly { get; set; }
+
+	/// <summary>How many more a game's own search says it has than it hands back.</summary>
+	public Dictionary<uint, int> GameExtras { get; } = [];
+
+	public void Add(uint app, string game, string card, int price, int listings, bool walk = true) => Cards.Add(($"{app}-{card}", game, price, listings, walk));
+
+	public void AddSet(uint app, string game, int size, int price, int listings, bool walk = true) {
+		for (int i = 1; i <= size; i++) {
+			Add(app, game, $"Card {i}", price, listings, walk);
+		}
+	}
+
+	public static int Start(string path) => int.Parse(System.Text.RegularExpressions.Regex.Match(path, @"start=(\d+)").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+
+	public Task<string?> Get(string path, CancellationToken ct) {
+		Asked.Add(path);
+
+		if ((FailFrom is int f) && (Asked.Count > f)) {
+			return Task.FromResult<string?>(null);
+		}
+
+		int start = Start(path);
+		var game = System.Text.RegularExpressions.Regex.Match(path, @"tag_app_(\d+)");
+		List<(string Hash, string Game, int Price, int Listings, bool Walk)> all;
+		int extras = 0;
+
+		if (game.Success) {
+			if (WalkOnly) {
+				return Task.FromResult<string?>(null);
+			}
+
+			string prefix = game.Groups[1].Value + "-";
+			all = [.. Cards.Where(c => c.Hash.StartsWith(prefix, StringComparison.Ordinal))];
+			extras = GameExtras.GetValueOrDefault(uint.Parse(game.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture));
+		} else {
+			all = [.. Cards.Where(static c => c.Walk && (c.Listings > 0)).OrderBy(static c => c.Price).ThenBy(static c => c.Hash, StringComparer.Ordinal)];
+		}
+
+		List<Dictionary<string, object>> results = [.. all.Skip(start).Take(10).Select(static c => new Dictionary<string, object> {
+			["hash_name"] = c.Hash, ["sell_listings"] = c.Listings, ["sell_price"] = c.Price,
+			["asset_description"] = new Dictionary<string, string> { ["type"] = $"{c.Game} Trading Card" }
+		})];
+
+		return Task.FromResult<string?>(System.Text.Json.JsonSerializer.Serialize(new { success = true, start, pagesize = 10, total_count = all.Count + extras, results }));
 	}
 }

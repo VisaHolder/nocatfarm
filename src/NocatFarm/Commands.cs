@@ -85,6 +85,7 @@ public static partial class Commands {
 		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
 		new("craft", "now <account> | preview <account>", GroupCards, "'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing."),
 		new("buy", "[account|all] | preview [account|all] | on|off|do <account>", GroupCards, "Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent."),
+		new("sets", "[account]", GroupCards, "The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys."),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
@@ -620,7 +621,7 @@ public static partial class Commands {
 			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "events" or "value" or "level"
 			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare"
 			// 1.8.2
-			or "buy";
+			or "buy" or "sets";
 
 	/// <summary>
 	/// A Steam-chat line with this account's name put in after the command, for a command that takes the account first and,
@@ -1000,6 +1001,7 @@ public static partial class Commands {
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
 				"buy" => await BuyCardsAsync(mgr, rest).ConfigureAwait(false),
+				"sets" => await SetsAsync(mgr, rest).ConfigureAwait(false),
 				"craft" => await CraftAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
 				"spare" or "gems" => await GemsAsync(mgr, rest).ConfigureAwait(false),

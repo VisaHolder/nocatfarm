@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "Venderia em vez de criar",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "O conjunto {0}: {1} depois da taxa da Steam compra cerca de {2} níveis de emblema, mais que o 1 que criar dá",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "O nível de emblema mais barato primeiro - um emblema já começado ou um conjunto novo inteiro, o que custar menos",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Se a Steam pedir para confirmar as compras no app da Steam, você confirma no celular - um conjunto por vez; se não, são deixadas de lado depois de um dia"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Se a Steam pedir para confirmar as compras no app da Steam, você confirma no celular - um conjunto por vez; se não, são deixadas de lado depois de um dia",
+    "set finder · couldn't look · {0}": "buscador de conjuntos · não conseguiu olhar · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "buscador de conjuntos · {0} cartas vistas hoje · {1} conjuntos completos conhecidos",
+    "set finder · couldn't read its list, starting over · {0}": "buscador de conjuntos · não conseguiu ler a lista, recomeçando · {0}",
+    "set finder · couldn't save its list · {0}": "buscador de conjuntos · não conseguiu salvar a lista · {0}",
+    "Set price": "Preço do conjunto",
+    "XP per 1.00": "XP por 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Nenhum conjunto completo conhecido ainda - o buscador de conjuntos lê o mercado aos poucos.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "O buscador de conjuntos viu hoje as {0} cartas mais baratas de {1} e conhece {2} conjuntos completos. Última olhada: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Só compra estes com \"Comprar os conjuntos completos mais baratos\" ligado.",
+    "Cheapest whole sets on the market": "Os conjuntos completos mais baratos do mercado",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "buscador de conjuntos · {0} ignorado · o robots.txt não respondeu ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "buscador de conjuntos · {0} ignorado · o robots.txt não permite",
+    "set finder · {0} skipped · it didn't answer ({1})": "buscador de conjuntos · {0} ignorado · não respondeu ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "buscador de conjuntos · {0} ignorado · a lista não pôde ser lida",
+    "set finder · {0} games to look at first, from {1}": "buscador de conjuntos · {0} jogos para olhar primeiro, de {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

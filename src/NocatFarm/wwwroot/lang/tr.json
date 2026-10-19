@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "Üretmek yerine satacakları",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} seti: Steam kesintisinden sonra {1} yaklaşık {2} rozet seviyesi alır, üretmenin verdiği 1 seviyeden fazla",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Önce en ucuz rozet seviyesi - başlanmış bir rozet ya da tamamen yeni bir set, hangisi daha ucuzsa",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam alımların Steam uygulamasında onaylanmasını isterse, onları telefonunda onaylarsın - her seferinde bir set; onaylanmazsa bir gün sonra bırakılır"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam alımların Steam uygulamasında onaylanmasını isterse, onları telefonunda onaylarsın - her seferinde bir set; onaylanmazsa bir gün sonra bırakılır",
+    "set finder · couldn't look · {0}": "set bulucu · bakamadı · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "set bulucu · bugün {0} karta bakıldı · {1} tam set biliniyor",
+    "set finder · couldn't read its list, starting over · {0}": "set bulucu · listesi okunamadı, baştan başlıyor · {0}",
+    "set finder · couldn't save its list · {0}": "set bulucu · listesi kaydedilemedi · {0}",
+    "Set price": "Set fiyatı",
+    "XP per 1.00": "1,00 başına XP",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Henüz bilinen tam set yok - set bulucu pazarı azar azar okuyor.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "Set bulucu bugün {1} kartın en ucuz {0} tanesine baktı ve {2} tam set biliyor. Son bakış: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Bunları yalnızca \"En ucuz tam setleri satın al\" açıkken alır.",
+    "Cheapest whole sets on the market": "Pazardaki en ucuz tam setler",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "set bulucu · {0} atlandı · robots.txt yanıt vermedi ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "set bulucu · {0} atlandı · robots.txt izin vermiyor",
+    "set finder · {0} skipped · it didn't answer ({1})": "set bulucu · {0} atlandı · yanıt vermedi ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "set bulucu · {0} atlandı · listesi okunamadı",
+    "set finder · {0} games to look at first, from {1}": "set bulucu · önce bakılacak {0} oyun, kaynak: {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

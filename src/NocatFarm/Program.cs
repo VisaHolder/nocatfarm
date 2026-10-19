@@ -499,6 +499,7 @@ if (!shutdown.IsCancellationRequested) {
 	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on nocat.farm". Sends nothing while it's off.
 	NocatFarm.Core.UserCount.Start();
 	NocatFarm.Core.CardExchange.Start();   // 1.8.2 card swaps: says nothing unless an account has them on
+	NocatFarm.Core.SetFinder.Start(manager);   // 1.8.2 the cheapest whole sets on the market: looks only while an account buys full sets, or after 'sets'
 
 	// The daily password-locked backup (Settings, Backups) - off until it's set up. Looks once a minute.
 	NocatFarm.Core.BackupSchedule.Start();

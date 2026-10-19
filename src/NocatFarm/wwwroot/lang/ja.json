@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "作らずに売るもの",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} のセット: Steam の手数料を引いて {1} で、バッジを約 {2} レベル買えます。作って得られる 1 レベルより多いです",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "一番安いバッジレベルから - 作りかけのバッジか新しいフルセットか、安い方",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam が購入を Steam アプリでの確認を求める場合は、スマホで確認してください - 一度に 1 セットずつ。確認がなければ 1 日で取りやめます"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam が購入を Steam アプリでの確認を求める場合は、スマホで確認してください - 一度に 1 セットずつ。確認がなければ 1 日で取りやめます",
+    "set finder · couldn't look · {0}": "セット探し · 確認できませんでした · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "セット探し · 今日 {0} 枚のカードを確認 · フルセット {1} 件が判明",
+    "set finder · couldn't read its list, starting over · {0}": "セット探し · リストを読めないため最初からやり直します · {0}",
+    "set finder · couldn't save its list · {0}": "セット探し · リストを保存できませんでした · {0}",
+    "Set price": "セット価格",
+    "XP per 1.00": "1.00 あたりの XP",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "まだフルセットはわかっていません - セット探しはマーケットを少しずつ読みます。",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "セット探しは今日 {1} 枚中もっとも安い {0} 枚を確認し、フルセット {2} 件がわかっています。最後の確認: {3}。",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "「最も安いフルセットを買う」がオンのときだけ、これらを買います。",
+    "Cheapest whole sets on the market": "マーケットで最も安いフルセット",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "セット探し · {0} をスキップ · robots.txt が応答しませんでした ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "セット探し · {0} をスキップ · robots.txt が許可していません",
+    "set finder · {0} skipped · it didn't answer ({1})": "セット探し · {0} をスキップ · 応答がありませんでした ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "セット探し · {0} をスキップ · リストを読めませんでした",
+    "set finder · {0} games to look at first, from {1}": "セット探し · 先に確認するゲーム {0} 件 ({1} から)"
   },
   "settings": {
     "SteamOpenEveryAccount": {

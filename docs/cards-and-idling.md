@@ -379,6 +379,32 @@ gems into booster packs (see [the numbers](#the-numbers)). A set is left out whe
 market, or when one card's cheapest listing is far under the rest (a "dumped" card - the set's real price is higher).
 To turn gems into money for this, set *Spare items* → *Gems afterwards* to sell the sacks: it lists one sack of 1,000 gems a look, inside the spare-items limits.
 
+**The set finder.** Where the cheapest full sets come from: one look at the market for the whole app, shared by every
+account. It reads the market's list of normal trading cards, cheapest first, a few pages every 15 to 30 minutes - up
+to 3,000 cards a day, starting from the top again each day - and reads the most promising games' whole sets (a couple
+at a time, up to 100 a day). Any game counts, played or not, owned or not: a badge can be crafted without the game. A
+set counts only when every card of it has been seen in the last two days, each one for sale; its price is the sum of
+each card's cheapest listing. So a 0.23 set for a game you've never played goes before finishing a badge whose missing
+card costs 1.50. It goes through the same slow, signed-out queue as every other price - about 10 seconds between
+requests, and only the background's quarter of the hourly cap (90 of 360 an hour, shared with the inventory value), so
+selling, listing and buying always have room. When the market says slow down, the batch stops at that request and
+the finder waits out the market's pause before it carries on by itself. It never uses an account's own session, so
+nothing shows on any profile, and human mode doesn't hold it back. It only looks while an account has *Buy the
+cheapest full sets* on, and for a day after you type `sets`. Its prices are only for choosing: every card is priced
+again on the market, in the wallet's currency, before anything is bought, and the rules above (whole sets, 2 or more on
+the market, no dumped card, the limits) still apply.
+
+Once a day it also reads public "cheapest sets" lists, only to choose which games to check first: steamcardexchange.net's
+badge price list (the 1,000 cheapest sets). It reads each site's robots.txt first and follows it, under the name
+"nocat.farm set finder", and leaves a site alone that day if it doesn't answer or says no. steam.tools' list is skipped
+for now: robots.txt keeps programs off it. Their prices are never kept or trusted - only which games to look at.
+
+`sets myaccount` shows the 20 cheapest whole sets right now for badges that account can still level - each set's price
+in the wallet's currency (at the rate learned from the market; US dollars until that's learned), its cards, and the XP
+for the money - and how much of the market the finder has looked at today and when. `sets` alone shows them for every
+game, in US dollars. It only reads: nothing is bought. The buying preview (*Buy missing cards*' popup) shows the five
+cheapest under what it would buy.
+
 **Card swaps.** With [card swaps](trades.md#card-swaps-with-other-nocatfarm-users) on as well, a missing card that a
 swap nocat.lol has already paired will bring is waited for instead of bought - when the spare card it gives for it is
 worth less than the card costs to buy, or when the swap's offer is already out (buying it then would be a second

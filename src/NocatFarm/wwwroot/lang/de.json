@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "Es würde verkaufen statt herzustellen",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "Der Satz {0}: {1} nach der Steam-Gebühr kauft etwa {2} Abzeichenstufen, mehr als die 1, die das Herstellen bringt",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Die günstigste Abzeichenstufe zuerst - ein angefangenes Abzeichen oder ein ganz neuer Satz, was weniger kostet",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Will Steam Käufe in der Steam-App bestätigt haben, bestätigst du sie auf deinem Handy - ein Satz nach dem anderen, sonst nach einem Tag losgelassen"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Will Steam Käufe in der Steam-App bestätigt haben, bestätigst du sie auf deinem Handy - ein Satz nach dem anderen, sonst nach einem Tag losgelassen",
+    "set finder · couldn't look · {0}": "Satzsuche · konnte nicht nachsehen · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "Satzsuche · heute {0} Karten angesehen · {1} ganze Sätze bekannt",
+    "set finder · couldn't read its list, starting over · {0}": "Satzsuche · ihre Liste ließ sich nicht lesen, sie fängt neu an · {0}",
+    "set finder · couldn't save its list · {0}": "Satzsuche · ihre Liste ließ sich nicht speichern · {0}",
+    "Set price": "Satzpreis",
+    "XP per 1.00": "EP pro 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Noch keine ganzen Sätze bekannt - die Satzsuche liest den Markt nach und nach.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "Die Satzsuche hat sich heute die {0} günstigsten von {1} Karten angesehen und kennt {2} ganze Sätze. Zuletzt nachgesehen: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Diese kauft es nur, wenn „Die günstigsten ganzen Sätze kaufen“ an ist.",
+    "Cheapest whole sets on the market": "Die günstigsten ganzen Sätze auf dem Markt",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "Satzsuche · {0} übersprungen · die robots.txt hat nicht geantwortet ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "Satzsuche · {0} übersprungen · die robots.txt erlaubt es nicht",
+    "set finder · {0} skipped · it didn't answer ({1})": "Satzsuche · {0} übersprungen · keine Antwort ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "Satzsuche · {0} übersprungen · die Liste ließ sich nicht lesen",
+    "set finder · {0} games to look at first, from {1}": "Satzsuche · {0} Spiele zuerst ansehen, von {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "Vendería en vez de crear",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "La colección {0}: {1} tras la comisión de Steam compra unos {2} niveles de insignia, más que el 1 que da crearla",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Primero el nivel de insignia más barato - una insignia ya empezada o una colección nueva entera, lo que cueste menos",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam pide confirmar las compras en la app de Steam, las confirmas en tu móvil - una colección cada vez; si no, se dejan tras un día"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam pide confirmar las compras en la app de Steam, las confirmas en tu móvil - una colección cada vez; si no, se dejan tras un día",
+    "set finder · couldn't look · {0}": "buscador de colecciones · no pudo mirar · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "buscador de colecciones · {0} cromos mirados hoy · {1} colecciones completas conocidas",
+    "set finder · couldn't read its list, starting over · {0}": "buscador de colecciones · no pudo leer su lista, empieza de nuevo · {0}",
+    "set finder · couldn't save its list · {0}": "buscador de colecciones · no pudo guardar su lista · {0}",
+    "Set price": "Precio de la colección",
+    "XP per 1.00": "PE por cada 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Aún no se conoce ninguna colección completa: el buscador de colecciones lee el mercado poco a poco.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "El buscador de colecciones ha mirado hoy los {0} cromos más baratos de {1} y conoce {2} colecciones completas. Última mirada: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Solo las compra con «Comprar las colecciones completas más baratas» activado.",
+    "Cheapest whole sets on the market": "Las colecciones completas más baratas del mercado",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "buscador de colecciones · {0} omitido · su robots.txt no respondió ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "buscador de colecciones · {0} omitido · su robots.txt no lo permite",
+    "set finder · {0} skipped · it didn't answer ({1})": "buscador de colecciones · {0} omitido · no respondió ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "buscador de colecciones · {0} omitido · no se pudo leer su lista",
+    "set finder · {0} games to look at first, from {1}": "buscador de colecciones · {0} juegos para mirar primero, de {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

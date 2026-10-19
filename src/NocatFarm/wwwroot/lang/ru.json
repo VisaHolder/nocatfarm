@@ -3169,7 +3169,22 @@
     "It would sell instead of crafting": "Продаст вместо сборки",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "Набор {0}: {1} после комиссии Steam покупает около {2} уровней значков - больше, чем 1 от сборки",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Сначала самый дешёвый уровень значка - начатый значок или целый новый набор, что дешевле",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Если Steam просит подтверждать покупки в приложении Steam, вы подтверждаете их на телефоне - по одному набору; без подтверждения через день они отменяются"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Если Steam просит подтверждать покупки в приложении Steam, вы подтверждаете их на телефоне - по одному набору; без подтверждения через день они отменяются",
+    "set finder · couldn't look · {0}": "поиск наборов · не удалось посмотреть · {0}",
+    "set finder · {0} cards looked at today · {1} whole sets known": "поиск наборов · сегодня просмотрено карточек: {0} · известно полных наборов: {1}",
+    "set finder · couldn't read its list, starting over · {0}": "поиск наборов · не удалось прочитать список, начинает заново · {0}",
+    "set finder · couldn't save its list · {0}": "поиск наборов · не удалось сохранить список · {0}",
+    "Set price": "Цена набора",
+    "XP per 1.00": "XP за 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Полных наборов пока не известно - поиск наборов читает торговую площадку понемногу.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "Поиск наборов сегодня просмотрел {0} самых дешёвых карточек из {1} и знает полных наборов: {2}. Последний просмотр: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Покупает их только при включённом «Покупать самые дешёвые полные наборы».",
+    "Cheapest whole sets on the market": "Самые дешёвые полные наборы на торговой площадке",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "поиск наборов · {0} пропущен · robots.txt не ответил ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "поиск наборов · {0} пропущен · robots.txt этого не разрешает",
+    "set finder · {0} skipped · it didn't answer ({1})": "поиск наборов · {0} пропущен · нет ответа ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "поиск наборов · {0} пропущен · список не удалось прочитать",
+    "set finder · {0} games to look at first, from {1}": "поиск наборов · игр для первой проверки: {0}, из {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {
