@@ -28695,6 +28695,9 @@ await SweepSetChecks.RunAsync(Check);
 // ── 1.8.2 sweep: what a sale's money buys is counted past the levels the wallet already pays for; fakes only ──
 await SweepWalletChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: buying cards - the fee's tax in the plan, a purchase counted from when it's known bought; fakes only ──
+await SweepBuyChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -33744,6 +33747,101 @@ static class SweepWalletChecks {
 
 			NocatFarm.Modules.GemsChoice.ForgetCosts();
 			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: buying cards - the tax on Steam's fee in the plan, and a purchase counted from when it's known bought. Fakes only.</summary>
+static class SweepBuyChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepbuy-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot() {
+			var b = new NocatFarm.Core.Bot("sb-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			return b;
+		}
+
+		NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m) {
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, SendGap = static () => TimeSpan.Zero };
+			buyer.ProofGap = TimeSpan.Zero;
+			return buyer;
+		}
+
+		try {
+			// ── the tax on Steam's fee is part of what a set costs: ranked and fitted on it, never half bought ──
+			string[] cards = ["100-a", "100-b", "100-c", "100-d", "100-e"];
+			var taxed = new FakeCardMarket { Wallet = new(5000, 20, false, 0, null, 20) };
+			taxed.Sets[100] = new(100, "Hundred", cards, cards.ToDictionary(static c => c, static _ => 100));
+			taxed.Held[100] = new() { ["100-a"] = 1 };
+
+			foreach (string c in cards.Skip(1)) {
+				taxed.Books[c] = FakeCardMarket.B(100);
+			}
+
+			var tight = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { BuyDailyLimit = 4.05f, BuyWeeklyLimit = 50f, BuyFullSets = false }, taxed,
+				NocatFarm.Modules.SwapCost.None, NocatFarm.Modules.BuyLedger.Of("sb-tax"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep buy: each card's tax on Steam's fee is in what the set costs - 4 cards at 1.00 with 0.02 tax each cost 4.08",
+				(tight.Ranked.Count == 1) && (tight.Ranked[0].Cost == 408) && tight.Ranked[0].Cards.All(static c => c is { Price: 100, Tax: 2 }),
+				tight.Ranked.Count == 0 ? "-" : tight.Ranked[0].Cost.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			Check("sweep buy: ...so a set that only fits a 4.05 day without the tax isn't planned - never started and left half bought",
+				(tight.Steps.Count == 0) && tight.Notes.Any(static n => n.Contains("more than a day's limit", StringComparison.Ordinal)), string.Join("; ", tight.Notes));
+			var roomy = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { BuyDailyLimit = 4.08f, BuyWeeklyLimit = 50f, BuyFullSets = false }, taxed,
+				NocatFarm.Modules.SwapCost.None, NocatFarm.Modules.BuyLedger.Of("sb-tax2"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep buy: ...and with room for the tax too, it is", (roomy.Steps.Count == 1) && (roomy.Cost == 408), string.Join("; ", roomy.Notes));
+
+			// ── a purchase found bought later counts from then: the limits never roll it off early, and it's never counted twice ──
+			var m = new FakeCardMarket { Wallet = new(1000, 20, false, 1) };   // email confirmations: nothing new is bought, only the sweep runs
+			m.Checks["o1"] = new(NocatFarm.Modules.BuyResult.Bought, 9, "", "o1");
+			var b1 = NewBot();
+			var buyer = Buyer(b1, m);
+			DateTime asked = DateTime.UtcNow.AddHours(-23.5);
+			buyer.Ledger.Add(new(asked, 9, 20, 100, "100-b", Pending: true, Order: "o1", Key: "k1"));
+			await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var after = buyer.Ledger.All;
+			Check("sweep buy: an order asked for 23.5 hours ago and found bought now counts from now - still in tomorrow's day, once",
+				after is [{ Key: "k1", Pending: false, Cents: 9 }] && (after[0].At > DateTime.UtcNow.AddMinutes(-5))
+				&& (buyer.Ledger.SpentSince(DateTime.UtcNow.AddHours(-1)) == 9) && (buyer.Ledger.SpentSince(DateTime.UtcNow.AddDays(-7)) == 9),
+				string.Join(" | ", after));
+
+			// Proven by the inventory: the same.
+			var pm = new ProofMarket(new FakeCardMarket { Wallet = new(1000, 20, false, 1) }) { Assets = new() { ["100-b"] = ["11", "12"] } };
+			var b2 = NewBot();
+			var prover = Buyer(b2, pm);
+			prover.Ledger.Add(new(DateTime.UtcNow.AddHours(-3), 9, 20, 100, "100-b", Pending: true, Order: "p1", Key: "k2", Before: ["11"]));
+			await prover.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var proven = prover.Ledger.All;
+			Check("sweep buy: a purchase the inventory proves counts from when it was found, too - one entry, moved, never two",
+				proven is [{ Key: "k2", Pending: false, Asset: "12" }] && (proven[0].At > DateTime.UtcNow.AddMinutes(-5)) && (prover.Ledger.SpentSince(DateTime.MinValue) == 9),
+				string.Join(" | ", proven));
+
+			// Steam never said, hours on, with nothing to prove it by: counted as bought from then.
+			var m3 = new FakeCardMarket { Wallet = new(1000, 20, false, 1) };
+			var b3 = NewBot();
+			var never = Buyer(b3, m3);
+			never.Ledger.Add(new(DateTime.UtcNow.AddHours(-7), 9, 20, 100, "100-b", Pending: true, Order: "n1", Key: "k3"));
+			await never.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("sweep buy: an order Steam never said the end of, counted as bought - from when that was decided",
+				never.Ledger.All is [{ Key: "k3", Pending: false }] && (never.Ledger.All[0].At > DateTime.UtcNow.AddMinutes(-5)), string.Join(" | ", never.Ledger.All));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);

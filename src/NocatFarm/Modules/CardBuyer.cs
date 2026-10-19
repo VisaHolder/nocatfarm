@@ -438,8 +438,11 @@ public static class SwapCost {
 	public static ICardSwaps Current { get; set; } = new CardExchange.BuyCosts();
 }
 
-/// <summary>One card to buy, at the cheapest listing's price (the buyer's price, fees in).</summary>
-public sealed record BuyCard(string Hash, long Price) {
+/// <summary>
+/// One card to buy, at the cheapest listing's price (the buyer's price, fees in). <paramref name="Tax"/>: 1.8.2, the tax some
+/// countries add on Steam's fee, paid on top - counted in what the set costs, as each purchase counts it.
+/// </summary>
+public sealed record BuyCard(string Hash, long Price, long Tax = 0) {
 	/// <summary>The card's name, without the "730-" in front of its market name.</summary>
 	public string Name => Hash.IndexOf('-') is int dash and > 0 ? Hash[(dash + 1)..] : Hash;
 }
@@ -449,7 +452,8 @@ public sealed record BuyCard(string Hash, long Price) {
 /// with none of it yet. Either way, one badge level: 100 XP once crafted.
 /// </summary>
 public sealed record BuyStep(uint App, string Game, bool FullSet, int Level, int SetSize, IReadOnlyList<BuyCard> Cards) {
-	public long Cost => Cards.Sum(static c => c.Price);
+	/// <summary>What the level really costs: every card's price and the tax on its fee - what the limits and the wallet are checked against.</summary>
+	public long Cost => Cards.Sum(static c => c.Price + c.Tax);
 
 	/// <summary>XP for every whole unit of money (100 cents): a level is 100 XP.</summary>
 	public long XpPerUnit => Cost > 0 ? 100L * 100 / Cost : 0;
@@ -911,7 +915,8 @@ public sealed class BuyPlan {
 				}
 			}
 
-			priced.Add(new BuyStep(set.App, set.Game, full, level, set.Cards.Count, [.. prices.Select(static p => new BuyCard(p.Hash, p.Book.Lowest))]));
+			// Each card with the tax on its fee, as the purchase will pay it - so the ranking and what fits today are what it costs.
+			priced.Add(new BuyStep(set.App, set.Game, full, level, set.Cards.Count, [.. prices.Select(p => new BuyCard(p.Hash, p.Book.Lowest, wallet.FeeTax(p.Book.Lowest)))]));
 		}
 
 		// Enough prices read for one look, and not one level priced: what money buys isn't known at all this look.
@@ -1658,7 +1663,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			if (now - open.At >= AskFor) {
 				if (open.Before != null) {
 					unsure = true;
-				} else if (!Ledger.Replace(open, open with { Pending = false, Confirm = null })) {
+				} else if (!Ledger.Replace(open, open with { At = Later(open.At, now), Pending = false, Confirm = null })) {
 					CantSave();
 
 					return;
@@ -1679,7 +1684,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				continue;
 			}
 
-			if (!Record(open, answer, open.Cents)) {
+			if (!Record(open, answer, open.Cents, now)) {
 				CantSave();
 
 				return;
@@ -1777,7 +1782,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				answer = new BuyAnswer(BuyResult.Unsure, phone.Cents, Log.Describe(e));
 			}
 
-			if (!Record(pending, answer, phone.Cents) || _cantSave) {
+			if (!Record(pending, answer, phone.Cents, now) || _cantSave) {
 				CantSave();
 
 				return unsure;
@@ -1845,13 +1850,19 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <summary>
 	/// Set the list straight after an answer: bought at what it paid, nothing spent off it, waiting on the phone with its
 	/// confirmation, unsure still counted (and never sent again with a confirmation). False when it couldn't be saved.
+	/// 1.8.2: bought, it counts from <paramref name="now"/> (Steam's clock) - an order found bought hours after it was asked
+	/// for counts from when the money is known to have gone, never rolling off the day's or the week's limit early. The
+	/// same entry, moved: never counted twice.
 	/// </summary>
-	private bool Record(BuyLedger.Entry pending, BuyAnswer answer, long price) => answer.Result switch {
-		BuyResult.Bought => Ledger.Replace(pending, pending with { Cents = Paid(answer, price), Pending = false, Order = answer.Order ?? pending.Order, Confirm = null }),
+	private bool Record(BuyLedger.Entry pending, BuyAnswer answer, long price, DateTime now) => answer.Result switch {
+		BuyResult.Bought => Ledger.Replace(pending, pending with { At = Later(pending.At, now), Cents = Paid(answer, price), Pending = false, Order = answer.Order ?? pending.Order, Confirm = null }),
 		BuyResult.Gone or BuyResult.Refused or BuyResult.NotSent => Ledger.Replace(pending, null),
 		BuyResult.Waiting => Ledger.Replace(pending, pending with { Confirm = answer.Confirm ?? pending.Confirm }),
 		_ => Ledger.Replace(pending, pending with { Order = answer.Order ?? pending.Order, Confirm = null })
 	};
+
+	/// <summary>The later of two times - a purchase's time only ever moves forward.</summary>
+	private static DateTime Later(DateTime a, DateTime b) => a >= b ? a : b;
 
 	private void CantSave() {
 		_cantSave = true;
@@ -1952,7 +1963,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				answer = new BuyAnswer(BuyResult.Unsure, cost, Log.Describe(e));
 			}
 
-			bool saved = Record(pending, answer, cost);
+			bool saved = Record(pending, answer, cost, at);
 
 			switch (answer.Result) {
 				case BuyResult.Bought:
@@ -2093,7 +2104,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				string proof = arrived.OrderByDescending(static id => id.Length).ThenByDescending(static id => id, StringComparer.Ordinal).First();
 				claimed.Add(proof);
 
-				if (!Ledger.Replace(entry, entry with { Pending = false, Asset = proof, Confirm = null })) {
+				if (!Ledger.Replace(entry, entry with { At = Later(entry.At, now), Pending = false, Asset = proof, Confirm = null })) {
 					CantSave();
 
 					break;
