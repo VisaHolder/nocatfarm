@@ -125,6 +125,7 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		if (!_armed) {
 			_armed = true;
 			_next = latest;
+			_lastDoing = "";   // 1.8.2: the first thing it settles on (settling in, a sitting) is said at the next tick
 
 			return;
 		}
