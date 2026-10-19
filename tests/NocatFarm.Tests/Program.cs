@@ -28710,6 +28710,9 @@ await SweepGemsRuleChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory,
 // ── 1.8.2 sweep: what the gems were turned into, listed - a fresh sack price, one sack at a time, cards by the spare items rules ──
 await SweepGemsSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 sweep: copying settings never starts spending, trading, sending or commands on the account copied to; the preview hides nothing ──
+await SweepCopyChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -32995,9 +32998,9 @@ static class CopySettingsChecks {
 				.Where(d => Shown(plan.Result, d.Name) != Shown(src, d.Name)).Select(static d => d.Name)];
 			Check("copy settings: every other setting comes across as the source has it", missed.Count == 0 && plan.Result.IdleGames.SequenceEqual([440u, 570u])
 				&& (plan.Result.CustomGameName == "nocat.lol") && (plan.Result.DiscoveryQueue == 2), string.Join(", ", missed));
-			Check("copy settings: what names the account itself is taken out - trading with itself, itself as one of your accounts, sending to itself",
-				(plan.Result.AutoTradeWith == "old") && (plan.Result.TradeMasters == "76561198000000777") && (plan.Result.SpareGemsSendTo == "")
-				&& (plan.Result.BoosterSendTo == "old") && plan.Cleared.Order().SequenceEqual(new[] { "AutoTradeWith", "SpareGemsSendTo", "TradeMasters" }.Order()),
+			Check("copy settings: who it trades with, your own accounts and where it sends items are the account's own - never copied, so nothing to take itself out of",
+				(plan.Result.AutoTradeWith == "") && (plan.Result.TradeMasters == "") && (plan.Result.SpareGemsSendTo == "")
+				&& (plan.Result.BoosterSendTo == "") && (plan.Cleared.Count == 0),
 				$"{plan.Result.AutoTradeWith} | {plan.Result.TradeMasters} | {string.Join(",", plan.Cleared)}");
 			Check("copy settings: working it out changes neither account, and shares no list with the source",
 				(Json(src) == srcWas) && (Json(dst) == dstWas) && !ReferenceEquals(plan.Result.IdleGames, src.IdleGames));
@@ -33036,15 +33039,16 @@ static class CopySettingsChecks {
 			// ── human mode and robots ──
 			var human = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", LegitBackup = "IdleGames=440", OpenBoosterPacks = 1, AchievementSkipMultiplayer = true };
 			var h1 = NocatFarm.Core.SettingsCopy.Build(human, new NocatFarm.Config.BotConfig { IdleGames = [570] }, "cp-r", 0).Result;
-			Check("human mode: a human-mode source onto a robot - human mode, its games, its stash of robot games, nothing idled, as the source has it",
-				h1.LegitMode && (h1.IdleGames.Count == 0) && (h1.GameWeights == "730:70, 440:30") && (h1.LegitBackup == "IdleGames=440") && h1.AchievementSkipMultiplayer
-				&& (h1.OpenBoosterPacks == 1), $"{h1.LegitBackup} | {h1.OpenBoosterPacks}");
+			Check("human mode: a human-mode source onto a robot - it stays a robot (its own mode), with the source's robot games from its stash",
+				!h1.LegitMode && h1.IdleGames.SequenceEqual([440u]) && (h1.LegitBackup == "") && !h1.AchievementSkipMultiplayer && (h1.OpenBoosterPacks == 1),
+				$"{string.Join(",", h1.IdleGames)} | {h1.LegitBackup} | {h1.OpenBoosterPacks}");
 			var robot = new NocatFarm.Config.BotConfig { IdleGames = [440, 730], CustomGameName = "nocat.lol", OpenBoosterPacks = 1 };
 			var mine = new NocatFarm.Config.BotConfig { LegitMode = true, IUseThisAccount = true, LegitBackup = "IdleGames=999", GameWeights = "730:100" };
 			var h2 = NocatFarm.Core.SettingsCopy.Build(robot, mine, "cp-mine", 0).Result;
-			Check("human mode: a robot copied onto your own account is copied as it is - a robot, its games, not your old stash - and you still sign into it yourself",
-				!h2.LegitMode && h2.IUseThisAccount && h2.IdleGames.SequenceEqual([440u, 730u]) && (h2.LegitBackup == "") && (h2.GameWeights == "") && !h2.AchievementSkipMultiplayer,
-				$"{string.Join(",", h2.IdleGames)} | {h2.LegitBackup}");
+			Check("human mode: a robot copied onto your own human-mode account stays human-mode - the robot's games become its weights, as a save switching it does - and you still sign into it yourself",
+				h2.LegitMode && h2.IUseThisAccount && (h2.IdleGames.Count == 0) && (h2.GameWeights == "440:70, 730:30") && (h2.LegitBackup == "IdleGames=440,730")
+				&& h2.AchievementSkipMultiplayer && (h2.OpenBoosterPacks == 0),
+				$"{h2.GameWeights} | {h2.LegitBackup}");
 			var h3 = NocatFarm.Core.SettingsCopy.Build(robot, new NocatFarm.Config.BotConfig(), "cp-h", 0, human: true).Result;
 			var asSaved = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Config.BotConfig>(Json(robot))!;
 			asSaved.LegitMode = true;
@@ -34297,6 +34301,77 @@ static class SweepGemsSellChecks {
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}
+
+		return Task.CompletedTask;
+	}
+}
+
+/// <summary>1.8.2 sweep: copying settings never starts spending, trading, sending or commands on the account copied to. Fakes only.</summary>
+static class SweepCopyChecks {
+	public static Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Json(object? o) => System.Text.Json.JsonSerializer.Serialize(o);
+
+		// ── every setting classified, exactly once ──
+		var never = NocatFarm.Core.SettingsCopy.NeverCopied;
+		var kept = NocatFarm.Core.SettingsCopy.KeptAsTheyAre;
+		var across = NocatFarm.Core.SettingsCopy.CopiedAcross;
+		HashSet<string> switches = [.. NocatFarm.Core.Switches.All.Select(static k => k.Setting)];
+		List<string> unclassified = [], twice = [];
+
+		foreach (var def in NocatFarm.Config.Settings.Bot) {
+			int lists = (never.Contains(def.Name) ? 1 : 0) + (kept.Contains(def.Name) ? 1 : 0) + (across.Contains(def.Name) ? 1 : 0) + (switches.Contains(def.Name) ? 1 : 0);
+
+			if (lists == 0) {
+				unclassified.Add(def.Name);
+			} else if (lists > 1) {
+				twice.Add(def.Name);
+			}
+		}
+
+		Check("sweep copy: every per-account setting is in exactly one list - copied, never copied, kept as the account has it, or a switch (a new setting fails here until it's put in one)",
+			(unclassified.Count == 0) && (twice.Count == 0), $"unclassified: {string.Join(", ", unclassified)} / twice: {string.Join(", ", twice)}");
+		HashSet<string> real = [.. NocatFarm.Config.Settings.Bot.Select(static d => d.Name)];
+		Check("sweep copy: the lists name only settings that exist", never.Concat(kept).Concat(across).All(real.Contains),
+			string.Join(", ", never.Concat(kept).Concat(across).Where(n => !real.Contains(n))));
+		Check("sweep copy: a setting in no list is never copied", !NocatFarm.Core.SettingsCopy.Copied(new NocatFarm.Config.SettingDef("NotASetting", "x", "x", NocatFarm.Config.SettingKind.Bool, "x")));
+		Check("sweep copy: what spends, trades, sends items, takes commands or switches human mode is kept as the account has it",
+			new[] { "BoosterMake", "GemsForLevels", "SellSetsForLevels", "AcceptFairCardSwaps", "SendItemTypes", "SendOnFarmingFinished", "AutoTradeWith", "TradeMasters",
+				"CommandMasters", "LegitMode", "BuyDailyLimit", "BuyWeeklyLimit", "CardSwapMaxLoss", "SpareMaxPrice", "SpareDailyValue", "SpareGemsSendTo", "BoosterSendTo" }.All(kept.Contains));
+
+		// ── a copy from an account that does all of it, onto one that does none ──
+		var src = new NocatFarm.Config.BotConfig {
+			BoosterMake = NocatFarm.Modules.BoosterPick.Auto, GemsForLevels = true, SellSetsForLevels = true, BuyFullSets = true, AcceptFairCardSwaps = true, CardSwapsPerDay = 9,
+			CardSwapMaxLoss = 5f, AcceptFromMasters = true, TradeMasters = "76561198000000777", AutoTradeWith = "old", DeclineOtherTrades = true, AcceptDonations = true,
+			SendItemTypes = "cards, gems", SendOnFarmingFinished = true, SendEveryHours = 6, SpareGems = 4, SpareGemsSendTo = "old", BoosterUnopened = 2, BoosterSendTo = "old",
+			CommandMasters = "76561198000000777", LegitMode = true, BuyDailyLimit = 99f, BuyWeeklyLimit = 999f, SpareMaxPrice = 50f, SpareDailyValue = 500f, SpareMinSale = 2f,
+			PointsWeeklyCap = 99999, PointsKeepAtLeast = 0, IdleGames = [440], DiscoveryQueue = 2
+		};
+		var dst = new NocatFarm.Config.BotConfig { BoosterMake = 0, GemsForLevels = false, SellSetsForLevels = false, SpareGems = 1 };
+		var plan = NocatFarm.Core.SettingsCopy.Build(src, dst, "cp-kept", 0);
+		List<string> moved = [.. kept.Where(n => Json(NocatFarm.Config.Settings.Read(plan.Result, n)) != Json(NocatFarm.Config.Settings.Read(dst, n)))];
+		Check("sweep copy: from an account that spends, trades and sends - none of it comes across; the account keeps every one of its own",
+			(plan.Error == null) && (moved.Count == 0) && !plan.Result.LegitMode && (plan.Result.DiscoveryQueue == 2), string.Join(", ", moved));
+
+		// ── the preview hides nothing ──
+		var many = new NocatFarm.Config.BotConfig();
+		var far = new NocatFarm.Config.BotConfig {
+			WeekdayHours = 3, WeekendHours = 5, DayOffChancePct = 7, DayStartVaryMinutes = 11, BedVaryMinutes = 13, LateNightExtraHours = 1, SleepMinHours = 6, SleepMaxHours = 9,
+			PureMainDayChancePct = 17, NewGamesFirst = !many.NewGamesFirst, LongerRhythms = !many.LongerRhythms, JoinFriends = !many.JoinFriends, WarmUpMinMinutes = 2, WarmUpMaxMinutes = 4,
+			SessionMinMinutes = 30, SessionMaxMinutes = 90, BreakMinMinutes = 5, BreakMaxMinutes = 20, MealBreaksPerDay = 1, MealBreakMinutes = 25, MaxSignOutsPerDay = 1,
+			OfflineIdleAtNight = !many.OfflineIdleAtNight, ActOnlyWhileAwake = !many.ActOnlyWhileAwake, QuietThingsWaitForDay = !many.QuietThingsWaitForDay, IdleGames = [440, 730],
+			IdleWholeLibrary = !many.IdleWholeLibrary, SkipRefundableGames = !many.SkipRefundableGames, RotateIdleGames = !many.RotateIdleGames, CustomGameNameEnabled = !many.CustomGameNameEnabled,
+			CustomGameName = "x", PlayWhileFarming = !many.PlayWhileFarming, FarmCards = !many.FarmCards, PriorityGames = [10], FarmPriorityOnly = !many.FarmPriorityOnly, BlacklistedGames = [20],
+			SkipUnplayedGames = !many.SkipUnplayedGames, FarmInSittings = !many.FarmInSittings, FarmOffline = !many.FarmOffline, StopWhenFarmingDone = !many.StopWhenFarmingDone,
+			CraftBadges = !many.CraftBadges, CraftFoilBadges = !many.CraftFoilBadges, SpareFoils = !many.SpareFoils, DiscoveryQueue = 2, SaleEvents = !many.SaleEvents, WatchBans = !many.WatchBans,
+			ShowInventoryValue = !many.ShowInventoryValue, AcceptGifts = !many.AcceptGifts, AcceptFriendRequests = !many.AcceptFriendRequests, AcceptGroupInvites = !many.AcceptGroupInvites
+		};
+		var big = NocatFarm.Core.SettingsCopy.Build(far, many, "cp-big", 0);
+		string text = NocatFarm.Core.SettingsCopy.PreviewText("far", "cp-big", big);
+		Check("sweep copy: the preview lists every change - none cut off - and says what's kept as the account has it",
+			(big.Changes.Count > 40) && big.Changes.All(c => text.Contains($"  {c.Label}: ", StringComparison.Ordinal)) && !text.Contains("...and ", StringComparison.Ordinal)
+			&& text.Contains("Kept as cp-big has them: whatever spends money, gems or points, trades, sends items away or takes commands", StringComparison.Ordinal),
+			$"{big.Changes.Count} changes");
 
 		return Task.CompletedTask;
 	}
