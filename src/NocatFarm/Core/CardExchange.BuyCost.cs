@@ -38,11 +38,14 @@ public static partial class CardExchange {
 			&& (ledger.Of(m.Id) is { State: "sent" } r) && r.Gets.Contains(hash, StringComparer.Ordinal)) ? 0 : null;
 	}
 
-	/// <summary>How long a game whose cards were bought for a badge is kept out of swaps and spare items: until it's crafted, a week at most.</summary>
-	public static readonly TimeSpan BoughtFor = TimeSpan.FromDays(7);
+	/// <summary>
+	/// How long a game whose cards were bought for a badge is kept out of swaps, spare items, sets sold and dear cards: until
+	/// its badge is crafted after the last purchase - 1.8.2: a month at most (a week let a set bought for a badge be sold).
+	/// </summary>
+	public static readonly TimeSpan BoughtFor = TimeSpan.FromDays(30);
 
-	/// <summary>Games this account bought cards of for a badge in the last week: their cards stay for the craft.</summary>
-	public static HashSet<uint> BoughtGames(string account, DateTime nowUtc) => BuyLedger.Of(account).GamesSince(nowUtc - BoughtFor);
+	/// <summary>Games this account bought cards of for a badge in the last month and hasn't crafted since: their cards stay for the craft.</summary>
+	public static HashSet<uint> BoughtGames(string account, DateTime nowUtc) => BuyLedger.Of(account).BoughtSince(nowUtc - BoughtFor);
 
 	/// <summary>What never goes in a swap on this account now: its "never touch" lists, and the games it bought cards of for a badge.</summary>
 	public static Rules RulesOf(Bot bot, DateTime nowUtc) {

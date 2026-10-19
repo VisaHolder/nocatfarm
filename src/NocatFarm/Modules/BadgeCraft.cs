@@ -327,6 +327,11 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 				_crafted++;
 				Stats.Record(Stats.KindBadge, Bot.Name);
 
+				// 1.8.2: the cards bought for this badge are spent - no longer kept out of selling and swaps.
+				if (c.Border == 0) {
+					BuyLedger.Of(Bot.Name).Crafted(c.AppId, DateTime.UtcNow);
+				}
+
 				bool more = await Sleep(Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);
 
 				// Handed back after the gap, not the moment it's crafted: a send that read the inventory just before the
@@ -348,6 +353,15 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		if (made > 0) {
 			Log.Reward(new Said("crafted {0} badge(s) - Steam level up", made), Bot.Name);
+
+			// 1.8.2: the new Steam level, said once (with what the cards bought for these badges cost).
+			try {
+				if (await Bot.GetLevelAsync().ConfigureAwait(false) is uint level) {
+					LevelUps.Seen(Bot, (int) level);
+				}
+			} catch (Exception e) when (e is not OperationCanceledException) {
+				Log.Debug(new Said("couldn't read the Steam level: {0}", Log.Describe(e)), Bot.Name);
+			}
 		}
 
 		_status = new Said("{0} crafted since start", _crafted);

@@ -1736,7 +1736,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep 보류 해제 - 댓글 재개",
     "achievement ceiling is one figure now: 90%": "업적 상한은 이제 하나의 값: 90%",
     "setting moved: when to farm cards = only at night": "설정 이동: 카드 파밍 시간 = 밤에만",
-    "going for {0}: {1} of {2} card drop(s)": "{0} 노리는 중: 카드 드롭 {1}/{2}",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord 봇: 연결하려면 설정에서 Discord 연결을 누르세요",
     "Discord bot: no / commands in a server - invite it again": "Discord 봇: 서버에 / 명령 없음 - 다시 초대하세요",
     "Discord connected - only {0} can use its commands": "Discord 연결됨 - {0}만 명령을 쓸 수 있음",
@@ -3334,7 +3333,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "등록 안 함: 받는 금액 {0}이(가) 보석 가치({1})보다 많지 않음",
     "no price right now - kept until it has one": "지금은 가격이 없음 - 가격이 나올 때까지 보관",
     "gems: no fresh price for a sack of gems - nothing listed this look": "보석: 보석 자루의 최신 가격이 없음 - 이번에는 아무것도 등록하지 않음",
-    "buy order {0} · Steam never said · counted as bought": "구매 주문 {0} · Steam이 끝내 답하지 않음 · 구매한 것으로 계산",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: 아직 제작 안 함 · {1} · 카드 가치를 모름",
     "it would leave fewer than {0} copies of a card you keep": "보관하는 카드가 {0}장 미만으로 남게 됩니다",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} 주문이 마켓에 열린 채 남아 있었습니다 · 취소함, 구매한 것 없음",
@@ -3371,7 +3369,6 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "세트 찾기가 지난 24시간 동안 가장 싼 세트 {1}개 중 {0}개를 장터에서 확인했고 전체 세트 {2}개를 알고 있습니다. 마지막 확인: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "한도 없음: 지갑에 있는 만큼 싼 레벨부터 씁니다 - 레벨 하나의 최대 금액은 그대로 적용됩니다.",
     "No limit a day ({0} spent in the last day)": "하루 한도 없음(지난 하루 {0} 사용)",
-    "At most {0} for one badge level - twice the cheapest level now": "배지 레벨 하나에 최대 {0} - 지금 가장 싼 레벨의 두 배",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "세트 찾기 · 가장 싼 세트 {1}개 중 {0}개를 지난 24시간 동안 장터에서 확인 · 전체 세트 {2}개 파악",
     "sets": "세트",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "카드 사기 · 싼 레벨을 더 살 돈이 남았습니다 - {0}분 뒤에 다시 확인",
@@ -3394,7 +3391,30 @@
     "card swap · found the offer sent to {0} before the restart": "카드 교환 · 재시작 전에 {0}에게 보낸 제안을 찾았습니다",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다",
     "{0} · {1} of {2} card drop(s)": "{0} · 카드 드롭 {1}/{2}",
-    "every game": "모든 게임"
+    "every game": "모든 게임",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "지갑 통화 {0}: “일주일 최대 지출” 이(가) 아직 {1}(달러 기준 금액)입니다 - {0}에서는 약 {2}을(를) 쓰세요",
+    "couldn't look at the money settings: {0}": "돈 설정을 확인하지 못했습니다: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "카드 구매를 껐습니다 · 지출 한도가 무제한으로 바뀌었습니다 - 구매를 다시 켜서 쓸 수 있는 금액을 확인하고 예를 누르세요",
+    "level goal {0} stopped": "레벨 목표 {0} 중지",
+    "Steam level {0} (+{1}) · this level cost {2}": "Steam 레벨 {0} (+{1}) · 이 레벨에 든 돈 {2}",
+    "Steam level {0} (+{1})": "Steam 레벨 {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "레벨 목표 {0} 시작: {1}레벨에 약 {2} ({3}을(를) 넘지 않음)",
+    "level goal reached: Steam level {0} · {1} spent": "레벨 목표 달성: Steam 레벨 {0} · {1} 사용",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "구매는 세트 찾기를 기다립니다: 가장 싼 세트 {1}개 중 {0}개 확인",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "지갑 통화 {0}: “이보다 비싼 아이템은 건드리지 않기” 이(가) 아직 {1}(달러 기준 금액)입니다 - {0}에서는 약 {2}을(를) 쓰세요",
+    "{0} would pay you {1}, not more than its gems are worth": "{0}은(는) {1}을(를) 받게 되어 보석 가치보다 많지 않습니다",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "지갑 통화 {0}: “교환에서 손해 볼 수 있는 최대” 이(가) 아직 {1}(달러 기준 금액)입니다 - {0}에서는 약 {2}을(를) 쓰세요",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "지갑 통화 {0}: “하루 최대 지출” 이(가) 아직 {1}(달러 기준 금액)입니다 - {0}에서는 약 {2}을(를) 쓰세요",
+    "couldn't read the Steam level: {0}": "Steam 레벨을 읽지 못했습니다: {0}",
+    "couldn't search the market: {0}": "장터를 검색하지 못했습니다: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "Steam이 일주일 동안 결과를 알려 주지 않은 카드 구매 {0}건 · 구매한 것으로 셉니다",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Steam 레벨 {0} (+{1}) · {1}레벨에 {2}",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "지갑 통화 {0}: “최소 이만큼 받을 때만 판매” 이(가) 아직 {1}(달러 기준 금액)입니다 - {0}에서는 약 {2}을(를) 쓰세요",
+    "couldn't note the money settings were looked at: {0}": "돈 설정을 확인했다고 기록하지 못했습니다: {0}",
+    "couldn't note the Steam level: {0}": "Steam 레벨을 기록하지 못했습니다: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "배지 레벨 하나에 최대 {0} - 보통 한 레벨 값보다 조금 위",
+    "{0} would pay you {1}, under your {2} minimum": "{0}은(는) {1}을(를) 받게 되어 최소 {2}보다 적습니다",
+    "cards were bought to finish it - crafted, never sold": "완성하려고 카드를 샀습니다 - 제작하고, 팔지 않습니다"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4643,11 +4663,11 @@
     },
     "BuyDailyLimit": {
       "label": "하루 최대 지출",
-      "tip": "24시간 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 1.50이면 0.60짜리 세트와 0.70짜리 세트로 하루가 차고, 다음 세트는 내일까지 기다립니다. 지갑에 있는 것보다 더 쓰지 않습니다."
+      "tip": "24시간 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 1.50이면 0.60짜리 세트와 0.70짜리 세트로 하루가 차고, 다음 세트는 내일까지 기다립니다. 지갑에 있는 것보다 더 쓰지 않습니다. 처음 값 1.50은 달러나 유로에 맞습니다. 엔이면 약 225를 쓰세요."
     },
     "BuyWeeklyLimit": {
       "label": "일주일 최대 지출",
-      "tip": "7일 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 하루 1.50에 8.00이면 일주일에 약 5일 동안 살 수 있습니다. 0이면 아무것도 사지 않습니다."
+      "tip": "7일 동안 쓰는 최대 금액으로, 이 계정의 Steam 지갑 통화 기준입니다. 예를 들어 하루 1.50에 8.00이면 일주일에 약 5일 동안 살 수 있습니다. 0이면 아무것도 사지 않습니다. 처음 값 8.00은 달러나 유로에 맞습니다. 엔이면 약 1200을 쓰세요."
     },
     "BuyCheckHours": {
       "label": "살 카드 확인 간격",
@@ -4782,7 +4802,7 @@
     },
     "SpareMaxPrice": {
       "label": "이보다 비싼 아이템은 건드리지 않기",
-      "tip": "이보다 가치 있는 것은 절대 건드리지 않습니다. 보석으로 바꾸지도, 팔지도 않습니다. 이 계정의 Steam 지갑 통화 기준: 달러나 유로면 0.25, 엔이면 약 40을 쓰세요. 가치는 최저 매물가와 최근 하루 판매가 중 높은 쪽입니다: 0.20에 올라와 있어도 0.30에 팔렸다면 0.30입니다. 팔려고 만든 팩의 카드는 이 한도와 상관없이 팝니다 - 돈을 벌려고 만든 것이니까요. 보관 목록의 게임은 절대 건드리지 않습니다."
+      "tip": "이보다 가치 있는 것은 절대 건드리지 않습니다. 보석으로 바꾸지도, 팔지도 않습니다. 이 계정의 Steam 지갑 통화 기준: 달러나 유로면 0.25, 엔이면 약 40을 쓰세요. 가치는 최저 매물가와 최근 하루 판매가 중 높은 쪽입니다: 0.20에 올라와 있어도 0.30에 팔렸다면 0.30입니다. 선택하신 대로 두 가지는 이 한도를 넘을 수 있습니다: 배지 레벨을 위해 파는 카드(“돈으로 레벨을 더 살 수 있으면 세트를 제작하지 않고 판매”)와 팔려고 만든 팩의 카드. 보관 목록의 게임은 가치와 상관없이 절대 건드리지 않습니다."
     },
     "SpareGemMarginPct": {
       "label": "보석이 판매보다 나아야 하는 정도",
@@ -4893,7 +4913,7 @@
     },
     "SellSetsForLevels": {
       "label": "돈으로 레벨을 더 살 수 있으면 세트를 제작하지 않고 판매",
-      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 일반 배지를 제작하기 전에 그 세트가 Steam 수수료를 빼고 장터에서 얼마에 팔리는지 봅니다. 그 돈으로 제작이 주는 1레벨보다 확실히 많은 배지 레벨을 살 수 있으면 대신 세트를 판매로 등록하고, 카드 구매가 그 한도 안에서 돈을 씁니다. 예를 들어 수수료를 빼고 5.00이 되는 세트는 가장 싼 레벨이 하나에 약 0.40일 때 1레벨 대신 약 12레벨을 삽니다. 등록은 다른 등록처럼 모두 Steam 앱에서 확인합니다. 포일 세트와 포일 카드도 똑같이 따집니다. 포일 배지는 1레벨입니다. 배지용으로 갖고 있는 카드도 갖고 있을 때 얻는 레벨보다 팔 때 더 가치 있으면 팝니다: 약 5.70에 팔리는 카드 7장은 0.40짜리 레벨 약 14개를 사며, 갖고 있을 때의 1~2레벨보다 많습니다. 파는 동안 그 게임의 카드 구매나 부스터 팩 제작은 하지 않습니다."
+      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 일반 배지를 제작하기 전에 그 세트가 Steam 수수료를 빼고 장터에서 얼마에 팔리는지 봅니다. 그 돈으로 제작이 주는 1레벨보다 확실히 많은 배지 레벨을 살 수 있으면 대신 세트를 판매로 등록하고, 카드 구매가 그 한도 안에서 돈을 씁니다. 예를 들어 수수료를 빼고 5.00이 되는 세트는 가장 싼 레벨이 하나에 약 0.40일 때 1레벨 대신 약 12레벨을 삽니다. 등록은 다른 등록처럼 모두 Steam 앱에서 확인합니다. 포일 세트와 포일 카드도 똑같이 따집니다. 포일 배지는 1레벨입니다. 배지용으로 갖고 있는 카드도 갖고 있을 때 얻는 레벨보다 팔 때 더 가치 있으면 팝니다: 약 5.70에 팔리는 카드 7장은 0.40짜리 레벨 약 14개를 사며, 갖고 있을 때의 1~2레벨보다 많습니다. 파는 동안 그 게임의 카드 구매나 부스터 팩 제작은 하지 않습니다. 이 판매는 “이보다 비싼 아이템은 건드리지 않기” 한도를 넘을 수 있습니다 - 그 한도는 남는 아이템용입니다. 보관 목록의 게임은 절대 건드리지 않습니다."
     },
     "CardSwaps": {
       "label": "남는 카드를 다른 nocat.farm 사용자와 교환",
@@ -4901,7 +4921,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "교환에서 손해 볼 수 있는 최대",
-      "tip": "교환이 주는 것보다 얼마나 가치가 낮아도 되는지, 마켓 최저가 기준, 이 계정의 Steam 지갑 통화로. 예를 들어 0.03이면 0.12짜리 카드를 0.09짜리와 바꾸는 건 되지만 0.08짜리와는 안 됩니다. 0이면 절대 손해 보지 않습니다. 최근 하루 안의 가격이 없는 카드는 교환하지 않습니다."
+      "tip": "교환이 주는 것보다 얼마나 가치가 낮아도 되는지, 마켓 최저가 기준, 이 계정의 Steam 지갑 통화로. 예를 들어 0.03이면 0.12짜리 카드를 0.09짜리와 바꾸는 건 되지만 0.08짜리와는 안 됩니다. 0이면 절대 손해 보지 않습니다. 최근 하루 안의 가격이 없는 카드는 교환하지 않습니다. 달러나 유로면 0.03, 엔이면 약 5를 쓰세요."
     },
     "CardSwapsPerDay": {
       "label": "하루 최대 교환 수",
@@ -4958,7 +4978,7 @@
     },
     "BuyMaxLevelPrice": {
       "label": "배지 레벨 하나에 쓸 최대 금액",
-      "tip": "배지 레벨 하나(100 XP)에 쓰는 최대 금액 - 전체 세트, 또는 시작한 배지에 모자란 카드 - 이 계정의 Steam 지갑 통화로. 더 비싼 레벨은 가격이 내릴 때까지 기다리므로, 싼 레벨이 떨어져도 돈이 비싼 레벨에 쓰이지 않습니다. 예: 0.50이면 0.35짜리 5장 세트는 사고 0.70짜리 9장 세트는 기다립니다. 0은 자동: 그때 살 수 있는 가장 싼 레벨의 두 배 - 가장 싼 레벨이 0.33이면 0.66까지."
+      "tip": "배지 레벨 하나(100 XP)에 쓰는 최대 금액 - 전체 세트, 또는 시작한 배지에 모자란 카드 - 이 계정의 Steam 지갑 통화로. 더 비싼 레벨은 가격이 내릴 때까지 기다리므로, 싼 레벨이 떨어져도 돈이 비싼 레벨에 쓰이지 않습니다. 예: 0.50이면 0.35짜리 5장 세트는 사고 0.70짜리 9장 세트는 기다립니다. 0은 자동이며 빡빡합니다: 보통 한 레벨 값보다 4분의 1 위 - 세트 찾기가 아는 가장 싼 전체 세트 5개의 중간값(그보다 적게 알면 절반 위, 또는 지난주 가장 싼 레벨). 세트가 약 0.40이면 0.50까지; 싼 세트가 떨어져도 오르지 않습니다. 세트 찾기가 가장 싼 세트 100개를 확인할 때까지는 전체 세트를 아는 것 중 가장 싼 것의 10분의 1 위까지만 삽니다. 달러나 유로면 0.50, 엔이면 약 75를 쓰세요."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "확인 사이 가장 긴 대기, 사람 모드",
@@ -4967,6 +4987,11 @@
     "RefundProtectMinPrice": {
       "label": "이 가격보다 비싼 게임만 환불 보호",
       "tip": "이보다 비쌌던 게임만 환불할 수 있는 동안 그대로 둡니다. 더 싼 게임은 바로 파밍합니다. Steam 구매 내역에 나오면 실제로 낸 금액을, 아니면 상점의 정가를 씁니다 (할인으로 낮아지지 않습니다). 가격을 찾지 못한 게임은 보호됩니다. 이 계정의 Steam 지갑 통화로. 예를 들어 5.00: 방금 산 0.99 게임은 바로 파밍하고, 20.00 게임은 환불할 수 없게 될 때까지 그대로 둡니다. 0이면 모든 게임을 보호합니다."
+    },
+    "LevelUpLine": {
+      "label": "레벨 업 줄에 보일 것",
+      "tip": "이 계정의 Steam 레벨이 오르면 로그에 한 줄을 남깁니다 - 예: “Steam 레벨 58 (+1) · 이 레벨에 든 돈 0.46 CAD” 또는 “Steam 레벨 60 (+3) · 3레벨에 1.42 CAD”. 비용은 실제로 쓴 돈뿐입니다: 제작한 배지를 위해 산 카드. 파밍한 카드는 비용이 없습니다. Telegram이나 Discord에서 카드 소식이 켜져 있으면 거기에도 보냅니다. 끄기: 줄을 남기지 않습니다.",
+      "choices": "3 레벨과 든 돈 | 1 레벨만 | 0 끄기"
     }
   }
 }

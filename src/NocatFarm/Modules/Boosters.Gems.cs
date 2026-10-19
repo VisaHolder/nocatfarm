@@ -485,14 +485,16 @@ public sealed partial class Boosters {
 		LiveSpareSteam? steam = null;
 		int gemAsks = 0;
 
-		foreach (GemsChoice.Memory.OpenedCard card in cards) {
-			SpareItem? item = items.FirstOrDefault(i => (i.Kind == SpareKind.Card) && (i.Game == card.App) && i.Marketable && !taken.Contains(i.AssetId)
-				&& i.Name.Equals(card.Name, StringComparison.Ordinal));
+		foreach (GemsChoice.Memory.OpenedCard noted in cards) {
+			// 1.8.2: its own copy - never another of the same name the account already held (a card kept for a badge).
+			SpareItem? item = GemsChoice.Memory.CopyOf(noted, items, taken);
 
 			if (item == null) {
-				mem.RemoveCard(card);   // crafted, swapped or sold since: nothing to list
+				mem.RemoveCard(noted);   // crafted, swapped or sold since: nothing to list
 				continue;
 			}
+
+			GemsChoice.Memory.OpenedCard card = noted.Asset == item.AssetId ? noted : mem.Bind(noted, item.AssetId);
 
 			if (KeepsOpened(card.App, item, rules)) {
 				mem.RemoveCard(card);   // kept: a spare card like any other from now on
@@ -581,13 +583,14 @@ public sealed partial class Boosters {
 		rules.KeepGames.Contains(app) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash);
 
 	/// <summary>A pack automatic opened to sell its cards: the cards noted, to be listed at the next looks.</summary>
-	internal static void OpenedToSell(Bot bot, BoosterPick.OwnPack own, IReadOnlyList<string> cards) {
+	/// <param name="before">1.8.2: the ids of the game's cards held before it was opened - its own copies are the new ones.</param>
+	internal static void OpenedToSell(Bot bot, BoosterPick.OwnPack own, IReadOnlyList<string> cards, IEnumerable<ulong> before) {
 		if (own.For != BoosterPick.ToOpenAndSell) {
 			return;
 		}
 
 		GemsChoice.Memory mem = GemsChoice.Memory.Of(bot.Name);
-		mem.AddCards(own.App, cards, DateTime.UtcNow);
+		mem.AddCards(own.App, cards, DateTime.UtcNow, before);
 		mem.Save(bot.Name);
 	}
 

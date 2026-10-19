@@ -74,7 +74,8 @@ public sealed partial class BadgeCraft {
 
 			// A normal set sold: its game's cards aren't bought back for a while (what's left of it is sold as dear cards).
 			if ((listed > 0) && !verdict.Foil) {
-				BuyLedger.Of(Bot.Name).AddSold(new BuyLedger.SoldSet(DateTime.UtcNow, verdict.App));
+				BuyLedger.Of(Bot.Name).AddSold(new BuyLedger.SoldSet(DateTime.UtcNow, verdict.App,
+					Weighed: verdict.Prices.ToDictionary(static p => p.Hash, static p => p.Receive, StringComparer.Ordinal)));
 			}
 
 			int all = verdict.Prices.Count * Math.Max(1, verdict.Sets);

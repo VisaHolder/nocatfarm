@@ -1736,7 +1736,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep-Pause aufgehoben - Kommentieren geht weiter",
     "achievement ceiling is one figure now: 90%": "Erfolgsobergrenze ist jetzt ein Wert: 90%",
     "setting moved: when to farm cards = only at night": "Einstellung verschoben: Karten farmen = nur nachts",
-    "going for {0}: {1} of {2} card drop(s)": "hole {0}: {1} von {2} Kartendrops",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord-Bot: zum Verknüpfen in den Einstellungen Discord verbinden drücken",
     "Discord bot: no / commands in a server - invite it again": "Discord-Bot: keine /-Befehle auf einem Server - erneut einladen",
     "Discord connected - only {0} can use its commands": "Discord verbunden - nur {0} kann die Befehle nutzen",
@@ -3334,7 +3333,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "nicht eingestellt: du bekämst {0}, nicht mehr als seine Edelsteine wert sind ({1})",
     "no price right now - kept until it has one": "gerade kein Preis - wird behalten, bis es einen hat",
     "gems: no fresh price for a sack of gems - nothing listed this look": "Edelsteine: kein frischer Preis für einen Sack Edelsteine - in diesem Durchgang wird nichts eingestellt",
-    "buy order {0} · Steam never said · counted as bought": "Kaufauftrag {0} · Steam hat es nie gesagt · als gekauft gezählt",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: noch nicht hergestellt · {1} · was seine Karten wert sind, ist nicht bekannt",
     "it would leave fewer than {0} copies of a card you keep": "es würde weniger als {0} Exemplare einer Karte übrig lassen, die du behältst",
     "an order for {0} was left open on the market · taken back, nothing bought": "ein Kaufauftrag für {0} war noch auf dem Markt offen · zurückgenommen, nichts gekauft",
@@ -3371,7 +3369,6 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Die Satzsuche hat in den letzten 24 Stunden {0} der {1} günstigsten Sätze auf dem Markt geprüft und kennt {2} ganze Sätze. Zuletzt nachgesehen: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Kein Limit: Es gibt aus, was die Geldbörse hält, die günstigsten Stufen zuerst - das Höchste für eine Stufe gilt weiter.",
     "No limit a day ({0} spent in the last day)": "Kein Limit pro Tag ({0} am letzten Tag ausgegeben)",
-    "At most {0} for one badge level - twice the cheapest level now": "Höchstens {0} für eine Abzeichenstufe - das Doppelte der günstigsten Stufe jetzt",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "Satzsuche · {0} der {1} günstigsten Sätze in den letzten 24 Stunden auf dem Markt geprüft · {2} ganze Sätze bekannt",
     "sets": "Sätze",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "Karten kaufen · Geld übrig für weitere günstige Stufen - nächster Blick in {0} Minuten",
@@ -3394,7 +3391,30 @@
     "card swap · found the offer sent to {0} before the restart": "Kartentausch · das vor dem Neustart an {0} gesendete Angebot gefunden",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "es hat um {0} etwas anderes gemacht - der menschliche Modus verteilt die Dinge; ab etwa {1} kann es loslegen",
     "{0} · {1} of {2} card drop(s)": "{0} · {1} von {2} Kartendrop(s)",
-    "every game": "jedes Spiel"
+    "every game": "jedes Spiel",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "Geldbörse in {0}: „Höchstens ausgeben pro Woche“ steht noch auf {1}, einem Dollarbetrag - für {0} nimm etwa {2}",
+    "couldn't look at the money settings: {0}": "konnte die Geld-Einstellungen nicht prüfen: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "Kartenkauf ausgeschaltet · ein Ausgabelimit wurde auf kein Limit gestellt - schalte den Kauf wieder ein, um zu sehen, was er ausgeben darf, und sag ja",
+    "level goal {0} stopped": "Level-Ziel {0} beendet",
+    "Steam level {0} (+{1}) · this level cost {2}": "Steam-Level {0} (+{1}) · dieses Level hat {2} gekostet",
+    "Steam level {0} (+{1})": "Steam-Level {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "Level-Ziel {0} gestartet: {1} Level für etwa {2} (nie über {3})",
+    "level goal reached: Steam level {0} · {1} spent": "Level-Ziel erreicht: Steam-Level {0} · {1} ausgegeben",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "der Kauf wartet auf die Satzsuche: {0} von {1} günstigsten Sätzen geprüft",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "Geldbörse in {0}: „Nichts anrühren, was mehr wert ist als“ steht noch auf {1}, einem Dollarbetrag - für {0} nimm etwa {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} brächte dir {1}, nicht mehr als seine Edelsteine wert sind",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "Geldbörse in {0}: „Höchstens so viel darf ein Tausch verlieren“ steht noch auf {1}, einem Dollarbetrag - für {0} nimm etwa {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "Geldbörse in {0}: „Höchstens ausgeben pro Tag“ steht noch auf {1}, einem Dollarbetrag - für {0} nimm etwa {2}",
+    "couldn't read the Steam level: {0}": "konnte das Steam-Level nicht lesen: {0}",
+    "couldn't search the market: {0}": "konnte den Markt nicht durchsuchen: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} Kartenkauf/-käufe, zu denen Steam eine Woche lang nichts Endgültiges sagte · als gekauft gezählt",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Steam-Level {0} (+{1}) · {2} für {1} Level",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "Geldbörse in {0}: „Nur verkaufen, wenn du mindestens bekommst“ steht noch auf {1}, einem Dollarbetrag - für {0} nimm etwa {2}",
+    "couldn't note the money settings were looked at: {0}": "konnte nicht vermerken, dass die Geld-Einstellungen geprüft wurden: {0}",
+    "couldn't note the Steam level: {0}": "konnte das Steam-Level nicht vermerken: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "Höchstens {0} für eine Abzeichenstufe - etwas über dem, was eine Stufe üblicherweise kostet",
+    "{0} would pay you {1}, under your {2} minimum": "{0} brächte dir {1}, unter deinem Minimum von {2}",
+    "cards were bought to finish it - crafted, never sold": "Karten wurden gekauft, um ihn zu vervollständigen - wird hergestellt, nie verkauft"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4643,11 +4663,11 @@
     },
     "BuyDailyLimit": {
       "label": "Höchstens ausgeben pro Tag",
-      "tip": "Das Höchste, was es in 24 Stunden ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 1,50: ein Satz für 0,60 und einer für 0,70 füllen den Tag; der nächste Satz wartet bis morgen. Es gibt nie mehr aus, als in der Geldbörse ist."
+      "tip": "Das Höchste, was es in 24 Stunden ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 1,50: ein Satz für 0,60 und einer für 0,70 füllen den Tag; der nächste Satz wartet bis morgen. Es gibt nie mehr aus, als in der Geldbörse ist. Die 1,50 zu Beginn passen zu Dollar oder Euro; für Yen nimm etwa 225."
     },
     "BuyWeeklyLimit": {
       "label": "Höchstens ausgeben pro Woche",
-      "tip": "Das Höchste, was es in 7 Tagen ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 8,00 bei 1,50 am Tag: etwa 5 volle Tage Kaufen pro Woche. 0 kauft nichts."
+      "tip": "Das Höchste, was es in 7 Tagen ausgibt, in der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 8,00 bei 1,50 am Tag: etwa 5 volle Tage Kaufen pro Woche. 0 kauft nichts. Die 8,00 zu Beginn passen zu Dollar oder Euro; für Yen nimm etwa 1200."
     },
     "BuyCheckHours": {
       "label": "Nach Karten zum Kaufen sehen alle",
@@ -4782,7 +4802,7 @@
     },
     "SpareMaxPrice": {
       "label": "Nichts anrühren, was mehr wert ist als",
-      "tip": "Alles, was mehr wert ist, wird nie angefasst: nie zu Edelsteinen, nie verkauft. In der Steam-Geldbörsen-Währung dieses Kontos: 0.25 passt für Dollar oder Euro, für Yen nimm etwa 40. Der Wert ist das Höhere aus dem günstigsten Angebot und dem Verkaufspreis des letzten Tages: angeboten für 0.20, aber verkauft für 0.30, ist 0.30 wert. Karten aus Packungen, die es zum Verkaufen herstellt, werden verkauft, egal was diese Grenze sagt - sie wurden für Geld gemacht. Spiele auf deiner Behalten-Liste werden nie angerührt."
+      "tip": "Alles, was mehr wert ist, wird nie angefasst: nie zu Edelsteinen, nie verkauft. In der Steam-Geldbörsen-Währung dieses Kontos: 0.25 passt für Dollar oder Euro, für Yen nimm etwa 40. Der Wert ist das Höhere aus dem günstigsten Angebot und dem Verkaufspreis des letzten Tages: angeboten für 0.20, aber verkauft für 0.30, ist 0.30 wert. Zwei Dinge können darüber gehen, weil du es so gewählt hast: Karten, die für Abzeichenstufen verkauft werden („Ein Set verkaufen statt herstellen, wenn das Geld mehr Level kauft“), und Karten aus Packungen, die es zum Verkaufen herstellt. Spiele auf deiner Behalten-Liste werden nie angerührt, egal was sie wert sind."
     },
     "SpareGemMarginPct": {
       "label": "Edelsteine müssen den Verkauf schlagen um",
@@ -4893,7 +4913,7 @@
     },
     "SellSetsForLevels": {
       "label": "Ein Set verkaufen statt herstellen, wenn das Geld mehr Level kauft",
-      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor es ein normales Abzeichen herstellt, schaut es, was der Satz auf dem Markt nach der Steam-Gebühr bringt. Kauft das Geld deutlich mehr Abzeichenstufen als die 1, die das Herstellen bringt, bietet es den Satz stattdessen zum Verkauf an, und das Kartenkaufen gibt das Geld innerhalb seiner Grenzen aus. Zum Beispiel: Ein Satz, der 5,00 bringt, wenn die günstigsten Stufen je etwa 0,40 kosten, kauft etwa 12 Stufen statt 1. Jedes Angebot bestätigst du in der Steam-App, wie jedes Angebot. Foil-Sätze und Foil-Karten werden genauso abgewogen: ein Foil-Abzeichen ist eine Stufe. Es verkauft auch Karten, die für ein Abzeichen gehalten werden, wenn sie verkauft mehr wert sind als die Stufen, die sie bringen würden: 7 Karten, die etwa 5,70 bringen, kaufen bei 0,40 etwa 14 Stufen statt der 1 oder 2, die sie behalten bringen würden. Für dieses Spiel wird nichts gekauft oder als Paket hergestellt, solange sie verkauft werden."
+      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor es ein normales Abzeichen herstellt, schaut es, was der Satz auf dem Markt nach der Steam-Gebühr bringt. Kauft das Geld deutlich mehr Abzeichenstufen als die 1, die das Herstellen bringt, bietet es den Satz stattdessen zum Verkauf an, und das Kartenkaufen gibt das Geld innerhalb seiner Grenzen aus. Zum Beispiel: Ein Satz, der 5,00 bringt, wenn die günstigsten Stufen je etwa 0,40 kosten, kauft etwa 12 Stufen statt 1. Jedes Angebot bestätigst du in der Steam-App, wie jedes Angebot. Foil-Sätze und Foil-Karten werden genauso abgewogen: ein Foil-Abzeichen ist eine Stufe. Es verkauft auch Karten, die für ein Abzeichen gehalten werden, wenn sie verkauft mehr wert sind als die Stufen, die sie bringen würden: 7 Karten, die etwa 5,70 bringen, kaufen bei 0,40 etwa 14 Stufen statt der 1 oder 2, die sie behalten bringen würden. Für dieses Spiel wird nichts gekauft oder als Paket hergestellt, solange sie verkauft werden. Diese Verkäufe können über „Nichts anrühren, was mehr wert ist als“ hinausgehen - diese Grenze gilt für übrige Gegenstände. Spiele auf deiner Behalten-Liste werden nie angerührt."
     },
     "CardSwaps": {
       "label": "Übrige Karten mit anderen nocat.farm-Nutzern tauschen",
@@ -4901,7 +4921,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Höchstens so viel darf ein Tausch verlieren",
-      "tip": "Wie viel weniger ein Tausch wert sein darf als das, was er hergibt, nach dem günstigsten Marktpreis, in der Steam-Wallet-Währung dieses Kontos. Zum Beispiel 0.03: Karten im Wert von 0.12 gegen Karten im Wert von 0.09 sind in Ordnung, gegen 0.08 nicht. 0: ein Tausch ist nie weniger wert. Eine Karte ohne Preis vom letzten Tag wird nie getauscht."
+      "tip": "Wie viel weniger ein Tausch wert sein darf als das, was er hergibt, nach dem günstigsten Marktpreis, in der Steam-Wallet-Währung dieses Kontos. Zum Beispiel 0.03: Karten im Wert von 0.12 gegen Karten im Wert von 0.09 sind in Ordnung, gegen 0.08 nicht. 0: ein Tausch ist nie weniger wert. Eine Karte ohne Preis vom letzten Tag wird nie getauscht. 0,03 passt zu Dollar oder Euro; für Yen nimm etwa 5."
     },
     "CardSwapsPerDay": {
       "label": "Tausche pro Tag, höchstens",
@@ -4958,7 +4978,7 @@
     },
     "BuyMaxLevelPrice": {
       "label": "Höchstens zahlen für eine Abzeichenstufe",
-      "tip": "Das Höchste, was es für eine Abzeichenstufe (100 EP) zahlt - einen ganzen Satz oder die Karten, die einem angefangenen Abzeichen fehlen - in der Steam-Geldbörsen-Währung dieses Kontos. Eine teurere Stufe wartet, bis die Preise sinken, damit das Geld nicht für teure Stufen ausgegeben wird, wenn die günstigen ausgehen. Zum Beispiel 0,50: Ein 5-Karten-Satz für 0,35 wird gekauft, ein 9-Karten-Satz für 0,70 wartet. 0 ist automatisch: das Doppelte der günstigsten Stufe, die es gerade kaufen kann - bei 0,33 als günstigster bis 0,66."
+      "tip": "Das Höchste, was es für eine Abzeichenstufe (100 EP) zahlt - einen ganzen Satz oder die Karten, die einem angefangenen Abzeichen fehlen - in der Steam-Geldbörsen-Währung dieses Kontos. Eine teurere Stufe wartet, bis die Preise sinken, damit das Geld nicht für teure Stufen ausgegeben wird, wenn die günstigen ausgehen. Zum Beispiel 0,50: Ein 5-Karten-Satz für 0,35 wird gekauft, ein 9-Karten-Satz für 0,70 wartet. 0 ist automatisch und eng: ein Viertel über dem, was eine Stufe üblicherweise kostet - die Mitte der 5 günstigsten ganzen Sätze, die die Satzsuche kennt (die Hälfte darüber, solange sie weniger kennt, oder die günstigste Stufe der letzten Woche). Bei Sätzen um 0,40 bis 0,50; es steigt nicht, wenn die günstigen Sätze ausgehen. Bis die Satzsuche die 100 günstigsten Sätze geprüft hat, werden ganze Sätze nur bis ein Zehntel über dem günstigsten bekannten gekauft. 0,50 passt zu Dollar oder Euro; für Yen nimm etwa 75."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Längste Pause zwischen Blicken, menschlicher Modus",
@@ -4967,6 +4987,11 @@
     "RefundProtectMinPrice": {
       "label": "Erstattungen nur schützen für Spiele über",
       "tip": "Nur Spiele, die mehr als das gekostet haben, bleiben in Ruhe, solange sie erstattet werden können; ein günstigeres wird sofort gefarmt. Es zählt, was du bezahlt hast, wenn Steams Kaufverlauf es zeigt, sonst der reguläre Shop-Preis (ein Angebot senkt ihn nie); ein Preis, den es nicht findet, ist geschützt. In der Steam-Geldbörsen-Währung dieses Kontos. Zum Beispiel 5,00: Ein gerade gekauftes Spiel für 0,99 wird sofort gefarmt; eines für 20,00 bleibt in Ruhe, bis es nicht mehr erstattet werden kann. 0 schützt jedes Spiel."
+    },
+    "LevelUpLine": {
+      "label": "Level-Aufstieg-Zeile zeigt",
+      "tip": "Eine Zeile im Log, wenn das Steam-Level dieses Kontos steigt - zum Beispiel „Steam-Level 58 (+1) · dieses Level hat 0,46 CAD gekostet“ oder „Steam-Level 60 (+3) · 1,42 CAD für 3 Level“. Die Kosten sind nur wirklich ausgegebenes Geld: die Karten, die für die hergestellten Abzeichen gekauft wurden. Gefarmte Karten kosten nichts. Sie geht auch an Telegram oder Discord, wenn Karten-Neuigkeiten dort an sind. Aus: keine Zeile.",
+      "choices": "3 das Level und was es gekostet hat | 1 nur das Level | 0 aus"
     }
   }
 }

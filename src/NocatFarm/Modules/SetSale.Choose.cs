@@ -48,6 +48,7 @@ public static partial class SetSale {
 		List<int> weigh = [];
 		IReadOnlyCollection<uint> keep = SpareRules.From(bot.Cfg).KeepGames;
 		IReadOnlyCollection<uint> dear = DearCards.Marked(bot);
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
 
 		for (int i = 0; i < ready.Count; i++) {
 			Ready r = ready[i];
@@ -55,6 +56,9 @@ public static partial class SetSale {
 			if (keep.Contains(r.App)) {
 				// A game on the keep list ("Never touch items from these games"): its set is crafted, never sold.
 				picks[i] = Craft(r, new Said("on your keep list - its set is crafted, never sold"), quiet: true);
+			} else if ((r.Border == 0) && bought.Contains(r.App)) {
+				// 1.8.2: buying cards bought the cards it was missing - for the level, so it's crafted, never sold.
+				picks[i] = Craft(r, new Said("cards were bought to finish it - crafted, never sold"));
 			} else if ((r.Border == 0) && dear.Contains(r.App)) {
 				// Its cards are worth more sold than the levels they'd make: buying cards' look is selling them - never crafted meanwhile.
 				picks[i] = new Pick(r.App, GameOf(r.App, inventory), Choice.Wait, new Said("its cards are being sold - worth more than the levels they'd make"), Quiet: true, Border: r.Border);

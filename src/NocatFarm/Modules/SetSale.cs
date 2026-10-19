@@ -89,8 +89,11 @@ public static partial class SetSale {
 	/// of the game weighed together - sold only when the money buys at least a level more than crafting them all makes, and
 	/// <see cref="GemsChoice.MarginPct"/> percent more.
 	/// </summary>
+	/// <param name="minReceive">1.8.2: "Only sell if you get at least" - a card that would pay less: the set is crafted.</param>
+	/// <param name="gemsWorth">1.8.2: what a card's gems are worth (null: not known) - a card that wouldn't pay a cent more: crafted.</param>
+	/// <param name="paid">1.8.2: the most paid for one copy of a card bought for a badge (0: none) - selling it for less counts that loss.</param>
 	public static Verdict Decide(uint app, string game, int currency, IReadOnlyList<(string Hash, MarketQuote? Quote)> cards, IEnumerable<long> levelCosts, int dumpPct,
-		int sets = 1, bool waited = false) {
+		int sets = 1, bool waited = false, int minReceive = 0, Func<string, decimal?>? gemsWorth = null, Func<string, long>? paid = null) {
 		sets = Math.Max(1, sets);
 		long top = cards.Where(c => c.Quote?.Currency == currency).Select(static c => (long) (c.Quote!.Lowest ?? 0)).DefaultIfEmpty(0).Max();
 		Verdict Craft(Said why, bool unsure = false) => Crafted(app, game, currency, why, unsure, top);
@@ -126,11 +129,23 @@ public static partial class SetSale {
 				return Craft(new Said("{0} pays nothing on the market", name));
 			}
 
+			// 1.8.2: never under "Only sell if you get at least", never for what its gems are worth or less - crafted instead.
+			if (receive < minReceive) {
+				return Craft(new Said("{0} would pay you {1}, under your {2} minimum", name, BuyPlan.Money(receive, currency), BuyPlan.Money(minReceive, currency)));
+			}
+
+			if ((gemsWorth?.Invoke(hash) is decimal gems) && (gems > 0) && !Spare.SellingPays(gems, receive)) {
+				return Craft(new Said("{0} would pay you {1}, not more than its gems are worth", name, BuyPlan.Money(receive, currency)));
+			}
+
 			prices.Add(new SalePrice(hash, lowest, pays, receive));
 		}
 
 		long proceeds = prices.Sum(static p => (long) p.Receive) * sets;
-		long left = proceeds;
+
+		// 1.8.2: a card bought for a badge sold for less than it paid: that loss counts against what selling buys.
+		long loss = paid == null ? 0 : prices.Sum(p => Math.Max(0, paid(p.Hash) - p.Receive)) * sets;
+		long left = proceeds - loss;
 		int levels = 0;
 		long last = 0;
 		bool more = false;
@@ -182,7 +197,7 @@ public static partial class SetSale {
 	/// since when it has waited for a card that hardly sells (null: it hasn't).
 	/// </summary>
 	public static async Task<Verdict> WeighAsync(CardSet set, BuyPlan plan, ICardMarket market, BotConfig cfg, CancellationToken ct, int sets = 1, bool foil = false,
-		DateTime? waitingSince = null) {
+		DateTime? waitingSince = null, Func<string, long>? paid = null, Func<string, decimal?>? gemsWorth = null) {
 		Verdict Mark(Verdict v) => v with { Sets = Math.Max(1, sets), Foil = foil };
 
 		List<(string, MarketQuote?)> cards = [];
@@ -205,7 +220,7 @@ public static partial class SetSale {
 		List<long> ranked = [.. plan.LevelCosts.Where(l => l.App != set.App).Select(static l => l.Cost).Where(static c => c > 0)];
 		List<long> more = BuyPlan.BeyondWallet(ranked, plan.Wallet);
 		bool waited = (waitingSince is DateTime since) && (DateTime.UtcNow - since >= WaitAtMost);
-		Verdict v = Mark(Decide(set.App, set.Game, plan.Currency, cards, more, Math.Clamp(cfg.SpareDumpPct, 0, 95), sets, waited));
+		Verdict v = Mark(Decide(set.App, set.Game, plan.Currency, cards, more, Math.Clamp(cfg.SpareDumpPct, 0, 95), sets, waited, SpareRules.From(cfg).MinSaleCents, gemsWorth, paid));
 
 		if (v.Unsure || v.Hold) {
 			return v;
@@ -291,10 +306,19 @@ public static partial class SetSale {
 		}
 
 		int floor = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		SpareRules rules = SpareRules.From(bot.Cfg);
+
+		// 1.8.2: like every listing (Seller.OwnRule) - never under "Only sell if you get at least", never for what its gems are
+		// worth or less (a card whose gem value isn't known is kept).
+		Dictionary<ulong, decimal?> gems = await GemsForListingAsync(bot, offers, inventory, verdict.Currency, rules, ct).ConfigureAwait(false);
 
 		async Task<(Seller.Offer? Offer, Said Why)> Reprice(Seller.Offer offer, CancellationToken token) {
+			if (gems.GetValueOrDefault(offer.AssetId) is not decimal worth) {
+				return (null, new Said("its gem value isn't known yet - kept"));
+			}
+
 			(Seller.Offer? now, Said why) = await Seller.RepriceAsync(offer, verdict.Currency, 3, dump, null, null, token, floorPct: floor,
-				ours: OurListings.UpFor(OurListings.Load(bot.Name), offer.Hash)).ConfigureAwait(false);
+				ours: OurListings.UpFor(OurListings.Load(bot.Name), offer.Hash), minReceive: rules.MinSaleCents, gemsWorth: worth > 0 ? worth : null).ConfigureAwait(false);
 
 			return (now != null) && !StillPays(offer, now) ? (null, new Said("its price fell since the set was weighed - not listed")) : (now, why);
 		}
@@ -311,5 +335,74 @@ public static partial class SetSale {
 		}
 
 		return listed;
+	}
+
+	/// <summary>Gem values one listing run may ask Steam for.</summary>
+	private const int GemAsks = 3;
+
+	/// <summary>
+	/// 1.8.2: what each offer's gems are worth, for listing a set or a dear game's cards: by asset id - 0 for an item with no
+	/// gems, null when its gem value or a sack's price isn't known (that card is kept, as Seller.OwnRule keeps it). A gem value
+	/// not known yet is asked a few a run; a sack's price older than "Trust a price for" is read again.
+	/// </summary>
+	internal static async Task<Dictionary<ulong, decimal?>> GemsForListingAsync(Bot bot, IReadOnlyList<Seller.Offer> offers, InventoryContents inventory, int currency,
+		SpareRules rules, CancellationToken ct) {
+		Dictionary<ulong, SpareItem> items = [];
+
+		foreach (SpareItem i in Spare.Read(inventory)) {
+			items[i.AssetId] = i;
+		}
+
+		Dictionary<string, int?> gooOf = new(StringComparer.Ordinal);
+		Dictionary<ulong, decimal?> worth = [];
+		LiveSpareSteam? steam = null;
+		int asks = 0;
+		MarketPrice? sack = null;
+		bool sackRead = false;
+
+		foreach (Seller.Offer o in offers) {
+			if (!items.TryGetValue(o.AssetId, out SpareItem? item)) {
+				worth[o.AssetId] = null;
+
+				continue;
+			}
+
+			if (item.GooType <= 0) {
+				worth[o.AssetId] = 0;
+
+				continue;
+			}
+
+			if (!gooOf.TryGetValue(item.GooKey, out int? goo)) {
+				goo = SteamGems.KnownValue(item) ?? (asks++ < GemAsks ? await (steam ??= new LiveSpareSteam(bot)).GemValueAsync(item, ct).ConfigureAwait(false) : null);
+				gooOf[item.GooKey] = goo;
+			}
+
+			if (goo is not int g) {
+				worth[o.AssetId] = null;
+
+				continue;
+			}
+
+			if (g <= 0) {
+				worth[o.AssetId] = 0;
+
+				continue;
+			}
+
+			if (!sackRead) {
+				sackRead = true;
+
+				if ((SparePrices.Sack(currency) is not { Cents: > 0 } held) || (DateTime.UtcNow - held.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+					await SparePrices.PriceSackAsync(currency, ct).ConfigureAwait(false);
+				}
+
+				sack = SparePrices.SackPays(currency, rules.DumpPct);
+			}
+
+			worth[o.AssetId] = (sack is { Cents: > 0 } s) && (DateTime.UtcNow - s.At <= TimeSpan.FromHours(rules.PriceMaxAgeHours)) ? Spare.GemsWorth(g, s.Cents) : null;
+		}
+
+		return worth;
 	}
 }

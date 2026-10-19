@@ -248,7 +248,8 @@ public sealed partial class Boosters {
 			}
 
 			opened = true;
-			OpenedToSell(Bot, own, result.cards);   // 1.8.2: a pack opened to sell its cards - they're listed at the next looks
+			// 1.8.2: a pack opened to sell its cards - they're listed at the next looks, by their own copies (not one held before).
+			OpenedToSell(Bot, own, result.cards, held.Where(i => (i.Kind == SpareKind.Card) && (i.Game == own.App) && (i.AssetId != 0)).Select(static i => i.AssetId));
 			note.Opened(name, result.cards);
 			HashSet<string> before = held.Where(i => (i.Kind == SpareKind.Card) && (i.Game == own.App)).Select(static i => i.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 			Log.Earned(SpareRun.OpenedSaid(name, result.cards, SpareRun.NewForBadge(before, result.cards)), Bot.Name);

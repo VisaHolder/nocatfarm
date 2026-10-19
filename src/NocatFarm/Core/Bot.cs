@@ -1066,6 +1066,13 @@ public sealed class Bot : IAsyncDisposable {
 		WalletCents = cb.LongBalance;
 		WalletPendingCents = cb.LongBalanceDelayed;
 		WalletCurrency = cb.Currency;
+
+		// 1.8.2: money settings still at their dollar defaults on a yen (or similar) wallet - said once, with what to use.
+		try {
+			MoneyDefaults.Warn(Name, Cfg, (int) cb.Currency);
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't look at the money settings: {0}", Log.Describe(e)), Name);
+		}
 	}
 
 	// ── 1.8.0 account health: limited-account status, from what Steam says at sign-in ──

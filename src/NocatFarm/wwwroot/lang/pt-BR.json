@@ -1736,7 +1736,6 @@
     "rep4rep hold lifted - commenting resumes": "pausa do rep4rep removida - comentários voltam",
     "achievement ceiling is one figure now: 90%": "o teto de conquistas agora é um valor só: 90%",
     "setting moved: when to farm cards = only at night": "ajuste movido: quando farmar cartas = só à noite",
-    "going for {0}: {1} of {2} card drop(s)": "atrás de {0}: {1} de {2} drops de cartas",
     "Discord bot: to link it, press Connect Discord in Settings": "bot do Discord: para vincular, aperte Conectar Discord nas Configurações",
     "Discord bot: no / commands in a server - invite it again": "bot do Discord: sem comandos / num servidor - convide de novo",
     "Discord connected - only {0} can use its commands": "Discord conectado - só {0} pode usar os comandos",
@@ -3334,7 +3333,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "não anunciado: você receberia {0}, não mais do que valem as gemas dele ({1})",
     "no price right now - kept until it has one": "sem preço agora - mantido até ter um",
     "gems: no fresh price for a sack of gems - nothing listed this look": "gemas: sem preço recente para um saco de gemas - nada é anunciado desta vez",
-    "buy order {0} · Steam never said · counted as bought": "ordem de compra {0} · o Steam nunca disse · contada como comprada",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: ainda não criado · {1} · não se sabe quanto valem as cartas dele",
     "it would leave fewer than {0} copies of a card you keep": "deixaria menos de {0} cópias de uma carta que você mantém",
     "an order for {0} was left open on the market · taken back, nothing bought": "uma ordem de {0} ficou aberta no mercado · retirada, nada comprado",
@@ -3371,7 +3369,6 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "O buscador de conjuntos verificou no mercado {0} dos {1} conjuntos mais baratos nas últimas 24 horas e conhece {2} conjuntos completos. Última olhada: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sem limite: gasta o que a carteira tiver, os níveis mais baratos primeiro - o máximo por nível continua valendo.",
     "No limit a day ({0} spent in the last day)": "Sem limite por dia ({0} gasto no último dia)",
-    "At most {0} for one badge level - twice the cheapest level now": "No máximo {0} por um nível de insígnia - o dobro do nível mais barato agora",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "buscador de conjuntos · {0} dos {1} conjuntos mais baratos verificados no mercado nas últimas 24 horas · {2} conjuntos completos conhecidos",
     "sets": "conjuntos",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "compra de cartas · sobra dinheiro para mais níveis baratos - próxima olhada em {0} minutos",
@@ -3394,7 +3391,30 @@
     "card swap · found the offer sent to {0} before the restart": "troca de cartas · encontrada a oferta enviada para {0} antes do reinício",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "fez outra coisa às {0} - o modo humano espaça as coisas; pode seguir por volta das {1}",
     "{0} · {1} of {2} card drop(s)": "{0} · {1} de {2} carta(s)",
-    "every game": "todos os jogos"
+    "every game": "todos os jogos",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Gastar no máximo por semana” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't look at the money settings: {0}": "não foi possível verificar as configurações de dinheiro: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "compra de cartas desligada · um limite de gasto foi colocado em sem limite - ligue a compra de novo para ver quanto pode gastar e confirme",
+    "level goal {0} stopped": "meta de nível {0} parada",
+    "Steam level {0} (+{1}) · this level cost {2}": "Nível Steam {0} (+{1}) · este nível custou {2}",
+    "Steam level {0} (+{1})": "Nível Steam {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "meta de nível {0} iniciada: {1} níveis por cerca de {2} (nunca acima de {3})",
+    "level goal reached: Steam level {0} · {1} spent": "meta de nível alcançada: nível Steam {0} · {1} gastos",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "a compra espera o buscador de conjuntos: {0} de {1} conjuntos mais baratos verificados",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Não mexer em itens que valham mais de” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} te daria {1}, não mais do que valem suas gemas",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “O máximo que uma troca pode perder” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Gastar no máximo por dia” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't read the Steam level: {0}": "não foi possível ler o nível Steam: {0}",
+    "couldn't search the market: {0}": "não foi possível pesquisar o mercado: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} compra(s) de cartas cujo fim o Steam não disse em uma semana · contadas como compradas",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Nível Steam {0} (+{1}) · {2} por {1} níveis",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Só vender se você receber pelo menos” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't note the money settings were looked at: {0}": "não foi possível anotar que as configurações de dinheiro foram verificadas: {0}",
+    "couldn't note the Steam level: {0}": "não foi possível anotar o nível Steam: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "No máximo {0} por um nível de insígnia - um pouco acima do que um nível costuma custar",
+    "{0} would pay you {1}, under your {2} minimum": "{0} te daria {1}, abaixo do seu mínimo de {2}",
+    "cards were bought to finish it - crafted, never sold": "cartas foram compradas para completá-lo - criado, nunca vendido"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4643,11 +4663,11 @@
     },
     "BuyDailyLimit": {
       "label": "Gastar no máximo por dia",
-      "tip": "O máximo que gasta em 24 horas, na moeda da carteira Steam desta conta. Por exemplo 1,50: um conjunto de 0,60 e outro de 0,70 enchem o dia; o próximo espera até amanhã. Nunca gasta mais do que tem na carteira."
+      "tip": "O máximo que gasta em 24 horas, na moeda da carteira Steam desta conta. Por exemplo 1,50: um conjunto de 0,60 e outro de 0,70 enchem o dia; o próximo espera até amanhã. Nunca gasta mais do que tem na carteira. O 1,50 inicial serve para dólares ou euros; para ienes use cerca de 225."
     },
     "BuyWeeklyLimit": {
       "label": "Gastar no máximo por semana",
-      "tip": "O máximo que gasta em 7 dias, na moeda da carteira Steam desta conta. Por exemplo 8,00 com 1,50 por dia: cerca de 5 dias inteiros de compras por semana. 0 não compra nada."
+      "tip": "O máximo que gasta em 7 dias, na moeda da carteira Steam desta conta. Por exemplo 8,00 com 1,50 por dia: cerca de 5 dias inteiros de compras por semana. 0 não compra nada. O 8,00 inicial serve para dólares ou euros; para ienes use cerca de 1200."
     },
     "BuyCheckHours": {
       "label": "Procurar cartas para comprar a cada",
@@ -4782,7 +4802,7 @@
     },
     "SpareMaxPrice": {
       "label": "Não mexer em itens que valham mais de",
-      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta: 0.25 serve para dólares ou euros; para ienes use uns 40. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30. Cartas de pacotes que ele faz para vender são vendidas não importa o que este limite diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
+      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta: 0.25 serve para dólares ou euros; para ienes use uns 40. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30. Duas coisas podem passar dele, por sua escolha: cartas vendidas por níveis de insígnia (“Vender um conjunto em vez de criar quando o dinheiro compra mais níveis”) e cartas de pacotes que ele faz para vender. Jogos na sua lista de manter nunca são tocados, valham o que valerem."
     },
     "SpareGemMarginPct": {
       "label": "As gemas precisam superar a venda em",
@@ -4893,7 +4913,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vender um conjunto em vez de criar quando o dinheiro compra mais níveis",
-      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um emblema laminado é um nível. Também vende cartas guardadas para um emblema que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo."
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um emblema laminado é um nível. Também vende cartas guardadas para um emblema que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo. Essas vendas podem passar de “Não mexer em itens que valham mais de” - esse limite é para os itens sobrando. Jogos na sua lista de manter nunca são tocados."
     },
     "CardSwaps": {
       "label": "Trocar cartas sobrando com outros usuários do nocat.farm",
@@ -4901,7 +4921,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "O máximo que uma troca pode perder",
-      "tip": "Quanto uma troca pode valer a menos do que dá, pelo preço mais barato do mercado, na moeda da carteira Steam desta conta. Por exemplo 0.03: cartas de 0.12 por cartas de 0.09 tudo bem; por 0.08, não. 0: uma troca nunca vale menos. Uma carta sem preço do último dia nunca é trocada."
+      "tip": "Quanto uma troca pode valer a menos do que dá, pelo preço mais barato do mercado, na moeda da carteira Steam desta conta. Por exemplo 0.03: cartas de 0.12 por cartas de 0.09 tudo bem; por 0.08, não. 0: uma troca nunca vale menos. Uma carta sem preço do último dia nunca é trocada. 0,03 serve para dólares ou euros; para ienes use cerca de 5."
     },
     "CardSwapsPerDay": {
       "label": "Trocas por dia, no máximo",
@@ -4958,7 +4978,7 @@
     },
     "BuyMaxLevelPrice": {
       "label": "No máximo por um nível de insígnia",
-      "tip": "O máximo que paga por um nível de insígnia (100 XP) - um conjunto completo, ou as cartas que faltam a uma insígnia começada - na moeda da carteira Steam desta conta. Um nível mais caro espera os preços baixarem, para o dinheiro não ir para níveis caros quando os baratos acabarem. Por exemplo 0,50: um conjunto de 5 cartas a 0,35 é comprado, um de 9 cartas a 0,70 espera. 0 é automático: o dobro do nível mais barato que pode comprar na hora - com o mais barato a 0,33, até 0,66."
+      "tip": "O máximo que paga por um nível de insígnia (100 XP) - um conjunto completo, ou as cartas que faltam a uma insígnia começada - na moeda da carteira Steam desta conta. Um nível mais caro espera os preços baixarem, para o dinheiro não ir para níveis caros quando os baratos acabarem. Por exemplo 0,50: um conjunto de 5 cartas a 0,35 é comprado, um de 9 cartas a 0,70 espera. 0 é automático e justo: um quarto acima do que um nível costuma custar - o meio dos 5 conjuntos completos mais baratos que o buscador de conjuntos conhece (metade acima enquanto conhecer menos, ou o nível mais barato da última semana). Com conjuntos a cerca de 0,40, até 0,50; não sobe quando os conjuntos baratos acabam. Até o buscador ter verificado os 100 conjuntos mais baratos, conjuntos completos só são comprados até um décimo acima do mais barato conhecido. 0,50 serve para dólares ou euros; para ienes use cerca de 75."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Espera mais longa entre olhadas, modo humano",
@@ -4967,6 +4987,11 @@
     "RefundProtectMinPrice": {
       "label": "Proteger reembolsos só para jogos acima de",
       "tip": "Só os jogos que custaram mais que isso ficam de lado enquanto podem ser reembolsados; um mais barato é farmado na hora. Usa o que você pagou quando o histórico de compras da Steam mostra; senão, o preço normal da loja (uma promoção nunca o abaixa); um preço que não encontra fica protegido. Na moeda da carteira Steam desta conta. Por exemplo 5,00: um jogo de 0,99 que você acabou de comprar é farmado na hora; um de 20,00 fica de lado até não poder mais ser reembolsado. 0 protege todos os jogos."
+    },
+    "LevelUpLine": {
+      "label": "A linha de subida de nível mostra",
+      "tip": "Uma linha no registro quando o nível Steam desta conta sobe - por exemplo “Nível Steam 58 (+1) · este nível custou 0,46 CAD” ou “Nível Steam 60 (+3) · 1,42 CAD por 3 níveis”. O custo é só dinheiro realmente gasto: as cartas compradas para as insígnias criadas. Cartas farmadas não custam nada. Também vai para o Telegram ou Discord quando as novidades de cartas estão ligadas lá. Desligado: nenhuma linha.",
+      "choices": "3 o nível e quanto custou | 1 só o nível | 0 desligado"
     }
   }
 }

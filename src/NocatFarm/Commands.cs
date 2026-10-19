@@ -87,7 +87,7 @@ public static partial class Commands {
 		new("craft", "now <account> | preview <account>", GroupCards, "'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing."),
 		new("buy", "[account|all] | preview [account|all] | on|off|do <account>", GroupCards, "Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent."),
 		new("sets", "[account]", GroupCards, "The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys."),
-		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
+		new("levelup", "<account> <level> [buy [yes]] | <account> stop", GroupCards, "What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
@@ -662,6 +662,8 @@ public static partial class Commands {
 			|| SpareRefusesFromChat(words)
 			// Turning buying cards on, or buying now, spends money - the owner's word too. 'buy preview' is only a look.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "buy") && BuyNeedsOwner(words[1..]))
+			// 1.8.2: starting a level goal spends money too.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "levelup") && words[1..].Any(static w => w.Equals("yes", StringComparison.OrdinalIgnoreCase)))
 			|| SpendsFromChat(words)
 			// 'scamwatch ok' lifts a scam watch hold - the owner's word, never a chat's: whoever took the account could send it.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "scamwatch") && words[1..].Any(static w => w.Equals("ok", StringComparison.OrdinalIgnoreCase)));
@@ -981,7 +983,7 @@ public static partial class Commands {
 				"scamwatch" or "scam" => ScamWatchCommand(mgr, rest),           // 1.8.0
 				"health" => await HealthCommandAsync(mgr, rest).ConfigureAwait(false),   // 1.8.0
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
-				"levelup" or "lvlup" => LevelUp(mgr, rest),
+				"levelup" or "lvlup" => await LevelUpAsync(mgr, rest).ConfigureAwait(false),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, AllIsEvery(rest)).ConfigureAwait(false),
 				"human" => Human(mgr, AllIsEvery(rest)),
 				"habits" => Habits(mgr, AllIsEvery(rest)),
@@ -3353,9 +3355,30 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
-	private static string LevelUp(BotManager mgr, string[] args) {
-		if ((args.Length < 2) || !int.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out int target) || (target < 1)) {
-			return "levelup <account> <level>      what reaching that Steam level would cost";
+	internal const string LevelUpUsage = "levelup <account> <level>          what reaching that Steam level would cost\n"
+		+ "levelup <account> <level> buy      the same, as a level goal - nothing is bought\n"
+		+ "levelup <account> <level> buy yes  start it: buying cards buys those levels, then stops\n"
+		+ "levelup <account> stop             end a level goal";
+
+	/// <summary>
+	/// 'levelup': what reaching a Steam level costs - at once, from the prices already known (1.8.2) - and a level goal that
+	/// buys those levels ('buy yes'), or ends one ('stop').
+	/// </summary>
+	private static async Task<string> LevelUpAsync(BotManager mgr, string[] args) {
+		if ((args.Length == 2) && args[1].Equals("stop", StringComparison.OrdinalIgnoreCase)) {
+			if (mgr.Get(args[0]) is not { } who) {
+				return NoSuchAccount(mgr, args[0]);
+			}
+
+			return BotManager.ModuleOf<CardBuyer>(who)?.StopGoal() == true ? $"{who.Name}: level goal stopped - nothing more is bought for it." : $"{who.Name}: no level goal to stop.";
+		}
+
+		bool buy = (args.Length >= 3) && args[2].Equals("buy", StringComparison.OrdinalIgnoreCase);
+		bool yes = buy && (args.Length == 4) && args[3].Equals("yes", StringComparison.OrdinalIgnoreCase);
+
+		if ((args.Length < 2) || (args.Length > 4) || ((args.Length >= 3) && !buy) || ((args.Length == 4) && !yes)
+			|| !int.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out int target) || (target < 1)) {
+			return LevelUpUsage.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
 		}
 
 		if (mgr.Get(args[0]) is not { } bot) {
@@ -3366,7 +3389,51 @@ public static partial class Commands {
 			return $"{bot.Name}: not logged in";
 		}
 
-		return LevelPlanner.Ask(bot, Math.Min(target, 5000));
+		target = Math.Min(target, 5000);
+
+		// Without buying cards running, the old plan worked out in the background.
+		if (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer) {
+			return buy ? $"{bot.Name}: buying cards isn't running on it." : LevelPlanner.Ask(bot, target);
+		}
+
+		CardBuyer.GoalPreview p = await buyer.GoalPreviewAsync(target, CancellationToken.None).ConfigureAwait(false);
+		string said = LevelGoalSaid(bot.Name, p, buy && !yes);
+
+		if (!yes || (p.Problem.Length > 0)) {
+			return said;
+		}
+
+		return buyer.StartGoal(p) is { } why
+			? said + Environment.NewLine + $"{bot.Name}: level goal not started - {why}."
+			: said + Environment.NewLine + $"{bot.Name}: level goal {target} started - it buys these levels at its own pace{(bot.Cfg.LegitMode ? ", in its day" : "")}, never over {BuyPlan.Money(p.Total * 11 / 10, p.Currency)}, and stops at level {target}. 'buy {bot.Name}' shows how far it got; 'levelup {bot.Name} stop' ends it.";
+	}
+
+	/// <summary>A level estimate written out (English, like every console reply).</summary>
+	public static string LevelGoalSaid(string name, CardBuyer.GoalPreview p, bool askYes) {
+		if (p.Problem.Length > 0) {
+			return $"{name}: {p.Problem}.";
+		}
+
+		string M(long cents) => BuyPlan.Money(cents, p.Currency);
+		List<string> lines = [
+			$"{name}: level {p.Level} -> {p.Target}: {p.Needed} badge level(s) of 100 XP{(p.Held > 0 ? $", {p.Held} of them from sets it holds once crafted" : "")}.",
+			$"{name}: to buy: {p.Costs.Count} level(s) for about {M(p.Total)} - {p.Known} from known prices{(p.Costs.Count > p.Known ? $", {p.Costs.Count - p.Known} at the set finder's prices" : "")}"
+				+ (p.MaxLevel > 0 ? $", none over {M(p.MaxLevel)} a level." : ".")
+		];
+
+		if (p.Missing > 0) {
+			lines.Add($"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate.");
+		}
+
+		if (p.Costs.Count > 0) {
+			lines.Add($"{name}: about {p.Days.ToString("0.#", CultureInfo.InvariantCulture)} day(s) at its pace. Every card is priced again right before it's bought.");
+		}
+
+		lines.Add(askYes
+			? $"{name}: nothing bought - 'levelup {name} {p.Target} buy yes' starts it as a level goal (never over {M(p.Total * 11 / 10)}); 'levelup {name} stop' ends one."
+			: $"{name}: 'levelup {name} {p.Target} buy' shows it as a level goal.");
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	private static async Task<string> BansAsync(BotManager mgr, string[] args) {

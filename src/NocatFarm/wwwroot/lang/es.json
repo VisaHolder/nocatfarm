@@ -1736,7 +1736,6 @@
     "rep4rep hold lifted - commenting resumes": "pausa de rep4rep quitada - los comentarios siguen",
     "achievement ceiling is one figure now: 90%": "el tope de logros es ahora un solo valor: 90%",
     "setting moved: when to farm cards = only at night": "ajuste movido: cuándo farmear cartas = solo de noche",
-    "going for {0}: {1} of {2} card drop(s)": "a por {0}: {1} de {2} drops de cartas",
     "Discord bot: to link it, press Connect Discord in Settings": "bot de Discord: para vincularlo, pulsa Conectar Discord en Ajustes",
     "Discord bot: no / commands in a server - invite it again": "bot de Discord: sin comandos / en un servidor - invítalo de nuevo",
     "Discord connected - only {0} can use its commands": "Discord conectado - solo {0} puede usar sus comandos",
@@ -3334,7 +3333,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "no se pone a la venta: recibirías {0}, no más de lo que valen sus gemas ({1})",
     "no price right now - kept until it has one": "sin precio ahora mismo - se guarda hasta que tenga uno",
     "gems: no fresh price for a sack of gems - nothing listed this look": "gemas: no hay un precio reciente de un saco de gemas - esta vez no se pone nada a la venta",
-    "buy order {0} · Steam never said · counted as bought": "orden de compra {0} · Steam nunca lo dijo · contada como comprada",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: aún sin crear · {1} · no se sabe cuánto valen sus cartas",
     "it would leave fewer than {0} copies of a card you keep": "dejaría menos de {0} copias de una carta que conservas",
     "an order for {0} was left open on the market · taken back, nothing bought": "una orden de {0} quedó abierta en el mercado · retirada, no se compró nada",
@@ -3371,7 +3369,6 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "El buscador de colecciones ha comprobado en el mercado {0} de las {1} colecciones más baratas en las últimas 24 horas y conoce {2} colecciones completas. Última mirada: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sin límite: gasta lo que tenga el monedero, los niveles más baratos primero - el máximo por nivel sigue valiendo.",
     "No limit a day ({0} spent in the last day)": "Sin límite al día ({0} gastado en el último día)",
-    "At most {0} for one badge level - twice the cheapest level now": "Como mucho {0} por un nivel de insignia - el doble del nivel más barato ahora",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "buscador de colecciones · {0} de las {1} colecciones más baratas comprobadas en el mercado en las últimas 24 horas · {2} colecciones completas conocidas",
     "sets": "colecciones",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "comprar cromos · queda dinero para más niveles baratos - próxima mirada en {0} minutos",
@@ -3394,7 +3391,30 @@
     "card swap · found the offer sent to {0} before the restart": "intercambio de cartas · encontrada la oferta enviada a {0} antes del reinicio",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "hizo otra cosa a las {0} - el modo humano espacia las cosas; puede seguir desde las {1} más o menos",
     "{0} · {1} of {2} card drop(s)": "{0} · {1} de {2} cartas",
-    "every game": "todos los juegos"
+    "every game": "todos los juegos",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "monedero en {0}: «Gastar como mucho a la semana» sigue en {1}, una cantidad en dólares - para {0} usa unos {2}",
+    "couldn't look at the money settings: {0}": "no se pudieron revisar los ajustes de dinero: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "compra de cromos desactivada · un límite de gasto se puso en sin límite - vuelve a activar la compra para ver lo que puede gastar y di que sí",
+    "level goal {0} stopped": "objetivo de nivel {0} detenido",
+    "Steam level {0} (+{1}) · this level cost {2}": "Nivel de Steam {0} (+{1}) · este nivel costó {2}",
+    "Steam level {0} (+{1})": "Nivel de Steam {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "objetivo de nivel {0} iniciado: {1} niveles por unos {2} (nunca más de {3})",
+    "level goal reached: Steam level {0} · {1} spent": "objetivo de nivel alcanzado: nivel de Steam {0} · {1} gastados",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "la compra espera al buscador de colecciones: {0} de {1} colecciones más baratas revisadas",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "monedero en {0}: «No tocar objetos que valgan más de» sigue en {1}, una cantidad en dólares - para {0} usa unos {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} te daría {1}, no más de lo que valen sus gemas",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "monedero en {0}: «Lo máximo que puede perder un intercambio» sigue en {1}, una cantidad en dólares - para {0} usa unos {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "monedero en {0}: «Gastar como mucho al día» sigue en {1}, una cantidad en dólares - para {0} usa unos {2}",
+    "couldn't read the Steam level: {0}": "no se pudo leer el nivel de Steam: {0}",
+    "couldn't search the market: {0}": "no se pudo buscar en el mercado: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} compra(s) de cromos de las que Steam no dijo el final en una semana · contadas como compradas",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Nivel de Steam {0} (+{1}) · {2} por {1} niveles",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "monedero en {0}: «Vender solo si recibes al menos» sigue en {1}, una cantidad en dólares - para {0} usa unos {2}",
+    "couldn't note the money settings were looked at: {0}": "no se pudo anotar que se revisaron los ajustes de dinero: {0}",
+    "couldn't note the Steam level: {0}": "no se pudo anotar el nivel de Steam: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "Como mucho {0} por un nivel de insignia - un poco más de lo que suele costar un nivel",
+    "{0} would pay you {1}, under your {2} minimum": "{0} te daría {1}, por debajo de tu mínimo de {2}",
+    "cards were bought to finish it - crafted, never sold": "se compraron cromos para completarla - se fabrica, nunca se vende"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4643,11 +4663,11 @@
     },
     "BuyDailyLimit": {
       "label": "Gastar como mucho al día",
-      "tip": "Lo máximo que gasta en 24 horas, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 1,50: una colección de 0,60 y otra de 0,70 llenan el día; la siguiente espera a mañana. Nunca gasta más de lo que hay en el monedero."
+      "tip": "Lo máximo que gasta en 24 horas, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 1,50: una colección de 0,60 y otra de 0,70 llenan el día; la siguiente espera a mañana. Nunca gasta más de lo que hay en el monedero. El 1,50 inicial va bien para dólares o euros; para yenes usa unos 225."
     },
     "BuyWeeklyLimit": {
       "label": "Gastar como mucho a la semana",
-      "tip": "Lo máximo que gasta en 7 días, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 8,00 con 1,50 al día: unos 5 días completos de compras a la semana. 0 no compra nada."
+      "tip": "Lo máximo que gasta en 7 días, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 8,00 con 1,50 al día: unos 5 días completos de compras a la semana. 0 no compra nada. El 8,00 inicial va bien para dólares o euros; para yenes usa unos 1200."
     },
     "BuyCheckHours": {
       "label": "Buscar cartas para comprar cada",
@@ -4782,7 +4802,7 @@
     },
     "SpareMaxPrice": {
       "label": "No tocar objetos que valgan más de",
-      "tip": "Lo que valga más nunca se toca: ni se convierte en gemas ni se vende. En la moneda del monedero de Steam de esta cuenta: 0.25 sirve para dólares o euros; para yenes usa unos 40. El valor es el mayor entre el anuncio más barato y lo que se vendió el último día: anunciado a 0.20 pero vendido a 0.30 vale 0.30. Las cartas de los sobres que crea para vender se venden diga lo que diga este límite: se hicieron para ganar dinero. Los juegos de tu lista de conservar nunca se tocan."
+      "tip": "Lo que valga más nunca se toca: ni se convierte en gemas ni se vende. En la moneda del monedero de Steam de esta cuenta: 0.25 sirve para dólares o euros; para yenes usa unos 40. El valor es el mayor entre el anuncio más barato y lo que se vendió el último día: anunciado a 0.20 pero vendido a 0.30 vale 0.30. Dos cosas pueden pasar de él, porque así lo elegiste: las cartas vendidas para niveles de insignia («Vender un set en vez de crearlo cuando el dinero compra más niveles») y las cartas de los sobres que crea para vender. Los juegos de tu lista de conservar nunca se tocan, valgan lo que valgan."
     },
     "SpareGemMarginPct": {
       "label": "Las gemas deben superar a la venta en",
@@ -4893,7 +4913,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vender un set en vez de crearlo cuando el dinero compra más niveles",
-      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de crear una insignia normal, mira por cuánto se vende la colección en el mercado, tras la comisión de Steam. Si ese dinero compra claramente más niveles de insignia que el 1 que da crearla, pone la colección a la venta en su lugar, y la compra de cromos gasta el dinero dentro de sus límites. Por ejemplo, una colección que deja 5,00 cuando los niveles más baratos cuestan unos 0,40 cada uno compra unos 12 niveles en vez de 1. Confirmas cada anuncio en la app de Steam, como cualquier anuncio. Las colecciones y los cromos brillantes se valoran igual: una insignia brillante es un nivel. También vende cromos guardados para una insignia que valen más vendidos que los niveles que darían: 7 cromos que dan unos 5,70 compran unos 14 niveles a 0,40, en vez de los 1 o 2 que darían guardados. Mientras se venden, no se compra ni se crean sobres para ese juego."
+      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de crear una insignia normal, mira por cuánto se vende la colección en el mercado, tras la comisión de Steam. Si ese dinero compra claramente más niveles de insignia que el 1 que da crearla, pone la colección a la venta en su lugar, y la compra de cromos gasta el dinero dentro de sus límites. Por ejemplo, una colección que deja 5,00 cuando los niveles más baratos cuestan unos 0,40 cada uno compra unos 12 niveles en vez de 1. Confirmas cada anuncio en la app de Steam, como cualquier anuncio. Las colecciones y los cromos brillantes se valoran igual: una insignia brillante es un nivel. También vende cromos guardados para una insignia que valen más vendidos que los niveles que darían: 7 cromos que dan unos 5,70 compran unos 14 niveles a 0,40, en vez de los 1 o 2 que darían guardados. Mientras se venden, no se compra ni se crean sobres para ese juego. Estas ventas pueden pasar de «No tocar objetos que valgan más de»: ese límite es para los objetos sobrantes. Los juegos de tu lista de conservar nunca se tocan."
     },
     "CardSwaps": {
       "label": "Cambiar cromos sobrantes con otros usuarios de nocat.farm",
@@ -4901,7 +4921,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Lo máximo que puede perder un intercambio",
-      "tip": "Cuánto menos puede valer un intercambio que lo que da, según el precio más barato del mercado, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 0.03: cartas que valen 0.12 por cartas que valen 0.09 está bien; por 0.08, no. 0: un intercambio nunca vale menos. Una carta sin precio del último día nunca se intercambia."
+      "tip": "Cuánto menos puede valer un intercambio que lo que da, según el precio más barato del mercado, en la moneda del monedero de Steam de esta cuenta. Por ejemplo 0.03: cartas que valen 0.12 por cartas que valen 0.09 está bien; por 0.08, no. 0: un intercambio nunca vale menos. Una carta sin precio del último día nunca se intercambia. 0,03 va bien para dólares o euros; para yenes usa unos 5."
     },
     "CardSwapsPerDay": {
       "label": "Intercambios al día, como máximo",
@@ -4958,7 +4978,7 @@
     },
     "BuyMaxLevelPrice": {
       "label": "Como mucho por un nivel de insignia",
-      "tip": "Lo máximo que paga por un nivel de insignia (100 XP) - una colección completa, o los cromos que le faltan a una insignia empezada - en la moneda del monedero de Steam de esta cuenta. Un nivel más caro espera a que bajen los precios, para que el dinero no se gaste en niveles caros cuando se acaban los baratos. Por ejemplo 0,50: una colección de 5 cromos a 0,35 se compra, una de 9 cromos a 0,70 espera. 0 es automático: el doble del nivel más barato que puede comprar en ese momento - con el más barato a 0,33, hasta 0,66."
+      "tip": "Lo máximo que paga por un nivel de insignia (100 XP) - una colección completa, o los cromos que le faltan a una insignia empezada - en la moneda del monedero de Steam de esta cuenta. Un nivel más caro espera a que bajen los precios, para que el dinero no se gaste en niveles caros cuando se acaban los baratos. Por ejemplo 0,50: una colección de 5 cromos a 0,35 se compra, una de 9 cromos a 0,70 espera. 0 es automático y ajustado: un cuarto más de lo que suele costar un nivel - el punto medio de las 5 colecciones completas más baratas que conoce el buscador de colecciones (la mitad más mientras conozca menos, o el nivel más barato de la última semana). Con colecciones a unos 0,40, hasta 0,50; no sube cuando se acaban las colecciones baratas. Hasta que el buscador haya revisado las 100 colecciones más baratas, las colecciones completas solo se compran hasta una décima por encima de la más barata conocida. 0,50 va bien para dólares o euros; para yenes usa unos 75."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Espera más larga entre miradas, modo humano",
@@ -4967,6 +4987,11 @@
     "RefundProtectMinPrice": {
       "label": "Proteger reembolsos solo para juegos de más de",
       "tip": "Solo los juegos que costaron más que esto se dejan en paz mientras se pueden reembolsar; uno más barato se farmea enseguida. Usa lo que pagaste cuando el historial de compras de Steam lo muestra; si no, el precio normal de la tienda (una oferta nunca lo baja); un precio que no encuentra queda protegido. En la moneda del monedero de Steam de esta cuenta. Por ejemplo 5,00: un juego de 0,99 que acabas de comprar se farmea enseguida; uno de 20,00 se deja en paz hasta que ya no se pueda reembolsar. 0 protege todos los juegos."
+    },
+    "LevelUpLine": {
+      "label": "La línea de subida de nivel muestra",
+      "tip": "Una línea en el registro cuando sube el nivel de Steam de esta cuenta - por ejemplo «Nivel de Steam 58 (+1) · este nivel costó 0,46 CAD» o «Nivel de Steam 60 (+3) · 1,42 CAD por 3 niveles». El coste es solo dinero gastado de verdad: los cromos comprados para las insignias fabricadas. Los cromos conseguidos jugando no cuestan nada. También se envía a Telegram o Discord si las novedades de cromos están activadas allí. Desactivado: ninguna línea.",
+      "choices": "3 el nivel y lo que costó | 1 solo el nivel | 0 desactivado"
     }
   }
 }

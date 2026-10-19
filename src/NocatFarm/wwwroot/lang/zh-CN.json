@@ -1736,7 +1736,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep 暂停已解除 - 恢复评论",
     "achievement ceiling is one figure now: 90%": "成就上限现为单一数值：90%",
     "setting moved: when to farm cards = only at night": "设置已迁移：何时刷卡 = 仅夜间",
-    "going for {0}: {1} of {2} card drop(s)": "刷 {0}：{1}/{2} 张卡牌",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord 机器人：要关联，请在设置中点“连接 Discord”",
     "Discord bot: no / commands in a server - invite it again": "Discord 机器人：某服务器没有 / 命令 - 请重新邀请",
     "Discord connected - only {0} can use its commands": "Discord 已连接 - 只有 {0} 能用它的命令",
@@ -3334,7 +3333,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "未上架：你只能拿到 {0}，不比它的宝石价值（{1}）多",
     "no price right now - kept until it has one": "现在没有价格 - 先留着，等有价格再说",
     "gems: no fresh price for a sack of gems - nothing listed this look": "宝石：没有宝石袋的最新价格 - 这次什么都不上架",
-    "buy order {0} · Steam never said · counted as bought": "购买订单 {0} · Steam 始终没有答复 · 按已购买计算",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少",
     "it would leave fewer than {0} copies of a card you keep": "会让你保留的卡剩不到 {0} 张",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} 的订单还挂在市场上 · 已撤回，什么也没买",
@@ -3371,7 +3369,6 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "卡组查找在过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个，已知 {2} 个整套。上次查看：{3}。",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "不设上限：钱包里有多少就花多少，最便宜的等级先买 - 每个等级的最高价仍然有效。",
     "No limit a day ({0} spent in the last day)": "每天不设上限（过去一天已花 {0}）",
-    "At most {0} for one badge level - twice the cheapest level now": "一个徽章等级最多 {0} - 当前最便宜等级的两倍",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "卡组查找 · 过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个 · 已知 {2} 个整套",
     "sets": "套",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "购买卡牌 · 还有钱买更多便宜的等级 - {0} 分钟后再看",
@@ -3394,7 +3391,30 @@
     "card swap · found the offer sent to {0} before the restart": "卡牌交换 · 找到了重启前发给 {0} 的报价",
     "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续",
     "{0} · {1} of {2} card drop(s)": "{0} · 卡牌掉落 {1}/{2}",
-    "every game": "所有游戏"
+    "every game": "所有游戏",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每周最多花费” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't look at the money settings: {0}": "无法检查金额设置：{0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "已关闭购买卡牌 · 一个花费上限被设为不限 - 请重新打开购买，看看它可能花多少，再确认",
+    "level goal {0} stopped": "等级目标 {0} 已停止",
+    "Steam level {0} (+{1}) · this level cost {2}": "Steam 等级 {0}（+{1}）· 这一级花了 {2}",
+    "Steam level {0} (+{1})": "Steam 等级 {0}（+{1}）",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "等级目标 {0} 已开始：{1} 级，约 {2}（绝不超过 {3}）",
+    "level goal reached: Steam level {0} · {1} spent": "等级目标已达成：Steam 等级 {0} · 花了 {1}",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "购买在等卡组查找：最便宜的 {1} 套中已检查 {0} 套",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“价值超过此数的物品绝不动” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} 只能让你拿到 {1}，不比它的宝石更值钱",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每次交换最多可亏” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每天最多花费” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't read the Steam level: {0}": "无法读取 Steam 等级：{0}",
+    "couldn't search the market: {0}": "无法搜索市场：{0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} 笔卡牌购买 Steam 一周内都没给出结果 · 按已买入计",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Steam 等级 {0}（+{1}）· {1} 级共 {2}",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“仅当到手至少为此金额时出售” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't note the money settings were looked at: {0}": "无法记下已检查过金额设置：{0}",
+    "couldn't note the Steam level: {0}": "无法记下 Steam 等级：{0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "一个徽章等级最多 {0} - 比一个等级的通常价格稍高",
+    "{0} would pay you {1}, under your {2} minimum": "{0} 只能让你拿到 {1}，低于你的最低 {2}",
+    "cards were bought to finish it - crafted, never sold": "为凑齐它买了卡牌 - 合成，绝不出售"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4643,11 +4663,11 @@
     },
     "BuyDailyLimit": {
       "label": "每天最多花费",
-      "tip": "任意 24 小时内最多花多少，按此账户 Steam 钱包的货币计算。例如 1.50：一套 0.60 加一套 0.70 就用满当天，下一套等到明天。绝不会花超过钱包余额。"
+      "tip": "任意 24 小时内最多花多少，按此账户 Steam 钱包的货币计算。例如 1.50：一套 0.60 加一套 0.70 就用满当天，下一套等到明天。绝不会花超过钱包余额。 初始的 1.50 适合美元或欧元；日元用约 225。"
     },
     "BuyWeeklyLimit": {
       "label": "每周最多花费",
-      "tip": "任意 7 天内最多花多少，按此账户 Steam 钱包的货币计算。例如每天 1.50、每周 8.00：每周大约能买满 5 天。0 表示什么都不买。"
+      "tip": "任意 7 天内最多花多少，按此账户 Steam 钱包的货币计算。例如每天 1.50、每周 8.00：每周大约能买满 5 天。0 表示什么都不买。 初始的 8.00 适合美元或欧元；日元用约 1200。"
     },
     "BuyCheckHours": {
       "label": "查找要买的卡的间隔",
@@ -4782,7 +4802,7 @@
     },
     "SpareMaxPrice": {
       "label": "价值超过此数的物品绝不动",
-      "tip": "价值更高的东西永远不碰：不换宝石，也不出售。用这个账号的 Steam 钱包货币：美元或欧元用 0.25 合适，日元用约 40。价值取最低挂单价和最近一天成交价中较高的那个：挂 0.20 但成交 0.30，就算 0.30。 为出售而制作的补充包里的卡牌，不管这个上限是多少都会卖掉 - 它们本来就是为了赚钱做的。保留列表里的游戏绝不会动。"
+      "tip": "价值更高的东西永远不碰：不换宝石，也不出售。用这个账号的 Steam 钱包货币：美元或欧元用 0.25 合适，日元用约 40。价值取最低挂单价和最近一天成交价中较高的那个：挂 0.20 但成交 0.30，就算 0.30。 按你的选择，有两样可以超过它：为徽章等级出售的卡牌（“钱能买到更多等级时，卖掉整套而不是合成”）和为出售而制作的补充包里的卡牌。保留列表里的游戏无论价值多少都绝不会动。"
     },
     "SpareGemMarginPct": {
       "label": "宝石须比出售高出",
@@ -4893,7 +4913,7 @@
     },
     "SellSetsForLevels": {
       "label": "钱能买到更多等级时，卖掉整套而不是合成",
-      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组和闪亮卡牌也同样比较：闪亮徽章只有 1 级。 为徽章留着的卡牌，如果卖掉比它们能升的等级更值，也会卖掉：卖约 5.70 的 7 张卡牌，按每级 0.40 能买约 14 级，而留着只能升 1 到 2 级。卖出期间不会为该游戏购买卡牌或制作补充包。"
+      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组和闪亮卡牌也同样比较：闪亮徽章只有 1 级。 为徽章留着的卡牌，如果卖掉比它们能升的等级更值，也会卖掉：卖约 5.70 的 7 张卡牌，按每级 0.40 能买约 14 级，而留着只能升 1 到 2 级。卖出期间不会为该游戏购买卡牌或制作补充包。 这些出售可以超过 “价值超过此数的物品绝不动” - 那个上限是给多余物品用的。保留列表里的游戏绝不会动。"
     },
     "CardSwaps": {
       "label": "与其他 nocat.farm 用户交换多余的卡牌",
@@ -4901,7 +4921,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "每次交换最多可亏",
-      "tip": "一次交换的价值最多可以比付出的少多少，按市场最低价、用此账户的 Steam 钱包货币计算。例如 0.03：用价值 0.12 的卡换价值 0.09 的卡可以，换 0.08 的就不行。0：交换绝不会更便宜。最近一天没有价格的卡绝不交换。"
+      "tip": "一次交换的价值最多可以比付出的少多少，按市场最低价、用此账户的 Steam 钱包货币计算。例如 0.03：用价值 0.12 的卡换价值 0.09 的卡可以，换 0.08 的就不行。0：交换绝不会更便宜。最近一天没有价格的卡绝不交换。 美元或欧元用 0.03 合适，日元用约 5。"
     },
     "CardSwapsPerDay": {
       "label": "每天最多交换次数",
@@ -4958,7 +4978,7 @@
     },
     "BuyMaxLevelPrice": {
       "label": "一个徽章等级最多付",
-      "tip": "一个徽章等级（100 XP）最多付多少 - 一个整套，或已开始的徽章缺少的卡牌 - 以此账户的 Steam 钱包货币计。更贵的等级会等价格降下来，这样便宜的等级用完后，钱不会花在贵的等级上。例如 0.50：0.35 的 5 张卡组会买，0.70 的 9 张卡组会等。0 为自动：当时能买到的最便宜等级的两倍 - 最便宜为 0.33 时，最多 0.66。"
+      "tip": "一个徽章等级（100 XP）最多付多少 - 一个整套，或已开始的徽章缺少的卡牌 - 以此账户的 Steam 钱包货币计。更贵的等级会等价格降下来，这样便宜的等级用完后，钱不会花在贵的等级上。例如 0.50：0.35 的 5 张卡组会买，0.70 的 9 张卡组会等。0 为自动且偏紧：比一个等级的通常价格高四分之一 - 即卡组查找已知最便宜的 5 个整套的中间值（已知不足 5 个时高一半，或用上周最便宜的等级）。整套约 0.40 时，最多 0.50；便宜的整套用完也不会上涨。在卡组查找检查完最便宜的 100 套之前，整套只买到已知最便宜的再高十分之一为止。美元或欧元用 0.50 合适，日元用约 75。"
     },
     "BuyHumanGapMaxMinutes": {
       "label": "两次查看之间最长等待（真人模式）",
@@ -4967,6 +4987,11 @@
     "RefundProtectMinPrice": {
       "label": "只为高于此价格的游戏保护退款",
       "tip": "只有花费高于此金额的游戏才会在仍可退款期间被保留不动；更便宜的会立即挂卡。若 Steam 购买记录显示了你实际支付的金额就按它，否则按商店常规价格（促销不会让它变低）；找不到价格的游戏会受到保护。使用此账户的 Steam 钱包货币。例如 5.00：刚买的 0.99 游戏会立即挂卡；20.00 的游戏会一直保留，直到不能再退款。0 表示保护所有游戏。"
+    },
+    "LevelUpLine": {
+      "label": "升级那一行显示",
+      "tip": "此账号的 Steam 等级上升时，在日志里写一行 - 例如“Steam 等级 58（+1）· 这一级花了 0.46 CAD”，或“Steam 等级 60（+3）· 3 级共 1.42 CAD”。费用只算真正花掉的钱：为合成的徽章买的卡牌。挂卡得到的卡牌不算钱。若 Telegram 或 Discord 开了卡牌消息，也会发到那里。关闭：不写这一行。",
+      "choices": "3 等级和花费 | 1 只显示等级 | 0 关闭"
     }
   }
 }

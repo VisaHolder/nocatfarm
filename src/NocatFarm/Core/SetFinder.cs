@@ -747,6 +747,24 @@ public sealed class SetFinder {
 			.Select(k => new Row(k.App, k.Game, k.Cards.Count, levels?.GetValueOrDefault(k.App) ?? 0, k.UsdCents, rate is double r ? WalletRate.ToWallet(k.UsdCents, r) : null))];
 	}
 
+	/// <summary>The cheapest candidates the lists name that buying waits for the finder to check (<see cref="WarmUp"/>).</summary>
+	public const int WarmUpSets = 100;
+
+	/// <summary>
+	/// 1.8.2, warming up: of the <see cref="WarmUpSets"/> cheapest candidates the lists name (all of them when fewer), how
+	/// many were read on the market in the last 24 hours. Needed 0: no list names any yet - nothing to wait for.
+	/// </summary>
+	public (int Checked, int Needed) WarmUp(DateTime now) {
+		lock (_gate) {
+			Table t = Load();
+			HashSet<uint> listed = [.. t.Hints.Where(static h => (h.Value.Rank > 0) || (h.Value.UsdCents > 0)).Select(static h => h.Key)];
+			List<uint> cheapest = [.. Candidates(t, now).Select(static c => c.App).Where(listed.Contains).Take(WarmUpSets)];
+			int done = cheapest.Count(a => t.Games.TryGetValue(a, out Game? g) && (g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < TimeSpan.FromHours(24)));
+
+			return (done, cheapest.Count);
+		}
+	}
+
 	/// <summary>How far it has got.</summary>
 	public Coverage Covered(DateTime now) {
 		int known = Known(now).Count;
