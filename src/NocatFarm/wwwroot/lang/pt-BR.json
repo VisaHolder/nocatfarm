@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "não tem carteira Steam para gastar o dinheiro",
     "{0}: not crafted yet · {1}": "{0}: ainda não criado · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: ainda não criado · {1} · não se sabe quanto valem as cartas dele",
-    "its wallet already pays for every level priced today": "a carteira já paga todos os níveis com preço hoje"
+    "its wallet already pays for every level priced today": "a carteira já paga todos os níveis com preço hoje",
+    "couldn't read the open buy orders: {0}": "não conseguiu ler as ordens de compra abertas: {0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "uma ordem de {0} ficou aberta no mercado · retirada, nada comprado",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: já há uma ordem de compra aberta no mercado · a própria é retirada, uma que você criou fica como está"
   },
   "settings": {
     "SteamOpenEveryAccount": {

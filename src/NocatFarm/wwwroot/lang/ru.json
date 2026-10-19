@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "у него нет кошелька Steam, чтобы потратить эти деньги",
     "{0}: not crafted yet · {1}": "{0}: пока не собран · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: пока не собран · {1} · неизвестно, сколько стоят его карточки",
-    "its wallet already pays for every level priced today": "кошелёк уже оплачивает все уровни, оценённые сегодня"
+    "its wallet already pays for every level priced today": "кошелёк уже оплачивает все уровни, оценённые сегодня",
+    "couldn't read the open buy orders: {0}": "не удалось прочитать открытые заявки на покупку: {0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "заявка на {0} осталась открытой на рынке · отозвана, ничего не куплено",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: на рынке уже открыта заявка на покупку · своя отзывается, вашу он не трогает"
   },
   "settings": {
     "SteamOpenEveryAccount": {

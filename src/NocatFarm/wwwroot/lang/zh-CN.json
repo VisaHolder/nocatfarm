@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
     "{0}: not crafted yet · {1}": "{0}：暂不合成 · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少",
-    "its wallet already pays for every level priced today": "钱包余额已经够买今天定价的所有等级"
+    "its wallet already pays for every level priced today": "钱包余额已经够买今天定价的所有等级",
+    "couldn't read the open buy orders: {0}": "无法读取未完成的购买订单：{0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "{0} 的订单还挂在市场上 · 已撤回，什么也没买",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}：市场上已有它的购买订单 · 撤回自己的订单，你自己下的订单不动"
   },
   "settings": {
     "SteamOpenEveryAccount": {

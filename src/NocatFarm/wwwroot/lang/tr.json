@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "parayı harcayacak bir Steam cüzdanı yok",
     "{0}: not crafted yet · {1}": "{0}: henüz üretilmedi · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: henüz üretilmedi · {1} · kartlarının değeri bilinmiyor",
-    "its wallet already pays for every level priced today": "cüzdanı bugün fiyatlanan her seviyeyi zaten karşılıyor"
+    "its wallet already pays for every level priced today": "cüzdanı bugün fiyatlanan her seviyeyi zaten karşılıyor",
+    "couldn't read the open buy orders: {0}": "açık alış emirleri okunamadı: {0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "{0} için bir emir pazarda açık kalmıştı · geri alındı, hiçbir şey alınmadı",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: bunun için pazarda zaten açık bir alış emri var · kendi emri geri alınır, sizin verdiğiniz emre dokunulmaz"
   },
   "settings": {
     "SteamOpenEveryAccount": {

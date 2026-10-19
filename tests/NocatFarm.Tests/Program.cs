@@ -28698,6 +28698,9 @@ await SweepWalletChecks.RunAsync(Check);
 // ── 1.8.2 sweep: buying cards - the fee's tax in the plan, a purchase counted from when it's known bought; fakes only ──
 await SweepBuyChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: an order that went in without Steam giving its id - found on the market's list of open buy orders and taken back; fakes only ──
+await SweepOrderChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -30924,7 +30927,7 @@ static class BuySafetyChecks {
 				string.Join(",", staleMarket.Checked) + " / " + string.Join(" | ", stale));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal));
 
 			// ── re-priced before a set is started ──
@@ -31575,7 +31578,7 @@ static class BuySmartChecks {
 				twoMarket.Bought.Select(static b => b.Hash).SequenceEqual(["200-B"]) && (two.Waiting.Count == 1), string.Join(",", twoMarket.Bought));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("phone: with buying off or outside its day, a purchase waiting too long is still let go; with the authenticator here it confirms exactly its own",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
 
@@ -33837,6 +33840,216 @@ static class SweepBuyChecks {
 			await never.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("sweep buy: an order Steam never said the end of, counted as bought - from when that was decided",
 				never.Ledger.All is [{ Key: "k3", Pending: false }] && (never.Ledger.All[0].At > DateTime.UtcNow.AddMinutes(-5)), string.Join(" | ", never.Ledger.All));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>A pretend card market that also lists the account's open buy orders, around <see cref="FakeCardMarket"/>.</summary>
+sealed class LeftoverMarket(FakeCardMarket inner) : NocatFarm.Modules.ICardMarket {
+	public FakeCardMarket Inner => inner;
+
+	/// <summary>The open buy orders the market's front page shows (null: it couldn't be read).</summary>
+	public List<NocatFarm.Modules.OpenBuyOrder>? Open { get; set; } = [];
+
+	/// <summary>How many times the open buy orders were read.</summary>
+	public int OpenReads { get; private set; }
+
+	/// <summary>What a purchase answers instead of the inner market's (null: the inner's), and what's done as it's sent.</summary>
+	public NocatFarm.Modules.BuyAnswer? BuyReply { get; set; }
+	public Action? OnBuy { get; set; }
+
+	public Task<IReadOnlyList<NocatFarm.Modules.OpenBuyOrder>?> OpenOrdersAsync(CancellationToken ct) {
+		OpenReads++;
+		return Task.FromResult<IReadOnlyList<NocatFarm.Modules.OpenBuyOrder>?>(Open == null ? null : [.. Open]);
+	}
+
+	public async Task<NocatFarm.Modules.BuyAnswer> BuyAsync(NocatFarm.Modules.BuyOrder order, Action<string>? placed, CancellationToken ct) {
+		NocatFarm.Modules.BuyAnswer answer = await inner.BuyAsync(order, placed, ct);
+		OnBuy?.Invoke();
+		return BuyReply ?? answer;
+	}
+
+	public Task<NocatFarm.Modules.CardMarket.Wallet?> WalletAsync(CancellationToken ct) => inner.WalletAsync(ct);
+	public Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) => inner.BadgeLevelsAsync(ct);
+	public Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) => inner.CardsAsync(ct);
+	public Task<NocatFarm.Modules.CardSet?> SetAsync(uint app, CancellationToken ct) => inner.SetAsync(app, ct);
+	public Task<IReadOnlyList<uint>?> CheapestGamesAsync(CancellationToken ct) => inner.CheapestGamesAsync(ct);
+	public Task<NocatFarm.Modules.CardMarket.Book?> BookAsync(string hash, CancellationToken ct) => inner.BookAsync(hash, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, hash, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> ResumeAsync(NocatFarm.Modules.BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct) => inner.ResumeAsync(order, confirmation, placed, ct);
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => inner.QuoteAsync(hash, currency, ct);
+}
+
+/// <summary>A pretend web session that answers the market's front page with some HTML, and notes the page each read came from.</summary>
+sealed class HomePageWeb(string? html) : NocatFarm.Core.IMarketWeb {
+	public List<string> Reads { get; } = [];
+	public Task<string?> GetAsync(Uri url, CancellationToken ct) => Task.FromResult<string?>(null);
+
+	public Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct) {
+		Reads.Add($"{url} from {referer}");
+		return Task.FromResult(html);
+	}
+
+	public Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct) => Task.FromResult<(string?, bool)>((null, false));
+	public string SessionId => "fake";
+	public bool CanConfirm => false;
+	public Task<(bool Ok, IReadOnlyList<NocatFarm.Core.Confirmations.Item> Items)> ConfirmationsAsync(CancellationToken ct) => Task.FromResult<(bool, IReadOnlyList<NocatFarm.Core.Confirmations.Item>)>((false, []));
+	public Task<bool> ActAsync(NocatFarm.Core.Confirmations.Item item, bool accept, CancellationToken ct) => Task.FromResult(false);
+	public Task DelayAsync(TimeSpan wait, CancellationToken ct) => Task.CompletedTask;
+}
+
+/// <summary>1.8.2 sweep: an order that went in without Steam giving its id - found on the market's own list and taken back. Fakes only.</summary>
+static class SweepOrderChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweeporder-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot() {
+			var b = new NocatFarm.Core.Bot("so-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			return b;
+		}
+
+		NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m) {
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			return new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, SendGap = static () => TimeSpan.Zero };
+		}
+
+		// A market for one card short of a set; email confirmations (blocked) unless it should buy.
+		LeftoverMarket Market(bool buys) {
+			var m = new FakeCardMarket { Wallet = new(1000, 20, false, buys ? 0 : 1) };
+			m.Sets[100] = new NocatFarm.Modules.CardSet(100, "Hundred", ["100-Card 1", "100-Card 2"], new Dictionary<string, int> { ["100-Card 1"] = 5, ["100-Card 2"] = 5 });
+			m.Held[100] = new() { ["100-Card 1"] = 1 };
+			m.Books["100-Card 1"] = FakeCardMarket.B(9);
+			m.Books["100-Card 2"] = FakeCardMarket.B(9);
+			return new LeftoverMarket(m);
+		}
+
+		// What a purchase sent with no clear answer left behind: counted as spent, no order id.
+		NocatFarm.Modules.BuyLedger.Entry Unplaced(string key) => new(DateTime.UtcNow.AddHours(-1), 9, 20, 100, "100-Card 2", Pending: true, Key: key);
+
+		const string Page = """
+			<div id="tabContentsMyListings">
+			<div class="my_listing_section market_content_block market_home_listing_table">
+			<h3 class="my_market_header"><span class="my_market_header_active">My buy orders</span> <span class="my_market_header_count">(3)</span></h3>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7001">
+				<div class="market_listing_right_cell market_listing_edit_buttons"><a href="javascript:CancelMarketBuyOrder('7001')" class="item_market_action_button">Cancel</a></div>
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price">
+					<span class="market_listing_inline_buyorder_qty">1 @</span>
+					0,09&#8364;			</span></div>
+				<img id="mybuyorder_7001_image" src="https://community.akamai.steamstatic.com/x.png" alt="">
+				<div class="market_listing_item_name_block"><span class="market_listing_item_name"><a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/100-Card%202">Card 2</a></span><br><span class="market_listing_game_name">Hundred Trading Card</span></div>
+			</div>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7002">
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price"><span class="market_listing_inline_buyorder_qty">1 @</span> $1.23 USD </span></div>
+				<a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/440-Scout">Scout</a>
+			</div>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7003">
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price">a price nobody can read</div>
+				<a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/440-Pyro">Pyro</a>
+			</div>
+			</div></div>
+			""";
+
+		try {
+			// ── reading "My buy orders" from the market's front page, defensively ──
+			var read = NocatFarm.Core.SteamCardMarket.ReadOpenOrders(Page);
+			Check("leftover orders: the market's front page read - each order's id, card and price per card; a row it can't read whole is left out (never taken back)",
+				read is [{ Id: "7001", Hash: "100-Card 2", Price: 9, Quantity: 1 }, { Id: "7002", Hash: "440-Scout", Price: 123, Quantity: 1 }],
+				read == null ? "null" : string.Join(" | ", read));
+			Check("leftover orders: a page that isn't the account's market page (signed out, an error) - not known, never 'no orders'; one with none - none",
+				(NocatFarm.Core.SteamCardMarket.ReadOpenOrders("<html><title>Sign In</title></html>") == null) && (NocatFarm.Core.SteamCardMarket.ReadOpenOrders(null) == null)
+				&& NocatFarm.Core.SteamCardMarket.ReadOpenOrders("<div id=\"tabContentsMyListings\"></div>") is { Count: 0 });
+			Check("leftover orders: prices as the market writes them - $0.05, 0,05€, 1,--€, ¥ 500, 1.234,56 pуб.",
+				(NocatFarm.Core.SteamCardMarket.MoneyCents("$0.05") == 5) && (NocatFarm.Core.SteamCardMarket.MoneyCents("0,05€") == 5)
+				&& (NocatFarm.Core.SteamCardMarket.MoneyCents("1,--€") == 100) && (NocatFarm.Core.SteamCardMarket.MoneyCents("¥ 500") == 50000)
+				&& (NocatFarm.Core.SteamCardMarket.MoneyCents("1.234,56 pуб.") == 123456) && (NocatFarm.Core.SteamCardMarket.MoneyCents("free") == null));
+			var home = new HomePageWeb(Page);
+			var viaPage = await new NocatFarm.Core.SteamCardMarket(NewBot(), home).OpenOrdersAsync(CancellationToken.None);
+			Check("leftover orders: read once, from the market's page itself, as a browser opens it",
+				(viaPage?.Count == 2) && home.Reads is ["https://steamcommunity.com/market/ from https://steamcommunity.com/market/"], string.Join(" | ", home.Reads));
+
+			// ── Steam refusing a new order because one is open: proof of a leftover order ──
+			var dup = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":29,\"message\":\"You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.\"}");
+			var other = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":8,\"message\":\"Something else\"}");
+			Check("leftover orders: 'You already have an active buy order for this item' - refused (nothing bought) and marked as a leftover order; another refusal isn't",
+				dup is { Kind: NocatFarm.Core.SteamCardMarket.OrderKind.Refused, Leftover: true } && other is { Kind: NocatFarm.Core.SteamCardMarket.OrderKind.Refused, Leftover: false });
+
+			// ── a sweep: the order found by card and price, asked about and taken back ──
+			var goneMarket = Market(buys: false);
+			goneMarket.Open = [new("7001", "100-Card 2", 9, 1), new("7003", "100-Card 1", 50, 1)];
+			goneMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Gone, 0, "", "7001");
+			var goneBuyer = Buyer(NewBot(), goneMarket);
+			goneBuyer.Ledger.Add(Unplaced("g1"));
+			await goneBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: an order with no id found on the market (same card, same price) - asked about, taken back with nothing bought, off the list; the owner's other order untouched",
+				goneMarket.Inner.Checked is ["7001"] && (goneBuyer.Ledger.All.Count == 0) && (goneMarket.OpenReads == 1),
+				$"{string.Join(",", goneMarket.Inner.Checked)} / {string.Join(" | ", goneBuyer.Ledger.All)} / reads {goneMarket.OpenReads}");
+
+			var boughtMarket = Market(buys: false);
+			boughtMarket.Open = [new("7001", "100-Card 2", 9, 1)];
+			boughtMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Bought, 9, "", "7001");
+			var boughtBuyer = Buyer(NewBot(), boughtMarket);
+			boughtBuyer.Ledger.Add(Unplaced("b1"));
+			await boughtBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: ...one that filled meanwhile - settled bought, with its order id, once",
+				boughtBuyer.Ledger.All is [{ Key: "b1", Pending: false, Order: "7001", Cents: 9 }], string.Join(" | ", boughtBuyer.Ledger.All));
+
+			var ownersMarket = Market(buys: false);
+			ownersMarket.Open = [new("7004", "100-Card 2", 50, 1)];
+			var ownersBuyer = Buyer(NewBot(), ownersMarket);
+			ownersBuyer.Ledger.Add(Unplaced("o1"));
+			await ownersBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: an order for the card at another price (one you placed) is never touched - the purchase stays counted as spent",
+				(ownersMarket.Inner.Checked.Count == 0) && ownersBuyer.Ledger.All is [{ Key: "o1", Pending: true }], string.Join(" | ", ownersBuyer.Ledger.All));
+
+			var unclearMarket = Market(buys: false);
+			unclearMarket.Open = [new("7001", "100-Card 2", 9, 1)];
+			var unclearBuyer = Buyer(NewBot(), unclearMarket);
+			unclearBuyer.Ledger.Add(Unplaced("u1"));
+			await unclearBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			await unclearBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: still unclear - stays counted as spent, and the list isn't read again at the next look within half an hour (gently)",
+				unclearBuyer.Ledger.All is [{ Key: "u1", Pending: true }] && (unclearMarket.OpenReads == 1) && (NocatFarm.Modules.CardBuyer.LeftoverGap == TimeSpan.FromMinutes(30)),
+				$"reads {unclearMarket.OpenReads} / {string.Join(" | ", unclearBuyer.Ledger.All)}");
+
+			var blindMarket = Market(buys: false);
+			blindMarket.Open = null;
+			var blindBuyer = Buyer(NewBot(), blindMarket);
+			blindBuyer.Ledger.Add(Unplaced("n1"));
+			await blindBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: the market's page can't be read - nothing taken back, the purchase stays counted",
+				(blindMarket.Inner.Checked.Count == 0) && blindBuyer.Ledger.All is [{ Key: "n1", Pending: true }]);
+
+			// ── Steam refusing the new order because the old one is open: the list read at once, its own order taken back ──
+			var dupMarket = Market(buys: true);
+			dupMarket.BuyReply = new(NocatFarm.Modules.BuyResult.Refused, 0, "You already have an active buy order for this item.", Leftover: true);
+			dupMarket.OnBuy = () => dupMarket.Open = [new("7001", "100-Card 2", 9, 1)];   // the front page lagged at the look's start
+			dupMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Gone, 0, "", "7001");
+			var dupBuyer = Buyer(NewBot(), dupMarket);
+			dupBuyer.Ledger.Add(Unplaced("d1"));
+			var dupResult = await dupBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: 'already have an active buy order' - its own leftover order is found at once and taken back; nothing counted for either",
+				(dupMarket.OpenReads == 2) && dupMarket.Inner.Checked.Contains("7001") && (dupBuyer.Ledger.All.Count == 0)
+				&& dupResult.Problem.Contains("already open on the market", StringComparison.Ordinal) && !dupResult.Lasting,
+				$"reads {dupMarket.OpenReads} / {dupResult.Problem} / {string.Join(" | ", dupBuyer.Ledger.All)}");
 		} finally {
 			foreach (var b in bots) {
 				await b.DisposeAsync();

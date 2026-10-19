@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "その代金を使うための Steam ウォレットがありません",
     "{0}: not crafted yet · {1}": "{0}: まだ作りません · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: まだ作りません · {1} · カードの価値がわかりません",
-    "its wallet already pays for every level priced today": "今日値段のわかったレベルは、すべてウォレットの残高でまかなえます"
+    "its wallet already pays for every level priced today": "今日値段のわかったレベルは、すべてウォレットの残高でまかなえます",
+    "couldn't read the open buy orders: {0}": "出ている購入注文を読めませんでした: {0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "{0} の注文がマーケットに残っていました · 取り消しました。何も買っていません",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: マーケットにすでに購入注文があります · 自分の注文は取り消し、あなたが出した注文はそのままにします"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3244,7 +3244,10 @@
     "it has no Steam wallet to spend the money from": "그 돈을 쓸 Steam 지갑이 없습니다",
     "{0}: not crafted yet · {1}": "{0}: 아직 제작 안 함 · {1}",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: 아직 제작 안 함 · {1} · 카드 가치를 모름",
-    "its wallet already pays for every level priced today": "오늘 가격이 나온 레벨은 이미 지갑 잔액으로 모두 살 수 있습니다"
+    "its wallet already pays for every level priced today": "오늘 가격이 나온 레벨은 이미 지갑 잔액으로 모두 살 수 있습니다",
+    "couldn't read the open buy orders: {0}": "열려 있는 구매 주문을 읽지 못했습니다: {0}",
+    "an order for {0} was left open on the market · taken back, nothing bought": "{0} 주문이 마켓에 열린 채 남아 있었습니다 · 취소함, 구매한 것 없음",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: 마켓에 이미 구매 주문이 열려 있습니다 · 자신의 주문은 취소하고, 직접 넣은 주문은 그대로 둡니다"
   },
   "settings": {
     "SteamOpenEveryAccount": {
