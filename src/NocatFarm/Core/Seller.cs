@@ -406,11 +406,17 @@ public static class Seller {
 	/// <param name="hold">Asked before each listing too: a reason to stop (spare items put back to preview only), or null.</param>
 	/// <param name="pause">The wait between two listings: 20 seconds to a minute when not given (a human-mode account's
 	/// spare items wait minutes).</param>
+	/// <param name="refused">1.8.2: told Steam's reason when it refused a listing ("" when it gave none).</param>
 	public static async Task<string> SellAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct, Func<bool>? mayAct = null,
-		Reprice? reprice = null, Func<Said?>? hold = null, Action<Offer>? onListed = null, Func<CancellationToken, Task>? pause = null) {
+		Reprice? reprice = null, Func<Said?>? hold = null, Action<Offer>? onListed = null, Func<CancellationToken, Task>? pause = null, Action<string>? refused = null) {
 		// Held by scam watch: nothing goes on the market by itself (ScamWatch.HeldBack).
 		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
 			return held;
+		}
+
+		// 1.8.2: Steam's market blocked for this account, or listing paused after Steam's refusal: nothing listed.
+		if (MarketHold.SellBlocked(bot) is { } market) {
+			return $"{bot.Name}: nothing listed - {market.ToEnglish()}";
 		}
 
 		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant: nothing is
@@ -450,7 +456,7 @@ public static class Seller {
 			HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 			return await SellClaimedAsync(bot, [.. offers.Where(o => claimed.Contains(o.AssetId) && !promised.Contains(o.AssetId))], ct, mayAct,
-				reprice ?? OwnRule(bot, currency), hold, onListed, pause).ConfigureAwait(false);
+				reprice ?? OwnRule(bot, currency), hold, onListed, pause, refused).ConfigureAwait(false);
 		} finally {
 			bot.ReleaseItems(claimed);
 		}
@@ -509,8 +515,10 @@ public static class Seller {
 
 			refusal = no ?? "no answer";
 
-			if (up.Count == 0) {
-				break;   // the first one refused - the rest would be refused for the same reason
+			// The first one refused - the rest would be refused for the same reason. 1.8.2: and whenever Steam's reason is a
+			// lasting one (not allowed, too many waiting for a confirmation, the wallet full, the market unavailable).
+			if ((up.Count == 0) || MarketHold.Lasting(MarketHold.Classify(no))) {
+				break;
 			}
 		}
 
@@ -518,7 +526,7 @@ public static class Seller {
 	}
 
 	private static async Task<string> SellClaimedAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct, Func<bool>? mayAct, Reprice reprice, Func<Said?>? hold,
-		Action<Offer>? onListed, Func<CancellationToken, Task>? pause) {
+		Action<Offer>? onListed, Func<CancellationToken, Task>? pause, Action<string>? refused) {
 		DateTime started = DateTime.UtcNow;
 
 		Said? Stop() {
@@ -528,6 +536,11 @@ public static class Seller {
 
 			if (Modules.ScamWatch.HeldBack(bot) != null) {
 				return Modules.ScamWatch.OnHold(bot.Name);
+			}
+
+			// 1.8.2: Steam's market blocked meanwhile (or listing paused after a refusal): the rest wait.
+			if (MarketHold.SellBlocked(bot) is { } market) {
+				return market;
 			}
 
 			return hold?.Invoke();
@@ -540,7 +553,7 @@ public static class Seller {
 				["assetid"] = offer.AssetId.ToString(CultureInfo.InvariantCulture),
 				["amount"] = "1",
 				["price"] = offer.YouGetCents.ToString(CultureInfo.InvariantCulture)
-			}, new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), token).ConfigureAwait(false);
+			}, new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), token, errorVerdict: true).ConfigureAwait(false);
 
 			if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
 				Stats.Record(Stats.KindListed, bot.Name);
@@ -560,11 +573,19 @@ public static class Seller {
 			// The automatic seller drops the summary this ends up in, so the reason is written down here as well.
 			Log.Debug($"market listing of {offer.Card} ({offer.Game}, asset {offer.AssetId}) refused: {Log.Scrub(Message(body) ?? (body == null ? "no answer" : body[..Math.Min(150, body.Length)]))}", bot.Name);
 
-			// Steam says why in the body ("You have too many listings pending confirmation", a market ban, ...).
-			return (false, Message(body));
+			// Steam says why in the body ("You have too many listings pending confirmation", a market ban, ...) - kept with an
+			// error status too (errorVerdict). 1.8.2: a lasting reason holds the market, or pauses listing, for every part.
+			string? why = Message(body);
+			MarketHold.Refused(bot, MarketHold.Classify(why), DateTime.UtcNow);
+
+			return (false, why);
 		}
 
 		Listed done = await ListEachAsync(offers, Stop, reprice, Post, pause ?? (static token => Task.Delay(Rng.Seconds(20, 60), token)), ct).ConfigureAwait(false);
+
+		if (done.Refusal != null) {
+			refused?.Invoke(done.Refusal == "no answer" ? "" : done.Refusal);
+		}
 
 		foreach ((Offer offer, Said why) in done.Kept) {
 			// Worth more than the price limit by now: never sold, so nothing you need to read - only the debug log.
@@ -614,16 +635,13 @@ public static class Seller {
 
 		List<Listing> now = await ListingsAsync(bot, ct).ConfigureAwait(false) ?? [];
 
-		foreach (ulong listing in MatchPending(now, up, started)) {
-			await Task.Delay(Rng.Seconds(2, 5), ct).ConfigureAwait(false);
-
-			if (await bot.ConfirmMobileAsync(listing, true, ct).ConfigureAwait(false)) {
-				confirmed++;
-				// Confirmed by nocat.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
-				Listing live = now.First(l => l.Id == listing);
-				OurListings.Mark(bot.Name, live);
-				Log.Good(SpareRun.LiveSaid(live.Hash, live.BuyerCents, (int) bot.WalletCurrency), bot.Name);
-			}
+		// 1.8.2: the confirmations list read once for the whole batch, not one to three times a listing.
+		foreach (ulong listing in await bot.ConfirmManyAsync(MatchPending(now, up, started), ct).ConfigureAwait(false)) {
+			confirmed++;
+			// Confirmed by nocat.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
+			Listing live = now.First(l => l.Id == listing);
+			OurListings.Mark(bot.Name, live);
+			Log.Good(SpareRun.LiveSaid(live.Hash, live.BuyerCents, (int) bot.WalletCurrency), bot.Name);
 		}
 
 		return sb.Append($", {confirmed} confirmed on its authenticator.").ToString();
@@ -876,7 +894,8 @@ public static class Seller {
 	/// <param name="oursOnly">Only listings nocat.farm put up itself (<see cref="OurListings"/>) - what Spare items does by
 	/// itself. Without it ('sell relist', which you type) every one of the account's card listings counts.</param>
 	public static async Task<(int Removed, int Stale)> RelistAsync(Bot bot, CancellationToken ct, int days = 7, bool oursOnly = false) {
-		if (Modules.ScamWatch.HeldBack(bot) != null) {
+		// 1.8.2: never taken down while the market is held - it couldn't go up again.
+		if ((Modules.ScamWatch.HeldBack(bot) != null) || (MarketHold.SellBlocked(bot) != null)) {
 			return (0, 0);
 		}
 
@@ -912,6 +931,10 @@ public static class Seller {
 		foreach (Listing listing in stale) {
 			await Task.Delay(Rng.Seconds(4, 10), ct).ConfigureAwait(false);
 
+			if (MarketHold.SellBlocked(bot) != null) {
+				break;   // held meanwhile: the rest stay up
+			}
+
 			string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, $"/market/removelisting/{listing.Id}"), [],
 				new Uri(WebSession.Community, "/market/"), ct).ConfigureAwait(false);
 
@@ -937,7 +960,7 @@ public static class Seller {
 	/// <param name="pause">The human-mode wait between two; a robot waits a few seconds.</param>
 	public static async Task<int> StepDownAsync(Bot bot, int days, CancellationToken ct, Func<Said?>? stop = null, LookBudget? budget = null,
 		Func<CancellationToken, Task<bool>>? pause = null) {
-		if ((Modules.ScamWatch.HeldBack(bot) != null) || (stop?.Invoke() != null) || (WalletCurrency(bot) is not int currency)
+		if ((Modules.ScamWatch.HeldBack(bot) != null) || (MarketHold.SellBlocked(bot) != null) || (stop?.Invoke() != null) || (WalletCurrency(bot) is not int currency)
 			|| (await ListingsAsync(bot, ct).ConfigureAwait(false) is not { } listings)) {
 			return 0;
 		}
@@ -978,7 +1001,7 @@ public static class Seller {
 			return body != null;
 		}
 
-		List<Step> done = await StepDownEachAsync(steps, stop ?? (static () => null), budget,
+		List<Step> done = await StepDownEachAsync(steps, () => MarketHold.SellBlocked(bot) ?? stop?.Invoke(), budget,
 			pause ?? (static async token => { await Task.Delay(Rng.Seconds(4, 10), token).ConfigureAwait(false); return true; }), Remove, ct).ConfigureAwait(false);
 
 		foreach (Step s in done) {

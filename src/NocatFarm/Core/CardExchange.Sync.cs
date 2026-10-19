@@ -151,7 +151,9 @@ public static partial class CardExchange {
 	/// <param name="build">Makes one account's entry, or null when it can't just now (the checks pass a stand-in).</param>
 	public static async Task<bool> SyncAsync(HttpClient http, IReadOnlyCollection<Bot> bots, Func<Bot, CancellationToken, Task<JsonObject?>> build, DateTime nowUtc,
 		CancellationToken ct) {
-		List<Bot> opted = [.. bots.Where(static b => (b.SteamId != 0) && On(b.Cfg, b.Name))];
+		// 1.8.2: an account trade banned, or with Steam's market blocked, isn't on the list - it's taken off nocat.lol (rm), so
+		// nobody is paired with it, until it's over.
+		List<Bot> opted = [.. bots.Where(static b => (b.SteamId != 0) && On(b.Cfg, b.Name) && !Barred(b))];
 		Sent sent = LoadSent();
 
 		if ((opted.Count == 0) && (sent.Listed.Count == 0)) {
@@ -314,6 +316,13 @@ public static partial class CardExchange {
 			return false;
 		}
 	}
+
+	/// <summary>
+	/// 1.8.2: whether an account can't swap for now - a trade ban (the ban look) or Steam's market blocked for it (the market
+	/// hold). Such an account is taken off nocat.lol's list so no swap is matched to it; put back once it's over.
+	/// </summary>
+	public static bool Barred(Bot bot) =>
+		MarketHold.On(bot.Name) || (BotManager.ModuleOf<Modules.BanWatch>(bot)?.Last is { TradeBanned: true });
 
 	/// <summary>
 	/// nocat.lol's answer: the matches, whether the list was taken, and how long until one would be; with a list taken, the

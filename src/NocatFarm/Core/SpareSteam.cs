@@ -72,6 +72,12 @@ public interface ISpareSteam {
 
 	/// <summary>The same in cents of the wallet's currency: what you get, and the currency. Null when it wasn't listed.</summary>
 	(int YouGetCents, int Currency)? ListedCents(ulong assetId) => null;
+
+	/// <summary>1.8.2: Steam's reason for refusing a listing in the last <see cref="SellAsync"/> ("" when it gave none); null when none was refused.</summary>
+	string? Refused => null;
+
+	/// <summary>1.8.2: Steam's market held for this account, or listing paused after a refusal (<see cref="MarketHold.SellBlocked"/>) - nothing is listed. Null when it may list.</summary>
+	Said? MarketHeld => null;
 }
 
 /// <summary>The real Steam, for one account. <paramref name="mayAct"/>: the human-mode gate the run keeps to (none: always).
@@ -116,6 +122,10 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 	private Uri Profile(string path) => new(WebSession.Community, $"/profiles/{bot.SteamId}/{path}");
 
 	public bool Held => Modules.ScamWatch.HeldBack(bot) != null;
+
+	public Said? MarketHeld => MarketHold.SellBlocked(bot);
+
+	public string? Refused { get; private set; }
 	private Uri Inventory => Profile("inventory/");
 
 	public async Task<int?> GemValueAsync(SpareItem item, CancellationToken ct) {
@@ -213,6 +223,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 			return (0, new Said("{0}: Steam hasn't said this account's wallet currency yet - nothing listed", bot.Name).ToString());
 		}
 
+		Refused = null;
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
 		Seller.Reprice reprice = SpareRun.Guarded(bot, items, rules => SpareRun.Repricer(items, rules, currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
@@ -224,7 +235,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 				_listedCents[o.AssetId] = (o.YouGetCents, currency);
 			},
 			// A human-mode account's listings are spread out like its gems; a robot keeps the market's own gap.
-			bot.Cfg.LegitMode ? async t => await PauseAsync(t).ConfigureAwait(false) : null).ConfigureAwait(false);
+			bot.Cfg.LegitMode ? async t => await PauseAsync(t).ConfigureAwait(false) : null, refused: why => Refused = why).ConfigureAwait(false);
 
 		// "name: listed 3 of 5, ..." - the count is the first number after "listed".
 		int at = said.IndexOf("listed ", StringComparison.Ordinal);

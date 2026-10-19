@@ -62,7 +62,8 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 
 		while (!ct.IsCancellationRequested) {
 			// On - or turned off with swap offers still out, to take them back.
-			if ((CardExchange.On(Bot.Cfg, Bot.Name) || (CardExchange.Ledger.Load(Bot.Name).InState("sent").Count > 0)) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused
+			if ((CardExchange.On(Bot.Cfg, Bot.Name) || (CardExchange.Ledger.Load(Bot.Name).InState("sent").Count > 0)
+				|| (CardExchange.Ledger.Load(Bot.Name).InState(Sending).Count > 0)) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
 				try {
 					await LookAsync(DateTime.UtcNow, ct).ConfigureAwait(false);
@@ -79,9 +80,21 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// 1.8.2: a swap written down before its offer goes to Steam - a crash or a stop while it's out leaves this, and the next
+	/// look finds the offer by its note (<see cref="CardExchange.Tag"/> and the match) instead of ever sending it again.
+	/// </summary>
+	internal const string Sending = "sending";
+
+	/// <summary>How long a swap may sit as <see cref="Sending"/> with no offer of ours carrying its note before it's let go.</summary>
+	internal static readonly TimeSpan SendingFor = TimeSpan.FromMinutes(10);
+
 	/// <summary>One look: the offers out first, then at most one new one. What it's doing, for the dashboard.</summary>
 	internal async Task<Said> LookAsync(DateTime now, CancellationToken ct) {
 		CardExchange.Ledger ledger = CardExchange.Ledger.Load(Bot.Name);
+
+		// 1.8.2: swaps that were on their way to Steam when it stopped: the offer is found by its note, or let go - never sent twice.
+		await AdoptAsync(ledger, now, ct).ConfigureAwait(false);
 
 		// Turned off: its own swap offers still out are taken back, and nothing else happens.
 		if (!CardExchange.On(Bot.Cfg, Bot.Name)) {
@@ -91,12 +104,19 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		}
 
 		bool held = ScamHeld, open = DayOpen?.Invoke() ?? Gate.Open;
+		Said? market = MarketHold.Blocked(Bot);
 
-		// Held by scam watch, or outside its day: the offers out are followed up - and taken back if need be - never confirmed.
-		await FollowUpAsync(ledger, now, !held && open, ct).ConfigureAwait(false);
+		// Held by scam watch or the market hold, or outside its day: the offers out are followed up - and taken back if need
+		// be - never confirmed.
+		await FollowUpAsync(ledger, now, !held && open && (market == null), ct).ConfigureAwait(false);
 
 		if (held) {
 			return _status = new Said("held by scam watch - no swaps until 'scamwatch ok'");
+		}
+
+		// 1.8.2: Steam's market blocked for this account (a trade ban, a new device...): no new swap.
+		if (market is { } blocked) {
+			return _status = blocked;
 		}
 
 		if (!open) {
@@ -249,8 +269,33 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 
 		List<Looting.Item> giving = [.. chosen.Select(static c => new Looting.Item(c.Asset, c.Pair.Give, 0, 1, "", c.Pair.GiveName, 753, 6, c.Pair.Game))];
 		List<Looting.Item> taking = [.. chosen.Select(static c => new Looting.Item(c.Pair.GetAsset, c.Pair.Get, 0, 1, "", c.Pair.GetName, 753, 6, c.Pair.Game))];
+
+		// 1.8.2: asked once more right before it goes - reading the cards, the offers and the prices took a while, and the
+		// account's day can end, you can start playing on it, or a hold can come, meanwhile. Nothing counted: the next look.
+		if (!(DayOpen?.Invoke() ?? Gate.Open)) {
+			return new Said("waiting for its day");
+		}
+
+		if (ScamHeld) {
+			return new Said("held by scam watch - no swaps until 'scamwatch ok'");
+		}
+
+		if (MarketHold.Blocked(Bot) is { } blocked) {
+			return blocked;
+		}
+
+		// 1.8.2: written down as on its way BEFORE it's sent (see Sending).
+		ledger.SetState(match.Id, Sending, match.You, now);
+
 		Looting.SwapSent sent = await (Send?.Invoke(match.You, match.Token, giving, taking, CardExchange.Tag + match.Id, ct)
 			?? Looting.SendCardSwapAsync(Bot, match.You, match.Token, giving, taking, CardExchange.Tag + match.Id, ct)).ConfigureAwait(false);
+
+		if (!sent.Ok && (sent.Message == Looting.NoAnswer)) {
+			// Steam may have taken it all the same: the next look finds the offer by its note, or lets it go.
+			_tries.Remove(match.Id);
+
+			return new Said("Steam didn't answer - looking for the offer at the next look");
+		}
 
 		if (!sent.Ok) {
 			return Drop(new Said("Steam refused the offer: {0}", sent.Message));
@@ -259,6 +304,7 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		ledger.SetState(match.Id, "sent", match.You, now, sent.OfferId);
 		ledger.Counted(now, Bot.Cfg.LegitMode ? Rng.HumanMinutes(45, 120) : Rng.Minutes(2, 5));
 		_tries.Remove(match.Id);
+		Gate.Acted();   // 1.8.2: an offer shows on the account - the other things wait a little after it
 
 		string give = Spare.Money(chosen.Sum(static c => (decimal) c.GivePrice), currency), get = Spare.Money(chosen.Sum(static c => (decimal) c.GetPrice), currency);
 		Log.Trade(new Said("card swap · offer sent to {0} · {1} card(s) each way", who, chosen.Count), Bot.Name);
@@ -360,6 +406,35 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		}
 
 		return (verdict, why);
+	}
+
+	/// <summary>
+	/// 1.8.2: swaps written down as <see cref="Sending"/> - on their way to Steam when it stopped, or with no answer from it: an
+	/// offer of ours carrying the match's note is that swap, sent (counted, followed up from here); none after
+	/// <see cref="SendingFor"/> - it never went, and it's let go. Never sent again. Steam not saying what's on its offers: the
+	/// next look.
+	/// </summary>
+	private async Task AdoptAsync(CardExchange.Ledger ledger, DateTime now, CancellationToken ct) {
+		List<(string Id, CardExchange.Record Record)> sending = ledger.InState(Sending);
+
+		if (sending.Count == 0) {
+			return;
+		}
+
+		if (await (ReadOffers?.Invoke(ct) ?? TradeOffers.ActiveAsync(Bot, received: false, sent: true, ct)).ConfigureAwait(false) is not { } live) {
+			return;
+		}
+
+		foreach ((string id, CardExchange.Record r) in sending) {
+			if (live.FirstOrDefault(o => o.Ours && (CardExchange.MatchIdOf(o.Message) == id)) is { } offer) {
+				ledger.SetState(id, "sent", r.Partner, now, offer.Id);
+				ledger.Counted(now, Bot.Cfg.LegitMode ? Rng.HumanMinutes(45, 120) : Rng.Minutes(2, 5));
+				Log.Info(new Said("card swap · found the offer sent to {0} before the restart", await Who(r.Partner, ct).ConfigureAwait(false)), Bot.Name);
+			} else if (now - new DateTime(r.At, DateTimeKind.Utc) > SendingFor) {
+				ledger.SetState(id, "dropped", r.Partner, now);
+				Log.Debug($"card swap {id}: no offer of ours carries it - it never went; let go", Bot.Name);
+			}
+		}
 	}
 
 	/// <summary>Swaps turned off: its own swap offers still out are taken back; the rest of what was out is let go.</summary>

@@ -299,8 +299,16 @@ public static partial class SetSale {
 			return (now != null) && !StillPays(offer, now) ? (null, new Said("its price fell since the set was weighed - not listed")) : (now, why);
 		}
 
+		// 1.8.2: a human-mode account lists a set only in its day (you not playing on it), a few minutes between cards - it
+		// listed one card every 20 to 60 seconds at any hour. One set a sweep (BadgeCraft.SellInsteadAsync).
+		HumanGate? gate = bot.Cfg.LegitMode ? BotManager.ModuleOf<BadgeCraft>(bot)?.Gate ?? HumanGate.OwnDay(bot) : null;
 		int listed = 0;
-		await Seller.SellAsync(bot, offers, ct, reprice: Reprice, onListed: _ => listed++).ConfigureAwait(false);
+		await Seller.SellAsync(bot, offers, ct, mayAct: gate == null ? null : () => gate.Open, reprice: Reprice, onListed: _ => listed++,
+			pause: gate == null ? null : static t => Task.Delay(Rng.HumanMinutes(1, 4), t)).ConfigureAwait(false);
+
+		if ((listed > 0) && (gate != null)) {
+			gate.Acted();
+		}
 
 		return listed;
 	}

@@ -33,6 +33,9 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 	private DateTime _nextSweep = DateTime.MinValue;
 	private HumanGate? _gate;
 
+	/// <summary>The gate a human-mode account's crafting - and a set sold instead (<see cref="SetSale.ListAsync"/>) - keeps to: its own day.</summary>
+	internal HumanGate Gate => _gate ??= HumanGate.OwnDay(Bot);
+
 	/// <summary>The last sweep left sets uncrafted on purpose (human mode crafts a few at a time) - look again sooner.</summary>
 	private bool _moreToCraft;
 
@@ -79,7 +82,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 			// its own day - not at 4am while it's asleep.
 			_gate ??= HumanGate.OwnDay(Bot);
 
-			if ((DateTime.UtcNow < _nextSweep) || !_gate.Open) {
+			if ((DateTime.UtcNow < _nextSweep) || !Gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 					return;
 				}
@@ -91,6 +94,10 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 			try {
 				int made = await SweepAsync(ct).ConfigureAwait(false);
+
+				if (made > 0) {
+					Gate.Acted();   // 1.8.2: a badge crafted shows on the account - the other things wait a little after it
+				}
 
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again

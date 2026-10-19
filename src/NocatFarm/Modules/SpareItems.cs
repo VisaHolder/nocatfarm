@@ -38,6 +38,9 @@ public sealed class SpareItems(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private DateTime _actAt = DateTime.MinValue;
 
+	/// <summary>1.8.2: the wait after a look in which Steam refused a listing - an hour to two.</summary>
+	public static TimeSpan RefusedWait() => Rng.Minutes(60, 120);
+
 	/// <summary>When the market is next looked at for a listing of ours waiting on its confirmation (see <see cref="SpareRun.CheckPendingAsync"/>).</summary>
 	private DateTime _pendingAt = DateTime.MinValue;
 
@@ -93,6 +96,15 @@ public sealed class SpareItems(Bot bot) : BotModule(bot) {
 
 				if (ran?.StillPricing == true) {
 					Timer.LookAt(DateTime.UtcNow + Rng.Minutes(5, 10));
+				}
+
+				// 1.8.2: Steam refused a listing - the next look waits an hour or two, whatever is still being priced: a look every
+				// 5 to 10 minutes went straight back into the same refusal.
+				if (ran?.Refused == true) {
+					DateTime later = DateTime.UtcNow + RefusedWait();
+					Timer.LookAt(later);
+					_actAt = later > _actAt ? later : _actAt;
+					Log.Debug($"spare items: Steam refused a listing - the next look about {Fmt.Clock(later)}", Bot.Name);
 				}
 
 				// Spaced after a look that did items; one that only priced did nothing anybody sees.

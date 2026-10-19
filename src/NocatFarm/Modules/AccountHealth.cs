@@ -141,6 +141,9 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 		string? marketPage = await (Fetch != null ? Fetch(MarketPage, ct) : Bot.Web.GetAsync(MarketPage, ct)).ConfigureAwait(false);
 		NoteMarket(marketPage);
 		Market? market = ParseMarket(marketPage, DateTime.UtcNow);
+
+		// 1.8.2: the market hold - nothing bought, listed or swapped while the page says it's blocked (it tells that itself).
+		MarketHold.FromMarketPage(Bot, market, DateTime.UtcNow);
 		ScamWatch.Details? details = BotManager.ModuleOf<ScamWatch>(Bot) is { } scam ? await scam.DetailsAsync(TimeSpan.FromHours(2), ct).ConfigureAwait(false) : null;
 
 		// The first Steam Guard from Steam's two-factor service is a baseline: the page's shield guess before it (or "not
@@ -178,7 +181,8 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 					Log.Info(new Said("account health: {0}", item.Words), Bot.Name);
 				}
 			} else if ((int) item.Level > was) {
-				if (Alerts(Bot.Cfg, item.Key)) {
+				// The market blocked is told by the market hold, with what waits for it - not twice.
+				if (Alerts(Bot.Cfg, item.Key) && !((item.Key == "market") && MarketHold.On(Bot.Name))) {
 					Log.Alarm(new Said("account health got worse: {0}", item.Words), Bot.Name, Topic.Health, Live.Global.NotifyHealth, red: false);
 				} else {
 					Log.Warn(new Said("account health got worse: {0}", item.Words), Bot.Name);

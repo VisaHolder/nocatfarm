@@ -64,7 +64,13 @@ public static class Limiters {
 	private sealed class Backoff {
 		public DateTime Until;
 		public int Minutes;
+
+		/// <summary>1.8.2: the market's own wait (a 429 on a /market/ page), which only a market answer resets - see <see cref="NoteRateLimited"/>.</summary>
+		public int MarketMinutes;
 	}
+
+	/// <summary>The key the market's own wait on a host is written down under (see <see cref="Remember"/>).</summary>
+	private static string MarketKey(string host) => host + "#market";
 
 	// ── remembered across restarts ──────────────────────────────────────────
 	// A rate limit is Steam's, not this process's: restarting didn't lift it, it just forgot it and walked straight
@@ -138,8 +144,9 @@ public static class Limiters {
 
 	private static Backoff NewBackoff(string host) {
 		(DateTime until, int minutes) = Remembered(host);
+		(DateTime marketUntil, int marketMinutes) = Remembered(MarketKey(host));
 
-		return new Backoff { Until = until, Minutes = minutes };
+		return new Backoff { Until = until > marketUntil ? until : marketUntil, Minutes = minutes, MarketMinutes = marketMinutes };
 	}
 
 	/// <summary>
@@ -148,7 +155,10 @@ public static class Limiters {
 	/// while it is hot only extends the ban. The wait doubles on each repeat and resets on the next answer.
 	/// </summary>
 	/// <returns>How long the host is now closed for, or <see cref="TimeSpan.Zero"/> if somebody just closed it.</returns>
-	public static TimeSpan NoteRateLimited(string host) {
+	/// <param name="market">1.8.2: the 429 came from a /market/ page. The market's limit is its own and outlasts the rest of
+	/// the site: its wait is kept apart (5, 10, 20, 40 minutes, then 40 each time) and only a market answer starts it again -
+	/// any other page answering fine used to reset it to 5 minutes, so the market was asked again and again into its limit.</param>
+	public static TimeSpan NoteRateLimited(string host, bool market = false) {
 		DateTime now = DateTime.UtcNow;
 		Backoff state = WebBackoff.GetOrAdd(host, NewBackoff);
 
@@ -157,6 +167,14 @@ public static class Limiters {
 			// lengthens the wait; the rest are the same event arriving three times.
 			if (state.Until > now) {
 				return TimeSpan.Zero;
+			}
+
+			if (market) {
+				state.MarketMinutes = state.MarketMinutes <= 0 ? BackoffMinMinutes : Math.Min(BackoffMaxMinutes, state.MarketMinutes * 2);
+				state.Until = now.AddMinutes(state.MarketMinutes);
+				Remember(MarketKey(host), state.Until, state.MarketMinutes);
+
+				return TimeSpan.FromMinutes(state.MarketMinutes);
 			}
 
 			state.Minutes = state.Minutes <= 0 ? BackoffMinMinutes : Math.Min(BackoffMaxMinutes, state.Minutes * 2);
@@ -168,18 +186,74 @@ public static class Limiters {
 	}
 
 	/// <summary>A request to <paramref name="host"/> came back fine, so whatever tripped the limit is over.</summary>
-	public static void NoteWebOk(string host) {
+	/// <param name="market">1.8.2: a /market/ page answered - only that starts the market's own wait again.</param>
+	public static void NoteWebOk(string host, bool market = false) {
 		if (!WebBackoff.TryGetValue(host, out Backoff? state)) {
 			return;
 		}
 
 		lock (state) {
-			if ((state.Until <= DateTime.UtcNow) && (state.Minutes != 0)) {
+			if (state.Until > DateTime.UtcNow) {
+				return;
+			}
+
+			if (state.Minutes != 0) {
 				state.Minutes = 0;
 				Remember(host, state.Until, 0);
 			}
+
+			if (market && (state.MarketMinutes != 0)) {
+				state.MarketMinutes = 0;
+				Remember(MarketKey(host), state.Until, 0);
+			}
 		}
 	}
+
+	/// <summary>The market's own wait on a host as it stands, in minutes (0: none) - for the checks.</summary>
+	public static int MarketBackoffMinutes(string host) {
+		Backoff state = WebBackoff.GetOrAdd(host, NewBackoff);
+
+		lock (state) {
+			return state.MarketMinutes;
+		}
+	}
+
+	// ── signed-in market requests: an hourly cap per account ────────────────
+	/// <summary>
+	/// 1.8.2: the most signed-in market requests (card prices, buy orders, wallet and listings reads, listings) one account
+	/// sends in any hour. Each request already waits the gap between requests (0.4 s), but with buying set to "No limit" one
+	/// look could still send 1000+ of them in a row. A robot buying a set sends about 25 to 30 (each card's price read twice,
+	/// the wallet, the order and its status), so 200 is about 7 sets an hour - more than any look needs - and a listing is
+	/// one request. Finishing an order already sent (its status, taking it back, sending one the owner confirmed) always goes.
+	/// </summary>
+	public const int MarketPerHour = 200;
+
+	private static readonly ConcurrentDictionary<string, Queue<DateTime>> MarketAsked = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// A signed-in market request's turn for <paramref name="account"/>: false (not sent) when it already sent
+	/// <see cref="MarketPerHour"/> in the last hour - unless it <paramref name="must"/> go (finishing an order). Counted when it goes.
+	/// </summary>
+	public static bool MarketTurn(string account, DateTime nowUtc, bool must = false) {
+		Queue<DateTime> asked = MarketAsked.GetOrAdd(account, static _ => new Queue<DateTime>());
+
+		lock (asked) {
+			while ((asked.Count > 0) && (nowUtc - asked.Peek() >= TimeSpan.FromHours(1))) {
+				asked.Dequeue();
+			}
+
+			if (!must && (asked.Count >= MarketPerHour)) {
+				return false;
+			}
+
+			asked.Enqueue(nowUtc);
+
+			return true;
+		}
+	}
+
+	/// <summary>Only the checks: forget the market requests counted for an account.</summary>
+	public static void ForgetMarketTurns(string account) => MarketAsked.TryRemove(account, out _);
 
 	/// <summary>How much longer <paramref name="host"/> is closed for. Zero when it is open.</summary>
 	public static TimeSpan RateLimitedFor(string host) {

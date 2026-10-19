@@ -646,6 +646,69 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
+	/// <summary>Test seam: the waiting confirmations and confirming one, instead of asking Steam (null: Steam itself).</summary>
+	internal Func<CancellationToken, Task<(bool Ok, List<Confirmations.Item> Items)>>? ConfirmationList { get; set; }
+
+	internal Func<Confirmations.Item, CancellationToken, Task<bool>>? ConfirmOne { get; set; }
+
+	/// <summary>
+	/// 1.8.2: several of its own new market listings confirmed with the authenticator - the confirmations list read ONCE for
+	/// the batch (once more, a few seconds later, only when none of them is in it yet: Steam can be slow to list a new one),
+	/// not one to three reads a listing. Only the ones asked for are confirmed. The ids confirmed.
+	/// </summary>
+	public async Task<List<ulong>> ConfirmManyAsync(IReadOnlyList<ulong> ids, CancellationToken ct = default) {
+		List<ulong> done = [];
+
+		if ((ids.Count == 0) || !CanConfirmTrades || (SteamId == 0) || ((ConfirmationList == null) && !Web.Ready)) {
+			return done;
+		}
+
+		try {
+			if (Cfg.LegitMode && (ConfirmationList == null)) {
+				await Task.Delay(Rng.Seconds(8, 60), ct).ConfigureAwait(false);
+			}
+
+			HashSet<ulong> wanted = [.. ids];
+			List<Confirmations.Item> matches = [];
+
+			for (int attempt = 0; (attempt < 2) && (matches.Count == 0); attempt++) {
+				if (attempt > 0) {
+					await Task.Delay(ConfirmationList == null ? Rng.Seconds(3, 6) : TimeSpan.Zero, ct).ConfigureAwait(false);
+				}
+
+				(bool ok, List<Confirmations.Item> items) = ConfirmationList != null ? await ConfirmationList(ct).ConfigureAwait(false)
+					: await ListConfirmationsAsync(ct).ConfigureAwait(false);
+
+				if (ok) {
+					matches = [.. items.Where(i => wanted.Contains(i.CreatorId)).DistinctBy(static i => i.CreatorId)];
+				}
+			}
+
+			int tried = 0;
+
+			foreach (Confirmations.Item match in matches) {
+				if (tried++ > 0) {
+					await Task.Delay(ConfirmationList == null ? Rng.Seconds(2, 5) : TimeSpan.Zero, ct).ConfigureAwait(false);
+				}
+
+				if (await (ConfirmOne?.Invoke(match, ct) ?? Confirmations.ActAsync(this, [match], true, ct)).ConfigureAwait(false)) {
+					Log.Good(Confirmed(match), Name);
+					done.Add(match.CreatorId);
+				}
+			}
+		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
+			Log.Debug($"couldn't confirm the market listings: {Log.Describe(e)}", Name);
+		}
+
+		return done;
+	}
+
+	private async Task<(bool Ok, List<Confirmations.Item> Items)> ListConfirmationsAsync(CancellationToken ct) {
+		(bool ok, _, List<Confirmations.Item> items) = await Confirmations.ListAsync(this, ct, fresh: true).ConfigureAwait(false);
+
+		return (ok, items);
+	}
+
 	/// <summary>
 	/// Logged in but deliberately doing nothing. Every module checks this, so pausing is one flag rather than
 	/// three separate stop switches that can disagree with each other.

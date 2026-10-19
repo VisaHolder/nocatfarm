@@ -15,8 +15,8 @@ public static class SpareRun {
 	/// <summary>Gem values asked for in one look.</summary>
 	private const int GemValuesPerLook = 20;
 
-	/// <summary>What one go did.</summary>
-	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped);
+	/// <summary>What one go did. <paramref name="Refused"/>: 1.8.2 - Steam refused a listing, and the look ended there.</summary>
+	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped, bool Refused = false);
 
 	/// <summary>
 	/// Do the plan's gems and sales, most valuable first: at most the per-look number, and nothing past today's item or
@@ -39,6 +39,7 @@ public static class SpareRun {
 		string? sold = null;
 		int listed = 0;
 		bool limited = false;   // a look stopped by today's limit - see the end of the pass
+		bool refused = false;   // Steam refused a listing: the look ends there
 
 		// Passes over the plan: one, unless sales held back at the market free slots today's limit was short of.
 		while (true) {
@@ -71,6 +72,13 @@ public static class SpareRun {
 				// Held by scam watch: nothing goes on the market, and nothing is counted against today's caps for it.
 				if ((d.Verdict == SpareVerdict.Sell) && steam.Held) {
 					stopped = Modules.ScamWatch.OnHold(account);
+
+					continue;
+				}
+
+				// 1.8.2: Steam's market blocked for the account (or listing paused after a refusal): the same - kept, not counted.
+				if ((d.Verdict == SpareVerdict.Sell) && (steam.MarketHeld is { } market)) {
+					stopped = market;
 
 					continue;
 				}
@@ -260,6 +268,14 @@ public static class SpareRun {
 				listed += listedNow;
 				GiveBack(ledger, toSell, listedNow, nowLocal);
 
+				// 1.8.2: Steam refused a listing - the look ends here. Its slots went back above, and a second pass only listed
+				// the same way into the same refusal, up to six times a look.
+				if (steam.Refused != null) {
+					refused = true;
+					limited = false;
+					stopped = new Said("Steam refused a listing - nothing more listed this look");
+				}
+
 				foreach (SpareDecision d in toSell) {
 					if (steam.ListedFor(d.Item.AssetId) is { } at) {
 						note.Listed(d.Item, at.Price, steam.ListedCents(d.Item.AssetId));
@@ -286,7 +302,7 @@ public static class SpareRun {
 
 		note.Send();
 
-		return new Done(gemItems, gems, listed, sold, stopped);
+		return new Done(gemItems, gems, listed, sold, stopped, refused);
 	}
 
 	/// <summary>An item turned into gems, as the log says it: "Metro (Tom Clancy's The Division) → 80 gems" - why is a DEBUG line.</summary>
@@ -1157,7 +1173,8 @@ public static class SpareRun {
 	/// <summary>What a look said, and whether a sooner look is wanted: items left that a later look in its day can do, or
 	/// items still waiting for their first price. Spacing: on a human-mode account, the time to its next look that does
 	/// items (see <see cref="SpareSpread"/>). Busy: another look was already working on the account - nothing was done.</summary>
-	public sealed record Ran(string Said, bool MoreToDo, bool StillPricing, TimeSpan? Spacing = null, bool Busy = false);
+	/// <param name="Refused">1.8.2: Steam refused a listing in it - the next look waits an hour or two.</param>
+	public sealed record Ran(string Said, bool MoreToDo, bool StillPricing, TimeSpan? Spacing = null, bool Busy = false, bool Refused = false);
 
 	// ── one look at a time ──────────────────────────────────────────────────
 	/// <summary>The accounts a look is working on right now - a 'spare do' or the timed look, never both.</summary>
@@ -1264,7 +1281,7 @@ public static class SpareRun {
 		bool more = (look.Plan.Actions.Count > done.GemItems + done.Sold) && look.Ledger.Fits(0, look.Rules.DailyItems, look.Rules.DailyValueCents, DateTime.Now);
 		Briefs[bot.Name] = Brief(look, done);
 
-		return new Ran(Answer(bot.Name, look, done, gems), more, pricing, look.Spread?.Spacing);
+		return new Ran(Answer(bot.Name, look, done, gems), more, pricing, look.Spread?.Spacing, Refused: done.Refused);
 	}
 
 	/// <summary>

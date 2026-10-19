@@ -28,6 +28,27 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 	private enum Start { SignedIn, Woke, YouStopped, Back, Spaced }
 
 	/// <summary>
+	/// 1.8.2: the account's last thing that shows on it, whichever gate did it - when, the gate that did it, and until when
+	/// every OTHER own-day gate waits (2 to 10 minutes, random). Each gate kept its own wait only: after waking, buying,
+	/// gems, swaps, spare items, crafting and points each opened on their own random delay, and two or three landed in the
+	/// same minute.
+	/// </summary>
+	private sealed class LastShown {
+		public DateTime At;
+		public DateTime Until;
+		public HumanGate? By;
+	}
+
+	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Bot, LastShown> Shown = [];
+
+	/// <summary>The shortest and longest wait, in minutes, between two different things that show on a human-mode account.</summary>
+	public const int ApartMin = 2, ApartMax = 10;
+
+	/// <summary>Until when another own-day gate than this one waits for the account's last thing that shows - null when it needn't.</summary>
+	private LastShown? OtherShown() =>
+		ownDay && Shown.TryGetValue(bot, out LastShown? last) && !ReferenceEquals(last.By, this) && (DateTime.UtcNow < last.Until) ? last : null;
+
+	/// <summary>
 	/// Answering other people waits: the account is finishing up before it logs off, or you're playing on a human-mode
 	/// account yourself. For what doesn't go through a gate - trades, gifts, queued keys - which read only whether the
 	/// account was awake, and that stays true while you play: an offer was accepted and confirmed mid-match.
@@ -96,7 +117,8 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 				_openAt = (_openAt != DateTime.MaxValue) && (_openAt > at) ? _openAt : at;
 			}
 
-			return DateTime.UtcNow >= _openAt;
+			// 1.8.2: something else that shows on the account went in the last few minutes - this waits a little after it.
+			return (DateTime.UtcNow >= _openAt) && (OtherShown() == null);
 		}
 	}
 
@@ -106,6 +128,26 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 			_openAt = DateTime.UtcNow + Rng.HumanMinutes(lo, hi);
 			_start = Start.Spaced;
 			_startedAt = DateTime.UtcNow;
+			Acted();
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2: this gate's account just did something that shows on it: every other own-day gate of the account waits 2 to 10
+	/// minutes after it (see <see cref="LastShown"/>). <see cref="Space"/> says it too. No effect without human mode.
+	/// </summary>
+	public void Acted() {
+		if (!bot.Cfg.LegitMode || !ownDay) {
+			return;
+		}
+
+		DateTime now = DateTime.UtcNow;
+		LastShown last = Shown.GetValue(bot, static _ => new LastShown());
+
+		lock (last) {
+			last.At = now;
+			last.Until = now + Rng.HumanMinutes(ApartMin, ApartMax);
+			last.By = this;
 		}
 	}
 
@@ -131,6 +173,11 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 
 		if (ownDay ? !HumanMode.UpFor(bot) : (followsDay || bot.Cfg.QuietThingsWaitForDay) ? !HumanMode.ReadyFor(bot) : !bot.IsOnline) {
 			return HumanMode.NotUpWhy(bot);
+		}
+
+		// 1.8.2: open by its own wait, held only by something else the account just did.
+		if ((DateTime.UtcNow >= _openAt) && (OtherShown() is { } other)) {
+			return new Said("it did something else at {0} - human mode spaces things out; it can go ahead from about {1}", Fmt.Clock(other.At), Fmt.Clock(other.Until));
 		}
 
 		string from = Fmt.Clock(_startedAt);

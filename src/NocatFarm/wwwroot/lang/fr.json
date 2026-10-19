@@ -3376,7 +3376,23 @@
     "sets": "séries",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "achat de cartes · il reste de l'argent pour d'autres niveaux bon marché - prochain passage dans {0} minutes",
     "automatic": "automatique",
-    "Time between looks, human mode": "Temps entre deux passages, mode humain"
+    "Time between looks, human mode": "Temps entre deux passages, mode humain",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "achat de cartes : une limite de dépense sous 0 qui n'était pas -1 (sans limite) vaut maintenant 0 - rien n'est acheté tant qu'elle n'est pas réglée",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "le portefeuille dépasserait son maximum si plus était vendu - la vente attend jusque vers {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "trop d'annonces attendent une confirmation dans l'app Steam - plus aucune mise en vente jusque vers {0}",
+    "Steam's market is unavailable just now - listing waits until about {0}": "le marché Steam est indisponible pour l'instant - les mises en vente attendent jusque vers {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "le marché Steam est bloqué jusqu'au {0} ({1}) - achats, ventes et échanges attendent jusque-là",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "le marché Steam est bloqué ({0}) - achats, ventes et échanges attendent sa réouverture",
+    "Steam said this account isn't allowed to use the market": "Steam dit que ce compte n'a pas le droit d'utiliser le marché",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "trop d'annonces attendent une confirmation dans l'app Steam - plus aucune mise en vente avant qu'elles soient confirmées",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam ne prend plus d'annonces - le portefeuille dépasserait son maximum. La vente attend un jour ; dépenser une partie du portefeuille permet de vendre à nouveau",
+    "Steam's market is unavailable just now - listing waits an hour": "le marché Steam est indisponible pour l'instant - les mises en vente attendent une heure",
+    "Steam's market is open again - buying, selling and swaps go on": "le marché Steam est de nouveau ouvert - achats, ventes et échanges reprennent",
+    "Steam refused a listing - nothing more listed this look": "Steam a refusé une annonce - plus rien n'est mis en vente lors de ce passage",
+    "gems: Steam refused the last listing - listing again from about {0}": "gemmes : Steam a refusé la dernière annonce - nouvel essai vers {0}",
+    "Steam didn't answer - looking for the offer at the next look": "Steam n'a pas répondu - l'offre sera cherchée au prochain passage",
+    "card swap · found the offer sent to {0} before the restart": "échange de cartes · offre envoyée à {0} avant le redémarrage retrouvée",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "il a fait autre chose à {0} - le mode humain espace les choses ; il pourra y aller vers {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

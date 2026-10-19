@@ -158,6 +158,14 @@ public sealed partial class Boosters {
 		// Untradable gems can only ever make packs for a badge: they go there, whatever the tradable ones do.
 		bool untradableToBadge = (ranking.Ranked.Count > 0) && (page.UntradableGems >= ranking.Ranked[0].Price) && (page.Gems - (long) ranking.Ranked[0].Price >= keep);
 
+		// 1.8.2: nothing made to sell while it couldn't be listed - the market held, or Steam refusing its listings lately.
+		if ((choice.Way is GemsChoice.Way.Sack or GemsChoice.Way.PackSell or GemsChoice.Way.PackOpen) && (SellWaits(mem) is { } waits)) {
+			_autoStatus = waits;
+			_autoNext = Later(2, 4);
+
+			return untradableToBadge ? GemsGo.BadgeUntradable : GemsGo.Handled;
+		}
+
 		switch (choice.Way) {
 			case GemsChoice.Way.Sack:
 				return await PackSackAsync(page, inventory, mem, choice.Pick!, keep, ct).ConfigureAwait(false) || !untradableToBadge ? GemsGo.Handled : GemsGo.BadgeUntradable;
@@ -309,6 +317,13 @@ public sealed partial class Boosters {
 			return false;
 		}
 
+		// 1.8.2: the market held, or a refusal lately: nothing listed now (and nothing else made to sell - see GemsStepAsync).
+		if (SellWaits(mem) is { } waits) {
+			_autoStatus = waits;
+
+			return false;
+		}
+
 		int left = mem.LeftToday(DateTime.Now);
 
 		if ((left <= 0) || (cur <= 0)) {
@@ -340,8 +355,17 @@ public sealed partial class Boosters {
 
 		async Task<int> ListAsync(IReadOnlyList<Seller.Offer> offers, Seller.Reprice reprice, Action<Seller.Offer>? each = null) {
 			int listed = 0;
-			await Seller.SellAsync(Bot, offers, ct, mayAct: () => DayGate.Open, reprice: reprice, onListed: o => { listed++; each?.Invoke(o); }).ConfigureAwait(false);
+			string? refused = null;
+			await Seller.SellAsync(Bot, offers, ct, mayAct: () => DayGate.Open, reprice: reprice, onListed: o => { listed++; each?.Invoke(o); },
+				refused: why => refused = why).ConfigureAwait(false);
 			mem.Listed(listed);
+
+			// 1.8.2: a refusal counts against today's listings, and the next try waits hours (growing) - see Memory.Refused.
+			if (refused != null) {
+				mem.Refused(DateTime.UtcNow);
+				Log.Debug($"gems: Steam refused the listing ({(refused.Length > 0 ? refused : "no reason given")}) - the next try from about {Fmt.Clock(mem.RefusedWait(DateTime.UtcNow) ?? DateTime.UtcNow)}", Bot.Name);
+			}
+
 			mem.Save(Bot.Name);
 
 			return listed;
@@ -407,6 +431,16 @@ public sealed partial class Boosters {
 			}
 
 			foreach (BoosterPick.OwnPack own in packs) {
+				// 1.8.2: one that's gone from the inventory (sold or sent by hand, opened) is forgotten here - kept, it held up
+				// the cards of packs opened to sell for up to two days.
+				if ((own.Asset != 0) && (DateTime.UtcNow - own.At > TimeSpan.FromMinutes(30)) && !items.Exists(i => i.AssetId == own.Asset)) {
+					AutoMemory.Remove(own);
+					AutoMemory.Save(Bot.Name);
+					Log.Debug($"gems: the {own.Name} pack made to sell isn't in the inventory any more - forgotten", Bot.Name);
+
+					continue;
+				}
+
 				if ((own.Asset == 0) || (items.FirstOrDefault(i => i.AssetId == own.Asset) is not { Marketable: true } item)) {
 					continue;
 				}
@@ -437,7 +471,7 @@ public sealed partial class Boosters {
 				return true;
 			}
 
-			return false;
+			// 1.8.2: no sealed pack to list this look - the cards of packs opened to sell still go (this returned here before).
 		}
 
 		// The cards of packs it opened to sell: one copy per card it got, each never under its own gems' worth. 1.8.2: they were
@@ -496,6 +530,22 @@ public sealed partial class Boosters {
 		SpaceOut();
 
 		return true;
+	}
+
+	/// <summary>
+	/// 1.8.2: why nothing is made to sell or listed now - Steam's market held for this account (or listing paused), or Steam
+	/// refusing its listings lately (<see cref="GemsChoice.Memory.RefusedWait"/>) - or null when it may.
+	/// </summary>
+	private Said? SellWaits(GemsChoice.Memory mem) {
+		if (MarketHold.SellBlocked(Bot) is { } held) {
+			return held;
+		}
+
+		if (mem.RefusedWait(DateTime.UtcNow) is { } until) {
+			return new Said("gems: Steam refused the last listing - listing again from about {0}", (Func<string>) (() => Fmt.Clock(until)));
+		}
+
+		return null;
 	}
 
 	/// <summary>1.8.2: what's made to sell, in a few words - for 'booster plan' and the preview.</summary>

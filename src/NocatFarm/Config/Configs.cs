@@ -2142,6 +2142,7 @@ public static partial class ConfigStore {
 			migrated |= MigrateWatchBans(cfg, name);
 			migrated |= MigrateOwnAccounts(cfg, name);
 			migrated |= MigrateSpareKeep(cfg);
+			migrated |= FixSpendLimits(cfg, name);
 			migrated |= MigrateNewDefaults(cfg, text);
 			migrated |= SettleSwitches(cfg, name);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and

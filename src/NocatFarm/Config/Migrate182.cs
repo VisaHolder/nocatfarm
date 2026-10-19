@@ -168,6 +168,32 @@ public static partial class ConfigStore {
 		return true;
 	}
 
+	/// <summary>
+	/// 1.8.2: a spending limit below 0 means "no limit" only when it's exactly -1, as the dashboard writes it. Any other number
+	/// below 0 (a typo in the file, -5, -0.01) became "no limit" too - spending whatever the wallet holds. Now it's 0: nothing
+	/// spent until it's set; said once, as the file is fixed.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool FixSpendLimits(BotConfig cfg, string name) {
+		bool changed = false;
+
+		if ((cfg.BuyDailyLimit < 0) && (cfg.BuyDailyLimit != -1f)) {
+			cfg.BuyDailyLimit = 0;
+			changed = true;
+		}
+
+		if ((cfg.BuyWeeklyLimit < 0) && (cfg.BuyWeeklyLimit != -1f)) {
+			cfg.BuyWeeklyLimit = 0;
+			changed = true;
+		}
+
+		if (changed) {
+			Log.Info(new Said("buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set"), name);
+		}
+
+		return changed;
+	}
+
 	/// <summary>One keep-count for every kind of spare item: the largest of the three, the one that keeps the most.</summary>
 	/// <returns>true when the config changed and should be written back.</returns>
 	public static bool MigrateSpareKeep(BotConfig cfg) {

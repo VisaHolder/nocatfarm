@@ -533,6 +533,10 @@ public static class GemsChoice {
 		public string Last { get; set; } = "";
 		public long LastAt { get; set; }
 
+		/// <summary>1.8.2: Steam's refusals of its listings in a row, and when the last came (UTC ticks, 0 none) - see <see cref="RefusedWait"/>.</summary>
+		public int Refusals { get; set; }
+		public long RefusedAt { get; set; }
+
 		/// <summary>A card from a pack opened to sell, by name; it's let go of after 3 days (a spare card like any other then).</summary>
 		public sealed record OpenedCard(uint App, string Name, DateTime At);
 
@@ -588,6 +592,38 @@ public static class GemsChoice {
 		public void Listed(int n) {
 			lock (_gate) {
 				ListedToday += n;
+
+				if (n > 0) {
+					Refusals = 0;   // a listing went up: the refusals are over
+				}
+			}
+		}
+
+		/// <summary>
+		/// 1.8.2: Steam refused a listing. It counts against today's listings like one that went up (refusals didn't, and a
+		/// refused sack was tried again every look - about 100 times a day), and the next try waits <see cref="RefusedWait"/>.
+		/// </summary>
+		public void Refused(DateTime nowUtc) {
+			lock (_gate) {
+				ListedToday++;
+				Refusals++;
+				RefusedAt = nowUtc.Ticks;
+			}
+		}
+
+		/// <summary>
+		/// 1.8.2: until when listing waits after Steam's refusals: 3 hours after the first, then 6, 12, and 24 at most - null
+		/// when it needn't wait.
+		/// </summary>
+		public DateTime? RefusedWait(DateTime nowUtc) {
+			lock (_gate) {
+				if ((Refusals <= 0) || (RefusedAt <= 0)) {
+					return null;
+				}
+
+				DateTime until = new DateTime(RefusedAt, DateTimeKind.Utc) + TimeSpan.FromHours(Math.Min(24, 3 << Math.Min(Refusals - 1, 3)));
+
+				return nowUtc < until ? until : null;
 			}
 		}
 

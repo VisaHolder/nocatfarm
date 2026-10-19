@@ -269,7 +269,7 @@ public static partial class CardExchange {
 	public static List<string> OpenIds(string account, ulong steamId, DateTime nowUtc) {
 		Ledger ledger = Ledger.Load(account);
 
-		return [.. MatchesOf(steamId).Where(m => ledger.Of(m.Id) is not { } r ? nowUtc - m.Made < MatchFor : r.State == "sent").Select(static m => m.Id)];
+		return [.. MatchesOf(steamId).Where(m => ledger.Of(m.Id) is not { } r ? nowUtc - m.Made < MatchFor : r.State is "sent" or "sending").Select(static m => m.Id)];
 	}
 
 	/// <summary>

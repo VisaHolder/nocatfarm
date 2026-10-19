@@ -26,6 +26,7 @@ public sealed partial class BadgeCraft {
 
 		IReadOnlyList<SetSale.Pick> picks = await SetSale.ChooseAsync(Bot, [.. ready.Select(static c => new SetSale.Ready(c.AppId, c.Border, c.Levels))], inventory, ct).ConfigureAwait(false);
 		List<Craftable> left = [.. ready];
+		bool sold = false;
 
 		foreach (SetSale.Pick pick in picks) {
 			switch (pick.Choice) {
@@ -56,6 +57,16 @@ public sealed partial class BadgeCraft {
 
 			// Not crafted this time either way: sold, or weighed again at the next look.
 			left.RemoveAll(c => (c.AppId == verdict.App) && (c.Border == pick.Border));
+
+			// 1.8.2: one set a sweep on a human-mode account - the next waits for a later sweep, not crafted meanwhile.
+			if (Bot.Cfg.LegitMode && sold) {
+				_moreToCraft = true;
+				Log.Debug($"{verdict.Game}: sold at a later look - one set a look in human mode", Bot.Name);
+
+				continue;
+			}
+
+			sold = true;
 			Log.Debug(verdict.Foil ? new Said("selling the {0} foil set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About)
 				: verdict.Sets > 1 ? new Said("selling {0} {1} sets instead of crafting: {2} buys about {3} levels", verdict.Sets, verdict.Game, verdict.Money, verdict.About)
 				: new Said("selling the {0} set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About), Bot.Name);

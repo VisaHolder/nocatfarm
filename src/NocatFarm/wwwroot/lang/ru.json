@@ -3376,7 +3376,23 @@
     "sets": "наборов",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "покупка карточек · остались деньги на другие дешёвые уровни - следующий просмотр через {0} мин.",
     "automatic": "автоматически",
-    "Time between looks, human mode": "Время между просмотрами, режим человека"
+    "Time between looks, human mode": "Время между просмотрами, режим человека",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "покупка карточек: лимит трат ниже 0, кроме -1 (без лимита), теперь 0 - ничего не покупается, пока вы его не зададите",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "кошелёк превысил бы свой максимум при дальнейших продажах - продажа ждёт примерно до {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "слишком много лотов ждут подтверждения в приложении Steam - новых не будет примерно до {0}",
+    "Steam's market is unavailable just now - listing waits until about {0}": "рынок Steam сейчас недоступен - выставление ждёт примерно до {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "рынок Steam закрыт до {0} ({1}) - покупки, продажи и обмены ждут до тех пор",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "рынок Steam закрыт ({0}) - покупки, продажи и обмены ждут, пока он снова не откроется",
+    "Steam said this account isn't allowed to use the market": "Steam сообщает, что этому аккаунту нельзя пользоваться рынком",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "слишком много лотов ждут подтверждения в приложении Steam - новых не будет, пока их не подтвердят",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam больше не принимает лоты - кошелёк превысил бы свой максимум. Продажа ждёт день; если потратить часть кошелька, продавать снова можно",
+    "Steam's market is unavailable just now - listing waits an hour": "рынок Steam сейчас недоступен - выставление ждёт час",
+    "Steam's market is open again - buying, selling and swaps go on": "рынок Steam снова открыт - покупки, продажи и обмены продолжаются",
+    "Steam refused a listing - nothing more listed this look": "Steam отклонил лот - в этом заходе больше ничего не выставляется",
+    "gems: Steam refused the last listing - listing again from about {0}": "самоцветы: Steam отклонил последний лот - новая попытка примерно с {0}",
+    "Steam didn't answer - looking for the offer at the next look": "Steam не ответил - предложение будет найдено при следующем заходе",
+    "card swap · found the offer sent to {0} before the restart": "обмен карточками · найдено предложение, отправленное {0} до перезапуска",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "он сделал что-то другое в {0} - человеческий режим растягивает действия по времени; сможет продолжить примерно с {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {

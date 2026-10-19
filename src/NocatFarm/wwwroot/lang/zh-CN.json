@@ -3376,7 +3376,23 @@
     "sets": "套",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "购买卡牌 · 还有钱买更多便宜的等级 - {0} 分钟后再看",
     "automatic": "自动",
-    "Time between looks, human mode": "两次查看之间的时间（真人模式）"
+    "Time between looks, human mode": "两次查看之间的时间（真人模式）",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "购买卡牌：低于 0 且不是 -1（不限）的花费上限现在为 0 - 设置之前不会购买任何东西",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "再卖的话钱包会超过上限 - 出售等到大约 {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "Steam 应用中等待确认的上架太多 - 大约 {0} 之前不再上架",
+    "Steam's market is unavailable just now - listing waits until about {0}": "Steam 市场暂时不可用 - 上架等到大约 {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "Steam 市场在 {0} 之前不可用（{1}） - 购买、出售和交换都等到那时",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "Steam 市场不可用（{0}） - 购买、出售和交换都等到它重新开放",
+    "Steam said this account isn't allowed to use the market": "Steam 表示此账户不能使用市场",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "Steam 应用中等待确认的上架太多 - 确认之前不再上架",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam 不再接受上架 - 钱包会超过上限。出售等待一天；花掉一些钱包余额后即可再次出售",
+    "Steam's market is unavailable just now - listing waits an hour": "Steam 市场暂时不可用 - 上架等待一小时",
+    "Steam's market is open again - buying, selling and swaps go on": "Steam 市场已重新开放 - 购买、出售和交换继续",
+    "Steam refused a listing - nothing more listed this look": "Steam 拒绝了一个上架 - 本次查看不再上架",
+    "gems: Steam refused the last listing - listing again from about {0}": "宝石：Steam 拒绝了上一次上架 - 大约 {0} 起再次上架",
+    "Steam didn't answer - looking for the offer at the next look": "Steam 没有回应 - 下次查看时寻找该报价",
+    "card swap · found the offer sent to {0} before the restart": "卡牌交换 · 找到了重启前发给 {0} 的报价",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续"
   },
   "settings": {
     "SteamOpenEveryAccount": {

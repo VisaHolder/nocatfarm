@@ -1660,6 +1660,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <summary>1.8.2: Steam said too many purchases wait for a confirmation - said once, until they're confirmed or let go.</summary>
 	private bool _saidTooMany;
 
+	/// <summary>The "too many waiting" line's said-once memory, kept on disk (<see cref="MarketHold.Once"/>).</summary>
+	internal const string TooManyKey = "buy-too-many";
+
 	/// <summary>1.8.2: when purchases waiting for the owner's phone are next sent again, and the wallet those rounds use.</summary>
 	private DateTime _nextPhone = DateTime.MinValue;
 
@@ -1886,8 +1889,14 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			BusyGate.Release();
 		}
 
+		// 1.8.2: a human-mode look that bought leaves its dear cards for a later look - listed seconds after buying, before
+		// its day's spacing (Gate.Space) had even started, it was a burst on the market.
 		if ((mode != Mode.Preview) && (result.Dear.Count > 0)) {
-			await SellDearAsync(result, ct).ConfigureAwait(false);
+			if (Bot.Cfg.LegitMode && (result.Bought.Count + result.Waiting.Count > 0)) {
+				Log.Debug($"cards worth more sold than kept: this look bought - listed at a later look ({result.Dear.Count} game(s))", Bot.Name);
+			} else {
+				await SellDearAsync(result, ct).ConfigureAwait(false);
+			}
 		}
 
 		return result;
@@ -2136,6 +2145,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return ($"not now - {Gate.Waiting().ToEnglish()}", false);
 		}
 
+		// 1.8.2: Steam's market blocked for this account - nothing new bought; purchases the owner confirmed still finish.
+		if (!finishing && (MarketHold.Blocked(Bot) is { } market)) {
+			return (market.ToEnglish(), false);
+		}
+
 		return ScamWatch.HeldBack(Bot) is { } held ? (held, false) : null;
 	}
 
@@ -2326,6 +2340,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		if (Ledger.OnPhone.Count == 0) {
 			_saidTooMany = false;   // nothing waits any more: "too many waiting" may be said again
+			MarketHold.Forget(Bot.Name, TooManyKey);
 
 			return false;
 		}
@@ -2374,7 +2389,18 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				await Task.Delay(SendGap(), ct).ConfigureAwait(false);
 			}
 
-			BuyLedger.Entry pending = phone;
+			// 1.8.2: written down as sent BEFORE it goes - without its confirmation, so a crash or a stop while it's out never
+			// sends it again: after a restart it's one Steam may have taken, proven from the open buy orders or the inventory
+			// (LeftoversAsync, ProveAsync), and counted as spent until then. Steam's answer puts the confirmation back when the
+			// owner hasn't confirmed it yet.
+			BuyLedger.Entry pending = phone with { Confirm = null };
+
+			if (!Ledger.Replace(phone, pending)) {
+				CantSave();
+
+				return unsure;
+			}
+
 			BuyAnswer answer;
 
 			try {
@@ -2390,6 +2416,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			} catch (Exception e) {
 				// Whatever broke, it may have been sent: it stays counted, never sent again with that confirmation.
 				answer = new BuyAnswer(BuyResult.Unsure, phone.Cents, Log.Describe(e));
+			}
+
+			// Not sent at all (stopping, the market's hourly cap): it goes back to waiting on the phone as it was.
+			if ((answer.Result == BuyResult.Waiting) && string.IsNullOrEmpty(answer.Confirm)) {
+				answer = answer with { Confirm = phone.Confirm };
 			}
 
 			if (!Record(pending, answer, phone.Cents, now) || _cantSave) {
@@ -2431,6 +2462,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		if (Ledger.OnPhone.Count == 0) {
 			_saidTooMany = false;
+			MarketHold.Forget(Bot.Name, TooManyKey);
 		}
 
 		return unsure;
@@ -2600,6 +2632,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		int got = 0, onPhone = 0;
 		bool leftover = false;
 
+		// 1.8.2: the wallet is read once for the set, not once a card; each card's check is that reading less what this set
+		// has spent (or left waiting on the phone) since.
+		CardMarket.Wallet? setWallet = null;
+		long spentHere = 0;
+
 		// The copies of each card held now (the plan's inventory read will do): a new one arriving after its order proves it
 		// was bought, when Steam won't say.
 		IReadOnlyDictionary<string, IReadOnlyList<string>>? held = await HeldAsync(fresh: false, ct).ConfigureAwait(false);
@@ -2636,7 +2673,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				return Asked(step, onPhone, result, false);
 			}
 
-			if (await _market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet || (wallet.Currency != currency) || (BuyPlan.BlockOf(wallet) != BuyBlock.None)) {
+			setWallet ??= await _market.WalletAsync(ct).ConfigureAwait(false);
+
+			if (setWallet is not { } wallet || (wallet.Currency != currency) || (BuyPlan.BlockOf(wallet) != BuyBlock.None)) {
 				result.Problem = "Steam didn't say what's in its wallet, or how its purchases are confirmed - nothing more bought";
 
 				return Asked(step, onPhone, result, false);
@@ -2649,7 +2688,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			long dayLeft = BuyPlan.Limit(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(at.AddDays(-1));
 			long weekLeft = BuyPlan.Limit(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(at.AddDays(-7));
 
-			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance)) {
+			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere)) {
 				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";
 
 				return Asked(step, onPhone, result, false);
@@ -2693,6 +2732,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					long paid = Paid(answer, cost);
 					result.Bought.Add((step, card, paid));
 					got++;
+					spentHere += paid;
 					Log.Good(new Said("bought {0} ({1}) · {2}", card.Name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
 
 					break;
@@ -2700,6 +2740,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					// Left for the owner's phone, like a market listing: counted as spent until it's confirmed, turned down or a day old.
 					result.Waiting.Add((step, card));
 					onPhone++;
+					spentHere += cost;
 
 					break;
 				case BuyResult.Unsure:
@@ -2728,7 +2769,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					// confirmed or let go (the next look waits for them anyway). Said once.
 					if (!_saidTooMany) {
 						_saidTooMany = true;
-						Log.Info(new Said("more cards wait · confirm the ones in the Steam app first"), Bot.Name);
+
+						// 1.8.2: said once until they're confirmed - a restart doesn't say it again.
+						if (MarketHold.Once(Bot.Name, TooManyKey)) {
+							Log.Info(new Said("more cards wait · confirm the ones in the Steam app first"), Bot.Name);
+						}
 					}
 
 					result.Problem = "Steam takes no more purchases until the ones waiting are confirmed in the Steam app - nothing more is tried until then";
@@ -2736,7 +2781,16 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 					break;
 				default:
-					Log.Warn(answer.Message.Length > 0 ? new Said("buying {0} turned down · {1}", card.Name, answer.Message) : new Said("buying {0} turned down", card.Name), Bot.Name);
+					// 1.8.2: not allowed to use the market - the market hold, told once by itself. Any other lasting refusal is said
+					// once a week (kept on disk): every look said it again, and a restart said it again.
+					if (MarketHold.Classify(answer.Message) == MarketHold.Refusal.NotAllowed) {
+						MarketHold.Refused(Bot, MarketHold.Refusal.NotAllowed, DateTime.UtcNow, selling: false);
+					} else if (MarketHold.Once(Bot.Name, "buy:" + answer.Message, TimeSpan.FromDays(7))) {
+						Log.Warn(answer.Message.Length > 0 ? new Said("buying {0} turned down · {1}", card.Name, answer.Message) : new Said("buying {0} turned down", card.Name), Bot.Name);
+					} else {
+						Log.Debug($"buying {card.Name} turned down again: {answer.Message}", Bot.Name);
+					}
+
 					result.Problem = $"Steam turned it down{(answer.Message.Length > 0 ? $": {answer.Message}" : "")}";
 					result.Lasting = true;
 

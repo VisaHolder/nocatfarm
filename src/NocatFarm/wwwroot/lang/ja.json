@@ -3376,7 +3376,23 @@
     "sets": "セット",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "カード購入 · まだ安いレベルに使えるお金があります - 次の確認は {0} 分後",
     "automatic": "自動",
-    "Time between looks, human mode": "確認の間隔（人間モード）"
+    "Time between looks, human mode": "確認の間隔（人間モード）",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "カード購入: -1(上限なし)以外の 0 未満の支出上限は 0 になりました - 設定するまで何も買いません",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "これ以上売るとウォレットが上限を超えます - 販売は {0} ごろまで待ちます",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "Steam アプリで確認待ちの出品が多すぎます - {0} ごろまでこれ以上出品しません",
+    "Steam's market is unavailable just now - listing waits until about {0}": "Steam マーケットは今利用できません - 出品は {0} ごろまで待ちます",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "Steam マーケットは {0} まで利用不可です ({1}) - 購入・販売・交換はそれまで待ちます",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "Steam マーケットは利用不可です ({0}) - 購入・販売・交換は再び使えるようになるまで待ちます",
+    "Steam said this account isn't allowed to use the market": "Steam によると、このアカウントはマーケットを利用できません",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "Steam アプリで確認待ちの出品が多すぎます - 確認されるまでこれ以上出品しません",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam はこれ以上出品できません - ウォレットが上限を超えます。販売は 1 日待ちます。ウォレットを少し使えばまた売れます",
+    "Steam's market is unavailable just now - listing waits an hour": "Steam マーケットは今利用できません - 出品は 1 時間待ちます",
+    "Steam's market is open again - buying, selling and swaps go on": "Steam マーケットがまた使えます - 購入・販売・交換を再開します",
+    "Steam refused a listing - nothing more listed this look": "Steam が出品を拒否しました - 今回はこれ以上出品しません",
+    "gems: Steam refused the last listing - listing again from about {0}": "ジェム: Steam が前回の出品を拒否しました - {0} ごろから再び出品します",
+    "Steam didn't answer - looking for the offer at the next look": "Steam から応答がありません - 次の確認でオファーを探します",
+    "card swap · found the offer sent to {0} before the restart": "カード交換 · 再起動前に {0} に送ったオファーを見つけました",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} に別のことをしました - 人間モードは間をあけます。{1} ごろから進められます"
   },
   "settings": {
     "SteamOpenEveryAccount": {

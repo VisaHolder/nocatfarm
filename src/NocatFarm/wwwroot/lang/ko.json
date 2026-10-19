@@ -3376,7 +3376,23 @@
     "sets": "세트",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "카드 사기 · 싼 레벨을 더 살 돈이 남았습니다 - {0}분 뒤에 다시 확인",
     "automatic": "자동",
-    "Time between looks, human mode": "확인 사이 시간, 사람 모드"
+    "Time between looks, human mode": "확인 사이 시간, 사람 모드",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "카드 구매: -1(제한 없음)이 아닌 0 미만의 지출 한도는 이제 0입니다 - 설정할 때까지 아무것도 사지 않습니다",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "더 팔면 지갑이 최대치를 넘습니다 - 판매는 {0}쯤까지 기다립니다",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "Steam 앱에서 확인을 기다리는 등록이 너무 많습니다 - {0}쯤까지 더 등록하지 않습니다",
+    "Steam's market is unavailable just now - listing waits until about {0}": "지금은 Steam 장터를 쓸 수 없습니다 - 등록은 {0}쯤까지 기다립니다",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "Steam 장터가 {0}까지 막혀 있습니다 ({1}) - 구매, 판매, 교환은 그때까지 기다립니다",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "Steam 장터가 막혀 있습니다 ({0}) - 구매, 판매, 교환은 다시 열릴 때까지 기다립니다",
+    "Steam said this account isn't allowed to use the market": "Steam에 따르면 이 계정은 장터를 쓸 수 없습니다",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "Steam 앱에서 확인을 기다리는 등록이 너무 많습니다 - 확인될 때까지 더 등록하지 않습니다",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam이 더 등록하지 않습니다 - 지갑이 최대치를 넘습니다. 판매는 하루 기다립니다. 지갑을 조금 쓰면 다시 팔 수 있습니다",
+    "Steam's market is unavailable just now - listing waits an hour": "지금은 Steam 장터를 쓸 수 없습니다 - 등록은 한 시간 기다립니다",
+    "Steam's market is open again - buying, selling and swaps go on": "Steam 장터가 다시 열렸습니다 - 구매, 판매, 교환을 계속합니다",
+    "Steam refused a listing - nothing more listed this look": "Steam이 등록을 거부했습니다 - 이번에는 더 등록하지 않습니다",
+    "gems: Steam refused the last listing - listing again from about {0}": "보석: Steam이 지난 등록을 거부했습니다 - {0}쯤부터 다시 등록합니다",
+    "Steam didn't answer - looking for the offer at the next look": "Steam이 응답하지 않았습니다 - 다음 확인 때 제안을 찾습니다",
+    "card swap · found the offer sent to {0} before the restart": "카드 교환 · 재시작 전에 {0}에게 보낸 제안을 찾았습니다",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0}에 다른 일을 했습니다 - 사람 모드는 간격을 둡니다. {1}쯤부터 진행할 수 있습니다"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -20,6 +20,9 @@ public static partial class Looting {
 	/// <summary>What sending a swap offer came to: its id, and whether it still needs a mobile confirmation or Steam's email.</summary>
 	public sealed record SwapSent(bool Ok, ulong OfferId, bool WaitsForPhone, string Message, bool ByEmail = false);
 
+	/// <summary>1.8.2: a swap offer's <see cref="SwapSent.Message"/> when Steam gave no answer - it may have gone all the same.</summary>
+	public const string NoAnswer = "Steam didn't answer";
+
 	/// <summary>
 	/// 1.8.2 card swaps: one offer to another nocat.farm user's account - these cards of ours for those of theirs, with the
 	/// match's note on it so their copy can check it against what nocat.lol paired. Not confirmed here: the sending side
@@ -39,6 +42,11 @@ public static partial class Looting {
 
 		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
 			return new SwapSent(false, 0, false, held);
+		}
+
+		// 1.8.2: Steam's market blocked for the account (a trade ban, a new device...): no swap goes.
+		if (MarketHold.Blocked(bot) is { } market) {
+			return new SwapSent(false, 0, false, market.ToEnglish());
 		}
 
 		HashSet<ulong> mine = bot.ClaimItems(giving.Select(static i => i.AssetId));
@@ -73,7 +81,7 @@ public static partial class Looting {
 			string? body = await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(body)) {
-				return new SwapSent(false, 0, false, "Steam didn't answer");
+				return new SwapSent(false, 0, false, NoAnswer);
 			}
 
 			try {

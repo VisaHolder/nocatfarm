@@ -3376,7 +3376,23 @@
     "sets": "set",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "kart satın alma · daha fazla ucuz seviye için para kaldı - sonraki bakış {0} dakika sonra",
     "automatic": "otomatik",
-    "Time between looks, human mode": "Bakışlar arası süre, insan modu"
+    "Time between looks, human mode": "Bakışlar arası süre, insan modu",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "kart satın alma: -1 (sınırsız) olmayan 0'ın altındaki bir harcama sınırı artık 0 - ayarlanana kadar hiçbir şey alınmaz",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "daha fazla satılırsa cüzdan üst sınırını aşar - satış yaklaşık {0} saatine kadar bekler",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "Steam uygulamasında onay bekleyen çok fazla ilan var - yaklaşık {0} saatine kadar yeni ilan yok",
+    "Steam's market is unavailable just now - listing waits until about {0}": "Steam pazarı şu anda kullanılamıyor - ilanlar yaklaşık {0} saatine kadar bekler",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "Steam pazarı {0} tarihine kadar kapalı ({1}) - alım, satım ve takaslar o zamana kadar bekler",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "Steam pazarı kapalı ({0}) - alım, satım ve takaslar yeniden açılana kadar bekler",
+    "Steam said this account isn't allowed to use the market": "Steam bu hesabın pazarı kullanamayacağını söylüyor",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "Steam uygulamasında onay bekleyen çok fazla ilan var - onaylanana kadar yeni ilan yok",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam daha fazla ilan almıyor - cüzdan üst sınırını aşar. Satış bir gün bekler; cüzdandan biraz harcamak yeniden satmayı sağlar",
+    "Steam's market is unavailable just now - listing waits an hour": "Steam pazarı şu anda kullanılamıyor - ilanlar bir saat bekler",
+    "Steam's market is open again - buying, selling and swaps go on": "Steam pazarı yeniden açık - alım, satım ve takaslar sürüyor",
+    "Steam refused a listing - nothing more listed this look": "Steam bir ilanı reddetti - bu bakışta başka ilan verilmez",
+    "gems: Steam refused the last listing - listing again from about {0}": "mücevherler: Steam son ilanı reddetti - yaklaşık {0} saatinden itibaren yeniden denenir",
+    "Steam didn't answer - looking for the offer at the next look": "Steam yanıt vermedi - teklif bir sonraki bakışta aranacak",
+    "card swap · found the offer sent to {0} before the restart": "kart takası · yeniden başlatmadan önce {0} kişisine gönderilen teklif bulundu",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "{0} saatinde başka bir şey yaptı - insan modu işleri aralıklı yapar; yaklaşık {1} itibarıyla devam edebilir"
   },
   "settings": {
     "SteamOpenEveryAccount": {
