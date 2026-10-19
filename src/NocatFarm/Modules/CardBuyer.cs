@@ -1403,7 +1403,8 @@ public sealed class BuyPlan {
 		long warmCap = 0;
 
 		if (finder.WarmUp(DateTime.UtcNow) is { } warm && (warm.Checked < warm.Needed)) {
-			long cheapestKnown = Math.Min(anchorLow, plan.Market.Select(static r => r.Wallet ?? long.MaxValue).Where(static w => w > 0).DefaultIfEmpty(long.MaxValue).Min());
+			long cheapestKnown = Math.Min(plan.Ranked.Where(static r => r.FullSet && (r.Cost > 0)).Select(static r => r.Cost).DefaultIfEmpty(long.MaxValue).Min(),
+				plan.Market.Select(static r => r.Wallet ?? long.MaxValue).Where(static w => w > 0).DefaultIfEmpty(long.MaxValue).Min());   // whole sets only: a started badge two cards short isn't what a set costs
 			warmCap = cheapestKnown < long.MaxValue ? cheapestKnown * WarmUpPct / 100 : 1;
 			plan.WarmUpChecked = warm.Checked;
 			plan.WarmUpNeeded = warm.Needed;

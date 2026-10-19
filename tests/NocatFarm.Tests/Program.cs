@@ -37109,7 +37109,7 @@ static class MoneyFixChecks {
 			Check("most per level: with no limit too", (noLimit.Steps.Count == 0) && (noLimit.MaxLevelPrice == 45), $"{noLimit.Steps.Count}");
 			Check("most per level: the setting's words say what automatic is",
 				NocatFarm.Config.Settings.FindBot("BuyMaxLevelPrice")!.Tooltip.Contains("a quarter over what a level usually costs", StringComparison.Ordinal)
-				&& NocatFarm.Config.Settings.FindBot("BuyMaxLevelPrice")!.Tooltip.Contains("100 cheapest sets", StringComparison.Ordinal)
+				&& NocatFarm.Config.Settings.FindBot("BuyMaxLevelPrice")!.Tooltip.Contains("30 cheapest sets", StringComparison.Ordinal)
 				&& !NocatFarm.Config.Settings.FindBot("BuyMaxLevelPrice")!.Tooltip.Contains("twice the cheapest level it can buy", StringComparison.Ordinal));
 
 			// The set finder's own sets, in the wallet's money (a rate of 1 learned from three items priced both ways).
@@ -37141,7 +37141,7 @@ static class MoneyFixChecks {
 			var warming = await FinderPlan(tiny);
 			Check("warm-up: a small known pool (16 of the 100 cheapest checked) and dear sets - only the cheapest known is bought, the dear ones wait, and it says why plainly",
 				(tiny.Finder.WarmUp(DateTime.UtcNow) is (> 0 and < 100, 100)) && (warming.Steps.Count == 1) && (warming.Steps[0].App == 20_000)
-				&& warming.WarmUp.Contains("of 100 cheapest sets checked", StringComparison.Ordinal) && warming.Notes.Contains(warming.WarmUp)
+				&& warming.WarmUp.Contains("of 30 cheapest sets checked", StringComparison.Ordinal) && warming.Notes.Contains(warming.WarmUp)
 				&& warming.Skipped.Any(static s => s.Contains("the set finder is still checking the cheapest sets", StringComparison.Ordinal)),
 				$"{tiny.Finder.WarmUp(DateTime.UtcNow)} steps {string.Join(",", warming.Steps.Select(static s => $"{s.App}={s.Cost}"))} ; {warming.WarmUp}");
 			var warm = await Finder(4, [6, 7, 8, 13]);   // all 4 listed checked: 0.30, 0.35, 0.40, 0.65

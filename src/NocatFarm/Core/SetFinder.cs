@@ -748,7 +748,7 @@ public sealed class SetFinder {
 	}
 
 	/// <summary>The cheapest candidates the lists name that buying waits for the finder to check (<see cref="WarmUp"/>).</summary>
-	public const int WarmUpSets = 100;
+	public const int WarmUpSets = 30;
 
 	/// <summary>
 	/// 1.8.2, warming up: of the <see cref="WarmUpSets"/> cheapest candidates the lists name (all of them when fewer), how
