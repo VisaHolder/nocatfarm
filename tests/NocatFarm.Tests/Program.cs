@@ -380,10 +380,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	var autoM = typeof(NocatFarm.Modules.Trading).GetMethod("Auto", BindingFlags.NonPublic | BindingFlags.Static)!;
 	bool AutoT(NocatFarm.Modules.Trading t, NocatFarm.Core.TradeOffers.Offer o) => (bool) autoM.Invoke(null, [o, t.Allowed()])!;
 
+	// 1.8.2: "Your other accounts" is the one list - an empty one is nobody, whatever else is set. ("Accept anything from your
+	// own accounts" was carried into the list when an old file is read - ConfigStore.MigrateOwnAccounts.)
 	var legacy = Trades("", fromMasters: true, masters: $"{Farm1}, {Farm2}");
-	Check("trades: empty list = your own accounts, both ways, when 'accept anything from your own accounts' is on",
-		legacy.Allowed().Count == 2 && legacy.Allowed()[Farm1] == NocatFarm.Modules.Trading.Way.Both);
-	Check("trades: ...and nobody at all when that setting is off", Trades("", fromMasters: false, masters: $"{Farm1}").Allowed().Count == 0);
+	Check("trades: an empty list is nobody - \"Send items to\" never lets anyone take, even with the retired switch set",
+		legacy.Allowed().Count == 0);
+	Check("trades: ...and nobody at all with it off", Trades("", fromMasters: false, masters: $"{Farm1}").Allowed().Count == 0);
 
 	var ways = Trades($"{Farm1}:to, {Farm2}:from");
 	Check("trades: ':to' lets them take items", AutoT(ways, Offer(Farm1, [TCard("A")], [])));
@@ -4262,7 +4264,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		List<uint> OldWay(NocatFarm.Core.Bot b) => [.. b.Cfg.IdleGames.Where(a => !b.Cfg.BlacklistedGames.Contains(a) && !NocatFarm.Config.Live.Global.GlobalBlacklistedGames.Contains(a) && !b.Refunds.Holds(a))];
 
 		// old/kylro's shape: a custom name and 8 real games. Both settings off: exactly the old list, no state file.
-		var robotCfg = new NocatFarm.Config.BotConfig { CustomGameName = "nocat.lol", IdleGames = [730, 440, 570, 550, 252490, 578080, 4000, 271590], BlacklistedGames = [4000] };
+		var robotCfg = new NocatFarm.Config.BotConfig { CustomGameName = "nocat.lol", CustomGameNameEnabled = true, IdleGames = [730, 440, 570, 550, 252490, 578080, 4000, 271590], BlacklistedGames = [4000] };
 		var robot = new NocatFarm.Core.Bot("rot-robot", robotCfg);
 		var robotIdler = new NocatFarm.Modules.Idler(robot);
 		robot.AddModule(robotIdler);
@@ -4344,7 +4346,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		// ── who else has the account: card farming and human mode come first ──
 		void SetProp(NocatFarm.Core.Bot b, string name, object? value) => typeof(NocatFarm.Core.Bot).GetProperty(name)!.SetValue(b, value);
-		var farmCfg = new NocatFarm.Config.BotConfig { RotateIdleGames = true, IdleGames = forty, CustomGameName = "nocat.lol" };
+		var farmCfg = new NocatFarm.Config.BotConfig { RotateIdleGames = true, IdleGames = forty, CustomGameName = "nocat.lol", CustomGameNameEnabled = true };
 		var farmBot = new NocatFarm.Core.Bot("rot-farm", farmCfg);
 		var farmIdler = new NocatFarm.Modules.Idler(farmBot);
 		farmBot.AddModule(farmIdler);
@@ -4382,7 +4384,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
 		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
 			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
-		var cmdCfg = new NocatFarm.Config.BotConfig { RotateIdleGames = true, IdleGames = forty, CustomGameName = "nocat.lol", RotateEveryHours = 12 };
+		var cmdCfg = new NocatFarm.Config.BotConfig { RotateIdleGames = true, IdleGames = forty, CustomGameName = "nocat.lol", CustomGameNameEnabled = true, RotateEveryHours = 12 };
 		var cmdBot = new NocatFarm.Core.Bot("rotcmd", cmdCfg);
 		var cmdIdler = new NocatFarm.Modules.Idler(cmdBot);
 		cmdBot.AddModule(cmdIdler);
@@ -4807,7 +4809,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("rhythm: quiet spells come once or twice a month", (perMonth > 0.9) && (perMonth < 2.4), $"{perMonth:0.00} a month");
 		Check("rhythm: a spell is 2 to 5 days (longer only where two happen to run together)", (runs[0] >= 2) && (runs[runs.Count / 2] is >= 2 and <= 5) && (longRuns < spells / 4),
 			$"shortest {runs[0]}, median {runs[runs.Count / 2]}, {longRuns} of {spells} longer");
-		Check("rhythm: late nights only on Friday and Saturday, never in a quiet spell, now and then", (lateWrongDay == 0) && (both == 0) && (lateNights > freeNights / 6) && (lateNights < freeNights / 2),
+		// 1.8.2: "Quiet spells now and then" is only the quiet spells - late Friday and Saturday nights are "Stays up later Fri/Sat"'s.
+		Check("rhythm: no late nights of its own - those are \"Stays up later Fri/Sat\"'s", (lateNights == 0) && (lateWrongDay == 0) && (both == 0) && (freeNights > 0),
 			$"{lateNights} of {freeNights} free nights");
 		Check("rhythm: different accounts don't share their quiet spells",
 			Enumerable.Range(0, 365).Count(i => RQ(R("new", new DateTime(2026, 1, 1).AddDays(i))) != RQ(R("old", new DateTime(2026, 1, 1).AddDays(i)))) > 20);
@@ -4860,8 +4863,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		double ratio = qT / qN / (nT / nN);
 		Check("rhythm: a quiet spell's days are noticeably shorter - about half", (ratio > 0.4) && (ratio < 0.7), $"{ratio:P0} of an ordinary day, {qN} quiet days");
 		// Later, but inside the bedtime window (02:00 give or take an hour by default): never past 03:00, 27 hours on.
-		Check("rhythm: a late night goes to bed later than the other Friday and Saturday nights - still inside its bedtime window",
-			(lateBed / lateN > (freeBed / freeN) + 0.1) && (lateBed / lateN <= 27), $"{lateBed / lateN:0.0}h vs {freeBed / freeN:0.0}h");
+		// 1.8.2: "Quiet spells now and then" has no late nights of its own - Friday and Saturday are "Stays up later Fri/Sat"'s.
+		Check("rhythm: no late night of its own - a free night's bed is \"Stays up later Fri/Sat\"'s alone, inside its bedtime window",
+			(lateN == 0) && (freeN > 0) && (freeBed / freeN <= 27), $"{lateN} late, {freeBed / Math.Max(1, freeN):0.0}h");
 		Check("rhythm: the day off still comes about one day in twenty", Math.Abs(((double) offs / rollDays) - 0.05) < 0.015, $"{(double) offs / rollDays:P1}");
 		Check("rhythm: bed after getting up, a night's sleep, hours that fit and the caps - on every shape of day", broke == 0, $"{broke} of {rollDays}");
 		Check("rhythm: the roll says which days are quiet", qMarked == 0);
@@ -4872,7 +4876,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		for (int i = 0; (i < 2000) && (acctWith == null); i++) {
 			string a = "harness-rhythm-" + i;
 
-			if (Enumerable.Range(0, 7).Any(d => RQ(R(a, DateTime.Now.Date.AddDays(d)))) && Enumerable.Range(0, 7).Any(d => RL(R(a, DateTime.Now.Date.AddDays(d))))) {
+			if (Enumerable.Range(0, 7).Any(d => RQ(R(a, DateTime.Now.Date.AddDays(d))))) {
 				acctWith = a;
 			}
 		}
@@ -4886,7 +4890,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			weekMatches = (week[d].Contains("(a quiet spell)") == RQ(rh)) && (week[d].Contains("(a late night)") == RL(rh));
 		}
 
-		Check("rhythm: 'human week' marks the same quiet days and late nights the account will have", weekMatches, string.Join(" | ", week));
+		Check("rhythm: 'human week' marks the same quiet days the account will have, and no late nights of its own", weekMatches, string.Join(" | ", week));
 
 		// Saved with the day's plan, and read back after a restart.
 		string pname = "harness-life-plan-" + Guid.NewGuid().ToString("N")[..6];
@@ -4923,7 +4927,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var guarded = new NocatFarm.Config.BotConfig { SkipRefundableGames = true };
 		Check("new games: a bought game refund protection is holding is tried once the hold ends; a free one straight away",
 			(TStart(new NocatFarm.Core.AppOwnership(got, true, true), guarded) == got.AddDays(14)) && (TStart(new NocatFarm.Core.AppOwnership(got, false, true), guarded) == got)
-			&& (TStart(new NocatFarm.Core.AppOwnership(got, true, true), new NocatFarm.Config.BotConfig()) == got));
+			&& (TStart(new NocatFarm.Core.AppOwnership(got, true, true), new NocatFarm.Config.BotConfig { SkipRefundableGames = false }) == got));
 
 		// A day's sittings with a brand-new game about.
 		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
@@ -5566,7 +5570,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	try {
 		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, """{ "WebEnabled": false, "DailyReportHour": 8, "SendDailySummary": true }""");
 		var g = NocatFarm.Config.ConfigStore.LoadGlobal();
-		Check("old config: loads with the weekly report off and the alarm at its default", !g.WeeklyReport && g.StuckAlarm && g.StuckAlarmHours == 3 && g.DailyReportHour == 8);
+		Check("old config: loads with the weekly report off and the alarm at its default", !g.WeeklyReport && g.StuckAlarm && g.StuckAlarmHours == 3 && g.DailyReportTime == (8 * 60) + 30);
 		NocatFarm.Config.GlobalConfig live = NocatFarm.Config.Live.Global;
 		NocatFarm.Config.Live.Global = g;
 		bool quiet = !NocatFarm.Core.Notifier.Wanted(NocatFarm.Topic.Weekly);
@@ -5730,7 +5734,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 {
 	Check("sign-in code: on by default", new NocatFarm.Config.GlobalConfig().WebSignInCode);
 	var def = NocatFarm.Config.Settings.FindGlobal("WebSignInCode");
-	Check("sign-in code: a setting in the Dashboard section, not hidden behind Show advanced", (def != null) && !def.Advanced && def.Section == NocatFarm.Config.Settings.FindGlobal("WebRemoteAccess")!.Section);
+	Check("sign-in code: next to Open from anywhere, behind Show advanced - it only matters from outside (still on)",
+		(def != null) && def.Advanced && (def.Section == NocatFarm.Config.Settings.FindGlobal("WebRemoteAccess")!.Section) && (def.Group == "Open from outside"));
 	Check("sign-in code: nothing to send it to without Telegram (then the password is enough, as before)",
 		!NocatFarm.Core.Notifier.CanSendPrivately || (NocatFarm.Config.Live.Global.TelegramBotToken.Length > 0));
 	string host = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs"));
@@ -6071,7 +6076,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		List<uint> forty = [.. Enumerable.Range(1, 40).Select(static i => (uint) i)];
 
 		// 12. Both settings off: still no more than Steam plays at once.
-		var cfg = new NocatFarm.Config.BotConfig { CustomGameName = "nocat.lol", IdleGames = [.. forty] };
+		var cfg = new NocatFarm.Config.BotConfig { CustomGameName = "nocat.lol", CustomGameNameEnabled = true, IdleGames = [.. forty] };
 		var bot = new NocatFarm.Core.Bot("uifix-idle", cfg);
 		var idler = new NocatFarm.Modules.Idler(bot);
 		bot.AddModule(idler);
@@ -9979,7 +9984,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("pacer multiplayer setting: on for human mode, off for a robot, kept when chosen, set to match when human mode is switched, under Achievements",
 		!robotCfg.AchievementSkipMultiplayer && humanCfg.AchievementSkipMultiplayer && !chosenCfg.AchievementSkipMultiplayer
 		&& !flipped.AchievementSkipMultiplayer && flippedOn.AchievementSkipMultiplayer && fromFile.AchievementSkipMultiplayer
-		&& (skipDef is { Section: NocatFarm.Config.Settings.SecAchievements, Kind: NocatFarm.Config.SettingKind.Bool, Advanced: false }));
+		&& (skipDef is { Section: NocatFarm.Config.Settings.SecAchievements, Kind: NocatFarm.Config.SettingKind.Bool, Advanced: true, ShowWhen: "UnlockAchievements=true" }));
 
 	// ── certain holds only: the layout orders, it never holds ──────────────────────────────────────────────────────────
 	// PAYDAY 2's shape: the base game in stats 1-2, free updates of the base game after a gap (6, then 12), a heist DLC
@@ -10169,7 +10174,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& File.ReadAllText(Path.Combine(repo, "docs", "settings.md")).Contains("*Skip multiplayer achievements* |", StringComparison.Ordinal));
 
 	// ── hours of the day: a list in the viewer's own clock, the same number underneath ─────────────────────────────────
-	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "DailyReportHour", "WeeklyReportHour",
+	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "WeeklyReportHour",
 		"FarmFromHour", "FarmUntilHour", "SendAroundHour", "Rep4RepStartHour", "Rep4RepEndHour"];
 	NocatFarm.Config.SettingDef? HourDef(string n) => NocatFarm.Config.Settings.FindBot(n) ?? NocatFarm.Config.Settings.Global.FirstOrDefault(d => d.Name == n);
 	Check("hour settings: every hour of the day is an Hour, not a bare number - and durations stay numbers",
@@ -10777,7 +10782,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		new[] { "ProtectGiftedGames", "RefundHoldDays", "HoldNewFamilyGames" }.All(static n => NocatFarm.Config.Settings.Find(n) == null));
 	Check("refunds: Steam's own 14 days, and gifted games count", (NocatFarm.Core.RefundGuard.HoldDays == 14)
 		&& new NocatFarm.Core.AppOwnership(DateTime.UtcNow, false, true, Gift: true).Refundable && !new NocatFarm.Core.AppOwnership(DateTime.UtcNow, false, true).Refundable);
-	Check("refunds: off for a new account", !new NocatFarm.Config.BotConfig().SkipRefundableGames);
+	Check("refunds: on for a new account (1.8.2) - an account from before keeps what it had", new NocatFarm.Config.BotConfig().SkipRefundableGames);
 	Check("refunds: the tooltips no longer say refundable games are skipped regardless",
 		new[] { "IdleWholeLibrary", "NewGamesFirst", "JoinFriends" }.All(static n => NocatFarm.Config.Settings.FindBot(n)!.Tooltip.Contains("\"Protect refunds\"", StringComparison.Ordinal)));
 
@@ -10849,8 +10854,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("free games migration: an already-moved file is left as it is", Claimed("free-new", "{\"ClaimFree\":2}") == NocatFarm.Modules.FreeClaims.GamesAndDlc);
 		// Updates: "Update by itself" and "When I say update" became one choice - nobody's updates behave any differently.
 		var mode = NocatFarm.Config.Settings.FindGlobal("UpdateMode");
-		Check("updates: one visible choice - once everyone's asleep / install when I click / install by itself at night",
-			mode is { Kind: NocatFarm.Config.SettingKind.Choice, Advanced: false } && (NocatFarm.Config.Settings.ParseChoices(mode).Count == 3)
+		Check("updates: one visible choice - ask me (once asleep / right away) / install by itself at night / don't look",
+			mode is { Kind: NocatFarm.Config.SettingKind.Choice, Advanced: false } && (NocatFarm.Config.Settings.ParseChoices(mode).Count == 4)
 			&& (NocatFarm.Config.Settings.FindGlobal("AutoUpdate") == null) && (NocatFarm.Config.Settings.FindGlobal("UpdateWhenAsked") == null));
 		var freshG = new NocatFarm.Config.GlobalConfig();
 		Check("updates: a new install is \"install when I click\" - the same as before (tell me, right away)",
@@ -10880,7 +10885,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			tellWait.File.Contains("\"UpdateMode\": 0", StringComparison.Ordinal) && tellWait.File.Contains("\"UpdateWhenAsked\": 0", StringComparison.Ordinal)
 			&& !tellWait.File.Contains("\"AutoUpdate\"", StringComparison.Ordinal));
 		NocatFarm.Config.GlobalConfig switched = NocatFarm.Config.ConfigStore.LoadGlobal();
-		NocatFarm.Config.Settings.Apply(switched, mode!, "install when I click");
+		NocatFarm.Config.Settings.Apply(switched, mode!, "1");
 		NocatFarm.Config.ConfigStore.SaveGlobal(switched);
 		NocatFarm.Config.GlobalConfig rereadG = NocatFarm.Config.ConfigStore.LoadGlobal();
 		string clickFile = File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath);
@@ -10967,9 +10972,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", rel)).Replace("\r\n", "\n");
 	List<NocatFarm.Config.SettingDef> bot = [.. NocatFarm.Config.Settings.Bot];
 	int at = bot.FindIndex(static d => d.Name == "OfflineIdleAtNight");
-	Check("overnight: the list and the top-games number sit right under the switch, not behind Show advanced, human mode only",
+	Check("overnight: the list and the top-games number sit right under the switch, shown while it's on, human mode only; the number behind Show advanced",
 		(at >= 0) && (bot[at + 1].Name == "OfflineIdleGames") && (bot[at + 2].Name == "OfflineIdleTopGames")
-		&& bot.Skip(at).Take(3).All(static d => !d.Advanced && (d.Mode == "legit")));
+		&& bot.Skip(at).Take(3).All(static d => d.Mode == "legit") && !bot[at].Advanced && !bot[at + 1].Advanced && bot[at + 2].Advanced
+		&& bot.Skip(at + 1).Take(2).All(static d => d.ShowWhen == "OfflineIdleAtNight=true"));
 	Check("overnight: the top-games number is 1 to 10, 1 by default", bot[at + 2] is { Kind: NocatFarm.Config.SettingKind.Int, Min: 1.0, Max: 10.0 }
 		&& (new NocatFarm.Config.BotConfig().OfflineIdleTopGames == 1));
 
@@ -11250,7 +11256,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string cfgSrc = File.ReadAllText(Path.Combine(root, "Config", "Configs.cs")).Replace("\r\n", "\n");
 	string backupSrc = File.ReadAllText(Path.Combine(root, "Core", "Backup.cs")).Replace("\r\n", "\n");
 	Check("overnight note: checked before reading, written after a good save, cleared by a restore",
-		(cfgSrc.IndexOf("bool seenBefore = File.Exists(seen);", StringComparison.Ordinal) < cfgSrc.IndexOf("BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(ReadShared(file), Json);", StringComparison.Ordinal))
+		(cfgSrc.IndexOf("bool seenBefore = File.Exists(seen);", StringComparison.Ordinal) < cfgSrc.IndexOf("string text = ReadShared(file);", StringComparison.Ordinal))
 		&& cfgSrc.Contains("if (!seenBefore && (!night || saved)) {", StringComparison.Ordinal)
 		&& backupSrc.Contains("@\"|state/overnight-(?<name>", StringComparison.Ordinal)
 		&& backupSrc.Contains("if (restored.Contains($\"state/overnight-{name}.seen\")) {", StringComparison.Ordinal)
@@ -11480,8 +11486,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	var weekends = NocatFarm.Config.Settings.FindBot("LearnWeekends")!;
 	Check("settings: \"Keeps up with changes\" and \"Weekends separately\" sit right under \"Learn from how I play\", in that order",
 		(learnAt >= 0) && (human[learnAt + 1] == follow) && (human[learnAt + 2] == weekends));
-	Check("settings: both human mode only, basic, and shown only while learning isn't off",
-		new[] { follow, weekends }.All(static d => (d.Mode == "legit") && !d.Advanced && (d.ShowWhen == "LearnFromOwner!=0")));
+	Check("settings: both human mode only, behind Show advanced, and shown only while learning isn't off",
+		new[] { follow, weekends }.All(static d => (d.Mode == "legit") && d.Advanced && (d.ShowWhen == "LearnFromOwner!=0")));
 	Check("settings: the words", (follow.Label == "Keeps up with changes") && (follow.Choices == "0 slowly | 1 normal | 2 quickly")
 		&& (follow.Tooltip == "How fast a change in when or what you play shows up. Older days count less and less - quickly follows a new routine in about a week, slowly takes about a month.")
 		&& (weekends.Label == "Weekends separately")
@@ -11668,7 +11674,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 
 	// 9 and 10. Hours: no clock format in the explanations (the picker may be a 12-hour one), and full-width digits are no hour.
-	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "DailyReportHour", "WeeklyReportHour",
+	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "WeeklyReportHour",
 		"FarmFromHour", "FarmUntilHour", "SendAroundHour", "Rep4RepStartHour", "Rep4RepEndHour"];
 	string TipOf(string n) => (NocatFarm.Config.Settings.FindBot(n) ?? NocatFarm.Config.Settings.Global.First(d => d.Name == n)).Tooltip;
 	List<string> withClock = [.. hourNames.Where(n => TipOf(n).Any(char.IsAsciiDigit) || TipOf(n).Contains("24-hour", StringComparison.Ordinal))];
@@ -19583,7 +19589,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		string globalJoined = await Commands.RunAsync(mgr, "set DailyReportHour=7");
 		Check("set: 'Key=value' and a quoted key are the setting they name, for an account and globally",
 			onAfterJoined && !bots["alt"].Cfg.Rep4Rep && joinedOn.StartsWith("alt.Rep4Rep = true", StringComparison.Ordinal) && quotedOff.StartsWith("alt.Rep4Rep = false", StringComparison.Ordinal)
-			&& (mgr.Global.DailyReportHour == 7), $"{joinedOn} / {quotedOff} / {globalJoined}");
+			&& (mgr.Global.DailyReportTime == 7 * 60), $"{joinedOn} / {quotedOff} / {globalJoined}");
 
 		// ── one typo off a command with a digit in its name, or a plugin's: shown, kept, and named in the reply ──
 		string[] digitTypos = [await Commands.RunAsync(mgr, "2af"), await Commands.RunAsync(mgr, "rep4ep status"), await Commands.RunAsync(mgr, "r4t")];
@@ -20007,8 +20013,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			!NocatFarm.Core.Notifier.OnChannel(Topic.ScamWatch, "discord") && NocatFarm.Core.Notifier.OnChannel(Topic.ScamWatch, "telegram")
 			&& !NocatFarm.Core.Notifier.OnChannel(Topic.Health, "telegram") && NocatFarm.Core.Notifier.OnChannel(Topic.Health, "discord")
 			&& NocatFarm.Core.Notifier.OnChannel(Topic.Cards, "discord") && NocatFarm.Core.Notifier.OnChannel(Topic.Problems, "telegram"));
-		g.ScamAlertDiscord = true;
-		g.HealthAlertTelegram = true;
+		g.ScamAlertDiscord = null;
+		g.HealthAlertTelegram = null;
 		Check("notify: scam watch and health have their own titles", (NocatFarm.Core.Notifier.Label(Topic.ScamWatch) == "Scam watch") && (NocatFarm.Core.Notifier.Label(Topic.Health) == "Account health"));
 
 		// ── account health ──
@@ -20068,14 +20074,15 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		// A new ban: ONE alert, not two - the ban watch already tells while it's on.
 		var banned1 = clean with { Bans = new NocatFarm.Modules.BanWatch.Bans(1, 0, false, "none", 3) };
 		Check("health: a ban is red", NocatFarm.Modules.AccountHealth.Worst(NocatFarm.Modules.AccountHealth.Assess(banned1, aT0)) == NocatFarm.Modules.AccountHealth.Level.Bad);
-		Check("health: with Watch for bans on, health never alerts a ban (the ban watch's own alert is the one)", hcfg.WatchBans && !NocatFarm.Modules.AccountHealth.Alerts(hcfg, "bans"));
+		// 1.8.2: one ban alert, account health's ("Alert on a new ban") - "Watch for bans" was a second switch for it.
+		Check("health: a new ban is health's own alert", hcfg.HealthAlertBans && NocatFarm.Modules.AccountHealth.Alerts(hcfg, "bans"));
 		Apply(banned1);
-		Check("health: a new ban while the ban watch is on - no second alert from health", Published(hbot.Name, Topic.Health) == 2);
+		Check("health: a new ban alerts - once", Published(hbot.Name, Topic.Health) == 3);
 		Apply(clean);
-		hcfg.WatchBans = false;
+		hcfg.HealthAlertBans = false;
 		Apply(banned1);
-		Check("health: with the ban watch off, health alerts the ban itself - once", Published(hbot.Name, Topic.Health) == 3);
-		hcfg.WatchBans = true;
+		Check("health: with \"Alert on a new ban\" off, a new ban is only logged", Published(hbot.Name, Topic.Health) == 3);
+		hcfg.HealthAlertBans = true;
 
 		// A whole check with faked reads: level, hold, market, limited from the sign-in, Guard and phone from scam watch's read.
 		var cbot = new NocatFarm.Core.Bot("watch-check", new NocatFarm.Config.BotConfig());
@@ -20115,11 +20122,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("settings: scam watch and health are on by default, the key revoke off, reactions on",
 			new NocatFarm.Config.BotConfig() is { WatchForScams: true, ScamWatchApiKey: true, ScamWatchDevices: true, ScamWatchDetails: true, ScamWatchSessions: true,
 				ScamWatchStopTrades: true, ScamWatchCancelOffers: true, ScamWatchRevokeKey: false, WatchHealth: true, HealthAlertGuard: true }
-			&& new NocatFarm.Config.GlobalConfig() is { ScamAlertTelegram: true, ScamAlertDiscord: true, ScamAlertPopup: true, HealthAlertTelegram: true, ScamWatchTrustedDevices: "" });
+			&& new NocatFarm.Config.GlobalConfig() is { SendScamWarnings: true, SendHealthAlerts: true, NotifyScam: true, NotifyHealth: true, ScamAlertTelegram: null, ScamWatchTrustedDevices: "" });
 		string[] aSettings = ["WatchForScams", "ScamWatchStopTrades", "ScamWatchCancelOffers", "ScamWatchRevokeKey", "ScamWatchApiKey", "ScamWatchDevices", "ScamWatchDetails",
 			"ScamWatchSessions", "ScamWatchMinMinutes", "ScamWatchMaxMinutes", "WatchHealth", "HealthAlertBans", "HealthAlertTradeHold", "HealthAlertMarket", "HealthAlertLimited",
-			"HealthAlertGuard", "HealthAlertPhone", "HealthMinHours", "HealthMaxHours", "ScamAlertTelegram", "ScamAlertDiscord", "ScamWatchTrustedDevices",
-			"HealthAlertTelegram", "HealthAlertDiscord"];
+			"HealthAlertGuard", "HealthAlertPhone", "HealthMinHours", "HealthMaxHours", "SendScamWarnings", "ScamWatchTrustedDevices", "SendHealthAlerts"];
 		List<string> aNoHelp = [];
 
 		foreach (string n in aSettings) {
@@ -20249,7 +20255,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("backup password: kept encrypted on disk like the other secrets, and reads back", !settingsOnDisk.Contains(BackupPw, StringComparison.Ordinal)
 			&& NocatFarm.Config.Live.Global.BackupPassword == BackupPw);
 		Check("backup password: never picked for anyone - a fresh install has none and daily backups off",
-			new NocatFarm.Config.GlobalConfig() is { BackupPassword: "", BackupAuto: false, BackupKeep: 7, BackupHour: 4, BackupIncludeLogs: false, BackupNotify: 0 }
+			new NocatFarm.Config.GlobalConfig() is { BackupPassword: "", BackupAuto: false, BackupKeep: 7, BackupHour: 4, BackupIncludeLogs: false, BackupMessages: 1 }
 			&& !File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "LockedBackup.cs")).Contains("BackupPassword =", StringComparison.Ordinal));
 		NocatFarm.Config.SettingDef pwDef = NocatFarm.Config.Settings.FindGlobal("BackupPassword")!;
 		var probe = new NocatFarm.Config.GlobalConfig();
@@ -20418,7 +20424,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var (noPw, noPwWhy) = await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(3));
 		Check("failure: no backup password - no backup, and it says to pick one", !noPw && noPwWhy.ToEnglish().Contains("no backup password set", StringComparison.Ordinal));
 		NocatFarm.Config.Live.Global.BackupPassword = BackupPw;
-		NocatFarm.Config.Live.Global.BackupNotify = 1;
+		NocatFarm.Config.Live.Global.BackupMessages = 2;
 		await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(4));   // after the failure: "backups work again"
 		published.Clear();
 		await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(5));
@@ -20468,7 +20474,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Core.BackupSchedule.DueOn(day.AddDays(1), g) > day.AddDays(1).AddHours(4).AddMinutes(-1));
 	Check("backups: every setting has a plain description, in the Backups group",
 		new[] { "BackupAuto", "BackupFolder", "BackupPassword", "BackupKeep", "BackupHour", "BackupJitterMinutes", "BackupIncludeSettings", "BackupIncludeAccounts",
-			"BackupIncludeAuthenticators", "BackupIncludeHistory", "BackupIncludeLogs", "BackupNotify", "BackupLocalCopy", "BackupRetryMinutes" }
+			"BackupIncludeAuthenticators", "BackupIncludeHistory", "BackupIncludeLogs", "BackupMessages", "BackupLocalCopy", "BackupRetryMinutes" }
 			.All(n => NocatFarm.Config.Settings.FindGlobal(n) is { Section: "Backups", Tooltip.Length: > 40 })
 		&& NocatFarm.Config.Settings.FindGlobal("BackupAuto") is { Advanced: false } && NocatFarm.Config.Settings.FindGlobal("BackupKeep") is { Advanced: true });
 }
@@ -20501,7 +20507,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		&& !appJs.Contains("PushManager", StringComparison.Ordinal) && !appJs.Contains("certificate", StringComparison.Ordinal));
 	Check("phone app: no web push anywhere", !Directory.GetFiles(Path.Combine(repo, "src", "NocatFarm"), "*.cs", SearchOption.AllDirectories)
 		.Any(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) && File.ReadAllText(f).Contains("VAPID", StringComparison.OrdinalIgnoreCase)));
-	Check("phone app: the install hint is a setting, on by default", NocatFarm.Config.Settings.FindGlobal("PhoneInstallHint") is { Section: "Phone app", Advanced: false }
+	Check("phone app: the install hint is a setting, on by default - in Dashboard & phone, behind Show advanced (1.8.2)",
+		NocatFarm.Config.Settings.FindGlobal("PhoneInstallHint") is { Section: "Dashboard & phone", Group: "Phone app", Advanced: true }
 		&& new NocatFarm.Config.GlobalConfig().PhoneInstallHint);
 	var types = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 	Check("phone app: the manifest goes out as a manifest", types.TryGetContentType("manifest.webmanifest", out string? mt) && mt == "application/manifest+json", mt ?? "");
@@ -20664,7 +20671,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		// ── never spare, each rule on its own
 		var last = Plan([SCard(1)], rules);
 		Check("keep: with the default (keep 1) the last copy stays", last.Actions.Count == 0 && VerdictOf(last, 1) == NocatFarm.Core.SpareVerdict.NotSpare);
-		Check("keep: 'keep 0' can be set - it means keep none", NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareKeepCopies = 0, SpareKeepBackgrounds = 0, SpareKeepEmoticons = 0 }) is { KeepCopies: 0, KeepBackgrounds: 0, KeepEmoticons: 0 }
+		Check("keep: 'keep 0' can be set - it means keep none, of every kind", NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareKeepCopies = 0 }) is { KeepCopies: 0, KeepBackgrounds: 0, KeepEmoticons: 0 }
 			&& NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig()) is { KeepCopies: 1, KeepBackgrounds: 1, KeepEmoticons: 1 });
 		var lastZero = Plan([SCard(1), new(60, G, NocatFarm.Core.SpareKind.Background, $"{G}-Sky", "Sky", true, true, 1, 3, 0)],
 			new NocatFarm.Core.SpareRules { On = true, KeepCopies = 0, KeepBackgrounds = 0 });
@@ -20989,14 +20996,16 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			!defaults.SpareItems && defaults.SpareAction == 0 && Math.Abs(defaults.SpareMaxPrice - 0.25f) < 0.0001f && defaults.SpareNewDays == 7 && !defaults.SpareFoils
 			&& defaults.SpareDailyItems == 10 && Math.Abs(defaults.SpareDailyValue - 1f) < 0.0001f && defaults.OpenBoosterPacks == 0 && defaults.BoosterUnopened == 0 && defaults.SpareGems == 0);
 		string[] mine = ["SpareItems", "SpareAction", "SpareGems", "SpareGemsSendTo", "SpareKeepGems", "SpareMaxedBadgeCards", "SpareExtraCards", "SpareKeepCopies", "SpareFoils",
-			"SpareBackgrounds", "SpareKeepBackgrounds", "SpareEmoticons", "SpareKeepEmoticons", "SpareMaxPrice", "SpareNewDays", "SpareKeepItems", "SpareKeepGames", "SpareGemMarginPct",
+			"SpareBackgrounds", "SpareEmoticons", "SpareMaxPrice", "SpareNewDays", "SpareKeepItems", "SpareKeepGames", "SpareGemMarginPct",
 			"SparePerRun", "SpareDailyItems", "SpareDailyValue", "SpareRunHours", "SpareGapSeconds", "SparePriceMaxAgeHours", "SpareSellPrice", "SpareRelistDays",
 			"OpenBoosterPacks", "BoosterOpenNewDays", "BoosterNeverOpen", "BoosterUnopened", "BoosterSendTo", "BoosterCheckHours"];
 		var missingDefs = mine.Where(static n => NocatFarm.Config.Settings.FindBot(n) is null || typeof(NocatFarm.Config.BotConfig).GetProperty(n) is null).ToList();
 		Check("settings: every spare items and booster pack setting is listed, per account", missingDefs.Count == 0, string.Join(",", missingDefs));
-		Check("settings: the on/off switches come first (basic), the numbers in Advanced",
-			!NocatFarm.Config.Settings.FindBot("SpareItems")!.Advanced && !NocatFarm.Config.Settings.FindBot("OpenBoosterPacks")!.Advanced && NocatFarm.Config.Settings.FindBot("SpareMaxPrice")!.Advanced
-			&& NocatFarm.Config.Settings.FindBot("SpareItems")!.Section == "Spare items" && NocatFarm.Config.Settings.FindBot("BoosterUnopened")!.Section == "Booster packs");
+		// 1.8.2: the money limits show without Show advanced once the switch is on; the rest of the numbers are advanced.
+		Check("settings: the on/off switches come first (basic), the limits once it's on, the other numbers in Advanced",
+			!NocatFarm.Config.Settings.FindBot("SpareItems")!.Advanced && !NocatFarm.Config.Settings.FindBot("OpenBoosterPacks")!.Advanced
+			&& NocatFarm.Config.Settings.FindBot("SpareMaxPrice") is { Advanced: false, ShowWhen: "SpareItems=true" } && NocatFarm.Config.Settings.FindBot("SpareMinSale")!.Advanced
+			&& NocatFarm.Config.Settings.FindBot("SpareItems")!.Part == "Spare items" && NocatFarm.Config.Settings.FindBot("BoosterUnopened")!.Part == "Booster packs");
 		Check("settings: the old names are gone, 'SellDuplicates' still reaches spare items",
 			NocatFarm.Config.Settings.FindBot("UnpackBoosterPacks") is null && NocatFarm.Config.Settings.FindBot("SellDuplicates")?.Name == "SpareItems");
 		string help = await Commands.RunAsync(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false }), "help SpareMaxPrice");
@@ -21417,9 +21426,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	string[] saleNames = ["SaleEvents", "SaleEventsHumanToo", "SaleAwardsNominate", "SaleAwardsVote", "ClaimEventItems", "DiscoveryQueue", "SaleQuests", "SaleNextFest",
 		"SaleNominatePick", "SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes", "SaleCheckHours"];
 	List<NocatFarm.Config.SettingDef?> saleDefs = [.. saleNames.Select(NocatFarm.Config.Settings.FindBot)];
-	Check("sale events: every setting is in the Sale events group, per account, with a description", saleDefs.All(d => d is { Section: "Sale events" } && d.Tooltip.Length > 40));
-	Check("sale events: the master switch comes first in its group and is basic", NocatFarm.Config.Settings.Bot.First(d => d.Section == "Sale events").Name == "SaleEvents" && !saleDefs[0]!.Advanced);
-	Check("sale events: numbers and the rarer kinds are advanced; the main switches basic", saleDefs.Skip(6).All(d => d!.Advanced) && saleDefs.Take(6).All(d => !d!.Advanced));
+	Check("sale events: every setting is in the Sale events part of Free stuff, per account, with a description",
+		saleDefs.All(d => d is { Section: "Free stuff", Part: "Sale events" } && d.Tooltip.Length > 40));
+	Check("sale events: the master switch comes first in its part and is basic", NocatFarm.Config.Settings.Bot.First(d => d.Part == "Sale events").Name == "SaleEvents" && !saleDefs[0]!.Advanced);
+	Check("sale events: one basic switch; what it takes part in, the numbers and the rarer kinds are advanced (1.8.2)", saleDefs.Skip(1).All(d => d!.Advanced) && !saleDefs[0]!.Advanced);
 	Check("sale events: the human-mode switch and the human gaps only show in human mode", saleDefs[1]!.Mode == "legit" && saleDefs[11]!.Mode == "legit" && saleDefs[12]!.Mode == "legit");
 
 	// The command.
@@ -21856,7 +21866,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		eCfg.OfflineIdleGames = [.. eCfg.OfflineIdleGames, 777777];
 		List<string> eWhy = [.. eMode.NightLeftOut().Select(static o => o.Why.ToEnglish())];
 		Check("night: a never-touch game and an unowned one are named too",
-			eWhy.Contains("Team Fortress 2 left out - it's on \"Never touch these\"")
+			eWhy.Contains("Team Fortress 2 left out - it's on \"Never play these games\"")
 			&& eWhy.Contains("app 777777: this account doesn't own it, so idling it banks nothing - add it to its Steam library first"), string.Join(" | ", eWhy));
 		eCfg.BlacklistedGames = [];
 		eCfg.IncludeFamilyLibrary = false;
@@ -21896,8 +21906,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 {
 	var eBorrow = NocatFarm.Config.Settings.FindBot("BorrowFamilyCopy");
 	var eWait = NocatFarm.Config.Settings.FindBot("FamilyWaitMinutes");
-	Check("settings: borrow a family copy - a basic switch in the Steam Family group",
-		(eBorrow != null) && !eBorrow.Advanced && (eBorrow.Kind == NocatFarm.Config.SettingKind.Bool) && (eBorrow.Section == "Steam Family"));
+	Check("settings: borrow a family copy - a switch in the Steam Family part, shown once family-shared games are on",
+		(eBorrow != null) && (eBorrow.Kind == NocatFarm.Config.SettingKind.Bool) && (eBorrow.Part == "Steam Family") && (eBorrow.ShowWhen == "IncludeFamilyLibrary=true"));
 	Check("settings: the wait after a family member stops - minutes, 0 to 240, advanced, with an example",
 		(eWait != null) && eWait.Advanced && (eWait.Min == 0) && (eWait.Max == 240) && (NocatFarm.Config.Settings.UnitOf(eWait) == "minutes") && eWait.Tooltip.Contains("e.g. 20", StringComparison.Ordinal));
 	string eHelp = await Commands.RunAsync(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false }), "help FamilyWaitMinutes");
@@ -22221,8 +22231,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		// ── settings, help, notifications ──
 		string[] perAccount = ["SpendPoints", "PointsKeepAtLeast", "PointsWeeklyCap", "PointsBuySeasonalBadge", "PointsBuyOlderBadges", "PointsBadgeMaxLevel", "PointsCheckEveryHours"];
 		var defs = perAccount.Select(n => NocatFarm.Config.Settings.FindBot(n)).ToList();
-		Check("settings: all of them per account, in their own \"Steam Points\" group, only the switch basic, each explained",
-			defs.All(d => (d != null) && (d.Section == "Steam Points") && (d.Tooltip.Length > 40) && (d.Advanced == (d.Name != "SpendPoints"))) && (NocatFarm.Config.Settings.FindBot("PointsOk") == null));
+		// 1.8.2: the two limits show without Show advanced once the switch is on.
+		Check("settings: all of them per account, in their own \"Steam Points\" part, the switch and its limits basic, each explained",
+			defs.All(d => (d != null) && (d.Part == "Steam Points") && (d.Tooltip.Length > 40) && (d.Advanced == (d.Name is not ("SpendPoints" or "PointsKeepAtLeast" or "PointsWeeklyCap"))))
+			&& defs.Where(static d => d!.Name != "SpendPoints").All(static d => d!.ShowWhen == "SpendPoints=true") && (NocatFarm.Config.Settings.FindBot("PointsOk") == null));
 		Check("settings: \"Send Steam Points spending\" is a notification switch, on by default",
 			(NocatFarm.Config.Settings.FindGlobal("SendPoints")?.Section == "Notifications") && new NocatFarm.Config.GlobalConfig().SendPoints);
 		string help = await Commands.RunAsync(mgr, "help PointsKeepAtLeast");
@@ -22623,8 +22635,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			offOk.Contains("spare do fc-off", StringComparison.Ordinal) || !offOk.Contains("gems ", StringComparison.Ordinal));
 		Check("price limits fit yen, won and rupiah, and say how",
 			(Def("SpareMaxPrice").Max >= 1_000_000) && (Def("SpareDailyValue").Max >= 1_000_000)
-			&& Def("SpareMaxPrice").Tooltip.Contains("e.g. 0.25 for dollars or euros - use the same value in your own currency, e.g. 40 for yen", StringComparison.Ordinal)
-			&& Def("SpareDailyValue").Tooltip.Contains("use the same value in your own currency", StringComparison.Ordinal)
+			&& Def("SpareMaxPrice").Tooltip.Contains("0.25 suits dollars or euros; for yen use about 40", StringComparison.Ordinal)
+			&& Def("SpareDailyValue").Tooltip.Contains("1.00 suits dollars or euros; for yen use about 150", StringComparison.Ordinal)
+			&& (NocatFarm.Config.Settings.UnitOf(Def("SpareMaxPrice")) == "wallet currency")
 			&& (NocatFarm.Config.Settings.Apply(new NocatFarm.Config.BotConfig(), Def("SpareMaxPrice"), "40") == null)
 			&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareMaxPrice = 40f, SpareDailyValue = 150_000f }).MaxPriceCents == 4000)
 			&& (NocatFarm.Core.SpareRules.From(new NocatFarm.Config.BotConfig { SpareDailyValue = 150_000f }).DailyValueCents == 15_000_000));
@@ -22931,15 +22944,15 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	Check("readability: the robot-account wait between steps is robot mode only", FtBot("SaleGapMinSeconds") is { Mode: "rage", Hidden: true, Label: "Shortest wait between steps" }, FtBot("SaleGapMinSeconds").Label);
 	Check("readability: human-mode sale events say \"a human-mode account\", not \"your main\"",
 		FtBot("SaleEventsHumanToo").Tooltip.Contains("so a human-mode account only does", StringComparison.Ordinal) && FtBot("SaleEventsHumanToo").Tooltip.Contains("Robot accounts always take part", StringComparison.Ordinal));
-	string[] ftNew = ["SendPoints", "SendItems", "ScamAlertTelegram", "ScamAlertDiscord", "ScamAlertPopup", "ScamWatchTrustedDevices", "HealthAlertTelegram", "HealthAlertDiscord", "HealthAlertPopup",
+	string[] ftNew = ["SendPoints", "SendItems", "SendScamWarnings", "NotifyScam", "ScamWatchTrustedDevices", "SendHealthAlerts", "NotifyHealth",
 		"ShareFarmTotals", "BackupAuto", "BackupFolder", "BackupPassword", "BackupKeep", "BackupHour", "BackupJitterMinutes", "BackupIncludeSettings", "BackupIncludeAccounts",
-		"BackupIncludeAuthenticators", "BackupIncludeHistory", "BackupIncludeLogs", "BackupNotify", "BackupLocalCopy", "BackupRetryMinutes", "SendBackups", "PhoneInstallHint",
+		"BackupIncludeAuthenticators", "BackupIncludeHistory", "BackupIncludeLogs", "BackupMessages", "BackupLocalCopy", "BackupRetryMinutes", "PhoneInstallHint",
 		"BorrowFamilyCopy", "FamilyWaitMinutes", "SaleEvents", "SaleEventsHumanToo", "SaleAwardsNominate", "SaleAwardsVote", "ClaimEventItems", "SaleQuests", "SaleNextFest",
 		"SaleNominatePick", "SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes", "SaleCheckHours", "WatchForScams", "ScamWatchStopTrades",
 		"ScamWatchCancelOffers", "ScamWatchRevokeKey", "ScamWatchApiKey", "ScamWatchDevices", "ScamWatchDetails", "ScamWatchSessions", "ScamWatchMinMinutes", "ScamWatchMaxMinutes",
 		"WatchHealth", "HealthAlertBans", "HealthAlertTradeHold", "HealthAlertMarket", "HealthAlertLimited", "HealthAlertGuard", "HealthAlertPhone", "HealthMinHours", "HealthMaxHours"];
 	if (!OperatingSystem.IsWindows()) {
-		ftNew = [.. ftNew.Where(static n => n is not ("ScamAlertPopup" or "HealthAlertPopup"))];   // pop-ups are Windows-only settings: not on the list elsewhere
+		ftNew = [.. ftNew.Where(static n => n is not ("NotifyScam" or "NotifyHealth"))];   // pop-ups are Windows-only settings: not on the list elsewhere
 	}
 	List<string> ftOddNames = [.. ftNew.Select(static n => NocatFarm.Config.Settings.Find(n)!)
 		.Where(static d => (d.Label + " " + d.Tooltip) is var s && (s.Contains("farm account", StringComparison.OrdinalIgnoreCase) || s.Contains("the others", StringComparison.OrdinalIgnoreCase) || s.Contains("your main", StringComparison.OrdinalIgnoreCase)))
@@ -22969,13 +22982,13 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	// 5. every Steam Family setting in the Steam Family group, next to each other
 	string[] ftFamily = ["IncludeFamilyLibrary", "YieldToFamily", "BorrowFamilyCopy", "FamilyWaitMinutes"];
 	List<int> ftFamilyAt = [.. ftFamily.Select(static n => NocatFarm.Config.Settings.Bot.ToList().FindIndex(d => d.Name == n))];
-	Check("readability: the four Steam Family settings are all in the Steam Family group, together",
-		ftFamily.All(n => FtBot(n).Section == NocatFarm.Config.Settings.SecFamily) && (ftFamilyAt.Max() - ftFamilyAt.Min() == 3)
-		&& NocatFarm.Config.Settings.Bot.Count(static d => d.Section == NocatFarm.Config.Settings.SecFamily) == 4, string.Join(",", ftFamilyAt));
+	Check("readability: the four Steam Family settings are all in the Steam Family part, together",
+		ftFamily.All(n => FtBot(n).Part == NocatFarm.Config.Settings.SecFamily) && (ftFamilyAt.Max() - ftFamilyAt.Min() == 3)
+		&& NocatFarm.Config.Settings.Bot.Count(static d => d.Part == NocatFarm.Config.Settings.SecFamily) == 4, string.Join(",", ftFamilyAt));
 	Check("readability: the family wait's text is the plain one",
 		FtBot("FamilyWaitMinutes").Tooltip == "Minutes a family-shared game is left alone after someone in your Steam Family stops playing it, e.g. 20 - people often start again. 0 uses it straight away.");
 	string ftHelpFam = await Commands.RunAsync(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false }), "help IncludeFamilyLibrary");
-	Check("readability: 'help IncludeFamilyLibrary' still explains it after the move", ftHelpFam.Contains("Also hunts achievements", StringComparison.Ordinal), ftHelpFam);
+	Check("readability: 'help IncludeFamilyLibrary' still explains it after the move", ftHelpFam.Contains("Also uses games shared with this account", StringComparison.Ordinal), ftHelpFam);
 
 	// 6. "Share my hours and cards totals" sits right under "Count me as a user", no one-setting group
 	List<NocatFarm.Config.SettingDef> ftG = [.. NocatFarm.Config.Settings.Global];
@@ -23244,8 +23257,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("ok: 'scamwatch <account> ok' clears it, the same as 'scamwatch ok <account>'", okAfter.Contains("cleared", StringComparison.Ordinal)
 			&& !NocatFarm.Modules.ScamWatch.HoldsTrades(kbot), okAfter);
 
-		// ── finding 2: health reads the bans itself while the ban watch is off, and a new ban alerts exactly once ──
-		var bcfg = new NocatFarm.Config.BotConfig { WatchBans = false };
+		// ── finding 2 (1.8.2): the ban look always runs, and a new ban alerts exactly once - account health's alert ──
+		var bcfg = new NocatFarm.Config.BotConfig();
 		var bbot = new NocatFarm.Core.Bot("hold-bans", bcfg);
 		var banWatch = new NocatFarm.Modules.BanWatch(bbot);
 		var health = new NocatFarm.Modules.AccountHealth(bbot);
@@ -23265,29 +23278,27 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		FaSet(health, "HoldOf", (Func<CancellationToken, Task<TimeSpan?>>) (_ => Task.FromResult<TimeSpan?>(TimeSpan.Zero)));
 		int Alerts() => FaHeard(bbot.Name, Topic.Health) + FaHeard(bbot.Name, Topic.Problems);
 
+		await banWatch.CheckAsync();
 		await health.CheckAsync();
-		Check("bans: with the ban watch off, health reads the bans itself", (banReads == 1) && (health.Last?.Bans is { Any: false }));
-		Check("bans: the first reading is a baseline - no alert", Alerts() == 0);
+		Check("bans: the first reading is a baseline - no alert", (banReads == 1) && (health.Last?.Bans is { Any: false }) && (Alerts() == 0));
+		int readsBefore = banReads;
+		await health.CheckAsync();
+		Check("bans: health leaves the reading to the ban look - it always runs now", banReads == readsBefore);
 		faBans = new(1, 0, false, "none", 2);
+		await banWatch.CheckAsync();   // its own look, or what 'bans <account>' does
+		Check("bans: a new ban alerts - exactly once, as account health's", (FaHeard(bbot.Name, Topic.Health) == 1) && (Alerts() == 1), $"{Alerts()} alert(s)");
 		await health.CheckAsync();
-		Check("bans: a new ban found by health's own look alerts - exactly once", (FaHeard(bbot.Name, Topic.Health) == 1) && (Alerts() == 1), $"{Alerts()} alert(s)");
-		await health.CheckAsync();
+		Check("bans: ...and health's next look doesn't alert it a second time", Alerts() == 1, $"{Alerts()} alert(s)");
+		await banWatch.CheckAsync();
 		Check("bans: the same ban at the next look doesn't alert again", Alerts() == 1);
-		faBans = new(0, 0, false, "none", 0);
-		await health.CheckAsync();
-		faBans = new(1, 0, false, "none", 2);
-		await banWatch.CheckAsync();   // what 'bans <account>' does
-		Check("bans: a new ban found by a typed 'bans' alerts once, at once", Alerts() == 2, $"{Alerts()} alert(s)");
-		await health.CheckAsync();
-		Check("bans: ...and health's next look doesn't alert it a second time", Alerts() == 2, $"{Alerts()} alert(s)");
 		faBans = new(1, 1, false, "none", 1);
 		await banWatch.CheckAsync();
 		await health.CheckAsync();
-		Check("bans: another ban while already banned still alerts - once", Alerts() == 3, $"{Alerts()} alert(s)");
-		bcfg.WatchBans = true;
-		int readsBefore = banReads;
-		await health.CheckAsync();
-		Check("bans: with the ban watch on, health leaves the reading to it", banReads == readsBefore);
+		Check("bans: another ban while already banned still alerts - once", (Alerts() == 2) && (FaHeard(bbot.Name, Topic.Health) == 2), $"{Alerts()} alert(s)");
+		bcfg.HealthAlertBans = false;
+		faBans = new(2, 1, false, "none", 0);
+		await banWatch.CheckAsync();
+		Check("bans: with \"Alert on a new ban\" off, a new ban is only in the log", Alerts() == 2, $"{Alerts()} alert(s)");
 	} finally {
 		Log.Published -= faListen;
 		NocatFarm.Config.Live.Global = faRealGlobal;
@@ -25131,7 +25142,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	string[] packOrder = ["BoosterMake", "BoosterPackGames", "BoosterGems", "BoosterKeepGems", "OpenBoosterPacks", "BoosterUnopened"];
 	List<int> packAt = [.. packOrder.Select(n => NocatFarm.Config.Settings.Bot.ToList().FindIndex(d => d.Name == n))];
 	Check("levelling: every booster setting is in \"Booster packs\" - making, then opening, then the ones it doesn't open",
-		packOrder.All(n => NocatFarm.Config.Settings.FindBot(n)!.Section == "Booster packs") && packAt.SequenceEqual(packAt.Order()) && packAt.All(static i => i >= 0)
+		packOrder.All(n => NocatFarm.Config.Settings.FindBot(n)!.Part == "Booster packs") && packAt.SequenceEqual(packAt.Order()) && packAt.All(static i => i >= 0)
 		&& !NocatFarm.Config.Settings.Bot.Any(static d => (d.Section == NocatFarm.Config.Settings.SecBadges) && d.Name.StartsWith("Booster", StringComparison.Ordinal))
 		&& (NocatFarm.Config.Settings.FindBot("BoosterPackGames")!.ShowWhen == "BoosterMake=1")
 		&& (NocatFarm.Config.Settings.FindBot("BoosterUnopened")!.ShowWhen == null)
@@ -25664,7 +25675,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var srDefaults = new NocatFarm.Config.BotConfig();
 		string[] srNew = ["SpareMinSale", "SpareDeclinedDays", "SpareRelistFloorPct", "SpareHumanGapMinMinutes", "SpareHumanGapMaxMinutes", "SpareHumanPerLook"];
 		Check("settings: the new spare items settings are listed per account, with their defaults",
-			srNew.All(static n => NocatFarm.Config.Settings.FindBot(n) is { Section: NocatFarm.Config.Settings.SecSpare })
+			srNew.All(static n => NocatFarm.Config.Settings.FindBot(n) is { Part: NocatFarm.Config.Settings.SecSpare })
 			&& (Math.Abs(srDefaults.SpareMinSale - 0.05f) < 0.0001f) && (srDefaults.SpareDeclinedDays == 30) && (srDefaults.SpareRelistFloorPct == 80)
 			&& (srDefaults.SpareHumanGapMinMinutes == 3) && (srDefaults.SpareHumanGapMaxMinutes == 20) && (srDefaults.SpareHumanPerLook == 3));
 
@@ -25931,11 +25942,11 @@ await CommandSweep.RunAsync(Check);
 	// Every setting of the 1.8.0 sections sits in a small titled box, and the boxes' order names only boxes that exist.
 	string[] lkBoxed = [NocatFarm.Config.Settings.SecSpare, NocatFarm.Config.Settings.SecPoints, NocatFarm.Config.Settings.SecScamWatch,
 		NocatFarm.Config.Settings.SecHealth, NocatFarm.Config.Settings.SecSaleEvents, NocatFarm.Config.Settings.SecPacks];
-	List<string> lkNoBox = [.. NocatFarm.Config.Settings.Bot.Where(d => lkBoxed.Contains(d.Section))
+	List<string> lkNoBox = [.. NocatFarm.Config.Settings.Bot.Where(d => lkBoxed.Contains(d.Part ?? d.Section))
 		.Concat(NocatFarm.Config.Settings.Global.Where(static d => d.Section == NocatFarm.Config.Settings.SecBackups))
 		.Where(static d => string.IsNullOrEmpty(d.Group)).Select(static d => d.Name)];
 	Check("settings page: every spare items, booster packs, Steam Points, scam watch, health, sale events and backups setting is in a titled box", lkNoBox.Count == 0, string.Join(", ", lkNoBox));
-	List<string> lkOrphanOrder = [.. NocatFarm.Config.Settings.GroupOrder.SelectMany(kv => kv.Value.Where(g => !lkAll.Any(d => (d.Section == kv.Key) && (d.Group == g))).Select(g => kv.Key + "/" + g))];
+	List<string> lkOrphanOrder = [.. NocatFarm.Config.Settings.GroupOrder.SelectMany(kv => kv.Value.Where(g => !lkAll.Any(d => ((d.Part ?? d.Section) == kv.Key) && ((d.Group ?? "") == g))).Select(g => kv.Key + "/" + g))];
 	Check("settings page: the box order names only boxes its section has", lkOrphanOrder.Count == 0, string.Join(", ", lkOrphanOrder));
 	Check("settings page: spare items' boxes are What it does, What counts as spare, Never touch, Limits, Selling, Gems",
 		string.Join("|", NocatFarm.Config.Settings.GroupOrder[NocatFarm.Config.Settings.SecSpare]) == "What it does|What counts as spare|Never touch|Limits|Selling|Gems");
@@ -25952,13 +25963,13 @@ await CommandSweep.RunAsync(Check);
 		return named == owner || LkUnder(LkDef(named), owner, depth + 1);
 	}
 
-	List<string> lkLoose = [.. NocatFarm.Config.Settings.Bot.Where(d => (d.Section == NocatFarm.Config.Settings.SecSpare) && (d.Name != "SpareItems") && !LkUnder(d, "SpareItems")).Select(static d => d.Name)];
+	List<string> lkLoose = [.. NocatFarm.Config.Settings.Bot.Where(d => (d.Part == NocatFarm.Config.Settings.SecSpare) && (d.Name != "SpareItems") && !LkUnder(d, "SpareItems")).Select(static d => d.Name)];
 	Check("settings page: with \"Deal with spare items\" off, every other spare-items setting is hidden", lkLoose.Count == 0, string.Join(", ", lkLoose));
 	Check("settings page: the Steam Points, scam watch, health and sale events settings hide under their switch",
-		NocatFarm.Config.Settings.Bot.Where(d => (d.Section == NocatFarm.Config.Settings.SecPoints) && (d.Name != "SpendPoints")).All(d => LkUnder(d, "SpendPoints"))
-		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Section == NocatFarm.Config.Settings.SecScamWatch) && (d.Name != "WatchForScams")).All(d => LkUnder(d, "WatchForScams"))
-		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Section == NocatFarm.Config.Settings.SecHealth) && (d.Name != "WatchHealth")).All(d => LkUnder(d, "WatchHealth"))
-		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Section == NocatFarm.Config.Settings.SecSaleEvents) && (d.Name != "SaleEvents")).All(d => LkUnder(d, "SaleEvents")));
+		NocatFarm.Config.Settings.Bot.Where(d => (d.Part == NocatFarm.Config.Settings.SecPoints) && (d.Name != "SpendPoints")).All(d => LkUnder(d, "SpendPoints"))
+		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Part == NocatFarm.Config.Settings.SecScamWatch) && (d.Name != "WatchForScams")).All(d => LkUnder(d, "WatchForScams"))
+		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Part == NocatFarm.Config.Settings.SecHealth) && (d.Name != "WatchHealth")).All(d => LkUnder(d, "WatchHealth"))
+		&& NocatFarm.Config.Settings.Bot.Where(d => (d.Part == NocatFarm.Config.Settings.SecSaleEvents) && (d.Name != "SaleEvents")).All(d => LkUnder(d, "SaleEvents")));
 	Check("settings page: \"Which game to nominate\" shows only while nominating, and \"Send the sacks to\" only while it sends them",
 		(LkDef("SaleNominatePick").ShowWhen == "SaleAwardsNominate=true") && (LkDef("SpareGemsSendTo").ShowWhen == "SpareGems=3") && LkUnder(LkDef("SpareGemsSendTo"), "SpareItems"));
 
@@ -25990,21 +26001,21 @@ await CommandSweep.RunAsync(Check);
 	Check("settings page: every box title is translated in every language", lkUntitled.Count == 0, string.Join(", ", lkUntitled));
 
 	// The (i) texts: each 1.8.0 setting says what it does, with an example, and every language has the new text (its numbers).
-	string[] lk180 = ["ScamAlertTelegram", "ScamAlertDiscord", "ScamWatchTrustedDevices", "HealthAlertTelegram", "HealthAlertDiscord", "ShareFarmTotals",
+	string[] lk180 = ["SendScamWarnings", "ScamWatchTrustedDevices", "SendHealthAlerts", "ShareFarmTotals",
 		"BackupAuto", "BackupFolder", "BackupPassword", "BackupKeep", "BackupHour", "BackupJitterMinutes", "BackupIncludeSettings", "BackupIncludeAccounts", "BackupIncludeAuthenticators",
-		"BackupIncludeHistory", "BackupIncludeLogs", "BackupNotify", "BackupLocalCopy", "BackupRetryMinutes", "PhoneInstallHint", "IncludeFamilyLibrary", "YieldToFamily", "BorrowFamilyCopy",
+		"BackupIncludeHistory", "BackupIncludeLogs", "BackupMessages", "BackupLocalCopy", "BackupRetryMinutes", "PhoneInstallHint", "IncludeFamilyLibrary", "YieldToFamily", "BorrowFamilyCopy",
 		"FamilyWaitMinutes", "SaleEvents", "SaleEventsHumanToo", "SaleAwardsNominate", "SaleAwardsVote", "ClaimEventItems", "DiscoveryQueue", "SaleQuests", "SaleNextFest", "SaleNominatePick",
 		"SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes", "SaleCheckHours", "SpendPoints", "PointsKeepAtLeast", "PointsWeeklyCap",
 		"PointsBuySeasonalBadge", "PointsBuyOlderBadges", "PointsBadgeMaxLevel", "PointsCheckEveryHours", "WatchForScams", "ScamWatchStopTrades", "ScamWatchCancelOffers", "ScamWatchRevokeKey",
 		"ScamWatchApiKey", "ScamWatchDevices", "ScamWatchDetails", "ScamWatchSessions", "ScamWatchMinMinutes", "ScamWatchMaxMinutes", "WatchHealth", "HealthAlertBans", "HealthAlertTradeHold",
 		"HealthAlertMarket", "HealthAlertLimited", "HealthAlertGuard", "HealthAlertPhone", "HealthMinHours", "HealthMaxHours", "SpareItems", "SpareAction", "SpareGems", "SpareGemsSendTo",
-		"SpareKeepGems", "SpareMaxedBadgeCards", "SpareExtraCards", "SpareKeepCopies", "SpareFoils", "SpareBackgrounds", "SpareKeepBackgrounds", "SpareEmoticons", "SpareKeepEmoticons",
+		"SpareKeepGems", "SpareMaxedBadgeCards", "SpareExtraCards", "SpareKeepCopies", "SpareFoils", "SpareBackgrounds", "SpareEmoticons",
 		"SpareMaxPrice", "SpareNewDays", "SpareKeepItems", "SpareKeepGames", "SpareGemMarginPct", "SparePerRun", "SpareDailyItems", "SpareDailyValue", "SpareRunHours", "SpareGapSeconds",
 		"SparePriceMaxAgeHours", "SpareSellPrice", "SpareDumpPct", "SpareRelistDays", "OpenBoosterPacks", "BoosterOpenNewDays", "BoosterNeverOpen", "BoosterUnopened", "BoosterSendTo", "BoosterCheckHours",
 		// and the ones 1.8.1 added
 		"BoosterMake", "BoosterPackGames", "BoosterKeepGems", "SpareRelistFloorPct", "SpareMinSale", "SpareDeclinedDays", "SpareHumanGapMinMinutes",
 		"SpareHumanGapMaxMinutes", "SpareHumanPerLook"];
-	string[] lkWindowsOnly = ["ScamAlertPopup", "HealthAlertPopup"];
+	string[] lkWindowsOnly = ["NotifyScam", "NotifyHealth"];
 	List<string> lkNoExample = [.. lk180.Where(n => NocatFarm.Config.Settings.Find(n) is { } d && !(d.Tooltip.Contains("for example", StringComparison.OrdinalIgnoreCase) || d.Tooltip.Contains("e.g.", StringComparison.Ordinal)))];
 	Check("tooltips: every 1.8.0 setting's (i) gives a real example", lkNoExample.Count == 0, string.Join(", ", lkNoExample));
 	Check("tooltips: the selling price shows each choice on one example",
@@ -27114,8 +27125,9 @@ await CommandSweep.RunAsync(Check);
 	string[] gbNames = ["DayStartTime", "DayStartVaryMinutes", "BedTime", "BedVaryMinutes"];
 	List<NocatFarm.Config.SettingDef?> gbDefs = [.. gbNames.Select(NocatFarm.Config.Settings.FindBot)];
 	List<string> gbOrder = [.. NocatFarm.Config.Settings.Bot.Select(static d => d.Name)];
-	Check("gets on / bed: four settings in Its day, human mode only, each 'varies by up to' right under its time",
-		gbDefs.All(static d => d is { Section: NocatFarm.Config.Settings.SecHuman, Mode: "legit", Group: "Its day", Advanced: false })
+	Check("gets on / bed: four settings in Its day, human mode only, each 'give or take' (Show advanced) right under its time",
+		gbDefs.All(static d => d is { Section: NocatFarm.Config.Settings.SecHuman, Mode: "legit", Group: "Its day" })
+		&& !gbDefs[0]!.Advanced && gbDefs[1]!.Advanced && !gbDefs[2]!.Advanced && gbDefs[3]!.Advanced
 		&& (gbOrder.IndexOf("DayStartVaryMinutes") == gbOrder.IndexOf("DayStartTime") + 1) && (gbOrder.IndexOf("BedVaryMinutes") == gbOrder.IndexOf("BedTime") + 1),
 		string.Join(", ", gbDefs.Select(static d => $"{d?.Name}:{d?.Group}:{d?.Mode}")));
 	Check("gets on / bed: 'Gets on at' and 'Goes to bed at' are times of day; each 'give or take' is minutes, 0 to 360",
@@ -27622,8 +27634,8 @@ await CommandSweep.RunAsync(Check);
 			(bcRobot.BuyDailyLimit == 1.50f) && (bcRobot.BuyWeeklyLimit == 8.00f) && (bcRobot.BuyCheckHours == 12));
 		string[] bcNames = ["BuyCards", "BuyFullSets", "BuyDailyLimit", "BuyWeeklyLimit", "BuyCheckHours"];
 		var bcDefs = bcNames.Select(static n => NocatFarm.Config.Settings.FindBot(n)).ToList();
-		Check("buying cards: its settings are in their own section, explained, only the switch on the basic page",
-			bcDefs.All(d => (d != null) && (d.Section == "Buying cards") && (d.Tooltip.Length > 40) && (d.Advanced == (d.Name != "BuyCards")))
+		Check("buying cards: its settings are in their own part, explained, the switch and its money limits on the basic page",
+			bcDefs.All(d => (d != null) && (d.Part == "Buying cards") && (d.Tooltip.Length > 40) && (d.Advanced == (d.Name is not ("BuyCards" or "BuyDailyLimit" or "BuyWeeklyLimit"))))
 			&& bcDefs.Where(static d => d!.Name != "BuyCards").All(static d => d!.ShowWhen == "BuyCards=true"));
 
 		// ── reading Steam's answers (as the market gave them, October 2026) ──
@@ -31660,7 +31672,7 @@ static class BuySmartChecks {
 				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("SetSale.Applies(Bot.Cfg, CardBuyer.On(Bot))", StringComparison.Ordinal));
 			var sellDef = NocatFarm.Config.Settings.FindBot("SellSetsForLevels");
 			Check("sell or craft: its setting is with badge crafting, explained with an example",
-				sellDef is { Section: "Badges & selling", Advanced: true, ShowWhen: "CraftBadges=true" } && sellDef.Tooltip.Contains("Buy missing cards", StringComparison.Ordinal)
+				sellDef is { Section: NocatFarm.Config.Settings.SecBadges, Advanced: true, ShowWhen: "CraftBadges=true" } && sellDef.Tooltip.Contains("Buy missing cards", StringComparison.Ordinal)
 				&& sellDef.Tooltip.Contains("For example", StringComparison.Ordinal) && sellDef.Tooltip.Contains("Foil sets are always crafted", StringComparison.Ordinal));
 
 			var offers = NocatFarm.Modules.SetSale.Offers(sell, arcane.ToDictionary(static a => a.Item1, static _ => new List<ulong> { 11 }));
@@ -33676,12 +33688,256 @@ static class SettingsCleanupChecks {
 			Check("settings: 'help' gives the unit too", help.Contains("Between 1 and 180 minutes.", StringComparison.Ordinal) && help.Contains("Default: 2 minutes", StringComparison.Ordinal), help);
 			string js = Src("src/NocatFarm/wwwroot/app.js");
 			Check("settings: the page draws a pair as one row and a unit after the box, from what the schema sends",
-				js.Contains("function pairHtml(lo, hi, values, defaults, depth)", StringComparison.Ordinal) && js.Contains("if (pairShortest(d)) return false;", StringComparison.Ordinal)
+				js.Contains("function pairHtml(lo, hi, values, defaults, depth)", StringComparison.Ordinal) && js.Contains("if (pairShortest(d) || chipRowOf(d, 'rest')) return false;", StringComparison.Ordinal)
 				&& js.Contains("function unitHtml(def)", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Pairs = Settings.RowPairs.Select(", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Units = Settings.Units(),", StringComparison.Ordinal)
 				&& NocatFarm.Config.Settings.UnitWords.Where(u => u != "%").All(u => js.Contains($"case '{u}': return t('{u}');", StringComparison.Ordinal)));
-			//STEP3
+			// ── merged settings: every old key still loads into the new one ──
+			string cfgDir = Path.Combine(root, "config");
+			NocatFarm.Config.GlobalConfig LoadG(string json) {
+				File.WriteAllText(Path.Combine(cfgDir, "nocatFarm.json"), json);
+				return NocatFarm.Config.ConfigStore.LoadGlobal();
+			}
+
+			NocatFarm.Config.BotConfig LoadB(string name, string json) {
+				File.WriteAllText(Path.Combine(cfgDir, name + ".json"), json);
+				return NocatFarm.Config.ConfigStore.LoadBot(name)!;
+			}
+
+			string OnDisk(string name) => File.ReadAllText(Path.Combine(cfgDir, name + ".json"));
+
+			// Scam watch and account health: one chip each, and a pop-up kind each.
+			var alerts = LoadG("""{ "ScamAlertTelegram": false, "ScamAlertDiscord": true, "ScamAlertPopup": false, "HealthAlertTelegram": true, "HealthAlertDiscord": true, "HealthAlertPopup": true }""");
+			NocatFarm.Config.Live.Global = alerts;
+			Check("migration: scam and health alerts - sent anywhere is the chip on, the pop-up switch is the pop-up kind",
+				alerts.SendScamWarnings && !alerts.NotifyScam && alerts.SendHealthAlerts && alerts.NotifyHealth && (alerts.ScamAlertPopup == null) && (alerts.HealthAlertTelegram == null));
+			Check("migration: a channel turned off on its own stays off for that channel until the chip is changed",
+				!NocatFarm.Core.Notifier.OnChannel(NocatFarm.Topic.ScamWatch, "telegram") && NocatFarm.Core.Notifier.OnChannel(NocatFarm.Topic.ScamWatch, "discord")
+				&& NocatFarm.Core.Notifier.OnChannel(NocatFarm.Topic.Health, "telegram") && OnDisk("nocatFarm").Contains("\"ScamAlertTelegram\": false", StringComparison.Ordinal)
+				&& !OnDisk("nocatFarm").Contains("HealthAlertTelegram", StringComparison.Ordinal) && !OnDisk("nocatFarm").Contains("ScamAlertPopup", StringComparison.Ordinal));
+			NocatFarm.Config.Settings.Apply(alerts, G("SendScamWarnings")!, "on");
+			NocatFarm.Config.Settings.Follow(alerts, ["SendScamWarnings"]);
+			Check("migration: ...and changing the chip puts that channel back with the others", NocatFarm.Core.Notifier.OnChannel(NocatFarm.Topic.ScamWatch, "telegram") && (alerts.ScamAlertTelegram == null));
+			var bothOff = LoadG("""{ "ScamAlertTelegram": false, "ScamAlertDiscord": false, "HealthAlertDiscord": false }""");
+			Check("migration: both channels off is the chip off; one is a channel off", !bothOff.SendScamWarnings && (bothOff.ScamAlertTelegram == null) && bothOff.SendHealthAlerts && (bothOff.HealthAlertDiscord == false));
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { SendScamWarnings = false };
+			Check("settings: scam warnings and health alerts follow their chip, like every other kind of message",
+				!NocatFarm.Core.Notifier.Wanted(NocatFarm.Topic.ScamWatch) && NocatFarm.Core.Notifier.Wanted(NocatFarm.Topic.Health)
+				&& new NocatFarm.Config.GlobalConfig().SendScamWarnings && new NocatFarm.Config.GlobalConfig().NotifyScam && (G("ScamAlertTelegram") == null) && (G("HealthAlertPopup") == null)
+				&& Src("src/NocatFarm/wwwroot/app.js").Contains("kinds.push(['SendScamWarnings', 'Scam warnings'], ['SendHealthAlerts', 'Health alerts']);", StringComparison.Ordinal));
+
+			// Backup messages: one choice.
+			Check("migration: \"Send backups\" and \"Tell me\" become one choice - off, only when one fails, after every backup",
+				(LoadG("""{ "SendBackups": false, "BackupNotify": 1 }""").BackupMessages == 0) && (LoadG("""{ "SendBackups": true, "BackupNotify": 1 }""").BackupMessages == 2)
+				&& (LoadG("""{ "SendBackups": true, "BackupNotify": 0 }""").BackupMessages == 1) && (LoadG("""{ "BackupNotify": 1 }""").BackupMessages == 2)
+				&& (LoadG("{}").BackupMessages == 1) && !OnDisk("nocatFarm").Contains("SendBackups", StringComparison.Ordinal));
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { BackupMessages = 0 };
+			Check("settings: backup messages off sends none", !NocatFarm.Core.Notifier.Wanted(NocatFarm.Topic.Backups));
+
+			// The daily summary at one time of day.
+			var daily = LoadG("""{ "DailyReportHour": 7, "DailyReportMinute": 45 }""");
+			Check("migration: the daily summary's hour and minute become one time - 7 and 45 is 07:45",
+				(daily.DailyReportTime == 465) && (daily.DailyReportHour == null) && !OnDisk("nocatFarm").Contains("DailyReportMinute", StringComparison.Ordinal)
+				&& (LoadG("{}").DailyReportTime == 570) && (G("DailyReportTime")?.Kind == NocatFarm.Config.SettingKind.Time));
+			var hourSet = new NocatFarm.Config.GlobalConfig();
+			Check("settings: 'set DailyReportHour 8' still works - the time becomes 08:00",
+				(NocatFarm.Config.Settings.FindGlobal("DailyReportHour") is { } dr) && (NocatFarm.Config.Settings.Apply(hourSet, dr, "8") == null) && (hourSet.DailyReportTime == 480));
+
+			// Updates: "don't look for updates" is the fourth choice.
+			var noLook = LoadG("""{ "CheckForUpdates": false, "UpdateMode": 1 }""");
+			var looks = LoadG("""{ "CheckForUpdates": true, "UpdateMode": 2 }""");
+			Check("migration: \"Notify if an update is available\" off is \"don't look for updates\"; on keeps the choice",
+				(noLook.UpdateMode == NocatFarm.Core.UpdateModes.Off) && !noLook.LooksForUpdates && (looks.UpdateMode == NocatFarm.Core.UpdateModes.AtNight) && looks.LooksForUpdates
+				&& !OnDisk("nocatFarm").Contains("CheckForUpdates", StringComparison.Ordinal) && (G("UpdateMode")!.Choices!.Contains("3 don't look for updates", StringComparison.Ordinal)));
+
+			// Ban watch into account health.
+			var bansOff = LoadB("bans1", """{ "SteamLogin": "x", "WatchBans": false }""");
+			var bansOn = LoadB("bans2", """{ "SteamLogin": "x", "WatchBans": true }""");
+			Check("migration: \"Watch for bans\" off turns account health's ban alert off; on leaves it on; the key goes",
+				!bansOff.HealthAlertBans && bansOn.HealthAlertBans && (bansOff.WatchBans == null) && !OnDisk("bans1").Contains("WatchBans", StringComparison.Ordinal)
+				&& NocatFarm.Modules.AccountHealth.Alerts(bansOn, "bans") && !NocatFarm.Modules.AccountHealth.Alerts(bansOff, "bans")
+				&& (NocatFarm.Config.Settings.FindBot("WatchBans")?.Name == "HealthAlertBans"));
+
+			// "Your other accounts": one list - and nothing that wasn't automatic becomes so.
+			const string Id1 = "76561198000000001", Id2 = "76561198000000002";
+			var masters = LoadB("own1", "{ \"SteamLogin\": \"x\", \"AcceptFromMasters\": true, \"TradeMasters\": \"" + Id1 + ", " + Id2 + "\" }");
+			var notMasters = LoadB("own2", "{ \"SteamLogin\": \"x\", \"AcceptFromMasters\": false, \"TradeMasters\": \"" + Id1 + "\" }");
+			var listed = LoadB("own3", "{ \"SteamLogin\": \"x\", \"AcceptFromMasters\": true, \"TradeMasters\": \"" + Id1 + "\", \"AutoTradeWith\": \"farm1:to\" }");
+			Check("migration: \"Accept anything from your own accounts\" with them listed puts them in \"Your other accounts\", both ways - exactly as before",
+				(masters.AutoTradeWith == Id1 + ", " + Id2) && (masters.TradeMasters == Id1 + ", " + Id2) && (masters.AcceptFromMasters == null) && !OnDisk("own1").Contains("AcceptFromMasters", StringComparison.Ordinal));
+			Check("migration: ...off, nobody is added - an empty list stays nobody; a list already written wins",
+				(notMasters.AutoTradeWith.Length == 0) && (listed.AutoTradeWith == "farm1:to"));
+
+			var ownBot = new NocatFarm.Core.Bot("clean2", new NocatFarm.Config.BotConfig { SteamLogin = "y", TradeMasters = Id1 });
+			made.Add(ownBot);
+			var ownTrading = new NocatFarm.Modules.Trading(ownBot);
+			bool nobody = ownTrading.Allowed().Count == 0;
+			ownBot.Cfg.AutoTradeWith = Id2 + ":from";
+			Dictionary<ulong, NocatFarm.Modules.Trading.Way> some = ownTrading.Allowed();
+			Check("safety: a new account takes no items from anyone - \"Send items to\" never lets anybody take, and an empty list is nobody",
+				nobody && (new NocatFarm.Config.BotConfig().AutoTradeWith.Length == 0) && (some.Count == 1) && (some[ulong.Parse(Id2)] == NocatFarm.Modules.Trading.Way.From)
+				&& (B("AcceptFromMasters") == null) && (B("AutoTradeWith")?.Label == "Your other accounts") && (B("TradeMasters")?.Label == "Send items to") && B("TradeMasters")!.Advanced);
+
+			// "Send items to" takes a name; the gem sacks and unopened packs go there when their own is empty.
+			var sendMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+			var sendManaged = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+				.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(sendMgr)!;
+			var mainBot = new NocatFarm.Core.Bot("mainacct", new NocatFarm.Config.BotConfig { SteamLogin = "m" });
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(mainBot, 76561198000000077UL);
+			made.Add(mainBot);
+			sendManaged["mainacct"] = mainBot;
+			var sender = new NocatFarm.Config.BotConfig { TradeMasters = "mainacct" };
+			var byId = new NocatFarm.Config.BotConfig { TradeMasters = "76561198000000077" };
+			Check("settings: \"Send items to\" takes an account name or a SteamID64, and the sacks and packs follow it when their own is empty",
+				(NocatFarm.Core.Looting.SendToId(sender, sendMgr) == 76561198000000077UL) && (NocatFarm.Core.Looting.SendToName(byId, "", "other", sendMgr) == "mainacct")
+				&& (NocatFarm.Core.Looting.SendToName(byId, "  alt ", "", sendMgr) == "alt") && (NocatFarm.Core.Looting.SendToName(byId, "", "mainacct", sendMgr) == "")
+				&& (NocatFarm.Core.Looting.SendToId(new NocatFarm.Config.BotConfig(), sendMgr) == 0));
+
+			// Spare items: one keep-count, the largest.
+			var keep = LoadB("keep1", """{ "SteamLogin": "x", "SpareKeepCopies": 1, "SpareKeepBackgrounds": 3, "SpareKeepEmoticons": 2 }""");
+			Check("migration: the three keep-counts become one - the largest, the one that keeps the most",
+				(keep.SpareKeepCopies == 3) && (keep.SpareKeepBackgrounds == null) && !OnDisk("keep1").Contains("SpareKeepEmoticons", StringComparison.Ordinal)
+				&& (NocatFarm.Core.SpareRules.From(keep).KeepBackgrounds == 3) && (NocatFarm.Core.SpareRules.From(keep).KeepEmoticons == 3)
+				&& (B("SpareKeepCopies")?.Label == "Keep this many of each item") && (B("SpareKeepBackgrounds") == null));
+			Check("settings: what counts as spare is one row of chips - the five switches stay settings of their own",
+				NocatFarm.Config.Settings.ChipRows["What counts as spare"].All(n => B(n) is { Kind: NocatFarm.Config.SettingKind.Bool })
+				&& Src("src/NocatFarm/wwwroot/app.js").Contains("function chipRowHtml(first, defs, values, defaults, depth)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("ChipRows = Settings.ChipRows,", StringComparison.Ordinal));
+			Check("settings: a proxy is one row - its user name and password open under \"needs a sign-in\"",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("const PROXY_SIGNIN = { WebProxy: ['WebProxyUsername', 'WebProxyPassword'], AccountProxy: ['AccountProxyUsername', 'AccountProxyPassword'] };", StringComparison.Ordinal));
+
+			// What follows a change - the dashboard and 'set' alike.
+			var follow = new NocatFarm.Config.BotConfig { AutoReply = "afk", AutoReplyEnabled = true, CustomGameName = "x", CustomGameNameEnabled = true };
+			NocatFarm.Config.Settings.Apply(follow, B("ClearNotifications")!, "off");
+			NocatFarm.Config.Settings.Apply(follow, B("AutoReply")!, "");
+			NocatFarm.Config.Settings.Apply(follow, B("CustomGameName")!, " ");
+			NocatFarm.Config.Settings.Follow(follow, ["ClearNotifications", "AutoReply", "CustomGameName"]);
+			Check("settings: one switch clears both of Steam's counters; an emptied reply or game name switches its switch off",
+				!follow.ClearInventoryNotifications && !follow.AutoReplyEnabled && !follow.CustomGameNameEnabled && B("ClearInventoryNotifications")!.Hidden
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Settings.Follow(body, [.. Settings.Bot.Where(", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Commands.cs").Contains("Settings.Follow(bot.Cfg, [def.Name]);", StringComparison.Ordinal));
+			var keepOn = new NocatFarm.Config.BotConfig { AutoReply = "afk", AutoReplyEnabled = true };
+			NocatFarm.Config.Settings.Follow(keepOn, ["AutoReplyOncePerDay"]);
+			Check("settings: ...a reply with text in it is left alone", keepOn.AutoReplyEnabled);
+
+			// Shown only while what they depend on is on.
+			(string Name, string When)[] needs = [("CustomGameName", "CustomGameNameEnabled=true"), ("PlayWhileFarming", "CustomGameNameEnabled=true"),
+				("AutoReply", "AutoReplyEnabled=true"), ("RotateEveryHours", "RotateIdleGames=true"), ("FarmHoursPerDay", "FarmInSittings=true"),
+				("OfflineIdleGames", "OfflineIdleAtNight=true"), ("ResumeDelayMinutes", "PauseWhenYouPlay=true"), ("DonationsWhileAsleep", "AcceptDonations=true"),
+				("IgnoreSuspiciousInvites", "AcceptFriendRequests=true"), ("FriendRequestDelayMinMinutes", "AcceptFriendRequests=true"),
+				("Rep4RepDailyCap", "Rep4Rep=true"), ("AchievementBoost", "UnlockAchievements=true"),
+				("AchievementMaxCompletionPct", "UnlockAchievements=true"), ("AchievementNeverGames", "UnlockAchievements=true"),
+				("YieldToFamily", "IncludeFamilyLibrary=true"), ("BorrowFamilyCopy", "IncludeFamilyLibrary=true"), ("FamilyWaitMinutes", "IncludeFamilyLibrary=true"),
+				("SendAroundHour", "SendEveryHours!=0")];
+			(string Name, string When)[] needsGlobal = [("StuckAlarmHours", "StuckAlarm=true"), ("WeeklyReportDay", "WeeklyReport=true"), ("MiniOnTop", "Tray=true"),
+				("NotifyEarnings", "TrayNotifications=true"), ("NotifyScam", "TrayNotifications=true"), ("Rep4RepApiToken", "Rep4RepEnabled=true")];
+			string[] wrongWhen = [.. needs.Where(n => B(n.Name)?.ShowWhen != n.When).Select(n => n.Name)
+				.Concat(needsGlobal.Where(n => G(n.Name) is { } d && (d.ShowWhen != n.When)).Select(n => n.Name))];
+			Check("settings: what does nothing while its switch is off shows only once it's on", wrongWhen.Length == 0, string.Join(", ", wrongWhen));
+			// Automatic pack making skips the never-open games, and the new-pack days decide which sealed packs are sent or sold.
+			Check("settings: the never-open games and the new-pack days still show with opening off - they matter then too",
+				(B("BoosterNeverOpen")?.ShowWhen == null) && (B("BoosterOpenNewDays")?.ShowWhen == null));
+			Check("settings: Telegram's and Discord's commands show once there's a bot to take them",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("function chatCommandsShown(def)", StringComparison.Ordinal));
+
+			// Plain words, the same words everywhere.
+			string[] humanOnly = [.. bot.Where(d => (d.Mode == "legit") && d.Tooltip.StartsWith("Human mode only", StringComparison.Ordinal)).Select(d => d.Name)];
+			Check("settings: \"human mode\" and \"robot mode\" - no \"Bot-like\", no \"Human mode only.\" on what only shows in human mode",
+				(humanOnly.Length == 0) && !bot.Concat(global).Any(d => d.Tooltip.Contains("Bot-like", StringComparison.Ordinal))
+				&& B("LegitMode")!.Tooltip.Contains("Robot-mode settings are hidden", StringComparison.Ordinal), string.Join(", ", humanOnly));
+			(string Name, string Label)[] relabels = [("Enabled", "Run this account"), ("LegitMode", "Play like a person (human mode)"),
+				("IUseThisAccount", "I also use this account in my own Steam app"), ("BlacklistedGames", "Never play these games"),
+				("AchievementBoost", "Achievement hunt"), ("ShowInventoryValue", "Show inventory value"), ("CardSwaps", "Swap spare cards with other nocat.farm users"),
+				("Rep4RepDailyCap", "Comments a day, at most"), ("SpareKeepGems", "Gems never packed, sent or sold"),
+				("BoosterKeepGems", "Gems packs never use"), ("LongerRhythms", "Quiet spells now and then"), ("ClearNotifications", "Clear Steam's notification counters")];
+			(string Name, string Label)[] relabelsGlobal = [("Rep4RepEnabled", "Use rep4rep"), ("MaxConcurrentFarming", "Accounts farming at once"), ("MarketCurrency", "Show inventory values in"),
+				("WebSignInCode", "Ask for a Telegram code when signing in from outside"), ("DailyReportTime", "Daily summary at")];
+			string[] notRelabelled = [.. relabels.Where(r => B(r.Name)?.Label != r.Label).Select(r => r.Name).Concat(relabelsGlobal.Where(r => G(r.Name)?.Label != r.Label).Select(r => r.Name))];
+			Check("settings: the labels say what they do", notRelabelled.Length == 0, string.Join(", ", notRelabelled));
+			Check("settings: money says it's the wallet's currency in plain words, and $5 is the equivalent of US$5",
+				new[] { "SpareMaxPrice", "SpareDailyValue", "SpareMinSale" }.All(n => B(n)!.Tooltip.Contains("this account's Steam wallet currency", StringComparison.Ordinal) && !B(n)!.Tooltip.Contains("use the same value in your own currency", StringComparison.Ordinal))
+				&& B("HoursUntilCardDrops")!.Tooltip.Contains("US$5", StringComparison.Ordinal) && B("HealthAlertLimited")!.Tooltip.Contains("US$5", StringComparison.Ordinal));
+			// ── order: 12 sections per account, 9 global; money and items together at the end ──
+			string[] botSections = [.. bot.Select(d => d.Section).Distinct()];
+			string[] globalSections = [.. global.Select(d => d.Section).Distinct()];
+			Check("settings: 12 sections per account, in order - everyday first, the money and items features together at the end, the log last",
+				botSections.SequenceEqual(["Account", "Human mode", "What it plays", "Trading cards", "Free stuff", "Badges", "Achievements", "Safety", "Trades",
+					"Friends & messages", "Items and spending", "Logging"]), string.Join(" | ", botSections));
+			Check("settings: 9 global sections, in order",
+				globalSections.SequenceEqual(["General", "Notifications", "Updates & plugins", "Backups", "All accounts", "rep4rep", "Dashboard & phone",
+					"Discord profile", "Steam connection & logs"]), string.Join(" | ", globalSections));
+			string[] items = [.. bot.Where(d => d.Section == "Items and spending").Select(d => d.Part ?? "").Distinct()];
+			Check("settings: spare items, booster packs, Steam Points and buying cards are parts of one section at the end",
+				items.SequenceEqual(["Spare items", "Booster packs", "Steam Points", "Buying cards"])
+				&& new[] { "SpareItems", "BoosterMake", "OpenBoosterPacks", "SpendPoints", "BuyCards" }.All(n => B(n)!.Section == "Items and spending"), string.Join(", ", items));
+			Check("settings: every part's settings come together, one run each",
+				bot.Concat(global).Where(d => d.Part != null).GroupBy(d => (d.Section, d.Part)).All(g => {
+					IReadOnlyList<NocatFarm.Config.SettingDef> list = bot.Contains(g.First()) ? bot : global;
+					List<int> at = [.. g.Select(d => list.ToList().IndexOf(d))];
+					return at.Max() - at.Min() == at.Count - 1;
+				}));
+			Check("settings: no setting is in two places - one name, one section, one list",
+				(bot.Select(d => d.Name).Distinct().Count() == bot.Count) && (global.Select(d => d.Name).Distinct().Count() == global.Count)
+				&& bot.Select(d => d.Name).Intersect(global.Select(d => d.Name)).SequenceEqual(["StatusEveryMinutes", "StatusQuietEveryMinutes"]));
+			string[] noTip = [.. bot.Concat(global).Where(d => !d.Hidden && (d.Tooltip.Trim().Length < 20)).Select(d => d.Name)];
+			Check("settings: every setting on the page has an explanation", noTip.Length == 0, string.Join(", ", noTip));
+			Check("settings: the page draws parts under their own heading, each part's boxes in its own order",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("function partsHtml(section, fields, values, defaults)", StringComparison.Ordinal)
+				&& NocatFarm.Config.Settings.GroupOrder.ContainsKey("Spare items") && NocatFarm.Config.Settings.GroupOrder.ContainsKey("Trades"));
+
+			// ── the basic view: what a new account shows with "Show advanced" off ──
+			var newRobot = new NocatFarm.Config.BotConfig();
+			var newHuman = new NocatFarm.Config.BotConfig { LegitMode = true };
+			NocatFarm.Config.Settings.ApplyLegitMode(newHuman, false);
+			NocatFarm.Config.Settings.NewHumanAccount(newHuman);
+			List<NocatFarm.Config.Settings.ViewRow> robotRows = NocatFarm.Config.Settings.BasicView(false, newRobot, rep4rep: false);
+			List<NocatFarm.Config.Settings.ViewRow> humanRows = NocatFarm.Config.Settings.BasicView(false, newHuman, rep4rep: false);
+			List<NocatFarm.Config.Settings.ViewRow> globalRows = NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig(), rep4rep: false);
+			string Names(List<NocatFarm.Config.Settings.ViewRow> r) => string.Join(", ", r.Select(x => x.Name));
+			Check("settings: a new robot account shows 28 settings with Show advanced off (it was 46)", robotRows.Count == 28, $"{robotRows.Count}: {Names(robotRows)}");
+			Check("settings: a new human-mode account shows about 33 (it was 55)", humanRows.Count is >= 31 and <= 35, $"{humanRows.Count}: {Names(humanRows)}");
+			Check("settings: the global settings show 14 (it was 31)", globalRows.Count == (OperatingSystem.IsWindows() ? 14 : 13), $"{globalRows.Count}: {Names(globalRows)}");
+			Check("settings: ...in 11 sections on a new account (the log is all advanced), 6 global",
+				(robotRows.Select(r => r.Section).Distinct().Count() == 11) && (globalRows.Select(r => r.Section).Distinct().Count() == 6),
+				$"{robotRows.Select(r => r.Section).Distinct().Count()} / {globalRows.Select(r => r.Section).Distinct().Count()}");
+			string[] mustShow = ["Enabled", "SteamLogin", "SteamPassword", "OnlineStatus", "IUseThisAccount", "LegitMode", "IdleGames", "IdleWholeLibrary", "RotateIdleGames",
+				"SkipRefundableGames", "BlacklistedGames", "CustomGameNameEnabled", "FarmCards", "ClaimFree", "SaleEvents", "CraftBadges", "UnlockAchievements", "WatchForScams",
+				"WatchHealth", "AcceptDonations", "CardSwaps", "AutoTradeWith", "AutoReplyEnabled", "SpareItems", "BoosterMake", "OpenBoosterPacks", "SpendPoints", "BuyCards"];
+			Check("settings: ...and they are the ones that matter on day one", mustShow.All(n => robotRows.Any(r => r.Name == n)), string.Join(", ", mustShow.Where(n => !robotRows.Any(r => r.Name == n))));
+			newRobot.SpendPoints = true;
+			newRobot.BuyCards = true;
+			Check("settings: once spending is on, its money limits show without Show advanced",
+				new[] { "PointsKeepAtLeast", "PointsWeeklyCap", "BuyDailyLimit", "BuyWeeklyLimit" }.All(n => NocatFarm.Config.Settings.BasicView(false, newRobot, false).Any(r => r.Name == n)));
+
+			// ── the defaults that changed - for new accounts only ──
+			var fresh = new NocatFarm.Config.BotConfig();
+			Check("defaults: a new account protects refunds, and starts with the auto-reply and the custom game name off",
+				fresh.SkipRefundableGames && !fresh.AutoReplyEnabled && !fresh.CustomGameNameEnabled && fresh.JoinGroup);
+			Check("defaults: a new human-mode account doesn't join the nocat.farm group; a robot one still does",
+				!newHuman.JoinGroup && new NocatFarm.Config.BotConfig().JoinGroup
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Settings.NewHumanAccount(cfg);", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Commands.Copy.cs").Contains("Settings.NewHumanAccount(cfg);", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Config/Import/IdlerImport.cs").Contains("Settings.NewHumanAccount(bot);", StringComparison.Ordinal));
+			var oldFile = LoadB("old1", """{ "SteamLogin": "x", "AutoReply": "afk" }""");
+			var chose = LoadB("old2", """{ "SteamLogin": "x", "SkipRefundableGames": false, "AutoReplyEnabled": false, "CustomGameNameEnabled": true }""");
+			Check("defaults: an account from before keeps what it ran on - the old defaults where its file doesn't say",
+				!oldFile.SkipRefundableGames && oldFile.AutoReplyEnabled && oldFile.CustomGameNameEnabled && OnDisk("old1").Contains("\"SkipRefundableGames\": false", StringComparison.Ordinal)
+				&& !chose.SkipRefundableGames && !chose.AutoReplyEnabled && chose.CustomGameNameEnabled);
+			NocatFarm.Config.ConfigStore.SaveBot("new1", new NocatFarm.Config.BotConfig { SteamLogin = "x" });
+			var newOne = NocatFarm.Config.ConfigStore.LoadBot("new1")!;
+			Check("defaults: ...and a new account's file keeps the new ones", newOne.SkipRefundableGames && !newOne.AutoReplyEnabled && !newOne.CustomGameNameEnabled);
+
+			// Must not change: everything that spends, gives away or opens stays off, with its pop-up; scam watch stays on.
+			Check("safety: spare items, Steam Points, buying cards, card swaps, Open in Steam, booster packs still off by default; money limits as they were",
+				!fresh.SpareItems && !fresh.SpendPoints && !fresh.BuyCards && !fresh.CardSwaps && !fresh.SteamOpenButton && (fresh.BoosterMake == 0) && (fresh.OpenBoosterPacks == 0)
+				&& !fresh.AcceptFairCardSwaps && !fresh.DeclineOtherTrades && (fresh.ClaimFree == 0) && (Math.Abs(fresh.BuyDailyLimit - 1.5f) < 0.001) && (Math.Abs(fresh.BuyWeeklyLimit - 8f) < 0.001)
+				&& (fresh.PointsWeeklyCap == 3000) && (fresh.PointsKeepAtLeast == 1000) && (Math.Abs(fresh.SpareMaxPrice - 0.25f) < 0.001) && (fresh.SpareDailyItems == 10)
+				&& (Math.Abs(fresh.SpareDailyValue - 1f) < 0.001) && (Math.Abs(fresh.SpareMinSale - 0.05f) < 0.001) && (Math.Abs(fresh.CardSwapMaxLoss - 0.01f) < 0.001) && (fresh.CardSwapsPerDay == 5)
+				&& fresh.WatchForScams && fresh.ScamWatchStopTrades && fresh.ScamWatchCancelOffers && !fresh.ScamWatchRevokeKey && fresh.WatchHealth
+				&& !new NocatFarm.Config.GlobalConfig().SteamOpenEveryAccount && !new NocatFarm.Config.GlobalConfig().WebRemoteAccess && (new NocatFarm.Config.GlobalConfig().WebRemoteOffAfter == 5)
+				&& (new NocatFarm.Config.GlobalConfig().WebHost == "127.0.0.1") && !new NocatFarm.Config.GlobalConfig().PluginsEnabled && (fresh.CommandMasters.Length == 0));
+			//STEP5
 		} finally {
 			foreach (NocatFarm.Core.Bot b in made) {
 				await b.DisposeAsync();

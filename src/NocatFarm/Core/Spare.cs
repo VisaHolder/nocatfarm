@@ -112,9 +112,9 @@ public sealed record SpareRules {
 		ExtraCards = c.SpareExtraCards,
 		KeepCopies = Math.Clamp(c.SpareKeepCopies, 0, 10),
 		Backgrounds = c.SpareBackgrounds,
-		KeepBackgrounds = Math.Clamp(c.SpareKeepBackgrounds, 0, 10),
+		KeepBackgrounds = Math.Clamp(c.SpareKeepCopies, 0, 10),   // one keep-count for every kind since 1.8.2
 		Emoticons = c.SpareEmoticons,
-		KeepEmoticons = Math.Clamp(c.SpareKeepEmoticons, 0, 10),
+		KeepEmoticons = Math.Clamp(c.SpareKeepCopies, 0, 10),
 		Foils = c.SpareFoils,
 		MaxPriceCents = Math.Clamp(Cents(Math.Clamp(c.SpareMaxPrice, 0f, 1_000_000f)), 1, 100_000_000),   // the wallet's own currency: yen, won and rupiah need big numbers
 		NewDays = Math.Clamp(c.SpareNewDays, 0, 30),

@@ -1326,6 +1326,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			GroupOrder = Settings.GroupOrder,   // the order of the titled boxes in a section
 			Pairs = Settings.RowPairs.Select(static p => new[] { p.Min, p.Max }),   // "shortest / longest" drawn as one row
 			Units = Settings.Units(),   // "minutes" after the box, the label doesn't say it
+			ChipRows = Settings.ChipRows,   // several switches drawn as one row of chips
+			PanelRows = Settings.PanelRows,   // drawn by their section's own panel, not as rows
 
 			// Sent rather than repeated in app.js. The same palette paints the window, the console board and
 			// this page, and a second copy in JavaScript is precisely how the two "what is this account doing"
@@ -2155,6 +2157,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
 				cfg.LegitMode = true;
 				Settings.ApplyLegitMode(cfg, false);
+				Settings.NewHumanAccount(cfg);
 			}
 
 			cfg.IUseThisAccount = body.SelfSignIn;
@@ -2841,6 +2844,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
+			// What goes with a change (one switch for both notification counters, an emptied reply switching its switch off).
+			Settings.Follow(body, [.. Settings.Bot.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d))).Select(static d => d.Name)]);
+
 			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
 			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
 			// now, from the same helper the console uses, so the two paths cannot drift apart again.
@@ -2901,6 +2907,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 			}
 
 			List<string> adjusted = Clamp(body, Settings.Global);
+
+			// What goes with a change: the scam or health chip changed takes back a channel left off on its own from before.
+			Settings.Follow(body, [.. Settings.Global.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d))).Select(static d => d.Name)]);
 
 			// 1.8.2: Open in Steam on every account is turned on only through its preview (/api/steam-open/everyone), never by
 			// a plain save; off clears its go-ahead.

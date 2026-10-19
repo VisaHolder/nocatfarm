@@ -340,7 +340,7 @@ async function refreshInventory(name) {
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
   // Where the switch really is: under Inventory & bans, and only with Show advanced ticked - it said Trades.
-  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick "Work out what its inventory is worth".', b.Name);
+  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick "Show inventory value".', b.Name);
   if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
   if (!rows.length) return t('Nothing with a market price in this inventory.');
@@ -2157,8 +2157,8 @@ function renderAuthList() {
 
   if (rules && d.Rules) {
     rules.innerHTML = `<p class="muted small auth-rules">${d.Rules.length
-      ? tf('Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades ("Trade by itself with").', d.Rules.map((r) => `<b>${esc(r.Who)}</b> (${esc(t(r.Way))})`).join(', '))
-      : esc(t('Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades ("Trade by itself with").'))}</p>`;
+      ? tf('Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades ("Your other accounts").', d.Rules.map((r) => `<b>${esc(r.Who)}</b> (${esc(t(r.Way))})`).join(', '))
+      : esc(t('Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades ("Your other accounts").'))}</p>`;
   }
 }
 
@@ -3121,8 +3121,6 @@ async function tutSaveUpdates() {
   // Anything else is left as it is.
   const mode = d.autoUpdate ? 2 : (g.UpdateMode === 2 ? (g.UpdateWhenAsked === 1 ? 0 : 1) : g.UpdateMode);
   if (mode !== g.UpdateMode) changes.UpdateMode = mode;
-  // Looking for updates switched off stops installing them too - so switching installing on has to switch it back on.
-  if (mode === 2 && g.CheckForUpdates === false) changes.CheckForUpdates = true;
 
   if (tutorialMode === 'advanced') {
     const clamp = (v, lo, hi, was) => (Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : was);
@@ -4130,7 +4128,7 @@ function phoneSafeCard(p) {
       <li>${esc(t('Ten wrong passwords from the internet in an hour, from any addresses, pause signing in from outside for an hour.'))}</li>
       ${p.OffAfter > 0 ? `<li>${esc(tf('{0} wrong passwords or codes from the internet in a day switch Open from anywhere off by itself.', p.OffAfter))}</li>` : ''}
       <li>${esc(t('Every sign-in from outside your home is sent to Telegram and Discord.'))}</li>
-      <li>${esc(!p.SignInCode ? t('Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.')
+      <li>${esc(!p.SignInCode ? t('Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.')
         : p.CodeReady ? t('From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.')
         : t('Connect Telegram and signing in from outside will also take a code sent to it.'))}</li>
       <li>${esc(t("It's plain http, not encrypted - use a password you don't use anywhere else."))}</li>
@@ -4788,7 +4786,8 @@ function selectSettings(name) {
 // Matched on the data-section attribute, not the heading text: the heading is translated and the jump link
 // carries the English name, so comparing what is on screen stopped finding anything in every language but one.
 function jumpTo(section) {
-  const find = () => document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`);
+  const find = () => document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`)
+    || document.querySelector(`#settingsBody .section h4[data-part="${CSS.escape(section)}"]`);
   let target = find();
 
   // A section made only of advanced settings isn't drawn while Show advanced is off (and a search or "only
@@ -4810,10 +4809,10 @@ function settingsDefs() {
   const all = (settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden);
   if (r4rOn()) return all;
 
-  // rep4rep is switched off: drop both its sections ("rep4rep account" and "rep4rep commenting") from the
+  // rep4rep is switched off: drop its section ("rep4rep") and each account's "rep4rep commenting" part from the
   // settings entirely - jump links and all - but keep the master toggle itself so it can be turned back on.
   return all.filter((d) =>
-    (d.Section !== 'rep4rep account' && d.Section !== 'rep4rep commenting') || d.Name === 'Rep4RepEnabled');
+    (d.Section !== REP4REP_GLOBAL && d.Part !== 'rep4rep commenting') || d.Name === 'Rep4RepEnabled');
 }
 function settingsValues() { return settingsTarget === GLOBAL ? config.Global : config.Bots[settingsTarget]; }
 function settingsDefaults() { return settingsTarget === GLOBAL ? schema.GlobalDefaults : schema.BotDefaults; }
@@ -4854,8 +4853,11 @@ function renderSettings() {
     .filter((d) => !(d.Mode === 'rage' && jumpLegit) && !(d.Mode === 'legit' && !jumpLegit)
       && !(settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name) && !PANEL_SECTIONS.has(d.Section)))
     .map((d) => d.Section))];
+  const partsOf = (n) => [...new Set(settingsDefs().filter((d) => d.Section === n && d.Part
+    && !(d.Mode === 'rage' && jumpLegit) && !(d.Mode === 'legit' && !jumpLegit)).map((d) => d.Part))];
   const jump = `<div class="jump">${sectionNames.map((n) =>
-    `<a class="j" role="button" tabindex="0" data-jump="${esc(n)}">${esc(t(n))}</a>`).join('')}</div>`;
+    `<a class="j" role="button" tabindex="0" data-jump="${esc(n)}">${esc(t(n))}</a>` + partsOf(n).map((p) =>
+      `<a class="j sub" role="button" tabindex="0" data-jump="${esc(p)}">${esc(t(p))}</a>`).join('')).join('')}</div>`;
 
   $('settingsNavBots').innerHTML = Object.keys(config.Bots).length
     ? Object.keys(config.Bots).map((n) =>
@@ -4889,17 +4891,22 @@ function renderSettings() {
   const foundOne = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
     || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q)
     || (!!d.Range && (t(d.Range).toLowerCase().includes(q) || d.Range.toLowerCase().includes(q)));
-  // A "shortest / longest" pair is one row, so either half found or changed shows it.
-  const found = (d) => foundOne(d) || (!!pairLongest(d) && foundOne(pairLongest(d)));
-  const changedRow = (d) => isChanged(d, values, defaults) || (!!pairLongest(d) && isChanged(pairLongest(d), values, defaults));
+  // A "shortest / longest" pair is one row, and so is a chip row - either half found or changed shows it.
+  const rowMates = (d) => [d, ...(pairLongest(d) ? [pairLongest(d)] : []), ...(chipRowOf(d, 'first') || []).filter((x) => x !== d)];
+  const found = (d) => rowMates(d).some(foundOne);
+  const changedRow = (d) => rowMates(d).some((x) => isChanged(x, values, defaults));
 
   for (const section of sections) {
     const legitOn = settingsTarget !== GLOBAL && !!liveValue('LegitMode', values);
 
     const fields = defs.filter((d) => {
       if (d.Section !== section) return false;
-      // The "longest" of a pair is drawn in the row of its "shortest" ("Breaks: 2 to 30 minutes").
-      if (pairShortest(d)) return false;
+      // The "longest" of a pair is drawn in the row of its "shortest" ("Breaks: 2 to 30 minutes"), and the switches of a
+      // chip row ("What counts as spare") in the row of its first.
+      if (pairShortest(d) || chipRowOf(d, 'rest')) return false;
+      // A proxy's user name and password only once it needs a sign-in; Telegram's and Discord's commands only once there's
+      // a bot to take them.
+      if (!proxyPartShown(d, values) || !chatCommandsShown(d)) return false;
       // Human mode hides the settings that would give the account away, and the human-only settings stay out
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
@@ -4924,7 +4931,7 @@ function renderSettings() {
     const panelHit = intro && settingsTarget === GLOBAL && (q || onlyChanged) && defs.some((d) => d.Section === section
       && PANEL_ROWS.has(d.Name) && found(d) && (!onlyChanged || isChanged(d, values, defaults)));
     if (!fields.length && !panelHit && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
-    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${groupedFields(section, fields, values, defaults)}</div>`;
+    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${partsHtml(section, fields, values, defaults)}</div>`;
   }
 
   // Only on a real account, and only when nothing is being searched or filtered - it is not a setting and
@@ -5115,7 +5122,7 @@ function pacerLine(live, name, hrs, done) {
     case 'SteamOnly':
       return `<p class="muted small">${tf('Playing {0} — {1}; the rest can only be awarded by Steam itself.', name, done)}</p>`;
     case 'Capped': {
-      const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Finish no more than' }, 'label'));
+      const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Never complete more of a game than' }, 'label'));
       return `<p class="muted small">${tf('Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.', name, done, live.CeilingPercent, setting)}</p>`;
     }
     case 'NeedsHours':
@@ -5165,8 +5172,10 @@ function sectionIntro(section, values) {
       ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
       ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts'],
       ['SendPoints', 'Steam Points']];
-    kinds.push(['SendBackups', 'Backups']);
     kinds.push(['SendItems', 'Spare items & packs']);   // 1.8.0: gems, sales and booster packs
+    // 1.8.2: scam watch and account health, where they were two sections of three switches each. Backups have their own
+    // choice under Backups ("Backup messages").
+    kinds.push(['SendScamWarnings', 'Scam warnings'], ['SendHealthAlerts', 'Health alerts']);
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
       <b>${esc(t('Get notified on Discord or Telegram'))}</b>
@@ -5194,16 +5203,21 @@ function sectionIntro(section, values) {
   }
 
   // Where the files are, one click away - the log on screen is only the last few hundred lines.
-  if (section === 'Logging' && settingsTarget === GLOBAL) {
+  if (section === 'Logging' && settingsTarget === GLOBAL) {   // the Logging part of "Steam connection & logs"
     return `<div class="explain"><b>${esc(t('Log files'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.'))}</p>
       <button class="ghost" onclick="openLogFolder()">${esc(t('Open the log folder'))}</button></div>`;
   }
 
-  if (section === 'Dashboard' && settingsTarget === GLOBAL) {
+  if (section === 'Dashboard & phone' && settingsTarget === GLOBAL) {
     return `<div class="explain"><b>${esc(t('Open on your phone'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.'))}</p>
       <button class="ghost" onclick="go('phone')">${esc(t('Open on your phone'))}</button></div>`;
+  }
+
+  // The features that sell, open, buy, swap or spend: together at the end, and all off until you turn them on.
+  if (section === 'Items and spending' && settingsTarget !== GLOBAL) {
+    return `<div class="explain">${esc(t('Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.'))}</div>`;
   }
 
   // Steam Points: spending is permanent, so the section says plainly where this account stands. One switch: turning it on
@@ -6780,6 +6794,20 @@ function dayWindows(start, startVary, bed, bedVary) {
   return { on: span(Math.max(0, at - sv), Math.min(1439, at + sv)), bed: span(Math.max(0, bedAt - bv), Math.min(2879, bedAt + bv)) };
 }
 
+// A section's settings, each run of one part (Part: "Spare items" in "Items and spending") under that part's own heading and
+// intro - the part's boxes ordered by its own GroupOrder - and what's straight in the section as before.
+function partsHtml(section, fields, values, defaults) {
+  const runs = [];
+  fields.forEach((d) => {
+    const part = d.Part || '';
+    if (!runs.length || runs[runs.length - 1].part !== part) runs.push({ part, fields: [] });
+    runs[runs.length - 1].fields.push(d);
+  });
+  return runs.map((r) => (r.part
+    ? `<div class="part"><h4 data-part="${esc(r.part)}">${esc(t(r.part))}</h4>${sectionIntro(r.part, values)}${groupedFields(r.part, r.fields, values, defaults)}</div>`
+    : groupedFields(section, r.fields, values, defaults))).join('');
+}
+
 // A section's settings in small titled boxes (each setting's Group: "What it does", "Limits", "Selling"...), the boxes
 // in the order the server gives for the section (GroupOrder), then any others as they first come. A setting shown only
 // under another one in the same box (its ShowWhen) is indented under it. A section with no groups is drawn as before.
@@ -6914,10 +6942,89 @@ function pairHtml(lo, hi, values, defaults, depth) {
     </div></div>`;
 }
 
+// A row of chips for several switches that answer one question - "What counts as spare": [extra card copies] [foils]...
+// (Settings.ChipRows). 'first' gives the row's switches when this is its first, 'rest' says whether it's one of the others.
+function chipRowOf(def, which) {
+  const rows = (schema && schema.ChipRows) || {};
+  for (const names of Object.values(rows)) {
+    const at = names.indexOf(def.Name);
+    if (at < 0) continue;
+    if (which === 'rest') return at > 0 && !!settingDefOf(names[0]);
+    return at === 0 ? names.map(settingDefOf).filter(Boolean) : null;
+  }
+  return which === 'rest' ? false : null;
+}
+
+function chipRowLabel(def) {
+  const rows = (schema && schema.ChipRows) || {};
+  return Object.keys(rows).find((k) => rows[k][0] === def.Name) || '';
+}
+
+// Each switch's word on its chip.
+function chipWord(name) {
+  switch (name) {
+    case 'SpareExtraCards': return t('extra card copies');
+    case 'SpareMaxedBadgeCards': return t('cards of finished badges');
+    case 'SpareFoils': return t('foils');
+    case 'SpareBackgrounds': return t('backgrounds');
+    case 'SpareEmoticons': return t('emoticons');
+    default: return name;
+  }
+}
+
+function chipRowHtml(first, defs, values, defaults, depth) {
+  const val = (d) => (pending[d.Name] !== undefined ? pending[d.Name] : values[d.Name]);
+  const changed = defs.some((d) => pending[d.Name] !== undefined);
+  const label = chipRowLabel(first);
+  const tip = t('Tap a chip to switch it on or off. Each one says what it counts.');
+  return `<div class="field chips ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
+    <label>${labelWithTip(t(label), tip)}</label>
+    <div class="ctl"><div class="langpick">${defs.map((d) =>
+      `<span class="p ${val(d) ? 'on' : ''}" role="button" tabindex="0" data-setting="${d.Name}" data-tip="${esc(tSetting(d, 'tip'))}" onclick="editAndRender('${d.Name}', ${!val(d)})">${esc(chipWord(d.Name))}</span>`).join('')}</div></div>
+    <div class="meta"><span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0"
+      onclick="${esc(defs.map((d) => `editAndRender('${d.Name}',${JSON.stringify(defaults[d.Name])})`).join(';'))}">${esc(t('default'))}</span></div></div>`;
+}
+
+// The proxy row: the address, and "needs a sign-in" opening its user name and password (they stay open while either is set).
+const PROXY_SIGNIN = { WebProxy: ['WebProxyUsername', 'WebProxyPassword'], AccountProxy: ['AccountProxyUsername', 'AccountProxyPassword'] };
+let proxyOpen = {};
+
+function proxyOwnerOf(def) {
+  return Object.keys(PROXY_SIGNIN).find((k) => PROXY_SIGNIN[k].includes(def.Name)) || null;
+}
+
+function proxyNeedsSignIn(owner, values) {
+  const [user, pass] = PROXY_SIGNIN[owner];
+  const v = (n) => (pending[n] !== undefined ? pending[n] : values[n]);
+  return !!proxyOpen[owner] || !!(v(user) || '').trim() || secretIsSet(pass) || (typeof pending[pass] === 'string' && pending[pass].length > 0);
+}
+
+function proxyPartShown(def, values) {
+  const owner = proxyOwnerOf(def);
+  return !owner || proxyNeedsSignIn(owner, values);
+}
+
+function proxySignInBox(def, values) {
+  if (!PROXY_SIGNIN[def.Name]) return '';
+  const on = proxyNeedsSignIn(def.Name, values);
+  return `<label class="tut-check proxysignin"><input type="checkbox" ${on ? 'checked' : ''} onchange="proxyOpen['${def.Name}']=this.checked;renderSettings()">
+    <span>${esc(t('needs a sign-in'))}</span></label>`;
+}
+
+// Telegram's and Discord's commands need a bot first: until its token is saved, the switch does nothing.
+function chatCommandsShown(def) {
+  const token = { TelegramCommands: 'TelegramBotToken', DiscordCommands: 'DiscordBotToken' }[def.Name];
+  return !token || settingsTarget !== GLOBAL || secretIsSet(token) || (typeof pending[token] === 'string' && pending[token].length > 0);
+}
+
 function fieldHtml(def, values, defaults, depth = 0) {
-  // The shortest of a pair draws the row for both.
+  // The shortest of a pair draws the row for both, and the first switch of a chip row the whole row.
   const longest = def.Range ? pairLongest(def) : null;
   if (longest) return pairHtml(def, longest, values, defaults, depth);
+  const chipDefs = chipRowOf(def, 'first');
+  if (chipDefs) return chipRowHtml(def, chipDefs, values, defaults, depth);
+  // A proxy's user name and password sit under it.
+  if (proxyOwnerOf(def)) depth = Math.max(depth, 1);
 
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
@@ -7055,7 +7162,7 @@ function fieldHtml(def, values, defaults, depth = 0) {
 
   return `<div class="field ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
     <label for="${id}">${labelWithTip(tSetting(def, 'label'), tSetting(def, 'tip'))}</label>
-    <div class="ctl">${ctl}</div>
+    <div class="ctl">${ctl}${proxySignInBox(def, values)}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
       ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
@@ -7100,15 +7207,12 @@ function edit(name, value) {
 // avatars, and the two buttons.
 const PANEL_SECTIONS = new Set(['Discord profile']);
 
-// Settings drawn by a section's own panel (chips and switches) instead of as rows.
-const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
-  'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
-  'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns', 'SendPoints']);
-PANEL_ROWS.add('SendBackups');
-PANEL_ROWS.add('SendItems');   // 1.8.0: drawn as a chip with the other notification kinds
+// Settings drawn by a section's own panel (chips and switches) instead of as rows - Settings.PanelRows, from the schema, so
+// the server's count of what a page shows uses the same list.
+const PANEL_ROWS = { has: (name) => ((schema && schema.PanelRows) || []).includes(name) };
 
 // The rep4rep hold: every account's commenting paused for some hours, kept through restarts ('rep4rep hold').
-const REP4REP_GLOBAL = 'rep4rep account';
+const REP4REP_GLOBAL = 'rep4rep';
 function rep4repHoldPanel(values) {
   const until = values.Rep4RepHoldUntil ? new Date(values.Rep4RepHoldUntil) : null;
   if (until && until > new Date()) {

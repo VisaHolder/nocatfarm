@@ -240,7 +240,7 @@ public static class BackupSchedule {
 
 		if (wasFailing) {
 			Log.Publish(Topic.Backups, "nocat.farm", new Said("backups work again - {0}", Path.GetFileName(path)));
-		} else if (g.BackupNotify == 1) {
+		} else if (g.BackupMessages == 2) {
 			Log.Publish(Topic.Backups, "nocat.farm", new Said("backup saved: {0} ({1} KB)", Path.GetFileName(path), kb));
 		}
 

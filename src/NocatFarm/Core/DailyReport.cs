@@ -89,8 +89,7 @@ public static class DailyReport {
 			DateTime now = DateTime.Now;
 			string today = now.ToString("yyyy-MM-dd");
 			DateTime fireAt = now.Date
-				.AddHours(Math.Clamp(mgr.Global.DailyReportHour, 0, 23))
-				.AddMinutes(Math.Clamp(mgr.Global.DailyReportMinute, 0, 59));
+				.AddMinutes(Math.Clamp(mgr.Global.DailyReportTime, 0, (24 * 60) - 1));
 
 			lock (Gate) {
 				if (_state.LastFired == today || now < fireAt) {
@@ -180,7 +179,7 @@ public static class DailyReport {
 		// A file from before LastAt: the day it went out, at the time it's set for.
 		if ((at == null) && (_mgr is { } mgr) && DateTime.TryParseExact(day, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
 			System.Globalization.DateTimeStyles.None, out DateTime fired)) {
-			at = fired.AddHours(mgr.Global.DailyReportHour).AddMinutes(mgr.Global.DailyReportMinute).ToUniversalTime();
+			at = fired.AddMinutes(Math.Clamp(mgr.Global.DailyReportTime, 0, (24 * 60) - 1)).ToUniversalTime();
 		}
 
 		return at;

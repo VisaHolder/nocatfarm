@@ -186,10 +186,10 @@ public static partial class Looting {
 	/// </summary>
 	public static async Task<(string Text, bool Busy)> SendToMasterCheckedAsync(Bot bot, string? types, CancellationToken ct = default) {
 		BotConfig cfg = bot.Cfg;
-		ulong master = Modules.Social.ParseIds(cfg.TradeMasters).FirstOrDefault();
+		ulong master = SendToId(cfg);
 
 		if (master == 0) {
-			return ($"{bot.Name}: nowhere to send to - set \"Your own accounts\" under Trades first", false);
+			return ($"{bot.Name}: nowhere to send to - set \"Send items to\" under Trades first", false);
 		}
 
 		if (master == bot.SteamId) {

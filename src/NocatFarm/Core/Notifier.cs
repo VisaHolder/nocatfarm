@@ -130,25 +130,27 @@ public static partial class Notifier {
 		Topic.Rep4Rep => G.SendRep4Rep,
 		Topic.Security => G.SendSignIns,
 		Topic.BreakIn => G.SendBreakIns,
-		// scam watch and account health decide for themselves whether to alert at all; which channels get it
-		// is per channel (OnChannel), so a channel added later gets them by its own switches.
-		Topic.ScamWatch or Topic.Health => true,
+		// 1.8.2: scam watch and account health are a chip each, like the rest - one that was turned off on one channel only
+		// before stays off there until the chip is changed (OnChannel).
+		Topic.ScamWatch => G.SendScamWarnings,
+		Topic.Health => G.SendHealthAlerts,
 		Topic.Points => G.SendPoints,
-		Topic.Backups => G.SendBackups,
+		Topic.Backups => G.BackupMessages != 0,
 		Topic.Items => G.SendItems,
 		_ => false
 	};
 
-	// ── per-channel switches for scam watch and account health ──
+	// ── a channel scam watch or account health was turned off on before 1.8.2 ──
 	/// <summary>
-	/// Whether one channel ("discord", "telegram") takes this kind of event. Every other kind goes to every channel that is
-	/// set up, as before; scam watch and account health each have their own switch per channel, in their own settings group.
+	/// Whether one channel ("discord", "telegram") takes this kind of event. Every kind goes to every channel that is set up -
+	/// but where scam watch or account health was switched off on one channel only (to 1.8.1 they had a switch per channel),
+	/// that channel stays out of it until their chip is changed (<see cref="Config.ConfigStore.MigrateAlertRouting"/>).
 	/// </summary>
 	public static bool OnChannel(Topic topic, string channel) => (topic, channel) switch {
-		(Topic.ScamWatch, "discord") => G.ScamAlertDiscord,
-		(Topic.ScamWatch, "telegram") => G.ScamAlertTelegram,
-		(Topic.Health, "discord") => G.HealthAlertDiscord,
-		(Topic.Health, "telegram") => G.HealthAlertTelegram,
+		(Topic.ScamWatch, "discord") => G.ScamAlertDiscord != false,
+		(Topic.ScamWatch, "telegram") => G.ScamAlertTelegram != false,
+		(Topic.Health, "discord") => G.HealthAlertDiscord != false,
+		(Topic.Health, "telegram") => G.HealthAlertTelegram != false,
 		_ => true
 	};
 

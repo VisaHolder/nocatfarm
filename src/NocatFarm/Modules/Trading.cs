@@ -125,7 +125,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	}
 
 	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
-	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
+	private bool Wanted => Bot.Cfg.AcceptDonations || (Bot.Cfg.AutoTradeWith.Trim().Length > 0) || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
 		|| ((BotManager.Instance?.All.Count ?? 0) > 1) || Bot.Cfg.CardSwaps;
 
 	/// <summary>
@@ -611,20 +611,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	public enum Way { None = 0, From = 1, To = 2, Both = From | To }
 
 	/// <summary>
-	/// The "Trade by itself with" list, as SteamIDs. Empty falls back to "Your own accounts" both ways - but only with
-	/// "Accept anything from your own accounts" on, which is what that setting always meant.
+	/// "Your other accounts", as SteamIDs. Empty is nobody: every offer waits for you, donations aside. (To 1.8.1 an empty
+	/// list fell back to "Your own accounts" when "Accept anything from your own accounts" was on; that's carried into the
+	/// list when an old file is read - ConfigStore.MigrateOwnAccounts - so nothing became automatic that wasn't.)
 	/// </summary>
 	public Dictionary<ulong, Way> Allowed() {
 		Dictionary<ulong, Way> allowed = [];
 		string list = Bot.Cfg.AutoTradeWith.Trim();
 
 		if (list.Length == 0) {
-			if (Bot.Cfg.AcceptFromMasters) {
-				foreach (ulong id in Social.ParseIds(Bot.Cfg.TradeMasters)) {
-					allowed[id] = Way.Both;
-				}
-			}
-
 			return allowed;
 		}
 

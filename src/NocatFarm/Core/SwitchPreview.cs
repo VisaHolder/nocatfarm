@@ -146,8 +146,8 @@ public static class SwitchPreview {
 		return new SpareNumbers(signedIn, problem, gems.Count, gemCount, gemsWorth, sell.Count, sellGet, pricing,
 			currency > 0 ? MarketQuotes.Code(currency) : "",
 			r.PerRun, r.DailyItems, Core.Spare.Money(r.DailyValueCents, currency), Core.Spare.Money(r.MaxPriceCents, currency), r.NewDays, r.Action,
-			Math.Clamp(cfg.BoosterUnopened, 0, 2), cfg.BoosterSendTo?.Trim() ?? "",
-			sacks is 3 or 4 ? sacks : 0, cfg.SpareGemsSendTo?.Trim() ?? "");
+			Math.Clamp(cfg.BoosterUnopened, 0, 2), Looting.SendToName(cfg, cfg.BoosterSendTo),
+			sacks is 3 or 4 ? sacks : 0, Looting.SendToName(cfg, cfg.SpareGemsSendTo));
 	}
 
 	/// <summary>The numbers of one Steam Points look.</summary>

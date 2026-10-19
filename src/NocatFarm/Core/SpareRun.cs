@@ -1140,7 +1140,7 @@ public static class SpareRun {
 		LookBudget? budget = LookBudget.After(bot.Cfg.LegitMode, look.Rules.PerRun, done.GemItems + done.Sold);
 
 		// Gems afterwards: from the inventory as it was - packed gems and sacks are read again next look.
-		List<Said> gems = await GemsAfterAsync(look.Items, GemsChoice(bot.Cfg), Math.Max(0, bot.Cfg.SpareKeepGems), bot.Cfg.SpareGemsSendTo, steam,
+		List<Said> gems = await GemsAfterAsync(look.Items, GemsChoice(bot.Cfg), Math.Max(0, bot.Cfg.SpareKeepGems), Looting.SendToName(bot.Cfg, bot.Cfg.SpareGemsSendTo, bot.Name), steam,
 			s => SaleOf(s, look.Currency, look.Rules, new Said("sack of gems")), look.Rules, look.Ledger, static () => DateTime.Now, bot.Name, ct, budget).ConfigureAwait(false);
 
 		// Selling, where it's chosen: its own listings unsold after the days set come down, to go up again a step cheaper -
@@ -1243,11 +1243,11 @@ public static class SpareRun {
 
 		// What else turning it on starts, by the account's other settings: packs it doesn't open and gem sacks leave too.
 		string also = (Math.Clamp(bot.Cfg.BoosterUnopened, 0, 2) switch {
-			1 => $"{Environment.NewLine}Also: booster packs it doesn't open are sent to {Named(bot.Cfg.BoosterSendTo)}.",
+			1 => $"{Environment.NewLine}Also: booster packs it doesn't open are sent to {Named(Looting.SendToName(bot.Cfg, bot.Cfg.BoosterSendTo, bot.Name))}.",
 			2 => $"{Environment.NewLine}Also: booster packs it doesn't open are sold, within these limits.",
 			_ => ""
 		}) + (GemsChoice(bot.Cfg) switch {
-			3 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and the sacks sent to {Named(bot.Cfg.SpareGemsSendTo)}.",
+			3 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and the sacks sent to {Named(Looting.SendToName(bot.Cfg, bot.Cfg.SpareGemsSendTo, bot.Name))}.",
 			4 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and one sack is sold each look, within these limits.",
 			_ => ""
 		});
@@ -1500,7 +1500,7 @@ public static class SpareRun {
 			}).ConfigureAwait(false);
 		sb.AppendLine().Append(CultureInfo.InvariantCulture, $"{bot.Name}: opened {opened}");
 
-		Said? unopened = await UnopenedAsync(packs, Math.Clamp(cfg.BoosterUnopened, 0, 2), cfg.BoosterSendTo, steam,
+		Said? unopened = await UnopenedAsync(packs, Math.Clamp(cfg.BoosterUnopened, 0, 2), Looting.SendToName(cfg, cfg.BoosterSendTo, bot.Name), steam,
 			p => SaleOf(p, look.Currency, look.Rules, new Said("worth more sealed")), look.Rules, look.Ledger, static () => DateTime.Now, ct, bot.Name).ConfigureAwait(false);
 
 		if (unopened is { } u) {

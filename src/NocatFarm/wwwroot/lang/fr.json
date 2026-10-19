@@ -440,7 +440,6 @@
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Combien de temps ce compte a joué à ce jeu. Steam ne lâche rien tant que le seuil défini dans les réglages de ce compte n'est pas franchi.",
     "Dashboard": "Tableau de bord",
     "Running in the background": "Fonctionnement en arrière-plan",
-    "rep4rep account": "Compte rep4rep",
     "Steam connection": "Connexion à Steam",
     "Logging": "Journalisation",
     "What it plays": "Ce à quoi il joue",
@@ -448,7 +447,6 @@
     "rep4rep commenting": "Commentaires rep4rep",
     "Friends & messages": "Amis et messages",
     "Trades": "Échanges",
-    "Staying out of the way": "Ne pas gêner",
     "Log": "Journal",
     "/week": "/semaine",
     "About {0} of an average week once the main-game-only days are counted in.": "Environ {0} d'une semaine moyenne, une fois comptés les jours consacrés au seul jeu principal.",
@@ -579,7 +577,6 @@
     "Free event items": "Objets d'événement gratuits",
     "Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.": "Les jeux gratuits, les boosters à partir de gemmes et les échanges de cartes équitables sont un interrupteur chacun dans les Paramètres, par compte.",
     "Gifts": "Cadeaux",
-    "Use rep4rep at all": "Utiliser rep4rep tout court",
     "{0} - Steam wallet gift cards and guest passes people send you.": "{0} - les cartes cadeaux Steam et les pass invités qu'on t'envoie.",
     "{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.": "{0} - l'autocollant quotidien pendant des soldes Steam, et tout ce qui coûte 0 point dans la boutique des points.",
     "couldn't read the free-game state: {0}": "impossible de lire l'état des jeux gratuits : {0}",
@@ -757,7 +754,6 @@
     "{0}: {1}h in - the next ones need more hours in it": "{0} : {1} h de jeu - les suivants demandent plus d'heures",
     "tomorrow {0}": "demain {0}",
     "yesterday {0}": "hier {0}",
-    "on - no games to hunt (pick some under \"Boost these games\")": "activé - aucun jeu à chasser (choisis-en sous \\\"Booster ces jeux\\\")",
     "couldn't read the price book: {0}": "impossible de lire le carnet de prix : {0}",
     "couldn't save the price book: {0}": "impossible d'enregistrer le carnet de prix : {0}",
     "couldn't read the library: {0}": "impossible de lire la bibliothèque : {0}",
@@ -1342,8 +1338,6 @@
     "you give": "tu donnes",
     "you get": "tu reçois",
     "Confirmation": "Confirmation",
-    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Trade by itself with\").": "Confirmés tout seuls : les échanges avec {0}. Tout le reste attend ici. À changer dans Paramètres, Échanges (« Échanger tout seul avec »).",
-    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Trade by itself with\").": "Rien n'est confirmé tout seul - tout t'attend ici. À changer dans Paramètres, Échanges (« Échanger tout seul avec »).",
     "Steam didn't take that": "Steam n'a pas accepté ça",
     "Confirmed {0}": "{0} confirmé(s)",
     "Denied {0}": "{0} refusé(s)",
@@ -1382,8 +1376,6 @@
     "Pop-ups": "Bulles de notification",
     "Inventory prices": "Prix de l'inventaire",
     "Updates & plugins": "Mises à jour et plugins",
-    "Badges & selling": "Badges et ventes",
-    "Inventory & bans": "Inventaire et bannissements",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Votre Discord affiche Playing nocat.farm tant qu'il est ouvert, comme un jeu. Vous pouvez changer ça à tout moment dans Paramètres, Profil Discord.",
     "Trades & items": "Échanges et objets",
     "Steam Guard": "Steam Guard",
@@ -1468,9 +1460,7 @@
     "Windows has this network set to Public, where the rule doesn't apply. Set it to Private (Settings > Network & internet > your network), then press it again.": "Windows considère ce réseau comme Public, où la règle ne s'applique pas. Passez-le en Privé (Paramètres > Réseau et Internet > votre réseau), puis réappuyez.",
     "couldn't encrypt {0} in place: {1}": "impossible de chiffrer {0} sur place : {1}",
     "couldn't look up how long {0} takes: {1}": "impossible de savoir combien de temps dure {0} : {1}",
-    "done hunting for today (Hunt at most, hours a day)": "chasse terminée pour aujourd'hui (Chasser au plus, heures par jour)",
     "every game on the list is resting for now - it comes back to them in a few days": "tous les jeux de la liste sont en pause pour l'instant - il y revient dans quelques jours",
-    "{0} is done for today (Hunt at most, hours a day) - back tomorrow": "{0} a fini pour aujourd'hui (Chasser au plus, heures par jour) - reprise demain",
     "{0}: couldn't read it": "{0} : impossible à lire",
     "ASF played it as a different device - choose one under \"Play as if on\" in its settings": "ASF le faisait passer pour un autre appareil - choisis-en un sous « Jouer comme sur » dans ses réglages",
     "its ASF password is encrypted with a key of its own, so it wasn't copied - the login token signs in, or it asks for the password once": "son mot de passe ASF est chiffré avec une clé à lui, il n'a donc pas été copié - le jeton de connexion le connecte, sinon il demandera le mot de passe une fois",
@@ -2062,7 +2052,6 @@
     "{0}: skipped, another account in this import signs in as {1} too": "{0} : ignoré, un autre compte de cet import se connecte aussi en tant que {1}",
     "Commands only work in a private chat with this bot - a group gets the notifications.": "Les commandes ne marchent que dans une discussion privée avec ce bot - un groupe reçoit les notifications.",
     "... and {0} more line(s) - type it in the dashboard's Console for the whole reply": "... et {0} ligne(s) de plus - tape-le dans la Console du tableau de bord pour la réponse complète",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick \"Work out what its inventory is worth\".": "N'est pas évalué. Pour le réactiver, ouvre les Paramètres, choisis {0}, coche « Afficher les avancés », déplie « Inventaire et bannissements » et coche « Calculer ce que vaut son inventaire ».",
     "Couldn't switch it on for {0}": "Impossible de l'activer pour {0}",
     "only what they send": "seulement ce qu'ils envoient",
     "they can take items": "ils peuvent prendre des objets",
@@ -2254,7 +2243,6 @@
     "Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.": "Impossible d'envoyer le code de connexion sur Telegram. Réessayez dans un moment, ou connectez-vous depuis la maison.",
     "Wrong code - {0} tries left.": "Mauvais code - encore {0} essais.",
     "That code has run out. Type the password again for a new one.": "Ce code a expiré. Retapez le mot de passe pour en recevoir un nouveau.",
-    "Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.": "Le code sur Telegram pour les connexions depuis l'extérieur est désactivé - le mot de passe seul suffit pour entrer.",
     "From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.": "Depuis l'extérieur, le mot de passe seul ne suffit pas : il faut aussi un code à 6 chiffres envoyé sur votre Telegram.",
     "Connect Telegram and signing in from outside will also take a code sent to it.": "Connectez Telegram et la connexion depuis l'extérieur demandera aussi un code envoyé dessus.",
     "6-digit code": "Code à 6 chiffres",
@@ -2564,7 +2552,6 @@
     "the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes": "les cartes ne sont pas envoyées avant la déconnexion - la surveillance des arnaques bloque les échanges de ce compte. Elles partent après 'scamwatch ok {0}' ou à la prochaine fin du farm",
     "scam watch is holding {0}'s trades - doing this anyway because you asked. Type 'scamwatch ok {0}' once you've checked": "la surveillance des arnaques bloque les échanges de {0} - fait quand même parce que vous l'avez demandé. Tapez 'scamwatch ok {0}' une fois que vous avez vérifié",
     "held by scam watch - nothing done by itself; trade accept or decline {0} {1}": "bloqué par la surveillance des arnaques - rien n'est fait tout seul ; trade accept ou decline {0} {1}",
-    "account health couldn't read the bans: {0}": "l'état du compte n'a pas pu lire les bannissements : {0}",
     "its sent offers are being cancelled, trades carry on (stopping them is off) - type 'scamwatch ok {0}' to clear the warning": "ses offres envoyées sont en cours d'annulation, les échanges continuent (leur arrêt est désactivé) - tapez 'scamwatch ok {0}' pour effacer l'alerte",
     "nothing was stopped (both reactions are off) - type 'scamwatch ok {0}' to clear the warning": "rien n'a été arrêté (les deux réactions sont désactivées) - tapez 'scamwatch ok {0}' pour effacer l'alerte",
     "a Steam Web API key appeared that wasn't there before": "une clé Steam Web API est apparue alors qu'il n'y en avait pas avant",
@@ -2674,7 +2661,6 @@
     "{0} is back on the overnight list": "{0} est de retour sur la liste de la nuit",
     "{0} left out - held back so it can still be refunded": "{0} laissé de côté - mis de côté pour pouvoir encore être remboursé",
     "couldn't read the software this account holds: {0}": "impossible de lire les logiciels de ce compte : {0}",
-    "{0} left out - it's on \"Never touch these\"": "{0} laissé de côté - il est dans « Ne jamais toucher à ceux-ci »",
     "library: {0} piece(s) of software owned too ({1})": "bibliothèque : possède aussi {0} logiciel(s) ({1})",
     "its cards are worth about {0}, the pack {1}": "ses cartes valent environ {0}, le booster {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "se vend {0}, tu reçois {1} - plus que ses {2} gemmes ne valent ({3})",
@@ -2846,7 +2832,6 @@
     "Value: at most {0} a day": "Valeur : au plus {0} par jour",
     "Booster packs it doesn't open are sent to {0}": "Les boosters qu'il n'ouvre pas sont envoyés à {0}",
     "Keep everything: it only reports, nothing changes": "Tout garder : il signale seulement, rien ne change",
-    "Your own accounts": "Tes propres comptes",
     "Next Fest": "Next Fest",
     "Making packs": "Création de boosters",
     "New items are not held back": "Les nouveaux objets ne sont pas retenus",
@@ -3091,7 +3076,6 @@
     "card swap · you'd give {0} · you'd get {1}": "échange de cartes · tu donnerais {0} · tu recevrais {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "l'offre d'échange {0} n'est pas ce qui a été associé ({1}) · laissée pour toi",
     "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "l'offre {0} se dit un échange que nocat.lol n'a pas associé · laissée pour toi",
-    "Swaps with other users": "Échanges avec d'autres utilisateurs",
     "Turn on card swaps?": "Activer l'échange de cartes ?",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Voici ce qu'il pourrait échanger maintenant, et les limites qu'il respecte. Rien n'est échangé avant que tu appuies sur Activer.",
     "spare cards to swap": "cartes en trop à échanger",
@@ -3284,7 +3268,39 @@
     "Accept a friend request after": "Accepter une demande d'ami après",
     "Gap between comments": "Écart entre les commentaires",
     "Only post between": "Publier seulement entre",
-    "Install by itself between": "Installer tout seul entre"
+    "Install by itself between": "Installer tout seul entre",
+    "Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.": "Demander un code Telegram pour les connexions depuis l'extérieur est désactivé - le mot de passe seul suffit pour entrer.",
+    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Your other accounts\").": "Confirmés tout seuls : les échanges avec {0}. Tout le reste attend ici. À changer dans Paramètres, Échanges (« Vos autres comptes »).",
+    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Your other accounts\").": "Rien n'est confirmé tout seul - tout vous attend ici. À changer dans Paramètres, Échanges (« Vos autres comptes »).",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "N'est pas évalué. Pour le réactiver, ouvre les Paramètres, choisis {0}, coche « Afficher les avancés » et, dans Échanges, coche « Afficher la valeur de l'inventaire ».",
+    "Tap a chip to switch it on or off. Each one says what it counts.": "Touchez une puce pour l'activer ou la couper. Chacune dit ce qu'elle compte.",
+    "extra card copies": "copies de cartes en trop",
+    "cards of finished badges": "cartes des badges terminés",
+    "foils": "cartes brillantes",
+    "backgrounds": "fonds",
+    "emoticons": "émoticônes",
+    "default": "par défaut",
+    "needs a sign-in": "demande une connexion",
+    "Scam warnings": "Alertes d'arnaque",
+    "Health alerts": "Santé du compte",
+    "done hunting for today (Hunt at most a day)": "fini de chasser pour aujourd'hui (Chasser au plus par jour)",
+    "{0} is done for today (Hunt at most a day) - back tomorrow": "{0} a fini pour aujourd'hui (Chasser au plus par jour) - reprise demain",
+    "on - no games to hunt (pick some under \"Hunt these games\")": "activé - aucun jeu à chasser (choisissez-en dans « Chasser ces jeux »)",
+    "{0} left out - it's on \"Never play these games\"": "{0} laissé de côté - il est dans « Ne jamais jouer à ces jeux »",
+    "{0}: alerts about bans are part of account health now, which is off on this account - turn it on to get them": "{0} : les alertes de bannissement font maintenant partie de la santé du compte, désactivée sur ce compte - activez-la pour les recevoir",
+    "{0}: your own accounts are in \"Your other accounts\" now, both ways - as before": "{0} : vos propres comptes sont maintenant dans « Vos autres comptes », dans les deux sens - comme avant",
+    "Badges": "Badges",
+    "Card swaps": "Échanges de cartes",
+    "Commands from the chats": "Commandes depuis les discussions",
+    "Dashboard & phone": "Tableau de bord et téléphone",
+    "General": "Général",
+    "Items and spending": "Objets et dépenses",
+    "Open from outside": "Ouvrir depuis l'extérieur",
+    "Safety": "Sécurité",
+    "Steam connection & logs": "Connexion Steam et journaux",
+    "When you use it yourself": "Quand vous l'utilisez vous-même",
+    "Your other accounts": "Vos autres comptes",
+    "Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.": "Tout ici est désactivé tant que vous ne l'activez pas, et chacun montre d'abord ce qu'il ferait et demande. Avant ça, rien n'est vendu, transformé en gemmes, ouvert, acheté ni dépensé."
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -3350,7 +3366,7 @@
     },
     "TrayNotifications": {
       "label": "Afficher les bulles",
-      "tip": "Active ou désactive les bulles de notification. Les quatre réglages en dessous choisissent lesquelles vous recevez."
+      "tip": "Active ou coupe les notifications pop-up. Les types en dessous choisissent celles que vous recevez."
     },
     "NotifyEarnings": {
       "label": "Signaler les gains",
@@ -3402,7 +3418,7 @@
     },
     "SendDailySummary": {
       "label": "Envoyer le résumé quotidien",
-      "tip": "Une fois par jour, ce que chaque compte a fait sur les dernières 24 heures : heures accumulées, cartes et commentaires. Envoyé à l'heure réglée pour « Résumé quotidien dans le journal »."
+      "tip": "Une fois par jour, ce que chaque compte a fait ces dernières 24 heures : heures accumulées, cartes et commentaires. Envoyé à l'heure de « Résumé du jour à » (Journalisation)."
     },
     "SendComments": {
       "label": "Envoyer les commentaires de profil",
@@ -3421,7 +3437,7 @@
       "tip": "Groupes Steam que tous tes comptes rejoignent, l'un après l'autre. La liste commence avec le groupe nocat.farm, tu peux la modifier ou la vider. Colle le lien d'un groupe ou son nom court, séparés par des virgules. Seuls les groupes ouverts sont rejoints, ceux qui demandent une approbation ou une invitation sont ignorés."
     },
     "Rep4RepEnabled": {
-      "label": "Utiliser rep4rep tout court",
+      "label": "Utiliser rep4rep",
       "tip": "Active rep4rep, un site tiers facultatif où les utilisateurs échangent des commentaires de profil Steam. Désactivé, toutes les fonctions et réglages rep4rep sont masqués sur chaque compte."
     },
     "Rep4RepApiToken": {
@@ -3449,7 +3465,7 @@
       "tip": "La langue du tableau, des statuts et des lignes du journal. Ce qui n'est pas encore traduit s'affiche en anglais. Les réponses aux commandes tapées dans la console restent en anglais."
     },
     "MarketCurrency": {
-      "label": "Prix de l'inventaire en",
+      "label": "Afficher la valeur de l'inventaire en",
       "tip": "La devise des valeurs d'inventaire. Choisissez celle de votre boutique Steam pour que les totaux correspondent au marché. La changer revérifie tous les prix.",
       "choices": "1 dollar américain | 20 dollar canadien | 21 dollar australien | 2 livre sterling | 3 euro | 5 rouble russe | 7 real brésilien | 8 yen japonais | 23 yuan chinois | 24 roupie indienne"
     },
@@ -3461,16 +3477,8 @@
       "label": "Résumé quotidien dans le journal",
       "tip": "Écrit chaque jour dans le journal un résumé de ce que chaque compte a gagné sur les dernières 24 heures : heures accumulées, cartes et commentaires rep4rep, et tout ce qui a été accumulé jusqu'ici. Chaque jeu lancé compte, comme Steam le compte : 32 jeux pendant une heure font 32 heures. Tape stats pour le voir à tout moment."
     },
-    "DailyReportHour": {
-      "label": "Heure du résumé · heure",
-      "tip": "L'heure à laquelle le résumé quotidien est écrit, en heure locale - et envoyé, quand « Envoyer le résumé quotidien » est activé."
-    },
-    "DailyReportMinute": {
-      "label": "Heure du résumé · minute",
-      "tip": "La minute de l'heure à laquelle le résumé quotidien est écrit. Heure 9 et minute 30 donnent 09:30."
-    },
     "Enabled": {
-      "label": "Activé",
+      "label": "Faire tourner ce compte",
       "tip": "Connecte ce compte. Désactivez-le pour garder ses réglages mais laisser le compte complètement tranquille."
     },
     "SteamLogin": {
@@ -3487,11 +3495,11 @@
     },
     "OnlineStatus": {
       "label": "Apparaître comme",
-      "tip": "Comment ce compte apparaît à vos amis. Invisible joue et farme quand même, personne ne le voit, c'est tout. Avec « Mode humain » activé, c'est seulement le statut pendant le jeu, donc laissez-le sur en ligne.",
+      "tip": "Comment vos amis voient ce compte. Invisible joue et farme quand même, personne ne le voit, c'est tout. En mode humain, ce n'est que le statut pendant qu'il joue - il passe tout seul Absent en pause et hors ligne la nuit -, alors laissez-le sur En ligne.",
       "choices": "0 hors ligne | 1 en ligne | 2 occupé | 3 absent | 4 en veille | 5 cherche à échanger | 6 cherche à jouer | 7 invisible"
     },
     "IUseThisAccount": {
-      "label": "Je me connecte moi-même à ce compte",
+      "label": "J'utilise aussi ce compte dans ma propre appli Steam",
       "tip": "Activez-le pour un compte que vous utilisez aussi dans votre propre appli Steam. Il ne change alors jamais le statut en ligne, car ça vous déconnecterait des amis et du chat. Tout le reste continue de tourner."
     },
     "StartPaused": {
@@ -3508,12 +3516,12 @@
       "placeholder": "idler principal, ne pas toucher"
     },
     "LegitMode": {
-      "label": "Mode humain",
-      "tip": "Joue comme une personne : un jeu à la fois, des séances réalistes, des pauses, des repas, des jours sans jouer et hors ligne la nuit. Les réglages de bot sont masqués pendant ce mode et reviennent tels quels quand vous le désactivez."
+      "label": "Jouer comme une personne (mode humain)",
+      "tip": "Joue comme une personne : un jeu à la fois, des séances réalistes, des pauses, des repas, des jours de repos et hors ligne la nuit. Les réglages du mode robot sont masqués tant qu'il est activé et reviennent inchangés quand vous le coupez."
     },
     "BreakAwayAfterMinMinutes": {
       "label": "En pause, absent après au moins",
-      "tip": "Mode humain uniquement. Après combien de minutes de pause son statut passe à absent ou hors ligne, comme un vrai client Steam inactif. Les pauses plus courtes restent en ligne."
+      "tip": "Après combien de minutes de pause son statut passe à absent ou hors ligne, comme un vrai client Steam inactif. Les pauses plus courtes restent en ligne."
     },
     "BreakAwayAfterMaxMinutes": {
       "label": "En pause, passer Absent après au plus",
@@ -3521,11 +3529,11 @@
     },
     "LegitStopMaxSeconds": {
       "label": "À l'arrêt, finir pendant jusqu'à",
-      "tip": "Quand vous arrêtez le compte, il continue de jouer quelques secondes au hasard, jusqu'à ce nombre, avant de se déconnecter, au lieu de disparaître en pleine partie. 0 arrête tout de suite. Utilisé seulement quand « Mode humain » est activé."
+      "tip": "Quand vous arrêtez le compte, il continue de jouer quelques secondes au hasard, jusqu'à autant, avant de se déconnecter, au lieu de disparaître en pleine partie. 0 arrête tout de suite. Seulement en mode humain."
     },
     "GameWeights": {
       "label": "Jeux et à quelle fréquence",
-      "tip": "À quels jeux il joue et quel pourcentage de son temps chacun reçoit, pour un total d'environ 100. Le premier est le jeu principal. Sans nombre, un jeu partage ce qui reste. Écrivez 440:0 pour mettre un jeu de côté. Ce sont des moyennes sur une semaine : un jour peut pencher vers un jeu, comme chez une vraie personne. Le jeu sur lequel est le \"Coup de pouce aux succès\" partage la part des autres jeux."
+      "tip": "Les jeux auxquels il joue et le pourcentage de son temps pour chacun, environ 100 au total. Le premier est le jeu principal. Laissez un nombre de côté pour partager le reste, ou écrivez 440:0 pour mettre un jeu sur le banc. Ce sont des moyennes sur une semaine - un jour peut pencher vers un jeu, comme une personne. Le jeu de la chasse aux succès partage la part des autres jeux."
     },
     "HourTargets": {
       "label": "Objectifs d'heures",
@@ -3545,7 +3553,7 @@
     },
     "DayStartTime": {
       "label": "Se connecte à",
-      "tip": "L'heure à laquelle il se connecte, par exemple 11:00. Chaque jour, il se connecte dans la limite de « Écart maximal » autour de cette heure, le plus souvent tout près, et un peu plus tôt le week-end."
+      "tip": "L'heure à laquelle il se connecte, comme 11:00. Chaque jour il se connecte dans la marge de « Se connecte, à plus ou moins » autour de cette heure, presque toujours tout près, et un peu plus tôt le week-end."
     },
     "DayStartVaryMinutes": {
       "label": "Se connecte, à plus ou moins",
@@ -3553,7 +3561,7 @@
     },
     "BedTime": {
       "label": "Se couche à",
-      "tip": "L'heure à laquelle il s'arrête pour la nuit. Après minuit, c'est possible : 02:00, c'est deux heures du matin, après la journée où il s'est connecté. Chaque nuit, il se couche dans la limite de « Écart maximal » autour de cette heure, un peu plus tard le vendredi et le samedi."
+      "tip": "L'heure à laquelle il arrête pour la nuit. Après minuit, c'est possible : 02:00 est deux heures du matin, après le jour où il s'est connecté. Chaque nuit il va se coucher dans la marge de « Va se coucher, à plus ou moins » autour de cette heure, un peu plus tard le vendredi et le samedi."
     },
     "BedVaryMinutes": {
       "label": "Va se coucher, à plus ou moins",
@@ -3565,11 +3573,11 @@
     },
     "SleepMinHours": {
       "label": "Dort au moins",
-      "tip": "Combien de temps dure une nuit avant que la journée suivante puisse commencer, en heures - une durée au hasard entre cette valeur et la suivante, différente chaque nuit. Une nuit trop longue pour tenir avant l'heure la plus tardive que permet « Se connecte à » est raccourcie : il ne se connecte jamais plus tard."
+      "tip": "Combien de temps dure une nuit avant que le jour suivant puisse commencer - une durée au hasard entre les deux, différente chaque nuit. Une nuit trop longue pour tenir avant le « Se connecte à » le plus tardif est raccourcie : il ne se connecte jamais plus tard."
     },
     "SleepMaxHours": {
       "label": "Dort au plus",
-      "tip": "Le haut de cette plage, en heures."
+      "tip": "Le plus longtemps qu'une nuit peut durer avant le jour suivant."
     },
     "PureMainDayChancePct": {
       "label": "Journées sur le jeu principal seul",
@@ -3577,7 +3585,7 @@
     },
     "WarmUpMinMinutes": {
       "label": "S'installer au moins",
-      "tip": "L'attente la plus courte après la connexion avant qu'il lance un jeu, en minutes. S'applique aussi quand vous activez « Mode humain », pour qu'il ne lance pas un jeu immédiatement."
+      "tip": "L'attente la plus courte après la connexion avant de lancer un jeu. S'applique aussi quand vous activez le mode humain, pour qu'il ne lance pas un jeu tout de suite."
     },
     "WarmUpMaxMinutes": {
       "label": "Prendre ses marques au plus",
@@ -3617,7 +3625,7 @@
     },
     "CustomGameNameEnabled": {
       "label": "Afficher un nom de jeu personnalisé",
-      "tip": "Montre à vos amis un nom personnalisé au lieu du vrai jeu. Le désactiver garde le nom tapé en dessous pour la prochaine fois."
+      "tip": "Montre à vos amis un nom personnalisé au lieu du vrai jeu. Le couper garde le nom ci-dessous pour la prochaine fois ; vider le nom le coupe."
     },
     "CustomGameName": {
       "label": "Afficher comme",
@@ -3629,7 +3637,7 @@
     },
     "HoursUntilCardDrops": {
       "label": "Jouer chaque jeu ce temps avant que des cartes puissent tomber",
-      "tip": "Combien d'heures un jeu demande avant que Steam fasse tomber ses cartes. Mettez 0 si ce compte a dépensé plus de 5 $ sur Steam, pour que rien ne tourne plus longtemps que nécessaire."
+      "tip": "Combien d'heures un jeu demande avant que Steam lâche ses cartes. Mettez 0 si ce compte a dépensé l'équivalent de 5 US$ ou plus sur Steam, pour que rien ne joue plus longtemps que nécessaire."
     },
     "FarmingOrder": {
       "label": "Farmer dans cet ordre",
@@ -3666,7 +3674,7 @@
       "tip": "Permet à ce compte de publier les commentaires de profil distribués par rep4rep. Tous les comptes gagnent dans les mêmes points rep4rep."
     },
     "Rep4RepDailyCap": {
-      "label": "Maximum par 24 heures",
+      "label": "Commentaires par jour, au plus",
       "tip": "Le nombre maximum de commentaires que ce compte publie sur 24 heures. Steam en autorise environ 10 sur des non-amis, et dépasser peut valoir au compte une interdiction de commenter."
     },
     "Rep4RepGapMinMinutes": {
@@ -3691,7 +3699,7 @@
     },
     "JoinGroup": {
       "label": "Rejoindre les groupes communs",
-      "tip": "Rejoint les groupes de « Groupes que tous les comptes rejoignent ». Désactive-le pour laisser seulement ce compte en dehors."
+      "tip": "Rejoint les groupes de « Groupes que tous les comptes rejoignent » (paramètres globaux, Tous les comptes). Désactivé, seul ce compte reste en dehors. Désactivé dès le départ sur un nouveau compte en mode humain, pour qu'un compte crédible ne soit pas dans un groupe qui porte le nom de l'outil."
     },
     "ExtraGroupsToJoin": {
       "label": "Rejoindre aussi ces groupes",
@@ -3699,7 +3707,7 @@
     },
     "AutoReplyEnabled": {
       "label": "Répondre aux messages",
-      "tip": "Répond aux personnes qui écrivent à ce compte. Le désactiver garde votre texte de réponse pour plus tard."
+      "tip": "Répond aux personnes qui écrivent à ce compte avec le texte ci-dessous. Le couper garde votre texte pour plus tard ; vider le texte le coupe."
     },
     "AutoReply": {
       "label": "Répondre avec",
@@ -3720,15 +3728,15 @@
     },
     "ActOnlyWhileAwake": {
       "label": "Réagir seulement quand il est éveillé",
-      "tip": "Mode humain uniquement. Met en attente tout ce que les autres peuvent voir, comme les échanges, cadeaux, invitations, réponses, commentaires et succès, pendant que le compte dort. Désactivez-le pour répondre aussi la nuit."
+      "tip": "Met en attente tout ce que les autres peuvent voir, comme les échanges, cadeaux, invitations, réponses, commentaires et succès, pendant que le compte dort. Désactivez-le pour répondre aussi la nuit."
     },
     "QuietThingsWaitForDay": {
-      "label": "Les choses en coulisses attendent aussi sa journée",
-      "tip": "Mode humain uniquement. Fait aussi attendre les heures d'éveil du compte aux tâches de fond comme fabriquer des badges, récupérer des jeux gratuits, les packs de boost et la vente de cartes. Désactivé, elles tournent à toute heure."
+      "label": "Tâches de fond seulement pendant ses heures d'éveil",
+      "tip": "Fait aussi attendre les heures d'éveil du compte aux tâches de fond comme fabriquer des badges, récupérer des jeux gratuits, les packs de boost et la vente de cartes. Désactivé, elles tournent à toute heure."
     },
     "WakeDelayMinMinutes": {
       "label": "Après le réveil, attendre au moins",
-      "tip": "Mode humain uniquement. Combien de temps après le réveil ou la connexion avant qu'il fasse des choses que les autres voient, comme des échanges, commentaires ou réponses, en minutes. Chaque type a sa propre attente aléatoire."
+      "tip": "Combien de temps après le réveil ou la connexion avant qu'il fasse des choses que les autres voient, comme des échanges, des commentaires ou des réponses. Chaque type a sa propre attente aléatoire."
     },
     "WakeDelayMaxMinutes": {
       "label": "Au réveil, attendre au plus",
@@ -3736,7 +3744,7 @@
     },
     "QuietDelayMinMinutes": {
       "label": "Les tâches de fond attendent après la connexion, au moins",
-      "tip": "Mode humain uniquement. Combien de temps après la connexion avant que les tâches de fond comme les badges, les jeux gratuits et les packs de boost démarrent, en minutes. Chacune a sa propre attente aléatoire pour qu'elles ne partent pas toutes en même temps."
+      "tip": "Combien de temps après la connexion avant que les tâches de fond comme les badges, les jeux gratuits et les paquets de cartes démarrent. Chacune a sa propre attente aléatoire pour qu'elles n'arrivent pas toutes en même temps."
     },
     "QuietDelayMaxMinutes": {
       "label": "Les tâches de fond attendent après la connexion, au plus",
@@ -3744,7 +3752,7 @@
     },
     "OneTradeAtATime": {
       "label": "Répondre à une offre d'échange à la fois",
-      "tip": "Mode humain uniquement. Quand plusieurs offres d'échange sont à traiter en même temps, par exemple le matin, il y répond à quelques minutes d'écart au lieu de toutes d'un coup."
+      "tip": "Quand plusieurs offres d'échange sont à traiter en même temps, par exemple le matin, il y répond à quelques minutes d'écart au lieu de toutes d'un coup."
     },
     "AcceptDonations": {
       "label": "Accepter les dons",
@@ -3752,27 +3760,24 @@
     },
     "DonationsWhileAsleep": {
       "label": "Accepter les dons pendant le sommeil",
-      "tip": "Mode humain uniquement. Laisse passer les dons la nuit même quand « Réagir seulement quand il est éveillé » est activé. Tout le reste attend quand même le matin."
+      "tip": "Laisse passer les dons la nuit même quand « Réagir seulement quand il est éveillé » est activé. Tout le reste attend quand même le matin."
     },
     "AcceptGiftedGames": {
       "label": "Accepter les jeux offerts",
       "tip": "Ajoute directement à sa bibliothèque les jeux que des amis offrent à ce compte. Désactivez-le pour décider vous-même de chaque cadeau. Chaque cadeau attend d'abord, voir « Accepter un cadeau après au moins »."
     },
     "AcceptFairCardSwaps": {
-      "label": "Accepter les échanges de cartes équitables",
+      "label": "Accepter les échanges de cartes 1:1 de tout le monde (seulement ceux qui aident vos sets)",
       "tip": "Accepte de n'importe qui les échanges de cartes un contre un dans le même jeu, mais seulement s'ils rapprochent vos collections de la fin. Les offres avec des cartes brillantes ou d'autres objets sont laissées de côté. Demande l'authentificateur mobile."
     },
     "AcceptGifts": {
       "label": "Accepter les cadeaux et pass invités",
       "tip": "Accepte les cartes cadeaux du porte-monnaie Steam et les pass invités envoyés à ce compte. Ni l'un ni l'autre ne peut rien coûter. Chaque cadeau attend d'abord, voir « Accepter un cadeau après au moins »."
     },
-    "AcceptFromMasters": {
-      "label": "Accepter n'importe quoi de vos propres comptes",
-      "tip": "Accepte n'importe quelle offre des comptes listés dans « Vos propres comptes », même celles qui prennent des objets. Pratique pour regrouper les cartes sur un compte, mais ne listez que des comptes qui vous appartiennent."
-    },
     "TradeMasters": {
-      "label": "Vos propres comptes",
-      "tip": "SteamID64 de vos propres comptes, séparés par des virgules. Toute personne listée ici peut prendre des objets à ce compte, donc n'ajoutez que des comptes qui vous appartiennent."
+      "label": "Envoyer les objets à",
+      "tip": "Où ce compte envoie ses objets - avec Envoyer les objets toutes les, quand le farm est terminé, et avec la commande send : un nom de compte ici ou un numéro de profil Steam (SteamID64). Le premier est utilisé. Pour envoyer seulement : personne ici ne peut rien prendre à ce compte - c'est « Vos autres comptes ».",
+      "placeholder": "main"
     },
     "DeclineOtherTrades": {
       "label": "Refuser tout le reste",
@@ -3796,7 +3801,7 @@
     },
     "PauseWhenYouPlay": {
       "label": "S'effacer quand vous jouez",
-      "tip": "Arrête de faire tourner les jeux dès que vous lancez vous-même un jeu sur ce compte, pour ne jamais entrer en conflit avec votre propre client Steam."
+      "tip": "Arrête de faire tourner les jeux dès que vous lancez vous-même un jeu sur ce compte, pour ne jamais se battre avec votre propre client Steam. Il reprend après l'attente ci-dessous."
     },
     "ResumeDelayMinutes": {
       "label": "Attendre avant de reprendre",
@@ -3804,7 +3809,7 @@
     },
     "AchievementBoost": {
       "tip": "Chasse les succès dans plusieurs jeux tout seul, un jeu à la fois. « Jeux que vous choisissez » utilise la liste ci-dessous. « Tous les jeux solo » prend les jeux solo avec succès de votre bibliothèque, joués ou non (activez « Ne chasser que des jeux déjà lancés » pour ignorer le reste). Sur un compte en mode humain, le jeu chassé rejoint les jeux qu'il joue, comme un jeu secondaire.",
-      "label": "Coup de pouce aux succès",
+      "label": "Chasse aux succès",
       "choices": "0 désactivé | 1 les jeux que tu choisis | 2 tous les jeux solo"
     },
     "SkipRefundableGames": {
@@ -3813,11 +3818,7 @@
     },
     "ShowInventoryValue": {
       "tip": "Calcule ce que vaut l'inventaire de ce compte aux prix du marché Steam et l'affiche sur le tableau. Désactivez-le sur les comptes qui n'ont que quelques cartes.",
-      "label": "Calculer ce que vaut son inventaire"
-    },
-    "CheckForUpdates": {
-      "tip": "Cherche une nouvelle version et le dit dans le journal, sur Telegram et Discord. Le désactiver arrête aussi l'installation seule la nuit.",
-      "label": "Prévenir si une mise à jour est disponible"
+      "label": "Afficher la valeur de l'inventaire"
     },
     "UpdateReminders": {
       "label": "Me le rappeler toutes les heures",
@@ -3836,7 +3837,7 @@
       "tip": "Le nombre maximum de fois par jour où il apparaît hors ligne pendant une pause, pour ne pas clignoter dans votre liste d'amis. 0 le désactive et chaque pause apparaît absent."
     },
     "PlayWhileFarming": {
-      "label": "Garder le nom pendant le farm",
+      "label": "Garder le nom personnalisé pendant le farm de cartes",
       "tip": "Garde le nom personnalisé affiché pendant le farm de cartes. Désactivez-le pour montrer le vrai jeu pendant le farm."
     },
     "GameDevice": {
@@ -3853,8 +3854,8 @@
       "tip": "Ne farme que les jeux de « Farmer ceux-ci d'abord » et ignore tous les autres jeux qui ont encore des cartes."
     },
     "BlacklistedGames": {
-      "label": "Ne jamais toucher à ceux-ci",
-      "tip": "ID de jeux qui ne sont jamais farmés ni mis à tourner."
+      "label": "Ne jamais jouer à ces jeux",
+      "tip": "Les jeux que ce compte ne farme, ne fait tourner, ne grind ni ne chasse jamais - par nom, ou par le numéro de leur lien dans la boutique."
     },
     "SkipUnplayedGames": {
       "label": "Ignorer les jeux jamais lancés",
@@ -3871,15 +3872,15 @@
     },
     "FarmFromHour": {
       "label": "Farmer les cartes seulement à partir de",
-      "tip": "Farme les cartes seulement à partir de cette heure. Laissez ce réglage et « ...jusqu'à » tous les deux à minuit pour farmer à toute heure."
+      "tip": "Ne farme les cartes qu'entre ces heures. Laissez les deux à minuit pour farmer à toute heure."
     },
     "FarmUntilHour": {
       "label": "Farmer les cartes seulement jusqu'à",
-      "tip": "Farme les cartes jusqu'à cette heure. Mettez-la avant l'heure de début pour passer minuit : du soir jusqu'au petit matin, il farme la nuit."
+      "tip": "La fin de cette plage. Plus tôt que le début, elle passe minuit - de tard le soir jusqu'au petit matin, il farme la nuit."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Après la dernière carte, continuer au moins",
-      "tip": "Mode humain uniquement. Après la dernière carte d'un jeu, il continue d'y jouer quelques minutes, puis fait une pause. Mettez les deux à 0 pour arrêter tout de suite."
+      "tip": "Après la dernière carte d'un jeu, il continue d'y jouer quelques minutes, puis fait une pause. Mettez les deux à 0 pour arrêter tout de suite."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "Après la dernière carte, continuer à jouer au plus",
@@ -3898,8 +3899,8 @@
       "tip": "Déconnecte ce compte quand il n'y a plus de cartes, au lieu de continuer à tourner."
     },
     "AchievementBoostGames": {
-      "label": "Booster ces jeux",
-      "tip": "Les jeux que le boost traite, en ID de jeu ou liens de la boutique séparés par des virgules. Utilisé seulement quand « Coup de pouce aux succès » est sur « les jeux que tu choisis »."
+      "label": "Chasser ces jeux",
+      "tip": "Les jeux que la chasse parcourt, en ID de jeu ou liens de la boutique séparés par des virgules. Utilisé seulement quand « Chasse aux succès » est sur les jeux que vous choisissez."
     },
     "BoostSessionHours": {
       "label": "Jouer chacun environ",
@@ -3923,7 +3924,7 @@
     },
     "IncludeFamilyLibrary": {
       "label": "Inclure les jeux partagés en famille",
-      "tip": "Laisse la chasse aux succès utiliser aussi les jeux partagés avec ce compte via Steam Family. Par exemple, avec 40 jeux possédés et 200 partagés, il peut choisir parmi les 240 - les jeux possédés passent toujours en premier. Activé : les jeux partagés comptent comme les jeux possédés. Désactivé : seulement les jeux que ce compte possède."
+      "tip": "Utilise aussi les jeux partagés avec ce compte via la famille Steam : il y chasse des succès, et « Faire tourner toute ma bibliothèque » les fait tourner aussi. Par exemple, avec 40 jeux possédés et 200 partagés, il peut choisir parmi les 240 - les jeux possédés passent toujours en premier. Désactivé : seulement les jeux de ce compte."
     },
     "AchievementGrindGapMinMinutes": {
       "label": "En grind, écart le plus court entre les succès",
@@ -3935,7 +3936,7 @@
     },
     "AchievementNeverGames": {
       "label": "Jamais dans ces jeux",
-      "tip": "Jeux à laisser complètement tranquilles. Aucun succès n'y est débloqué et les boosts ne les choisissent jamais. En mode humain, le jeu principal du compte est aussi ignoré."
+      "tip": "Les jeux laissés complètement tranquilles. Aucun succès n'y est débloqué et la chasse ne les choisit jamais. En mode humain, le jeu principal du compte est aussi ignoré."
     },
     "AchievementGames": {
       "label": "Seulement ces jeux",
@@ -4026,11 +4027,11 @@
       "tip": "Le nom d'appareil que ce compte affiche dans la liste des appareils autorisés de Steam. Laissez vide pour utiliser le vrai nom de ce PC."
     },
     "SharedSecret": {
-      "label": "Secret des codes de l'authentificateur",
+      "label": "shared_secret de Steam Guard (du .maFile)",
       "tip": "Le secret de l'authentificateur qui lui permet d'entrer lui-même les codes Steam Guard, pour que le compte se reconnecte seul après un redémarrage. Mettre son maFile dans le dossier authenticators fait la même chose. Gardez-le privé."
     },
     "IdentitySecret": {
-      "label": "Secret de confirmation de l'authentificateur",
+      "label": "identity_secret de Steam Guard (du .maFile)",
       "tip": "Le second secret de l'authentificateur, qui sert à accepter les demandes « confirmer sur votre téléphone ». Nécessaire seulement quand ce compte donne des objets, car recevoir ne demande jamais de confirmation."
     },
     "AccountProxy": {
@@ -4054,7 +4055,7 @@
       "tip": "Ignore discrètement les demandes d'ami de nouveaux profils privés de niveau 0, qui sont le profil type des bots d'arnaque. Fonctionne seulement quand « Accepter les demandes d'ami » est activé."
     },
     "RejectInvalidFriendInvites": {
-      "label": "Refuser ce que vous n'acceptez pas",
+      "label": "Refuser les demandes d'ami qu'il n'accepte pas",
       "tip": "Refuse les demandes d'ami qu'il n'accepte pas au lieu de les laisser dans la liste. Désactivé, il les laisse là pour que vous les regardiez."
     },
     "AutoReplyDelaySeconds": {
@@ -4098,7 +4099,7 @@
       "tip": "Combien de temps attendre la réponse de Steam avant d'abandonner et de se reconnecter, en secondes."
     },
     "MaxConcurrentFarming": {
-      "label": "Farmer au plus",
+      "label": "Comptes qui farment en même temps",
       "tip": "Combien de comptes peuvent farmer des cartes en même temps. 0 veut dire aucune limite."
     },
     "LoginCooldownMinutes": {
@@ -4127,11 +4128,11 @@
       "tip": "Mot de passe du proxy ci-dessus, s'il en demande un."
     },
     "GlobalBlacklistedGames": {
-      "label": "Ne jamais y toucher (tous les comptes)",
+      "label": "Ne jamais jouer à ces jeux (tous les comptes)",
       "tip": "Jeux qu'aucun compte ne farmera ni ne fera tourner, par ID de jeu (le nombre dans son lien de la boutique). Chaque compte peut quand même ajouter les siens en plus."
     },
     "Rep4RepLearnCap": {
-      "label": "Apprendre la vraie limite",
+      "label": "Baisser la limite du jour quand Steam dit qu'elle est atteinte",
       "tip": "Quand Steam dit que le compte a atteint sa limite quotidienne de commentaires avant le nombre réglé plus haut, ça devient sa limite (jamais moins de 5). Un refus « commente trop souvent » concerne l'écart entre les commentaires et ne la change jamais."
     },
     "Rep4RepRetryRefused": {
@@ -4140,11 +4141,11 @@
     },
     "SendOnFarmingFinished": {
       "label": "Envoyer les objets à la fin du farm",
-      "tip": "Quand il n'y a plus de cartes à farmer, envoie ce que ce compte a récolté au premier compte de « Vos propres comptes »."
+      "tip": "Quand il n'y a plus de cartes à farmer, envoie ce que ce compte a récolté au compte de « Envoyer les objets à »."
     },
     "SendEveryHours": {
       "label": "Envoyer les objets toutes les",
-      "tip": "Envoie les objets de ce compte au premier compte de « Vos propres comptes » toutes les tant d'heures, pour que les cartes ne s'accumulent pas. Le premier envoi a lieu une période après l'activation, la carte du compte dans le tableau de bord indique quand aura lieu le suivant, et chaque envoi est dans le journal. 0 le désactive."
+      "tip": "Envoie les objets de ce compte au compte de « Envoyer les objets à » toutes les tant d'heures, pour que les cartes ne s'accumulent pas. Le premier envoi a lieu une période après l'activation, la carte du compte dans le tableau de bord montre quand aura lieu le suivant, et chaque envoi est dans le journal."
     },
     "SendItemTypes": {
       "label": "Ce qu'il faut envoyer",
@@ -4152,16 +4153,16 @@
       "placeholder": "cartes"
     },
     "TradeMasterToken": {
-      "label": "Le jeton de leur lien d'échange",
-      "tip": "Le jeton du lien d'échange de l'autre compte, la partie après &token=. Nécessaire seulement si les deux comptes ne sont pas amis."
+      "label": "Jeton du lien d'échange du compte qui reçoit",
+      "tip": "Le jeton du lien d'échange du compte de « Envoyer les objets à », la partie après &token=. Nécessaire seulement si les deux comptes ne sont pas amis."
     },
     "ClearNotifications": {
-      "label": "Effacer les notifications Steam",
-      "tip": "Marque comme lu tout ce qui est dans les notifications Steam, comme les commentaires, cadeaux et invitations, pour que les compteurs ne grimpent pas sans arrêt."
+      "label": "Remettre à zéro les compteurs de notifications Steam",
+      "tip": "Marque comme lu tout ce qui est dans les notifications Steam - commentaires, cadeaux, invitations - et remet à zéro le compteur vert des nouveaux objets à chaque carte obtenue, pour que les compteurs ne grimpent pas sans arrêt."
     },
     "AchievementIncludeMainGame": {
       "label": "Les gagner aussi dans le jeu principal",
-      "tip": "Laisse le jeu principal de « Mode humain » gagner des succès comme tous les autres jeux. Mieux vaut le laisser activé, car des centaines d'heures sans aucun succès, ça paraît bizarre."
+      "tip": "Laisse le jeu principal du mode humain gagner des succès comme n'importe quel autre jeu. Mieux vaut le laisser activé : des centaines d'heures sans succès, ça paraît bizarre."
     },
     "PluginsEnabled": {
       "label": "Charger les plugins",
@@ -4220,16 +4221,12 @@
       "tip": "Le compte dont l'avatar Steam s'affiche dans le coin du logo nocat.farm sur votre carte Discord - un clic ouvre son profil Steam. N'importe quel compte convient, même en mode humain. Vide utilise le premier compte affiché."
     },
     "AutoTradeWith": {
-      "label": "Échanger tout seul avec",
-      "tip": "Avec qui ce compte échange sans vous demander, et dans quel sens. Noms de compte ou SteamID64, séparés par des virgules, chacun avec :from (accepter ce qu'ils envoient), :to (les laisser prendre des objets) ou :both - :both est la valeur par défaut. Exemple : farm1, farm2:to. Vide = les comptes de « Vos propres comptes », dans les deux sens, quand « Accepter n'importe quoi de vos propres comptes » est activé. Les dons suivent leur propre interrupteur. Tout le reste vous attend : trade accept ou trade decline, dans la console ou sur Telegram."
+      "label": "Vos autres comptes",
+      "tip": "Vos propres comptes avec lesquels celui-ci échange tout seul, et dans quel sens : noms de comptes ici ou numéros de profil Steam (SteamID64), séparés par des virgules, chacun avec :from (accepter ce qu'ils envoient), :to (les laisser prendre des objets) ou :both - :both par défaut. Exemple : farm1, farm2:to. N'indiquez que des comptes à vous. Vide : personne - chaque offre vous attend (trade accept ou trade decline, dans la console ou sur Telegram) ; les dons suivent leur propre interrupteur."
     },
     "NotifyTrades": {
       "label": "Signaler les offres d'échange",
       "tip": "Affiche une bulle pour chaque nouvelle offre d'échange - de qui elle vient, ce que vous donneriez et recevriez, et ce que nocat.farm va faire - et quand une offre est acceptée, refusée ou doit être confirmée."
-    },
-    "WatchBans": {
-      "label": "Surveiller les bannissements",
-      "tip": "Consulte les bannissements de ce compte à quelques heures d'intervalle - VAC, bannissements de jeu, une interdiction d'échange, un bannissement communautaire - et vous prévient tout de suite (journal, bulle, Discord/Telegram) quand un nouveau apparaît. Il ne fait que regarder ; il ne change jamais rien. Les jeux dont il trouve le compte banni sont exclus des échanges automatiquement ; les cartes à échanger continuent de s'échanger."
     },
     "TelegramLogColour": {
       "label": "Couleur de Telegram dans le journal",
@@ -4248,8 +4245,8 @@
       "tip": "Seulement pour un proxy inverse qui n'est pas sur ce PC, comme Caddy devant Docker : son adresse ou sa plage, comme 172.16.0.0/12. L'adresse du visiteur qu'il transmet est alors crue, donc les gens sur internet comptent comme internet et pas comme la maison. Un proxy sur ce PC n'a besoin de rien ici. Sinon, laisse vide."
     },
     "BoostWeight": {
-      "label": "Mode humain : poids du jeu chassé",
-      "tip": "Mode humain uniquement. Le jeu chassé rejoint les jeux qu'il joue, et ceci règle sa fréquence - un poids comme ceux de « Jeux et fréquence ». Il se joue en sessions normales, avec pauses et coucher, sans jamais couper un autre jeu."
+      "label": "Fréquence du jeu chassé",
+      "tip": "Le jeu chassé rejoint les jeux qu'il joue, et ceci règle sa fréquence - un poids comme ceux de « Jeux et fréquence ». Il se joue en sessions normales, avec pauses et coucher, sans jamais couper un autre jeu."
     },
     "AutoUpdateFromHour": {
       "label": "Installer tout seul à partir de",
@@ -4265,7 +4262,7 @@
     },
     "UpdateCheckHours": {
       "label": "Chercher les mises à jour toutes les",
-      "tip": "Heures entre deux recherches d'une nouvelle version. Il cherche aussi une fois au démarrage de nocat.farm, et chaque fois que vous tapez update."
+      "tip": "Heures entre deux recherches d'une nouvelle version. Il cherche aussi au démarrage de nocat.farm et chaque fois que vous tapez update. Pas avec « ne pas chercher de mises à jour »."
     },
     "DiscordBotToken": {
       "label": "Jeton du bot Discord",
@@ -4296,15 +4293,15 @@
       "tip": "Comme Jellyfin : demande à votre routeur de rediriger le port du tableau de bord vers ce PC (UPnP), pour qu'il s'ouvre de partout à votre adresse internet - /dashboard sur Telegram et Discord donne le lien. Il faut un mot de passe d'au moins 12 caractères et 0.0.0.0 dans « Écouter sur ». N'importe qui sur internet peut atteindre la page de connexion, et cinq mauvais mots de passe le bloquent une heure. Désactiver retire la redirection. Le lien est en http simple, non chiffré : connectez-vous via les données mobiles ou un réseau de confiance."
     },
     "WebSignInCode": {
-      "label": "Code sur Telegram pour les connexions depuis l'extérieur",
+      "label": "Demander un code Telegram pour se connecter depuis l'extérieur",
       "tip": "Se connecter depuis l'extérieur de chez vous demande le mot de passe puis un code à 6 chiffres envoyé sur votre Telegram, donc le mot de passe seul ne suffit pas. À la maison et sur ce PC, seul le mot de passe est demandé. Il faut que Telegram soit connecté (Paramètres, Notifications) ; d'ici là, le mot de passe suffit aussi depuis l'extérieur."
     },
     "WebRemoteOffAfter": {
-      "label": "Désactiver Ouvrir de partout après",
+      "label": "Couper Ouvrir de partout après autant de connexions ratées par jour",
       "tip": "Mauvais mots de passe et codes depuis internet en une journée avant qu'Ouvrir de partout se désactive tout seul - et reste désactivé jusqu'à ce que vous le réactiviez (page Téléphone, ou anywhere on). D'ici là, plus rien n'entre depuis internet, même par une adresse publique saisie à la main. 0 ne le désactive jamais."
     },
     "BoostGamesInRotation": {
-      "label": "Jeux en rotation",
+      "label": "Jeux chassés en même temps",
       "tip": "Combien de jeux la chasse a en cours à la fois. Elle alterne entre eux, et quand l'un est en pause ou fini, le suivant de la liste prend sa place."
     },
     "BoostHoursPerDay": {
@@ -4313,19 +4310,19 @@
     },
     "BoostSwitchFromPct": {
       "label": "Passer à un autre jeu à partir de",
-      "tip": "Quand un jeu a à peu près cette part de ses succès - un point au hasard entre ce réglage et le suivant, différent pour chaque jeu - il passe à un autre, comme quelqu'un qui en a assez pour l'instant. En pourcentage."
+      "tip": "Quand un jeu a à peu près cette part de ses succès - un point au hasard entre les deux, différent pour chaque jeu -, il passe à un autre, comme une personne qui en a assez d'un jeu pour l'instant."
     },
     "BoostSwitchToPct": {
       "label": "Passer à un autre jeu au plus tard à",
-      "tip": "Le haut de cette plage. Le même nombre qu'au-dessus la rend exacte."
+      "tip": "Le haut de cette fourchette. Deux fois le même nombre le rend exact."
     },
     "BoostRestDaysMin": {
       "label": "Revenir à un jeu après au moins",
-      "tip": "Combien de jours avant de revenir à un jeu quitté - un nombre au hasard entre ce réglage et le suivant. À chaque retour, il s'arrête un peu plus loin, jusqu'à « Ne pas finir plus de »."
+      "tip": "Combien de jours avant de revenir à un jeu qu'il a quitté - un nombre au hasard entre les deux. À chaque retour, il s'arrête un peu plus loin, jusqu'à « Ne jamais compléter plus d'un jeu que »."
     },
     "BoostRestDaysMax": {
       "label": "Revenir à un jeu après au plus",
-      "tip": "Le haut de cette plage, en jours."
+      "tip": "Le plus de jours avant de revenir à un jeu."
     },
     "AchievementRealLength": {
       "label": "Rythme selon la vraie durée des jeux",
@@ -4342,7 +4339,7 @@
     },
     "IdleWholeLibrary": {
       "label": "Toute ma bibliothèque",
-      "tip": "Fait tourner tous les jeux que possède le compte, après ceux de « Jeux à faire tourner ». Laisse de côté ceux de « Ne jamais toucher à ceux-ci », les jeux partagés en famille (sauf si « Inclure les jeux partagés en famille » est activé) et ceux que « Protéger les remboursements » met de côté. Steam en fait tourner 32 à la fois, alors activez « Faire tourner la liste par lots » pour que chaque jeu ait son tour."
+      "tip": "Fait tourner tous les jeux que possède le compte, après ceux de « Jeux à faire tourner ». Laisse de côté ceux de « Ne jamais jouer à ces jeux », les jeux partagés en famille (sauf si « Inclure les jeux partagés en famille » est activé) et ceux que « Protéger les remboursements » met de côté. Steam en fait tourner 32 à la fois, alors activez « Faire tourner la liste par lots » pour que chaque jeu ait son tour."
     },
     "RotateIdleGames": {
       "label": "Faire tourner la liste par lots",
@@ -4371,8 +4368,8 @@
       "tip": "Un jeu qui vient d'arriver dans la bibliothèque, acheté, offert ou gratuit, reçoit des séances en plus pendant 3 à 10 jours, un peu moins chaque jour, comme quand on essaie quelque chose de nouveau. Les jeux de la liste noire ou partagés en famille et ceux que tes autres comptes font tourner sont laissés tranquilles, et un jeu que « Protéger les remboursements » met de côté attend la fin de cette période."
     },
     "LongerRhythms": {
-      "label": "Périodes calmes et soirées tardives",
-      "tip": "Une ou deux fois par mois, il a une période calme de 2 à 5 jours avec des journées nettement plus courtes, et de temps en temps un vendredi ou samedi soir se prolonge plus que d'habitude. Les jours de repos et les réglages d'heures s'appliquent toujours. human week les montre."
+      "label": "Périodes calmes de temps en temps",
+      "tip": "Une ou deux fois par mois, il a une période calme de 2 à 5 jours avec des journées nettement plus courtes. Les jours de repos et les réglages d'heures s'appliquent toujours. Les nuits tardives du vendredi et du samedi, c'est « Veille plus tard ven/sam ». La commande `human week` les montre."
     },
     "JoinFriends": {
       "label": "Parfois jouer à ce que joue un ami",
@@ -4401,7 +4398,7 @@
     },
     "OfflineIdleTopGames": {
       "label": "Jeux les plus joués pour la nuit",
-      "tip": "Si « Jeux pour la nuit » est vide, il fait tourner la nuit ce nombre de ses jeux les plus joués. 1 ou 2 paraît le plus naturel - beaucoup à la fois est la première chose que selfcheck relève."
+      "tip": "Sans rien dans « Jeux à faire tourner la nuit », il fait tourner la nuit autant des jeux les plus joués du compte. 1 ou 2 paraît le plus naturel - beaucoup à la fois est la première chose contre laquelle la commande `selfcheck` met en garde."
     },
     "ClaimFree": {
       "label": "Récupérer les jeux gratuits",
@@ -4410,8 +4407,8 @@
     },
     "UpdateMode": {
       "label": "Mises à jour",
-      "tip": "Ce qui se passe quand une nouvelle version sort. Il te prévient toujours d'abord, dans le journal et sur Telegram et Discord. Installer quand je clique, une fois que tout le monde dort : le bouton Mettre à jour ou update accept l'installe une fois tes comptes endormis - aucun compte en mode humain éveillé, personne ne joue, aucun échange ni cadeau en attente. Installer quand je clique : tout de suite. Installer toute seule la nuit : il l'installe seul pendant les heures ci-dessous, à un moment calme, et prévient avant et après. update now installe toujours tout de suite. Pas dans Docker ni en service Linux, qui se mettent à jour à la main.",
-      "choices": "0 installer quand je clique, une fois que tout le monde dort | 1 installer quand je clique | 2 installer toute seule la nuit"
+      "tip": "Ce qui se passe quand une nouvelle version sort. Me demander : il vous prévient (dans le journal, sur Telegram et Discord) et le bouton Mettre à jour ou 'update accept' l'installe - une fois vos comptes endormis (aucun compte en mode humain réveillé, personne ne joue, aucun échange ou cadeau en attente) ou tout de suite. Installer toute seule la nuit : il l'installe de lui-même dans les heures ci-dessous, à un moment calme, et prévient avant et après. Ne pas chercher de mises à jour : il ne cherche jamais ; 'update' le fait quand même. Pas dans Docker ni en service Linux, qu'on met à jour à la main.",
+      "choices": "0 me demander ; installer quand mes comptes dorment | 1 me demander ; installer tout de suite | 2 installer toute seule la nuit | 3 ne pas chercher de mises à jour"
     },
     "CountMeAsUser": {
       "label": "Me compter comme utilisateur",
@@ -4436,11 +4433,7 @@
     },
     "HealthAlertBans": {
       "label": "Alerter en cas de nouveau bannissement",
-      "tip": "Te prévient quand un bannissement apparaît - par exemple un bannissement VAC, un bannissement de jeu, d'échange ou de la communauté. Tant que Surveiller les bannissements est activé, c'est déjà lui qui te prévient, donc celui-ci reste silencieux pour ne pas le dire deux fois. Désactivé : pas de message de bannissement d'ici."
-    },
-    "HealthAlertDiscord": {
-      "label": "Alertes de santé sur Discord",
-      "tip": "Envoie un message dans ton salon Discord quand quelque chose se dégrade sur un compte. Par exemple, le marché bloqué pendant 7 jours envoie un message. Activé : chaque dégradation est envoyée. Désactivé : rien ne va sur Discord - la ligne Santé l'affiche toujours. Il faut le webhook Discord configuré dans Notifications."
+      "tip": "Vous prévient quand un nouveau bannissement apparaît - VAC, de jeu, d'échange ou de communauté. Par exemple, un nouveau bannissement de jeu dans un jeu : vous recevez un message, une seule fois. Les bannissements sont vérifiés toutes les quelques heures de toute façon : les jeux où le compte est banni restent hors de ses échanges, et la carte du compte les montre. Désactivé : un nouveau bannissement est seulement écrit dans le journal."
     },
     "HealthAlertGuard": {
       "label": "Alerter quand Steam Guard s'affaiblit",
@@ -4448,7 +4441,7 @@
     },
     "HealthAlertLimited": {
       "label": "Alerter en cas de compte limité",
-      "tip": "Te prévient quand Steam commence à traiter ce compte comme limité : pas d'invitations d'amis, pas de marché. Par exemple, un compte qui n'a jamais dépensé 5 dollars est limité. Désactivé : seule la ligne Santé l'affiche."
+      "tip": "Vous prévient quand Steam commence à traiter ce compte comme limité : pas d'invitations d'amis, pas de marché. Par exemple, un compte qui n'a jamais dépensé l'équivalent de 5 US$ est limité. Désactivé : seule la ligne de santé le montre."
     },
     "HealthAlertMarket": {
       "label": "Alerter quand le marché est bloqué",
@@ -4457,14 +4450,6 @@
     "HealthAlertPhone": {
       "label": "Alerter quand le téléphone est retiré",
       "tip": "Te prévient quand le compte n'a plus de numéro de téléphone - par exemple après sa suppression sur le site de Steam. Désactivé : seule la ligne Santé l'affiche."
-    },
-    "HealthAlertPopup": {
-      "label": "Alertes de santé en bulle",
-      "tip": "Affiche une bulle sur ce PC quand quelque chose se dégrade sur un compte. Par exemple, Steam Guard qui passe de l'application mobile à l'e-mail ouvre une bulle. Activé : une bulle à chaque fois, tant que Afficher les bulles est activé. Désactivé : pas de bulle - la ligne Santé l'affiche toujours."
-    },
-    "HealthAlertTelegram": {
-      "label": "Alertes de santé sur Telegram",
-      "tip": "Envoie un message dans ton chat Telegram quand quelque chose se dégrade sur un compte. Par exemple, une suspension d'échange de 15 jours qui commence sur un compte envoie un message. Activé : chaque dégradation est envoyée. Désactivé : rien ne va sur Telegram - la ligne Santé du compte l'affiche toujours. Il faut Telegram configuré dans Notifications."
     },
     "HealthAlertTradeHold": {
       "label": "Alerter en cas de suspension d'échange",
@@ -4477,18 +4462,6 @@
     "HealthMinHours": {
       "label": "Pause la plus courte entre deux vérifications d'état",
       "tip": "Le temps le plus court entre deux vérifications de santé, en heures - par exemple 5. Avec le plus long à 7, une vérification a lieu toutes les 5 à 7 heures, au hasard. Il vérifie toujours une fois quand le compte se connecte."
-    },
-    "ScamAlertDiscord": {
-      "label": "Alertes anti-arnaque sur Discord",
-      "tip": "Envoie les alertes anti-arnaque dans ton salon Discord. Par exemple, une nouvelle clé API sur un compte envoie un message qui nomme le compte. Activé : chaque alerte y est envoyée. Désactivé : aucune ne va sur Discord - le journal et le tableau de bord les affichent toujours. Il faut le webhook Discord configuré dans Notifications."
-    },
-    "ScamAlertPopup": {
-      "label": "Alertes anti-arnaque en bulle",
-      "tip": "Affiche une bulle sur ce PC pour chaque alerte anti-arnaque. Par exemple, un e-mail modifié sur un compte ouvre une bulle qui nomme le compte. Activé : une bulle pour chaque alerte, tant que Afficher les bulles est activé. Désactivé : pas de bulle - le journal et le tableau de bord l'affichent toujours."
-    },
-    "ScamAlertTelegram": {
-      "label": "Alertes anti-arnaque sur Telegram",
-      "tip": "Envoie les alertes anti-arnaque dans ton chat Telegram. Par exemple, un nouvel appareil qui se connecte sur un compte envoie un message qui nomme le compte et l'appareil. Activé : chaque alerte y est envoyée. Désactivé : aucune ne va sur Telegram - le journal et le tableau de bord les affichent toujours. Il faut Telegram configuré dans Notifications."
     },
     "ScamWatchApiKey": {
       "label": "Vérifier la clé API",
@@ -4594,10 +4567,6 @@
       "label": "Réessayer après",
       "tip": "Après une sauvegarde ratée, combien de temps attendre avant de réessayer ce jour-là. Par exemple 60 : une sauvegarde ratée à 4 h réessaie à 5 h. 0 attend jusqu'à demain."
     },
-    "SendBackups": {
-      "label": "Envoyer les sauvegardes",
-      "tip": "Un message quand une sauvegarde échoue, avec la raison - par exemple le dossier est introuvable. Avec Me prévenir réglé sur après chaque sauvegarde, un aussi pour chaque sauvegarde enregistrée."
-    },
     "BackupFolder": {
       "label": "Enregistrer les sauvegardes dans",
       "tip": "Le dossier où vont les sauvegardes quotidiennes. Choisis un dossier OneDrive ou Dropbox, ou une clé USB, pour qu'elles survivent à ce PC - par exemple D:\\OneDrive\\nocat.farm. Vide : le dossier backups à côté de nocat.farm."
@@ -4625,11 +4594,6 @@
     "BackupIncludeAccounts": {
       "label": "Inclure les comptes et les connexions enregistrées",
       "tip": "Met dans la sauvegarde les paramètres de chaque compte, sa connexion Steam enregistrée et sa progression (la journée du mode humain, la chasse aux succès, les compteurs rep4rep). Par exemple, 3 comptes reviennent prêts à se connecter. Désactivé : une restauration ne ramène aucun compte."
-    },
-    "BackupNotify": {
-      "label": "Me prévenir",
-      "tip": "Quand tu entends parler des sauvegardes sur Telegram et Discord. Seulement quand une sauvegarde échoue : un message seulement si une n'a pas pu être faite - par exemple le dossier est introuvable, le disque est plein ou il n'y a pas la permission. Après chaque sauvegarde : un message aussi pour chaque sauvegarde enregistrée. Il faut Envoyer les sauvegardes activé dans Notifications.",
-      "choices": "0 seulement quand une sauvegarde échoue | 1 après chaque sauvegarde"
     },
     "PhoneInstallHint": {
       "label": "Montrer comment l'installer sur un téléphone",
@@ -4664,12 +4628,8 @@
       "tip": "Minutes pendant lesquelles un jeu partagé en famille est laissé tranquille après que quelqu'un de ta famille Steam a arrêté d'y jouer, par exemple 20 - souvent ils relancent. 0 le prend tout de suite."
     },
     "SpareKeepGems": {
-      "label": "Garder au moins autant de gemmes en vrac",
+      "label": "Gemmes jamais emballées, envoyées ni vendues",
       "tip": "Gemmes jamais emballées, envoyées ni vendues. Par exemple 500 avec 2 450 gemmes : 1 950 peuvent partir, donc 1 sac est fait et 1 450 restent en vrac. 0 emballe chaque tranche complète de 1 000."
-    },
-    "SpareKeepBackgrounds": {
-      "label": "Garder autant de chaque arrière-plan",
-      "tip": "Copies de chaque arrière-plan toujours gardées. Par exemple 1 : sur 3 copies, 2 peuvent partir. 0 n'en garde aucune, la dernière copie peut donc partir aussi."
     },
     "SpareGems": {
       "label": "Les gemmes ensuite",
@@ -4692,10 +4652,6 @@
       "label": "Chercher des paquets toutes les",
       "tip": "Heures entre deux recherches de boosters - ça varie un peu à chaque fois. Par exemple 24 : environ une fois par jour."
     },
-    "SpareKeepEmoticons": {
-      "label": "Garder autant de chaque émoticône",
-      "tip": "Copies de chaque émoticône toujours gardées. Par exemple 1 : sur 3 copies, 2 peuvent partir. 0 n'en garde aucune, la dernière copie peut donc partir aussi."
-    },
     "BoosterUnopened": {
       "label": "Boosters qu'il n'ouvre pas",
       "tip": "Ce qui arrive aux boosters laissés scellés parce qu'ils valent plus scellés, que leur jeu est dans la liste ci-dessus ou que l'ouverture est désactivée. Les garder : ils restent. Les envoyer : au compte indiqué ci-dessous, par exemple main. Les vendre : mis en vente comme les objets en trop. Les envoyer ou les vendre n'a lieu que tant qu'Objets en trop est activé, et la vente respecte ses limites. Les boosters nouveaux ou sur le marché sont toujours laissés tranquilles, tout comme ceux créés par automatique dans « Créer des boosters ».",
@@ -4711,7 +4667,7 @@
     },
     "BoosterSendTo": {
       "label": "Envoyer les boosters non ouverts à",
-      "tip": "Le nom d'un de tes autres comptes ici, par ex. main - les boosters lui sont envoyés par un échange. L'envoi doit être confirmé sur le téléphone, sauf si l'authentificateur est ajouté."
+      "tip": "Un autre de vos comptes ici, par son nom, p. ex. main - les paquets y partent par échange. Vide : le compte de « Envoyer les objets à » (Échanges). L'envoi doit être confirmé sur le téléphone sauf si l'authentificateur est ajouté."
     },
     "SpareRunHours": {
       "label": "Chercher les objets en trop toutes les",
@@ -4723,16 +4679,16 @@
     },
     "SpareSellPrice": {
       "label": "Prix de vente",
-      "tip": "Le prix de mise en vente de tout objet, recalculé dans la devise du porte-monnaie Steam de ce compte juste avant sa mise en vente. Par exemple, un objet vendu 0.30 plusieurs fois aujourd'hui, avec une annonce bradée à 0.10 : un centime sous le vrai prix le met à 0.29, au même prix que le moins cher à 0.10, la médiane à 0.30. « Un centime sous le vrai prix » (le choix sûr par défaut) : ce à quoi il s'est vendu le dernier jour, ou l'annonce la moins chère si elle est plus haute - une annonce bradée très en dessous est ignorée. Pas de vente récente ou personne ne vend : gardé. « Un centime sous le moins cher » rend le vôtre le moins cher, pour qu'il se vende en premier : le moins cher à 0.12 → mis en vente à 0.11. Il ignore aussi une annonce bradée (celle à 0.10 plus haut : il le met à 0.29), ne descend jamais sous votre propre annonce si elle est déjà la moins chère, ni sous « Jamais plus bas que », ni si bas que vous recevriez moins que « Vendre seulement si vous recevez au moins ». Les autres : au même prix que le moins cher, ou la médiane (jamais sous le moins cher).",
+      "tip": "Le prix de mise en vente de tout objet, recalculé dans la devise du porte-monnaie Steam de ce compte juste avant sa mise en vente. Par exemple, un objet vendu 0.30 plusieurs fois aujourd'hui, avec une annonce bradée à 0.10 : un centime sous le vrai prix le met à 0.29, au même prix que le moins cher à 0.10, la médiane à 0.30. « Un centime sous le vrai prix » (le choix sûr par défaut) : ce à quoi il s'est vendu le dernier jour, ou l'annonce la moins chère si elle est plus haute - une annonce bradée très en dessous est ignorée. Pas de vente récente ou personne ne vend : gardé. « Un centime sous le moins cher » rend le vôtre le moins cher, pour qu'il se vende en premier : le moins cher à 0.12 → mis en vente à 0.11. Il ignore aussi une annonce bradée (celle à 0.10 plus haut : il le met à 0.29), ne descend jamais sous votre propre annonce si elle est déjà la moins chère, ni sous « Prix le plus bas en remise en vente, du prix de vente récent », ni si bas que vous recevriez moins que « Vendre seulement si vous recevez au moins ». Les autres : au même prix que le moins cher, ou la médiane (jamais sous le moins cher).",
       "choices": "0 un centime sous le vrai prix | 1 au même prix que le moins cher | 2 le prix de vente médian | 3 un centime sous le moins cher"
     },
     "SpareRelistDays": {
       "label": "Retirer les annonces invendues après",
-      "tip": "Jours avant qu'une annonce invendue soit retirée puis remise en vente un peu moins cher. Par exemple 7 : une carte mise en vente à 0.30 le 1er, toujours invendue le 8, est remise à 0.29 - ou à 0.25 quand quelqu'un d'autre la vend à 0.26 (une annonce bradée ne compte pas). Jamais sous « Jamais plus bas que » ; à ce prix elle reste en vente. Seulement les annonces que nocat.farm a mises lui-même. Les annonces que tu as mises toi-même ne sont jamais touchées."
+      "tip": "Jours avant qu'une annonce invendue soit retirée puis remise en vente un peu moins cher. Par exemple 7 : une carte mise en vente à 0.30 le 1er, toujours invendue le 8, est remise à 0.29 - ou à 0.25 quand quelqu'un d'autre la vend à 0.26 (une annonce bradée ne compte pas). Jamais sous « Prix le plus bas en remise en vente, du prix de vente récent » ; à ce prix elle reste en vente. Seulement les annonces que nocat.farm a mises lui-même. Les annonces que tu as mises toi-même ne sont jamais touchées."
     },
     "SpareMaxPrice": {
       "label": "Ne jamais toucher aux objets valant plus de",
-      "tip": "Tout ce qui vaut plus n'est jamais touché : jamais transformé en gemmes, jamais vendu. Dans la devise du porte-monnaie Steam de ce compte, par ex. 0.25 pour des dollars ou des euros - mets la même valeur dans ta devise, par ex. 40 pour des yens. La valeur est la plus haute entre l'annonce la moins chère et ce à quoi il s'est vendu le dernier jour : mis en vente à 0.20 mais vendu 0.30, il vaut 0.30."
+      "tip": "Tout ce qui vaut plus n'est jamais touché : jamais transformé en gemmes, jamais vendu. Dans la devise du porte-monnaie Steam de ce compte : 0.25 convient aux dollars ou aux euros ; pour le yen, mettez environ 40. La valeur est la plus haute entre l'annonce la moins chère et le prix de vente du dernier jour : affiché à 0.20 mais vendu 0.30, il vaut 0.30."
     },
     "SpareGemMarginPct": {
       "label": "Les gemmes doivent battre la vente de",
@@ -4740,7 +4696,7 @@
     },
     "SpareMaxedBadgeCards": {
       "label": "Cartes des badges terminés",
-      "tip": "Compte comme en trop les cartes d'un jeu dont le badge est déjà terminé - niveau 5, ou badge brillant fabriqué - en gardant les copies réglées dans « Garder autant de chaque carte ». Par exemple, 3 copies d'une carte en gardant 1 : 2 sont en trop. Désactivé : les cartes des badges terminés restent."
+      "tip": "Compte comme en trop les cartes d'un jeu dont le badge est déjà terminé - niveau 5, ou badge brillant fabriqué - en gardant les copies réglées dans « Garder autant de chaque objet ». Par exemple, 3 copies d'une carte en gardant 1 : 2 sont en trop. Désactivé : les cartes des badges terminés restent."
     },
     "SpareNewDays": {
       "label": "Laisser les nouveaux objets tranquilles pendant",
@@ -4748,7 +4704,7 @@
     },
     "SpareGemsSendTo": {
       "label": "Envoyer les sacs à",
-      "tip": "Le nom d'un de tes autres comptes ici, par ex. main - les sacs lui sont envoyés par un échange. Utilisé seulement quand « Les gemmes ensuite » envoie les sacs. L'envoi doit être confirmé sur le téléphone, sauf si l'authentificateur est ajouté."
+      "tip": "Un autre de vos comptes ici, par son nom, p. ex. main - les sacs y partent par échange. Vide : le compte de « Envoyer les objets à » (Échanges). L'envoi doit être confirmé sur le téléphone sauf si l'authentificateur est ajouté."
     },
     "OpenBoosterPacks": {
       "label": "Ouvrir les boosters",
@@ -4774,7 +4730,7 @@
     },
     "SpareDailyValue": {
       "label": "Valeur par jour, au plus",
-      "tip": "Ce que les objets d'une journée peuvent valoir ensemble au plus, dans la devise du porte-monnaie Steam de ce compte. Par exemple 1.00 : dix objets à 0.10 remplissent la journée et le 11e attend demain. Par ex. 1.00 pour des dollars ou des euros - mets la même valeur dans ta devise, par ex. 150 pour des yens."
+      "tip": "Ce que les objets d'une journée peuvent valoir au plus ensemble, dans la devise du porte-monnaie Steam de ce compte : 1.00 convient aux dollars ou aux euros ; pour le yen, mettez environ 150. Par exemple 1.00 : dix objets à 0.10 remplissent la journée et le suivant attend demain."
     },
     "SpareDailyItems": {
       "label": "Objets par jour, au plus",
@@ -4797,8 +4753,8 @@
       "tip": "Un message par coup d'œil d'Objets en trop ou aux boosters : combien d'objets transformés en gemmes ou mis en vente et combien de boosters ouverts, les 10 premiers par leur nom - par exemple un message pour 14 objets, pas 14. Désactivé : rien de tout ça n'est envoyé."
     },
     "SpareKeepCopies": {
-      "label": "Garder autant de chaque carte",
-      "tip": "Copies de chaque carte toujours gardées, même quand le badge est terminé. Par exemple 1 : sur 3 copies, 2 peuvent partir. 0 n'en garde aucune, la dernière copie peut donc partir aussi. Les cartes dont un badge a encore besoin sont toujours gardées."
+      "label": "Garder autant de chaque objet",
+      "tip": "Copies de chaque carte, fond et émoticône toujours gardées, même quand le badge est terminé. Par exemple 1 : sur 3 copies, 2 peuvent partir. 0 n'en garde aucune, la dernière copie peut donc partir aussi. Les cartes dont un badge a encore besoin sont toujours gardées."
     },
     "SpareDumpPct": {
       "label": "Ignorer les annonces aussi loin sous les ventes",
@@ -4810,7 +4766,7 @@
       "choices": "0 non | 1 jeux que je choisis | 2 automatique - badge le plus proche"
     },
     "BoosterKeepGems": {
-      "label": "Garder au moins ce nombre de gemmes",
+      "label": "Gemmes que les paquets n'utilisent jamais",
       "tip": "Le nombre de gemmes sous lequel un booster ne fait jamais descendre le compte. Un booster n'est créé que tant que les gemmes couvrent son prix plus ce nombre. Par exemple 1000 avec 1 500 gemmes : un booster à 400 est créé et il en reste 1 100, et le suivant attend d'avoir plus de gemmes. 0 peut toutes les utiliser."
     },
     "SpareRelistFloorPct": {
@@ -4831,7 +4787,7 @@
     },
     "SpareMinSale": {
       "label": "Vendre seulement si vous recevez au moins",
-      "tip": "Le minimum qu'une vente doit te rapporter après les frais de Steam, dans la devise du porte-monnaie Steam de ce compte. Par exemple 0.05 : une carte qui te rapporterait 0.03 devient des gemmes quand ses gemmes valent plus de 0.02, et est gardée quand elle ne se transforme pas en gemmes. Un objet n'est jamais transformé en gemmes valant moins que la vente moins 0.01 : avec des gemmes valant 0.02 ou moins, cette carte est vendue pour les 0.03 quand même. En « vente uniquement », elle est gardée. p. ex. 0.05 pour des dollars ou des euros - mets la même valeur dans ta propre devise, p. ex. 5 pour des yens. 0 vend tout."
+      "tip": "Le minimum qu'une vente doit vous rapporter après les frais de Steam, dans la devise du porte-monnaie Steam de ce compte : 0.05 convient aux dollars ou aux euros ; pour le yen, mettez environ 5. Par exemple 0.05 : une carte qui vous rapporterait 0.03 devient des gemmes quand ses gemmes valent plus de 0.02, et est gardée si elle ne devient pas des gemmes. Un objet n'est jamais transformé en gemmes valant moins que la vente moins 0.01 : avec des gemmes à 0.02 ou moins, la carte est vendue pour les 0.03 quand même. En « vendre seulement », elle est gardée. 0 vend tout."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "Pause la plus longue entre les objets, mode humain",
@@ -4842,11 +4798,11 @@
       "tip": "Transforme aussi les séries de cartes brillantes complètes en badges brillants. Désactivé, il ne fabrique que les badges normaux et laisse les cartes brillantes tranquilles. Si Steam refuse un badge brillant, seuls les brillants attendent - les badges normaux continuent."
     },
     "SellSetsForLevels": {
-      "label": "Vendre les séries qui valent plus que les niveaux qu'elles achèteraient",
+      "label": "Vendre un set au lieu de le fabriquer quand l'argent achète plus de niveaux",
       "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries brillantes sont toujours fabriquées."
     },
     "CardSwaps": {
-      "label": "Échanger des cartes avec d'autres utilisateurs de nocat.farm",
+      "label": "Échanger les cartes en trop avec d'autres utilisateurs de nocat.farm",
       "tip": "Échange les cartes à échanger normales en trop, une pour une, avec d'autres utilisateurs de nocat.farm, dans le même jeu, pour que chacun finisse ses sets plus vite. nocat.lol associe les comptes ; ce compte revérifie chaque échange avant. Il ne donne jamais une carte dont tes sets ont besoin ni le dernier exemplaire d'une carte, jamais de cartes brillantes, d'arrière-plans ou d'émoticônes, et rien de tes listes « ne jamais toucher ». Tant qu'il est activé, nocat.lol garde le SteamID et le lien d'échange de ce compte - le désactiver les supprime. À l'activation, il montre d'abord ce qu'il ferait et demande confirmation."
     },
     "CardSwapMaxLoss": {
@@ -4868,6 +4824,31 @@
     "GemsForLevels": {
       "label": "Utiliser les gemmes pour le plus de niveaux",
       "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant que les boosters automatiques créent un booster, il calcule combien de niveaux de badge valent 1 000 gemmes aux prix du marché du jour, de quatre façons : vendre un sac de gemmes et laisser l'achat de cartes dépenser l'argent, créer un booster et le vendre fermé, créer un booster et vendre ses 3 cartes, ou ouvrir des boosters pour le badge le plus proche comme avant - et fait celle qui rapporte le plus. Par exemple, un sac qui rapporte 0,45 achète environ 1,8 niveau de séries bon marché, alors que des boosters pour le badge le plus proche en donnent environ 0,3. Une façon qui passe par le marché doit battre nettement (de 15 %) une façon plus sûre ; si les prix ne sont pas connus, les gemmes restent en vrac. Il ne vend jamais pour moins que ce que valent les gemmes, met en vente 10 choses par jour au plus, et tu confirmes chaque mise en vente dans l'app Steam comme toute autre. Seules les gemmes échangeables sont vendues ; les non échangeables vont toujours au badge le plus proche. 'booster plan' montre les chiffres."
+    },
+    "SendScamWarnings": {
+      "label": "Envoyer les alertes d'arnaque",
+      "tip": "Les alertes de la surveillance anti-arnaque : une clé API qui n'était pas là, un nouvel appareil, l'e-mail, le téléphone ou Steam Guard changés, tout déconnecté. Par exemple, un nouvel appareil qui se connecte à un compte envoie un message nommant le compte et l'appareil. Activé par défaut."
+    },
+    "SendHealthAlerts": {
+      "label": "Envoyer les alertes de santé du compte",
+      "tip": "Quelque chose s'est dégradé sur un compte : un nouveau bannissement, une retenue des échanges, le marché bloqué, un compte limité, un Steam Guard plus faible, le téléphone retiré. Par exemple, une retenue de 15 jours qui commence envoie un message. Activé par défaut."
+    },
+    "NotifyScam": {
+      "label": "Pop-up pour les alertes d'arnaque",
+      "tip": "Affiche un pop-up sur ce PC pour chaque alerte de la surveillance anti-arnaque - par exemple un e-mail changé sur un compte ouvre une fenêtre nommant le compte."
+    },
+    "NotifyHealth": {
+      "label": "Pop-up pour la santé du compte",
+      "tip": "Affiche un pop-up sur ce PC quand quelque chose se dégrade sur un compte - par exemple Steam Guard qui passe de l'appli mobile à l'e-mail."
+    },
+    "BackupMessages": {
+      "label": "Messages des sauvegardes",
+      "tip": "Messages des sauvegardes sur Telegram et Discord. Seulement si une échoue : un message uniquement quand une sauvegarde n'a pas pu être faite - par exemple le dossier manque ou le disque est plein. Après chaque sauvegarde : aussi un message pour chaque sauvegarde enregistrée. Désactivé : aucun.",
+      "choices": "0 désactivé | 1 seulement si une échoue | 2 après chaque sauvegarde"
+    },
+    "DailyReportTime": {
+      "label": "Résumé du jour à",
+      "tip": "Quand le résumé du jour est écrit dans le journal, en heure locale - et envoyé, quand la puce Résumé quotidien est activée dans Notifications. Par exemple 09:30."
     }
   }
 }

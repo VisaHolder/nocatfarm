@@ -3153,7 +3153,7 @@ public static partial class Commands {
 			}
 
 			if (!bot.Cfg.ShowInventoryValue) {
-				lines.Add($"{bot.Name}: not being valued (its \"Work out what its inventory is worth\" setting is off)");
+				lines.Add($"{bot.Name}: not being valued (its \"Show inventory value\" setting is off)");
 
 				continue;
 			}
@@ -4342,7 +4342,7 @@ public static partial class Commands {
 	internal static string PersonaNow(Bot bot, SettingDef def) {
 		string set = Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus);
 		string shows = !bot.IsOnline ? $"signed out, so friends see it offline - set to {set}"
-			: bot.Cfg.IUseThisAccount ? $"left to your own Steam client (\"I sign into this one myself\" is on) - set to {set} for when that's off"
+			: bot.Cfg.IUseThisAccount ? $"left to your own Steam client (\"I also use this account in my own Steam app\" is on) - set to {set} for when that's off"
 			: bot.PersonaOverridden ? $"{bot.PersonaReallyWord} - your own Steam client is overriding the {bot.PersonaWord} it sets"
 			: bot.EffectivePersona != bot.Cfg.OnlineStatus ? $"{bot.PersonaWord} for now - set to {set}"
 			: set;
@@ -5671,6 +5671,9 @@ public static partial class Commands {
 				// its go-ahead goes back off, and off clears the go-ahead - as a dashboard save does.
 				Switches.Settle(bot.Cfg, bot.Name);
 
+				// What goes with it - as a dashboard save does (Settings.Follow).
+				Settings.Follow(bot.Cfg, [def.Name]);
+
 				// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
 				// The dashboard fixed one such pair; this fixes all of them, on both paths.
 				pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
@@ -5727,6 +5730,7 @@ public static partial class Commands {
 				return failure;
 			}
 
+			Settings.Follow(mgr.Global, [globalDef.Name]);
 			ConfigStore.SaveGlobal(mgr.Global);
 			mgr.ApplyGlobal(mgr.Global);
 		}

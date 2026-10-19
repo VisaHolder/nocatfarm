@@ -86,6 +86,10 @@ public static partial class Commands {
 		if (copyFrom == null) {
 			cfg.LegitMode = kind == "human";
 
+			if (cfg.LegitMode) {
+				Settings.NewHumanAccount(cfg);
+			}
+
 			return new NewAccount(cfg, kind, null, null, null);
 		}
 
