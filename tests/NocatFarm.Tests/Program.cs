@@ -28716,6 +28716,9 @@ await SweepCopyChecks.RunAsync(Check);
 // ── 1.8.2 sweep: fair card swaps keep to the keep lists like paired swaps; a paired swap's hold asked with its trade token; fakes only ──
 await SweepSwapChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 sweep: listings - the price a buyer is really charged written down; an unreadable answer never 'no listings'; fakes only ──
+await SweepListingChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -34462,6 +34465,30 @@ static class SweepSwapChecks {
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: listings - what a buyer is really charged is what's written down; an unreadable answer is never "no listings". Fakes only.</summary>
+static class SweepListingChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		var realGet = NocatFarm.Core.SparePrices.Get;
+
+		try {
+			NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("SlHat", StringComparison.Ordinal)
+				? "{\"success\":true,\"lowest_price\":\"$0.23\",\"volume\":\"50\",\"median_price\":\"$0.23\"}" : null, true));
+			var offer = new NocatFarm.Core.Seller.Offer(9201, "Team Fortress 2", "SlHat", 23, 23, 19, "440-SlHat");
+			var (priced, _) = await NocatFarm.Core.Seller.RepriceAsync(offer, 1, 3, 50, null, null, CancellationToken.None, floorPct: 80);
+			Check("sweep listings: aimed at 0.22, the seller gets 0.19 and the buyer is charged 0.21 - 0.21 is what's written down as ours, never the 0.22 aimed at",
+				priced is { YouGetCents: 19, BuyerCents: 21 } && (NocatFarm.Core.Seller.FeesFor(19) == 2), $"{priced?.YouGetCents} {priced?.BuyerCents}");
+			string seller = Src("src/NocatFarm/Core/Seller.cs");
+			Check("sweep listings: an answer about the listings it can't read is 'not known' - never 'no listings'",
+				seller.Contains("\t\treturn found;\n\t}", StringComparison.Ordinal) && !seller.Contains("return found ?? [];", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Core.SparePrices.Get = realGet;
+			NocatFarm.Core.MarketQuotes.Reset();
 		}
 	}
 }

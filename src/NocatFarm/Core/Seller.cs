@@ -351,7 +351,9 @@ public static class Seller {
 			return (null, new Said(WentUpWhy, Spare.Money(worth, currency)));
 		}
 
-		return receive > 0 ? (offer with { LowestCents = quote.Lowest ?? 0, BuyerCents = buyer, YouGetCents = receive }, default)
+		// 1.8.2: what a buyer is really charged - what the account gets and Steam's fees on it, which can be a cent under the
+		// price aimed at - so "never under our own listing" goes by what's really up.
+		return receive > 0 ? (offer with { LowestCents = quote.Lowest ?? 0, BuyerCents = receive + FeesFor(receive), YouGetCents = receive }, default)
 			: (null, new Said("the market pays nothing for it"));
 	}
 
@@ -656,11 +658,12 @@ public static class Seller {
 
 		List<Listing>? found = ParseListings(json);
 
+		// 1.8.2: an answer it can't read is "not known" - never "no listings", which would take every listing for gone.
 		if (found == null) {
 			Log.Debug($"market listings: Steam's answer had no listings in it: {Log.Scrub(json[..Math.Min(150, json.Length)])}", bot.Name);
 		}
 
-		return found ?? [];
+		return found;
 	}
 
 	/// <summary>
