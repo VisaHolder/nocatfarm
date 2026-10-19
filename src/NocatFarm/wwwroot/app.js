@@ -4572,7 +4572,11 @@ function stackLog(lines) {
     if (l.Kind === 'status') {
       let at = -1;
       for (let i = groups.length - 1; i >= 0; i--) if (groups[i].kind === 'status' && groups[i].source === l.Source) { at = i; break; }
+      // 1.8.2: only while it's doing the same thing - settling in, then a sitting, then a break are each their own row.
+      const doing = (t) => String(t || '').split(' · ')[0];
       if (at >= 0) {
+        const prev = groups[at].items.filter((x) => x.Kind === 'status');
+        if (prev.length && doing(prev[prev.length - 1].Text) !== doing(l.Text)) { groups.push({ kind: 'status', source: l.Source, items: [l] }); continue; }
         const [g] = groups.splice(at, 1);
         g.items.push(l);
         groups.push(g);
