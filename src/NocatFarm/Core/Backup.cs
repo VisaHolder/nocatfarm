@@ -607,9 +607,11 @@ public static partial class Backup {
 					// unreadable here: no go-ahead, and the backup's list stands
 				}
 
+				// A purchase waiting on the phone in the backup stays counted, but is never sent again from it (1.8.2).
 				return JsonSerializer.SerializeToUtf8Bytes(new Modules.BuyLedger.Stored {
 					Ok = mineBuy?.Ok ?? false,
-					Entries = [.. (cameBuy.Entries ?? []).Concat(mineBuy?.Entries ?? []).DistinctBy(static e => (e.At, e.Card, e.Cents)).OrderBy(static e => e.At)]
+					Entries = [.. (cameBuy.Entries ?? []).Select(static e => e with { Confirm = null }).Concat(mineBuy?.Entries ?? []).DistinctBy(static e => (e.At, e.Card, e.Cents)).OrderBy(static e => e.At)],
+					Sold = [.. (cameBuy.Sold ?? []).Concat(mineBuy?.Sold ?? []).Distinct().OrderBy(static e => e.At)]
 				});
 			}
 

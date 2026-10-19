@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "zlecenie kupna {0} · jeszcze nierozstrzygnięte · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Kupowanie kart jest włączone dla {0}: sam kupuje brakujące karty do swoich odznak, w swoich granicach",
     "Buying cards is off for {0}: nothing is bought": "Kupowanie kart jest wyłączone dla {0}: nic nie jest kupowane",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam chce danych rozliczeniowych przed pierwszym zakupem tego konta na rynku - kup raz ręcznie jedną kartę, potem będzie mógł kupować",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam wymaga potwierdzania każdego zakupu tego konta na rynku e-mailem, czego nocat.farm nie potrafi",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam wymaga potwierdzania każdego zakupu tego konta na rynku w aplikacji Steam - dodaj jego uwierzytelniacz do nocat.farm, żeby mógł potwierdzać własne zakupy",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam nie powiedział, jak potwierdzane są zakupy na rynku na tym koncie, więc tym razem nic nie zostanie kupione",
     "couldn't save the card buying list: {0}": "nie udało się zapisać listy zakupów kart: {0}",
     "couldn't read the card buying list: {0}": "nie udało się odczytać listy zakupów kart: {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "Wydaje najwyżej {0} tygodniowo (wydano {1} w tym tygodniu)",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Nigdy więcej, niż jest w portfelu. Planowane są tylko całe zestawy, a każda cena jest najpierw sprawdzana - jeśli któraś zmieni się w trakcie, reszta zestawu czeka na następne sprawdzenie",
     "Each card at the cheapest price on the market, checked again right before it buys": "Każda karta w najniższej cenie na rynku, sprawdzonej ponownie tuż przed zakupem",
-    "Badges it has started first, then the cheapest full sets": "Najpierw rozpoczęte odznaki, potem najtańsze pełne zestawy",
     "Only badges it has started - not full sets": "Tylko rozpoczęte odznaki - nie pełne zestawy",
     "Only during its day (human mode), one set at a time": "Tylko w jego dniu (tryb ludzki), jeden zestaw naraz",
     "Badge crafting turns each finished set into a level": "Tworzenie odznak zamienia każdy ukończony zestaw w poziom",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "wymiana kart · potwierdź ofertę do {0} w e-mailu od Steam",
     "then off for the night": "potem już spać",
     "short break · then off for the night": "krótka przerwa · potem już spać",
-    "meal break · then off for the night": "przerwa na posiłek · potem już spać"
+    "meal break · then off for the night": "przerwa na posiłek · potem już spać",
+    "nothing left to craft - sets sold instead": "nic więcej do stworzenia - zestawy sprzedane zamiast tego",
+    "weighing sets against the levels they'd buy": "porównuje zestawy z poziomami, które by kupiły",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "sprzedaje zestaw {0} zamiast go tworzyć: {1} kupi około {2} poziomów",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "zestaw {0}: wystawiono {1} z {2} kart · reszta czeka na następne spojrzenie",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam chce danych rozliczeniowych przy każdym zakupie na rynku, a na tym koncie żadnych nie zapisano - kup raz ręcznie jedną kartę na rynku (to je zapisze), potem będzie mógł kupować",
+    "{0} not bought · not confirmed in the Steam app": "{0} nie kupiono · nie potwierdzono w aplikacji Steam",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} zakup(y) kart niepotwierdzone przez dzień · odpuszczone, nic nie kupiono",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "potwierdź zakup kart w aplikacji Steam · {0} kart(y) do {1}",
+    "its price fell since the set was weighed - not listed": "jej cena spadła, odkąd zestaw został wyceniony - nie wystawiono",
+    "It would sell instead of crafting": "Sprzedałby zamiast tworzyć",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "Zestaw {0}: {1} po prowizji Steam kupi około {2} poziomów odznak, więcej niż 1 z tworzenia",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Najpierw najtańszy poziom odznaki - rozpoczęta odznaka albo cały nowy zestaw, co kosztuje mniej",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Jeśli Steam chce potwierdzenia zakupów w aplikacji Steam, potwierdzasz je na telefonie - jeden zestaw naraz, a bez tego po dniu są odpuszczane"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "Kupuj brakujące karty",
-      "tip": "Kupuje karty, których odznace brakuje do następnego poziomu, w najniższej cenie na rynku, żeby dało się ją stworzyć - najpierw najbliższa odznaka, i tylko całe zestawy. Na przykład mając 4 z 5 kart, kupuje 5., za około 0,05 do 0,15. Wydaje z portfela Steam tego konta. Domyślnie wyłączone na każdym koncie. Włączenie najpierw pokazuje, co by kupił i za ile, i prosi o potwierdzenie; wyłączenie zatrzymuje od razu. Wymaga włączonego „Twórz odznaki z kart”."
+      "tip": "Kupuje karty, których odznace brakuje do następnego poziomu, w najniższej cenie na rynku, żeby dało się ją stworzyć - najpierw najtańszy poziom, i tylko całe zestawy. Na przykład mając 4 z 5 kart, kupuje 5., za około 0,05 do 0,15. Wydaje z portfela Steam tego konta. Domyślnie wyłączone na każdym koncie. Włączenie najpierw pokazuje, co by kupił i za ile, i prosi o potwierdzenie; wyłączenie zatrzymuje od razu. Wymaga włączonego „Twórz odznaki z kart”."
     },
     "BuyFullSets": {
       "label": "Kupuj najtańsze pełne zestawy",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "Twórz też foliowe odznaki",
       "tip": "Zamienia też pełne zestawy foliowych kart w foliowe odznaki. Wyłączone - tworzy tylko zwykłe odznaki i nie rusza foliowych kart. Jeśli Steam odrzuci foliową odznakę, czekają tylko foliowe - zwykłe odznaki działają dalej."
+    },
+    "SellSetsForLevels": {
+      "label": "Sprzedawaj zestawy warte więcej niż poziomy, które by kupiły",
+      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Przed stworzeniem zwykłej odznaki sprawdza, ile zestaw daje na rynku po prowizji Steam. Gdy te pieniądze kupią wyraźnie więcej poziomów odznak niż 1 z tworzenia, wystawia zestaw na sprzedaż zamiast tego, a kupowanie kart wydaje pieniądze w swoich limitach. Na przykład zestaw, który daje 5,00, gdy najtańsze poziomy kosztują około 0,40 za sztukę, kupi około 12 poziomów zamiast 1. Każdą ofertę potwierdzasz w aplikacji Steam, jak każdą ofertę. Zestawy foliowe są zawsze tworzone."
     },
     "CardSwaps": {
       "label": "Wymieniaj karty z innymi użytkownikami nocat.farm",

@@ -90,21 +90,25 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	}
 
 	/// <summary>
-	/// One card: a buy order for one at <paramref name="price"/>, which the cheapest listing fills at once. Asked what it
-	/// bought a few times; still open after that, it's taken back - an order is never left waiting on the market. Once
-	/// the order is sent, <paramref name="ct"/> no longer stops it: finding out and taking it back run on their own clock.
+	/// One card: a buy order for one at the order's price, which the cheapest listing fills at once. Asked what it bought a
+	/// few times; still open after that, it's taken back - an order is never left waiting on the market. Once the order is
+	/// sent, <paramref name="ct"/> no longer stops it: finding out and taking it back run on their own clock. Steam wanting
+	/// it confirmed in the Steam app: with the authenticator here exactly that confirmation is accepted; without, it's left
+	/// for the owner's phone (Waiting) - nothing is bought until it's sent again with it (<see cref="ResumeAsync"/>).
 	/// </summary>
-	public async Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, Action<string>? placed, CancellationToken ct) {
+	public async Task<BuyAnswer> BuyAsync(BuyOrder order, Action<string>? placed, CancellationToken ct) {
 		if (ct.IsCancellationRequested) {
 			return new BuyAnswer(BuyResult.NotSent, 0, "stopped before anything was sent");
 		}
 
-		Uri page = new(WebSession.Community, $"/market/listings/{CardMarket.SteamItems}/{Uri.EscapeDataString(hash)}");
+		string hash = order.Hash;
+		long price = order.Price + order.Tax;
+		Uri page = Page(hash);
 		using CancellationTokenSource own = new(AfterSending);
 		CancellationToken t = own.Token;
 
 		try {
-			(string? body, bool sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(hash, price, currency, "0"), page, t).ConfigureAwait(false);
+			(string? body, bool sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(order, "0"), page, t).ConfigureAwait(false);
 
 			if (!sent) {
 				return new BuyAnswer(BuyResult.NotSent, 0, "it couldn't be sent - nothing bought");
@@ -123,9 +127,16 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 					return new BuyAnswer(BuyResult.Unsure, price, "Steam didn't answer clearly");
 			}
 
-			// Steam wants the purchase confirmed: with its authenticator here, exactly this confirmation is accepted - the
-			// one Steam just named, and only a market purchase - and the order sent again with it.
+			// Steam wants the purchase confirmed. No authenticator here: left for the owner's phone - nothing is bought until
+			// the order is sent again with it, at the next look.
 			string confirm = first.Confirm!;
+
+			if (!_web.CanConfirm) {
+				return new BuyAnswer(BuyResult.Waiting, price, "waiting to be confirmed in the Steam app", null, confirm);
+			}
+
+			// With its authenticator here, exactly this confirmation is accepted - the one Steam just named, and only a
+			// market purchase - and the order sent again with it.
 
 			if (!await ConfirmAsync(confirm, accept: true, t).ConfigureAwait(false)) {
 				// Nothing is left waiting in the Steam app: exactly that confirmation is turned down.
@@ -134,7 +145,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 					: new BuyAnswer(BuyResult.Unsure, price, "a purchase confirmation may still be waiting in the Steam app");
 			}
 
-			(body, sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(hash, price, currency, confirm), page, t).ConfigureAwait(false);
+			(body, sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(order, confirm), page, t).ConfigureAwait(false);
 			Order second = sent ? ReadOrder(body) : default;
 
 			if (second.Kind == OrderKind.Placed) {
@@ -169,24 +180,79 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		}
 	}
 
-	private static Dictionary<string, string> OrderForm(string hash, long price, int currency, string confirmation) => new(StringComparer.Ordinal) {
-		["currency"] = currency.ToString(CultureInfo.InvariantCulture),
-		["appid"] = CardMarket.SteamItems.ToString(CultureInfo.InvariantCulture),
-		["market_hash_name"] = hash,
-		["price_total"] = price.ToString(CultureInfo.InvariantCulture),
-		["tradefee_tax"] = "0",
-		["quantity"] = "1",
-		["first_name"] = "",
-		["last_name"] = "",
-		["billing_address"] = "",
-		["billing_address_two"] = "",
-		["billing_country"] = "",
-		["billing_city"] = "",
-		["billing_state"] = "",
-		["billing_postal_code"] = "",
-		["save_my_address"] = "0",
-		["confirmation"] = confirmation
-	};
+	/// <summary>
+	/// A purchase the owner confirmed in the Steam app (or hasn't yet): the same order sent again with that confirmation,
+	/// as Steam's market page does. Placed, it's settled like any order. Not confirmed yet: Waiting, with the confirmation
+	/// Steam names now. Not sent: still Waiting - nothing happened. Anything Steam says no to: Refused, nothing bought.
+	/// </summary>
+	public async Task<BuyAnswer> ResumeAsync(BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct) {
+		long price = order.Price + order.Tax;
+
+		if (ct.IsCancellationRequested) {
+			return new BuyAnswer(BuyResult.Waiting, price, "", null, confirmation);
+		}
+
+		Uri page = Page(order.Hash);
+		using CancellationTokenSource own = new(AfterSending);
+		CancellationToken t = own.Token;
+
+		try {
+			(string? body, bool sent) = await _web.PostAsync(new Uri(WebSession.Community, "/market/createbuyorder/"), OrderForm(order, confirmation), page, t).ConfigureAwait(false);
+
+			if (!sent) {
+				return new BuyAnswer(BuyResult.Waiting, price, "", null, confirmation);
+			}
+
+			Order again = ReadOrder(body);
+
+			switch (again.Kind) {
+				case OrderKind.Placed:
+					return await PlacedAsync(again.Id!, price, page, placed, t).ConfigureAwait(false);
+				case OrderKind.Confirm:
+					return new BuyAnswer(BuyResult.Waiting, price, "", null, again.Confirm);
+				case OrderKind.Refused:
+					return new BuyAnswer(BuyResult.Refused, 0, again.Message);
+			}
+
+			Log.Debug(new Said("buy order for {0} · no clear answer · {1}", order.Hash, Shown(body)), bot.Name);
+
+			return new BuyAnswer(BuyResult.Unsure, price, "Steam didn't answer clearly");
+		} catch (Exception e) {
+			return new BuyAnswer(BuyResult.Unsure, price, Log.Describe(e));
+		}
+	}
+
+	public Task<MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => MarketQuotes.FetchAsync(hash, currency, ct);
+
+	private static Uri Page(string hash) => new(WebSession.Community, $"/market/listings/{CardMarket.SteamItems}/{Uri.EscapeDataString(hash)}");
+
+	/// <summary>
+	/// The createbuyorder form, field for field as Steam's own buy-order dialog sends it (October 2026): one card at the
+	/// order's price, the tax on the fee worked out from the wallet page, and the billing details saved on the account -
+	/// the dialog fills them in from there and saves them back as they are. Never logged: they're personal.
+	/// </summary>
+	internal static Dictionary<string, string> OrderForm(BuyOrder order, string confirmation) {
+		CardMarket.Billing billing = order.Wallet.Saved ?? new CardMarket.Billing();
+
+		return new(StringComparer.Ordinal) {
+			["currency"] = order.Currency.ToString(CultureInfo.InvariantCulture),
+			["appid"] = CardMarket.SteamItems.ToString(CultureInfo.InvariantCulture),
+			["market_hash_name"] = order.Hash,
+			["price_total"] = order.Price.ToString(CultureInfo.InvariantCulture),
+			["tradefee_tax"] = order.Tax.ToString(CultureInfo.InvariantCulture),
+			["quantity"] = "1",
+			["first_name"] = billing.FirstName,
+			["last_name"] = billing.LastName,
+			["billing_address"] = billing.Address,
+			["billing_address_two"] = billing.AddressTwo,
+			["billing_country"] = billing.Country,
+			["billing_city"] = billing.City,
+			["billing_state"] = billing.State,
+			["billing_postal_code"] = billing.PostalCode,
+			["confirmation"] = confirmation,
+			["save_my_address"] = "1"
+		};
+	}
 
 	private async Task<BuyAnswer> PlacedAsync(string orderId, long price, Uri page, Action<string>? placed, CancellationToken t) {
 		placed?.Invoke(orderId);   // written down before anything else, so a sweep can find it whatever happens next

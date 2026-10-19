@@ -23,8 +23,16 @@ namespace NocatFarm.Modules;
 /// quantity, the buyer's price), quantity, currency and the hash. One at the cheapest listing's price is filled straight
 /// away; GET /market/getbuyorderstatus/ says what it bought, and /market/cancelbuyorder/ takes one back that wasn't.</item>
 /// <item>Steam may want each purchase confirmed (need_confirmation with a confirmation_id): by email, or in the mobile
-/// app - /market/userbillinginfo says which (confirmation_type 1 email, 2 mobile), with the wallet (wallet_info) and
-/// whether billing details are needed first (require_billing_info).</item>
+/// app - /market/userbillinginfo says which (confirmation_type 1 email, 2 mobile), with the wallet (wallet_info), the
+/// billing details saved on the account (billing_address, country_code, billing_states), the tax on the market fee
+/// (tax_rate) and whether a buy order has to carry billing details (require_billing_info).</item>
+/// <item>Steam's own buy-order dialog (its market script, read October 2026) fills the billing fields in from the saved
+/// billing_address and sends them with every buy order - require_billing_info only makes it show them, and it stops
+/// only when they're incomplete (no names, address, city or postal code; no state where the country has states; a US
+/// postal code under 5 digits). tradefee_tax is worked out from tax_rate, on top of price_total. Wanting a confirmation,
+/// the dialog waits and sends the same order again with confirmation=&lt;id&gt; every 1.5 seconds: not confirmed yet is
+/// need_confirmation again; confirmed, the order goes in (a buy_orderid); anything else is "not confirmed". Nothing is
+/// bought until that second order - confirming on the phone alone buys nothing.</item>
 /// </list>
 /// </remarks>
 public static class CardMarket {
@@ -111,8 +119,91 @@ public static class CardMarket {
 	}
 
 	/// <summary>The account's wallet and what the market asks of a purchase.</summary>
+	/// <param name="NeedsBilling">
+	/// Steam's require_billing_info: every buy order has to carry the billing details. Steam's own market page fills them in
+	/// from the ones saved on the account (<paramref name="Saved"/>) - it only stops when there are none to fill in.
+	/// </param>
 	/// <param name="Confirm">Steam's confirmation_type: 0 none, 1 by email, 2 in the mobile app; -1 when it wasn't said.</param>
-	public sealed record Wallet(long Balance, int Currency, bool NeedsBilling, int Confirm);
+	/// <param name="Saved">The billing details saved on the account, and its country. Never logged or shown.</param>
+	/// <param name="FeeTaxRate">The tax Steam adds on its market fee, in percent (tax_rate.tradefee_taxrate); 0 when it adds none.</param>
+	public sealed record Wallet(long Balance, int Currency, bool NeedsBilling, int Confirm, Billing? Saved = null, double FeeTaxRate = 0) {
+		/// <summary>The tax on the market fee for one card at this price, worked out as Steam's market page does. 0 for none.</summary>
+		public long FeeTax(long price) {
+			if ((FeeTaxRate <= 0) || (price < 3)) {
+				return 0;
+			}
+
+			long fees;
+
+			if (price - 2 <= 20) {
+				fees = 2;
+			} else {
+				// The fees in a buyer's price: Steam's 5% and the game's 10%, at least 1 each - found the way the page finds them.
+				long net = price * 100 / 115;
+				fees = 0;
+
+				for (int i = 0; i < 3; i++) {
+					fees = Math.Max(1, net * 10 / 100) + Math.Max(1, net * 5 / 100);
+
+					if (net + fees < price) {
+						net++;
+					} else {
+						break;
+					}
+				}
+			}
+
+			return (long) Math.Floor((fees * FeeTaxRate / 100) + 0.5);
+		}
+	}
+
+	/// <summary>
+	/// The billing details saved on an account, as /market/userbillinginfo gives them, for buy orders. Personal: never
+	/// written to the log, the screen or a file - <see cref="ToString"/> says only what it is.
+	/// </summary>
+	public sealed class Billing {
+		public string FirstName { get; init; } = "";
+		public string LastName { get; init; } = "";
+		public string Address { get; init; } = "";
+		public string AddressTwo { get; init; } = "";
+		public string City { get; init; } = "";
+		public string State { get; init; } = "";
+		public string PostalCode { get; init; } = "";
+
+		/// <summary>The account's country (country_code).</summary>
+		public string Country { get; init; } = "";
+
+		/// <summary>The country has states or provinces to pick from (billing_states isn't empty): one is needed.</summary>
+		public bool HasStates { get; init; }
+
+		/// <summary>Whether Steam's market page would send these as they are - its own check: names, address, city, postal code, a state where there are states.</summary>
+		public bool Complete {
+			get {
+				if ((FirstName.Length == 0) || (LastName.Length == 0) || (Address.Length == 0) || (City.Length == 0) || (PostalCode.Length == 0)) {
+					return false;
+				}
+
+				if (HasStates && (State.Length == 0)) {
+					return false;
+				}
+
+				if (Country.Equals("US", StringComparison.OrdinalIgnoreCase)) {
+					if (PostalCode.Length < 5) {
+						return false;
+					}
+
+					// A US military state goes with a military city, or the page says no.
+					if (HasStates && (State is "AE" or "AP" or "AA") && (City is not ("APO" or "FPO" or "DPO"))) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}
+
+		public override string ToString() => "billing details";
+	}
 
 	/// <summary>A /market/userbillinginfo answer. Null when it isn't one (signed out, an error page).</summary>
 	public static Wallet? ParseWallet(string? json) {
@@ -131,10 +222,52 @@ public static class CardMarket {
 			int confirm = root.TryGetProperty("confirmation_type", out JsonElement c) ? (int) Math.Clamp(Value(c), -1, 99) : -1;
 
 			return new Wallet(Math.Max(0, Num(w, "wallet_balance")), (int) Math.Clamp(Num(w, "wallet_currency"), 0, int.MaxValue),
-				Flag(root, "require_billing_info"), confirm);
+				Flag(root, "require_billing_info"), confirm, SavedBilling(root), FeeTaxRate(root));
 		} catch (JsonException) {
 			return null;
 		}
+	}
+
+	/// <summary>The saved billing details: billing_address {firstname, lastname, address1, address2, city, state, postcode}, country_code, billing_states.</summary>
+	private static Billing SavedBilling(JsonElement root) {
+		JsonElement a = root.TryGetProperty("billing_address", out JsonElement found) && (found.ValueKind == JsonValueKind.Object) ? found : default;
+
+		string Text(JsonElement e, string name) =>
+			(e.ValueKind == JsonValueKind.Object) && e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? (v.GetString() ?? "").Trim() : "";
+
+		bool states = root.TryGetProperty("billing_states", out JsonElement s) && (((s.ValueKind == JsonValueKind.Object) && s.EnumerateObject().Any())
+			|| ((s.ValueKind == JsonValueKind.Array) && (s.GetArrayLength() > 0)));
+
+		return new Billing {
+			FirstName = Text(a, "firstname"),
+			LastName = Text(a, "lastname"),
+			Address = Text(a, "address1"),
+			AddressTwo = Text(a, "address2"),
+			City = Text(a, "city"),
+			State = Text(a, "state"),
+			PostalCode = Text(a, "postcode"),
+			Country = Text(root, "country_code"),
+			HasStates = states
+		};
+	}
+
+	/// <summary>tax_rate {tradefee_addtax, tradefee_taxrate}: the percent added on the market fee, or 0.</summary>
+	private static double FeeTaxRate(JsonElement root) {
+		if (!root.TryGetProperty("tax_rate", out JsonElement t) || (t.ValueKind != JsonValueKind.Object) || (!Flag(t, "tradefee_addtax") && (Num(t, "tradefee_addtax") <= 0))) {
+			return 0;
+		}
+
+		if (!t.TryGetProperty("tradefee_taxrate", out JsonElement r)) {
+			return 0;
+		}
+
+		double rate = r.ValueKind switch {
+			JsonValueKind.Number when r.TryGetDouble(out double n) => n,
+			JsonValueKind.String when double.TryParse(r.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double n) => n,
+			_ => 0
+		};
+
+		return double.IsFinite(rate) ? Math.Clamp(rate, 0, 100) : 0;
 	}
 
 	/// <summary>A JSON number Steam may send as a number or as text. 0 when it's missing or neither.</summary>
@@ -161,13 +294,16 @@ public sealed record CardSet(uint App, string Game, IReadOnlyList<string> Cards,
 public enum BuyBlock {
 	None,
 
-	/// <summary>Billing details are wanted before its first market purchase.</summary>
+	/// <summary>Steam wants billing details with each market purchase, and none are saved on the account to send.</summary>
 	Billing,
 
 	/// <summary>Every purchase confirmed by email.</summary>
 	Email,
 
-	/// <summary>Every purchase confirmed in the Steam app, and its authenticator isn't in nocat.farm.</summary>
+	/// <summary>
+	/// No longer a block (kept so the numbers stay the same): a purchase Steam wants confirmed in the Steam app, with no
+	/// authenticator here, waits for the owner to confirm it on the phone.
+	/// </summary>
 	App,
 
 	/// <summary>Steam didn't say how its purchases are confirmed (the wallet page didn't answer): nothing is bought on a guess.</summary>
@@ -189,11 +325,22 @@ public enum BuyResult {
 	Unsure,
 
 	/// <summary>Never sent - it didn't leave this PC. Nothing bought.</summary>
-	NotSent
+	NotSent,
+
+	/// <summary>
+	/// Waiting for the owner to confirm it in the Steam app (no authenticator here). Nothing is bought until the order is
+	/// sent again with the confirmation, the way Steam's market page does; counted as spent until then.
+	/// </summary>
+	Waiting
 }
 
-/// <summary>One purchase's answer: how it went, what it cost, Steam's reason when it said no, and the order's id once there is one.</summary>
-public sealed record BuyAnswer(BuyResult Result, long Paid, string Message = "", string? Order = null);
+/// <summary>A purchase still to send: the card, its price (the buyer's, fees in), the tax on the fee, and the wallet it's paid from.</summary>
+public sealed record BuyOrder(uint App, string Hash, long Price, long Tax, CardMarket.Wallet Wallet) {
+	public int Currency => Wallet.Currency;
+}
+
+/// <summary>One purchase's answer: how it went, what it cost, Steam's reason when it said no, the order's id once there is one, and the confirmation it waits on.</summary>
+public sealed record BuyAnswer(BuyResult Result, long Paid, string Message = "", string? Order = null, string? Confirm = null);
 
 /// <summary>What buying cards needs from Steam. A fake in the tests - no test ever reaches Steam.</summary>
 public interface ICardMarket {
@@ -216,14 +363,26 @@ public interface ICardMarket {
 	Task<CardMarket.Book?> BookAsync(string hash, CancellationToken ct);
 
 	/// <summary>
-	/// Buy one card for at most <paramref name="price"/> (the buyer's price, fees in), in <paramref name="currency"/>. Spends
-	/// money. <paramref name="placed"/> hears the order's id the moment Steam gives it. <paramref name="ct"/> only stops it
-	/// before anything is sent (NotSent); once sent, it finds out and takes the order back on its own clock.
+	/// Buy one card for at most the order's price (the buyer's price, fees in) plus the tax on the fee, in the wallet's
+	/// currency, with the billing details saved on the account. Spends money. <paramref name="placed"/> hears the order's id
+	/// the moment Steam gives it. <paramref name="ct"/> only stops it before anything is sent (NotSent); once sent, it finds
+	/// out and takes the order back on its own clock. Wanting a confirmation in the Steam app with no authenticator here,
+	/// it's Waiting, with the confirmation's id.
 	/// </summary>
-	Task<BuyAnswer> BuyAsync(uint app, string hash, long price, int currency, Action<string>? placed, CancellationToken ct);
+	Task<BuyAnswer> BuyAsync(BuyOrder order, Action<string>? placed, CancellationToken ct);
 
 	/// <summary>An order it placed earlier whose outcome wasn't known: what it bought, or - still open - taken back.</summary>
 	Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct);
+
+	/// <summary>
+	/// A purchase left for the owner to confirm in the Steam app: the order sent again with that confirmation, as Steam's
+	/// market page does. Confirmed, the order goes in and is asked about and taken back like any; not confirmed yet is
+	/// Waiting; anything Steam says no to (turned down, too old) is Refused. Spends money, at most the order's price.
+	/// </summary>
+	Task<BuyAnswer> ResumeAsync(BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct);
+
+	/// <summary>A card's price, last day's sales and how many sold, in the wallet's currency (priceoverview) - for selling a set. Null when the market didn't answer.</summary>
+	Task<MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct);
 }
 
 /// <summary>
@@ -283,6 +442,18 @@ public sealed class BuyPlan {
 
 	public List<BuyStep> Steps { get; } = [];
 
+	/// <summary>
+	/// Everything it could buy, priced now and ranked - cheapest next badge level first - whatever the limits leave room for
+	/// today. What a set sold instead of crafted would buy is counted on this (<see cref="SetSale"/>).
+	/// </summary>
+	public List<BuyStep> Ranked { get; } = [];
+
+	/// <summary>Whole normal sets it holds for a badge under level 5 - the ones badge crafting would craft.</summary>
+	public List<(CardSet Set, int Level)> Complete { get; } = [];
+
+	/// <summary>The preview's word on each whole set: sold instead of crafted, or crafted (<see cref="SetSale"/>).</summary>
+	public List<SetSale.Verdict> Sales { get; } = [];
+
 	/// <summary>Why something wasn't bought, in plain words (English - console replies stay English).</summary>
 	public List<string> Notes { get; } = [];
 
@@ -297,18 +468,16 @@ public sealed class BuyPlan {
 
 	/// <summary><see cref="Block"/> in plain words (English, for the console). Empty when nothing blocks it.</summary>
 	public string Blocked => Block switch {
-		BuyBlock.Billing => "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy",
+		BuyBlock.Billing => "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy",
 		BuyBlock.Email => "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do",
-		BuyBlock.App => "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases",
 		BuyBlock.Unknown => "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time",
 		_ => ""
 	};
 
 	/// <summary><see cref="Block"/> for the log, translated.</summary>
 	public Said BlockedSaid => Block switch {
-		BuyBlock.Billing => new Said("Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy"),
+		BuyBlock.Billing => new Said("Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy"),
 		BuyBlock.Email => new Said("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
-		BuyBlock.App => new Said("Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases"),
 		BuyBlock.Unknown => new Said("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time"),
 		_ => new Said("")
 	};
@@ -317,15 +486,16 @@ public sealed class BuyPlan {
 	public int CardCount => Steps.Sum(static s => s.Cards.Count);
 
 	/// <summary>
-	/// Why Steam won't let it buy by itself, from the wallet page: billing details first, confirmed by email, or in the app
-	/// without its authenticator here - and anything it didn't say plainly (no answer, a type it doesn't know) buys nothing.
+	/// Why Steam won't let it buy by itself, from the wallet page: billing details wanted and none saved to send (Steam's own
+	/// market page stops there too), or every purchase confirmed by email - and anything it didn't say plainly (no answer, a
+	/// type it doesn't know) buys nothing. Confirmed in the Steam app is fine: with the authenticator here it confirms its
+	/// own; without, each purchase waits for the owner's phone.
 	/// </summary>
-	public static BuyBlock BlockOf(CardMarket.Wallet wallet, bool canConfirm) =>
-		wallet.NeedsBilling ? BuyBlock.Billing
+	public static BuyBlock BlockOf(CardMarket.Wallet wallet) =>
+		wallet.NeedsBilling && (wallet.Saved is not { Complete: true }) ? BuyBlock.Billing
 			: wallet.Confirm switch {
-				0 => BuyBlock.None,
+				0 or 2 => BuyBlock.None,
 				1 => BuyBlock.Email,
-				2 => canConfirm ? BuyBlock.None : BuyBlock.App,
 				_ => BuyBlock.Unknown
 			};
 
@@ -342,16 +512,19 @@ public sealed class BuyPlan {
 	public static string Money(long cents, int currency) => Spare.Money(cents, currency);
 
 	/// <summary>
-	/// The plan. Missing cards first: for each badge the account is levelling (cards of its set held, badge under level 5),
-	/// the cards its next level still needs, closest badge first - the fewest missing, then the cheaper - as automatic booster
-	/// packs pick. Then, with "Buy the cheapest full sets" on, whole sets for games it has none of, cheapest first. A set is
-	/// only ever planned whole: every missing card on the market, and all of it inside what may be spent now. One that costs
-	/// more than a day's or a week's limit is passed over (said why); one that doesn't fit what's left of today stops the plan
-	/// there - the closest goes first, not a cheaper one further away.
+	/// The plan - smart levelling. What could be bought: for each badge the account is levelling (cards of its set held, badge
+	/// under level 5), the cards its next level still needs; and, with "Buy the cheapest full sets" on, whole sets for games
+	/// it has none of. All of them ranked together by what the next badge level costs, cheapest first - the most XP for the
+	/// money - so a whole new set for 0.40 goes before a started badge whose one missing card costs 2.00. A set is only ever
+	/// planned whole: every missing card on the market, and all of it inside what may be spent now. One that costs more than
+	/// a day's or a week's limit is passed over (said why); one that doesn't fit what's left of today stops the plan there.
+	/// Games automatic booster packs is working on are left to the packs.
 	/// </summary>
 	/// <param name="nowUtc">Now on Steam's clock - the limits' windows move with it, not with this PC's.</param>
 	/// <param name="stopWhenBlocked">Stop once the wallet says Steam won't let it buy by itself - for a look that would buy.</param>
-	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct, bool stopWhenBlocked = false) {
+	/// <param name="boosting">Games automatic booster packs is saving gems for or has a pack waiting for (<see cref="BoosterPick.Busy"/>): not bought.</param>
+	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct,
+		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null) {
 		BuyPlan plan = new() {
 			DayLimit = Cents(cfg.BuyDailyLimit),
 			WeekLimit = Cents(cfg.BuyWeeklyLimit)
@@ -383,7 +556,7 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		plan.Block = BlockOf(wallet, bot?.CanConfirmTrades ?? false);
+		plan.Block = BlockOf(wallet);
 
 		if (stopWhenBlocked && (plan.Block != BuyBlock.None)) {
 			return plan;
@@ -469,13 +642,33 @@ public sealed class BuyPlan {
 			return true;
 		}
 
-		// ── the missing cards of badges it's levelling, closest first ──
+		// ── what could be bought: the missing cards of badges it's levelling, and (when on) whole sets for new games ──
 		// Games with cards held and a badge under level 5, the most different cards held first - each set read costs a market
 		// search, so the likeliest are read first.
 		List<uint> levelling = [.. held.Where(h => (levels.GetValueOrDefault(h.Key) < MaxLevel) && h.Value.Values.Any(static n => n > 0))
 			.OrderByDescending(static h => h.Value.Count(static c => c.Value > 0)).ThenBy(static h => h.Key).Select(static h => h.Key)];
-		List<(CardSet Set, int Level, List<string> Missing)> closest = [];
+		List<(CardSet Set, int Level, List<string> Missing, bool Full)> candidates = [];
+		HashSet<uint> packs = boosting is null ? [] : [.. boosting];
+		HashSet<uint> sold = ledger.SoldSince(nowUtc - SetSale.NotBoughtFor);
 		int sets = 0;
+
+		// A game automatic booster packs is saving gems for, or has a pack waiting to open for: its cards come from the packs.
+		// A set it just sold instead of crafting isn't bought back either.
+		bool Boosting(CardSet set) {
+			if (sold.Contains(set.App)) {
+				plan.Notes.Add($"{set.Game}: its set was just sold instead of crafted - not bought back");
+
+				return true;
+			}
+
+			if (!packs.Contains(set.App)) {
+				return false;
+			}
+
+			plan.Notes.Add($"{set.Game}: booster packs are working on it - its cards come from the packs");
+
+			return true;
+		}
 
 		foreach (uint app in levelling) {
 			if (sets >= MaxSetReads) {
@@ -499,6 +692,11 @@ public sealed class BuyPlan {
 			int level = levels.GetValueOrDefault(app);
 			int complete = set.Cards.All(c => cards.GetValueOrDefault(c) > 0) ? set.Cards.Min(c => cards.GetValueOrDefault(c)) : 0;
 
+			// A whole set held: badge crafting's - or sold instead, when that buys more levels (SetSale).
+			if ((complete > 0) && (level < MaxLevel)) {
+				plan.Complete.Add((set, level));
+			}
+
 			// The sets held already take it to level 5 - nothing to buy.
 			if (complete >= MaxLevel - level) {
 				continue;
@@ -506,60 +704,11 @@ public sealed class BuyPlan {
 
 			List<string> missing = [.. set.Cards.Where(c => cards.GetValueOrDefault(c) <= complete)];
 
-			if ((missing.Count > 0) && (missing.Count < set.Cards.Count)) {
-				closest.Add((set, level + complete, missing));
+			if ((missing.Count > 0) && (missing.Count < set.Cards.Count) && !Boosting(set)) {
+				candidates.Add((set, level + complete, missing, false));
 			}
 		}
 
-		// Fewest missing first, then the cheaper by the market's last search (US cents, only to order them).
-		foreach ((CardSet set, int level, List<string> missing) in closest.OrderBy(static c => c.Missing.Count)
-			.ThenBy(c => c.Missing.Sum(h => c.Set.Usd.GetValueOrDefault(h))).ThenBy(static c => c.Set.App)) {
-			if (stopped) {
-				break;
-			}
-
-			if (await PricesAsync(missing).ConfigureAwait(false) is not { } prices) {
-				stopped = true;
-
-				break;
-			}
-
-			if (prices.FirstOrDefault(p => p.Book.Lowest <= 0) is { Hash: not null } none) {
-				plan.Notes.Add($"{set.Game}: nobody is selling {new BuyCard(none.Hash, 0).Name} right now");
-
-				continue;
-			}
-
-			// A card a swap would bring for less waits for the swap - and so does its set: never half a set.
-			List<string> swapped = [];
-
-			foreach ((string hash, CardMarket.Book book) in prices) {
-				if ((await swaps.SwapCostAsync(bot, set.App, hash, ct).ConfigureAwait(false) is long swap) && (swap < book.Lowest)) {
-					swapped.Add(new BuyCard(hash, 0).Name);
-				}
-			}
-
-			if (swapped.Count > 0) {
-				plan.Notes.Add($"{set.Game}: waiting for a card swap for {string.Join(", ", swapped)} - cheaper than buying");
-
-				continue;
-			}
-
-			long cost = prices.Sum(static p => p.Book.Lowest);
-
-			if (Fits(set.Game, cost) is not { } fits) {
-				stopped = true;
-
-				break;
-			}
-
-			if (fits) {
-				plan.Steps.Add(new BuyStep(set.App, set.Game, false, level, set.Cards.Count, [.. prices.Select(static p => new BuyCard(p.Hash, p.Book.Lowest))]));
-				left -= cost;
-			}
-		}
-
-		// ── the cheapest full sets, for games it has none of ──
 		if (cfg.BuyFullSets && !stopped) {
 			if (await market.CheapestGamesAsync(ct).ConfigureAwait(false) is not { } cheapest) {
 				plan.Notes.Add("the market didn't say which sets are cheapest - full sets wait for the next look");
@@ -580,49 +729,81 @@ public sealed class BuyPlan {
 					}
 
 					// Every card listed at the last search: a set with a card nobody sells can't be bought whole.
-					if ((set.Cards.Count > 0) && set.Cards.All(c => set.Usd.GetValueOrDefault(c) > 0)) {
+					if ((set.Cards.Count > 0) && set.Cards.All(c => set.Usd.GetValueOrDefault(c) > 0) && !Boosting(set)) {
 						found.Add(set);
 					}
 				}
 
-				// Priced in the wallet's own money, the few cheapest by the search; then the cheapest of those that's steady.
-				List<BuyStep> full = [];
+				// The few cheapest by the search, to be priced in the wallet's own money.
+				candidates.AddRange(found.OrderBy(static s => s.UsdCents).ThenBy(static s => s.App).Take(MaxFullSetGames)
+					.Select(s => (s, levels.GetValueOrDefault(s.App), s.Cards.ToList(), true)));
+			}
+		}
 
-				foreach (CardSet set in found.OrderBy(static s => s.UsdCents).ThenBy(static s => s.App).Take(MaxFullSetGames)) {
-					if (await PricesAsync(set.Cards).ConfigureAwait(false) is not { } prices) {
-						break;
-					}
+		// ── each priced now, the likeliest cheapest first (by the market's last search, in US cents - only to order them) ──
+		List<BuyStep> priced = [];
 
-					if (prices.FirstOrDefault(p => p.Book.Listings < 2) is { Hash: not null } thin) {
-						plan.Notes.Add($"{set.Game}: left out - {new BuyCard(thin.Hash, 0).Name} has fewer than 2 listings");
+		foreach ((CardSet set, int level, List<string> missing, bool full) in candidates.OrderBy(static c => c.Missing.Sum(h => c.Set.Usd.GetValueOrDefault(h)))
+			.ThenBy(static c => c.Full).ThenBy(static c => c.Set.App)) {
+			if (await PricesAsync(missing).ConfigureAwait(false) is not { } prices) {
+				break;
+			}
 
-						continue;
-					}
+			if (full) {
+				if (prices.FirstOrDefault(p => p.Book.Listings < 2) is { Hash: not null } thin) {
+					plan.Notes.Add($"{set.Game}: left out - {new BuyCard(thin.Hash, 0).Name} has fewer than 2 listings");
 
-					if (prices.FirstOrDefault(p => p.Book.Dumped) is { Hash: not null } dumped) {
-						plan.Notes.Add($"{set.Game}: left out - one cheap listing of {new BuyCard(dumped.Hash, 0).Name} makes the set look cheaper than it is");
-
-						continue;
-					}
-
-					full.Add(new BuyStep(set.App, set.Game, true, levels.GetValueOrDefault(set.App), set.Cards.Count, [.. prices.Select(static p => new BuyCard(p.Hash, p.Book.Lowest))]));
+					continue;
 				}
 
-				foreach (BuyStep step in full.OrderBy(static s => s.Cost).ThenBy(static s => s.App)) {
-					if (Fits(step.Game, step.Cost) is not { } fits) {
-						break;
-					}
+				if (prices.FirstOrDefault(p => p.Book.Dumped) is { Hash: not null } dumped) {
+					plan.Notes.Add($"{set.Game}: left out - one cheap listing of {new BuyCard(dumped.Hash, 0).Name} makes the set look cheaper than it is");
 
-					if (fits) {
-						plan.Steps.Add(step);
-						left -= step.Cost;
+					continue;
+				}
+			} else {
+				if (prices.FirstOrDefault(p => p.Book.Lowest <= 0) is { Hash: not null } none) {
+					plan.Notes.Add($"{set.Game}: nobody is selling {new BuyCard(none.Hash, 0).Name} right now");
+
+					continue;
+				}
+
+				// A card a swap would bring for less waits for the swap - and so does its set: never half a set.
+				List<string> swapped = [];
+
+				foreach ((string hash, CardMarket.Book book) in prices) {
+					if ((await swaps.SwapCostAsync(bot, set.App, hash, ct).ConfigureAwait(false) is long swap) && (swap < book.Lowest)) {
+						swapped.Add(new BuyCard(hash, 0).Name);
 					}
 				}
+
+				if (swapped.Count > 0) {
+					plan.Notes.Add($"{set.Game}: waiting for a card swap for {string.Join(", ", swapped)} - cheaper than buying");
+
+					continue;
+				}
+			}
+
+			priced.Add(new BuyStep(set.App, set.Game, full, level, set.Cards.Count, [.. prices.Select(static p => new BuyCard(p.Hash, p.Book.Lowest))]));
+		}
+
+		// ── smart levelling: whatever makes the next badge level cheapest goes first - the most XP for the money ──
+		// A started badge one card short goes after a whole new set that costs less; at the same price, the started badge.
+		plan.Ranked.AddRange(priced.OrderBy(static s => s.Cost).ThenBy(static s => s.FullSet).ThenBy(static s => s.App));
+
+		foreach (BuyStep step in plan.Ranked) {
+			if (Fits(step.Game, step.Cost) is not { } fits) {
+				break;
+			}
+
+			if (fits) {
+				plan.Steps.Add(step);
+				left -= step.Cost;
 			}
 		}
 
 		if ((plan.Steps.Count == 0) && (plan.Notes.Count == 0)) {
-			plan.Notes.Add(closest.Count == 0 && !cfg.BuyFullSets
+			plan.Notes.Add(candidates.Count == 0 && !cfg.BuyFullSets
 				? "no badge it's levelling is missing cards it can buy"
 				: "nothing to buy right now");
 		}
@@ -641,14 +822,28 @@ public sealed class BuyLedger(string path) {
 	/// <param name="Pending">Not known yet whether it was bought: counted as spent, at the order's price, until a look finds out.</param>
 	/// <param name="Order">The buy order's id, once Steam gave one - the only orders a look ever takes back.</param>
 	/// <param name="Key">This purchase's own name in the list, so it's updated in place.</param>
-	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false, string? Order = null, string? Key = null);
+	/// <param name="Confirm">
+	/// The Steam app confirmation it waits on (no order yet): the owner confirms it on the phone, and the next look sends the
+	/// order again with it - as Steam's market page does. Never sent again once it's a day old.
+	/// </param>
+	/// <param name="Tax">The tax on the market fee in <paramref name="Cents"/> - the order's price is the rest.</param>
+	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false, string? Order = null, string? Key = null,
+		string? Confirm = null, long Tax = 0) {
+		/// <summary>Waiting for the owner to confirm it in the Steam app: no order yet, a confirmation to send it with.</summary>
+		public bool OnPhone => Pending && string.IsNullOrEmpty(Order) && !string.IsNullOrEmpty(Confirm);
+	}
+
+	/// <summary>A set sold instead of crafted (<see cref="SetSale"/>): its cards aren't bought back for a while.</summary>
+	public sealed record SoldSet(DateTime At, uint App);
 
 	internal sealed class Stored {
 		public bool Ok { get; set; }
 		public List<Entry> Entries { get; set; } = [];
+		public List<SoldSet> Sold { get; set; } = [];
 	}
 
 	private List<Entry>? _entries;
+	private List<SoldSet> _sold = [];
 	private bool _ok, _onDisk, _unreadable;
 	private readonly Lock _gate = new();
 
@@ -746,6 +941,35 @@ public sealed class BuyLedger(string path) {
 		}
 	}
 
+	/// <summary>Purchases waiting for the owner to confirm them in the Steam app - the oldest first.</summary>
+	public IReadOnlyList<Entry> OnPhone {
+		get {
+			lock (_gate) {
+				return [.. Load().Where(static e => e.OnPhone).OrderBy(static e => e.At)];
+			}
+		}
+	}
+
+	/// <summary>The games whose set it sold instead of crafting since then.</summary>
+	public HashSet<uint> SoldSince(DateTime utc) {
+		lock (_gate) {
+			Load();
+
+			return [.. _sold.Where(e => e.At >= utc).Select(static e => e.App)];
+		}
+	}
+
+	/// <summary>A set sold instead of crafted, written down. False when it couldn't be saved.</summary>
+	public bool AddSold(SoldSet sold) {
+		lock (_gate) {
+			Load();
+			_sold.Add(sold);
+			_sold.RemoveAll(static e => e.At < DateTime.UtcNow.AddDays(-60));
+
+			return Save();
+		}
+	}
+
 	/// <summary>Write one down. False when it couldn't be saved (kept in memory either way).</summary>
 	public bool Add(Entry entry) {
 		lock (_gate) {
@@ -784,7 +1008,7 @@ public sealed class BuyLedger(string path) {
 
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			AtomicFile.Write(path, JsonSerializer.Serialize(new Stored { Ok = _ok, Entries = _entries ?? [] }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(new Stored { Ok = _ok, Entries = _entries ?? [], Sold = _sold }));
 			_onDisk = true;
 
 			return true;
@@ -805,6 +1029,7 @@ public sealed class BuyLedger(string path) {
 			Stored? read = File.Exists(path) ? JsonSerializer.Deserialize<Stored>(File.ReadAllText(path)) ?? throw new JsonException("empty") : null;
 			_onDisk = read != null;
 			_entries = read?.Entries ?? [];
+			_sold = read?.Sold ?? [];
 			_ok = read?.Ok ?? false;
 		} catch (Exception e) {
 			// A list that can't be read counts the week as already spent, rather than nothing spent - and no go-ahead.
@@ -832,6 +1057,13 @@ public sealed class BuyLedger(string path) {
 /// fills at once or is taken back; one whose outcome Steam didn't say stays counted and is asked about at the next look.
 /// A human-mode account buys only in its own day, one set a look, spaced out. Bought cards are crafted by badge crafting
 /// (which has to be on - otherwise nothing is bought).
+///
+/// 1.8.2: each order carries the billing details saved on the account, as Steam's own market page sends them (it only
+/// stops when none are saved), and the tax some countries add on Steam's fee. Steam wanting a purchase confirmed in the
+/// Steam app: with the account's authenticator here it confirms exactly that one itself; without, it's left for the
+/// owner's phone like a market listing - counted as spent, sent again with the confirmation at the next look (bought
+/// once confirmed, let go when turned down or a day old), and no other set is started meanwhile. What it buys is ranked
+/// by what the next badge level costs, cheapest first; games automatic booster packs is working on are left to the packs.
 /// </remarks>
 public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? swaps = null, Func<CancellationToken, Task<DateTime>>? clock = null) : BotModule(bot) {
 	/// <summary>How a look was asked for.</summary>
@@ -855,6 +1087,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		/// <summary>Sets bought whole this look.</summary>
 		public List<BuyStep> Finished { get; } = [];
+
+		/// <summary>Cards left for the owner to confirm in the Steam app this look - nothing is bought until they are.</summary>
+		public List<(BuyStep Step, BuyCard Card)> Waiting { get; } = [];
+
+		/// <summary>Purchases confirmed on the phone since the last look, bought at this look.</summary>
+		public int Confirmed { get; set; }
 
 		/// <summary>Why it couldn't look or carry on (English). Empty when all went well.</summary>
 		public string Problem { get; set; } = "";
@@ -906,8 +1144,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			if (Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && Timer.Due(DateTime.UtcNow)) {
 				bool buying = On(Bot) && Gate.Open;
 
-				// Off, or outside its day: an order it placed whose outcome isn't known is still asked about and taken back.
-				if (buying || (Ledger.OpenOrders.Count > 0)) {
+				// Off, or outside its day: an order it placed whose outcome isn't known is still asked about and taken back
+				// (and a purchase waiting on the phone too long is let go).
+				if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {
 					Timer.Looked(DateTime.UtcNow);
 
 					try {
@@ -927,7 +1166,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 							await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
 							try {
-								await SweepLockedAsync(ct).ConfigureAwait(false);
+								await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);
 							} finally {
 								BusyGate.Release();
 							}
@@ -978,6 +1217,39 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			: LookAsync(Mode.Now, ct);
 	}
 
+	/// <summary>
+	/// For badge crafting (smart levelling, <see cref="SetSale"/>): each of these games' whole normal set weighed - sold, or
+	/// crafted - against what the money would buy, ranked as buying ranks it, at today's prices. Nothing is bought or listed
+	/// here. Empty when the market or the wallet didn't say, or Steam won't let this account buy (the money couldn't be spent):
+	/// then every set is crafted.
+	/// </summary>
+	public async Task<IReadOnlyList<SetSale.Verdict>> WeighSalesAsync(IReadOnlyList<uint> apps, CancellationToken ct) {
+		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
+				boosting: BoosterPick.Busy(Bot)).ConfigureAwait(false);
+
+			if ((plan.Problem.Length > 0) || (plan.Block != BuyBlock.None)) {
+				return [];
+			}
+
+			List<SetSale.Verdict> weighed = [];
+
+			foreach (uint app in apps.Distinct().Take(SetSale.MaxSetsALook)) {
+				CardSet? set = plan.Complete.Select(static c => c.Set).FirstOrDefault(s => s.App == app) ?? await _market.SetAsync(app, ct).ConfigureAwait(false);
+
+				if (set is { Cards.Count: > 0 }) {
+					weighed.Add(await SetSale.WeighAsync(set, plan, _market, Bot.Cfg, ct).ConfigureAwait(false));
+				}
+			}
+
+			return weighed;
+		} finally {
+			BusyGate.Release();
+		}
+	}
+
 	/// <summary>Why a look can't buy now, before anything is read from the market - or null when it may. Lasting when it won't clear by itself.</summary>
 	private (string Problem, bool Lasting)? Stopped() {
 		if (!On(Bot)) {
@@ -1021,11 +1293,27 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			// Orders from before whose outcome wasn't known: asked about, and taken back if still open, before anything new.
-			await SweepLockedAsync(ct).ConfigureAwait(false);
+			// Purchases the owner was asked to confirm in the Steam app: sent again with the confirmation.
+			await SweepLockedAsync(ct, resume: true, result).ConfigureAwait(false);
+
+			// One set waiting on the phone at a time: nothing new until it's confirmed, turned down or a day old.
+			if (Ledger.OnPhone.Count is int waiting and > 0) {
+				result.Problem = $"{waiting} card purchase(s) waiting to be confirmed in the Steam app - nothing new is bought until then";
+
+				return result;
+			}
 		}
 
-		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct, stopWhenBlocked: buying).ConfigureAwait(false);
+		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct, stopWhenBlocked: buying,
+			boosting: BoosterPick.Busy(Bot)).ConfigureAwait(false);
 		result.Plan = plan;
+
+		// The preview says which whole sets it would sell instead of crafting (smart levelling) - nothing is listed here.
+		if ((mode == Mode.Preview) && (plan.Problem.Length == 0) && (plan.Block == BuyBlock.None) && SetSale.Applies(Bot.Cfg, buying: true)) {
+			foreach ((CardSet set, _) in plan.Complete.Take(SetSale.MaxSetsALook)) {
+				plan.Sales.Add(await SetSale.WeighAsync(set, plan, _market, Bot.Cfg, ct).ConfigureAwait(false));
+			}
+		}
 
 		if (plan.Problem.Length > 0) {
 			result.Problem = plan.Problem;
@@ -1068,9 +1356,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 	/// <summary>
 	/// The orders it placed whose outcome Steam didn't say: each asked about - and taken back if still open - and the list
-	/// set straight: bought at what it paid, gone off it, or still counted. Only ids it wrote down itself.
+	/// set straight: bought at what it paid, gone off it, or still counted. Only ids it wrote down itself. Then the purchases
+	/// waiting for the owner's phone: a day old, let go (nothing was bought - the order was never sent with the
+	/// confirmation); otherwise, with <paramref name="resume"/>, sent again with it, as Steam's market page does.
 	/// </summary>
-	private async Task SweepLockedAsync(CancellationToken ct) {
+	private async Task SweepLockedAsync(CancellationToken ct, bool resume, Result? result = null) {
 		foreach (BuyLedger.Entry open in Ledger.OpenOrders.Take(10)) {
 			if (ct.IsCancellationRequested) {
 				return;
@@ -1096,16 +1386,115 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				Log.Good(new Said("bought {0} · {1} · {2}", new BuyCard(open.Card, 0).Name, GameNames.Of(open.App), BuyPlan.Money(Paid(answer, open.Cents), open.Currency)), Bot.Name);
 			}
 		}
+
+		if ((Ledger.OnPhone.Count == 0) || ct.IsCancellationRequested) {
+			return;
+		}
+
+		DateTime now = await _clock(ct).ConfigureAwait(false);
+		CardMarket.Wallet? wallet = null;
+		int bought = 0, letGo = 0;
+
+		foreach (BuyLedger.Entry phone in Ledger.OnPhone.Take(10)) {
+			if (ct.IsCancellationRequested) {
+				break;
+			}
+
+			// Never confirmed in a day: let go. The order was never sent with the confirmation, so nothing was bought - and it
+			// never will be: a confirmation is only ever sent within its day.
+			if (now - phone.At >= PhoneWait) {
+				if (!Ledger.Replace(phone, null)) {
+					CantSave();
+
+					return;
+				}
+
+				letGo++;
+
+				continue;
+			}
+
+			if (!resume) {
+				continue;
+			}
+
+			// The wallet once, for the billing details the order carries - and whether Steam still lets it buy.
+			wallet ??= await _market.WalletAsync(ct).ConfigureAwait(false);
+
+			if ((wallet == null) || (wallet.Currency != phone.Currency) || (BuyPlan.BlockOf(wallet) != BuyBlock.None)) {
+				break;
+			}
+
+			BuyLedger.Entry pending = phone;
+			BuyAnswer answer;
+
+			try {
+				answer = await _market.ResumeAsync(new BuyOrder(phone.App, phone.Card, phone.Cents - phone.Tax, phone.Tax, wallet), phone.Confirm!, order => {
+					BuyLedger.Entry noted = pending with { Order = order };
+
+					if (!Ledger.Replace(pending, noted)) {
+						_cantSave = true;
+					}
+
+					pending = noted;
+				}, ct).ConfigureAwait(false);
+			} catch (Exception e) {
+				// Whatever broke, it may have been sent: it stays counted, never sent again with that confirmation.
+				answer = new BuyAnswer(BuyResult.Unsure, phone.Cents, Log.Describe(e));
+			}
+
+			if (!Record(pending, answer, phone.Cents) || _cantSave) {
+				CantSave();
+
+				return;
+			}
+
+			switch (answer.Result) {
+				case BuyResult.Bought:
+					bought++;
+					Log.Good(new Said("bought {0} · {1} · {2}", new BuyCard(phone.Card, 0).Name, GameNames.Of(phone.App), BuyPlan.Money(Paid(answer, phone.Cents), phone.Currency)), Bot.Name);
+
+					break;
+				case BuyResult.Refused or BuyResult.Gone:
+					Log.Info(new Said("{0} not bought · not confirmed in the Steam app", new BuyCard(phone.Card, 0).Name), Bot.Name);
+
+					break;
+				case BuyResult.Unsure:
+					Log.Warn(new Said("unsure if {0} was bought · counted as spent", new BuyCard(phone.Card, 0).Name), Bot.Name);
+
+					break;
+			}
+		}
+
+		if (letGo > 0) {
+			Log.Info(new Said("{0} card purchase(s) not confirmed in a day · let go, nothing bought", letGo), Bot.Name);
+		}
+
+		if (bought > 0) {
+			if (result != null) {
+				result.Confirmed += bought;
+			}
+
+			// Confirmed on the phone and bought: a set may be whole now - badge crafting looks soon.
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0);
+		}
 	}
+
+	/// <summary>How long a purchase waits for the owner's phone before it's let go - about a day.</summary>
+	internal static readonly TimeSpan PhoneWait = TimeSpan.FromHours(24);
 
 	/// <summary>What a purchase cost: what Steam said it paid, else the order's price.</summary>
 	private static long Paid(BuyAnswer answer, long price) => answer.Paid > 0 ? answer.Paid : price;
 
-	/// <summary>Set the list straight after an answer: bought at what it paid, nothing spent off it, unsure still counted. False when it couldn't be saved.</summary>
+	/// <summary>
+	/// Set the list straight after an answer: bought at what it paid, nothing spent off it, waiting on the phone with its
+	/// confirmation, unsure still counted (and never sent again with a confirmation). False when it couldn't be saved.
+	/// </summary>
 	private bool Record(BuyLedger.Entry pending, BuyAnswer answer, long price) => answer.Result switch {
-		BuyResult.Bought => Ledger.Replace(pending, pending with { Cents = Paid(answer, price), Pending = false, Order = answer.Order ?? pending.Order }),
+		BuyResult.Bought => Ledger.Replace(pending, pending with { Cents = Paid(answer, price), Pending = false, Order = answer.Order ?? pending.Order, Confirm = null }),
 		BuyResult.Gone or BuyResult.Refused or BuyResult.NotSent => Ledger.Replace(pending, null),
-		_ => Ledger.Replace(pending, pending with { Order = answer.Order ?? pending.Order })
+		BuyResult.Waiting => Ledger.Replace(pending, pending with { Confirm = answer.Confirm ?? pending.Confirm }),
+		_ => Ledger.Replace(pending, pending with { Order = answer.Order ?? pending.Order, Confirm = null })
 	};
 
 	private void CantSave() {
@@ -1125,11 +1514,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 		}
 
-		int got = 0;
+		int got = 0, onPhone = 0;
 
 		foreach (BuyCard card in step.Cards) {
 			// A person clicking through the market, not a list being emptied - slower still on a human-mode account.
-			if (result.Bought.Count > 0) {
+			if (result.Bought.Count + result.Waiting.Count > 0) {
 				await Task.Delay(Bot.Cfg.LegitMode ? Rng.Seconds(20, 90) : Rng.Seconds(3, 10), ct).ConfigureAwait(false);
 			}
 
@@ -1138,40 +1527,43 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				result.Problem = stop.Problem == "buying cards is off" ? "buying cards was turned off - stopped" : stop.Problem;
 				result.Lasting = stop.Lasting;
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
 			if (await _market.BookAsync(card.Hash, ct).ConfigureAwait(false) is not { } book || (book.Lowest <= 0) || (book.Currency != currency)) {
 				result.Problem = $"{card.Name} isn't on the market at a price it can read now - it looks again next time";
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
 			if (book.Lowest > card.Price) {
 				result.Problem = $"{card.Name} costs more than planned now ({BuyPlan.Money(book.Lowest, currency)}, was {BuyPlan.Money(card.Price, currency)}) - it looks again next time";
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
-			if (await _market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet || (wallet.Currency != currency) || (BuyPlan.BlockOf(wallet, Bot.CanConfirmTrades) != BuyBlock.None)) {
+			if (await _market.WalletAsync(ct).ConfigureAwait(false) is not { } wallet || (wallet.Currency != currency) || (BuyPlan.BlockOf(wallet) != BuyBlock.None)) {
 				result.Problem = "Steam didn't say what's in its wallet, or how its purchases are confirmed - nothing more bought";
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
+			// What it really costs: the card's price and the tax some countries add on Steam's fee, as Steam's page works it out.
+			long tax = wallet.FeeTax(book.Lowest);
+			long cost = book.Lowest + tax;
 			DateTime at = await _clock(ct).ConfigureAwait(false);
 			long dayLeft = BuyPlan.Cents(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(at.AddDays(-1));
 			long weekLeft = BuyPlan.Cents(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(at.AddDays(-7));
 
-			if ((book.Lowest > dayLeft) || (book.Lowest > weekLeft) || (book.Lowest > wallet.Balance)) {
+			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance)) {
 				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
 			// Written down as spent BEFORE it's sent: whatever happens next - a stop, a disconnect, an update - the money
 			// counts against the limits until a look finds out what really happened.
-			BuyLedger.Entry pending = new(at, book.Lowest, currency, step.App, card.Hash, Pending: true, Key: Guid.NewGuid().ToString("N"));
+			BuyLedger.Entry pending = new(at, cost, currency, step.App, card.Hash, Pending: true, Key: Guid.NewGuid().ToString("N"), Tax: tax);
 
 			if (!Ledger.Add(pending)) {
 				Ledger.Replace(pending, null);
@@ -1179,13 +1571,13 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
 				result.Lasting = true;
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
 			BuyAnswer answer;
 
 			try {
-				answer = await _market.BuyAsync(step.App, card.Hash, book.Lowest, currency, order => {
+				answer = await _market.BuyAsync(new BuyOrder(step.App, card.Hash, book.Lowest, tax, wallet), order => {
 					BuyLedger.Entry noted = pending with { Order = order };
 
 					if (!Ledger.Replace(pending, noted)) {
@@ -1196,17 +1588,23 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				}, ct).ConfigureAwait(false);
 			} catch (Exception e) {
 				// Whatever broke, it may have been sent: it stays counted until a look finds out.
-				answer = new BuyAnswer(BuyResult.Unsure, book.Lowest, Log.Describe(e));
+				answer = new BuyAnswer(BuyResult.Unsure, cost, Log.Describe(e));
 			}
 
-			bool saved = Record(pending, answer, book.Lowest);
+			bool saved = Record(pending, answer, cost);
 
 			switch (answer.Result) {
 				case BuyResult.Bought:
-					long paid = Paid(answer, book.Lowest);
+					long paid = Paid(answer, cost);
 					result.Bought.Add((step, card, paid));
 					got++;
 					Log.Good(new Said("bought {0} · {1} · {2}", card.Name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
+
+					break;
+				case BuyResult.Waiting:
+					// Left for the owner's phone, like a market listing: counted as spent until it's confirmed, turned down or a day old.
+					result.Waiting.Add((step, card));
+					onPhone++;
 
 					break;
 				case BuyResult.Unsure:
@@ -1235,11 +1633,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
 				result.Lasting = true;
 
-				return false;
+				return Asked(step, onPhone, result, false);
 			}
 
-			if ((answer.Result != BuyResult.Bought) || ct.IsCancellationRequested) {
-				return false;
+			if ((answer.Result is not (BuyResult.Bought or BuyResult.Waiting)) || ct.IsCancellationRequested) {
+				return Asked(step, onPhone, result, false);
 			}
 		}
 
@@ -1250,7 +1648,26 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true);
 		}
 
-		return true;
+		// A set waiting on the phone is the only one: the next set waits until it's confirmed.
+		return Asked(step, onPhone, result, onPhone == 0);
+	}
+
+	/// <summary>
+	/// Purchases of this set left for the owner's phone: said once for the set, where it can't be missed - like market
+	/// listings - and the look stops there (one set waiting at a time). Hands back <paramref name="carryOn"/>.
+	/// </summary>
+	private bool Asked(BuyStep step, int onPhone, Result result, bool carryOn) {
+		if (onPhone == 0) {
+			return carryOn;
+		}
+
+		Log.Attention(new Said("confirm the card purchase in the Steam app · {0} card(s) for {1}", onPhone, step.Game), Bot.Name);
+
+		if (result.Problem.Length == 0) {
+			result.Problem = $"{onPhone} card purchase(s) for {step.Game} to confirm in the Steam app on your phone - bought once confirmed, at the next look; let go after a day";
+		}
+
+		return false;
 	}
 
 	/// <summary>One line and one notification for a look that bought something - not one per card.</summary>

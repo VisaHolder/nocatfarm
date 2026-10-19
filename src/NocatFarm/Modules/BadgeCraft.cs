@@ -16,7 +16,7 @@ namespace NocatFarm.Modules;
 ///    craft everything it listed, and never re-read after each craft. Steam's own UI reloads every time -
 ///    do not copy that.
 /// </summary>
-public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
+public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 	private const int SweepLowHours = 22;
 	private const int SweepHighHours = 26;
 	private const int CraftGapLowSeconds = 6;
@@ -277,6 +277,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		if (inventory is not { Complete: true }) {
 			_status = new Said("couldn't read the inventory - crafting later");
 			_moreToCraft = true;
+
+			return 0;
+		}
+
+		// 1.8.2 smart levelling: a normal set whose market price buys clearly more levels is listed for sale instead.
+		ready = await SellInsteadAsync(ready, inventory, ct).ConfigureAwait(false);
+
+		if (ready.Count == 0) {
+			_status = new Said("nothing left to craft - sets sold instead");
 
 			return 0;
 		}

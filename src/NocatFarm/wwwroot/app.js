@@ -6412,11 +6412,12 @@ function buyPreviewHtml(d) {
   const top = [];
   if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the market yet. These are the limits it will keep to."))}</p>`);
   else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the market: {0}", d.Problem))}</p>`);
-  // Why Steam won't let it buy by itself: billing details first, or each purchase confirmed by email or in the Steam app.
+  // Why Steam won't let it buy by itself: no billing details saved to send, or each purchase confirmed by email. (A
+  // purchase confirmed in the Steam app waits for your phone - not a block since 1.8.2, so 3 is never sent.)
   const blocked = [null,
-    t("Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy"),
+    t("Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy"),
     t("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
-    t('Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases'),
+    null,
     t("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time")][d.Blocked];
   if (blocked) top.push(`<p class="problem">${esc(blocked)}</p>`);
   if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
@@ -6431,6 +6432,10 @@ function buyPreviewHtml(d) {
       ? tf('A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00', s.Game, s.Cards, s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit))
       : tf('{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00', s.Cards, s.SetSize, s.Game, s.Names.join(', '), s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit)))}</li>`).join('')}</ul>`
     : '';
+  // Smart levelling: whole sets worth more sold than crafted - badge crafting lists them, each confirmed on your phone.
+  const sells = (d.Sells || []).length
+    ? `<h4>${esc(t('It would sell instead of crafting'))}</h4><ul class="limits">${d.Sells.map((s) => `<li>${esc(tf("The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes", s.Game, s.Money, grouped(s.Levels)))}</li>`).join('')}</ul>`
+    : '';
   const notes = d.Notes.length ? `<ul class="limits muted">${d.Notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
 
   const limits = [
@@ -6438,12 +6443,13 @@ function buyPreviewHtml(d) {
     tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
     t('Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look'),
     t('Each card at the cheapest price on the market, checked again right before it buys'),
-    d.FullSets ? t('Badges it has started first, then the cheapest full sets') : t('Only badges it has started - not full sets'),
+    d.FullSets ? t('The cheapest badge level first - a badge it has started or a whole new set, whichever costs less') : t('Only badges it has started - not full sets'),
+    t('If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not'),
   ];
   if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));
   limits.push(t('Badge crafting turns each finished set into a level'));
 
-  return `${top.join('')}${big}${sets}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+  return `${top.join('')}${big}${sets}${sells}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
 }
 
 async function switchTo(name, account, on) {

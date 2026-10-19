@@ -170,7 +170,8 @@ section below.
 **Badges.** *Craft badges from card sets* (off) turns full sets into badges once a day. That's what raises your
 Steam level; cards sitting in the inventory raise nothing. *Also craft foil badges* (on) crafts foil sets too - turn it
 off to level with normal badges only and leave foil cards alone. If Steam refuses a foil badge, only foils wait (about
-6 hours); normal badges carry on.
+6 hours); normal badges carry on. With buying cards on, a set worth more sold than crafted is sold instead - see
+[Selling a set instead of crafting it](#selling-a-set-instead-of-crafting-it).
 
 **Selling.** `sell myaccount` shows which spare cards it would list and what you'd get after Steam's fees.
 `sell myaccount do` lists them (5 at a time by default), and `sell myaccount relist` takes down week-old listings
@@ -337,11 +338,19 @@ spends the account's Steam wallet, so it's careful:
   how much, and its limits - *Turn on* or *Cancel*. Off stops it at once. At the console, `set myaccount BuyCards on`
   answers with the same preview, `buy on myaccount` confirms it and `buy off myaccount` turns it off. Steam chat can
   look (`buy preview`) but can't turn it on or buy. A backup brings back the money spent, never the switch.
-- **Closest badge first, whole sets only.** It picks the badge closest to its next level - the fewest cards missing,
-  then the cheapest - the same rule as automatic booster packs. It plans a set's missing cards only when every one is
-  on the market and all of them fit inside the limits. A set that costs more than a day's limit is passed over (it
-  says so); one that doesn't fit what's left of today waits for tomorrow. Only normal cards of that game count - never
-  a foil or anything else the market search lets in.
+- **The cheapest level first, whole sets only.** Every badge level it could buy - a started badge's missing cards, and
+  (with *Buy the cheapest full sets* on) a whole set for a game it has none of - is ranked by what that next level
+  costs, cheapest first: the most XP for the money. A badge one card short whose card costs 2.00 goes after a whole new
+  set that costs 0.40. It plans a set's missing cards only when every one is on the market and all of them fit inside
+  the limits. A set that costs more than a day's limit is passed over (it says so); one that doesn't fit what's left of
+  today waits for tomorrow. Only normal cards of that game count - never a foil or anything else the market search
+  lets in.
+- **Booster packs first where they're working.** A game automatic booster packs is saving gems for, or has made a pack
+  for that's still to open, isn't bought - its cards come from the packs.
+- **Billing details.** Steam may want billing details with every market purchase (some countries always do). Each order
+  carries the ones saved on the account, exactly as Steam's own market page sends them, plus any tax your country adds
+  on Steam's fee. Only when none are saved does it stop and tell you: buy one card by hand on the market once, and the
+  details are saved for next time. They're never written to the log, shown, or kept by nocat.farm.
 - **Limits.** *Spend at most, a day* (1.50) and *Spend at most, a week* (8.00), in the wallet's own currency, over any
   24 hours and any 7 days by Steam's clock (a wrong PC clock can't move them) - and never more than the wallet holds.
   It reads the wallet first; if Steam doesn't say how this account's purchases are confirmed, it buys nothing that look.
@@ -385,8 +394,15 @@ that's held whole, since the missing cards will be bought.
 cheapest listing's price, which goes through at once - or, if somebody bought that card first, is taken back. Nothing
 is ever left waiting on the market. If Steam wants each purchase confirmed in the Steam app, it confirms its own
 purchase with the account's authenticator when that's in nocat.farm - only that market purchase, matched exactly. If
-it can't confirm it, it denies that same confirmation so nothing is left waiting in your Steam app. By email, or with
-no authenticator here, it buys nothing and tells you once.
+it can't confirm it, it denies that same confirmation so nothing is left waiting in your Steam app. By email, it buys
+nothing and tells you once.
+
+**Confirming on your phone.** Without the authenticator in nocat.farm, a purchase Steam wants confirmed in the Steam
+app waits for you, like a market listing: the log says *confirm the card purchase in the Steam app* (once for the
+set), and you confirm it on your phone. Until then it counts as spent against the limits. At the next look (within
+about an hour or two) it sends the order again with your confirmation, as Steam's page does - that's when the card is
+bought. Turned down on the phone, the money is free again; still not confirmed after about a day, it's let go and
+nothing is bought. Only one set waits on your phone at a time - nothing new is bought until it's done.
 
 `buy` shows what each account has spent today and this week; `buy do myaccount` buys the next ones now, inside the
 same limits (not while the account is paused, and never beside a look that's already buying). Something that won't
@@ -405,6 +421,28 @@ Settings, the account, **Buying cards**:
 | *Spend at most, a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
 | *Spend at most, a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
 | *Look every (hours)* | 12 | How often it looks. A human-mode account only in its day. |
+
+### Selling a set instead of crafting it
+
+Crafting a set makes 1 badge level. Some sets are worth far more on the market than the levels they'd buy - a set of
+cards worth 5.00 could buy about 12 levels of the cheapest sets instead. *Sell sets worth more than the levels they'd
+buy* (in **Badges & selling**, on, but it only does anything while *Buy missing cards* is on) weighs this before badge
+crafting crafts a normal badge:
+
+- **Sold:** what the set brings in after Steam's fee - each card listed a cent under the cheapest - set against what
+  the next badge levels cost, ranked the same way buying ranks them, at today's prices.
+- **Only when it clearly wins:** at least 2 levels, or 1 level with a quarter of the money left over. Otherwise the set
+  is crafted as before. So is a set with a card that sold fewer than 10 times in the last day (a listing could hang),
+  one with no price right now, and any game with more than one set ready.
+- **Foil sets are always crafted.**
+- **Then:** it doesn't craft, lists one copy of each card (these may go above *Never sell above* - this path only), and
+  says so: *selling the Arcane Raise set instead of crafting: 4.97 CAD buys about 12 levels*. Each listing needs your
+  confirmation in the Steam app, like any listing. A card whose price fell by more than a tenth since the set was
+  weighed isn't listed. Buying cards then spends the money inside its own limits, and doesn't buy that game's cards
+  back for a month.
+
+`buy preview myaccount` (and the popup when you turn buying on) shows any set it would sell instead of crafting, and
+what that money buys.
 
 ## Spare items: gems, sell or keep
 

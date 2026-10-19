@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "购买订单 {0} · 尚未确定 · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} 的卡牌购买已开启：会在限额内自己购买徽章缺少的卡牌",
     "Buying cards is off for {0}: nothing is bought": "{0} 的卡牌购买已关闭：不会购买任何东西",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam 要求此账户在市场首次购买前填写账单信息 - 先手动买一张卡牌，之后它就能购买",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam 要求此账户的每笔市场购买都通过电子邮件确认，nocat.farm 无法做到",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam 要求此账户的每笔市场购买都在 Steam 应用中确认 - 把它的身份验证器加到 nocat.farm，它就能确认自己的购买",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam 没有说明此账户的市场购买如何确认，所以这次不买任何东西",
     "couldn't save the card buying list: {0}": "无法保存卡牌购买记录：{0}",
     "couldn't read the card buying list: {0}": "无法读取卡牌购买记录：{0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "每周最多花 {0}（本周已花 {1}）",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "绝不超过钱包余额。只计划整套，每个价格都先检查 - 如果中途有价格变动，这套剩下的部分等下次查看",
     "Each card at the cheapest price on the market, checked again right before it buys": "每张卡牌都按市场最低价，购买前会再查一次",
-    "Badges it has started first, then the cheapest full sets": "先买已开始的徽章，再买最便宜的整套",
     "Only badges it has started - not full sets": "只买已开始的徽章 - 不买整套",
     "Only during its day (human mode), one set at a time": "只在它的一天内（拟人模式），每次一套",
     "Badge crafting turns each finished set into a level": "徽章合成会把每套集齐的卡牌变成一个等级",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价",
     "then off for the night": "然后就睡了",
     "short break · then off for the night": "短暂休息 · 然后就睡了",
-    "meal break · then off for the night": "吃饭休息 · 然后就睡了"
+    "meal break · then off for the night": "吃饭休息 · 然后就睡了",
+    "nothing left to craft - sets sold instead": "没有要合成的了 - 卡组改为出售",
+    "weighing sets against the levels they'd buy": "正在比较卡组和它能买到的等级",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "出售 {0} 卡组而不合成：{1} 约可买 {2} 级",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "{0} 卡组：{2} 张卡中已上架 {1} 张 · 其余等下次查看",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam 要求每次市场购买都附上账单信息，而此账户没有保存 - 先在市场上手动买一张卡（这样会保存），之后就能购买",
+    "{0} not bought · not confirmed in the Steam app": "{0} 未购买 · 未在 Steam 应用中确认",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} 笔卡牌购买一天内未确认 · 已放弃，什么也没买",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "请在 Steam 应用中确认卡牌购买 · {1} 的 {0} 张卡",
+    "its price fell since the set was weighed - not listed": "评估卡组之后价格下跌了 - 未上架",
+    "It would sell instead of crafting": "会出售而不合成的",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} 卡组：扣除 Steam 手续费后 {1} 约可买 {2} 个徽章等级，比合成得到的 1 级多",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "先买最便宜的徽章等级 - 已开始的徽章或全新的整套，哪个便宜买哪个",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "如果 Steam 要求在 Steam 应用中确认购买，你在手机上确认 - 一次一套；不确认的话一天后放弃"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "购买缺少的卡牌",
-      "tip": "以市场最低价购买徽章升到下一级还缺的卡牌，让它能合成 - 先买最接近下一级的徽章，而且只买整套。例如 5 张里已有 4 张，就花约 0.05 到 0.15 买第 5 张。会花此账户的 Steam 钱包。每个账户默认关闭。打开时会先显示要买什么、花多少，并请你确认；关闭会立即停止。需要打开“用卡牌合成徽章”。"
+      "tip": "以市场最低价购买徽章升到下一级还缺的卡牌，让它能合成 - 先买最便宜的等级，而且只买整套。例如 5 张里已有 4 张，就花约 0.05 到 0.15 买第 5 张。会花此账户的 Steam 钱包。每个账户默认关闭。打开时会先显示要买什么、花多少，并请你确认；关闭会立即停止。需要打开“用卡牌合成徽章”。"
     },
     "BuyFullSets": {
       "label": "购买最便宜的整套",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "也合成闪亮徽章",
       "tip": "也把集齐的闪亮卡牌合成闪亮徽章。关闭时只合成普通徽章，闪亮卡牌不动。Steam 拒绝闪亮徽章时，只有闪亮徽章等待 —— 普通徽章继续。"
+    },
+    "SellSetsForLevels": {
+      "label": "出售比能买到的等级更值钱的卡组",
+      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组总是合成。"
     },
     "CardSwaps": {
       "label": "与其他 nocat.farm 用户交换卡牌",

@@ -30,6 +30,9 @@ public sealed partial class Boosters {
 	/// <summary>What automatic made and still has to open (loaded on first use).</summary>
 	internal BoosterPick.Memory AutoMemory => _memory ??= BoosterPick.Memory.Load(Bot.Name);
 
+	/// <summary>1.8.2: the game automatic is saving gems for at its last look (0: none) - see <see cref="BoosterPick.Busy(Core.Bot)"/>.</summary>
+	internal uint SavingFor { get; private set; }
+
 	private async Task AutoTickAsync(CancellationToken ct) {
 		_dayGate ??= DayGate;
 
@@ -106,6 +109,8 @@ public sealed partial class Boosters {
 
 		BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, normal, Bot.Cfg.BoosterNeverOpen, AutoMemory.Made, DateTime.UtcNow);
 		BoosterPick.Choice choice = BoosterPick.Choose(ranking, page.Gems, Bot.Cfg.BoosterKeepGems, dayOpen: true);
+
+		SavingFor = choice.WaitingForGems && (ranking.Ranked.Count > 0) ? ranking.Ranked[0].App : 0;
 
 		if (choice.Next is not { } next) {
 			_autoStatus = choice.Why;

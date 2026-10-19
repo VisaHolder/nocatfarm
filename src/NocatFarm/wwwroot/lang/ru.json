@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "заявка на покупку {0} · ещё не ясно · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Покупка карточек включена для {0}: сама покупает недостающие карточки для значков в своих пределах",
     "Buying cards is off for {0}: nothing is bought": "Покупка карточек выключена для {0}: ничего не покупается",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam просит платёжные данные перед первой покупкой этого аккаунта на торговой площадке - купите одну карточку вручную один раз, потом она сможет покупать",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam требует подтверждать каждую покупку этого аккаунта на торговой площадке по почте, а nocat.farm так не умеет",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam требует подтверждать каждую покупку этого аккаунта в приложении Steam - добавьте его аутентификатор в nocat.farm, чтобы она могла подтверждать свои покупки",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam не сказал, как подтверждаются покупки на торговой площадке для этого аккаунта, поэтому в этот раз ничего не покупается",
     "couldn't save the card buying list: {0}": "не удалось сохранить список покупок карточек: {0}",
     "couldn't read the card buying list: {0}": "не удалось прочитать список покупок карточек: {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "Тратит не больше {0} в неделю (на этой неделе потрачено {1})",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Никогда больше, чем есть в кошельке. Планируются только целые наборы, и каждая цена проверяется заранее - если какая-то изменится на полпути, остаток набора ждёт следующей проверки",
     "Each card at the cheapest price on the market, checked again right before it buys": "Каждая карточка по самой низкой цене на торговой площадке, с повторной проверкой прямо перед покупкой",
-    "Badges it has started first, then the cheapest full sets": "Сначала начатые значки, потом самые дешёвые полные наборы",
     "Only badges it has started - not full sets": "Только начатые значки - не полные наборы",
     "Only during its day (human mode), one set at a time": "Только в течение его дня (человеческий режим), по одному набору за раз",
     "Badge crafting turns each finished set into a level": "Сборка значков превращает каждый собранный набор в уровень",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam",
     "then off for the night": "потом спать",
     "short break · then off for the night": "короткий перерыв · потом спать",
-    "meal break · then off for the night": "перерыв на еду · потом спать"
+    "meal break · then off for the night": "перерыв на еду · потом спать",
+    "nothing left to craft - sets sold instead": "собирать больше нечего - наборы проданы вместо этого",
+    "weighing sets against the levels they'd buy": "сравнивает наборы с уровнями, которые на них можно купить",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "продаёт набор {0} вместо сборки: на {1} можно купить около {2} уровней",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "набор {0}: выставлено {1} из {2} карточек · остальные ждут следующего просмотра",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam требует платёжные данные при каждой покупке на торговой площадке, а на этом аккаунте они не сохранены - купите один раз карточку вручную на площадке (так они сохранятся), после этого он сможет покупать",
+    "{0} not bought · not confirmed in the Steam app": "{0} не куплена · не подтверждена в приложении Steam",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} покупк(и) карточек не подтверждены за день · отменено, ничего не куплено",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "подтвердите покупку карточек в приложении Steam · {0} карточк(и) для {1}",
+    "its price fell since the set was weighed - not listed": "её цена упала с тех пор, как набор оценили - не выставлена",
+    "It would sell instead of crafting": "Продаст вместо сборки",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "Набор {0}: {1} после комиссии Steam покупает около {2} уровней значков - больше, чем 1 от сборки",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Сначала самый дешёвый уровень значка - начатый значок или целый новый набор, что дешевле",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Если Steam просит подтверждать покупки в приложении Steam, вы подтверждаете их на телефоне - по одному набору; без подтверждения через день они отменяются"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "Покупать недостающие карточки",
-      "tip": "Покупает карточки, которых значку не хватает до следующего уровня, по самой низкой цене на торговой площадке, чтобы его можно было собрать - сначала самый близкий значок, и только целые наборы. Например, если есть 4 из 5 карточек, покупает 5-ю, примерно за 0,05-0,15. Тратит кошелёк Steam этого аккаунта. По умолчанию выключено на каждом аккаунте. При включении сначала показывает, что купила бы и за сколько, и просит подтвердить; выключение сразу останавливает. Нужно включённое «Собирать значки из карточек»."
+      "tip": "Покупает карточки, которых значку не хватает до следующего уровня, по самой низкой цене на торговой площадке, чтобы его можно было собрать - сначала самый дешёвый уровень, и только целые наборы. Например, если есть 4 из 5 карточек, покупает 5-ю, примерно за 0,05-0,15. Тратит кошелёк Steam этого аккаунта. По умолчанию выключено на каждом аккаунте. При включении сначала показывает, что купила бы и за сколько, и просит подтвердить; выключение сразу останавливает. Нужно включённое «Собирать значки из карточек»."
     },
     "BuyFullSets": {
       "label": "Покупать самые дешёвые полные наборы",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "Собирать и металлические значки",
       "tip": "Собирает в значки и полные наборы металлических карточек. Выключено - собирает только обычные значки и не трогает металлические карточки. Если Steam отклонит металлический значок, ждут только металлические - обычные продолжаются."
+    },
+    "SellSetsForLevels": {
+      "label": "Продавать наборы, которые стоят больше уровней, что на них можно купить",
+      "tip": "Работает, только пока включено «Покупать недостающие карточки». Перед сборкой обычного значка смотрит, сколько набор приносит на торговой площадке после комиссии Steam. Если на эти деньги можно купить явно больше уровней значков, чем 1 от сборки, он выставляет набор на продажу, а покупка карточек тратит деньги в своих лимитах. Например, набор, который приносит 5,00, когда самые дешёвые уровни стоят около 0,40 каждый, покупает около 12 уровней вместо 1. Каждый лот вы подтверждаете в приложении Steam, как любой лот. Металлические наборы всегда собираются."
     },
     "CardSwaps": {
       "label": "Менять карточки с другими пользователями nocat.farm",

@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "alış emri {0} · henüz netleşmedi · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} için kart satın alma açık: sınırları içinde rozetlerine eksik kartları kendisi alır",
     "Buying cards is off for {0}: nothing is bought": "{0} için kart satın alma kapalı: hiçbir şey alınmaz",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam, bu hesabın ilk pazar alışverişinden önce fatura bilgisi istiyor - bir kez elle bir kart al, sonra o alabilir",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam bu hesabın her pazar alışverişinin e-postayla onaylanmasını istiyor; nocat.farm bunu yapamaz",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam bu hesabın her pazar alışverişinin Steam uygulamasında onaylanmasını istiyor - kendi alışverişlerini onaylayabilmesi için doğrulayıcısını nocat.farm’a ekle",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam bu hesabın pazar alımlarının nasıl onaylandığını söylemedi, bu yüzden bu sefer hiçbir şey alınmıyor",
     "couldn't save the card buying list: {0}": "kart satın alma listesi kaydedilemedi: {0}",
     "couldn't read the card buying list: {0}": "kart satın alma listesi okunamadı: {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "Haftada en fazla {0} harcar (bu hafta {1} harcandı)",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Asla cüzdandakinden fazla değil. Yalnızca tam setler planlanır ve her fiyat önce kontrol edilir - biri yarıda değişirse setin kalanı bir sonraki bakışı bekler",
     "Each card at the cheapest price on the market, checked again right before it buys": "Her kart pazardaki en ucuz fiyattan, almadan hemen önce yeniden kontrol edilir",
-    "Badges it has started first, then the cheapest full sets": "Önce başlanmış rozetler, sonra en ucuz tam setler",
     "Only badges it has started - not full sets": "Yalnızca başlanmış rozetler - tam setler değil",
     "Only during its day (human mode), one set at a time": "Yalnızca kendi gününde (insan modu), her seferinde bir set",
     "Badge crafting turns each finished set into a level": "Rozet üretimi her tamamlanan seti bir seviyeye çevirir",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "kart takası · {0} kişisine teklifi Steam'in e-postasından onayla",
     "then off for the night": "sonra yatıyor",
     "short break · then off for the night": "kısa mola · sonra yatıyor",
-    "meal break · then off for the night": "yemek molası · sonra yatıyor"
+    "meal break · then off for the night": "yemek molası · sonra yatıyor",
+    "nothing left to craft - sets sold instead": "üretilecek bir şey kalmadı - setler onun yerine satıldı",
+    "weighing sets against the levels they'd buy": "setleri alacakları seviyelerle karşılaştırıyor",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "{0} seti üretmek yerine satılıyor: {1} yaklaşık {2} seviye alır",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "{0} seti: {2} karttan {1} tanesi ilana kondu · kalanı sonraki bakışı bekliyor",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam her pazar alışverişinde fatura bilgisi istiyor ve bu hesapta kayıtlı hiç yok - pazardan bir kez elle bir kart al (bu onları kaydeder), sonra satın alabilir",
+    "{0} not bought · not confirmed in the Steam app": "{0} alınmadı · Steam uygulamasında onaylanmadı",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} kart alımı bir gün içinde onaylanmadı · bırakıldı, hiçbir şey alınmadı",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "kart alımını Steam uygulamasında onayla · {1} için {0} kart",
+    "its price fell since the set was weighed - not listed": "set değerlendirildiğinden beri fiyatı düştü - ilana konmadı",
+    "It would sell instead of crafting": "Üretmek yerine satacakları",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} seti: Steam kesintisinden sonra {1} yaklaşık {2} rozet seviyesi alır, üretmenin verdiği 1 seviyeden fazla",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Önce en ucuz rozet seviyesi - başlanmış bir rozet ya da tamamen yeni bir set, hangisi daha ucuzsa",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam alımların Steam uygulamasında onaylanmasını isterse, onları telefonunda onaylarsın - her seferinde bir set; onaylanmazsa bir gün sonra bırakılır"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "Eksik kartları satın al",
-      "tip": "Bir rozetin sonraki seviyesi için eksik kartları, üretilebilsin diye pazardaki en ucuz fiyattan alır - önce en yakın rozet ve yalnızca tam setler. Örneğin 5 kartın 4’ü varsa 5’incisini yaklaşık 0,05-0,15’e alır. Bu hesabın Steam cüzdanını harcar. Her hesapta varsayılan olarak kapalı. Açınca önce neyi kaça alacağını gösterir ve onay ister; kapatmak hemen durdurur. \"Kart setlerinden rozet üret\" açık olmalı."
+      "tip": "Bir rozetin sonraki seviyesi için eksik kartları, üretilebilsin diye pazardaki en ucuz fiyattan alır - önce en ucuz seviye ve yalnızca tam setler. Örneğin 5 kartın 4’ü varsa 5’incisini yaklaşık 0,05-0,15’e alır. Bu hesabın Steam cüzdanını harcar. Her hesapta varsayılan olarak kapalı. Açınca önce neyi kaça alacağını gösterir ve onay ister; kapatmak hemen durdurur. \"Kart setlerinden rozet üret\" açık olmalı."
     },
     "BuyFullSets": {
       "label": "En ucuz tam setleri satın al",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "Parlak rozetleri de üret",
       "tip": "Tamamlanmış parlak kart setlerinden parlak rozet de üretir. Kapalıyken yalnızca normal rozet üretir ve parlak kartlara dokunmaz. Steam bir parlak rozeti reddederse yalnızca parlaklar bekler - normal rozetler devam eder."
+    },
+    "SellSetsForLevels": {
+      "label": "Alacağı seviyelerden daha değerli setleri sat",
+      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Normal bir rozet üretmeden önce setin pazarda Steam kesintisinden sonra kaça satıldığına bakar. Bu para, üretmenin verdiği 1 seviyeden açıkça daha fazla rozet seviyesi alıyorsa seti onun yerine satışa koyar ve kart alımı parayı kendi sınırları içinde harcar. Örneğin en ucuz seviyeler tanesi yaklaşık 0,40 iken 5,00 getiren bir set, 1 yerine yaklaşık 12 seviye alır. Her ilanı, her ilan gibi Steam uygulamasında onaylarsın. Parlak setler her zaman üretilir."
     },
     "CardSwaps": {
       "label": "Diğer nocat.farm kullanıcılarıyla kart takas et",

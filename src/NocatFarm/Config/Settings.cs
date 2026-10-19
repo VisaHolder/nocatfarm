@@ -1361,6 +1361,9 @@ public static class Settings {
 		new("CraftFoilBadges", "Also craft foil badges", SecBadges, SettingKind.Bool,
 			"Crafts finished foil card sets into foil badges too. Off, it crafts normal badges only and leaves foil cards alone. If Steam refuses a foil badge, only foils wait - normal badges carry on.",
 			Advanced: true, ShowWhen: "CraftBadges=true"),
+		new("SellSetsForLevels", "Sell sets worth more than the levels they'd buy", SecBadges, SettingKind.Bool,
+			"Only does anything while \"Buy missing cards\" is on. Before crafting a normal badge it checks what the set sells for on the market, after Steam's fee. When that money buys clearly more badge levels than the 1 the craft makes, it lists the set for sale instead, and buying cards spends the money within its limits. For example, a set that brings in 5.00 when the cheapest levels cost about 0.40 each buys about 12 levels instead of 1. You confirm each listing in the Steam app, like any listing. Foil sets are always crafted.",
+			Advanced: true, ShowWhen: "CraftBadges=true"),
 		new("SellPerRun", "Cards to list at a time", SecBadges, SettingKind.Int,
 			"How many spare cards the sell command lists when you don't say how many, most valuable first. Spare items has its own number.",
 			Advanced: true, Min: 1, Max: 25),
@@ -1644,7 +1647,7 @@ public static class Settings {
 			Advanced: true, Min: 1, Max: 168, ShowWhen: "SpendPoints=true", Group: "How often"),
 		// ── Buying cards (Modules/CardBuyer.cs) - 1.8.2 ──
 		new("BuyCards", "Buy missing cards", SecBuy, SettingKind.Bool,
-			"Buys the cards a badge is missing for its next level, at the cheapest price on the market, so it can be crafted - closest badge first, and only whole sets. For example, with 4 of 5 cards held it buys the 5th, about 0.05 to 0.15. It spends this account's Steam wallet. Off by default on every account. Turning it on first shows what it would buy and for how much, and asks you to confirm; off stops it at once. Needs \"Craft badges from card sets\" on.", Group: "What it does"),
+			"Buys the cards a badge is missing for its next level, at the cheapest price on the market, so it can be crafted - the cheapest level first, and only whole sets. For example, with 4 of 5 cards held it buys the 5th, about 0.05 to 0.15. It spends this account's Steam wallet. Off by default on every account. Turning it on first shows what it would buy and for how much, and asks you to confirm; off stops it at once. Needs \"Craft badges from card sets\" on.", Group: "What it does"),
 		new("BuyFullSets", "Buy the cheapest full sets", SecBuy, SettingKind.Bool,
 			"Also buys whole card sets for games it has no cards of, cheapest first, one badge level (100 XP) each. Sets where a card has fewer than 2 on the market, or one very cheap card that makes the set look cheaper than it is, are left out. Off: only cards for badges it has started.",
 			Advanced: true, ShowWhen: "BuyCards=true", Group: "What it does"),

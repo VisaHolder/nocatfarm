@@ -431,6 +431,35 @@ public static class BoosterPick {
 	}
 
 	/// <summary>
+	/// 1.8.2: the games automatic booster packs is working on - the one it's saving gems for, and every one it made a pack
+	/// for that's still to open. Buying cards leaves them to the packs. None unless "Make booster packs" is automatic.
+	/// </summary>
+	public static IReadOnlyCollection<uint> Busy(Bot bot) {
+		if (bot.Cfg.BoosterMake != Auto) {
+			return [];
+		}
+
+		Boosters? boosters = BotManager.ModuleOf<Boosters>(bot);
+
+		return Busy(bot.Cfg.BoosterMake, (boosters?.AutoMemory ?? Memory.Load(bot.Name)).Snapshot(), boosters?.SavingFor ?? 0);
+	}
+
+	/// <summary><see cref="Busy(Bot)"/> on its own: the packs still to open and the game gems are saved for, when automatic.</summary>
+	public static IReadOnlyCollection<uint> Busy(int make, IEnumerable<OwnPack> owed, uint savingFor) {
+		if (make != Auto) {
+			return [];
+		}
+
+		HashSet<uint> games = [.. owed.Select(static o => o.App).Where(static a => a != 0)];
+
+		if (savingFor != 0) {
+			games.Add(savingFor);
+		}
+
+		return games;
+	}
+
+	/// <summary>
 	/// Whether the cards held already make a whole normal set of a game the booster creator lists whose badge isn't at
 	/// level 5 - a level waiting to be crafted.
 	/// </summary>

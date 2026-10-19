@@ -79,13 +79,17 @@ public static class SwitchPreview {
 		IReadOnlyList<string> Notes,
 		bool FullSets,
 		bool CraftOff,
-		bool OwnDayOnly
+		bool OwnDayOnly,
+		IReadOnlyList<SellSet>? Sells = null
 	) {
 		public string Kind => "buy";
 	}
 
 	/// <summary>One set it would buy: the game, the cards, its cost and XP for each whole unit of money.</summary>
 	public sealed record BuySet(string Game, bool FullSet, int Level, int Cards, int SetSize, string Cost, long XpPerUnit, IReadOnlyList<string> Names);
+
+	/// <summary>1.8.2 smart levelling: a whole set it would sell instead of crafting - what it brings in after Steam's fee, and about how many levels that buys.</summary>
+	public sealed record SellSet(string Game, string Money, int Levels);
 
 	/// <summary>The numbers of one buying-cards look.</summary>
 	public static BuyNumbers Buy(BuyPlan? plan, BotConfig cfg, bool signedIn, string problem) {
@@ -95,7 +99,8 @@ public static class SwitchPreview {
 
 		return new BuyNumbers(signedIn, problem, (int) (plan?.Block ?? BuyBlock.None), cur > 0 ? MarketQuotes.Code(cur) : "", plan == null ? "" : M(plan.Wallet),
 			M(BuyPlan.Cents(cfg.BuyDailyLimit)), M(plan?.DaySpent ?? 0), M(BuyPlan.Cents(cfg.BuyWeeklyLimit)), M(plan?.WeekSpent ?? 0),
-			M(plan?.Cost ?? 0), plan?.CardCount ?? 0, sets, plan?.Notes.ToList() ?? [], cfg.BuyFullSets, !cfg.CraftBadges, cfg.LegitMode);
+			M(plan?.Cost ?? 0), plan?.CardCount ?? 0, sets, plan?.Notes.ToList() ?? [], cfg.BuyFullSets, !cfg.CraftBadges, cfg.LegitMode,
+			plan == null ? [] : [.. plan.Sales.Where(static v => v.Sell).Select(static v => new SellSet(v.Game, v.Money, v.About))]);
 	}
 
 	/// <summary>1.8.2 card swaps: spare cards it could swap now, and the limits it keeps to.</summary>

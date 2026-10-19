@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "구매 주문 {0} · 아직 확정되지 않음 · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0}의 카드 구매가 켜짐: 한도 안에서 배지에 모자란 카드를 스스로 삽니다",
     "Buying cards is off for {0}: nothing is bought": "{0}의 카드 구매가 꺼짐: 아무것도 사지 않습니다",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam이 이 계정의 첫 마켓 구매 전에 청구 정보를 요구합니다 - 카드 한 장을 직접 한 번 사면 그다음부터 살 수 있습니다",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam이 이 계정의 모든 마켓 구매를 이메일로 확인하라고 요구합니다. nocat.farm은 할 수 없습니다",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam이 이 계정의 모든 마켓 구매를 Steam 앱에서 확인하라고 요구합니다 - 자기 구매를 확인할 수 있도록 인증기를 nocat.farm에 추가하세요",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam이 이 계정의 마켓 구매 확인 방법을 알려주지 않아 이번에는 아무것도 사지 않습니다",
     "couldn't save the card buying list: {0}": "카드 구매 목록을 저장하지 못했습니다: {0}",
     "couldn't read the card buying list: {0}": "카드 구매 목록을 읽지 못했습니다: {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "일주일에 최대 {0}까지 씁니다(이번 주 {1} 사용)",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "지갑에 있는 것보다 더 쓰지 않습니다. 세트는 통째로만 계획하고 모든 가격을 먼저 확인합니다 - 도중에 가격이 바뀌면 세트의 나머지는 다음 확인까지 기다립니다",
     "Each card at the cheapest price on the market, checked again right before it buys": "카드마다 마켓 최저가로, 사기 직전에 다시 확인합니다",
-    "Badges it has started first, then the cheapest full sets": "먼저 시작한 배지, 그다음 가장 싼 전체 세트",
     "Only badges it has started - not full sets": "시작한 배지만 - 전체 세트는 사지 않음",
     "Only during its day (human mode), one set at a time": "자기 하루 동안에만 (사람 모드), 한 번에 한 세트",
     "Badge crafting turns each finished set into a level": "배지 제작이 완성된 세트를 하나씩 레벨로 바꿉니다",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "카드 교환 · {0}에게 보낸 제안을 Steam 이메일에서 확인하세요",
     "then off for the night": "그대로 취침",
     "short break · then off for the night": "짧은 휴식 · 그대로 취침",
-    "meal break · then off for the night": "식사 휴식 · 그대로 취침"
+    "meal break · then off for the night": "식사 휴식 · 그대로 취침",
+    "nothing left to craft - sets sold instead": "더 제작할 것 없음 - 세트를 대신 팔았습니다",
+    "weighing sets against the levels they'd buy": "세트를 그 돈으로 살 수 있는 레벨과 비교하는 중",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "{0} 세트를 제작하지 않고 팝니다: {1}(으)로 약 {2}레벨을 삽니다",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "{0} 세트: 카드 {2}장 중 {1}장 등록 · 나머지는 다음 확인 때",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam은 장터 구매마다 청구 정보를 요구하는데 이 계정에는 저장된 것이 없습니다 - 장터에서 카드 한 장을 직접 한 번 사면 저장되고, 그 뒤로는 살 수 있습니다",
+    "{0} not bought · not confirmed in the Steam app": "{0} 사지 않음 · Steam 앱에서 확인되지 않음",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "카드 구매 {0}건이 하루 동안 확인되지 않음 · 포기, 아무것도 사지 않음",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "Steam 앱에서 카드 구매를 확인하세요 · {1}의 카드 {0}장",
+    "its price fell since the set was weighed - not listed": "세트를 따져 본 뒤 가격이 떨어졌습니다 - 등록하지 않음",
+    "It would sell instead of crafting": "제작 대신 판매할 것",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} 세트: Steam 수수료를 뗀 {1}(으)로 배지 약 {2}레벨을 삽니다. 제작으로 얻는 1레벨보다 많습니다",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "가장 싼 배지 레벨부터 - 시작한 배지든 새 전체 세트든, 더 싼 쪽",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam이 구매를 Steam 앱에서 확인하라고 하면 휴대폰에서 확인하세요 - 한 번에 한 세트씩, 확인하지 않으면 하루 뒤 포기합니다"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "모자란 카드 사기",
-      "tip": "배지의 다음 레벨에 모자란 카드를 마켓 최저가로 사서 제작할 수 있게 합니다 - 가장 가까운 배지부터, 세트는 통째로만. 예를 들어 카드 5장 중 4장이 있으면 5번째를 약 0.05~0.15에 삽니다. 이 계정의 Steam 지갑을 씁니다. 모든 계정에서 기본은 꺼짐. 켜면 먼저 무엇을 얼마에 살지 보여 주고 확인을 받습니다. 끄면 바로 멈춥니다. \"카드로 배지 제작\"이 켜져 있어야 합니다."
+      "tip": "배지의 다음 레벨에 모자란 카드를 마켓 최저가로 사서 제작할 수 있게 합니다 - 가장 싼 레벨부터, 세트는 통째로만. 예를 들어 카드 5장 중 4장이 있으면 5번째를 약 0.05~0.15에 삽니다. 이 계정의 Steam 지갑을 씁니다. 모든 계정에서 기본은 꺼짐. 켜면 먼저 무엇을 얼마에 살지 보여 주고 확인을 받습니다. 끄면 바로 멈춥니다. \"카드로 배지 제작\"이 켜져 있어야 합니다."
     },
     "BuyFullSets": {
       "label": "가장 싼 전체 세트 사기",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "은박 배지도 제작",
       "tip": "완성된 은박 카드 세트로 은박 배지도 만듭니다. 끄면 일반 배지만 만들고 은박 카드는 그대로 둡니다. Steam이 은박 배지를 거부하면 은박만 기다리고, 일반 배지는 계속합니다."
+    },
+    "SellSetsForLevels": {
+      "label": "살 수 있는 레벨보다 비싼 세트는 팔기",
+      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 일반 배지를 제작하기 전에 그 세트가 Steam 수수료를 빼고 장터에서 얼마에 팔리는지 봅니다. 그 돈으로 제작이 주는 1레벨보다 확실히 많은 배지 레벨을 살 수 있으면 대신 세트를 판매로 등록하고, 카드 구매가 그 한도 안에서 돈을 씁니다. 예를 들어 수수료를 빼고 5.00이 되는 세트는 가장 싼 레벨이 하나에 약 0.40일 때 1레벨 대신 약 12레벨을 삽니다. 등록은 다른 등록처럼 모두 Steam 앱에서 확인합니다. 포일 세트는 항상 제작합니다."
     },
     "CardSwaps": {
       "label": "다른 nocat.farm 사용자와 카드 교환",

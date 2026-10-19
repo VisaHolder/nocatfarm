@@ -682,6 +682,14 @@ public sealed class BotConfig {
 	public bool CraftFoilBadges { get; set; } = true;
 
 	/// <summary>
+	/// "Sell sets worth more than the levels they'd buy" (1.8.2, Modules/SetSale.cs): before crafting a normal badge, a set
+	/// whose market price buys clearly more badge levels than the one its craft makes is listed for sale instead, and buying
+	/// cards spends the money. On by default, but it does nothing unless buying cards is on (and turned on through its
+	/// preview). Foil sets are always crafted.
+	/// </summary>
+	public bool SellSetsForLevels { get; set; } = true;
+
+	/// <summary>
 	/// Retired "Open booster packs" switch - carried over to <see cref="OpenBoosterPacks"/> (ConfigStore.MigrateSpare). Still
 	/// written, as a mirror of it ("always" is on), so rolling back to 1.7.x keeps packs opening as they were; read only from
 	/// a file without OpenBoosterPacks.

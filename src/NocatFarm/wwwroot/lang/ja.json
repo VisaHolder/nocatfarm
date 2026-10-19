@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "購入注文 {0} · まだ確定していません · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} のカード購入はオン：上限の範囲でバッジに足りないカードを自分で買います",
     "Buying cards is off for {0}: nothing is bought": "{0} のカード購入はオフ：何も買いません",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam はこのアカウントの最初のマーケット購入の前に請求先情報を求めています - 一度手でカードを 1 枚買えば、その後は買えます",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam はこのアカウントのマーケット購入ごとにメールでの確認を求めています。nocat.farm にはできません",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam はこのアカウントのマーケット購入ごとに Steam アプリでの確認を求めています - 自分の購入を確認できるよう、認証機能を nocat.farm に追加してください",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "このアカウントのマーケット購入の確認方法をSteamが示さなかったので、今回は何も買いません",
     "couldn't save the card buying list: {0}": "カード購入リストを保存できませんでした: {0}",
     "couldn't read the card buying list: {0}": "カード購入リストを読めませんでした: {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "1 週間に最大 {0} まで使います（今週 {1} 使用）",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "ウォレットの残高を超えることはありません。計画するのはセット丸ごとだけで、価格はすべて先に確認します - 途中で価格が動いたら、セットの残りは次の確認まで待ちます",
     "Each card at the cheapest price on the market, checked again right before it buys": "各カードはマーケットの最安値で、買う直前にもう一度確認します",
-    "Badges it has started first, then the cheapest full sets": "まず作りかけのバッジ、次に最も安いフルセット",
     "Only badges it has started - not full sets": "作りかけのバッジだけ - フルセットは買いません",
     "Only during its day (human mode), one set at a time": "自分の一日の間だけ（人間モード）、1 回に 1 セット",
     "Badge crafting turns each finished set into a level": "バッジ作成で、そろった各セットがレベルになります",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "カード交換 · {0} へのオファーを Steam のメールで確認して",
     "then off for the night": "そのまま就寝",
     "short break · then off for the night": "小休憩 · そのまま就寝",
-    "meal break · then off for the night": "食事休憩 · そのまま就寝"
+    "meal break · then off for the night": "食事休憩 · そのまま就寝",
+    "nothing left to craft - sets sold instead": "作るものはもうありません - セットは代わりに売りました",
+    "weighing sets against the levels they'd buy": "セットを、それで買えるレベルと比べています",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "{0} のセットを作らずに売ります: {1} で約 {2} レベル買えます",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "{0} のセット: {2} 枚中 {1} 枚を出品 · 残りは次の確認で",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam はマーケットでの購入ごとに請求先情報を求めますが、このアカウントには保存されていません - 一度マーケットで手動でカードを 1 枚買うと保存され、その後は買えます",
+    "{0} not bought · not confirmed in the Steam app": "{0} は買いませんでした · Steam アプリで確認されませんでした",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "カードの購入 {0} 件が 1 日確認されませんでした · 取りやめ、何も買っていません",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "Steam アプリでカードの購入を確認してください · {1} のカード {0} 枚",
+    "its price fell since the set was weighed - not listed": "セットを比べた後で値下がりしました - 出品しません",
+    "It would sell instead of crafting": "作らずに売るもの",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} のセット: Steam の手数料を引いて {1} で、バッジを約 {2} レベル買えます。作って得られる 1 レベルより多いです",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "一番安いバッジレベルから - 作りかけのバッジか新しいフルセットか、安い方",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam が購入を Steam アプリでの確認を求める場合は、スマホで確認してください - 一度に 1 セットずつ。確認がなければ 1 日で取りやめます"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "足りないカードを買う",
-      "tip": "バッジの次のレベルに足りないカードを、マーケットの最安値で買い、作れるようにします - 次のレベルに一番近いバッジから、セットは丸ごとだけ。例えば 5 枚中 4 枚あれば 5 枚目を約 0.05〜0.15 で買います。このアカウントの Steam ウォレットを使います。どのアカウントでも初期設定はオフ。オンにすると、先に何をいくらで買うかを表示して確認を求めます。オフにすればすぐ止まります。「カードからバッジを作る」がオンである必要があります。"
+      "tip": "バッジの次のレベルに足りないカードを、マーケットの最安値で買い、作れるようにします - 一番安いレベルから、セットは丸ごとだけ。例えば 5 枚中 4 枚あれば 5 枚目を約 0.05〜0.15 で買います。このアカウントの Steam ウォレットを使います。どのアカウントでも初期設定はオフ。オンにすると、先に何をいくらで買うかを表示して確認を求めます。オフにすればすぐ止まります。「カードからバッジを作る」がオンである必要があります。"
     },
     "BuyFullSets": {
       "label": "最も安いフルセットを買う",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "キラバッジも作る",
       "tip": "そろったキラカードのセットからキラバッジも作ります。オフにすると通常のバッジだけを作り、キラカードには手を付けません。Steam がキラバッジを拒否したときは、キラだけが待ち、通常のバッジは続けます。"
+    },
+    "SellSetsForLevels": {
+      "label": "買えるレベルより価値のあるセットは売る",
+      "tip": "「足りないカードを買う」がオンのときだけ働きます。通常のバッジを作る前に、そのセットが Steam の手数料を引いてマーケットでいくらで売れるかを見ます。そのお金で、作って得られる 1 レベルよりはっきり多くのバッジレベルが買えるなら、作らずにセットを出品し、カードの購入がその上限の中でお金を使います。例えば、手数料を引いて 5.00 になるセットは、一番安いレベルが 1 つ約 0.40 なら、1 レベルの代わりに約 12 レベル買えます。出品はどれも、ほかの出品と同じく Steam アプリで確認します。フォイルのセットは必ず作ります。"
     },
     "CardSwaps": {
       "label": "他の nocat.farm ユーザーとカードを交換",

@@ -2764,9 +2764,7 @@
     "buy order {0} · not settled yet · {1}": "ordre d'achat {0} · pas encore réglé · {1}",
     "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "L'achat de cartes est activé pour {0} : il achète lui-même les cartes qui manquent à ses badges, dans ses limites",
     "Buying cards is off for {0}: nothing is bought": "L'achat de cartes est désactivé pour {0} : rien n'est acheté",
-    "Steam wants billing details before this account's first market purchase - buy one card by hand once, then it can buy": "Steam demande des informations de facturation avant le premier achat de ce compte sur le marché - achetez une carte vous-même une fois, ensuite il pourra acheter",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam demande de confirmer par e-mail chaque achat de ce compte sur le marché, ce que nocat.farm ne peut pas faire",
-    "Steam asks for every market purchase on this account to be confirmed in the Steam app - add its authenticator to nocat.farm so it can confirm its own purchases": "Steam demande de confirmer dans l'appli Steam chaque achat de ce compte sur le marché - ajoutez son authentificateur à nocat.farm pour qu'il confirme ses propres achats",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam n'a pas dit comment les achats sur le marché de ce compte sont confirmés, donc rien n'est acheté cette fois",
     "couldn't save the card buying list: {0}": "impossible d'enregistrer la liste des achats de cartes : {0}",
     "couldn't read the card buying list: {0}": "impossible de lire la liste des achats de cartes : {0}",
@@ -2796,7 +2794,6 @@
     "Spends at most {0} a week ({1} spent this week)": "Dépense au plus {0} par semaine ({1} dépensé cette semaine)",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Jamais plus que ce que contient le porte-monnaie. Seules des séries entières sont prévues, et chaque prix est vérifié avant - si l'un change en cours de route, le reste de la série attend le prochain passage",
     "Each card at the cheapest price on the market, checked again right before it buys": "Chaque carte au prix le plus bas du marché, vérifié de nouveau juste avant l'achat",
-    "Badges it has started first, then the cheapest full sets": "D'abord les badges commencés, puis les séries complètes les moins chères",
     "Only badges it has started - not full sets": "Seulement les badges commencés - pas de séries complètes",
     "Only during its day (human mode), one set at a time": "Seulement pendant sa journée (mode humain), une série à la fois",
     "Badge crafting turns each finished set into a level": "La fabrication de badges transforme chaque série terminée en niveau",
@@ -3140,7 +3137,20 @@
     "card swap · confirm the offer to {0} from Steam's email": "échange de cartes · confirme l'offre à {0} depuis l'e-mail de Steam",
     "then off for the night": "puis au lit pour la nuit",
     "short break · then off for the night": "courte pause · puis au lit pour la nuit",
-    "meal break · then off for the night": "pause repas · puis au lit pour la nuit"
+    "meal break · then off for the night": "pause repas · puis au lit pour la nuit",
+    "nothing left to craft - sets sold instead": "plus rien à fabriquer - séries vendues à la place",
+    "weighing sets against the levels they'd buy": "compare les séries aux niveaux qu'elles achèteraient",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "vend la série {0} au lieu de la fabriquer : {1} achète environ {2} niveaux",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "série {0} : {1} cartes sur {2} mises en vente · le reste attend le prochain coup d'œil",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam demande des informations de facturation à chaque achat sur le marché et aucune n'est enregistrée sur ce compte - achète une carte à la main sur le marché une fois (ça les enregistre), ensuite il pourra acheter",
+    "{0} not bought · not confirmed in the Steam app": "{0} pas acheté · pas confirmé dans l'app Steam",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} achat(s) de cartes non confirmé(s) en un jour · abandonné(s), rien acheté",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "confirme l'achat de cartes dans l'app Steam · {0} carte(s) pour {1}",
+    "its price fell since the set was weighed - not listed": "son prix a baissé depuis que la série a été évaluée - pas mise en vente",
+    "It would sell instead of crafting": "Il vendrait au lieu de fabriquer",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "La série {0} : {1} après la commission de Steam achète environ {2} niveaux de badge, plus que le 1 que donne la fabrication",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Le niveau de badge le moins cher d'abord - un badge commencé ou une série neuve entière, selon ce qui coûte le moins",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam demande de confirmer les achats dans l'app Steam, tu les confirmes sur ton téléphone - une série à la fois, sinon abandonnés au bout d'un jour"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4424,7 +4434,7 @@
     },
     "BuyCards": {
       "label": "Acheter les cartes manquantes",
-      "tip": "Achète les cartes qui manquent à un badge pour son niveau suivant, au prix le plus bas du marché, pour qu'il puisse être fabriqué - le badge le plus proche d'abord, et seulement des séries entières. Par exemple, avec 4 cartes sur 5, il achète la 5e, environ 0,05 à 0,15. Il dépense le porte-monnaie Steam de ce compte. Désactivé par défaut sur chaque compte. L'activer montre d'abord ce qu'il achèterait et pour combien, et vous demande de confirmer ; le désactiver l'arrête aussitôt. Nécessite « Fabriquer des badges avec les cartes » activé."
+      "tip": "Achète les cartes qui manquent à un badge pour son niveau suivant, au prix le plus bas du marché, pour qu'il puisse être fabriqué - le niveau le moins cher d'abord, et seulement des séries entières. Par exemple, avec 4 cartes sur 5, il achète la 5e, environ 0,05 à 0,15. Il dépense le porte-monnaie Steam de ce compte. Désactivé par défaut sur chaque compte. L'activer montre d'abord ce qu'il achèterait et pour combien, et vous demande de confirmer ; le désactiver l'arrête aussitôt. Nécessite « Fabriquer des badges avec les cartes » activé."
     },
     "BuyFullSets": {
       "label": "Acheter les séries complètes les moins chères",
@@ -4696,6 +4706,10 @@
     "CraftFoilBadges": {
       "label": "Fabriquer aussi les badges brillants",
       "tip": "Transforme aussi les séries de cartes brillantes complètes en badges brillants. Désactivé, il ne fabrique que les badges normaux et laisse les cartes brillantes tranquilles. Si Steam refuse un badge brillant, seuls les brillants attendent - les badges normaux continuent."
+    },
+    "SellSetsForLevels": {
+      "label": "Vendre les séries qui valent plus que les niveaux qu'elles achèteraient",
+      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries brillantes sont toujours fabriquées."
     },
     "CardSwaps": {
       "label": "Échanger des cartes avec d'autres utilisateurs de nocat.farm",
