@@ -231,21 +231,15 @@ public sealed class ReportCard {
 		}
 	}
 
-	/// <summary>Into the log a line at a time: the heading in green, what wants a look in yellow, the rest plain.</summary>
+	/// <summary>
+	/// Into the log: the heading in green, what wants a look in yellow, the rest plain - as ONE row in the window and the
+	/// dashboard that opens to the rest (1.8.2), yellow when something in it wants a look. Twenty rows twice a day was a
+	/// whole window. The log file has every line.
+	/// </summary>
 	public void WriteToLog(string source) {
-		bool heading = true;
+		List<(Said Line, Row? Row)> lines = [.. Lines()];
 
-		foreach ((Said line, Row? row) in Lines()) {
-			if (heading) {
-				Log.Good(line, source);
-			} else if (row is { Alert: true }) {
-				Log.Warn(line, source);
-			} else {
-				Log.Info(line, source);
-			}
-
-			heading = false;
-		}
+		Log.Answer(lines[0].Line, [.. lines.Skip(1).Select(static l => (l.Row is { Alert: true } ? "WARN" : "INFO", l.Line))], source, "GOOD");
 	}
 
 	/// <summary>The whole card as text, one line under another - what 'report' and 'report week' answer with.</summary>

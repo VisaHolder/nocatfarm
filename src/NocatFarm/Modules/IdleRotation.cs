@@ -114,7 +114,7 @@ public sealed class IdleRotation {
 
 				_movesAt = now + every;
 				changed = true;
-				Log.Info(new Said("idle rotation: batch {0} of {1} now, {2} games", BatchAt(_pos, size),
+				Log.Debug(new Said("idle rotation: batch {0} of {1} now, {2} games", BatchAt(_pos, size),
 					(int) Math.Ceiling(_lap.Count / (double) size), Math.Min(size, _lap.Count)), _who);
 			}
 

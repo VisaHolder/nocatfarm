@@ -353,7 +353,7 @@ public sealed class Bot : IAsyncDisposable {
 			DropsFirstGot = saved.Got;
 
 			if (DropsFirstActive) {
-				Log.Info(new Said("still going for {0}: {1} of {2} card drop(s)", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
+				Log.Debug(new Said("still going for {0}: {1} of {2} card drop(s)", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't resume the drop run: {0}", Log.Describe(e)), Name);
@@ -407,7 +407,7 @@ public sealed class Bot : IAsyncDisposable {
 			GrindDropsLeft = Math.Max(0, saved.DropsLeft);
 			GrindRun++;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
-			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) Math.Max(1, Math.Ceiling((until - DateTime.UtcNow).TotalMinutes)))), Name);
+			Log.Debug(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) Math.Max(1, Math.Ceiling((until - DateTime.UtcNow).TotalMinutes)))), Name);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't resume the grind: {0}", Log.Describe(e)), Name);
 		}
@@ -1566,13 +1566,13 @@ public sealed class Bot : IAsyncDisposable {
 		await Limiters.WaitForLoginSlotAsync(ct, wait => {
 			if (wait >= TimeSpan.FromSeconds(3)) {
 				int secs = (int) Math.Ceiling(wait.TotalSeconds);
-				Log.Info(said ? new Said("waiting to sign in · {0}s", secs) : new Said("starting · signs in in {0}s", secs), Name);
+				Log.Debug(said ? new Said("waiting to sign in · {0}s", secs) : new Said("starting · signs in in {0}s", secs), Name);
 				said = true;
 			}
 		}).ConfigureAwait(false);
 
 		if (!said) {
-			Log.Info("starting · signs in now", Name);
+			Log.Debug("starting · signs in now", Name);
 		}
 
 		// The check and the connect under the stop lock. Apart, a stop landing between them disconnected nothing (there was
@@ -1647,7 +1647,7 @@ public sealed class Bot : IAsyncDisposable {
 				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
 				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
 				Stopping = true;
-				Log.Info(new Said("signing out in {0}s", secs), Name);
+				Log.Debug(new Said("signing out in {0}s", secs), Name);
 
 				try {
 					await Task.Delay(TimeSpan.FromSeconds(secs)).ConfigureAwait(false);
@@ -1716,7 +1716,14 @@ public sealed class Bot : IAsyncDisposable {
 		Web.Invalidate();
 
 		if (wasRunning) {
-			Log.Info("signed out", Name);
+			// An update signing everyone out already says so, account by account, in its own row (1.8.2): there "signed out"
+			// only cut that row into pieces.
+			if (SelfUpdate.Busy) {
+				Log.Debug("signed out", Name);
+			} else {
+				Log.Info("signed out", Name);
+			}
+
 			Plugins.PluginHost.RaiseOffline(this);
 		}
 	}
@@ -2566,7 +2573,7 @@ public sealed class Bot : IAsyncDisposable {
 			&& _announcedLabel is { Length: > 0 } announced && !string.IsNullOrWhiteSpace(announced)
 			&& (DateTime.UtcNow.Subtract(_lastNameHeal).TotalSeconds >= 120)) {
 			_lastNameHeal = DateTime.UtcNow;
-			Log.Info(new Said("custom name slipped to {0} - setting it again", PlayingAsSeen), Name);
+			Log.Debug(new Said("custom name slipped to {0} - setting it again", PlayingAsSeen), Name);
 
 			try {
 				// The same label that was announced - never the configured name over a farmer that chose none.
@@ -3617,7 +3624,7 @@ public sealed class Bot : IAsyncDisposable {
 				_lastRemint = now;
 			}
 
-			Log.Info("daily web refresh · getting a new web token", Name);
+			Log.Debug("daily web refresh · getting a new web token", Name);
 
 			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true lets Steam rotate the
 			// long-lived refresh token before it ages out, so an unattended farmer keeps
@@ -3713,15 +3720,10 @@ public sealed class Bot : IAsyncDisposable {
 		Said showing = shown.Length > 0 ? new Said("now showing {0}", shown) : new Said("now showing nothing");
 		if (shown != _lastLoggedPlaying) {
 			if (_lastLoggedPlaying != null) {
-				// A human-mode account narrates every change itself - "short break - back in about 24m",
-				// "playing X for about Ym" - so this lower-level "now showing nothing / <game>" line only stacks
-				// noise on a clearer one. Keep it for the trace, at debug. Other accounts have no such narrator
-				// (and this is the line that proves their custom name never lapsed), so there it stays visible.
-				if (HumanOwned) {
-					Log.Debug(showing, Name);
-				} else {
-					Log.Info(showing, Name);
-				}
+				// A trace, at debug, on every account (1.8.2): the window's status line already says what it plays, and
+				// "now showing nothing" / "now showing Portal" five times a day was noise there. The log file keeps every
+				// one - it's still the line that proves a custom name never lapsed.
+				Log.Debug(showing, Name);
 			}
 
 			_lastLoggedPlaying = shown;
@@ -4000,14 +4002,9 @@ public sealed class Bot : IAsyncDisposable {
 		// transitions after that - online -> invisible for the night, back again, a manual override - get a line.
 		if (state != _lastLoggedPersona) {
 			if (_lastLoggedPersona >= 0) {
-				// Human mode already says WHY the appearance changed - a break, a meal, bedtime - in one clear
-				// line of its own, so on that account this bare "now appearing away / invisible" only clutters it.
-				// Debug keeps the trace; other accounts (no narrator) keep it visible.
-				if (HumanOwned) {
-					Log.Debug(new Said("now appearing {0}", new Said(Word(state))), Name);
-				} else {
-					Log.Info(new Said("now appearing {0}", new Said(Word(state))), Name);
-				}
+				// A trace, at debug, on every account (1.8.2): the window's status line already says whether it's online,
+				// and the log file keeps every change.
+				Log.Debug(new Said("now appearing {0}", new Said(Word(state))), Name);
 			}
 
 			_lastLoggedPersona = state;
@@ -4137,7 +4134,7 @@ public sealed class ConsoleGuard(string botName, string? sharedSecret = null) : 
 
 			if (code != null) {
 				_lastGenerated = code;
-				Log.Info("Steam Guard code sent from its authenticator", botName);
+				Log.Debug("Steam Guard code sent from its authenticator", botName);
 
 				return code;
 			}

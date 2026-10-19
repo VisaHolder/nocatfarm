@@ -415,7 +415,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			&& (_waiting.DueOf(offer.Id) is { } due)) {
 			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
 				: fair ? new Said("a fair card swap") : new Said("a donation");
-			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
+			Log.Debug(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
 
 		if ((_waiting.DueOf(offer.Id) is not { } when) || (DateTime.UtcNow < when)) {
@@ -559,7 +559,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			if (!_nightDue.TryGetValue(offer.Id, out due)) {
 				due = DateTime.UtcNow + TradeWait();
 				_nightDue[offer.Id] = due;
-				Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), new Said("a donation"), offer.Describe,
+				Log.Debug(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), new Said("a donation"), offer.Describe,
 					Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 
 				return true;

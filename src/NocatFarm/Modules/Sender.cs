@@ -86,7 +86,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 			if ((_nextDue == null) || (_periodSeen != 0 && _periodSeen != hours) || (_hourSeen != -2 && _hourSeen != atHour)) {
 				Schedule(hours);
 				DateTime first = _nextDue!.Value;
-				Log.Info(new Said("sending items to your main every {0}, first around {1}", Fmt.Hm(hours * 60),
+				Log.Debug(new Said("sending items to your main every {0}, first around {1}", Fmt.Hm(hours * 60),
 					(Func<string>) (() => Fmt.Clock(first))), Bot.Name);
 			}
 
@@ -165,7 +165,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 				_nextDue = DateTime.UtcNow + soon;
 				Save();
 				DateTime retry = _nextDue.Value;
-				Log.Info(new Said("its items are busy with a sale or another send - sending again around {0}", (Func<string>) (() => Fmt.Clock(retry))), Bot.Name);
+				Log.Debug(new Said("its items are busy with a sale or another send - sending again around {0}", (Func<string>) (() => Fmt.Clock(retry))), Bot.Name);
 
 				continue;
 			}

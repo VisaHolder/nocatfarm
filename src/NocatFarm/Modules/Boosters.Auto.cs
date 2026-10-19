@@ -79,7 +79,7 @@ public sealed partial class Boosters {
 		List<BoosterPick.OwnPack> notMade = AutoMemory.NotMade(page);
 
 		foreach (BoosterPick.OwnPack own in notMade) {
-			Log.Info(new Said("the {0} booster pack wasn't made after all - it can be made again", own.Name), Bot.Name);
+			Log.Debug(new Said("the {0} booster pack wasn't made after all - it can be made again", own.Name), Bot.Name);
 		}
 
 		if (notMade.Count > 0) {
@@ -150,7 +150,7 @@ public sealed partial class Boosters {
 			AutoMemory.NoteMade(next.App, DateTime.UtcNow);
 			AutoMemory.Add(new BoosterPick.OwnPack(next.App, offer.Name, 0, after, DateTime.UtcNow, Maybe: true, SetSize: next.SetSize));
 			AutoMemory.Save(Bot.Name);
-			Log.Info(new Said("Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another", offer.Name), Bot.Name);
+			Log.Debug(new Said("Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another", offer.Name), Bot.Name);
 			_openNext = DateTime.UtcNow + Rng.Minutes(1, 3);
 			_autoNext = DateTime.UtcNow + Rng.Minutes(4, 8);
 

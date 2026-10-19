@@ -352,7 +352,7 @@ public sealed partial class Library {
 						_lenders[app] = lender;
 					}
 
-					Log.Info(new Said("{0}: {1}'s copy is in use - borrowing {2}'s free copy (already set that way)", name,
+					Log.Debug(new Said("{0}: {1}'s copy is in use - borrowing {2}'s free copy (already set that way)", name,
 						MemberName(inUseBy, false), MemberName(lender, true)), bot.Name);
 
 					return;
@@ -370,7 +370,7 @@ public sealed partial class Library {
 					_lenders[app] = lender;
 				}
 
-				Log.Info(new Said("{0}: {1}'s copy is in use - borrowing {2}'s free copy instead", name,
+				Log.Debug(new Said("{0}: {1}'s copy is in use - borrowing {2}'s free copy instead", name,
 					MemberName(inUseBy, false), MemberName(lender, true)), bot.Name);
 			} catch (Exception e) {
 				NoSwitch(app, new Said("{0}: couldn't ask Steam to lend another family member's copy ({1}) - left out for now", name, Log.Describe(e)));
@@ -387,7 +387,7 @@ public sealed partial class Library {
 			_cantSwitchUntil[app] = DateTime.UtcNow + RetrySwitchAfter;
 		}
 
-		Log.Info(why, bot.Name);
+		Log.Debug(why, bot.Name);
 	}
 
 	/// <summary>

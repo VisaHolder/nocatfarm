@@ -139,13 +139,13 @@ public sealed partial class HumanMode {
 
 			if (!_nightSaid.TryGetValue(app, out string? before) || (before != said)) {
 				_nightSaid[app] = said;
-				Log.Info(why, Bot.Name);
+				Log.Debug(why, Bot.Name);
 			}
 		}
 
 		foreach (uint app in _nightSaid.Keys.Where(a => !outs.Any(o => o.App == a)).ToList()) {
 			_nightSaid.Remove(app);
-			Log.Info(new Said("{0} is back on the overnight list", Bot.Library.ItemName(app)), Bot.Name);
+			Log.Debug(new Said("{0} is back on the overnight list", Bot.Library.ItemName(app)), Bot.Name);
 		}
 	}
 

@@ -20,11 +20,15 @@ top of the dashboard, with an *It was me* button (see [Scam watch](trades.md#sca
 authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
 phone (see [below](#using-the-dashboard-from-another-device)).
 
-**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. Lines in a
-row of the same kind from one account are one row that updates in place: items into gems ("turned 14 items into 1,080
-gems"), an account's status every few minutes ("×6 playing Counter-Strike 2 · 8m left · 2h10m today"), rep4rep
-comments and an update's countdown. Click the row (▸) to see each line; any other line in between starts a new row,
-and an account's rows never mix with another's. Copy and the log file keep every line. `clear`
+**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. It shows what
+happened and what needs you - bought, sold, listed, crafted, gems made, achievements, comments, warnings; the reasons,
+plans and prices behind them are Debug lines, in the log file. Lines in a row of the same kind from one account are one
+row that updates in place: items into gems ("turned 14 items into 1,080 gems"), cards bought ("bought 5 card(s) · 0.31
+CAD · 1 set(s) to craft"), items listed, rep4rep comments and an update's countdown. Each account's status every few
+minutes is one row at the bottom ("×6 playing Counter-Strike 2 · 8m left · 2h10m today"). An answer you asked for that
+comes in the log - a `buy preview` or `booster plan` that took a while, the daily summary - is one row too ("buy preview
+new · 4 set(s) for 1.76 CAD"). Click the row (▸) to see each line; any other line in between starts a new row, and an
+account's rows never mix with another's. Copy and the log file keep every line. `clear`
 (or `cls`) in the Console empties this tab and the Console on this screen only. The app window keeps its lines, and
 the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
 

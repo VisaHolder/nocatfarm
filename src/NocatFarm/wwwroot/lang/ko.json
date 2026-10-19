@@ -1618,6 +1618,7 @@
     "Running in Docker": "Docker에서 실행 중",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Docker 안에서는 nocat.farm이 와이파이에서 이 컴퓨터의 주소를 볼 수 없습니다. 휴대폰에서 이 컴퓨터의 주소와 Docker가 공개한 포트를 열거나, docker-compose.yml의 NOCATFARM_HOME_ADDRESS에 넣으면 여기에 링크와 스캔용 코드가 나옵니다.",
     "  ... and {0} more line(s)": "  ... 외 {0}줄",
+    "answer · {0} line(s)": "답변 · {0}줄",
     "couldn't encrypt a login token in place: {0}": "로그인 토큰을 제자리에서 암호화하지 못했습니다: {0}",
     "set a dashboard password": "대시보드 비밀번호 설정하기",
     "turn on Open to other devices": "'다른 기기에 열기' 켜기",

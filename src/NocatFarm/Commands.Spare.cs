@@ -112,8 +112,12 @@ public static partial class Commands {
 		return await SlowAsync(new Slow("spare", "dealing with spare items", Key: "spare do", Brief: SpareBrief), [bot], static b => Modules.ScamWatch.AsYouAskedAsync(() => SpareRun.RunAsync(b, act: true, CancellationToken.None)), ReplyWithin).ConfigureAwait(false);
 	}
 
-	/// <summary>A spare look's answer in one line, for the log when it answers late (<see cref="SpareRun.Brief"/>).</summary>
-	private static string? SpareBrief(string account) => SpareRun.Briefs.TryRemove(account, out string? brief) ? brief : null;
+	/// <summary>
+	/// A spare look's answer in a few words, for its row in the log when it answers late (<see cref="SpareRun.Brief"/>) - without
+	/// the "spare: " in front, which the row already says ("spare preview new · 29 → gems, 1 to sell · today 26/50").
+	/// </summary>
+	private static string? SpareBrief(string account) => SpareRun.Briefs.TryRemove(account, out string? brief)
+		? (brief.StartsWith("spare: ", StringComparison.Ordinal) ? brief["spare: ".Length..] : brief) : null;
 
 	/// <summary>
 	/// 'set': a switch (<see cref="Switches.All"/>) is only turned on after its preview. 'set &lt;account&gt; SpareItems on' answers
