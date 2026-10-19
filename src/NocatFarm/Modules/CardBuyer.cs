@@ -21,7 +21,9 @@ namespace NocatFarm.Modules;
 /// Steam's fees included. The old itemordershistogram needed an item_nameid the new page no longer shows.</item>
 /// <item>The new page buys a commodity with a buy order: POST /market/createbuyorder/ with price_total (per card times the
 /// quantity, the buyer's price), quantity, currency and the hash. One at the cheapest listing's price is filled straight
-/// away; GET /market/getbuyorderstatus/ says what it bought, and /market/cancelbuyorder/ takes one back that wasn't.</item>
+/// away; GET /market/getbuyorderstatus/?sessionid=&amp;buy_orderid= (asked from the card's page, as the page asks it - its
+/// answer has purchased and purchases when filled; the page asks every second for 5 seconds, then counts the order as
+/// placed) says what it bought, and /market/cancelbuyorder/ takes one back that wasn't.</item>
 /// <item>Steam may want each purchase confirmed (need_confirmation with a confirmation_id): by email, or in the mobile
 /// app - /market/userbillinginfo says which (confirmation_type 1 email, 2 mobile), with the wallet (wallet_info), the
 /// billing details saved on the account (billing_address, country_code, billing_states), the tax on the market fee
@@ -270,6 +272,21 @@ public static class CardMarket {
 		return double.IsFinite(rate) ? Math.Clamp(rate, 0, 100) : 0;
 	}
 
+	/// <summary>1.8.2: every item of an inventory by market name, with the ids of its copies - what a bought card is seen arriving by.</summary>
+	public static IReadOnlyDictionary<string, IReadOnlyList<string>> AssetsOf(InventoryContents inventory) {
+		Dictionary<string, List<string>> found = new(StringComparer.Ordinal);
+
+		foreach (JsonElement asset in inventory.Assets) {
+			string id = InventoryContents.Text(asset, "assetid");
+
+			if ((id.Length > 0) && (inventory.DescriptionOf(asset) is { } d) && (InventoryContents.Text(d, "market_hash_name") is { Length: > 0 } hash)) {
+				(found.TryGetValue(hash, out List<string>? ids) ? ids : found[hash] = []).Add(id);
+			}
+		}
+
+		return found.ToDictionary(static f => f.Key, static f => (IReadOnlyList<string>) f.Value, StringComparer.Ordinal);
+	}
+
 	/// <summary>A JSON number Steam may send as a number or as text. 0 when it's missing or neither.</summary>
 	private static long Num(JsonElement e, string name) =>
 		(e.ValueKind == JsonValueKind.Object) && e.TryGetProperty(name, out JsonElement v) ? Value(v) : 0;
@@ -383,6 +400,13 @@ public interface ICardMarket {
 
 	/// <summary>A card's price, last day's sales and how many sold, in the wallet's currency (priceoverview) - for selling a set. Null when the market didn't answer.</summary>
 	Task<MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct);
+
+	/// <summary>
+	/// 1.8.2: every item held, by market name, with its copies' ids - to see a bought card arrive. Not <paramref name="fresh"/>:
+	/// an inventory read a few minutes ago will do. Null when it couldn't be read whole (or isn't known here).
+	/// </summary>
+	Task<IReadOnlyDictionary<string, IReadOnlyList<string>>?> AssetsAsync(bool fresh, CancellationToken ct) =>
+		Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<string>>?>(null);
 }
 
 /// <summary>
@@ -829,8 +853,11 @@ public sealed class BuyLedger(string path) {
 	/// order again with it - as Steam's market page does. Never sent again once it's a day old.
 	/// </param>
 	/// <param name="Tax">The tax on the market fee in <paramref name="Cents"/> - the order's price is the rest.</param>
+	/// <param name="Before">1.8.2: the ids of the copies of this card held before it was ordered (null: not known) - a new one
+	/// arriving after the order proves it was bought, when Steam won't say.</param>
+	/// <param name="Asset">1.8.2: the copy that proved it was bought - never proof for another purchase.</param>
 	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false, string? Order = null, string? Key = null,
-		string? Confirm = null, long Tax = 0) {
+		string? Confirm = null, long Tax = 0, string[]? Before = null, string? Asset = null) {
 		/// <summary>Waiting for the owner to confirm it in the Steam app: no order yet, a confirmation to send it with.</summary>
 		public bool OnPhone => Pending && string.IsNullOrEmpty(Order) && !string.IsNullOrEmpty(Confirm);
 	}
@@ -1064,7 +1091,11 @@ public sealed class BuyLedger(string path) {
 /// stops when none are saved), and the tax some countries add on Steam's fee. Steam wanting a purchase confirmed in the
 /// Steam app: with the account's authenticator here it confirms exactly that one itself; without, it's left for the
 /// owner's phone like a market listing - counted as spent, sent again with the confirmation at the next look (bought
-/// once confirmed, let go when turned down or a day old), and no other set is started meanwhile. What it buys is ranked
+/// once confirmed, let go when turned down or a day old), and no other set is started meanwhile. 1.8.2 fixes: the
+/// waiting ones are sent again every few minutes between looks (<see cref="PhoneRoundAsync"/>), so a purchase is bought
+/// minutes after the owner confirms it; a purchase Steam never says the end of is proven by the card arriving in the
+/// inventory (<see cref="ProveAsync"/>); Steam's "too many purchases without confirmation" stops new ones until the
+/// waiting ones are done. What it buys is ranked
 /// by what the next badge level costs, cheapest first; games automatic booster packs is working on are left to the packs.
 /// </remarks>
 public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? swaps = null, Func<CancellationToken, Task<DateTime>>? clock = null) : BotModule(bot) {
@@ -1096,6 +1127,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		/// <summary>Purchases confirmed on the phone since the last look, bought at this look.</summary>
 		public int Confirmed { get; set; }
 
+		/// <summary>1.8.2: purchases Steam didn't say the end of, found bought in the inventory at this look.</summary>
+		public int Proven { get; set; }
+
 		/// <summary>Why it couldn't look or carry on (English). Empty when all went well.</summary>
 		public string Problem { get; set; } = "";
 
@@ -1116,6 +1150,26 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 	/// <summary>The spending list couldn't be saved: nothing more is bought until nocat.farm starts again.</summary>
 	private bool _cantSave;
+
+	/// <summary>1.8.2: Steam said too many purchases wait for a confirmation - said once, until they're confirmed or let go.</summary>
+	private bool _saidTooMany;
+
+	/// <summary>1.8.2: when purchases waiting for the owner's phone are next sent again, and the wallet those rounds use.</summary>
+	private DateTime _nextPhone = DateTime.MinValue;
+
+	private (CardMarket.Wallet Wallet, DateTime At)? _phoneWallet;
+
+	/// <summary>1.8.2: when the inventory was last read to prove a purchase - at most once a minute (<see cref="ProofGap"/>).</summary>
+	private DateTime _lastProof = DateTime.MinValue;
+
+	/// <summary>How long a fresh purchase is given to show up in the inventory before it's looked for. The tests make it 0.</summary>
+	public Func<TimeSpan> ProofWait { get; set; } = static () => Rng.Seconds(15, 30);
+
+	/// <summary>The least time between two inventory reads to prove purchases.</summary>
+	public TimeSpan ProofGap { get; set; } = TimeSpan.FromMinutes(1);
+
+	/// <summary>How long a purchase Steam never said the end of is still looked for in the inventory.</summary>
+	internal static readonly TimeSpan ProofFor = TimeSpan.FromDays(7);
 
 	/// <summary>When the next look is - from "Look every (hours)" as it's set now.</summary>
 	internal LookTimer Timer { get; } = new(() => Math.Clamp(bot.Cfg.BuyCheckHours, 1, 168), 1.0, 1.2);
@@ -1184,10 +1238,74 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				}
 			}
 
-			if (!await Sleep(Rng.Minutes(2, 5), ct).ConfigureAwait(false)) {
+			// Purchases waiting for the owner's phone: finished as soon as they're confirmed, between looks - outside a
+			// human-mode account's day too (the owner already said yes), but nothing new is started here.
+			if (Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && PhoneDue(DateTime.UtcNow)) {
+				try {
+					await PhoneRoundAsync(ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+					throw;
+				} catch (Exception e) {
+					Log.Debug(new Said("couldn't look at buying cards: {0}", Log.Describe(e)), Bot.Name);
+					_nextPhone = DateTime.UtcNow + Rng.Minutes(5, 10);
+				}
+			}
+
+			if (!await Sleep(Wake(DateTime.UtcNow), ct).ConfigureAwait(false)) {
 				return;
 			}
 		}
+	}
+
+	/// <summary>Whether purchases wait for the owner's phone and it's time to send them again.</summary>
+	public bool PhoneDue(DateTime now) => (now >= _nextPhone) && (Ledger.OnPhone.Count > 0);
+
+	/// <summary>The loop's next wake: the usual few minutes - sooner while purchases wait for the owner's phone.</summary>
+	private TimeSpan Wake(DateTime now) {
+		TimeSpan usual = Rng.Minutes(2, 5);
+
+		return Ledger.OnPhone.Count > 0 ? TimeSpan.FromTicks(Math.Clamp((_nextPhone - now).Ticks, TimeSpan.FromSeconds(15).Ticks, usual.Ticks)) : usual;
+	}
+
+	/// <summary>
+	/// How long until purchases waiting for the phone are sent again, by how long the oldest has waited: about every 2
+	/// minutes for the first half hour, every 5 for the next few hours, then every 10 to 15 - gentle on Steam, and still
+	/// quick when the owner confirms soon after the prompt.
+	/// </summary>
+	public static TimeSpan PhoneGap(TimeSpan waited) =>
+		waited < TimeSpan.FromMinutes(30) ? Rng.Seconds(100, 140)
+			: waited < TimeSpan.FromHours(3) ? Rng.Minutes(4, 6)
+			: Rng.Minutes(10, 15);
+
+	/// <summary>
+	/// 1.8.2: purchases waiting for the owner's phone, between looks - each sent again with its confirmation, as Steam's
+	/// market page does, so it's bought the moment the owner has confirmed it ("bought ... · 0.04 CAD"). Only finishes
+	/// what the owner already confirmed: no new purchase is started, the money was counted when it was asked for, and it
+	/// runs outside a human-mode account's day too. Not while buying is off, paused, held by scam watch or its list can't
+	/// be saved. One a day old is let go. Steam asking for less (a 429) shuts the market for every account (WebSession):
+	/// nothing is sent until that passes, and the next round comes on its own.
+	/// </summary>
+	public async Task<Result> PhoneRoundAsync(CancellationToken ct) {
+		Result result = new();
+		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			if (Ledger.OnPhone.Count > 0) {
+				bool unsure = await ResumePhoneAsync(ct, Stopped(finishing: true) == null, result).ConfigureAwait(false);
+
+				if (unsure) {
+					await ProveAsync(justBought: true, ct).ConfigureAwait(false);
+				}
+			}
+		} finally {
+			BusyGate.Release();
+		}
+
+		DateTime now = await _clock(ct).ConfigureAwait(false);
+		TimeSpan waited = Ledger.OnPhone.Select(e => now - e.At).DefaultIfEmpty(TimeSpan.Zero).Max();
+		_nextPhone = DateTime.UtcNow + PhoneGap(waited);
+
+		return result;
 	}
 
 	/// <summary>Look, and - outside a preview, while it's on and the day allows - buy what the plan says. One look at a time.</summary>
@@ -1262,8 +1380,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 	}
 
-	/// <summary>Why a look can't buy now, before anything is read from the market - or null when it may. Lasting when it won't clear by itself.</summary>
-	private (string Problem, bool Lasting)? Stopped() {
+	/// <summary>
+	/// Why a look can't buy now, before anything is read from the market - or null when it may. Lasting when it won't clear by
+	/// itself. <paramref name="finishing"/>: only finishing purchases the owner already confirmed - a human-mode account's day
+	/// doesn't stop that.
+	/// </summary>
+	private (string Problem, bool Lasting)? Stopped(bool finishing = false) {
 		if (!On(Bot)) {
 			return ("buying cards is off", true);
 		}
@@ -1285,7 +1407,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return ("it's paused - nothing bought", true);
 		}
 
-		if (!Gate.Open) {
+		if (!finishing && !Gate.Open) {
 			return ($"not now - {Gate.Waiting().ToEnglish()}", false);
 		}
 
@@ -1295,6 +1417,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	private async Task<Result> LookLockedAsync(Mode mode, CancellationToken ct) {
 		Result result = new();
 		bool buying = mode != Mode.Preview;
+		_phoneWallet = null;   // a look reads the wallet afresh
 
 		if (buying) {
 			if (Stopped() is { } stop) {
@@ -1355,10 +1478,21 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		// A human-mode account buys one set a look, like somebody finishing one badge at a time.
+		bool unsure = false;
+
 		foreach (BuyStep step in Bot.Cfg.LegitMode ? plan.Steps.Take(1) : plan.Steps) {
-			if (!await BuyStepAsync(step, plan.Currency, result, ct).ConfigureAwait(false)) {
+			bool carryOn = await BuyStepAsync(step, plan.Currency, result, ct).ConfigureAwait(false);
+			unsure |= result.Problem.StartsWith(UnsureText, StringComparison.Ordinal);
+
+			if (!carryOn) {
 				break;
 			}
+		}
+
+		// Steam didn't say whether a card was bought: the inventory says, once it's caught up.
+		if (unsure && (await ProveAsync(justBought: true, ct).ConfigureAwait(false) > 0) && result.Problem.StartsWith(UnsureText, StringComparison.Ordinal)
+			&& Ledger.All.All(static e => !e.Pending || e.OnPhone)) {
+			result.Problem = "";
 		}
 
 		Said(result, plan.Currency);
@@ -1373,6 +1507,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// confirmation); otherwise, with <paramref name="resume"/>, sent again with it, as Steam's market page does.
 	/// </summary>
 	private async Task SweepLockedAsync(CancellationToken ct, bool resume, Result? result = null) {
+		bool unsure = false;
+
 		foreach (BuyLedger.Entry open in Ledger.OpenOrders.Take(10)) {
 			if (ct.IsCancellationRequested) {
 				return;
@@ -1395,17 +1531,42 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			if (answer.Result == BuyResult.Bought) {
-				Log.Good(new Said("bought {0} · {1} · {2}", new BuyCard(open.Card, 0).Name, GameNames.Of(open.App), BuyPlan.Money(Paid(answer, open.Cents), open.Currency)), Bot.Name);
+				Log.Good(new Said("bought {0} ({1}) · {2}", new BuyCard(open.Card, 0).Name, GameNames.Of(open.App), BuyPlan.Money(Paid(answer, open.Cents), open.Currency)), Bot.Name);
 			}
+
+			unsure |= answer.Result == BuyResult.Unsure;
 		}
 
-		if ((Ledger.OnPhone.Count == 0) || ct.IsCancellationRequested) {
-			return;
+		// Purchases waiting for the owner's phone: sent again (or let go after a day).
+		unsure |= !ct.IsCancellationRequested && await ResumePhoneAsync(ct, resume, result).ConfigureAwait(false);
+
+		// Still not said by Steam: the inventory decides, if the card has come.
+		if (unsure && (await ProveAsync(justBought: false, ct).ConfigureAwait(false) is int proven and > 0) && (result != null)) {
+			result.Proven += proven;
+		}
+	}
+
+	/// <summary>
+	/// The purchases waiting for the owner's phone: a day old, let go (nothing was bought - the order was never sent with the
+	/// confirmation); otherwise, with <paramref name="resume"/>, sent again with it, as Steam's market page does. True when
+	/// Steam left one unsure.
+	/// </summary>
+	private async Task<bool> ResumePhoneAsync(CancellationToken ct, bool resume, Result? result) {
+		bool unsure = false;
+
+		if (Ledger.OnPhone.Count == 0) {
+			_saidTooMany = false;   // nothing waits any more: "too many waiting" may be said again
+
+			return false;
+		}
+
+		if (ct.IsCancellationRequested) {
+			return false;
 		}
 
 		DateTime now = await _clock(ct).ConfigureAwait(false);
 		CardMarket.Wallet? wallet = null;
-		int bought = 0, letGo = 0;
+		int bought = 0, letGo = 0, sent = 0;
 
 		foreach (BuyLedger.Entry phone in Ledger.OnPhone.Take(10)) {
 			if (ct.IsCancellationRequested) {
@@ -1418,7 +1579,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				if (!Ledger.Replace(phone, null)) {
 					CantSave();
 
-					return;
+					return unsure;
 				}
 
 				letGo++;
@@ -1430,11 +1591,17 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				continue;
 			}
 
-			// The wallet once, for the billing details the order carries - and whether Steam still lets it buy.
-			wallet ??= await _market.WalletAsync(ct).ConfigureAwait(false);
+			// The wallet, for the billing details the order carries - and whether Steam still lets it buy. Read again every
+			// 10 minutes at most: rounds come every couple of minutes.
+			wallet ??= await PhoneWalletAsync(ct).ConfigureAwait(false);
 
 			if ((wallet == null) || (wallet.Currency != phone.Currency) || (BuyPlan.BlockOf(wallet) != BuyBlock.None)) {
 				break;
+			}
+
+			// A few seconds between two, like somebody going down a list - never a burst.
+			if (sent++ > 0) {
+				await Task.Delay(SendGap(), ct).ConfigureAwait(false);
 			}
 
 			BuyLedger.Entry pending = phone;
@@ -1458,13 +1625,13 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			if (!Record(pending, answer, phone.Cents) || _cantSave) {
 				CantSave();
 
-				return;
+				return unsure;
 			}
 
 			switch (answer.Result) {
 				case BuyResult.Bought:
 					bought++;
-					Log.Good(new Said("bought {0} · {1} · {2}", new BuyCard(phone.Card, 0).Name, GameNames.Of(phone.App), BuyPlan.Money(Paid(answer, phone.Cents), phone.Currency)), Bot.Name);
+					Log.Good(new Said("bought {0} ({1}) · {2}", new BuyCard(phone.Card, 0).Name, GameNames.Of(phone.App), BuyPlan.Money(Paid(answer, phone.Cents), phone.Currency)), Bot.Name);
 
 					break;
 				case BuyResult.Refused or BuyResult.Gone:
@@ -1472,6 +1639,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 					break;
 				case BuyResult.Unsure:
+					unsure = true;
 					Log.Warn(new Said("unsure if {0} was bought · counted as spent", new BuyCard(phone.Card, 0).Name), Bot.Name);
 
 					break;
@@ -1490,6 +1658,27 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			// Confirmed on the phone and bought: a set may be whole now - badge crafting looks soon.
 			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0);
 		}
+
+		if (Ledger.OnPhone.Count == 0) {
+			_saidTooMany = false;
+		}
+
+		return unsure;
+	}
+
+	/// <summary>The gap between two purchases sent again in one round. The tests make it 0.</summary>
+	public Func<TimeSpan> SendGap { get; set; } = static () => Rng.Seconds(2, 4);
+
+	/// <summary>The wallet for sending waiting purchases again: read at most every 10 minutes. Null when Steam wouldn't say.</summary>
+	private async Task<CardMarket.Wallet?> PhoneWalletAsync(CancellationToken ct) {
+		if ((_phoneWallet is { } kept) && (DateTime.UtcNow - kept.At < TimeSpan.FromMinutes(10))) {
+			return kept.Wallet;
+		}
+
+		CardMarket.Wallet? wallet = await _market.WalletAsync(ct).ConfigureAwait(false);
+		_phoneWallet = wallet == null ? null : (wallet, DateTime.UtcNow);
+
+		return wallet;
 	}
 
 	/// <summary>How long a purchase waits for the owner's phone before it's let go - about a day.</summary>
@@ -1527,6 +1716,10 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		int got = 0, onPhone = 0;
+
+		// The copies of each card held now (the plan's inventory read will do): a new one arriving after its order proves it
+		// was bought, when Steam won't say.
+		IReadOnlyDictionary<string, IReadOnlyList<string>>? held = await HeldAsync(fresh: false, ct).ConfigureAwait(false);
 
 		foreach (BuyCard card in step.Cards) {
 			// A person clicking through the market, not a list being emptied - slower still on a human-mode account.
@@ -1575,7 +1768,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			// Written down as spent BEFORE it's sent: whatever happens next - a stop, a disconnect, an update - the money
 			// counts against the limits until a look finds out what really happened.
-			BuyLedger.Entry pending = new(at, cost, currency, step.App, card.Hash, Pending: true, Key: Guid.NewGuid().ToString("N"), Tax: tax);
+			BuyLedger.Entry pending = new(at, cost, currency, step.App, card.Hash, Pending: true, Key: Guid.NewGuid().ToString("N"), Tax: tax,
+				Before: held == null ? null : [.. held.GetValueOrDefault(card.Hash) ?? []]);
 
 			if (!Ledger.Add(pending)) {
 				Ledger.Replace(pending, null);
@@ -1610,7 +1804,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					long paid = Paid(answer, cost);
 					result.Bought.Add((step, card, paid));
 					got++;
-					Log.Good(new Said("bought {0} · {1} · {2}", card.Name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
+					Log.Good(new Said("bought {0} ({1}) · {2}", card.Name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
 
 					break;
 				case BuyResult.Waiting:
@@ -1621,7 +1815,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					break;
 				case BuyResult.Unsure:
 					Log.Warn(new Said("unsure if {0} was bought · counted as spent", card.Name), Bot.Name);
-					result.Problem = $"Steam didn't say for sure whether {card.Name} was bought ({answer.Message}) - counted as spent, and asked about again at the next look";
+					result.Problem = $"{UnsureText} {card.Name} was bought ({answer.Message}) - counted as spent, and asked about again at the next look";
 
 					break;
 				case BuyResult.Gone:
@@ -1630,6 +1824,18 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					break;
 				case BuyResult.NotSent:
 					result.Problem = $"buying {card.Name} couldn't be sent to Steam - nothing bought, it looks again soon";
+
+					break;
+				case BuyResult.Refused when TooMany(answer):
+					// Steam won't take more purchases until the ones waiting are confirmed: none is tried until they're
+					// confirmed or let go (the next look waits for them anyway). Said once.
+					if (!_saidTooMany) {
+						_saidTooMany = true;
+						Log.Info(new Said("more cards wait · confirm the ones in the Steam app first"), Bot.Name);
+					}
+
+					result.Problem = "Steam takes no more purchases until the ones waiting are confirmed in the Steam app - nothing more is tried until then";
+					result.Lasting = true;
 
 					break;
 				default:
@@ -1662,6 +1868,98 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		// A set waiting on the phone is the only one: the next set waits until it's confirmed.
 		return Asked(step, onPhone, result, onPhone == 0);
+	}
+
+	/// <summary>The start of a look's problem when Steam didn't say whether a card was bought.</summary>
+	private const string UnsureText = "Steam didn't say for sure whether";
+
+	/// <summary>
+	/// Steam turning a purchase down because too many wait for a confirmation ("You have tried too many purchases without
+	/// confirmation"): said so, or said no while purchases of this account wait on the phone - in any language.
+	/// </summary>
+	private bool TooMany(BuyAnswer answer) =>
+		(Ledger.OnPhone.Count > 0) || answer.Message.Contains("without confirmation", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>The copies of every item held, by market name - null when the inventory couldn't be read (nothing is proven on it then).</summary>
+	private async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>?> HeldAsync(bool fresh, CancellationToken ct) {
+		try {
+			return await _market.AssetsAsync(fresh, ct).ConfigureAwait(false);
+		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
+			Log.Debug(new Said("couldn't read the inventory: {0}", Log.Describe(e)), Bot.Name);
+
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Purchases Steam never said the end of (counted as spent all along): the inventory decides. A copy of the card that
+	/// wasn't held before its order, and isn't already proof of another purchase, proves it was bought - settled at what it
+	/// was counted at, never counted twice. A purchase of the same card that Steam did say was bought since takes one of the
+	/// new copies first. Only its own orders' cards, only for a week, and gently: one inventory read a minute at most, a
+	/// fresh purchase given a little time to show up first. How many were proven.
+	/// </summary>
+	private async Task<int> ProveAsync(bool justBought, CancellationToken ct) {
+		if (ct.IsCancellationRequested || (DateTime.UtcNow - _lastProof < ProofGap)) {
+			return 0;
+		}
+
+		int proven = 0;
+
+		try {
+			DateTime now = await _clock(ct).ConfigureAwait(false);
+			List<BuyLedger.Entry> open = [.. Ledger.All.Where(e => e is { Pending: true, Before: not null, Asset: null } && !e.OnPhone && (now - e.At < ProofFor)).OrderBy(static e => e.At)];
+
+			if (open.Count == 0) {
+				return 0;
+			}
+
+			if (justBought) {
+				await Task.Delay(ProofWait(), ct).ConfigureAwait(false);
+			}
+
+			_lastProof = DateTime.UtcNow;
+
+			if (await HeldAsync(fresh: true, ct).ConfigureAwait(false) is not { } held) {
+				return 0;
+			}
+
+			List<BuyLedger.Entry> all = [.. Ledger.All];
+			HashSet<string> claimed = new(all.Select(static e => e.Asset).OfType<string>(), StringComparer.Ordinal);
+
+			foreach (BuyLedger.Entry entry in open) {
+				HashSet<string> before = new(entry.Before!, StringComparer.Ordinal);
+				List<string> arrived = [.. (held.GetValueOrDefault(entry.Card) ?? []).Where(id => !before.Contains(id) && !claimed.Contains(id))];
+				int others = all.Count(e => (e != entry) && (e.Card == entry.Card) && !e.Pending && (e.Asset == null) && (e.At >= entry.At.AddMinutes(-10)));
+
+				if (arrived.Count <= others) {
+					continue;
+				}
+
+				string proof = arrived.OrderByDescending(static id => id.Length).ThenByDescending(static id => id, StringComparer.Ordinal).First();
+				claimed.Add(proof);
+
+				if (!Ledger.Replace(entry, entry with { Pending = false, Asset = proof, Confirm = null })) {
+					CantSave();
+
+					break;
+				}
+
+				proven++;
+				Log.Good(new Said("bought {0} ({1}) · {2}", new BuyCard(entry.Card, 0).Name, GameNames.Of(entry.App), BuyPlan.Money(entry.Cents, entry.Currency)), Bot.Name);
+				Log.Debug(new Said("{0} · found in the inventory after its order", new BuyCard(entry.Card, 0).Name), Bot.Name);
+			}
+		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
+			Log.Debug(new Said("couldn't read the inventory: {0}", Log.Describe(e)), Bot.Name);
+		} catch (OperationCanceledException) {
+			// stopping: the next look looks again
+		}
+
+		if (proven > 0) {
+			// A set may be whole now - badge crafting looks soon.
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0);
+		}
+
+		return proven;
 	}
 
 	/// <summary>

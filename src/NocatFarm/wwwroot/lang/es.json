@@ -2687,7 +2687,6 @@
     "needed for the badge": "necesario para la insignia",
     "on your keep list": "está en tu lista para conservar",
     "it doesn't turn into gems": "no se convierte en gemas",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} gemas, valen {1} - supera a vender ({2}) en un {3}% o más",
     "unopened booster packs: listed {0} - {1}": "sobres sin abrir: {0} puestos a la venta - {1}",
     "next look at booster packs around {0}": "próxima revisión de sobres hacia las {0}",
     "today's limit of {0} in value is reached": "se alcanzó el límite de valor de hoy de {0}",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "no se pudo leer la lista de compras de cromos: {0}",
     "buying cards: next look around {0}": "comprar cromos: próxima consulta hacia las {0}",
     "couldn't look at buying cards: {0}": "no se pudo mirar la compra de cromos: {0}",
-    "bought {0} · {1} · {2}": "comprado {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "no se sabe si {0} se compró · contado como gastado",
     "card buying stopped · its spending list can't be read or saved": "compra de cromos detenida · su lista de gastos no se puede leer ni guardar",
     "buying {0} turned down · {1}": "compra de {0} rechazada · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "repartido a lo largo de su día: unos {0} por revisión, próxima revisión ~{1}",
     "spread over its day: about {0} a look - its last look today": "repartido a lo largo de su día: unos {0} por revisión - es su última revisión de hoy",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "aún poniendo precio a {0} objeto(s) - Steam pidió ir más despacio, se sigue poniendo precio hacia las {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} gemas - vender pagaría {1}, por debajo de tu mínimo de {2}",
     "{0} gems - nobody sells it on the market": "{0} gemas - nadie lo vende en el mercado",
     "you declined its listing on your phone - never listed again": "rechazaste su anuncio en el móvil - no se vuelve a poner a la venta nunca",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Las gemas se empaquetan en sacos de 1000 y los sacos se envían a {0}",
@@ -3169,7 +3166,18 @@
     "It would sell instead of crafting": "Vendería en vez de crear",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "La colección {0}: {1} tras la comisión de Steam compra unos {2} niveles de insignia, más que el 1 que da crearla",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Primero el nivel de insignia más barato - una insignia ya empezada o una colección nueva entera, lo que cueste menos",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam pide confirmar las compras en la app de Steam, las confirmas en tu móvil - una colección cada vez; si no, se dejan tras un día"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam pide confirmar las compras en la app de Steam, las confirmas en tu móvil - una colección cada vez; si no, se dejan tras un día",
+    "bought {0} ({1}) · {2}": "comprado {0} ({1}) · {2}",
+    "more cards wait · confirm the ones in the Steam app first": "más cromos esperan · confirma primero los de la app de Steam",
+    "{0} · found in the inventory after its order": "{0} · encontrado en el inventario después de su orden",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "ahora nadie lo vende, pero se vendió hace poco por {0} - más que sus gemas - se conserva",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "se vende por {0}, recibes {1} - por debajo de tu mínimo de {2}, pero más de lo que valen sus {3} gemas ({4})",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} gemas, valen {1} - vender pagaría {2}, por debajo de tu mínimo de {3}",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "vender pagaría {0}, más de lo que valen sus {1} gemas ({2}) - se conserva",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} gemas, valen {1} - vender pagaría {2}",
+    "{0} was paused - stopped before the next item": "{0} se pausó - se detuvo antes del siguiente objeto",
+    "on your keep list now - skipped": "ahora está en tu lista de conservar - se omite",
+    "worth {0}, over your price limit now - skipped": "vale {0}, ahora por encima de tu límite de precio - se omite"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4621,7 +4629,7 @@
     },
     "SpareGemMarginPct": {
       "label": "Las gemas deben superar a vender en (%)",
-      "tip": "Cuánto más tienen que valer las gemas que la venta para que un objeto se convierta en gemas, en porcentaje. Por ejemplo 20: si venderlo te paga 0.10 tras las comisiones de Steam, unas gemas que valen 0.12 o más ganan y se convierte en gemas; si valen 0.11, se vende. Solo para «lo mejor entre gemas o vender»."
+      "tip": "Ya no se usa. Desde la 1.8.2 un objeto solo se vende cuando venderlo te paga (tras las comisiones de Steam) al menos 0.01 más de lo que valen sus gemas, y si no se convierte en gemas - por ejemplo, la venta paga 0.10: con gemas que valen 0.09 o menos, se vende; si valen más, gemas. Esa regla decide por sí sola, así las gemas nunca te hacen perder dinero. Se mantiene para que los archivos de ajustes antiguos sigan cargando."
     },
     "SpareMaxedBadgeCards": {
       "label": "Cromos de insignias terminadas",
@@ -4642,7 +4650,7 @@
     },
     "SpareAction": {
       "label": "Qué hacer con los objetos sobrantes",
-      "tip": "«Lo mejor entre gemas o vender» convierte un objeto en gemas cuando las gemas valen más que venderlo (por el margen de abajo), y si no lo vende - por ejemplo gemas que valen 0.05 ganan a una venta que te paga 0.02. Solo gemas: nunca vende. Solo vender: nunca crea gemas. Conservarlo todo: solo informa de lo que sobra, no cambia nada.",
+      "tip": "Lo mejor entre gemas o vender vende un objeto solo cuando venderlo te paga (tras las comisiones de Steam) al menos 0.01 más de lo que valen sus gemas, y si no lo convierte en gemas - así las gemas nunca te hacen perder dinero, y no se hacen ventas diminutas, que necesitan cada una tu móvil. Por ejemplo, una venta que te paga 0.07: con gemas que valen 0.06 o menos, se vende; si valen más, se convierte en gemas. Solo gemas: nunca vende, y conserva un objeto que se vendería por al menos 0.01 más que sus gemas. Solo vender: nunca hace gemas. Conservar todo: solo informa de lo que sobra, nada cambia.",
       "choices": "0 lo mejor entre gemas o vender | 1 solo gemas | 2 solo vender | 3 conservarlo todo (solo informar)"
     },
     "SpareEmoticons": {
@@ -4716,7 +4724,7 @@
     },
     "SpareMinSale": {
       "label": "Vender solo si recibes al menos",
-      "tip": "Lo mínimo que una venta debe darte tras las comisiones de Steam, en la moneda propia del monedero de Steam de esta cuenta. Por ejemplo 0.05: un cromo que te daría 0.03 se convierte en gemas si sus gemas valen algo, y si no se queda. p. ej. 0.05 para dólares o euros - usa el mismo valor en tu propia moneda, p. ej. 5 para yenes. Con 0 se vende cualquier cosa."
+      "tip": "Lo mínimo que una venta debe pagarte tras las comisiones de Steam, en la propia moneda del monedero de Steam de esta cuenta. Por ejemplo 0.05: un cromo que te pagaría 0.03 se convierte en gemas cuando sus gemas valen más de 0.02, y se conserva cuando no se convierte en gemas. Un objeto nunca se convierte en gemas que valen menos que la venta menos 0.01: con gemas que valen 0.02 o menos, ese cromo se vende por los 0.03 de todos modos. Con \"solo vender\" se conserva. p. ej. 0.05 para dólares o euros - usa el mismo valor en tu propia moneda, p. ej. 5 para yenes. 0 vende cualquier cosa."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...hasta (minutos)",

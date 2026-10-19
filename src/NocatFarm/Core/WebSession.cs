@@ -156,6 +156,9 @@ public sealed partial class WebSession : IDisposable {
 	// ── requests ────────────────────────────────────────────────────────────
 	public async Task<string?> GetAsync(Uri url, CancellationToken ct = default) => await SendAsync(url, null, null, true, ct).ConfigureAwait(false);
 
+	/// <summary>GET from a page: with the page it's asked from (the Referer a browser sends) - the market answers some reads only then.</summary>
+	public async Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct = default) => await SendAsync(url, null, referer, true, ct).ConfigureAwait(false);
+
 	/// <summary>
 	/// POST a form. The sessionid is injected from the cookie jar per request rather than cached, so if Steam ever
 	/// replaces the cookie the body and the cookie stay in agreement automatically.

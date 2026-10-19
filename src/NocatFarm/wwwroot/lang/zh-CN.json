@@ -2687,7 +2687,6 @@
     "needed for the badge": "合成徽章需要",
     "on your keep list": "在你的保留清单上",
     "it doesn't turn into gems": "不能分解成宝石",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} 宝石，价值 {1} —— 比出售（{2}）至少多 {3}%",
     "unopened booster packs: listed {0} - {1}": "未打开的补充包：上架了 {0} 个 —— {1}",
     "next look at booster packs around {0}": "下次查看补充包约在 {0}",
     "today's limit of {0} in value is reached": "已达到今天价值 {0} 的上限",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "无法读取卡牌购买记录：{0}",
     "buying cards: next look around {0}": "购买卡牌：下次查看约在 {0}",
     "couldn't look at buying cards: {0}": "无法查看卡牌购买：{0}",
-    "bought {0} · {1} · {2}": "已购买 {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "不确定是否买到了 {0} · 记为已花费",
     "card buying stopped · its spending list can't be read or saved": "已停止买卡 · 无法读取或保存花费记录",
     "buying {0} turned down · {1}": "购买 {0} 被拒绝 · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "分散在它的一天里：每次查看约 {0} 件，下次查看 ~{1}",
     "spread over its day: about {0} a look - its last look today": "分散在它的一天里：每次查看约 {0} 件——这是它今天最后一次查看",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "还有 {0} 件物品在定价——Steam 要求放慢速度，大约 {1} 继续定价",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} 宝石——出售只能拿到 {1}，低于你设定的最低 {2}",
     "{0} gems - nobody sells it on the market": "{0} 个宝石 - 市场上没人出售",
     "you declined its listing on your phone - never listed again": "你在手机上拒绝了它的挂单——不会再上架",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "宝石装成 1000 个一袋，宝石袋发到 {0}",
@@ -3169,7 +3166,18 @@
     "It would sell instead of crafting": "会出售而不合成的",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} 卡组：扣除 Steam 手续费后 {1} 约可买 {2} 个徽章等级，比合成得到的 1 级多",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "先买最便宜的徽章等级 - 已开始的徽章或全新的整套，哪个便宜买哪个",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "如果 Steam 要求在 Steam 应用中确认购买，你在手机上确认 - 一次一套；不确认的话一天后放弃"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "如果 Steam 要求在 Steam 应用中确认购买，你在手机上确认 - 一次一套；不确认的话一天后放弃",
+    "bought {0} ({1}) · {2}": "已购买 {0}（{1}）· {2}",
+    "more cards wait · confirm the ones in the Steam app first": "其余卡牌在等待 · 请先在 Steam 应用中确认这些",
+    "{0} · found in the inventory after its order": "{0} · 下单后在库存中找到",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "现在没人在卖，但最近卖出过 {0} —— 比它的宝石值钱 —— 保留",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "售价 {0}，你得到 {1} —— 低于你设定的最低 {2}，但比它的 {3} 宝石值钱（{4}）",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} 宝石，价值 {1} —— 出售只能拿到 {2}，低于你设定的最低 {3}",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "出售能拿到 {0}，比它的 {1} 宝石值钱（{2}）—— 保留",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} 宝石，价值 {1} —— 出售能拿到 {2}",
+    "{0} was paused - stopped before the next item": "{0} 已暂停 - 在下一件物品之前停下",
+    "on your keep list now - skipped": "现在在你的保留列表中 - 已跳过",
+    "worth {0}, over your price limit now - skipped": "价值 {0}，现在超过你的价格上限 - 已跳过"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4621,7 +4629,7 @@
     },
     "SpareGemMarginPct": {
       "label": "宝石必须比出售多出（%）",
-      "tip": "宝石的价值必须比出售高出多少，物品才会分解成宝石，单位为百分比。例如 20：如果出售扣除 Steam 手续费后你能拿到 0.10，宝石价值 0.12 或更高就分解成宝石；价值 0.11 就出售。只适用于“宝石和出售两者取优”。"
+      "tip": "已不再使用。从 1.8.2 起，只有出售（扣除 Steam 手续费后）比它的宝石至少多拿 0.01 时物品才会出售，否则变成宝石——例如出售能拿到 0.10：宝石值 0.09 或更少就出售；值更多就变宝石。这条规则自己决定，所以宝石永远不会让你亏钱。保留它是为了让旧的设置文件还能加载。"
     },
     "SpareMaxedBadgeCards": {
       "label": "已完成徽章的卡牌",
@@ -4642,7 +4650,7 @@
     },
     "SpareAction": {
       "label": "多余物品怎么处理",
-      "tip": "“宝石和出售两者取优”在宝石比出售更值钱（超过下面的差额）时分解成宝石，否则出售 - 例如价值 0.05 的宝石胜过只能让你拿到 0.02 的出售。只分解成宝石：从不出售。只出售：从不分解成宝石。全部保留：只报告哪些是多余的，什么都不改变。",
+      "tip": "“宝石或出售取其优”只有在出售（扣除 Steam 手续费后）比它的宝石至少多拿 0.01 时才出售物品，否则把它变成宝石——所以宝石永远不会让你亏钱，也不会做那些每笔都要手机确认的极小交易。例如出售能拿到 0.07：宝石值 0.06 或更少就出售；值更多就变成宝石。只要宝石：从不出售，出售能比宝石至少多拿 0.01 的物品会保留。只出售：从不做宝石。全部保留：只报告多余的东西，什么都不改。",
       "choices": "0 宝石和出售两者取优 | 1 只分解成宝石 | 2 只出售 | 3 全部保留（只报告）"
     },
     "SpareEmoticons": {
@@ -4716,7 +4724,7 @@
     },
     "SpareMinSale": {
       "label": "仅当到手至少为此金额时出售",
-      "tip": "扣除 Steam 手续费后一笔出售至少要让你到手的金额，按此账户自己的 Steam 钱包货币计。例如 0.05：到手只有 0.03 的卡，若分解成宝石有价值就分解，否则保留。例如美元或欧元填 0.05——用你自己货币的同等金额，例如日元填 5。0 表示什么都卖。"
+      "tip": "一笔出售在扣除 Steam 手续费后至少要给你的钱，以这个账号自己的 Steam 钱包货币计。例如 0.05：一张能拿到 0.03 的卡，宝石值超过 0.02 就变成宝石，不能变宝石就保留。物品绝不会变成比出售所得少 0.01 以上的宝石：宝石值 0.02 或更少时，这张卡照样以 0.03 出售。选“只出售”时它会保留。例如美元或欧元用 0.05 - 用你自己货币里相同的价值，例如日元用 5。0 表示什么都卖。"
     },
     "SpareHumanGapMaxMinutes": {
       "label": "……最长（分钟）",

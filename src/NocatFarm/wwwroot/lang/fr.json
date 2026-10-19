@@ -2687,7 +2687,6 @@
     "needed for the badge": "nécessaire pour le badge",
     "on your keep list": "dans ta liste à garder",
     "it doesn't turn into gems": "il ne se transforme pas en gemmes",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} gemmes, valant {1} - bat la vente ({2}) de {3}% ou plus",
     "unopened booster packs: listed {0} - {1}": "boosters non ouverts : {0} mis en vente - {1}",
     "next look at booster packs around {0}": "prochain coup d'œil aux boosters vers {0}",
     "today's limit of {0} in value is reached": "la limite de valeur du jour de {0} est atteinte",
@@ -2770,7 +2769,6 @@
     "couldn't read the card buying list: {0}": "impossible de lire la liste des achats de cartes : {0}",
     "buying cards: next look around {0}": "achat de cartes : prochain coup d'œil vers {0}",
     "couldn't look at buying cards: {0}": "impossible de regarder l'achat de cartes : {0}",
-    "bought {0} · {1} · {2}": "acheté {0} · {1} · {2}",
     "unsure if {0} was bought · counted as spent": "pas sûr que {0} ait été acheté · compté comme dépensé",
     "card buying stopped · its spending list can't be read or saved": "achat de cartes arrêté · sa liste de dépenses ne peut être ni lue ni enregistrée",
     "buying {0} turned down · {1}": "achat de {0} refusé · {1}",
@@ -2839,7 +2837,6 @@
     "spread over its day: about {0} a look, next look ~{1}": "réparti sur sa journée : environ {0} par coup d'œil, prochain coup d'œil ~{1}",
     "spread over its day: about {0} a look - its last look today": "réparti sur sa journée : environ {0} par coup d'œil - son dernier coup d'œil aujourd'hui",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "encore {0} objet(s) à estimer - Steam a demandé de ralentir, les estimations reprennent vers {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} gemmes - la vente rapporterait {1}, sous votre minimum de {2}",
     "{0} gems - nobody sells it on the market": "{0} gemmes - personne ne le vend sur le marché",
     "you declined its listing on your phone - never listed again": "vous avez refusé son annonce sur votre téléphone - plus jamais mis en vente",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Les gemmes sont emballées en sacs de 1000 et les sacs envoyés à {0}",
@@ -3169,7 +3166,18 @@
     "It would sell instead of crafting": "Il vendrait au lieu de fabriquer",
     "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "La série {0} : {1} après la commission de Steam achète environ {2} niveaux de badge, plus que le 1 que donne la fabrication",
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Le niveau de badge le moins cher d'abord - un badge commencé ou une série neuve entière, selon ce qui coûte le moins",
-    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam demande de confirmer les achats dans l'app Steam, tu les confirmes sur ton téléphone - une série à la fois, sinon abandonnés au bout d'un jour"
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam demande de confirmer les achats dans l'app Steam, tu les confirmes sur ton téléphone - une série à la fois, sinon abandonnés au bout d'un jour",
+    "bought {0} ({1}) · {2}": "acheté {0} ({1}) · {2}",
+    "more cards wait · confirm the ones in the Steam app first": "d'autres cartes attendent · confirme d'abord celles dans l'app Steam",
+    "{0} · found in the inventory after its order": "{0} · trouvé dans l'inventaire après sa commande",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "personne ne le vend en ce moment, mais il s'est vendu {0} récemment - plus que ses gemmes - gardé",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "se vend {0}, tu reçois {1} - sous ton minimum de {2}, mais plus que ses {3} gemmes ne valent ({4})",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} gemmes, valant {1} - la vente rapporterait {2}, sous ton minimum de {3}",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "la vente rapporterait {0}, plus que ses {1} gemmes ne valent ({2}) - gardé",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} gemmes, valant {1} - la vente rapporterait {2}",
+    "{0} was paused - stopped before the next item": "{0} a été mis en pause - arrêté avant l'objet suivant",
+    "on your keep list now - skipped": "maintenant sur ta liste à garder - ignoré",
+    "worth {0}, over your price limit now - skipped": "vaut {0}, au-dessus de ta limite de prix maintenant - ignoré"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4621,7 +4629,7 @@
     },
     "SpareGemMarginPct": {
       "label": "Les gemmes doivent battre la vente de (%)",
-      "tip": "De combien les gemmes doivent valoir plus que la vente pour qu'un objet devienne des gemmes, en pourcentage. Par exemple 20 : si la vente te rapporte 0.10 après les frais de Steam, des gemmes valant 0.12 ou plus gagnent et l'objet devient des gemmes ; à 0.11, il est vendu. Seulement pour « le meilleur entre gemmes et vente »."
+      "tip": "N'est plus utilisé. Depuis la 1.8.2 un objet n'est vendu que si la vente te rapporte (après les frais de Steam) au moins 0.01 de plus que la valeur de ses gemmes, et sinon il devient des gemmes - par exemple la vente rapporte 0.10 : avec des gemmes valant 0.09 ou moins, il est vendu ; valant plus, des gemmes. Cette règle décide seule, ainsi les gemmes ne te font jamais perdre d'argent. Gardé pour que les anciens fichiers de réglages se chargent encore."
     },
     "SpareMaxedBadgeCards": {
       "label": "Cartes des badges terminés",
@@ -4642,7 +4650,7 @@
     },
     "SpareAction": {
       "label": "Que faire des objets en trop",
-      "tip": "« Le meilleur entre gemmes et vente » transforme un objet en gemmes quand les gemmes valent plus que sa vente (de la marge ci-dessous), et le vend sinon - par exemple des gemmes valant 0.05 battent une vente qui te rapporte 0.02. Gemmes seulement : ne vend jamais. Vente seulement : ne fait jamais de gemmes. Tout garder : signale seulement ce qui est en trop, rien ne change.",
+      "tip": "Le meilleur entre gemmes et vente ne vend un objet que si la vente te rapporte (après les frais de Steam) au moins 0.01 de plus que la valeur de ses gemmes, et sinon le transforme en gemmes - ainsi les gemmes ne te font jamais perdre d'argent, et les ventes minuscules, qui demandent chacune ton téléphone, n'ont pas lieu. Par exemple une vente qui te rapporte 0.07 : avec des gemmes valant 0.06 ou moins, il est vendu ; valant plus, il devient des gemmes. Gemmes uniquement : ne vend jamais, et garde un objet qui se vendrait au moins 0.01 de plus que ses gemmes. Vente uniquement : ne fait jamais de gemmes. Tout garder : indique seulement ce qui est en trop, rien ne change.",
       "choices": "0 le meilleur entre gemmes et vente | 1 gemmes seulement | 2 vente seulement | 3 tout garder (seulement signaler)"
     },
     "SpareEmoticons": {
@@ -4716,7 +4724,7 @@
     },
     "SpareMinSale": {
       "label": "Vendre seulement si vous recevez au moins",
-      "tip": "Le minimum qu'une vente doit te rapporter après les frais Steam, dans la devise du porte-monnaie Steam de ce compte. Par exemple 0.05 : une carte qui te rapporterait 0.03 est transformée en gemmes si ses gemmes valent quelque chose, sinon elle est gardée. par ex. 0.05 pour des dollars ou des euros - mets la même valeur dans ta propre devise, par ex. 5 pour des yens. 0 vend n'importe quoi."
+      "tip": "Le minimum qu'une vente doit te rapporter après les frais de Steam, dans la devise du porte-monnaie Steam de ce compte. Par exemple 0.05 : une carte qui te rapporterait 0.03 devient des gemmes quand ses gemmes valent plus de 0.02, et est gardée quand elle ne se transforme pas en gemmes. Un objet n'est jamais transformé en gemmes valant moins que la vente moins 0.01 : avec des gemmes valant 0.02 ou moins, cette carte est vendue pour les 0.03 quand même. En « vente uniquement », elle est gardée. p. ex. 0.05 pour des dollars ou des euros - mets la même valeur dans ta propre devise, p. ex. 5 pour des yens. 0 vend tout."
     },
     "SpareHumanGapMaxMinutes": {
       "label": "...jusqu'à (minutes)",

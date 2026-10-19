@@ -484,9 +484,27 @@ public static partial class Spare {
 			if ((r.Action is 0 or 1) && (item.GooType > 0)) {
 				int? goo = input.GemValue(item);
 
-				return goo is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"))
-					: goo > 0 ? new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - nobody sells it on the market", goo), 0, goo.Value, 0, 0)
-					: new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
+				if (goo is not > 0) {
+					return goo is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"))
+						: new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
+				}
+
+				// Nobody lists it now, but it sold lately: gems only when they're worth what that sale would pay, less a cent.
+				int median = item.Marketable ? Math.Max(0, price.Median ?? 0) : 0;
+				int lately = median > 0 ? Seller.ReceiveFor(median) : 0;
+
+				if (lately > 0) {
+					if ((input.Sack is not { Cents: > 0 } lateSack) || (input.Now - lateSack.At > maxAge)) {
+						return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"));
+					}
+
+					if (SellingPays(GemsWorth(goo.Value, lateSack.Cents), lately)) {
+						return new SpareDecision(item, SpareVerdict.Keep, new Said("nobody sells it now, but it sold for {0} lately - more than its gems - kept",
+							Money(median, input.Currency)));
+					}
+				}
+
+				return new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - nobody sells it on the market", goo), 0, goo.Value, 0, 0);
 			}
 
 			return new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
@@ -531,24 +549,70 @@ public static partial class Spare {
 			case 3:
 				return Keep(new Said("you chose to keep everything - only reported"));
 			case 1:
-				return gems is null ? NoGemValue() : gems > 0 ? Gems(new Said("{0} gems", gems)) : Keep(new Said("it doesn't turn into gems"));
+				return GemsOnly();
 			case 2:
 				return declined is { } no ? Keep(no)
 					: tooLittle ? Keep(Little())
 					: receive > 0 ? Sell(new Said("sells for {0}, you get {1}", Cash(list), Cash(receive))) : Keep(new Said("the market pays nothing for it"));
 		}
 
-		// Selling would pay under the minimum: gems when they're worth anything, kept when they're not.
+		// Selling would pay under the minimum: gems - but only when the gems are worth what the sale pays, less a cent.
+		// Gems worth less: sold all the same (it pays at least 0.01). No gems at all: kept.
 		if (tooLittle && (declined == null)) {
-			return gems is null ? NoGemValue()
-				: gems > 0 ? Gems(new Said("{0} gems - selling would pay {1}, under your {2} minimum", gems, Cash(receive), Cash(r.MinSaleCents)))
-				: Keep(Little());
+			if (gems is null) {
+				return NoGemValue();
+			}
+
+			if (gems == 0) {
+				return Keep(Little());
+			}
+
+			if (!sackKnown) {
+				return GemsPriceUnknown();
+			}
+
+			decimal worthAsGems = GemsWorth(gems.Value, input.Sack!.Value.Cents);
+
+			return SellingPays(worthAsGems, receive)
+				? Sell(new Said("sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})", Cash(list), Cash(receive), Cash(r.MinSaleCents), gems, Cash(worthAsGems)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}, under your {3} minimum", gems, Cash(worthAsGems), Cash(receive), Cash(r.MinSaleCents)));
 		}
 
 		SpareDecision best = Best();
 
 		// Its listing was declined on the phone: not listed again for now - turned into gems only where gems won anyway.
 		return (declined is { } why) && (best.Verdict != SpareVerdict.Gems) ? Keep(why) : best;
+
+		// Gems only (1.8.2): gems, unless selling would pay at least a cent more than the gems are worth - then it's kept.
+		// What selling would pay: at the price it would list for, or - with no sure price - the most it's worth, so an
+		// item is never turned into gems on a low guess.
+		SpareDecision GemsOnly() {
+			if (gems is null) {
+				return NoGemValue();
+			}
+
+			if (gems == 0) {
+				return Keep(new Said("it doesn't turn into gems"));
+			}
+
+			int sale = !item.Marketable ? 0 : listed != null ? receive : Seller.ReceiveFor(worth);
+
+			if (sale <= 0) {
+				return Gems(new Said("{0} gems", gems));
+			}
+
+			if (!sackKnown) {
+				return GemsPriceUnknown();
+			}
+
+			decimal worthAsGems = GemsWorth(gems.Value, input.Sack!.Value.Cents);
+
+			return SellingPays(worthAsGems, sale)
+				? Keep(new Said("selling would pay {0}, more than its {1} gems are worth ({2}) - kept", Cash(sale), gems, Cash(worthAsGems)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}", gems, Cash(worthAsGems), Cash(sale)));
+		}
+
+		SpareDecision GemsPriceUnknown() => new(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
 
 		// Best of the two.
 		SpareDecision Best() {
@@ -565,22 +629,28 @@ public static partial class Spare {
 			}
 
 			if (!sackKnown) {
-				return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
+				return GemsPriceUnknown();
 			}
 
 			decimal gemsWorth = GemsWorth(gems.Value, input.Sack!.Value.Cents);
 
-			return GemsWin(gemsWorth, receive, r.MarginPct)
-				? Gems(new Said("{0} gems, worth {1} - beats selling ({2}) by {3}% or more", gems, Cash(gemsWorth), Cash(receive), r.MarginPct))
-				: Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)));
+			return SellingPays(gemsWorth, receive)
+				? Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}", gems, Cash(gemsWorth), Cash(receive)));
 		}
 	}
 
 	/// <summary>What some gems are worth: their share of a sack of 1000, in cents.</summary>
 	public static decimal GemsWorth(int gems, int sackCents) => gems * (decimal) sackCents / 1000m;
 
-	/// <summary>Gems beat selling: worth at least the margin more than the market pays after fees.</summary>
-	public static bool GemsWin(decimal gemsWorth, int receiveCents, int marginPct) => gemsWorth >= receiveCents * (1m + (marginPct / 100m));
+	/// <summary>
+	/// 1.8.2, the owner's rule - gems never lose money: an item is sold only when selling pays at least a cent more (after
+	/// Steam's fees, in the wallet's currency) than its gems are worth; otherwise it becomes gems. So never gems worth less
+	/// than the sale less a cent, and never a sale that pays less than its gems - each sale needs a phone confirmation, and
+	/// Steam's fee eats tiny ones. Decides between the two on its own: "Gems must beat selling by" and "Only sell if you get
+	/// at least" can't make an item gems that selling pays more for.
+	/// </summary>
+	public static bool SellingPays(decimal gemsWorth, int receiveCents) => receiveCents >= gemsWorth + 1m;
 
 	/// <summary>Cents as money, "0.25" - the account's own currency, whichever it is.</summary>
 	public static string Money(decimal cents) {
