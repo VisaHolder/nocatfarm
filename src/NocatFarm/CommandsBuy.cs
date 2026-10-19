@@ -61,6 +61,27 @@ public static partial class Commands {
 	internal static bool BuyNeedsOwner(string[] args) =>
 		args.Any(static a => a.ToLowerInvariant() is "on" or "do" or "now");
 
+	/// <summary>'craft now &lt;account&gt;': the badge look right away.</summary>
+	private static string CraftNow(BotManager mgr, string[] args) {
+		string[] who = [.. args.Where(static a => !a.Equals("now", StringComparison.OrdinalIgnoreCase))];
+
+		if ((who.Length != 1) || (mgr.Get(who[0]) is not { } bot)) {
+			return "craft now <account> - one account.";
+		}
+
+		if (!bot.Cfg.CraftBadges) {
+			return $"{bot.Name}: crafting badges is off.";
+		}
+
+		if (BotManager.ModuleOf<Modules.BadgeCraft>(bot) is not { } craft) {
+			return $"{bot.Name}: not running.";
+		}
+
+		craft.LookNow();
+
+		return $"{bot.Name}: looking at its badges now - the log says what it does.";
+	}
+
 	private static async Task<string> BuyCardsAsync(BotManager mgr, string[] args) {
 		(BuyAsk ask, string? who) = ParseBuy(args);
 

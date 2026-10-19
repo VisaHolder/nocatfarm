@@ -148,6 +148,15 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// is actually complete (<paramref name="setComplete"/>: the inventory holds a whole normal set); then it crafts at its
 	/// next chance in its own day (the loop's gate). A look already due sooner stays; Steam's back-off is never cut short.
 	/// </summary>
+	/// <summary>
+	/// 'craft now &lt;account&gt;': the next look right away - its day and Steam's back-off still apply (the loop's gate).
+	/// </summary>
+	public void LookNow() {
+		if (DateTime.UtcNow >= _backoffUntil) {
+			_nextSweep = DateTime.UtcNow;
+		}
+	}
+
 	public void LookSoon(bool setComplete = false) {
 		if (Bot.Cfg.LegitMode && !setComplete) {
 			return;
