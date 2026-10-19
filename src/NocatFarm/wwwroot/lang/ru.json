@@ -1618,6 +1618,7 @@
     "Running in Docker": "Работает в Docker",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Изнутри Docker nocat.farm не видит адрес этого компьютера в вашем Wi-Fi. На телефоне откройте адрес этого компьютера с портом, который публикует Docker, - или впишите его в NOCATFARM_HOME_ADDRESS в docker-compose.yml, и здесь появятся ссылка и код для сканирования.",
     "  ... and {0} more line(s)": "  ... и ещё {0} строк(и)",
+    "answer · {0} line(s)": "ответ · строк: {0}",
     "couldn't encrypt a login token in place: {0}": "не удалось зашифровать токен входа на месте: {0}",
     "set a dashboard password": "задать пароль панели",
     "turn on Open to other devices": "включить «Открыть для других устройств»",

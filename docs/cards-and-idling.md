@@ -649,17 +649,17 @@ sale in the last day are named there too (up to 15 each). With nothing to do it'
 right now". Once a look has done something, its answer is what it did - "new: done - 14 item(s) into 1,080 gems, 0
 listed" - and today's count; the items themselves are already in the log, one line each. When `spare preview` or
 `spare do` answers after the command line already said "the log says when it's done", the log gets its answer as one
-line - "spare: 29 → gems, 1 to sell · today 26/50" - and the full list goes to the debug log; ask again and the
-command shows the list.
+row - "spare preview new · 29 → gems, 1 to sell · today 26/50" - and clicking it (▸) shows the full answer.
 
 **Every action is a line in the log.** Short, item first: "Metro (Tom Clancy's The Division) → 80 gems", "listed Scout
 (Game) for 0.12 CAD · you get 0.10 CAD", "sold Scout (Game) for 0.12 CAD · you got 0.10 CAD" (once the market history
-shows the sale), "Starry Background 1 (Waveform): no price yet, tries later". Once a listing is confirmed and up for buyers: "Starry
+shows the sale). An item kept back ("Starry Background 1 (Waveform): no price yet, tries later") is a debug line. Once a listing is confirmed and up for buyers: "Starry
 Background 1 is on the market · 0.22 CAD". While one waits on its confirmation in the Steam app, it looks at the
 market every 5 to 10 minutes (one request), so that line - or the declined one - comes minutes after you confirm,
 not at the next look. Why an item went to gems or the market is
 a debug line. In the window and the dashboard's Log tab, a run of items into gems is one row - "turned 14 items into
-1,080 gems" - that opens on a click to show each one; the log file keeps every line. "lowered
+1,080 gems" - and a look's listings one row read as its total, "listed 19 item(s) · 0.19 CAD if they all sell"; each
+opens on a click to show each one, and the log file keeps every line. "lowered
 Scout from 0.31 CAD to 0.30 CAD - unsold 7 days", a declined listing, unopened packs or sacks of gems sent to another
 account, a pack opened or made, a badge crafted.
 

@@ -4527,8 +4527,9 @@ public static partial class Commands {
 	/// for different things - two batches of keys, two offers. Without one, a second 'trade decline 5' while 'trade accept 3'
 	/// was going was turned away as "already", and offer 5 was never declined.
 	/// </summary>
-	/// <param name="Brief">For an answer that comes after the reply: the account's answer in one line for the log, by its
-	/// name - the whole answer goes to the debug log. Null, or nothing for that account: every line of it, as INFO.</param>
+	/// <param name="Brief">For an answer that comes after the reply: the account's answer in a few words, by its name - said
+	/// on the answer's row after what was asked ("buy preview new · 4 set(s) for 1.76 CAD"). Null, or nothing for that
+	/// account: the row is what was asked alone.</param>
 	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null, Func<string, string?>? Brief = null);
 
 	/// <summary>
@@ -4637,20 +4638,24 @@ public static partial class Commands {
 					return;
 				}
 
-				// One line, where the command has one: 'spare preview' item by item was 25 INFO lines. The whole answer is in the
-				// debug log, and asking again answers with it straight away.
-				if (job.Brief?.Invoke(name) is { Length: > 0 } brief) {
-					Log.Info(MaskedReply(job.What, brief, typed), source);
-					Log.Debug(Columns.ClipChars(SpareRun.OneLine(MaskedReply(job.What, done.Result.Reply, typed)), 300, "..."), source);
+				// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
+				// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
+				string[] lines = [.. done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)
+					.Select(l => MaskedReply(job.What, Unnamed(l, name), typed))];
+				string? brief = job.Brief?.Invoke(name) is { Length: > 0 } b ? MaskedReply(job.What, b, typed) : null;
+
+				// One line and nothing to add: that line, as it was.
+				if ((lines.Length <= 1) && (brief == null)) {
+					foreach (string line in lines) {
+						Log.Info(line, source);
+					}
 
 					return;
 				}
 
-				foreach (string line in done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)) {
-					// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
-					// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
-					Log.Info(MaskedReply(job.What, Unnamed(line, name), typed), source);
-				}
+				// More: ONE row in the window and the dashboard - what was asked, and the answer under it when it's opened. A
+				// 'buy preview' was ten rows of prices and reasons, 'spare preview' item by item 25. The file has every line.
+				Log.Answer(new Said(LateHead(job, name, brief)), lines, source);
 			}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default), source);
 		}
 
@@ -4683,6 +4688,17 @@ public static partial class Commands {
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// The row a late answer reads as: what was asked and for whom, and the few words of its brief - "buy preview new · 4 set(s)
+	/// for 1.76 CAD", "booster plan new". English, as a command's answer is.
+	/// </summary>
+	public static string LateHead(Slow job, string name, string? brief) {
+		string asked = job.Key ?? job.What;
+		bool named = (name.Length > 0) && !asked.EndsWith(" " + name, StringComparison.OrdinalIgnoreCase);
+
+		return $"{asked}{(named ? " " + name : "")}{(brief is { Length: > 0 } ? " · " + brief : "")}";
 	}
 
 	/// <summary>A slow command's answer for one account, and whether it was already said in the log.</summary>

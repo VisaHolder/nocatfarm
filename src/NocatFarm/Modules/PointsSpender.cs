@@ -683,7 +683,7 @@ public sealed class PointsSpender(Bot bot, IPointsSteam? steam = null) : BotModu
 
 			if ((mode == Mode.Auto) && (said != _lastPreview)) {
 				_lastPreview = said;
-				Log.Info(new Said("Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings",
+				Log.Debug(new Said("Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings",
 					PointsPlan.N(plan.Cost), plan.Steps.Sum(static s => s.Levels), plan.Steps[0].Badge.Name, plan.Xp), Bot.Name);
 			}
 

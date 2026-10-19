@@ -425,7 +425,7 @@ public static class Seller {
 		List<Offer> onKeepList = [.. offers.Where(o => OnKeepList(o, keep))];
 
 		foreach (Offer o in onKeepList) {
-			Log.Info(KeptSaid(o, new Said("on your keep list - never sold")), bot.Name);
+			Log.Debug(KeptSaid(o, new Said("on your keep list - never sold")), bot.Name);
 		}
 
 		if (onKeepList.Count > 0) {
@@ -571,7 +571,7 @@ public static class Seller {
 			if (OverLimit(why)) {
 				Log.Debug(KeptSaid(offer, why), bot.Name);
 			} else {
-				Log.Info(KeptSaid(offer, why), bot.Name);
+				Log.Debug(KeptSaid(offer, why), bot.Name);
 			}
 		}
 

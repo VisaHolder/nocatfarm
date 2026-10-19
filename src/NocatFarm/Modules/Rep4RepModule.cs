@@ -54,7 +54,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		_notSentRun++;
 		int wait = NotSentWaitSeconds(_notSentRun);
 		_status = new Said("couldn't reach Steam - trying again in {0}", Fmt.Hm(wait / 60));
-		Log.Info(new Said("comment on {0} wasn't sent (couldn't reach Steam) - not counted, trying again in {1}", task.TargetName, Fmt.Hm(wait / 60)), Bot.Name);
+		Log.Debug(new Said("comment on {0} wasn't sent (couldn't reach Steam) - not counted, trying again in {1}", task.TargetName, Fmt.Hm(wait / 60)), Bot.Name);
 
 		return wait;
 	}
@@ -291,7 +291,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 			}
 
 			// The comments of the last 24h still count - a short hold doesn't wipe them.
-			Log.Info(new Said("the rep4rep hold has run out - back on at {0}/{1}", _state?.PostsInLast24h() ?? 0, Cap), Bot.Name);
+			Log.Debug(new Said("the rep4rep hold has run out - back on at {0}/{1}", _state?.PostsInLast24h() ?? 0, Cap), Bot.Name);
 		}
 
 		// Whichever account gets here after the grace tidies up for everybody. Deliberately NOT pinned to the
@@ -618,7 +618,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 				return await OnTargetRefusedAsync(task).ConfigureAwait(false);
 		}
 
-		Log.Info(new Said("retry posted on {0}", task.TargetName), Bot.Name);
+		Log.Debug(new Said("retry posted on {0}", task.TargetName), Bot.Name);
 
 		return await CreditAsync(task, ct).ConfigureAwait(false);
 	}
@@ -750,7 +750,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		if (LearnsDailyLimit(Bot.Cfg.Rep4RepLearnCap, posted, Cap)) {
 			_state.Cap = posted;
 			_state.CapLearned = true;
-			Log.Info(new Said("daily limit found: {0}/24h", posted), Bot.Name);
+			Log.Debug(new Said("daily limit found: {0}/24h", posted), Bot.Name);
 		}
 
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
@@ -777,7 +777,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		//
 		// Only a refusal AFTER the configured cap has already been reached says anything real, and by then we
 		// have stopped posting anyway - so the honest answer is to learn nothing here and simply back off.
-		Log.Info(new Said("rate-limited at {0}/{1} - comment gap, not the daily cap", posted, cap), Bot.Name);
+		Log.Debug(new Said("rate-limited at {0}/{1} - comment gap, not the daily cap", posted, cap), Bot.Name);
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
@@ -929,7 +929,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 			_closedRun++;
 			_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
-			Log.Info(new Said("{0} doesn't take comments · skipped", task.TargetName), Bot.Name);
+			Log.Debug(new Said("{0} doesn't take comments · skipped", task.TargetName), Bot.Name);
 
 			return true;
 		}

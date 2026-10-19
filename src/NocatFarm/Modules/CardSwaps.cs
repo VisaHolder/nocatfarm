@@ -191,7 +191,7 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 		Said Drop(Said why) {
 			_tries.Remove(match.Id);
 			ledger.SetState(match.Id, "dropped", match.You, now);
-			Log.Info(new Said("card swap with {0} skipped · {1}", who, why), Bot.Name);
+			Log.Debug(new Said("card swap with {0} skipped · {1}", who, why), Bot.Name);
 
 			return why;
 		}

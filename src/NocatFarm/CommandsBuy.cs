@@ -211,6 +211,7 @@ public static partial class Commands {
 				: await ScamWatch.AsYouAskedAsync(buyer.BuyNowAsync).ConfigureAwait(false);
 
 			List<string> lines = BuySaid(b, mode, result);
+			BuyBriefs[b.Name] = BuyBrief(mode, result);
 
 			// 1.8.2: the gems maths beside what it would buy - only while it's in play (its setting, automatic packs, buying on).
 			if ((mode == CardBuyer.Mode.Preview) && b.Cfg.GemsForLevels && (b.Cfg.BoosterMake == BoosterPick.Auto) && CardBuyer.On(b)) {
@@ -220,10 +221,42 @@ public static partial class Commands {
 			return string.Join(Environment.NewLine, lines);
 		}
 
-		Slow job = mode == CardBuyer.Mode.Preview ? new("buy", "looking at which cards to buy", Key: "buy preview") : new("buy", "buying cards", Key: "buy do");
+		Slow job = mode == CardBuyer.Mode.Preview ? new("buy", "looking at which cards to buy", Key: "buy preview", Brief: TakeBuyBrief)
+			: new("buy", "buying cards", Key: "buy do", Brief: TakeBuyBrief);
 
 		return SlowAsync(job, bots, Look, ReplyWithin, oneAtATime: true,
 			cannot: static b => !b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<CardBuyer>(b) is null) ? $"{b.Name}: not logged in" : null);
+	}
+
+	/// <summary>Each account's last 'buy preview' or 'buy do' in a few words, for its row when it answers in the log.</summary>
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> BuyBriefs = new(StringComparer.OrdinalIgnoreCase);
+
+	private static string? TakeBuyBrief(string account) => BuyBriefs.TryRemove(account, out string? brief) && (brief.Length > 0) ? brief : null;
+
+	/// <summary>
+	/// A look in a few words, for the row its answer is in the log (1.8.2): "4 set(s) for 1.76 CAD", "bought 5 card(s) for
+	/// 0.31 CAD", "nothing to buy". Empty when it couldn't look - the answer under it says why.
+	/// </summary>
+	public static string BuyBrief(CardBuyer.Mode mode, CardBuyer.Result result) {
+		if (result.Plan is not { } plan || (plan.Problem.Length > 0)) {
+			return "";
+		}
+
+		if (result.Bought.Count > 0) {
+			return $"bought {result.Bought.Count} card(s) for {BuyPlan.Money(result.Bought.Sum(static x => x.Paid), plan.Currency)}";
+		}
+
+		if (result.Waiting.Count > 0) {
+			return $"{result.Waiting.Count} card(s) to confirm in the Steam app";
+		}
+
+		if (plan.Steps.Count == 0) {
+			return mode == CardBuyer.Mode.Preview ? "nothing to buy" : "nothing bought";
+		}
+
+		string sets = $"{plan.Steps.Count} set(s) for {BuyPlan.Money(plan.Steps.Sum(static s => s.Cost), plan.Currency)}";
+
+		return mode == CardBuyer.Mode.Preview ? sets : $"nothing bought - would have been {sets}";
 	}
 
 	/// <summary>One account's look in plain words: what it would buy or bought, for how much, the limits, and why not when nothing.</summary>
@@ -248,7 +281,9 @@ public static partial class Commands {
 		}
 
 		if ((result.Bought.Count > 0) || (result.Waiting.Count > 0)) {
-			lines.AddRange(result.Bought.Select(x => $"{name}: bought {x.Card.Name} ({x.Step.Game}) for {M(x.Paid)}"));
+			// One line a set, not one a card: each card was already its own line in the log as it was bought, and a 'buy do'
+			// answering in the log said all ten again (1.8.2).
+			lines.AddRange(result.Bought.GroupBy(static x => x.Step.Game).Select(g => $"{name}: bought {g.Key} · {g.Count()} card(s) · {M(g.Sum(static x => x.Paid))}"));
 			lines.AddRange(result.Finished.Select(s => $"{name}: {s.Game} set complete - badge crafting makes it level {s.Level + 1}"));
 			lines.AddRange(result.Waiting.Select(x => $"{name}: {x.Card.Name} ({x.Step.Game}) - confirm the purchase in the Steam app on your phone; it's bought at the next look"));
 		} else {

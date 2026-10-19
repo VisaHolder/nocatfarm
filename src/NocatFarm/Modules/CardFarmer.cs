@@ -676,7 +676,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// account, nothing of the idler's is playing, and the list is the best there is to go on.
 				int idling = Bot.CanPlay ? Bot.PlayingApps.Count : Bot.Cfg.IdleGames.Count;
 
-				Log.Info(Bot.HumanOwned
+				Log.Debug(Bot.HumanOwned
 					? new Said("no cards left · human mode carries on{0}", been)
 					// The games by count: the custom name is on every status line already, and with it this ran past the window.
 					: new Said("no cards left · idling {0}{1}", IdleSummary(null, idling), been), Bot.Name);
@@ -955,7 +955,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		Log.Info(new Said("all cards in - winding down on {0} for ~{1}", game.GameName, Fmt.Hm(mins)), Bot.Name);
+		Log.Debug(new Said("all cards in - winding down on {0} for ~{1}", game.GameName, Fmt.Hm(mins)), Bot.Name);
 		DateTime until = DateTime.UtcNow.AddMinutes(mins);
 
 		while (!ct.IsCancellationRequested && (DateTime.UtcNow < until)) {
@@ -1021,7 +1021,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("farming {0} ({1} left · ~{2} in all)", game.GameName, game.CardsRemaining, AllDoneIn);
-		Log.Info(new Said("farming {0} · {1} card(s) left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
+		Log.Debug(new Said("farming {0} · {1} card(s) left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 
 		// Farming time since the last drop - the measure of this game's pace. Restarts with every call, so a pause,
 		// a break or the owner playing is never counted as waiting for a card. The first drop of a call isn't
@@ -1352,7 +1352,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying(batch.Select(static g => g.AppId).ToArray(), Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
-		Log.Info(new Said("building playtime first - {0} games at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
+		Log.Debug(new Said("building playtime first - {0} games at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
 
 		DateTime started = DateTime.UtcNow;
 		DateTime until = started.AddHours(needHours);
@@ -1428,7 +1428,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			if (Bot.HumanOwned && (batch.Count > 1) && (BotManager.ModuleOf<HumanMode>(Bot) is { } human) && (!human.InBed || human.AwakeHoursNow)) {
 				Release();
 				Bot.StopPlaying();
-				Log.Info(new Said("awake now - building playtime one game at a time from here"), Bot.Name);
+				Log.Debug(new Said("awake now - building playtime one game at a time from here"), Bot.Name);
 
 				return;
 			}

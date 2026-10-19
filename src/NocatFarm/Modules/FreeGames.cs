@@ -434,7 +434,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 				if (RecentClaims() >= MaxPerWindow) {
 					_status = new Said("paused - {0} activations this window", MaxPerWindow);
-					Log.Info(new Said("{0} activations in {1}m - pausing to stay under Steam's limit", MaxPerWindow, WindowMinutes), Bot.Name);
+					Log.Debug(new Said("{0} activations in {1}m - pausing to stay under Steam's limit", MaxPerWindow, WindowMinutes), Bot.Name);
 
 					if (report != null) {
 						DateTime frees = _claims.Min().AddMinutes(WindowMinutes);
@@ -580,7 +580,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					// Pressing on only lengthens it. Steam's own wording is "try again in an hour".
 					_quietUntil = DateTime.UtcNow.AddMinutes(Rng.Next(62, 80));
 					DateTime back = _quietUntil;
-					Log.Info(new Said("free-game claims rate-limited - retrying after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
+					Log.Debug(new Said("free-game claims rate-limited - retrying after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
 
 					if (report != null) {
 						report.Stopped = new Said("Steam asked it to slow down - it tries again after {0}", (Func<string>) (() => Fmt.Clock(back)));
