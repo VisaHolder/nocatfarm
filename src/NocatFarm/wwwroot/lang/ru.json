@@ -3243,7 +3243,8 @@
     "the market stopped answering before what its money buys was priced": "рынок перестал отвечать, прежде чем стало ясно, что можно купить на эти деньги",
     "it has no Steam wallet to spend the money from": "у него нет кошелька Steam, чтобы потратить эти деньги",
     "{0}: not crafted yet · {1}": "{0}: пока не собран · {1}",
-    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: пока не собран · {1} · неизвестно, сколько стоят его карточки"
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: пока не собран · {1} · неизвестно, сколько стоят его карточки",
+    "its wallet already pays for every level priced today": "кошелёк уже оплачивает все уровни, оценённые сегодня"
   },
   "settings": {
     "SteamOpenEveryAccount": {

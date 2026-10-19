@@ -164,11 +164,23 @@ public static partial class SetSale {
 			return Decide(set.App, set.Game, plan.Currency, [.. cards, .. set.Cards.Skip(cards.Count).Select(static h => (h, (MarketQuote?) null))], [], 0);
 		}
 
-		Verdict v = Decide(set.App, set.Game, plan.Currency, cards, plan.Ranked.Where(s => s.App != set.App).Select(static s => s.Cost), Math.Clamp(cfg.SpareDumpPct, 0, 95));
+		// Only the levels past what the wallet already pays for: the money from the set buys those, not the ones it has money for.
+		List<long> ranked = [.. plan.Ranked.Where(s => s.App != set.App).Select(static s => s.Cost).Where(static c => c > 0)];
+		List<long> more = BuyPlan.BeyondWallet(ranked, plan.Wallet);
+		Verdict v = Decide(set.App, set.Game, plan.Currency, cards, more, Math.Clamp(cfg.SpareDumpPct, 0, 95));
+
+		if (v.Unsure || v.Hold) {
+			return v;
+		}
 
 		// The plan's prices stopped part way: what the money buys isn't known for sure - never sold or crafted on half a list.
-		return plan.Short && !v.Unsure && !v.Hold
-			? Crafted(set.App, set.Game, plan.Currency, new Said("the market stopped answering before what its money buys was priced"), unsure: true, top: v.Top)
+		if (plan.Short) {
+			return Crafted(set.App, set.Game, plan.Currency, new Said("the market stopped answering before what its money buys was priced"), unsure: true, top: v.Top);
+		}
+
+		// The wallet already pays for every level priced today: what more money would buy isn't priced - not sure either.
+		return (ranked.Count > 0) && (more.Count == 0)
+			? Crafted(set.App, set.Game, plan.Currency, new Said("its wallet already pays for every level priced today"), unsure: true, top: v.Top)
 			: v;
 	}
 

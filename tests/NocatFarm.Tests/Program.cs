@@ -28692,6 +28692,9 @@ await GemsChoiceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".
 // ── 1.8.2 sweep: a set not known for sure waits - the market stopping part way, nothing known of its worth, a card hardly selling; fakes only ──
 await SweepSetChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: what a sale's money buys is counted past the levels the wallet already pays for; fakes only ──
+await SweepWalletChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31693,7 +31696,7 @@ static class BuySmartChecks {
 
 			// The preview: a set it would sell instead of crafting.
 			var showBot = NewBot(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyFullSets = true, BuyDailyLimit = 5 });
-			var showMarket = new FakeCardMarket();
+			var showMarket = new FakeCardMarket { Wallet = new(0, 20, false, 0) };   // an empty wallet: what the set brings in buys the cheapest levels
 			showMarket.Sets[700] = Set(700, "Seven", "A", "B", "C");
 			showMarket.Held[700] = new() { ["700-A"] = 1, ["700-B"] = 1, ["700-C"] = 1 };
 			foreach (string c in showMarket.Sets[700].Cards) { showMarket.Quotes[c] = Q(c, 150, 150, 50); }
@@ -31767,7 +31770,7 @@ static class CraftSellChecks {
 
 		// Both sets on the market, priced: Arcane Raise about 5.00 after the fee, s&box about 0.45; three cheap new sets at 0.40.
 		FakeCardMarket Market() {
-			var m = new FakeCardMarket { CardsFail = true };
+			var m = new FakeCardMarket { CardsFail = true, Wallet = new(0, 20, false, 0) };   // an empty wallet: the money from a set sold buys the cheapest levels
 			m.Sets[603750] = new(603750, "- Arcane Raise -", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
 			m.Sets[590830] = new(590830, "s&box", [.. sboxCards.Select(S).Order(StringComparer.Ordinal)], sboxCards.ToDictionary(S, static _ => 15));
 
@@ -33592,7 +33595,7 @@ static class SweepSetChecks {
 		(NocatFarm.Core.Bot Bot, FakeCardMarket Market, NocatFarm.Modules.CardBuyer Buyer) Account(string name) {
 			var b = new NocatFarm.Core.Bot(name + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true, SellSetsForLevels = true, BuyDailyLimit = 1.5f, BuyFullSets = false });
 			bots.Add(b);
-			var m = new FakeCardMarket();
+			var m = new FakeCardMarket { Wallet = new(5, 20, false, 0) };
 			m.Sets[603750] = new(603750, "Arcane Raise", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
 			m.Held[603750] = arcaneCards.ToDictionary(A, static _ => 1);
 			m.Held[100] = new Dictionary<string, int> { ["100-a"] = 1 };
@@ -33661,6 +33664,82 @@ static class SweepSetChecks {
 		} finally {
 			foreach (var b in bots) {
 				await b.DisposeAsync();
+			}
+
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: what money from a sale buys is counted past the levels the wallet already pays for. Fakes only.</summary>
+static class SweepWalletChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepwallet-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		string[] arcaneCards = ["Heart", "Ribbon", "Shield", "Rose", "Skull"];
+		int[] arcaneLowest = [197, 127, 85, 96, 72];
+		string A(string card) => $"603750-{card} (Arcane Raise)";
+		NocatFarm.Core.MarketQuote Q(string hash, int lowest) => new(hash, 20, lowest, lowest + 2, 150, DateTime.UtcNow.Ticks);
+		List<(string, NocatFarm.Core.MarketQuote?)> arcane = [.. arcaneCards.Select((c, i) => (A(c), (NocatFarm.Core.MarketQuote?) Q(A(c), arcaneLowest[i])))];
+
+		try {
+			// ── the levels past the wallet: the cheapest it pays for skipped, the one it pays part of left at the rest ──
+			Check("sweep wallet: the wallet's balance pays for the cheapest levels first - only what's past it is counted (24 paid, 30 less the 6 left over, then 50)",
+				NocatFarm.Modules.BuyPlan.BeyondWallet([30, 24, 50], 30) is [24, 50]);
+			Check("sweep wallet: an empty wallet counts every level; one that pays for them all leaves none",
+				NocatFarm.Modules.BuyPlan.BeyondWallet([30, 24, 0], 0) is [24, 30] && (NocatFarm.Modules.BuyPlan.BeyondWallet([20, 20], 100).Count == 0));
+
+			// The set's money, counted on what the wallet doesn't cover: 10 levels at 0.40 priced, the wallet pays for 5 of them.
+			var noWallet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, arcane, NocatFarm.Modules.BuyPlan.BeyondWallet(Enumerable.Repeat(40L, 10), 0), 50);
+			var someWallet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, arcane, NocatFarm.Modules.BuyPlan.BeyondWallet(Enumerable.Repeat(40L, 10), 200), 50);
+			Check("sweep wallet: a set's money buys only the levels the wallet doesn't already - 10 with an empty wallet, 5 with 2.00 in it",
+				(noWallet.Levels == 10) && (someWallet.Levels == 5), $"{noWallet.Levels} / {someWallet.Levels}");
+
+			// The plan's wallet covering every level priced: what more money would buy isn't known - not sure, the set waits.
+			var b = new NocatFarm.Core.Bot("sw-rich" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true, SellSetsForLevels = true, BuyDailyLimit = 1.5f, BuyFullSets = false });
+			bots.Add(b);
+			var m = new FakeCardMarket { Wallet = new(5000, 20, false, 0) };
+			m.Sets[603750] = new(603750, "Arcane Raise", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
+			m.Held[603750] = arcaneCards.ToDictionary(A, static _ => 1);
+			m.Held[100] = new Dictionary<string, int> { ["100-a"] = 1 };
+			m.Sets[100] = new(100, "Cheap", ["100-a", "100-b"], new Dictionary<string, int> { ["100-a"] = 10, ["100-b"] = 10 });
+			m.Books["100-b"] = FakeCardMarket.B(20);
+
+			for (int i = 0; i < arcaneCards.Length; i++) {
+				m.Quotes[A(arcaneCards[i])] = Q(A(arcaneCards[i]), arcaneLowest[i]);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			b.AddModule(buyer);
+			var rich = await buyer.WeighSalesAsync([603750u], CancellationToken.None);
+			Check("sweep wallet: the wallet already pays for every level priced today - the set is 'not sure' (never sold or crafted on that), its dearest card known",
+				rich.Single() is { Unsure: true, Sell: false, Top: 197 } && rich[0].Why.Contains("wallet already pays", StringComparison.Ordinal), rich.Single().Why);
+
+			// The gems maths counts the same way.
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			var plan = new NocatFarm.Modules.BuyPlan { Currency = 20, Wallet = 40 };
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(1, "x", true, 0, 5, [new("1-a", 30)]));
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(2, "y", true, 0, 5, [new("2-a", 24)]));
+			NocatFarm.Modules.GemsChoice.NoteCosts("sw-gems", plan, DateTime.UtcNow);
+			var costs = NocatFarm.Modules.GemsChoice.CostsOf("sw-gems", 20, DateTime.UtcNow);
+			Check("sweep wallet: the gems maths too - 0.40 in the wallet pays the 0.24 level and 0.16 of the 0.30 one, so money from gems buys from 0.14 on",
+				costs is [14], costs == null ? "null" : string.Join(",", costs));
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
 			}
 
 			NocatFarm.Modules.GemsChoice.ForgetCosts();

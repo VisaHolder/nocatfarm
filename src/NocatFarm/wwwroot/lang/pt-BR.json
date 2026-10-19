@@ -3243,7 +3243,8 @@
     "the market stopped answering before what its money buys was priced": "o mercado parou de responder antes de saber o que o dinheiro compraria",
     "it has no Steam wallet to spend the money from": "não tem carteira Steam para gastar o dinheiro",
     "{0}: not crafted yet · {1}": "{0}: ainda não criado · {1}",
-    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: ainda não criado · {1} · não se sabe quanto valem as cartas dele"
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: ainda não criado · {1} · não se sabe quanto valem as cartas dele",
+    "its wallet already pays for every level priced today": "a carteira já paga todos os níveis com preço hoje"
   },
   "settings": {
     "SteamOpenEveryAccount": {

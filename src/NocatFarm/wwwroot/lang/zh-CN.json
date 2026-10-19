@@ -3243,7 +3243,8 @@
     "the market stopped answering before what its money buys was priced": "还没算出这笔钱能买什么，市场就不再响应了",
     "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
     "{0}: not crafted yet · {1}": "{0}：暂不合成 · {1}",
-    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少"
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少",
+    "its wallet already pays for every level priced today": "钱包余额已经够买今天定价的所有等级"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3243,7 +3243,8 @@
     "the market stopped answering before what its money buys was priced": "お金で買えるものの値段がわかる前に、マーケットが応答しなくなりました",
     "it has no Steam wallet to spend the money from": "その代金を使うための Steam ウォレットがありません",
     "{0}: not crafted yet · {1}": "{0}: まだ作りません · {1}",
-    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: まだ作りません · {1} · カードの価値がわかりません"
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: まだ作りません · {1} · カードの価値がわかりません",
+    "its wallet already pays for every level priced today": "今日値段のわかったレベルは、すべてウォレットの残高でまかなえます"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -560,6 +560,30 @@ public sealed class BuyPlan {
 	public static string Money(long cents, int currency) => Spare.Money(cents, currency);
 
 	/// <summary>
+	/// 1.8.2: the levels MORE money would buy, cheapest first - past the ones the wallet's balance already pays for. The
+	/// cheapest levels are skipped while the wallet covers them; the first one it covers only part of is left at what's
+	/// still missing; the rest as they are. Never the day's or the week's limits: they only hold the buying back a while.
+	/// Empty when the wallet already pays for every level priced.
+	/// </summary>
+	public static List<long> BeyondWallet(IEnumerable<long> costs, long wallet) {
+		List<long> more = [];
+		long money = Math.Max(0, wallet);
+
+		foreach (long cost in costs.Where(static c => c > 0).Order()) {
+			if (money >= cost) {
+				money -= cost;   // the wallet pays for this one already
+
+				continue;
+			}
+
+			more.Add(cost - money);
+			money = 0;
+		}
+
+		return more;
+	}
+
+	/// <summary>
 	/// The plan - smart levelling. What could be bought: for each badge the account is levelling (cards of its set held, badge
 	/// under level 5), the cards its next level still needs; and, with "Buy the cheapest full sets" on, whole sets for games
 	/// it has none of - the set finder's cheapest on the market (<see cref="SetFinder"/>), any game, played or not. All of them ranked together by what the next badge level costs, cheapest first - the most XP for the

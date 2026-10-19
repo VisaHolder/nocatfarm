@@ -3243,7 +3243,8 @@
     "the market stopped answering before what its money buys was priced": "parayla ne alınacağı fiyatlanmadan önce pazar yanıt vermeyi bıraktı",
     "it has no Steam wallet to spend the money from": "parayı harcayacak bir Steam cüzdanı yok",
     "{0}: not crafted yet · {1}": "{0}: henüz üretilmedi · {1}",
-    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: henüz üretilmedi · {1} · kartlarının değeri bilinmiyor"
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: henüz üretilmedi · {1} · kartlarının değeri bilinmiyor",
+    "its wallet already pays for every level priced today": "cüzdanı bugün fiyatlanan her seviyeyi zaten karşılıyor"
   },
   "settings": {
     "SteamOpenEveryAccount": {
