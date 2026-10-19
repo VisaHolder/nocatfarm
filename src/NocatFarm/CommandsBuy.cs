@@ -106,6 +106,8 @@ public static partial class Commands {
 
 		List<string> lines = [.. picks.Select(p => p.Choice switch {
 			SetSale.Choice.Sell => $"{name}: {p.Game}: sell - {p.Reason.ToEnglish()}",
+			SetSale.Choice.Wait when p.Verdict is { Hold: true } => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}; not crafted - it's worth more sold, so it waits for its cards to sell more",
+			SetSale.Choice.Wait when p.Worth.Length == 0 => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}, and what its cards are worth isn't known; not crafted until it's priced",
 			SetSale.Choice.Wait => $"{name}: {p.Game}: wait - {p.Reason.ToEnglish()}, and a card is worth {p.Worth}; not crafted until it's priced",
 			_ => $"{name}: {p.Game}: craft - {p.Reason.ToEnglish()}"
 		})];

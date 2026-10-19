@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using NocatFarm.Modules;
 
 namespace NocatFarm.Core;
@@ -156,7 +157,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 				case OrderKind.Placed:
 					return await PlacedAsync(first.Id!, price, page, placed, t).ConfigureAwait(false);
 				case OrderKind.Refused:
-					return new BuyAnswer(BuyResult.Refused, 0, first.Message);
+					return new BuyAnswer(BuyResult.Refused, 0, first.Message, Leftover: first.Leftover);
 				case OrderKind.Unclear:
 					Log.Debug(new Said("buy order for {0} · no clear answer · {1}", hash, Shown(body)), bot.Name);
 
@@ -202,7 +203,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	/// An order bought earlier that Steam didn't settle: what it bought, or - still open - taken back. Only ever an order
 	/// this program placed (its id was written down when it was), never one the owner placed by hand.
 	/// </summary>
-	public async Task<BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+	public async Task<BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) {
 		if (ct.IsCancellationRequested) {
 			return new BuyAnswer(BuyResult.Unsure, price, "", orderId);
 		}
@@ -210,7 +211,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		using CancellationTokenSource own = new(AfterSending);
 
 		try {
-			return await SettleAsync(orderId, price, null, looks: 1, own.Token).ConfigureAwait(false);
+			return await SettleAsync(orderId, price, string.IsNullOrEmpty(hash) ? null : Page(hash), looks: 1, own.Token).ConfigureAwait(false);
 		} catch (Exception e) {
 			return new BuyAnswer(BuyResult.Unsure, price, Log.Describe(e), orderId);
 		}
@@ -259,6 +260,87 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	}
 
 	public Task<MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => MarketQuotes.FetchAsync(hash, currency, ct);
+
+	/// <summary>The market's own front page - where Steam lists the account's buy orders ("My buy orders").</summary>
+	private static readonly Uri MarketHome = new(WebSession.Community, "/market/");
+
+	/// <summary>
+	/// 1.8.2: the account's open buy orders, as the market's front page lists them - one read, from the page itself as a
+	/// browser opens it. Null when the page couldn't be read (nothing is taken back on a guess then).
+	/// </summary>
+	public async Task<IReadOnlyList<OpenBuyOrder>?> OpenOrdersAsync(CancellationToken ct) =>
+		ReadOpenOrders(await _web.GetFromAsync(MarketHome, MarketHome, ct).ConfigureAwait(false));
+
+	private static readonly Regex OrderRow = new("<div[^>]*\\bid=\"mybuyorder_(\\d+)\"", RegexOptions.CultureInvariant);
+	private static readonly Regex OrderItem = new("href=\"[^\"]*/market/listings/753/([^\"?#]+)\"", RegexOptions.CultureInvariant);
+	private static readonly Regex OrderPrice = new("market_listing_inline_buyorder_qty\"\\s*>\\s*(\\d+)\\s*@\\s*</span>\\s*([^<]+?)\\s*</span>", RegexOptions.CultureInvariant);
+
+	/// <summary>
+	/// "My buy orders" on the market's front page, read defensively: each row's order id (mybuyorder_&lt;id&gt;), its card
+	/// (the link to the card's page) and its price per card as shown ("1 @ 0,05€"). A row it can't read whole is left out -
+	/// never taken back. Null when the page isn't the account's market page at all (signed out, an error page).
+	/// </summary>
+	public static List<OpenBuyOrder>? ReadOpenOrders(string? html) {
+		if (string.IsNullOrWhiteSpace(html) || (!html.Contains("tabContentsMyListings", StringComparison.Ordinal) && !html.Contains("mybuyorder_", StringComparison.Ordinal))) {
+			return null;
+		}
+
+		List<OpenBuyOrder> found = [];
+		MatchCollection rows = OrderRow.Matches(html);
+
+		for (int i = 0; i < rows.Count; i++) {
+			int start = rows[i].Index;
+			int end = i + 1 < rows.Count ? rows[i + 1].Index : Math.Min(html.Length, start + 6000);
+			string row = html[start..end];
+
+			if ((OrderItem.Match(row) is not { Success: true } item) || (OrderPrice.Match(row) is not { Success: true } price)) {
+				continue;
+			}
+
+			string hash;
+
+			try {
+				hash = Uri.UnescapeDataString(item.Groups[1].Value);
+			} catch (UriFormatException) {
+				continue;
+			}
+
+			if ((hash.Length == 0) || !int.TryParse(price.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int quantity) || (quantity <= 0)) {
+				continue;
+			}
+
+			found.Add(new OpenBuyOrder(rows[i].Groups[1].Value, hash, MoneyCents(System.Net.WebUtility.HtmlDecode(price.Groups[2].Value)) ?? -1, quantity));
+		}
+
+		return found;
+	}
+
+	/// <summary>
+	/// A price as the market writes it, in cents: "$0.05", "0,05€", "1,--€", "CDN$ 1.23", "¥ 500" (no cents: whole units).
+	/// Null when there's no number in it.
+	/// </summary>
+	public static long? MoneyCents(string text) {
+		string t = text.Replace("--", "00", StringComparison.Ordinal);
+		int first = -1, last = -1;
+
+		for (int i = 0; i < t.Length; i++) {
+			if (char.IsAsciiDigit(t[i])) {
+				first = first < 0 ? i : first;
+				last = i;
+			}
+		}
+
+		if (first < 0) {
+			return null;
+		}
+
+		string number = t[first..(last + 1)];
+		string digits = new([.. number.Where(char.IsAsciiDigit)]);
+		int separator = number.LastIndexOfAny(['.', ',']);
+		bool cents = (separator >= 0) && (number.Length - separator - 1 == 2) && number[(separator + 1)..].All(char.IsAsciiDigit);
+
+		return (digits.Length > 12) || !long.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out long n) ? null : cents ? n : n * 100;
+	}
 
 	private static Uri Page(string hash) => new(WebSession.Community, $"/market/listings/{CardMarket.SteamItems}/{Uri.EscapeDataString(hash)}");
 
@@ -394,7 +476,9 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		Refused
 	}
 
-	public readonly record struct Order(OrderKind Kind, string? Id, string? Confirm, string Message);
+	/// <param name="Leftover">1.8.2: refused because a buy order for this card is already open ("You already have an active
+	/// buy order for this item") - proof an earlier order went in.</param>
+	public readonly record struct Order(OrderKind Kind, string? Id, string? Confirm, string Message, bool Leftover = false);
 
 	/// <summary>
 	/// A createbuyorder answer. Any order id that isn't 0 means it went in, whatever "success" says (1 or true). Only a JSON
@@ -427,9 +511,10 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 			}
 
 			// No order: a refusal only when Steam says so plainly. Success with no order, Steam's "timed out" (16) or
-			// "pending" (22), or no word at all - it may have gone in.
+			// "pending" (22), or no word at all - it may have gone in. A buy order for the card already open (Steam's
+			// "duplicate request", 29): refused, and proof that an earlier order is still on the market.
 			return root.TryGetProperty("success", out JsonElement s) && (Code(s) is { } code) && (code is not (1 or 16 or 22 or 0))
-				? new Order(OrderKind.Refused, null, null, message)
+				? new Order(OrderKind.Refused, null, null, message, (code == 29) || message.Contains("active buy order", StringComparison.OrdinalIgnoreCase))
 				: new Order(OrderKind.Unclear, null, null, message);
 		} catch (Exception e) when (e is JsonException or InvalidOperationException) {
 			return new Order(OrderKind.Unclear, null, null, "");

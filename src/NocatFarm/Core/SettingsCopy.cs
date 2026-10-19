@@ -9,12 +9,15 @@ namespace NocatFarm.Core;
 /// ("Copy settings from...") and 'copy settings &lt;from&gt; &lt;to&gt;'.
 /// </summary>
 /// <remarks>
-/// <para>Every per-account setting comes across except what belongs to that account alone (<see cref="NeverCopied"/>) -
-/// and the five switches that are turned on only after their preview (<see cref="Switches.All"/>) always end up off on
-/// the account copied to: their go-ahead is the owner's, given on that account, and never travels.</para>
-/// <para>The copy is the source account's settings, as they are, mode included: a robot copied onto an account you sign
-/// into yourself stays a robot. Only a mode chosen in the same step (Add account asks human or robot) switches it, the way
-/// a dashboard save switching human mode does (<see cref="Settings.ApplyLegitMode"/>). The rest of a dashboard save's
+/// <para>Every per-account setting is named in exactly one list: <see cref="CopiedAcross"/> comes across;
+/// <see cref="NeverCopied"/> belongs to that account alone; <see cref="KeptAsTheyAre"/> - whatever spends money, gems or
+/// points, trades, sends items away, takes commands, its money limits and human mode - stays as the account copied to has
+/// it; and the five switches that are turned on only after their preview (<see cref="Switches.All"/>) always end up off on
+/// the account copied to: their go-ahead is the owner's, given on that account, and never travels. A setting in no list
+/// is never copied (the checks fail until it's put in one).</para>
+/// <para>1.8.2: the account keeps its own mode: the source's settings are switched to it the way a dashboard save switching
+/// human mode does (<see cref="Settings.ApplyLegitMode"/>) - a robot copied onto a human-mode account stays human-mode.
+/// Only a mode chosen in the same step (Add account asks human or robot) is taken instead. The rest of a dashboard save's
 /// checks run as well: bad values clamped, ranges put in order.</para>
 /// <para>Nothing here changes the account copied from. <see cref="Build"/> changes nothing at all - it's the preview.</para>
 /// </remarks>
@@ -35,15 +38,134 @@ public static class SettingsCopy {
 		nameof(BotConfig.TradeMasterToken)
 	];
 
+	/// <summary>
+	/// 1.8.2: settings the account copied to keeps as it has them - whatever spends money, gems or points, trades, sends items
+	/// away, takes commands or changes human mode, and money limits in a currency (the source's wallet may be another money).
+	/// Copying another account's settings must never start any of that on this one.
+	/// </summary>
+	public static readonly IReadOnlyList<string> KeptAsTheyAre = [
+		// spends money, gems or points, or sells
+		nameof(BotConfig.BoosterMake), nameof(BotConfig.BoosterGems), nameof(BotConfig.GemsForLevels), nameof(BotConfig.SellSetsForLevels), nameof(BotConfig.BuyFullSets),
+		nameof(BotConfig.PointsBuySeasonalBadge), nameof(BotConfig.PointsBuyOlderBadges), nameof(BotConfig.PointsBadgeMaxLevel), nameof(BotConfig.PointsKeepAtLeast),
+		nameof(BotConfig.PointsWeeklyCap),
+		// money limits, in the wallet's own currency
+		nameof(BotConfig.BuyDailyLimit), nameof(BotConfig.BuyWeeklyLimit), nameof(BotConfig.CardSwapMaxLoss), nameof(BotConfig.SpareMaxPrice), nameof(BotConfig.SpareDailyValue),
+		nameof(BotConfig.SpareMinSale),
+		// trades
+		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.CardSwapsPerDay), nameof(BotConfig.AcceptFromMasters), nameof(BotConfig.TradeMasters),
+		nameof(BotConfig.AutoTradeWith), nameof(BotConfig.DeclineOtherTrades), nameof(BotConfig.AcceptDonations), nameof(BotConfig.DonationsWhileAsleep),
+		// sends items away
+		nameof(BotConfig.SendItemTypes), nameof(BotConfig.SendOnFarmingFinished), nameof(BotConfig.SendEveryHours), nameof(BotConfig.SendAroundHour),
+		nameof(BotConfig.SpareGems), nameof(BotConfig.SpareGemsSendTo), nameof(BotConfig.BoosterUnopened), nameof(BotConfig.BoosterSendTo),
+		// takes commands
+		nameof(BotConfig.CommandMasters),
+		// human mode
+		nameof(BotConfig.LegitMode)
+	];
+
+	/// <summary>1.8.2: every setting that does come across - named one by one, so a new setting is never copied by accident.</summary>
+	public static readonly IReadOnlyList<string> CopiedAcross = [
+		// Account
+		nameof(BotConfig.OnlineStatus), nameof(BotConfig.UIMode), nameof(BotConfig.ClearInventoryNotifications), nameof(BotConfig.ClearNotifications),
+		// Human
+		nameof(BotConfig.GameWeights), nameof(BotConfig.HourTargets), nameof(BotConfig.WeekdayHours), nameof(BotConfig.WeekendHours),
+		nameof(BotConfig.DayOffChancePct), nameof(BotConfig.DayStartTime), nameof(BotConfig.DayStartVaryMinutes), nameof(BotConfig.BedTime),
+		nameof(BotConfig.BedVaryMinutes), nameof(BotConfig.LateNightExtraHours), nameof(BotConfig.SleepMinHours), nameof(BotConfig.SleepMaxHours),
+		nameof(BotConfig.PureMainDayChancePct), nameof(BotConfig.LearnFromOwner), nameof(BotConfig.LearnFollow), nameof(BotConfig.LearnWeekends),
+		nameof(BotConfig.NewGamesFirst), nameof(BotConfig.LongerRhythms), nameof(BotConfig.JoinFriends), nameof(BotConfig.ReactionSpeed),
+		nameof(BotConfig.WarmUpMinMinutes), nameof(BotConfig.WarmUpMaxMinutes), nameof(BotConfig.SessionMinMinutes), nameof(BotConfig.SessionMaxMinutes),
+		nameof(BotConfig.BreakMinMinutes), nameof(BotConfig.BreakMaxMinutes), nameof(BotConfig.BreakAwayAfterMinMinutes),
+		nameof(BotConfig.BreakAwayAfterMaxMinutes), nameof(BotConfig.MealBreaksPerDay), nameof(BotConfig.MealBreakMinutes),
+		nameof(BotConfig.SignOutOnBreakChancePct), nameof(BotConfig.MaxSignOutsPerDay), nameof(BotConfig.OfflineIdleAtNight),
+		nameof(BotConfig.OfflineIdleGames), nameof(BotConfig.OfflineIdleTopGames), nameof(BotConfig.ActOnlyWhileAwake),
+		nameof(BotConfig.QuietThingsWaitForDay), nameof(BotConfig.WakeDelayMinMinutes), nameof(BotConfig.WakeDelayMaxMinutes),
+		nameof(BotConfig.QuietDelayMinMinutes), nameof(BotConfig.QuietDelayMaxMinutes), nameof(BotConfig.LegitStopMaxSeconds),
+		// Playing
+		nameof(BotConfig.IdleGames), nameof(BotConfig.IdleWholeLibrary), nameof(BotConfig.SkipRefundableGames), nameof(BotConfig.RotateIdleGames),
+		nameof(BotConfig.RotateEveryHours), nameof(BotConfig.CustomGameNameEnabled), nameof(BotConfig.CustomGameName), nameof(BotConfig.PlayWhileFarming),
+		nameof(BotConfig.GameDevice),
+		// Cards
+		nameof(BotConfig.FarmCards), nameof(BotConfig.FarmCardsWhen), nameof(BotConfig.CardSittingsPct), nameof(BotConfig.HoursUntilCardDrops),
+		nameof(BotConfig.FarmingOrder), nameof(BotConfig.PriorityGames), nameof(BotConfig.FarmPriorityOnly), nameof(BotConfig.BlacklistedGames),
+		nameof(BotConfig.SkipUnplayedGames), nameof(BotConfig.FarmInSittings), nameof(BotConfig.FarmHoursPerDay), nameof(BotConfig.FarmFromHour),
+		nameof(BotConfig.FarmUntilHour), nameof(BotConfig.PostFarmWindDownMinMinutes), nameof(BotConfig.PostFarmWindDownMaxMinutes),
+		nameof(BotConfig.FarmingDelayMinutes), nameof(BotConfig.MaxFarmingHoursPerGame), nameof(BotConfig.FarmOffline),
+		nameof(BotConfig.StopWhenFarmingDone),
+		// Badges
+		nameof(BotConfig.CraftBadges), nameof(BotConfig.CraftFoilBadges), nameof(BotConfig.SellPerRun),
+		// Spare
+		nameof(BotConfig.SpareAction), nameof(BotConfig.SpareKeepGems), nameof(BotConfig.SpareMaxedBadgeCards), nameof(BotConfig.SpareExtraCards),
+		nameof(BotConfig.SpareKeepCopies), nameof(BotConfig.SpareFoils), nameof(BotConfig.SpareBackgrounds), nameof(BotConfig.SpareKeepBackgrounds),
+		nameof(BotConfig.SpareEmoticons), nameof(BotConfig.SpareKeepEmoticons), nameof(BotConfig.SpareNewDays), nameof(BotConfig.SpareKeepItems),
+		nameof(BotConfig.SpareKeepGames), nameof(BotConfig.SpareGemMarginPct), nameof(BotConfig.SparePerRun), nameof(BotConfig.SpareDailyItems),
+		nameof(BotConfig.SpareRunHours), nameof(BotConfig.SpareGapSeconds), nameof(BotConfig.SparePriceMaxAgeHours), nameof(BotConfig.SpareSellPrice),
+		nameof(BotConfig.SpareDumpPct), nameof(BotConfig.SpareRelistDays), nameof(BotConfig.SpareRelistFloorPct), nameof(BotConfig.SpareDeclinedDays),
+		nameof(BotConfig.SpareHumanGapMinMinutes), nameof(BotConfig.SpareHumanGapMaxMinutes), nameof(BotConfig.SpareHumanPerLook),
+		// Packs
+		nameof(BotConfig.BoosterPackGames), nameof(BotConfig.BoosterKeepGems), nameof(BotConfig.OpenBoosterPacks), nameof(BotConfig.BoosterOpenNewDays),
+		nameof(BotConfig.BoosterNeverOpen), nameof(BotConfig.BoosterCheckHours),
+		// Achievements
+		nameof(BotConfig.UnlockAchievements), nameof(BotConfig.AchievementPace), nameof(BotConfig.AchievementMaxCompletionPct),
+		nameof(BotConfig.AchievementBurstMinPct), nameof(BotConfig.AchievementIncludeMainGame), nameof(BotConfig.AchievementSkipMultiplayer),
+		nameof(BotConfig.AchievementGames), nameof(BotConfig.AchievementNeverGames), nameof(BotConfig.AchievementGrindGapMinMinutes),
+		nameof(BotConfig.AchievementGrindGapMaxMinutes), nameof(BotConfig.AchievementBoost), nameof(BotConfig.AchievementBoostGames),
+		nameof(BotConfig.BoostSessionHours), nameof(BotConfig.BoostWeight), nameof(BotConfig.BoostGamesInRotation), nameof(BotConfig.BoostHoursPerDay),
+		nameof(BotConfig.BoostSwitchFromPct), nameof(BotConfig.BoostSwitchToPct), nameof(BotConfig.BoostRestDaysMin), nameof(BotConfig.BoostRestDaysMax),
+		nameof(BotConfig.AchievementRealLength), nameof(BotConfig.BoostMinReviews), nameof(BotConfig.BoostOnlyPlayedGames),
+		// Family
+		nameof(BotConfig.IncludeFamilyLibrary), nameof(BotConfig.YieldToFamily), nameof(BotConfig.BorrowFamilyCopy), nameof(BotConfig.FamilyWaitMinutes),
+		// Extras
+		nameof(BotConfig.ClaimFree),
+		// SaleEvents
+		nameof(BotConfig.SaleEvents), nameof(BotConfig.SaleEventsHumanToo), nameof(BotConfig.SaleAwardsNominate), nameof(BotConfig.SaleAwardsVote),
+		nameof(BotConfig.ClaimEventItems), nameof(BotConfig.DiscoveryQueue), nameof(BotConfig.SaleQuests), nameof(BotConfig.SaleNextFest),
+		nameof(BotConfig.SaleNominatePick), nameof(BotConfig.SaleGapMinSeconds), nameof(BotConfig.SaleGapMaxSeconds),
+		nameof(BotConfig.SaleHumanGapMinMinutes), nameof(BotConfig.SaleHumanGapMaxMinutes), nameof(BotConfig.SaleCheckHours),
+		// Points
+		nameof(BotConfig.PointsCheckEveryHours),
+		// Buy
+		nameof(BotConfig.BuyCheckHours),
+		// Inventory
+		nameof(BotConfig.ShowInventoryValue), nameof(BotConfig.InventoryIgnoreGames), nameof(BotConfig.WatchBans),
+		// ScamWatch
+		nameof(BotConfig.WatchForScams), nameof(BotConfig.ScamWatchStopTrades), nameof(BotConfig.ScamWatchCancelOffers),
+		nameof(BotConfig.ScamWatchRevokeKey), nameof(BotConfig.ScamWatchApiKey), nameof(BotConfig.ScamWatchDevices), nameof(BotConfig.ScamWatchDetails),
+		nameof(BotConfig.ScamWatchSessions), nameof(BotConfig.ScamWatchMinMinutes), nameof(BotConfig.ScamWatchMaxMinutes),
+		// Health
+		nameof(BotConfig.WatchHealth), nameof(BotConfig.HealthAlertBans), nameof(BotConfig.HealthAlertTradeHold), nameof(BotConfig.HealthAlertMarket),
+		nameof(BotConfig.HealthAlertLimited), nameof(BotConfig.HealthAlertGuard), nameof(BotConfig.HealthAlertPhone), nameof(BotConfig.HealthMinHours),
+		nameof(BotConfig.HealthMaxHours),
+		// Trading
+		nameof(BotConfig.AcceptGifts), nameof(BotConfig.AcceptGiftedGames), nameof(BotConfig.GiftDelayMinMinutes), nameof(BotConfig.GiftDelayMaxMinutes),
+		nameof(BotConfig.CardSwapSkipHeld), nameof(BotConfig.OneTradeAtATime), nameof(BotConfig.TradeDelayMinMinutes),
+		nameof(BotConfig.TradeDelayMaxMinutes),
+		// Comments
+		nameof(BotConfig.Rep4Rep), nameof(BotConfig.Rep4RepDailyCap), nameof(BotConfig.Rep4RepGapMinMinutes), nameof(BotConfig.Rep4RepGapMaxMinutes),
+		nameof(BotConfig.Rep4RepStartHour), nameof(BotConfig.Rep4RepEndHour), nameof(BotConfig.Rep4RepLearnCap), nameof(BotConfig.Rep4RepRetryRefused),
+		// Social
+		nameof(BotConfig.AcceptFriendRequests), nameof(BotConfig.FriendRequestDelayMinMinutes), nameof(BotConfig.FriendRequestDelayMaxMinutes),
+		nameof(BotConfig.AcceptGroupInvites), nameof(BotConfig.JoinGroup), nameof(BotConfig.ExtraGroupsToJoin), nameof(BotConfig.IgnoreSuspiciousInvites),
+		nameof(BotConfig.RejectInvalidFriendInvites), nameof(BotConfig.AutoReplyEnabled), nameof(BotConfig.AutoReply),
+		nameof(BotConfig.AutoReplyOncePerDay), nameof(BotConfig.AutoReplyDelaySeconds),
+		// Courtesy
+		nameof(BotConfig.PauseWhenYouPlay), nameof(BotConfig.ResumeDelayMinutes),
+		// Logging
+		nameof(BotConfig.StatusEveryMinutes), nameof(BotConfig.StatusQuietEveryMinutes)
+	];
+
 	/// <summary>Settings naming accounts: an entry naming the account copied to (itself) is taken out.</summary>
 	public static readonly IReadOnlyList<string> NamesAccounts = [
 		nameof(BotConfig.AutoTradeWith), nameof(BotConfig.TradeMasters), nameof(BotConfig.CommandMasters),
 		nameof(BotConfig.SpareGemsSendTo), nameof(BotConfig.BoosterSendTo)
 	];
 
-	/// <summary>Whether a setting comes across in a copy: not one of an account's own, not a secret, not a switch with a go-ahead.</summary>
+	/// <summary>
+	/// Whether a setting comes across in a copy: named in <see cref="CopiedAcross"/> - not one of an account's own, not one it
+	/// keeps (<see cref="KeptAsTheyAre"/>), not a secret, not a switch with a go-ahead.
+	/// </summary>
 	public static bool Copied(SettingDef def) =>
-		(def.Kind != SettingKind.Secret) && !NeverCopied.Contains(def.Name) && (Switches.FeatureOf(def.Name) == null);
+		(def.Kind != SettingKind.Secret) && CopiedAcross.Contains(def.Name) && !NeverCopied.Contains(def.Name) && !KeptAsTheyAre.Contains(def.Name)
+		&& (Switches.FeatureOf(def.Name) == null);
 
 	/// <summary>One setting the copy changes, as it is and as it would be.</summary>
 	public sealed record Change(string Name, string Label, object? Before, object? After, string BeforeText, string AfterText);
@@ -59,7 +181,7 @@ public static class SettingsCopy {
 	/// <summary>
 	/// The account's settings with the source's copied over and checked like a dashboard save - changing nothing: not the
 	/// source, not the target, not a go-ahead. <paramref name="human"/>: a mode chosen in the same step (Add account), or null
-	/// to take the source's.
+	/// to keep the account's own.
 	/// </summary>
 	public static Plan Build(BotConfig source, BotConfig target, string targetName, ulong targetSteamId, bool? human = null) {
 		BotConfig from = Clone(source);   // nothing in the result is shared with the source - a list changed later changes one account
@@ -69,8 +191,9 @@ public static class SettingsCopy {
 			Set(result, def.Name, Settings.Read(from, def.Name));
 		}
 
-		// Human mode's stash of the robot games goes with the mode, so turning it off later on this account puts back the
-		// source's games, not whatever this one had before.
+		// The source's mode comes across for a moment with its games - and its stash of robot games, so switching below puts
+		// back the source's games, not whatever this one had before.
+		result.LegitMode = from.LegitMode;
 		result.LegitBackup = from.LegitBackup;
 
 		// The switches with a go-ahead: always off after a copy, whatever either account had.
@@ -81,12 +204,15 @@ public static class SettingsCopy {
 			Set(result, k.Setting, false);
 		}
 
-		List<string> cleared = [.. NamesAccounts.Where(n => WithoutSelf(result, n, targetName, targetSteamId))];
+		List<string> cleared = [.. NamesAccounts.Where(n => (Settings.FindBot(n) is { } d) && Copied(d) && WithoutSelf(result, n, targetName, targetSteamId))];
 
-		// A mode picked in the same step: the switch a dashboard save makes, from the source's mode.
-		if ((human is bool h) && (h != result.LegitMode)) {
-			result.LegitMode = h;
-			Settings.ApplyLegitMode(result, !h);
+		// 1.8.2: the account keeps its own mode (or the one picked in the same step): the source's settings switched to it,
+		// the way a dashboard save switching human mode does.
+		bool want = human ?? target.LegitMode;
+
+		if (want != result.LegitMode) {
+			result.LegitMode = want;
+			Settings.ApplyLegitMode(result, !want);
 		}
 
 		// Automatic booster packs keep their gems loose - the check a save makes (Modules.BoosterPick.Settle), said here
@@ -166,7 +292,8 @@ public static class SettingsCopy {
 
 	/// <summary>
 	/// A new account's settings, copied from <paramref name="from"/>: <paramref name="fresh"/> (its sign-in) with everything
-	/// else from the source. Not saved - Add account saves it as it adds it, after <see cref="Switches.Settle"/>.
+	/// else from the source. Not saved - Add account saves it as it adds it, after <see cref="Switches.Settle"/>. A new
+	/// account has no mode of its own yet: the one picked, else the source's.
 	/// </summary>
 	public static Plan ForNewAccount(Bot from, BotConfig fresh, string name, bool? human) {
 		BotConfig source;
@@ -175,7 +302,7 @@ public static class SettingsCopy {
 			source = Clone(from.Cfg);
 		}
 
-		return Build(source, fresh, name, 0, human);
+		return Build(source, fresh, name, 0, human ?? source.LegitMode);
 	}
 
 	/// <summary>The log line for a copy: "settings copied from new · 3 switches left off for you to turn on".</summary>
@@ -205,19 +332,16 @@ public static class SettingsCopy {
 			return $"{to} already has {from}'s settings - copying changes nothing.";
 		}
 
+		// Every change, none left out: what isn't shown can't be checked before it's copied.
 		List<string> lines = [$"Copying {from}'s settings onto {to} changes {Count(plan.Changes.Count, "setting")}:"];
-		const int Shown = 40;
 
-		foreach (Change c in plan.Changes.Take(Shown)) {
+		foreach (Change c in plan.Changes) {
 			lines.Add($"  {c.Label}: {Blank(c.BeforeText)} -> {Blank(c.AfterText)}");
-		}
-
-		if (plan.Changes.Count > Shown) {
-			lines.Add($"  ...and {plan.Changes.Count - Shown} more");
 		}
 
 		lines.AddRange(Notes(to, plan));
 		lines.Add($"Never copied: {to}'s sign-in, authenticator, proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token.");
+		lines.Add($"Kept as {to} has them: whatever spends money, gems or points, trades, sends items away or takes commands, its money limits, and human mode.");
 		lines.Add($"{from}'s settings stay as they are.");
 
 		return string.Join(Environment.NewLine, lines);

@@ -4,8 +4,12 @@ namespace NocatFarm.Modules;
 
 /// <summary>1.8.2 smart levelling: before crafting, a normal set worth more on the market than the levels it'd buy is sold instead (<see cref="SetSale"/>).</summary>
 public sealed partial class BadgeCraft {
-	/// <summary>The sets that are weighed at all: normal ones, one level each - a foil set is always crafted.</summary>
-	internal static List<Craftable> SaleCandidates(IEnumerable<Craftable> ready) => [.. ready.Where(static c => SetSale.Considered(c.Border, c.Levels))];
+	/// <summary>
+	/// The sets that are weighed at all: normal ones, one level each - a foil set is always crafted, and so is a game on the
+	/// keep list ("Never touch items from these games").
+	/// </summary>
+	internal static List<Craftable> SaleCandidates(IEnumerable<Craftable> ready, IReadOnlyCollection<uint> keep) =>
+		[.. ready.Where(c => SetSale.Considered(c.Border, c.Levels) && !keep.Contains(c.AppId))];
 
 	/// <summary>Lists a set sold instead of crafted - how many of its cards went up.</summary>
 	private readonly Func<Bot, SetSale.Verdict, InventoryContents, CancellationToken, Task<int>> _listSet = SetSale.ListAsync;
@@ -16,7 +20,7 @@ public sealed partial class BadgeCraft {
 	/// why; one not known for sure whose cards are known to be worth something waits for the next look, not crafted.
 	/// </summary>
 	private async Task<List<Craftable>> SellInsteadAsync(List<Craftable> ready, InventoryContents inventory, CancellationToken ct) {
-		if (SetSale.Applies(Bot.Cfg, CardBuyer.On(Bot)) && (SaleCandidates(ready).Count > 0)) {
+		if (SetSale.Applies(Bot.Cfg, CardBuyer.On(Bot)) && (SaleCandidates(ready, SpareRules.From(Bot.Cfg).KeepGames).Count > 0)) {
 			_status = new Said("weighing sets against the levels they'd buy");
 		}
 
@@ -35,7 +39,9 @@ public sealed partial class BadgeCraft {
 					// Not crafted: it may well be worth more sold. The next look weighs it again.
 					left.RemoveAll(c => (c.AppId == pick.App) && (c.Border == 0));
 					_moreToCraft = true;
-					Log.Info(new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
+					Log.Info(pick.Verdict is { Hold: true } ? new Said("{0}: not crafted yet · {1}", pick.Game, pick.Reason)
+						: pick.Worth.Length == 0 ? new Said("{0}: not crafted yet · {1} · what its cards are worth isn't known", pick.Game, pick.Reason)
+						: new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
 
 					continue;
 			}

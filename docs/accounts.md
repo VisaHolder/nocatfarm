@@ -94,9 +94,18 @@ ever turned on after its own preview, on that account. If the account you copy f
 off and tells you to turn it on yourself after its preview (`spare on new2`, or the switch in its settings).
 
 A setting that names accounts loses the account itself: copying new's *Your other accounts* `new2:to, old` onto new2
-leaves `old`, and *Send the sacks to* `new2` becomes empty. Everything else comes across as it is, human mode
-included - a robot copied onto an account you sign into yourself stays a robot until you change it. Numbers out of
-range are put back the way a save does it, and the preview says so.
+leaves `old`, and *Send the sacks to* `new2` becomes empty.
+
+**Kept as the account has them:** whatever spends money, gems or points (making booster packs, using gems for levels,
+selling sets, buying full sets, Steam Points levels), its money limits (they're in its own wallet's currency), trading
+(fair card swaps, your own accounts, *Trade by itself with*, declining, donations), sending items away (what to send and
+when, sacks of gems and unopened packs), *Accept commands from*, and human mode. Copying never starts any of that on
+another account - set it there yourself.
+
+The account keeps its own mode: a robot's settings copied onto a human-mode account are switched to human mode the way
+a save switching it does (its games become the weights), and the other way round. Only a mode you pick in the same step
+(Add account asks human or robot) is taken instead. Everything else comes across as it is. Numbers out of range are put
+back the way a save does it, and the preview lists every change.
 
 `disable myaccount` keeps the settings but never signs in, and `enable myaccount` undoes it. `remove myaccount`
 deletes the account and its login token. `nickname myaccount <name>` changes the profile name everybody sees, and

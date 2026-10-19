@@ -57,7 +57,7 @@ public static partial class Commands {
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
 		new("add", "<name> <steamLogin|qr> [human|robot] [from <account>]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. 'from <account>' starts it with that account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone; Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview."),
-		new("copy", "settings <from> <to> [yes]", GroupAccounts, "Copy every setting from one account onto another, so you don't set it up twice. 'copy settings new new2' shows what would change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed."),
+		new("copy", "settings <from> <to> [yes]", GroupAccounts, "Copy one account's settings onto another, so you don't set it up twice. 'copy settings new new2' shows every change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Kept as new2 has them: whatever spends money, gems or points, its money limits, trading, sending items, 'Accept commands from' and human mode. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
@@ -5000,7 +5000,9 @@ public static partial class Commands {
 		}
 
 		if (what == "do") {
-			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None).ConfigureAwait(false);
+			// Priced again right before each goes up by the same rule: the price limit, the minimum, never under its gems.
+			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None,
+				reprice: Seller.OwnRule(bot, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, plan.Gems ?? new Dictionary<ulong, int?>())).ConfigureAwait(false);
 		}
 
 		StringBuilder sb = new();

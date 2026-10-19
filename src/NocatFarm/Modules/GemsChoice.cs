@@ -360,12 +360,20 @@ public static class GemsChoice {
 
 	/// <summary>
 	/// What a buying look found the next badge levels cost, cheapest first: none when it couldn't tell (a problem, Steam not
-	/// saying how purchases are confirmed); empty when the money can't be spent by itself (billing details, email).
+	/// saying how purchases are confirmed, the market stopping part way); empty when the money can't be spent by itself
+	/// (billing details, email). Only the levels past what the wallet already pays for: money from gems buys those
+	/// (<see cref="BuyPlan.BeyondWallet"/>) - none known (the wallet pays for every one priced) is not known either.
 	/// </summary>
 	public static void NoteCosts(string account, BuyPlan plan, DateTime now) {
-		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) ? null
+		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
 			: plan.Block != BuyBlock.None ? []
-			: [.. plan.Ranked.Select(static s => s.Cost).Where(static c => c > 0).Order()];
+			: [.. BuyPlan.BeyondWallet(plan.Ranked.Select(static s => s.Cost), plan.Wallet)];
+
+		// The wallet already pays for every level priced: what more money buys isn't known (the levels past them weren't
+		// priced) - not "nothing", or opening packs would look better than a sack that buys several cheap sets later.
+		if (costs is { Length: 0 } && (plan.Block == BuyBlock.None) && (plan.Ranked.Count > 0)) {
+			costs = null;
+		}
 
 		Costs[account] = (now, plan.Currency, costs);
 	}
@@ -387,6 +395,9 @@ public static class GemsChoice {
 		public List<OpenedCard> Cards { get; set; } = [];
 		public int Day { get; set; }
 		public int ListedToday { get; set; }
+
+		/// <summary>1.8.2: when a sack was last put up without a clear yes (UTC ticks, 0 none) - looked for among the listings before another goes up.</summary>
+		public long SackTriedAt { get; set; }
 
 		/// <summary>The latest word, for 'booster plan' and the status line.</summary>
 		public string Last { get; set; } = "";

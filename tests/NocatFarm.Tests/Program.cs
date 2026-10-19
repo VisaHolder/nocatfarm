@@ -26200,7 +26200,7 @@ await CommandSweep.RunAsync(Check);
 		Check("log: a listing gone from the market makes the look read the market history, so a sale can be told",
 			NocatFarm.Core.OurListings.Gone([soldRec], [], svNow) && !NocatFarm.Core.OurListings.Gone([soldRec], [new(1, 11, soldRec.Hash, 26, soldRec.At, false)], svNow));
 		string spareRunSrc = SvSrc("Core/SpareRun.cs");
-		Check("log: sold and declined listings are each logged as they're found", spareRunSrc.Contains("Log.Good(SoldSaid(s, currency), bot.Name);", StringComparison.Ordinal)
+		Check("log: sold and declined listings are each logged as they're found", spareRunSrc.Contains("Say(soldNow.Count > EachOwnLine, SoldSaid(s, currency), bot.Name);", StringComparison.Ordinal)
 			&& spareRunSrc.Contains("Log.Info(DeclinedSaid(d.Hash, rules.DeclinedDays), bot.Name);", StringComparison.Ordinal));
 		Check("log: making a pack, opening one and crafting a badge each log a line",
 			SvSrc("Modules/Boosters.cs").Contains("Log.Reward(MadeSaid(offer.Name, gems), Bot.Name);", StringComparison.Ordinal)
@@ -26934,6 +26934,13 @@ await CommandSweep.RunAsync(Check);
 	string lvLine = NocatFarm.Core.SpareRun.LiveSaid(lvWaiting.Hash, lvWaiting.BuyerCents, 20).ToEnglish();
 	Check("listing live: the line is short - \"Starry Background 1 is on the market · 0.22 CAD\"",
 		lvLine == "Starry Background 1 is on the market · 0.22 CAD", lvLine);
+	var lvMany = Enumerable.Range(0, 29).Select(i => new NocatFarm.Core.OurListings.Entry((ulong) (100 + i), $"1-Thing {i}", 2, lvNow, Tracked: true, Active: true, BuyerCents: i == 0 ? 16 : 3)).ToList();
+	string lvAll = NocatFarm.Core.SpareRun.LiveAllSaid(lvMany, 20).ToEnglish();
+	string soldAll = NocatFarm.Core.SpareRun.SoldAllSaid(lvMany.Take(5).ToList(), 20).ToEnglish();
+	Check("listing live: a batch confirmed at once is one line in the window - \"29 listings on the market · 1.00 CAD\", \"sold 5 items · you got 0.10 CAD\" - each still in the log file",
+		(lvAll == "29 listings on the market · 1.00 CAD") && (soldAll == "sold 5 items · you got 0.10 CAD") && (NocatFarm.Core.SpareRun.EachOwnLine == 3)
+		&& LvSrc("Core/SpareRun.cs").Contains("if (live.Count > EachOwnLine) {", StringComparison.Ordinal) && LvSrc("Core/SpareRun.cs").Contains("Log.Debug(said, account);", StringComparison.Ordinal),
+		lvAll + " / " + soldAll);
 	Check("listing live: with no price known it's just the name",
 		NocatFarm.Core.SpareRun.LiveSaid("1-Thing", 0, 20).ToEnglish() == "Thing is on the market");
 	Check("listing live: while a listing waits on its confirmation, a light look at the market every 5 to 10 minutes - only then",
@@ -26941,7 +26948,7 @@ await CommandSweep.RunAsync(Check);
 		&& LvSrc("Modules/SpareItems.cs").Contains("await SpareRun.CheckPendingAsync(Bot, ct)", StringComparison.Ordinal)
 		&& LvSrc("Modules/SpareItems.cs").Contains("_pendingAt = DateTime.UtcNow + Rng.Minutes(5, 10);", StringComparison.Ordinal));
 	Check("listing live: the look and the light check say the same lines - on the market, sold, declined",
-		LvSrc("Core/SpareRun.cs").Contains("Log.Good(LiveSaid(e.Hash, e.BuyerCents, currency), bot.Name);", StringComparison.Ordinal)
+		LvSrc("Core/SpareRun.cs").Contains("Say(live.Count > EachOwnLine, LiveSaid(e.Hash, e.BuyerCents, currency), bot.Name);", StringComparison.Ordinal)
 		&& LvSrc("Core/SpareRun.cs").Contains("await JudgeListingsAsync(bot, listings, currency, rules, memory, now, ct).ConfigureAwait(false);", StringComparison.Ordinal));
 }
 
@@ -28710,6 +28717,36 @@ await GemsChoiceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".
 // ── 1.8.2: settings clean-up - internals hidden, ranges on one row, merged settings with their old keys, order, defaults, setup ──
 await SettingsCleanupChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 sweep: a set not known for sure waits - the market stopping part way, nothing known of its worth, a card hardly selling; fakes only ──
+await SweepSetChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: what a sale's money buys is counted past the levels the wallet already pays for; fakes only ──
+await SweepWalletChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: buying cards - the fee's tax in the plan, a purchase counted from when it's known bought; fakes only ──
+await SweepBuyChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: an order that went in without Steam giving its id - found on the market's list of open buy orders and taken back; fakes only ──
+await SweepOrderChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: a game on the keep list is never sold - its set crafted, the listing path refusing it; fakes only ──
+await SweepKeepChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: a price read right before listing or turning into gems is weighed against the gems and the price limit too; fakes only ──
+await SweepGemsRuleChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.2 sweep: what the gems were turned into, listed - a fresh sack price, one sack at a time, cards by the spare items rules ──
+await SweepGemsSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.2 sweep: copying settings never starts spending, trading, sending or commands on the account copied to; the preview hides nothing ──
+await SweepCopyChecks.RunAsync(Check);
+
+// ── 1.8.2 sweep: fair card swaps keep to the keep lists like paired swaps; a paired swap's hold asked with its trade token; fakes only ──
+await SweepSwapChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.2 sweep: listings - the price a buyer is really charged written down; an unreadable answer never 'no listings'; fakes only ──
+await SweepListingChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -29818,6 +29855,7 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 	/// <summary>What asking about an earlier order says, by its id; the orders asked about.</summary>
 	public Dictionary<string, NocatFarm.Modules.BuyAnswer> Checks { get; } = [];
 	public List<string> Checked { get; } = [];
+	public List<string> CheckedHashes { get; } = [];
 
 	/// <summary>Every price read so far.</summary>
 	public int Reads => _reads;
@@ -29875,8 +29913,9 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 			Answer == NocatFarm.Modules.BuyResult.Waiting ? ConfirmId : null));
 	}
 
-	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) {
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) {
 		Checked.Add(orderId);
+		CheckedHashes.Add(hash);
 
 		return Task.FromResult(Checks.GetValueOrDefault(orderId) ?? new NocatFarm.Modules.BuyAnswer(NocatFarm.Modules.BuyResult.Unsure, price, "", orderId));
 	}
@@ -30828,10 +30867,10 @@ static class BuySafetyChecks {
 			var checkWeb = new FakeMarketWeb();
 			checkWeb.Statuses.Enqueue(Open);
 			checkWeb.AfterCancel = Closed;
-			var checkAnswer = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkWeb).CheckOrderAsync("6001", 9, CancellationToken.None);
+			var checkAnswer = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkWeb).CheckOrderAsync("6001", 9, "753-Card", CancellationToken.None);
 			var checkFilledWeb = new FakeMarketWeb();
 			checkFilledWeb.Statuses.Enqueue(Filled);
-			var checkFilled = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkFilledWeb).CheckOrderAsync("6002", 9, CancellationToken.None);
+			var checkFilled = await new NocatFarm.Core.SteamCardMarket(NewBot(), checkFilledWeb).CheckOrderAsync("6002", 9, "753-Card", CancellationToken.None);
 			Check("an earlier order: still open is taken back by its own id; filled is bought",
 				(checkAnswer.Result == NocatFarm.Modules.BuyResult.Gone) && checkWeb.Calls.Contains("cancel:6001") && (checkFilled is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }),
 				$"{checkAnswer} {checkFilled} {string.Join(",", checkWeb.Calls)}");
@@ -30914,9 +30953,29 @@ static class BuySafetyChecks {
 				&& swept.Any(static e => e is { Key: "k3", Pending: true, Cents: 9 }) && swept.Any(static e => e is { Key: "k4", Pending: true })
 				&& swept.Any(static e => e is { Key: "k5", Pending: false }),
 				string.Join(",", sweepMarket.Checked) + " / " + string.Join(" | ", swept));
+			Check("sweep: each order is asked about with its own card (Steam answers only from the card's page)",
+				sweepMarket.CheckedHashes.SequenceEqual(["100-Card 2", "100-Card 2", "100-Card 2"]), string.Join(",", sweepMarket.CheckedHashes));
+
+			// Asked for hours with no answer: not asked again. With nothing to prove it by, counted as bought at its price;
+			// with what was held before, left to the inventory.
+			var staleBot = NewBot();
+			var staleMarket = Market();
+			var staleLedger = NocatFarm.Modules.BuyLedger.Of(staleBot.Name);
+			DateTime tOld = DateTime.UtcNow.AddHours(-7);
+			staleLedger.Add(new(tOld, 4, 20, 100, "100-Card 2", Pending: true, Order: "s1", Key: "s1"));
+			staleLedger.Add(new(tOld, 4, 20, 100, "100-Card 2", Pending: true, Order: "s2", Key: "s2", Before: []));
+			staleLedger.Add(new(DateTime.UtcNow.AddHours(-5), 4, 20, 100, "100-Card 2", Pending: true, Order: "s3", Key: "s3"));
+			staleMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(1000, 20, false, 1);
+			await Buyer(staleBot, staleMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var stale = staleLedger.All;
+			Check("sweep: an order Steam left unsure for 6 hours isn't asked about again - counted as bought (never less spent), or left to the inventory",
+				staleMarket.Checked.SequenceEqual(["s3"])
+				&& stale.Any(static e => e is { Key: "s1", Pending: false, Cents: 4 }) && stale.Any(static e => e is { Key: "s2", Pending: true, Cents: 4 })
+				&& stale.Any(static e => e is { Key: "s3", Pending: true }),
+				string.Join(",", staleMarket.Checked) + " / " + string.Join(" | ", stale));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal));
 
 			// ── re-priced before a set is started ──
@@ -31290,7 +31349,7 @@ static class CardSwapCheatChecks {
 			// ── a stranger's swap whose trade hold Steam won't say: left for you, and the log says why ──
 			var hBot = NewBot("swc-hold", MeId);
 			var hTrades = new NocatFarm.Modules.Trading(hBot);
-			bool seamed = Seam(hTrades, "ReadHold", (Func<ulong, CancellationToken, Task<TimeSpan?>>) ((_, _) => Task.FromResult<TimeSpan?>(null)));
+			bool seamed = Seam(hTrades, "ReadHold", (Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, _, _) => Task.FromResult<TimeSpan?>(null)));
 			MethodInfo? holdVerdict = typeof(NocatFarm.Modules.Trading).GetMethod("HoldVerdictAsync", Inst);
 			var stranger = new NocatFarm.Core.TradeOffers.Offer(4242, OtherId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")]);
 			long mark = NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
@@ -31567,7 +31626,7 @@ static class BuySmartChecks {
 				twoMarket.Bought.Select(static b => b.Hash).SequenceEqual(["200-B"]) && (two.Waiting.Count == 1), string.Join(",", twoMarket.Bought));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("phone: with buying off or outside its day, a purchase waiting too long is still let go; with the authenticator here it confirms exactly its own",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
 
@@ -31659,12 +31718,15 @@ static class BuySmartChecks {
 			List<(string, NocatFarm.Core.MarketQuote?)> silent = [.. arcane.Take(4), ("603750-Skull (Arcane Raise)", null)];
 			var slowSet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, Enumerable.Repeat(40L, 6), 50);
 			var silentSet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, silent, Enumerable.Repeat(40L, 6), 50);
-			Check("sell or craft: a card that hardly sold in the last day, or no price at all - crafted",
-				!slowSet.Sell && slowSet.Why.Contains("sold only 3", StringComparison.Ordinal) && !silentSet.Sell && silentSet.Why.Contains("no market price", StringComparison.Ordinal),
-				$"{slowSet.Why} / {silentSet.Why}");
+			var slowSmall = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, [400L], 50);
+			Check("sell or craft: a card that hardly sold in the last day - a set worth 6 levels waits (neither sold nor crafted), one worth 1 level at most is crafted; no price at all - not sure",
+				slowSet is { Sell: false, Hold: true, Unsure: false, Levels: 6 } && slowSet.Why.Contains("sold only 3", StringComparison.Ordinal)
+				&& slowSmall is { Sell: false, Hold: false, Unsure: false } && slowSmall.Why.Contains("sold only 3", StringComparison.Ordinal)
+				&& silentSet is { Sell: false, Unsure: true } && silentSet.Why.Contains("no market price", StringComparison.Ordinal),
+				$"{slowSet.Why} / {slowSmall.Why} / {silentSet.Why}");
 			Check("sell or craft: foil badges are always crafted, and only normal ones one level at a time are weighed",
 				!NocatFarm.Modules.SetSale.Considered(1, 1) && NocatFarm.Modules.SetSale.Considered(0, 1) && !NocatFarm.Modules.SetSale.Considered(0, 2)
-				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("ready.Where(static c => SetSale.Considered(c.Border, c.Levels))", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("ready.Where(c => SetSale.Considered(c.Border, c.Levels) && !keep.Contains(c.AppId))", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Modules/BadgeCraft.cs").Contains("ready = await SellInsteadAsync(ready, inventory, ct).ConfigureAwait(false);", StringComparison.Ordinal));
 			Check("sell or craft: only with the setting and buying cards on - it's on by default but does nothing while buying is off",
 				new NocatFarm.Config.BotConfig().SellSetsForLevels
@@ -31688,7 +31750,7 @@ static class BuySmartChecks {
 
 			// The preview: a set it would sell instead of crafting.
 			var showBot = NewBot(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyFullSets = true, BuyDailyLimit = 5 });
-			var showMarket = new FakeCardMarket();
+			var showMarket = new FakeCardMarket { Wallet = new(0, 20, false, 0) };   // an empty wallet: what the set brings in buys the cheapest levels
 			showMarket.Sets[700] = Set(700, "Seven", "A", "B", "C");
 			showMarket.Held[700] = new() { ["700-A"] = 1, ["700-B"] = 1, ["700-C"] = 1 };
 			foreach (string c in showMarket.Sets[700].Cards) { showMarket.Quotes[c] = Q(c, 150, 150, 50); }
@@ -31762,7 +31824,7 @@ static class CraftSellChecks {
 
 		// Both sets on the market, priced: Arcane Raise about 5.00 after the fee, s&box about 0.45; three cheap new sets at 0.40.
 		FakeCardMarket Market() {
-			var m = new FakeCardMarket { CardsFail = true };
+			var m = new FakeCardMarket { CardsFail = true, Wallet = new(0, 20, false, 0) };   // an empty wallet: the money from a set sold buys the cheapest levels
 			m.Sets[603750] = new(603750, "- Arcane Raise -", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
 			m.Sets[590830] = new(590830, "s&box", [.. sboxCards.Select(S).Order(StringComparer.Ordinal)], sboxCards.ToDictionary(S, static _ => 15));
 
@@ -31879,6 +31941,8 @@ static class CraftSellChecks {
 			foreach (string c in arcaneCards.Skip(1)) { unsureMarket.Quotes[A(c)] = null; }   // the market stops answering after the first card
 			foreach (string c in sboxCards) { unsureMarket.Quotes[S(c)] = null; }
 			unsure.AddModule(new NocatFarm.Modules.CardBuyer(unsure, unsureMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			// s&box's cards are known to be worth little (a price kept from before): crafted when not sure.
+			typeof(NocatFarm.Core.MarketQuotes).GetMethod("Keep", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Q(S("Box"), 18)]);
 			at = Mark();
 			(crafted, listed, bool more) = await SellInstead(unsure, inventory);
 			lines = Said(unsure, at);
@@ -31908,8 +31972,8 @@ static class CraftSellChecks {
 			// Buying cards on but its module not running, and a game with two sets ready: said, never silent.
 			var lone = NewAccount();
 			var lonePicks = await NocatFarm.Modules.SetSale.ChooseAsync(lone, [new(590830, 0, 1), new(603750, 0, 2), new(440, 1, 1)], inventory, CancellationToken.None);
-			Check("skipped: buying cards not running, two sets of a game ready, a foil set - each crafted with its reason, nothing left waiting without one",
-				(lonePicks.Count == 3) && lonePicks[0] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: false } && (lonePicks[0].Reason.ToEnglish() == "buying cards isn't running")
+			Check("skipped: buying cards not running (and the wallet's money not known) - waits with its reason; two sets of a game ready, a foil set - each crafted with its reason",
+				(lonePicks.Count == 3) && lonePicks[0] is { Choice: NocatFarm.Modules.SetSale.Choice.Wait, Quiet: false, Worth: "" } && (lonePicks[0].Reason.ToEnglish() == "buying cards isn't running")
 				&& (lonePicks[1].Reason.ToEnglish() == "2 sets ready, crafted together") && !lonePicks[1].Quiet
 				&& lonePicks[2] is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true },
 				string.Join(" | ", lonePicks.Select(static p => $"{p.Choice} {p.Reason.ToEnglish()}")));
@@ -32548,9 +32612,10 @@ static class BuyFixChecks {
 			var earlierInner = new FakeMarketWeb();
 			earlierInner.Statuses.Enqueue(Filled);
 			var earlierWeb = new PageMarketWeb(earlierInner);
-			var earlier = await new NocatFarm.Core.SteamCardMarket(NewBot(), earlierWeb).CheckOrderAsync("6001", 9, CancellationToken.None);
-			Check("order status: an earlier order is asked about from the market's buy orders page",
-				(earlier.Result == NocatFarm.Modules.BuyResult.Bought) && earlierWeb.Referers.SequenceEqual(["https://steamcommunity.com/market/buyorders"]),
+			var earlier = await new NocatFarm.Core.SteamCardMarket(NewBot(), earlierWeb).CheckOrderAsync("6001", 9, "753-Card", CancellationToken.None);
+			Check("order status: an earlier order is asked about from its card's page (Steam answers 400 [] from anywhere else)",
+				(earlier.Result == NocatFarm.Modules.BuyResult.Bought) && (earlierWeb.Referers.Count > 0)
+				&& earlierWeb.Referers.All(static r => r == "https://steamcommunity.com/market/listings/753/753-Card"),
 				string.Join(",", earlierWeb.Referers));
 			string marketSrc = Src("src/NocatFarm/Core/SteamCardMarket.cs");
 			Check("order status: the real web session sends the page with it",
@@ -32869,7 +32934,7 @@ sealed class ProofMarket(FakeCardMarket inner) : NocatFarm.Modules.ICardMarket {
 	public Task<IReadOnlyList<uint>?> CheapestGamesAsync(CancellationToken ct) => inner.CheapestGamesAsync(ct);
 	public Task<NocatFarm.Modules.CardMarket.Book?> BookAsync(string hash, CancellationToken ct) => inner.BookAsync(hash, ct);
 	public Task<NocatFarm.Modules.BuyAnswer> BuyAsync(NocatFarm.Modules.BuyOrder order, Action<string>? placed, CancellationToken ct) => inner.BuyAsync(order, placed, ct);
-	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, hash, ct);
 	public Task<NocatFarm.Modules.BuyAnswer> ResumeAsync(NocatFarm.Modules.BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct) => inner.ResumeAsync(order, confirmation, placed, ct);
 	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => inner.QuoteAsync(hash, currency, ct);
 }
@@ -32969,9 +33034,9 @@ static class CopySettingsChecks {
 				.Where(d => Shown(plan.Result, d.Name) != Shown(src, d.Name)).Select(static d => d.Name)];
 			Check("copy settings: every other setting comes across as the source has it", missed.Count == 0 && plan.Result.IdleGames.SequenceEqual([440u, 570u])
 				&& (plan.Result.CustomGameName == "nocat.lol") && (plan.Result.DiscoveryQueue == 2), string.Join(", ", missed));
-			Check("copy settings: what names the account itself is taken out - trading with itself, itself as one of your accounts, sending to itself",
-				(plan.Result.AutoTradeWith == "old") && (plan.Result.TradeMasters == "76561198000000777") && (plan.Result.SpareGemsSendTo == "")
-				&& (plan.Result.BoosterSendTo == "old") && plan.Cleared.Order().SequenceEqual(new[] { "AutoTradeWith", "SpareGemsSendTo", "TradeMasters" }.Order()),
+			Check("copy settings: who it trades with, your own accounts and where it sends items are the account's own - never copied, so nothing to take itself out of",
+				(plan.Result.AutoTradeWith == "") && (plan.Result.TradeMasters == "") && (plan.Result.SpareGemsSendTo == "")
+				&& (plan.Result.BoosterSendTo == "") && (plan.Cleared.Count == 0),
 				$"{plan.Result.AutoTradeWith} | {plan.Result.TradeMasters} | {string.Join(",", plan.Cleared)}");
 			Check("copy settings: working it out changes neither account, and shares no list with the source",
 				(Json(src) == srcWas) && (Json(dst) == dstWas) && !ReferenceEquals(plan.Result.IdleGames, src.IdleGames));
@@ -33010,15 +33075,16 @@ static class CopySettingsChecks {
 			// ── human mode and robots ──
 			var human = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", LegitBackup = "IdleGames=440", OpenBoosterPacks = 1, AchievementSkipMultiplayer = true };
 			var h1 = NocatFarm.Core.SettingsCopy.Build(human, new NocatFarm.Config.BotConfig { IdleGames = [570] }, "cp-r", 0).Result;
-			Check("human mode: a human-mode source onto a robot - human mode, its games, its stash of robot games, nothing idled, as the source has it",
-				h1.LegitMode && (h1.IdleGames.Count == 0) && (h1.GameWeights == "730:70, 440:30") && (h1.LegitBackup == "IdleGames=440") && h1.AchievementSkipMultiplayer
-				&& (h1.OpenBoosterPacks == 1), $"{h1.LegitBackup} | {h1.OpenBoosterPacks}");
+			Check("human mode: a human-mode source onto a robot - it stays a robot (its own mode), with the source's robot games from its stash",
+				!h1.LegitMode && h1.IdleGames.SequenceEqual([440u]) && (h1.LegitBackup == "") && !h1.AchievementSkipMultiplayer && (h1.OpenBoosterPacks == 1),
+				$"{string.Join(",", h1.IdleGames)} | {h1.LegitBackup} | {h1.OpenBoosterPacks}");
 			var robot = new NocatFarm.Config.BotConfig { IdleGames = [440, 730], CustomGameName = "nocat.lol", OpenBoosterPacks = 1 };
 			var mine = new NocatFarm.Config.BotConfig { LegitMode = true, IUseThisAccount = true, LegitBackup = "IdleGames=999", GameWeights = "730:100" };
 			var h2 = NocatFarm.Core.SettingsCopy.Build(robot, mine, "cp-mine", 0).Result;
-			Check("human mode: a robot copied onto your own account is copied as it is - a robot, its games, not your old stash - and you still sign into it yourself",
-				!h2.LegitMode && h2.IUseThisAccount && h2.IdleGames.SequenceEqual([440u, 730u]) && (h2.LegitBackup == "") && (h2.GameWeights == "") && !h2.AchievementSkipMultiplayer,
-				$"{string.Join(",", h2.IdleGames)} | {h2.LegitBackup}");
+			Check("human mode: a robot copied onto your own human-mode account stays human-mode - the robot's games become its weights, as a save switching it does - and you still sign into it yourself",
+				h2.LegitMode && h2.IUseThisAccount && (h2.IdleGames.Count == 0) && (h2.GameWeights == "440:70, 730:30") && (h2.LegitBackup == "IdleGames=440,730")
+				&& h2.AchievementSkipMultiplayer && (h2.OpenBoosterPacks == 0),
+				$"{h2.GameWeights} | {h2.LegitBackup}");
 			var h3 = NocatFarm.Core.SettingsCopy.Build(robot, new NocatFarm.Config.BotConfig(), "cp-h", 0, human: true).Result;
 			var asSaved = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Config.BotConfig>(Json(robot))!;
 			asSaved.LegitMode = true;
@@ -33994,6 +34060,908 @@ static class SettingsCleanupChecks {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: sets sold instead of crafted - never crafted away on half an answer. Fakes only, nothing reaches Steam.</summary>
+static class SweepSetChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepset-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		string[] arcaneCards = ["Heart", "Ribbon", "Shield", "Rose", "Skull"];
+		int[] arcaneLowest = [197, 127, 85, 96, 72];
+		string A(string card) => $"603750-{card} (Arcane Raise)";
+		NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales = 150) => new(hash, 20, lowest, lowest + 2, sales, DateTime.UtcNow.Ticks);
+		NocatFarm.Config.BotConfig PlanCfg() => new() { BuyDailyLimit = 1.5f, BuyFullSets = false };
+
+		// An account levelling Arcane Raise (its set held whole) and another game one card short, buying cards on.
+		(NocatFarm.Core.Bot Bot, FakeCardMarket Market, NocatFarm.Modules.CardBuyer Buyer) Account(string name) {
+			var b = new NocatFarm.Core.Bot(name + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true, SellSetsForLevels = true, BuyDailyLimit = 1.5f, BuyFullSets = false });
+			bots.Add(b);
+			var m = new FakeCardMarket { Wallet = new(5, 20, false, 0) };
+			m.Sets[603750] = new(603750, "Arcane Raise", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
+			m.Held[603750] = arcaneCards.ToDictionary(A, static _ => 1);
+			m.Held[100] = new Dictionary<string, int> { ["100-a"] = 1 };
+			m.Sets[100] = new(100, "Cheap", ["100-a", "100-b"], new Dictionary<string, int> { ["100-a"] = 10, ["100-b"] = 10 });
+			m.Books["100-b"] = FakeCardMarket.B(20);
+
+			for (int i = 0; i < arcaneCards.Length; i++) {
+				m.Quotes[A(arcaneCards[i])] = Q(A(arcaneCards[i]), arcaneLowest[i]);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			b.AddModule(buyer);
+
+			return (b, m, buyer);
+		}
+
+		try {
+			// ── the plan's prices stopping part way: every set weighed is not sure, never "buys no level today" ──
+			var (_, fine, fineBuyer) = Account("ss-fine");
+			var whole = await fineBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			var (_, cut, cutBuyer) = Account("ss-cut");
+			cut.Sets.Remove(100);   // the market stops answering when the second set is read
+			var stopped = await cutBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			var cutPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), cut, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-cutplan"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep sets: the market answering whole - the set is decided (not 'not sure')",
+				whole.Single() is { Unsure: false }, whole.Single().Why);
+			Check("sweep sets: the market stopping part way marks the plan short - and the set weighed on it is 'not sure', its dearest card still known",
+				cutPlan.Short && stopped.Single() is { Unsure: true, Sell: false, Top: 197 } && stopped[0].Why.Contains("stopped answering", StringComparison.Ordinal),
+				$"{cutPlan.Short} / {stopped.Single().Why} / top {stopped.Single().Top}");
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Modules.GemsChoice.NoteCosts("ss-short", cutPlan, DateTime.UtcNow);
+			Check("sweep sets: the gems maths never takes a short list for what money buys - not known",
+				NocatFarm.Modules.GemsChoice.CostsOf("ss-short", 20, DateTime.UtcNow) == null);
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+
+			// A card's price not answered, or answered in another money: short too.
+			var (_, silent, _) = Account("ss-silent");
+			silent.Books.Remove("100-b");
+			var silentPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), silent, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-silentplan"), null, DateTime.UtcNow, CancellationToken.None);
+			var (_, euro, _) = Account("ss-euro");
+			euro.Books["100-b"] = new(20, 3, 10, [(20L, 10)]);
+			var euroPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), euro, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-europlan"), null, DateTime.UtcNow, CancellationToken.None);
+			var fullPlan = await NocatFarm.Modules.BuyPlan.MakeAsync(PlanCfg(), fine, NocatFarm.Modules.SwapCost.None,
+				NocatFarm.Modules.BuyLedger.Of("ss-fullplan"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep sets: a card's price not answered, or answered in another money - short; everything answered - not short",
+				silentPlan.Short && euroPlan.Short && !fullPlan.Short && (fullPlan.Ranked.Count == 1), $"{silentPlan.Short} {euroPlan.Short} {fullPlan.Short} {fullPlan.Ranked.Count}");
+
+			// No wallet at all: the money could never be spent - crafted, decided.
+			var (_, nowallet, nwBuyer) = Account("ss-nowallet");
+			nowallet.Wallet = new(0, 0, false, 0);
+			var noWallet = await nwBuyer.WeighSalesAsync([603750u], CancellationToken.None);
+			Check("sweep sets: an account with no Steam wallet - crafted as before (decided, not left waiting for ever)",
+				noWallet.Single() is { Unsure: false, Sell: false, Hold: false } && noWallet[0].Why.Contains("no Steam wallet", StringComparison.Ordinal), noWallet.Single().Why);
+
+			// ── a card hardly selling, the set worth 2 levels or more: waits; worth 1 level at most: crafted ──
+			List<(string, NocatFarm.Core.MarketQuote?)> slow = [.. arcaneCards.Select((c, i) => (A(c), (NocatFarm.Core.MarketQuote?) Q(A(c), arcaneLowest[i], c == "Skull" ? 0 : 150)))];
+			var held = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, Enumerable.Repeat(40L, 6), 50);
+			var small = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, slow, [300L, 300L], 50);
+			Check("sweep sets: a card with no sales in the last day (Steam leaves the volume out) - the set worth 6 levels waits, said plainly",
+				held is { Hold: true, Sell: false, Unsure: false, Levels: 6 } && held.Why.Contains("sold only 0 time(s) in the last day - waiting, the set is worth", StringComparison.Ordinal), held.Why);
+			Check("sweep sets: ...a set it would sell for 1 level at most is crafted as before",
+				small is { Hold: false, Sell: false, Unsure: false } && small.Why.Contains("sold only 0", StringComparison.Ordinal), small.Why);
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: what money from a sale buys is counted past the levels the wallet already pays for. Fakes only.</summary>
+static class SweepWalletChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepwallet-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		string[] arcaneCards = ["Heart", "Ribbon", "Shield", "Rose", "Skull"];
+		int[] arcaneLowest = [197, 127, 85, 96, 72];
+		string A(string card) => $"603750-{card} (Arcane Raise)";
+		NocatFarm.Core.MarketQuote Q(string hash, int lowest) => new(hash, 20, lowest, lowest + 2, 150, DateTime.UtcNow.Ticks);
+		List<(string, NocatFarm.Core.MarketQuote?)> arcane = [.. arcaneCards.Select((c, i) => (A(c), (NocatFarm.Core.MarketQuote?) Q(A(c), arcaneLowest[i])))];
+
+		try {
+			// ── the levels past the wallet: the cheapest it pays for skipped, the one it pays part of left at the rest ──
+			Check("sweep wallet: the wallet's balance pays for the cheapest levels first - only what's past it is counted (24 paid, 30 less the 6 left over, then 50)",
+				NocatFarm.Modules.BuyPlan.BeyondWallet([30, 24, 50], 30) is [24, 50]);
+			Check("sweep wallet: an empty wallet counts every level; one that pays for them all leaves none",
+				NocatFarm.Modules.BuyPlan.BeyondWallet([30, 24, 0], 0) is [24, 30] && (NocatFarm.Modules.BuyPlan.BeyondWallet([20, 20], 100).Count == 0));
+
+			// The set's money, counted on what the wallet doesn't cover: 10 levels at 0.40 priced, the wallet pays for 5 of them.
+			var noWallet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, arcane, NocatFarm.Modules.BuyPlan.BeyondWallet(Enumerable.Repeat(40L, 10), 0), 50);
+			var someWallet = NocatFarm.Modules.SetSale.Decide(603750, "Arcane Raise", 20, arcane, NocatFarm.Modules.BuyPlan.BeyondWallet(Enumerable.Repeat(40L, 10), 200), 50);
+			Check("sweep wallet: a set's money buys only the levels the wallet doesn't already - 10 with an empty wallet, 5 with 2.00 in it",
+				(noWallet.Levels == 10) && (someWallet.Levels == 5), $"{noWallet.Levels} / {someWallet.Levels}");
+
+			// The plan's wallet covering every level priced: what more money would buy isn't known - not sure, the set waits.
+			var b = new NocatFarm.Core.Bot("sw-rich" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { CraftBadges = true, SellSetsForLevels = true, BuyDailyLimit = 1.5f, BuyFullSets = false });
+			bots.Add(b);
+			var m = new FakeCardMarket { Wallet = new(5000, 20, false, 0) };
+			m.Sets[603750] = new(603750, "Arcane Raise", [.. arcaneCards.Select(A).Order(StringComparer.Ordinal)], arcaneCards.ToDictionary(A, static _ => 150));
+			m.Held[603750] = arcaneCards.ToDictionary(A, static _ => 1);
+			m.Held[100] = new Dictionary<string, int> { ["100-a"] = 1 };
+			m.Sets[100] = new(100, "Cheap", ["100-a", "100-b"], new Dictionary<string, int> { ["100-a"] = 10, ["100-b"] = 10 });
+			m.Books["100-b"] = FakeCardMarket.B(20);
+
+			for (int i = 0; i < arcaneCards.Length; i++) {
+				m.Quotes[A(arcaneCards[i])] = Q(A(arcaneCards[i]), arcaneLowest[i]);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			b.AddModule(buyer);
+			var rich = await buyer.WeighSalesAsync([603750u], CancellationToken.None);
+			Check("sweep wallet: the wallet already pays for every level priced today - the set is 'not sure' (never sold or crafted on that), its dearest card known",
+				rich.Single() is { Unsure: true, Sell: false, Top: 197 } && rich[0].Why.Contains("wallet already pays", StringComparison.Ordinal), rich.Single().Why);
+
+			// The gems maths counts the same way.
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			var plan = new NocatFarm.Modules.BuyPlan { Currency = 20, Wallet = 40 };
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(1, "x", true, 0, 5, [new("1-a", 30)]));
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(2, "y", true, 0, 5, [new("2-a", 24)]));
+			NocatFarm.Modules.GemsChoice.NoteCosts("sw-gems", plan, DateTime.UtcNow);
+			var costs = NocatFarm.Modules.GemsChoice.CostsOf("sw-gems", 20, DateTime.UtcNow);
+			Check("sweep wallet: the gems maths too - 0.40 in the wallet pays the 0.24 level and 0.16 of the 0.30 one, so money from gems buys from 0.14 on",
+				costs is [14], costs == null ? "null" : string.Join(",", costs));
+			plan.Wallet = 344;
+			NocatFarm.Modules.GemsChoice.NoteCosts("sw-gems", plan, DateTime.UtcNow);
+			var covered = NocatFarm.Modules.GemsChoice.CostsOf("sw-gems", 20, DateTime.UtcNow);
+			var coveredPick = NocatFarm.Modules.GemsChoice.Decide([new(NocatFarm.Modules.GemsChoice.Way.Badge, 603750, "Arcane Raise", 1200, 0, 0, 0.5)], true, covered, 20);
+			Check("sweep wallet: the wallet pays for every level priced (3.44 against 0.54) - what money buys isn't known, so the gems stay loose, never opened for half a level",
+				(covered == null) && (coveredPick.Way == NocatFarm.Modules.GemsChoice.Way.Keep), $"{(covered == null ? "null" : string.Join(",", covered))} {coveredPick.Way}");
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
+			}
+
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: buying cards - the tax on Steam's fee in the plan, and a purchase counted from when it's known bought. Fakes only.</summary>
+static class SweepBuyChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepbuy-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot() {
+			var b = new NocatFarm.Core.Bot("sb-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			return b;
+		}
+
+		NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m) {
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			var buyer = new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, SendGap = static () => TimeSpan.Zero };
+			buyer.ProofGap = TimeSpan.Zero;
+			return buyer;
+		}
+
+		try {
+			// ── the tax on Steam's fee is part of what a set costs: ranked and fitted on it, never half bought ──
+			string[] cards = ["100-a", "100-b", "100-c", "100-d", "100-e"];
+			var taxed = new FakeCardMarket { Wallet = new(5000, 20, false, 0, null, 20) };
+			taxed.Sets[100] = new(100, "Hundred", cards, cards.ToDictionary(static c => c, static _ => 100));
+			taxed.Held[100] = new() { ["100-a"] = 1 };
+
+			foreach (string c in cards.Skip(1)) {
+				taxed.Books[c] = FakeCardMarket.B(100);
+			}
+
+			var tight = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { BuyDailyLimit = 4.05f, BuyWeeklyLimit = 50f, BuyFullSets = false }, taxed,
+				NocatFarm.Modules.SwapCost.None, NocatFarm.Modules.BuyLedger.Of("sb-tax"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep buy: each card's tax on Steam's fee is in what the set costs - 4 cards at 1.00 with 0.02 tax each cost 4.08",
+				(tight.Ranked.Count == 1) && (tight.Ranked[0].Cost == 408) && tight.Ranked[0].Cards.All(static c => c is { Price: 100, Tax: 2 }),
+				tight.Ranked.Count == 0 ? "-" : tight.Ranked[0].Cost.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			Check("sweep buy: ...so a set that only fits a 4.05 day without the tax isn't planned - never started and left half bought",
+				(tight.Steps.Count == 0) && tight.Notes.Any(static n => n.Contains("more than a day's limit", StringComparison.Ordinal)), string.Join("; ", tight.Notes));
+			var roomy = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { BuyDailyLimit = 4.08f, BuyWeeklyLimit = 50f, BuyFullSets = false }, taxed,
+				NocatFarm.Modules.SwapCost.None, NocatFarm.Modules.BuyLedger.Of("sb-tax2"), null, DateTime.UtcNow, CancellationToken.None);
+			Check("sweep buy: ...and with room for the tax too, it is", (roomy.Steps.Count == 1) && (roomy.Cost == 408), string.Join("; ", roomy.Notes));
+
+			// ── a purchase found bought later counts from then: the limits never roll it off early, and it's never counted twice ──
+			var m = new FakeCardMarket { Wallet = new(1000, 20, false, 1) };   // email confirmations: nothing new is bought, only the sweep runs
+			m.Checks["o1"] = new(NocatFarm.Modules.BuyResult.Bought, 9, "", "o1");
+			var b1 = NewBot();
+			var buyer = Buyer(b1, m);
+			DateTime asked = DateTime.UtcNow.AddHours(-23.5);
+			buyer.Ledger.Add(new(asked, 9, 20, 100, "100-b", Pending: true, Order: "o1", Key: "k1"));
+			await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var after = buyer.Ledger.All;
+			Check("sweep buy: an order asked for 23.5 hours ago and found bought now counts from now - still in tomorrow's day, once",
+				after is [{ Key: "k1", Pending: false, Cents: 9 }] && (after[0].At > DateTime.UtcNow.AddMinutes(-5))
+				&& (buyer.Ledger.SpentSince(DateTime.UtcNow.AddHours(-1)) == 9) && (buyer.Ledger.SpentSince(DateTime.UtcNow.AddDays(-7)) == 9),
+				string.Join(" | ", after));
+
+			// Proven by the inventory: the same.
+			var pm = new ProofMarket(new FakeCardMarket { Wallet = new(1000, 20, false, 1) }) { Assets = new() { ["100-b"] = ["11", "12"] } };
+			var b2 = NewBot();
+			var prover = Buyer(b2, pm);
+			prover.Ledger.Add(new(DateTime.UtcNow.AddHours(-3), 9, 20, 100, "100-b", Pending: true, Order: "p1", Key: "k2", Before: ["11"]));
+			await prover.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			var proven = prover.Ledger.All;
+			Check("sweep buy: a purchase the inventory proves counts from when it was found, too - one entry, moved, never two",
+				proven is [{ Key: "k2", Pending: false, Asset: "12" }] && (proven[0].At > DateTime.UtcNow.AddMinutes(-5)) && (prover.Ledger.SpentSince(DateTime.MinValue) == 9),
+				string.Join(" | ", proven));
+
+			// Steam never said, hours on, with nothing to prove it by: counted as bought from then.
+			var m3 = new FakeCardMarket { Wallet = new(1000, 20, false, 1) };
+			var b3 = NewBot();
+			var never = Buyer(b3, m3);
+			never.Ledger.Add(new(DateTime.UtcNow.AddHours(-7), 9, 20, 100, "100-b", Pending: true, Order: "n1", Key: "k3"));
+			await never.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("sweep buy: an order Steam never said the end of, counted as bought - from when that was decided",
+				never.Ledger.All is [{ Key: "k3", Pending: false }] && (never.Ledger.All[0].At > DateTime.UtcNow.AddMinutes(-5)), string.Join(" | ", never.Ledger.All));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>A pretend card market that also lists the account's open buy orders, around <see cref="FakeCardMarket"/>.</summary>
+sealed class LeftoverMarket(FakeCardMarket inner) : NocatFarm.Modules.ICardMarket {
+	public FakeCardMarket Inner => inner;
+
+	/// <summary>The open buy orders the market's front page shows (null: it couldn't be read).</summary>
+	public List<NocatFarm.Modules.OpenBuyOrder>? Open { get; set; } = [];
+
+	/// <summary>How many times the open buy orders were read.</summary>
+	public int OpenReads { get; private set; }
+
+	/// <summary>What a purchase answers instead of the inner market's (null: the inner's), and what's done as it's sent.</summary>
+	public NocatFarm.Modules.BuyAnswer? BuyReply { get; set; }
+	public Action? OnBuy { get; set; }
+
+	public Task<IReadOnlyList<NocatFarm.Modules.OpenBuyOrder>?> OpenOrdersAsync(CancellationToken ct) {
+		OpenReads++;
+		return Task.FromResult<IReadOnlyList<NocatFarm.Modules.OpenBuyOrder>?>(Open == null ? null : [.. Open]);
+	}
+
+	public async Task<NocatFarm.Modules.BuyAnswer> BuyAsync(NocatFarm.Modules.BuyOrder order, Action<string>? placed, CancellationToken ct) {
+		NocatFarm.Modules.BuyAnswer answer = await inner.BuyAsync(order, placed, ct);
+		OnBuy?.Invoke();
+		return BuyReply ?? answer;
+	}
+
+	public Task<NocatFarm.Modules.CardMarket.Wallet?> WalletAsync(CancellationToken ct) => inner.WalletAsync(ct);
+	public Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) => inner.BadgeLevelsAsync(ct);
+	public Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) => inner.CardsAsync(ct);
+	public Task<NocatFarm.Modules.CardSet?> SetAsync(uint app, CancellationToken ct) => inner.SetAsync(app, ct);
+	public Task<IReadOnlyList<uint>?> CheapestGamesAsync(CancellationToken ct) => inner.CheapestGamesAsync(ct);
+	public Task<NocatFarm.Modules.CardMarket.Book?> BookAsync(string hash, CancellationToken ct) => inner.BookAsync(hash, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> CheckOrderAsync(string orderId, long price, string hash, CancellationToken ct) => inner.CheckOrderAsync(orderId, price, hash, ct);
+	public Task<NocatFarm.Modules.BuyAnswer> ResumeAsync(NocatFarm.Modules.BuyOrder order, string confirmation, Action<string>? placed, CancellationToken ct) => inner.ResumeAsync(order, confirmation, placed, ct);
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) => inner.QuoteAsync(hash, currency, ct);
+}
+
+/// <summary>A pretend web session that answers the market's front page with some HTML, and notes the page each read came from.</summary>
+sealed class HomePageWeb(string? html) : NocatFarm.Core.IMarketWeb {
+	public List<string> Reads { get; } = [];
+	public Task<string?> GetAsync(Uri url, CancellationToken ct) => Task.FromResult<string?>(null);
+
+	public Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct) {
+		Reads.Add($"{url} from {referer}");
+		return Task.FromResult(html);
+	}
+
+	public Task<(string? Body, bool Sent)> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer, CancellationToken ct) => Task.FromResult<(string?, bool)>((null, false));
+	public string SessionId => "fake";
+	public bool CanConfirm => false;
+	public Task<(bool Ok, IReadOnlyList<NocatFarm.Core.Confirmations.Item> Items)> ConfirmationsAsync(CancellationToken ct) => Task.FromResult<(bool, IReadOnlyList<NocatFarm.Core.Confirmations.Item>)>((false, []));
+	public Task<bool> ActAsync(NocatFarm.Core.Confirmations.Item item, bool accept, CancellationToken ct) => Task.FromResult(false);
+	public Task DelayAsync(TimeSpan wait, CancellationToken ct) => Task.CompletedTask;
+}
+
+/// <summary>1.8.2 sweep: an order that went in without Steam giving its id - found on the market's own list and taken back. Fakes only.</summary>
+static class SweepOrderChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweeporder-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot() {
+			var b = new NocatFarm.Core.Bot("so-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			return b;
+		}
+
+		NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m) {
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			return new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, SendGap = static () => TimeSpan.Zero };
+		}
+
+		// A market for one card short of a set; email confirmations (blocked) unless it should buy.
+		LeftoverMarket Market(bool buys) {
+			var m = new FakeCardMarket { Wallet = new(1000, 20, false, buys ? 0 : 1) };
+			m.Sets[100] = new NocatFarm.Modules.CardSet(100, "Hundred", ["100-Card 1", "100-Card 2"], new Dictionary<string, int> { ["100-Card 1"] = 5, ["100-Card 2"] = 5 });
+			m.Held[100] = new() { ["100-Card 1"] = 1 };
+			m.Books["100-Card 1"] = FakeCardMarket.B(9);
+			m.Books["100-Card 2"] = FakeCardMarket.B(9);
+			return new LeftoverMarket(m);
+		}
+
+		// What a purchase sent with no clear answer left behind: counted as spent, no order id.
+		NocatFarm.Modules.BuyLedger.Entry Unplaced(string key) => new(DateTime.UtcNow.AddHours(-1), 9, 20, 100, "100-Card 2", Pending: true, Key: key);
+
+		const string Page = """
+			<div id="tabContentsMyListings">
+			<div class="my_listing_section market_content_block market_home_listing_table">
+			<h3 class="my_market_header"><span class="my_market_header_active">My buy orders</span> <span class="my_market_header_count">(3)</span></h3>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7001">
+				<div class="market_listing_right_cell market_listing_edit_buttons"><a href="javascript:CancelMarketBuyOrder('7001')" class="item_market_action_button">Cancel</a></div>
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price">
+					<span class="market_listing_inline_buyorder_qty">1 @</span>
+					0,09&#8364;			</span></div>
+				<img id="mybuyorder_7001_image" src="https://community.akamai.steamstatic.com/x.png" alt="">
+				<div class="market_listing_item_name_block"><span class="market_listing_item_name"><a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/100-Card%202">Card 2</a></span><br><span class="market_listing_game_name">Hundred Trading Card</span></div>
+			</div>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7002">
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price"><span class="market_listing_inline_buyorder_qty">1 @</span> $1.23 USD </span></div>
+				<a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/440-Scout">Scout</a>
+			</div>
+			<div class="market_listing_row market_recent_listing_row" id="mybuyorder_7003">
+				<div class="market_listing_right_cell market_listing_my_price"><span class="market_listing_price">a price nobody can read</div>
+				<a class="market_listing_item_name_link" href="https://steamcommunity.com/market/listings/753/440-Pyro">Pyro</a>
+			</div>
+			</div></div>
+			""";
+
+		try {
+			// ── reading "My buy orders" from the market's front page, defensively ──
+			var read = NocatFarm.Core.SteamCardMarket.ReadOpenOrders(Page);
+			Check("leftover orders: the market's front page read - each order's id, card and price per card; a row it can't read whole is left out (never taken back)",
+				read is [{ Id: "7001", Hash: "100-Card 2", Price: 9, Quantity: 1 }, { Id: "7002", Hash: "440-Scout", Price: 123, Quantity: 1 }],
+				read == null ? "null" : string.Join(" | ", read));
+			Check("leftover orders: a page that isn't the account's market page (signed out, an error) - not known, never 'no orders'; one with none - none",
+				(NocatFarm.Core.SteamCardMarket.ReadOpenOrders("<html><title>Sign In</title></html>") == null) && (NocatFarm.Core.SteamCardMarket.ReadOpenOrders(null) == null)
+				&& NocatFarm.Core.SteamCardMarket.ReadOpenOrders("<div id=\"tabContentsMyListings\"></div>") is { Count: 0 });
+			Check("leftover orders: prices as the market writes them - $0.05, 0,05€, 1,--€, ¥ 500, 1.234,56 pуб.",
+				(NocatFarm.Core.SteamCardMarket.MoneyCents("$0.05") == 5) && (NocatFarm.Core.SteamCardMarket.MoneyCents("0,05€") == 5)
+				&& (NocatFarm.Core.SteamCardMarket.MoneyCents("1,--€") == 100) && (NocatFarm.Core.SteamCardMarket.MoneyCents("¥ 500") == 50000)
+				&& (NocatFarm.Core.SteamCardMarket.MoneyCents("1.234,56 pуб.") == 123456) && (NocatFarm.Core.SteamCardMarket.MoneyCents("free") == null));
+			var home = new HomePageWeb(Page);
+			var viaPage = await new NocatFarm.Core.SteamCardMarket(NewBot(), home).OpenOrdersAsync(CancellationToken.None);
+			Check("leftover orders: read once, from the market's page itself, as a browser opens it",
+				(viaPage?.Count == 2) && home.Reads is ["https://steamcommunity.com/market/ from https://steamcommunity.com/market/"], string.Join(" | ", home.Reads));
+
+			// ── Steam refusing a new order because one is open: proof of a leftover order ──
+			var dup = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":29,\"message\":\"You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.\"}");
+			var other = NocatFarm.Core.SteamCardMarket.ReadOrder("{\"success\":8,\"message\":\"Something else\"}");
+			Check("leftover orders: 'You already have an active buy order for this item' - refused (nothing bought) and marked as a leftover order; another refusal isn't",
+				dup is { Kind: NocatFarm.Core.SteamCardMarket.OrderKind.Refused, Leftover: true } && other is { Kind: NocatFarm.Core.SteamCardMarket.OrderKind.Refused, Leftover: false });
+
+			// ── a sweep: the order found by card and price, asked about and taken back ──
+			var goneMarket = Market(buys: false);
+			goneMarket.Open = [new("7001", "100-Card 2", 9, 1), new("7003", "100-Card 1", 50, 1)];
+			goneMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Gone, 0, "", "7001");
+			var goneBuyer = Buyer(NewBot(), goneMarket);
+			goneBuyer.Ledger.Add(Unplaced("g1"));
+			await goneBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: an order with no id found on the market (same card, same price) - asked about, taken back with nothing bought, off the list; the owner's other order untouched",
+				goneMarket.Inner.Checked is ["7001"] && (goneBuyer.Ledger.All.Count == 0) && (goneMarket.OpenReads == 1),
+				$"{string.Join(",", goneMarket.Inner.Checked)} / {string.Join(" | ", goneBuyer.Ledger.All)} / reads {goneMarket.OpenReads}");
+
+			var boughtMarket = Market(buys: false);
+			boughtMarket.Open = [new("7001", "100-Card 2", 9, 1)];
+			boughtMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Bought, 9, "", "7001");
+			var boughtBuyer = Buyer(NewBot(), boughtMarket);
+			boughtBuyer.Ledger.Add(Unplaced("b1"));
+			await boughtBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: ...one that filled meanwhile - settled bought, with its order id, once",
+				boughtBuyer.Ledger.All is [{ Key: "b1", Pending: false, Order: "7001", Cents: 9 }], string.Join(" | ", boughtBuyer.Ledger.All));
+
+			var ownersMarket = Market(buys: false);
+			ownersMarket.Open = [new("7004", "100-Card 2", 50, 1)];
+			var ownersBuyer = Buyer(NewBot(), ownersMarket);
+			ownersBuyer.Ledger.Add(Unplaced("o1"));
+			await ownersBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: an order for the card at another price (one you placed) is never touched - the purchase stays counted as spent",
+				(ownersMarket.Inner.Checked.Count == 0) && ownersBuyer.Ledger.All is [{ Key: "o1", Pending: true }], string.Join(" | ", ownersBuyer.Ledger.All));
+
+			var unclearMarket = Market(buys: false);
+			unclearMarket.Open = [new("7001", "100-Card 2", 9, 1)];
+			var unclearBuyer = Buyer(NewBot(), unclearMarket);
+			unclearBuyer.Ledger.Add(Unplaced("u1"));
+			await unclearBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			await unclearBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: still unclear - stays counted as spent, and the list isn't read again at the next look within half an hour (gently)",
+				unclearBuyer.Ledger.All is [{ Key: "u1", Pending: true }] && (unclearMarket.OpenReads == 1) && (NocatFarm.Modules.CardBuyer.LeftoverGap == TimeSpan.FromMinutes(30)),
+				$"reads {unclearMarket.OpenReads} / {string.Join(" | ", unclearBuyer.Ledger.All)}");
+
+			var blindMarket = Market(buys: false);
+			blindMarket.Open = null;
+			var blindBuyer = Buyer(NewBot(), blindMarket);
+			blindBuyer.Ledger.Add(Unplaced("n1"));
+			await blindBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: the market's page can't be read - nothing taken back, the purchase stays counted",
+				(blindMarket.Inner.Checked.Count == 0) && blindBuyer.Ledger.All is [{ Key: "n1", Pending: true }]);
+
+			// ── Steam refusing the new order because the old one is open: the list read at once, its own order taken back ──
+			var dupMarket = Market(buys: true);
+			dupMarket.BuyReply = new(NocatFarm.Modules.BuyResult.Refused, 0, "You already have an active buy order for this item.", Leftover: true);
+			dupMarket.OnBuy = () => dupMarket.Open = [new("7001", "100-Card 2", 9, 1)];   // the front page lagged at the look's start
+			dupMarket.Inner.Checks["7001"] = new(NocatFarm.Modules.BuyResult.Gone, 0, "", "7001");
+			var dupBuyer = Buyer(NewBot(), dupMarket);
+			dupBuyer.Ledger.Add(Unplaced("d1"));
+			var dupResult = await dupBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			Check("leftover orders: 'already have an active buy order' - its own leftover order is found at once and taken back; nothing counted for either",
+				(dupMarket.OpenReads == 2) && dupMarket.Inner.Checked.Contains("7001") && (dupBuyer.Ledger.All.Count == 0)
+				&& dupResult.Problem.Contains("already open on the market", StringComparison.Ordinal) && !dupResult.Lasting,
+				$"reads {dupMarket.OpenReads} / {dupResult.Problem} / {string.Join(" | ", dupBuyer.Ledger.All)}");
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: a game on the keep list is never sold - its set crafted as normal, and the one listing path refuses it. Fakes only.</summary>
+static class SweepKeepChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepkeep-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		try {
+			// ── the craft: a keep-list game's set is crafted as normal, never weighed for selling ──
+			var b = new NocatFarm.Core.Bot("sk-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig {
+				CraftBadges = true, SellSetsForLevels = true, SpareKeepGames = [270310]
+			});
+			bots.Add(b);
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			var market = new FakeCardMarket();
+			b.AddModule(new NocatFarm.Modules.CardBuyer(b, market, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			const string Empty = "{\"success\":1,\"assets\":[],\"descriptions\":[],\"more_items\":0}";
+			var inventory = (await NocatFarm.Core.Inventory.ReadAsync((_, _) => Task.FromResult<string?>(Empty), 1, 753, "6", CancellationToken.None))!;
+			var picks = await NocatFarm.Modules.SetSale.ChooseAsync(b, [new(270310, 0, 1)], inventory, CancellationToken.None);
+			Check("sweep keep: a set of a game on the keep list (270310) is crafted as normal - never weighed for selling, nothing priced",
+				picks.Single() is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true, Verdict: null } && picks[0].Reason.ToEnglish().Contains("keep list", StringComparison.Ordinal)
+				&& (market.Reads == 0) && (market.CardsReads == 0),
+				picks.Single().Reason.ToEnglish());
+
+			// ── the one listing path: an item of a keep-list game, or one kept by name, is never listed - whatever asked ──
+			var s = new NocatFarm.Core.Bot("sk-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareKeepGames = [270310], SpareKeepItems = "Shiny Thing" });
+			bots.Add(s);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(s, SteamKit2.ECurrencyCode.CAD);
+			string said = await NocatFarm.Core.Seller.SellAsync(s, [
+				new NocatFarm.Core.Seller.Offer(1, "Kept", "Card", 100, 100, 87, "270310-Card"),
+				new NocatFarm.Core.Seller.Offer(2, "Other", "Shiny Thing", 100, 100, 87, "440-Shiny Thing")], CancellationToken.None);
+			Check("sweep keep: the listing path itself refuses items of a keep-list game and items kept by name - nothing listed, said why",
+				said.Contains("nothing listed", StringComparison.Ordinal) && said.Contains("keep list", StringComparison.Ordinal), said);
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>A pretend Steam for spare items whose last check before gems answers what it's told (<see cref="NocatFarm.Core.ISpareSteam.BeforeGemsAsync"/>).</summary>
+sealed class BeforeGemsSpareSteam : NocatFarm.Core.ISpareSteam {
+	public List<ulong> Ground { get; } = [];
+	public Func<NocatFarm.Core.SpareDecision, NocatFarm.Core.Said?> Before { get; set; } = static _ => null;
+	public Task<NocatFarm.Core.Said?> BeforeGemsAsync(NocatFarm.Core.SpareDecision d, CancellationToken ct) => Task.FromResult(Before(d));
+	public Task<int?> GemValueAsync(NocatFarm.Core.SpareItem item, CancellationToken ct) => Task.FromResult<int?>(40);
+
+	public Task<(bool Ok, int Gems, string? Why)> GrindAsync(NocatFarm.Core.SpareItem item, int expected, CancellationToken ct) {
+		Ground.Add(item.AssetId);
+		return Task.FromResult((true, expected, (string?) null));
+	}
+
+	public Task<(int Listed, string Said)> SellAsync(IReadOnlyList<NocatFarm.Core.SpareDecision> items, CancellationToken ct) => Task.FromResult((0, ""));
+	public Task<(bool Ok, string? Why)> PackSacksAsync(NocatFarm.Core.SpareItem gems, int sacks, CancellationToken ct) => Task.FromResult((true, (string?) null));
+	public Task<(bool Ok, List<string> Cards, string? Why)> UnpackAsync(NocatFarm.Core.SpareItem pack, CancellationToken ct) => Task.FromResult((true, new List<string>(), (string?) null));
+	public Task<string> SendAsync(IReadOnlyList<NocatFarm.Core.SpareItem> items, string toAccount, CancellationToken ct) => Task.FromResult("");
+	public HashSet<ulong> Claim(IEnumerable<ulong> ids) => [.. ids];
+
+	public void Release(IEnumerable<ulong> ids) {
+	}
+
+	public Task<bool> PauseAsync(CancellationToken ct) => Task.FromResult(true);
+}
+
+/// <summary>1.8.2 sweep: a price read right before listing or turning into gems is weighed against the gems and the price limit too. Fakes only.</summary>
+static class SweepGemsRuleChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepgems-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		var realGet = NocatFarm.Core.SparePrices.Get;
+		List<NocatFarm.Core.Bot> bots = [];
+		const int Cad = 20;
+		DateTime now = DateTime.UtcNow;
+		void KeepQuote(NocatFarm.Core.MarketQuote q) => typeof(NocatFarm.Core.MarketQuotes).GetMethod("Keep", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [q]);
+
+		try {
+			// Every price asked for: 0.12 for the card, nothing else.
+			NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("SgCard", StringComparison.Ordinal)
+				? "{\"success\":true,\"lowest_price\":\"CDN$ 0.12\",\"volume\":\"50\",\"median_price\":\"CDN$ 0.12\"}" : null, true));
+			var offer = new NocatFarm.Core.Seller.Offer(9101, "Some Game", "SgCard", 12, 12, 10, "440-SgCard");
+
+			// ── right before listing: today's price against what the gems are worth ──
+			var (gemsWin, gemsWhy) = await NocatFarm.Core.Seller.RepriceAsync(offer, Cad, 3, 50, null, null, CancellationToken.None, gemsWorth: 9.5m);
+			var (sellWins, _) = await NocatFarm.Core.Seller.RepriceAsync(offer, Cad, 3, 50, null, null, CancellationToken.None, gemsWorth: 7m);
+			Check("sweep gems: right before listing - 0.09 for the seller against gems worth 0.095 isn't a cent more: kept; against gems worth 0.07 it's listed",
+				(gemsWin == null) && gemsWhy.ToEnglish().Contains("not more than its gems are worth", StringComparison.Ordinal) && sellWins is { YouGetCents: 9 },
+				gemsWhy.ToEnglish());
+
+			// Spare items' own rule: best of both weighs the gems, by the look's sack price; with none fresh, kept.
+			var item = new NocatFarm.Core.SpareItem(9101, 440, NocatFarm.Core.SpareKind.Card, "440-SgCard", "SgCard", true, true, 1, 2, 0);
+			var sell = new NocatFarm.Core.SpareDecision(item, NocatFarm.Core.SpareVerdict.Sell, new NocatFarm.Core.Said("x"), 12, 40, 11, 9);
+			var best = new NocatFarm.Core.SpareRules { On = true, Action = 0, SellPrice = 3, MaxPriceCents = 100 };
+			var (overGems, overGemsWhy) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad, sack: new NocatFarm.Core.MarketPrice(300, now))(offer, CancellationToken.None);
+			var (noSack, noSackWhy) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad)(offer, CancellationToken.None);
+			var (cheapGems, _) = await NocatFarm.Core.SpareRun.Repricer([sell], best, Cad, sack: new NocatFarm.Core.MarketPrice(100, now))(offer, CancellationToken.None);
+			var (sellOnly, _) = await NocatFarm.Core.SpareRun.Repricer([sell], best with { Action = 2 }, Cad, sack: new NocatFarm.Core.MarketPrice(300, now))(offer, CancellationToken.None);
+			Check("sweep gems: spare items' listing - 40 gems at a 3.00 sack (0.12) beat a 0.09 sale: kept, the next look makes gems; no sack price - kept; at a 1.00 sack it's listed; 'sell only' isn't weighed",
+				(overGems == null) && overGemsWhy.ToEnglish().Contains("gems are worth", StringComparison.Ordinal) && (noSack == null) && noSackWhy.ToEnglish().Contains("price of gems", StringComparison.Ordinal)
+				&& cheapGems is { YouGetCents: 9 } && sellOnly is { YouGetCents: 9 },
+				$"{overGemsWhy.ToEnglish()} / {noSackWhy.ToEnglish()}");
+
+			// ── right before turning into gems an item that had no price at all ──
+			var unpriced = new NocatFarm.Core.SpareDecision(item, NocatFarm.Core.SpareVerdict.Gems, new NocatFarm.Core.Said("40 gems - nobody sells it on the market"), 0, 40);
+			var rules = new NocatFarm.Core.SpareRules { On = true, Action = 0, MaxPriceCents = 100 };
+			var sack = new NocatFarm.Core.MarketPrice(300, now);
+			NocatFarm.Core.MarketQuote Quote(int? lowest, int? median) => new("440-SgCard", Cad, lowest, median, 5, now.Ticks);
+			Check("sweep gems: before gems - no price now: kept until it has one", NocatFarm.Core.SpareRun.BeforeGems(unpriced, null, sack, rules, Cad, now)?.ToEnglish().Contains("no price right now", StringComparison.Ordinal) == true);
+			Check("sweep gems: before gems - still nobody selling it and no sale lately: gems", NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(null, null), sack, rules, Cad, now) == null);
+			Check("sweep gems: before gems - someone sells it now for 5.00, over the 1.00 price limit: kept, never touched",
+				NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(500, 500), sack, rules, Cad, now)?.ToEnglish().Contains("over your price limit", StringComparison.Ordinal) == true);
+			Check("sweep gems: before gems - selling now (0.30) pays more than its gems (0.12): kept; with no fresh sack price to tell - kept",
+				(NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(30, 30), sack, rules, Cad, now)?.ToEnglish().Contains("more than its 40 gems", StringComparison.Ordinal) == true)
+				&& (NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(30, 30), new NocatFarm.Core.MarketPrice(300, now.AddDays(-3)), rules, Cad, now)?.ToEnglish().Contains("price of gems", StringComparison.Ordinal) == true));
+			Check("sweep gems: before gems - selling now (0.05) pays less than its gems: gems; an item it had a price for isn't asked about",
+				(NocatFarm.Core.SpareRun.BeforeGems(unpriced, Quote(6, 6), sack, rules, Cad, now) == null)
+				&& (NocatFarm.Core.SpareRun.BeforeGems(unpriced with { PriceCents = 5 }, null, sack, rules, Cad, now) == null));
+
+			// ...and the look asks it right before each one, after the other checks.
+			var b = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true });
+			bots.Add(b);
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Spare, true);
+			var steam = new BeforeGemsSpareSteam { Before = static d => d.Item.AssetId == 2 ? new NocatFarm.Core.Said("selling now pays more") : null };
+			NocatFarm.Core.SpareItem It(ulong id) => new(id, 440, NocatFarm.Core.SpareKind.Card, $"440-Sg{id}", $"Sg{id}", true, true, 1, 2, 0);
+			var plan = new NocatFarm.Core.SparePlan([.. new ulong[] { 1, 2, 3 }.Select(id => new NocatFarm.Core.SpareDecision(It(id), NocatFarm.Core.SpareVerdict.Gems, new NocatFarm.Core.Said("x"), 0, 40))]);
+			var ledger = NocatFarm.Core.SpareLedger.Load(b.Name);
+			var run = await NocatFarm.Core.SpareRun.ActAsync(plan, new NocatFarm.Core.SpareRules { On = true, PerRun = 10, DailyItems = 10, DailyValueCents = 1000 }, ledger, steam, b.Name,
+				static () => DateTime.Now, CancellationToken.None);
+			Check("sweep gems: the look checks each unpriced item right before it becomes gems - the one selling would pay more for is kept, and not counted",
+				steam.Ground.SequenceEqual([1ul, 3ul]) && (run.GemItems == 2) && (ledger.DoneItems == 2), string.Join(",", steam.Ground));
+
+			// ── 'sell do': the same price limit, minimum and gems rule ──
+			KeepQuote(new NocatFarm.Core.MarketQuote(NocatFarm.Core.SparePrices.SackHash, Cad, 300, 300, 50, now.Ticks));
+			var s = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareMaxPrice = 1f });
+			bots.Add(s);
+			var cheapCap = new NocatFarm.Core.Bot("sg-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareMaxPrice = 0.10f });
+			bots.Add(cheapCap);
+			var (noGoo, noGooWhy) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?>())(offer, CancellationToken.None);
+			var (gooWins, gooWhy) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?> { [9101] = 40 })(offer, CancellationToken.None);
+			var (noGems, _) = await NocatFarm.Core.Seller.OwnRule(s, Cad, new Dictionary<ulong, int?> { [9101] = 0 })(offer, CancellationToken.None);
+			var (capped, cappedWhy) = await NocatFarm.Core.Seller.OwnRule(cheapCap, Cad, new Dictionary<ulong, int?> { [9101] = 0 })(offer, CancellationToken.None);
+			Check("sweep gems: 'sell do' - its gem value not known: kept; gems worth more than the sale: kept; no gems: listed; over the price limit: kept",
+				(noGoo == null) && noGooWhy.ToEnglish().Contains("gem value", StringComparison.Ordinal) && (gooWins == null) && gooWhy.ToEnglish().Contains("gems are worth", StringComparison.Ordinal)
+				&& noGems is { YouGetCents: 9 } && (capped == null) && cappedWhy.ToEnglish().Contains("price limit", StringComparison.Ordinal),
+				$"{noGooWhy.ToEnglish()} / {gooWhy.ToEnglish()} / {cappedWhy.ToEnglish()}");
+			Check("sweep gems: 'sell do' lists by that rule, with the plan's gems",
+				Src("src/NocatFarm/Commands.cs").Contains("reprice: Seller.OwnRule(bot, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, plan.Gems", StringComparison.Ordinal));
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
+			}
+
+			NocatFarm.Core.SparePrices.Get = realGet;
+			NocatFarm.Core.MarketQuotes.Reset();
+			NocatFarm.Core.SpareLedger.ForgetLoaded();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: what the gems were turned into, listed - only on a fresh sack price, one sack at a time, cards by the spare items rules. Fakes only.</summary>
+static class SweepGemsSellChecks {
+	public static Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepgemsell-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+
+		try {
+			string gems = Src("src/NocatFarm/Modules/Boosters.Gems.cs");
+			Check("sweep gems sell: a sack price older than 6 hours is never used - read again, and with none that fresh nothing is listed this look",
+				gems.Contains("int sack = (sackQuote != null) && (DateTime.UtcNow - sackQuote.When <= GemsChoice.SackFresh) ? GemsChoice.Receive(sackQuote", StringComparison.Ordinal)
+				&& gems.Contains("if (sack <= 0) {\n\t\t\tLog.DebugOnChange(", StringComparison.Ordinal) && (NocatFarm.Modules.GemsChoice.SackFresh == TimeSpan.FromHours(6)));
+			Check("sweep gems sell: one sack at a time - a listing without a clear yes is looked for among the listings before another goes up",
+				gems.Contains("mem.SackTriedAt = DateTime.UtcNow.Ticks;", StringComparison.Ordinal) && gems.Contains("if (mem.SackTriedAt > 0) {", StringComparison.Ordinal)
+				&& gems.Contains("return true;   // not known whether the last one went up: nothing more this look", StringComparison.Ordinal));
+			Check("sweep gems sell: cards from packs opened to sell - the keep list, the price limit, an unknown gem value keeps them",
+				gems.Contains("rules.KeepGames.Contains(card.App) || rules.KeepNames.Contains(item.Name) || rules.KeepNames.Contains(item.Hash)", StringComparison.Ordinal)
+				&& gems.Contains("Priced(mins.GetValueOrDefault(o.AssetId, 1), rules.MaxPriceCents)", StringComparison.Ordinal)
+				&& gems.Contains("if (SteamGems.KnownValue(item) is not int goo) {", StringComparison.Ordinal));
+
+			var mem = NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem");
+			mem.SackTriedAt = 638_000_000_000_000_000;
+			mem.Save("sgs-mem");
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			Check("sweep gems sell: a sack put up without a clear yes is remembered across a restart",
+				NocatFarm.Modules.GemsChoice.Memory.Of("sgs-mem").SackTriedAt == 638_000_000_000_000_000);
+
+			// A set it's levelling: cards of it held besides the pack's, or bought, or packs working on it - those cards stay.
+			MethodInfo levelling = typeof(NocatFarm.Modules.Boosters).GetMethod("Levelling", BindingFlags.NonPublic | BindingFlags.Static)!;
+			NocatFarm.Core.SpareItem Card(ulong id, uint app) => new(id, app, NocatFarm.Core.SpareKind.Card, $"{app}-C{id}", $"C{id}", true, true, 1, 2, 0);
+			List<NocatFarm.Modules.GemsChoice.Memory.OpenedCard> opened = [new(600, "C1", DateTime.UtcNow), new(600, "C2", DateTime.UtcNow), new(600, "C3", DateTime.UtcNow)];
+			bool Is(List<NocatFarm.Core.SpareItem> items, HashSet<uint> working) => (bool) levelling.Invoke(null, [600u, items, opened, working])!;
+			List<NocatFarm.Core.SpareItem> onlyPack = [Card(1, 600), Card(2, 600), Card(3, 600), Card(4, 700)];
+			Check("sweep gems sell: only the pack's own cards of a game - sold; a card of it held besides - its set is being levelled, kept; bought for a badge or packs on it - kept",
+				!Is(onlyPack, []) && Is([.. onlyPack, Card(5, 600)], []) && Is(onlyPack, [600u]));
+		} finally {
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+
+		return Task.CompletedTask;
+	}
+}
+
+/// <summary>1.8.2 sweep: copying settings never starts spending, trading, sending or commands on the account copied to. Fakes only.</summary>
+static class SweepCopyChecks {
+	public static Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Json(object? o) => System.Text.Json.JsonSerializer.Serialize(o);
+
+		// ── every setting classified, exactly once ──
+		var never = NocatFarm.Core.SettingsCopy.NeverCopied;
+		var kept = NocatFarm.Core.SettingsCopy.KeptAsTheyAre;
+		var across = NocatFarm.Core.SettingsCopy.CopiedAcross;
+		HashSet<string> switches = [.. NocatFarm.Core.Switches.All.Select(static k => k.Setting)];
+		List<string> unclassified = [], twice = [];
+
+		foreach (var def in NocatFarm.Config.Settings.Bot) {
+			int lists = (never.Contains(def.Name) ? 1 : 0) + (kept.Contains(def.Name) ? 1 : 0) + (across.Contains(def.Name) ? 1 : 0) + (switches.Contains(def.Name) ? 1 : 0);
+
+			if (lists == 0) {
+				unclassified.Add(def.Name);
+			} else if (lists > 1) {
+				twice.Add(def.Name);
+			}
+		}
+
+		Check("sweep copy: every per-account setting is in exactly one list - copied, never copied, kept as the account has it, or a switch (a new setting fails here until it's put in one)",
+			(unclassified.Count == 0) && (twice.Count == 0), $"unclassified: {string.Join(", ", unclassified)} / twice: {string.Join(", ", twice)}");
+		HashSet<string> real = [.. NocatFarm.Config.Settings.Bot.Select(static d => d.Name)];
+		Check("sweep copy: the lists name only settings that exist", never.Concat(kept).Concat(across).All(real.Contains),
+			string.Join(", ", never.Concat(kept).Concat(across).Where(n => !real.Contains(n))));
+		Check("sweep copy: a setting in no list is never copied", !NocatFarm.Core.SettingsCopy.Copied(new NocatFarm.Config.SettingDef("NotASetting", "x", "x", NocatFarm.Config.SettingKind.Bool, "x")));
+		Check("sweep copy: what spends, trades, sends items, takes commands or switches human mode is kept as the account has it",
+			new[] { "BoosterMake", "GemsForLevels", "SellSetsForLevels", "AcceptFairCardSwaps", "SendItemTypes", "SendOnFarmingFinished", "AutoTradeWith", "TradeMasters",
+				"CommandMasters", "LegitMode", "BuyDailyLimit", "BuyWeeklyLimit", "CardSwapMaxLoss", "SpareMaxPrice", "SpareDailyValue", "SpareGemsSendTo", "BoosterSendTo" }.All(kept.Contains));
+
+		// ── a copy from an account that does all of it, onto one that does none ──
+		var src = new NocatFarm.Config.BotConfig {
+			BoosterMake = NocatFarm.Modules.BoosterPick.Auto, GemsForLevels = true, SellSetsForLevels = true, BuyFullSets = true, AcceptFairCardSwaps = true, CardSwapsPerDay = 9,
+			CardSwapMaxLoss = 5f, AcceptFromMasters = true, TradeMasters = "76561198000000777", AutoTradeWith = "old", DeclineOtherTrades = true, AcceptDonations = true,
+			SendItemTypes = "cards, gems", SendOnFarmingFinished = true, SendEveryHours = 6, SpareGems = 4, SpareGemsSendTo = "old", BoosterUnopened = 2, BoosterSendTo = "old",
+			CommandMasters = "76561198000000777", LegitMode = true, BuyDailyLimit = 99f, BuyWeeklyLimit = 999f, SpareMaxPrice = 50f, SpareDailyValue = 500f, SpareMinSale = 2f,
+			PointsWeeklyCap = 99999, PointsKeepAtLeast = 0, IdleGames = [440], DiscoveryQueue = 2
+		};
+		var dst = new NocatFarm.Config.BotConfig { BoosterMake = 0, GemsForLevels = false, SellSetsForLevels = false, SpareGems = 1 };
+		var plan = NocatFarm.Core.SettingsCopy.Build(src, dst, "cp-kept", 0);
+		List<string> moved = [.. kept.Where(n => Json(NocatFarm.Config.Settings.Read(plan.Result, n)) != Json(NocatFarm.Config.Settings.Read(dst, n)))];
+		Check("sweep copy: from an account that spends, trades and sends - none of it comes across; the account keeps every one of its own",
+			(plan.Error == null) && (moved.Count == 0) && !plan.Result.LegitMode && (plan.Result.DiscoveryQueue == 2), string.Join(", ", moved));
+
+		// ── the preview hides nothing ──
+		var many = new NocatFarm.Config.BotConfig();
+		var far = new NocatFarm.Config.BotConfig {
+			WeekdayHours = 3, WeekendHours = 5, DayOffChancePct = 7, DayStartVaryMinutes = 11, BedVaryMinutes = 13, LateNightExtraHours = 1, SleepMinHours = 6, SleepMaxHours = 9,
+			PureMainDayChancePct = 17, NewGamesFirst = !many.NewGamesFirst, LongerRhythms = !many.LongerRhythms, JoinFriends = !many.JoinFriends, WarmUpMinMinutes = 2, WarmUpMaxMinutes = 4,
+			SessionMinMinutes = 30, SessionMaxMinutes = 90, BreakMinMinutes = 5, BreakMaxMinutes = 20, MealBreaksPerDay = 1, MealBreakMinutes = 25, MaxSignOutsPerDay = 1,
+			OfflineIdleAtNight = !many.OfflineIdleAtNight, ActOnlyWhileAwake = !many.ActOnlyWhileAwake, QuietThingsWaitForDay = !many.QuietThingsWaitForDay, IdleGames = [440, 730],
+			IdleWholeLibrary = !many.IdleWholeLibrary, SkipRefundableGames = !many.SkipRefundableGames, RotateIdleGames = !many.RotateIdleGames, CustomGameNameEnabled = !many.CustomGameNameEnabled,
+			CustomGameName = "x", PlayWhileFarming = !many.PlayWhileFarming, FarmCards = !many.FarmCards, PriorityGames = [10], FarmPriorityOnly = !many.FarmPriorityOnly, BlacklistedGames = [20],
+			SkipUnplayedGames = !many.SkipUnplayedGames, FarmInSittings = !many.FarmInSittings, FarmOffline = !many.FarmOffline, StopWhenFarmingDone = !many.StopWhenFarmingDone,
+			CraftBadges = !many.CraftBadges, CraftFoilBadges = !many.CraftFoilBadges, SpareFoils = !many.SpareFoils, DiscoveryQueue = 2, SaleEvents = !many.SaleEvents, WatchBans = !many.WatchBans,
+			ShowInventoryValue = !many.ShowInventoryValue, AcceptGifts = !many.AcceptGifts, AcceptFriendRequests = !many.AcceptFriendRequests, AcceptGroupInvites = !many.AcceptGroupInvites
+		};
+		var big = NocatFarm.Core.SettingsCopy.Build(far, many, "cp-big", 0);
+		string text = NocatFarm.Core.SettingsCopy.PreviewText("far", "cp-big", big);
+		Check("sweep copy: the preview lists every change - none cut off - and says what's kept as the account has it",
+			(big.Changes.Count > 40) && big.Changes.All(c => text.Contains($"  {c.Label}: ", StringComparison.Ordinal)) && !text.Contains("...and ", StringComparison.Ordinal)
+			&& text.Contains("Kept as cp-big has them: whatever spends money, gems or points, trades, sends items away or takes commands", StringComparison.Ordinal),
+			$"{big.Changes.Count} changes");
+
+		return Task.CompletedTask;
+	}
+}
+
+/// <summary>1.8.2 sweep: fair card swaps keep to the keep lists like paired swaps; a paired swap's hold asked with its trade token. Fakes only.</summary>
+static class SweepSwapChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepswap-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		const ulong YouId = 76561198000009902UL;
+
+		try {
+			// ── "Keep this many of each card" ──
+			Type fs = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Modules.FairSwap")!;
+			Type cardT = fs.GetNestedType("Card", BindingFlags.NonPublic)!;
+			object Card(uint game, ulong cls) => Activator.CreateInstance(cardT, [game, cls])!;
+			object CardList(params object[] cards) { var l = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(cardT))!; foreach (var c in cards) l.Add(c); return l; }
+			object Holdings(params (uint g, ulong c, int n)[] h) { var d = (IDictionary) Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(cardT, typeof(int)))!; foreach (var (g, c, n) in h) d[Card(g, c)] = n; return d; }
+			bool Fair(object give, object get, object ours, int keep) {
+				var r = fs.GetMethod("JudgeKeeping", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [give, get, ours, keep])!;
+				return (bool) r.GetType().GetField("Item1")!.GetValue(r)!;
+			}
+
+			Check("sweep swaps: keeping 2 of each card - 2 of A, none of B: A for B would leave 1, refused; 3 of A: fair",
+				!Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 2)), 2) && Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 3)), 2)
+				&& Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 2)), 1));
+
+			// ── keep lists: a fair swap never gives a card of a game, or a card, on them - before the inventory is even read ──
+			MethodInfo judge = fs.GetMethod("JudgeAsync", BindingFlags.NonPublic | BindingFlags.Static)!;
+			Type fairCard = judge.GetParameters()[2].ParameterType.GetGenericArguments()[0];
+			NocatFarm.Core.TradeOffers.Item Ci(ulong asset, ulong cls, uint game, string name) =>
+				new(753, "6", asset, cls, 0, 1, "Some Game Trading Card", name, game, true, "", $"{game}-{name}");
+
+			async Task<(bool? Fair, string Why)> Judge(NocatFarm.Core.Bot b, NocatFarm.Core.TradeOffers.Offer offer) {
+				object task = judge.Invoke(null, [b, offer, Array.CreateInstance(fairCard, 0), CancellationToken.None])!;
+				await (Task) task;
+				object result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+				return ((bool?) result.GetType().GetField("Item1")!.GetValue(result), ((NocatFarm.Core.Said) result.GetType().GetField("Item2")!.GetValue(result)!).ToEnglish());
+			}
+
+			var keepBot = new NocatFarm.Core.Bot("sw-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareKeepGames = [270310], SpareKeepItems = "Precious" });
+			bots.Add(keepBot);
+			var byGame = await Judge(keepBot, new(1, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 1, 270310, "Scout")], [Ci(91, 3, 270310, "Pyro")]));
+			var byName = await Judge(keepBot, new(2, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(2, 1, 440, "Precious")], [Ci(92, 3, 440, "Pyro")]));
+			Check("sweep swaps: a fair swap asking for a card of a keep-list game (270310), or one kept by name - not fair, said why",
+				(byGame.Fair == false) && byGame.Why.Contains("keep list", StringComparison.Ordinal) && (byName.Fair == false) && byName.Why.Contains("keep list", StringComparison.Ordinal),
+				$"{byGame.Why} / {byName.Why}");
+			string fairSrc = Src("src/NocatFarm/Modules/FairSwap.cs");
+			Check("sweep swaps: a fair swap never gives a copy promised to a paired swap, and those don't count as held",
+				fairSrc.Contains("HashSet<ulong> reserved = CardExchange.Reserved(bot.Name, bot.SteamId, now);", StringComparison.Ordinal)
+				&& fairSrc.Contains("|| reserved.Contains(Num64(Text(asset, \"assetid\")))) {", StringComparison.Ordinal)
+				&& fairSrc.Contains("return JudgeKeeping(cards.Giving, cards.Receiving, ours, rules.Keep);", StringComparison.Ordinal));
+
+			// ── a swap's trade hold: asked with the partner's trade token when the paired match came with one ──
+			var hBot = new NocatFarm.Core.Bot("sw-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig());
+			bots.Add(hBot);
+			var trades = new NocatFarm.Modules.Trading(hBot);
+			List<string> asked = [];
+			typeof(NocatFarm.Modules.Trading).GetProperty("ReadHold", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(trades,
+				(Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, token, _) => { asked.Add(token); return Task.FromResult<TimeSpan?>(TimeSpan.Zero); }));
+			MethodInfo holdVerdict = typeof(NocatFarm.Modules.Trading).GetMethod("HoldVerdictAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
+			var stranger = new NocatFarm.Core.TradeOffers.Offer(4243, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, 440, "Card10")], [Ci(901, 40, 440, "Card40")]);
+			bool? clear = await (Task<bool?>) holdVerdict.Invoke(trades, [stranger, false, CancellationToken.None])!;
+			Check("sweep swaps: a stranger's fair swap is asked about with no token (none is known); clear of holds - it may go",
+				(clear == true) && asked is [""], string.Join(",", asked));
+			Check("sweep swaps: a paired swap's hold is asked with the trade token its match came with",
+				Src("src/NocatFarm/Modules/Trading.Holds.cs").Contains("&& (match.You == offer.Partner) && CardExchange.TokenOk(match.Token) ? match.Token : \"\";", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/Trading.Holds.cs").Contains("TradeOffers.HoldAsync(Bot, offer.Partner, ct, token)", StringComparison.Ordinal));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: listings - what a buyer is really charged is what's written down; an unreadable answer is never "no listings". Fakes only.</summary>
+static class SweepListingChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		var realGet = NocatFarm.Core.SparePrices.Get;
+
+		try {
+			NocatFarm.Core.SparePrices.Get = (path, _) => Task.FromResult<(string?, bool)>((path.Contains("SlHat", StringComparison.Ordinal)
+				? "{\"success\":true,\"lowest_price\":\"$0.23\",\"volume\":\"50\",\"median_price\":\"$0.23\"}" : null, true));
+			var offer = new NocatFarm.Core.Seller.Offer(9201, "Team Fortress 2", "SlHat", 23, 23, 19, "440-SlHat");
+			var (priced, _) = await NocatFarm.Core.Seller.RepriceAsync(offer, 1, 3, 50, null, null, CancellationToken.None, floorPct: 80);
+			Check("sweep listings: aimed at 0.22, the seller gets 0.19 and the buyer is charged 0.21 - 0.21 is what's written down as ours, never the 0.22 aimed at",
+				priced is { YouGetCents: 19, BuyerCents: 21 } && (NocatFarm.Core.Seller.FeesFor(19) == 2), $"{priced?.YouGetCents} {priced?.BuyerCents}");
+			string seller = Src("src/NocatFarm/Core/Seller.cs");
+			Check("sweep listings: an answer about the listings it can't read is 'not known' - never 'no listings'",
+				seller.Contains("\t\treturn found;\n\t}", StringComparison.Ordinal) && !seller.Contains("return found ?? [];", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Core.SparePrices.Get = realGet;
+			NocatFarm.Core.MarketQuotes.Reset();
 		}
 	}
 }
