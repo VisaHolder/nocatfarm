@@ -411,14 +411,12 @@ public sealed class SetFinder {
 				}
 			}
 
-			bool catching = CatchingUp(now);
-			int budget = catching ? RequestsABatch : RequestsABatchIdle;
+			int budget = CatchingUp(now) ? RequestsABatch : RequestsABatchIdle;
 			bool walking = Walked() < DailyCards;
 
 			// ── the most promising sets, read whole: one request each (two past 10 cards) ──
 			foreach (uint app in ToFill(now)) {
-				// Catching up, the lists' cheapest sets take the whole batch - the walk only gets what's left once they're read.
-				if ((requests >= budget - (walking && !catching ? PagesABatch : 0)) || (FillsToday() >= FillsADay)) {
+				if ((requests >= budget - (walking ? PagesABatch : 0)) || (FillsToday() >= FillsADay)) {
 					break;
 				}
 
