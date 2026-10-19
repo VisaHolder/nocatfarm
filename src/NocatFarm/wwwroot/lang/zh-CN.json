@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "无法记下 Steam 等级：{0}",
     "At most {0} for one badge level - a little over what a level usually costs": "一个徽章等级最多 {0} - 比一个等级的通常价格稍高",
     "{0} would pay you {1}, under your {2} minimum": "{0} 只能让你拿到 {1}，低于你的最低 {2}",
-    "cards were bought to finish it - crafted, never sold": "为凑齐它买了卡牌 - 合成，绝不出售"
+    "cards were bought to finish it - crafted, never sold": "为凑齐它买了卡牌 - 合成，绝不出售",
+    "{0}: answered · {1} lines in the log file": "{0}：已回答 · 日志文件中 {1} 行"
   },
   "settings": {
     "SteamOpenEveryAccount": {

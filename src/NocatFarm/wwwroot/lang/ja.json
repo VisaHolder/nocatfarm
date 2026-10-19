@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "Steam レベルを記録できませんでした: {0}",
     "At most {0} for one badge level - a little over what a level usually costs": "バッジ 1 レベルに最大 {0} - ふだんの 1 レベルの値段より少し上",
     "{0} would pay you {1}, under your {2} minimum": "{0} は {1} にしかならず、最低額 {2} を下回ります",
-    "cards were bought to finish it - crafted, never sold": "完成させるためにカードを買いました - 作成し、売りません"
+    "cards were bought to finish it - crafted, never sold": "完成させるためにカードを買いました - 作成し、売りません",
+    "{0}: answered · {1} lines in the log file": "{0}: 回答済み · ログファイルに {1} 行"
   },
   "settings": {
     "SteamOpenEveryAccount": {

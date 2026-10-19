@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "не удалось записать уровень Steam: {0}",
     "At most {0} for one badge level - a little over what a level usually costs": "Не больше {0} за один уровень значка - чуть выше обычной цены уровня",
     "{0} would pay you {1}, under your {2} minimum": "{0} принесёт тебе {1} - меньше твоего минимума {2}",
-    "cards were bought to finish it - crafted, never sold": "карточки купили, чтобы его собрать, - создаётся, не продаётся"
+    "cards were bought to finish it - crafted, never sold": "карточки купили, чтобы его собрать, - создаётся, не продаётся",
+    "{0}: answered · {1} lines in the log file": "{0}: ответ · {1} строк в файле журнала"
   },
   "settings": {
     "SteamOpenEveryAccount": {

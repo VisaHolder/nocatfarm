@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "Steam seviyesi not edilemedi: {0}",
     "At most {0} for one badge level - a little over what a level usually costs": "Bir rozet seviyesi için en fazla {0} - bir seviyenin genelde tuttuğundan biraz fazla",
     "{0} would pay you {1}, under your {2} minimum": "{0} sana {1} kazandırır, {2} alt sınırının altında",
-    "cards were bought to finish it - crafted, never sold": "tamamlamak için kart alındı - üretilir, asla satılmaz"
+    "cards were bought to finish it - crafted, never sold": "tamamlamak için kart alındı - üretilir, asla satılmaz",
+    "{0}: answered · {1} lines in the log file": "{0}: yanıtlandı · günlük dosyasında {1} satır"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "no se pudo anotar el nivel de Steam: {0}",
     "At most {0} for one badge level - a little over what a level usually costs": "Como mucho {0} por un nivel de insignia - un poco más de lo que suele costar un nivel",
     "{0} would pay you {1}, under your {2} minimum": "{0} te daría {1}, por debajo de tu mínimo de {2}",
-    "cards were bought to finish it - crafted, never sold": "se compraron cromos para completarla - se fabrica, nunca se vende"
+    "cards were bought to finish it - crafted, never sold": "se compraron cromos para completarla - se fabrica, nunca se vende",
+    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} líneas en el archivo de registro"
   },
   "settings": {
     "SteamOpenEveryAccount": {

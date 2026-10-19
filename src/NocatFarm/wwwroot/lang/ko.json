@@ -3413,7 +3413,8 @@
     "couldn't note the Steam level: {0}": "Steam 레벨을 기록하지 못했습니다: {0}",
     "At most {0} for one badge level - a little over what a level usually costs": "배지 레벨 하나에 최대 {0} - 보통 한 레벨 값보다 조금 위",
     "{0} would pay you {1}, under your {2} minimum": "{0}은(는) {1}을(를) 받게 되어 최소 {2}보다 적습니다",
-    "cards were bought to finish it - crafted, never sold": "완성하려고 카드를 샀습니다 - 제작하고, 팔지 않습니다"
+    "cards were bought to finish it - crafted, never sold": "완성하려고 카드를 샀습니다 - 제작하고, 팔지 않습니다",
+    "{0}: answered · {1} lines in the log file": "{0}: 응답함 · 로그 파일에 {1}줄"
   },
   "settings": {
     "SteamOpenEveryAccount": {

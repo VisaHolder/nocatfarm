@@ -4598,6 +4598,9 @@ public static partial class Commands {
 	/// name - the whole answer goes to the debug log. Null, or nothing for that account: every line of it, as INFO.</param>
 	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null, Func<string, string?>? Brief = null);
 
+	/// <summary>An answer that comes back later with more lines than this is one line in the window, the rest in the log file.</summary>
+	private const int LongAnswer = 4;
+
 	/// <summary>
 	/// Run a slow command's work, account by account, and answer within <paramref name="wait"/>: what each finished account
 	/// said, and for the rest that it's going on and the log says when it's done - where its answer then goes, under the
@@ -4713,7 +4716,21 @@ public static partial class Commands {
 					return;
 				}
 
-				foreach (string line in done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)) {
+				List<string> answer = [.. done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)];
+
+				// A long answer is one line in the window - what was asked and how long the answer is - and the whole of it in the log
+				// file (1.8.2: a buy preview was 13 lines). Asking again where it can answer at once (the dashboard, chat) shows it all.
+				if (answer.Count > LongAnswer) {
+					Log.Info(new Said("{0}: answered · {1} lines in the log file", job.Key ?? job.What, answer.Count), source);
+
+					foreach (string line in answer) {
+						Log.Debug(MaskedReply(job.What, Unnamed(line, name), typed), source);
+					}
+
+					return;
+				}
+
+				foreach (string line in answer) {
 					// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
 					// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
 					Log.Info(MaskedReply(job.What, Unnamed(line, name), typed), source);
