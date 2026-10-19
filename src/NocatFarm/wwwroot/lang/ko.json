@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "이 세트는 장터에서 전부 알려져 있지 않습니다",
     "selling sets instead of crafting is off": "제작 대신 세트 판매가 꺼져 있습니다",
     "buying cards is off": "카드 구매가 꺼져 있습니다",
-    "a foil set is always crafted": "반짝이 세트는 항상 제작합니다",
     "{0} sets ready, crafted together": "{0}세트 준비됨, 함께 제작",
     "only {0} sets are weighed a look": "한 번에 {0}세트만 비교합니다",
     "buying cards isn't running": "카드 구매가 실행 중이 아닙니다",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "그 돈으로 무엇을 살 수 있는지 가격을 알기 전에 마켓이 응답을 멈췄습니다",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0}은(는) 지난 하루 동안 {1}번만 팔렸습니다 - 기다립니다. 세트 가치는 {2}입니다 ({3}레벨)",
     "it has no Steam wallet to spend the money from": "그 돈을 쓸 Steam 지갑이 없습니다",
-    "on your keep list - its set is crafted, never sold": "보관 목록에 있음 - 세트는 제작하고 절대 팔지 않음"
+    "on your keep list - its set is crafted, never sold": "보관 목록에 있음 - 세트는 제작하고 절대 팔지 않음",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "갖고 있는 것보다 팔 때 더 가치 있는 카드: 등록할 인벤토리가 지금 없음 - 다음 확인 때",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: 카드 {2}장 중 {1}장 등록 · 나머지는 다음 확인을 기다립니다",
+    "selling buys about {0} levels, keeping makes {1}": "팔면 약 {0}레벨을 살 수 있고, 갖고 있으면 {1}레벨",
+    "keeping makes {0} level(s), selling buys about {1}": "갖고 있으면 {0}레벨, 팔면 약 {1}레벨을 살 수 있음",
+    "cards worth more sold than kept: not weighed · {0}": "갖고 있는 것보다 팔 때 더 가치 있는 카드: 따져 보지 않음 · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: 카드 보관 - 파는 게 더 나은지 확실하지 않음 · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: 카드를 다시 갖고 있을 가치가 있음 · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: 카드 {1}장이 레벨보다 가치 있음 - 약 {2}에 판매 ≈ 싼 레벨 {3}개",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · 최저가 {3} · 장당 {4} 받음",
+    "its price fell since it was weighed - not listed": "따져 본 뒤로 가격이 떨어짐 - 등록하지 않음",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "{0} 반짝이 세트를 제작하지 않고 판매: {1}(으)로 약 {2}레벨 구매",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "{1} 세트 {0}개를 제작하지 않고 판매: {2}(으)로 약 {3}레벨 구매",
+    "sets worth more sold than crafted wait uncrafted · {0}": "제작보다 팔 때 더 가치 있는 세트는 제작하지 않고 기다림 · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "제작하지 않고 판 세트의 남은 카드 - {0} 받음",
+    "what's left of a set sold instead of crafted pays nothing": "제작하지 않고 판 세트의 남은 카드는 아무것도 받지 못함",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "지금은 돈으로 무엇을 살 수 있는지 모름 - 카드 구매가 다음 레벨 가격을 아직 확인하지 않음",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: 반짝이 카드 {1}장이 레벨보다 가치 있음 - 약 {2}에 판매 ≈ 싼 레벨 {3}개",
+    "its cards are being sold - worth more than the levels they'd make": "카드를 판매 중 - 얻는 레벨보다 가치 있음",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0}(으)로 약 {1}레벨 구매 · {2}이(가) 거의 팔리지 않지만 세트가 충분히 기다림 - 그래도 등록",
+    "{0} sets worth {1} buy only {2} levels": "{1} 가치의 세트 {0}개로 {2}레벨만 구매",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0}(으)로 약 {1}레벨을 살 수 있지만 Steam이 스스로 카드를 사지 못하게 함 - 가능해질 때까지 기다림"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "돈으로 레벨을 더 살 수 있으면 세트를 제작하지 않고 판매",
-      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 일반 배지를 제작하기 전에 그 세트가 Steam 수수료를 빼고 장터에서 얼마에 팔리는지 봅니다. 그 돈으로 제작이 주는 1레벨보다 확실히 많은 배지 레벨을 살 수 있으면 대신 세트를 판매로 등록하고, 카드 구매가 그 한도 안에서 돈을 씁니다. 예를 들어 수수료를 빼고 5.00이 되는 세트는 가장 싼 레벨이 하나에 약 0.40일 때 1레벨 대신 약 12레벨을 삽니다. 등록은 다른 등록처럼 모두 Steam 앱에서 확인합니다. 포일 세트는 항상 제작합니다."
+      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 일반 배지를 제작하기 전에 그 세트가 Steam 수수료를 빼고 장터에서 얼마에 팔리는지 봅니다. 그 돈으로 제작이 주는 1레벨보다 확실히 많은 배지 레벨을 살 수 있으면 대신 세트를 판매로 등록하고, 카드 구매가 그 한도 안에서 돈을 씁니다. 예를 들어 수수료를 빼고 5.00이 되는 세트는 가장 싼 레벨이 하나에 약 0.40일 때 1레벨 대신 약 12레벨을 삽니다. 등록은 다른 등록처럼 모두 Steam 앱에서 확인합니다. 포일 세트와 포일 카드도 똑같이 따집니다. 포일 배지는 1레벨입니다. 배지용으로 갖고 있는 카드도 갖고 있을 때 얻는 레벨보다 팔 때 더 가치 있으면 팝니다: 약 5.70에 팔리는 카드 7장은 0.40짜리 레벨 약 14개를 사며, 갖고 있을 때의 1~2레벨보다 많습니다. 파는 동안 그 게임의 카드 구매나 부스터 팩 제작은 하지 않습니다."
     },
     "CardSwaps": {
       "label": "남는 카드를 다른 nocat.farm 사용자와 교환",

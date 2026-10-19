@@ -41,7 +41,7 @@ public static partial class Commands {
 			}
 
 			Dictionary<uint, DateTime> made = BotManager.ModuleOf<Boosters>(b)?.AutoMemory.Made ?? BoosterPick.Memory.Load(b.Name).Made;
-			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow);
+			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow, DearCards.Marked(b));
 			bool dayOpen = HumanWaits(b, BotManager.ModuleOf<Boosters>(b)?.DayGate) == null;
 
 			string plan = BoosterPick.Explain(b.Name, b.Cfg.BoosterMake, page, ranking, b.Cfg.BoosterKeepGems, dayOpen, b.Cfg.CraftBadges, b.Cfg.OpenBoosterPacks);

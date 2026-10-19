@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "このセットはマーケットで全部わかっていません",
     "selling sets instead of crafting is off": "作らずにセットを売る設定はオフです",
     "buying cards is off": "カードの購入はオフです",
-    "a foil set is always crafted": "キラセットはいつも作ります",
     "{0} sets ready, crafted together": "{0} セットそろっています、まとめて作ります",
     "only {0} sets are weighed a look": "1回に比べるのは {0} セットまでです",
     "buying cards isn't running": "カードの購入が動いていません",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "お金で買えるものの値段がわかる前に、マーケットが応答しなくなりました",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} は過去1日に {1} 回しか売れていません - 待ちます。このセットは {2} の価値があります（{3} レベル分）",
     "it has no Steam wallet to spend the money from": "その代金を使うための Steam ウォレットがありません",
-    "on your keep list - its set is crafted, never sold": "残すリストにあります - セットは作り、売りません"
+    "on your keep list - its set is crafted, never sold": "残すリストにあります - セットは作り、売りません",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "持つより売った方が価値のあるカード: 出品するためのインベントリが手元にない - 次の確認で",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: {2} 枚中 {1} 枚を出品 · 残りは次の確認を待ちます",
+    "selling buys about {0} levels, keeping makes {1}": "売ると約 {0} レベル買え、持っていると {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "持っていると {0} レベル、売ると約 {1} レベル買える",
+    "cards worth more sold than kept: not weighed · {0}": "持つより売った方が価値のあるカード: 比較していません · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: カードは保持 - 売った方が価値があるか確かではありません · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: カードはまた持つ価値があります · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} 枚のカードがレベルより価値あり - 約 {2} で販売 ≈ 安いレベル {3} 個分",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · 最安 {3} · 1 枚につき {4} 受け取り",
+    "its price fell since it was weighed - not listed": "比較した後に値下がりしました - 出品しません",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "{0} のキラセットを作成せずに販売: {1} で約 {2} レベル買えます",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "{1} のセット {0} 個を作成せずに販売: {2} で約 {3} レベル買えます",
+    "sets worth more sold than crafted wait uncrafted · {0}": "作成するより売った方が価値のあるセットは作成せずに待機中 · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "作成せずに売ったセットの残り - {0} になります",
+    "what's left of a set sold instead of crafted pays nothing": "作成せずに売ったセットの残りは何にもなりません",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "お金で何が買えるか今はわかりません - カード購入が次のレベルの値段をまだ調べていません",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} 枚のキラカードがレベルより価値あり - 約 {2} で販売 ≈ 安いレベル {3} 個分",
+    "its cards are being sold - worth more than the levels they'd make": "カードを販売中 - 上がるレベルより価値があります",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} で約 {1} レベル買えます · {2} はほとんど売れませんが、セットは十分待ちました - それでも出品します",
+    "{0} sets worth {1} buy only {2} levels": "{1} 相当のセット {0} 個で {2} レベルしか買えません",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} で約 {1} レベル買えますが、Steam が自動でのカード購入を許可していません - できるまで待ちます"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "お金でより多くのレベルが買えるなら、セットを作らずに売る",
-      "tip": "「足りないカードを買う」がオンのときだけ働きます。通常のバッジを作る前に、そのセットが Steam の手数料を引いてマーケットでいくらで売れるかを見ます。そのお金で、作って得られる 1 レベルよりはっきり多くのバッジレベルが買えるなら、作らずにセットを出品し、カードの購入がその上限の中でお金を使います。例えば、手数料を引いて 5.00 になるセットは、一番安いレベルが 1 つ約 0.40 なら、1 レベルの代わりに約 12 レベル買えます。出品はどれも、ほかの出品と同じく Steam アプリで確認します。フォイルのセットは必ず作ります。"
+      "tip": "「足りないカードを買う」がオンのときだけ働きます。通常のバッジを作る前に、そのセットが Steam の手数料を引いてマーケットでいくらで売れるかを見ます。そのお金で、作って得られる 1 レベルよりはっきり多くのバッジレベルが買えるなら、作らずにセットを出品し、カードの購入がその上限の中でお金を使います。例えば、手数料を引いて 5.00 になるセットは、一番安いレベルが 1 つ約 0.40 なら、1 レベルの代わりに約 12 レベル買えます。出品はどれも、ほかの出品と同じく Steam アプリで確認します。フォイルのセットとカードも同じように比べます。フォイルバッジは 1 レベルです。 バッジ用に持っているカードも、持っていて上がるレベルより売った方が価値があれば売ります: 約 5.70 で売れる 7 枚は 0.40 のレベルなら約 14 レベル分になり、持っていた場合の 1〜2 レベルより多くなります。売っている間、そのゲームのカード購入やブースターパック作成はしません。"
     },
     "CardSwaps": {
       "label": "余ったカードをほかの nocat.farm ユーザーと交換",

@@ -48,8 +48,20 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 			: null;
 	}
 
-	public async Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) =>
-		await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is { } badges ? badges.GameLevels : null;
+	public async Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) {
+		if (await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is not { } badges) {
+			return null;
+		}
+
+		_foils = badges.FoilLevels;
+
+		return badges.GameLevels;
+	}
+
+	/// <summary>1.8.2: each foil badge's level, from the badges the plan just read - never asked again for this.</summary>
+	public Task<IReadOnlyDictionary<uint, int>?> FoilLevelsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<uint, int>?>(_foils);
+
+	private Dictionary<uint, int>? _foils;
 
 	public async Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) =>
 		await ReadInventoryAsync(ct).ConfigureAwait(false) is { } inventory ? LevelPlanner.NormalCards(inventory) : null;
@@ -74,6 +86,10 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 
 		return inventory == null ? null : CardMarket.AssetsOf(inventory);
 	}
+
+	/// <summary>1.8.2: the inventory the plan read, while it's under <see cref="KeptInventory"/> old - never read again for it.</summary>
+	public Task<InventoryContents?> InventoryAsync(CancellationToken ct) =>
+		Task.FromResult((_inventory is { } kept) && (DateTime.UtcNow - _inventoryAt < KeptInventory) ? kept : null);
 
 	/// <summary>How long an inventory read stands in for a fresh one, and the least time between two reads.</summary>
 	internal static readonly TimeSpan KeptInventory = TimeSpan.FromMinutes(5), InventoryGap = TimeSpan.FromSeconds(20);

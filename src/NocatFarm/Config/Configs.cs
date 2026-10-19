@@ -754,7 +754,8 @@ public sealed class BotConfig {
 	/// "Sell sets worth more than the levels they'd buy" (1.8.2, Modules/SetSale.cs): before crafting a normal badge, a set
 	/// whose market price buys clearly more badge levels than the one its craft makes is listed for sale instead, and buying
 	/// cards spends the money. On by default, but it does nothing unless buying cards is on (and turned on through its
-	/// preview). Foil sets are always crafted.
+	/// preview). 1.8.2: foil sets and a game's several sets are weighed too, and cards held for a badge that are worth more
+	/// sold than the levels they'd make are sold (Modules/DearCards.cs).
 	/// </summary>
 	public bool SellSetsForLevels { get; set; } = true;
 

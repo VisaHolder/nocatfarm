@@ -472,7 +472,7 @@ public sealed partial class Boosters {
 			}
 
 			Dictionary<uint, DateTime> made = BotManager.ModuleOf<Boosters>(bot)?.AutoMemory.Made ?? BoosterPick.Memory.Load(bot.Name).Made;
-			ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), bot.Cfg.BoosterNeverOpen, made, DateTime.UtcNow);
+			ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), bot.Cfg.BoosterNeverOpen, made, DateTime.UtcNow, DearCards.Marked(bot));
 		}
 
 		int cur = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;

@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "它的卡组在市场上没有完整的信息",
     "selling sets instead of crafting is off": "出售卡组代替合成已关闭",
     "buying cards is off": "购买卡片已关闭",
-    "a foil set is always crafted": "闪亮卡组总是合成",
     "{0} sets ready, crafted together": "{0} 套卡组已集齐，一起合成",
     "only {0} sets are weighed a look": "每次只比较 {0} 套卡组",
     "buying cards isn't running": "购买卡片没有在运行",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "还没算出这笔钱能买什么，市场就不再响应了",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} 过去一天只卖出 {1} 次 - 先等等，这套卡价值 {2}（{3} 级）",
     "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
-    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售"
+    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "卖掉比留着更值的卡牌：手头没有库存可用来上架 - 下次查看时再说",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}：{2} 张卡牌中上架了 {1} 张 · 其余等下次查看",
+    "selling buys about {0} levels, keeping makes {1}": "卖掉约能买 {0} 级，留着能升 {1} 级",
+    "keeping makes {0} level(s), selling buys about {1}": "留着能升 {0} 级，卖掉约能买 {1} 级",
+    "cards worth more sold than kept: not weighed · {0}": "卖掉比留着更值的卡牌：未比较 · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}：卡牌已保留 - 不确定卖掉是否更值 · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}：它的卡牌又值得留着了 · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}：{1} 张卡牌比它们能升的等级更值钱 - 以约 {2} 出售 ≈ {3} 个便宜等级",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0}（{1}）x{2} · 最低 {3} · 每张你得 {4}",
+    "its price fell since it was weighed - not listed": "比较之后价格下跌了 - 未上架",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "出售 {0} 的闪亮卡组而不合成：{1} 约能买 {2} 级",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "出售 {0} 套 {1} 卡组而不合成：{2} 约能买 {3} 级",
+    "sets worth more sold than crafted wait uncrafted · {0}": "卖掉比合成更值的卡组暂不合成 · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "卖掉而未合成的卡组剩下的卡牌 - 能卖 {0}",
+    "what's left of a set sold instead of crafted pays nothing": "卖掉而未合成的卡组剩下的卡牌卖不到钱",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "目前不知道钱能买到什么 - 买卡还没给接下来的等级定价",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}：{1} 张闪亮卡牌比它们的等级更值钱 - 以约 {2} 出售 ≈ {3} 个便宜等级",
+    "its cards are being sold - worth more than the levels they'd make": "它的卡牌正在出售 - 比它们能升的等级更值钱",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} 约能买 {1} 级 · {2} 几乎卖不动，但这套卡已经等得够久了 - 照样上架",
+    "{0} sets worth {1} buy only {2} levels": "价值 {1} 的 {0} 套卡组只能买 {2} 级",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} 约能买 {1} 级，但 Steam 不让它自己买卡 - 等到可以为止"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "钱能买到更多等级时，卖掉整套而不是合成",
-      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组总是合成。"
+      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组和闪亮卡牌也同样比较：闪亮徽章只有 1 级。 为徽章留着的卡牌，如果卖掉比它们能升的等级更值，也会卖掉：卖约 5.70 的 7 张卡牌，按每级 0.40 能买约 14 级，而留着只能升 1 到 2 级。卖出期间不会为该游戏购买卡牌或制作补充包。"
     },
     "CardSwaps": {
       "label": "与其他 nocat.farm 用户交换多余的卡牌",

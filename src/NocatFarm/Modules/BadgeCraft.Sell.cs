@@ -5,8 +5,8 @@ namespace NocatFarm.Modules;
 /// <summary>1.8.2 smart levelling: before crafting, a normal set worth more on the market than the levels it'd buy is sold instead (<see cref="SetSale"/>).</summary>
 public sealed partial class BadgeCraft {
 	/// <summary>
-	/// The sets that are weighed at all: normal ones, one level each - a foil set is always crafted, and so is a game on the
-	/// keep list ("Never touch items from these games").
+	/// The sets that are weighed at all: every one (1.8.2 - foil sets and a game's several sets too), but a game on the keep
+	/// list ("Never touch items from these games") is always crafted.
 	/// </summary>
 	internal static List<Craftable> SaleCandidates(IEnumerable<Craftable> ready, IReadOnlyCollection<uint> keep) =>
 		[.. ready.Where(c => SetSale.Considered(c.Border, c.Levels) && !keep.Contains(c.AppId))];
@@ -37,8 +37,14 @@ public sealed partial class BadgeCraft {
 					continue;
 				case SetSale.Choice.Wait:
 					// Not crafted: it may well be worth more sold. The next look weighs it again.
-					left.RemoveAll(c => (c.AppId == pick.App) && (c.Border == 0));
+					left.RemoveAll(c => (c.AppId == pick.App) && (c.Border == pick.Border));
 					_moreToCraft = true;
+
+					// Its cards are being sold as worth more than their levels: nothing to say every look.
+					if (pick.Quiet) {
+						continue;
+					}
+
 					Log.Info(pick.Verdict is { Hold: true } ? new Said("{0}: not crafted yet · {1}", pick.Game, pick.Reason)
 						: pick.Worth.Length == 0 ? new Said("{0}: not crafted yet · {1} · what its cards are worth isn't known", pick.Game, pick.Reason)
 						: new Said("{0}: not crafted yet · {1} · a card is worth {2}", pick.Game, pick.Reason, pick.Worth), Bot.Name);
@@ -49,16 +55,21 @@ public sealed partial class BadgeCraft {
 			SetSale.Verdict verdict = pick.Verdict!;
 
 			// Not crafted this time either way: sold, or weighed again at the next look.
-			left.RemoveAll(c => (c.AppId == verdict.App) && (c.Border == 0));
-			Log.Info(new Said("selling the {0} set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About), Bot.Name);
+			left.RemoveAll(c => (c.AppId == verdict.App) && (c.Border == pick.Border));
+			Log.Info(verdict.Foil ? new Said("selling the {0} foil set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About)
+				: verdict.Sets > 1 ? new Said("selling {0} {1} sets instead of crafting: {2} buys about {3} levels", verdict.Sets, verdict.Game, verdict.Money, verdict.About)
+				: new Said("selling the {0} set instead of crafting: {1} buys about {2} levels", verdict.Game, verdict.Money, verdict.About), Bot.Name);
 			int listed = await _listSet(Bot, verdict, inventory, ct).ConfigureAwait(false);
 
-			if (listed > 0) {
+			// A normal set sold: its game's cards aren't bought back for a while (what's left of it is sold as dear cards).
+			if ((listed > 0) && !verdict.Foil) {
 				BuyLedger.Of(Bot.Name).AddSold(new BuyLedger.SoldSet(DateTime.UtcNow, verdict.App));
 			}
 
-			if (listed < verdict.Prices.Count) {
-				Log.Info(new Said("{0} set: {1} of {2} cards listed · the rest wait for the next look", verdict.Game, listed, verdict.Prices.Count), Bot.Name);
+			int all = verdict.Prices.Count * Math.Max(1, verdict.Sets);
+
+			if (listed < all) {
+				Log.Debug(new Said("{0} set: {1} of {2} cards listed · the rest wait for the next look", verdict.Game, listed, all), Bot.Name);
 				_moreToCraft = true;
 			}
 		}
@@ -83,6 +94,6 @@ public sealed partial class BadgeCraft {
 			return ([], "couldn't read all of its inventory - try again later");
 		}
 
-		return (await SetSale.ChooseAsync(Bot, [.. ready.Select(static c => new SetSale.Ready(c.AppId, c.Border, c.Levels))], inventory, ct).ConfigureAwait(false), "");
+		return (await SetSale.ChooseAsync(Bot, [.. ready.Select(static c => new SetSale.Ready(c.AppId, c.Border, c.Levels))], inventory, ct, preview: true).ConfigureAwait(false), "");
 	}
 }

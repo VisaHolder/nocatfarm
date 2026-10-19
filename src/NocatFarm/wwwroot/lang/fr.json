@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "sa série n'est pas connue en entier sur le marché",
     "selling sets instead of crafting is off": "vendre les séries au lieu de les fabriquer est désactivé",
     "buying cards is off": "l'achat de cartes est désactivé",
-    "a foil set is always crafted": "une série brillante est toujours fabriquée",
     "{0} sets ready, crafted together": "{0} séries prêtes, fabriquées ensemble",
     "only {0} sets are weighed a look": "seulement {0} séries sont comparées à chaque passage",
     "buying cards isn't running": "l'achat de cartes ne tourne pas",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "le marché a cessé de répondre avant que ce que l'argent achèterait soit chiffré",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} ne s'est vendue que {1} fois le dernier jour - en attente, le set vaut {2} ({3} niveaux)",
     "it has no Steam wallet to spend the money from": "il n'a pas de porte-monnaie Steam pour dépenser l'argent",
-    "on your keep list - its set is crafted, never sold": "dans ta liste à garder - son set est fabriqué, jamais vendu"
+    "on your keep list - its set is crafted, never sold": "dans ta liste à garder - son set est fabriqué, jamais vendu",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "cartes qui valent plus vendues que gardées : l'inventaire n'est pas sous la main pour les mettre en vente - au prochain coup d'œil",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0} : {1} cartes sur {2} mises en vente · le reste attend le prochain coup d'œil",
+    "selling buys about {0} levels, keeping makes {1}": "vendre achète environ {0} niveaux, garder en donne {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "garder donne {0} niveau(x), vendre en achète environ {1}",
+    "cards worth more sold than kept: not weighed · {0}": "cartes qui valent plus vendues que gardées : pas évalué · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0} : cartes gardées - pas sûr qu'elles valent plus vendues · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0} : ses cartes valent de nouveau la peine d'être gardées · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0} : {1} cartes valent plus que leurs niveaux - vendues pour environ {2} ≈ {3} niveaux bon marché",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · le moins cher {3} · tu reçois {4} chacune",
+    "its price fell since it was weighed - not listed": "son prix a baissé depuis qu'il a été évalué - pas mis en vente",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "vente du set brillant de {0} au lieu de le fabriquer : {1} achète environ {2} niveaux",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "vente de {0} sets de {1} au lieu de les fabriquer : {2} achète environ {3} niveaux",
+    "sets worth more sold than crafted wait uncrafted · {0}": "les sets qui valent plus vendus que fabriqués attendent sans être fabriqués · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "ce qui reste d'un set vendu au lieu d'être fabriqué - ça rapporte {0}",
+    "what's left of a set sold instead of crafted pays nothing": "ce qui reste d'un set vendu au lieu d'être fabriqué ne rapporte rien",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "ce que l'argent achète n'est pas connu pour l'instant - l'achat de cartes n'a pas encore évalué ses prochains niveaux",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0} : {1} cartes brillantes valent plus que leur niveau - vendues pour environ {2} ≈ {3} niveaux bon marché",
+    "its cards are being sold - worth more than the levels they'd make": "ses cartes sont en vente - elles valent plus que les niveaux qu'elles donneraient",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} achète environ {1} niveaux · {2} se vend à peine, mais le set a assez attendu - mis en vente quand même",
+    "{0} sets worth {1} buy only {2} levels": "{0} sets valant {1} n'achètent que {2} niveaux",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} achète environ {1} niveaux, mais Steam ne le laisse pas acheter des cartes tout seul - en attente"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vendre un set au lieu de le fabriquer quand l'argent achète plus de niveaux",
-      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries brillantes sont toujours fabriquées."
+      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries et cartes brillantes sont évaluées de la même façon : un badge brillant est un niveau. Il vend aussi les cartes gardées pour un badge qui valent plus vendues que les niveaux qu'elles donneraient : 7 cartes qui rapportent environ 5,70 achètent environ 14 niveaux à 0,40, au lieu des 1 ou 2 qu'elles donneraient gardées. Rien n'est acheté ni mis en paquet pour ce jeu pendant qu'elles se vendent."
     },
     "CardSwaps": {
       "label": "Échanger les cartes en trop avec d'autres utilisateurs de nocat.farm",

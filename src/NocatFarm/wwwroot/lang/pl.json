@@ -3133,7 +3133,6 @@
     "its set isn't known whole on the market": "jego zestaw nie jest znany w całości na rynku",
     "selling sets instead of crafting is off": "sprzedawanie zestawów zamiast tworzenia jest wyłączone",
     "buying cards is off": "kupowanie kart jest wyłączone",
-    "a foil set is always crafted": "zestaw foliowy jest zawsze tworzony",
     "{0} sets ready, crafted together": "{0} zestawy gotowe, tworzone razem",
     "only {0} sets are weighed a look": "przy jednym spojrzeniu porównuje tylko {0} zestawy",
     "buying cards isn't running": "kupowanie kart nie działa",
@@ -3341,7 +3340,28 @@
     "the market stopped answering before what its money buys was priced": "rynek przestał odpowiadać, zanim wyceniono, co kupią te pieniądze",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} sprzedała się tylko {1} raz(y) w ostatnim dniu - czeka, zestaw jest wart {2} ({3} poziomów)",
     "it has no Steam wallet to spend the money from": "nie ma portfela Steam, z którego wydałby te pieniądze",
-    "on your keep list - its set is crafted, never sold": "na Twojej liście do zachowania - zestaw jest tworzony, nigdy sprzedawany"
+    "on your keep list - its set is crafted, never sold": "na Twojej liście do zachowania - zestaw jest tworzony, nigdy sprzedawany",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "karty warte więcej sprzedane niż zatrzymane: ekwipunku nie ma pod ręką, by je wystawić - przy następnym spojrzeniu",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: wystawiono {1} z {2} kart · reszta czeka na następne spojrzenie",
+    "selling buys about {0} levels, keeping makes {1}": "sprzedaż kupi około {0} poziomów, zatrzymanie da {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "zatrzymanie da {0} poziom(y), sprzedaż kupi około {1}",
+    "cards worth more sold than kept: not weighed · {0}": "karty warte więcej sprzedane niż zatrzymane: nie porównano · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: karty zatrzymane - nie wiadomo, czy są warte więcej sprzedane · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: jej karty znów warto zatrzymać · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} kart wartych więcej niż ich poziomy - sprzedaż za około {2} ≈ {3} tanich poziomów",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · najniższa {3} · dostajesz {4} za sztukę",
+    "its price fell since it was weighed - not listed": "jej cena spadła od porównania - nie wystawiono",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "sprzedaż foliowego zestawu {0} zamiast tworzenia: {1} kupi około {2} poziomów",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "sprzedaż {0} zestawów {1} zamiast tworzenia: {2} kupi około {3} poziomów",
+    "sets worth more sold than crafted wait uncrafted · {0}": "zestawy warte więcej sprzedane niż stworzone czekają nietworzone · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "to, co zostało z zestawu sprzedanego zamiast stworzenia - daje {0}",
+    "what's left of a set sold instead of crafted pays nothing": "to, co zostało z zestawu sprzedanego zamiast stworzenia, nic nie daje",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "nie wiadomo teraz, co kupią pieniądze - kupowanie kart nie wyceniło jeszcze kolejnych poziomów",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} kart foliowych wartych więcej niż ich poziom - sprzedaż za około {2} ≈ {3} tanich poziomów",
+    "its cards are being sold - worth more than the levels they'd make": "jej karty są sprzedawane - warte więcej niż poziomy, które by dały",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} kupi około {1} poziomów · {2} prawie się nie sprzedaje, ale zestaw czekał już dość długo - wystawiony mimo to",
+    "{0} sets worth {1} buy only {2} levels": "{0} zestawów wartych {1} kupi tylko {2} poziomów",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} kupi około {1} poziomów, ale Steam nie pozwala mu samemu kupować kart - czeka, aż będzie mógł"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4840,7 +4860,7 @@
     },
     "SellSetsForLevels": {
       "label": "Sprzedaj zestaw zamiast go tworzyć, gdy pieniądze kupią więcej poziomów",
-      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Przed stworzeniem zwykłej odznaki sprawdza, ile zestaw daje na rynku po prowizji Steam. Gdy te pieniądze kupią wyraźnie więcej poziomów odznak niż 1 z tworzenia, wystawia zestaw na sprzedaż zamiast tego, a kupowanie kart wydaje pieniądze w swoich limitach. Na przykład zestaw, który daje 5,00, gdy najtańsze poziomy kosztują około 0,40 za sztukę, kupi około 12 poziomów zamiast 1. Każdą ofertę potwierdzasz w aplikacji Steam, jak każdą ofertę. Zestawy foliowe są zawsze tworzone."
+      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Przed stworzeniem zwykłej odznaki sprawdza, ile zestaw daje na rynku po prowizji Steam. Gdy te pieniądze kupią wyraźnie więcej poziomów odznak niż 1 z tworzenia, wystawia zestaw na sprzedaż zamiast tego, a kupowanie kart wydaje pieniądze w swoich limitach. Na przykład zestaw, który daje 5,00, gdy najtańsze poziomy kosztują około 0,40 za sztukę, kupi około 12 poziomów zamiast 1. Każdą ofertę potwierdzasz w aplikacji Steam, jak każdą ofertę. Zestawy i karty foliowe są porównywane tak samo: odznaka foliowa to jeden poziom. Sprzedaje też karty trzymane do odznaki, gdy sprzedane są warte więcej niż poziomy, które by dały: 7 kart za około 5,70 kupi około 14 poziomów po 0,40 zamiast 1 lub 2, które dałyby zatrzymane. Dopóki się sprzedają, dla tej gry nic nie jest kupowane ani robione w paczkach."
     },
     "CardSwaps": {
       "label": "Wymieniaj zbędne karty z innymi użytkownikami nocat.farm",
