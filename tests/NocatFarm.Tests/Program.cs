@@ -30127,7 +30127,7 @@ static class CardSwapChecks {
 		var swBot = new NocatFarm.Core.Bot("harness-swaps", new NocatFarm.Config.BotConfig());
 		typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(swBot, MeId);
 		typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(swBot, SteamKit2.ECurrencyCode.USD);
-		Check("swaps switch: off by default, and on in the settings alone isn't on", !swBot.Cfg.CardSwaps && (swBot.Cfg.CardSwapMaxLoss == 0.01f) && swBot.Cfg.CardSwapSkipHeld && (swBot.Cfg.CardSwapsPerDay == 5)
+		Check("swaps switch: off by default, and on in the settings alone isn't on", !swBot.Cfg.CardSwaps && (swBot.Cfg.CardSwapMaxLoss == 0.03f) && swBot.Cfg.CardSwapSkipHeld && (swBot.Cfg.CardSwapsPerDay == 5)
 			&& !NocatFarm.Core.CardExchange.On(swBot.Cfg, swBot.Name));
 		swBot.Cfg.CardSwaps = true;
 		Check("swaps switch: switched on in the settings without its preview → put back off", NocatFarm.Core.Switches.Settle(swBot.Cfg, swBot.Name) && !swBot.Cfg.CardSwaps);
@@ -34016,7 +34016,7 @@ static class SettingsCleanupChecks {
 				!fresh.SpareItems && !fresh.SpendPoints && !fresh.BuyCards && !fresh.CardSwaps && !fresh.SteamOpenButton && (fresh.BoosterMake == 0) && (fresh.OpenBoosterPacks == 0)
 				&& !fresh.AcceptFairCardSwaps && !fresh.DeclineOtherTrades && (fresh.ClaimFree == 0) && (Math.Abs(fresh.BuyDailyLimit - 1.5f) < 0.001) && (Math.Abs(fresh.BuyWeeklyLimit - 8f) < 0.001)
 				&& (fresh.PointsWeeklyCap == 3000) && (fresh.PointsKeepAtLeast == 1000) && (Math.Abs(fresh.SpareMaxPrice - 0.25f) < 0.001) && (fresh.SpareDailyItems == 10)
-				&& (Math.Abs(fresh.SpareDailyValue - 1f) < 0.001) && (Math.Abs(fresh.SpareMinSale - 0.05f) < 0.001) && (Math.Abs(fresh.CardSwapMaxLoss - 0.01f) < 0.001) && (fresh.CardSwapsPerDay == 5)
+				&& (Math.Abs(fresh.SpareDailyValue - 1f) < 0.001) && (Math.Abs(fresh.SpareMinSale - 0.05f) < 0.001) && (Math.Abs(fresh.CardSwapMaxLoss - 0.03f) < 0.001) && (fresh.CardSwapsPerDay == 5)
 				&& fresh.WatchForScams && fresh.ScamWatchStopTrades && fresh.ScamWatchCancelOffers && !fresh.ScamWatchRevokeKey && fresh.WatchHealth
 				&& !new NocatFarm.Config.GlobalConfig().SteamOpenEveryAccount && !new NocatFarm.Config.GlobalConfig().WebRemoteAccess && (new NocatFarm.Config.GlobalConfig().WebRemoteOffAfter == 5)
 				&& (new NocatFarm.Config.GlobalConfig().WebHost == "127.0.0.1") && !new NocatFarm.Config.GlobalConfig().PluginsEnabled && (fresh.CommandMasters.Length == 0));

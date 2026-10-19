@@ -115,7 +115,7 @@ What it never does:
   items) allows, and nothing on *Never touch these items* or *Never touch items from these games*.
 - Never a card of a game it bought cards of for a badge in the last week ([Buying cards](cards-and-idling.md#buying-cards)),
   so nothing it paid for leaves before it's crafted.
-- Never worth more than *Most a swap may lose* (0.01 by default) less than what it gives, by the market's cheapest
+- Never worth more than *Most a swap may lose* (0.03 by default) less than what it gives, by the market's cheapest
   price in this account's own wallet currency. 0 means a swap is never worth less. A card with no price from the last
   day is never swapped. The log shows both sides' worth: `card swap · you give 0.10 USD · you get 0.11 USD`.
 - Never with an account whose trades Steam would hold (*Skip swaps Steam would hold*, on).

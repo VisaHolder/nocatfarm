@@ -1280,7 +1280,7 @@ public sealed class BotConfig {
 	public bool CardSwaps { get; set; }
 
 	/// <summary>The most a swap may be worth less than what it gives, in the wallet's currency. 0: never worth less.</summary>
-	public float CardSwapMaxLoss { get; set; } = 0.01f;
+	public float CardSwapMaxLoss { get; set; } = 0.03f;
 
 	/// <summary>Never swap with an account when the trade would be held.</summary>
 	public bool CardSwapSkipHeld { get; set; } = true;
