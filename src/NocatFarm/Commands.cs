@@ -4710,7 +4710,7 @@ public static partial class Commands {
 				// One line, where the command has one: 'spare preview' item by item was 25 INFO lines. The whole answer is in the
 				// debug log, and asking again answers with it straight away.
 				if (job.Brief?.Invoke(name) is { Length: > 0 } brief) {
-					Log.Info(MaskedReply(job.What, brief, typed), source);
+					Log.Answer(MaskedReply(job.What, brief, typed), source);
 					Log.Debug(Columns.ClipChars(SpareRun.OneLine(MaskedReply(job.What, done.Result.Reply, typed)), 300, "..."), source);
 
 					return;
@@ -4721,7 +4721,7 @@ public static partial class Commands {
 				// A long answer is one line in the window - what was asked and how long the answer is - and the whole of it in the log
 				// file (1.8.2: a buy preview was 13 lines). Asking again where it can answer at once (the dashboard, chat) shows it all.
 				if (answer.Count > LongAnswer) {
-					Log.Info(new Said("{0}: answered · {1} lines in the log file", job.Key ?? job.What, answer.Count), source);
+					Log.Answer(new Said("{0}: answered · {1} lines in the log file", job.Key ?? job.What, answer.Count), source);
 
 					foreach (string line in answer) {
 						Log.Debug(MaskedReply(job.What, Unnamed(line, name), typed), source);
@@ -4733,7 +4733,7 @@ public static partial class Commands {
 				foreach (string line in answer) {
 					// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
 					// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
-					Log.Info(MaskedReply(job.What, Unnamed(line, name), typed), source);
+					Log.Answer(MaskedReply(job.What, Unnamed(line, name), typed), source);
 				}
 			}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default), source);
 		}
@@ -5990,6 +5990,14 @@ public static partial class Commands {
 			case "Debug":
 			case "LogRetentionDays":
 				Log.Configure(mgr.Global.FileLogging, mgr.Global.Debug, ConfigStore.Root, mgr.Global.LogRetentionDays);
+
+				break;
+			case Core.LogShow.Doing or Core.LogShow.Drops or Core.LogShow.Badges or Core.LogShow.Buying or Core.LogShow.Selling or Core.LogShow.Trades
+				or Core.LogShow.Comments or Core.LogShow.Achievements or Core.LogShow.Free or Core.LogShow.Answers or Core.LogShow.App:
+				// "Show in the app's log": the window redraws its log under the new chips now, not at the next line (Core/LogShow.cs).
+				if (OperatingSystem.IsWindows()) {
+					Window?.Invalidate();
+				}
 
 				break;
 			case "StartWithWindows":

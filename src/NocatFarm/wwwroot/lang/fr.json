@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "Au plus {0} pour un niveau de badge - un peu plus que ce qu'un niveau coûte d'habitude",
     "{0} would pay you {1}, under your {2} minimum": "{0} te rapporterait {1}, sous ton minimum de {2}",
     "cards were bought to finish it - crafted, never sold": "des cartes ont été achetées pour la compléter - fabriquée, jamais vendue",
-    "{0}: answered · {1} lines in the log file": "{0} : répondu · {1} lignes dans le fichier journal"
+    "{0}: answered · {1} lines in the log file": "{0} : répondu · {1} lignes dans le fichier journal",
+    "Show in the app's log": "Afficher dans le journal de l'appli",
+    "{0} hidden by Show in the app's log": "{0} masquées par Afficher dans le journal de l'appli",
+    "what it's doing": "ce qu'il fait",
+    "card drops and farming": "drops de cartes et farm",
+    "badges, crafting, level": "badges, fabrication, niveau",
+    "buying cards": "achat de cartes",
+    "selling, spare items, gems": "vente, objets en trop, gemmes",
+    "trades and card swaps": "échanges et échanges de cartes",
+    "comments, friends, rep4rep": "commentaires, amis, rep4rep",
+    "free games, items, Points": "jeux et objets gratuits, Points",
+    "answers to commands": "réponses aux commandes",
+    "updates and app messages": "mises à jour et messages de l'appli"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Afficher les détails de débogage à l'écran",
       "tip": "Affiche plus de détails de débogage dans la fenêtre et la console. Ces détails sont toujours enregistrés dans le fichier journal, donc laissez désactivé sauf si vous voulez les suivre en direct."
+    },
+    "LogShowDoing": {
+      "label": "Afficher ce qu'il fait",
+      "tip": "Affiche dans le journal de l'appli ce que fait chaque compte : jouer, idler, les sessions, la mise en route, les pauses et le coucher - par exemple « grinding Portal · 41m left » ou « asleep · 7 games · up 13:37 ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowDrops": {
+      "label": "Afficher les drops de cartes et le farm",
+      "tip": "Affiche les drops de cartes et le farm de cartes dans le journal de l'appli - par exemple « carte obtenue dans Portal - encore 2 » ou « plus de cartes · idle de tes jeux ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowBadges": {
+      "label": "Afficher badges, fabrication et niveau",
+      "tip": "Affiche les badges fabriqués, les sets prêts et le niveau Steam dans le journal de l'appli - par exemple « 2 badge(s) fabriqué(s) - niveau Steam en hausse ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowBuying": {
+      "label": "Afficher l'achat de cartes",
+      "tip": "Affiche l'achat de cartes dans le journal de l'appli - par exemple « acheté Zane (Destiny Warriors) · 0.10 CAD » ou le porte-monnaie et les limites. Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowSelling": {
+      "label": "Afficher vente, objets en trop et gemmes",
+      "tip": "Affiche les ventes, les annonces du marché, les objets en trop, les gemmes et les boosters dans le journal de l'appli - par exemple « Arena (BitMaster) mis en vente à 0.03 CAD » ou « Room (Epsilon corp.) → 10 gemmes ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowTrades": {
+      "label": "Afficher les échanges et échanges de cartes",
+      "tip": "Affiche les offres d'échange et les échanges de cartes dans le journal de l'appli - par exemple « offre 123 d'un ami acceptée ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowComments": {
+      "label": "Afficher commentaires, amis et rep4rep",
+      "tip": "Affiche les commentaires de profil, les demandes d'ami, les groupes et rep4rep dans le journal de l'appli - par exemple « nouveau commentaire d'un ami » ou « commenté chez quelqu'un et crédité (7/10 aujourd'hui) ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowAchievements": {
+      "label": "Afficher les succès",
+      "tip": "Affiche les succès dans le journal de l'appli - par exemple « 🏆 Camera Shy · Portal · 11/15 ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowFree": {
+      "label": "Afficher jeux et objets gratuits et Points",
+      "tip": "Affiche les jeux et objets gratuits, les cadeaux, les Points Steam et les événements de soldes dans le journal de l'appli - par exemple « 2 jeu(x) gratuit(s) récupéré(s) ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowAnswers": {
+      "label": "Afficher les réponses aux commandes",
+      "tip": "Affiche dans le journal de l'appli les réponses aux commandes qui arrivent plus tard, et les commandes venues de Telegram et Discord. Ce que tu tapes dans la fenêtre y reçoit toujours sa réponse. Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
+    },
+    "LogShowApp": {
+      "label": "Afficher mises à jour et messages de l'appli",
+      "tip": "Affiche les messages de nocat.farm lui-même dans le journal de l'appli : mises à jour, le tableau de bord, paramètres enregistrés, sauvegardes, Discord et Telegram, le résumé du jour - par exemple « mise à jour dans 10s ». Désactivé : ces lignes vont seulement dans le fichier journal. Les avertissements et les erreurs s'affichent toujours."
     },
     "LogRetentionDays": {
       "label": "Conserver les journaux",

@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "Como mucho {0} por un nivel de insignia - un poco más de lo que suele costar un nivel",
     "{0} would pay you {1}, under your {2} minimum": "{0} te daría {1}, por debajo de tu mínimo de {2}",
     "cards were bought to finish it - crafted, never sold": "se compraron cromos para completarla - se fabrica, nunca se vende",
-    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} líneas en el archivo de registro"
+    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} líneas en el archivo de registro",
+    "Show in the app's log": "Mostrar en el registro de la app",
+    "{0} hidden by Show in the app's log": "{0} ocultas por Mostrar en el registro de la app",
+    "what it's doing": "lo que está haciendo",
+    "card drops and farming": "drops de cromos y farmeo",
+    "badges, crafting, level": "insignias, fabricación, nivel",
+    "buying cards": "comprar cromos",
+    "selling, spare items, gems": "venta, objetos sobrantes, gemas",
+    "trades and card swaps": "intercambios y cambios de cromos",
+    "comments, friends, rep4rep": "comentarios, amigos, rep4rep",
+    "free games, items, Points": "juegos y objetos gratis, Puntos",
+    "answers to commands": "respuestas a comandos",
+    "updates and app messages": "actualizaciones y mensajes de la app"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Mostrar detalle de depuración en pantalla",
       "tip": "Muestra detalle de depuración extra en la ventana y la consola. Ese detalle se guarda siempre en el archivo de registro, así que déjalo desactivado salvo que quieras verlo en directo."
+    },
+    "LogShowDoing": {
+      "label": "Mostrar lo que está haciendo",
+      "tip": "Muestra en el registro de la app lo que hace cada cuenta: jugar, idlear, sesiones, el rato de acomodarse, pausas y la hora de dormir - por ejemplo «grinding Portal · 41m left» o «asleep · 7 games · up 13:37». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowDrops": {
+      "label": "Mostrar drops de cromos y farmeo",
+      "tip": "Muestra los drops de cromos y el farmeo de cromos en el registro de la app - por ejemplo «cromo caído en Portal - quedan 2» o «no quedan cromos · idleando tus juegos». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowBadges": {
+      "label": "Mostrar insignias, fabricación y nivel",
+      "tip": "Muestra las insignias fabricadas, los sets listos y el nivel de Steam en el registro de la app - por ejemplo «2 insignia(s) fabricada(s) - sube el nivel de Steam». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowBuying": {
+      "label": "Mostrar la compra de cromos",
+      "tip": "Muestra la compra de cromos en el registro de la app - por ejemplo «comprado Zane (Destiny Warriors) · 0.10 CAD» o el monedero y los límites. Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowSelling": {
+      "label": "Mostrar venta, objetos sobrantes y gemas",
+      "tip": "Muestra ventas, publicaciones en el mercado, objetos sobrantes, gemas y sobres de cromos en el registro de la app - por ejemplo «publicado Arena (BitMaster) por 0.03 CAD» o «Room (Epsilon corp.) → 10 gemas». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowTrades": {
+      "label": "Mostrar intercambios y cambios de cromos",
+      "tip": "Muestra las ofertas de intercambio y los cambios de cromos en el registro de la app - por ejemplo «oferta 123 de un amigo aceptada». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowComments": {
+      "label": "Mostrar comentarios, amigos y rep4rep",
+      "tip": "Muestra comentarios del perfil, solicitudes de amistad, grupos y rep4rep en el registro de la app - por ejemplo «nuevo comentario de un amigo» o «comentado en alguien y acreditado (7/10 hoy)». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowAchievements": {
+      "label": "Mostrar logros",
+      "tip": "Muestra los logros en el registro de la app - por ejemplo «🏆 Camera Shy · Portal · 11/15». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowFree": {
+      "label": "Mostrar juegos y objetos gratis y Puntos",
+      "tip": "Muestra juegos y objetos gratis, regalos, Puntos de Steam y eventos de rebajas en el registro de la app - por ejemplo «reclamado(s) 2 juego(s) gratis». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowAnswers": {
+      "label": "Mostrar respuestas a comandos",
+      "tip": "Muestra en el registro de la app las respuestas a comandos que llegan más tarde, y los comandos de Telegram y Discord. Lo que escribes en la ventana siempre se responde allí. Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
+    },
+    "LogShowApp": {
+      "label": "Mostrar actualizaciones y mensajes de la app",
+      "tip": "Muestra los mensajes propios de nocat.farm en el registro de la app: actualizaciones, el panel, ajustes guardados, copias de seguridad, Discord y Telegram, el resumen diario - por ejemplo «actualización en 10s». Apagado: esas líneas van solo al archivo de registro. Los avisos y los errores se muestran siempre."
     },
     "LogRetentionDays": {
       "label": "Conservar los registros",

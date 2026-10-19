@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "一个徽章等级最多 {0} - 比一个等级的通常价格稍高",
     "{0} would pay you {1}, under your {2} minimum": "{0} 只能让你拿到 {1}，低于你的最低 {2}",
     "cards were bought to finish it - crafted, never sold": "为凑齐它买了卡牌 - 合成，绝不出售",
-    "{0}: answered · {1} lines in the log file": "{0}：已回答 · 日志文件中 {1} 行"
+    "{0}: answered · {1} lines in the log file": "{0}：已回答 · 日志文件中 {1} 行",
+    "Show in the app's log": "在应用日志中显示",
+    "{0} hidden by Show in the app's log": "已被“在应用日志中显示”隐藏 {0} 行",
+    "what it's doing": "正在做什么",
+    "card drops and farming": "卡牌掉落与挂卡",
+    "badges, crafting, level": "徽章、合成、等级",
+    "buying cards": "购买卡牌",
+    "selling, spare items, gems": "出售、多余物品、宝石",
+    "trades and card swaps": "交易与换卡",
+    "comments, friends, rep4rep": "留言、好友、rep4rep",
+    "free games, items, Points": "免费游戏、物品、点数",
+    "answers to commands": "命令的回复",
+    "updates and app messages": "更新与应用消息"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "在屏幕上显示调试细节",
       "tip": "在窗口和控制台里显示额外的调试细节。这些细节无论如何都会保存到日志文件，所以除非你想实时查看，否则保持关闭。"
+    },
+    "LogShowDoing": {
+      "label": "显示正在做什么",
+      "tip": "在应用日志中显示每个账号正在做什么: 游玩、挂机、时段、热身、休息和睡觉 - 例如“grinding Portal · 41m left”或“asleep · 7 games · up 13:37”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowDrops": {
+      "label": "显示卡牌掉落与挂卡",
+      "tip": "在应用日志中显示卡牌掉落和挂卡 - 例如“Portal 掉落一张卡 - 还剩 2 张”或“没有卡了 · 挂机你的游戏”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowBadges": {
+      "label": "显示徽章、合成与等级",
+      "tip": "在应用日志中显示合成的徽章、集齐的套卡和 Steam 等级 - 例如“合成了 2 个徽章 - Steam 等级提升”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowBuying": {
+      "label": "显示购买卡牌",
+      "tip": "在应用日志中显示购买卡牌 - 例如“买入 Zane (Destiny Warriors) · 0.10 CAD”或钱包与限额。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowSelling": {
+      "label": "显示出售、多余物品与宝石",
+      "tip": "在应用日志中显示出售、市场上架、多余物品、宝石和补充包 - 例如“以 0.03 CAD 上架 Arena (BitMaster)”或“Room (Epsilon corp.) → 10 宝石”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowTrades": {
+      "label": "显示交易与换卡",
+      "tip": "在应用日志中显示交易报价和换卡 - 例如“接受了好友的报价 123”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowComments": {
+      "label": "显示留言、好友与 rep4rep",
+      "tip": "在应用日志中显示个人资料留言、好友请求、组和 rep4rep - 例如“好友的新留言”或“给某人留言并已计入 (今天 7/10)”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowAchievements": {
+      "label": "显示成就",
+      "tip": "在应用日志中显示成就 - 例如“🏆 Camera Shy · Portal · 11/15”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowFree": {
+      "label": "显示免费游戏、物品与点数",
+      "tip": "在应用日志中显示免费游戏和物品、礼物、Steam 点数和促销活动 - 例如“领取了 2 个免费游戏”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowAnswers": {
+      "label": "显示命令的回复",
+      "tip": "在应用日志中显示稍后才到的命令回复，以及来自 Telegram 和 Discord 的命令。在窗口中输入的内容总会在那里得到回复。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowApp": {
+      "label": "显示更新与应用消息",
+      "tip": "在应用日志中显示 nocat.farm 自己的消息: 更新、仪表板、已保存的设置、备份、Discord 和 Telegram、每日总结 - 例如“10s 后更新”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
     },
     "LogRetentionDays": {
       "label": "日志保留时长",

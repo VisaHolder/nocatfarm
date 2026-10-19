@@ -28762,6 +28762,9 @@ await SafeChecks182.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..",
 // ── 1.8.2 "Protect refunds only for games over": what was paid, else the store's regular price; not known - protected; fakes only ──
 await RefundPriceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 "Show in the app's log": what the window and the dashboard show by kind; the file keeps everything ──
+await LogShowChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -37265,5 +37268,205 @@ static class MoneyFixChecks {
 		}
 
 		static bool Check2(Func<bool> f) => f();
+	}
+}
+// ── 1.8.2 "Show in the app's log": which kinds of line the window and the dashboard show - the log file keeps every one ──
+static class LogShowChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		const string Doing = NocatFarm.Core.LogShow.Doing, Drops = NocatFarm.Core.LogShow.Drops, Badges = NocatFarm.Core.LogShow.Badges,
+			Buying = NocatFarm.Core.LogShow.Buying, Selling = NocatFarm.Core.LogShow.Selling, Trades = NocatFarm.Core.LogShow.Trades,
+			Comments = NocatFarm.Core.LogShow.Comments, Achievements = NocatFarm.Core.LogShow.Achievements, Free = NocatFarm.Core.LogShow.Free,
+			Answers = NocatFarm.Core.LogShow.Answers, App = NocatFarm.Core.LogShow.App;
+		NocatFarm.Log.Entry Line(string level, string source, NocatFarm.Core.Said said, string? kind = null, string? show = null, long seq = 1) =>
+			new(seq, DateTime.Now, level, source, said, kind, show);
+
+		// ── the kind of real lines, from a day of the owner's log (2026-10-19) ──
+		(string Source, string Text, string? Kind)[] real = [
+			("new", "grinding Portal · 41m left", Doing), ("new", "asleep · 7 games · up 13:37", Doing), ("new", "settling in · 11m to go · 55m today", Doing),
+			("new", "signed in", Doing), ("new", "idling 💀nocat.lol/nocatfarm💀 +8", Doing), ("new", "you're on this account · waiting until you're done", Doing),
+			("new", "no cards left · idling your games · 5,226h banked", Drops), ("new", "going for SOS OPS!: 0 of 3 card drop(s)", Drops),
+			("new", "card dropped in SOS OPS! - 2 left · ~2h01m in all", Drops), ("new", "SOS OPS! first: 3 card drop(s), in normal sittings", Drops),
+			("new", "Destiny Warriors set complete - badge crafting makes it level 1", Badges), ("new", "crafted 2 badge(s) - Steam level up", Badges),
+			("new", "UBERMOSH:OMEGA: crafted · only 3 sets are weighed a look", Badges),
+			("new", "bought Zane (Destiny Warriors) · 0.10 CAD", Buying), ("new", "bought 3 card(s) · 0.27 CAD · 1 set(s) to craft", Buying),
+			("new", "would buy 7 of 8 cards for Dota 2 for 0.28 CAD - level 0 to 1, about 357 XP per 1.00", Buying),
+			("new", "wallet 5.45 CAD · 0.00 CAD of 2.50 CAD spent today · 0.00 CAD of 2.75 CAD this week - 2.50 CAD can be spent now", Buying),
+			("new", "that's enough prices for one look - the rest waits for the next one", Buying),
+			("new", "listed Arena (BitMaster) for 0.03 CAD · you get 0.01 CAD", Selling), ("new", "Room (Epsilon corp.) → 10 gems", Selling),
+			("new", "Madrobot (Profile Background) is on the market · 0.03 CAD", Selling), ("new", "spare: 23 → gems, 5 to sell · today 0/80", Selling),
+			("new", "sold Sack of Gems (Steam) for 0.93 CAD · you got 0.81 CAD", Selling),
+			("new", "commented on flameY and credited (7/10 today)", Comments), ("new", "new comment from 14 l.e.t: \"cracked\"", Comments),
+			("new", "rep4rep 10/10 · next ~14:37", Comments), ("new", "Witchita invited you to play ARC Raiders", Comments),
+			("new", "🏆 Camera Shy · Portal · 11/15", Achievements), ("new", "achievements: 716 games to hunt", Achievements),
+			("new", "achievements: Portal for 1h20m · 9/15", Achievements),
+			("new", "  Crusher 0.07 CAD, ED Tank2 0.08 CAD, TMP Unit 0.07 CAD", Answers), ("telegram", "> /status", Answers),
+			("nocat.farm", "update in 10s", App), ("nocat.farm", "installing 1.8.2", App), ("discord", "Discord: presence off", App),
+			("report", "◈ new: 81h played · 9 comments", App), ("new", "settings saved from the dashboard", App),
+			("new", "something nobody has written a rule for", null)];
+		string[] wrong = [.. real.Where(r => NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said(r.Text), r.Source) != r.Kind)
+			.Select(r => $"{r.Text} = {NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said(r.Text), r.Source) ?? "none"}, not {r.Kind ?? "none"}")];
+		Check("log show: a day's real lines each get their kind - what it's doing, drops, badges, buying, selling, comments, achievements, answers, app",
+			wrong.Length == 0, string.Join(" | ", wrong));
+
+		// ── by the sentence as written, so a value can't change the kind ──
+		NocatFarm.Core.Said boughtTrade = new("bought {0} ({1}) · {2}", "Trade Offer", "Trade Simulator", "0.10 CAD");
+		NocatFarm.Core.Said parts = new("{0} · {1}", new NocatFarm.Core.Said("grinding {0}", "Portal"), "41m left");
+		Check("log show: sorted by the sentence as written - a game called \"Trade Simulator\" bought is buying; a line of parts by what it says filled in",
+			(NocatFarm.Core.LogShow.KindOf(boughtTrade, "new") == Buying) && (NocatFarm.Core.LogShow.KindOf(parts, "new") == Doing)
+			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said(NocatFarm.Core.LogStack.GemsLine, "Room", "Epsilon corp.", "10"), "new") == Selling));
+		Check("log show: what a line was written as comes first - the status line is what it's doing (even about drops), a trade is a trade, an answer an answer",
+			(NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("farming cards on {0} · {1} of {2} card drop(s)", "SOS OPS!", 0, 2), kind: NocatFarm.Core.LogStack.Heartbeat)) == Doing)
+			&& (NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("anything at all"), show: Trades)) == Trades)
+			&& (NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "a", "b", "c"), show: Answers)) == Answers));
+		Check("log show: a line no rule knows falls back on its notification topic, then where it came from - nocat.farm, the chats and the report are app messages",
+			(NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new reward line"), "new", NocatFarm.Topic.FreeStuff) == Free)
+			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new line"), "nocat.farm") == App)
+			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new line"), "new") == null));
+
+		// ── the filter: all on to begin with; off hides that kind only; warnings, errors, the window's own lines and unknown lines always show ──
+		var on = new NocatFarm.Config.GlobalConfig();
+		var buyingOff = new NocatFarm.Config.GlobalConfig { LogShowBuying = false };
+		var allOff = new NocatFarm.Config.GlobalConfig();
+		foreach (string k in NocatFarm.Core.LogShow.All) {
+			typeof(NocatFarm.Config.GlobalConfig).GetProperty(k)!.SetValue(allOff, false);
+		}
+		NocatFarm.Log.Entry bought = Line("GOOD", "new", new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "Zane", "Destiny Warriors", "0.10 CAD"));
+		NocatFarm.Log.Entry listed = Line("INFO", "new", new NocatFarm.Core.Said("listed {0} item(s) · {1} if they all sell", 3, "0.09 CAD"));
+		Check("log show: every chip is on to begin with - nothing is hidden until one is turned off",
+			NocatFarm.Core.LogShow.All.All(k => NocatFarm.Core.LogShow.IsOn(on, k)) && NocatFarm.Core.LogShow.Shows(bought, on) && (NocatFarm.Core.LogShow.Off(on).Length == 0));
+		Check("log show: buying off hides buying lines only; on again, they show",
+			!NocatFarm.Core.LogShow.Shows(bought, buyingOff) && NocatFarm.Core.LogShow.Shows(listed, buyingOff) && NocatFarm.Core.LogShow.Shows(bought, on)
+			&& (NocatFarm.Core.LogShow.Off(buyingOff) == Buying));
+		Check("log show: warnings and errors always show, every chip off or not",
+			NocatFarm.Core.LogShow.Shows(Line("WARN", "new", new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "a", "b", "c")), allOff)
+			&& NocatFarm.Core.LogShow.Shows(Line("ERROR", "new", new NocatFarm.Core.Said("listed {0} item(s) · {1} if they all sell", 1, "x")), allOff));
+		Check("log show: with every chip off, a line of no known kind and the window's own lines (what you typed, its answer) still show",
+			NocatFarm.Core.LogShow.Shows(Line("INFO", "new", new NocatFarm.Core.Said("something nobody has written a rule for")), allOff)
+			&& NocatFarm.Core.LogShow.Shows(Line("INFO", "you", new NocatFarm.Core.Said("> buy preview new"), seq: 0), allOff)
+			&& NocatFarm.Core.LogShow.Shows(Line("INFO", "", new NocatFarm.Core.Said("  bought nothing yet"), seq: 0), allOff));
+
+		// ── the log file and the ring keep everything, whatever the chips say ──
+		string root = Path.Combine(Path.GetTempPath(), "nf-logshow-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(root);
+		NocatFarm.Config.GlobalConfig liveBefore = NocatFarm.Config.Live.Global;
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+
+		try {
+			NocatFarm.Log.Suppressed = true;
+			NocatFarm.Config.Live.Global = allOff;
+			NocatFarm.Log.Configure(fileLogging: true, debug: false, root, retentionDays: 14);
+			string tag = "ls" + Guid.NewGuid().ToString("N")[..6];
+			NocatFarm.Log.Good(new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "Zane", tag, "0.10 CAD"), tag);
+			NocatFarm.Log.Answer($"  {tag} an answer that came later", tag);
+			NocatFarm.Log.Trade(new NocatFarm.Core.Said("declined offer {0} from {1}", 123, tag), tag);
+			NocatFarm.Log.Configure(fileLogging: false, debug: false, root);
+			string file = Path.Combine(root, "logs", $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+			string[] lines = File.Exists(file) ? File.ReadAllLines(file) : [];
+			NocatFarm.Log.Entry[] mine = [.. NocatFarm.Log.Recent(1000).Where(e => e.Source == tag)];
+			Check("log show: with every chip off the log file still gets every line, and the dashboard's feed still has them (each with its kind)",
+				(lines.Count(l => l.Contains($"|{tag}|", StringComparison.Ordinal)) == 3) && (mine.Length == 3)
+				&& (mine[0].Show == null) && (NocatFarm.Core.LogShow.KindOf(mine[0]) == Buying) && (mine[1].Show == Answers) && (mine[2].Show == Trades)
+				&& mine.All(e => !NocatFarm.Core.LogShow.Shows(e)),
+				string.Join(" / ", lines));
+
+			// ── the window: the chips take effect without a restart - off takes the lines away, on brings them back ──
+			if (OperatingSystem.IsWindows()) {
+				NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig();
+				var window = new NocatFarm.Windows.MainWindow(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig()), static () => "", static () => { });
+				FieldInfo rowsField = typeof(NocatFarm.Windows.MainWindow).GetField("_rows", BindingFlags.NonPublic | BindingFlags.Instance)!;
+				MethodInfo follow = typeof(NocatFarm.Windows.MainWindow).GetMethod("FollowChips", BindingFlags.NonPublic | BindingFlags.Instance)!;
+				string[] Shown() {
+					follow.Invoke(window, null);
+					return [.. NocatFarm.Core.LogStack.Shown((List<NocatFarm.Core.LogStack.Row>) rowsField.GetValue(window)!).Select(static r => r.Entry.Said.English)];
+				}
+				window.Append(bought with { Seq = 10 });
+				window.Append(listed with { Seq = 11 });
+				window.Append(Line("WARN", "new", new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "x", "y", "z"), seq: 12));
+				int allShown = Shown().Length;
+				NocatFarm.Config.Live.Global = buyingOff;
+				string[] hidden = Shown();
+				NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig();
+				int back = Shown().Length;
+				Check("log show: the window follows the chips at once - buying off takes its line away (the warning stays), on again brings it back",
+					(allShown == 3) && (hidden.Length == 2) && hidden.Contains("listed {0} item(s) · {1} if they all sell") && (back == 3),
+					$"{allShown} / {string.Join(", ", hidden)} / {back}");
+			}
+		} finally {
+			NocatFarm.Config.Live.Global = liveBefore;
+			NocatFarm.Log.Configure(fileLogging: false, debug: false, root);
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			TestTemp.Gone(root);
+		}
+
+		// ── the setting, the page, the window and the dashboard ──
+		Check("log show: one global switch per kind, all on by default, drawn as one row of chips \"Show in the app's log\" under Logging",
+			NocatFarm.Core.LogShow.All.All(k => NocatFarm.Config.Settings.FindGlobal(k) is { Kind: NocatFarm.Config.SettingKind.Bool, Part: "Logging" })
+			&& NocatFarm.Config.Settings.ChipRows["Show in the app's log"].SequenceEqual(NocatFarm.Core.LogShow.All) && (NocatFarm.Core.LogShow.All.Length == 11));
+		string app = Src("src/NocatFarm/wwwroot/app.js"), web = Src("src/NocatFarm/Web/WebHost.cs"), win = Src("src/NocatFarm/Windows/MainWindow.cs");
+		Check("log show: the dashboard gets each line's kind and hides it while its chip is off (Copy keeps everything); the window and a saved change redraw at once",
+			web.Contains("Show = e.Level is \"WARN\" or \"ERROR\" ? null : LogShow.KindOf(e)", StringComparison.Ordinal)
+			&& app.Contains("const kept = logLines.filter(logChipShows);", StringComparison.Ordinal) && app.Contains("return !l.Show || g[l.Show] !== false;", StringComparison.Ordinal)
+			&& app.Contains("copyText(logLines.map(", StringComparison.Ordinal)
+			&& win.Contains("FollowChips();\n\t\t\tList<(Core.LogStack.Row Row, Log.Entry Entry, int Depth, bool Head)> shown", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Commands.cs").Contains("case Core.LogShow.Doing or Core.LogShow.Drops", StringComparison.Ordinal)
+			&& !Src("src/NocatFarm/Windows/MiniLayout.cs").Contains("LogShow", StringComparison.Ordinal));
+		Check("log show: an answer to a command that comes later is written as an answer - still INFO, still in the file",
+			Src("src/NocatFarm/Commands.cs").Contains("Log.Answer(MaskedReply(job.What, Unnamed(line, name), typed), source);", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Log.cs").Contains("public static void Answer(string text, string source) => Write(\"INFO\"", StringComparison.Ordinal));
+
+		// ── which of the INFO/GOOD sentences in the source have a kind - the ones that don't are listed, to map if they get frequent ──
+		System.Text.RegularExpressions.Regex call = new(@"Log\.(Info|Good|Status|Reward|Earned|Event|Trade|Answer)\(");
+		System.Text.RegularExpressions.Regex first = new(@"^\s*(?:new(?: NocatFarm\.Core\.Said| Core\.Said| Said)?\(\s*)?""((?:[^""\\]|\\.)*)""");
+		List<string> mapped = [], unmapped = [];
+		foreach (string path in Directory.EnumerateFiles(Path.Combine(repo, "src", "NocatFarm"), "*.cs", SearchOption.AllDirectories)) {
+			string text = File.ReadAllText(path);
+			foreach (System.Text.RegularExpressions.Match m in call.Matches(text)) {
+				int from = m.Index + m.Length;
+				System.Text.RegularExpressions.Match lit = first.Match(text.Substring(from, Math.Min(400, text.Length - from)));
+				if (!lit.Success || (lit.Groups[1].Value.Trim().Length == 0)) {
+					continue;
+				}
+				string english = lit.Groups[1].Value.Replace("\\\"", "\"", StringComparison.Ordinal);
+				bool known = (m.Groups[1].Value is "Trade" or "Answer" or "Status") || (NocatFarm.Core.LogShow.OfSentence(english) != null);
+				(known ? mapped : unmapped).Add($"{Path.GetFileName(path)}: {english}");
+			}
+		}
+		double share = mapped.Count / (double) Math.Max(1, mapped.Count + unmapped.Count);
+		Console.WriteLine($"log show: {mapped.Count} of {mapped.Count + unmapped.Count} INFO/GOOD sentences in the source have a kind ({share:P0}); without one (they always show):");
+		foreach (string u in unmapped.Distinct()) {
+			Console.WriteLine("    " + u);
+		}
+		Check("log show: nearly every INFO/GOOD sentence in the source has a kind (the rest always show)", share >= 0.9, $"{share:P0}, {unmapped.Count} without");
+
+		// With NOCATFARM_LOGSHOW_SAMPLE pointing at a real log file: how many of its INFO/GOOD lines got a kind.
+		if (Environment.GetEnvironmentVariable("NOCATFARM_LOGSHOW_SAMPLE") is { Length: > 0 } sample && File.Exists(sample)) {
+			int total = 0, kinded = 0;
+			Dictionary<string, int> byKind = [];
+			Dictionary<string, int> none = [];
+			foreach (string l in File.ReadLines(sample)) {
+				string[] p = l.Split('|', 4);
+				if ((p.Length < 4) || p[1] is not ("INFO" or "GOOD") || (p[2] == "command")) {
+					continue;
+				}
+				total++;
+				string? kind = NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said(p[3]), p[2]);
+				if (kind != null) {
+					kinded++;
+					byKind[kind] = byKind.GetValueOrDefault(kind) + 1;
+				} else {
+					string shape = System.Text.RegularExpressions.Regex.Replace(p[3], @"\d+", "N");
+					none[shape] = none.GetValueOrDefault(shape) + 1;
+				}
+			}
+			Console.WriteLine($"log show sample: {kinded} of {total} INFO/GOOD lines got a kind ({kinded / (double) Math.Max(1, total):P1}) - "
+				+ string.Join(", ", byKind.OrderByDescending(static k => k.Value).Select(static k => $"{k.Key} {k.Value}")));
+			foreach (KeyValuePair<string, int> n in none.OrderByDescending(static n => n.Value).Take(40)) {
+				Console.WriteLine($"    {n.Value} × {n.Key}");
+			}
+		}
+
+		await Task.CompletedTask;
 	}
 }

@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "No máximo {0} por um nível de insígnia - um pouco acima do que um nível costuma custar",
     "{0} would pay you {1}, under your {2} minimum": "{0} te daria {1}, abaixo do seu mínimo de {2}",
     "cards were bought to finish it - crafted, never sold": "cartas foram compradas para completá-lo - criado, nunca vendido",
-    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} linhas no arquivo de log"
+    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} linhas no arquivo de log",
+    "Show in the app's log": "Mostrar no log do app",
+    "{0} hidden by Show in the app's log": "{0} ocultas por Mostrar no log do app",
+    "what it's doing": "o que está fazendo",
+    "card drops and farming": "drops de cartas e farm",
+    "badges, crafting, level": "insígnias, criação, nível",
+    "buying cards": "compra de cartas",
+    "selling, spare items, gems": "venda, itens sobrando, gemas",
+    "trades and card swaps": "trocas e trocas de cartas",
+    "comments, friends, rep4rep": "comentários, amigos, rep4rep",
+    "free games, items, Points": "jogos e itens grátis, Pontos",
+    "answers to commands": "respostas a comandos",
+    "updates and app messages": "atualizações e mensagens do app"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Mostrar detalhe de depuração na tela",
       "tip": "Mostra detalhes extras de depuração na janela e no console. Esses detalhes sempre vão para o arquivo de log de qualquer jeito, então deixe desligado, a menos que queira acompanhar ao vivo."
+    },
+    "LogShowDoing": {
+      "label": "Mostrar o que está fazendo",
+      "tip": "Mostra no log do app o que cada conta está fazendo: jogando, idle, sessões, aquecimento, pausas e hora de dormir - por exemplo \"grinding Portal · 41m left\" ou \"asleep · 7 games · up 13:37\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowDrops": {
+      "label": "Mostrar drops de cartas e farm",
+      "tip": "Mostra os drops de cartas e o farm de cartas no log do app - por exemplo \"carta dropou em Portal - faltam 2\" ou \"sem cartas · idle nos seus jogos\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowBadges": {
+      "label": "Mostrar insígnias, criação e nível",
+      "tip": "Mostra as insígnias criadas, os conjuntos prontos e o nível Steam no log do app - por exemplo \"2 insígnia(s) criada(s) - nível Steam subiu\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowBuying": {
+      "label": "Mostrar compra de cartas",
+      "tip": "Mostra a compra de cartas no log do app - por exemplo \"comprou Zane (Destiny Warriors) · 0.10 CAD\" ou a carteira e os limites. Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowSelling": {
+      "label": "Mostrar venda, itens sobrando e gemas",
+      "tip": "Mostra vendas, anúncios no mercado, itens sobrando, gemas e pacotes de cartas no log do app - por exemplo \"anunciou Arena (BitMaster) por 0.03 CAD\" ou \"Room (Epsilon corp.) → 10 gemas\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowTrades": {
+      "label": "Mostrar trocas e trocas de cartas",
+      "tip": "Mostra as ofertas de troca e as trocas de cartas no log do app - por exemplo \"aceitou a oferta 123 de um amigo\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowComments": {
+      "label": "Mostrar comentários, amigos e rep4rep",
+      "tip": "Mostra comentários no perfil, pedidos de amizade, grupos e rep4rep no log do app - por exemplo \"novo comentário de um amigo\" ou \"comentou em alguém e foi creditado (7/10 hoje)\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowAchievements": {
+      "label": "Mostrar conquistas",
+      "tip": "Mostra as conquistas no log do app - por exemplo \"🏆 Camera Shy · Portal · 11/15\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowFree": {
+      "label": "Mostrar jogos e itens grátis e Pontos",
+      "tip": "Mostra jogos e itens grátis, presentes, Pontos Steam e eventos de promoção no log do app - por exemplo \"resgatou 2 jogo(s) grátis\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowAnswers": {
+      "label": "Mostrar respostas a comandos",
+      "tip": "Mostra no log do app as respostas a comandos que chegam depois, e os comandos vindos do Telegram e do Discord. O que você digita na janela sempre é respondido lá. Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowApp": {
+      "label": "Mostrar atualizações e mensagens do app",
+      "tip": "Mostra as mensagens do próprio nocat.farm no log do app: atualizações, o painel, configurações salvas, backups, Discord e Telegram, o resumo diário - por exemplo \"atualização em 10s\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
     },
     "LogRetentionDays": {
       "label": "Guardar os logs por",

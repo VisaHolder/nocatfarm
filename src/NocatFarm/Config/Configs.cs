@@ -462,6 +462,20 @@ public sealed class GlobalConfig {
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
 
+	// ── Show in the app's log (1.8.2) ── which kinds of line the window and the dashboard's Log tab show (Core/LogShow.cs).
+	// All on: nothing is hidden until a chip is turned off. The log file keeps every line, and warnings and errors always show.
+	public bool LogShowDoing { get; set; } = true;
+	public bool LogShowDrops { get; set; } = true;
+	public bool LogShowBadges { get; set; } = true;
+	public bool LogShowBuying { get; set; } = true;
+	public bool LogShowSelling { get; set; } = true;
+	public bool LogShowTrades { get; set; } = true;
+	public bool LogShowComments { get; set; } = true;
+	public bool LogShowAchievements { get; set; } = true;
+	public bool LogShowFree { get; set; } = true;
+	public bool LogShowAnswers { get; set; } = true;
+	public bool LogShowApp { get; set; } = true;
+
 	// ── Open in Steam (1.8.2) ── the button on every account at once. Off by default; like each account's own switch,
 	// its go-ahead lives outside the settings (SteamOpenLedger.Everyone), so this alone can't switch it on - the
 	// preview's Turn on does.

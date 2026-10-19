@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "Höchstens {0} für eine Abzeichenstufe - etwas über dem, was eine Stufe üblicherweise kostet",
     "{0} would pay you {1}, under your {2} minimum": "{0} brächte dir {1}, unter deinem Minimum von {2}",
     "cards were bought to finish it - crafted, never sold": "Karten wurden gekauft, um ihn zu vervollständigen - wird hergestellt, nie verkauft",
-    "{0}: answered · {1} lines in the log file": "{0}: beantwortet · {1} Zeilen in der Logdatei"
+    "{0}: answered · {1} lines in the log file": "{0}: beantwortet · {1} Zeilen in der Logdatei",
+    "Show in the app's log": "Im Protokoll der App zeigen",
+    "{0} hidden by Show in the app's log": "{0} ausgeblendet durch „Im Protokoll der App zeigen“",
+    "what it's doing": "was es gerade tut",
+    "card drops and farming": "Kartendrops und Farmen",
+    "badges, crafting, level": "Abzeichen, Herstellen, Level",
+    "buying cards": "Karten kaufen",
+    "selling, spare items, gems": "Verkaufen, übrige Gegenstände, Edelsteine",
+    "trades and card swaps": "Tauschangebote und Kartentausch",
+    "comments, friends, rep4rep": "Kommentare, Freunde, rep4rep",
+    "free games, items, Points": "Gratisspiele, Gegenstände, Punkte",
+    "answers to commands": "Antworten auf Befehle",
+    "updates and app messages": "Updates und App-Meldungen"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Debug-Details auf dem Bildschirm anzeigen",
       "tip": "Zeigt zusätzliche Debug-Details im Fenster und in der Konsole. Diese Details landen sowieso immer in der Protokolldatei. Lass es also aus, außer du willst live zuschauen."
+    },
+    "LogShowDoing": {
+      "label": "Zeigen, was es gerade tut",
+      "tip": "Zeigt im Protokoll der App, was jedes Konto gerade tut: spielen, idlen, Sitzungen, Eingewöhnen, Pausen und Schlafenszeit - zum Beispiel „grinding Portal · 41m left“ oder „asleep · 7 games · up 13:37“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowDrops": {
+      "label": "Kartendrops und Farmen zeigen",
+      "tip": "Zeigt Kartendrops und das Karten-Farmen im Protokoll der App - zum Beispiel „Karte gedroppt in Portal - noch 2“ oder „keine Karten mehr · idlet deine Spiele“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowBadges": {
+      "label": "Abzeichen, Herstellen und Level zeigen",
+      "tip": "Zeigt hergestellte Abzeichen, fertige Sets und das Steam-Level im Protokoll der App - zum Beispiel „2 Abzeichen hergestellt - Steam-Level steigt“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowBuying": {
+      "label": "Karten kaufen zeigen",
+      "tip": "Zeigt den Kartenkauf im Protokoll der App - zum Beispiel „Zane (Destiny Warriors) gekauft · 0.10 CAD“ oder das Guthaben und die Grenzen. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowSelling": {
+      "label": "Verkaufen, übrige Gegenstände und Edelsteine zeigen",
+      "tip": "Zeigt Verkäufe, Angebote auf dem Markt, übrige Gegenstände, Edelsteine und Booster-Packs im Protokoll der App - zum Beispiel „Arena (BitMaster) für 0.03 CAD eingestellt“ oder „Room (Epsilon corp.) → 10 Edelsteine“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowTrades": {
+      "label": "Tauschangebote und Kartentausch zeigen",
+      "tip": "Zeigt Tauschangebote und Kartentausch im Protokoll der App - zum Beispiel „Angebot 123 von einem Freund angenommen“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowComments": {
+      "label": "Kommentare, Freunde und rep4rep zeigen",
+      "tip": "Zeigt Profilkommentare, Freundschaftsanfragen, Gruppen und rep4rep im Protokoll der App - zum Beispiel „neuer Kommentar von einem Freund“ oder „bei jemandem kommentiert und gutgeschrieben (7/10 heute)“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowAchievements": {
+      "label": "Erfolge zeigen",
+      "tip": "Zeigt Erfolge im Protokoll der App - zum Beispiel „🏆 Camera Shy · Portal · 11/15“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowFree": {
+      "label": "Gratisspiele, Gegenstände und Punkte zeigen",
+      "tip": "Zeigt Gratisspiele und -gegenstände, Geschenke, Steam-Punkte und Sale-Events im Protokoll der App - zum Beispiel „2 Gratisspiel(e) geholt“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowAnswers": {
+      "label": "Antworten auf Befehle zeigen",
+      "tip": "Zeigt im Protokoll der App die Antworten auf Befehle, die später kommen, und Befehle aus Telegram und Discord. Was du im Fenster eintippst, wird dort immer beantwortet. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
+    },
+    "LogShowApp": {
+      "label": "Updates und App-Meldungen zeigen",
+      "tip": "Zeigt die eigenen Meldungen von nocat.farm im Protokoll der App: Updates, das Dashboard, gespeicherte Einstellungen, Sicherungen, Discord und Telegram, die tägliche Zusammenfassung - zum Beispiel „Update in 10s“. Aus: diese Zeilen landen nur in der Protokolldatei. Warnungen und Fehler werden immer angezeigt."
     },
     "LogRetentionDays": {
       "label": "Protokolle aufbewahren",

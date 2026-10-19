@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "Bir rozet seviyesi için en fazla {0} - bir seviyenin genelde tuttuğundan biraz fazla",
     "{0} would pay you {1}, under your {2} minimum": "{0} sana {1} kazandırır, {2} alt sınırının altında",
     "cards were bought to finish it - crafted, never sold": "tamamlamak için kart alındı - üretilir, asla satılmaz",
-    "{0}: answered · {1} lines in the log file": "{0}: yanıtlandı · günlük dosyasında {1} satır"
+    "{0}: answered · {1} lines in the log file": "{0}: yanıtlandı · günlük dosyasında {1} satır",
+    "Show in the app's log": "Uygulamanın günlüğünde göster",
+    "{0} hidden by Show in the app's log": "{0} satır Uygulamanın günlüğünde göster ile gizlendi",
+    "what it's doing": "şu an ne yaptığı",
+    "card drops and farming": "kart düşüşleri ve farm",
+    "badges, crafting, level": "rozetler, üretim, seviye",
+    "buying cards": "kart satın alma",
+    "selling, spare items, gems": "satış, fazla eşyalar, mücevherler",
+    "trades and card swaps": "takaslar ve kart takasları",
+    "comments, friends, rep4rep": "yorumlar, arkadaşlar, rep4rep",
+    "free games, items, Points": "ücretsiz oyunlar, eşyalar, Puanlar",
+    "answers to commands": "komutlara yanıtlar",
+    "updates and app messages": "güncellemeler ve uygulama mesajları"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Hata ayıklama ayrıntılarını ekranda göster",
       "tip": "Pencerede ve konsolda ek hata ayıklama ayrıntıları gösterir. Bu ayrıntılar zaten her zaman günlük dosyasına kaydedilir. Canlı izlemek istemiyorsan kapalı bırak."
+    },
+    "LogShowDoing": {
+      "label": "Ne yaptığını göster",
+      "tip": "Her hesabın ne yaptığını uygulamanın günlüğünde gösterir: oynama, boşta bekleme, oturumlar, ısınma, molalar ve uyku - örneğin \"grinding Portal · 41m left\" veya \"asleep · 7 games · up 13:37\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowDrops": {
+      "label": "Kart düşüşlerini ve farmı göster",
+      "tip": "Kart düşüşlerini ve kart farmını uygulamanın günlüğünde gösterir - örneğin \"Portal'da kart düştü - 2 kaldı\" veya \"kart kalmadı · oyunların boşta\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowBadges": {
+      "label": "Rozetleri, üretimi ve seviyeyi göster",
+      "tip": "Üretilen rozetleri, hazır setleri ve Steam seviyesini uygulamanın günlüğünde gösterir - örneğin \"2 rozet üretildi - Steam seviyesi arttı\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowBuying": {
+      "label": "Kart satın almayı göster",
+      "tip": "Kart satın almayı uygulamanın günlüğünde gösterir - örneğin \"Zane (Destiny Warriors) alındı · 0.10 CAD\" veya cüzdan ve sınırlar. Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowSelling": {
+      "label": "Satışı, fazla eşyaları ve mücevherleri göster",
+      "tip": "Satışları, pazar ilanlarını, fazla eşyaları, mücevherleri ve kart paketlerini uygulamanın günlüğünde gösterir - örneğin \"Arena (BitMaster) 0.03 CAD'ye ilana kondu\" veya \"Room (Epsilon corp.) → 10 mücevher\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowTrades": {
+      "label": "Takasları ve kart takaslarını göster",
+      "tip": "Takas tekliflerini ve kart takaslarını uygulamanın günlüğünde gösterir - örneğin \"bir arkadaştan gelen 123 numaralı teklif kabul edildi\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowComments": {
+      "label": "Yorumları, arkadaşları ve rep4rep'i göster",
+      "tip": "Profil yorumlarını, arkadaşlık isteklerini, grupları ve rep4rep'i uygulamanın günlüğünde gösterir - örneğin \"bir arkadaştan yeni yorum\" veya \"birine yorum yapıldı ve sayıldı (bugün 7/10)\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowAchievements": {
+      "label": "Başarımları göster",
+      "tip": "Başarımları uygulamanın günlüğünde gösterir - örneğin \"🏆 Camera Shy · Portal · 11/15\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowFree": {
+      "label": "Ücretsiz oyunları, eşyaları ve Puanları göster",
+      "tip": "Ücretsiz oyun ve eşyaları, hediyeleri, Steam Puanlarını ve indirim etkinliklerini uygulamanın günlüğünde gösterir - örneğin \"2 ücretsiz oyun alındı\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowAnswers": {
+      "label": "Komutlara yanıtları göster",
+      "tip": "Sonradan gelen komut yanıtlarını ve Telegram ile Discord'dan gelen komutları uygulamanın günlüğünde gösterir. Pencereye yazdıkların her zaman orada yanıtlanır. Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
+    },
+    "LogShowApp": {
+      "label": "Güncellemeleri ve uygulama mesajlarını göster",
+      "tip": "nocat.farm'ın kendi mesajlarını uygulamanın günlüğünde gösterir: güncellemeler, pano, kaydedilen ayarlar, yedekler, Discord ve Telegram, günlük özet - örneğin \"10s içinde güncelleme\". Kapalı: bu satırlar yalnızca günlük dosyasına gider. Uyarılar ve hatalar her zaman gösterilir."
     },
     "LogRetentionDays": {
       "label": "Günlükleri şu kadar sakla",

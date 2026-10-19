@@ -3414,7 +3414,19 @@
     "At most {0} for one badge level - a little over what a level usually costs": "Najwyżej {0} za jeden poziom odznaki - trochę ponad to, ile zwykle kosztuje poziom",
     "{0} would pay you {1}, under your {2} minimum": "{0} dałby ci {1}, poniżej twojego minimum {2}",
     "cards were bought to finish it - crafted, never sold": "kupiono karty, żeby go dokończyć - tworzony, nigdy nie sprzedawany",
-    "{0}: answered · {1} lines in the log file": "{0}: odpowiedź · {1} wierszy w pliku dziennika"
+    "{0}: answered · {1} lines in the log file": "{0}: odpowiedź · {1} wierszy w pliku dziennika",
+    "Show in the app's log": "Pokazuj w dzienniku aplikacji",
+    "{0} hidden by Show in the app's log": "{0} ukryte przez Pokazuj w dzienniku aplikacji",
+    "what it's doing": "co teraz robi",
+    "card drops and farming": "dropy kart i farmienie",
+    "badges, crafting, level": "odznaki, tworzenie, poziom",
+    "buying cards": "kupowanie kart",
+    "selling, spare items, gems": "sprzedaż, zbędne przedmioty, klejnoty",
+    "trades and card swaps": "wymiany i wymiany kart",
+    "comments, friends, rep4rep": "komentarze, znajomi, rep4rep",
+    "free games, items, Points": "darmowe gry, przedmioty, Punkty",
+    "answers to commands": "odpowiedzi na polecenia",
+    "updates and app messages": "aktualizacje i komunikaty aplikacji"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4195,6 +4207,50 @@
     "Debug": {
       "label": "Pokazuj szczegóły debugowania na ekranie",
       "tip": "Pokazuje dodatkowe szczegóły debugowania w oknie i konsoli. I tak zawsze trafiają do pliku dziennika, więc zostaw to wyłączone, chyba że chcesz je oglądać na żywo."
+    },
+    "LogShowDoing": {
+      "label": "Pokazuj, co teraz robi",
+      "tip": "Pokazuje w dzienniku aplikacji, co robi każde konto: granie, idlowanie, sesje, rozgrzewkę, przerwy i porę snu - na przykład „grinding Portal · 41m left” albo „asleep · 7 games · up 13:37”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowDrops": {
+      "label": "Pokazuj dropy kart i farmienie",
+      "tip": "Pokazuje dropy kart i farmienie kart w dzienniku aplikacji - na przykład „karta wypadła w Portal - zostały 2” albo „brak kart · idluje twoje gry”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowBadges": {
+      "label": "Pokazuj odznaki, tworzenie i poziom",
+      "tip": "Pokazuje stworzone odznaki, gotowe zestawy i poziom Steam w dzienniku aplikacji - na przykład „stworzono 2 odznak(i) - poziom Steam w górę”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowBuying": {
+      "label": "Pokazuj kupowanie kart",
+      "tip": "Pokazuje kupowanie kart w dzienniku aplikacji - na przykład „kupiono Zane (Destiny Warriors) · 0.10 CAD” albo portfel i limity. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowSelling": {
+      "label": "Pokazuj sprzedaż, zbędne przedmioty i klejnoty",
+      "tip": "Pokazuje sprzedaż, oferty na rynku, zbędne przedmioty, klejnoty i paczki kart w dzienniku aplikacji - na przykład „wystawiono Arena (BitMaster) za 0.03 CAD” albo „Room (Epsilon corp.) → 10 klejnotów”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowTrades": {
+      "label": "Pokazuj wymiany i wymiany kart",
+      "tip": "Pokazuje oferty wymiany i wymiany kart w dzienniku aplikacji - na przykład „przyjęto ofertę 123 od znajomego”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowComments": {
+      "label": "Pokazuj komentarze, znajomych i rep4rep",
+      "tip": "Pokazuje komentarze na profilu, zaproszenia do znajomych, grupy i rep4rep w dzienniku aplikacji - na przykład „nowy komentarz od znajomego” albo „skomentowano u kogoś i zaliczono (7/10 dziś)”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowAchievements": {
+      "label": "Pokazuj osiągnięcia",
+      "tip": "Pokazuje osiągnięcia w dzienniku aplikacji - na przykład „🏆 Camera Shy · Portal · 11/15”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowFree": {
+      "label": "Pokazuj darmowe gry, przedmioty i Punkty",
+      "tip": "Pokazuje darmowe gry i przedmioty, prezenty, Punkty Steam i wydarzenia wyprzedaży w dzienniku aplikacji - na przykład „odebrano 2 darmow(e) gr(y)”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowAnswers": {
+      "label": "Pokazuj odpowiedzi na polecenia",
+      "tip": "Pokazuje w dzienniku aplikacji odpowiedzi na polecenia, które przychodzą później, i polecenia z Telegrama i Discorda. To, co wpiszesz w oknie, zawsze dostaje tam odpowiedź. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
+    },
+    "LogShowApp": {
+      "label": "Pokazuj aktualizacje i komunikaty aplikacji",
+      "tip": "Pokazuje własne komunikaty nocat.farm w dzienniku aplikacji: aktualizacje, panel, zapisane ustawienia, kopie zapasowe, Discord i Telegram, dzienne podsumowanie - na przykład „aktualizacja za 10s”. Wyłączone: te wiersze trafiają tylko do pliku dziennika. Ostrzeżenia i błędy są zawsze pokazywane."
     },
     "LogRetentionDays": {
       "label": "Przechowuj dzienniki przez",
