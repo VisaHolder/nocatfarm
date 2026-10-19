@@ -28701,6 +28701,9 @@ await SweepBuyChecks.RunAsync(Check);
 // ── 1.8.2 sweep: an order that went in without Steam giving its id - found on the market's list of open buy orders and taken back; fakes only ──
 await SweepOrderChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: a game on the keep list is never sold - its set crafted, the listing path refusing it; fakes only ──
+await SweepKeepChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31678,7 +31681,7 @@ static class BuySmartChecks {
 				$"{slowSet.Why} / {slowSmall.Why} / {silentSet.Why}");
 			Check("sell or craft: foil badges are always crafted, and only normal ones one level at a time are weighed",
 				!NocatFarm.Modules.SetSale.Considered(1, 1) && NocatFarm.Modules.SetSale.Considered(0, 1) && !NocatFarm.Modules.SetSale.Considered(0, 2)
-				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("ready.Where(static c => SetSale.Considered(c.Border, c.Levels))", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/BadgeCraft.Sell.cs").Contains("ready.Where(c => SetSale.Considered(c.Border, c.Levels) && !keep.Contains(c.AppId))", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Modules/BadgeCraft.cs").Contains("ready = await SellInsteadAsync(ready, inventory, ct).ConfigureAwait(false);", StringComparison.Ordinal));
 			Check("sell or craft: only with the setting and buying cards on - it's on by default but does nothing while buying is off",
 				new NocatFarm.Config.BotConfig().SellSetsForLevels
@@ -34053,6 +34056,59 @@ static class SweepOrderChecks {
 		} finally {
 			foreach (var b in bots) {
 				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>1.8.2 sweep: a game on the keep list is never sold - its set crafted as normal, and the one listing path refuses it. Fakes only.</summary>
+static class SweepKeepChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepkeep-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+
+		try {
+			// ── the craft: a keep-list game's set is crafted as normal, never weighed for selling ──
+			var b = new NocatFarm.Core.Bot("sk-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig {
+				CraftBadges = true, SellSetsForLevels = true, SpareKeepGames = [270310]
+			});
+			bots.Add(b);
+			NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			var market = new FakeCardMarket();
+			b.AddModule(new NocatFarm.Modules.CardBuyer(b, market, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock));
+			const string Empty = "{\"success\":1,\"assets\":[],\"descriptions\":[],\"more_items\":0}";
+			var inventory = (await NocatFarm.Core.Inventory.ReadAsync((_, _) => Task.FromResult<string?>(Empty), 1, 753, "6", CancellationToken.None))!;
+			var picks = await NocatFarm.Modules.SetSale.ChooseAsync(b, [new(270310, 0, 1)], inventory, CancellationToken.None);
+			Check("sweep keep: a set of a game on the keep list (270310) is crafted as normal - never weighed for selling, nothing priced",
+				picks.Single() is { Choice: NocatFarm.Modules.SetSale.Choice.Craft, Quiet: true, Verdict: null } && picks[0].Reason.ToEnglish().Contains("keep list", StringComparison.Ordinal)
+				&& (market.Reads == 0) && (market.CardsReads == 0),
+				picks.Single().Reason.ToEnglish());
+
+			// ── the one listing path: an item of a keep-list game, or one kept by name, is never listed - whatever asked ──
+			var s = new NocatFarm.Core.Bot("sk-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareKeepGames = [270310], SpareKeepItems = "Shiny Thing" });
+			bots.Add(s);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(s, SteamKit2.ECurrencyCode.CAD);
+			string said = await NocatFarm.Core.Seller.SellAsync(s, [
+				new NocatFarm.Core.Seller.Offer(1, "Kept", "Card", 100, 100, 87, "270310-Card"),
+				new NocatFarm.Core.Seller.Offer(2, "Other", "Shiny Thing", 100, 100, 87, "440-Shiny Thing")], CancellationToken.None);
+			Check("sweep keep: the listing path itself refuses items of a keep-list game and items kept by name - nothing listed, said why",
+				said.Contains("nothing listed", StringComparison.Ordinal) && said.Contains("keep list", StringComparison.Ordinal), said);
+		} finally {
+			foreach (var bot in bots) {
+				await bot.DisposeAsync();
 			}
 
 			NocatFarm.Log.Suppressed = wasSuppressed;

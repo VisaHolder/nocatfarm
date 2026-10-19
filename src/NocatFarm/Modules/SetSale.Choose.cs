@@ -43,12 +43,16 @@ public static partial class SetSale {
 		}
 
 		List<int> weigh = [];
+		IReadOnlyCollection<uint> keep = SpareRules.From(bot.Cfg).KeepGames;
 
 		for (int i = 0; i < ready.Count; i++) {
 			Ready r = ready[i];
 
 			if (r.Border > 0) {
 				picks[i] = Craft(r, new Said("a foil set is always crafted"), quiet: true);
+			} else if (keep.Contains(r.App)) {
+				// A game on the keep list ("Never touch items from these games"): its set is crafted, never sold.
+				picks[i] = Craft(r, new Said("on your keep list - its set is crafted, never sold"), quiet: true);
 			} else if (!Considered(r.Border, r.Levels)) {
 				picks[i] = Craft(r, new Said("{0} sets ready, crafted together", r.Levels));
 			} else {

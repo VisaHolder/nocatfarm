@@ -3247,7 +3247,9 @@
     "its wallet already pays for every level priced today": "son porte-monnaie paie déjà tous les niveaux chiffrés aujourd'hui",
     "couldn't read the open buy orders: {0}": "impossible de lire les ordres d'achat ouverts : {0}",
     "an order for {0} was left open on the market · taken back, nothing bought": "un ordre pour {0} était resté ouvert sur le marché · retiré, rien acheté",
-    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0} : un ordre d'achat est déjà ouvert sur le marché · le sien est retiré, celui que tu as passé n'est pas touché"
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0} : un ordre d'achat est déjà ouvert sur le marché · le sien est retiré, celui que tu as passé n'est pas touché",
+    "on your keep list - never sold": "dans ta liste à garder - jamais vendu",
+    "on your keep list - its set is crafted, never sold": "dans ta liste à garder - son set est fabriqué, jamais vendu"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3247,7 +3247,9 @@
     "its wallet already pays for every level priced today": "今日値段のわかったレベルは、すべてウォレットの残高でまかなえます",
     "couldn't read the open buy orders: {0}": "出ている購入注文を読めませんでした: {0}",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} の注文がマーケットに残っていました · 取り消しました。何も買っていません",
-    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: マーケットにすでに購入注文があります · 自分の注文は取り消し、あなたが出した注文はそのままにします"
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: マーケットにすでに購入注文があります · 自分の注文は取り消し、あなたが出した注文はそのままにします",
+    "on your keep list - never sold": "残すリストにあります - 売りません",
+    "on your keep list - its set is crafted, never sold": "残すリストにあります - セットは作り、売りません"
   },
   "settings": {
     "SteamOpenEveryAccount": {

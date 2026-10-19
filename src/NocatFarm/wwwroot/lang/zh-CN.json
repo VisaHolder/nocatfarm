@@ -3247,7 +3247,9 @@
     "its wallet already pays for every level priced today": "钱包余额已经够买今天定价的所有等级",
     "couldn't read the open buy orders: {0}": "无法读取未完成的购买订单：{0}",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} 的订单还挂在市场上 · 已撤回，什么也没买",
-    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}：市场上已有它的购买订单 · 撤回自己的订单，你自己下的订单不动"
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}：市场上已有它的购买订单 · 撤回自己的订单，你自己下的订单不动",
+    "on your keep list - never sold": "在你的保留列表里 - 绝不出售",
+    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3247,7 +3247,9 @@
     "its wallet already pays for every level priced today": "오늘 가격이 나온 레벨은 이미 지갑 잔액으로 모두 살 수 있습니다",
     "couldn't read the open buy orders: {0}": "열려 있는 구매 주문을 읽지 못했습니다: {0}",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} 주문이 마켓에 열린 채 남아 있었습니다 · 취소함, 구매한 것 없음",
-    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: 마켓에 이미 구매 주문이 열려 있습니다 · 자신의 주문은 취소하고, 직접 넣은 주문은 그대로 둡니다"
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: 마켓에 이미 구매 주문이 열려 있습니다 · 자신의 주문은 취소하고, 직접 넣은 주문은 그대로 둡니다",
+    "on your keep list - never sold": "보관 목록에 있음 - 절대 팔지 않음",
+    "on your keep list - its set is crafted, never sold": "보관 목록에 있음 - 세트는 제작하고 절대 팔지 않음"
   },
   "settings": {
     "SteamOpenEveryAccount": {

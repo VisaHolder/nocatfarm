@@ -3247,7 +3247,9 @@
     "its wallet already pays for every level priced today": "кошелёк уже оплачивает все уровни, оценённые сегодня",
     "couldn't read the open buy orders: {0}": "не удалось прочитать открытые заявки на покупку: {0}",
     "an order for {0} was left open on the market · taken back, nothing bought": "заявка на {0} осталась открытой на рынке · отозвана, ничего не куплено",
-    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: на рынке уже открыта заявка на покупку · своя отзывается, вашу он не трогает"
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: на рынке уже открыта заявка на покупку · своя отзывается, вашу он не трогает",
+    "on your keep list - never sold": "в вашем списке «оставить» - никогда не продаётся",
+    "on your keep list - its set is crafted, never sold": "в вашем списке «оставить» - набор собирается, никогда не продаётся"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -223,6 +223,13 @@ public static class Seller {
 	/// <summary>"391540-Sans" is the card "Sans".</summary>
 	internal static string CardName(string hash) => hash.IndexOf('-') is int dash and > 0 ? hash[(dash + 1)..] : hash;
 
+	/// <summary>"391540-Sans" is an item of game 391540 (0: no game in its name).</summary>
+	internal static uint GameOf(string hash) => (hash.IndexOf('-') is int dash and > 0) && uint.TryParse(hash.AsSpan(0, dash), NumberStyles.None, CultureInfo.InvariantCulture, out uint app) ? app : 0;
+
+	/// <summary>1.8.2: an item on the keep list - its game ("Never touch items from these games"), or itself by name.</summary>
+	internal static bool OnKeepList(Offer offer, SpareRules rules) =>
+		((GameOf(offer.Hash) is uint app and > 0) && rules.KeepGames.Contains(app)) || rules.KeepNames.Contains(offer.Card) || ((offer.Hash.Length > 0) && rules.KeepNames.Contains(offer.Hash));
+
 	// ── listing ──────────────────────────────────────────────────────────────
 	/// <summary>
 	/// Right before one listing goes up: the offer at today's price, in the account's own wallet currency - or null, with
@@ -329,6 +336,23 @@ public static class Seller {
 		// listed before Steam has said which money this account's wallet is in.
 		if (WalletCurrency(bot) is not int currency) {
 			return new Said("{0}: Steam hasn't said this account's wallet currency yet - nothing listed", bot.Name).ToString();
+		}
+
+		// 1.8.2, the last word whatever asked: never an item of a game on the keep list ("Never touch items from these
+		// games"), nor an item on it by name.
+		SpareRules keep = SpareRules.From(bot.Cfg);
+		List<Offer> onKeepList = [.. offers.Where(o => OnKeepList(o, keep))];
+
+		foreach (Offer o in onKeepList) {
+			Log.Info(KeptSaid(o, new Said("on your keep list - never sold")), bot.Name);
+		}
+
+		if (onKeepList.Count > 0) {
+			offers = [.. offers.Where(o => !OnKeepList(o, keep))];
+
+			if (offers.Count == 0) {
+				return $"{bot.Name}: nothing listed - {(onKeepList.Count == 1 ? "it's" : "they're all")} on the keep list";
+			}
 		}
 
 		// Claimed, then checked against the waiting trades once more. The plan read them a while ago (pricing takes
