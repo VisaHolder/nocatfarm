@@ -28713,6 +28713,9 @@ await SweepGemsSellChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory,
 // ── 1.8.2 sweep: copying settings never starts spending, trading, sending or commands on the account copied to; the preview hides nothing ──
 await SweepCopyChecks.RunAsync(Check);
 
+// ── 1.8.2 sweep: fair card swaps keep to the keep lists like paired swaps; a paired swap's hold asked with its trade token; fakes only ──
+await SweepSwapChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -31313,7 +31316,7 @@ static class CardSwapCheatChecks {
 			// ── a stranger's swap whose trade hold Steam won't say: left for you, and the log says why ──
 			var hBot = NewBot("swc-hold", MeId);
 			var hTrades = new NocatFarm.Modules.Trading(hBot);
-			bool seamed = Seam(hTrades, "ReadHold", (Func<ulong, CancellationToken, Task<TimeSpan?>>) ((_, _) => Task.FromResult<TimeSpan?>(null)));
+			bool seamed = Seam(hTrades, "ReadHold", (Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, _, _) => Task.FromResult<TimeSpan?>(null)));
 			MethodInfo? holdVerdict = typeof(NocatFarm.Modules.Trading).GetMethod("HoldVerdictAsync", Inst);
 			var stranger = new NocatFarm.Core.TradeOffers.Offer(4242, OtherId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")]);
 			long mark = NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
@@ -34374,5 +34377,91 @@ static class SweepCopyChecks {
 			$"{big.Changes.Count} changes");
 
 		return Task.CompletedTask;
+	}
+}
+
+/// <summary>1.8.2 sweep: fair card swaps keep to the keep lists like paired swaps; a paired swap's hold asked with its trade token. Fakes only.</summary>
+static class SweepSwapChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-sweepswap-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		List<NocatFarm.Core.Bot> bots = [];
+		const ulong YouId = 76561198000009902UL;
+
+		try {
+			// ── "Keep this many of each card" ──
+			Type fs = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Modules.FairSwap")!;
+			Type cardT = fs.GetNestedType("Card", BindingFlags.NonPublic)!;
+			object Card(uint game, ulong cls) => Activator.CreateInstance(cardT, [game, cls])!;
+			object CardList(params object[] cards) { var l = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(cardT))!; foreach (var c in cards) l.Add(c); return l; }
+			object Holdings(params (uint g, ulong c, int n)[] h) { var d = (IDictionary) Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(cardT, typeof(int)))!; foreach (var (g, c, n) in h) d[Card(g, c)] = n; return d; }
+			bool Fair(object give, object get, object ours, int keep) {
+				var r = fs.GetMethod("JudgeKeeping", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [give, get, ours, keep])!;
+				return (bool) r.GetType().GetField("Item1")!.GetValue(r)!;
+			}
+
+			Check("sweep swaps: keeping 2 of each card - 2 of A, none of B: A for B would leave 1, refused; 3 of A: fair",
+				!Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 2)), 2) && Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 3)), 2)
+				&& Fair(CardList(Card(1, 10)), CardList(Card(1, 20)), Holdings((1, 10, 2)), 1));
+
+			// ── keep lists: a fair swap never gives a card of a game, or a card, on them - before the inventory is even read ──
+			MethodInfo judge = fs.GetMethod("JudgeAsync", BindingFlags.NonPublic | BindingFlags.Static)!;
+			Type fairCard = judge.GetParameters()[2].ParameterType.GetGenericArguments()[0];
+			NocatFarm.Core.TradeOffers.Item Ci(ulong asset, ulong cls, uint game, string name) =>
+				new(753, "6", asset, cls, 0, 1, "Some Game Trading Card", name, game, true, "", $"{game}-{name}");
+
+			async Task<(bool? Fair, string Why)> Judge(NocatFarm.Core.Bot b, NocatFarm.Core.TradeOffers.Offer offer) {
+				object task = judge.Invoke(null, [b, offer, Array.CreateInstance(fairCard, 0), CancellationToken.None])!;
+				await (Task) task;
+				object result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+				return ((bool?) result.GetType().GetField("Item1")!.GetValue(result), ((NocatFarm.Core.Said) result.GetType().GetField("Item2")!.GetValue(result)!).ToEnglish());
+			}
+
+			var keepBot = new NocatFarm.Core.Bot("sw-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { SpareKeepGames = [270310], SpareKeepItems = "Precious" });
+			bots.Add(keepBot);
+			var byGame = await Judge(keepBot, new(1, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 1, 270310, "Scout")], [Ci(91, 3, 270310, "Pyro")]));
+			var byName = await Judge(keepBot, new(2, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(2, 1, 440, "Precious")], [Ci(92, 3, 440, "Pyro")]));
+			Check("sweep swaps: a fair swap asking for a card of a keep-list game (270310), or one kept by name - not fair, said why",
+				(byGame.Fair == false) && byGame.Why.Contains("keep list", StringComparison.Ordinal) && (byName.Fair == false) && byName.Why.Contains("keep list", StringComparison.Ordinal),
+				$"{byGame.Why} / {byName.Why}");
+			string fairSrc = Src("src/NocatFarm/Modules/FairSwap.cs");
+			Check("sweep swaps: a fair swap never gives a copy promised to a paired swap, and those don't count as held",
+				fairSrc.Contains("HashSet<ulong> reserved = CardExchange.Reserved(bot.Name, bot.SteamId, now);", StringComparison.Ordinal)
+				&& fairSrc.Contains("|| reserved.Contains(Num64(Text(asset, \"assetid\")))) {", StringComparison.Ordinal)
+				&& fairSrc.Contains("return JudgeKeeping(cards.Giving, cards.Receiving, ours, rules.Keep);", StringComparison.Ordinal));
+
+			// ── a swap's trade hold: asked with the partner's trade token when the paired match came with one ──
+			var hBot = new NocatFarm.Core.Bot("sw-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig());
+			bots.Add(hBot);
+			var trades = new NocatFarm.Modules.Trading(hBot);
+			List<string> asked = [];
+			typeof(NocatFarm.Modules.Trading).GetProperty("ReadHold", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(trades,
+				(Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, token, _) => { asked.Add(token); return Task.FromResult<TimeSpan?>(TimeSpan.Zero); }));
+			MethodInfo holdVerdict = typeof(NocatFarm.Modules.Trading).GetMethod("HoldVerdictAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
+			var stranger = new NocatFarm.Core.TradeOffers.Offer(4243, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, 440, "Card10")], [Ci(901, 40, 440, "Card40")]);
+			bool? clear = await (Task<bool?>) holdVerdict.Invoke(trades, [stranger, false, CancellationToken.None])!;
+			Check("sweep swaps: a stranger's fair swap is asked about with no token (none is known); clear of holds - it may go",
+				(clear == true) && asked is [""], string.Join(",", asked));
+			Check("sweep swaps: a paired swap's hold is asked with the trade token its match came with",
+				Src("src/NocatFarm/Modules/Trading.Holds.cs").Contains("&& (match.You == offer.Partner) && CardExchange.TokenOk(match.Token) ? match.Token : \"\";", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/Trading.Holds.cs").Contains("TradeOffers.HoldAsync(Bot, offer.Partner, ct, token)", StringComparison.Ordinal));
+		} finally {
+			foreach (var b in bots) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
 	}
 }

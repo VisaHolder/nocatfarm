@@ -3254,7 +3254,10 @@
     "no price right now - kept until it has one": "pas de prix pour l'instant - gardé jusqu'à ce qu'il en ait un",
     "worth {0} now - over your price limit, kept": "vaut {0} maintenant - au-dessus de ta limite de prix, gardé",
     "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "le vendre maintenant rapporte {0}, plus que ses {1} gemmes ({2}) - gardé",
-    "gems: no fresh price for a sack of gems - nothing listed this look": "gemmes : pas de prix récent pour un sac de gemmes - rien n'est mis en vente cette fois"
+    "gems: no fresh price for a sack of gems - nothing listed this look": "gemmes : pas de prix récent pour un sac de gemmes - rien n'est mis en vente cette fois",
+    "it asks for a card promised to a card swap": "il demande une carte promise à un échange de cartes",
+    "it asks for {0}, on your keep list": "il demande {0}, qui est dans ta liste à garder",
+    "it would leave fewer than {0} copies of a card you keep": "il laisserait moins de {0} exemplaires d'une carte que tu gardes"
   },
   "settings": {
     "SteamOpenEveryAccount": {

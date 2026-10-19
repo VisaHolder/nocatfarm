@@ -3254,7 +3254,10 @@
     "no price right now - kept until it has one": "сейчас цены нет - остаётся, пока она не появится",
     "worth {0} now - over your price limit, kept": "сейчас стоит {0} - выше вашего лимита цены, остаётся",
     "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "продажа сейчас даст {0}, больше, чем стоят его {1} самоцветов ({2}) - остаётся",
-    "gems: no fresh price for a sack of gems - nothing listed this look": "самоцветы: нет свежей цены мешка самоцветов - в этот раз ничего не выставляется"
+    "gems: no fresh price for a sack of gems - nothing listed this look": "самоцветы: нет свежей цены мешка самоцветов - в этот раз ничего не выставляется",
+    "it asks for a card promised to a card swap": "просит карточку, обещанную для обмена карточками",
+    "it asks for {0}, on your keep list": "просит {0} из вашего списка «оставить»",
+    "it would leave fewer than {0} copies of a card you keep": "оставит меньше {0} копий карточки, которую вы храните"
   },
   "settings": {
     "SteamOpenEveryAccount": {

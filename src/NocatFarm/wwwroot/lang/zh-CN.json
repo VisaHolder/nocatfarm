@@ -3254,7 +3254,10 @@
     "no price right now - kept until it has one": "现在没有价格 - 先留着，等有价格再说",
     "worth {0} now - over your price limit, kept": "现在价值 {0} - 超过你的价格上限，留着",
     "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "现在卖能拿 {0}，比它的 {1} 宝石价值（{2}）多 - 留着",
-    "gems: no fresh price for a sack of gems - nothing listed this look": "宝石：没有宝石袋的最新价格 - 这次什么都不上架"
+    "gems: no fresh price for a sack of gems - nothing listed this look": "宝石：没有宝石袋的最新价格 - 这次什么都不上架",
+    "it asks for a card promised to a card swap": "它要的卡已经许给了一次换卡",
+    "it asks for {0}, on your keep list": "它要的 {0} 在你的保留列表里",
+    "it would leave fewer than {0} copies of a card you keep": "会让你保留的卡剩不到 {0} 张"
   },
   "settings": {
     "SteamOpenEveryAccount": {
