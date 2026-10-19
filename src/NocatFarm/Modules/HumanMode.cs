@@ -2169,7 +2169,8 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying([game]);   // ONE game. Six at once is the tell.
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
-		Log.Debug(_farmSession
+		// A sitting starting is what the account is doing now - in the window, one line (1.8.2).
+		Log.Info(_farmSession
 			? new Said("farming cards on {0} for ~{1} · {2}/{3} today", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
 			: new Said("playing {0} for ~{1} · {2}/{3} today", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
