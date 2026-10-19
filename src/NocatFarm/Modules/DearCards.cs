@@ -77,7 +77,8 @@ public static class DearCards {
 	}
 
 	/// <summary>What one look found: a word on each game it priced, and - when it couldn't weigh any - why.</summary>
-	public sealed record Look(IReadOnlyList<Verdict> Verdicts, Said? Problem = null);
+	/// <param name="Passed">1.8.2: games looked at and kept without a price asked - plainly worth too little sold, or no level left to make.</param>
+	public sealed record Look(IReadOnlyList<Verdict> Verdicts, Said? Problem = null, IReadOnlyCollection<uint>? Passed = null);
 
 	/// <summary>
 	/// What a look weighs besides the plan: the foil cards held and each foil badge's level (null: foils aren't weighed), the
@@ -85,7 +86,27 @@ public static class DearCards {
 	/// waited for a card that hardly sells.
 	/// </summary>
 	public sealed record Extra(IReadOnlyDictionary<uint, Dictionary<string, int>>? Foils = null, IReadOnlyDictionary<uint, int>? FoilLevels = null,
-		IReadOnlyCollection<uint>? Leftovers = null, Func<uint, bool, DateTime?>? WaitingSince = null);
+		IReadOnlyCollection<uint>? Leftovers = null, Func<uint, bool, DateTime?>? WaitingSince = null) {
+		/// <summary>
+		/// 1.8.2: what each next level money buys costs without this game's own levels (its missing cards are kept's cost - never
+		/// counted twice), past what the wallet pays for. Null when not given: the costs handed to the look, as they are.
+		/// </summary>
+		public Func<uint, IReadOnlyList<long>?>? CostsWithout { get; init; }
+
+		/// <summary>1.8.2: what each card of a set sold instead of crafted was weighed at (what's left of it never goes for over a tenth less).</summary>
+		public Func<uint, IReadOnlyDictionary<string, int>?>? Weighed { get; init; }
+
+		/// <summary>1.8.2: the most paid for one copy of a card bought for a badge (0: none bought), and how many copies were bought.</summary>
+		public Func<string, long>? Paid { get; init; }
+
+		public Func<string, int>? BoughtCopies { get; init; }
+
+		/// <summary>1.8.2: "Only sell if you get at least", in the wallet's money.</summary>
+		public int MinReceive { get; init; }
+
+		/// <summary>1.8.2: what a card's gems are worth by what's known now (null: not known - the listing checks again).</summary>
+		public Func<string, decimal?>? GemsWorth { get; init; }
+	}
 
 	/// <summary>Whether it weighs at all: the same switch as a set sold instead of crafted, with buying cards on to spend the money.</summary>
 	public static bool Applies(BotConfig cfg, bool buying) => SetSale.Applies(cfg, buying);
@@ -121,8 +142,16 @@ public static class DearCards {
 	/// for <see cref="SetSale.WaitAtMost"/> - it's counted and sold all the same. <paramref name="leftover"/>: what's left of
 	/// a set sold instead of crafted - nothing kept is weighed against it, it's sold.
 	/// </summary>
+	/// <param name="minReceive">1.8.2: "Only sell if you get at least" - a card that would pay less is kept.</param>
+	/// <param name="gemsWorth">1.8.2: what a card's gems are worth (null: not known) - a card that wouldn't pay a cent more is kept.</param>
+	/// <param name="weighed">1.8.2: what's left of a set sold - what each card was weighed at when the set was: never sold for over a tenth less.</param>
+	/// <param name="paid">1.8.2: the most paid for one copy of a card bought for a badge (0: none) - never sold for less, unless selling still
+	/// clearly wins counting that loss.</param>
+	/// <param name="boughtCopies">1.8.2: how many copies of a card were bought (the rest of those held came some other way).</param>
 	public static Verdict Decide(uint app, string game, int currency, int level, IReadOnlyList<string> set, IReadOnlyDictionary<string, int> held,
-		IReadOnlyDictionary<string, MarketQuote?> quotes, IReadOnlyList<long> costs, int dumpPct, bool foil = false, bool waited = false, bool leftover = false) {
+		IReadOnlyDictionary<string, MarketQuote?> quotes, IReadOnlyList<long> costs, int dumpPct, bool foil = false, bool waited = false, bool leftover = false,
+		int minReceive = 0, Func<string, decimal?>? gemsWorth = null, IReadOnlyDictionary<string, int>? weighed = null, Func<string, long>? paid = null,
+		Func<string, int>? boughtCopies = null) {
 		if (currency <= 0) {
 			return NotSure(app, game, currency, new Said("no price in its wallet's currency")) with { Foil = foil };
 		}
@@ -149,7 +178,11 @@ public static class DearCards {
 				thin = (name, quote.Sales);
 			}
 
-			cards.Add(new Card(hash, held[hash], lowest, buyer, receive, quote.Sales, sells && (receive > 0)));
+			// 1.8.2: never under "Only sell if you get at least", never for what its gems are worth or less, and what's left of a
+			// set sold never for over a tenth less than the set was weighed at - those copies are kept.
+			bool pays = (receive > 0) && (receive >= minReceive) && (gemsWorth?.Invoke(hash) is not decimal gems || (gems <= 0) || Spare.SellingPays(gems, receive))
+				&& ((weighed == null) || !weighed.TryGetValue(hash, out int was) || (receive * 10L >= was * 9L));
+			cards.Add(new Card(hash, held[hash], lowest, buyer, receive, quote.Sales, sells && pays));
 		}
 
 		// Kept, each level still needs the cards missing for it bought: that money is spared by selling.
@@ -162,6 +195,16 @@ public static class DearCards {
 		}
 
 		long sure = cards.Where(static c => c.Sold).Sum(static c => (long) c.Copies * c.Receive);
+
+		// 1.8.2: a card it bought for a badge, sold for less than it paid - only when selling still clearly wins counting that
+		// loss; otherwise those copies are kept (what's left of a set sold has nothing to win by: kept too).
+		long Loss(Card c) => paid == null ? 0 : Math.Min(c.Copies, boughtCopies?.Invoke(c.Hash) ?? c.Copies) * Math.Max(0, paid(c.Hash) - c.Receive);
+		long loss = cards.Where(static c => c.Sold).Sum(Loss);
+
+		if ((loss > 0) && (leftover || !Wins(LevelsFor(sure - loss + keepCost, costs), kept))) {
+			cards = [.. cards.Select(c => c.Sold && (Loss(c) > 0) ? c with { Sold = false } : c)];
+			sure = cards.Where(static c => c.Sold).Sum(static c => (long) c.Copies * c.Receive);
+		}
 		long all = cards.Sum(static c => (long) c.Copies * Math.Max(0, c.Receive));
 		int sold = LevelsFor(sure, costs), saving = LevelsFor(sure + keepCost, costs);
 		Verdict Word(bool dear, Said why) => new(app, game, currency, dear, false, kept, keepCost, sure, sold, saving, why.ToEnglish(), cards, foil) { Reason = why };
@@ -253,6 +296,7 @@ public static class DearCards {
 		}
 
 		List<Verdict> verdicts = [];
+		HashSet<uint> passed = [];
 		int reads = 0, asked = 0;
 
 		foreach (Candidate g in games.OrderByDescending(static g => g.Marked || g.Leftover).ThenByDescending(static g => g.Worth)
@@ -284,6 +328,16 @@ public static class DearCards {
 			int kept = KeptLevels(g.Level, set.Cards, held, g.Top);
 
 			if ((kept <= 0) && !leftover) {
+				passed.Add(g.App);
+
+				continue;
+			}
+
+			// 1.8.2: weighed against the levels money buys without this game's own - its missing cards are counted as what keeping
+			// costs, never on both sides. Not known: not weighed.
+			IReadOnlyList<long>? gameCosts = extra?.CostsWithout is { } without ? without(g.App) : costs;
+
+			if (gameCosts == null) {
 				continue;
 			}
 
@@ -295,7 +349,9 @@ public static class DearCards {
 			// Nothing known at all about what its cards are worth (a foil card no price was ever seen for): priced to find out.
 			bool known = set.Cards.Any(c => (held.GetValueOrDefault(c) > 0) && (Known(c, cur, rate, normal) > 0));
 
-			if (!g.Marked && !leftover && known && !Wins(LevelsFor(guess * 3 / 2, costs), kept)) {
+			if (!g.Marked && !leftover && known && !Wins(LevelsFor(guess * 3 / 2, gameCosts), kept)) {
+				passed.Add(g.App);
+
 				continue;
 			}
 
@@ -329,7 +385,8 @@ public static class DearCards {
 			bool waited = (extra?.WaitingSince?.Invoke(g.App, g.Foil) is DateTime since) && (DateTime.UtcNow - since >= SetSale.WaitAtMost);
 			Verdict v = stopped && set.Cards.Any(c => (held.GetValueOrDefault(c) > 0) && (quotes.GetValueOrDefault(c) == null))
 				? NotSure(g.App, set.Game, cur, new Said("couldn't price its cards"), kept) with { Foil = g.Foil }
-				: Decide(g.App, set.Game, cur, g.Level, set.Cards, held, quotes, costs, dump, g.Foil, waited, leftover);
+				: Decide(g.App, set.Game, cur, g.Level, set.Cards, held, quotes, gameCosts, dump, g.Foil, waited, leftover, extra?.MinReceive ?? 0, extra?.GemsWorth,
+					leftover ? extra?.Weighed?.Invoke(g.App) : null, extra?.Paid, extra?.BoughtCopies);
 			verdicts.Add(v);
 
 			if (stopped) {
@@ -337,7 +394,7 @@ public static class DearCards {
 			}
 		}
 
-		return new Look(verdicts);
+		return new Look(verdicts, Passed: passed);
 	}
 
 	// ── the log: each game's word once, and what's written down ─────────────
@@ -362,10 +419,19 @@ public static class DearCards {
 			Log.Debug(new Said("cards worth more sold than kept: not weighed · {0}", problem), account);
 		}
 
+		// 1.8.2: weighed - buying may finish these games' sets now (CardBuyer waits for it on a game whose cards look dear).
+		foreach (uint app in look.Passed ?? []) {
+			NoteWeighed(account, app, now);
+		}
+
 		foreach (Verdict v in look.Verdicts) {
 			// Held back by a card that hardly sells: since when, so it's sold all the same after a while.
 			if (v.Slow || !v.Unsure) {
-				ledger.Wait(v.App, v.Foil, v.Slow, now);
+				ledger.Wait(v.App, v.Foil, v.Slow, now, BuyLedger.DearSource);
+			}
+
+			if (!v.Unsure && !v.Foil) {
+				NoteWeighed(account, v.App, now);
 			}
 
 			if (v.Unsure) {
@@ -406,6 +472,78 @@ public static class DearCards {
 	}
 
 	private static string Key(string account, uint app) => $"{account}|{app}";
+
+	// ── 1.8.2: buying cards waits for a game whose cards look dear to be weighed first ───────────────────
+	private static readonly ConcurrentDictionary<string, DateTime> Weighed = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly ConcurrentDictionary<string, DateTime> WaitedFrom = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>How long a game weighed counts as weighed, and how long buying waits at most for it to be.</summary>
+	public static readonly TimeSpan WeighedFor = TimeSpan.FromDays(1);
+
+	/// <summary>A game's cards weighed now (a verdict, or kept without a price asked).</summary>
+	public static void NoteWeighed(string account, uint app, DateTime now) {
+		Weighed[Key(account, app)] = now;
+		WaitedFrom.TryRemove(Key(account, app), out _);
+	}
+
+	/// <summary>Whether a game's cards were weighed in the last day.</summary>
+	public static bool WeighedLately(string account, uint app, DateTime now) =>
+		Weighed.TryGetValue(Key(account, app), out DateTime at) && (now - at < WeighedFor) && (now >= at.AddMinutes(-5));
+
+	/// <summary>
+	/// Whether buying still waits for a game to be weighed: from the first look that waited, for a day at most - then it's
+	/// bought as any (the dear-cards check never got to it).
+	/// </summary>
+	public static bool WaitForWeighing(string account, uint app, DateTime now) {
+		DateTime from = WaitedFrom.GetOrAdd(Key(account, app), now);
+
+		return now - from < WeighedFor;
+	}
+
+	/// <summary>Forget what was weighed - the checks.</summary>
+	public static void ForgetWeighed() {
+		Weighed.Clear();
+		WaitedFrom.Clear();
+	}
+
+	/// <summary>
+	/// What the cards held of a game would pay sold, by what's known without asking the market (each copy a cent under its
+	/// known price, after Steam's fee) - null when nothing is known about any of them.
+	/// </summary>
+	public static long? HeldWorth(IReadOnlyDictionary<string, int> held, int currency, double? rate, CardSet? set) {
+		long worth = 0;
+		bool any = false;
+
+		foreach ((string hash, int copies) in held.Where(static h => h.Value > 0)) {
+			long price = Known(hash, currency, rate, set);
+
+			if (price > 0) {
+				any = true;
+				worth += copies * (long) Seller.ReceiveFor(Seller.UndercutFor((int) Math.Min(int.MaxValue, price)));
+			}
+		}
+
+		return any ? worth : null;
+	}
+
+	/// <summary>
+	/// What each card's gems are worth by what's known now - its gem value as Steam said it lately, at what a sack of gems pays
+	/// (no older than a day) - by market name; null for one not known. Null when nothing can be known (no inventory, no sack
+	/// price). Never a request.
+	/// </summary>
+	public static Func<string, decimal?>? KnownGemsWorth(InventoryContents? inventory, int currency, int dumpPct) {
+		if ((inventory == null) || (SparePrices.SackPays(currency, dumpPct) is not { Cents: > 0 } sack) || (DateTime.UtcNow - sack.At > TimeSpan.FromDays(1))) {
+			return null;
+		}
+
+		Dictionary<string, SpareItem> byHash = new(StringComparer.Ordinal);
+
+		foreach (SpareItem item in Spare.Read(inventory)) {
+			byHash.TryAdd(item.Hash, item);
+		}
+
+		return hash => byHash.TryGetValue(hash, out SpareItem? item) ? item.GooType > 0 ? SteamGems.KnownValue(item) is int goo ? Spare.GemsWorth(goo, sack.Cents) : null : 0m : null;
+	}
 
 	private static bool SaidOnce(string account, uint app, string why) {
 		string key = Key(account, app);
@@ -460,10 +598,19 @@ public static class DearCards {
 		}
 
 		int floor = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		SpareRules rules = SpareRules.From(bot.Cfg);
+
+		// 1.8.2: like every listing (Seller.OwnRule) - never under "Only sell if you get at least", never for what its gems are
+		// worth or less (a card whose gem value isn't known is kept).
+		Dictionary<ulong, decimal?> gems = await SetSale.GemsForListingAsync(bot, offers, inventory, verdict.Currency, rules, ct).ConfigureAwait(false);
 
 		async Task<(Seller.Offer? Offer, Said Why)> Reprice(Seller.Offer offer, CancellationToken token) {
+			if (gems.GetValueOrDefault(offer.AssetId) is not decimal worth) {
+				return (null, new Said("its gem value isn't known yet - kept"));
+			}
+
 			(Seller.Offer? now, Said why) = await Seller.RepriceAsync(offer, verdict.Currency, 3, dump, null, null, token, floorPct: floor,
-				ours: OurListings.UpFor(OurListings.Load(bot.Name), offer.Hash)).ConfigureAwait(false);
+				ours: OurListings.UpFor(OurListings.Load(bot.Name), offer.Hash), minReceive: rules.MinSaleCents, gemsWorth: worth > 0 ? worth : null).ConfigureAwait(false);
 
 			return (now != null) && !SetSale.StillPays(offer, now) ? (null, new Said("its price fell since it was weighed - not listed")) : (now, why);
 		}

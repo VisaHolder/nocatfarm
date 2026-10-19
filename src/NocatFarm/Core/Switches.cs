@@ -68,7 +68,7 @@ public static class Switches {
 				ledger.Save();
 			} else if (feature == Buy) {
 				bot.Cfg.BuyCards = on;
-				Modules.BuyLedger.Of(bot.Name).SetOk(on);
+				Modules.BuyLedger.Of(bot.Name).SetOk(on, bot.Cfg.BuyDailyLimit, bot.Cfg.BuyWeeklyLimit);   // 1.8.2: with the limits it was shown
 			} else {
 				Modules.PointsLedger.Approved(bot);   // an old ok in the settings is moved over first, so this one has the last word
 				bot.Cfg.SpendPoints = on;
@@ -157,6 +157,13 @@ public static class Switches {
 
 		// Buying cards: the same rule, its go-ahead in its own spending list.
 		Modules.BuyLedger buy = Modules.BuyLedger.Of(account);
+
+		// 1.8.2: a spend limit turned to "No limit" since the go-ahead: off again - its preview shows what it may spend now, and
+		// it's turned on again from there. Said plainly, once.
+		if (cfg.BuyCards && buy.Ok && buy.NoLimitSince(cfg.BuyDailyLimit, cfg.BuyWeeklyLimit)) {
+			buy.SetOk(false);
+			Log.Attention(new Said("buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes"), account);
+		}
 
 		if (cfg.BuyCards && !buy.Ok) {
 			cfg.BuyCards = false;

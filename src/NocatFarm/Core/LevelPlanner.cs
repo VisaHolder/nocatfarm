@@ -281,7 +281,12 @@ public static class LevelPlanner {
 			}
 		}
 
-		return new BadgeState(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games, foils);
+		BadgeState state = new(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games, foils);
+
+		// 1.8.2: the Steam level went up since it was last said - one line.
+		LevelUps.Seen(bot, state.Level);
+
+		return state;
 	}
 
 	// ── cards held ───────────────────────────────────────────────────────────

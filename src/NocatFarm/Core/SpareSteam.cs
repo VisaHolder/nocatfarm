@@ -91,11 +91,12 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 	}
 
 	public async Task<Said?> BeforeGemsAsync(SpareDecision d, CancellationToken ct) {
-		if (!d.Item.Marketable || (d.PriceCents > 0) || (d.Verdict != SpareVerdict.Gems)) {
+		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		// 1.8.2: also an item priced only by an estimate from the dollar search, or over an hour ago - read again in the wallet's money.
+		if (!SpareRun.NeedsPriceBeforeGems(d, currency, DateTime.UtcNow)) {
 			return null;
 		}
-
-		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
 
 		if (currency <= 0) {
 			return new Said("no price right now - kept until it has one");
@@ -216,7 +217,8 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
 		Seller.Reprice reprice = SpareRun.Guarded(bot, items, rules => SpareRun.Repricer(items, rules, currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
-			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash), SparePrices.SackPays(currency, SpareRules.From(bot.Cfg).DumpPct)));
+			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash), SparePrices.SackPays(currency, SpareRules.From(bot.Cfg).DumpPct),
+			hash => Modules.BuyLedger.Of(bot.Name).PaidFor(hash, currency)));
 		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct, reprice,
 			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name) ?? SpareRun.Halted(bot),
 			o => {
@@ -681,7 +683,8 @@ public static class SparePrices {
 		}
 
 		// The shortlist has the cheapest listing only: taken as the real price too, two sales behind it - the listing rule
-		// then reads it as it is. What it really sells for is asked right before listing.
+		// then reads it as it is. What it really sells for is asked right before listing - and (1.8.2) right before it becomes
+		// gems (SpareRun.NeedsPriceBeforeGems), so one dumped listing on the search never turns a card into gems.
 		return new MarketPrice(Math.Max(1, cents), g.When, Math.Max(1, cents), 2);
 	}
 

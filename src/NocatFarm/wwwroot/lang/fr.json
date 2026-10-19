@@ -3334,7 +3334,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "pas mis en vente : tu recevrais {0}, pas plus que ce que valent ses gemmes ({1})",
     "no price right now - kept until it has one": "pas de prix pour l'instant - gardé jusqu'à ce qu'il en ait un",
     "gems: no fresh price for a sack of gems - nothing listed this look": "gemmes : pas de prix récent pour un sac de gemmes - rien n'est mis en vente cette fois",
-    "buy order {0} · Steam never said · counted as bought": "ordre d'achat {0} · Steam ne l'a jamais dit · compté comme acheté",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0} : pas encore fabriquée · {1} · on ne sait pas ce que valent ses cartes",
     "it would leave fewer than {0} copies of a card you keep": "il laisserait moins de {0} exemplaires d'une carte que tu gardes",
     "an order for {0} was left open on the market · taken back, nothing bought": "un ordre pour {0} était resté ouvert sur le marché · retiré, rien acheté",
@@ -3371,12 +3370,34 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "La recherche de séries a vérifié sur le marché {0} des {1} séries les moins chères ces dernières 24 heures et connaît {2} séries complètes. Dernier passage : {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Pas de limite : il dépense ce que contient le porte-monnaie, les niveaux les moins chers d'abord - le maximum par niveau s'applique toujours.",
     "No limit a day ({0} spent in the last day)": "Pas de limite par jour ({0} dépensé ces dernières 24 heures)",
-    "At most {0} for one badge level - twice the cheapest level now": "Au plus {0} pour un niveau de badge - le double du niveau le moins cher maintenant",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "recherche de séries · {0} des {1} séries les moins chères vérifiées sur le marché ces dernières 24 heures · {2} séries complètes connues",
     "sets": "séries",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "achat de cartes · il reste de l'argent pour d'autres niveaux bon marché - prochain passage dans {0} minutes",
     "automatic": "automatique",
-    "Time between looks, human mode": "Temps entre deux passages, mode humain"
+    "Time between looks, human mode": "Temps entre deux passages, mode humain",
+    "couldn't look at the money settings: {0}": "impossible de vérifier les réglages d'argent : {0}",
+    "couldn't note the money settings were looked at: {0}": "impossible de noter que les réglages d'argent ont été vérifiés : {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "achat de cartes désactivé · une limite de dépense a été mise sur sans limite - réactive l'achat pour voir ce qu'il peut dépenser, et dis oui",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} achat(s) de cartes dont Steam n'a pas dit l'issue en une semaine · comptés comme achetés",
+    "cards were bought to finish it - crafted, never sold": "des cartes ont été achetées pour la compléter - fabriquée, jamais vendue",
+    "{0} would pay you {1}, under your {2} minimum": "{0} te rapporterait {1}, sous ton minimum de {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} te rapporterait {1}, pas plus que ce que valent ses gemmes",
+    "At most {0} for one badge level - a little over what a level usually costs": "Au plus {0} pour un niveau de badge - un peu plus que ce qu'un niveau coûte d'habitude",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "l'achat attend le chercheur de séries : {0} des {1} séries les moins chères vérifiées",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "portefeuille en {0} : « Dépenser au plus par jour » est toujours à {1}, un montant en dollars - pour {0}, mets environ {2}",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "portefeuille en {0} : « Dépenser au plus par semaine » est toujours à {1}, un montant en dollars - pour {0}, mets environ {2}",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "portefeuille en {0} : « Le maximum qu'un échange peut perdre » est toujours à {1}, un montant en dollars - pour {0}, mets environ {2}",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "portefeuille en {0} : « Ne jamais toucher aux objets valant plus de » est toujours à {1}, un montant en dollars - pour {0}, mets environ {2}",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "portefeuille en {0} : « Vendre seulement si vous recevez au moins » est toujours à {1}, un montant en dollars - pour {0}, mets environ {2}",
+    "couldn't note the Steam level: {0}": "impossible de noter le niveau Steam : {0}",
+    "couldn't read the Steam level: {0}": "impossible de lire le niveau Steam : {0}",
+    "couldn't search the market: {0}": "impossible de chercher sur le marché : {0}",
+    "Steam level {0} (+{1})": "Niveau Steam {0} (+{1})",
+    "Steam level {0} (+{1}) · this level cost {2}": "Niveau Steam {0} (+{1}) · ce niveau a coûté {2}",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Niveau Steam {0} (+{1}) · {2} pour {1} niveaux",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "objectif de niveau {0} lancé : {1} niveaux pour environ {2} (jamais plus de {3})",
+    "level goal {0} stopped": "objectif de niveau {0} arrêté",
+    "level goal reached: Steam level {0} · {1} spent": "objectif de niveau atteint : niveau Steam {0} · {1} dépensés"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4625,11 +4646,11 @@
     },
     "BuyDailyLimit": {
       "label": "Dépenser au plus par jour",
-      "tip": "Le maximum qu'il dépense sur 24 heures, dans la devise du porte-monnaie Steam de ce compte. Par exemple 1,50 : une série à 0,60 et une autre à 0,70 remplissent la journée ; la suivante attend le lendemain. Il ne dépense jamais plus que ce que contient le porte-monnaie."
+      "tip": "Le maximum qu'il dépense sur 24 heures, dans la devise du porte-monnaie Steam de ce compte. Par exemple 1,50 : une série à 0,60 et une autre à 0,70 remplissent la journée ; la suivante attend le lendemain. Il ne dépense jamais plus que ce que contient le porte-monnaie. Le 1,50 de départ convient aux dollars ou aux euros ; pour le yen, mets environ 225."
     },
     "BuyWeeklyLimit": {
       "label": "Dépenser au plus par semaine",
-      "tip": "Le maximum qu'il dépense sur 7 jours, dans la devise du porte-monnaie Steam de ce compte. Par exemple 8,00 avec 1,50 par jour : environ 5 jours pleins d'achats par semaine. 0 n'achète rien."
+      "tip": "Le maximum qu'il dépense sur 7 jours, dans la devise du porte-monnaie Steam de ce compte. Par exemple 8,00 avec 1,50 par jour : environ 5 jours pleins d'achats par semaine. 0 n'achète rien. Le 8,00 de départ convient aux dollars ou aux euros ; pour le yen, mets environ 1200."
     },
     "BuyCheckHours": {
       "label": "Chercher des cartes à acheter toutes les",
@@ -4764,7 +4785,7 @@
     },
     "SpareMaxPrice": {
       "label": "Ne jamais toucher aux objets valant plus de",
-      "tip": "Tout ce qui vaut plus n'est jamais touché : jamais transformé en gemmes, jamais vendu. Dans la devise du porte-monnaie Steam de ce compte : 0.25 convient aux dollars ou aux euros ; pour le yen, mettez environ 40. La valeur est la plus haute entre l'annonce la moins chère et le prix de vente du dernier jour : affiché à 0.20 mais vendu 0.30, il vaut 0.30. Les cartes des paquets qu'il fabrique pour les vendre sont vendues quoi que dise cette limite - elles ont été faites pour l'argent. Les jeux de ta liste à garder ne sont jamais touchés."
+      "tip": "Tout ce qui vaut plus n'est jamais touché : jamais transformé en gemmes, jamais vendu. Dans la devise du porte-monnaie Steam de ce compte : 0.25 convient aux dollars ou aux euros ; pour le yen, mettez environ 40. La valeur est la plus haute entre l'annonce la moins chère et le prix de vente du dernier jour : affiché à 0.20 mais vendu 0.30, il vaut 0.30. Deux choses peuvent le dépasser, par ton choix : les cartes vendues pour des niveaux de badge (« Vendre un set au lieu de le fabriquer quand l'argent achète plus de niveaux ») et les cartes des paquets qu'il fabrique pour les vendre. Les jeux de ta liste à garder ne sont jamais touchés, quelle que soit leur valeur."
     },
     "SpareGemMarginPct": {
       "label": "Les gemmes doivent battre la vente de",
@@ -4875,7 +4896,7 @@
     },
     "SellSetsForLevels": {
       "label": "Vendre un set au lieu de le fabriquer quand l'argent achète plus de niveaux",
-      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries et cartes brillantes sont évaluées de la même façon : un badge brillant est un niveau. Il vend aussi les cartes gardées pour un badge qui valent plus vendues que les niveaux qu'elles donneraient : 7 cartes qui rapportent environ 5,70 achètent environ 14 niveaux à 0,40, au lieu des 1 ou 2 qu'elles donneraient gardées. Rien n'est acheté ni mis en paquet pour ce jeu pendant qu'elles se vendent."
+      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant de fabriquer un badge normal, il regarde ce que la série rapporte sur le marché, après la commission de Steam. Si cet argent achète nettement plus de niveaux de badge que le 1 de la fabrication, il met la série en vente à la place, et l'achat de cartes dépense l'argent dans ses limites. Par exemple, une série qui rapporte 5,00 quand les niveaux les moins chers coûtent environ 0,40 chacun achète environ 12 niveaux au lieu de 1. Tu confirmes chaque annonce dans l'app Steam, comme toute annonce. Les séries et cartes brillantes sont évaluées de la même façon : un badge brillant est un niveau. Il vend aussi les cartes gardées pour un badge qui valent plus vendues que les niveaux qu'elles donneraient : 7 cartes qui rapportent environ 5,70 achètent environ 14 niveaux à 0,40, au lieu des 1 ou 2 qu'elles donneraient gardées. Rien n'est acheté ni mis en paquet pour ce jeu pendant qu'elles se vendent. Ces ventes peuvent dépasser « Ne jamais toucher aux objets valant plus de » - cette limite vaut pour les objets en trop. Les jeux de ta liste à garder ne sont jamais touchés."
     },
     "CardSwaps": {
       "label": "Échanger les cartes en trop avec d'autres utilisateurs de nocat.farm",
@@ -4883,7 +4904,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Le maximum qu'un échange peut perdre",
-      "tip": "De combien un échange peut valoir moins que ce qu'il donne, selon le prix le plus bas du marché, dans la devise du portefeuille Steam de ce compte. Par exemple 0.03 : des cartes à 0.12 contre des cartes à 0.09, c'est bon ; contre 0.08, non. 0 : un échange ne vaut jamais moins. Une carte sans prix de la dernière journée n'est jamais échangée."
+      "tip": "De combien un échange peut valoir moins que ce qu'il donne, selon le prix le plus bas du marché, dans la devise du portefeuille Steam de ce compte. Par exemple 0.03 : des cartes à 0.12 contre des cartes à 0.09, c'est bon ; contre 0.08, non. 0 : un échange ne vaut jamais moins. Une carte sans prix de la dernière journée n'est jamais échangée. 0,03 convient aux dollars ou aux euros ; pour le yen, mets environ 5."
     },
     "CardSwapsPerDay": {
       "label": "Échanges par jour, au maximum",
@@ -4940,11 +4961,16 @@
     },
     "BuyMaxLevelPrice": {
       "label": "Payer au plus pour un niveau de badge",
-      "tip": "Le maximum qu'il paie pour un niveau de badge (100 XP) - une série complète, ou les cartes qui manquent à un badge commencé - dans la devise du porte-monnaie Steam de ce compte. Un niveau plus cher attend que les prix baissent, pour que l'argent ne parte pas dans des niveaux chers une fois les bon marché épuisés. Par exemple 0,50 : une série de 5 cartes à 0,35 est achetée, une série de 9 cartes à 0,70 attend. 0 est automatique : le double du niveau le moins cher qu'il peut acheter à ce moment - avec le moins cher à 0,33, jusqu'à 0,66."
+      "tip": "Le maximum qu'il paie pour un niveau de badge (100 XP) - une série complète, ou les cartes qui manquent à un badge commencé - dans la devise du porte-monnaie Steam de ce compte. Un niveau plus cher attend que les prix baissent, pour que l'argent ne parte pas dans des niveaux chers une fois les bon marché épuisés. Par exemple 0,50 : une série de 5 cartes à 0,35 est achetée, une série de 9 cartes à 0,70 attend. 0 est automatique et serré : un quart de plus que ce qu'un niveau coûte d'habitude - le milieu des 5 séries complètes les moins chères que connaît le chercheur de séries (la moitié de plus tant qu'il en connaît moins, ou le niveau le moins cher de la dernière semaine). Avec des séries à environ 0,40, jusqu'à 0,50 ; il ne monte pas quand les séries bon marché s'épuisent. Tant que le chercheur n'a pas vérifié les 100 séries les moins chères, les séries complètes ne sont achetées qu'à un dixième au plus au-dessus de la moins chère connue. 0,50 convient aux dollars ou aux euros ; pour le yen, mets environ 75."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Attente la plus longue entre deux passages, mode humain",
       "tip": "L'attente la plus longue entre deux passages qui achètent sur un compte en mode humain, en minutes. Par exemple 90, avec 30 comme plus courte : environ 16 passages dans une journée de 16 heures."
+    },
+    "LevelUpLine": {
+      "label": "La ligne de montée de niveau montre",
+      "tip": "Une ligne dans le journal quand le niveau Steam de ce compte monte - par exemple « Niveau Steam 58 (+1) · ce niveau a coûté 0,46 CAD » ou « Niveau Steam 60 (+3) · 1,42 CAD pour 3 niveaux ». Le coût n'est que l'argent vraiment dépensé : les cartes achetées pour les badges fabriqués. Les cartes obtenues en jouant ne coûtent rien. Elle est aussi envoyée sur Telegram ou Discord si les nouvelles des cartes y sont activées. Désactivé : aucune ligne.",
+      "choices": "3 le niveau et ce qu'il a coûté | 1 le niveau seulement | 0 désactivé"
     }
   }
 }

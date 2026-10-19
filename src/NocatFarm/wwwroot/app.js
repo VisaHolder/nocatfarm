@@ -6681,7 +6681,7 @@ function buyPreviewHtml(d) {
     t('Each card at the cheapest price on the market, checked again right before it buys'),
     d.FullSets ? t('The cheapest badge level first - a badge it has started or a whole new set, whichever costs less') : t('Only badges it has started - not full sets'),
     ...(d.LevelPrice ? [tf('Level price now: {0} a level (100 XP)', d.LevelPrice)] : []),
-    ...(d.MaxLevel ? [d.MaxLevelAuto ? tf('At most {0} for one badge level - twice the cheapest level now', d.MaxLevel) : tf('At most {0} for one badge level', d.MaxLevel)] : []),
+    ...(d.MaxLevel ? [d.MaxLevelAuto ? tf('At most {0} for one badge level - a little over what a level usually costs', d.MaxLevel) : tf('At most {0} for one badge level', d.MaxLevel)] : []),
     t('If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not'),
   ];
   if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));

@@ -3334,7 +3334,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "nie wystawiono: dostałbyś {0}, nie więcej niż warte są jego klejnoty ({1})",
     "no price right now - kept until it has one": "teraz brak ceny - zachowany, dopóki jej nie będzie",
     "gems: no fresh price for a sack of gems - nothing listed this look": "klejnoty: brak świeżej ceny worka klejnotów - tym razem nic nie zostaje wystawione",
-    "buy order {0} · Steam never said · counted as bought": "zlecenie kupna {0} · Steam nigdy nie odpowiedział · liczone jako kupione",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: jeszcze nie stworzony · {1} · nie wiadomo, ile są warte jego karty",
     "it would leave fewer than {0} copies of a card you keep": "zostawiłoby mniej niż {0} kopii karty, którą zachowujesz",
     "an order for {0} was left open on the market · taken back, nothing bought": "zlecenie na {0} zostało otwarte na rynku · wycofane, nic nie kupiono",
@@ -3371,12 +3370,34 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Wyszukiwarka zestawów sprawdziła na rynku {0} z {1} najtańszych zestawów w ostatnich 24 godzinach i zna {2} pełnych zestawów. Ostatnio: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Bez limitu: wydaje tyle, ile jest w portfelu, najtańsze poziomy najpierw - limit za jeden poziom nadal obowiązuje.",
     "No limit a day ({0} spent in the last day)": "Bez limitu dziennie (wydano {0} w ostatniej dobie)",
-    "At most {0} for one badge level - twice the cheapest level now": "Najwyżej {0} za jeden poziom odznaki - dwa razy tyle, co najtańszy poziom teraz",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "wyszukiwarka zestawów · sprawdzono na rynku {0} z {1} najtańszych zestawów w ostatnich 24 godzinach · znanych pełnych zestawów: {2}",
     "sets": "zestawy",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "kupowanie kart · zostały pieniądze na kolejne tanie poziomy - następne sprawdzenie za {0} minut",
     "automatic": "automatycznie",
-    "Time between looks, human mode": "Czas między sprawdzeniami, tryb ludzki"
+    "Time between looks, human mode": "Czas między sprawdzeniami, tryb ludzki",
+    "couldn't look at the money settings: {0}": "nie udało się sprawdzić ustawień pieniędzy: {0}",
+    "couldn't note the money settings were looked at: {0}": "nie udało się zapisać, że ustawienia pieniędzy zostały sprawdzone: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "kupowanie kart wyłączone · limit wydatków ustawiono na bez limitu - włącz kupowanie ponownie, zobacz, ile może wydać, i potwierdź",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} zakup(ów) kart, o których wyniku Steam nie powiedział przez tydzień · liczone jako kupione",
+    "cards were bought to finish it - crafted, never sold": "kupiono karty, żeby go dokończyć - tworzony, nigdy nie sprzedawany",
+    "{0} would pay you {1}, under your {2} minimum": "{0} dałby ci {1}, poniżej twojego minimum {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} dałby ci {1}, nie więcej niż warte są jego klejnoty",
+    "At most {0} for one badge level - a little over what a level usually costs": "Najwyżej {0} za jeden poziom odznaki - trochę ponad to, ile zwykle kosztuje poziom",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "kupowanie czeka na wyszukiwarkę zestawów: sprawdzono {0} z {1} najtańszych zestawów",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "portfel w {0}: „Wydaj najwyżej dziennie” wciąż wynosi {1}, kwotę w dolarach - dla {0} ustaw około {2}",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "portfel w {0}: „Wydaj najwyżej tygodniowo” wciąż wynosi {1}, kwotę w dolarach - dla {0} ustaw około {2}",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "portfel w {0}: „Ile najwyżej może stracić wymiana” wciąż wynosi {1}, kwotę w dolarach - dla {0} ustaw około {2}",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "portfel w {0}: „Nie ruszaj przedmiotów wartych więcej niż” wciąż wynosi {1}, kwotę w dolarach - dla {0} ustaw około {2}",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "portfel w {0}: „Sprzedawaj tylko, jeśli dostaniesz co najmniej” wciąż wynosi {1}, kwotę w dolarach - dla {0} ustaw około {2}",
+    "couldn't note the Steam level: {0}": "nie udało się zapisać poziomu Steam: {0}",
+    "couldn't read the Steam level: {0}": "nie udało się odczytać poziomu Steam: {0}",
+    "couldn't search the market: {0}": "nie udało się przeszukać rynku: {0}",
+    "Steam level {0} (+{1})": "Poziom Steam {0} (+{1})",
+    "Steam level {0} (+{1}) · this level cost {2}": "Poziom Steam {0} (+{1}) · ten poziom kosztował {2}",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Poziom Steam {0} (+{1}) · {2} za {1} poziomy",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "cel poziomu {0} rozpoczęty: {1} poziomów za około {2} (nigdy ponad {3})",
+    "level goal {0} stopped": "cel poziomu {0} zatrzymany",
+    "level goal reached: Steam level {0} · {1} spent": "cel poziomu osiągnięty: poziom Steam {0} · wydano {1}"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4625,11 +4646,11 @@
     },
     "BuyDailyLimit": {
       "label": "Wydaj najwyżej dziennie",
-      "tip": "Najwięcej, ile wydaje w ciągu 24 godzin, w walucie portfela Steam tego konta. Na przykład 1,50: zestaw za 0,60 i drugi za 0,70 wypełniają dzień; następny czeka do jutra. Nigdy nie wydaje więcej, niż jest w portfelu."
+      "tip": "Najwięcej, ile wydaje w ciągu 24 godzin, w walucie portfela Steam tego konta. Na przykład 1,50: zestaw za 0,60 i drugi za 0,70 wypełniają dzień; następny czeka do jutra. Nigdy nie wydaje więcej, niż jest w portfelu. Początkowe 1,50 pasuje do dolarów lub euro; dla jenów ustaw około 225."
     },
     "BuyWeeklyLimit": {
       "label": "Wydaj najwyżej tygodniowo",
-      "tip": "Najwięcej, ile wydaje w ciągu 7 dni, w walucie portfela Steam tego konta. Na przykład 8,00 przy 1,50 dziennie: około 5 pełnych dni kupowania w tygodniu. 0 nic nie kupuje."
+      "tip": "Najwięcej, ile wydaje w ciągu 7 dni, w walucie portfela Steam tego konta. Na przykład 8,00 przy 1,50 dziennie: około 5 pełnych dni kupowania w tygodniu. 0 nic nie kupuje. Początkowe 8,00 pasuje do dolarów lub euro; dla jenów ustaw około 1200."
     },
     "BuyCheckHours": {
       "label": "Szukaj kart do kupienia co",
@@ -4764,7 +4785,7 @@
     },
     "SpareMaxPrice": {
       "label": "Nie ruszaj przedmiotów wartych więcej niż",
-      "tip": "Nic, co jest warte więcej, nie jest ruszane: nigdy nie zmienia się w klejnoty, nigdy nie jest sprzedawane. W walucie portfela Steam tego konta: 0.25 pasuje do dolarów lub euro; dla jenów użyj około 40. Wartość to wyższa z najtańszej oferty i ceny sprzedaży z ostatniego dnia: wystawione za 0.20, ale sprzedane za 0.30, jest warte 0.30. Karty z paczek, które robi na sprzedaż, są sprzedawane bez względu na ten limit - zrobiono je dla pieniędzy. Gry z Twojej listy do zachowania nigdy nie są ruszane."
+      "tip": "Nic, co jest warte więcej, nie jest ruszane: nigdy nie zmienia się w klejnoty, nigdy nie jest sprzedawane. W walucie portfela Steam tego konta: 0.25 pasuje do dolarów lub euro; dla jenów użyj około 40. Wartość to wyższa z najtańszej oferty i ceny sprzedaży z ostatniego dnia: wystawione za 0.20, ale sprzedane za 0.30, jest warte 0.30. Dwie rzeczy mogą go przekroczyć, bo tak wybrałeś: karty sprzedawane dla poziomów odznak („Sprzedaj zestaw zamiast go tworzyć, gdy pieniądze kupią więcej poziomów”) i karty z paczek, które robi na sprzedaż. Gry z Twojej listy do zachowania nigdy nie są ruszane, niezależnie od wartości."
     },
     "SpareGemMarginPct": {
       "label": "Klejnoty muszą pobić sprzedaż o",
@@ -4875,7 +4896,7 @@
     },
     "SellSetsForLevels": {
       "label": "Sprzedaj zestaw zamiast go tworzyć, gdy pieniądze kupią więcej poziomów",
-      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Przed stworzeniem zwykłej odznaki sprawdza, ile zestaw daje na rynku po prowizji Steam. Gdy te pieniądze kupią wyraźnie więcej poziomów odznak niż 1 z tworzenia, wystawia zestaw na sprzedaż zamiast tego, a kupowanie kart wydaje pieniądze w swoich limitach. Na przykład zestaw, który daje 5,00, gdy najtańsze poziomy kosztują około 0,40 za sztukę, kupi około 12 poziomów zamiast 1. Każdą ofertę potwierdzasz w aplikacji Steam, jak każdą ofertę. Zestawy i karty foliowe są porównywane tak samo: odznaka foliowa to jeden poziom. Sprzedaje też karty trzymane do odznaki, gdy sprzedane są warte więcej niż poziomy, które by dały: 7 kart za około 5,70 kupi około 14 poziomów po 0,40 zamiast 1 lub 2, które dałyby zatrzymane. Dopóki się sprzedają, dla tej gry nic nie jest kupowane ani robione w paczkach."
+      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Przed stworzeniem zwykłej odznaki sprawdza, ile zestaw daje na rynku po prowizji Steam. Gdy te pieniądze kupią wyraźnie więcej poziomów odznak niż 1 z tworzenia, wystawia zestaw na sprzedaż zamiast tego, a kupowanie kart wydaje pieniądze w swoich limitach. Na przykład zestaw, który daje 5,00, gdy najtańsze poziomy kosztują około 0,40 za sztukę, kupi około 12 poziomów zamiast 1. Każdą ofertę potwierdzasz w aplikacji Steam, jak każdą ofertę. Zestawy i karty foliowe są porównywane tak samo: odznaka foliowa to jeden poziom. Sprzedaje też karty trzymane do odznaki, gdy sprzedane są warte więcej niż poziomy, które by dały: 7 kart za około 5,70 kupi około 14 poziomów po 0,40 zamiast 1 lub 2, które dałyby zatrzymane. Dopóki się sprzedają, dla tej gry nic nie jest kupowane ani robione w paczkach. Te sprzedaże mogą przekroczyć „Nie ruszaj przedmiotów wartych więcej niż” - ten limit dotyczy zbędnych przedmiotów. Gry z Twojej listy do zachowania nigdy nie są ruszane."
     },
     "CardSwaps": {
       "label": "Wymieniaj zbędne karty z innymi użytkownikami nocat.farm",
@@ -4883,7 +4904,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Ile najwyżej może stracić wymiana",
-      "tip": "O ile mniej może być warta wymiana niż to, co oddaje, według najniższej ceny na rynku, w walucie portfela Steam tego konta. Na przykład 0.03: karty warte 0.12 za karty warte 0.09 są w porządku, za 0.08 już nie. 0: wymiana nigdy nie jest warta mniej. Karta bez ceny z ostatniego dnia nigdy nie jest wymieniana."
+      "tip": "O ile mniej może być warta wymiana niż to, co oddaje, według najniższej ceny na rynku, w walucie portfela Steam tego konta. Na przykład 0.03: karty warte 0.12 za karty warte 0.09 są w porządku, za 0.08 już nie. 0: wymiana nigdy nie jest warta mniej. Karta bez ceny z ostatniego dnia nigdy nie jest wymieniana. 0,03 pasuje do dolarów lub euro; dla jenów ustaw około 5."
     },
     "CardSwapsPerDay": {
       "label": "Wymian dziennie, najwyżej",
@@ -4940,11 +4961,16 @@
     },
     "BuyMaxLevelPrice": {
       "label": "Najwyżej za jeden poziom odznaki",
-      "tip": "Najwięcej, ile płaci za jeden poziom odznaki (100 XP) - pełny zestaw albo karty brakujące rozpoczętej odznace - w walucie portfela Steam tego konta. Droższy poziom czeka, aż ceny spadną, żeby pieniądze nie szły na drogie poziomy, gdy skończą się tanie. Na przykład 0,50: zestaw 5 kart za 0,35 zostaje kupiony, zestaw 9 kart za 0,70 czeka. 0 to automatycznie: dwa razy tyle, co najtańszy poziom, który może wtedy kupić - przy najtańszym za 0,33 do 0,66."
+      "tip": "Najwięcej, ile płaci za jeden poziom odznaki (100 XP) - pełny zestaw albo karty brakujące rozpoczętej odznace - w walucie portfela Steam tego konta. Droższy poziom czeka, aż ceny spadną, żeby pieniądze nie szły na drogie poziomy, gdy skończą się tanie. Na przykład 0,50: zestaw 5 kart za 0,35 zostaje kupiony, zestaw 9 kart za 0,70 czeka. 0 to automatycznie i ciasno: o ćwierć więcej, niż zwykle kosztuje poziom - środek 5 najtańszych pełnych zestawów, które zna wyszukiwarka zestawów (o połowę więcej, dopóki zna mniej, albo najtańszy poziom z ostatniego tygodnia). Przy zestawach po około 0,40 do 0,50; nie rośnie, gdy tanie zestawy się kończą. Dopóki wyszukiwarka nie sprawdzi 100 najtańszych zestawów, pełne zestawy są kupowane najwyżej o jedną dziesiątą drożej niż najtańszy znany. 0,50 pasuje do dolarów lub euro; dla jenów ustaw około 75."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Najdłuższa przerwa między sprawdzeniami, tryb ludzki",
       "tip": "Najdłuższa przerwa między dwoma sprawdzeniami, które kupują na koncie w trybie ludzkim, w minutach. Na przykład 90, z 30 jako najkrótszą: około 16 sprawdzeń w 16-godzinnym dniu."
+    },
+    "LevelUpLine": {
+      "label": "Wiersz awansu pokazuje",
+      "tip": "Jeden wiersz w logu, gdy poziom Steam tego konta rośnie - na przykład „Poziom Steam 58 (+1) · ten poziom kosztował 0,46 CAD” albo „Poziom Steam 60 (+3) · 1,42 CAD za 3 poziomy”. Koszt to tylko naprawdę wydane pieniądze: karty kupione do stworzonych odznak. Wyfarmione karty nic nie kosztują. Wysyłany też na Telegram lub Discord, gdy wiadomości o kartach są tam włączone. Wyłączone: brak wiersza.",
+      "choices": "3 poziom i ile kosztował | 1 tylko poziom | 0 wyłączone"
     }
   }
 }

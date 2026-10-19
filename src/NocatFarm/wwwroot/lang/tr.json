@@ -3334,7 +3334,6 @@
     "not listed: you'd get {0}, not more than its gems are worth ({1})": "listelenmedi: {0} alırdın, mücevherlerinin değerinden ({1}) fazla değil",
     "no price right now - kept until it has one": "şu an fiyatı yok - bir fiyatı olana kadar tutuluyor",
     "gems: no fresh price for a sack of gems - nothing listed this look": "mücevherler: bir mücevher çuvalı için güncel fiyat yok - bu bakışta hiçbir şey listelenmiyor",
-    "buy order {0} · Steam never said · counted as bought": "alış emri {0} · Steam hiç söylemedi · alınmış sayıldı",
     "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: henüz üretilmedi · {1} · kartlarının değeri bilinmiyor",
     "it would leave fewer than {0} copies of a card you keep": "sakladığın bir karttan {0} kopyadan az bırakırdı",
     "an order for {0} was left open on the market · taken back, nothing bought": "{0} için bir emir pazarda açık kalmıştı · geri alındı, hiçbir şey alınmadı",
@@ -3371,12 +3370,34 @@
     "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Set bulucu son 24 saatte en ucuz {1} setin {0} tanesini pazarda kontrol etti ve {2} tam set biliyor. Son bakış: {3}.",
     "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sınır yok: cüzdanda ne varsa harcar, en ucuz seviyeler önce - bir seviyeye ödenecek en fazla tutar yine geçerli.",
     "No limit a day ({0} spent in the last day)": "Günlük sınır yok (son günde {0} harcandı)",
-    "At most {0} for one badge level - twice the cheapest level now": "Bir rozet seviyesi için en fazla {0} - şu anki en ucuz seviyenin iki katı",
     "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "set bulucu · en ucuz {1} setin {0} tanesi son 24 saatte pazarda kontrol edildi · {2} tam set biliniyor",
     "sets": "set",
     "buying cards · money left for more cheap levels - next look in {0} minutes": "kart satın alma · daha fazla ucuz seviye için para kaldı - sonraki bakış {0} dakika sonra",
     "automatic": "otomatik",
-    "Time between looks, human mode": "Bakışlar arası süre, insan modu"
+    "Time between looks, human mode": "Bakışlar arası süre, insan modu",
+    "couldn't look at the money settings: {0}": "para ayarlarına bakılamadı: {0}",
+    "couldn't note the money settings were looked at: {0}": "para ayarlarına bakıldığı not edilemedi: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "kart satın alma kapatıldı · bir harcama sınırı sınırsız yapıldı - ne harcayabileceğini görmek için satın almayı yeniden aç ve onayla",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "Steam'in bir hafta boyunca sonucunu söylemediği {0} kart alımı · alınmış sayıldı",
+    "cards were bought to finish it - crafted, never sold": "tamamlamak için kart alındı - üretilir, asla satılmaz",
+    "{0} would pay you {1}, under your {2} minimum": "{0} sana {1} kazandırır, {2} alt sınırının altında",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} sana {1} kazandırır, mücevherlerinin değerinden fazla değil",
+    "At most {0} for one badge level - a little over what a level usually costs": "Bir rozet seviyesi için en fazla {0} - bir seviyenin genelde tuttuğundan biraz fazla",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "satın alma set bulucuyu bekliyor: en ucuz {1} setten {0} tanesine bakıldı",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "cüzdan {0}: “Günde en çok harca” hâlâ {1}, dolar tutarı - {0} için yaklaşık {2} kullan",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "cüzdan {0}: “Haftada en çok harca” hâlâ {1}, dolar tutarı - {0} için yaklaşık {2} kullan",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "cüzdan {0}: “Bir takasın kaybedebileceği en fazla” hâlâ {1}, dolar tutarı - {0} için yaklaşık {2} kullan",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "cüzdan {0}: “Bundan değerli eşyalara dokunma” hâlâ {1}, dolar tutarı - {0} için yaklaşık {2} kullan",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "cüzdan {0}: “Yalnızca en az şu kadar alırsan sat” hâlâ {1}, dolar tutarı - {0} için yaklaşık {2} kullan",
+    "couldn't note the Steam level: {0}": "Steam seviyesi not edilemedi: {0}",
+    "couldn't read the Steam level: {0}": "Steam seviyesi okunamadı: {0}",
+    "couldn't search the market: {0}": "pazar aranamadı: {0}",
+    "Steam level {0} (+{1})": "Steam seviyesi {0} (+{1})",
+    "Steam level {0} (+{1}) · this level cost {2}": "Steam seviyesi {0} (+{1}) · bu seviye {2} tuttu",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Steam seviyesi {0} (+{1}) · {1} seviye için {2}",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "seviye hedefi {0} başladı: yaklaşık {2} karşılığında {1} seviye (asla {3} üstü değil)",
+    "level goal {0} stopped": "seviye hedefi {0} durduruldu",
+    "level goal reached: Steam level {0} · {1} spent": "seviye hedefine ulaşıldı: Steam seviyesi {0} · {1} harcandı"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4625,11 +4646,11 @@
     },
     "BuyDailyLimit": {
       "label": "Günde en çok harca",
-      "tip": "24 saat içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin 1,50: 0,60’lık bir set ve 0,70’lik başka biri günü doldurur; sonraki set yarını bekler. Asla cüzdandakinden fazla harcamaz."
+      "tip": "24 saat içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin 1,50: 0,60’lık bir set ve 0,70’lik başka biri günü doldurur; sonraki set yarını bekler. Asla cüzdandakinden fazla harcamaz. Başlangıçtaki 1,50 dolar veya euro için uygundur; yen için yaklaşık 225 kullan."
     },
     "BuyWeeklyLimit": {
       "label": "Haftada en çok harca",
-      "tip": "7 gün içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin günde 1,50 ile 8,00: haftada yaklaşık 5 tam gün alışveriş. 0 hiçbir şey almaz."
+      "tip": "7 gün içinde harcadığı en fazla tutar, bu hesabın Steam cüzdanının para biriminde. Örneğin günde 1,50 ile 8,00: haftada yaklaşık 5 tam gün alışveriş. 0 hiçbir şey almaz. Başlangıçtaki 8,00 dolar veya euro için uygundur; yen için yaklaşık 1200 kullan."
     },
     "BuyCheckHours": {
       "label": "Alınacak kart kontrolü aralığı",
@@ -4764,7 +4785,7 @@
     },
     "SpareMaxPrice": {
       "label": "Bundan değerli eşyalara dokunma",
-      "tip": "Daha değerli olan hiçbir şeye dokunulmaz: asla mücevhere çevrilmez, asla satılmaz. Bu hesabın Steam cüzdanı para biriminde: dolar ya da avro için 0.25 uygundur; yen için yaklaşık 40 kullan. Değer, en ucuz ilanla son bir günün satış fiyatından yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur. Satmak için yaptığı paketlerin kartları bu sınır ne derse desin satılır - para için yapıldılar. Saklama listendeki oyunlara asla dokunulmaz."
+      "tip": "Daha değerli olan hiçbir şeye dokunulmaz: asla mücevhere çevrilmez, asla satılmaz. Bu hesabın Steam cüzdanı para biriminde: dolar ya da avro için 0.25 uygundur; yen için yaklaşık 40 kullan. Değer, en ucuz ilanla son bir günün satış fiyatından yüksek olanıdır: 0.20'den listelenmiş ama 0.30'dan satılmışsa değeri 0.30'dur. Senin seçiminle iki şey bunu aşabilir: rozet seviyeleri için satılan kartlar (“Para daha çok seviye alıyorsa seti üretmek yerine sat”) ve satmak için yaptığı paketlerin kartları. Saklama listendeki oyunlara, değeri ne olursa olsun asla dokunulmaz."
     },
     "SpareGemMarginPct": {
       "label": "Taşların satışı geçmesi gereken oran",
@@ -4875,7 +4896,7 @@
     },
     "SellSetsForLevels": {
       "label": "Para daha çok seviye alıyorsa seti üretmek yerine sat",
-      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Normal bir rozet üretmeden önce setin pazarda Steam kesintisinden sonra kaça satıldığına bakar. Bu para, üretmenin verdiği 1 seviyeden açıkça daha fazla rozet seviyesi alıyorsa seti onun yerine satışa koyar ve kart alımı parayı kendi sınırları içinde harcar. Örneğin en ucuz seviyeler tanesi yaklaşık 0,40 iken 5,00 getiren bir set, 1 yerine yaklaşık 12 seviye alır. Her ilanı, her ilan gibi Steam uygulamasında onaylarsın. Parlak setler ve parlak kartlar da aynı şekilde tartılır: parlak rozet tek seviyedir. Bir rozet için tutulan kartları da, verecekleri seviyelerden çok satınca değerliyse satar: yaklaşık 5,70 getiren 7 kart, saklanınca verecekleri 1 ya da 2 yerine 0,40'tan yaklaşık 14 seviye alır. Satılırken o oyun için hiçbir şey alınmaz ya da paketlenmez."
+      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Normal bir rozet üretmeden önce setin pazarda Steam kesintisinden sonra kaça satıldığına bakar. Bu para, üretmenin verdiği 1 seviyeden açıkça daha fazla rozet seviyesi alıyorsa seti onun yerine satışa koyar ve kart alımı parayı kendi sınırları içinde harcar. Örneğin en ucuz seviyeler tanesi yaklaşık 0,40 iken 5,00 getiren bir set, 1 yerine yaklaşık 12 seviye alır. Her ilanı, her ilan gibi Steam uygulamasında onaylarsın. Parlak setler ve parlak kartlar da aynı şekilde tartılır: parlak rozet tek seviyedir. Bir rozet için tutulan kartları da, verecekleri seviyelerden çok satınca değerliyse satar: yaklaşık 5,70 getiren 7 kart, saklanınca verecekleri 1 ya da 2 yerine 0,40'tan yaklaşık 14 seviye alır. Satılırken o oyun için hiçbir şey alınmaz ya da paketlenmez. Bu satışlar “Bundan değerli eşyalara dokunma” sınırını aşabilir - o sınır fazla eşyalar içindir. Saklama listendeki oyunlara asla dokunulmaz."
     },
     "CardSwaps": {
       "label": "Fazla kartları diğer nocat.farm kullanıcılarıyla takasla",
@@ -4883,7 +4904,7 @@
     },
     "CardSwapMaxLoss": {
       "label": "Bir takasın kaybedebileceği en fazla",
-      "tip": "Bir takasın verdiğinden ne kadar daha az değerli olabileceği; pazardaki en ucuz fiyata göre, bu hesabın Steam cüzdan para biriminde. Örneğin 0.03: 0.12 değerindeki kartları 0.09 değerindeki kartlarla takas etmek olur, 0.08 olmaz. 0: takas asla daha az değerli olmaz. Son günden fiyatı olmayan bir kart asla takas edilmez."
+      "tip": "Bir takasın verdiğinden ne kadar daha az değerli olabileceği; pazardaki en ucuz fiyata göre, bu hesabın Steam cüzdan para biriminde. Örneğin 0.03: 0.12 değerindeki kartları 0.09 değerindeki kartlarla takas etmek olur, 0.08 olmaz. 0: takas asla daha az değerli olmaz. Son günden fiyatı olmayan bir kart asla takas edilmez. 0,03 dolar veya euro için uygundur; yen için yaklaşık 5 kullan."
     },
     "CardSwapsPerDay": {
       "label": "Günde en fazla takas",
@@ -4940,11 +4961,16 @@
     },
     "BuyMaxLevelPrice": {
       "label": "Bir rozet seviyesine en fazla ödenecek",
-      "tip": "Bir rozet seviyesi (100 XP) için ödediği en fazla tutar - tam bir set ya da başlanmış bir rozetin eksik kartları - bu hesabın Steam cüzdanı para biriminde. Daha pahalı bir seviye fiyatlar düşene kadar bekler, böylece ucuz seviyeler bitince para pahalı seviyelere gitmez. Örneğin 0,50: 0,35 olan 5 kartlık set alınır, 0,70 olan 9 kartlık set bekler. 0 otomatiktir: o an alabileceği en ucuz seviyenin iki katı - en ucuz 0,33 ise 0,66 kadar."
+      "tip": "Bir rozet seviyesi (100 XP) için ödediği en fazla tutar - tam bir set ya da başlanmış bir rozetin eksik kartları - bu hesabın Steam cüzdanı para biriminde. Daha pahalı bir seviye fiyatlar düşene kadar bekler, böylece ucuz seviyeler bitince para pahalı seviyelere gitmez. Örneğin 0,50: 0,35 olan 5 kartlık set alınır, 0,70 olan 9 kartlık set bekler. 0 otomatiktir ve sıkıdır: bir seviyenin genelde tuttuğunun dörtte biri fazlası - set bulucunun bildiği en ucuz 5 tam setin ortası (daha azını bildiği sürece yarısı fazlası, ya da geçen haftanın en ucuz seviyesi). Setler 0,40 civarındaysa 0,50 kadar; ucuz setler bitince yükselmez. Set bulucu en ucuz 100 sete bakana kadar tam setler, bilinen en ucuzun en fazla onda bir fazlasına alınır. 0,50 dolar veya euro için uygundur; yen için yaklaşık 75 kullan."
     },
     "BuyHumanGapMaxMinutes": {
       "label": "Bakışlar arası en uzun bekleme, insan modu",
       "tip": "İnsan modundaki bir hesapta alım yapan iki bakış arasındaki en uzun bekleme, dakika olarak. Örneğin en kısa 30 ile 90: 16 saatlik bir günde yaklaşık 16 bakış."
+    },
+    "LevelUpLine": {
+      "label": "Seviye atlama satırı gösterir",
+      "tip": "Bu hesabın Steam seviyesi yükseldiğinde günlükte bir satır - örneğin “Steam seviyesi 58 (+1) · bu seviye 0,46 CAD tuttu” ya da “Steam seviyesi 60 (+3) · 3 seviye için 1,42 CAD”. Maliyet yalnızca gerçekten harcanan paradır: üretilen rozetler için alınan kartlar. Farm edilen kartlar bir şey tutmaz. Telegram ya da Discord’da kart haberleri açıksa oraya da gider. Kapalı: satır yok.",
+      "choices": "3 seviye ve tuttuğu para | 1 yalnızca seviye | 0 kapalı"
     }
   }
 }

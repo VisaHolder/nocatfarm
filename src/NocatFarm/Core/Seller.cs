@@ -935,8 +935,9 @@ public static class Seller {
 	/// <param name="stop">Asked before each one comes down: a reason to stop (Spare items turned off, scam watch, human mode), or null.</param>
 	/// <param name="budget">A human-mode look's number and gap (see <see cref="LookBudget"/>); none on a robot account.</param>
 	/// <param name="pause">The human-mode wait between two; a robot waits a few seconds.</param>
+	/// <param name="gemsOf">1.8.2: what an item's gems are worth, by market name (null: not known) - a step that wouldn't pay more stays up.</param>
 	public static async Task<int> StepDownAsync(Bot bot, int days, CancellationToken ct, Func<Said?>? stop = null, LookBudget? budget = null,
-		Func<CancellationToken, Task<bool>>? pause = null) {
+		Func<CancellationToken, Task<bool>>? pause = null, Func<string, decimal?>? gemsOf = null) {
 		if ((Modules.ScamWatch.HeldBack(bot) != null) || (stop?.Invoke() != null) || (WalletCurrency(bot) is not int currency)
 			|| (await ListingsAsync(bot, ct).ConfigureAwait(false) is not { } listings)) {
 			return 0;
@@ -962,7 +963,8 @@ public static class Seller {
 			// What a buyer really pays for ours - as listed, not worked back from what we get (a cent off at times).
 			int ours = OurListings.BuyerPrice(l, record);
 
-			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump) is int to) {
+			// 1.8.2: never a step that pays under "Only sell if you get at least", or no more than its gems are worth.
+			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsOf?.Invoke(l.Hash)) is int to) {
 				steps.Add(new Step(l, ours, to));
 			}
 		}

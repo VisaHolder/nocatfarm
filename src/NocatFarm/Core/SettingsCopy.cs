@@ -67,7 +67,7 @@ public static class SettingsCopy {
 	/// <summary>1.8.2: every setting that does come across - named one by one, so a new setting is never copied by accident.</summary>
 	public static readonly IReadOnlyList<string> CopiedAcross = [
 		// Account
-		nameof(BotConfig.OnlineStatus), nameof(BotConfig.UIMode), nameof(BotConfig.ClearInventoryNotifications), nameof(BotConfig.ClearNotifications),
+		nameof(BotConfig.OnlineStatus), nameof(BotConfig.LevelUpLine), nameof(BotConfig.UIMode), nameof(BotConfig.ClearInventoryNotifications), nameof(BotConfig.ClearNotifications),
 		// Human
 		nameof(BotConfig.GameWeights), nameof(BotConfig.HourTargets), nameof(BotConfig.WeekdayHours), nameof(BotConfig.WeekendHours),
 		nameof(BotConfig.DayOffChancePct), nameof(BotConfig.DayStartTime), nameof(BotConfig.DayStartVaryMinutes), nameof(BotConfig.BedTime),

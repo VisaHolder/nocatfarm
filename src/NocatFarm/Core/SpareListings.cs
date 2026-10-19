@@ -105,9 +105,11 @@ public sealed class SpareListings {
 	/// own last price, or a cent under a cheaper real listing when there is one (a dumped one, this far under what it sold
 	/// for, doesn't count). Never under <paramref name="floorPct"/> percent of what it sold for over the last day, nor the
 	/// market's 3 cents: at that floor it stays up, so it never goes round and round. No sale lately: no real price to
-	/// keep to, so it isn't lowered at all.
+	/// keep to, so it isn't lowered at all. 1.8.2: nor when the step would pay under <paramref name="minReceive"/> ("Only sell
+	/// if you get at least") or no more than <paramref name="gemsWorth"/> (its gems' worth, null: not known) - then it stays
+	/// up as it is.
 	/// </summary>
-	public static int? StepTo(int ourCents, MarketPrice price, int floorPct, int dumpPct) {
+	public static int? StepTo(int ourCents, MarketPrice price, int floorPct, int dumpPct, int minReceive = 0, decimal? gemsWorth = null) {
 		int median = price.Median ?? 0;
 		int lowest = price.Cents;
 
@@ -125,7 +127,13 @@ public sealed class SpareListings {
 		int floor = Math.Max(3, (int) Math.Ceiling(median * Math.Clamp(floorPct, 1, 100) / 100m));
 		to = Math.Max(to, floor);
 
-		return to < ourCents ? to : null;
+		if (to >= ourCents) {
+			return null;
+		}
+
+		int receive = Seller.ReceiveFor(to);
+
+		return (receive < minReceive) || ((gemsWorth is decimal gems) && (gems > 0) && !Spare.SellingPays(gems, receive)) ? null : to;
 	}
 
 	/// <summary>The log line for one step: "lowered Level ??? Ninja from 0.31 CAD to 0.30 CAD - unsold 4 days".</summary>

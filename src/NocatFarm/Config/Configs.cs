@@ -747,6 +747,9 @@ public sealed class BotConfig {
 	public bool? ClaimFreeDlcBase { get; set; }
 	public bool CraftBadges { get; set; }
 
+	/// <summary>"Level-up line shows" (1.8.2, Core/LevelUps.cs): 3 the level and what it cost, 1 the level only, 0 no line.</summary>
+	public int LevelUpLine { get; set; } = Core.LevelUps.LevelAndCost;
+
 	/// <summary>"Also craft foil badges" (1.8.1): with crafting on, foil sets too. Off levels with normal badges only.</summary>
 	public bool CraftFoilBadges { get; set; } = true;
 
@@ -926,7 +929,7 @@ public sealed class BotConfig {
 
 	/// <summary>
 	/// The most it pays for one badge level (100 XP) - a whole set, or a started badge's missing cards - in the wallet's own
-	/// currency. 0: automatic, twice the cheapest level priced at the look. A dearer level waits.
+	/// currency. 0: automatic, a little over what a level usually costs (BuyPlan.UsualLevel). A dearer level waits.
 	/// </summary>
 	public float BuyMaxLevelPrice { get; set; }
 

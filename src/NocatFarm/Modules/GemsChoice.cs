@@ -84,7 +84,8 @@ public static class GemsChoice {
 
 	/// <summary>
 	/// Badge levels a sum buys: the cheapest next levels first (<paramref name="costs"/>, each a level's price), the last one
-	/// it reaches in part. Past the levels priced today, the rest at the dearest of them.
+	/// it reaches in part. Past the levels known, the rest at a quarter over the dearest of them - 1.8.2: never at the
+	/// dearest itself, which made money look worth more than it is (the levels past the list cost more, not the same).
 	/// </summary>
 	public static double LevelsFor(long money, IReadOnlyList<long> costs) {
 		double levels = 0;
@@ -102,8 +103,11 @@ public static class GemsChoice {
 			levels++;
 		}
 
-		return last > 0 ? levels + (left / (double) last) : levels;
+		return last > 0 ? levels + (left / (last * PastListPct / 100.0)) : levels;
 	}
+
+	/// <summary>1.8.2: money past the levels known buys levels at this many percent of the dearest known.</summary>
+	public const int PastListPct = 125;
 
 	/// <summary>
 	/// The decision on its own. <paramref name="costs"/>: what each next badge level costs, cheapest first (null: not known
@@ -481,7 +485,10 @@ public static class GemsChoice {
 	}
 
 	// ── what buying cards priced last, per account ────────────────────────────
-	private static readonly ConcurrentDictionary<string, (DateTime At, int Currency, long[]? Costs)> Costs = new(StringComparer.OrdinalIgnoreCase);
+	/// <summary>A look's level costs: when, the money, the levels with their games (null: not known; empty: money can't be spent by itself) and the wallet.</summary>
+	private sealed record Noted(DateTime At, int Currency, (uint App, long Cost)[]? Levels, long Wallet);
+
+	private static readonly ConcurrentDictionary<string, Noted> Costs = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>How long a look's level costs are used before buying cards prices them again.</summary>
 	public static readonly TimeSpan CostsFor = TimeSpan.FromHours(24);
@@ -495,22 +502,35 @@ public static class GemsChoice {
 	/// pays for every level known is what more money buys not known.
 	/// </summary>
 	public static void NoteCosts(string account, BuyPlan plan, DateTime now) {
-		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
+		(uint App, long Cost)[]? levels = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
 			: plan.Block != BuyBlock.None ? []
-			: [.. BuyPlan.BeyondWallet(plan.LevelCosts.Select(static l => l.Cost), plan.Wallet)];
+			: [.. plan.LevelCosts];
+
+		Costs[account] = new Noted(now, plan.Currency, levels, plan.Block == BuyBlock.None ? plan.Wallet : 0);
+	}
+
+	/// <summary>
+	/// The level costs noted for an account lately, in its wallet's money, past what the wallet already pays for - null when
+	/// there are none to go by. 1.8.2: <paramref name="except"/> - without that game's own levels (what its cards held are
+	/// weighed against never counts the level they'd make themselves).
+	/// </summary>
+	public static IReadOnlyList<long>? CostsOf(string account, int currency, DateTime now, uint except = 0) {
+		if (!Costs.TryGetValue(account, out Noted? c) || (c.Currency != currency) || (now - c.At >= CostsFor) || (c.Levels == null)) {
+			return null;
+		}
+
+		// Steam won't let it buy by itself: money buys no level (empty), not "not known".
+		if (c.Levels.Length == 0) {
+			return [];
+		}
+
+		List<(uint App, long Cost)> levels = [.. c.Levels.Where(l => (except == 0) || (l.App != except))];
+		List<long> more = BuyPlan.BeyondWallet(levels.Select(static l => l.Cost), c.Wallet);
 
 		// The wallet already pays for every level known: what more money buys isn't known (the levels past them weren't
 		// priced or found) - not "nothing", or opening packs would look better than a sack that buys several cheap sets later.
-		if (costs is { Length: 0 } && (plan.Block == BuyBlock.None) && (plan.LevelCosts.Count > 0)) {
-			costs = null;
-		}
-
-		Costs[account] = (now, plan.Currency, costs);
+		return (more.Count == 0) && (levels.Count > 0) ? null : more;
 	}
-
-	/// <summary>The level costs noted for an account lately, in its wallet's money - null when there are none to go by.</summary>
-	public static IReadOnlyList<long>? CostsOf(string account, int currency, DateTime now) =>
-		Costs.TryGetValue(account, out (DateTime At, int Currency, long[]? Costs) c) && (c.Currency == currency) && (now - c.At < CostsFor) ? c.Costs : null;
 
 	/// <summary>Forget them - the checks.</summary>
 	public static void ForgetCosts() => Costs.Clear();
@@ -533,8 +553,12 @@ public static class GemsChoice {
 		public string Last { get; set; } = "";
 		public long LastAt { get; set; }
 
-		/// <summary>A card from a pack opened to sell, by name; it's let go of after 3 days (a spare card like any other then).</summary>
-		public sealed record OpenedCard(uint App, string Name, DateTime At);
+		/// <summary>
+		/// A card from a pack opened to sell; it's let go of after 3 days (a spare card like any other then). 1.8.2: by its own
+		/// copy - <paramref name="Before"/>, the ids of the game's cards held before the pack was opened (it's a copy that wasn't
+		/// one of them), and <paramref name="Asset"/> once it's found (0: not yet) - never another copy of the same name.
+		/// </summary>
+		public sealed record OpenedCard(uint App, string Name, DateTime At, ulong[]? Before = null, ulong Asset = 0);
 
 		public static readonly TimeSpan CardsFor = TimeSpan.FromDays(3);
 
@@ -591,10 +615,47 @@ public static class GemsChoice {
 			}
 		}
 
-		public void AddCards(uint app, IEnumerable<string> names, DateTime at) {
+		public void AddCards(uint app, IEnumerable<string> names, DateTime at, IEnumerable<ulong>? before = null) {
+			ulong[]? had = before == null ? null : [.. before];
+
 			lock (_gate) {
-				Cards.AddRange(names.Select(n => new OpenedCard(app, n, at)));
+				Cards.AddRange(names.Select(n => new OpenedCard(app, n, at, had)));
 			}
+		}
+
+		/// <summary>1.8.2: the copy a card from a pack opened to sell is - found in the inventory, kept from now on.</summary>
+		public OpenedCard Bind(OpenedCard card, ulong asset) {
+			lock (_gate) {
+				int at = Cards.IndexOf(card);
+				OpenedCard bound = card with { Asset = asset };
+
+				if (at >= 0) {
+					Cards[at] = bound;
+				}
+
+				return bound;
+			}
+		}
+
+		/// <summary>
+		/// 1.8.2: which copy in the inventory a card from a pack opened to sell is: the one found before (by its id), or else one
+		/// of that name that came in after the pack was opened (not among <see cref="OpenedCard.Before"/>) and isn't taken -
+		/// never a copy the account already held. Null when there's none (crafted, swapped or sold since - or a card noted
+		/// before the copies were known, which is let go of).
+		/// </summary>
+		public static SpareItem? CopyOf(OpenedCard card, IReadOnlyList<SpareItem> items, IReadOnlySet<ulong> taken) {
+			if (card.Asset != 0) {
+				return items.FirstOrDefault(i => (i.AssetId == card.Asset) && (i.Kind == SpareKind.Card) && i.Marketable && !taken.Contains(i.AssetId));
+			}
+
+			if (card.Before == null) {
+				return null;
+			}
+
+			HashSet<ulong> before = [.. card.Before];
+
+			return items.Where(i => (i.Kind == SpareKind.Card) && (i.Game == card.App) && i.Marketable && !taken.Contains(i.AssetId) && !before.Contains(i.AssetId)
+				&& i.Name.Equals(card.Name, StringComparison.Ordinal)).OrderByDescending(static i => i.AssetId).FirstOrDefault();
 		}
 
 		public List<OpenedCard> CardsNow() {

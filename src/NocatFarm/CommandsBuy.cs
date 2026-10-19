@@ -190,17 +190,18 @@ public static partial class Commands {
 		DateTime now = DateTimeOffset.FromUnixTimeSeconds(Confirmations.SteamTimeNow).UtcDateTime;   // the limits go by Steam's clock
 
 		string level = CardBuyer.LevelPriceOf(b.Name);
+		string goal = (ledger.Goal is { } g) && (BotManager.ModuleOf<CardBuyer>(b) is { } buyer) ? " · " + buyer.GoalSaid(g).ToEnglish() : "";
 
 		return $"buys cards: {BuyPlan.Money(ledger.SpentSince(now.AddDays(-1)), cur)} of {BuyPlan.LimitSaid(BuyPlan.Limit(b.Cfg.BuyDailyLimit), cur)} today, "
 			+ $"{BuyPlan.Money(ledger.SpentSince(now.AddDays(-7)), cur)} of {BuyPlan.LimitSaid(BuyPlan.Limit(b.Cfg.BuyWeeklyLimit), cur)} this week"
-			+ (level.Length > 0 ? $" · {level} at the last look" : "");
+			+ (level.Length > 0 ? $" · {level} at the last look" : "") + goal;
 	}
 
 	/// <summary>The limits it keeps to, in one line.</summary>
 	internal static string BuyLimits(Bot bot) {
 		int cur = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
 
-		string perLevel = bot.Cfg.BuyMaxLevelPrice > 0 ? $"at most {BuyPlan.Money(BuyPlan.Cents(bot.Cfg.BuyMaxLevelPrice), cur)} a level" : "a level at most twice the cheapest one";
+		string perLevel = bot.Cfg.BuyMaxLevelPrice > 0 ? $"at most {BuyPlan.Money(BuyPlan.Cents(bot.Cfg.BuyMaxLevelPrice), cur)} a level" : "a level at most a little over what one usually costs";
 		string stop = bot.Cfg.BuyStopAtLevel > 0 ? $", until Steam level {bot.Cfg.BuyStopAtLevel}" : "";
 
 		return $"{bot.Name}: it spends at most {BuyPlan.LimitSaid(BuyPlan.Limit(bot.Cfg.BuyDailyLimit), cur)} a day and {BuyPlan.LimitSaid(BuyPlan.Limit(bot.Cfg.BuyWeeklyLimit), cur)} a week, "

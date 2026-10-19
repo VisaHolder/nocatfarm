@@ -48,9 +48,24 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 			: null;
 	}
 
+	/// <summary>
+	/// 1.8.2: for an estimate ('levelup'), the badges and the inventory as read this long ago will do (0: read them now) - so
+	/// it answers at once. Never for buying: a look reads them afresh.
+	/// </summary>
+	public TimeSpan ReuseFor { get; set; }
+
+	private (LevelPlanner.BadgeState Badges, DateTime At)? _badges;
+
 	public async Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct) {
-		if (await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is not { } badges) {
-			return null;
+		LevelPlanner.BadgeState? badges = (ReuseFor > TimeSpan.Zero) && (_badges is { } kept) && (DateTime.UtcNow - kept.At < ReuseFor) ? kept.Badges : null;
+
+		if (badges == null) {
+			if (await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is not { } read) {
+				return null;
+			}
+
+			badges = read;
+			_badges = (read, DateTime.UtcNow);
 		}
 
 		_foils = badges.FoilLevels;
@@ -68,7 +83,8 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	public (int Level, int Xp)? SteamLevel { get; private set; }
 
 	public async Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) =>
-		await ReadInventoryAsync(ct).ConfigureAwait(false) is { } inventory ? LevelPlanner.NormalCards(inventory) : null;
+		((ReuseFor > TimeSpan.Zero) && (_inventory is { } kept) && (DateTime.UtcNow - _inventoryAt < ReuseFor) ? kept : await ReadInventoryAsync(ct).ConfigureAwait(false)) is { } inventory
+			? LevelPlanner.NormalCards(inventory) : null;
 
 	/// <summary>
 	/// 1.8.2: every item held by market name, with its copies' ids - to see a bought card arrive. Not fresh: the inventory read
@@ -108,6 +124,31 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		_inventory = read is { Complete: true } ? read : null;
 
 		return _inventory;
+	}
+
+	/// <summary>1.8.2: the game's own search, now (the set finder's page, US cents) - every page of it, three at most.</summary>
+	public async Task<IReadOnlyDictionary<string, int>?> SetSearchAsync(uint app, CancellationToken ct) {
+		Dictionary<string, int> found = new(StringComparer.Ordinal);
+
+		for (int start = 0, pages = 0; pages < 3; pages++) {
+			(string? json, _) = await SparePrices.Get(SetFinder.GamePage(app, start), ct).ConfigureAwait(false);
+
+			if (SparePrices.ParseSearch(json) is not { } page) {
+				return null;
+			}
+
+			foreach ((string hash, SparePrices.Row row) in page.Rows) {
+				found[hash] = row.Cents;
+			}
+
+			start += page.Rows.Count;
+
+			if ((page.Rows.Count == 0) || (start >= page.Total)) {
+				break;
+			}
+		}
+
+		return found;
 	}
 
 	public async Task<CardSet?> SetAsync(uint app, CancellationToken ct) {
