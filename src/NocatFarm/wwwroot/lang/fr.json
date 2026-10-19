@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Le niveau de badge le moins cher d'abord - un badge commencé ou une série neuve entière, selon ce qui coûte le moins",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam demande de confirmer les achats dans l'app Steam, tu les confirmes sur ton téléphone - une série à la fois, sinon abandonnés au bout d'un jour",
     "set finder · couldn't look · {0}": "recherche de séries · n'a pas pu regarder · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "recherche de séries · {0} cartes regardées aujourd'hui · {1} séries complètes connues",
     "set finder · couldn't read its list, starting over · {0}": "recherche de séries · impossible de lire sa liste, elle recommence · {0}",
     "set finder · couldn't save its list · {0}": "recherche de séries · impossible d'enregistrer sa liste · {0}",
     "Set price": "Prix de la série",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "ses cartes sont en vente - elles valent plus que les niveaux qu'elles donneraient",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} achète environ {1} niveaux · {2} se vend à peine, mais le set a assez attendu - mis en vente quand même",
     "{0} sets worth {1} buy only {2} levels": "{0} sets valant {1} n'achètent que {2} niveaux",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} achète environ {1} niveaux, mais Steam ne le laisse pas acheter des cartes tout seul - en attente"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} achète environ {1} niveaux, mais Steam ne le laisse pas acheter des cartes tout seul - en attente",
+    "Level price now: {0} a level (100 XP)": "Prix d’un niveau maintenant : {0} par niveau (100 XP)",
+    "No limit a week ({0} spent this week)": "Pas de limite par semaine ({0} dépensé cette semaine)",
+    "No limit": "Pas de limite",
+    "At most {0} for one badge level": "Au plus {0} pour un niveau de badge",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "La recherche de séries a vérifié sur le marché {0} des {1} séries les moins chères ces dernières 24 heures et connaît {2} séries complètes. Dernier passage : {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Pas de limite : il dépense ce que contient le porte-monnaie, les niveaux les moins chers d'abord - le maximum par niveau s'applique toujours.",
+    "No limit a day ({0} spent in the last day)": "Pas de limite par jour ({0} dépensé ces dernières 24 heures)",
+    "At most {0} for one badge level - twice the cheapest level now": "Au plus {0} pour un niveau de badge - le double du niveau le moins cher maintenant",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "recherche de séries · {0} des {1} séries les moins chères vérifiées sur le marché ces dernières 24 heures · {2} séries complètes connues",
+    "sets": "séries",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "achat de cartes · il reste de l'argent pour d'autres niveaux bon marché - prochain passage dans {0} minutes",
+    "automatic": "automatique",
+    "Time between looks, human mode": "Temps entre deux passages, mode humain"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "Résumé du jour à",
       "tip": "Quand le résumé du jour est écrit dans le journal, en heure locale - et envoyé, quand la puce Résumé quotidien est activée dans Notifications. Par exemple 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Attente la plus courte entre deux passages, mode humain",
+      "tip": "L'attente la plus courte entre deux passages qui achètent sur un compte en mode humain, tant qu'il reste de l'argent et des séries bon marché, en minutes - seulement dans sa journée. Chaque attente est tirée au hasard entre cette valeur et la plus longue. Par exemple 30 et 90 : le passage suivant arrive entre une demi-heure et une heure et demie plus tard."
+    },
+    "BuyStopAtLevel": {
+      "label": "Arrêter d'acheter au niveau Steam",
+      "tip": "L'achat de cartes s'arrête dès que ce compte atteint ce niveau Steam - par exemple 50 : au niveau 50 il n'achète plus rien, et en chemin il n'achète que les niveaux de badge qui manquent encore pour y arriver. 'levelup' indique ce que coûte un niveau. 0 ne s'arrête jamais."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Séries par passage, mode humain",
+      "tip": "Combien de séries un passage achète sur un compte en mode humain, les moins chères d'abord - puis il attend un moment avant le passage suivant, comme quelqu'un qui achète quelques séries de temps en temps. Par exemple 3 séries par passage, un passage toutes les 30 à 90 minutes dans sa journée : environ 25 à 40 séries par jour, jusqu'à ce que l'argent du jour ou les séries bon marché soient épuisés. Un robot achète en un passage toutes les séries qui rentrent."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Payer au plus pour un niveau de badge",
+      "tip": "Le maximum qu'il paie pour un niveau de badge (100 XP) - une série complète, ou les cartes qui manquent à un badge commencé - dans la devise du porte-monnaie Steam de ce compte. Un niveau plus cher attend que les prix baissent, pour que l'argent ne parte pas dans des niveaux chers une fois les bon marché épuisés. Par exemple 0,50 : une série de 5 cartes à 0,35 est achetée, une série de 9 cartes à 0,70 attend. 0 est automatique : le double du niveau le moins cher qu'il peut acheter à ce moment - avec le moins cher à 0,33, jusqu'à 0,66."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Attente la plus longue entre deux passages, mode humain",
+      "tip": "L'attente la plus longue entre deux passages qui achètent sur un compte en mode humain, en minutes. Par exemple 90, avec 30 comme plus courte : environ 16 passages dans une journée de 16 heures."
     }
   }
 }

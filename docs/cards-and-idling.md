@@ -393,14 +393,25 @@ spends the account's Steam wallet, so it's careful:
   answers with the same preview, `buy on myaccount` confirms it and `buy off myaccount` turns it off. Steam chat can
   look (`buy preview`) but can't turn it on or buy. A backup brings back the money spent, never the switch.
 - **The cheapest level first, whole sets only.** Every badge level it could buy - a started badge's missing cards, and
-  (with *Buy the cheapest full sets* on) a whole set for a game it has none of - is ranked by what that next level
-  costs, cheapest first: the most XP for the money. A badge one card short whose card costs 2.00 goes after a whole new
-  set that costs 0.40. It plans a set's missing cards only when every one is on the market and all of them fit inside
-  the limits. A set that costs more than a day's limit is passed over (it says so); one that doesn't fit what's left of
-  today waits for tomorrow. Only normal cards of that game count - never a foil or anything else the market search
-  lets in.
-- **Booster packs first where they're working.** A game automatic booster packs is saving gems for, or has made a pack
-  for that's still to open, isn't bought - its cards come from the packs.
+  (with *Buy the cheapest full sets* on) a whole set for any game - goes in one list, in the order of what the set
+  finder says that next level costs, and is priced in that order until the money left is used: a cheaper known level
+  is never passed over for a dearer one. A game you hold even one card of is a started badge, priced as its missing
+  cards (Dota 2 with one card held: its 7 missing cards). Then everything priced is ranked by what it really costs,
+  cheapest first: the most XP for the money. A badge one card short whose card costs 2.00 goes after a whole new set
+  that costs 0.40. It plans a set's missing cards only when every one is on the market and all of them fit inside the
+  limits. A set that costs more than a day's limit is passed over (it says so); one that doesn't fit what's left of
+  today waits for tomorrow. Every cheaper one it passes over (its badge at level 5, a card listed once, the packs on it,
+  dearer than the most to pay) is said why in the debug log, one line a look. Only normal cards of that game count -
+  never a foil or anything else the market search lets in.
+- **The most to pay for one level.** *Most to pay for one badge level* (automatic by default) keeps the money off dear
+  levels once the cheap ones run out: automatic is twice the cheapest level it can buy at the time - with the cheapest
+  at 0.33, up to 0.66 a level. Or set an amount, for example 0.50. A dearer level waits until prices come down.
+- **As many prices as the money can use.** A look reads up to 60 card prices (at least 30) - enough for the levels the
+  money left can buy, and half as much again - and uses a price read for a plan in the last 2 hours again. The check
+  right before buying still reads every card.
+- **Booster packs first where they're working.** A game automatic booster packs has made a pack for that's still to
+  open isn't bought - its cards come from the pack. A game it's only saving gems for (a pack still far off) can be
+  finished by buying when that's the cheapest level.
 - **Billing details.** Steam may want billing details with every market purchase (some countries always do). Each order
   carries the ones saved on the account, exactly as Steam's own market page sends them, plus any tax your country adds
   on Steam's fee. Only when none are saved does it stop and tell you: buy one card by hand on the market once, and the
@@ -423,20 +434,36 @@ spends the account's Steam wallet, so it's careful:
   and says so - fix or delete that file. If the list can't be saved, it stops buying until nocat.farm starts again.
 - **Then it's crafted.** *Craft badges from card sets* has to be on - otherwise nothing is bought, or the cards would
   only sit there. Once a set is whole, badge crafting looks within the hour instead of at its daily round.
-- **Human mode.** A human-mode account buys only during its own day, one set a look, with a pause between cards.
-  Purchases show on the account's market history like anybody's.
+- **Spending the day's money.** After a look that bought sets, while money is left today and cheap levels are still to
+  buy, the next look comes soon instead of in 12 hours: a robot in 3 to 8 minutes (it buys every set that fits in one
+  look, so this only matters when a look stopped short), a human-mode account in 30 to 90 minutes (*Time between looks,
+  human mode*). Never while a purchase waits on your phone; once you've confirmed the last one, the next look comes soon
+  too.
+- **Human mode.** A human-mode account buys only during its own day, a few sets a look (*Sets per look, human mode*, 3),
+  with a pause between cards - like somebody buying a few sets now and then. 3 sets a look, a look every 30 to 90
+  minutes in its day: about 25 to 40 sets a day, until the day's money or the cheap sets run out. Outside its day it
+  buys nothing. Purchases show on the account's market history like anybody's.
+- **Stop at a Steam level.** *Stop buying at Steam level* (advanced, off): at that level it buys nothing more, and on
+  the way it buys only the badge levels still needed to get there.
 
-**The cheapest full sets.** With *Buy the cheapest full sets* on (off by default), once the started badges are done it
-also buys whole sets for games the account has no cards of and whose badge isn't at level 5 - cheapest first, so the
+**The cheapest full sets.** With *Buy the cheapest full sets* on (on by default since 1.8.2 - it does nothing while
+*Buy missing cards* is off; a settings file that already says off keeps it off), it also buys whole sets for games the
+account has no cards of and whose badge isn't at level 5 - cheapest first, alongside the started badges, so the
 most XP for the money. Selling gems and buying the cheapest sets gives about 3 to 7 times the XP of turning the same
 gems into booster packs (see [the numbers](#the-numbers)). A set is left out when any card has fewer than 2 on the
 market, or when one card's cheapest listing is far under the rest (a "dumped" card - the set's real price is higher).
 To turn gems into money for this, set *Spare items* → *Gems afterwards* to sell the sacks: it lists one sack of 1,000 gems a look, inside the spare-items limits.
 
 **The set finder.** Where the cheapest full sets come from: one look at the market for the whole app, shared by every
-account. It reads the market's list of normal trading cards, cheapest first, a few pages every 15 to 30 minutes - up
-to 3,000 cards a day, starting from the top again each day - and reads the most promising games' whole sets (a couple
-at a time, up to 100 a day). Any game counts, played or not, owned or not: a badge can be crafted without the game. A
+account. A card belongs to a set, and one search of a game hands back its whole set - every card's cheapest price and
+how many are listed - so it reads whole sets, one request each (two for a set of more than 10 cards), the cheapest
+candidates first: the games the public cheapest-sets list and the shared list name. While any of the 300 cheapest is
+due, a batch of up to 16 requests every 12 to 18 minutes - about 64 an hour, 80 at most, about 50 sets an hour: the
+100 cheapest are checked within about two hours, the 300 cheapest within about six. After that, small batches (4
+requests every 15 to 30 minutes) keep them fresh, cheapest first, each read again after 20 hours. At most 600 sets a
+day (about 780 requests, under a tenth of the market's day). It also walks the market's cheapest single cards, a page or
+two a batch and up to 600 cards a day - a slow extra that finds a cheap set no list has yet. Any game counts, played or
+not, owned or not: a badge can be crafted without the game. A
 set counts only when every card of it has been seen in the last two days, each one for sale; its price is the sum of
 each card's cheapest listing. So a 0.23 set for a game you've never played goes before finishing a badge whose missing
 card costs 1.50. It goes through the same slow, signed-out queue as every other price - about 10 seconds between
@@ -466,7 +493,8 @@ nocat.lol doesn't answer it tries again 6 hours later. Off, nothing is sent or f
 
 `sets myaccount` shows the 20 cheapest whole sets right now for badges that account can still level - each set's price
 in the wallet's currency (at the rate learned from the market; US dollars until that's learned), its cards, and the XP
-for the money - and how much of the market the finder has looked at today and when. `sets` alone shows them for every
+for the money - and how many of the cheapest sets the finder has checked on the market in the last 24 hours (*312 of
+the 1,000 cheapest sets checked*) and when it last looked. `sets` alone shows them for every
 game, in US dollars. It only reads: nothing is bought. The buying preview (*Buy missing cards*' popup) shows the five
 cheapest under what it would buy.
 
@@ -505,7 +533,8 @@ Turned down on the phone, the money is free again; still not confirmed after abo
 bought. Only one set waits on your phone at a time - nothing new is bought until it's done. When Steam says too many
 purchases are waiting for a confirmation, it stops trying more until those are confirmed or let go, and says so once.
 
-`buy` shows what each account has spent today and this week; `buy do myaccount` buys the next ones now, inside the
+`buy` shows what each account has spent today and this week, and what a level cost at the last look (*0.33 CAD a level
+(100 XP)* - `buy preview` shows it too); `buy do myaccount` buys the next ones now, inside the
 same limits (not while the account is paused, and never beside a look that's already buying). Something that won't
 clear by itself - crafting off, Steam asking for email confirmation, Steam saying no - waits for the next usual look
 instead of trying again within the hour. Each card bought goes in the log, and one line per look (with *Send spare items and booster packs* on, to
@@ -518,10 +547,14 @@ Settings, the account, **Buying cards**:
 | Setting | Default | What it does |
 |---|---|---|
 | *Buy missing cards* | off | Buys the cards its badges are missing, cheapest first. Turning it on shows what it would buy first and asks you to confirm. |
-| *Buy the cheapest full sets* | off | Also whole sets for games it has no cards of, cheapest first. |
+| *Buy the cheapest full sets* | on | Also whole sets for games it has no cards of, cheapest first. |
 | *Spend at most a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
 | *Spend at most a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
-| `BuyCheckHours` (not on the page) | 12 hours | How often it looks. A human-mode account only in its day. |
+| *Most to pay for one badge level* | automatic | The most for one level (100 XP), in the wallet's currency. Automatic: twice the cheapest level it can buy at the time. A dearer level waits. |
+| *Stop buying at Steam level* (advanced) | never | At this Steam level it buys nothing more; on the way, only the levels still needed. |
+| *Sets per look, human mode* | 3 | Sets one look buys on a human-mode account. |
+| *Time between looks, human mode* | 30 to 90 minutes | The wait before the next look while money and cheap sets are left - only in its day. |
+| `BuyCheckHours` (not on the page) | 12 hours | How often it looks when nothing is left to buy. A human-mode account only in its day. |
 
 ### Selling a set instead of crafting it
 

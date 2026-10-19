@@ -490,16 +490,18 @@ public static class GemsChoice {
 	/// What a buying look found the next badge levels cost, cheapest first: none when it couldn't tell (a problem, Steam not
 	/// saying how purchases are confirmed, the market stopping part way); empty when the money can't be spent by itself
 	/// (billing details, email). Only the levels past what the wallet already pays for: money from gems buys those
-	/// (<see cref="BuyPlan.BeyondWallet"/>) - none known (the wallet pays for every one priced) is not known either.
+	/// (<see cref="BuyPlan.BeyondWallet"/>). 1.8.2: the levels are the ones priced and the set finder's cheapest known past
+	/// them (<see cref="BuyPlan.Levels"/>), so a wallet that pays for the few priced still leaves money a value; only when it
+	/// pays for every level known is what more money buys not known.
 	/// </summary>
 	public static void NoteCosts(string account, BuyPlan plan, DateTime now) {
 		long[]? costs = (plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown) || (plan.Currency <= 0) || plan.Short ? null
 			: plan.Block != BuyBlock.None ? []
-			: [.. BuyPlan.BeyondWallet(plan.Ranked.Select(static s => s.Cost), plan.Wallet)];
+			: [.. BuyPlan.BeyondWallet(plan.LevelCosts.Select(static l => l.Cost), plan.Wallet)];
 
-		// The wallet already pays for every level priced: what more money buys isn't known (the levels past them weren't
-		// priced) - not "nothing", or opening packs would look better than a sack that buys several cheap sets later.
-		if (costs is { Length: 0 } && (plan.Block == BuyBlock.None) && (plan.Ranked.Count > 0)) {
+		// The wallet already pays for every level known: what more money buys isn't known (the levels past them weren't
+		// priced or found) - not "nothing", or opening packs would look better than a sack that buys several cheap sets later.
+		if (costs is { Length: 0 } && (plan.Block == BuyBlock.None) && (plan.LevelCosts.Count > 0)) {
 			costs = null;
 		}
 

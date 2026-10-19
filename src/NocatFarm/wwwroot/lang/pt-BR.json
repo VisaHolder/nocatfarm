@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "O nível de emblema mais barato primeiro - um emblema já começado ou um conjunto novo inteiro, o que custar menos",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Se a Steam pedir para confirmar as compras no app da Steam, você confirma no celular - um conjunto por vez; se não, são deixadas de lado depois de um dia",
     "set finder · couldn't look · {0}": "buscador de conjuntos · não conseguiu olhar · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "buscador de conjuntos · {0} cartas vistas hoje · {1} conjuntos completos conhecidos",
     "set finder · couldn't read its list, starting over · {0}": "buscador de conjuntos · não conseguiu ler a lista, recomeçando · {0}",
     "set finder · couldn't save its list · {0}": "buscador de conjuntos · não conseguiu salvar a lista · {0}",
     "Set price": "Preço do conjunto",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "suas cartas estão sendo vendidas - valem mais que os níveis que dariam",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} compra cerca de {1} níveis · {2} quase não vende, mas o conjunto já esperou o bastante - anunciado mesmo assim",
     "{0} sets worth {1} buy only {2} levels": "{0} conjuntos que valem {1} compram só {2} níveis",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra cerca de {1} níveis, mas a Steam não deixa a conta comprar cartas sozinha - esperando até poder"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra cerca de {1} níveis, mas a Steam não deixa a conta comprar cartas sozinha - esperando até poder",
+    "Level price now: {0} a level (100 XP)": "Preço do nível agora: {0} por nível (100 XP)",
+    "No limit a week ({0} spent this week)": "Sem limite por semana ({0} gasto nesta semana)",
+    "No limit": "Sem limite",
+    "At most {0} for one badge level": "No máximo {0} por um nível de insígnia",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "O buscador de conjuntos verificou no mercado {0} dos {1} conjuntos mais baratos nas últimas 24 horas e conhece {2} conjuntos completos. Última olhada: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sem limite: gasta o que a carteira tiver, os níveis mais baratos primeiro - o máximo por nível continua valendo.",
+    "No limit a day ({0} spent in the last day)": "Sem limite por dia ({0} gasto no último dia)",
+    "At most {0} for one badge level - twice the cheapest level now": "No máximo {0} por um nível de insígnia - o dobro do nível mais barato agora",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "buscador de conjuntos · {0} dos {1} conjuntos mais baratos verificados no mercado nas últimas 24 horas · {2} conjuntos completos conhecidos",
+    "sets": "conjuntos",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "compra de cartas · sobra dinheiro para mais níveis baratos - próxima olhada em {0} minutos",
+    "automatic": "automático",
+    "Time between looks, human mode": "Tempo entre olhadas, modo humano"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "Resumo diário às",
       "tip": "Quando o resumo diário é escrito no registro, no horário local - e enviado, quando o chip Resumo diário em Notificações está ligado. Por exemplo 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Espera mais curta entre olhadas, modo humano",
+      "tip": "A espera mais curta entre duas olhadas que compram numa conta em modo humano, enquanto sobram dinheiro e conjuntos baratos, em minutos - só no dia dela. Cada espera é sorteada entre este valor e o mais longo. Por exemplo 30 e 90: a próxima olhada vem entre meia hora e uma hora e meia depois."
+    },
+    "BuyStopAtLevel": {
+      "label": "Parar de comprar no nível Steam",
+      "tip": "A compra de cartas para quando esta conta chega a este nível Steam - por exemplo 50: no nível 50 não compra mais nada, e no caminho compra só os níveis de insígnia que ainda faltam para chegar lá. 'levelup' diz quanto custa um nível. 0 nunca para."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Conjuntos por olhada, modo humano",
+      "tip": "Quantos conjuntos uma olhada compra numa conta em modo humano, os mais baratos primeiro - depois espera um pouco até a próxima olhada, como alguém que compra alguns conjuntos de vez em quando. Por exemplo 3 conjuntos por olhada, uma olhada a cada 30 a 90 minutos no dia dela: uns 25 a 40 conjuntos por dia, até acabar o dinheiro do dia ou os conjuntos baratos. Um robô compra numa olhada todo conjunto que cabe."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "No máximo por um nível de insígnia",
+      "tip": "O máximo que paga por um nível de insígnia (100 XP) - um conjunto completo, ou as cartas que faltam a uma insígnia começada - na moeda da carteira Steam desta conta. Um nível mais caro espera os preços baixarem, para o dinheiro não ir para níveis caros quando os baratos acabarem. Por exemplo 0,50: um conjunto de 5 cartas a 0,35 é comprado, um de 9 cartas a 0,70 espera. 0 é automático: o dobro do nível mais barato que pode comprar na hora - com o mais barato a 0,33, até 0,66."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Espera mais longa entre olhadas, modo humano",
+      "tip": "A espera mais longa entre duas olhadas que compram numa conta em modo humano, em minutos. Por exemplo 90, com 30 como a mais curta: umas 16 olhadas num dia de 16 horas."
     }
   }
 }

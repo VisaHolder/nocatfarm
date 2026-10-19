@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "一番安いバッジレベルから - 作りかけのバッジか新しいフルセットか、安い方",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam が購入を Steam アプリでの確認を求める場合は、スマホで確認してください - 一度に 1 セットずつ。確認がなければ 1 日で取りやめます",
     "set finder · couldn't look · {0}": "セット探し · 確認できませんでした · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "セット探し · 今日 {0} 枚のカードを確認 · フルセット {1} 件が判明",
     "set finder · couldn't read its list, starting over · {0}": "セット探し · リストを読めないため最初からやり直します · {0}",
     "set finder · couldn't save its list · {0}": "セット探し · リストを保存できませんでした · {0}",
     "Set price": "セット価格",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "カードを販売中 - 上がるレベルより価値があります",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} で約 {1} レベル買えます · {2} はほとんど売れませんが、セットは十分待ちました - それでも出品します",
     "{0} sets worth {1} buy only {2} levels": "{1} 相当のセット {0} 個で {2} レベルしか買えません",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} で約 {1} レベル買えますが、Steam が自動でのカード購入を許可していません - できるまで待ちます"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} で約 {1} レベル買えますが、Steam が自動でのカード購入を許可していません - できるまで待ちます",
+    "Level price now: {0} a level (100 XP)": "今のレベル価格: 1 レベル {0}（100 XP）",
+    "No limit a week ({0} spent this week)": "1 週間の上限なし（今週 {0} 使用）",
+    "No limit": "上限なし",
+    "At most {0} for one badge level": "バッジ 1 レベルに最大 {0}",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "セット探しは過去 24 時間にもっとも安い {1} セット中 {0} セットをマーケットで確認し、フルセット {2} 件がわかっています。最後の確認: {3}。",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "上限なし: ウォレットにある分だけ、安いレベルから使います - 1 レベルの上限はそのまま。",
+    "No limit a day ({0} spent in the last day)": "1 日の上限なし（直近 1 日で {0} 使用）",
+    "At most {0} for one badge level - twice the cheapest level now": "バッジ 1 レベルに最大 {0} - 今いちばん安いレベルの 2 倍",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "セット探し · もっとも安い {1} セット中 {0} セットを過去 24 時間にマーケットで確認 · フルセット {2} 件が判明",
+    "sets": "セット",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "カード購入 · まだ安いレベルに使えるお金があります - 次の確認は {0} 分後",
+    "automatic": "自動",
+    "Time between looks, human mode": "確認の間隔（人間モード）"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "毎日のまとめの時刻",
       "tip": "毎日のまとめをログに書く時刻（現地時間）。通知の「日次まとめ」チップがオンなら、その時刻に送ります。たとえば 09:30。"
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "確認の最短間隔（人間モード）",
+      "tip": "お金と安いセットが残っているあいだ、人間モードのアカウントで買う確認どうしの最短の間隔（分）- その日のうちだけ。毎回この値と最長のあいだでランダムに選びます。たとえば 30 と 90: 次の確認は 30 分から 1 時間半後のどこか。"
+    },
+    "BuyStopAtLevel": {
+      "label": "この Steam レベルで購入をやめる",
+      "tip": "このアカウントの Steam レベルがこれに届いたらカードの購入をやめます - たとえば 50: レベル 50 で何も買わなくなり、それまではそこに届くのに必要なバッジレベルだけを買います。'levelup' で 1 レベルの値段がわかります。0 はやめません。"
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "1 回の確認で買うセット数（人間モード）",
+      "tip": "人間モードのアカウントが 1 回の確認で買うセット数、安い順 - そのあと次の確認までしばらく待ちます。ときどき数セット買う人のように。たとえば 1 回 3 セット、その日のうち 30〜90 分ごとに確認: その日のお金か安いセットがなくなるまで、1 日およそ 25〜40 セット。ロボットは 1 回で入るセットをすべて買います。"
+    },
+    "BuyMaxLevelPrice": {
+      "label": "バッジ 1 レベルに払う上限",
+      "tip": "バッジ 1 レベル（100 XP）に払う上限 - フルセット、または始めたバッジに足りないカード - このアカウントの Steam ウォレットの通貨で。これより高いレベルは値下がりを待つので、安いレベルがなくなっても高いレベルにお金が使われません。たとえば 0.50: 0.35 の 5 枚セットは買い、0.70 の 9 枚セットは待ちます。0 は自動: そのとき買えるいちばん安いレベルの 2 倍 - いちばん安いのが 0.33 なら 0.66 まで。"
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "確認の最長間隔（人間モード）",
+      "tip": "人間モードのアカウントで買う確認どうしの最長の間隔（分）。たとえば最短 30 で 90: 16 時間の 1 日でおよそ 16 回。"
     }
   }
 }

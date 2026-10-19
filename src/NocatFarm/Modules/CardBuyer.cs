@@ -371,6 +371,9 @@ public interface ICardMarket {
 	/// <summary>Each game badge's normal level (not foil). Null when Steam wouldn't say.</summary>
 	Task<IReadOnlyDictionary<uint, int>?> BadgeLevelsAsync(CancellationToken ct);
 
+	/// <summary>1.8.2: the account's Steam level and XP, as the last <see cref="BadgeLevelsAsync"/> said. Null when not known.</summary>
+	(int Level, int Xp)? SteamLevel => null;
+
 	/// <summary>Normal trading cards held: game -> market name -> copies. Null when the inventory couldn't be read whole.</summary>
 	Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct);
 
@@ -512,7 +515,7 @@ public sealed class BuyPlan {
 	public IReadOnlyDictionary<uint, Dictionary<string, int>> Held { get; set; } = new Dictionary<uint, Dictionary<string, int>>();
 
 	/// <summary>1.8.2: each game badge's normal level, as the plan read them (empty until it has).</summary>
-	public IReadOnlyDictionary<uint, int> Levels { get; set; } = new Dictionary<uint, int>();
+	public IReadOnlyDictionary<uint, int> BadgeLevels { get; set; } = new Dictionary<uint, int>();
 
 	/// <summary>Why something wasn't bought, in plain words (English - console replies stay English).</summary>
 	public List<string> Notes { get; } = [];
@@ -522,6 +525,41 @@ public sealed class BuyPlan {
 	/// what the preview shows beside what it would buy. Only shown: every card is priced again before anything is bought.
 	/// </summary>
 	public List<SetFinder.Row> Market { get; } = [];
+
+	/// <summary>
+	/// 1.8.2: why each cheaper candidate it reached wasn't planned - a badge at level 5, a card listed once, the packs on it,
+	/// dearer than the most to pay for a level - for the debug log (English, like the notes).
+	/// </summary>
+	public List<string> Skipped { get; } = [];
+
+	/// <summary>
+	/// 1.8.2: what each next badge level costs, the cheapest first, in the wallet's money - the levels priced this look
+	/// (<see cref="Ranked"/>), then the set finder's cheapest known sets past them at the rate learned from the market (only
+	/// ever a number to weigh by: nothing is bought at it). What money from gems or a set sold would buy (GemsChoice, SetSale).
+	/// Only levels it would buy: none dearer than <see cref="MaxLevelPrice"/>, none past the Steam level buying stops at.
+	/// </summary>
+	public List<(uint App, long Cost)> Levels { get; } = [];
+
+	/// <summary>1.8.2: <see cref="Levels"/> was worked out by a look (a plan put together by hand has only <see cref="Ranked"/>).</summary>
+	public bool LevelsKnown { get; set; }
+
+	/// <summary>What each next level costs, cheapest first: <see cref="Levels"/> when a look worked them out, else <see cref="Ranked"/>.</summary>
+	public IReadOnlyList<(uint App, long Cost)> LevelCosts => LevelsKnown ? Levels : [.. Ranked.Select(static s => (s.App, s.Cost))];
+
+	/// <summary>1.8.2: the most it pays for one badge level this look (the setting, or twice the cheapest level priced) - 0 when there's no level to go by.</summary>
+	public long MaxLevelPrice { get; set; }
+
+	/// <summary>1.8.2: the most to pay for a level is the automatic one (twice the cheapest level priced).</summary>
+	public bool MaxLevelAuto { get; set; }
+
+	/// <summary>1.8.2: the cheapest badge level priced this look, in the wallet's money (0: none priced) - "0.33 CAD a level".</summary>
+	public long LevelPrice => Ranked.Count > 0 ? Ranked.Min(static s => s.Cost) : 0;
+
+	/// <summary>1.8.2: the look read as many prices as one look may - dearer levels than it priced wait for the next.</summary>
+	public bool Capped { get; set; }
+
+	/// <summary>1.8.2: the account is at the Steam level buying stops at ("Stop buying at Steam level").</summary>
+	public bool LevelReached { get; set; }
 
 	/// <summary>Why it couldn't look at all - empty when it could.</summary>
 	public string Problem { get; set; } = "";
@@ -574,11 +612,21 @@ public sealed class BuyPlan {
 				_ => BuyBlock.Unknown
 			};
 
-	/// <summary>Market reads one plan may make: sets, and cards' prices.</summary>
-	internal const int MaxSetReads = 12, MaxBookReads = 30, MaxFullSetGames = 3;
+	/// <summary>Market searches one plan may make for started badges the set finder doesn't know; whole sets the old way (no finder yet).</summary>
+	internal const int MaxSetReads = 12, MaxFullSetGames = 3;
 
-	/// <summary>Whole sets from the set finder priced in one look, at most - the cheapest first.</summary>
-	internal const int MaxFinderSets = 4;
+	/// <summary>
+	/// Card prices one look reads, at least and at most: as many as the money left can use (about every card of the levels
+	/// it could buy, and half as much again), never fewer than 30 nor more than 60 - inside the price book's hourly budget
+	/// shared by every account (360 an hour).
+	/// </summary>
+	public const int MinBookReads = 30, MaxBookReads = 60;
+
+	/// <summary>Levels priced at least before the money left stops the pricing - so what more money buys is known too.</summary>
+	public const int MinPriced = 5;
+
+	/// <summary>A card's price read for a plan is used again for this long: the price read right before buying is the real check.</summary>
+	public static readonly TimeSpan PriceKept = TimeSpan.FromHours(2);
 
 	/// <summary>The cheapest sets on the market the preview shows.</summary>
 	internal const int MarketShown = 5;
@@ -586,11 +634,48 @@ public sealed class BuyPlan {
 	/// <summary>A normal game badge's top level.</summary>
 	internal const int MaxLevel = 5;
 
+	/// <summary>The most levels <see cref="Levels"/> holds.</summary>
+	internal const int LevelsKept = 200;
+
+	/// <summary>
+	/// 1.8.2: card prices read lately for an account's plans (in the wallet's money), used again by the next look for
+	/// <see cref="PriceKept"/> - and refreshed by every price read right before buying.
+	/// </summary>
+	public sealed class Prices {
+		private readonly Dictionary<string, (CardMarket.Book Book, DateTime At)> _kept = new(StringComparer.Ordinal);
+		private readonly Lock _gate = new();
+
+		public void Remember(string hash, CardMarket.Book book, DateTime now) {
+			lock (_gate) {
+				_kept[hash] = (book, now);
+			}
+		}
+
+		/// <summary>A price read in the last <see cref="PriceKept"/>, in this money - or null.</summary>
+		public CardMarket.Book? Recent(string hash, int currency, DateTime now) {
+			lock (_gate) {
+				return _kept.TryGetValue(hash, out (CardMarket.Book Book, DateTime At) k) && (k.Book.Currency == currency) && (now - k.At < PriceKept) && (now >= k.At) ? k.Book : null;
+			}
+		}
+	}
+
 	/// <summary>Money as typed (1.50) in cents (150), clamped.</summary>
 	public static long Cents(float money) => Math.Clamp(SpareRules.Cents(Math.Clamp(money, 0f, 1_000_000f)), 0, 100_000_000);
 
 	/// <summary>"0.35 CAD".</summary>
 	public static string Money(long cents, int currency) => Spare.Money(cents, currency);
+
+	/// <summary>1.8.2: a day's or a week's limit set to "No limit" (below 0): far more than any wallet holds - the wallet is the limit.</summary>
+	public const long NoLimit = long.MaxValue / 4;
+
+	/// <summary>A day's or a week's limit in cents: <see cref="NoLimit"/> when it's set to no limit (below 0), else the amount.</summary>
+	public static long Limit(float money) => money < 0 ? NoLimit : Cents(money);
+
+	/// <summary>A limit as said: 1.50 CAD, or no limit (<see cref="Settings.NoLimitWord"/>).</summary>
+	public static string LimitSaid(long cents, int currency) => cents >= NoLimit ? Settings.NoLimitWord : Money(cents, currency);
+
+	/// <summary>"0.33 CAD a level (100 XP)" - empty when no level was priced.</summary>
+	public string LevelPriceSaid => LevelPrice > 0 ? $"{Money(LevelPrice, Currency)} a level (100 XP)" : "";
 
 	/// <summary>
 	/// 1.8.2: the levels MORE money would buy, cheapest first - past the ones the wallet's balance already pays for. The
@@ -616,26 +701,46 @@ public sealed class BuyPlan {
 		return more;
 	}
 
+	/// <summary>XP a Steam level takes from nothing: 100 for each of the first 10 levels, 200 each up to 20, and so on (level 100 is 55,000).</summary>
+	public static long XpFor(int level) {
+		long xp = 0;
+
+		for (int n = 0; n < Math.Clamp(level, 0, 100_000); n++) {
+			xp += 100L * ((n / 10) + 1);
+		}
+
+		return xp;
+	}
+
+	/// <summary>A level the plan could buy, before its prices are read: the set, from which level, the cards it needs, whole or not, and what the finder or the market's search says those cost in US cents (only to order them).</summary>
+	private sealed record Candidate(CardSet Set, int Level, List<string> Missing, bool Full, long Usd, string? Skip = null, string? Note = null);
+
 	/// <summary>
-	/// The plan - smart levelling. What could be bought: for each badge the account is levelling (cards of its set held, badge
-	/// under level 5), the cards its next level still needs; and, with "Buy the cheapest full sets" on, whole sets for games
-	/// it has none of - the set finder's cheapest on the market (<see cref="SetFinder"/>), any game, played or not. All of them ranked together by what the next badge level costs, cheapest first - the most XP for the
-	/// money - so a whole new set for 0.40 goes before a started badge whose one missing card costs 2.00. A set is only ever
-	/// planned whole: every missing card on the market, and all of it inside what may be spent now. One that costs more than
-	/// a day's or a week's limit is passed over (said why); one that doesn't fit what's left of today stops the plan there.
-	/// Games automatic booster packs is working on are left to the packs.
+	/// The plan - smart levelling. Everything that could make a badge level, in one list: for each badge the account is
+	/// levelling (cards of its set held, badge under level 5), the cards its next level still needs; and, with "Buy the
+	/// cheapest full sets" on, whole sets for any game - the set finder's cheapest on the market (<see cref="SetFinder"/>),
+	/// played or not. A game it holds even one card of is a started badge priced as its missing cards - never left out of the
+	/// whole sets (live, 2026-10-19: Dota 2 at 0.36 and World of Warships at 0.43 were never priced because one card of each
+	/// was held). All of it in the order of what the finder (or the market's search) says the next level costs, and priced
+	/// in that order, in the wallet's money, until the money left is used or the look has read its prices - so a cheaper
+	/// known level is never passed over for a dearer one. Then ranked by the real cost, cheapest first - the most XP for the
+	/// money. A set is only ever planned whole: every missing card on the market, and all of it inside what may be spent now.
+	/// One that costs more than a day's or a week's limit, or more than the most to pay for one level, is passed over (said
+	/// why); one that doesn't fit what's left of today stops the plan there. Games automatic booster packs has a pack waiting
+	/// for are left to the packs. Every cheaper one passed over is said why in <see cref="Skipped"/>.
 	/// </summary>
 	/// <param name="nowUtc">Now on Steam's clock - the limits' windows move with it, not with this PC's.</param>
 	/// <param name="stopWhenBlocked">Stop once the wallet says Steam won't let it buy by itself - for a look that would buy.</param>
-	/// <param name="boosting">Games automatic booster packs is saving gems for or has a pack waiting for (<see cref="BoosterPick.Busy"/>): not bought.</param>
+	/// <param name="boosting">Games automatic booster packs has a pack waiting to open for (<see cref="BoosterPick.Busy"/>): not bought.</param>
 	/// <param name="heldCards">The cards held, from an inventory the caller has just read - not read again.</param>
 	/// <param name="finder">Where the cheapest whole sets on the market come from: the app's set finder unless the checks give their own.</param>
+	/// <param name="prices">Card prices read for this account's plans lately, used again (and kept): none unless the buyer gives its own.</param>
 	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct,
 		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null, IReadOnlyDictionary<uint, Dictionary<string, int>>? heldCards = null,
-		SetFinder? finder = null) {
+		SetFinder? finder = null, Prices? prices = null) {
 		BuyPlan plan = new() {
-			DayLimit = Cents(cfg.BuyDailyLimit),
-			WeekLimit = Cents(cfg.BuyWeeklyLimit)
+			DayLimit = Limit(cfg.BuyDailyLimit),
+			WeekLimit = Limit(cfg.BuyWeeklyLimit)
 		};
 
 		// A spending list that can't be read: nothing is bought, and no made-up number is shown for what was spent.
@@ -679,11 +784,26 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		plan.Levels = levels;
+		plan.BadgeLevels = levels;
+
+		// "Stop buying at Steam level": there already, nothing more - on the way, only the levels still needed.
+		long? levelsToGo = null;
+
+		if ((cfg.BuyStopAtLevel > 0) && (market.SteamLevel is { } steam)) {
+			if (steam.Level >= cfg.BuyStopAtLevel) {
+				plan.LevelReached = true;
+				plan.Notes.Add($"it's at Steam level {steam.Level} - buying stops at level {cfg.BuyStopAtLevel} (\"Stop buying at Steam level\")");
+
+				return plan;
+			}
+
+			levelsToGo = Math.Max(1, (XpFor(cfg.BuyStopAtLevel) - steam.Xp + 99) / 100);
+		}
 
 		// The set finder's cheapest whole sets, for badges it can still level - on this PC's clock, like the finder's own.
 		finder ??= SetFinder.Shared;
 		IReadOnlyList<SetFinder.KnownSet> known = finder.Known(DateTime.UtcNow);
+		Dictionary<uint, SetFinder.KnownSet> knownBy = known.ToDictionary(static k => k.App);
 		plan.Market.AddRange(finder.Cheapest(levels, plan.Currency, MarketShown, DateTime.UtcNow));
 
 		// The cards held: as the caller just read them (badge crafting), or read now.
@@ -703,20 +823,30 @@ public sealed class BuyPlan {
 
 			return plan;
 		}
-		int books = 0;
-		bool stopped = false, capped = false;
+
+		long fixedCap = cfg.BuyMaxLevelPrice > 0 ? Cents(cfg.BuyMaxLevelPrice) : 0;
+		string limitName = plan.DayLimit <= plan.WeekLimit ? "day's" : "week's";
+		int books = 0, budget = MinBookReads;
+		bool stopped = false;
 		Dictionary<string, CardMarket.Book> read = new(StringComparer.Ordinal);
 
-		// The price of every card in a list, read now - null when the market stopped answering, or this look has read
-		// enough prices (said in the notes either way).
+		// The price of every card in a list: read now, or a price this account's plans read lately - null when the market
+		// stopped answering, or this look has read enough prices (said in the notes either way).
 		async Task<List<(string Hash, CardMarket.Book Book)>?> PricesAsync(IEnumerable<string> hashes) {
 			List<(string, CardMarket.Book)> got = [];
 
 			foreach (string hash in hashes) {
 				if (!read.TryGetValue(hash, out CardMarket.Book? book)) {
-					if (books >= MaxBookReads) {
-						plan.Notes.Add("that's enough prices for one look - the rest waits for the next one");
-						capped = true;
+					if (prices?.Recent(hash, plan.Currency, DateTime.UtcNow) is { } kept) {
+						read[hash] = book = kept;
+						got.Add((hash, book));
+
+						continue;
+					}
+
+					if (books >= budget) {
+						plan.Notes.Add("that's enough prices for one look - the dearer levels wait for the next one");
+						plan.Capped = true;
 
 						return null;
 					}
@@ -738,6 +868,7 @@ public sealed class BuyPlan {
 						return null;
 					}
 
+					prices?.Remember(hash, fresh, DateTime.UtcNow);
 					read[hash] = book = fresh;
 				}
 
@@ -750,7 +881,8 @@ public sealed class BuyPlan {
 		// Whether a set of this price can go in now: true to take it, false to pass it over, null to stop the plan here.
 		bool? Fits(string game, long cost) {
 			if (cost > most) {
-				plan.Notes.Add($"{game}: the cards it needs cost {Money(cost, plan.Currency)}, more than a {(plan.DayLimit <= plan.WeekLimit ? "day's" : "week's")} limit ({Money(most, plan.Currency)})");
+				plan.Notes.Add($"{game}: the cards it needs cost {Money(cost, plan.Currency)}, more than a {limitName} limit ({Money(most, plan.Currency)})");
+				plan.Skipped.Add($"{game}: {Money(cost, plan.Currency)} - more than a {limitName} limit");
 
 				return false;
 			}
@@ -764,58 +896,61 @@ public sealed class BuyPlan {
 			return true;
 		}
 
-		// ── what could be bought: the missing cards of badges it's levelling, and (when on) whole sets for new games ──
-		// Games with cards held and a badge under level 5, the most different cards held first - each set read costs a market
-		// search, so the likeliest are read first.
-		List<uint> levelling = [.. held.Where(h => (levels.GetValueOrDefault(h.Key) < MaxLevel) && h.Value.Values.Any(static n => n > 0))
-			.OrderByDescending(static h => h.Value.Count(static c => c.Value > 0)).ThenBy(static h => h.Key).Select(static h => h.Key)];
-		List<(CardSet Set, int Level, List<string> Missing, bool Full)> candidates = [];
+		// ── everything that could make a level ──
+		List<Candidate> candidates = [];
 		HashSet<uint> packs = boosting is null ? [] : [.. boosting];
 		HashSet<uint> sold = ledger.SoldSince(nowUtc - SetSale.NotBoughtFor);
+
 		HashSet<uint> dear = ledger.DearSince(nowUtc - SetSale.NotBoughtFor);
-		int sets = 0;
 
-		// A game automatic booster packs is saving gems for, or has a pack waiting to open for: its cards come from the packs.
-		// A set it just sold instead of crafting isn't bought back either, nor a game whose cards are worth more sold (1.8.2).
-		bool Boosting(CardSet set) {
-			if (dear.Contains(set.App)) {
-				plan.Notes.Add($"{set.Game}: its cards are worth more sold than the levels they'd make - not bought");
+		// A game automatic booster packs has a pack waiting to open for: its cards come from the pack. A set it just sold
+		// instead of crafting isn't bought back either, nor a game whose cards are worth more sold (1.8.2).
+		(string Skip, string Note)? Busy(uint app, string game) =>
+			dear.Contains(app) ? ($"{game}: its cards are worth more sold than the levels they'd make", $"{game}: its cards are worth more sold than the levels they'd make - not bought")
+			: sold.Contains(app) ? ($"{game}: its set was just sold instead of crafted", $"{game}: its set was just sold instead of crafted - not bought back")
+			: packs.Contains(app) ? ($"{game}: booster packs are working on it", $"{game}: booster packs are working on it - its cards come from the packs")
+			: null;
 
-				return true;
-			}
-
-			if (sold.Contains(set.App)) {
-				plan.Notes.Add($"{set.Game}: its set was just sold instead of crafted - not bought back");
-
-				return true;
-			}
-
-			if (!packs.Contains(set.App)) {
-				return false;
-			}
-
-			plan.Notes.Add($"{set.Game}: booster packs are working on it - its cards come from the packs");
-
-			return true;
-		}
+		// Badges it's levelling: the set from the finder when it knows it (no request), else the game's own search - the most
+		// different cards held first, a few a look. A game left to the packs isn't searched at all.
+		List<uint> levelling = [.. held.Where(h => (levels.GetValueOrDefault(h.Key) < MaxLevel) && h.Value.Values.Any(static n => n > 0))
+			.OrderByDescending(static h => h.Value.Count(static c => c.Value > 0)).ThenBy(static h => h.Key).Select(static h => h.Key)];
+		int searched = 0, unsearched = 0;
 
 		foreach (uint app in levelling) {
-			if (sets >= MaxSetReads) {
-				break;
-			}
+			CardSet? set = knownBy.TryGetValue(app, out SetFinder.KnownSet? k) ? k.ToCardSet() : null;
 
-			sets++;
+			if (set == null) {
+				if (Busy(app, GameNames.Of(app)) is { } busy) {
+					plan.Skipped.Add(busy.Skip);
+					plan.Notes.Add(busy.Note);
 
-			if (await market.SetAsync(app, ct).ConfigureAwait(false) is not { } set) {
-				plan.Notes.Add("the market stopped answering - the rest waits for the next look");
-				stopped = true;
-				plan.Short = true;
+					continue;
+				}
 
-				break;
-			}
+				if (stopped || (searched >= MaxSetReads)) {
+					unsearched++;
 
-			if (set.Cards.Count == 0) {
-				continue;   // not known whole - nothing is planned on half a set
+					continue;
+				}
+
+				searched++;
+
+				if (await market.SetAsync(app, ct).ConfigureAwait(false) is not { } found) {
+					plan.Notes.Add("the market stopped answering - the rest waits for the next look");
+					stopped = true;
+					plan.Short = true;
+
+					continue;
+				}
+
+				if (found.Cards.Count == 0) {
+					plan.Skipped.Add($"{GameNames.Of(app)}: its set isn't known whole on the market");
+
+					continue;   // nothing is planned on half a set
+				}
+
+				set = found;
 			}
 
 			Dictionary<string, int> cards = held[app];
@@ -834,47 +969,31 @@ public sealed class BuyPlan {
 
 			List<string> missing = [.. set.Cards.Where(c => cards.GetValueOrDefault(c) <= complete)];
 
-			if ((missing.Count > 0) && (missing.Count < set.Cards.Count) && !Boosting(set)) {
-				candidates.Add((set, level + complete, missing, false));
+			if ((missing.Count > 0) && (missing.Count < set.Cards.Count)) {
+				(string Skip, string Note)? busy = Busy(app, set.Game);
+				candidates.Add(new Candidate(set, level + complete, missing, false, missing.Sum(h => (long) set.Usd.GetValueOrDefault(h)), busy?.Skip, busy?.Note));
 			}
 		}
 
+		if (unsearched > 0) {
+			plan.Skipped.Add($"{unsearched} more started badge(s) whose sets the set finder doesn't know yet - looked at as it learns them");
+		}
+
+		HashSet<uint> started = [.. levelling];
+
 		if (cfg.BuyFullSets && !stopped && (known.Count > 0)) {
-			// The set finder's: whole sets for any game - played, owned or not - the cheapest on the market first. Each in the
-			// wallet's money at the rate learned from the market, only to leave out what costs more than a limit before a
-			// single price is read; every card is priced for real below, in the wallet's currency, and again before buying.
-			double? rate = WalletRate.ForDeciding(plan.Currency);
-			int taken = 0;
-
+			// The set finder's: whole sets for any game - played, owned or not. A game with cards held is a started badge, above.
 			foreach (SetFinder.KnownSet k in known) {
-				if (taken >= MaxFinderSets) {
-					break;
-				}
-
-				// Games it holds cards of are the missing cards' business, above; a maxed badge has nothing to give; a card
-				// with fewer than 2 on the market is no whole set to buy.
-				if ((levels.GetValueOrDefault(k.App) >= MaxLevel) || (held.TryGetValue(k.App, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))
-					|| (k.Depth < 2)) {
+				if (started.Contains(k.App) || (held.TryGetValue(k.App, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))) {
 					continue;
-				}
-
-				// The cheapest first: once one costs more than a day's or a week's limit, so does every one after it.
-				if ((rate is double r) && (WalletRate.ToWallet(k.UsdCents, r) is int about) && (about > most)) {
-					if (taken == 0) {
-						plan.Notes.Add($"the cheapest whole set on the market ({k.Game}, about {Money(about, plan.Currency)}) costs more than a {(plan.DayLimit <= plan.WeekLimit ? "day's" : "week's")} limit ({Money(most, plan.Currency)})");
-					}
-
-					break;
 				}
 
 				CardSet set = k.ToCardSet();
-
-				if (Boosting(set)) {
-					continue;
-				}
-
-				candidates.Add((set, levels.GetValueOrDefault(k.App), [.. set.Cards], true));
-				taken++;
+				string? skip = levels.GetValueOrDefault(k.App) >= MaxLevel ? $"{k.Game}: its badge is at level 5"
+					: k.Depth < 2 ? $"{k.Game}: a card of it has fewer than 2 on the market"
+					: null;
+				(string Skip, string Note)? busy = skip == null ? Busy(k.App, k.Game) : null;
+				candidates.Add(new Candidate(set, levels.GetValueOrDefault(k.App), [.. set.Cards], true, k.UsdCents, skip ?? busy?.Skip, busy?.Note));
 			}
 		} else if (cfg.BuyFullSets && !stopped) {
 			// The set finder hasn't a whole set yet (it has only just started): the games of the cheapest single cards.
@@ -887,7 +1006,14 @@ public sealed class BuyPlan {
 
 				foreach (uint app in cheapest) {
 					// Games it holds cards of are the missing cards' business, above; a maxed badge has nothing to give.
-					if ((looked >= MaxSetReads) || (levels.GetValueOrDefault(app) >= MaxLevel) || (held.TryGetValue(app, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))) {
+					if ((looked >= MaxSetReads) || (levels.GetValueOrDefault(app) >= MaxLevel) || started.Contains(app)
+						|| (held.TryGetValue(app, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))) {
+						continue;
+					}
+
+					if (Busy(app, GameNames.Of(app)) is { } busy) {
+						plan.Skipped.Add(busy.Skip);
+
 						continue;
 					}
 
@@ -900,49 +1026,126 @@ public sealed class BuyPlan {
 					}
 
 					// Every card listed at the last search: a set with a card nobody sells can't be bought whole.
-					if ((set.Cards.Count > 0) && set.Cards.All(c => set.Usd.GetValueOrDefault(c) > 0) && !Boosting(set)) {
+					if ((set.Cards.Count > 0) && set.Cards.All(c => set.Usd.GetValueOrDefault(c) > 0)) {
 						found.Add(set);
 					}
 				}
 
 				// The few cheapest by the search, to be priced in the wallet's own money.
 				candidates.AddRange(found.OrderBy(static s => s.UsdCents).ThenBy(static s => s.App).Take(MaxFullSetGames)
-					.Select(s => (s, levels.GetValueOrDefault(s.App), s.Cards.ToList(), true)));
+					.Select(s => new Candidate(s, levels.GetValueOrDefault(s.App), [.. s.Cards], true, s.UsdCents)));
 			}
 		}
 
-		// ── each priced now, the likeliest cheapest first (by the market's last search, in US cents - only to order them) ──
-		List<BuyStep> priced = [];
+		// ── each priced now, in the order of what the finder or the search says the level costs (US cents - only to order them) ──
+		double? rate = WalletRate.ForDeciding(plan.Currency);
+		long? Wallet(long usd) => rate is double r ? WalletRate.ToWallet((int) Math.Min(usd, int.MaxValue), r) : null;
+		List<Candidate> order = [.. candidates.OrderBy(static c => c.Usd).ThenBy(static c => c.Full).ThenBy(static c => c.Set.App)];
 
-		foreach ((CardSet set, int level, List<string> missing, bool full) in candidates.OrderBy(static c => c.Missing.Sum(h => c.Set.Usd.GetValueOrDefault(h)))
-			.ThenBy(static c => c.Full).ThenBy(static c => c.Set.App)) {
-			if (await PricesAsync(missing).ConfigureAwait(false) is not { } prices) {
+		// As many prices as the money left can use: every card of the levels it could buy, and half as much again.
+		long room = Math.Max(plan.Room, 1) * 3 / 2, planned = 0;
+		int wanted = 0;
+
+		foreach (Candidate c in order.Where(static c => c.Skip == null)) {
+			if (planned >= room) {
 				break;
 			}
 
-			if (full) {
-				if (prices.FirstOrDefault(p => p.Book.Listings < 2) is { Hash: not null } thin) {
+			planned += Wallet(c.Usd) ?? c.Usd;
+			wanted += c.Missing.Count;
+		}
+
+		budget = Math.Clamp(wanted + 5, MinBookReads, MaxBookReads);
+
+		List<BuyStep> priced = [];
+		List<Candidate> unpriced = [];
+		long fitting = 0, lowest = long.MaxValue;
+		bool saidDear = false, pricing = true;
+
+		foreach (Candidate c in order) {
+			CardSet set = c.Set;
+
+			if (!pricing) {
+				if (c.Skip == null) {
+					unpriced.Add(c);
+				}
+
+				continue;
+			}
+
+			if (c.Skip != null) {
+				plan.Skipped.Add(c.Skip);
+
+				if (c.Note != null) {
+					plan.Notes.Add(c.Note);
+				}
+
+				continue;
+			}
+
+			// The money left is used by levels priced already (and enough are priced to know what more money buys): the rest
+			// - dearer by what the finder says - waits.
+			if ((fitting >= plan.Room) && (priced.Count >= MinPriced)) {
+				pricing = false;
+				unpriced.Add(c);
+
+				continue;
+			}
+
+			// A whole set: once one costs more than a day's or a week's limit by the finder's price, so does every one after it.
+			if (c.Full && (Wallet(c.Usd) is long about) && (about > most)) {
+				if (!saidDear && !priced.Any(static s => s.FullSet)) {
+					plan.Notes.Add($"the cheapest whole set on the market ({set.Game}, about {Money(about, plan.Currency)}) costs more than a {limitName} limit ({Money(most, plan.Currency)})");
+				}
+
+				saidDear = true;
+				plan.Skipped.Add($"{set.Game}: about {Money(about, plan.Currency)} - more than a {limitName} limit");
+
+				continue;
+			}
+
+			// Dearer by the finder's price than the most to pay for one level, by a good margin (the rate is only learned).
+			if ((fixedCap > 0) && (Wallet(c.Usd) is long guess) && (guess * 2 > fixedCap * 3)) {
+				plan.Skipped.Add($"{set.Game}: about {Money(guess, plan.Currency)} a level - more than the most to pay for one ({Money(fixedCap, plan.Currency)})");
+				unpriced.Add(c);
+
+				continue;
+			}
+
+			if (await PricesAsync(c.Missing).ConfigureAwait(false) is not { } got) {
+				pricing = false;
+
+				continue;
+			}
+
+			if (c.Full) {
+				if (got.FirstOrDefault(p => p.Book.Listings < 2) is { Hash: not null } thin) {
 					plan.Notes.Add($"{set.Game}: left out - {new BuyCard(thin.Hash, 0).Name} has fewer than 2 listings");
+					plan.Skipped.Add($"{set.Game}: {new BuyCard(thin.Hash, 0).Name} has fewer than 2 listings");
 
 					continue;
 				}
 
-				if (prices.FirstOrDefault(p => p.Book.Dumped) is { Hash: not null } dumped) {
+				if (got.FirstOrDefault(p => p.Book.Dumped) is { Hash: not null } dumped) {
 					plan.Notes.Add($"{set.Game}: left out - one cheap listing of {new BuyCard(dumped.Hash, 0).Name} makes the set look cheaper than it is");
+					plan.Skipped.Add($"{set.Game}: one cheap listing of {new BuyCard(dumped.Hash, 0).Name} makes it look cheaper than it is");
 
 					continue;
 				}
-			} else {
-				if (prices.FirstOrDefault(p => p.Book.Lowest <= 0) is { Hash: not null } none) {
-					plan.Notes.Add($"{set.Game}: nobody is selling {new BuyCard(none.Hash, 0).Name} right now");
+			}
 
-					continue;
-				}
+			if (got.FirstOrDefault(p => p.Book.Lowest <= 0) is { Hash: not null } none) {
+				plan.Notes.Add($"{set.Game}: nobody is selling {new BuyCard(none.Hash, 0).Name} right now");
+				plan.Skipped.Add($"{set.Game}: nobody is selling {new BuyCard(none.Hash, 0).Name}");
 
+				continue;
+			}
+
+			if (!c.Full) {
 				// A card a swap would bring for less waits for the swap - and so does its set: never half a set.
 				List<string> swapped = [];
 
-				foreach ((string hash, CardMarket.Book book) in prices) {
+				foreach ((string hash, CardMarket.Book book) in got) {
 					if ((await swaps.SwapCostAsync(bot, set.App, hash, ct).ConfigureAwait(false) is long swap) && (swap < book.Lowest)) {
 						swapped.Add(new BuyCard(hash, 0).Name);
 					}
@@ -950,17 +1153,31 @@ public sealed class BuyPlan {
 
 				if (swapped.Count > 0) {
 					plan.Notes.Add($"{set.Game}: waiting for a card swap for {string.Join(", ", swapped)} - cheaper than buying");
+					plan.Skipped.Add($"{set.Game}: waiting for a card swap");
 
 					continue;
 				}
 			}
 
 			// Each card with the tax on its fee, as the purchase will pay it - so the ranking and what fits today are what it costs.
-			priced.Add(new BuyStep(set.App, set.Game, full, level, set.Cards.Count, [.. prices.Select(p => new BuyCard(p.Hash, p.Book.Lowest, wallet.FeeTax(p.Book.Lowest)))]));
+			BuyStep step = new(set.App, set.Game, c.Full, c.Level, set.Cards.Count, [.. got.Select(p => new BuyCard(p.Hash, p.Book.Lowest, wallet.FeeTax(p.Book.Lowest)))]);
+			long before = Wallet(c.Usd) ?? 0;
+
+			if ((before > 0) && (step.Cost * 2 > before * 3)) {
+				plan.Skipped.Add($"{set.Game}: about {Money(before, plan.Currency)} by the set finder, {Money(step.Cost, plan.Currency)} now - its price moved");
+			}
+
+			priced.Add(step);
+			lowest = Math.Min(lowest, step.Cost);
+			long cap = fixedCap > 0 ? fixedCap : lowest * 2;
+
+			if ((step.Cost <= most) && (step.Cost <= cap)) {
+				fitting += step.Cost;
+			}
 		}
 
 		// Enough prices read for one look, and not one level priced: what money buys isn't known at all this look.
-		if (capped && (priced.Count == 0)) {
+		if (plan.Capped && (priced.Count == 0)) {
 			plan.Short = true;
 		}
 
@@ -968,7 +1185,32 @@ public sealed class BuyPlan {
 		// A started badge one card short goes after a whole new set that costs less; at the same price, the started badge.
 		plan.Ranked.AddRange(priced.OrderBy(static s => s.Cost).ThenBy(static s => s.FullSet).ThenBy(static s => s.App));
 
+		// The most to pay for one level: the setting, or twice the cheapest level priced.
+		plan.MaxLevelAuto = fixedCap <= 0;
+		plan.MaxLevelPrice = fixedCap > 0 ? fixedCap : plan.LevelPrice * 2;
+		string capSaid = plan.MaxLevelAuto ? $"{Money(plan.MaxLevelPrice, plan.Currency)}, twice the cheapest level now" : Money(plan.MaxLevelPrice, plan.Currency);
+		bool saidCap = false;
+
 		foreach (BuyStep step in plan.Ranked) {
+			if ((levelsToGo is long togo) && (plan.Steps.Count >= togo - plan.Complete.Count)) {
+				plan.Notes.Add(togo <= plan.Complete.Count
+					? $"the sets it holds reach Steam level {cfg.BuyStopAtLevel} once crafted - buying stops there (\"Stop buying at Steam level\")"
+					: $"{togo - plan.Complete.Count} more badge level(s) reach Steam level {cfg.BuyStopAtLevel} - buying stops there (\"Stop buying at Steam level\")");
+
+				break;
+			}
+
+			if ((plan.MaxLevelPrice > 0) && (step.Cost > plan.MaxLevelPrice)) {
+				plan.Skipped.Add($"{step.Game}: {Money(step.Cost, plan.Currency)} a level - more than the most to pay for one ({capSaid})");
+
+				if (!saidCap) {
+					saidCap = true;
+					plan.Notes.Add($"levels dearer than {capSaid} wait for prices to come down (\"Most to pay for one badge level\")");
+				}
+
+				continue;
+			}
+
 			if (Fits(step.Game, step.Cost) is not { } fits) {
 				break;
 			}
@@ -978,6 +1220,23 @@ public sealed class BuyPlan {
 				left -= step.Cost;
 			}
 		}
+
+		// What each next level costs, for what money from gems or a set sold buys: the levels priced, then the finder's
+		// cheapest known past them at the learned rate - only levels it would buy.
+		foreach (BuyStep s in plan.Ranked.Where(s => (plan.MaxLevelPrice <= 0) || (s.Cost <= plan.MaxLevelPrice))) {
+			plan.Levels.Add((s.App, s.Cost));
+		}
+
+		foreach (Candidate c in unpriced) {
+			if ((Wallet(c.Usd) is long est) && (est > 0) && (est <= most) && ((plan.MaxLevelPrice <= 0) || (est <= plan.MaxLevelPrice)) && !plan.Levels.Any(l => l.App == c.Set.App)) {
+				plan.Levels.Add((c.Set.App, est));
+			}
+		}
+
+		List<(uint App, long Cost)> sorted = [.. plan.Levels.OrderBy(static l => l.Cost).ThenBy(static l => l.App).Take(levelsToGo is long most2 ? (int) Math.Clamp(most2 - plan.Complete.Count, 0, LevelsKept) : LevelsKept)];
+		plan.Levels.Clear();
+		plan.Levels.AddRange(sorted);
+		plan.LevelsKnown = true;
 
 		if ((plan.Steps.Count == 0) && (plan.Notes.Count == 0)) {
 			plan.Notes.Add(candidates.Count == 0 && !cfg.BuyFullSets
@@ -1370,6 +1629,24 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> Busy = new(StringComparer.OrdinalIgnoreCase);
 
 	private readonly ICardMarket _market = market ?? new SteamCardMarket(bot);
+
+	/// <summary>1.8.2: card prices this account's plans read lately - used again for a couple of hours, refreshed by every read before buying.</summary>
+	private readonly BuyPlan.Prices _prices = new();
+
+	/// <summary>1.8.2: the cheapest badge level each account's last look priced, in its wallet's money - for 'buy'.</summary>
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (long Cents, int Currency, DateTime At)> LevelPrices = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>The cheapest level a look priced, noted for 'buy' (kept a day).</summary>
+	private void NoteLevelPrice(BuyPlan plan) {
+		if (plan.LevelPrice > 0) {
+			LevelPrices[Bot.Name] = (plan.LevelPrice, plan.Currency, DateTime.UtcNow);
+		}
+	}
+
+	/// <summary>"0.33 CAD a level (100 XP)" - the cheapest level the account's last look (in the last day) priced; empty when none.</summary>
+	public static string LevelPriceOf(string account) =>
+		LevelPrices.TryGetValue(account, out (long Cents, int Currency, DateTime At) p) && (DateTime.UtcNow - p.At < TimeSpan.FromDays(1))
+			? $"{BuyPlan.Money(p.Cents, p.Currency)} a level (100 XP)" : "";
 	private ICardSwaps Swaps => swaps ?? SwapCost.Current;
 	private readonly Func<CancellationToken, Task<DateTime>> _clock = clock ?? SteamClockAsync;
 	private HumanGate? _gate;
@@ -1450,6 +1727,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 							if ((result.Problem.Length > 0) && !result.Lasting) {
 								Timer.LookAt(DateTime.UtcNow + Rng.Minutes(45, 90));
 							}
+
+							// 1.8.2: sets bought, money left and cheap levels still to buy - the next look soon, not in 12 hours.
+							if (FollowUp(result, Bot.Cfg.LegitMode, Bot.Cfg.BuyHumanGapMinMinutes, Bot.Cfg.BuyHumanGapMaxMinutes) is { } soon) {
+								Timer.LookAt(DateTime.UtcNow + soon);
+								Log.Debug(new Said("buying cards · money left for more cheap levels - next look in {0} minutes", (int) soon.TotalMinutes), Bot.Name);
+							}
 						} else {
 							await BusyGate.WaitAsync(ct).ConfigureAwait(false);
 
@@ -1474,7 +1757,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			// human-mode account's day too (the owner already said yes), but nothing new is started here.
 			if (Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && PhoneDue(DateTime.UtcNow)) {
 				try {
-					await PhoneRoundAsync(ct).ConfigureAwait(false);
+					Result phone = await PhoneRoundAsync(ct).ConfigureAwait(false);
+
+					// 1.8.2: the last one waiting on the phone confirmed and bought - new sets may be bought again, soon.
+					if ((phone.Confirmed > 0) && (Ledger.OnPhone.Count == 0) && On(Bot)) {
+						Timer.LookAt(DateTime.UtcNow + FollowUpGap());
+					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
@@ -1497,6 +1785,49 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		TimeSpan usual = Rng.Minutes(2, 5);
 
 		return Ledger.OnPhone.Count > 0 ? TimeSpan.FromTicks(Math.Clamp((_nextPhone - now).Ticks, TimeSpan.FromSeconds(15).Ticks, usual.Ticks)) : usual;
+	}
+
+	/// <summary>
+	/// 1.8.2: the next look soon after one that bought, while money and cheap levels are left. A robot: 3 to 8 minutes - it
+	/// buys every set that fits in one look, so another comes only when a look stopped short (it read its 60 prices, or a
+	/// price moved). A human-mode account buys a few sets a look ("Sets per look, human mode", 3), only in its day, the next
+	/// look 30 to 90 minutes later ("Time between looks, human mode"), like somebody buying a few sets now and then - about
+	/// 16 looks in a 16-hour day, 25 to 40 sets, so 11.00 a day at 0.30 to 0.50 a set gets spent. Gentle on the
+	/// market either way: a follow-up mostly re-uses the prices read in the last 2 hours (<see cref="BuyPlan.PriceKept"/>)
+	/// and reads each card once right before buying - a set's 5 to 10 reads, inside the app's 360 an hour.
+	/// </summary>
+	/// <param name="humanMin">"Time between looks, human mode", shortest (30 by default).</param>
+	/// <param name="humanMax">Longest (90 by default).</param>
+	public static TimeSpan FollowUpGap(bool human, int humanMin = 30, int humanMax = 90) {
+		int lo = Math.Clamp(Math.Min(humanMin, humanMax), 5, 720), hi = Math.Clamp(Math.Max(humanMin, humanMax), 5, 720);
+
+		return human ? Rng.Minutes(lo, hi) : Rng.Minutes(3, 8);
+	}
+
+	/// <summary>The follow-up gap for this account, from its settings.</summary>
+	private TimeSpan FollowUpGap() => FollowUpGap(Bot.Cfg.LegitMode, Bot.Cfg.BuyHumanGapMinMinutes, Bot.Cfg.BuyHumanGapMaxMinutes);
+
+	/// <summary>Sets one look buys: every one that fits on a robot; "Sets per look, human mode" (1 to 10) on a human-mode account.</summary>
+	public static int SetsALook(BotConfig cfg) => cfg.LegitMode ? Math.Clamp(cfg.BuyHumanSetsPerLook, 1, 10) : int.MaxValue;
+
+	/// <summary>
+	/// 1.8.2: after a look that bought sets, while money is left today and cheap levels it knows are still to buy - the next
+	/// look soon (<see cref="FollowUpGap"/>) instead of in "Look every" hours (12), so the day's money buys the day's cheap
+	/// levels. A human-mode account's look still waits for its day (outside it, nothing).
+	/// Never while purchases wait on the owner's phone (Steam takes only a few unconfirmed - the next look waits for them
+	/// anyway), nor after Steam said no. Null: the usual time.
+	/// </summary>
+	public static TimeSpan? FollowUp(Result result, bool human, int humanMin = 30, int humanMax = 90) {
+		if ((result.Plan is not { } plan) || (result.Bought.Count == 0) || (result.Waiting.Count > 0) || ((result.Problem.Length > 0) && result.Lasting)) {
+			return null;
+		}
+
+		long left = plan.Room - result.Bought.Sum(static b => b.Paid);
+		HashSet<uint> bought = [.. result.Bought.Select(static b => b.Step.App)];
+		bool Within(long cost) => (cost <= left) && ((plan.MaxLevelPrice <= 0) || (cost <= plan.MaxLevelPrice));
+		bool more = (left > 0) && (plan.Capped || plan.Ranked.Any(s => !bought.Contains(s.App) && Within(s.Cost)) || plan.Levels.Any(l => !bought.Contains(l.App) && Within(l.Cost)));
+
+		return more ? FollowUpGap(human, humanMin, humanMax) : null;
 	}
 
 	/// <summary>
@@ -1675,8 +2006,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		try {
 			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
-				boosting: BoosterPick.Busy(Bot), heldCards: held).ConfigureAwait(false);
+				boosting: BoosterPick.Busy(Bot), heldCards: held, prices: _prices).ConfigureAwait(false);
 			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
+			NoteLevelPrice(plan);
 
 			return GemsChoice.CostsOf(Bot.Name, currency, DateTime.UtcNow);
 		} finally {
@@ -1710,8 +2042,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		try {
 			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
-				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory)).ConfigureAwait(false);
+				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory), prices: _prices).ConfigureAwait(false);
 			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
+			NoteLevelPrice(plan);
 
 			// No wallet at all: the money from a set sold could never be spent - crafted, as without buying cards.
 			if (plan.NoWallet) {
@@ -1832,9 +2165,15 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct, stopWhenBlocked: buying,
-			boosting: BoosterPick.Busy(Bot)).ConfigureAwait(false);
+			boosting: BoosterPick.Busy(Bot), prices: _prices).ConfigureAwait(false);
 		result.Plan = plan;
 		GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);   // 1.8.2: what the gems maths turns money into
+		NoteLevelPrice(plan);
+
+		// 1.8.2: why each cheaper level it reached wasn't planned - one debug line a look, never more.
+		if (plan.Skipped.Count > 0) {
+			Log.Debug($"buying cards · passed over: {string.Join("; ", plan.Skipped)}", Bot.Name);
+		}
 
 		// The preview says which whole sets it would sell instead of crafting (smart levelling) - nothing is listed here.
 		if ((mode == Mode.Preview) && (plan.Problem.Length == 0) && (plan.Block == BuyBlock.None) && SetSale.Applies(Bot.Cfg, buying: true)) {
@@ -1882,10 +2221,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return result;
 		}
 
-		// A human-mode account buys one set a look, like somebody finishing one badge at a time.
+		// A human-mode account buys a few sets a look ("Sets per look, human mode"), like somebody buying a few badges at a
+		// time - the next look comes 30 to 90 minutes later in its day while money and cheap sets are left (FollowUp).
 		bool unsure = false;
 
-		foreach (BuyStep step in Bot.Cfg.LegitMode ? plan.Steps.Take(1) : plan.Steps) {
+		foreach (BuyStep step in plan.Steps.Take(SetsALook(Bot.Cfg))) {
 			bool carryOn = await BuyStepAsync(step, plan.Currency, result, ct).ConfigureAwait(false);
 			unsure |= result.Problem.StartsWith(UnsureText, StringComparison.Ordinal);
 
@@ -2244,7 +2584,13 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		// The whole set priced again before its first card: anything dearer or gone since the plan, and the set isn't
 		// started - the next set may still go.
 		foreach (BuyCard card in step.Cards) {
-			if (await _market.BookAsync(card.Hash, ct).ConfigureAwait(false) is not { } now || (now.Lowest <= 0) || (now.Currency != currency) || (now.Lowest > card.Price)) {
+			CardMarket.Book? read = await _market.BookAsync(card.Hash, ct).ConfigureAwait(false);
+
+			if (read != null) {
+				_prices.Remember(card.Hash, read, DateTime.UtcNow);
+			}
+
+			if (read is not { } now || (now.Lowest <= 0) || (now.Currency != currency) || (now.Lowest > card.Price)) {
 				result.Problem = $"{step.Game}: the price of {card.Name} moved since the plan - the set waits for the next look";
 
 				return true;
@@ -2272,7 +2618,13 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				return Asked(step, onPhone, result, false);
 			}
 
-			if (await _market.BookAsync(card.Hash, ct).ConfigureAwait(false) is not { } book || (book.Lowest <= 0) || (book.Currency != currency)) {
+			CardMarket.Book? last = await _market.BookAsync(card.Hash, ct).ConfigureAwait(false);
+
+			if (last != null) {
+				_prices.Remember(card.Hash, last, DateTime.UtcNow);
+			}
+
+			if (last is not { } book || (book.Lowest <= 0) || (book.Currency != currency)) {
 				result.Problem = $"{card.Name} isn't on the market at a price it can read now - it looks again next time";
 
 				return Asked(step, onPhone, result, false);
@@ -2294,8 +2646,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			long tax = wallet.FeeTax(book.Lowest);
 			long cost = book.Lowest + tax;
 			DateTime at = await _clock(ct).ConfigureAwait(false);
-			long dayLeft = BuyPlan.Cents(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(at.AddDays(-1));
-			long weekLeft = BuyPlan.Cents(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(at.AddDays(-7));
+			long dayLeft = BuyPlan.Limit(Bot.Cfg.BuyDailyLimit) - Ledger.SpentSince(at.AddDays(-1));
+			long weekLeft = BuyPlan.Limit(Bot.Cfg.BuyWeeklyLimit) - Ledger.SpentSince(at.AddDays(-7));
 
 			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance)) {
 				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";

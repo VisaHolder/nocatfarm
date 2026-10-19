@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Najpierw najtańszy poziom odznaki - rozpoczęta odznaka albo cały nowy zestaw, co kosztuje mniej",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Jeśli Steam chce potwierdzenia zakupów w aplikacji Steam, potwierdzasz je na telefonie - jeden zestaw naraz, a bez tego po dniu są odpuszczane",
     "set finder · couldn't look · {0}": "wyszukiwarka zestawów · nie udało się sprawdzić · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "wyszukiwarka zestawów · dziś przejrzano {0} kart · znanych pełnych zestawów: {1}",
     "set finder · couldn't read its list, starting over · {0}": "wyszukiwarka zestawów · nie da się odczytać jej listy, zaczyna od nowa · {0}",
     "set finder · couldn't save its list · {0}": "wyszukiwarka zestawów · nie da się zapisać jej listy · {0}",
     "Set price": "Cena zestawu",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "jej karty są sprzedawane - warte więcej niż poziomy, które by dały",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} kupi około {1} poziomów · {2} prawie się nie sprzedaje, ale zestaw czekał już dość długo - wystawiony mimo to",
     "{0} sets worth {1} buy only {2} levels": "{0} zestawów wartych {1} kupi tylko {2} poziomów",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} kupi około {1} poziomów, ale Steam nie pozwala mu samemu kupować kart - czeka, aż będzie mógł"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} kupi około {1} poziomów, ale Steam nie pozwala mu samemu kupować kart - czeka, aż będzie mógł",
+    "Level price now: {0} a level (100 XP)": "Cena poziomu teraz: {0} za poziom (100 XP)",
+    "No limit a week ({0} spent this week)": "Bez limitu tygodniowo (wydano {0} w tym tygodniu)",
+    "No limit": "Bez limitu",
+    "At most {0} for one badge level": "Najwyżej {0} za jeden poziom odznaki",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Wyszukiwarka zestawów sprawdziła na rynku {0} z {1} najtańszych zestawów w ostatnich 24 godzinach i zna {2} pełnych zestawów. Ostatnio: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Bez limitu: wydaje tyle, ile jest w portfelu, najtańsze poziomy najpierw - limit za jeden poziom nadal obowiązuje.",
+    "No limit a day ({0} spent in the last day)": "Bez limitu dziennie (wydano {0} w ostatniej dobie)",
+    "At most {0} for one badge level - twice the cheapest level now": "Najwyżej {0} za jeden poziom odznaki - dwa razy tyle, co najtańszy poziom teraz",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "wyszukiwarka zestawów · sprawdzono na rynku {0} z {1} najtańszych zestawów w ostatnich 24 godzinach · znanych pełnych zestawów: {2}",
+    "sets": "zestawy",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "kupowanie kart · zostały pieniądze na kolejne tanie poziomy - następne sprawdzenie za {0} minut",
+    "automatic": "automatycznie",
+    "Time between looks, human mode": "Czas między sprawdzeniami, tryb ludzki"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "Dzienne podsumowanie o",
       "tip": "Kiedy dzienne podsumowanie trafia do logów, w czasie lokalnym - i jest wysyłane, gdy kafelek Dzienne podsumowanie w Powiadomieniach jest włączony. Na przykład 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Najkrótsza przerwa między sprawdzeniami, tryb ludzki",
+      "tip": "Najkrótsza przerwa między dwoma sprawdzeniami, które kupują na koncie w trybie ludzkim, póki zostały pieniądze i tanie zestawy, w minutach - tylko w jego dniu. Każda przerwa jest losowana między tą a najdłuższą. Na przykład 30 i 90: następne sprawdzenie przychodzi od pół godziny do półtorej godziny później."
+    },
+    "BuyStopAtLevel": {
+      "label": "Przestań kupować na poziomie Steam",
+      "tip": "Kupowanie kart kończy się, gdy to konto osiągnie ten poziom Steam - na przykład 50: na poziomie 50 nic więcej nie kupuje, a po drodze kupuje tylko poziomy odznak potrzebne, by tam dojść. 'levelup' mówi, ile kosztuje poziom. 0 nigdy nie przestaje."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Zestawy na sprawdzenie, tryb ludzki",
+      "tip": "Ile zestawów kupuje jedno sprawdzenie na koncie w trybie ludzkim, najtańsze najpierw - potem czeka chwilę do następnego, jak ktoś, kto od czasu do czasu kupuje kilka zestawów. Na przykład 3 zestawy na sprawdzenie, sprawdzenie co 30 do 90 minut w jego dniu: około 25 do 40 zestawów dziennie, aż skończą się pieniądze na ten dzień albo tanie zestawy. Robot kupuje w jednym sprawdzeniu każdy zestaw, który się mieści."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Najwyżej za jeden poziom odznaki",
+      "tip": "Najwięcej, ile płaci za jeden poziom odznaki (100 XP) - pełny zestaw albo karty brakujące rozpoczętej odznace - w walucie portfela Steam tego konta. Droższy poziom czeka, aż ceny spadną, żeby pieniądze nie szły na drogie poziomy, gdy skończą się tanie. Na przykład 0,50: zestaw 5 kart za 0,35 zostaje kupiony, zestaw 9 kart za 0,70 czeka. 0 to automatycznie: dwa razy tyle, co najtańszy poziom, który może wtedy kupić - przy najtańszym za 0,33 do 0,66."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Najdłuższa przerwa między sprawdzeniami, tryb ludzki",
+      "tip": "Najdłuższa przerwa między dwoma sprawdzeniami, które kupują na koncie w trybie ludzkim, w minutach. Na przykład 90, z 30 jako najkrótszą: około 16 sprawdzeń w 16-godzinnym dniu."
     }
   }
 }

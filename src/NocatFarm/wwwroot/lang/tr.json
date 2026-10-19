@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Önce en ucuz rozet seviyesi - başlanmış bir rozet ya da tamamen yeni bir set, hangisi daha ucuzsa",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam alımların Steam uygulamasında onaylanmasını isterse, onları telefonunda onaylarsın - her seferinde bir set; onaylanmazsa bir gün sonra bırakılır",
     "set finder · couldn't look · {0}": "set bulucu · bakamadı · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "set bulucu · bugün {0} karta bakıldı · {1} tam set biliniyor",
     "set finder · couldn't read its list, starting over · {0}": "set bulucu · listesi okunamadı, baştan başlıyor · {0}",
     "set finder · couldn't save its list · {0}": "set bulucu · listesi kaydedilemedi · {0}",
     "Set price": "Set fiyatı",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "kartları satılıyor - verecekleri seviyelerden daha değerli",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} yaklaşık {1} seviye alır · {2} pek satılmıyor, ama set yeterince bekledi - yine de listelendi",
     "{0} sets worth {1} buy only {2} levels": "{1} değerindeki {0} set yalnızca {2} seviye alır",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} yaklaşık {1} seviye alır, ama Steam kendi başına kart almasına izin vermiyor - alabilene kadar bekliyor"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} yaklaşık {1} seviye alır, ama Steam kendi başına kart almasına izin vermiyor - alabilene kadar bekliyor",
+    "Level price now: {0} a level (100 XP)": "Şu anki seviye fiyatı: seviye başına {0} (100 XP)",
+    "No limit a week ({0} spent this week)": "Haftalık sınır yok (bu hafta {0} harcandı)",
+    "No limit": "Sınır yok",
+    "At most {0} for one badge level": "Bir rozet seviyesi için en fazla {0}",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Set bulucu son 24 saatte en ucuz {1} setin {0} tanesini pazarda kontrol etti ve {2} tam set biliyor. Son bakış: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sınır yok: cüzdanda ne varsa harcar, en ucuz seviyeler önce - bir seviyeye ödenecek en fazla tutar yine geçerli.",
+    "No limit a day ({0} spent in the last day)": "Günlük sınır yok (son günde {0} harcandı)",
+    "At most {0} for one badge level - twice the cheapest level now": "Bir rozet seviyesi için en fazla {0} - şu anki en ucuz seviyenin iki katı",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "set bulucu · en ucuz {1} setin {0} tanesi son 24 saatte pazarda kontrol edildi · {2} tam set biliniyor",
+    "sets": "set",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "kart satın alma · daha fazla ucuz seviye için para kaldı - sonraki bakış {0} dakika sonra",
+    "automatic": "otomatik",
+    "Time between looks, human mode": "Bakışlar arası süre, insan modu"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "Günlük özet saati",
       "tip": "Günlük özetin günlüğe yazıldığı yerel saat - Bildirimler'de Günlük özet çipi açıksa o saatte gönderilir de. Örneğin 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Bakışlar arası en kısa bekleme, insan modu",
+      "tip": "Para ve ucuz setler kaldıkça insan modundaki bir hesapta alım yapan iki bakış arasındaki en kısa bekleme, dakika olarak - yalnızca gününde. Her bekleme bu değerle en uzun arasında rastgele seçilir. Örneğin 30 ve 90: sonraki bakış yarım saat ile bir buçuk saat sonra gelir."
+    },
+    "BuyStopAtLevel": {
+      "label": "Bu Steam seviyesinde almayı bırak",
+      "tip": "Bu hesap bu Steam seviyesine ulaşınca kart almak durur - örneğin 50: seviye 50'de artık hiçbir şey almaz, yolda da yalnızca oraya varmak için gereken rozet seviyelerini alır. 'levelup' bir seviyenin ne kadar tuttuğunu söyler. 0 hiç durmaz."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Bakış başına set, insan modu",
+      "tip": "İnsan modundaki bir hesapta bir bakışın aldığı set sayısı, en ucuzlar önce - sonra bir sonraki bakışa kadar biraz bekler, arada bir birkaç set alan biri gibi. Örneğin bakış başına 3 set, gününde 30 ila 90 dakikada bir bakış: günün parası ya da ucuz setler bitene kadar günde yaklaşık 25 ila 40 set. Bir robot bir bakışta sığan her seti alır."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Bir rozet seviyesine en fazla ödenecek",
+      "tip": "Bir rozet seviyesi (100 XP) için ödediği en fazla tutar - tam bir set ya da başlanmış bir rozetin eksik kartları - bu hesabın Steam cüzdanı para biriminde. Daha pahalı bir seviye fiyatlar düşene kadar bekler, böylece ucuz seviyeler bitince para pahalı seviyelere gitmez. Örneğin 0,50: 0,35 olan 5 kartlık set alınır, 0,70 olan 9 kartlık set bekler. 0 otomatiktir: o an alabileceği en ucuz seviyenin iki katı - en ucuz 0,33 ise 0,66 kadar."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Bakışlar arası en uzun bekleme, insan modu",
+      "tip": "İnsan modundaki bir hesapta alım yapan iki bakış arasındaki en uzun bekleme, dakika olarak. Örneğin en kısa 30 ile 90: 16 saatlik bir günde yaklaşık 16 bakış."
     }
   }
 }

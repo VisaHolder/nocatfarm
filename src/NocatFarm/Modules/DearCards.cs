@@ -235,8 +235,8 @@ public static class DearCards {
 
 		// Normal cards of a badge it's still levelling, foil cards of a foil badge not made yet - never the keep list's games
 		// or cards, nor a game just bought for.
-		List<Candidate> games = [.. plan.Held.Where(h => h.Value.Values.Any(static n => n > 0) && (plan.Levels.GetValueOrDefault(h.Key) < MaxLevel) && !Kept(h.Key, h.Value))
-			.Select(h => new Candidate(h.Key, false, h.Value, plan.Levels.GetValueOrDefault(h.Key), MaxLevel, marked.Contains(h.Key), leftovers.Contains(h.Key) && !marked.Contains(h.Key), Worth(h.Value)))];
+		List<Candidate> games = [.. plan.Held.Where(h => h.Value.Values.Any(static n => n > 0) && (plan.BadgeLevels.GetValueOrDefault(h.Key) < MaxLevel) && !Kept(h.Key, h.Value))
+			.Select(h => new Candidate(h.Key, false, h.Value, plan.BadgeLevels.GetValueOrDefault(h.Key), MaxLevel, marked.Contains(h.Key), leftovers.Contains(h.Key) && !marked.Contains(h.Key), Worth(h.Value)))];
 
 		if ((extra?.Foils is { } foils) && (extra.FoilLevels is { } foilLevels)) {
 			games.AddRange(foils.Where(h => h.Value.Values.Any(static n => n > 0) && (foilLevels.GetValueOrDefault(h.Key) < 1) && !Kept(h.Key, h.Value))

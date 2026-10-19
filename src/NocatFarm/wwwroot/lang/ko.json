@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "가장 싼 배지 레벨부터 - 시작한 배지든 새 전체 세트든, 더 싼 쪽",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Steam이 구매를 Steam 앱에서 확인하라고 하면 휴대폰에서 확인하세요 - 한 번에 한 세트씩, 확인하지 않으면 하루 뒤 포기합니다",
     "set finder · couldn't look · {0}": "세트 찾기 · 확인하지 못함 · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "세트 찾기 · 오늘 카드 {0}장 확인 · 전체 세트 {1}개 파악",
     "set finder · couldn't read its list, starting over · {0}": "세트 찾기 · 목록을 읽지 못해 처음부터 다시 시작 · {0}",
     "set finder · couldn't save its list · {0}": "세트 찾기 · 목록을 저장하지 못함 · {0}",
     "Set price": "세트 가격",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "카드를 판매 중 - 얻는 레벨보다 가치 있음",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0}(으)로 약 {1}레벨 구매 · {2}이(가) 거의 팔리지 않지만 세트가 충분히 기다림 - 그래도 등록",
     "{0} sets worth {1} buy only {2} levels": "{1} 가치의 세트 {0}개로 {2}레벨만 구매",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0}(으)로 약 {1}레벨을 살 수 있지만 Steam이 스스로 카드를 사지 못하게 함 - 가능해질 때까지 기다림"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0}(으)로 약 {1}레벨을 살 수 있지만 Steam이 스스로 카드를 사지 못하게 함 - 가능해질 때까지 기다림",
+    "Level price now: {0} a level (100 XP)": "지금 레벨 가격: 레벨당 {0}(100 XP)",
+    "No limit a week ({0} spent this week)": "일주일 한도 없음(이번 주 {0} 사용)",
+    "No limit": "한도 없음",
+    "At most {0} for one badge level": "배지 레벨 하나에 최대 {0}",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "세트 찾기가 지난 24시간 동안 가장 싼 세트 {1}개 중 {0}개를 장터에서 확인했고 전체 세트 {2}개를 알고 있습니다. 마지막 확인: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "한도 없음: 지갑에 있는 만큼 싼 레벨부터 씁니다 - 레벨 하나의 최대 금액은 그대로 적용됩니다.",
+    "No limit a day ({0} spent in the last day)": "하루 한도 없음(지난 하루 {0} 사용)",
+    "At most {0} for one badge level - twice the cheapest level now": "배지 레벨 하나에 최대 {0} - 지금 가장 싼 레벨의 두 배",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "세트 찾기 · 가장 싼 세트 {1}개 중 {0}개를 지난 24시간 동안 장터에서 확인 · 전체 세트 {2}개 파악",
+    "sets": "세트",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "카드 사기 · 싼 레벨을 더 살 돈이 남았습니다 - {0}분 뒤에 다시 확인",
+    "automatic": "자동",
+    "Time between looks, human mode": "확인 사이 시간, 사람 모드"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "일일 요약 시각",
       "tip": "일일 요약을 로그에 쓰는 시각(현지 시간)입니다. 알림의 일일 요약 칩이 켜져 있으면 이때 보냅니다. 예: 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "확인 사이 가장 짧은 대기, 사람 모드",
+      "tip": "돈과 싼 세트가 남아 있는 동안 사람 모드 계정에서 사는 확인 사이의 가장 짧은 대기(분) - 그날 안에서만. 매번 이 값과 가장 긴 값 사이에서 무작위로 고릅니다. 예: 30과 90이면 다음 확인은 30분에서 1시간 30분 뒤 사이."
+    },
+    "BuyStopAtLevel": {
+      "label": "이 Steam 레벨에서 구매 중지",
+      "tip": "이 계정의 Steam 레벨이 이 값에 이르면 카드 사기를 멈춥니다 - 예: 50이면 레벨 50에서 더는 아무것도 사지 않고, 그 전에는 거기까지 필요한 배지 레벨만 삽니다. 'levelup'이 레벨 하나의 값을 알려 줍니다. 0이면 멈추지 않습니다."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "확인당 세트 수, 사람 모드",
+      "tip": "사람 모드 계정이 한 번 확인할 때 사는 세트 수, 싼 것부터 - 그다음 잠시 기다렸다가 다시 확인합니다. 가끔 몇 세트씩 사는 사람처럼. 예: 한 번에 3세트, 그날 안에 30~90분마다 확인하면 그날 돈이나 싼 세트가 떨어질 때까지 하루 약 25~40세트. 로봇은 한 번에 맞는 세트를 모두 삽니다."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "배지 레벨 하나에 쓸 최대 금액",
+      "tip": "배지 레벨 하나(100 XP)에 쓰는 최대 금액 - 전체 세트, 또는 시작한 배지에 모자란 카드 - 이 계정의 Steam 지갑 통화로. 더 비싼 레벨은 가격이 내릴 때까지 기다리므로, 싼 레벨이 떨어져도 돈이 비싼 레벨에 쓰이지 않습니다. 예: 0.50이면 0.35짜리 5장 세트는 사고 0.70짜리 9장 세트는 기다립니다. 0은 자동: 그때 살 수 있는 가장 싼 레벨의 두 배 - 가장 싼 레벨이 0.33이면 0.66까지."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "확인 사이 가장 긴 대기, 사람 모드",
+      "tip": "사람 모드 계정에서 사는 확인 사이의 가장 긴 대기(분). 예: 가장 짧은 값 30에 90이면 16시간 하루에 약 16번."
     }
   }
 }

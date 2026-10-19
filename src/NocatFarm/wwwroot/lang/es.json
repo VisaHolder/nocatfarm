@@ -3151,7 +3151,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Primero el nivel de insignia más barato - una insignia ya empezada o una colección nueva entera, lo que cueste menos",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Si Steam pide confirmar las compras en la app de Steam, las confirmas en tu móvil - una colección cada vez; si no, se dejan tras un día",
     "set finder · couldn't look · {0}": "buscador de colecciones · no pudo mirar · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "buscador de colecciones · {0} cromos mirados hoy · {1} colecciones completas conocidas",
     "set finder · couldn't read its list, starting over · {0}": "buscador de colecciones · no pudo leer su lista, empieza de nuevo · {0}",
     "set finder · couldn't save its list · {0}": "buscador de colecciones · no pudo guardar su lista · {0}",
     "Set price": "Precio de la colección",
@@ -3364,7 +3363,20 @@
     "its cards are being sold - worth more than the levels they'd make": "sus cartas se están vendiendo - valen más que los niveles que darían",
     "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} compra unos {1} niveles · {2} apenas se vende, pero el set ya esperó bastante - se pone a la venta igualmente",
     "{0} sets worth {1} buy only {2} levels": "{0} sets que valen {1} compran solo {2} niveles",
-    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra unos {1} niveles, pero Steam no le deja comprar cartas por sí sola - espera hasta que pueda"
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra unos {1} niveles, pero Steam no le deja comprar cartas por sí sola - espera hasta que pueda",
+    "Level price now: {0} a level (100 XP)": "Precio por nivel ahora: {0} por nivel (100 XP)",
+    "No limit a week ({0} spent this week)": "Sin límite a la semana ({0} gastado esta semana)",
+    "No limit": "Sin límite",
+    "At most {0} for one badge level": "Como mucho {0} por un nivel de insignia",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "El buscador de colecciones ha comprobado en el mercado {0} de las {1} colecciones más baratas en las últimas 24 horas y conoce {2} colecciones completas. Última mirada: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sin límite: gasta lo que tenga el monedero, los niveles más baratos primero - el máximo por nivel sigue valiendo.",
+    "No limit a day ({0} spent in the last day)": "Sin límite al día ({0} gastado en el último día)",
+    "At most {0} for one badge level - twice the cheapest level now": "Como mucho {0} por un nivel de insignia - el doble del nivel más barato ahora",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "buscador de colecciones · {0} de las {1} colecciones más baratas comprobadas en el mercado en las últimas 24 horas · {2} colecciones completas conocidas",
+    "sets": "colecciones",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "comprar cromos · queda dinero para más niveles baratos - próxima mirada en {0} minutos",
+    "automatic": "automático",
+    "Time between looks, human mode": "Tiempo entre miradas, modo humano"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4913,6 +4925,26 @@
     "DailyReportTime": {
       "label": "Resumen diario a las",
       "tip": "Cuándo se escribe el resumen diario en el registro, en hora local, y se envía, si la etiqueta Resumen diario de Notificaciones está activada. Por ejemplo 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Espera más corta entre miradas, modo humano",
+      "tip": "La espera más corta entre dos miradas que compran en una cuenta en modo humano, mientras quedan dinero y colecciones baratas, en minutos - solo en su día. Cada espera se elige al azar entre este valor y el más largo. Por ejemplo 30 y 90: la siguiente mirada llega entre media hora y hora y media después."
+    },
+    "BuyStopAtLevel": {
+      "label": "Dejar de comprar en el nivel de Steam",
+      "tip": "La compra de cromos se detiene cuando esta cuenta llega a este nivel de Steam - por ejemplo 50: en el nivel 50 ya no compra nada, y por el camino solo compra los niveles de insignia que aún faltan para llegar. 'levelup' dice lo que cuesta un nivel. 0 no se detiene nunca."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Colecciones por mirada, modo humano",
+      "tip": "Cuántas colecciones compra una mirada en una cuenta en modo humano, las más baratas primero - luego espera un rato hasta la siguiente mirada, como alguien que compra unas pocas colecciones de vez en cuando. Por ejemplo 3 colecciones por mirada, una mirada cada 30 a 90 minutos en su día: unas 25 a 40 colecciones al día, hasta que se acabe el dinero del día o las colecciones baratas. Un robot compra en una mirada todas las colecciones que caben."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Como mucho por un nivel de insignia",
+      "tip": "Lo máximo que paga por un nivel de insignia (100 XP) - una colección completa, o los cromos que le faltan a una insignia empezada - en la moneda del monedero de Steam de esta cuenta. Un nivel más caro espera a que bajen los precios, para que el dinero no se gaste en niveles caros cuando se acaban los baratos. Por ejemplo 0,50: una colección de 5 cromos a 0,35 se compra, una de 9 cromos a 0,70 espera. 0 es automático: el doble del nivel más barato que puede comprar en ese momento - con el más barato a 0,33, hasta 0,66."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Espera más larga entre miradas, modo humano",
+      "tip": "La espera más larga entre dos miradas que compran en una cuenta en modo humano, en minutos. Por ejemplo 90, con 30 como la más corta: unas 16 miradas en un día de 16 horas."
     }
   }
 }

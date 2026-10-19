@@ -42,7 +42,7 @@ public static partial class Settings {
 		"SendAchievements", "SendRep4Rep", "SendSignIns", "SendBreakIns", "SendPoints", "SendItems", "SendScamWarnings", "SendHealthAlerts"];
 
 	/// <summary>The words a unit can be - each one translated by the page.</summary>
-	public static readonly string[] UnitWords = ["minutes", "hours", "seconds", "days", "%", "ms", "wallet currency", "points", "backups", "reviews", "times a day"];
+	public static readonly string[] UnitWords = ["minutes", "hours", "seconds", "days", "%", "ms", "wallet currency", "points", "backups", "reviews", "times a day", "sets"];
 
 	/// <summary>
 	/// What a number setting is counted in: its own <see cref="SettingDef.Unit"/>, or worked out from the name's ending -

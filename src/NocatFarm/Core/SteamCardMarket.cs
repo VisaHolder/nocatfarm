@@ -54,6 +54,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		}
 
 		_foils = badges.FoilLevels;
+		SteamLevel = (badges.Level, badges.Xp);
 
 		return badges.GameLevels;
 	}
@@ -62,6 +63,9 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 	public Task<IReadOnlyDictionary<uint, int>?> FoilLevelsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<uint, int>?>(_foils);
 
 	private Dictionary<uint, int>? _foils;
+
+	/// <summary>1.8.2: the Steam level and XP the last badge read said.</summary>
+	public (int Level, int Xp)? SteamLevel { get; private set; }
 
 	public async Task<IReadOnlyDictionary<uint, Dictionary<string, int>>?> CardsAsync(CancellationToken ct) =>
 		await ReadInventoryAsync(ct).ConfigureAwait(false) is { } inventory ? LevelPlanner.NormalCards(inventory) : null;

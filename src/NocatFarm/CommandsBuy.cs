@@ -189,16 +189,22 @@ public static partial class Commands {
 		int cur = b.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) b.WalletCurrency;
 		DateTime now = DateTimeOffset.FromUnixTimeSeconds(Confirmations.SteamTimeNow).UtcDateTime;   // the limits go by Steam's clock
 
-		return $"buys cards: {BuyPlan.Money(ledger.SpentSince(now.AddDays(-1)), cur)} of {BuyPlan.Money(BuyPlan.Cents(b.Cfg.BuyDailyLimit), cur)} today, "
-			+ $"{BuyPlan.Money(ledger.SpentSince(now.AddDays(-7)), cur)} of {BuyPlan.Money(BuyPlan.Cents(b.Cfg.BuyWeeklyLimit), cur)} this week";
+		string level = CardBuyer.LevelPriceOf(b.Name);
+
+		return $"buys cards: {BuyPlan.Money(ledger.SpentSince(now.AddDays(-1)), cur)} of {BuyPlan.LimitSaid(BuyPlan.Limit(b.Cfg.BuyDailyLimit), cur)} today, "
+			+ $"{BuyPlan.Money(ledger.SpentSince(now.AddDays(-7)), cur)} of {BuyPlan.LimitSaid(BuyPlan.Limit(b.Cfg.BuyWeeklyLimit), cur)} this week"
+			+ (level.Length > 0 ? $" · {level} at the last look" : "");
 	}
 
 	/// <summary>The limits it keeps to, in one line.</summary>
 	internal static string BuyLimits(Bot bot) {
 		int cur = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
 
-		return $"{bot.Name}: it spends at most {BuyPlan.Money(BuyPlan.Cents(bot.Cfg.BuyDailyLimit), cur)} a day and {BuyPlan.Money(BuyPlan.Cents(bot.Cfg.BuyWeeklyLimit), cur)} a week, "
-			+ $"never more than the wallet holds, and only whole sets{(bot.Cfg.BuyFullSets ? " - the cheapest full sets too" : "")}{(bot.Cfg.LegitMode ? ", only during its day" : "")}.";
+		string perLevel = bot.Cfg.BuyMaxLevelPrice > 0 ? $"at most {BuyPlan.Money(BuyPlan.Cents(bot.Cfg.BuyMaxLevelPrice), cur)} a level" : "a level at most twice the cheapest one";
+		string stop = bot.Cfg.BuyStopAtLevel > 0 ? $", until Steam level {bot.Cfg.BuyStopAtLevel}" : "";
+
+		return $"{bot.Name}: it spends at most {BuyPlan.LimitSaid(BuyPlan.Limit(bot.Cfg.BuyDailyLimit), cur)} a day and {BuyPlan.LimitSaid(BuyPlan.Limit(bot.Cfg.BuyWeeklyLimit), cur)} a week, "
+			+ $"{perLevel}{stop}, never more than the wallet holds, and only whole sets{(bot.Cfg.BuyFullSets ? " - the cheapest full sets too" : "")}{(bot.Cfg.LegitMode ? ", only during its day" : "")}.";
 	}
 
 	/// <summary>'buy preview' and 'buy do': each account's look, said plainly.</summary>
@@ -274,7 +280,12 @@ public static partial class Commands {
 		int cur = plan.Currency;
 		string M(long cents) => BuyPlan.Money(cents, cur);
 
-		lines.Add($"{name}: wallet {M(plan.Wallet)} · {M(plan.DaySpent)} of {M(plan.DayLimit)} spent today · {M(plan.WeekSpent)} of {M(plan.WeekLimit)} this week - {M(plan.Room)} can be spent now");
+		lines.Add($"{name}: wallet {M(plan.Wallet)} · {M(plan.DaySpent)} of {BuyPlan.LimitSaid(plan.DayLimit, cur)} spent today · {M(plan.WeekSpent)} of {BuyPlan.LimitSaid(plan.WeekLimit, cur)} this week - {M(plan.Room)} can be spent now");
+
+		// 1.8.2: one number for what a level costs now - the cheapest priced.
+		if (plan.LevelPriceSaid.Length > 0) {
+			lines.Add($"{name}: level price: {plan.LevelPriceSaid}");
+		}
 
 		if (result.Confirmed > 0) {
 			lines.Add($"{name}: {result.Confirmed} purchase(s) confirmed in the Steam app - bought");
