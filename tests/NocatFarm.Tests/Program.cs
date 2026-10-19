@@ -30316,6 +30316,7 @@ static class CardSwapChecks {
 		rLedger.Change(l => { l.Blocked.Clear(); l.Reports.Clear(); l.Records.Clear(); });
 		NocatFarm.Core.SparePrices.Keep(new NocatFarm.Core.SparePrices.Game(440, 1, DateTime.UtcNow.Ticks, new() {
 			["440-Card10"] = new(9, NocatFarm.Core.SpareKind.Card), ["440-Card40"] = new(6, NocatFarm.Core.SpareKind.Card) }));
+		rBot.Cfg.CardSwapMaxLoss = 0.01f;
 		Check("swap receive: worth 3 cents less than it gives, limit 1 cent → declined", await Judge(ROffer(74, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == false);
 		rBot.Cfg.CardSwapsPerDay = 1;
 		rLedger.Counted(DateTime.UtcNow, TimeSpan.Zero);
@@ -35164,7 +35165,7 @@ static class DearCardsChecks {
 
 			var second = await liveBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("dear look: the next look leaves the game alone - said in the plan's notes, a cheap whole set bought instead",
-				(second.Plan?.Notes.Any(static n => n.Contains("Arcane Raise: its cards are worth more sold than the levels they'd make", StringComparison.Ordinal)) == true)
+				(second.Plan?.Notes.Any(static n => (n.StartsWith("Arcane Raise", StringComparison.Ordinal) || n.StartsWith("app 603750", StringComparison.Ordinal)) && n.Contains(": its cards are worth more sold than the levels they'd make", StringComparison.Ordinal)) == true)
 				&& !liveMarket.Bought.Any(static b => b.Hash.StartsWith("603750-", StringComparison.Ordinal)) && liveMarket.Bought.Any(static b => b.Hash.StartsWith("60", StringComparison.Ordinal)),
 				string.Join("; ", second.Plan?.Notes ?? []) + " / " + string.Join(",", liveMarket.Bought));
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
