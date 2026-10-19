@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "売る{0}のパックのために取引可能なジェムを貯めています",
     "the {0} pack's price moved · weighed again later": "{0}のパックの価格が動きました · 後でもう一度比べます",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "開けてカードを売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "開けてカードを売るための{0}のパックを作成 · ジェム 1,000 個あたり約 {1} レベル",
+    "Commenting is on hold on every account until {0}.": "{0} まで、すべてのアカウントでコメントを保留中です。",
+    "Resume now": "今すぐ再開",
+    "Pause rep4rep for...": "rep4rep を一時停止...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "すべてのアカウントでコメントを止め、時間が来ると自動で再開します。再起動しても続きます。",
+    "{0} hours": "{0} 時間",
+    "rep4rep held for {0} hours": "rep4rep を {0} 時間保留しました",
+    "rep4rep commenting carries on": "rep4rep のコメントを続けます",
+    "Disconnect": "接続を解除",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "このチャットを解除します。別のチャットをつなぐ「Telegram に接続」ボタンが戻ります。",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "この Discord アカウントを解除します。もう一度接続するまで、ボットは誰の命令も聞きません。"
   },
   "settings": {
     "SteamOpenEveryAccount": {

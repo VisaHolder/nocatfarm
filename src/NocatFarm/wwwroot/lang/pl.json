@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "zbiera wymienialne klejnoty na booster {0} do sprzedania",
     "the {0} pack's price moved · weighed again later": "cena boostera {0} się zmieniła · zostanie przeliczona później",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "zrobiono booster {0} do sprzedania · około {1} poziomów na 1000 klejnotów",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "zrobiono booster {0} do otwarcia i sprzedania kart · około {1} poziomów na 1000 klejnotów"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "zrobiono booster {0} do otwarcia i sprzedania kart · około {1} poziomów na 1000 klejnotów",
+    "Commenting is on hold on every account until {0}.": "Komentowanie jest wstrzymane na wszystkich kontach do {0}.",
+    "Resume now": "Wznów teraz",
+    "Pause rep4rep for...": "Wstrzymaj rep4rep na...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Wstrzymuje komentowanie na wszystkich kontach, potem wraca samo - także po ponownym uruchomieniu.",
+    "{0} hours": "{0} godz.",
+    "rep4rep held for {0} hours": "rep4rep wstrzymany na {0} godz.",
+    "rep4rep commenting carries on": "rep4rep komentuje dalej",
+    "Disconnect": "Rozłącz",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Zapomina ten czat. Wraca przycisk Połącz Telegram, żeby połączyć inny.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Zapomina to konto Discord - bot nikogo nie słucha, dopóki nie połączysz go znowu."
   },
   "settings": {
     "SteamOpenEveryAccount": {

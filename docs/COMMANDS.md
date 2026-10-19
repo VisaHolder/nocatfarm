@@ -134,7 +134,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 
 | Command | What it does |
 |---|---|
-| `rep4rep [status\|points\|profiles] \| tasks <account> \| now\|pause\|resume\|clear\|rest <account\|all>` <br>also `r4r` | Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on\|off. |
+| `rep4rep [status\|points\|profiles] \| tasks <account> \| now\|pause\|resume\|clear\|rest <account\|all> \| hold <hours>\|off` <br>also `r4r` | Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on\|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it. |
 
 ## Settings
 

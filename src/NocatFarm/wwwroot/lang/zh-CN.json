@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "正在为要出售的 {0} 补充包攒可交易宝石",
     "the {0} pack's price moved · weighed again later": "{0} 补充包的价格变了 · 稍后重新比较",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于出售 · 每 1,000 个宝石约 {1} 级",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级",
+    "Commenting is on hold on every account until {0}.": "所有账户的评论已暂停，直到 {0}。",
+    "Resume now": "立即恢复",
+    "Pause rep4rep for...": "暂停 rep4rep...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "暂停所有账户的评论，到时会自行恢复——重启后也一样。",
+    "{0} hours": "{0} 小时",
+    "rep4rep held for {0} hours": "rep4rep 已暂停 {0} 小时",
+    "rep4rep commenting carries on": "rep4rep 继续评论",
+    "Disconnect": "断开连接",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "忘记这个聊天。“连接 Telegram”按钮会重新出现，可以连接另一个。",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "忘记这个 Discord 账户——在你重新连接之前，机器人不听任何人的命令。"
   },
   "settings": {
     "SteamOpenEveryAccount": {

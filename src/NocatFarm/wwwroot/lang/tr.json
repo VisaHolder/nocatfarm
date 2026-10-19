@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "satılacak bir {0} paketi için takas edilebilir mücevher biriktiriliyor",
     "the {0} pack's price moved · weighed again later": "{0} paketinin fiyatı değişti · daha sonra yeniden tartılacak",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "açıp kartlarını satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "açıp kartlarını satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye",
+    "Commenting is on hold on every account until {0}.": "Yorumlar tüm hesaplarda {0} tarihine kadar beklemede.",
+    "Resume now": "Şimdi devam et",
+    "Pause rep4rep for...": "rep4rep'i şu kadar duraklat...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Tüm hesaplarda yorumları durdurur, sonra kendiliğinden yeniden başlar - yeniden başlatmalarda da.",
+    "{0} hours": "{0} saat",
+    "rep4rep held for {0} hours": "rep4rep {0} saat beklemede",
+    "rep4rep commenting carries on": "rep4rep yorum yapmaya devam ediyor",
+    "Disconnect": "Bağlantıyı kes",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Bu sohbeti unutur. Başka birini bağlamak için Telegram'ı bağla düğmesi geri gelir.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Bu Discord hesabını unutur - yeniden bağlayana kadar bot kimseyi dinlemez."
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -4805,7 +4805,9 @@ function jumpTo(section) {
 }
 
 function settingsDefs() {
-  const all = settingsTarget === GLOBAL ? schema.Global : schema.Bot;
+  // An internal knob (Hidden) is never drawn - not even with Show advanced on - and isn't counted among the hidden
+  // advanced ones. It still works from the console, the JSON files and plugins.
+  const all = (settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden);
   if (r4rOn()) return all;
 
   // rep4rep is switched off: drop both its sections ("rep4rep account" and "rep4rep commenting") from the
@@ -5176,6 +5178,9 @@ function sectionIntro(section, values) {
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
   }
+
+  // "Pause rep4rep for..." is an action, not a setting: a few buttons, and while a hold is on, until when and a way out.
+  if (section === REP4REP_GLOBAL && settingsTarget === GLOBAL && val('Rep4RepEnabled')) return rep4repHoldPanel(values);
 
   // Going back to an older version, and a zip from this PC - beside the settings for updating.
   if (section === 'Updates & plugins' && settingsTarget === GLOBAL) {
@@ -6818,7 +6823,7 @@ function groupedFields(section, fields, values, defaults) {
 function offHint(def, values) {
   if (def.Kind !== 'Bool' || liveValue(def.Name, values)) return '';
   const own = (settingsTarget === GLOBAL ? schema.Global : schema.Bot) || [];
-  if (!own.some((d) => d.ShowWhen === `${def.Name}=true`)) return '';
+  if (!own.some((d) => !d.Hidden && d.ShowWhen === `${def.Name}=true`)) return '';
   const tip = tSetting(def, 'tip') || '';
   const first = (sentenceEnd ? tip.split(sentenceEnd)[0] : tip).trim();
   return `<div class="offhint">${esc(first)} <span>${esc(t('Its settings show here once it is on.'))}</span></div>`;
@@ -7009,6 +7014,27 @@ const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShow
 PANEL_ROWS.add('SendBackups');
 PANEL_ROWS.add('SendItems');   // 1.8.0: drawn as a chip with the other notification kinds
 
+// The rep4rep hold: every account's commenting paused for some hours, kept through restarts ('rep4rep hold').
+const REP4REP_GLOBAL = 'rep4rep account';
+function rep4repHoldPanel(values) {
+  const until = values.Rep4RepHoldUntil ? new Date(values.Rep4RepHoldUntil) : null;
+  if (until && until > new Date()) {
+    return `<div class="explain"><b>${esc(tf('Commenting is on hold on every account until {0}.', until.toLocaleString()))}</b>
+      <div style="margin-top:8px"><button class="ghost" onclick="rep4repHold(0)">${esc(t('Resume now'))}</button></div></div>`;
+  }
+  return `<div class="explain"><b>${esc(t('Pause rep4rep for...'))}</b>
+    <p style="margin:6px 0 8px">${esc(t('Holds commenting on every account, then it starts again by itself - restarts included.'))}</p>
+    ${[6, 12, 24, 48].map((h) => `<button class="ghost" onclick="rep4repHold(${h})">${esc(tf('{0} hours', h))}</button>`).join(' ')}</div>`;
+}
+
+async function rep4repHold(hours) {
+  const r = await post('/api/command', { Line: hours ? `rep4rep hold ${hours}` : 'rep4rep hold off' }).catch(() => null);
+  if (!r || typeof r.output !== 'string') toast(t("Couldn't reach nocat.farm"), true);
+  else toast(hours ? tf('rep4rep held for {0} hours', hours) : t('rep4rep commenting carries on'));
+  await loadConfig().catch(() => {});
+  if (view === 'settings') renderSettings();
+}
+
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowCounter', 'Accounts online'], ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
@@ -7149,7 +7175,8 @@ function telegramConnectInner() {
       <span class="muted small">${esc(t('Opens your bot - press Start there and it connects.'))}</span></div>`;
   }
   if (state && state.TelegramConnected) {
-    return `<div class="tgconnect"><span class="muted small">${esc(t('Telegram is connected.'))}</span></div>`;
+    return `<div class="tgconnect"><span class="muted small">${esc(t('Telegram is connected.'))}</span>
+      <button class="ghost small" onclick="disconnectChat('TelegramChatId')" data-tip="${esc(t('Forgets this chat. Connect Telegram comes back, to connect a different one.'))}">${esc(t('Disconnect'))}</button></div>`;
   }
   return '';
 }
@@ -7188,9 +7215,21 @@ function discordConnectInner() {
     ${state.DiscordInviteUrl ? `<a class="btn" href="${esc(state.DiscordInviteUrl)}" target="_blank" rel="noopener">${esc(t('Add the bot to your server'))}</a>` : ''}
     <button class="ghost" onclick="discordConnectCode(this)">${esc(t('Connect Discord'))}</button>
     <span class="muted small">${esc(who)}</span>
+    ${state.DiscordConnected ? `<button class="ghost small" onclick="disconnectChat('DiscordOwnerId')" data-tip="${esc(t('Forgets this Discord account - the bot obeys nobody until you connect again.'))}">${esc(t('Disconnect'))}</button>` : ''}
     ${discordCode ? `<span class="small" style="flex-basis:100%">${tf('Send {0} to your bot in Discord - the code works once, for {1} minutes.',
       `<code>/connect code: ${esc(discordCode.code)}</code>`, discordCode.minutes)}</span>` : ''}
   </div>`;
+}
+
+// The chat Telegram is connected to, or the Discord account the bot obeys, forgotten - they aren't rows on the settings
+// page: Connect fills them in, and this is the way back out.
+async function disconnectChat(key) {
+  await loadConfig().catch(() => {});
+  if (!config || !config.Global) return;
+  const res = await postGlobal({ ...config.Global, [key]: '' }).catch(() => null);
+  if (!res || !res.ok) { toast((res && res.error) || t('Save failed'), true); return; }
+  await loadConfig().catch(() => {});
+  refresh();
 }
 
 async function discordConnectCode(btn) {

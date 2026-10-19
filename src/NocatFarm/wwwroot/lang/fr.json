@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "met de côté des gemmes échangeables pour un booster {0} à vendre",
     "the {0} pack's price moved · weighed again later": "le prix du booster {0} a bougé · réévalué plus tard",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "booster {0} créé pour être vendu · environ {1} niveaux pour 1 000 gemmes",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "booster {0} créé pour être ouvert et ses cartes vendues · environ {1} niveaux pour 1 000 gemmes"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "booster {0} créé pour être ouvert et ses cartes vendues · environ {1} niveaux pour 1 000 gemmes",
+    "Commenting is on hold on every account until {0}.": "Les commentaires sont en pause sur tous les comptes jusqu'au {0}.",
+    "Resume now": "Reprendre maintenant",
+    "Pause rep4rep for...": "Mettre rep4rep en pause pendant...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Met les commentaires en pause sur tous les comptes, puis ils reprennent d'eux-mêmes - même après un redémarrage.",
+    "{0} hours": "{0} heures",
+    "rep4rep held for {0} hours": "rep4rep en pause pendant {0} heures",
+    "rep4rep commenting carries on": "rep4rep continue de commenter",
+    "Disconnect": "Déconnecter",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Oublie ce chat. Le bouton Connecter Telegram revient, pour en connecter un autre.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Oublie ce compte Discord - le bot n'obéit plus à personne jusqu'à ce que tu le reconnectes."
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -3237,7 +3237,17 @@
     "saving tradable gems for a {0} pack to sell": "копит обмениваемые самоцветы на набор {0} для продажи",
     "the {0} pack's price moved · weighed again later": "цена набора {0} изменилась · пересчитает позже",
     "{0} pack made to sell · about {1} levels per 1,000 gems": "сделан набор {0} для продажи · около {1} уровней на 1 000 самоцветов",
-    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "сделан набор {0}, чтобы открыть и продать карточки · около {1} уровней на 1 000 самоцветов"
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "сделан набор {0}, чтобы открыть и продать карточки · около {1} уровней на 1 000 самоцветов",
+    "Commenting is on hold on every account until {0}.": "Комментарии приостановлены на всех аккаунтах до {0}.",
+    "Resume now": "Продолжить сейчас",
+    "Pause rep4rep for...": "Приостановить rep4rep на...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Приостанавливает комментарии на всех аккаунтах, потом они возобновляются сами - даже после перезапуска.",
+    "{0} hours": "{0} ч",
+    "rep4rep held for {0} hours": "rep4rep приостановлен на {0} ч",
+    "rep4rep commenting carries on": "rep4rep продолжает комментировать",
+    "Disconnect": "Отключить",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Забывает этот чат. Снова появится кнопка «Подключить Telegram», чтобы подключить другой.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Забывает этот аккаунт Discord - бот никого не слушается, пока вы не подключите его снова."
   },
   "settings": {
     "SteamOpenEveryAccount": {

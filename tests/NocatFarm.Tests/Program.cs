@@ -28689,6 +28689,9 @@ await SetShareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".."
 // ── 1.8.2: the gems maths - each way winning in turn, the margin, kept loose when unsure, never losing money; fakes only ──
 await GemsChoiceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: settings clean-up - internals hidden, ranges on one row, merged settings with their old keys, order, defaults, setup ──
+await SettingsCleanupChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -33536,4 +33539,91 @@ sealed class FakeGemsMarket : NocatFarm.Modules.GemsChoice.IMarket {
 	private readonly HashSet<uint> _read = [];
 
 	public double? Rate(int currency) => RateValue;
+}
+
+/// <summary>The 1.8.2 settings clean-up: what the dashboard draws, the old keys still loading, the new defaults, the setup.</summary>
+static class SettingsCleanupChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		var S = typeof(NocatFarm.Config.Settings);
+		IReadOnlyList<NocatFarm.Config.SettingDef> bot = NocatFarm.Config.Settings.Bot, global = NocatFarm.Config.Settings.Global;
+		NocatFarm.Config.SettingDef? B(string n) => bot.FirstOrDefault(d => d.Name == n);
+		NocatFarm.Config.SettingDef? G(string n) => global.FirstOrDefault(d => d.Name == n);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-setclean-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		NocatFarm.Config.GlobalConfig wasGlobal = NocatFarm.Config.Live.Global;
+		List<NocatFarm.Core.Bot> made = [];
+
+		try {
+			// ── hidden internals ──
+			string[] hiddenBot = ["UIMode", "WarmUpMinMinutes", "WarmUpMaxMinutes", "BreakAwayAfterMinMinutes", "BreakAwayAfterMaxMinutes",
+				"WakeDelayMinMinutes", "WakeDelayMaxMinutes", "QuietDelayMinMinutes", "QuietDelayMaxMinutes", "LegitStopMaxSeconds",
+				"PureMainDayChancePct", "FarmingDelayMinutes", "SellPerRun", "SparePerRun", "SpareHumanPerLook", "SpareGapSeconds",
+				"SpareHumanGapMinMinutes", "SpareHumanGapMaxMinutes", "SpareRunHours", "SparePriceMaxAgeHours", "SpareDumpPct",
+				"SpareGemMarginPct", "BoosterCheckHours", "AchievementGrindGapMinMinutes", "AchievementGrindGapMaxMinutes", "SaleQuests",
+				"SaleNextFest", "SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes",
+				"SaleCheckHours", "PointsCheckEveryHours", "BuyCheckHours", "ScamWatchMinMinutes", "ScamWatchMaxMinutes",
+				"HealthMinHours", "HealthMaxHours", "Rep4RepRetryRefused"];
+			string[] hiddenGlobal = ["WebRefreshSeconds", "OpenDashboardAfterAdd", "MarketGapSeconds", "PriceCacheHours",
+				"Rep4RepPointsRefreshMinutes", "Rep4RepPauseHours", "UpdateCheckHours", "BackupJitterMinutes", "BackupRetryMinutes",
+				"LoginStaggerSeconds", "ReconnectDelaySeconds", "ConnectionTimeoutSeconds", "LoginCooldownMinutes", "WebRequestGapMs",
+				"TelegramLogColour", "DiscordLogColour", "TelegramChatId", "DiscordOwnerId"];
+			List<string> notHidden = [.. hiddenBot.Where(n => B(n) is not { Hidden: true }), .. hiddenGlobal.Where(n => G(n) is not { Hidden: true })];
+			Check("settings: the internals nobody tunes are hidden - 39 per account, 18 global, \"Gems must beat selling by\" among them",
+				notHidden.Count == 0 && (bot.Count(d => d.Hidden) >= 39) && (global.Count(d => d.Hidden) >= 18), string.Join(", ", notHidden));
+
+			// Hidden is only the dashboard: the console finds it, sets it and lists it under 'config all'.
+			var hcfg = new NocatFarm.Config.BotConfig();
+			bool setsHidden = (NocatFarm.Config.Settings.FindBot("spareruNhours") is { } runHours) && (NocatFarm.Config.Settings.Apply(hcfg, runHours, "30") == null) && (hcfg.SpareRunHours == 30)
+				&& (NocatFarm.Config.Settings.Find("Rep4RepPauseHours") != null);
+			Check("settings: a hidden one still works from the console - found, set and explained", setsHidden);
+			Check("settings: the dashboard never draws a hidden one, and doesn't count it with the advanced ones",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("(settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden)", StringComparison.Ordinal));
+
+			var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+			var managed = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+				.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+			var robot = new NocatFarm.Core.Bot("clean1", new NocatFarm.Config.BotConfig { SteamLogin = "x" });
+			made.Add(robot);
+			managed["clean1"] = robot;
+			string plain = await NocatFarm.Commands.RunAsync(mgr, "config clean1");
+			string all = await NocatFarm.Commands.RunAsync(mgr, "config clean1 all");
+			Check("settings: 'config <account>' leaves the hidden ones out, 'config <account> all' lists them",
+				!plain.Contains("SpareRunHours", StringComparison.Ordinal) && all.Contains("SpareRunHours", StringComparison.Ordinal) && all.Contains("UIMode", StringComparison.Ordinal), plain.Length + "/" + all.Length);
+
+			// Robot-only pacing is robot mode only - it did nothing on a human-mode account, where it showed.
+			Check("settings: robot-only pacing settings are robot mode only",
+				new[] { "SparePerRun", "SpareGapSeconds", "SaleGapMinSeconds", "SaleGapMaxSeconds" }.All(n => B(n)?.Mode == "rage"));
+
+			// "Pause rep4rep for..." - an action, with a command and buttons, not a setting.
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false };
+			string held = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold 24");
+			bool holding = NocatFarm.Config.Live.Global.Rep4RepHoldUntil is { } hu && Math.Abs((hu - DateTime.UtcNow).TotalHours - 24) < 0.1;
+			string off = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold off");
+			string bad = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold soon");
+			Check("settings: 'rep4rep hold 24' holds every account's comments for a day, 'rep4rep hold off' ends it",
+				holding && held.Contains("24h", StringComparison.Ordinal) && (NocatFarm.Config.Live.Global.Rep4RepHoldUntil == null)
+				&& bad.StartsWith("rep4rep hold <hours>", StringComparison.Ordinal), $"{held} | {off} | {bad}");
+			Check("settings: the dashboard's rep4rep section has Pause buttons, and the chat panels a Disconnect",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("function rep4repHoldPanel(values)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('TelegramChatId')", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('DiscordOwnerId')", StringComparison.Ordinal));
+			//STEP2
+		} finally {
+			foreach (NocatFarm.Core.Bot b in made) {
+				await b.DisposeAsync();
+			}
+
+			NocatFarm.Config.Live.Global = wasGlobal;
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
 }

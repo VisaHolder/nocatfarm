@@ -123,7 +123,7 @@ public static partial class Commands {
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
-		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all>", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
+		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all> | hold <hours>|off", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it.", "r4r"),
 
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
@@ -5297,6 +5297,28 @@ public static partial class Commands {
 		string? who = args.Length > 1 ? args[1] : null;
 
 		switch (sub) {
+			// "Pause rep4rep for..." - every account, a number of hours, kept through restarts. It used to be a setting
+			// (Rep4RepPauseHours), which is an action rather than a preference; the setting still works underneath.
+			case "hold": {
+				int hours = who == null ? -1
+					: who.Equals("off", StringComparison.OrdinalIgnoreCase) ? 0
+					: int.TryParse(who, NumberStyles.None, CultureInfo.InvariantCulture, out int h) ? h : -1;
+
+				if (hours is < 0 or > 720) {
+					return "rep4rep hold <hours> - 1 to 720, or 'rep4rep hold off' to end it";
+				}
+
+				lock (ConfigStore.GlobalEditGate) {
+					Live.Global.Rep4RepPauseHours = hours;
+					Live.Global.Rep4RepHoldFrom = null;   // a new hold starts now, not when an old one did
+					ConfigStore.SaveGlobal(Live.Global);
+				}
+
+				ApplyGlobalSideEffects(mgr, Settings.FindGlobal("Rep4RepPauseHours")!);
+
+				return hours == 0 ? "rep4rep: no hold - commenting carries on" : $"rep4rep: commenting held on every account for {hours}h";
+			}
+
 			case "points": {
 				if (!mgr.Rep4Rep.HasToken) {
 					return "No rep4rep API token set. Get one from rep4rep.com under Settings, then:  set Rep4RepApiToken <token>";
@@ -5520,8 +5542,9 @@ public static partial class Commands {
 		int width = defs.Max(static d => d.Name.Length) + 2;
 
 		foreach (string section in defs.Select(static d => d.Section).Distinct()) {
-			List<SettingDef> shown = defs.Where(d => (d.Section == section) && (showAdvanced || !d.Advanced)).ToList();
-			hidden += defs.Count(d => (d.Section == section) && d.Advanced && !showAdvanced);
+			// An internal knob (Hidden) is listed with the advanced ones: 'config all' shows every setting there is.
+			List<SettingDef> shown = defs.Where(d => (d.Section == section) && (showAdvanced || (!d.Advanced && !d.Hidden))).ToList();
+			hidden += defs.Count(d => (d.Section == section) && (d.Advanced || d.Hidden) && !showAdvanced);
 
 			if (shown.Count == 0) {
 				continue;
