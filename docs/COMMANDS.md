@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-86 commands in all.
+87 commands in all.
 
 ## Accounts
 
