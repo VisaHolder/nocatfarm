@@ -3150,7 +3150,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Die günstigste Abzeichenstufe zuerst - ein angefangenes Abzeichen oder ein ganz neuer Satz, was weniger kostet",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Will Steam Käufe in der Steam-App bestätigt haben, bestätigst du sie auf deinem Handy - ein Satz nach dem anderen, sonst nach einem Tag losgelassen",
     "set finder · couldn't look · {0}": "Satzsuche · konnte nicht nachsehen · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "Satzsuche · heute {0} Karten angesehen · {1} ganze Sätze bekannt",
     "set finder · couldn't read its list, starting over · {0}": "Satzsuche · ihre Liste ließ sich nicht lesen, sie fängt neu an · {0}",
     "set finder · couldn't save its list · {0}": "Satzsuche · ihre Liste ließ sich nicht speichern · {0}",
     "Set price": "Satzpreis",
@@ -3341,7 +3340,20 @@
     "the market stopped answering before what its money buys was priced": "der Markt antwortete nicht mehr, bevor feststand, was das Geld kaufen würde",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} wurde am letzten Tag nur {1} Mal verkauft - wartet, das Set ist {2} wert ({3} Stufen)",
     "it has no Steam wallet to spend the money from": "es hat keine Steam-Geldbörse, um das Geld auszugeben",
-    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft"
+    "on your keep list - its set is crafted, never sold": "auf deiner Behalten-Liste - das Set wird hergestellt, nie verkauft",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "Satzsuche · {0} der {1} günstigsten Sätze in den letzten 24 Stunden auf dem Markt geprüft · {2} ganze Sätze bekannt",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "Karten kaufen · Geld übrig für weitere günstige Stufen - nächster Blick in {0} Minuten",
+    "Level price now: {0} a level (100 XP)": "Stufenpreis jetzt: {0} pro Stufe (100 EP)",
+    "At most {0} for one badge level - twice the cheapest level now": "Höchstens {0} für eine Abzeichenstufe - das Doppelte der günstigsten Stufe jetzt",
+    "At most {0} for one badge level": "Höchstens {0} für eine Abzeichenstufe",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Die Satzsuche hat in den letzten 24 Stunden {0} der {1} günstigsten Sätze auf dem Markt geprüft und kennt {2} ganze Sätze. Zuletzt nachgesehen: {3}.",
+    "automatic": "automatisch",
+    "Time between looks, human mode": "Zeit zwischen Blicken, menschlicher Modus",
+    "sets": "Sätze",
+    "No limit a day ({0} spent in the last day)": "Kein Limit pro Tag ({0} am letzten Tag ausgegeben)",
+    "No limit a week ({0} spent this week)": "Kein Limit pro Woche ({0} diese Woche ausgegeben)",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Kein Limit: Es gibt aus, was die Geldbörse hält, die günstigsten Stufen zuerst - das Höchste für eine Stufe gilt weiter.",
+    "No limit": "Kein Limit"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4890,6 +4902,26 @@
     "DailyReportTime": {
       "label": "Tägliche Zusammenfassung um",
       "tip": "Wann die tägliche Zusammenfassung ins Protokoll geschrieben wird, in Ortszeit - und gesendet, wenn der Chip „Tageszusammenfassung“ unter Benachrichtigungen an ist. Zum Beispiel 09:30."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Höchstens zahlen für eine Abzeichenstufe",
+      "tip": "Das Höchste, was es für eine Abzeichenstufe (100 EP) zahlt - einen ganzen Satz oder die Karten, die einem angefangenen Abzeichen fehlen - in der Steam-Geldbörsen-Währung dieses Kontos. Eine teurere Stufe wartet, bis die Preise sinken, damit das Geld nicht für teure Stufen ausgegeben wird, wenn die günstigen ausgehen. Zum Beispiel 0,50: Ein 5-Karten-Satz für 0,35 wird gekauft, ein 9-Karten-Satz für 0,70 wartet. 0 ist automatisch: das Doppelte der günstigsten Stufe, die es gerade kaufen kann - bei 0,33 als günstigster bis 0,66."
+    },
+    "BuyStopAtLevel": {
+      "label": "Kaufen bei Steam-Level beenden",
+      "tip": "Das Kartenkaufen hört auf, sobald dieses Konto dieses Steam-Level erreicht - zum Beispiel 50: Bei Level 50 kauft es nichts mehr, und unterwegs kauft es nur die Abzeichenstufen, die bis dahin noch fehlen. 'levelup' sagt, was ein Level kostet. 0 hört nie auf."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Sätze pro Blick, menschlicher Modus",
+      "tip": "Wie viele Sätze ein Blick auf einem Konto im Menschen-Modus kauft, die günstigsten zuerst - dann wartet es eine Weile bis zum nächsten Blick, wie jemand, der ab und zu ein paar Sätze kauft. Zum Beispiel 3 Sätze pro Blick, ein Blick alle 30 bis 90 Minuten in seinem Tag: etwa 25 bis 40 Sätze am Tag, bis das Geld des Tages oder die günstigen Sätze ausgehen. Ein Roboter kauft in einem Blick jeden Satz, der passt."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Kürzeste Pause zwischen Blicken, menschlicher Modus",
+      "tip": "Die kürzeste Pause zwischen zwei Blicken, die auf einem Konto im Menschen-Modus kaufen, solange Geld und günstige Sätze übrig sind, in Minuten - nur in seinem Tag. Jede Pause wird zufällig zwischen diesem Wert und dem längsten gewählt. Zum Beispiel 30 und 90: der nächste Blick kommt irgendwann zwischen einer halben und anderthalb Stunden später."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Längste Pause zwischen Blicken, menschlicher Modus",
+      "tip": "Die längste Pause zwischen zwei Blicken, die auf einem Konto im Menschen-Modus kaufen, in Minuten. Zum Beispiel 90, mit 30 als kürzester: etwa 16 Blicke an einem 16-Stunden-Tag."
     }
   }
 }

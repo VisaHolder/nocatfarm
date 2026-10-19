@@ -10,33 +10,49 @@ namespace NocatFarm.Core;
 /// badge can be crafted without the game). One for the whole app, shared by every account.
 /// </summary>
 /// <remarks>
-/// Buying cards used to look only at the 200 cheapest single cards and the games they belong to, and so missed a cheap
-/// SET whose cards weren't individually the very cheapest. This walks much deeper, a little at a time:
+/// A card belongs to a set, and one search of a game (its own search, <see cref="GamePage"/>) hands back the whole set with
+/// each card's cheapest price and how many are listed: a set costs one request (two for a set of more than 10 cards - a
+/// signed-out search answers 10 a page). So it reads whole sets, the most promising games first:
 /// <list type="bullet">
-/// <item>The walk: the market's normal trading card search (Steam's own items, normal cards, cheapest first, signed out,
-/// US dollars) a few pages a batch, up to <see cref="DailyCards"/> cards a day, starting from the top again each day.
-/// Every card it sees is written down with its cheapest listing, how many are listed and when.</item>
-/// <item>The sets: a game's whole set is read with the game's own search (its size and every card), the most promising
-/// games first - the cheapest the walk says they can be - a couple a batch, at most <see cref="FillsADay"/> a day.</item>
+/// <item>Which games: the public cheapest-sets list (<see cref="SetSeeds"/>, once a day, robots.txt followed - up to
+/// 1,000 games, cheapest first) and the shared list from other copies (<see cref="SetShare"/>). Neither price is ever
+/// kept as a set's: they only put the games in order (<see cref="ToFill"/>).</item>
+/// <item>How fast: while any of the <see cref="KeepFresh"/> cheapest candidates is due (never read, or read longer ago than
+/// <see cref="RefillAfter"/>), a batch of up to <see cref="RequestsABatch"/> requests every 12 to 18 minutes
+/// (<see cref="CatchUpGap"/>) - about 64 an hour, 80 at the very most: under a quarter of the app's market budget (360
+/// an hour, <see cref="PriceBook.DefaultHourCap"/>) and inside the background's quarter of it (90). That reads about 50
+/// sets an hour: the 100 cheapest in about two hours, the 300 cheapest in about six. After that, small batches
+/// (<see cref="RequestsABatchIdle"/>, every 15 to 30 minutes) keep them fresh, cheapest first. At most
+/// <see cref="FillsADay"/> sets a day (about 780 requests, under a tenth of a day's budget).</item>
+/// <item>The walk - the market's cheapest single cards, page by page - is only a slow extra now (<see cref="PagesABatch"/>
+/// a batch, <see cref="DailyCards"/> a day): it finds a cheap set no list has yet. Reading 10 cards a request, it was far
+/// too slow to be the main way (1,200 cards and 25 sets in six hours on 2026-10-19).</item>
 /// <item>A set is known only when every card of it was seen in the last <see cref="CardLife"/>, every one listed: its
-/// price is the sum of each card's cheapest listing. An older table only says which games to read first, never a price.</item>
+/// price is the sum of each card's cheapest listing.</item>
 /// </list>
-/// Every request goes through the price book's queue (<see cref="PriceBook.MarketGetAsync"/>): the same gap, the hourly
-/// cap, the background's share of it, and nothing while the market says slow down. Nothing here is ever bought on:
-/// buying cards prices every card again on the real market, in the wallet's currency, right before it buys.
-///
-/// Public "cheapest sets" lists (<see cref="SetSeeds"/>, once a day, robots.txt followed) and sets from outside
-/// (<see cref="Merge"/>) only say which games to read first (<see cref="ToFill"/>): their prices are never kept as a set's.
+/// Every request goes through the price book's queue (<see cref="PriceBook.MarketGetAsync"/>): its gap (about 10 seconds,
+/// give or take a quarter), the hourly cap, the background's share of it, and nothing while the market says slow down -
+/// the first request it doesn't answer ends the batch. Nothing here is ever bought on: buying cards prices every card
+/// again on the real market, in the wallet's currency, right before it buys.
 /// </remarks>
 public sealed class SetFinder {
-	/// <summary>Cards the walk reads a day, at most.</summary>
-	public const int DailyCards = 3000;
+	/// <summary>Cards the walk reads a day, at most - a slow extra (60 requests a day).</summary>
+	public const int DailyCards = 600;
 
-	/// <summary>Search pages a batch reads of the walk, at most.</summary>
-	public const int PagesABatch = 8;
+	/// <summary>Search pages a batch reads of the walk, at most - with what the sets leave of the batch.</summary>
+	public const int PagesABatch = 2;
 
-	/// <summary>Whole sets a batch reads, at most - and a day.</summary>
-	public const int FillsABatch = 2, FillsADay = 100;
+	/// <summary>Market requests a batch makes at most while the cheapest sets are due - whole sets first, then the walk.</summary>
+	public const int RequestsABatch = 16;
+
+	/// <summary>Market requests a batch makes at most once the cheapest sets are fresh.</summary>
+	public const int RequestsABatchIdle = 4;
+
+	/// <summary>Whole sets read a day, at most.</summary>
+	public const int FillsADay = 600;
+
+	/// <summary>The cheapest candidate sets kept fresh at the quick pace.</summary>
+	public const int KeepFresh = 300;
 
 	/// <summary>The fewest cards a set has.</summary>
 	internal const int MinSetSize = 5;
@@ -53,8 +69,11 @@ public sealed class SetFinder {
 	/// <summary>How long 'sets' keeps the finder looking when no account buys full sets.</summary>
 	public static readonly TimeSpan AskedFor = TimeSpan.FromDays(1);
 
-	/// <summary>The time between batches.</summary>
+	/// <summary>The time between batches once the cheapest sets are fresh.</summary>
 	public static TimeSpan BatchGap() => Rng.Minutes(15, 30);
+
+	/// <summary>The time between batches while the cheapest sets are still being read.</summary>
+	public static TimeSpan CatchUpGap() => Rng.Minutes(12, 18);
 
 	/// <summary>The market's normal trading card search: Steam's own items, trading cards, normal (not foil), in English.</summary>
 	private const string Search = "/market/search/render/?norender=1&appid=753&category_753_item_class[]=tag_item_class_2&category_753_cardborder[]=tag_cardborder_0&l=english";
@@ -81,8 +100,11 @@ public sealed class SetFinder {
 		public long XpPerUnit => Shown > 0 ? 100L * 100 / Shown : 0;
 	}
 
-	/// <summary>How far it has got: cards read today, of how many on the market, whole sets known, and the last look.</summary>
-	public sealed record Coverage(int Walked, int MarketTotal, int Known, DateTime? LastLook);
+	/// <summary>
+	/// How far it has got: cards the walk read today, of how many on the market, whole sets known, the last look - and of the
+	/// cheapest sets the lists name (<paramref name="Candidates"/>), how many were read on the market in the last 24 hours.
+	/// </summary>
+	public sealed record Coverage(int Walked, int MarketTotal, int Known, DateTime? LastLook, int Checked = 0, int Candidates = 0);
 
 	internal sealed class Card {
 		public int Usd { get; set; }
@@ -137,9 +159,17 @@ public sealed class SetFinder {
 	/// only its place in the list (<see cref="Rank"/>). A candidate, nothing more.
 	/// </summary>
 	internal sealed class Hint {
+		/// <summary>An outside set's price (US cents) - only what orders it; 0 when none.</summary>
 		public int UsdCents { get; set; }
+
+		/// <summary>When the outside price was seen.</summary>
 		public long At { get; set; }
+
+		/// <summary>Its place in the public list (1 the cheapest); 0 when it isn't in it.</summary>
 		public int Rank { get; set; }
+
+		/// <summary>When the public list said so.</summary>
+		public long RankAt { get; set; }
 	}
 
 	// ── what it knows, as plain records - and outside ones taken in as candidates only ──
@@ -174,19 +204,30 @@ public sealed class SetFinder {
 
 	/// <summary>
 	/// Games from a public list, the cheapest set first: only which games to read first, in that order - no price is kept,
-	/// a game already offered with a price keeps it. How many were taken.
+	/// a game already offered with a price keeps it. The list before this one is done with. How many were taken.
 	/// </summary>
 	public int Seed(IReadOnlyList<uint> games, DateTime now) {
 		lock (_gate) {
 			Table t = Load();
 			int rank = 0;
 
+			foreach ((uint app, Hint h) in t.Hints.ToList()) {
+				h.Rank = 0;
+
+				if (h.UsdCents == 0) {
+					t.Hints.Remove(app);
+				}
+			}
+
 			foreach (uint app in games.Where(static a => a > 0).Distinct()) {
 				rank++;
 
-				if (!t.Hints.TryGetValue(app, out Hint? h) || (h.UsdCents == 0)) {
-					t.Hints[app] = new Hint { At = now.Ticks, Rank = rank };
+				if (!t.Hints.TryGetValue(app, out Hint? h)) {
+					t.Hints[app] = h = new Hint();
 				}
+
+				h.Rank = rank;
+				h.RankAt = now.Ticks;
 			}
 
 			Save();
@@ -226,7 +267,12 @@ public sealed class SetFinder {
 					continue;
 				}
 
-				t.Hints[r.App] = new Hint { UsdCents = r.UsdCents, At = r.Cards.Min(static c => c.SeenUtc).Ticks };
+				if (!t.Hints.TryGetValue(r.App, out Hint? h)) {
+					t.Hints[r.App] = h = new Hint();
+				}
+
+				h.UsdCents = r.UsdCents;
+				h.At = r.Cards.Min(static c => c.SeenUtc).Ticks;
 				taken++;
 			}
 
@@ -285,11 +331,16 @@ public sealed class SetFinder {
 	}
 
 	// ── the background look ─────────────────────────────────────────────────
-	/// <summary>The look, every 15 to 30 minutes, for as long as the app runs.</summary>
+	/// <summary>
+	/// The look, for as long as the app runs: every 12 to 18 minutes while the cheapest sets are still being read, every 15
+	/// to 30 once they're fresh.
+	/// </summary>
 	public static void Start(BotManager mgr) => _ = Task.Run(async () => {
 		await Task.Delay(Rng.Minutes(3, 8)).ConfigureAwait(false);
 
 		while (true) {
+			bool more = false;
+
 			try {
 				SetFinder finder = Shared;
 
@@ -299,13 +350,13 @@ public sealed class SetFinder {
 				}
 
 				if (finder.Looking(mgr.All, DateTime.UtcNow) && (PriceBook.PausedUntil == null) && (PriceBook.SearchesBackAt == null)) {
-					await finder.BatchAsync(DateTime.UtcNow, CancellationToken.None).ConfigureAwait(false);
+					more = (await finder.BatchAsync(DateTime.UtcNow, CancellationToken.None).ConfigureAwait(false)).More;
 				}
 			} catch (Exception e) {
 				Log.Debug(new Said("set finder · couldn't look · {0}", Log.Describe(e)));
 			}
 
-			await Task.Delay(BatchGap()).ConfigureAwait(false);
+			await Task.Delay(more ? CatchUpGap() : BatchGap()).ConfigureAwait(false);
 		}
 	});
 
@@ -328,19 +379,24 @@ public sealed class SetFinder {
 		}
 	}
 
-	/// <summary>What one batch did: walk pages and sets read, and whether the market stopped answering partway.</summary>
-	public readonly record struct Batch(int Pages, int Sets, bool Stopped);
+	/// <summary>
+	/// What one batch did: walk pages and sets read, market requests made, whether the market stopped answering partway, and
+	/// whether the cheapest sets are still being read (the next batch comes sooner).
+	/// </summary>
+	public readonly record struct Batch(int Pages, int Sets, bool Stopped, int Requests = 0, bool More = false);
 
 	/// <summary>
-	/// One batch: up to <see cref="PagesABatch"/> pages further down the walk (until the day's <see cref="DailyCards"/>),
-	/// then up to <see cref="FillsABatch"/> of the most promising games' whole sets. The first request the market doesn't
-	/// answer ends the batch - the market's pause is the price book's business; the next batch goes on from there.
+	/// One batch: the most promising games' whole sets, cheapest first (<see cref="ToFill"/>) - up to
+	/// <see cref="RequestsABatch"/> requests while one of the <see cref="KeepFresh"/> cheapest is due, else
+	/// <see cref="RequestsABatchIdle"/> - leaving <see cref="PagesABatch"/> of them to the walk, which takes what the sets
+	/// don't use (until the day's <see cref="DailyCards"/>). The first request the market doesn't answer ends the batch -
+	/// the market's pause is the price book's business; the next batch goes on from there.
 	/// </summary>
 	public async Task<Batch> BatchAsync(DateTime now, CancellationToken ct) {
 		await _one.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
-			int pages = 0, sets = 0;
+			int pages = 0, sets = 0, requests = 0;
 			bool stopped = false;
 
 			lock (_gate) {
@@ -355,9 +411,32 @@ public sealed class SetFinder {
 				}
 			}
 
-			// ── the walk ──
-			while ((pages < PagesABatch) && (Walked() < DailyCards)) {
+			int budget = CatchingUp(now) ? RequestsABatch : RequestsABatchIdle;
+			bool walking = Walked() < DailyCards;
+
+			// ── the most promising sets, read whole: one request each (two past 10 cards) ──
+			foreach (uint app in ToFill(now)) {
+				if ((requests >= budget - (walking ? PagesABatch : 0)) || (FillsToday() >= FillsADay)) {
+					break;
+				}
+
+				int used = await FillAsync(app, now, ct).ConfigureAwait(false);
+
+				if (used < 0) {
+					requests -= used;
+					stopped = true;
+
+					break;
+				}
+
+				requests += used;
+				sets++;
+			}
+
+			// ── the walk, with what's left ──
+			while (!stopped && (pages < PagesABatch) && (requests < budget) && (Walked() < DailyCards)) {
 				string? json = await _get(WalkPage(Walked()), ct).ConfigureAwait(false);
+				requests++;
 
 				if ((json == null) || !ReadWalk(json, now)) {
 					stopped = true;
@@ -366,19 +445,6 @@ public sealed class SetFinder {
 				}
 
 				pages++;
-			}
-
-			// ── the most promising sets, read whole ──
-			if (!stopped) {
-				foreach (uint app in ToFill(now).Take(FillsABatch)) {
-					if (!await FillAsync(app, now, ct).ConfigureAwait(false)) {
-						stopped = true;
-
-						break;
-					}
-
-					sets++;
-				}
 			}
 
 			lock (_gate) {
@@ -394,12 +460,18 @@ public sealed class SetFinder {
 
 			if (pages + sets > 0) {
 				Coverage c = Covered(now);
-				Log.Debug(new Said("set finder · {0} cards looked at today · {1} whole sets known", c.Walked, c.Known));
+				Log.Debug(new Said("set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known", c.Checked, c.Candidates, c.Known));
 			}
 
-			return new Batch(pages, sets, stopped);
+			return new Batch(pages, sets, stopped, requests, !stopped && CatchingUp(now));
 		} finally {
 			_one.Release();
+		}
+	}
+
+	private int FillsToday() {
+		lock (_gate) {
+			return Load().FillsToday;
 		}
 	}
 
@@ -468,19 +540,21 @@ public sealed class SetFinder {
 	}
 
 	/// <summary>
-	/// A game's whole set read with its own search: its size and every card. False when the market didn't answer. A set the
-	/// search doesn't hand back whole (something else came with it, or it stopped short) stays not known.
+	/// A game's whole set read with its own search: its size and every card. The requests it took - minus them when the
+	/// market didn't answer. A set the search doesn't hand back whole (something else came with it, or it stopped short)
+	/// stays not known.
 	/// </summary>
-	private async Task<bool> FillAsync(uint app, DateTime now, CancellationToken ct) {
+	private async Task<int> FillAsync(uint app, DateTime now, CancellationToken ct) {
 		Dictionary<string, Card> cards = new(StringComparer.Ordinal);
 		string name = "";
-		int total = 0, others = 0;
+		int total = 0, others = 0, asked = 0;
 
 		for (int start = 0; start < 300;) {   // nobody makes a set of 300 cards
 			string? json = await _get(GamePage(app, start), ct).ConfigureAwait(false);
+			asked++;
 
 			if (json == null) {
-				return false;
+				return -asked;
 			}
 
 			int got = 0;
@@ -490,7 +564,7 @@ public sealed class SetFinder {
 				JsonElement root = doc.RootElement;
 
 				if ((root.ValueKind != JsonValueKind.Object) || !root.TryGetProperty("results", out JsonElement results) || (results.ValueKind != JsonValueKind.Array)) {
-					return false;
+					return -asked;
 				}
 
 				total = Int(root, "total_count");
@@ -508,7 +582,7 @@ public sealed class SetFinder {
 					name = card.Game;
 				}
 			} catch (JsonException) {
-				return false;
+				return -asked;
 			}
 
 			start += got;
@@ -527,7 +601,14 @@ public sealed class SetFinder {
 			}
 
 			game.FilledAt = now.Ticks;
-			t.Hints.Remove(app);   // read here now: whatever an outside list said of it is done with
+			// Read here now: whatever price an outside list said of it is done with - its place in the public list stays.
+			if (t.Hints.TryGetValue(app, out Hint? h)) {
+				h.UsdCents = 0;
+
+				if (h.Rank == 0) {
+					t.Hints.Remove(app);
+				}
+			}
 
 			if ((cards.Count > 0) && (cards.Count + others == total)) {
 				game.Size = cards.Count;
@@ -537,81 +618,104 @@ public sealed class SetFinder {
 			}
 		}
 
-		return true;
+		return asked;
 	}
 
 	/// <summary>
-	/// The one place it picks which games' whole sets to read next, the most promising first: at least what the walk says it
-	/// costs - the cards it has seen, and every card it hasn't at the walk's dearest card or more - or, when it was known
-	/// before, what it cost then, if that's more; a set from outside (<see cref="Merge"/>) at what it was said to cost
-	/// there. Not one known now and read lately, nor one read in the last <see cref="RefillAfter"/>.
+	/// The one place it picks which games' whole sets to read next, the most promising first (<see cref="Candidates"/>) - only
+	/// those due: not read in the last <see cref="RefillAfter"/>, and not known now with every card seen lately. Nothing once
+	/// the day's <see cref="FillsADay"/> are read.
 	/// </summary>
 	public IReadOnlyList<uint> ToFill(DateTime now) {
 		lock (_gate) {
 			Table t = Load();
 
-			if (t.FillsToday >= FillsADay) {
-				return [];
-			}
-
-			List<(uint App, long Bound, int Rank)> wanted = [];
-
-			foreach ((uint app, Game g) in t.Games) {
-				if ((g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < RefillAfter)) {
-					continue;
-				}
-
-				List<Card> fresh = [.. g.Cards.Values.Where(c => Fresh(c, now))];
-
-				// Known now, and every card seen lately: the walk keeps it up to date by itself.
-				if (Whole(g, now) && g.Cards.Values.All(c => now - new DateTime(c.At, DateTimeKind.Utc) < RefillAfter)) {
-					continue;
-				}
-
-				// A card seen fresh with nobody selling it: the set can't be bought whole.
-				if (fresh.Any(static c => c.Usd <= 0)) {
-					continue;
-				}
-
-				bool before = (g.Size > 0) && (g.Cards.Count == g.Size) && g.Cards.Values.All(static c => c.Usd > 0);
-
-				if ((fresh.Count == 0) && !before) {
-					continue;   // nothing seen lately, and never known: nothing to go on
-				}
-
-				int unseen = Math.Max(0, (g.Size > 0 ? g.Size : MinSetSize) - fresh.Count);
-				long bound = fresh.Sum(static c => (long) c.Usd) + ((long) unseen * Math.Max(1, t.Frontier));
-
-				// Known before: what it cost then orders it - only orders it, it's never a price anything is bought at.
-				if (before) {
-					bound = Math.Max(bound, g.Cards.Values.Sum(static c => (long) c.Usd));
-				}
-
-				wanted.Add((app, bound, int.MaxValue));
-			}
-
-			// Sets from outside: only the order games are read in.
-			foreach ((uint app, Hint h) in t.Hints) {
-				if (t.Games.TryGetValue(app, out Game? g) && (((g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < RefillAfter))
-					|| Whole(g, now) || g.Cards.Values.Any(c => Fresh(c, now) && (c.Usd <= 0)))) {
-					continue;
-				}
-
-				int at = wanted.FindIndex(w => w.App == app);
-
-				// A price from outside orders it; a public list's game, with no price, is at least a smallest set of cards the
-				// walk hasn't reached today - and among those, the list's own order.
-				long bound = h.UsdCents > 0 ? h.UsdCents : (long) MinSetSize * Math.Max(1, t.Frontier);
-
-				if (at < 0) {
-					wanted.Add((app, bound, h.Rank));
-				} else if ((h.UsdCents > 0) && (h.UsdCents < wanted[at].Bound)) {
-					wanted[at] = (app, h.UsdCents, wanted[at].Rank);
-				}
-			}
-
-			return [.. wanted.OrderBy(static w => w.Bound).ThenBy(static w => w.Rank).ThenBy(static w => w.App).Select(static w => w.App)];
+			return t.FillsToday >= FillsADay ? [] : [.. Candidates(t, now).Where(static c => c.Due).Select(static c => c.App)];
 		}
+	}
+
+	/// <summary>Whether one of the <see cref="KeepFresh"/> cheapest candidates is due, and the day's sets aren't all read: the quick pace.</summary>
+	public bool CatchingUp(DateTime now) {
+		lock (_gate) {
+			Table t = Load();
+
+			return (t.FillsToday < FillsADay) && Candidates(t, now).Take(KeepFresh).Any(static c => c.Due);
+		}
+	}
+
+	/// <summary>
+	/// Every game worth reading, the cheapest it's likely to be first - only to put them in order, never a price anything is
+	/// bought at. Read whole before: what it cost then. Not yet: what the walk says it costs at least (the cards it has seen,
+	/// every one it hasn't at the walk's dearest card), or what another copy said it costs (<see cref="Merge"/>), whichever is
+	/// less; a game only the public list names (no price kept) is put where its place in the list says - about what the
+	/// nearest cheaper-placed game it has read costs (nothing read yet: first of all, in the list's order). A game with a card
+	/// seen lately that nobody sells is left out.
+	/// </summary>
+	private static List<(uint App, long Key, int Rank, bool Due)> Candidates(Table t, DateTime now) {
+		Dictionary<uint, (long Key, bool Has)> keys = [];
+		HashSet<uint> left = [];
+
+		foreach ((uint app, Game g) in t.Games) {
+			List<Card> fresh = [.. g.Cards.Values.Where(c => Fresh(c, now))];
+
+			// A card seen lately with nobody selling it: the set can't be bought whole.
+			if (fresh.Any(static c => c.Usd <= 0)) {
+				left.Add(app);
+
+				continue;
+			}
+
+			if (Before(g)) {
+				keys[app] = (g.Cards.Values.Sum(static c => (long) c.Usd), true);
+			} else if (fresh.Count > 0) {
+				int unseen = Math.Max(0, (g.Size > 0 ? g.Size : MinSetSize) - fresh.Count);
+				keys[app] = (fresh.Sum(static c => (long) c.Usd) + ((long) unseen * Math.Max(1, t.Frontier)), false);
+			}
+		}
+
+		foreach ((uint app, Hint h) in t.Hints) {
+			if ((h.UsdCents > 0) && !left.Contains(app) && (!keys.TryGetValue(app, out (long Key, bool Has) k) || (!k.Has && (h.UsdCents < k.Key)))) {
+				keys[app] = (h.UsdCents, false);
+			}
+		}
+
+		// The public list's games with nothing else to go by: about what the nearest cheaper-placed game read costs.
+		long nearest = 0;
+
+		foreach ((uint app, Hint h) in t.Hints.Where(static h => h.Value.Rank > 0).OrderBy(static h => h.Value.Rank)) {
+			if (left.Contains(app)) {
+				continue;
+			}
+
+			if (keys.TryGetValue(app, out (long Key, bool Has) k)) {
+				if (k.Has) {
+					nearest = k.Key;
+				}
+
+				continue;
+			}
+
+			keys[app] = (nearest, false);
+		}
+
+		return [.. keys.Select(k => (App: k.Key, k.Value.Key, Rank: t.Hints.TryGetValue(k.Key, out Hint? h) && (h.Rank > 0) ? h.Rank : int.MaxValue, Due: Due(t, k.Key, now)))
+			.OrderBy(static c => c.Key).ThenBy(static c => c.Rank).ThenBy(static c => c.App)];
+	}
+
+	/// <summary>Read whole before, every card listed then - its price then (maybe stale) orders it.</summary>
+	private static bool Before(Game g) => (g.Size > 0) && (g.Cards.Count == g.Size) && g.Cards.Values.All(static c => c.Usd > 0);
+
+	/// <summary>A game to read again: not read in the last <see cref="RefillAfter"/>, and not known now with every card seen lately (the walk keeps that one up to date).</summary>
+	private static bool Due(Table t, uint app, DateTime now) {
+		if (!t.Games.TryGetValue(app, out Game? g)) {
+			return true;
+		}
+
+		if ((g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < RefillAfter)) {
+			return false;
+		}
+
+		return !(Whole(g, now) && g.Cards.Values.All(c => now - new DateTime(c.At, DateTimeKind.Utc) < RefillAfter));
 	}
 
 	private static bool Fresh(Card c, DateTime now) => now - new DateTime(c.At, DateTimeKind.Utc) < CardLife;
@@ -651,14 +755,27 @@ public sealed class SetFinder {
 			Table t = Load();
 			bool today = t.Day == Day(now);
 
-			return new Coverage(today ? t.Walked : 0, t.MarketTotal, known, t.LastLook > 0 ? new DateTime(t.LastLook, DateTimeKind.Utc) : null);
+			// The cheapest sets the lists name, and how many of them were read on the market in the last 24 hours.
+			List<uint> listed = [.. t.Hints.Where(static h => (h.Value.Rank > 0) || (h.Value.UsdCents > 0)).Select(static h => h.Key)];
+			int checkedLately = listed.Count(a => t.Games.TryGetValue(a, out Game? g) && (g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < TimeSpan.FromHours(24)));
+
+			return new Coverage(today ? t.Walked : 0, t.MarketTotal, known, t.LastLook > 0 ? new DateTime(t.LastLook, DateTimeKind.Utc) : null, checkedLately, listed.Count);
 		}
 	}
 
 	/// <summary>Cards not seen for a while go; a game with none left goes once its size is old too.</summary>
 	private static void Prune(Table t, DateTime now) {
+		// An outside price goes once it's old; a place in the public list once the list hasn't said it for two days.
 		foreach ((uint app, Hint h) in t.Hints.ToList()) {
-			if (now - new DateTime(h.At, DateTimeKind.Utc) >= CardLife) {
+			if ((h.UsdCents > 0) && (now - new DateTime(h.At, DateTimeKind.Utc) >= CardLife)) {
+				h.UsdCents = 0;
+			}
+
+			if ((h.Rank > 0) && (now - new DateTime(h.RankAt, DateTimeKind.Utc) >= TimeSpan.FromDays(2))) {
+				h.Rank = 0;
+			}
+
+			if ((h.UsdCents == 0) && (h.Rank == 0)) {
 				t.Hints.Remove(app);
 			}
 		}
@@ -690,6 +807,11 @@ public sealed class SetFinder {
 		}
 
 		_table ??= new Table();
+
+		// Before 1.8.2's quick sets: a place in the public list was dated by At.
+		foreach (Hint h in _table.Hints.Values.Where(static h => (h.Rank > 0) && (h.RankAt == 0))) {
+			h.RankAt = h.At;
+		}
 
 		return _table;
 	}

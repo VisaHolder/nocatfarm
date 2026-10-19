@@ -911,14 +911,33 @@ public sealed class BotConfig {
 	/// </summary>
 	public bool BuyCards { get; set; }
 
-	/// <summary>Also buy the cheapest whole sets for games it has no cards of. Off by default.</summary>
-	public bool BuyFullSets { get; set; }
+	/// <summary>
+	/// Also buy the cheapest whole sets, for any game. On by default since 1.8.2's quick set finder - it only does anything
+	/// while <see cref="BuyCards"/> is on; a settings file that already says keeps what it says.
+	/// </summary>
+	public bool BuyFullSets { get; set; } = true;
 
-	/// <summary>The most it spends in any 24 hours, in the wallet's own currency.</summary>
+	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;
 
-	/// <summary>The most it spends in any 7 days, in the wallet's own currency.</summary>
+	/// <summary>The most it spends in any 7 days, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyWeeklyLimit { get; set; } = 8.00f;
+
+	/// <summary>
+	/// The most it pays for one badge level (100 XP) - a whole set, or a started badge's missing cards - in the wallet's own
+	/// currency. 0: automatic, twice the cheapest level priced at the look. A dearer level waits.
+	/// </summary>
+	public float BuyMaxLevelPrice { get; set; }
+
+	/// <summary>Buying stops once the account's Steam level is this or more. 0: never.</summary>
+	public int BuyStopAtLevel { get; set; }
+
+	/// <summary>Sets one look buys on a human-mode account (a robot buys every one that fits).</summary>
+	public int BuyHumanSetsPerLook { get; set; } = 3;
+
+	/// <summary>Minutes between two looks that buy on a human-mode account while money and cheap levels are left, picked at random in between, only in its day.</summary>
+	public int BuyHumanGapMinMinutes { get; set; } = 30;
+	public int BuyHumanGapMaxMinutes { get; set; } = 90;
 
 	/// <summary>How often it looks, in hours.</summary>
 	public int BuyCheckHours { get; set; } = 12;

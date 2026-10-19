@@ -47,8 +47,9 @@ public static class SettingsCopy {
 		// spends money, gems or points, or sells
 		nameof(BotConfig.BoosterMake), nameof(BotConfig.BoosterGems), nameof(BotConfig.GemsForLevels), nameof(BotConfig.SellSetsForLevels), nameof(BotConfig.BuyFullSets),
 		nameof(BotConfig.PointsBuySeasonalBadge), nameof(BotConfig.PointsBuyOlderBadges), nameof(BotConfig.PointsBadgeMaxLevel), nameof(BotConfig.PointsKeepAtLeast),
-		nameof(BotConfig.PointsWeeklyCap),
+		nameof(BotConfig.PointsWeeklyCap), nameof(BotConfig.BuyStopAtLevel),
 		// money limits, in the wallet's own currency
+		nameof(BotConfig.BuyMaxLevelPrice), nameof(BotConfig.BuyHumanSetsPerLook), nameof(BotConfig.BuyHumanGapMinMinutes), nameof(BotConfig.BuyHumanGapMaxMinutes),
 		nameof(BotConfig.BuyDailyLimit), nameof(BotConfig.BuyWeeklyLimit), nameof(BotConfig.CardSwapMaxLoss), nameof(BotConfig.SpareMaxPrice), nameof(BotConfig.SpareDailyValue),
 		nameof(BotConfig.SpareMinSale),
 		// trades

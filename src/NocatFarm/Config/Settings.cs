@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Reflection;
 
 namespace NocatFarm.Config;
@@ -107,10 +107,20 @@ public sealed record SettingDef(
 	/// watch" in "Safety" (1.8.2: 21 sections became 12). Its titled boxes (<see cref="Group"/>) are ordered by the part's
 	/// entry in <see cref="Settings.GroupOrder"/>. Null: straight in the section. Translated by the page like a section.
 	/// </summary>
-	string? Part = null
+	string? Part = null,
+
+	/// <summary>
+	/// 1.8.2: a money limit that can be switched off - below 0 (written -1) means no limit, and the dashboard draws a "No
+	/// limit" tick box beside the number (0 keeps its own meaning, <see cref="Zero"/>). 'set' takes -1, "no limit" or
+	/// "unlimited". False: an ordinary number.
+	/// </summary>
+	bool NoLimit = false
 );
 
 public static partial class Settings {
+	/// <summary>1.8.2: how a money limit switched off reads in replies and 'config' (English, like every reply).</summary>
+	public const string NoLimitWord = "no limit";
+
 	// ── global sections (1.8.2: 15 became 9), in display order ─────────────
 	public const string SecGeneral = "General";
 	public const string SecNotifications = "Notifications";
@@ -231,6 +241,11 @@ public static partial class Settings {
 
 		if (def.Kind == SettingKind.Choice && value is int choice) {
 			return $"{choice} ({ChoiceLabel(def, choice)})";
+		}
+
+		// 1.8.2: a money limit switched off.
+		if (def.NoLimit && value is float limit && (limit < 0)) {
+			return NoLimitWord;
 		}
 
 		// A time of day as a clock reads, 07:00 - not the minutes it's kept as. Anything that isn't one stays the number it is.
@@ -456,6 +471,13 @@ public static partial class Settings {
 			case SettingKind.Float: {
 				// Finite too: "nan" parses, passes every range check (NaN is neither below nor above), and a NaN can't be
 				// written as JSON - so every save of that account failed from then on, and each change was lost at restart.
+				// 1.8.2: a money limit that can be off - "no limit" (or -1) is written -1.
+				if (def.NoLimit && (raw.Trim().ToLowerInvariant() is "no limit" or "nolimit" or "unlimited" or "-1")) {
+					p.SetValue(config, -1f);
+
+					return null;
+				}
+
 				if (!float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out float f) || !float.IsFinite(f)) {
 					return $"{def.Label} must be a number";
 				}
@@ -1853,11 +1875,24 @@ public static partial class Settings {
 			"Buys the cards a badge is missing for its next level, at the cheapest price on the market, so it can be crafted - the cheapest level first, and only whole sets. For example, with 4 of 5 cards held it buys the 5th, about 0.05 to 0.15. It spends this account's Steam wallet. Off by default on every account. Turning it on first shows what it would buy and for how much, and asks you to confirm; off stops it at once. Needs \"Craft badges from card sets\" on.", Group: "What it does", Part: SecBuy),
 		new("BuyFullSets", "Buy the cheapest full sets", SecItems, SettingKind.Bool,
 			"Also buys whole card sets for games it has no cards of, cheapest first, one badge level (100 XP) each. Sets where a card has fewer than 2 on the market, or one very cheap card that makes the set look cheaper than it is, are left out. Off: only cards for badges it has started.",
-			Advanced: true, ShowWhen: "BuyCards=true", Group: "What it does", Part: SecBuy),
+			ShowWhen: "BuyCards=true", Group: "What it does", Part: SecBuy),
 		new("BuyDailyLimit", "Spend at most a day", SecItems, SettingKind.Float,
-			"The most it spends in any 24 hours, in this account's own Steam wallet currency. For example 1.50: a set costing 0.60 and another at 0.70 fill the day; the next set waits for tomorrow. It never spends more than the wallet holds.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "spend nothing", Part: SecBuy),
+			"The most it spends in any 24 hours, in this account's own Steam wallet currency. For example 1.50: a set costing 0.60 and another at 0.70 fill the day; the next set waits for tomorrow. It never spends more than the wallet holds.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "spend nothing", Part: SecBuy, NoLimit: true),
 		new("BuyWeeklyLimit", "Spend at most a week", SecItems, SettingKind.Float,
-			"The most it spends in any 7 days, in this account's own Steam wallet currency. For example 8.00 with 1.50 a day: about 5 full days of buying a week. 0 buys nothing.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "spend nothing", Part: SecBuy),
+			"The most it spends in any 7 days, in this account's own Steam wallet currency. For example 8.00 with 1.50 a day: about 5 full days of buying a week. 0 buys nothing.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "spend nothing", Part: SecBuy, NoLimit: true),
+		new("BuyMaxLevelPrice", "Most to pay for one badge level", SecItems, SettingKind.Float,
+			"The most it pays for one badge level (100 XP) - a whole set, or the cards a started badge is missing - in this account's own Steam wallet currency. A dearer level waits until prices come down, so the money isn't spent on dear levels once the cheap ones run out. For example 0.50: a 5-card set at 0.35 is bought, a 9-card set at 0.70 waits. 0 is automatic: twice the cheapest level it can buy at the time - with the cheapest at 0.33, up to 0.66.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "automatic", Part: SecBuy),
+		new("BuyStopAtLevel", "Stop buying at Steam level", SecItems, SettingKind.Int,
+			"Buying cards stops once this account's Steam level reaches this - for example 50: at level 50 it buys nothing more, and on the way it buys only the badge levels still needed to get there. 'levelup' says what a level costs. 0 never stops.", Advanced: true, Min: 0, Max: 5000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "", Zero: "never", Part: SecBuy),
+		new("BuyHumanSetsPerLook", "Sets per look, human mode", SecItems, SettingKind.Int,
+			"How many sets one look buys on a human-mode account, the cheapest first - then it waits a while before the next look, like somebody buying a few sets now and then. For example 3 sets a look, a look every 30 to 90 minutes in its day: about 25 to 40 sets a day, until the day's money or the cheap sets run out. A robot buys every set that fits in one look.",
+			Min: 1, Max: 10, Mode: "legit", ShowWhen: "BuyCards=true", Group: "How often", Unit: "sets", Part: SecBuy),
+		new("BuyHumanGapMinMinutes", "Shortest wait between looks, human mode", SecItems, SettingKind.Int,
+			"The shortest wait between two looks that buy on a human-mode account, while money and cheap sets are left, in minutes - only in its day. Each wait is picked at random between this and the longest. For example 30 and 90: the next look comes anywhere from half an hour to an hour and a half later.",
+			Min: 5, Max: 720, Mode: "legit", ShowWhen: "BuyCards=true", Group: "How often", Range: "Time between looks, human mode", Part: SecBuy),
+		new("BuyHumanGapMaxMinutes", "Longest wait between looks, human mode", SecItems, SettingKind.Int,
+			"The longest wait between two looks that buy on a human-mode account, in minutes. For example 90, with 30 as the shortest: about 16 looks in a 16-hour day.",
+			Min: 5, Max: 720, Mode: "legit", ShowWhen: "BuyCards=true", Group: "How often", Part: SecBuy),
 		new("BuyCheckHours", "Look for cards to buy every", SecItems, SettingKind.Int,
 			"How often it looks for cards to buy, in hours - for example 12, twice a day. A human-mode account only looks during its day, and buys one set a look.",
 			Advanced: true, Min: 1, Max: 168, ShowWhen: "BuyCards=true", Group: "How often", Hidden: true, Part: SecBuy),

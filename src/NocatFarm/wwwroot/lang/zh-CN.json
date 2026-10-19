@@ -3150,7 +3150,6 @@
     "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "先买最便宜的徽章等级 - 已开始的徽章或全新的整套，哪个便宜买哪个",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "如果 Steam 要求在 Steam 应用中确认购买，你在手机上确认 - 一次一套；不确认的话一天后放弃",
     "set finder · couldn't look · {0}": "卡组查找 · 无法查看 · {0}",
-    "set finder · {0} cards looked at today · {1} whole sets known": "卡组查找 · 今天看了 {0} 张卡牌 · 已知 {1} 个整套",
     "set finder · couldn't read its list, starting over · {0}": "卡组查找 · 无法读取列表，从头开始 · {0}",
     "set finder · couldn't save its list · {0}": "卡组查找 · 无法保存列表 · {0}",
     "Set price": "整套价格",
@@ -3341,7 +3340,20 @@
     "the market stopped answering before what its money buys was priced": "还没算出这笔钱能买什么，市场就不再响应了",
     "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} 过去一天只卖出 {1} 次 - 先等等，这套卡价值 {2}（{3} 级）",
     "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
-    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售"
+    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "卡组查找 · 过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个 · 已知 {2} 个整套",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "购买卡牌 · 还有钱买更多便宜的等级 - {0} 分钟后再看",
+    "Level price now: {0} a level (100 XP)": "当前等级价格：每级 {0}（100 XP）",
+    "At most {0} for one badge level - twice the cheapest level now": "一个徽章等级最多 {0} - 当前最便宜等级的两倍",
+    "At most {0} for one badge level": "一个徽章等级最多 {0}",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "卡组查找在过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个，已知 {2} 个整套。上次查看：{3}。",
+    "automatic": "自动",
+    "Time between looks, human mode": "两次查看之间的时间（真人模式）",
+    "sets": "套",
+    "No limit a day ({0} spent in the last day)": "每天不设上限（过去一天已花 {0}）",
+    "No limit a week ({0} spent this week)": "每周不设上限（本周已花 {0}）",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "不设上限：钱包里有多少就花多少，最便宜的等级先买 - 每个等级的最高价仍然有效。",
+    "No limit": "不设上限"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4890,6 +4902,26 @@
     "DailyReportTime": {
       "label": "每日总结时间",
       "tip": "每日总结写入日志的时间（本地时间）——通知里的“每日总结”标签打开时也在此时发送。例如 09:30。"
+    },
+    "BuyMaxLevelPrice": {
+      "label": "一个徽章等级最多付",
+      "tip": "一个徽章等级（100 XP）最多付多少 - 一个整套，或已开始的徽章缺少的卡牌 - 以此账户的 Steam 钱包货币计。更贵的等级会等价格降下来，这样便宜的等级用完后，钱不会花在贵的等级上。例如 0.50：0.35 的 5 张卡组会买，0.70 的 9 张卡组会等。0 为自动：当时能买到的最便宜等级的两倍 - 最便宜为 0.33 时，最多 0.66。"
+    },
+    "BuyStopAtLevel": {
+      "label": "到这个 Steam 等级停止购买",
+      "tip": "此账户的 Steam 等级达到这个值后就停止购买卡牌 - 例如 50：到 50 级后不再买任何东西，在此之前只买达到该等级还需要的徽章等级。'levelup' 会告诉你一级要花多少。0 表示永不停止。"
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "每次查看购买的套数（真人模式）",
+      "tip": "真人模式账户每次查看购买多少套，最便宜的先买 - 然后等一会儿再查看，像偶尔买几套的人一样。例如每次 3 套，在其一天中每 30 到 90 分钟查看一次：每天约 25 到 40 套，直到当天的钱或便宜的整套用完。机器人一次查看就买下所有放得下的整套。"
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "两次查看之间最短等待（真人模式）",
+      "tip": "在还有钱和便宜整套时，真人模式账户两次购买查看之间的最短等待（分钟）- 仅在其一天中。每次在此值和最长值之间随机选择。例如 30 和 90：下一次查看在半小时到一个半小时之后。"
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "两次查看之间最长等待（真人模式）",
+      "tip": "真人模式账户两次购买查看之间的最长等待（分钟）。例如最短 30、最长 90：16 小时的一天中约 16 次查看。"
     }
   }
 }

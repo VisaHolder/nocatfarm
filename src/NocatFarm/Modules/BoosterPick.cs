@@ -452,8 +452,10 @@ public static class BoosterPick {
 	}
 
 	/// <summary>
-	/// 1.8.2: the games automatic booster packs is working on - the one it's saving gems for, and every one it made a pack
-	/// for that's still to open. Buying cards leaves them to the packs. None unless "Make booster packs" is automatic.
+	/// 1.8.2: the games automatic booster packs is working on - every one it made a pack for that's still to open. Buying
+	/// cards leaves them to the packs. A game it's only saving gems for isn't: with 211 of 1,200 gems that pack is weeks
+	/// away, and buying may finish the set first when that's the cheapest level (live, 2026-10-19). None unless "Make booster
+	/// packs" is automatic.
 	/// </summary>
 	public static IReadOnlyCollection<uint> Busy(Bot bot) {
 		if (bot.Cfg.BoosterMake != Auto) {
@@ -462,10 +464,13 @@ public static class BoosterPick {
 
 		Boosters? boosters = BotManager.ModuleOf<Boosters>(bot);
 
-		return Busy(bot.Cfg.BoosterMake, (boosters?.AutoMemory ?? Memory.Load(bot.Name)).Snapshot(), boosters?.SavingFor ?? 0);
+		return Busy(bot.Cfg.BoosterMake, (boosters?.AutoMemory ?? Memory.Load(bot.Name)).Snapshot(), 0);
 	}
 
-	/// <summary><see cref="Busy(Bot)"/> on its own: the packs still to open and the game gems are saved for, when automatic.</summary>
+	/// <summary>
+	/// <see cref="Busy(Bot)"/> on its own: the packs still to open, and <paramref name="savingFor"/> - a game whose pack can
+	/// be made now (the gems are there) - when automatic.
+	/// </summary>
 	public static IReadOnlyCollection<uint> Busy(int make, IEnumerable<OwnPack> owed, uint savingFor) {
 		if (make != Auto) {
 			return [];

@@ -71,11 +71,19 @@ public static partial class Commands {
 		return string.Join(Environment.NewLine, lines);
 	}
 
-	/// <summary>How much of the market the finder has looked at, and when it last looked.</summary>
+	/// <summary>
+	/// How far the finder has got: of the cheapest sets the lists name, how many were checked on the market lately - or, with
+	/// no list yet, how many of the cheapest single cards it has looked at - and when it last looked.
+	/// </summary>
 	public static string FinderSaid(SetFinder.Coverage c) {
-		string share = c.MarketTotal > 0 ? $" of {c.MarketTotal:N0} ({Math.Min(100, c.Walked * 100.0 / c.MarketTotal).ToString("0.#", CultureInfo.InvariantCulture)}%)" : "";
 		string last = c.LastLook is { } at ? $"last look {Fmt.Clock(at)}" : "it hasn't looked yet";
 
-		return $"set finder: looked at the {c.Walked:N0} cheapest cards{share} today · {c.Known:N0} whole sets known · {last} - up to {SetFinder.DailyCards:N0} cards a day, a little at a time";
+		if (c.Candidates > 0) {
+			return $"set finder: {c.Checked:N0} of the {c.Candidates:N0} cheapest sets checked on the market in the last 24 hours · {c.Known:N0} whole sets known · {last}";
+		}
+
+		string share = c.MarketTotal > 0 ? $" of {c.MarketTotal:N0} ({Math.Min(100, c.Walked * 100.0 / c.MarketTotal).ToString("0.#", CultureInfo.InvariantCulture)}%)" : "";
+
+		return $"set finder: looked at the {c.Walked:N0} cheapest cards{share} today · {c.Known:N0} whole sets known · {last}";
 	}
 }

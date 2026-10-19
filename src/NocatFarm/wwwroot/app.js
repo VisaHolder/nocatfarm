@@ -6635,11 +6635,13 @@ function buyPreviewHtml(d) {
   const market = d.SignedIn && !d.Problem ? buyMarketHtml(d) : '';
 
   const limits = [
-    tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
-    tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
+    d.DayNoLimit ? tf('No limit a day ({0} spent in the last day)', d.DaySpent) : tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
+    d.WeekNoLimit ? tf('No limit a week ({0} spent this week)', d.WeekSpent) : tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
     t('Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look'),
     t('Each card at the cheapest price on the market, checked again right before it buys'),
     d.FullSets ? t('The cheapest badge level first - a badge it has started or a whole new set, whichever costs less') : t('Only badges it has started - not full sets'),
+    ...(d.LevelPrice ? [tf('Level price now: {0} a level (100 XP)', d.LevelPrice)] : []),
+    ...(d.MaxLevel ? [d.MaxLevelAuto ? tf('At most {0} for one badge level - twice the cheapest level now', d.MaxLevel) : tf('At most {0} for one badge level', d.MaxLevel)] : []),
     t('If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not'),
   ];
   if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));
@@ -6657,7 +6659,9 @@ function buyMarketHtml(d) {
     ? `<div class="tablewrap"><table class="marketsets"><tr><th>${esc(t('Game'))}</th><th>${esc(t('Set price'))}</th><th>${esc(t('Cards'))}</th><th>${esc(t('XP per 1.00'))}</th></tr>${rows.map((r) => `<tr><td>${esc(r.Game)}</td><td>${esc(r.Cost)}</td><td>${r.Cards}</td><td>${grouped(r.XpPerUnit)}</td></tr>`).join('')}</table></div>`
     : `<p class="muted small finder">${esc(t('No whole sets known yet - the set finder reads the market a little at a time.'))}</p>`;
   const covered = f && f.LastLook
-    ? `<p class="muted small finder">${esc(tf('The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.', grouped(f.Walked), grouped(f.Total), grouped(f.Known), f.LastLook))}</p>`
+    ? `<p class="muted small finder">${esc(f.Candidates
+      ? tf('The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.', grouped(f.Checked), grouped(f.Candidates), grouped(f.Known), f.LastLook)
+      : tf('The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.', grouped(f.Walked), grouped(f.Total), grouped(f.Known), f.LastLook))}</p>`
     : '';
   const off = rows.length && !d.FullSets ? `<p class="muted small finder">${esc(t('It buys these only with "Buy the cheapest full sets" on.'))}</p>` : '';
   return `<h4>${esc(t('Cheapest whole sets on the market'))}</h4>${table}${off}${covered}`;
@@ -6948,6 +6952,7 @@ function unitWord(u) {
     case 'backups': return t('backups');
     case 'reviews': return t('reviews');
     case 'times a day': return t('times a day');
+    case 'sets': return t('sets');
     default: return u || '';
   }
 }
@@ -6963,6 +6968,7 @@ function zeroWord(z) {
     case 'keep forever': return t('keep forever');
     case 'never again': return t('never again');
     case 'never': return t('never');
+    case 'automatic': return t('automatic');
     default: return z || '';
   }
 }
@@ -7114,6 +7120,13 @@ function fieldHtml(def, values, defaults, depth = 0) {
       // The unit after the box ("minutes"), and what 0 means where it means something of its own.
       const after = unitHtml(def);
       ctl = after ? `<span class="withunit">${box}${after}</span>` : box;
+      // 1.8.2: a money limit that can be off - a "No limit" tick box beside it (kept as -1); off again, back to the default.
+      if (def.NoLimit) {
+        const off = Number(cur) < 0;
+        const back = (settingsDefaults() || {})[def.Name];
+        ctl = `<span class="withunit">${off ? '' : ctl}<label class="nolimit" title="${esc(t('No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.'))}">`
+          + `<input type="checkbox" id="${id}-nolimit" ${off ? 'checked' : ''} onchange="editAndRender('${def.Name}', this.checked ? -1 : ${Number(back) > 0 ? Number(back) : 1})"> ${esc(t('No limit'))}</label></span>`;
+      }
       break;
     }
     case 'Secret': {
