@@ -3226,7 +3226,18 @@
     "After": "Après",
     "the proxy and the device name": "le proxy et le nom de l'appareil",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Choisis le compte à copier. Rien ne change avant que tu appuies sur Copier les paramètres, et le compte copié reste tel quel.",
-    "none - the defaults": "aucun - les valeurs par défaut"
+    "none - the defaults": "aucun - les valeurs par défaut",
+    "set finder · couldn't save what it shared · {0}": "recherche de séries · impossible d'enregistrer ce qu'elle a partagé · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "recherche de séries · listes partagées · {0} envoyées, {1} prises chez d'autres copies",
+    "set finder · nocat.lol didn't answer · {0}": "recherche de séries · nocat.lol n'a pas répondu · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "gemmes gardées en vrac · on ne sait pas encore combien de niveaux elles valent",
+    "saving tradable gems for a sack to sell": "met de côté des gemmes échangeables pour un sac à vendre",
+    "gems: today's listings are done · more tomorrow": "gemmes : les mises en vente du jour sont faites · d'autres demain",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1 000 gemmes emballées dans un sac à vendre · environ {0} niveaux pour 1 000 gemmes",
+    "saving tradable gems for a {0} pack to sell": "met de côté des gemmes échangeables pour un booster {0} à vendre",
+    "the {0} pack's price moved · weighed again later": "le prix du booster {0} a bougé · réévalué plus tard",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "booster {0} créé pour être vendu · environ {1} niveaux pour 1 000 gemmes",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "booster {0} créé pour être ouvert et ses cartes vendues · environ {1} niveaux pour 1 000 gemmes"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Me compter comme utilisateur",
-      "tip": "Dit à nocat.lol une fois par heure que cette copie tourne, pour que sa page puisse compter les utilisateurs. Il envoie un nombre aléatoire créé pour cette installation, la version de l'app, la plateforme et combien de tes comptes Steam sont connectés (juste le nombre, par exemple 3), plus les totaux d'heures et de cartes et le reste (gemmes, badges, boosters, objets vendus) si tu les partages (le réglage suivant) - rien d'autre : ni noms de compte, ni Steam IDs, ni paramètres. C'est ainsi qu'est fait le nombre de comptes Steam. Désactivé n'envoie rien."
+      "tip": "Dit à nocat.lol une fois par heure que cette copie tourne, pour que sa page puisse compter les utilisateurs. Il envoie un nombre aléatoire créé pour cette installation, la version de l'app, la plateforme et combien de tes comptes Steam sont connectés (juste le nombre, par exemple 3), plus les totaux d'heures et de cartes et le reste (gemmes, badges, boosters, objets vendus) si tu les partages (le réglage suivant) - rien d'autre : ni noms de compte, ni Steam IDs, ni paramètres. C'est ainsi qu'est fait le nombre de comptes Steam. Désactivé n'envoie rien. Avec « Partager les séries les moins chères avec les autres utilisateurs de nocat.farm » activé, il envoie aussi les prix du marché des séries de cartes trouvées, dans un message à part (voir ce réglage)."
     },
     "ShareFarmTotals": {
       "label": "Partager mes totaux de farm",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Ignorer les échanges que Steam suspendrait",
       "tip": "N'échange jamais avec un compte si Steam suspendrait l'échange pendant des jours - par exemple quand un côté n'a pas l'application Steam Guard depuis longtemps. Activé est le plus sûr."
+    },
+    "ShareCheapestSets": {
+      "label": "Partager les séries les moins chères avec les autres utilisateurs de nocat.farm",
+      "tip": "Tant qu'un compte achète les séries complètes les moins chères, envoie à nocat.lol, environ toutes les 6 heures, les séries complètes les moins chères que cette copie a trouvées sur le marché, et récupère celles que toutes les autres copies ont trouvées - il trouve ainsi les séries bon marché bien plus tôt. Ce qui part : le jeu de chaque série, les noms de ses cartes, le prix le plus bas de chaque carte, combien sont en vente et quand ça a été vu - par exemple une série de 5 cartes à 0,03 chacune, vue il y a une heure. Rien sur toi ni sur tes comptes. Ce qui revient dit seulement quels jeux vérifier en premier : chaque carte est de nouveau évaluée sur le marché Steam avant tout achat. Activé : partagé dans les deux sens. Désactivé : rien n'est envoyé ni récupéré. Seulement tant que « Me compter comme utilisateur » est activé."
+    },
+    "GemsForLevels": {
+      "label": "Utiliser les gemmes pour le plus de niveaux",
+      "tip": "Ne fait quelque chose que si « Acheter les cartes manquantes » est activé. Avant que les boosters automatiques créent un booster, il calcule combien de niveaux de badge valent 1 000 gemmes aux prix du marché du jour, de quatre façons : vendre un sac de gemmes et laisser l'achat de cartes dépenser l'argent, créer un booster et le vendre fermé, créer un booster et vendre ses 3 cartes, ou ouvrir des boosters pour le badge le plus proche comme avant - et fait celle qui rapporte le plus. Par exemple, un sac qui rapporte 0,45 achète environ 1,8 niveau de séries bon marché, alors que des boosters pour le badge le plus proche en donnent environ 0,3. Une façon qui passe par le marché doit battre nettement (de 15 %) une façon plus sûre ; si les prix ne sont pas connus, les gemmes restent en vrac. Il ne vend jamais pour moins que ce que valent les gemmes, met en vente 10 choses par jour au plus, et tu confirmes chaque mise en vente dans l'app Steam comme toute autre. Seules les gemmes échangeables sont vendues ; les non échangeables vont toujours au badge le plus proche. 'booster plan' montre les chiffres."
     }
   }
 }

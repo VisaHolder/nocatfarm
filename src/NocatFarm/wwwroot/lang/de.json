@@ -3226,7 +3226,18 @@
     "After": "Danach",
     "the proxy and the device name": "Proxy und Gerätename",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Wähl das Konto, von dem übernommen wird. Nichts ändert sich, bevor du auf „Einstellungen übernehmen“ drückst, und das andere Konto bleibt, wie es ist.",
-    "none - the defaults": "keins - die Standardwerte"
+    "none - the defaults": "keins - die Standardwerte",
+    "set finder · couldn't save what it shared · {0}": "Satzsuche · konnte nicht speichern, was sie geteilt hat · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "Satzsuche · geteilte Listen · {0} gesendet, {1} von anderen Kopien übernommen",
+    "set finder · nocat.lol didn't answer · {0}": "Satzsuche · nocat.lol hat nicht geantwortet · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "Edelsteine bleiben lose · noch unklar, wie viele Stufen sie wert sind",
+    "saving tradable gems for a sack to sell": "spart handelbare Edelsteine für einen Sack zum Verkaufen",
+    "gems: today's listings are done · more tomorrow": "Edelsteine: die Angebote für heute sind erledigt · morgen mehr",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1.000 Edelsteine in einen Sack zum Verkaufen gepackt · etwa {0} Stufen pro 1.000 Edelsteine",
+    "saving tradable gems for a {0} pack to sell": "spart handelbare Edelsteine für ein {0}-Pack zum Verkaufen",
+    "the {0} pack's price moved · weighed again later": "der Preis des {0}-Packs hat sich bewegt · wird später neu abgewogen",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "{0}-Pack zum Verkaufen erstellt · etwa {1} Stufen pro 1.000 Edelsteine",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "{0}-Pack zum Öffnen und Verkaufen der Karten erstellt · etwa {1} Stufen pro 1.000 Edelsteine"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Als Nutzer zählen",
-      "tip": "Sagt nocat.lol einmal pro Stunde, dass diese Kopie läuft, damit seine Seite die Nutzer zählen kann. Es sendet eine Zufallszahl, die für diese Installation erzeugt wurde, die App-Version, die Plattform und wie viele deiner Steam-Konten angemeldet sind (nur die Zahl, zum Beispiel 3), dazu die Stunden- und Karten-Summen und den Rest (Edelsteine, Abzeichen, Packs, verkaufte Gegenstände), wenn du sie teilst (die nächste Einstellung) - sonst nichts: keine Kontonamen, Steam-IDs oder Einstellungen. So entsteht die Zahl der Steam-Konten. Aus sendet nichts."
+      "tip": "Sagt nocat.lol einmal pro Stunde, dass diese Kopie läuft, damit seine Seite die Nutzer zählen kann. Es sendet eine Zufallszahl, die für diese Installation erzeugt wurde, die App-Version, die Plattform und wie viele deiner Steam-Konten angemeldet sind (nur die Zahl, zum Beispiel 3), dazu die Stunden- und Karten-Summen und den Rest (Edelsteine, Abzeichen, Packs, verkaufte Gegenstände), wenn du sie teilst (die nächste Einstellung) - sonst nichts: keine Kontonamen, Steam-IDs oder Einstellungen. So entsteht die Zahl der Steam-Konten. Aus sendet nichts. Mit „Günstigste Sätze mit anderen nocat.farm-Nutzern teilen“ gehen außerdem die Marktpreise gefundener Kartensätze mit, in einer eigenen Nachricht (siehe diese Einstellung)."
     },
     "ShareFarmTotals": {
       "label": "Meine Farm-Summen teilen",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Tausche überspringen, die Steam zurückhalten würde",
       "tip": "Tauscht nie mit einem Konto, wenn Steam den Handel tagelang zurückhalten würde - zum Beispiel, wenn eine Seite die Steam-Guard-App noch nicht lange hat. An ist am sichersten."
+    },
+    "ShareCheapestSets": {
+      "label": "Günstigste Sätze mit anderen nocat.farm-Nutzern teilen",
+      "tip": "Solange ein Konto die günstigsten ganzen Sätze kauft, schickt es nocat.lol etwa alle 6 Stunden die günstigsten ganzen Kartensätze, die diese Kopie auf dem Markt gefunden hat, und holt sich die zurück, die alle anderen Kopien gefunden haben - so findet es günstige Sätze viel früher. Was gesendet wird: das Spiel jedes Satzes, die Namen seiner Karten, der günstigste Preis jeder Karte, wie viele zum Verkauf stehen und wann das gesehen wurde - zum Beispiel ein Satz aus 5 Karten zu je 0,03, vor einer Stunde gesehen. Nichts über dich oder deine Konten. Was zurückkommt, sagt nur, welche Spiele zuerst geprüft werden: Jede Karte wird vor einem Kauf noch einmal auf dem Steam-Markt bepreist. An: in beide Richtungen geteilt. Aus: nichts wird gesendet oder geholt. Nur solange „Als Nutzer zählen“ an ist."
+    },
+    "GemsForLevels": {
+      "label": "Edelsteine für die meisten Stufen nutzen",
+      "tip": "Wirkt nur, solange „Fehlende Karten kaufen“ an ist. Bevor die automatischen Booster-Packs ein Pack erstellen, rechnet es zu den heutigen Marktpreisen aus, wie viele Abzeichenstufen 1.000 Edelsteine wert sind, auf vier Wegen: einen Edelsteinsack verkaufen und das Geld vom Kartenkauf ausgeben lassen, ein Pack erstellen und versiegelt verkaufen, ein Pack erstellen und seine 3 Karten verkaufen, oder wie bisher Packs für das nächstgelegene Abzeichen öffnen - und nimmt den Weg, der am meisten bringt. Zum Beispiel kauft ein Sack, der 0,45 einbringt, etwa 1,8 Stufen günstiger Sätze, während Packs für das nächstgelegene Abzeichen etwa 0,3 bringen. Ein Weg über den Markt muss einen sichereren klar schlagen (um 15 %); sind die Preise nicht bekannt, bleiben die Edelsteine lose. Es verkauft nie für weniger, als die Edelsteine wert sind, stellt höchstens 10 Dinge am Tag ein, und du bestätigst jedes Angebot in der Steam-App wie jedes andere. Nur handelbare Edelsteine werden verkauft; nicht handelbare gehen weiter an das nächstgelegene Abzeichen. 'booster plan' zeigt die Zahlen."
     }
   }
 }

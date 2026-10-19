@@ -1452,8 +1452,10 @@ public static class SpareRun {
 
 		memory.ReleaseAndSay(cfg.BoosterMake, cfg.BoosterNeverOpen, DateTime.UtcNow, bot.Name);
 		HashSet<ulong> own = memory.Ids();
+		// 1.8.2: packs automatic made to sell (Modules/Boosters.Gems.cs) are left to it, like ones on the market.
+		HashSet<ulong> forSale = memory.ForSaleIds();
 		List<Spare.PackDecision> packs = Spare.PlanPacks(look.Items, choice, Math.Clamp(cfg.BoosterOpenNewDays, 0, 30), cfg.BoosterNeverOpen,
-			look.Ledger.Received, look.Busy, SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own);
+			look.Ledger.Received, forSale.Count == 0 ? look.Busy : new HashSet<ulong>(look.Busy.Concat(forSale)), SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own);
 
 		if (act && (cfg.BoosterUnopened == 2)) {
 			int quoted = 0;

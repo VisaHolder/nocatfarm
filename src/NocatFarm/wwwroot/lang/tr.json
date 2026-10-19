@@ -3226,7 +3226,18 @@
     "After": "Sonra",
     "the proxy and the device name": "proxy ve cihaz adı",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Kopyalanacak hesabı seç. Ayarları kopyala'ya basana kadar hiçbir şey değişmez ve kaynak hesap olduğu gibi kalır.",
-    "none - the defaults": "hiçbiri - varsayılanlar"
+    "none - the defaults": "hiçbiri - varsayılanlar",
+    "set finder · couldn't save what it shared · {0}": "set bulucu · paylaştığını kaydedemedi · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "set bulucu · ortak listeler · {0} gönderildi, diğer kopyalardan {1} alındı",
+    "set finder · nocat.lol didn't answer · {0}": "set bulucu · nocat.lol yanıt vermedi · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "mücevherler serbest kalıyor · seviye olarak değerleri henüz belli değil",
+    "saving tradable gems for a sack to sell": "satılacak bir çuval için takas edilebilir mücevher biriktiriliyor",
+    "gems: today's listings are done · more tomorrow": "mücevherler: bugünün listelemeleri bitti · yarın devam",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1.000 mücevher satılacak bir çuvala dolduruldu · 1.000 mücevher başına yaklaşık {0} seviye",
+    "saving tradable gems for a {0} pack to sell": "satılacak bir {0} paketi için takas edilebilir mücevher biriktiriliyor",
+    "the {0} pack's price moved · weighed again later": "{0} paketinin fiyatı değişti · daha sonra yeniden tartılacak",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "açıp kartlarını satmak için {0} paketi yapıldı · 1.000 mücevher başına yaklaşık {1} seviye"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Beni kullanıcı say",
-      "tip": "Kullanıcıları sayabilsin diye nocat.lol'a saatte bir bu kopyanın çalıştığını söyler. Bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının giriş yaptığını (yalnızca sayı, örneğin 3) gönderir; paylaşıyorsan saat ve kart toplamlarını ve geri kalanını da (mücevherler, rozetler, paketler, satılan eşyalar) (sonraki ayar) - başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle çıkar. Kapalı: hiçbir şey göndermez."
+      "tip": "Kullanıcıları sayabilsin diye nocat.lol'a saatte bir bu kopyanın çalıştığını söyler. Bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının giriş yaptığını (yalnızca sayı, örneğin 3) gönderir; paylaşıyorsan saat ve kart toplamlarını ve geri kalanını da (mücevherler, rozetler, paketler, satılan eşyalar) (sonraki ayar) - başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle çıkar. Kapalı: hiçbir şey göndermez. \"En ucuz setleri diğer nocat.farm kullanıcılarıyla paylaş\" açıksa, bulduğu kart setlerinin pazar fiyatlarını da ayrı bir mesajla gönderir (o ayara bak)."
     },
     "ShareFarmTotals": {
       "label": "Farm toplamlarımı paylaş",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Steam'in bekleteceği takasları atla",
       "tip": "Steam takası günlerce bekletecekse o hesapla asla takas etmez - örneğin taraflardan biri Steam Guard uygulamasını yeni kullanmaya başladıysa. Açık olması en güvenlisi."
+    },
+    "ShareCheapestSets": {
+      "label": "En ucuz setleri diğer nocat.farm kullanıcılarıyla paylaş",
+      "tip": "Bir hesap en ucuz tam setleri satın aldığı sürece, bu kopyanın pazarda bulduğu en ucuz tam kart setlerini yaklaşık 6 saatte bir nocat.lol'a gönderir ve diğer tüm kopyaların bulduklarını geri alır - böylece ucuz setleri çok daha erken bulur. Gidenler: her setin oyunu, kartlarının adları, her kartın en düşük fiyatı, kaç tanesinin satışta olduğu ve bunun ne zaman görüldüğü - örneğin tanesi 0,03 olan 5 kartlık bir set, bir saat önce görülmüş. Sen ya da hesapların hakkında hiçbir şey yok. Geri gelenler yalnızca önce hangi oyunlara bakılacağını söyler: bir şey satın alınmadan önce her kart Steam pazarında yeniden fiyatlanır. Açık: iki yönlü paylaşılır. Kapalı: hiçbir şey gönderilmez ya da alınmaz. Yalnızca \"Beni kullanıcı say\" açıkken."
+    },
+    "GemsForLevels": {
+      "label": "Mücevherleri en çok seviye için kullan",
+      "tip": "Yalnızca \"Eksik kartları satın al\" açıkken bir şey yapar. Otomatik kart paketleri bir paket yapmadan önce, 1.000 mücevherin bugünün pazar fiyatlarıyla kaç rozet seviyesi ettiğini dört yoldan hesaplar: bir mücevher çuvalı satıp parayı kart satın almanın harcamasına bırakmak, bir paket yapıp kapalı satmak, bir paket yapıp 3 kartını satmak ya da eskisi gibi en yakın rozet için paket açmak - ve en çok getireni yapar. Örneğin 0,45 kazandıran bir çuval yaklaşık 1,8 seviyelik ucuz set alır, en yakın rozet için paketler ise yaklaşık 0,3 verir. Pazarı kullanan bir yol daha güvenli olanı açıkça (%15) geçmelidir; fiyatlar bilinmiyorsa mücevherler serbest kalır. Asla mücevherlerin değerinden ucuza satmaz, günde en fazla 10 şey listeler ve her listelemeyi diğerleri gibi Steam uygulamasında onaylarsın. Yalnızca takas edilebilir mücevherler satılır; takas edilemeyenler yine en yakın rozete gider. 'booster plan' sayıları gösterir."
     }
   }
 }

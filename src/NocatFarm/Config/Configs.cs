@@ -328,6 +328,12 @@ public sealed class GlobalConfig {
 	/// <summary>The ping also carries the hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
 	public bool ShareFarmTotals { get; set; } = true;
 
+	/// <summary>
+	/// 1.8.2: the set finder sends nocat.lol the cheapest whole card sets it knows (market prices only) and takes back the
+	/// ones every copy has seen, as candidates - see Core/SetShare.cs. Only with CountMeAsUser on; off sends and fetches nothing.
+	/// </summary>
+	public bool ShareCheapestSets { get; set; } = true;
+
 	public bool UpdateReminders { get; set; } = true;
 
 	public int UpdateCheckHours { get; set; } = 2;
@@ -756,6 +762,14 @@ public sealed class BotConfig {
 
 	/// <summary>Gems a booster pack never takes the account below.</summary>
 	public int BoosterKeepGems { get; set; }
+
+	/// <summary>
+	/// 1.8.2 "Use gems for the most levels" (Modules/GemsChoice.cs): with buying cards on and "Make booster packs" automatic,
+	/// gems go whichever way buys the most badge levels at today's prices - a sack sold, a pack sold sealed, a pack opened and
+	/// its cards sold, or the closest badge - with a safety margin, and kept loose when it isn't sure. On by default; it does
+	/// nothing while buying cards is off.
+	/// </summary>
+	public bool GemsForLevels { get; set; } = true;
 	public bool ClaimEventItems { get; set; } = true;
 
 	/// <summary>0 off, 1 during sales, 2 every day.</summary>
@@ -2210,7 +2224,8 @@ public static class ConfigStore {
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
-		("state", "cardswaps-", ".json")   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)
+		("state", "cardswaps-", ".json"),   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)
+		("state", "gems-", ".json")   // 1.8.2 "Use gems for the most levels": what it still has to list (Modules/GemsChoice.cs)
 	];
 
 	/// <summary>

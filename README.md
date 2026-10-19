@@ -259,7 +259,9 @@ Once an hour it tells nocat.lol it's running, to count Steam accounts: a random 
 and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
 also carries a few numbers, the game-hours banked, the cards dropped, and the items turned into gems, badges crafted,
 packs opened and items sold, for the totals on nocat.lol's nocat.farm page (*Share my farming totals* turns just that
-off). *Count me as a user* turns it all off.
+off). While an account buys the cheapest full sets, about every 6 hours it also shares the cheapest card sets it found
+on the market - market prices only - and takes back the ones other copies found (*Share cheapest sets with other
+nocat.farm users* turns just that off). *Count me as a user* turns it all off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
 you also use in your own Steam app, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.

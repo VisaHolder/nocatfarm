@@ -3226,7 +3226,18 @@
     "After": "Depois",
     "the proxy and the device name": "o proxy e o nome do dispositivo",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Escolha a conta de onde copiar. Nada muda até você apertar Copiar configurações, e a conta de origem fica como está.",
-    "none - the defaults": "nenhuma - as padrão"
+    "none - the defaults": "nenhuma - as padrão",
+    "set finder · couldn't save what it shared · {0}": "buscador de conjuntos · não conseguiu salvar o que compartilhou · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "buscador de conjuntos · listas compartilhadas · {0} enviados, {1} pegos de outras cópias",
+    "set finder · nocat.lol didn't answer · {0}": "buscador de conjuntos · o nocat.lol não respondeu · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "gemas guardadas soltas · ainda não se sabe quantos níveis valem",
+    "saving tradable gems for a sack to sell": "juntando gemas negociáveis para um saco para vender",
+    "gems: today's listings are done · more tomorrow": "gemas: os anúncios de hoje acabaram · mais amanhã",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1.000 gemas empacotadas num saco para vender · cerca de {0} níveis por 1.000 gemas",
+    "saving tradable gems for a {0} pack to sell": "juntando gemas negociáveis para um pacote de {0} para vender",
+    "the {0} pack's price moved · weighed again later": "o preço do pacote de {0} mudou · comparado de novo mais tarde",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "pacote de {0} criado para vender · cerca de {1} níveis por 1.000 gemas",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "pacote de {0} criado para abrir e vender as cartas · cerca de {1} níveis por 1.000 gemas"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Contar como usuário",
-      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, emblemas, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada."
+      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, emblemas, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
     },
     "ShareFarmTotals": {
       "label": "Compartilhar meus totais de farm",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Pular trocas que a Steam reteria",
       "tip": "Nunca troca com uma conta quando a Steam reteria a troca por dias - por exemplo, quando um lado tem o app Steam Guard há pouco tempo. Ligado é o mais seguro."
+    },
+    "ShareCheapestSets": {
+      "label": "Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm",
+      "tip": "Enquanto uma conta compra os conjuntos completos mais baratos, manda ao nocat.lol, mais ou menos a cada 6 horas, os conjuntos completos de cartas mais baratos que esta cópia achou no mercado, e pega de volta os que todas as outras cópias acharam - assim acha conjuntos baratos muito antes. O que vai: o jogo de cada conjunto, os nomes das cartas, o menor preço de cada carta, quantas estão à venda e quando isso foi visto - por exemplo um conjunto de 5 cartas a 0,03 cada, visto há uma hora. Nada sobre você ou suas contas. O que volta só diz quais jogos olhar primeiro: cada carta é avaliada de novo no mercado da Steam antes de qualquer compra. Ligado: compartilhado nos dois sentidos. Desligado: nada é enviado nem buscado. Só enquanto \"Contar como usuário\" estiver ligado."
+    },
+    "GemsForLevels": {
+      "label": "Usar as gemas para o máximo de níveis",
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de emblema 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o emblema mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o emblema mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o emblema mais próximo. 'booster plan' mostra os números."
     }
   }
 }

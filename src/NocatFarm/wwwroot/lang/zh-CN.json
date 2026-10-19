@@ -3226,7 +3226,18 @@
     "After": "之后",
     "the proxy and the device name": "代理和设备名称",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "选择要从哪个账户复制。按下“复制设置”之前什么都不会改变，被复制的账户也保持原样。",
-    "none - the defaults": "无 - 使用默认值"
+    "none - the defaults": "无 - 使用默认值",
+    "set finder · couldn't save what it shared · {0}": "卡组查找 · 无法保存已分享的内容 · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "卡组查找 · 共享列表 · 发送 {0} 个，从其他副本取得 {1} 个",
+    "set finder · nocat.lol didn't answer · {0}": "卡组查找 · nocat.lol 没有响应 · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "宝石保持散装 · 还不确定它们值多少等级",
+    "saving tradable gems for a sack to sell": "正在为要出售的一袋宝石攒可交易宝石",
+    "gems: today's listings are done · more tomorrow": "宝石：今天的上架已完成 · 明天继续",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "已把 1,000 个宝石装成一袋待售 · 每 1,000 个宝石约 {0} 级",
+    "saving tradable gems for a {0} pack to sell": "正在为要出售的 {0} 补充包攒可交易宝石",
+    "the {0} pack's price moved · weighed again later": "{0} 补充包的价格变了 · 稍后重新比较",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于出售 · 每 1,000 个宝石约 {1} 级",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "把我算作用户",
-      "tip": "每小时告诉 nocat.lol 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。"
+      "tip": "每小时告诉 nocat.lol 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。 开启“与其他 nocat.farm 用户分享最便宜的卡组”时，还会在单独的消息中发送找到的卡组的市场价格（见该设置）。"
     },
     "ShareFarmTotals": {
       "label": "分享我的挂卡总数",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "跳过 Steam 会暂挂的交换",
       "tip": "如果 Steam 会把交易暂挂好几天，就绝不与那个账户交换 - 例如某一方刚开始用 Steam Guard 手机应用不久。开启最安全。"
+    },
+    "ShareCheapestSets": {
+      "label": "与其他 nocat.farm 用户分享最便宜的卡组",
+      "tip": "只要有账户在购买最便宜的整套，大约每 6 小时把这个副本在市场上找到的最便宜整套卡牌发送给 nocat.lol，并取回所有其他副本找到的卡组——这样能更早找到便宜的卡组。发送的内容：每套卡组的游戏、卡牌名称、每张卡的最低价、在售数量以及看到的时间——例如一套 5 张、每张 0.03、一小时前看到的卡组。不包含任何关于你或你账户的信息。取回的内容只决定先检查哪些游戏：购买任何东西之前，每张卡都会在 Steam 市场上重新定价。开启：双向分享。关闭：什么都不发送也不取回。仅在“把我算作用户”开启时。"
+    },
+    "GemsForLevels": {
+      "label": "把宝石用在最多的等级上",
+      "tip": "只在“购买缺少的卡牌”开启时起作用。自动补充包制作补充包之前，会按今天的市场价格用四种方式算出 1,000 个宝石值多少徽章等级：卖掉一袋宝石，让购买卡牌花掉这笔钱；制作补充包并原封出售；制作补充包并卖掉其中 3 张卡；或像以前一样为最接近的徽章打开补充包——然后选得到最多的那种。例如，一袋卖 0.45 的宝石约能买 1.8 级便宜的卡组，而为最接近的徽章开补充包约为 0.3 级。用到市场的方式必须明显（高出 15%）胜过更稳妥的方式；价格未知时，宝石保持散装。它绝不会以低于宝石价值的价格出售，每天最多上架 10 件，每次上架都像其他上架一样在 Steam 应用中确认。只出售可交易宝石；不可交易的宝石仍用于最接近的徽章。'booster plan' 会显示这些数字。"
     }
   }
 }

@@ -500,6 +500,7 @@ if (!shutdown.IsCancellationRequested) {
 	NocatFarm.Core.UserCount.Start();
 	NocatFarm.Core.CardExchange.Start();   // 1.8.2 card swaps: says nothing unless an account has them on
 	NocatFarm.Core.SetFinder.Start(manager);   // 1.8.2 the cheapest whole sets on the market: looks only while an account buys full sets, or after 'sets'
+	NocatFarm.Core.SetShare.Start(manager);   // 1.8.2 the shared cheapest-sets list: only while the finder looks and sharing is on
 
 	// The daily password-locked backup (Settings, Backups) - off until it's set up. Looks once a minute.
 	NocatFarm.Core.BackupSchedule.Start();

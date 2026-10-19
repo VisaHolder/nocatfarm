@@ -204,7 +204,14 @@ public static partial class Commands {
 				? await buyer.LookAsync(mode, CancellationToken.None).ConfigureAwait(false)
 				: await ScamWatch.AsYouAskedAsync(buyer.BuyNowAsync).ConfigureAwait(false);
 
-			return string.Join(Environment.NewLine, BuySaid(b, mode, result));
+			List<string> lines = BuySaid(b, mode, result);
+
+			// 1.8.2: the gems maths beside what it would buy - only while it's in play (its setting, automatic packs, buying on).
+			if ((mode == CardBuyer.Mode.Preview) && b.Cfg.GemsForLevels && (b.Cfg.BoosterMake == BoosterPick.Auto) && CardBuyer.On(b)) {
+				lines.Insert(lines.Count - 1, $"{b.Name}: {await Boosters.GemsPreviewAsync(b, null, null, null, CancellationToken.None).ConfigureAwait(false)}");
+			}
+
+			return string.Join(Environment.NewLine, lines);
 		}
 
 		Slow job = mode == CardBuyer.Mode.Preview ? new("buy", "looking at which cards to buy", Key: "buy preview") : new("buy", "buying cards", Key: "buy do");

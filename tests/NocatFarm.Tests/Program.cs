@@ -28683,6 +28683,12 @@ await BuyFixChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", 
 // ── 1.8.2: copy settings from another account - never the account's own, the switches left off, human mode, Add account and 'copy settings'; fakes only ──
 await CopySettingsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2: the shared cheapest-sets list - what goes out, what's taken back, when, and the setting; a pretend nocat.lol ──
+await SetShareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.2: the gems maths - each way winning in turn, the margin, kept loose when unsure, never losing money; fakes only ──
+await GemsChoiceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -33087,4 +33093,447 @@ static class CopySettingsChecks {
 			}
 		}
 	}
+}
+
+/// <summary>The shared cheapest-sets list against a pretend nocat.lol: what goes out, what's taken back, when, and the setting.</summary>
+static class SetShareChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-setshare-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		string State(string name) => Path.Combine(root, "config", "state", name + "-" + Guid.NewGuid().ToString("N") + ".json");
+
+		try {
+			DateTime t0 = new(2026, 10, 19, 6, 0, 0, DateTimeKind.Utc);
+			var market = new FakeSetMarket();
+			market.AddSet(100, "Cheap", 5, 4, 10);
+			market.AddSet(200, "Mid", 6, 7, 12);
+			market.AddSet(300, "Big", 16, 1, 10);   // no Steam set has 16 cards: never sent
+			var finder = new NocatFarm.Core.SetFinder(State("finder"), market.Get);
+			for (int i = 0; i < 8; i++) {
+				await finder.BatchAsync(t0.AddMinutes(i), CancellationToken.None);
+			}
+			DateTime now = t0.AddHours(1);
+			var records = finder.Records(now);
+
+			// ── what goes out ──
+			var sets = NocatFarm.Core.SetShare.Sets(records, now);
+			string body = NocatFarm.Core.SetShare.Body(sets);
+			using (var doc = System.Text.Json.JsonDocument.Parse(body)) {
+				var r = doc.RootElement;
+				var first = r.GetProperty("s")[0];
+				Check("set sharing: what goes out - the install's random number, the version and the sets, nothing else",
+					r.EnumerateObject().Select(static p => p.Name).SequenceEqual(["id", "v", "s"]) && NocatFarm.Core.UserCount.IsId(r.GetProperty("id").GetString()), body[..Math.Min(200, body.Length)]);
+				Check("set sharing: each set as nocat.lol takes it - the game, then each card's name (without '<app>-'), US cents, listings and seconds since it was seen",
+					(first[0].GetUInt32() == 100) && (first[1].GetArrayLength() == 5) && (first[1][0][0].GetString() == "Card 1") && (first[1][0][1].GetInt32() == 4)
+					&& (first[1][0][2].GetInt32() == 10) && (first[1][0][3].GetInt64() is >= 3000 and <= 3600), first.ToString());
+			}
+			Check("set sharing: the cheapest first, and never a set Steam couldn't have (16 cards)",
+				sets.Select(static s => (uint) s![0]!).SequenceEqual([100u, 200u]), sets.ToJsonString());
+			var odd = new List<NocatFarm.Core.SetFinder.SetRecord> {
+				new(1, 500, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"501-C{i}", 3, 5, now.AddMinutes(-5)))]),   // another game's cards
+				new(1, 501, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"501-C{i}", 3, i == 1 ? 0 : 5, now.AddMinutes(-5)))]),   // one nobody lists
+				new(1, 502, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"502-C{i}", 3, 5, now.AddHours(-49)))]),   // too old
+				new(1, 503, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"503-C{i}", 100_001, 5, now.AddMinutes(-5)))]),
+			};
+			Check("set sharing: a set with anything nocat.lol would refuse is left out, not sent", NocatFarm.Core.SetShare.Sets(odd, now).Count == 0);
+			Check("set sharing: at most 300 sets go",
+				NocatFarm.Core.SetShare.Sets(Enumerable.Range(1, 400).Select(a => new NocatFarm.Core.SetFinder.SetRecord(1, (uint) a,
+					[.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"{a}-C{i}", 3, 5, now))])).ToList(), now).Count == 300);
+			Check("set sharing: the same prices a minute later are no news - only a price changing is",
+				(NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now)) == NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now.AddMinutes(1))))
+				&& (NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now)) != NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(
+					[.. records.Select(r => r with { Cards = [.. r.Cards.Select(c => c with { UsdCents = c.UsdCents + 1 })] })], now))));
+
+			// ── what comes back ──
+			string table = """{"v":1,"at":"2026-10-19T06:00:00.000Z","s":[[900,[["A",3,20,600,2],["B",3,20,600,2],["C",3,20,600,1],["D",4,9,3600,1],["E",3,20,60,1]]],[901,[["A","3",20,600],["B",3,20,600],["C",3,20,600],["D",3,20,600],["E",3,20,600]]],[902,[["A",3,20,600]]],["x",[]]]}""";
+			var parsed = NocatFarm.Core.SetShare.Parse(table, now);
+			Check("set sharing: the shared list read back as records - '<app>-<name>', its price, listings, and when it was seen counted back from now; anything unreadable left out",
+				(parsed.Count == 1) && (parsed[0].App == 900) && (parsed[0].Cards[0].Hash == "900-A") && (parsed[0].Cards[3].UsdCents == 4) && (parsed[0].Cards[3].Listings == 9)
+				&& (parsed[0].Cards[3].SeenUtc == now.AddSeconds(-3600)), string.Join(",", parsed.Select(static p => p.App)));
+			Check("set sharing: an answer that isn't the list is nothing, never an error",
+				(NocatFarm.Core.SetShare.Parse("<html>", now).Count == 0) && (NocatFarm.Core.SetShare.Parse("""{"v":2,"s":[]}""", now).Count == 0) && (NocatFarm.Core.SetShare.Parse("[]", now).Count == 0));
+			int before = finder.Known(now).Count;
+			int taken = finder.Merge(parsed, now);
+			Check("set sharing: what comes back is only a candidate - which game to read first, never a known set or a price",
+				(taken == 1) && (finder.Known(now).Count == before) && finder.ToFill(now).Contains(900u), string.Join(",", finder.ToFill(now)));
+
+			// ── one go, against a pretend nocat.lol ──
+			var site = new FakeSetsSite { Table = table };
+			using var http = NocatFarm.Core.SetShare.MakeClient(site);
+			var g = new NocatFarm.Config.GlobalConfig { CountMeAsUser = true, ShareCheapestSets = true };
+			var off = new NocatFarm.Config.GlobalConfig { CountMeAsUser = true, ShareCheapestSets = false };
+			var notCounted = new NocatFarm.Config.GlobalConfig { CountMeAsUser = false, ShareCheapestSets = true };
+			Check("set sharing: on by default, and only while 'Count me as a user' is on",
+				new NocatFarm.Config.GlobalConfig().ShareCheapestSets && NocatFarm.Core.SetShare.Sharing(g) && !NocatFarm.Core.SetShare.Sharing(off) && !NocatFarm.Core.SetShare.Sharing(notCounted));
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, off, true, now, CancellationToken.None);
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, notCounted, true, now, CancellationToken.None);
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, false, now, CancellationToken.None);
+			Check("set sharing: off (or counting off, or the finder not looking) sends and fetches nothing at all", site.Calls.Count == 0);
+			var go = await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now, CancellationToken.None);
+			Check("set sharing: on - its sets sent, then the shared list fetched and handed to the finder",
+				go.Sent && (go.Got == 1) && (site.Calls.Count == 2) && (site.Calls[0].Method == "POST") && site.Calls[0].Body.Contains("\"s\":[[100,", StringComparison.Ordinal)
+				&& (site.Calls[1].Method == "GET") && site.Calls.All(static c => c.Url == NocatFarm.Core.SetShare.Endpoint), string.Join(" | ", site.Calls.Select(static c => c.Method + " " + c.Url)));
+			Check("set sharing: a plain nocat.farm User-Agent, JSON, and nothing about any account",
+				site.Calls[0].UserAgent.StartsWith("nocat.farm/", StringComparison.Ordinal) && site.Calls[0].ContentType.StartsWith("application/json", StringComparison.Ordinal)
+				&& !site.Calls[0].Body.Contains("steam", StringComparison.OrdinalIgnoreCase));
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(5), CancellationToken.None);
+			Check("set sharing: gentle - nothing again for 6 hours", site.Calls.Count == 2);
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(6.1), CancellationToken.None);
+			Check("set sharing: 6 hours on with nothing new, only the fetch - the same sets aren't sent again",
+				(site.Calls.Count == 3) && (site.Calls[2].Method == "GET"));
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(24.2), CancellationToken.None);
+			Check("set sharing: a day on, the same sets go again so nocat.lol's copy of them doesn't age out",
+				(site.Calls.Count == 5) && (site.Calls[3].Method == "POST"));
+			site.Fail = true;
+			int calls = site.Calls.Count;
+			var down = await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(31), CancellationToken.None);
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(32), CancellationToken.None);
+			Check("set sharing: nocat.lol not answering is nothing - no error, and it doesn't ask again for 6 hours",
+				!down.Sent && (down.Taken == 0) && (site.Calls.Count == calls + 1), site.Calls.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+			Check("set sharing: the setting - on, beside 'Share my farming totals', shown only while 'Count me as a user' is on, its words say what goes",
+				NocatFarm.Config.Settings.Global.Single(static d => d.Name == "ShareCheapestSets") is { ShowWhen: "CountMeAsUser=true", Group: "Counting users", Label: "Share cheapest sets with other nocat.farm users" } d
+				&& d.Tooltip.Contains("Nothing about you or your accounts", StringComparison.Ordinal) && d.Tooltip.Contains("priced again on the Steam market", StringComparison.Ordinal));
+			Check("set sharing: the docs say what's shared and that it's only ever a candidate",
+				Src("docs/cards-and-idling.md").Contains("Share cheapest sets with other nocat.farm users", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(root, true);
+			} catch (IOException) {
+				// temp - it goes when Windows tidies up
+			}
+		}
+	}
+}
+
+/// <summary>A pretend nocat.lol for the shared cheapest-sets list: notes each request, answers a send with "up" and a fetch with its table.</summary>
+sealed class FakeSetsSite : HttpMessageHandler {
+	public sealed record Call(string Method, string Url, string Body, string UserAgent, string ContentType);
+
+	public List<Call> Calls { get; } = [];
+	public string Table { get; set; } = """{"v":1,"at":null,"s":[]}""";
+	public bool Fail { get; set; }
+
+	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) {
+		Calls.Add(new Call(request.Method.Method, request.RequestUri?.ToString() ?? "", request.Content == null ? "" : await request.Content.ReadAsStringAsync(ct),
+			request.Headers.UserAgent.ToString(), request.Content?.Headers.ContentType?.ToString() ?? ""));
+
+		if (Fail) {
+			throw new HttpRequestException("no answer");
+		}
+
+		return new HttpResponseMessage(System.Net.HttpStatusCode.OK) {
+			Content = new StringContent(request.Method == HttpMethod.Post ? """{"up":true,"wait":21600}""" : Table)
+		};
+	}
+}
+
+/// <summary>
+/// "Use gems for the most levels": each way winning in turn, the margin, keeping the gems when it isn't sure, never losing
+/// money, the prices learned a few a look and read again before acting, and what it remembers. Fakes only.
+/// </summary>
+static class GemsChoiceChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-gems-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+
+		try {
+			const int Cad = 20;
+			DateTime now = new(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc);
+			NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales, double hoursOld = 0) => new(hash, Cad, lowest, lowest, sales, now.AddHours(-hoursOld).Ticks);
+			string sack = NocatFarm.Core.SparePrices.SackHash;
+			IReadOnlyList<long> costs = [24, 24, 24, 24, 30, 30];
+			int sackPays = NocatFarm.Modules.GemsChoice.Receive(Q(sack, 50, 500), 0);
+
+			// The levels money buys: the cheapest next levels first, the last in part, past the priced ones at the dearest.
+			Check("gems: money into levels - the cheapest next levels first, the last one in part",
+				(Math.Abs(NocatFarm.Modules.GemsChoice.LevelsFor(43, costs) - (1 + (19 / 24.0))) < 1e-9) && (NocatFarm.Modules.GemsChoice.LevelsFor(0, costs) == 0)
+				&& (Math.Abs(NocatFarm.Modules.GemsChoice.LevelsFor(216, costs) - 8) < 1e-9) && (NocatFarm.Modules.GemsChoice.LevelsFor(100, []) == 0));
+
+			// A booster creator: Crypt (15 cards, 400 gems), Arcane Raise (5 cards, 1200 gems), and the closest badge's game.
+			NocatFarm.Modules.Boosters.Page Page(uint tradable = 5000, uint untradable = 0) => new(tradable + untradable, tradable, untradable, new Dictionary<uint, NocatFarm.Modules.Boosters.Offer> {
+				[500] = new(500, "Crypt", 1, 400, false, ""),
+				[600] = new(600, "Arcane Raise", 1, 1200, false, ""),
+				[700] = new(700, "Closest", 1, 1000, false, ""),
+			});
+			var ranking = new NocatFarm.Modules.BoosterPick.Ranking([new NocatFarm.Modules.BoosterPick.Candidate(700, "Closest", 1000, 6, 1, 3, 3, 0)], 0, 0, 0, 0);
+			NocatFarm.Modules.GemsChoice.Inputs In(IReadOnlyList<long>? c, IReadOnlyCollection<uint>? never = null) => new(Cad, Page(), ranking, c, 0, never ?? [], now);
+			FakeGemsMarket Market() {
+				var m = new FakeGemsMarket();
+				m.Live[sack] = Q(sack, 50, 500);
+				return m;
+			}
+			var arcane = new NocatFarm.Modules.CardSet(600, "Arcane Raise", ["600-A", "600-B", "600-C", "600-D", "600-E"],
+				new Dictionary<string, int> { ["600-A"] = 60, ["600-B"] = 60, ["600-C"] = 60, ["600-D"] = 60, ["600-E"] = 60 });
+
+			// (a) a sack wins: nothing else priced, the closest badge is far behind.
+			var ma = Market();
+			var a = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), ma, 4, CancellationToken.None);
+			Check("gems: (a) selling a sack wins when it buys the most levels",
+				(a.Way == NocatFarm.Modules.GemsChoice.Way.Sack) && (a.Pick!.PerThousand == sackPays) && (Math.Abs(a.Pick.Levels - NocatFarm.Modules.GemsChoice.LevelsFor(sackPays, costs)) < 1e-9),
+				NocatFarm.Modules.GemsChoice.Line(a));
+			Check("gems: (d) the closest badge counted as automatic always did - 1,000 / the gems a level takes on average",
+				a.Options.Single(static o => o.Way == NocatFarm.Modules.GemsChoice.Way.Badge).Levels is var lv && (Math.Abs(lv - (1000.0 / NocatFarm.Modules.BoosterPick.ExpectedGems(ranking.Ranked[0]))) < 1e-9));
+
+			// (b) a Crypt pack sells sealed for more than its gems - and buys the most levels.
+			var mb = Market();
+			mb.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 30, 20);
+			var b = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), mb, 4, CancellationToken.None);
+			Check("gems: (b) making a pack and selling it sealed wins when it pays more than its gems and buys clearly more",
+				(b.Way == NocatFarm.Modules.GemsChoice.Way.PackSell) && (b.Pick!.App == 500), NocatFarm.Modules.GemsChoice.Line(b));
+
+			// (c) Arcane Raise's cards sell for about 0.60 each: open the pack and sell them.
+			var mc = Market();
+			mc.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 30, 20);
+			mc.KnownSets[600] = arcane;
+			var c = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), mc, 4, CancellationToken.None);
+			Check("gems: (c) opening a pack and selling its 3 cards wins when the cards are worth the most - 3 x the set's average, after fees",
+				(c.Way == NocatFarm.Modules.GemsChoice.Way.PackOpen) && (c.Pick!.App == 600) && (c.Pick.Proceeds == 3 * NocatFarm.Core.Seller.ReceiveFor(NocatFarm.Core.Seller.UndercutFor(60))),
+				NocatFarm.Modules.GemsChoice.Line(c));
+			var cNever = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs, [600u]), mc, 4, CancellationToken.None);
+			Check("gems: never opens a game whose packs stay sealed ('Never open packs from these games')",
+				cNever.Options.All(static o => !((o.Way == NocatFarm.Modules.GemsChoice.Way.PackOpen) && (o.App == 600))));
+
+			// (d) the closest badge wins when money buys nothing (no level to buy), or levels are dear.
+			var d1 = await NocatFarm.Modules.GemsChoice.WeighAsync(In([]), Market(), 4, CancellationToken.None);
+			var d2 = await NocatFarm.Modules.GemsChoice.WeighAsync(In([500, 500]), Market(), 4, CancellationToken.None);
+			Check("gems: (d) packs for the closest badge win when the money would buy no level, or too little",
+				(d1.Way == NocatFarm.Modules.GemsChoice.Way.Badge) && (d2.Way == NocatFarm.Modules.GemsChoice.Way.Badge), NocatFarm.Modules.GemsChoice.Line(d2));
+
+			// The margin: the owner's example - a sack 1.8 levels, an Arcane Raise pack 1.3, a Crypt pack sold 2.1: sell the pack.
+			NocatFarm.Modules.GemsChoice.Option O(NocatFarm.Modules.GemsChoice.Way w, double levels, uint app = 0, string game = "") => new(w, app, game, 400, 0, 45, levels);
+			var example = NocatFarm.Modules.GemsChoice.Decide([O(NocatFarm.Modules.GemsChoice.Way.Sack, 1.8), O(NocatFarm.Modules.GemsChoice.Way.PackOpen, 1.3, 600, "Arcane Raise"),
+				O(NocatFarm.Modules.GemsChoice.Way.PackSell, 2.1, 500, "Crypt"), O(NocatFarm.Modules.GemsChoice.Way.Badge, 0.3, 700, "Closest")], true, costs, Cad);
+			Check("gems: the owner's example - a sack 1.8 levels, Arcane Raise opened 1.3, Crypt sold sealed 2.1 → sell the Crypt pack",
+				(example.Way == NocatFarm.Modules.GemsChoice.Way.PackSell) && NocatFarm.Modules.GemsChoice.Line(example).EndsWith("→ make a Crypt pack and sell it", StringComparison.Ordinal),
+				NocatFarm.Modules.GemsChoice.Line(example));
+			var close = NocatFarm.Modules.GemsChoice.Decide([O(NocatFarm.Modules.GemsChoice.Way.Sack, 1.8), O(NocatFarm.Modules.GemsChoice.Way.PackSell, 2.0, 500, "Crypt")], true, costs, Cad);
+			var riskier = NocatFarm.Modules.GemsChoice.Decide([O(NocatFarm.Modules.GemsChoice.Way.Sack, 1.8), O(NocatFarm.Modules.GemsChoice.Way.PackSell, 2.1, 500, "Crypt"),
+				O(NocatFarm.Modules.GemsChoice.Way.PackOpen, 2.2, 600, "Arcane Raise")], true, costs, Cad);
+			var badgeClose = NocatFarm.Modules.GemsChoice.Decide([O(NocatFarm.Modules.GemsChoice.Way.Sack, 0.33), O(NocatFarm.Modules.GemsChoice.Way.Badge, 0.3, 700, "Closest")], true, costs, Cad);
+			Check("gems: the margin - a riskier way only when it beats every safer one by 15% (2.0 against a sack's 1.8 isn't enough; 3 cards at 2.2 don't beat a pack at 2.1 by enough; a sack at 0.33 doesn't beat the badge's 0.3)",
+				(close.Way == NocatFarm.Modules.GemsChoice.Way.Sack) && (riskier.Way == NocatFarm.Modules.GemsChoice.Way.PackSell) && (badgeClose.Way == NocatFarm.Modules.GemsChoice.Way.Badge)
+				&& (NocatFarm.Modules.GemsChoice.MarginPct == 15));
+
+			// Not sure: the gems stay loose.
+			var noCosts = await NocatFarm.Modules.GemsChoice.WeighAsync(In(null), Market(), 4, CancellationToken.None);
+			var noSack = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), new FakeGemsMarket(), 4, CancellationToken.None);
+			var thinSack = new FakeGemsMarket();
+			thinSack.Live[sack] = Q(sack, 50, 2);
+			var thin = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), thinSack, 4, CancellationToken.None);
+			var oldSack = new FakeGemsMarket();
+			oldSack.Held[sack] = Q(sack, 50, 500, hoursOld: 30);
+			var stale = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), oldSack, 4, CancellationToken.None);
+			var nothing = NocatFarm.Modules.GemsChoice.Decide([], true, costs, Cad);
+			Check("gems: not sure - what money buys unknown, no price for a sack (none, a thin market, or only an old one) - the gems stay loose",
+				(noCosts.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && (noSack.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && (thin.Way == NocatFarm.Modules.GemsChoice.Way.Keep)
+				&& (stale.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && (nothing.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && noSack.Why.Contains("sack", StringComparison.Ordinal),
+				$"{noCosts.Way} {noSack.Way} {thin.Way} {stale.Way} {nothing.Way}");
+			Check("gems: kept loose says so - '→ keep them loose (why)'",
+				NocatFarm.Modules.GemsChoice.Line(noSack).Contains("→ keep them loose (no price for a sack", StringComparison.Ordinal), NocatFarm.Modules.GemsChoice.Line(noSack));
+
+			// Never lose money: a pack that pays less than its gems would as a sack isn't a way at all, nor one that barely sells.
+			var cheap = Market();
+			cheap.Live["600-Arcane Raise Booster Pack"] = Q("600-Arcane Raise Booster Pack", 30, 50);   // 1,200 gems ≈ 0.52 as a sack; this pays 0.26
+			cheap.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 300, 1);                 // dear, but sold once in the last day
+			var lose = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), cheap, 4, CancellationToken.None);
+			Check("gems: never loses money - a pack that pays less than its gems as a sack, or one that hardly sells, is never a way",
+				lose.Options.All(static o => o.Way != NocatFarm.Modules.GemsChoice.Way.PackSell) && (lose.Way == NocatFarm.Modules.GemsChoice.Way.Sack), NocatFarm.Modules.GemsChoice.Line(lose));
+			var cheapCards = Market();
+			cheapCards.KnownSets[600] = arcane with { Usd = arcane.Usd.ToDictionary(static k => k.Key, static _ => 5) };
+			var loseCards = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), cheapCards, 4, CancellationToken.None);
+			Check("gems: ...nor a pack whose 3 cards pay less than its gems", loseCards.Options.All(static o => o.Way != NocatFarm.Modules.GemsChoice.Way.PackOpen));
+
+			// Gentle: prices it doesn't hold are learned a few a look, the cheapest packs first.
+			var many = new FakeGemsMarket();
+			many.Live[sack] = Q(sack, 50, 500);
+			var big = new Dictionary<uint, NocatFarm.Modules.Boosters.Offer>();
+			for (uint app = 1; app <= 12; app++) {
+				big[app] = new(app, "G" + app, 1, 300 + app, false, "");
+				many.Live[$"{app}-G{app} Booster Pack"] = new($"{app}-G{app} Booster Pack", Cad, null, null, 0, now.Ticks);   // nobody sells it
+			}
+			await NocatFarm.Modules.GemsChoice.WeighAsync(new(Cad, new(5000, 5000, 0, big), ranking, costs, 0, [], now), many, NocatFarm.Modules.GemsChoice.LearnALook, CancellationToken.None);
+			Check("gems: gentle - prices it doesn't have are learned at most 4 a look (a sack's aside), the cheapest packs first",
+				many.Asked.SequenceEqual([sack, "1-G1 Booster Pack", "set:1", "2-G2 Booster Pack", "set:2"]), string.Join(",", many.Asked));
+			int asked = many.Asked.Count;
+			await NocatFarm.Modules.GemsChoice.WeighAsync(new(Cad, new(5000, 5000, 0, big), ranking, costs, 0, [], now.AddMinutes(30)), many, NocatFarm.Modules.GemsChoice.LearnALook, CancellationToken.None);
+			Check("gems: what it learned lately isn't asked again - the next look learns the next ones",
+				many.Asked.Skip(asked).SequenceEqual(["3-G3 Booster Pack", "set:3", "4-G4 Booster Pack", "set:4"]), string.Join(",", many.Asked.Skip(asked)));
+
+			// Right before acting: the price read again, and the choice made again with it.
+			var moved = Market();
+			moved.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 30, 20);
+			var was = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), moved, 4, CancellationToken.None);
+			var still = await NocatFarm.Modules.GemsChoice.ConfirmAsync(was, In(costs), moved, CancellationToken.None);
+			moved.Live["500-Crypt Booster Pack"] = Q("500-Crypt Booster Pack", 12, 20);
+			var fell = await NocatFarm.Modules.GemsChoice.ConfirmAsync(was, In(costs), moved, CancellationToken.None);
+			Check("gems: right before the gems are spent the pack is priced again - still the best, it goes; fallen, it waits for the next look",
+				(was.Way == NocatFarm.Modules.GemsChoice.Way.PackSell) && (still.Way == NocatFarm.Modules.GemsChoice.Way.PackSell)
+				&& (fell.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && fell.Why.Contains("price moved", StringComparison.Ordinal), fell.Why);
+			var cardsMoved = Market();
+			cardsMoved.KnownSets[600] = arcane;
+			var wasOpen = await NocatFarm.Modules.GemsChoice.WeighAsync(In(costs), cardsMoved, 4, CancellationToken.None);
+			foreach (string h in arcane.Cards) {
+				cardsMoved.Live[h] = Q(h, 60, 1);   // they hardly sell: each counts as nothing
+			}
+			var thinCards = await NocatFarm.Modules.GemsChoice.ConfirmAsync(wasOpen, In(costs), cardsMoved, CancellationToken.None);
+			foreach (string h in arcane.Cards) {
+				cardsMoved.Live[h] = Q(h, 60, 40);
+			}
+			var goodCards = await NocatFarm.Modules.GemsChoice.ConfirmAsync(wasOpen, In(costs), cardsMoved, CancellationToken.None);
+			Check("gems: before a pack is opened to sell, every card is priced in the wallet's money - cards that hardly sell count as nothing",
+				(wasOpen.Way == NocatFarm.Modules.GemsChoice.Way.PackOpen) && (thinCards.Way == NocatFarm.Modules.GemsChoice.Way.Keep) && (goodCards.Way == NocatFarm.Modules.GemsChoice.Way.PackOpen),
+				$"{wasOpen.Way} {thinCards.Way} {goodCards.Way}");
+
+			// The words.
+			string line = NocatFarm.Modules.GemsChoice.Line(c);
+			Check("gems: the preview line - '1,000 gems: open Closest packs for its badge = about 0.3 levels; sell a sack = 0.43 CAD = about 1.8 levels; ... → open an Arcane Raise pack and sell its cards'",
+				line.StartsWith($"1,000 gems: open Closest packs for its badge = about 0.3 levels; sell a sack = {NocatFarm.Modules.BuyPlan.Money(sackPays, Cad)} = about 1.8 levels; ", StringComparison.Ordinal)
+				&& line.Contains("make a Crypt pack and sell it = ", StringComparison.Ordinal)
+				&& line.EndsWith("→ open an Arcane Raise pack and sell its cards", StringComparison.Ordinal), line);
+
+			// Only while it's in play.
+			var cfg = new NocatFarm.Config.BotConfig { BoosterMake = NocatFarm.Modules.BoosterPick.Auto };
+			Check("gems: on by default, and only with buying cards on and 'Make booster packs' automatic",
+				cfg.GemsForLevels && NocatFarm.Modules.GemsChoice.Applies(cfg, buying: true) && !NocatFarm.Modules.GemsChoice.Applies(cfg, buying: false)
+				&& !NocatFarm.Modules.GemsChoice.Applies(new NocatFarm.Config.BotConfig { BoosterMake = NocatFarm.Modules.BoosterPick.Pick }, buying: true)
+				&& !NocatFarm.Modules.GemsChoice.Applies(new NocatFarm.Config.BotConfig { BoosterMake = NocatFarm.Modules.BoosterPick.Auto, GemsForLevels = false }, buying: true));
+
+			// What buying cards priced last: by account and money, a day at most; unknown and "can't buy by itself" told apart.
+			var plan = new NocatFarm.Modules.BuyPlan { Currency = Cad };
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(1, "x", true, 0, 5, [new("1-a", 30)]));
+			plan.Ranked.Add(new NocatFarm.Modules.BuyStep(2, "y", true, 0, 5, [new("2-a", 24)]));
+			NocatFarm.Modules.GemsChoice.NoteCosts("gemsacct", plan, now);
+			var noted = NocatFarm.Modules.GemsChoice.CostsOf("gemsacct", Cad, now.AddHours(2));
+			var otherMoney = NocatFarm.Modules.GemsChoice.CostsOf("gemsacct", 1, now.AddHours(2));
+			var tooOld = NocatFarm.Modules.GemsChoice.CostsOf("gemsacct", Cad, now.AddHours(25));
+			plan.Block = NocatFarm.Modules.BuyBlock.Billing;
+			NocatFarm.Modules.GemsChoice.NoteCosts("gemsacct", plan, now);
+			var blocked = NocatFarm.Modules.GemsChoice.CostsOf("gemsacct", Cad, now);
+			plan.Problem = "Steam didn't say what's in its wallet";
+			NocatFarm.Modules.GemsChoice.NoteCosts("gemsacct", plan, now);
+			var problem = NocatFarm.Modules.GemsChoice.CostsOf("gemsacct", Cad, now);
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			Check("gems: the level costs from buying cards' last look - cheapest first, a day at most, in the wallet's money; billing details missing → money buys nothing; a problem → not known",
+				(noted is [24, 30]) && (otherMoney == null) && (tooOld == null) && (blocked is { Count: 0 }) && (problem == null));
+
+			// What it remembers: 10 listings a day, cards of opened packs for 3 days.
+			var mem = NocatFarm.Modules.GemsChoice.Memory.Of("gemsmem");
+			DateTime local = new(2026, 10, 19, 10, 0, 0, DateTimeKind.Local);
+			int left0 = mem.LeftToday(local);
+			mem.Listed(7);
+			int left7 = mem.LeftToday(local);
+			mem.Listed(5);
+			int leftNone = mem.LeftToday(local);
+			int leftTomorrow = mem.LeftToday(local.AddDays(1));
+			mem.AddCards(600, ["A", "B", "C"], DateTime.UtcNow);
+			mem.AddCards(601, ["Old"], DateTime.UtcNow.AddDays(-4));
+			mem.Sacks = 2;
+			mem.Save("gemsmem");
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			var back = NocatFarm.Modules.GemsChoice.Memory.Of("gemsmem");
+			Check("gems: at most 10 listings a day; what's still to list kept over a restart, cards of opened packs let go of after 3 days",
+				(left0 == 10) && (left7 == 3) && (leftNone == 0) && (leftTomorrow == 10) && (back.Sacks == 2) && (back.CardsNow().Count == 3) && back.CardsNow().All(static x => x.App == 600));
+
+			// The packs it makes to sell: never opened by anything else, never counted as levelling a badge.
+			var bm = new NocatFarm.Modules.BoosterPick.Memory();
+			bm.Add(new(1, "Badge", 11, 0, DateTime.UtcNow));
+			bm.Add(new(2, "Sealed", 22, 0, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToSell));
+			bm.Add(new(3, "Opened", 33, 0, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToOpenAndSell));
+			var busy = NocatFarm.Modules.BoosterPick.Busy(NocatFarm.Modules.BoosterPick.Auto, bm.Snapshot(), 0);
+			Check("gems: a pack made to sell sealed is never opened (not 'to open'); packs made to sell are left out of 'Open booster packs' and 'Packs it doesn't open'; neither holds back buying that game",
+				bm.Ids().SetEquals([11ul, 33ul]) && bm.ForSaleIds().SetEquals([22ul, 33ul]) && (bm.CountOwed() == 2) && busy.SequenceEqual([1u]));
+			var oldJson = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Modules.BoosterPick.OwnPack>("""{"App":5,"Name":"x","Asset":9,"After":0,"At":"2026-10-19T00:00:00Z","Maybe":false,"SetSize":6}""");
+			Check("gems: a pack saved by an older build reads as one for the badge", oldJson is { For: 0, App: 5 });
+			var spareSays = NocatFarm.Core.Spare.PlanPacks([new NocatFarm.Core.SpareItem(33, 3, NocatFarm.Core.SpareKind.BoosterPack, "3-Opened Booster Pack", "Opened Booster Pack", true, true)],
+				2, 0, [], static _ => null, new HashSet<ulong>([33ul]), static _ => null, 24, DateTime.UtcNow, own: bm.Ids());
+			Check("gems: spare items' pack look leaves a pack made to sell alone (its cards are noted only when automatic opens it)",
+				spareSays.Single() is { Open: false });
+			Check("gems: spare items passes those packs as busy", Src("src/NocatFarm/Core/SpareRun.cs").Contains("HashSet<ulong> forSale = memory.ForSaleIds();", StringComparison.Ordinal));
+
+			// The setting and the docs.
+			Check("gems: the setting - 'Use gems for the most levels', on, under automatic booster packs, its words say the rules",
+				NocatFarm.Config.Settings.Bot.Single(static s => s.Name == "GemsForLevels") is { Label: "Use gems for the most levels", ShowWhen: "BoosterMake=2", Group: "Making packs", Kind: NocatFarm.Config.SettingKind.Bool } gs
+				&& gs.Tooltip.Contains("Buy missing cards", StringComparison.Ordinal) && gs.Tooltip.Contains("15%", StringComparison.Ordinal)
+				&& gs.Tooltip.Contains("never sells for less than the gems are worth", StringComparison.OrdinalIgnoreCase) && gs.Tooltip.Contains("confirm each listing", StringComparison.Ordinal));
+			string boostersGems = Src("src/NocatFarm/Modules/Boosters.Gems.cs");
+			Check("gems: what it lists goes through the one listing path - inside the account's day, priced again right before, never under the gems' worth",
+				boostersGems.Contains("Seller.SellAsync(Bot, offers, ct, mayAct: () => DayGate.Open", StringComparison.Ordinal)
+				&& boostersGems.Contains("minReceive: minReceive", StringComparison.Ordinal) && boostersGems.Contains("prefer: \"1\"", StringComparison.Ordinal));
+			Check("gems: 'booster plan' and 'buy preview' show the choice and its numbers; the docs explain it",
+				Src("src/NocatFarm/Commands.Booster.cs").Contains("Boosters.GemsPreviewAsync", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/CommandsBuy.cs").Contains("Boosters.GemsPreviewAsync", StringComparison.Ordinal)
+				&& Src("docs/cards-and-idling.md").Contains("Use gems for the most levels", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Modules.GemsChoice.Memory.ForgetLoaded();
+			NocatFarm.Modules.GemsChoice.ForgetCosts();
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(root, true);
+			} catch (IOException) {
+				// temp - it goes when Windows tidies up
+			}
+		}
+	}
+}
+
+/// <summary>A pretend market for the gems maths: prices held, what the market answers now (null: no answer), sets, and every ask noted.</summary>
+sealed class FakeGemsMarket : NocatFarm.Modules.GemsChoice.IMarket {
+	public Dictionary<string, NocatFarm.Core.MarketQuote> Held { get; } = [];
+	public Dictionary<string, NocatFarm.Core.MarketQuote?> Live { get; } = [];
+	public Dictionary<uint, NocatFarm.Modules.CardSet> Sets { get; } = [];
+	public Dictionary<uint, NocatFarm.Modules.CardSet> KnownSets { get; } = [];
+	public double? RateValue { get; set; } = 1;
+	public List<string> Asked { get; } = [];
+
+	public NocatFarm.Core.MarketQuote? Known(string hash, int currency) => Held.GetValueOrDefault(hash);
+
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, int currency, CancellationToken ct) {
+		Asked.Add(hash);
+
+		if (Live.TryGetValue(hash, out NocatFarm.Core.MarketQuote? q) && (q != null)) {
+			Held[hash] = q;
+
+			return Task.FromResult<NocatFarm.Core.MarketQuote?>(q);
+		}
+
+		return Task.FromResult<NocatFarm.Core.MarketQuote?>(null);
+	}
+
+	public NocatFarm.Modules.CardSet? KnownSet(uint app) => KnownSets.GetValueOrDefault(app);
+
+	/// <summary>A set asked before is answered from what was read (no ask), like the app's own set prices.</summary>
+	public Task<(NocatFarm.Modules.CardSet? Set, bool Asked)> SetAsync(uint app, CancellationToken ct) {
+		bool ask = !_read.Contains(app);
+
+		if (ask) {
+			_read.Add(app);
+			Asked.Add("set:" + app);
+		}
+
+		return Task.FromResult((Sets.GetValueOrDefault(app), ask));
+	}
+
+	private readonly HashSet<uint> _read = [];
+
+	public double? Rate(int currency) => RateValue;
 }

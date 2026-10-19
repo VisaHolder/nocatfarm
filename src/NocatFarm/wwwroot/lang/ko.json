@@ -3226,7 +3226,18 @@
     "After": "바뀐 후",
     "the proxy and the device name": "프록시와 기기 이름",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "복사해 올 계정을 고르세요. 설정 복사를 누르기 전에는 아무것도 바뀌지 않고, 원본 계정은 그대로입니다.",
-    "none - the defaults": "없음 - 기본값"
+    "none - the defaults": "없음 - 기본값",
+    "set finder · couldn't save what it shared · {0}": "세트 찾기 · 공유한 내용을 저장하지 못함 · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "세트 찾기 · 공유 목록 · {0}개 보냄, 다른 사본에서 {1}개 가져옴",
+    "set finder · nocat.lol didn't answer · {0}": "세트 찾기 · nocat.lol이 응답하지 않음 · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "보석은 그대로 · 레벨로 얼마인지 아직 모름",
+    "saving tradable gems for a sack to sell": "팔 보석 자루를 위해 거래 가능한 보석을 모으는 중",
+    "gems: today's listings are done · more tomorrow": "보석: 오늘 판매 등록은 끝 · 내일 더",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "보석 1,000개를 팔 자루로 묶음 · 보석 1,000개당 약 {0}레벨",
+    "saving tradable gems for a {0} pack to sell": "팔 {0} 팩을 위해 거래 가능한 보석을 모으는 중",
+    "the {0} pack's price moved · weighed again later": "{0} 팩 가격이 바뀜 · 나중에 다시 비교",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "팔기 위한 {0} 팩 제작 · 보석 1,000개당 약 {1}레벨",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "열어서 카드를 팔기 위한 {0} 팩 제작 · 보석 1,000개당 약 {1}레벨"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "사용자로 집계",
-      "tip": "한 시간에 한 번 nocat.lol에 이 사본이 실행 중이라고 알려, 그 페이지가 사용자 수를 셀 수 있게 합니다. 보내는 것은 이 설치용으로 만든 무작위 번호, 앱 버전, 플랫폼, 로그인한 Steam 계정 수(숫자만, 예: 3), 그리고 공유하는 경우 시간과 카드 합계와 나머지(보석, 배지, 팩, 판매된 아이템)(다음 설정)뿐입니다. 계정 이름, Steam ID, 설정은 보내지 않습니다. Steam 계정 수는 이렇게 집계됩니다. 끄면 아무것도 보내지 않습니다."
+      "tip": "한 시간에 한 번 nocat.lol에 이 사본이 실행 중이라고 알려, 그 페이지가 사용자 수를 셀 수 있게 합니다. 보내는 것은 이 설치용으로 만든 무작위 번호, 앱 버전, 플랫폼, 로그인한 Steam 계정 수(숫자만, 예: 3), 그리고 공유하는 경우 시간과 카드 합계와 나머지(보석, 배지, 팩, 판매된 아이템)(다음 설정)뿐입니다. 계정 이름, Steam ID, 설정은 보내지 않습니다. Steam 계정 수는 이렇게 집계됩니다. 끄면 아무것도 보내지 않습니다. \"가장 싼 세트를 다른 nocat.farm 사용자와 공유\"가 켜져 있으면 찾은 카드 세트의 장터 가격도 별도 메시지로 보냅니다(그 설정 참고)."
     },
     "ShareFarmTotals": {
       "label": "내 파밍 합계 공유",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Steam이 보류할 교환은 건너뛰기",
       "tip": "Steam이 거래를 며칠씩 보류할 때는 그 계정과 교환하지 않습니다 - 예를 들어 한쪽이 Steam Guard 앱을 쓴 지 얼마 안 됐을 때. 켜 두는 것이 가장 안전합니다."
+    },
+    "ShareCheapestSets": {
+      "label": "가장 싼 세트를 다른 nocat.farm 사용자와 공유",
+      "tip": "계정이 가장 싼 전체 세트를 사는 동안, 이 사본이 장터에서 찾은 가장 싼 전체 카드 세트를 약 6시간마다 nocat.lol에 보내고, 다른 모든 사본이 찾은 세트를 받아 옵니다 - 그래서 싼 세트를 훨씬 빨리 찾습니다. 보내는 것: 각 세트의 게임, 카드 이름, 각 카드의 최저가, 판매 중인 수량, 그것을 본 시각 - 예: 장당 0.03인 5장짜리 세트, 1시간 전에 확인. 당신이나 계정에 대한 것은 아무것도 없습니다. 받아 오는 것은 어떤 게임을 먼저 확인할지만 알려 줍니다: 무엇이든 사기 전에 모든 카드를 Steam 장터에서 다시 가격을 확인합니다. 켜기: 양방향으로 공유. 끄기: 아무것도 보내거나 받지 않습니다. \"사용자로 집계\"가 켜져 있을 때만."
+    },
+    "GemsForLevels": {
+      "label": "보석을 가장 많은 레벨에 쓰기",
+      "tip": "\"모자란 카드 사기\"가 켜져 있을 때만 작동합니다. 자동 부스터 팩이 팩을 만들기 전에, 오늘 장터 가격으로 보석 1,000개가 배지 몇 레벨인지 네 가지 방법으로 계산합니다: 보석 자루를 팔아 카드 구매가 그 돈을 쓰게 하기, 팩을 만들어 뜯지 않고 팔기, 팩을 만들어 카드 3장을 팔기, 또는 지금처럼 가장 가까운 배지를 위해 팩 열기 - 그리고 가장 많이 나오는 방법을 씁니다. 예를 들어 0.45를 받는 자루는 싼 세트를 약 1.8레벨 살 수 있고, 가장 가까운 배지를 위한 팩은 약 0.3입니다. 장터를 쓰는 방법은 더 안전한 방법을 확실히(15%) 이겨야 하며, 가격을 모르면 보석은 그대로 둡니다. 보석의 가치보다 싸게는 절대 팔지 않고, 하루에 최대 10개만 등록하며, 모든 판매 등록은 다른 등록처럼 Steam 앱에서 확인합니다. 거래 가능한 보석만 팔고, 거래 불가 보석은 계속 가장 가까운 배지에 씁니다. 'booster plan'에서 숫자를 볼 수 있습니다."
     }
   }
 }

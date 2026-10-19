@@ -3226,7 +3226,18 @@
     "After": "Después",
     "the proxy and the device name": "el proxy y el nombre del dispositivo",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Elige la cuenta de la que copiar. Nada cambia hasta que pulses Copiar ajustes, y la cuenta de origen se queda como está.",
-    "none - the defaults": "ninguna - los predeterminados"
+    "none - the defaults": "ninguna - los predeterminados",
+    "set finder · couldn't save what it shared · {0}": "buscador de colecciones · no pudo guardar lo que compartió · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "buscador de colecciones · listas compartidas · {0} enviadas, {1} tomadas de otras copias",
+    "set finder · nocat.lol didn't answer · {0}": "buscador de colecciones · nocat.lol no respondió · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "gemas guardadas sueltas · aún no se sabe cuántos niveles valen",
+    "saving tradable gems for a sack to sell": "ahorrando gemas intercambiables para un saco que vender",
+    "gems: today's listings are done · more tomorrow": "gemas: las ventas de hoy están hechas · más mañana",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1.000 gemas empaquetadas en un saco para vender · unos {0} niveles por cada 1.000 gemas",
+    "saving tradable gems for a {0} pack to sell": "ahorrando gemas intercambiables para un sobre de {0} que vender",
+    "the {0} pack's price moved · weighed again later": "el precio del sobre de {0} cambió · se vuelve a calcular más tarde",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "sobre de {0} creado para vender · unos {1} niveles por cada 1.000 gemas",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "sobre de {0} creado para abrirlo y vender sus cromos · unos {1} niveles por cada 1.000 gemas"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Contarme como usuario",
-      "tip": "Le dice a nocat.lol una vez por hora que esta copia está funcionando, para que su página pueda contar usuarios. Envía un número aleatorio creado para esta instalación, la versión de la app, la plataforma y cuántas de tus cuentas de Steam tienen la sesión iniciada (solo el número, por ejemplo 3), más los totales de horas y cromos y el resto (gemas, insignias, sobres, objetos vendidos) si los compartes (el ajuste siguiente) - nada más: ni nombres de cuenta, ni Steam IDs, ni ajustes. Así se obtiene el número de cuentas de Steam. Desactivado no envía nada."
+      "tip": "Le dice a nocat.lol una vez por hora que esta copia está funcionando, para que su página pueda contar usuarios. Envía un número aleatorio creado para esta instalación, la versión de la app, la plataforma y cuántas de tus cuentas de Steam tienen la sesión iniciada (solo el número, por ejemplo 3), más los totales de horas y cromos y el resto (gemas, insignias, sobres, objetos vendidos) si los compartes (el ajuste siguiente) - nada más: ni nombres de cuenta, ni Steam IDs, ni ajustes. Así se obtiene el número de cuentas de Steam. Desactivado no envía nada. Con «Compartir las colecciones más baratas con otros usuarios de nocat.farm» activado, también envía los precios de mercado de las colecciones de cromos que encontró, en un mensaje aparte (ver ese ajuste)."
     },
     "ShareFarmTotals": {
       "label": "Compartir mis totales de farmeo",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Omitir intercambios que Steam retendría",
       "tip": "Nunca intercambia con una cuenta si Steam retendría el intercambio durante días; por ejemplo, cuando un lado lleva poco tiempo con la app de Steam Guard. Activado es lo más seguro."
+    },
+    "ShareCheapestSets": {
+      "label": "Compartir las colecciones más baratas con otros usuarios de nocat.farm",
+      "tip": "Mientras una cuenta compra las colecciones completas más baratas, envía a nocat.lol, cada 6 horas más o menos, las colecciones completas más baratas que esta copia ha encontrado en el mercado, y recibe las que encontraron todas las demás copias - así encuentra colecciones baratas mucho antes. Lo que se envía: el juego de cada colección, los nombres de sus cromos, el precio más bajo de cada cromo, cuántos hay a la venta y cuándo se vio - por ejemplo una colección de 5 cromos a 0,03 cada uno, vista hace una hora. Nada sobre ti ni tus cuentas. Lo que llega solo dice qué juegos mirar primero: cada cromo se vuelve a tasar en el mercado de Steam antes de comprar nada. Activado: se comparte en los dos sentidos. Desactivado: no se envía ni se recibe nada. Solo mientras «Contarme como usuario» esté activado."
+    },
+    "GemsForLevels": {
+      "label": "Usar las gemas para el mayor número de niveles",
+      "tip": "Solo hace algo mientras «Comprar los cromos que faltan» está activado. Antes de que los sobres automáticos creen un sobre, calcula cuántos niveles de insignia valen 1.000 gemas a los precios de hoy del mercado, de cuatro maneras: vender un saco de gemas y dejar que la compra de cromos gaste el dinero, crear un sobre y venderlo cerrado, crear un sobre y vender sus 3 cromos, o abrir sobres para la insignia más cercana como antes - y hace la que más da. Por ejemplo, un saco que paga 0,45 compra unos 1,8 niveles de colecciones baratas, mientras que los sobres para la insignia más cercana dan unos 0,3. Una manera que usa el mercado tiene que ganar con claridad (por un 15 %) a una más segura; si no se conocen los precios, las gemas se quedan sueltas. Nunca vende por menos de lo que valen las gemas, pone a la venta como mucho 10 cosas al día, y confirmas cada venta en la app de Steam como cualquier otra. Solo se venden gemas intercambiables; las no intercambiables siguen yendo a la insignia más cercana. 'booster plan' muestra los números."
     }
   }
 }

@@ -238,7 +238,7 @@ Two things follow:
 |---|---|---|
 | Card drops from your games | free | nocat.farm (*Farm trading cards*) |
 | Steam Points: the seasonal badge | 100 XP per 1,000 points | nocat.farm, once you turn on *Spend Steam Points on levels* |
-| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | nocat.farm, once you turn on *Buy missing cards* and *Buy the cheapest full sets* (and *Spare items* → *Gems afterwards* set to sell the sacks turns gems into money) - see [Buying cards](#buying-cards) |
+| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | nocat.farm, once you turn on *Buy missing cards* and *Buy the cheapest full sets* (with *Make booster packs: automatic*, *Use gems for the most levels* sells the sacks by itself when that wins - see [Use gems for the most levels](#use-gems-for-the-most-levels); or *Spare items* → *Gems afterwards* set to sell the sacks) - see [Buying cards](#buying-cards) |
 | Gems into booster packs | about 20 to 50 XP per 1,000 gems | nocat.farm (*Make booster packs: automatic*) |
 | Keep the gems | nothing | - |
 
@@ -272,6 +272,47 @@ Two things follow:
 
 Picking automatic sets *Gems afterwards* (Spare items) to **keep them loose** when it was automatic or sacks - the
 booster creator can't use gems in sacks. It says so once in the log. Change it back if you'd rather keep sacks.
+
+### Use gems for the most levels
+
+With *Buy missing cards* on, money can buy far more levels than packs do (see [Cheapest XP routes](#cheapest-xp-routes)).
+So with *Use gems for the most levels* on (*Booster packs*, under *Make booster packs: automatic*, on by default - it
+does nothing while buying cards is off), before automatic makes a pack it works out what **1,000 gems** are worth in
+badge levels, four ways, at today's prices in the wallet's own money:
+
+| Way | What 1,000 gems become | Counted as |
+|---|---|---|
+| Sell a sack | a sack of gems listed a cent under the cheapest, after Steam's fee | that money spent on the cheapest next levels, the way buying cards ranks them |
+| Make a pack and sell it sealed | a pack listed a cent under the cheapest - only when it pays more than its gems would as a sack | the same, per 1,000 gems of pack |
+| Make a pack, open it and sell the cards | 3 random cards of the set: 3 x the average card, each after the fee - only when that pays more than the gems as a sack (some sets, like Arcane Raise, have cards around 0.60) | the same |
+| Open packs for the closest badge | what automatic always did: 1,000 ÷ the gems the next level takes on average | levels |
+
+It does the way with the most levels. Using the market is less sure than not (a sack sells fastest, a sealed pack less
+so, three loose cards least), so a way that leans on the market more has to beat every surer way by **15%**; otherwise
+the surer one is done. `booster plan myaccount` (and `buy preview myaccount`) shows the numbers, for example:
+
+*1,000 gems: open Closest packs for its badge = about 0.3 levels; sell a sack = 0.43 CAD = about 1.8 levels; make a
+Crypt pack and sell it = 0.52 CAD = about 2.1 levels; open an Arcane Raise pack and sell its cards = 0.31 CAD = about 1.3
+levels → make a Crypt pack and sell it*
+
+The rules it keeps:
+
+- **Not sure, nothing happens.** No price for a sack of gems (or one that hardly sells), or buying cards hasn't priced
+  its next levels yet: the gems stay loose until the next look. If the money would buy no level at all (nothing to buy,
+  or Steam won't let the account buy by itself), the closest badge it is, as before.
+- **Never loses money.** Nothing is sold for less than its gems would pay as a sack: each listing is priced again right
+  before it goes up, and kept back if it would pay less. A pack's price, or every card of a set, is also read again just
+  before the gems are spent; if the pick changed, it waits for the next look.
+- **Like any listing.** Every listing needs confirming in the Steam app (or the account's authenticator, as any listing
+  does), at most 10 a day, one kind a look, through the same slow price queue as everything else, and on a human-mode
+  account only during its day.
+- **Only tradable gems.** A sack, or a pack made to sell, uses tradable gems only - a pack made from untradable ones
+  couldn't be sold, nor its cards. Untradable gems still make packs for the closest badge.
+- **Its own packs.** A pack made to sell sealed is never opened, sent or sold by anything else; one made to open is
+  opened by automatic, and its 3 cards listed at the next looks (cards it can't find any more - crafted or swapped - are
+  let go of, and any it hasn't listed after 3 days are ordinary spare cards again). Neither stops buying cards for that
+  game.
+- Prices it doesn't know yet are learned a few a look (4 at most), the cheapest packs first.
 
 Sources:
 [1] [Steam trading cards FAQ](https://steamcommunity.com/tradingcards/faq) ·
@@ -398,6 +439,17 @@ Once a day it also reads public "cheapest sets" lists, only to choose which game
 badge price list (the 1,000 cheapest sets). It reads each site's robots.txt first and follows it, under the name
 "nocat.farm set finder", and leaves a site alone that day if it doesn't answer or says no. steam.tools' list is skipped
 for now: robots.txt keeps programs off it. Their prices are never kept or trusted - only which games to look at.
+
+**Shared with other nocat.farm users.** With *Share cheapest sets with other nocat.farm users* on (*Global settings →
+Updates & plugins*, on by default, only while *Count me as a user* is on), about every 6 hours the finder sends
+nocat.lol the cheapest whole sets it knows (up to 300: each set's game, its cards' names, each card's cheapest price in
+US cents, how many are for sale and how long ago that was seen - nothing about you or your accounts) and takes back the
+cheapest 1,000 sets every copy has seen. Like the public lists, those only say which games to read first: every card is
+still priced on the market by this copy before a set counts, and again in the wallet's currency before anything is
+bought. nocat.lol keeps each card's cheapest price seen in the last two days, and one copy alone can't make a set look
+cheaper than it is: a price only another copy backs up wins, an odd one out among several is ignored, and a card only
+one copy claims for a game is left out. It sends only when it learned something new (or a day has passed), and if
+nocat.lol doesn't answer it tries again 6 hours later. Off, nothing is sent or fetched.
 
 `sets myaccount` shows the 20 cheapest whole sets right now for badges that account can still level - each set's price
 in the wallet's currency (at the rate learned from the market; US dollars until that's learned), its cards, and the XP
@@ -744,6 +796,7 @@ every account.
 | Make booster packs for | The games, for "games I pick" | empty |
 | Booster packs use | Tradable gems first, or untradable first | tradable first |
 | Keep at least this many gems | A pack is made only while the gems cover it plus this | 0 |
+| Use gems for the most levels | With buying cards on: each time, a sack sold, a pack sold, a pack's cards sold or packs for the closest badge - whichever gives the most levels for 1,000 gems (see [Use gems for the most levels](#use-gems-for-the-most-levels)) | on |
 | Open booster packs | Never, only when the cards are worth more, or always. For levelling, always. Packs automatic made are opened by it either way | never |
 | Leave new packs alone for (days) | 0 to 30. Always shown: it holds back new packs from selling or sending too. Packs nocat.farm made itself are never held back | 7 |
 | Never open packs from these games | Games whose packs stay sealed. Always shown, even with opening off | empty |

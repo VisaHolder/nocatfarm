@@ -3226,7 +3226,18 @@
     "After": "Potem",
     "the proxy and the device name": "proxy i nazwa urządzenia",
     "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Wybierz konto, z którego kopiować. Nic się nie zmienia, dopóki nie naciśniesz Skopiuj ustawienia, a konto źródłowe zostaje bez zmian.",
-    "none - the defaults": "brak - ustawienia domyślne"
+    "none - the defaults": "brak - ustawienia domyślne",
+    "set finder · couldn't save what it shared · {0}": "wyszukiwarka zestawów · nie udało się zapisać tego, co udostępniła · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "wyszukiwarka zestawów · wspólne listy · wysłano {0}, wzięto {1} od innych kopii",
+    "set finder · nocat.lol didn't answer · {0}": "wyszukiwarka zestawów · nocat.lol nie odpowiedział · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "klejnoty zostają luzem · jeszcze nie wiadomo, ile są warte w poziomach",
+    "saving tradable gems for a sack to sell": "zbiera wymienialne klejnoty na worek do sprzedania",
+    "gems: today's listings are done · more tomorrow": "klejnoty: dzisiejsze wystawienia zrobione · więcej jutro",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "spakowano 1000 klejnotów w worek do sprzedania · około {0} poziomów na 1000 klejnotów",
+    "saving tradable gems for a {0} pack to sell": "zbiera wymienialne klejnoty na booster {0} do sprzedania",
+    "the {0} pack's price moved · weighed again later": "cena boostera {0} się zmieniła · zostanie przeliczona później",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "zrobiono booster {0} do sprzedania · około {1} poziomów na 1000 klejnotów",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "zrobiono booster {0} do otwarcia i sprzedania kart · około {1} poziomów na 1000 klejnotów"
   },
   "settings": {
     "SteamOpenEveryAccount": {
@@ -4357,7 +4368,7 @@
     },
     "CountMeAsUser": {
       "label": "Licz mnie jako użytkownika",
-      "tip": "Raz na godzinę mówi nocat.lol, że ta kopia działa, żeby jej strona mogła liczyć użytkowników. Wysyła losowy numer zrobiony dla tej instalacji, wersję aplikacji, platformę i ile twoich kont Steam jest zalogowanych (tylko liczbę, na przykład 3), plus sumy godzin i kart oraz resztę (klejnoty, odznaki, paczki, sprzedane przedmioty), jeśli je udostępniasz (następne ustawienie) - nic więcej: żadnych nazw kont, Steam ID ani ustawień. Tak powstaje liczba kont Steam. Wyłączone nic nie wysyła."
+      "tip": "Raz na godzinę mówi nocat.lol, że ta kopia działa, żeby jej strona mogła liczyć użytkowników. Wysyła losowy numer zrobiony dla tej instalacji, wersję aplikacji, platformę i ile twoich kont Steam jest zalogowanych (tylko liczbę, na przykład 3), plus sumy godzin i kart oraz resztę (klejnoty, odznaki, paczki, sprzedane przedmioty), jeśli je udostępniasz (następne ustawienie) - nic więcej: żadnych nazw kont, Steam ID ani ustawień. Tak powstaje liczba kont Steam. Wyłączone nic nie wysyła. Gdy „Udostępniaj najtańsze zestawy innym użytkownikom nocat.farm” jest włączone, wysyła też ceny rynkowe znalezionych zestawów kart, w osobnej wiadomości (zobacz to ustawienie)."
     },
     "ShareFarmTotals": {
       "label": "Udostępniaj moje sumy farmienia",
@@ -4802,6 +4813,14 @@
     "CardSwapSkipHeld": {
       "label": "Pomijaj wymiany, które Steam by wstrzymał",
       "tip": "Nigdy nie wymienia z kontem, jeśli Steam wstrzymałby wymianę na kilka dni - na przykład gdy jedna strona ma aplikację Steam Guard od niedawna. Włączone jest najbezpieczniejsze."
+    },
+    "ShareCheapestSets": {
+      "label": "Udostępniaj najtańsze zestawy innym użytkownikom nocat.farm",
+      "tip": "Dopóki jakieś konto kupuje najtańsze pełne zestawy, mniej więcej co 6 godzin wysyła do nocat.lol najtańsze pełne zestawy kart, które ta kopia znalazła na rynku, i pobiera te, które znalazły wszystkie inne kopie - dzięki temu znajduje tanie zestawy dużo wcześniej. Co jest wysyłane: gra każdego zestawu, nazwy jego kart, najniższa cena każdej karty, ile jest wystawionych i kiedy to widziano - na przykład zestaw 5 kart po 0,03 każda, widziany godzinę temu. Nic o tobie ani twoich kontach. To, co wraca, mówi tylko, które gry sprawdzić najpierw: każda karta jest wyceniana ponownie na rynku Steam, zanim cokolwiek zostanie kupione. Włączone: udostępnianie w obie strony. Wyłączone: nic nie jest wysyłane ani pobierane. Tylko gdy „Licz mnie jako użytkownika” jest włączone."
+    },
+    "GemsForLevels": {
+      "label": "Używaj klejnotów na jak najwięcej poziomów",
+      "tip": "Działa tylko, gdy „Kupuj brakujące karty” jest włączone. Zanim automatyczne boostery zrobią booster, liczy, ile poziomów odznak jest wartych 1000 klejnotów po dzisiejszych cenach rynkowych, na cztery sposoby: sprzedać worek klejnotów i pozwolić kupowaniu kart wydać pieniądze, zrobić booster i sprzedać go zamknięty, zrobić booster i sprzedać jego 3 karty, albo jak dotąd otwierać boostery dla najbliższej odznaki - i wybiera ten, który daje najwięcej. Na przykład worek, który daje 0,45, kupuje około 1,8 poziomu tanich zestawów, a boostery dla najbliższej odznaki dają około 0,3. Sposób przez rynek musi wyraźnie (o 15%) pokonać bezpieczniejszy; jeśli ceny nie są znane, klejnoty zostają luzem. Nigdy nie sprzedaje taniej, niż są warte klejnoty, wystawia najwyżej 10 rzeczy dziennie, a każde wystawienie potwierdzasz w aplikacji Steam jak każde inne. Sprzedawane są tylko wymienialne klejnoty; niewymienialne nadal idą na najbliższą odznakę. 'booster plan' pokazuje liczby."
     }
   }
 }

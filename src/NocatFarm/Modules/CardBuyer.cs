@@ -1395,6 +1395,26 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	}
 
 	/// <summary>
+	/// 1.8.2, for the gems maths (<see cref="GemsChoice"/>): what each next badge level costs, cheapest first, priced now the
+	/// way a look ranks them - nothing is bought. Null when it couldn't tell (or the wallet's money isn't
+	/// <paramref name="currency"/>); empty when Steam won't let this account buy by itself. Noted for a day either way.
+	/// </summary>
+	/// <param name="held">The cards held, from an inventory the caller just read - not read again.</param>
+	public async Task<IReadOnlyList<long>?> LevelCostsAsync(int currency, IReadOnlyDictionary<uint, Dictionary<string, int>>? held, CancellationToken ct) {
+		await BusyGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
+				boosting: BoosterPick.Busy(Bot), heldCards: held).ConfigureAwait(false);
+			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
+
+			return GemsChoice.CostsOf(Bot.Name, currency, DateTime.UtcNow);
+		} finally {
+			BusyGate.Release();
+		}
+	}
+
+	/// <summary>
 	/// For badge crafting (smart levelling, <see cref="SetSale"/>): each of these games' whole normal set weighed - sold, or
 	/// crafted - against what the money would buy, ranked as buying ranks it, at today's prices. Nothing is bought or listed
 	/// here. One verdict per game (up to <see cref="SetSale.MaxSetsALook"/>): when the market or the wallet didn't say, it's
@@ -1410,6 +1430,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		try {
 			BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
 				boosting: BoosterPick.Busy(Bot), heldCards: inventory == null ? null : LevelPlanner.NormalCards(inventory)).ConfigureAwait(false);
+			GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);
 
 			if ((plan.Problem.Length > 0) || (plan.Block == BuyBlock.Unknown)) {
 				Log.Debug($"weighing sets: {(plan.Problem.Length > 0 ? plan.Problem : plan.Blocked)}", Bot.Name);
@@ -1499,6 +1520,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		BuyPlan plan = await BuyPlan.MakeAsync(Bot.Cfg, _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct, stopWhenBlocked: buying,
 			boosting: BoosterPick.Busy(Bot)).ConfigureAwait(false);
 		result.Plan = plan;
+		GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);   // 1.8.2: what the gems maths turns money into
 
 		// The preview says which whole sets it would sell instead of crafting (smart levelling) - nothing is listed here.
 		if ((mode == Mode.Preview) && (plan.Problem.Length == 0) && (plan.Block == BuyBlock.None) && SetSale.Applies(Bot.Cfg, buying: true)) {
