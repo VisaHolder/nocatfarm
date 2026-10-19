@@ -58,6 +58,12 @@ public sealed class GlobalConfig {
 	/// and the window size get.
 	/// </summary>
 	public bool TutorialDone { get; set; }
+
+	/// <summary>
+	/// Somebody chose the language - in the installer, or by changing it here (1.8.2). Then the walkthrough doesn't ask again:
+	/// two language questions in a row was one too many. Set by itself, so it has no entry in Settings.cs.
+	/// </summary>
+	public bool LanguagePicked { get; set; }
 	public int WebRefreshSeconds { get; set; } = 3;
 	public int WebSessionDays { get; set; } = 7;
 

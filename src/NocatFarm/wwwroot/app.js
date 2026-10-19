@@ -1443,7 +1443,7 @@ function showAddAccount() {
     <p style="margin:14px 0 8px"><b>${esc(t('What kind of account is it?'))}</b></p>
     <div class="pickcards">
       <div class="pickcard" id="a-type-human" role="button" tabindex="0" onclick="addPickType(true)">
-        <b>${esc(t('My main - I play on it'))}</b>
+        <b>${esc(t('My main account'))}</b>
         <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
       </div>
       <div class="pickcard" id="a-type-robot" role="button" tabindex="0" onclick="addPickType(false)">
@@ -1866,11 +1866,22 @@ function welcomePickType(human) {
   welcomeType = human;
   $('w-type-human').classList.toggle('on', human);
   $('w-type-robot').classList.toggle('on', !human);
+  // The same follow-up the walkthrough asks a human-mode account - it was lost on this form.
+  $('w-self-row').classList.toggle('hidden', !human);
 }
 
+// The same as the walkthrough's account step: the nickname is optional (the Steam login names it), and a human-mode account
+// says whether you use it in your own Steam app too.
 async function createFirstBot() {
   if (welcomeType === null) { $('welcomeError').textContent = t('Pick one first'); return; }
-  const res = await post('/api/bots', { Name: $('w-name').value.trim(), SteamLogin: $('w-login').value.trim(), Password: $('w-pass').value, Human: welcomeType });
+  const login = $('w-login').value.trim();
+  const typed = $('w-name').value.trim();
+  if (typed && !/^[A-Za-z0-9_-]+$/.test(typed)) {
+    $('welcomeError').textContent = t("Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config.");
+    return;
+  }
+  const res = await post('/api/bots', { Name: typed || nameFromLogin(login), SteamLogin: login, Password: $('w-pass').value, Human: welcomeType,
+    SelfSignIn: welcomeType === true && $('w-self').checked });
   if (!res.ok) { $('welcomeError').textContent = res.error; return; }
   sessionStorage.setItem('skip-welcome', '1');
   await refresh();
@@ -2427,6 +2438,7 @@ async function pickTutorialLanguage(code) {
   if (config && config.Global) {
     config.Global.Language = code;
     await postGlobal(config.Global).catch(() => {});
+    config.Global.LanguagePicked = true;   // the server marks it too, as the language changes (Settings.Follow)
   }
 
   await loadLanguage(code);
@@ -2597,27 +2609,45 @@ const tutSwitch = (id, on, onchange, title, text) => `<label class="tut-switch" 
     <span><b>${esc(title)}</b>${text ? `<span class="muted small">${esc(text)}</span>` : ''}</span>
     <span class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} onchange="${onchange}"><span></span></span></label>`;
 
-/// The steps, in order, for the mode picked. Worked out again on every draw: saying yes to the phone adds the password
-/// step after it, and the bar grows by one.
+/// The steps, in order. The fewest questions (1.8.2): the language only if nobody has picked one (the installer asks too),
+/// what kind of account it is, and the account - then one follow-up once it's signed in, and the rest as optional cards on
+/// the last screen. "Advanced setup" (a link on the first screen) adds the phone, from anywhere, the password,
+/// notifications and the update hours before the account. Replayed with accounts already here, it starts on the welcome.
 function tutSteps() {
   const adv = tutorialMode === 'advanced';
   const hasAccounts = !!(state && state.Bots && state.Bots.length);
-  return ['language', 'welcome', 'phone', adv ? 'anywhere' : null,
-    // Easy never asks about from anywhere, so only a yes to the phone brings the password step.
-    adv || (tutDash && tutDash.phone === true) ? 'password' : null,
-    adv ? 'notify' : null, 'updates', hasAccounts ? null : 'type', 'final'].filter(Boolean);
+  const askLanguage = !(config && config.Global && config.Global.LanguagePicked);
+  return [askLanguage ? 'language' : null, hasAccounts ? 'welcome' : 'type',
+    adv ? 'phone' : null, adv ? 'anywhere' : null, adv ? 'password' : null, adv ? 'notify' : null, adv ? 'updates' : null,
+    'final'].filter(Boolean);
+}
+
+/// The first screen's small print: restoring from another PC, the full tour, and the language (when it wasn't asked).
+function tutFirstLinks() {
+  const lang = LANGUAGES.find((l) => l.code === ((config && config.Global && config.Global.Language) || 'en'));
+  const langLink = config && config.Global && config.Global.LanguagePicked
+    ? ` · <a href="#" onclick="tutPickLanguageAgain();return false">${esc(tf('Language: {0}', lang ? lang.name : 'English'))}</a>` : '';
+  return `<p class="muted small tut-links">${esc(t('Moving from another PC?'))} <a href="#" onclick="pickRestoreFile();return false">${esc(t('Restore from a backup file'))}</a>
+    · <a href="#" onclick="tutorialMode=tutorialMode==='advanced'?'easy':'advanced';renderTutorial();return false">${esc(tutorialMode === 'advanced' ? t('Fewer questions') : t('Advanced setup'))}</a>${langLink}</p>`;
+}
+
+/// The language again, from the first screen's link - the step is left out once a language was picked.
+function tutPickLanguageAgain() {
+  if (config && config.Global) config.Global.LanguagePicked = false;
+  tutorialStep = 0;
+  renderTutorial();
 }
 
 function tutStepName(key) {
   switch (key) {
     case 'language': return t('Language');
     case 'welcome': return t('Welcome');
+    case 'type': return t('Account type');
     case 'phone': return t('Phone');
     case 'anywhere': return t('From anywhere');
     case 'password': return t('Password');
     case 'notify': return t('Notifications');
     case 'updates': return t('Updates');
-    case 'type': return t('Account type');
     default: return state && state.Bots && state.Bots.length ? t('Done') : t('Account');
   }
 }
@@ -3145,16 +3175,19 @@ function tutStepType() {
   // What the account is for - asked once there is no account yet, and turned into its settings when it's added.
   const importing = !!(imp && imp.tutorial) && !tutorialManual;
   const importAccts = (importing && imp.scan && imp.scan.Accounts) || [];
+  // The first screen of a new install: the welcome in a line, and the one question that sets dozens of defaults.
   return {
+    hero: true,
     title: t('What kind of account is it?'),
-    lead: esc(t('This picks the right settings for it. Anything can be changed later, per account.')),
+    lead: esc(t('nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.')),
     body: `<div class="pickcards tut-cards">
-        ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main - I play on it'),
+        ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main account'),
           t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}
         ${tutCard(tutorialHuman === false, 'tutorialPickType(false)', tutIcon('bolt'), t('A spare or farm account'),
           t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}
       </div>
-      ${importAccts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}`,
+      ${importAccts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}
+      ${tutFirstLinks()}`,
     act: () => {
       if (tutorialHuman === null) { toast(t('Pick one first'), true); return; }
       tutForward();
@@ -3208,13 +3241,15 @@ function tutStepFinal() {
           `<input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off" spellcheck="false">`)}
         ${field('tut-pass', t('Password'), t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'),
           `<input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">`)}
-        ${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
-          `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}
       </div>
-      ${tutorialMode === 'advanced' ? `<label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
-        <span>${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>` : ''}
       ${tutorialHuman === true ? `<label class="tut-check"><input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">
-        <span>${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+        <span>${esc(t('I also use this account in my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+      <details class="tut-more"><summary>${esc(t('More'))}</summary>
+        <div class="tut-fields">${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
+          `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}</div>
+        <label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
+          <span>${esc(t('Sign in with a QR code instead'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>
+      </details>
       <p id="tutError" class="error"></p>
       <p class="muted small"><a style="cursor:pointer" role="button" tabindex="0" onclick="${imp && imp.tutorial ? 'tutorialManual=false;renderTutorial()' : 'tutorialOpenImport()'}">${esc(t('Coming from another idler? Import from it'))}</a></p>
       ${tips}`,
@@ -3287,10 +3322,10 @@ async function startTutorialSetup(name, steps) {
   if (!schema) schema = await api('/api/settings/schema').catch(() => null);
   const d = (schema && schema.BotDefaults) || {};
   tutSetup = {
-    name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '',
+    name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '', idleKind: 'pick',
     routine: {
-      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartTime: d.DayStartTime ?? 660,
-      BedTime: d.BedTime ?? 60, DayOffChancePct: d.DayOffChancePct ?? 10,
+      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartTime: d.DayStartTime ?? 780,
+      BedTime: d.BedTime ?? 120, DayOffChancePct: d.DayOffChancePct ?? 5,
     },
   };
   tutShow({ key: 'setup-loading', at: tutBarSteps - 1, kicker: tf('SETTING UP {0}', name.toUpperCase()),
@@ -3369,17 +3404,23 @@ function renderTutorialSetup() {
     };
     body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
       <div class="form2 tut-form2">
-        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartTime', 0, 1439)}${field('BedTime', 0, 1439)}${field('DayOffChancePct', 0, 90)}
+        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartTime', 0, 1439)}${field('BedTime', 0, 1439)}${field('DayOffChancePct', 0, 60)}
       </div>
       <p id="tutRoutinePreview" class="muted small" style="margin-top:12px"></p>`;
   } else {
-    title = t('What should it idle?');
-    body = `<p>${esc(t('It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.'))}</p>
-      ${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
+    title = t('After the cards are done, what should it idle?');
+    const kind = (k, label, text) => tutCard(s.idleKind === k, `tutSetup.idleKind='${k}';renderTutorialSetup()`, tutIcon(k === 'all' ? 'globe' : k === 'pick' ? 'easy' : 'home'), label, text);
+    body = `<p>${esc(t('It farms trading cards first. Once they are done, it can keep playing games to add hours.'))}</p>
+      <div class="pickcards tut-cards">
+        ${kind('none', t('Nothing'), t('It stays signed in and does nothing once the cards are done.'))}
+        ${kind('pick', t('Games I pick'), t('Tap them below.'))}
+        ${kind('all', t('My whole library'), t('Every game it owns, a batch at a time. Games still within Steam\'s 2 hours for a refund are left alone.'))}
+      </div>
+      ${s.idleKind === 'pick' ? `${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
       <div style="display:flex;gap:6px;margin:6px 0 12px"><input id="tutAddGame" type="text" placeholder="${esc(t('Not in the list? Paste a store link or game ID'))}" style="flex:1">
-        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>
-      <div class="tut-field"><label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
-      <input id="tut-custom" type="text" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value"></div>`;
+        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>` : ''}
+      ${tutorialMode === 'advanced' ? `<div class="tut-field"><label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
+      <input id="tut-custom" type="text" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value"></div>` : ''}`;
   }
 
   tutShow({
@@ -3451,7 +3492,10 @@ async function tutSaveSetup() {
   }
   if (s.steps.includes('routine')) Object.assign(changes, s.routine);
   if (s.steps.includes('idle')) {
-    changes.IdleGames = [...s.idle];
+    // Nothing, the games picked, or the whole library a batch at a time - with refunds protected (on for a new account).
+    changes.IdleGames = s.idleKind === 'pick' ? [...s.idle] : [];
+    changes.IdleWholeLibrary = s.idleKind === 'all';
+    if (s.idleKind === 'all') { changes.RotateIdleGames = true; changes.SkipRefundableGames = true; }
     if (s.customName.trim()) { changes.CustomGameName = s.customName.trim(); changes.CustomGameNameEnabled = true; }
   }
 
@@ -3496,11 +3540,24 @@ function tutShowDone() {
       ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
       ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
         <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span></div>` : ''}
+      ${tutOptionalCards()}
       ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
-        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}`,
+        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
+      <p class="muted small">${esc(t('It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`,
     skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
     next: t('Show me my account'),
   }, finishSignin);
+}
+
+/// The rest of the set-up, as cards on the last screen rather than more steps - each opens its own place.
+function tutOptionalCards() {
+  const card = (onclick, icon, title, text) => tutCard(false, `finishSignin().then(() => ${onclick})`, tutIcon(icon), title, text);
+  return `<p class="tut-kicker" style="margin-top:14px">${esc(t('When you like'))}</p>
+    <div class="pickcards tut-cards tut-optional">
+      ${card("go('phone')", 'phone', t('Use it from your phone'), t('A QR code to scan, and how to open it from outside your home.'))}
+      ${card("goSetting('TelegramBotToken')", 'bolt', t('Get messages on Telegram or Discord'), t('Card drops, problems that need you, scam warnings - you pick which.'))}
+      ${card("goSetting('BackupAuto')", 'home', t('A daily backup'), t('Everything in one locked file each day, to put back on any PC.'))}
+    </div>`;
 }
 
 // The first-run question for the Discord card: saved the moment it's ticked, nothing else to press.
@@ -3554,8 +3611,10 @@ function renderSignin() {
   // robot's idle list, are the full tour's.
   if (b && b.Online && !tutorialSetupDone) {
     tutorialSetupDone = true;
+    // One follow-up for each kind: a human-mode account's games (and, in the full tour, its routine); a robot's what to
+    // idle once its cards are done - asked every time, or it went quiet once the cards were farmed.
     const adv = tutorialMode === 'advanced';
-    const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : (adv ? ['idle'] : []);
+    const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : ['idle'];
     if (steps.length) {
       startTutorialSetup(b.Name, steps);
       return;

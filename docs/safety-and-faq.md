@@ -47,7 +47,7 @@ install ID, and takes back the cheapest ones every copy found. Nothing about you
 says which games to check first: every card is priced again on the Steam market before anything is bought, so a wrong
 price there can't cost you money. Turn it off (or *Count me as a user*) and nothing is sent or fetched.
 
-Card swaps with other nocat.farm users (1.8.2, *Swap cards with other nocat.farm users*, off on every account) talk to
+Card swaps with other nocat.farm users (1.8.2, *Swap spare cards with other nocat.farm users*, off on every account) talk to
 nocat.lol only for accounts you turned them on for: the same random install ID, and for each of those accounts its
 SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Every few weeks each account
 also signs in to nocat.lol through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID

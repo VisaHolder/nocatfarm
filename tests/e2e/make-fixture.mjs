@@ -25,8 +25,8 @@ const write = (file, value) => {
 write(path.join(config, 'nocatFarm.json'), {
   WebPort: Number(portArg),
   WebHost: '127.0.0.1',
-  CheckForUpdates: false,
-  UpdateMode: 1,
+  UpdateMode: 3,   // don't look for updates
+
   StartWithWindows: false,
   TrayNotifications: false,
   Tray: false,

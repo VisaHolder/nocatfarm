@@ -10171,7 +10171,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("pacer multiplayer setting: one save that turns human mode on and the skip off keeps it off (and the other way round); the dashboard tells it so",
 		!both.AchievementSkipMultiplayer && bothOff.AchievementSkipMultiplayer
 		&& Src("Web/WebHost.cs").Contains("Settings.ApplyLegitMode(body, current.LegitMode, skipChosen: body.AchievementSkipMultiplayer != current.AchievementSkipMultiplayer);", StringComparison.Ordinal)
-		&& File.ReadAllText(Path.Combine(repo, "docs", "settings.md")).Contains("*Skip multiplayer achievements* |", StringComparison.Ordinal));
+		&& File.ReadAllText(Path.Combine(repo, "docs", "settings.md")).Contains("*Skip multiplayer achievements* (follows human mode)", StringComparison.Ordinal));
 
 	// ── hours of the day: a list in the viewer's own clock, the same number underneath ─────────────────────────────────
 	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "WeeklyReportHour",
@@ -10208,7 +10208,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	int earnAt = NocatFarm.Config.Settings.Bot.ToList().FindIndex(static d => d.Name == "UnlockAchievements");
 	Check("how fast: shown without Show advanced, directly under 'Earn achievements over time'",
 		NocatFarm.Config.Settings.Bot[earnAt + 1] is { Name: "AchievementPace", Advanced: false, Kind: NocatFarm.Config.SettingKind.Choice }
-		&& File.ReadAllText(Path.Combine(repo, "docs", "settings.md")).Contains("| Achievements | *Earn achievements over time*, *How fast*, *Skip multiplayer achievements* |", StringComparison.Ordinal));
+		&& File.ReadAllText(Path.Combine(repo, "docs", "settings.md")).Contains("| Achievements | *Earn achievements over time*, and while it's on *How fast* and *Achievement hunt* |", StringComparison.Ordinal));
 
 	// ── How fast: careful doubles every wait, brisk halves it, normal is as it was ───────────────────────────────────
 	MethodInfo paceMinutes = typeof(NocatFarm.Modules.AchievementPacer).GetMethod("PaceMinutes", SP)!;
@@ -10624,7 +10624,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& (NocatFarm.Config.Settings.Apply(burstCfg, burstDef!, "100") == null) && (burstCfg.AchievementBurstMinPct == 100)
 		&& (NocatFarm.Config.Settings.Apply(burstCfg, burstDef!, "101") != null) && (burstCfg.AchievementBurstMinPct == 100));
 	Check("bursts: the docs say so", File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "docs", "settings.md"))
-		.Contains("*Quick bursts only for achievements at least* (10%", StringComparison.Ordinal));
+		.Contains("*Quick bursts only for achievements held by at least* (10%", StringComparison.Ordinal));
 }
 
 // ── old settings files: 1.6.4's and 1.6.5's, as they wrote them, load with every choice kept ─────────────────────────
@@ -22975,9 +22975,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		.Select(static d => d.Name)];
 	Check("readability: every new 1.8.0 number setting (outside spare items, packs, points) has its unit", ftNoUnit.Count == 0, string.Join(", ", ftNoUnit));
 	string ftTrades = FtRead("docs", "trades.md");
-	Check("readability: docs/trades.md uses the shortest/up to labels",
-		ftTrades.Contains("| Shortest wait between looks / ...up to (minutes) | 30 / 60 minutes |", StringComparison.Ordinal)
-		&& ftTrades.Contains("| Shortest wait between health checks / ...up to (hours) | 5 / 7 hours |", StringComparison.Ordinal) && !ftTrades.Contains("Look at least every", StringComparison.Ordinal));
+	Check("readability: docs/trades.md gives how often each looks as the range it is (an internal setting since 1.8.2)",
+		ftTrades.Contains("| How often it looks (`ScamWatchMinMinutes` / `ScamWatchMaxMinutes`, not on the page) | 30 to 60 minutes |", StringComparison.Ordinal)
+		&& ftTrades.Contains("| How often it checks (`HealthMinHours` / `HealthMaxHours`, not on the page) | 5 to 7 hours |", StringComparison.Ordinal) && !ftTrades.Contains("Look at least every", StringComparison.Ordinal));
 
 	// 5. every Steam Family setting in the Steam Family group, next to each other
 	string[] ftFamily = ["IncludeFamilyLibrary", "YieldToFamily", "BorrowFamilyCopy", "FamilyWaitMinutes"];
@@ -28714,7 +28714,9 @@ await SettingsCleanupChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirector
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
 Check("temp: every check deletes the temp folders and files it made", leftInTemp.Count == 0, string.Join(", ", leftInTemp));
-Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
+Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced && !d.Hidden)} basic, {NocatFarm.Config.Settings.Global.Count(d => d.Hidden)} hidden), "
+	+ $"{NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced && !d.Hidden)} basic, {NocatFarm.Config.Settings.Bot.Count(d => d.Hidden)} hidden); "
+	+ $"a new account shows {NocatFarm.Config.Settings.BasicView(false, new NocatFarm.Config.BotConfig(), false).Count}, the global page {NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig(), false).Count}");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
 return fails;
 
@@ -33937,7 +33939,52 @@ static class SettingsCleanupChecks {
 				&& fresh.WatchForScams && fresh.ScamWatchStopTrades && fresh.ScamWatchCancelOffers && !fresh.ScamWatchRevokeKey && fresh.WatchHealth
 				&& !new NocatFarm.Config.GlobalConfig().SteamOpenEveryAccount && !new NocatFarm.Config.GlobalConfig().WebRemoteAccess && (new NocatFarm.Config.GlobalConfig().WebRemoteOffAfter == 5)
 				&& (new NocatFarm.Config.GlobalConfig().WebHost == "127.0.0.1") && !new NocatFarm.Config.GlobalConfig().PluginsEnabled && (fresh.CommandMasters.Length == 0));
-			//STEP5
+			// ── the setup: fewest questions ──
+			string app = Src("src/NocatFarm/wwwroot/app.js");
+			int tutFrom = app.IndexOf("let tutorialStep = 0;", StringComparison.Ordinal), tutTo = app.IndexOf("async function closeTutorial()", StringComparison.Ordinal);
+			string tut = (tutFrom >= 0) && (tutTo > tutFrom) ? app[tutFrom..tutTo] : "";
+			Check("setup: a new install asks what kind of account, then the account - language only if nobody picked one, the rest only in the full tour",
+				tut.Contains("return [askLanguage ? 'language' : null, hasAccounts ? 'welcome' : 'type',", StringComparison.Ordinal)
+				&& tut.Contains("adv ? 'phone' : null, adv ? 'anywhere' : null, adv ? 'password' : null, adv ? 'notify' : null, adv ? 'updates' : null,", StringComparison.Ordinal)
+				&& tut.Contains("const askLanguage = !(config && config.Global && config.Global.LanguagePicked);", StringComparison.Ordinal));
+			Check("setup: one follow-up once it's signed in - a human-mode account's games, a robot's what to idle (always asked now)",
+				tut.Contains("const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : ['idle'];", StringComparison.Ordinal)
+				&& tut.Contains("changes.IdleWholeLibrary = s.idleKind === 'all';", StringComparison.Ordinal)
+				&& tut.Contains("if (s.idleKind === 'all') { changes.RotateIdleGames = true; changes.SkipRefundableGames = true; }", StringComparison.Ordinal));
+			Check("setup: the phone, messages and a daily backup are optional cards on the last screen, not more steps",
+				tut.Contains("function tutOptionalCards()", StringComparison.Ordinal) && tut.Contains("goSetting('BackupAuto')", StringComparison.Ordinal) && tut.Contains("go('phone')", StringComparison.Ordinal));
+			Check("setup: the card says \"My main account\" - the same question isn't asked twice; the nickname and the QR code are under More",
+				!app.Contains("My main - I play on it", StringComparison.Ordinal) && tut.Contains("t('My main account')", StringComparison.Ordinal)
+				&& tut.Contains("<details class=\"tut-more\"><summary>${esc(t('More'))}</summary>", StringComparison.Ordinal));
+			Check("setup: the routine's numbers are the real defaults (13:00, 02:00, 5%), and a day off goes up to 60%, as the setting does",
+				tut.Contains("DayStartTime: d.DayStartTime ?? 780", StringComparison.Ordinal) && tut.Contains("BedTime: d.BedTime ?? 120", StringComparison.Ordinal)
+				&& tut.Contains("DayOffChancePct: d.DayOffChancePct ?? 5", StringComparison.Ordinal) && tut.Contains("${field('DayOffChancePct', 0, 60)}", StringComparison.Ordinal)
+				&& (B("DayOffChancePct")!.Max == 60) && (new NocatFarm.Config.BotConfig().DayStartTime == 780) && (new NocatFarm.Config.BotConfig().BedTime == 120) && (new NocatFarm.Config.BotConfig().DayOffChancePct == 5));
+			string[] neverInSetup = ["SpareItems", "SpendPoints", "BuyCards", "CardSwaps", "SteamOpenButton", "SteamOpenEveryAccount", "BoosterMake", "OpenBoosterPacks", "PointsOk"];
+			Check("safety: the setup never turns on anything that sells, spends, swaps, opens packs or opens Steam",
+				(tut.Length > 1000) && !neverInSetup.Any(n => tut.Contains(n, StringComparison.Ordinal)), string.Join(", ", neverInSetup.Where(n => tut.Contains(n, StringComparison.Ordinal))));
+
+			// The welcome form asks the same as the walkthrough - and doesn't lose "I also use this account".
+			string html = Src("src/NocatFarm/wwwroot/index.html");
+			Check("setup: the welcome form asks what the walkthrough asks - nickname optional, the own-Steam-app question for a human-mode account",
+				html.Contains("id=\"w-self-row\"", StringComparison.Ordinal) && html.IndexOf("w-type-human", StringComparison.Ordinal) < html.IndexOf("id=\"w-login\"", StringComparison.Ordinal)
+				&& app.Contains("SelfSignIn: welcomeType === true && $('w-self').checked", StringComparison.Ordinal) && app.Contains("Name: typed || nameFromLogin(login)", StringComparison.Ordinal));
+
+			// No double language question: the installer's pick counts.
+			string setupRoot = Path.Combine(root, "setup");
+			Directory.CreateDirectory(setupRoot);
+			NocatFarm.Config.ConfigStore.UseRoot(setupRoot);
+			Action<bool> wasStartWithWindows = NocatFarm.Config.SetupChoices.StartWithWindows;
+			NocatFarm.Config.SetupChoices.StartWithWindows = static _ => { };
+			int setupCode = NocatFarm.Config.SetupChoices.Apply(["Language=de"]);
+			NocatFarm.Config.SetupChoices.StartWithWindows = wasStartWithWindows;
+			bool pickedBySetup = NocatFarm.Config.ConfigStore.LoadGlobal().LanguagePicked;
+			NocatFarm.Config.ConfigStore.UseRoot(root);
+			var langCfg = new NocatFarm.Config.GlobalConfig();
+			NocatFarm.Config.Settings.Apply(langCfg, G("Language")!, "fr");
+			NocatFarm.Config.Settings.Follow(langCfg, ["Language"]);
+			Check("setup: a language picked in the installer or changed here is picked - the walkthrough doesn't ask again",
+				(setupCode == 0) && pickedBySetup && langCfg.LanguagePicked && !new NocatFarm.Config.GlobalConfig().LanguagePicked && (G("LanguagePicked") == null));
 		} finally {
 			foreach (NocatFarm.Core.Bot b in made) {
 				await b.DisposeAsync();

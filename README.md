@@ -264,7 +264,7 @@ on the market - market prices only - and takes back the ones other copies found 
 nocat.farm users* turns just that off). *Count me as a user* turns it all off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
-you also use in your own Steam app, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.
+you also use in your own Steam app, turn on *I also use this account in my own Steam app* and it won't kick you off Friends & Chat.
 
 Automating your accounts is against Steam's Subscriber Agreement and can get an account limited or banned.
 nocat.farm is built to be gentle, but only run it on accounts you're OK with risking.

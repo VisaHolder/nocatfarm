@@ -17,10 +17,10 @@ it will take. The estimate starts at Steam's usual 30 minutes a card and then le
 To turn it off for one account, switch off *Farm trading cards* or type `set myaccount FarmCards false`.
 
 Most of the finer controls are under Show advanced: *Farm in this order*, *Farm these first*, *Only farm those*,
-*Never touch these*, *Skip games you've never played*, *Hours before cards drop* (set it to 0 if the account has
-spent over $5 on Steam), *Give up after* (8 hours per game), and, on robot accounts, *Farm cards only from … until*
+*Never play these games*, *Skip games you've never played*, *Play each game this long before cards can drop* (set it to 0 if the account has
+spent over $5 on Steam), *Give up on a game after* (8 hours per game), and, on robot accounts, *Farm cards only between*
 (a clock window), *Farm while appearing offline*, *Log out when finished*, and *Farm in sittings, not flat out* with
-*Hours a day to farm*. *Farm at most* (a global setting under Steam connection) caps how many accounts farm at once.
+*Hours a day to farm*. *Accounts farming at once* (a global setting under Steam connection) caps how many accounts farm at once.
 
 On a human-mode account, *When to farm cards* decides when the cards happen (robot accounts farm the moment there
 are cards, so they don't show it, and the clock window isn't used there):
@@ -75,7 +75,7 @@ rotation myaccount next   # move on to the next batch now
 ```
 
 *Show as* (`gamename myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
-still count playtime. `gamename myaccount off` removes it, and *Keep the name while farming* (on) keeps it showing
+still count playtime. `gamename myaccount off` removes it, and *Keep the custom name while farming cards* (on) keeps it showing
 during card farming too. Now and then Steam drops the name and shows the real game; the account card then warns
 "Steam shows …" and nocat.farm puts the name back.
 
@@ -162,7 +162,7 @@ never guesses), and `events` says what it saw.
 **Booster packs.** *Make booster packs* (in *Booster packs*) is off, **games I pick** - each game on the list gets a
 pack a day, as Steam allows - or **automatic**, which picks the game closest to its next badge level (see
 [Levelling with gems](#levelling-with-gems)). Packs use tradable gems first (*Booster packs use*) and never go below
-*Keep at least this many gems*. `booster myaccount` shows the gems and which games can be made now,
+*Gems packs never use*. `booster myaccount` shows the gems and which games can be made now,
 `booster myaccount 730, 440` makes those packs straight away, and `booster plan myaccount` shows what automatic would
 make next and why. An older list carries over as "games I pick"; an empty one is off. Opening packs has its own
 section below.
@@ -249,7 +249,7 @@ Two things follow:
 - picks the game whose normal badge is closest to its next level - the fewest cards missing, counting the cards you
   have - among the games the booster creator lists;
 - never a game whose badge is at level 5, never one whose packs you've set to stay sealed, never foils;
-- one pack per game per day, and only while the gems cover the pack plus *Keep at least this many gems*;
+- one pack per game per day, and only while the gems cover the pack plus *Gems packs never use*;
 - opens the packs it made, whatever *Open booster packs* says - packs from anywhere else still follow that setting,
   and its own are never sent or sold;
 - its own packs stop being its own - and follow *Open booster packs* and *Packs it doesn't open* like any other - when
@@ -266,7 +266,7 @@ Two things follow:
 **You choose:**
 
 - *Make booster packs*: off, games I pick (the list below it), or automatic;
-- *Keep at least this many gems* (0) and *Booster packs use* (tradable gems first);
+- *Gems packs never use* (0) and *Booster packs use* (tradable gems first);
 - *Open booster packs* for packs from drops and gifts;
 - whether finished sets get crafted (*Craft badges from card sets*).
 
@@ -339,7 +339,7 @@ Points spent are gone for good, so it's careful:
   once. At the console, `set myaccount SpendPoints on` answers with the same preview, and `points on myaccount`
   confirms it; `points off myaccount` turns it off. Steam chat can't turn it on. Whether it's on stays on the PC where
   you turned it on: a backup brings back the week's spending, never the switch.
-- **It keeps some.** *Always keep at least* (1,000 points) is never spent, and *Spend at most, a week* (3,000) caps
+- **It keeps some.** *Always keep at least* (1,000 points) is never spent, and *Points a week, at most* (3,000) caps
   any 7 days.
 - **Off by default.** *Spend Steam Points on levels* is off on every account, robots too. Turned on, a
   human-mode account only buys during its own day - asked again right before each purchase.
@@ -360,11 +360,11 @@ Settings, the account, **Steam Points**:
 |---|---|---|
 | *Spend Steam Points on levels* | off | Buys badge levels by itself. Turning it on shows what it would buy first and asks you to confirm. |
 | *Always keep at least* | 1000 | Points it never spends. |
-| *Spend at most, a week* | 3000 | The most it spends in any 7 days. 0 spends nothing. |
+| *Points a week, at most* | 3000 points | The most it spends in any 7 days. 0 spends nothing. |
 | *Buy levels of the seasonal badge* | on | The badge the shop is selling now. |
 | *Also older seasonal badges* | off | Older seasonal badges the shop still lists, once the current one is done. Steam has turned some of these down. |
 | *Stop each badge at level* | 40 | The highest level it takes a badge to. |
-| *Look every (hours)* | 12 | How often it looks at the points and the shop. |
+| `PointsCheckEveryHours` (not on the page) | 12 hours | How often it looks at the points and the shop. |
 
 ## Buying cards
 
@@ -392,7 +392,7 @@ spends the account's Steam wallet, so it's careful:
   carries the ones saved on the account, exactly as Steam's own market page sends them, plus any tax your country adds
   on Steam's fee. Only when none are saved does it stop and tell you: buy one card by hand on the market once, and the
   details are saved for next time. They're never written to the log, shown, or kept by nocat.farm.
-- **Limits.** *Spend at most, a day* (1.50) and *Spend at most, a week* (8.00), in the wallet's own currency, over any
+- **Limits.** *Spend at most a day* (1.50) and *Spend at most a week* (8.00), in the wallet's own currency, over any
   24 hours and any 7 days by Steam's clock (a wrong PC clock can't move them) - and never more than the wallet holds.
   It reads the wallet first; if Steam doesn't say how this account's purchases are confirmed, it buys nothing that look.
 - **Checked again right before buying.** Every card of a set is priced again before the first one is bought: if any
@@ -506,9 +506,9 @@ Settings, the account, **Buying cards**:
 |---|---|---|
 | *Buy missing cards* | off | Buys the cards its badges are missing, cheapest first. Turning it on shows what it would buy first and asks you to confirm. |
 | *Buy the cheapest full sets* | off | Also whole sets for games it has no cards of, cheapest first. |
-| *Spend at most, a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
-| *Spend at most, a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
-| *Look every (hours)* | 12 | How often it looks. A human-mode account only in its day. |
+| *Spend at most a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
+| *Spend at most a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
+| `BuyCheckHours` (not on the page) | 12 hours | How often it looks. A human-mode account only in its day. |
 
 ### Selling a set instead of crafting it
 
@@ -622,7 +622,7 @@ under the cheapest listing. The log says each price with its currency: "sells fo
 *A cent under the cheapest* (choice 3) makes yours the cheapest so it sells first: cheapest 0.12, it lists at 0.11. A
 listing dumped 50% or more under what it sold for is ignored - it lists a cent under the sale price instead (0.29 in the
 example above). If your own listing is already the cheapest, the next copy goes up at the same price, never under it.
-It never goes under *Never go lower than* (80% of what it sold for), nor so low you'd get less than *Only sell if you
+It never goes under *Lowest relist price, of the recent sale price* (80% of what it sold for), nor so low you'd get less than *Only sell if you
 get at least* - then it lists at the cheapest's price, and if even that pays too little, the item goes to gems or is
 kept. With no sale lately it still lists a cent under the cheapest; with nobody selling it's kept.
 
@@ -722,7 +722,7 @@ Steam doesn't say why a listing vanished, so it checks your market history: one 
 sale, not a decline. If the history can't be read, it waits and checks again next look. While one of its listings
 still waits on your phone, no other copy of that item is listed.
 
-Changing *Look every (hours)* moves the next look straight away - for booster packs and Steam Points too.
+Changing how often it looks (`set <account> SpareRunHours 6`, an internal setting) moves the next look straight away - for booster packs and Steam Points too.
 
 *Sell duplicate cards* from earlier versions is part of this now. If it was on, *Deal with spare items* starts off and
 the log says once: turn it on in Settings to see what it would do.
@@ -751,7 +751,7 @@ the log says once: turn it on in Settings to see what it would do.
 | Wait between items (seconds) | Robot accounts | 40 |
 | Wait between items, human mode (minutes) | Shortest and longest, random in between each time | 3 to 20 |
 | Trust a price for (hours) | Hours a price counts as fresh | 24 |
-| Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, the median (never under the cheapest; no median - kept), or a cent under the cheapest (cheapest 0.12 lists at 0.11; ignores a dump, never under your own cheapest listing, *Never go lower than* or *Only sell if you get at least*). Priced again in the wallet's currency right before each listing | a cent under the real price |
+| Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, the median (never under the cheapest; no median - kept), or a cent under the cheapest (cheapest 0.12 lists at 0.11; ignores a dump, never under your own cheapest listing, *Lowest relist price, of the recent sale price* or *Only sell if you get at least*). Priced again in the wallet's currency right before each listing | a cent under the real price |
 | Only sell if you get at least | The least you'd get after fees, in the wallet's own currency. Less: gems - but never gems worth less than the sale less 0.01 (then it's sold); no gems for it, kept. 0 sells anything | 0.05 |
 | A cheapest listing this far under its sales is a dump (%) | A cent under the real price: with only one sale in the last day and the cheapest listing this far under it, the prices contradict each other and the item is kept. A cent under the cheapest: that listing is ignored and it lists a cent under the sale price. 0: nothing counts as a dump | 50 |
 | Take down unsold listings after (days) | Only listings nocat.farm put up itself: still unsold, it comes down and goes up again a cent cheaper, or a cent under a cheaper real listing. Yours are never touched | 7 |

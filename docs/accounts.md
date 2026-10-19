@@ -29,7 +29,7 @@ trades. Or paste the two secrets into the account's settings (*Authenticator cod
 confirm secret*, under Show advanced). Either way they're stored encrypted. nocat.farm doesn't create or move
 authenticators.
 
-**I sign into this one myself** (`IUseThisAccount`) is for an account you also use in your own Steam app. With it
+**I also use this account in my own Steam app** (`IUseThisAccount`) is for an account you also use in your own Steam app. With it
 on, nocat.farm never changes that account's online status, so your own app keeps Friends & Chat.
 
 **Open in Steam** (`SteamOpenButton`, Windows only) adds a one-click button to an account - on its card and in the
@@ -85,7 +85,7 @@ on*.
 - its authenticator secrets
 - its proxy (address, user name and password) and the device name Steam sees
 - its notes and its colour in the log
-- whether it's switched on, *Start paused*, and *I sign into this one myself*
+- whether it's switched on, *Start paused*, and *I also use this account in my own Steam app*
 - the trade link token of your other account
 - the games you left alone for achievements (`dlc leave`)
 
@@ -93,7 +93,7 @@ on*.
 ever turned on after its own preview, on that account. If the account you copy from has one on, the copy leaves it
 off and tells you to turn it on yourself after its preview (`spare on new2`, or the switch in its settings).
 
-A setting that names accounts loses the account itself: copying new's *Trade by itself with* `new2:to, old` onto new2
+A setting that names accounts loses the account itself: copying new's *Your other accounts* `new2:to, old` onto new2
 leaves `old`, and *Send the sacks to* `new2` becomes empty. Everything else comes across as it is, human mode
 included - a robot copied onto an account you sign into yourself stays a robot until you change it. Numbers out of
 range are put back the way a save does it, and the preview says so.

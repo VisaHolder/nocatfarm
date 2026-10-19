@@ -117,7 +117,8 @@ const SKIP_SETTING = {
   NotifySocial: 'pop-ups on this PC',
   NotifyProblems: 'pop-ups on this PC',
   NotifyTrades: 'pop-ups on this PC',
-  CheckForUpdates: 'asks GitHub for a newer version',
+  NotifyScam: 'pop-ups on this PC',
+  NotifyHealth: 'pop-ups on this PC',
   UpdateMode: 'could install a newer version mid-test',
   DiscordPresence: "shows on the Discord running on this PC",
   ...(PING_STUB ? {} : { CountMeAsUser: 'tells nocat.lol this copy is running (no --ping-stub to send it to instead)' }),
@@ -745,6 +746,9 @@ async function change(def, target) {
     const pill = page.locator(`#settingsBody .langpick .p[onclick*="editAndRender('${n}'"]`).first();
     if (!(await pill.count())) return { why: 'no control for it on screen' };
     await pill.click();
+  } else if (kind === 'Bool' && tag.startsWith('span')) {
+    // A switch drawn as a chip in a row of them ("What counts as spare": [foils] [backgrounds]...).
+    await box.click();
   } else if (kind === 'Bool') {
     await field(n).locator('label.switch').first().click();
     await settle(150);
@@ -859,6 +863,8 @@ async function putBack(def, orig, target, defaults) {
     const pill = page.locator(`#settingsBody .langpick .p[onclick*="editAndRender('${n}'"]`).first();
     if (!(await pill.count())) return false;
     await pill.click();
+  } else if (def.Kind === 'Bool' && tag.startsWith('span')) {
+    await box.click();
   } else if (def.Kind === 'Bool') {
     await field(n).locator('label.switch').first().click();
     await settle(150);
@@ -907,7 +913,8 @@ async function putBack(def, orig, target, defaults) {
 const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'];
 // 1.8.2: the one switch of this kind in the global settings - Open in Steam on every account.
 const GLOBAL_CONFIRM_SWITCH = ['SteamOpenEveryAccount'];
-// The ones whose section is all theirs: off, the section shows only the switch.
+// The ones whose part of a section is all theirs (1.8.2: Spare items, Steam Points and Buying cards are parts of Items
+// and spending): off, the part shows only the switch.
 const OWN_SECTION = ['SpareItems', 'SpendPoints', 'BuyCards'];
 
 async function confirmSwitchScenario(n, target, who) {
@@ -918,11 +925,11 @@ async function confirmSwitchScenario(n, target, who) {
   if (was) await tick();   // off first: off is off at once, no pop-up
   check(`settings ${who}: ${n} is off to start with`, (await saved()) === false && !(await modalOpen()));
   // Off, its section is the switch and one line saying what turning it on does - its other settings are hidden.
-  const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(@class,"section")][1]');
+  const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " part ") or contains(@class,"section")][1]');
   const offRows = await sectionOf().locator('[data-setting]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null || e.closest('label.switch')).map((e) => e.dataset.setting));
   const dependents = ((target ? schema.Bot : schema.Global) || []).filter((d) => d.ShowWhen === `${n}=true`).map((d) => d.Name);
   if (OWN_SECTION.includes(n)) {
-    check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
+    check(`settings ${who}: with ${n} off its part shows only that switch and a line saying what it does`,
       offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
   } else {
     check(`settings ${who}: with ${n} off the settings under it are hidden${dependents.length ? ', and a line says what it does' : ''}`,
@@ -1119,6 +1126,15 @@ async function settingsRound(target) {
       }, { name: target, back });
       after = await api('/api/config');
     }
+  }
+  // 1.8.2: emptying the auto-reply or the custom game name switches it off by itself, and putting an empty one back
+  // emptied it again - so a switch that was on goes back through the page's own save (the text isn't changed by that).
+  const followed = target ? ['AutoReplyEnabled', 'CustomGameNameEnabled'].filter((n) => defs.some((d) => d.Name === n) && !same(valuesOf(after, target)[n], orig[n])) : [];
+  if (followed.length) {
+    note(`${who}: ${followed.join(', ')} put back through the page's own save - emptying its text switched it off`);
+    const back = Object.fromEntries(followed.map((n) => [n, orig[n]]));
+    await evalq(async ({ name, back }) => { await loadConfig(); await postBot(name, { ...config.Bots[name], ...back }); await loadConfig(); renderSettings(); }, { name: target, back });
+    after = await api('/api/config');
   }
   const left = defs.filter((d) => d.Kind !== 'Secret' && !same(valuesOf(after, target)[d.Name], orig[d.Name]))
     .map((d) => `${d.Name}: ${JSON.stringify(valuesOf(after, target)[d.Name])} (was ${JSON.stringify(orig[d.Name])})`);
@@ -1340,7 +1356,7 @@ if (PING_STUB) {
   const rows = await page.locator('#copyPreview table tr').count();
   const preview = (await page.locator('#copyPreview').textContent()) || '';
   check('copy settings: the preview lists each change (human mode among them) and what is never copied',
-    rows > 2 && preview.includes('Human mode') && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
+    rows > 2 && /human mode/i.test(preview) && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
   await page.locator('#modal button.ghost').first().click();
   await settle(300);
   check('copy settings: Cancel changes nothing', !(await modalOpen()) && same((await api('/api/config')).Bots.robot, before));

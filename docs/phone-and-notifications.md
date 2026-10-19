@@ -104,12 +104,15 @@ switch for each kind, under Show advanced:
 | Send rep4rep comments | off |
 | Send Steam Points spending (badge levels bought) | on |
 | Send spare items and booster packs (one message a look: gems made, items listed, packs opened; and the first preview) | on |
-| Send backups (a daily backup failed, or every backup with *Tell me* set to after every backup) | on |
+| Scam warnings (see [Scam watch](trades.md#scam-watch)) | on |
+| Health alerts (see [Account health](trades.md#account-health)) | on |
 
 The weekly report has no switch here: when *Weekly report* is on, it's sent too.
 
-Scam watch warnings and account health alerts have their own switches, one per place (Telegram, Discord, pop-up), in
-their own groups in Global settings: *Scam watch* and *Account health*. See [Scam watch](trades.md#scam-watch).
+Scam watch warnings and account health alerts are two of the chips, like the rest, and two of the pop-up kinds (1.8.2 -
+they had a switch per place before; one you'd switched off on its own stays off for that place until you change the
+chip). Backups have their own choice under Backups, *Backup messages*: off, only when one fails (the default), or after
+every backup.
 
 A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
 pretty good player"*. If Steam is still checking a comment, it says so instead.
@@ -184,10 +187,13 @@ shows each account as the alarm sees it.
 
 ## Steam groups
 
-Every account joins the groups in **Groups every account joins** (*Global settings → All accounts*). It starts with
-the nocat.farm group. Paste group links or short names separated by commas, or clear the box to stop joining it.
+Every robot account joins the groups in **Groups every account joins** (*Global settings → All accounts*, Show
+advanced). It starts with the nocat.farm group. Paste group links or short names separated by commas, or clear the box
+to stop joining it. A human-mode account added new doesn't join them: a believable account isn't in a group named
+after the farming tool, on its public profile.
 
-Per account there's *Join the shared groups* (Show advanced, on), which you can turn off to keep one account out;
+Per account there's *Join the shared groups* (Show advanced; on, off for a new human-mode account), which you can turn
+off to keep one account out;
 *Also join these groups*, for groups only that account joins; and *Accept group invites* (off), which joins groups
 the account is invited to.
 

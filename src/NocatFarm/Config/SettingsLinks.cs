@@ -16,6 +16,11 @@ public static partial class Settings {
 		if (config is GlobalConfig global) {
 			ConfigStore.FollowAlertChips(global, changed);
 
+			// A language chosen here - the walkthrough's own pick, or Settings - is picked: the walkthrough doesn't ask again.
+			if (changed.Contains(nameof(GlobalConfig.Language))) {
+				global.LanguagePicked = true;
+			}
+
 			return;
 		}
 

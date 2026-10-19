@@ -4,7 +4,7 @@
 
 Out of the box, an account accepts donations, which are offers where it gives nothing away (*Accept donations*,
 on), and leaves every other offer for you. Offers from your own accounts can go through by themselves once you set that up
-(below). Fair card swaps from anyone are accepted only if you turn on *Accept fair card swaps*. And if you'd rather
+(below). Fair card swaps from anyone are accepted only if you turn on *Accept 1:1 card swaps from anyone*. And if you'd rather
 not have offers pile up, *Decline everything else* (off) declines whatever isn't accepted.
 
 Each offer waits 2-15 minutes before it's answered (*Wait at least* / *And at most*). No Steam Web API key is
@@ -29,16 +29,20 @@ trade cancel myaccount <offer id> # take back an offer this account sent that ha
 
 Accepting an offer that sends items out also confirms it, if the account's authenticator is in nocat.farm.
 
-**Trade by itself with** (`AutoTradeWith`) sets which accounts it trades with without asking you, and in which
+**Your other accounts** (`AutoTradeWith`) sets which accounts it trades with without asking you, and in which
 direction. List account names or SteamID64s, separated by commas: `farm1` or `farm1:both` trades both ways (the
 default), `farm1:from` only accepts what farm1 sends, and `farm1:to` lets farm1 take items. For example,
-`farm1, alt:to`. Left empty, it means the accounts in *Your own accounts*, both ways, when *Accept anything from
-your own accounts* is on.
+`farm1, alt:to`. Only list accounts you own. Left empty it's nobody: every offer waits for you (donations follow their
+own switch). A config from before 1.8.2 with *Accept anything from your own accounts* on had its *Your own accounts*
+put in here, both ways - exactly what it did before.
+
+*Send items to* (`TradeMasters`, Show advanced) is only where `send` and the timed sends go - a name or a SteamID64, the
+first one used. Nobody on it can take anything; that's *Your other accounts*.
 
 ## Sending items
 
 ```
-send farm1                       # farm1's items to the first account in "Your own accounts"
+send farm1                       # farm1's items to the account in "Send items to"
 send farm1 to myaccount          # farm1's trading cards to myaccount
 send all to myaccount cards foils
 ```
@@ -49,19 +53,19 @@ uses the account's *What to send* setting (trading cards by default; `all` sends
 TF2 and CS2 items too), and `send … to` sends trading cards.
 
 To send on a schedule, *Send items every* (0 = off) sends on a timer and *Send items when farming finishes* sends
-once when the cards run out. Both always use *What to send*. *...around* picks the hour of the day for the timed
+once when the cards run out. Both always use *What to send*. *Send items around* picks the hour of the day for the timed
 send (like 4 for about 4 in the morning); left at -1 it goes every so many hours from when you turned it on. The
 account's card on the dashboard shows when the next send is, each send is in the log, and a send Steam refuses is
 sent to you as a problem with Steam's reason.
 
 Between accounts that aren't Steam friends, Steam needs the other account's trade link token. nocat.farm reads it
-by itself when that account is signed in here; otherwise set *Their trade link token*. Offers the account sends
+by itself when that account is signed in here; otherwise set *Trade link token of the receiving account*. Offers the account sends
 confirm themselves when its authenticator is here, and otherwise wait for you in the Steam app.
 
 `match` shows swaps of spare cards between your own accounts that help both finish sets. `match do` sends them, and
 the other account accepts by itself.
 
-**Fair card swaps** (*Accept fair card swaps*, off) are one-for-one card swaps from anyone, like the ones
+**Fair card swaps** (*Accept 1:1 card swaps from anyone*, off) are one-for-one card swaps from anyone, like the ones
 card-swapping sites send. One is accepted only when every item is an ordinary trading card from the same game, one
 for one, and the swap never sets your sets back: every card you give away must still have more copies afterwards
 than any incoming card had before. Swaps that would sit in a trade hold are left alone. A swap with a stranger is
@@ -75,7 +79,7 @@ by itself, and you can add more.
 
 ## Card swaps with other nocat.farm users
 
-*Swap cards with other nocat.farm users* (`CardSwaps`, off) swaps your spare normal trading cards with other people's
+*Swap spare cards with other nocat.farm users* (`CardSwaps`, off) swaps your spare normal trading cards with other people's
 nocat.farm accounts: one card for one card, in the same game, so both of you finish sets sooner. It's per account.
 Ticking it first shows what it could swap now and its limits, and nothing happens until you press **Turn on**. Off
 stops it at once. From the console: `swaps preview myaccount`, `swaps on myaccount`, `swaps off myaccount`.
@@ -107,7 +111,7 @@ How it goes:
 What it never does:
 
 - Never foils, backgrounds, emoticons, gems or game items. Only normal trading cards.
-- Never a card your sets need, never the last copy of a card, never more than *Keep this many of each card* (Spare
+- Never a card your sets need, never the last copy of a card, never more than *Keep this many of each item* (Spare
   items) allows, and nothing on *Never touch these items* or *Never touch items from these games*.
 - Never a card of a game it bought cards of for a badge in the last week ([Buying cards](cards-and-idling.md#buying-cards)),
   so nothing it paid for leaves before it's crafted.
@@ -159,10 +163,11 @@ with no authenticator gets a note saying where to put its maFile.
 
 ## Ban watch
 
-*Watch for bans* is on by default. Every few hours it checks each account for VAC bans, game bans, a trade ban or a
-community ban, and when a new one appears it tells you straight away with a log line, a pop-up and a
-Discord/Telegram message. It only looks and never changes anything, apart from keeping games the account is banned
-in out of trades. `bans [account|all]` checks now.
+Every few hours each account's bans are looked at - VAC bans, game bans, a trade ban or a community ban - and when a
+new one appears you're told straight away: a log line, a pop-up and a Discord/Telegram message. That alert is account
+health's *Alert on a new ban* (on); in 1.8.2 *Watch for bans* became it, and a config with it off has the alert off.
+The look only reads and never changes anything, apart from keeping games the account is banned in out of trades.
+`bans [account|all]` checks now.
 
 ## Scam watch
 
@@ -209,9 +214,9 @@ If it wasn't you, change the Steam password first. `scamwatch [account]` shows t
 | On a warning: take back sent offers | on | Cancels the account's own offers still waiting. |
 | On a new API key: revoke it | off | Presses Revoke on Steam's key page. Leave off if you make keys yourself. |
 | Check for an API key / new devices / email, phone and Steam Guard / everything signed out | on | Each check on its own. |
-| Shortest wait between looks / ...up to (minutes) | 30 / 60 minutes | Each wait is a random time between the two. |
-| Scam warnings on Telegram / Discord / as a pop-up (Global settings, Scam watch) | on | Where warnings go. |
-| Devices of yours to ignore (Global settings) | empty | Your own device names, as Steam lists them, comma separated. |
+| How often it looks (`ScamWatchMinMinutes` / `ScamWatchMaxMinutes`, not on the page) | 30 to 60 minutes | Each wait is a random time between the two. |
+| *Scam warnings* (a chip under Global settings, Notifications) and *Pop up for scam warnings* (Pop-ups) | on | Where warnings go: every channel that's set up. |
+| Devices of yours to ignore (Global settings, All accounts) | empty | Your own device names, as Steam lists them, comma separated. |
 
 ## Account health
 
@@ -223,17 +228,17 @@ takes the place of the old bans line.
 It checks a few minutes after the account signs in, then every 5 to 7 hours. It reads only what nocat.farm already
 reads (the ban watch, scam watch's account page, the trade-hold lookup, what Steam says at sign-in) plus one look at
 the Community Market page. When something gets **worse** it tells you once (log, pop-up, Discord/Telegram); getting
-better is only written in the log. A new ban is told once: by the ban watch while *Watch for bans* is on, and by
-health while it's off (health then reads the bans itself at each check). `health [account]` shows every item.
+better is only written in the log. A new ban is told once, as health's, whichever look finds it. `health [account]`
+shows every item.
 
 ### What each account health setting does
 
 | Setting | Default | What it does |
 |---|---|---|
 | Keep an eye on account health | on | The Health line and the alerts, per account. |
-| Alert on a new ban / a trade hold / the market blocked / a limited account / Steam Guard weaker / the phone removed | on | Which changes alert. Off still writes them in the log. A ban is only alerted here while *Watch for bans* is off. |
-| Shortest wait between health checks / ...up to (hours) | 5 / 7 hours | Each wait is a random time between the two. |
-| Health alerts on Telegram / Discord / as a pop-up (Global settings, Account health) | on | Where alerts go. |
+| Alert on a new ban / a trade hold / the market blocked / a limited account / Steam Guard weaker / the phone removed | on | Which changes alert. Off still writes them in the log. |
+| How often it checks (`HealthMinHours` / `HealthMaxHours`, not on the page) | 5 to 7 hours | Each wait is a random time between the two. |
+| *Health alerts* (a chip under Global settings, Notifications) and *Pop up for account health* (Pop-ups) | on | Where alerts go: every channel that's set up. |
 
 ## Inventory value
 
@@ -242,11 +247,11 @@ value                    # every account, by game, and the change in the last 24
 value myaccount refresh  # read that account's inventory again
 ```
 
-Items are priced at the lowest price each one is listed for on the Steam market, in *Inventory prices in* (US dollar
+Items are priced at the lowest price each one is listed for on the Steam market, in *Show inventory values in* (US dollar
 by default; match it to your Steam store). Inventories are read again every 6 hours. Prices are asked a whole game's
 cards, backgrounds and emoticons at a time, and every wear of a skin at once, where the market allows it - so even a
 big inventory is a few dozen requests, not one per item. Requests are still spaced out so Steam doesn't refuse; the
-Inventory tile shows how many are left and about how long that is. Turn *Work out what its inventory is worth* off on
+Inventory tile shows how many are left and about how long that is. Turn *Show inventory value* off on
 accounts that only hold a few cards. Games listed in *...but not these games* are left out.
 
 ## History charts

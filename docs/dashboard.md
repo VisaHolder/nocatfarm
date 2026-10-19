@@ -34,8 +34,14 @@ goes through your history. A bare `help` opens a searchable command list.
 **Plugins** is always there, and says "off" until plugins are turned on. See [Plugins](plugins.md).
 
 **Settings** has search, **Show advanced**, **Only changed**, a "default" link beside anything you've changed, and a
-**Save N changes** button. Settings marked ⟳ need a restart. Each section is in small titled boxes, and the settings
-that only matter while a switch is on are indented under it and hidden while it's off.
+**Save N changes** button. Settings marked ⟳ need a restart. A new account shows about 28 settings (33 in human mode)
+in 12 sections - the everyday ones first, and **Items and spending** (spare items, booster packs, Steam Points, buying
+cards) together at the end, all off until you turn them on. A section's parts have headings of their own, the jump list
+on the left lists them under their section, and each is in small titled boxes. Settings that only matter while a switch
+is on are indented under it and hidden while it's off. A number has its unit after the box and says what 0 means where
+that matters (*0 = no limit*); a shortest and a longest are one row (*Breaks: 2 to 30 minutes*). A few internal settings
+- how often each feature looks, Steam's rate-limit waits - aren't shown at all, and still work from the Console
+(`config <account> all`, `set`, `help`). See [Settings](settings.md#settings).
 
 An account's state on the Overview and on its card says how long a human-mode break has left and when a sleeping
 account gets up: `on a break · 5m to go`, `asleep · up ~09:30` - and `any moment` once that time has come but it hasn't
@@ -119,14 +125,15 @@ refused. Restoring only works at home or on this PC.
 | *Back up every day* | the daily locked backup | off |
 | *Save backups in* | the folder it goes in, e.g. `D:\OneDrive\nocat.farm`; empty is the `backups` folder | empty |
 | *Backup password* | locks the backups, 12+ characters, picked by you | none |
-| *Keep the last (backups)* | how many of its backups stay in the folder | 7 |
+| *Keep the last* | how many of its backups stay in the folder | 7 backups |
 | *Back up at* | the hour it runs | 4 am |
-| *Up to this many minutes later* | a random delay each day, in minutes | 30 |
 | *Include the settings* / *accounts and saved logins* / *authenticators* / *history and stats* / *logs* | what goes in | all on, logs off |
-| *Tell me* | only when a backup fails, or after every backup too | only when it fails |
+| *Backup messages* | on Telegram and Discord: off, only when a backup fails, or after every backup too | only when one fails |
 | *Also keep a copy here* | the same backups in the `backups` folder too | on |
-| *Try again after (minutes)* | minutes before trying again after a failure; 0 waits until tomorrow | 60 |
-| *Send backups* (Notifications) | backups on Telegram and Discord | on |
+
+Two more aren't on the page - they're internal, and work from the Console: `BackupJitterMinutes`, a random delay each
+day (30 minutes), and `BackupRetryMinutes`, how long before trying again after a failure (60 minutes; 0 waits until
+tomorrow).
 
 ## The app window (Windows)
 
@@ -224,7 +231,7 @@ signs every browser and phone out at once (`/visitors signout` on Telegram). A s
 is sent to Telegram and Discord (*Send dashboard sign-ins*), and so is anybody guessing: a lockout, the brake below,
 or *Open from anywhere* switching itself off (*Send break-in attempts*). Both are on by default.
 
-**From anywhere.** Turning on *Open from anywhere* (on the Phone page, or Settings → Dashboard with Show advanced)
+**From anywhere.** Turning on *Open from anywhere* (on the Phone page, or Settings → Dashboard & phone → Open from outside, with Show advanced)
 works like Jellyfin. nocat.farm asks your router to forward the dashboard's port to this PC (UPnP), finds your
 internet address, and gives you a link and QR code that work anywhere. It needs a password of at least 12
 characters, because anyone on the internet can reach the sign-in page. The link is plain http, so use a password you
@@ -232,13 +239,13 @@ don't use anywhere else. The forward is taken away when you turn it off or close
 starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
 had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
 mix of addresses, pause signing in from outside for an hour (home still works, and `dashboard unlock` lifts it). And after
-*Turn Open from anywhere off after* wrong passwords or codes from the internet in a day (5 by default, 0 for
-never), it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
+*Switch off Open from anywhere after this many failed sign-ins a day* (5 wrong passwords or codes from the internet by
+default, 0 for never), it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
 on again (the Phone page, or `anywhere on`) or type `dashboard unlock`. That survives a restart. Backups and restores only work at home or on
 this PC, since the zip holds every saved login.
 
 **A code on Telegram.** With Telegram connected, signing in from outside your home takes the password and then a
-6-digit code the bot sends you (*Code on Telegram for sign-ins from outside*, on by default). So the password alone
+6-digit code the bot sends you (*Ask for a Telegram code when signing in from outside*, on by default). So the password alone
 never lets anyone in from the internet, and a code you didn't ask for means somebody has the password. Change it and
 type `visitors signout`. The code works for 5 minutes, only for the address it was sent for, and five wrong codes
 lock that address out like five wrong passwords. At home and on this PC the password is all it asks. Until Telegram
