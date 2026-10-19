@@ -904,7 +904,7 @@
     "unwanted": "不需要的",
     "trade offer refused. Steam said: {0}": "交易报价被拒。Steam 表示：{0}",
     "using {0}'s own trade token - it is one of your accounts": "使用 {0} 自己的交易令牌 —— 它是你的账号之一",
-    "crafted {0} badge(s) - Steam level up": "已合成 {0} 枚徽章 —— Steam 等级提升",
+    "crafted {0} badge(s): {1} · +{2} XP": "制作了 {0} 个徽章：{1} · +{2} 经验",
     "craft refused - backing off {0}h rather than retrying": "合成被拒 —— 后退 {0} 小时而不是重试",
     "{0} completed card set(s) ready to craft": "有 {0} 套完整卡牌可供合成",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "有别的东西在设置该账号的状态（显示 {0}，我们要求的是 {1}）—— 退让",

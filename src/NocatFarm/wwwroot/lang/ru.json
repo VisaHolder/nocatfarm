@@ -904,7 +904,7 @@
     "unwanted": "нежелательное",
     "trade offer refused. Steam said: {0}": "предложение обмена отклонено. Steam ответил: {0}",
     "using {0}'s own trade token - it is one of your accounts": "используем собственный токен обмена {0} - это один из ваших аккаунтов",
-    "crafted {0} badge(s) - Steam level up": "создано значков: {0} - уровень Steam повышен",
+    "crafted {0} badge(s): {1} · +{2} XP": "создано значков: {0}: {1} · +{2} опыта",
     "craft refused - backing off {0}h rather than retrying": "создание отклонено - пауза {0}ч вместо повтора",
     "{0} completed card set(s) ready to craft": "готово к созданию наборов карточек: {0}",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "что-то ещё задаёт статус этого аккаунта (показывает {0}, мы просили {1}) - отступаем",

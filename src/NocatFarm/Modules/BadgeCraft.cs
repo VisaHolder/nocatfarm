@@ -227,6 +227,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		Log.Debug(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
 		int made = 0;
+		List<string> craftedNames = [];
 
 		// A human-mode account crafts a few and gets on with its day - the rest wait for a later sweep. Twenty badges
 		// a few seconds apart is a burst nobody makes by hand.
@@ -325,6 +326,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				made++;
 				_crafted++;
+				craftedNames.Add(c.Border == 0 ? GameNames.Of(c.AppId) : $"{GameNames.Of(c.AppId)} (foil)");
 				Stats.Record(Stats.KindBadge, Bot.Name);
 
 				// 1.8.2: the cards bought for this badge are spent - no longer kept out of selling and swaps.
@@ -352,7 +354,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		if (made > 0) {
-			Log.Reward(new Said("crafted {0} badge(s) - Steam level up", made), Bot.Name);
+			Log.Reward(new Said("crafted {0} badge(s): {1} · +{2} XP", made, string.Join(", ", craftedNames), made * 100), Bot.Name);
 
 			// 1.8.2: the new Steam level, said once (with what the cards bought for these badges cost).
 			try {

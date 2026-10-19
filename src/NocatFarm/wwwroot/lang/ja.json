@@ -904,7 +904,7 @@
     "unwanted": "不要",
     "trade offer refused. Steam said: {0}": "トレードオファーが拒否されました。Steamの回答: {0}",
     "using {0}'s own trade token - it is one of your accounts": "{0}自身のトレードトークンを使用します - あなたのアカウントの一つです",
-    "crafted {0} badge(s) - Steam level up": "バッジを{0}個作成 - Steamレベルアップ",
+    "crafted {0} badge(s): {1} · +{2} XP": "バッジを {0} 個作成: {1} · +{2} XP",
     "craft refused - backing off {0}h rather than retrying": "作成が拒否されました - 再試行せず{0}時間待機します",
     "{0} completed card set(s) ready to craft": "完成したカードセットが{0}組、作成可能です",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "他の何かがこのアカウントのステータスを設定しています ({0}と表示、こちらは{1}を要求) - 手を引きます",

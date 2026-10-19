@@ -904,7 +904,7 @@
     "unwanted": "no deseada",
     "trade offer refused. Steam said: {0}": "oferta de intercambio rechazada. Steam dijo: {0}",
     "using {0}'s own trade token - it is one of your accounts": "usando el token de intercambio propio de {0} - es una de tus cuentas",
-    "crafted {0} badge(s) - Steam level up": "creada(s) {0} insignia(s) - subida de nivel de Steam",
+    "crafted {0} badge(s): {1} · +{2} XP": "{0} insignia(s) fabricada(s): {1} · +{2} PE",
     "craft refused - backing off {0}h rather than retrying": "creación rechazada - se espera {0}h en lugar de reintentar",
     "{0} completed card set(s) ready to craft": "{0} conjunto(s) de cromos completo(s) listos para crear",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "algo más está fijando el estado de esta cuenta (dice {0}, pedimos {1}) - nos apartamos",

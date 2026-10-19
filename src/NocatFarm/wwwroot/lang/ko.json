@@ -904,7 +904,7 @@
     "unwanted": "원치 않음",
     "trade offer refused. Steam said: {0}": "교환 제안이 거부되었습니다. Steam 응답: {0}",
     "using {0}'s own trade token - it is one of your accounts": "{0} 자체의 거래 토큰을 사용합니다 - 당신의 계정 중 하나입니다",
-    "crafted {0} badge(s) - Steam level up": "배지 {0}개 제작 - Steam 레벨 상승",
+    "crafted {0} badge(s): {1} · +{2} XP": "배지 {0}개 제작: {1} · +{2} XP",
     "craft refused - backing off {0}h rather than retrying": "제작이 거부되었습니다 - 재시도 대신 {0}시간 물러납니다",
     "{0} completed card set(s) ready to craft": "완성된 카드 세트 {0}개를 제작할 수 있습니다",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "다른 무언가가 이 계정의 상태를 설정하고 있습니다 ({0}으로 표시, 우리는 {1} 요청) - 물러납니다",

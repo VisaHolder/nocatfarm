@@ -904,7 +904,7 @@
     "unwanted": "unerwünscht",
     "trade offer refused. Steam said: {0}": "Handelsangebot abgelehnt. Steam sagte: {0}",
     "using {0}'s own trade token - it is one of your accounts": "nutzt das eigene Handelstoken von {0} - es ist eines deiner Konten",
-    "crafted {0} badge(s) - Steam level up": "{0} Abzeichen gefertigt - Steam-Level gestiegen",
+    "crafted {0} badge(s): {1} · +{2} XP": "{0} Abzeichen hergestellt: {1} · +{2} EP",
     "craft refused - backing off {0}h rather than retrying": "Fertigen abgelehnt - {0}h Pause statt erneutem Versuch",
     "{0} completed card set(s) ready to craft": "{0} vollständige Kartensätze fertig zum Fertigen",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "etwas anderes setzt den Status dieses Kontos (es steht auf {0}, wir wollten {1}) - wir halten uns zurück",

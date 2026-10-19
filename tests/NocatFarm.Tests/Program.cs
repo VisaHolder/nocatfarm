@@ -26209,7 +26209,7 @@ await CommandSweep.RunAsync(Check);
 			SvSrc("Modules/Boosters.cs").Contains("Log.Reward(MadeSaid(offer.Name, gems), Bot.Name);", StringComparison.Ordinal)
 			&& SvSrc("Modules/Boosters.Auto.cs").Contains("Log.Reward(Boosters.MadeSaid(offer.Name, made.Gems), Bot.Name);", StringComparison.Ordinal)
 			&& spareRunSrc.Contains("new Said(\"opened {0}: {1}\", PackSaid(pack), CardsSaid(pack, cards))", StringComparison.Ordinal)
-			&& SvSrc("Modules/BadgeCraft.cs").Contains("Log.Reward(new Said(\"crafted {0} badge(s) - Steam level up\"", StringComparison.Ordinal)
+			&& SvSrc("Modules/BadgeCraft.cs").Contains("Log.Reward(new Said(\"crafted {0} badge(s): {1} · +{2} XP\"", StringComparison.Ordinal)
 			&& SvSrc("Core/Looting.cs").Contains("Log.Good(line, bot.Name);", StringComparison.Ordinal));
 
 		// ── packs per look on a human-mode account
