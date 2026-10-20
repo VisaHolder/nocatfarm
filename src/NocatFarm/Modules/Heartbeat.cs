@@ -140,6 +140,19 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// The status alone - "playing Counter-Strike 2 · 8m left · 2h10m today" - with no "still" or "now" in front: the
 		// window and the dashboard stack a run of them into one row updating in place (Core/LogStack.cs), so the row itself
 		// tells a repeat from a fresh start. A Said, never Loc.T's finished text, so the row re-renders in a new language.
-		Log.Status(status.Line(), Bot.Name);
+		// 1.8.2: asleep, done for the day, nothing to do - the same line again every interval says nothing new: said once,
+		// and again only when it changes ("asleep · up 13:17" twenty minutes apart read like it went to sleep twice).
+		Said line = status.Line();
+		string text = line.ToEnglish();
+
+		if (status.QuietToday && string.Equals(text, _lastQuiet, StringComparison.Ordinal)) {
+			return;
+		}
+
+		_lastQuiet = status.QuietToday ? text : null;
+		Log.Status(line, Bot.Name);
 	}
+
+	/// <summary>The quiet status said last (asleep, done for the day) - not said again until it changes.</summary>
+	private string? _lastQuiet;
 }
