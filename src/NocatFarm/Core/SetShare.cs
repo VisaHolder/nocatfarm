@@ -28,16 +28,16 @@ public static class SetShare {
 	public const string Endpoint = "https://nocat.lol/api/farm/sets";
 
 	/// <summary>Between two goes (a send and a fetch).</summary>
-	public static readonly TimeSpan Every = TimeSpan.FromHours(6);
+	public static readonly TimeSpan Every = TimeSpan.FromHours(2);
 
 	/// <summary>The same sets are sent again after this, so nocat.lol's copy of them doesn't age out.</summary>
 	public static readonly TimeSpan SendAgainAfter = TimeSpan.FromHours(24);
 
-	/// <summary>Sets sent at most - the cheapest. nocat.lol takes 300.</summary>
-	public const int MaxSets = 300;
+	/// <summary>Sets sent at most - the cheapest it read itself. nocat.lol takes 1000.</summary>
+	public const int MaxSets = 1000;
 
 	/// <summary>Sets taken from the shared list at most.</summary>
-	public const int MaxTaken = 2000;
+	public const int MaxTaken = 20000;
 
 	/// <summary>A Steam set is 5 to 15 cards.</summary>
 	public const int MinCards = 5, MaxCards = 15;
@@ -260,7 +260,7 @@ public static class SetShare {
 		int got = 0, taken = 0;
 
 		try {
-			JsonArray sets = Sets(finder.Records(now), now);
+			JsonArray sets = Sets(finder.Records(now, own: true), now);   // 1.8.3: never another copy's sets sent back as this one's
 			string sig = Signature(sets);
 
 			if ((sets.Count > 0) && ((sig != st.Sent) || (now - new DateTime(st.SentAt, DateTimeKind.Utc) >= SendAgainAfter))) {

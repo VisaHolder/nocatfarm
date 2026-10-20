@@ -1064,6 +1064,7 @@ public sealed class BuyPlan {
 		List<uint> levelling = [.. held.Where(h => (levels.GetValueOrDefault(h.Key) < MaxLevel) && h.Value.Values.Any(static n => n > 0))
 			.OrderByDescending(static h => h.Value.Count(static c => c.Value > 0)).ThenBy(static h => h.Key).Select(static h => h.Key)];
 		int searched = 0, unsearched = 0;
+		List<uint> unknownStarted = [];
 
 		foreach (uint app in levelling) {
 			CardSet? set = knownBy.TryGetValue(app, out SetFinder.KnownSet? k) ? k.ToCardSet() : null;
@@ -1086,6 +1087,7 @@ public sealed class BuyPlan {
 			if (set == null) {
 				if (stopped || (searched >= (knownOnly || quick ? KnownOnlySearches : MaxSetReads))) {
 					unsearched++;
+					unknownStarted.Add(app);
 					heldLevels += Guess(app, held[app], levels.GetValueOrDefault(app));
 
 					continue;
@@ -1155,6 +1157,8 @@ public sealed class BuyPlan {
 				heldLevels += whole ? 1 : 0;
 			}
 		}
+
+		finder.Want(unknownStarted);   // 1.8.3: the set finder reads these first
 
 		if (unsearched > 0) {
 			plan.Skipped.Add($"{unsearched} more started badge(s) whose sets the set finder doesn't know yet - looked at as it learns them");
