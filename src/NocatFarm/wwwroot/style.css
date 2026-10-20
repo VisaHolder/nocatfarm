@@ -1716,7 +1716,7 @@ a.loglink:hover { color: #79b8ff; }
 /* 1.8.2 Copy settings from another account: the list of what changes scrolls inside its pop-up. */
 .copylist { max-height: 300px; overflow: auto; margin-bottom: var(--s3); }
 .copylist td { font-size: 13px; overflow-wrap: anywhere; }
-/* 1.8.2 settings clean-up: a "shortest / longest" pair in one row (Breaks: [2] to [30] minutes), the unit after a box.
+/* 1.8.2 settings clean-up: a "shortest / longest" pair in one row (Breaks: [2] to [30] minutes), the unit after a box. */
 .field .pairctl { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 100%; }
 .field .ctl input[type=number].pairnum { width: 84px; max-width: 84px; }
 .field .pairto, .field .unit { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
