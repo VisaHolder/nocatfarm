@@ -3654,7 +3654,10 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		long spent = result.Bought.Sum(static b => b.Paid);
-		Log.Reward(new Said("bought {0} card(s) · {1} · {2} set(s) to craft", result.Bought.Count, BuyPlan.Money(spent, currency), result.Finished.Count),
-			Bot.Name, Topic.Items);
+		// 1.8.2: each card was its own line as it was bought - in the window this round-up came at the end of the look, often
+		// after a craft that ran meanwhile, and read as a second purchase. The log file and the notifications keep it.
+		Said line = new("bought {0} card(s) · {1} · {2} set(s) to craft", result.Bought.Count, BuyPlan.Money(spent, currency), result.Finished.Count);
+		Log.Debug(line, Bot.Name);
+		Log.Notify?.Invoke(NotifyKind.Earning, Bot.Name, line.ToString());
 	}
 }
