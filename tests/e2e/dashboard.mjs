@@ -1355,8 +1355,8 @@ if (PING_STUB) {
   await page.waitForSelector('#copyPreview table tr:nth-child(2)', { timeout: 10000 }).catch(() => {});
   const rows = await page.locator('#copyPreview table tr').count();
   const preview = (await page.locator('#copyPreview').textContent()) || '';
-  check('copy settings: the preview lists each change (human mode among them) and what is never copied',
-    rows > 2 && /human mode/i.test(preview) && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
+  check('copy settings: the preview lists each change and what is never copied',
+    rows > 2 && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
   await page.locator('#modal button.ghost').first().click();
   await settle(300);
   check('copy settings: Cancel changes nothing', !(await modalOpen()) && same((await api('/api/config')).Bots.robot, before));
@@ -1369,8 +1369,8 @@ if (PING_STUB) {
   await settle(800);
   const after = (await api('/api/config')).Bots.robot;
   const human = (await api('/api/config')).Bots.human;
-  check('copy settings: Copy settings copies them - human mode and its games come across',
-    !(await modalOpen()) && after.LegitMode === true && after.GameWeights === human.GameWeights && after.Rep4Rep === human.Rep4Rep, JSON.stringify({ LegitMode: after.LegitMode, GameWeights: after.GameWeights }));
+  check('copy settings: Copy settings copies them - the account keeps its own mode (robot stays robot), the rest comes across',
+    !(await modalOpen()) && after.LegitMode === before.LegitMode && after.Rep4Rep === human.Rep4Rep, JSON.stringify({ LegitMode: after.LegitMode, Rep4Rep: after.Rep4Rep }));
   check("copy settings: ...the account's own sign-in and notes are kept, and the switches with a go-ahead are off",
     after.SteamLogin === before.SteamLogin && after.Notes === before.Notes && after.Enabled === before.Enabled
     && ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'].every((n) => after[n] === false));
