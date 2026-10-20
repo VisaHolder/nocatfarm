@@ -307,7 +307,33 @@ public static class GemsChoice {
 			}
 		}
 
-		return Decide(options, sackKnown, x.Costs, cur);
+		Choice now = Decide(options, sackKnown, x.Costs, cur);
+
+		// 1.8.2: a pack made once a day is waiting for today's to be made again - when it's clearly better than the best way open
+		// now (by the margin), the gems wait for it rather than going somewhere worse. Only prices already held: no lookups here.
+		if ((now.Way != Way.Keep) && (now.Pick is { } best)) {
+			foreach (Boosters.Offer later in x.Page.Offers.Values.Where(o => o.Unavailable && (o.Price > 0) && !keep.Contains(o.AppId))) {
+				decimal worth = Spare.GemsWorth((int) later.Price, sack);
+				long per = 0;
+
+				if ((market.Known(PackHash(later.AppId, later.Name), cur) is { } pack) && !Stale(pack) && (pack.Sales >= MinPackSales) && (Receive(pack, x.DumpPct) is int paid and > 0) && (paid >= worth + 1m)) {
+					per = Math.Max(per, paid * (long) Per / later.Price);
+				}
+
+				if (Opens(later) && (market.KnownSet(later.AppId) is { Cards.Count: > 0 } laterSet) && (laterSet.Cards.Count == BoosterPick.SetSize(later.Price))
+					&& (OpenedWorth(laterSet, cur, rate!.Value, market, x.Now, x.DumpPct, live: false) is long ev and > 0) && (ev >= worth + 1m)) {
+					per = Math.Max(per, ev * Per / later.Price);
+				}
+
+				double levels = per > 0 ? LevelsFor(per, costs) : 0;
+
+				if ((levels > 0) && (levels * 100 >= best.Levels * (100 + MarginPct))) {
+					return new Choice(Way.Keep, null, options, $"waiting for {later.Name}'s pack ({later.AvailableAt}) - about {levels:0.0} levels per 1,000 gems, against {best.Levels:0.0} now", cur);
+				}
+			}
+		}
+
+		return now;
 	}
 
 	/// <summary>
