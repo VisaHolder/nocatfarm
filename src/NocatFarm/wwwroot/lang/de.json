@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steams Markt ist gesperrt ({0}) - Kaufen, Verkaufen und Tausch warten, bis Steam die Sperre aufhebt, und dafür braucht es einen Kauf auf Steam mit diesem Konto",
+    "settling in first (~{0}m), then looking for cards": "kommt erst an (~{0}m), dann sucht es nach Karten",
+    "settling in first, then looking for cards": "kommt erst an, dann sucht es nach Karten",
+    "it's the small hours - this plan ends at bed tonight, {0}": "es ist mitten in der Nacht - dieser Plan endet heute Nacht mit dem Schlafengehen, {0}",
+    "{0} to confirm in your email": "{0} in deiner E-Mail zu bestätigen",
+    "Goes off - turn it on again yourself after its preview": "Geht aus - schalte es nach seiner Vorschau selbst wieder ein",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Du kannst dieses Fenster schließen - nocat.farm läuft nach der Uhr weiter. Die Seite Konten zeigt, was jedes Konto tut, und dort fügst du ein weiteres hinzu.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "Der Menschmodus ist an: Gerade ist nicht der Tag dieses Kontos, also ruht es, bis sein Tag beginnt - dann kommt es ein paar Minuten an und spielt, mit Pausen und einer Schlafenszeit.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam ist bei der Anmeldung für {0}: gib das Passwort ein (und den Steam-Guard-Code, falls gefragt), lass „Angemeldet bleiben“ angehakt - nächstes Mal ist es ein Klick",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam ließ sich nicht schließen - wenn es ein Meldungsfenster zeigt, schließ es und versuch es dann noch einmal",
     "Open in Steam is on for every account: each one shows the one-click button": "„In Steam öffnen“ ist für jedes Konto an: jedes zeigt den Ein-Klick-Knopf",

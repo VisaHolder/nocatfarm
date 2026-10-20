@@ -1241,6 +1241,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 
 			// Up and about, it stays up: a new plan whose wake time happened to land later sent it back to bed at noon.
 			bool wasUp = (_dayStamp >= 0) && InWakingHours(now);
+			DateTime oldEnds = _dayStamp >= 0 ? PlanEnds() : DateTime.MinValue;
 
 			if (_phase == Phase.Playing) {
 				BankSession();
@@ -1268,11 +1269,37 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 			Log.Info("new plan for today from the current settings", Bot.Name);
 			RollFor(date, lastBed, carry);
 
-			if (wasUp && (now < PlanWake())) {
+			// 1.8.2: up in the small hours, the plan is tonight's and ends at bed tonight - rolled as today, its bedtime
+			// landed the NEXT night and the account played on past it, a day of about 24 hours (live, 01:46 "bed 02:11").
+			if (wasUp && (_targetMinutes > 0) && (TonightBed(now, EarliestWakeToday(), PlanBed(), oldEnds) is { } tonight)) {
+				_dayStamp = now.Date.AddDays(-1).DayOfYear;
+				_bedHour = tonight.Hour;
+				_bedMinute = tonight.Minute;
+				_bedIsTomorrow = true;
+				Persist();
+				Log.Info(new Said("it's the small hours - this plan ends at bed tonight, {0}", tonight.ToString("HH:mm")), Bot.Name);
+			} else if (wasUp && (now < PlanWake())) {
 				_wakeMinuteOfDay = Math.Clamp((int) (now - PlanDate(_dayStamp, now)).TotalMinutes, 0, (23 * 60) + 59);
 				Persist();
 			}
 		}
+	}
+
+	/// <summary>
+	/// 1.8.2, 'human reroll' while up in the small hours (before the earliest a day can start): when the night ends - the new
+	/// plan's bedtime tonight when it's an after-midnight one still ahead, else the old plan's bedtime when it's still ahead
+	/// tonight. Null for an ordinary reroll: not the small hours, or neither bedtime is tonight (it stays up, as any reroll).
+	/// </summary>
+	public static DateTime? TonightBed(DateTime now, DateTime earliestWake, DateTime rolledBed, DateTime oldEnds) {
+		if (now >= earliestWake) {
+			return null;
+		}
+
+		DateTime tonight = now.Date + rolledBed.TimeOfDay;
+
+		return (tonight > now) && (tonight <= earliestWake) ? tonight
+			: (oldEnds > now) && (oldEnds <= earliestWake) ? oldEnds
+			: null;
 	}
 
 	/// <param name="wakingNow">'wake': today starts now, so today's plan is wanted even before its earliest wake time.</param>

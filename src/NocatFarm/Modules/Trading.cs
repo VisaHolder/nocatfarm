@@ -68,6 +68,9 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>Offers accepted here (of any kind) still waiting on a confirmation, for the status line.</summary>
 	private int _awaitingConfirmation;
 
+	/// <summary>1.8.2: of those, the ones Steam's email confirms (an email-guard account).</summary>
+	private int _awaitingByEmail;
+
 	// ── numbers and announcements ──
 
 	/// <summary>A short number per live incoming offer - "trade accept new 3" - instead of Steam's 11-digit ids.</summary>
@@ -103,7 +106,9 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			}
 
 			if (_awaitingConfirmation > 0) {
-				bits.Add(Loc.T("{0} to confirm on your phone", _awaitingConfirmation));
+				bits.Add(_awaitingByEmail >= _awaitingConfirmation || Commands.EmailGuard(Bot)
+					? Loc.T("{0} to confirm in your email", _awaitingConfirmation)
+					: Loc.T("{0} to confirm on your phone", _awaitingConfirmation));
 			}
 
 			return bits.Count > 0 ? string.Join(" · ", bits) : "";
@@ -292,6 +297,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		_awaitingConfirmation = awaiting.Count;
+		_awaitingByEmail = awaiting.Count(static o => o.ConfirmationMethod == 1);
 
 		// Anything no longer live was accepted, declined or withdrawn somewhere else - forget it.
 		_waiting.RetainOnly(offers.Select(static o => o.Id));

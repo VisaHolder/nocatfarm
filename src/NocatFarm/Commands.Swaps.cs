@@ -56,12 +56,30 @@ public static partial class Commands {
 			case "on":
 				Switches.Set(bot, Switches.Swaps, true);
 
-				return $"{bot.Name}: card swaps are on - nocat.lol gets its list in a minute or two and pairs it within the hour. 'swaps off {bot.Name}' turns it off.";
+				return SwapsOnSaid(bot.Name, OwnHoldDays(bot), bot.CanConfirmTrades);
 			default:
 				return await SwitchPreviewAsync(bot, Switches.Swaps, CancellationToken.None).ConfigureAwait(false)
 					+ (CardExchange.On(bot.Cfg, bot.Name) ? "" : $"{Environment.NewLine}To turn it on, type: swaps on {bot.Name}");
 		}
 	}
+
+	/// <summary>
+	/// 'swaps on': turned on - and, with a trade hold of its own (15 days without a mobile authenticator), that no swap goes
+	/// through until the hold is gone. It's still turned on.
+	/// </summary>
+	public static string SwapsOnSaid(string account, int? holdDays, bool authenticator) {
+		string on = $"{account}: card swaps are on - nocat.lol gets its list in a minute or two and pairs it within the hour. 'swaps off {account}' turns it off.";
+
+		return holdDays is int days and > 0
+			? on + Environment.NewLine + $"{account}: it has a {days}-day trade hold{(authenticator ? "" : " (no mobile authenticator)")} - swaps can't go through until the hold is gone."
+			: on;
+	}
+
+	/// <summary>The account's own trade hold in days, as last seen (trade offers lately, else its health look) - null when not known.</summary>
+	internal static int? OwnHoldDays(Bot bot) =>
+		TradeOffers.OwnHolds.TryGetValue(bot.Name, out (TimeSpan Hold, DateTime At) own) && (DateTime.UtcNow - own.At < TimeSpan.FromDays(7))
+			? (int) Math.Ceiling(own.Hold.TotalDays)
+			: BotManager.ModuleOf<Modules.AccountHealth>(bot)?.Last?.HoldDays;
 
 	/// <summary>
 	/// 'swaps check': whether the account can sign in to nocat.lol through Steam - only ok or why not, never Steam's answer

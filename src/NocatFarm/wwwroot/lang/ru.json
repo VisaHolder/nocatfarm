@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Торговая площадка Steam заблокирована ({0}) - покупка, продажа и обмены ждут, пока Steam её не откроет, а для этого нужна покупка в Steam на этом аккаунте",
+    "settling in first (~{0}m), then looking for cards": "сначала обживается (~{0} мин), потом ищет карточки",
+    "settling in first, then looking for cards": "сначала обживается, потом ищет карточки",
+    "it's the small hours - this plan ends at bed tonight, {0}": "сейчас глубокая ночь - этот план заканчивается сегодня ночью отбоем в {0}",
+    "{0} to confirm in your email": "{0} ждут подтверждения в почте",
+    "Goes off - turn it on again yourself after its preview": "Выключается - включи снова сам после предпросмотра",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Это окно можно закрыть - nocat.farm продолжает работать по часам. На странице «Аккаунты» видно, что делает каждый аккаунт, и там же добавляется ещё один.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "Режим человека включён: сейчас не день этого аккаунта, поэтому он отдыхает, пока не начнётся его день - потом несколько минут обживается и играет, с перерывами и отбоем.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam на входе в {0}: введи пароль (и код Steam Guard, если спросит), оставь галочку «Запомнить меня» - в следующий раз это один клик",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam не закрылся - если он показывает окно с сообщением, закрой его и попробуй снова",
     "Open in Steam is on for every account: each one shows the one-click button": "«Открыть в Steam» включено для всех аккаунтов: у каждого есть кнопка в один клик",

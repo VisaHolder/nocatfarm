@@ -3273,6 +3273,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			DiscordOwner = Notifier.DiscordConnected ? Notifier.DiscordOwner : "",
 			DiscordOwnerId = _mgr.Global.DiscordOwnerId,
 			UpdateProgress = SelfUpdate.Progress,
+			// 1.8.2: the "Show in the app's log" chips that are off - an open Log tab follows a change made with 'set'.
+			LogShowOff = LogShow.Off(_mgr.Global),
 			InventoryPending = fleetWaiting.Count,
 			// How many market requests the prices still waiting will take - every account's together, an item two of them
 			// hold counted once, as it is asked once - and how long that is at the market pace, for the tile's "about 14
@@ -3337,6 +3339,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Games = b.GamesRemaining,
 					Rep4Rep = b.Cfg.Rep4Rep,
 					Legit = b.Cfg.LegitMode,
+					// 1.8.2: human mode outside its day right now (asleep, done for the day, a day off) - the set-up's last screen says so.
+					OffForNow = BotManager.ModuleOf<HumanMode>(b)?.Current is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff,
 					InventoryValue = b.Inventory.Total,
 					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,

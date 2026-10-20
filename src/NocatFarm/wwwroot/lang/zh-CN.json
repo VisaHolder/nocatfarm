@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam 市场被封锁（{0}）- 购买、出售和交换都要等 Steam 解除，而解除需要用此账户在 Steam 上消费一次",
+    "settling in first (~{0}m), then looking for cards": "先缓冲（约{0}分钟），然后查找卡牌",
+    "settling in first, then looking for cards": "先缓冲，然后查找卡牌",
+    "it's the small hours - this plan ends at bed tonight, {0}": "现在是深夜 - 这个计划在今晚 {0} 睡觉时结束",
+    "{0} to confirm in your email": "{0} 个待在邮件中确认",
+    "Goes off - turn it on again yourself after its preview": "会关闭 - 在预览后自己重新打开",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "可以关闭这个窗口 - nocat.farm 会按时间继续运行。账户页面显示每个账户在做什么，也在那里添加其他账户。",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "人类模式已开启：现在不在这个账户的一天之内，所以它会休息到一天开始 - 然后缓冲几分钟再玩，中间有休息和睡觉时间。",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam 已打开 {0} 的登录界面：输入密码（如有要求再输入 Steam 令牌验证码），保持勾选“记住我” - 下次只需点一下",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam 没有关闭 - 如果它弹出了消息框，先关掉，然后再试一次",
     "Open in Steam is on for every account: each one shows the one-click button": "所有账号都已开启“在 Steam 中打开”：每个账号都显示一键按钮",

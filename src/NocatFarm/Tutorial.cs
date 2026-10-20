@@ -1,4 +1,5 @@
 using System.Text;
+using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm;
@@ -82,7 +83,9 @@ public static class Tutorial {
 		sb.AppendLine("Some things happen by themselves: free event items (sale stickers, 0-point Points Shop items) and");
 		sb.AppendLine("gifts sent to the account are collected. 'tutorial free' covers those and the ones you switch on.");
 		sb.AppendLine();
-		sb.AppendLine("That's it. It runs in the tray - close the window and it keeps going.");
+		sb.AppendLine(OperatingSystem.IsWindows() && Live.Global.Tray
+			? "That's it. It runs in the tray - close the window and it keeps going."
+			: "That's it. It keeps going by itself - close the window and it carries on.");
 		sb.AppendLine();
 		sb.AppendLine("  status            what everything is doing right now");
 		sb.AppendLine("  config <name>     every setting for an account, with its value");

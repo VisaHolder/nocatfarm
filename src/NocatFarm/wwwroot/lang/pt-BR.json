@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "O mercado da Steam está bloqueado ({0}) - comprar, vender e trocar esperam até a Steam liberar, e para isso é preciso uma compra na Steam nesta conta",
+    "settling in first (~{0}m), then looking for cards": "se ajeitando primeiro (~{0}m), depois procura cartas",
+    "settling in first, then looking for cards": "se ajeitando primeiro, depois procura cartas",
+    "it's the small hours - this plan ends at bed tonight, {0}": "é madrugada - este plano termina na hora de dormir hoje à noite, {0}",
+    "{0} to confirm in your email": "{0} para confirmar no seu e-mail",
+    "Goes off - turn it on again yourself after its preview": "Desliga - ligue de novo você mesmo depois da prévia",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Você pode fechar esta janela - o nocat.farm continua rodando pelo relógio. A página Contas mostra o que cada conta está fazendo, e é lá que você adiciona outra.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "O modo humano está ligado: agora está fora do dia desta conta, então ela descansa até o dia começar - depois se ajeita por alguns minutos e joga, com pausas e hora de dormir.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "O Steam está no login de {0}: digite a senha (e o código do Steam Guard se pedir), deixe Lembrar de mim marcado - da próxima vez é um clique",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "O Steam não fechou - se ele mostrar uma caixa de mensagem, feche-a e tente de novo",
     "Open in Steam is on for every account: each one shows the one-click button": "Abrir no Steam está ligado em todas as contas: cada uma mostra o botão de um clique",

@@ -26773,7 +26773,7 @@ await CommandSweep.RunAsync(Check);
 		&& LsSrc("wwwroot/app.js").Contains("stackLog(rows).map((g) => logGroupHtml(g, q))", StringComparison.Ordinal)
 		&& LsSrc("Windows/MainWindow.cs").Contains("Core.LogStack.Add(_rows, entry);", StringComparison.Ordinal));
 	Check("stacked log: the heartbeat is written as a status line that stacks, with no \"still\" or \"now\" in front",
-		LsSrc("Modules/Heartbeat.cs").Contains("Log.Status(status.Line(), Bot.Name);", StringComparison.Ordinal)
+		LsSrc("Modules/Heartbeat.cs").Contains("Said line = status.Line();", StringComparison.Ordinal) && LsSrc("Modules/Heartbeat.cs").Contains("Log.Status(line, Bot.Name);", StringComparison.Ordinal)
 		&& !LsSrc("Modules/Heartbeat.cs").Contains("\"still {0}\"", StringComparison.Ordinal));
 
 	// ── the shorter lines themselves
@@ -28767,6 +28767,9 @@ await LogShowChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..",
 
 // ── 1.8.2 trade-locked spare items: gems now when worth more, else kept until the lock ends; locked for good - gems; keep lists and caps as any; fakes only ──
 await LockedSpareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.2 live-test polish: a quick buy preview that leads with blocks, 'buy do' on a held market, a small-hours reroll, the wallet in 'levelup', swaps and trade holds, email confirmations; fakes only ──
+await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
@@ -37632,6 +37635,199 @@ static class LockedSpareChecks {
 				File.ReadAllText(Path.Combine(repo, "src", "NocatFarm", "Core", "Spare.cs")).Contains("if (!item.Tradable && !item.LockedForNow && !(item.LockedForGood && (item.GooType > 0))) {", StringComparison.Ordinal));
 		} finally {
 			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>
+/// 1.8.2 live-test polish: the buy preview answers fast and leads with what blocks buying, 'buy do' says a market hold
+/// lasts, 'human reroll' in the small hours ends tonight, 'levelup ... buy' says what the wallet covers, 'swaps on' warns of
+/// a trade hold, and an email-guard account's offers are confirmed in the email. Fakes only - nothing reaches Steam.
+/// </summary>
+static class Polish182Checks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-polish182-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		NocatFarm.Core.MarketHold.ForgetLoaded();
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		List<NocatFarm.Core.Bot> bots = [];
+
+		NocatFarm.Core.Bot NewBot(NocatFarm.Config.BotConfig? cfg = null) {
+			var b = new NocatFarm.Core.Bot("pl-" + Guid.NewGuid().ToString("N")[..8], cfg ?? new NocatFarm.Config.BotConfig { CraftBadges = true });
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(b, 76561198000000888UL);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(b, SteamKit2.ECurrencyCode.CAD);
+			bots.Add(b);
+			return b;
+		}
+
+		NocatFarm.Core.SetFinder Finder() => new(Path.Combine(root, "config", "state", "sets-" + Guid.NewGuid().ToString("N") + ".json"), static (_, _) => Task.FromResult<string?>(null));
+
+		NocatFarm.Modules.CardBuyer Buyer(NocatFarm.Core.Bot b, NocatFarm.Modules.ICardMarket m, bool on = false) {
+			if (on) {
+				NocatFarm.Core.Switches.Set(b, NocatFarm.Core.Switches.Buy, true);
+			}
+			return new NocatFarm.Modules.CardBuyer(b, m, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero, Finder = Finder() };
+		}
+
+		try {
+			// ── 1: the preview answers from a few searches and a few prices, and says what it's still checking ──
+			// 30 started badges the set finder doesn't know: the first two (10 cards held of 20) each need 10 cards priced,
+			// the rest one card each. A look that buys would search 12 sets and read up to 60 prices; the preview 2 and 16.
+			var big = new FakeCardMarket { Wallet = new(5000, 20, false, 0) };
+			// Game numbers no other check uses: the level planner's saved sets are shared by every check.
+			const uint A = 880000;
+			for (uint app = A + 1; app <= A + 30; app++) {
+				int size = app <= A + 2 ? 20 : 6;
+				List<string> cards = [.. Enumerable.Range(1, size).Select(i => $"{app}-Card {i:00}")];
+				big.Sets[app] = new NocatFarm.Modules.CardSet(app, $"Game {app}", cards, cards.ToDictionary(static c => c, static _ => 5));
+				big.Held[app] = cards.Take(app <= A + 2 ? 10 : 5).ToDictionary(static c => c, static _ => 1);
+				foreach (string c in cards) {
+					big.Books[c] = FakeCardMarket.B(4);
+				}
+			}
+			var bigBot = NewBot(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyFullSets = true, BuyDailyLimit = -1f, BuyWeeklyLimit = -1f });
+			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
+			var sw = System.Diagnostics.Stopwatch.StartNew();
+			var quick = await Buyer(bigBot, big).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Preview, CancellationToken.None);
+			sw.Stop();
+			string quickNotes = string.Join(" | ", quick.Plan?.Notes ?? []);
+			Check("buy preview: a couple of set searches and at most 16 new card prices - not the 12 searches and 60 prices of a look that buys",
+				(quick.Plan != null) && (big.Reads <= NocatFarm.Modules.BuyPlan.QuickReads) && (big.Reads > 0)
+				&& quickNotes.Contains("28 started badge(s) whose sets it hasn't looked up yet", StringComparison.Ordinal),
+				$"{big.Reads} prices read · {quickNotes}");
+			Check("buy preview: says plainly what it's still checking - the level it couldn't price this time too",
+				quickNotes.Contains("still checking: 1 more badge level(s) whose card prices it hasn't read yet", StringComparison.Ordinal)
+				&& buyerSrc.Contains("if ((looked >= (quick ? KnownOnlySearches : MaxSetReads))", StringComparison.Ordinal)
+				&& (quick.Plan!.Steps.Count == 1) && (quick.Plan.Steps[0].App == A + 1),
+				quickNotes);
+			Check("buy preview: only the preview is quick - a look that buys prices as before",
+				buyerSrc.Contains("finder: Finder, quick: !buying).ConfigureAwait(false);", StringComparison.Ordinal), $"{sw.ElapsedMilliseconds} ms");
+
+			// ── 1: what stops all buying comes first ──
+			var held = NewBot();
+			NocatFarm.Core.MarketHold.FromMarketPage(held, new NocatFarm.Modules.AccountHealth.Market(false, "no purchase", null), DateTime.UtcNow);
+			var hMarket = new FakeCardMarket();
+			hMarket.Sets[100] = new NocatFarm.Modules.CardSet(100, "Hundred", ["100-Card 1", "100-Card 2"], new Dictionary<string, int> { ["100-Card 1"] = 5, ["100-Card 2"] = 5 });
+			hMarket.Held[100] = new() { ["100-Card 1"] = 1 };
+			hMarket.Books["100-Card 2"] = FakeCardMarket.B(9);
+			var hPreview = await Buyer(held, hMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Preview, CancellationToken.None);
+			List<string> hSaid = NocatFarm.Commands.BuySaid(held, NocatFarm.Modules.CardBuyer.Mode.Preview, hPreview);
+			var hNums = NocatFarm.Core.SwitchPreview.Buy(hPreview.Plan, held.Cfg, true, hPreview.Problem, hPreview.Blocks);
+			Check("buy preview: Steam's market blocked (no recent purchase) leads - and nothing is listed it would buy",
+				hPreview.Blocks && hPreview.Lasting && (hSaid[0] == $"{held.Name}: " + hPreview.Problem) && hPreview.Problem.StartsWith("Steam's market is blocked (no recent purchase)", StringComparison.Ordinal)
+				&& hPreview.Problem.Contains("which takes a purchase on Steam on this account", StringComparison.Ordinal)
+				&& !hSaid.Any(static l => l.Contains("would buy", StringComparison.Ordinal)) && (hMarket.Reads == 0) && hNums.Blocker && (hNums.Sets.Count == 0),
+				string.Join(" | ", hSaid));
+			string page = Src("src/NocatFarm/wwwroot/app.js");
+			Check("buy preview (dashboard): the block is shown as it is, not as \"Couldn't look at the market\"",
+				page.Contains("esc(d.Blocker ? d.Problem : tf(\"Couldn't look at the market: {0}\", d.Problem))", StringComparison.Ordinal));
+
+			var billBot = NewBot();
+			var bill = new FakeCardMarket { Wallet = new(1000, 20, true, 0) };
+			bill.Sets[100] = hMarket.Sets[100];
+			bill.Held[100] = new() { ["100-Card 1"] = 1 };
+			bill.Books["100-Card 2"] = FakeCardMarket.B(9);
+			var billLook = await Buyer(billBot, bill).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Preview, CancellationToken.None);
+			List<string> billSaid = NocatFarm.Commands.BuySaid(billBot, NocatFarm.Modules.CardBuyer.Mode.Preview, billLook);
+			Check("buy preview: no billing details saved - said first, and no set it \"would buy\"",
+				(billLook.Plan?.Block == NocatFarm.Modules.BuyBlock.Billing) && billSaid[0].Contains("Steam wants billing details", StringComparison.Ordinal)
+				&& !billSaid.Any(static l => l.Contains("would buy", StringComparison.Ordinal)) && (billSaid.Count(static l => l.Contains("billing details", StringComparison.Ordinal)) == 1),
+				string.Join(" | ", billSaid));
+			var mailBot = NewBot();
+			var mail = new FakeCardMarket { Wallet = new(1000, 20, false, 1) };
+			mail.Sets[100] = hMarket.Sets[100];
+			mail.Held[100] = new() { ["100-Card 1"] = 1 };
+			mail.Books["100-Card 2"] = FakeCardMarket.B(9);
+			List<string> mailSaid = NocatFarm.Commands.BuySaid(mailBot, NocatFarm.Modules.CardBuyer.Mode.Preview,
+				await Buyer(mailBot, mail).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Preview, CancellationToken.None));
+			Check("buy preview: every purchase confirmed by email - said first, nothing it would buy",
+				mailSaid[0].Contains("confirmed by email", StringComparison.Ordinal) && !mailSaid.Any(static l => l.Contains("would buy", StringComparison.Ordinal)), string.Join(" | ", mailSaid));
+
+			// ── 4: 'buy do' with the market blocked says the block, and that it lasts - not "try again in a minute" ──
+			var doBot = NewBot();
+			NocatFarm.Core.MarketHold.FromMarketPage(doBot, new NocatFarm.Modules.AccountHealth.Market(false, "no purchase", null), DateTime.UtcNow);
+			var doLook = await Buyer(doBot, hMarket, on: true).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			List<string> doSaid = NocatFarm.Commands.BuySaid(doBot, NocatFarm.Modules.CardBuyer.Mode.Now, doLook);
+			Check("buy do: the market blocked is said as it is, lasting until Steam lifts it (a purchase on Steam) - never \"try again in a minute\"",
+				doLook.Lasting && doSaid[0].StartsWith($"{doBot.Name}: Steam's market is blocked (no recent purchase)", StringComparison.Ordinal)
+				&& doSaid[0].Contains("a purchase on Steam", StringComparison.Ordinal) && !doSaid.Any(static l => l.Contains("try again in a minute", StringComparison.Ordinal)),
+				string.Join(" | ", doSaid));
+
+			// ── 2: 'human reroll' in the small hours ends at bed tonight ──
+			DateTime d0 = new(2026, 10, 20);
+			DateTime nightNow = d0.AddHours(1).AddMinutes(46), earliest = d0.AddHours(9);
+			DateTime? t1 = NocatFarm.Modules.HumanMode.TonightBed(nightNow, earliest, d0.AddDays(1).AddHours(2).AddMinutes(11), DateTime.MinValue);
+			DateTime? t2 = NocatFarm.Modules.HumanMode.TonightBed(nightNow, earliest, d0.AddHours(23).AddMinutes(30), d0.AddHours(2).AddMinutes(30));
+			DateTime? t3 = NocatFarm.Modules.HumanMode.TonightBed(nightNow, earliest, d0.AddHours(23).AddMinutes(30), DateTime.MinValue);
+			DateTime? t4 = NocatFarm.Modules.HumanMode.TonightBed(d0.AddHours(10), earliest, d0.AddDays(1).AddHours(2), DateTime.MinValue);
+			Check("reroll at 01:46: a new plan's 02:11 bedtime is tonight's (25 minutes away), not the next night's - a day of about 24 hours",
+				t1 == d0.AddHours(2).AddMinutes(11), $"{t1:yyyy-MM-dd HH:mm}");
+			Check("reroll at 01:46: a new bedtime that's an evening one keeps tonight's planned bedtime; with neither tonight, or in the day, it's an ordinary reroll (it stays up)",
+				(t2 == d0.AddHours(2).AddMinutes(30)) && (t3 == null) && (t4 == null), $"{t2:HH:mm} {t3} {t4}");
+			string hm = Src("src/NocatFarm/Modules/HumanMode.cs");
+			Check("reroll: the small hours' plan is last night's, ending at bed tonight - the next day starts as usual in the morning",
+				hm.Contains("TonightBed(now, EarliestWakeToday(), PlanBed(), oldEnds) is { } tonight)) {\n\t\t\t\t_dayStamp = now.Date.AddDays(-1).DayOfYear;", StringComparison.Ordinal)
+				&& hm.Contains("_bedIsTomorrow = true;\n\t\t\t\tPersist();", StringComparison.Ordinal));
+
+			// ── 3: 'levelup ... buy' says what the wallet covers ──
+			var goal = new NocatFarm.Modules.CardBuyer.GoalPreview("", 20, 0, 23, 3, 0, [30L, 30L, 40L], 3, 20, 1.5, 0, 33, 83);
+			string goalSaid = NocatFarm.Commands.LevelGoalSaid("lv", goal, askYes: true, buy: true);
+			string rich = NocatFarm.Commands.LevelGoalSaid("lv", goal with { Wallet = 500 }, askYes: true, buy: true);
+			string plain = NocatFarm.Commands.LevelGoalSaid("lv", goal, askYes: false);
+			Check("levelup buy: the wallet holding less than the plan's total says how far it goes",
+				goalSaid.Contains("lv: the wallet has 0.83 CAD - about 2 of the 3 levels until more money comes in.", StringComparison.Ordinal)
+				&& !rich.Contains("the wallet has", StringComparison.Ordinal) && !plain.Contains("the wallet has", StringComparison.Ordinal), goalSaid);
+
+			// ── 5: 'swaps on' with a trade hold ──
+			string onHeld = NocatFarm.Commands.SwapsOnSaid("sw", 15, false);
+			Check("swaps on: a 15-day trade hold (no mobile authenticator) - swaps can't go through until it's gone; still turned on",
+				onHeld.StartsWith("sw: card swaps are on", StringComparison.Ordinal)
+				&& onHeld.Contains("sw: it has a 15-day trade hold (no mobile authenticator) - swaps can't go through until the hold is gone.", StringComparison.Ordinal)
+				&& !NocatFarm.Commands.SwapsOnSaid("sw", 0, true).Contains("hold", StringComparison.Ordinal) && !NocatFarm.Commands.SwapsOnSaid("sw", null, false).Contains("hold", StringComparison.Ordinal),
+				onHeld);
+
+			// ── 6: an email-guard account's offers are confirmed in the email ──
+			var sent = new NocatFarm.Core.TradeOffers.Offer(1, 2, NocatFarm.Core.TradeOffers.NeedsConfirmation, true, null, [], []);
+			var accepted = new NocatFarm.Core.TradeOffers.Offer(3, 4, NocatFarm.Core.TradeOffers.Active, false, null, [], [], ConfirmationMethod: 1);
+			Check("offers: email Steam Guard - \"needs confirming in your email\"; with the phone app, on the phone",
+				(NocatFarm.Commands.OfferState(sent, emailGuard: true) == "needs confirming in your email")
+				&& (NocatFarm.Commands.OfferState(sent, emailGuard: false) == "needs confirming on your phone")
+				&& (NocatFarm.Commands.OfferState(accepted, emailGuard: false) == "needs confirming in your email")
+				&& (NocatFarm.Commands.OfferState(sent with { State = NocatFarm.Core.TradeOffers.Active }, emailGuard: true) == "waiting"),
+				NocatFarm.Commands.OfferState(sent, emailGuard: true));
+			Check("offers: the trades line says email for an email-guard account too",
+				Src("src/NocatFarm/Modules/Trading.cs").Contains("Loc.T(\"{0} to confirm in your email\", _awaitingConfirmation)", StringComparison.Ordinal));
+
+			// ── 7: wording ──
+			Check("wording: 'nickname <account>' alone says the profile name it has now",
+				(NocatFarm.Commands.NicknameNow("nk", "Reap") == "nk: profile name is \"Reap\". 'nickname nk <profile name>' changes it.")
+				&& NocatFarm.Commands.NicknameNow("nk", "").Contains("isn't known until it's logged in", StringComparison.Ordinal));
+			bool countWas = NocatFarm.Config.Live.Global.CountMeAsUser;
+			NocatFarm.Config.Live.Global.CountMeAsUser = false;
+			string aboutOff = NocatFarm.Commands.About();
+			NocatFarm.Config.Live.Global.CountMeAsUser = true;
+			string aboutOn = NocatFarm.Commands.About();
+			NocatFarm.Config.Live.Global.CountMeAsUser = countWas;
+			Check("wording: 'version' says it counts itself on nocat.lol only while Count me as a user is on",
+				!aboutOff.Contains("Once an hour it tells nocat.lol", StringComparison.Ordinal) && aboutOff.Contains("doesn't count itself", StringComparison.Ordinal)
+				&& aboutOn.Contains("Once an hour it tells nocat.lol", StringComparison.Ordinal));
+		} finally {
+			foreach (NocatFarm.Core.Bot b in bots) {
+				await b.DisposeAsync();
+			}
+			await Task.Delay(200);
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Core.MarketHold.ForgetLoaded();
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}

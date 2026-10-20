@@ -248,6 +248,11 @@ public static partial class Commands {
 		int cur = plan.Currency;
 		string M(long cents) => BuyPlan.Money(cents, cur);
 
+		// 1.8.2: what stops all buying comes first (billing details, email confirmations) - nothing is listed it couldn't buy.
+		if (plan.Blocked.Length > 0) {
+			lines.Add($"{name}: {plan.Blocked}");
+		}
+
 		lines.Add($"{name}: wallet {M(plan.Wallet)} · {M(plan.DaySpent)} of {BuyPlan.LimitSaid(plan.DayLimit, cur)} spent today · {M(plan.WeekSpent)} of {BuyPlan.LimitSaid(plan.WeekLimit, cur)} this week - {M(plan.Room)} can be spent now");
 
 		// 1.8.2: one number for what a level costs now - the cheapest priced.
@@ -281,10 +286,6 @@ public static partial class Commands {
 		}
 
 		lines.AddRange(plan.Notes.Select(n => $"{name}: {n}"));
-
-		if (plan.Blocked.Length > 0) {
-			lines.Add($"{name}: {plan.Blocked}");
-		}
 
 		if (!b.Cfg.CraftBadges) {
 			lines.Add($"{name}: \"Craft badges from card sets\" is off - nothing is bought until it's on, or the cards would only sit there.");

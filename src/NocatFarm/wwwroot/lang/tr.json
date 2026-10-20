@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam pazarı engelli ({0}) - alım, satım ve takaslar Steam engeli kaldırana kadar bekler; bunun için bu hesapla Steam'de bir satın alma gerekir",
+    "settling in first (~{0}m), then looking for cards": "önce yerleşiyor (~{0}dk), sonra kart arıyor",
+    "settling in first, then looking for cards": "önce yerleşiyor, sonra kart arıyor",
+    "it's the small hours - this plan ends at bed tonight, {0}": "gece yarısını geçti - bu plan bu gece {0} yatışıyla biter",
+    "{0} to confirm in your email": "e-postanda onaylanacak {0}",
+    "Goes off - turn it on again yourself after its preview": "Kapanır - önizlemeden sonra kendin yeniden aç",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Bu pencereyi kapatabilirsin - nocat.farm saate göre çalışmaya devam eder. Hesaplar sayfası her hesabın ne yaptığını gösterir; başka bir hesabı da orada eklersin.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "İnsan modu açık: şu an bu hesabın günü dışında, bu yüzden günü başlayana kadar dinlenir - sonra birkaç dakika yerleşir ve molalar ile bir yatma saatiyle oynar.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam, {0} için oturum açma ekranında: şifresini yaz (istenirse Steam Guard kodunu da), Beni hatırla işaretli kalsın - bir dahakine tek tık",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam kapanmadı - bir mesaj kutusu gösteriyorsa kapat, sonra tekrar dene",
     "Open in Steam is on for every account: each one shows the one-click button": "Steam'de aç her hesapta açık: her biri tek tıklık düğmeyi gösteriyor",

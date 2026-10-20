@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam マーケットがブロックされています（{0}）- 購入・販売・交換は Steam が解除するまで待ちます。解除にはこのアカウントで Steam での購入が必要です",
+    "settling in first (~{0}m), then looking for cards": "まず落ち着いてから（約{0}分）カードを探します",
+    "settling in first, then looking for cards": "まず落ち着いてからカードを探します",
+    "it's the small hours - this plan ends at bed tonight, {0}": "深夜です - このプランは今夜の就寝 {0} で終わります",
+    "{0} to confirm in your email": "メールでの確認待ち {0} 件",
+    "Goes off - turn it on again yourself after its preview": "オフになります - プレビューの後に自分でもう一度オンにしてください",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "このウィンドウは閉じても大丈夫です - nocat.farm は時計どおりに動き続けます。アカウントページで各アカウントの様子を確認でき、別のアカウントもそこで追加できます。",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "人間モードがオンです：今はこのアカウントの一日の外なので、一日が始まるまで休みます - その後数分落ち着いてから、休憩と就寝時間を挟みつつプレイします。",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam は {0} のサインイン画面です：パスワードを入力し（求められたら Steam Guard コードも）、「ログイン情報を保存」にチェックを入れたままにしてください - 次回からはワンクリックです",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam が終了しませんでした - メッセージボックスが出ていたら閉じてから、もう一度試してください",
     "Open in Steam is on for every account: each one shows the one-click button": "すべてのアカウントで「Steamで開く」がオンです：どのアカウントにもワンクリックのボタンが出ます",

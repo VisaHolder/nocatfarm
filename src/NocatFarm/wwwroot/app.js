@@ -1557,12 +1557,17 @@ function copyValueText(name, v) {
 function copyPreviewHtml(d) {
   const rows = d.Changes.map((c) => `<tr><td>${esc(copyLabel(c.Name))}</td><td class="muted">${esc(copyValueText(c.Name, c.Before))}</td><td>${esc(copyValueText(c.Name, c.After))}</td></tr>`).join('');
   const list = (items) => `<ul class="limits">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  // 1.8.2: a switch on there now goes off - said so, not "stays off" under a change that reads on -> off.
+  const stays = d.LeftOff.filter((x) => !d.TurnedOff.includes(x));
+  const again = d.LeftOff.filter((x) => d.TurnedOff.includes(x));
+  const goes = d.TurnedOff.filter((x) => !d.LeftOff.includes(x));
   return `${d.Changes.length
       ? `<h4>${esc(d.Changes.length === 1 ? t('One setting changes') : tf('{0} settings change', d.Changes.length))}</h4>
         <div class="tablewrap copylist"><table><tr><th>${esc(t('Setting'))}</th><th>${esc(t('Now'))}</th><th>${esc(t('After'))}</th></tr>${rows}</table></div>`
       : `<p>${esc(tf('{0} already has the same settings - nothing to copy.', d.To))}</p>`}
-    ${d.LeftOff.length ? `<h4>${esc(t('Stays off - turn it on yourself after its preview'))}</h4>${list(d.LeftOff.map(copyLabel))}` : ''}
-    ${d.TurnedOff.length ? `<h4>${esc(t('Goes off, as on the account copied from'))}</h4>${list(d.TurnedOff.map(copyLabel))}` : ''}
+    ${stays.length ? `<h4>${esc(t('Stays off - turn it on yourself after its preview'))}</h4>${list(stays.map(copyLabel))}` : ''}
+    ${again.length ? `<h4>${esc(t('Goes off - turn it on again yourself after its preview'))}</h4>${list(again.map(copyLabel))}` : ''}
+    ${goes.length ? `<h4>${esc(t('Goes off, as on the account copied from'))}</h4>${list(goes.map(copyLabel))}` : ''}
     ${d.Cleared.length ? `<h4>${esc(tf('With {0} itself taken out', d.To))}</h4>${list(d.Cleared.map(copyLabel))}` : ''}
     ${d.Adjusted.length ? `<h4>${esc(t('Put right'))}</h4>${list(d.Adjusted)}` : ''}
     <h4>${esc(t('Never copied'))}</h4>${list([t('the sign-in, password and authenticator'), t('the proxy and the device name'), t('notes and log colour'),
@@ -3519,7 +3524,9 @@ function tutShowDone() {
   tutSetup = null;
   let what;
 
-  if (b && b.Legit) {
+  if (b && b.Legit && b.OffForNow) {
+    what = tutOffForNow();
+  } else if (b && b.Legit) {
     what = s && s.main
       ? tf('It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.',
         gameLabel(s.main), s.sides.size ? tf(', and {0} now and then', [...s.sides].map(gameLabel).join(', ')) : '')
@@ -3535,7 +3542,7 @@ function tutShowDone() {
     title: t("You're all set"),
     badge: true,
     body: `<p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
-      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
+      <p class="muted small">${esc(tutCloseNote())}</p>
       ${safeItemsNote()}
       ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
       ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
@@ -3543,10 +3550,24 @@ function tutShowDone() {
       ${tutOptionalCards()}
       ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
         t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
-      <p class="muted small">${esc(t('It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`,
+      ${config && config.Global && config.Global.CountMeAsUser === false ? ''
+        : `<p class="muted small">${esc(t('It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`}`,
     skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
     next: t('Show me my account'),
   }, finishSignin);
+}
+
+// 1.8.2: "in the tray" only while the tray icon is on (and on Windows, where there is one).
+function tutCloseNote() {
+  const tray = !(config && config.Global && config.Global.Tray === false) && !(state && state.Windows === false);
+  return tray
+    ? t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.')
+    : t('You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.');
+}
+
+// 1.8.2: human mode outside its day as the set-up ends - it goes straight to sleep, not "settles in, then plays".
+function tutOffForNow() {
+  return t("Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.");
 }
 
 /// The rest of the set-up, as cards on the last screen rather than more steps - each opens its own place.
@@ -3624,12 +3645,12 @@ function renderSignin() {
   if (b && b.Online) {
     title = t("You're all set");
     const what = b.Legit
-      ? t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.')
+      ? (b.OffForNow ? tutOffForNow() : t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.'))
       : (b.Cards > 0
         ? tf('It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.', b.Cards, b.Games)
         : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.'));
     body = `<p>${esc(tf('{0} is signed in.', b.Name))} ${esc(what)}</p>
-      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>`;
+      <p class="muted small">${esc(tutCloseNote())}</p>`;
     key = 'signin-done';
     next = t('Show me my account');
     act = finishSignin;
@@ -4550,6 +4571,22 @@ function renderLog() {
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
 }
+
+// 1.8.2: the chips that are off, as the status says them ("LogShowDrops,LogShowApp") - put into the settings the page holds,
+// so a chip changed outside the page shows at once. True when one moved.
+function syncLogShow(off) {
+  if (typeof off !== 'string' || !config || !config.Global) return false;
+  const offs = new Set(off.split(',').filter(Boolean));
+  let moved = false;
+  for (const k of LOG_SHOW_KINDS) {
+    const on = !offs.has(k);
+    if (config.Global[k] !== on) { config.Global[k] = on; moved = true; }
+  }
+  return moved;
+}
+
+const LOG_SHOW_KINDS = ['LogShowDoing', 'LogShowDrops', 'LogShowBadges', 'LogShowBuying', 'LogShowSelling', 'LogShowTrades', 'LogShowComments',
+  'LogShowAchievements', 'LogShowFree', 'LogShowAnswers', 'LogShowApp'];
 
 // A line's "Show in the app's log" chip, as the server says it (Core/LogShow.cs): Show names the setting, and the line stays
 // out while that is off. Warnings, errors and lines of no known kind come with none and always show.
@@ -6620,7 +6657,7 @@ function pointsPreviewHtml(d) {
 function buyPreviewHtml(d) {
   const top = [];
   if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the market yet. These are the limits it will keep to."))}</p>`);
-  else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the market: {0}", d.Problem))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(d.Blocker ? d.Problem : tf("Couldn't look at the market: {0}", d.Problem))}</p>`);
   // Why Steam won't let it buy by itself: no billing details saved to send, or each purchase confirmed by email. (A
   // purchase confirmed in the Steam app waits for your phone - not a block since 1.8.2, so 3 is never sent.)
   const blocked = [null,
@@ -7954,10 +7991,10 @@ async function refresh() {
     // button) asked from the same place and both appended it, so the Log showed every line twice.
     const last = logLines.length ? logLines[logLines.length - 1].Seq : 0;
     const fresh = got.filter((e) => e.Seq > last);
-    if (fresh.length) {
-      logLines = logLines.concat(fresh).slice(-1000);
-      if (view === 'log') renderLog();
-    }
+    // 1.8.2: a "Show in the app's log" chip changed elsewhere ('set' in the console, Telegram): the Log tab follows it now.
+    const chipsMoved = syncLogShow(state.LogShowOff);
+    if (fresh.length) logLines = logLines.concat(fresh).slice(-1000);
+    if ((fresh.length || chipsMoved) && view === 'log') renderLog();
 
     render();
   } catch {

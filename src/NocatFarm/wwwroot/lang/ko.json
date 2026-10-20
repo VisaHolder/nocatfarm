@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam 장터가 막혀 있습니다 ({0}) - 구매, 판매, 교환은 Steam이 풀어 줄 때까지 기다리며, 풀리려면 이 계정으로 Steam에서 구매해야 합니다",
+    "settling in first (~{0}m), then looking for cards": "먼저 자리 잡은 뒤 (~{0}분) 카드를 찾음",
+    "settling in first, then looking for cards": "먼저 자리 잡은 뒤 카드를 찾음",
+    "it's the small hours - this plan ends at bed tonight, {0}": "한밤중입니다 - 이 계획은 오늘 밤 {0} 취침으로 끝납니다",
+    "{0} to confirm in your email": "이메일에서 확인할 것 {0}개",
+    "Goes off - turn it on again yourself after its preview": "꺼짐 - 미리보기 후 직접 다시 켜세요",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "이 창은 닫아도 됩니다 - nocat.farm은 시계에 맞춰 계속 돌아갑니다. 계정 페이지에서 각 계정이 무엇을 하는지 볼 수 있고, 다른 계정도 거기서 추가합니다.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "인간 모드가 켜져 있습니다: 지금은 이 계정의 하루가 아니어서 하루가 시작될 때까지 쉽니다 - 그다음 몇 분 자리 잡고 휴식과 취침 시간을 두며 플레이합니다.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam이 {0}의 로그인 화면에 있습니다: 비밀번호를 입력하고(요청하면 Steam Guard 코드도) 로그인 정보 기억을 체크한 채로 두세요 - 다음부터는 한 번 클릭이면 됩니다",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam이 닫히지 않았습니다 - 메시지 상자가 떠 있으면 닫은 뒤 다시 시도하세요",
     "Open in Steam is on for every account: each one shows the one-click button": "모든 계정에서 Steam에서 열기가 켜졌습니다: 각 계정에 한 번 클릭 버튼이 보입니다",

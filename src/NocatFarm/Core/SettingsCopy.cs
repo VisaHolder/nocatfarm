@@ -352,9 +352,12 @@ public static class SettingsCopy {
 	public static List<string> Notes(string to, Plan plan) {
 		List<string> lines = [];
 
+		// 1.8.2: on there now, it goes off (as the list of changes says) - "stays off" read as if it was off already.
 		foreach (string s in plan.LeftOff) {
 			(string name, string command) = SwitchWords(s);
-			lines.Add($"{name} stays off on {to}: turn it on yourself after its preview ('{command} {to}', or the switch in its settings).");
+			lines.Add(plan.TurnedOff.Contains(s)
+				? $"{name} goes off on {to}: turn it on again yourself after its preview ('{command} {to}', or the switch in its settings)."
+				: $"{name} stays off on {to}: turn it on yourself after its preview ('{command} {to}', or the switch in its settings).");
 		}
 
 		foreach (string s in plan.TurnedOff.Where(s => !plan.LeftOff.Contains(s))) {

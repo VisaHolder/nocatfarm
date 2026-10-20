@@ -161,7 +161,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	private bool _saidNothingLeft;
 
 	public override string Name => "cards";
-	public override string Status => _settling && (BotManager.ModuleOf<HumanMode>(Bot) is { } w) ? SettlingSaid(w) : _status;
+	public override string Status => _settling && (BotManager.ModuleOf<HumanMode>(Bot) is { } w) ? SettlingSaid(w, Bot) : _status;
 
 	/// <summary>
 	/// Set while the farmer waits out human mode's settle after signing in. The wait is re-checked once a minute, so
@@ -170,8 +170,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private volatile bool _settling;
 
-	private static Said SettlingSaid(HumanMode warmup) {
+	/// <remarks>1.8.2: an account whose badges were read and have no cards left says so, and one not read yet says it looks
+	/// first - not "then farming".</remarks>
+	internal static Said SettlingSaid(HumanMode warmup, Bot bot) {
+		if ((bot.CardsCheckedAt != null) && (bot.CardsRemaining == 0)) {
+			return new Said("nothing left to farm");
+		}
+
 		int mins = warmup.WarmUpMinutesLeft;
+
+		// Its badges not read yet: whether it has cards isn't known - it looks once it's settled.
+		if (bot.CardsCheckedAt == null) {
+			return mins > 0 ? new Said("settling in first (~{0}m), then looking for cards", mins) : new Said("settling in first, then looking for cards");
+		}
 
 		return mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
 	}
@@ -573,7 +584,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// The owner-safety part still applies, though. Skipping it started night farming seconds after signing in,
 		// while Steam's word that the owner is playing can still be minutes behind.
 		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp && !(warmup.InBed && warmup.SafeToPlay)) {
-			_status = SettlingSaid(warmup);
+			_status = SettlingSaid(warmup, Bot);
 			_settling = true;
 
 			return 1;

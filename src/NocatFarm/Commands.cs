@@ -67,7 +67,7 @@ public static partial class Commands {
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
 		new("persona", "<account> [state]", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now."),
-		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'."),
+		new("nickname", "<account> [profile name]", GroupPlaying, "Change the name everybody sees on the profile and friends list - without a name, it shows the one it has now. Not the custom game name, that's 'gamename'."),
 		new("grind", "<account|all> <appID> <hours> | <account|all> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
@@ -1882,13 +1882,20 @@ public static partial class Commands {
 		return $"Dashboard set to the {want} theme. Reload the page to see it.";
 	}
 
-	private static string About() =>
-		$"""
+	// 1.8.2: says it counts itself only while "Count me as a user" is on.
+	public static string About() => Live.Global.CountMeAsUser
+		? $"""
 		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue. Once an hour it tells nocat.lol it's running, to count
 		Steam accounts: a random install ID, the version, the platform and how many accounts
 		are signed in (just the number), nothing else. Count me as a user turns it off.
+		"""
+		: $"""
+		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
+		Everything runs on this PC. Your accounts never leave it; the only thing that talks
+		to rep4rep is the task queue. Count me as a user is off, so it doesn't count itself
+		on nocat.lol.
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
@@ -2109,7 +2116,8 @@ public static partial class Commands {
 				sb.AppendLine($"    {bar} waiting on you: {b.GuardPrompt}");
 			}
 
-			foreach (IBotModule m in b.Modules) {
+			// 1.8.2: a disabled account does nothing - its modules' last words ("grinding", "settling in") were stale.
+			foreach (IBotModule m in b.Cfg.Enabled ? b.Modules : []) {
 				// Module statuses are localised, so a bare `is not ("idle" or "off")` only ever matched in
 				// English and printed a wall of resting modules in every other language. Compare against the
 				// same words in the same language.
@@ -3397,7 +3405,7 @@ public static partial class Commands {
 		}
 
 		CardBuyer.GoalPreview p = await buyer.GoalPreviewAsync(target, CancellationToken.None).ConfigureAwait(false);
-		string said = LevelGoalSaid(bot.Name, p, buy && !yes);
+		string said = LevelGoalSaid(bot.Name, p, buy && !yes, buy);
 
 		if (!yes || (p.Problem.Length > 0)) {
 			return said;
@@ -3409,7 +3417,8 @@ public static partial class Commands {
 	}
 
 	/// <summary>A level estimate written out (English, like every console reply).</summary>
-	public static string LevelGoalSaid(string name, CardBuyer.GoalPreview p, bool askYes) {
+	/// <param name="buy">1.8.2: shown as a level goal - says when the wallet holds less than its total.</param>
+	public static string LevelGoalSaid(string name, CardBuyer.GoalPreview p, bool askYes, bool buy = false) {
 		if (p.Problem.Length > 0) {
 			return $"{name}: {p.Problem}.";
 		}
@@ -3423,6 +3432,11 @@ public static partial class Commands {
 
 		if (p.Missing > 0) {
 			lines.Add($"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate.");
+		}
+
+		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
+		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Wallet < p.Total)) {
+			lines.Add($"{name}: the wallet has {M(p.Wallet)} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
 		}
 
 		if (p.Costs.Count > 0) {
@@ -3496,6 +3510,18 @@ public static partial class Commands {
 		return await SlowAsync(job, [bot], _ => verb == "cancel" ? trading.CancelSentAsync(args[2]) : trading.AnswerAsync(verb == "accept", args[2]), ReplyWithin).ConfigureAwait(false);
 	}
 
+	/// <summary>1.8.2: Steam Guard by email only (no authenticator here): its offers are confirmed from Steam's email, not a phone.</summary>
+	internal static bool EmailGuard(Bot bot) => !bot.CanConfirmTrades && (BotManager.ModuleOf<AccountHealth>(bot)?.Last?.Guard == "email");
+
+	/// <summary>An offer's state in a few words for 'offers' - confirmed in the email on an email-guard account (1.8.2).</summary>
+	public static string OfferState(TradeOffers.Offer o, bool emailGuard) => o.State switch {
+		TradeOffers.Active when o.AwaitingConfirmation => (o.ConfirmationMethod == 1) || emailGuard ? "needs confirming in your email" : "needs confirming on your phone",
+		TradeOffers.Active => "waiting",
+		TradeOffers.NeedsConfirmation => (o.ConfirmationMethod == 1) || emailGuard ? "needs confirming in your email" : "needs confirming on your phone",
+		TradeOffers.InEscrow => "in a trade hold",
+		_ => $"state {o.State}"
+	};
+
 	private static async Task<string> OffersAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
 			return problem!;
@@ -3526,12 +3552,7 @@ public static partial class Commands {
 
 			foreach (TradeOffers.Offer o in live.OrderBy(static o => o.Ours)) {
 				string who = mgr.All.FirstOrDefault(b => b.SteamId == o.Partner)?.Name ?? o.Partner.ToString(CultureInfo.InvariantCulture);
-				string state = o.State switch {
-					TradeOffers.Active => "waiting",
-					TradeOffers.NeedsConfirmation => "needs confirming on your phone",
-					TradeOffers.InEscrow => "in a trade hold",
-					_ => $"state {o.State}"
-				};
+				string state = OfferState(o, EmailGuard(bot));
 				string hold = o.HoldUntil is { } until ? $", hold until {until.ToLocalTime():d MMM HH:mm}" : "";
 
 				// Offers it received get their short number - the one 'trade accept' and the announcements use.
@@ -4848,12 +4869,17 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> NicknameAsync(BotManager mgr, string[] args, string line) {
-		if (args.Length < 2) {
+		if (args.Length < 1) {
 			return "nickname <account> <profile name>";
 		}
 
 		if (mgr.Get(args[0]) is not { } bot) {
 			return NoSuchAccount(mgr, args[0]);
+		}
+
+		// 1.8.2: no name - the one it has now.
+		if (args.Length < 2) {
+			return NicknameNow(bot.Name, bot.SteamName);
 		}
 
 		string name = Tail(line, 2);   // as typed - put back together from its words, a no-break space in it was a space
@@ -4869,6 +4895,12 @@ public static partial class Commands {
 			_ => $"{bot.Name}: sent - Steam hasn't shown \"{name}\" yet, so check the profile in a minute"
 		};
 	}
+
+	/// <summary>'nickname &lt;account&gt;' alone: its profile name now, and how to change it.</summary>
+	public static string NicknameNow(string account, string? steamName) =>
+		string.IsNullOrEmpty(steamName)
+			? $"{account}: its profile name isn't known until it's logged in. 'nickname {account} <profile name>' changes it."
+			: $"{account}: profile name is \"{steamName}\". 'nickname {account} <profile name>' changes it.";
 
 	private static async Task<string> LevelAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
@@ -6046,7 +6078,8 @@ public static partial class Commands {
 		ImportScan scan = IdlerImport.Scan(args[0], path);
 
 		if (!scan.Found) {
-			return $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}"
+			// 1.8.2: no empty "Looked in:" line - 'import auto' without a folder looks nowhere (its note says to pick one).
+			return (scan.Looked.Count > 0 ? $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}" : "Nothing to import was found.")
 				+ string.Concat(scan.Notes.Select(static n => "\n  " + n))
 				// The example in the shape of a path on this machine: a C:\ one was no help on Linux, a Mac or in Docker.
 				+ $"\nPoint at it directly:  import {args[0]} {(OperatingSystem.IsWindows() ? @"C:\path\to\it" : "/path/to/it")}";

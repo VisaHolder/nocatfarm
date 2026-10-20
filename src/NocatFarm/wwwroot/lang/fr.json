@@ -1,5 +1,13 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Le marché Steam est bloqué ({0}) - achats, ventes et échanges attendent que Steam le débloque, ce qui demande un achat sur Steam avec ce compte",
+    "settling in first (~{0}m), then looking for cards": "s'installe d'abord (~{0}m), puis cherche des cartes",
+    "settling in first, then looking for cards": "s'installe d'abord, puis cherche des cartes",
+    "it's the small hours - this plan ends at bed tonight, {0}": "c'est le milieu de la nuit - ce plan se termine au coucher cette nuit, {0}",
+    "{0} to confirm in your email": "{0} à confirmer dans ton e-mail",
+    "Goes off - turn it on again yourself after its preview": "Passe à éteint - réactive-le toi-même après son aperçu",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Tu peux fermer cette fenêtre - nocat.farm continue de tourner selon l'horloge. La page Comptes montre ce que fait chaque compte, et c'est là que tu en ajoutes un autre.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "Le mode humain est activé : on est en dehors de la journée de ce compte, donc il se repose jusqu'au début de sa journée - puis il s'installe quelques minutes et joue, avec des pauses et une heure de coucher.",
     "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam est sur la connexion de {0} : tape son mot de passe (et le code Steam Guard s'il le demande), laisse « Se souvenir de moi » coché - la prochaine fois, c'est un clic",
     "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam ne s'est pas fermé - s'il affiche une boîte de message, ferme-la, puis réessaie",
     "Open in Steam is on for every account: each one shows the one-click button": "Ouvrir dans Steam est activé pour chaque compte : chacun affiche le bouton en un clic",

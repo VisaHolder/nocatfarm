@@ -234,7 +234,10 @@ public static class MarketHold {
 			return new Said("Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then", (Func<string>) (() => Fmt.Clock(until)), reason);
 		}
 
-		return new Said("Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again", reason);
+		// 1.8.2: no recent purchase, or a limited account - it lasts until a purchase is made on Steam, so that's what's said.
+		return s.Why is "no purchase" or "limited"
+			? new Said("Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account", reason)
+			: new Said("Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again", reason);
 	}
 
 	/// <summary>The reason in plain words: the market page's, or Steam's refusal.</summary>

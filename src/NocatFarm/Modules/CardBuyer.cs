@@ -666,6 +666,27 @@ public sealed class BuyPlan {
 	/// <summary>1.8.2, an estimate: the most market searches and card prices it asks for - a handful, so it answers at once.</summary>
 	public const int KnownOnlySearches = 2, KnownOnlyReads = 6;
 
+	/// <summary>1.8.2, the preview: the most new card prices it reads - about half a minute (<see cref="MakeAsync"/>'s quick).</summary>
+	public const int QuickReads = 16;
+
+	/// <summary>1.8.2, the preview's note on what it didn't get to: "still checking: 4 more badge level(s) whose card prices it hasn't read yet ...".</summary>
+	public static string QuickSaid(int levels, int badges) {
+		List<string> what = [];
+
+		if (levels > 0) {
+			what.Add($"{levels} more badge level(s) whose card prices it hasn't read yet");
+		}
+
+		if (badges > 0) {
+			what.Add($"{badges} started badge(s) whose sets it hasn't looked up yet");
+		}
+
+		return $"still checking: {string.Join(" and ", what)} - the next looks price them, and every card is priced again before it's bought";
+	}
+
+	/// <summary>1.8.2, the preview: badge levels it didn't price this time, and started badges whose sets it didn't look up - said in the notes.</summary>
+	public int StillChecking { get; set; }
+
 	/// <summary>
 	/// Card prices one look reads, at least and at most: as many as the money left can use (about every card of the levels
 	/// it could buy, and half as much again), never fewer than 30 nor more than 60 - inside the price book's hourly budget
@@ -792,9 +813,12 @@ public sealed class BuyPlan {
 	/// <param name="knownOnly">1.8.2, an estimate ('levelup'): only prices already known - read for a plan in the last 2 hours,
 	/// or saved from the market in the last day - and the set finder's; a handful of a started badge's missing cards priced at
 	/// most. What isn't known is counted at the set finder's price (<see cref="Estimated"/>). Nothing is bought on it.</param>
+	/// <param name="quick">1.8.2, the preview: answers in about a minute - prices known already (read lately, or saved from
+	/// the market in the last day) and the set finder's sets, a couple of searches and <see cref="QuickReads"/> new card
+	/// prices at most, two of the cheapest games' sets. What it didn't get to is said in the notes (<see cref="StillChecking"/>).</param>
 	public static async Task<BuyPlan> MakeAsync(BotConfig cfg, ICardMarket market, ICardSwaps swaps, BuyLedger ledger, Bot? bot, DateTime nowUtc, CancellationToken ct,
 		bool stopWhenBlocked = false, IReadOnlyCollection<uint>? boosting = null, IReadOnlyDictionary<uint, Dictionary<string, int>>? heldCards = null,
-		SetFinder? finder = null, Prices? prices = null, Func<uint, bool>? dearWeighed = null, long? goalBudget = null, bool knownOnly = false) {
+		SetFinder? finder = null, Prices? prices = null, Func<uint, bool>? dearWeighed = null, long? goalBudget = null, bool knownOnly = false, bool quick = false) {
 		BuyPlan plan = new() {
 			DayLimit = Limit(cfg.BuyDailyLimit),
 			WeekLimit = Limit(cfg.BuyWeeklyLimit)
@@ -917,7 +941,7 @@ public sealed class BuyPlan {
 					}
 
 					// 1.8.2, an estimate: a price saved from the market in the last day will do - else, past a handful, not known.
-					if (knownOnly) {
+					if (knownOnly || quick) {
 						if ((MarketQuotes.Of(hash, plan.Currency) is { Lowest: int saved and > 0 } q) && (DateTime.UtcNow - q.When < TimeSpan.FromDays(1))) {
 							read[hash] = book = new CardMarket.Book(saved, plan.Currency, Math.Max(2, q.Sales), [(saved, Math.Max(2, q.Sales))]);
 							got.Add((hash, book));
@@ -925,7 +949,7 @@ public sealed class BuyPlan {
 							continue;
 						}
 
-						if (!asking || (books >= KnownOnlyReads)) {
+						if (!asking || (books >= (quick ? QuickReads : KnownOnlyReads))) {
 							return null;
 						}
 					}
@@ -1054,13 +1078,13 @@ public sealed class BuyPlan {
 				}
 
 				// 1.8.2, an estimate: a set read lately is used as it is; only a handful searched.
-				if (knownOnly && (LevelPlanner.KnownSet(app) is { Count: > 0 } usd)) {
+				if ((knownOnly || quick) && (LevelPlanner.KnownSet(app) is { Count: > 0 } usd)) {
 					set = new CardSet(app, GameNames.Of(app), [.. usd.Keys.Order(StringComparer.Ordinal)], usd);
 				}
 			}
 
 			if (set == null) {
-				if (stopped || (searched >= (knownOnly ? KnownOnlySearches : MaxSetReads))) {
+				if (stopped || (searched >= (knownOnly || quick ? KnownOnlySearches : MaxSetReads))) {
 					unsearched++;
 					heldLevels += Guess(app, held[app], levels.GetValueOrDefault(app));
 
@@ -1163,7 +1187,8 @@ public sealed class BuyPlan {
 
 				foreach (uint app in cheapest) {
 					// Games it holds cards of are the missing cards' business, above; a maxed badge has nothing to give.
-					if ((looked >= MaxSetReads) || (levels.GetValueOrDefault(app) >= MaxLevel) || started.Contains(app)
+					// 1.8.2, the preview: a couple of sets searched, not a dozen.
+					if ((looked >= (quick ? KnownOnlySearches : MaxSetReads)) || (levels.GetValueOrDefault(app) >= MaxLevel) || started.Contains(app)
 						|| (held.TryGetValue(app, out Dictionary<string, int>? some) && some.Values.Any(static n => n > 0))) {
 						continue;
 					}
@@ -1285,12 +1310,13 @@ public sealed class BuyPlan {
 				continue;
 			}
 
-			asking = !c.Full;
+			asking = quick || !c.Full;
 
 			if (await PricesAsync(c.Missing).ConfigureAwait(false) is not { } got) {
 				// 1.8.2, an estimate: a level whose prices aren't known is counted at the set finder's price - the rest go on.
-				if (knownOnly && !plan.Short) {
+				if ((knownOnly || quick) && !plan.Short) {
 					unpriced.Add(c);
+					plan.StillChecking++;
 
 					continue;
 				}
@@ -1469,6 +1495,11 @@ public sealed class BuyPlan {
 		plan.Levels.Clear();
 		plan.Levels.AddRange(sorted);
 		plan.LevelsKnown = true;
+
+		// 1.8.2, the preview: what it didn't get to this time, said plainly.
+		if (quick && ((plan.StillChecking > 0) || (unsearched > 0))) {
+			plan.Notes.Add(QuickSaid(plan.StillChecking, unsearched));
+		}
 
 		if ((plan.Steps.Count == 0) && (plan.Notes.Count == 0)) {
 			plan.Notes.Add(candidates.Count == 0 && !cfg.BuyFullSets
@@ -2060,6 +2091,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		/// <summary>The problem won't clear by itself (a setting, a block, Steam saying no) - the next look is at the usual time.</summary>
 		public bool Lasting { get; set; }
 
+		/// <summary>1.8.2: the problem stops all buying (Steam's market blocked, scam watch) - the preview leads with it.</summary>
+		public bool Blocks { get; set; }
+
 		/// <summary>1.8.2: games whose cards were found worth more sold than kept this look (<see cref="DearCards"/>) - listed once the look is done.</summary>
 		public List<DearCards.Verdict> Dear { get; } = [];
 
@@ -2163,8 +2197,27 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <param name="Usual">What a level usually costs - what the levels not found are counted at.</param>
 	/// <param name="Days">About how many days buying them takes at this account's pace.</param>
 	public sealed record GoalPreview(string Problem, int Level, int Xp, int Target, int Needed, int Held, IReadOnlyList<long> Costs, int Known, int Currency,
-		double Days, long MaxLevel, long Usual) {
+		double Days, long MaxLevel, long Usual, long Wallet = -1) {
 		public long Total => Costs.Sum();
+
+		/// <summary>1.8.2: how many of the levels to buy the wallet pays for now - the cheapest first.</summary>
+		public int Affordable {
+			get {
+				long left = Wallet;
+				int n = 0;
+
+				foreach (long cost in Costs.Order()) {
+					if (cost > left) {
+						break;
+					}
+
+					left -= cost;
+					n++;
+				}
+
+				return n;
+			}
+		}
 
 		/// <summary>Levels to buy that no known price covers yet.</summary>
 		public int Missing => Math.Max(0, Needed - Held - Costs.Count);
@@ -2206,7 +2259,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			return new GoalPreview("", steam.Level, steam.Xp, target, needed, Math.Max(0, needed - toBuy), [.. levels.Select(static l => l.Cost)],
 				levels.Count(l => !plan.Estimated.Contains(l.App)), plan.Currency, GoalDays(Bot.Cfg, toBuy), plan.MaxLevelPrice,
-				plan.UsualLevelPrice > 0 ? plan.UsualLevelPrice : plan.MaxLevelPrice);
+				plan.UsualLevelPrice > 0 ? plan.UsualLevelPrice : plan.MaxLevelPrice, plan.Wallet);
 		} finally {
 			if (steamMarket != null) {
 				steamMarket.ReuseFor = TimeSpan.Zero;
@@ -2770,12 +2823,17 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		// 1.8.2: Steam's market blocked for this account - nothing new bought; purchases the owner confirmed still finish.
+		// It lasts until Steam lifts it, never "try again in a minute".
 		if (!finishing && (MarketHold.Blocked(Bot) is { } market)) {
-			return (market.ToEnglish(), false);
+			return (market.ToEnglish(), true);
 		}
 
 		return ScamWatch.HeldBack(Bot) is { } held ? (held, false) : null;
 	}
+
+	/// <summary>1.8.2, the preview: what stops all buying before anything is read - Steam's market blocked, or scam watch holding it back. Null when nothing does.</summary>
+	private string? Blocker() =>
+		MarketHold.Blocked(Bot) is { } market ? market.ToEnglish() : ScamWatch.HeldBack(Bot);
 
 	private async Task<Result> LookLockedAsync(Mode mode, CancellationToken ct) {
 		Result result = new();
@@ -2800,12 +2858,19 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 				return result;
 			}
+		} else if (Blocker() is { } blocker) {
+			// 1.8.2: the preview leads with what stops all buying - never a list of sets it "would buy" that it can't.
+			result.Problem = blocker;
+			result.Lasting = true;
+			result.Blocks = true;
+
+			return result;
 		}
 
 		// 1.8.2: a level goal under way buys by its own budget and stops at its level.
 		BuyLedger.LevelGoal? goal = Ledger.Goal;
 		BuyPlan plan = await BuyPlan.MakeAsync(goal == null ? Bot.Cfg : GoalCfg(goal.Target), _market, Swaps, Ledger, Bot, await _clock(ct).ConfigureAwait(false), ct,
-			stopWhenBlocked: buying, boosting: Boosting(), prices: _prices, goalBudget: goal == null ? null : GoalLeft(goal), finder: Finder).ConfigureAwait(false);
+			stopWhenBlocked: true, boosting: Boosting(), prices: _prices, goalBudget: goal == null ? null : GoalLeft(goal), finder: Finder, quick: !buying).ConfigureAwait(false);
 		result.Plan = plan;
 
 		if (goal != null) {

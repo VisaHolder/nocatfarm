@@ -87,7 +87,8 @@ public static class SwitchPreview {
 		string MaxLevel = "",
 		bool MaxLevelAuto = true,
 		bool DayNoLimit = false,
-		bool WeekNoLimit = false
+		bool WeekNoLimit = false,
+		bool Blocker = false
 	) {
 		public string Kind => "buy";
 	}
@@ -108,7 +109,8 @@ public static class SwitchPreview {
 	public sealed record SellSet(string Game, string Money, int Levels);
 
 	/// <summary>The numbers of one buying-cards look.</summary>
-	public static BuyNumbers Buy(BuyPlan? plan, BotConfig cfg, bool signedIn, string problem) {
+	/// <param name="blocker">1.8.2: <paramref name="problem"/> stops all buying (Steam's market blocked) - shown first, as it is.</param>
+	public static BuyNumbers Buy(BuyPlan? plan, BotConfig cfg, bool signedIn, string problem, bool blocker = false) {
 		int cur = plan?.Currency ?? 0;
 		string M(long cents) => BuyPlan.Money(cents, cur);
 		List<BuySet> sets = plan == null ? [] : [.. plan.Steps.Select(s => new BuySet(s.Game, s.FullSet, s.Level, s.Cards.Count, s.SetSize, M(s.Cost), s.XpPerUnit, [.. s.Cards.Select(static c => c.Name)]))];
@@ -121,7 +123,7 @@ public static class SwitchPreview {
 			Finder(SetFinder.Shared.Covered(DateTime.UtcNow)),
 			plan is { LevelPrice: > 0 } ? M(plan.LevelPrice) : "",
 			plan is { MaxLevelPrice: > 0 } ? M(plan.MaxLevelPrice) : cfg.BuyMaxLevelPrice > 0 ? M(BuyPlan.Cents(cfg.BuyMaxLevelPrice)) : "",
-			cfg.BuyMaxLevelPrice <= 0, cfg.BuyDailyLimit < 0, cfg.BuyWeeklyLimit < 0);
+			cfg.BuyMaxLevelPrice <= 0, cfg.BuyDailyLimit < 0, cfg.BuyWeeklyLimit < 0, blocker);
 	}
 
 	/// <summary>The set finder's progress, for the preview.</summary>
@@ -258,7 +260,7 @@ public static class SwitchPreview {
 
 			CardBuyer.Result look = await buyer.LookAsync(CardBuyer.Mode.Preview, ct).ConfigureAwait(false);
 
-			return (string.Join(Environment.NewLine, Commands.BuySaid(bot, CardBuyer.Mode.Preview, look)), Buy(look.Plan, bot.Cfg, true, look.Problem));
+			return (string.Join(Environment.NewLine, Commands.BuySaid(bot, CardBuyer.Mode.Preview, look)), Buy(look.Plan, bot.Cfg, true, look.Problem, look.Blocks));
 		}
 
 		string keeps = $"It keeps at least {PointsPlan.N(bot.Cfg.PointsKeepAtLeast)} points and spends at most {PointsPlan.N(bot.Cfg.PointsWeeklyCap)} a week{(bot.Cfg.LegitMode ? ", only during its day" : "")}. Points spent are gone for good.";

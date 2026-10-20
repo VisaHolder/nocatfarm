@@ -54,7 +54,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `play <account> <appIDs\|none>` | Set the games this account idles for playtime. |
 | `gamename <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it. |
 | `persona <account> [state]` | What the account shows your friends: online \| offline \| busy \| away \| snooze \| looking to trade \| looking to play \| invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now. |
-| `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'. |
+| `nickname <account> [profile name]` | Change the name everybody sees on the profile and friends list - without a name, it shows the one it has now. Not the custom game name, that's 'gamename'. |
 | `grind <account\|all> <appID> <hours> \| <account\|all> off` | Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs. |
 | `human [account] [week\|reroll]` | What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings. |
 | `habits [account] [forget]` | What human mode has learned from you playing on the account yourself (days seen, the hours you're usually on, your top games), and whether "Learn from how I play" is using it yet. 'habits <account> forget' wipes it and it starts learning again. |
