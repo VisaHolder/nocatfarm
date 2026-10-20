@@ -1,5 +1,64 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam 市场被封锁（{0}）- 购买、出售和交换都要等 Steam 解除，而解除需要用此账户在 Steam 上消费一次",
+    "settling in first (~{0}m), then looking for cards": "先缓冲（约{0}分钟），然后查找卡牌",
+    "settling in first, then looking for cards": "先缓冲，然后查找卡牌",
+    "it's the small hours - this plan ends at bed tonight, {0}": "现在是深夜 - 这个计划在今晚 {0} 睡觉时结束",
+    "{0} to confirm in your email": "{0} 个待在邮件中确认",
+    "Goes off - turn it on again yourself after its preview": "会关闭 - 在预览后自己重新打开",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "可以关闭这个窗口 - nocat.farm 会按时间继续运行。账户页面显示每个账户在做什么，也在那里添加其他账户。",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "人类模式已开启：现在不在这个账户的一天之内，所以它会休息到一天开始 - 然后缓冲几分钟再玩，中间有休息和睡觉时间。",
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam 已打开 {0} 的登录界面：输入密码（如有要求再输入 Steam 令牌验证码），保持勾选“记住我” - 下次只需点一下",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam 没有关闭 - 如果它弹出了消息框，先关掉，然后再试一次",
+    "Open in Steam is on for every account: each one shows the one-click button": "所有账号都已开启“在 Steam 中打开”：每个账号都显示一键按钮",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "“在 Steam 中打开”已对所有账号关闭：只有单独开启的账号才显示",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam 还没有记住这个账号，所以会打开已填好名字的 Steam 登录界面：输入一次密码，并保持勾选“记住我”。",
+    "Steam Guard code: {0}": "Steam 令牌验证码：{0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam 正在这个账号的登录界面：Steam 要求时输入这个验证码。",
+    "Turn on Open in Steam for every account?": "为所有账号开启“在 Steam 中打开”？",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "这会在每个账号上显示“在 Steam 中打开”按钮，不用一个个去开。在这里按“开启”之前，什么都不会改变。",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "你的 Steam 应用还没有记住这个账号：按钮会打开已填好名字的 Steam 登录界面。勾选“记住我”，输入一次密码（如有要求再输入 Steam 令牌验证码）- 之后只需点一下。",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "如果 Steam 开启了“每次启动 Steam 时询问使用哪个账号”，就把它关掉 - 否则 Steam 会忽略指定的账号。",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "像双击一样重新启动 Steam，让它直接登录这个账号 - 第一次则打开已填好名字的登录界面。",
+    "ready - Steam remembers it": "就绪 - Steam 记得它",
+    "opens Steam's sign-in the first time": "第一次会打开 Steam 登录界面",
+    "sign in once with Remember me": "勾选“记住我”登录一次",
+    "Every account": "所有账号",
+    "What pressing one does": "按下后会做什么",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam 设置为每次启动时询问使用哪个账号 - 这里会把它关掉，否则 Steam 会忽略这个账号。",
+    "Open in Steam: sign your Steam app into this account": "在 Steam 中打开：用这个账号登录你的 Steam 应用",
+    "signing your Steam app into {0} - it closes and opens again": "正在让你的 Steam 应用登录 {0} - 它会关闭并重新打开",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "{0} 的“在 Steam 中打开”未开启 - 请先在它的设置里开启",
+    "Open in Steam only works on Windows for now": "“在 Steam 中打开”目前仅支持 Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "这台电脑上似乎没有安装 Steam，没有可打开的内容",
+    "a game is open in Steam - close it first, then open {0}": "Steam 中正在运行一个游戏 - 请先关闭它，再打开 {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "在 Steam 中勾选“记住我”并登录 {0} 一次，之后这个按钮就能用了",
+    "couldn't open {0} in Steam": "无法在 Steam 中打开 {0}",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "{0} 的“在 Steam 中打开”已开启：一个按钮可一键让你的 Steam 应用登录该账户",
+    "Open in Steam is off for {0}: the button is hidden": "{0} 的“在 Steam 中打开”已关闭：按钮已隐藏",
+    "couldn't change Steam's saved accounts - {0}": "无法更改 Steam 的已保存账户 - {0}",
+    "couldn't back up Steam's saved accounts first, so nothing was changed": "无法先备份 Steam 的已保存账户，所以没有做任何更改",
+    "one Open in Steam is already running - wait for it to finish": "已有一个“在 Steam 中打开”正在运行 - 请等它完成",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "一键让你的 Steam 应用登录此账户。会关闭并重新打开 Steam。该账户会继续挂卡。",
+    "Open in Steam": "在 Steam 中打开",
+    "Windows only for now": "目前仅限 Windows",
+    "Turn on the Open in Steam button?": "开启“在 Steam 中打开”按钮？",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "这会在此账户上显示一个按钮，一键让你的 Steam 应用登录。按下时正是执行这些操作。在此按下开启之前，按钮不会有任何动作。",
+    "Closes your Steam app (the polite way, letting it finish).": "关闭你的 Steam 应用（以正常方式，让它完成退出）。",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "将 Steam 的已保存账户文件指向此账户 - 仅此一个；其他账户不受影响。",
+    "Open in Steam only works on Windows for now.": "“在 Steam 中打开”目前仅支持 Windows。",
+    "Steam doesn't look installed on this PC.": "这台电脑上似乎没有安装 Steam。",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Steam 中正运行一个游戏 - 游戏运行时按钮不会切换。",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "你的 Steam 应用还没有记住此账户。在 Steam 中勾选“记住我”并登录一次，之后这个按钮就能用了。",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "你的 Steam 应用已记住此账户，因此按钮无需密码即可登录。",
+    "It never types a password and never touches your login tokens.": "它从不输入密码，也从不触碰你的登录令牌。",
+    "It backs up the files it changes first, and keeps the last three backups.": "它会先备份要更改的文件，并保留最近三个备份。",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "它绝不会让 nocat.farm 停止挂这个账户 - 只有当你真的启动游戏时，Steam 才会让挂卡让步。",
+    "What pressing it does": "按下时的操作",
+    "Safe by design": "设计上安全",
+    "Sign your Steam app into {0}? Steam will close and open again.": "让你的 Steam 应用登录 {0}？Steam 将关闭并重新打开。",
+    "Signing Steam into {0}…": "正在让 Steam 登录 {0}…",
+    "Done.": "完成。",
     "That's not a command - did you mean '{0}'?": "这不是命令 - 你是想输入 '{0}' 吗？",
     "That's not a command - 'help' lists them.": "这不是命令 - 'help' 会列出所有命令。",
     "Overview": "概览",
@@ -389,7 +448,6 @@
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。",
     "Dashboard": "面板",
     "Running in the background": "后台运行",
-    "rep4rep account": "rep4rep 账号",
     "Steam connection": "Steam 连接",
     "Logging": "日志",
     "What it plays": "它玩什么",
@@ -397,7 +455,6 @@
     "rep4rep commenting": "rep4rep 评论",
     "Friends & messages": "好友与消息",
     "Trades": "交易",
-    "Staying out of the way": "别碍事",
     "Log": "日志",
     "/week": "/周",
     "About {0} of an average week once the main-game-only days are counted in.": "把只玩主玩游戏的日子也算进去后，约占平均一周的 {0}。",
@@ -528,7 +585,6 @@
     "Free event items": "免费活动物品",
     "Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.": "免费游戏、用宝石制作补充包和公平的卡牌交换，在设置里每个账号各有一个开关。",
     "Gifts": "礼物",
-    "Use rep4rep at all": "到底用不用 rep4rep",
     "{0} - Steam wallet gift cards and guest passes people send you.": "{0}——别人送你的 Steam 钱包礼品卡和访客通行证。",
     "{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.": "{0}——Steam 促销期间每天的贴纸，以及点数商店里 0 点的任何东西。",
     "couldn't read the free-game state: {0}": "无法读取免费游戏状态：{0}",
@@ -706,7 +762,6 @@
     "{0}: {1}h in - the next ones need more hours in it": "{0}：已玩 {1} 小时 —— 接下来的需要更多游戏时间",
     "tomorrow {0}": "明天 {0}",
     "yesterday {0}": "昨天 {0}",
-    "on - no games to hunt (pick some under \"Boost these games\")": "已开启 —— 没有可猎取的游戏（请在\\\"加速这些游戏\\\"中选择）",
     "couldn't read the price book: {0}": "无法读取价格簿：{0}",
     "couldn't save the price book: {0}": "无法保存价格簿：{0}",
     "couldn't read the library: {0}": "无法读取库：{0}",
@@ -857,7 +912,7 @@
     "unwanted": "不需要的",
     "trade offer refused. Steam said: {0}": "交易报价被拒。Steam 表示：{0}",
     "using {0}'s own trade token - it is one of your accounts": "使用 {0} 自己的交易令牌 —— 它是你的账号之一",
-    "crafted {0} badge(s) - Steam level up": "已合成 {0} 枚徽章 —— Steam 等级提升",
+    "crafted {0} badge(s): {1} · +{2} XP": "制作了 {0} 个徽章：{1} · +{2} 经验",
     "craft refused - backing off {0}h rather than retrying": "合成被拒 —— 后退 {0} 小时而不是重试",
     "{0} completed card set(s) ready to craft": "有 {0} 套完整卡牌可供合成",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "有别的东西在设置该账号的状态（显示 {0}，我们要求的是 {1}）—— 退让",
@@ -975,11 +1030,8 @@
     "You can skip this and come back from the Overview page.": "可以跳过，之后从概览页面再打开。",
     "Show advanced": "显示高级",
     "What kind of account is it?": "这是什么样的账号？",
-    "This picks the right settings for it. Anything can be changed later, per account.": "据此选择合适的设置。之后每个账号都可以随时修改。",
-    "My main - I play on it": "我的主号——我自己在玩",
     "A spare or farm account": "小号或挂卡号",
     "Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.": "机器人模式：全天候全速挂卡、挂游戏时长。最适合没人看的账号。",
-    "I also sign into it from my own Steam app": "我也在自己的 Steam 客户端登录它",
     "Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.": "这样 nocat.farm 就不会改动它的在线状态——否则 Steam 会把你自己的客户端从好友和聊天中登出。",
     "Importing several? You pick which ones on the next step.": "要导入好几个？下一步再选哪些。",
     "Pick one first": "请先选一个",
@@ -1015,7 +1067,6 @@
     "Its game list didn't load - add games by their store link below.": "游戏列表没能加载——请在下方用商店链接添加游戏。",
     ", and {0} now and then": "，偶尔玩 {0}",
     "Add": "添加",
-    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "它会先刷集换式卡牌。刷完后，就玩这些游戏来积累时长。点选你喜欢的——或者一个都不选。",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "它主要会玩 {0}{1}，中间会休息、吃饭，也会按时睡觉。一开始它会先缓几分钟，就像刚打开 Steam 的人一样。",
     "Its daily routine": "它的日常作息",
     "Looking at its games...": "正在查看它的游戏……",
@@ -1031,7 +1082,6 @@
     "The side games share the rest. You can fine-tune all of this later under Settings.": "其余时间由副玩游戏分摊。这些之后都可以在「设置」里细调。",
     "Time on the main game: {0}%": "主玩游戏时间：{0}%",
     "What does it play?": "它玩什么？",
-    "What should it idle?": "要挂机哪些游戏？",
     "leave empty to show the real game": "留空则显示真实游戏",
     "none - that is fine": "不选也可以",
     "tap one above": "请在上方点选一个",
@@ -1291,8 +1341,6 @@
     "you give": "你给出",
     "you get": "你得到",
     "Confirmation": "确认",
-    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Trade by itself with\").": "自动确认：与 {0} 的交易。其他一切都在这里等待。可在「设置」的「交易」中通过「自动与这些账户交易」更改。",
-    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Trade by itself with\").": "没有任何内容会自动确认 - 一切都在这里等你。可在「设置」的「交易」中通过「自动与这些账户交易」更改。",
     "Steam didn't take that": "Steam 没有接受",
     "Confirmed {0}": "已确认 {0} 项",
     "Denied {0}": "已拒绝 {0} 项",
@@ -1331,8 +1379,6 @@
     "Pop-ups": "弹窗",
     "Inventory prices": "库存价格",
     "Updates & plugins": "更新与插件",
-    "Badges & selling": "徽章与出售",
-    "Inventory & bans": "库存与封禁",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“Discord 资料”里更改。",
     "Trades & items": "交易与物品",
     "Steam Guard": "Steam Guard",
@@ -1417,9 +1463,7 @@
     "Windows has this network set to Public, where the rule doesn't apply. Set it to Private (Settings > Network & internet > your network), then press it again.": "Windows 把这个网络设成了“公用”，规则在那里不生效。把它改成“专用”（设置 > 网络和 Internet > 你的网络）后再点一次。",
     "couldn't encrypt {0} in place: {1}": "无法原地加密 {0}：{1}",
     "couldn't look up how long {0} takes: {1}": "查不到 {0} 要玩多久：{1}",
-    "done hunting for today (Hunt at most, hours a day)": "今天的刷成就结束了（每天最多几小时）",
     "every game on the list is resting for now - it comes back to them in a few days": "列表里的游戏都在休息 - 过几天再回来玩",
-    "{0} is done for today (Hunt at most, hours a day) - back tomorrow": "{0} 今天到此为止（每天最多几小时）- 明天继续",
     "{0}: couldn't read it": "{0}：读取失败",
     "ASF played it as a different device - choose one under \"Play as if on\" in its settings": "ASF 把它当作另一种设备来玩——请在它的设置里“显示为在此设备上游玩”中选一个",
     "its ASF password is encrypted with a key of its own, so it wasn't copied - the login token signs in, or it asks for the password once": "它的 ASF 密码用自己的密钥加密了，所以没有复制——会用登录令牌登录，否则会问一次密码",
@@ -1699,7 +1743,6 @@
     "rep4rep hold lifted - commenting resumes": "rep4rep 暂停已解除 - 恢复评论",
     "achievement ceiling is one figure now: 90%": "成就上限现为单一数值：90%",
     "setting moved: when to farm cards = only at night": "设置已迁移：何时刷卡 = 仅夜间",
-    "going for {0}: {1} of {2} card drop(s)": "刷 {0}：{1}/{2} 张卡牌",
     "Discord bot: to link it, press Connect Discord in Settings": "Discord 机器人：要关联，请在设置中点“连接 Discord”",
     "Discord bot: no / commands in a server - invite it again": "Discord 机器人：某服务器没有 / 命令 - 请重新邀请",
     "Discord connected - only {0} can use its commands": "Discord 已连接 - 只有 {0} 能用它的命令",
@@ -2011,7 +2054,6 @@
     "{0}: skipped, another account in this import signs in as {1} too": "{0}：已跳过，本次导入中另一个账号也以 {1} 登录",
     "Commands only work in a private chat with this bot - a group gets the notifications.": "命令只能在与此机器人的私聊中使用 - 群组只接收通知。",
     "... and {0} more line(s) - type it in the dashboard's Console for the whole reply": "... 还有 {0} 行 - 在仪表盘的控制台中输入可查看完整回复",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick \"Work out what its inventory is worth\".": "未在估值。若要重新开启，请进入设置，选择 {0}，勾选\"显示高级\"，展开\"库存与封禁\"并勾选\"算出它的库存值多少钱\"。",
     "Couldn't switch it on for {0}": "无法为 {0} 开启",
     "only what they send": "只接收对方发来的",
     "they can take items": "对方可以拿走物品",
@@ -2203,7 +2245,6 @@
     "Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.": "无法把登录验证码发到 Telegram。请过一会儿再试，或在家里登录。",
     "Wrong code - {0} tries left.": "验证码错误 - 还剩 {0} 次机会。",
     "That code has run out. Type the password again for a new one.": "这个验证码已过期。重新输入密码以获取新的验证码。",
-    "Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.": "外部登录的 Telegram 验证码已关闭 - 只凭密码就能进来。",
     "From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.": "从外部登录时，只有密码不够：还需要发到你 Telegram 的 6 位验证码。",
     "Connect Telegram and signing in from outside will also take a code sent to it.": "连接 Telegram 后，从外部登录还需要发到那里的验证码。",
     "6-digit code": "6 位验证码",
@@ -2513,7 +2554,6 @@
     "the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes": "退出登录前不发送卡牌 - 诈骗监视正在暂停此账号的交易。卡牌会在输入 'scamwatch ok {0}' 后或下次挂卡结束时发送",
     "scam watch is holding {0}'s trades - doing this anyway because you asked. Type 'scamwatch ok {0}' once you've checked": "诈骗监视正在暂停 {0} 的交易 - 因为是你要求的，仍然照做。确认后请输入 'scamwatch ok {0}'",
     "held by scam watch - nothing done by itself; trade accept or decline {0} {1}": "被诈骗监视暂停 - 不会自动做任何事；trade accept 或 decline {0} {1}",
-    "account health couldn't read the bans: {0}": "账号健康无法读取封禁记录：{0}",
     "its sent offers are being cancelled, trades carry on (stopping them is off) - type 'scamwatch ok {0}' to clear the warning": "正在取消它发出的报价，交易照常进行（停止交易已关闭） - 输入 'scamwatch ok {0}' 清除警告",
     "nothing was stopped (both reactions are off) - type 'scamwatch ok {0}' to clear the warning": "什么都没停止（两种应对都已关闭） - 输入 'scamwatch ok {0}' 清除警告",
     "a Steam Web API key appeared that wasn't there before": "出现了一个以前没有的 Steam Web API 密钥",
@@ -2623,7 +2663,6 @@
     "{0} is back on the overnight list": "{0} 回到了夜间列表",
     "{0} left out - held back so it can still be refunded": "{0} 已排除 —— 先留着，以便还能退款",
     "couldn't read the software this account holds: {0}": "无法读取这个账户的软件：{0}",
-    "{0} left out - it's on \"Never touch these\"": "{0} 已排除 —— 它在“永不碰这些”里",
     "library: {0} piece(s) of software owned too ({1})": "库：另外拥有 {0} 款软件 ({1})",
     "its cards are worth about {0}, the pack {1}": "卡牌约值 {0}，补充包值 {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "售价 {0}，你得到 {1} —— 比它的 {2} 宝石值钱（{3}）",
@@ -2636,7 +2675,6 @@
     "needed for the badge": "合成徽章需要",
     "on your keep list": "在你的保留清单上",
     "it doesn't turn into gems": "不能分解成宝石",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} 宝石，价值 {1} —— 比出售（{2}）至少多 {3}%",
     "unopened booster packs: listed {0} - {1}": "未打开的补充包：上架了 {0} 个 —— {1}",
     "next look at booster packs around {0}": "下次查看补充包约在 {0}",
     "today's limit of {0} in value is reached": "已达到今天价值 {0} 的上限",
@@ -2661,6 +2699,9 @@
     "couldn't pack gems into sacks: {0}": "无法把宝石装袋：{0}",
     "a copy you keep": "你保留的一份",
     "trade-locked": "交易锁定",
+    "kept until {0} - selling pays more": "保留到 {0} - 出售更划算",
+    "kept until it can be traded - selling pays more": "保留到可以交易时 - 出售更划算",
+    "{0} gems - it can never be traded or sold": "{0} 个宝石 - 永远无法交易或出售",
     "nobody sells it, so there's no price - kept": "没人在卖，所以没有价格 —— 保留",
     "Steam refused one - trying again next time": "Steam 拒绝了一件 —— 下次再试",
     "next look at spare items around {0}": "下次查看多余物品约在 {0}",
@@ -2692,7 +2733,10 @@
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "实时统计：等待发送的数据已损坏 - 已另存为 farm-totals.json.broken；从现在起继续计数，不补发以前的数据",
     "human mode (its day ended or you're playing on it)": "真人模式（它的一天结束了，或你正在用它玩）",
     "nobody is selling it right now - kept, there's no price to go by": "现在没人在卖 - 保留，没有可参考的价格",
-    "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm 从不自己出售、转成宝石、打开或花费任何东西。多余物品、打开和制作补充包、花费 Steam 点数默认全部关闭，需要你在账户设置里打开——出售、宝石和 Steam 点数还会先显示它会做什么并请你确认。它自己领取的只有免费的东西：Steam 促销期间的活动物品，以及你打开后的免费游戏。",
+    "nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm 从不自己出售、转成宝石、打开、购买、交换或花费任何东西。多余物品、打开和制作补充包、花费 Steam 点数、购买卡牌和卡牌交换默认全部关闭，需要你在账户设置里打开——出售、宝石、Steam 点数、购买卡牌和卡牌交换还会先显示它会做什么并请你确认。它自己领取的只有免费的东西：Steam 促销期间的活动物品，以及你打开后的免费游戏。",
+    "it gives a card this account keeps": "它会给出这个账户保留的卡牌",
+    "bought for a badge - kept until it's crafted": "为徽章购买 - 合成前一直保留",
+    "it gives a card bought for a badge - kept until it's crafted": "它会给出为徽章购买的卡牌 - 合成前一直保留",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}：Steam 还没告诉此账户的钱包货币 - 没有上架任何东西",
     "No preview - try again in a minute.": "没有预览 - 请一分钟后再试。",
     "Not changed - try again.": "未更改 - 请再试一次。",
@@ -2703,6 +2747,45 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "{0} 的多余物品已开启：会在限额内把多余物品转成宝石或出售",
     "Spare items was turned off on {0} - stopped before the next item": "{0} 的多余物品已被关闭 - 在下一件物品之前停下",
     "Spending Steam Points is off for {0}: nothing is spent": "{0} 的 Steam 点数花费已关闭：不会花任何东西",
+    "Buying cards": "购买卡牌",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}：购买卡牌在你于设置中打开前一直关闭 - 会先显示它要买什么",
+    "up {0}": "{0} 起床",
+    "buy order for {0} · no clear answer · {1}": "{0} 的购买订单 · 没有明确答复 · {1}",
+    "buy order {0} · not settled yet · {1}": "购买订单 {0} · 尚未确定 · {1}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "{0} 的卡牌购买已开启：会在限额内自己购买徽章缺少的卡牌",
+    "Buying cards is off for {0}: nothing is bought": "{0} 的卡牌购买已关闭：不会购买任何东西",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam 要求此账户的每笔市场购买都通过电子邮件确认，nocat.farm 无法做到",
+    "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam 没有说明此账户的市场购买如何确认，所以这次不买任何东西",
+    "couldn't save the card buying list: {0}": "无法保存卡牌购买记录：{0}",
+    "couldn't read the card buying list: {0}": "无法读取卡牌购买记录：{0}",
+    "buying cards: next look around {0}": "购买卡牌：下次查看约在 {0}",
+    "couldn't look at buying cards: {0}": "无法查看卡牌购买：{0}",
+    "unsure if {0} was bought · counted as spent": "不确定是否买到了 {0} · 记为已花费",
+    "card buying stopped · its spending list can't be read or saved": "已停止买卡 · 无法读取或保存花费记录",
+    "buying {0} turned down · {1}": "购买 {0} 被拒绝 · {1}",
+    "buying {0} turned down": "购买 {0} 被拒绝",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "已购买 {0} 张卡牌 · {1} · 可合成 {2} 套",
+    "next up {0} · goes to bed {1}": "下次起床 {0} · 睡觉 {1}",
+    "{0} · that sitting's over": "{0} · 那段游玩已结束",
+    "Turn on buying cards?": "打开卡牌购买？",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "这是它接下来会买什么、花多少，以及它遵守的限额。它会花此账户的 Steam 钱包。你按下“打开”之前不会购买任何东西。",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "未登录，所以还不能查看市场。以下是它会遵守的限额。",
+    "Couldn't look at the market: {0}": "无法查看市场：{0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "“用卡牌合成徽章”已关闭 - 打开之前不会购买，否则卡牌只会放着。",
+    "card to buy": "要买的卡牌",
+    "cards to buy": "要买的卡牌",
+    "{0} for {1} badge level(s)": "{1} 个徽章等级，共 {0}",
+    "badge levels": "徽章等级",
+    "wallet: {0}": "钱包：{0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "{0} 的整套（{1} 张卡牌），{2} - {3} 级到 {4} 级，每 1.00 约 {5} XP",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{2} 的 {1} 张卡牌中的 {0} 张（{3}），{4} - {5} 级到 {6} 级，每 1.00 约 {7} XP",
+    "Spends at most {0} a day ({1} spent in the last day)": "每天最多花 {0}（过去一天已花 {1}）",
+    "Spends at most {0} a week ({1} spent this week)": "每周最多花 {0}（本周已花 {1}）",
+    "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "绝不超过钱包余额。只计划整套，每个价格都先检查 - 如果中途有价格变动，这套剩下的部分等下次查看",
+    "Each card at the cheapest price on the market, checked again right before it buys": "每张卡牌都按市场最低价，购买前会再查一次",
+    "Only badges it has started - not full sets": "只买已开始的徽章 - 不买整套",
+    "Only during its day (human mode), one set at a time": "只在它的一天内（拟人模式），每次一套",
+    "Badge crafting turns each finished set into a level": "徽章合成会把每套集齐的卡牌变成一个等级",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "{0} 的 Steam 点数花费已开启：会在限额内自己购买徽章等级",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Steam 点数：花费已关闭 - 在设置里打开即可看到它会买什么",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Steam 点数：会花 {0} 点买 {2} 的 {1} 个等级（+{3} 经验）- 在设置里打开花费之前什么都不会花",
@@ -2737,7 +2820,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "补充包正在凑齐卡牌套组，但“用卡牌合成徽章”已关闭 - 凑齐的套组会等到它打开",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "你在手机上拒绝了它的挂单——还有 {0} 天不会再上架",
     "couldn't read which listings you declined: {0}": "无法读取你拒绝过的挂单：{0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}：出售价格“比最低价低一分”已取消——现在按比真实价格低一分上架",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}：出售价格设置不是可选项之一——现在按比真实价格低一分上架",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}：Steam 没有说明哪些物品在等待中的交易里——稍后再试",
     "you'd get {0} - under your {1} minimum": "你只能拿到 {0}——低于你设定的最低 {1}",
     "couldn't write down which listings you declined: {0}": "无法记录你拒绝过的挂单：{0}",
@@ -2745,17 +2828,15 @@
     "spread over its day: about {0} a look, next look ~{1}": "分散在它的一天里：每次查看约 {0} 件，下次查看 ~{1}",
     "spread over its day: about {0} a look - its last look today": "分散在它的一天里：每次查看约 {0} 件——这是它今天最后一次查看",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "还有 {0} 件物品在定价——Steam 要求放慢速度，大约 {1} 继续定价",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} 宝石——出售只能拿到 {1}，低于你设定的最低 {2}",
     "{0} gems - nobody sells it on the market": "{0} 个宝石 - 市场上没人出售",
     "you declined its listing on your phone - never listed again": "你在手机上拒绝了它的挂单——不会再上架",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "宝石装成 1000 个一袋，宝石袋发到 {0}",
     "Daily backup": "每日备份",
-    "up ~{0}": "约增加 {0}",
+    "up ~{0}": "约 {0} 起床",
     "to sell": "出售",
     "Value: at most {0} a day": "价值：每天最多 {0}",
     "Booster packs it doesn't open are sent to {0}": "不打开的补充包发到 {0}",
     "Keep everything: it only reports, nothing changes": "全部保留：只报告，什么都不改变",
-    "Your own accounts": "你自己的账户",
     "Next Fest": "新品节",
     "Making packs": "制作补充包",
     "New items are not held back": "新物品不会被保留",
@@ -2841,6 +2922,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} 现在在“永不打开这些游戏的补充包”里 —— 为它制作的补充包保持不打开",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "它的一个上架还在手机上等待确认 - 处理完之前不会上架其他副本",
     "worth {0} - over your price limit, never touched": "价值 {0} - 超过你的价格上限，绝不动它",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} 件物品（共 {1}）超过你的价格上限 {2} - 提高上限才能卖掉它们",
     "worth {0} now - over your price limit, not listed": "现在价值 {0} - 超过你的价格上限，不上架",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "{0} 的多余物品预览：{1} 件转成宝石，{2} 件出售。在它的设置里打开多余物品之前什么都不会发生 - 'spare preview {0}' 会逐个列出。",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} 从 {2} 降到 {3} - {1} 天没卖出",
@@ -2957,9 +3039,417 @@
     "done grinding · back to the usual day": "刷完了 · 回到平常的一天",
     "{0} is on the market · {1}": "{0} 已在市场上架 · {1}",
     "{0} is on the market": "{0} 已在市场上架",
-    "couldn't look at the listings waiting on a confirmation: {0}": "无法查看等待确认的上架：{0}"
+    "{0} listings on the market · {1}": "{0} 件已在市场上架 · {1}",
+    "{0} listings on the market": "{0} 件已在市场上架",
+    "sold {0} items · you got {1}": "已售出 {0} 件 · 你得到 {1}",
+    "couldn't look at the listings waiting on a confirmation: {0}": "无法查看等待确认的上架：{0}",
+    "its cards have changed since": "它的卡牌之后有了变化",
+    "no fresh price for some of its cards": "部分卡牌没有最新价格",
+    "it would set back a set now": "现在会让某套卡退步",
+    "it would lose more than your limit": "损失会超过你的上限",
+    "not a swap nocat.lol paired with this account": "不是 nocat.lol 为此账户配对的交换",
+    "it has something that isn't a normal trading card": "其中有不是普通集换式卡牌的东西",
+    "it isn't the swap nocat.lol paired": "不是 nocat.lol 配对的那次交换",
+    "no fresh price yet for {0}": "{0} 还没有最新价格",
+    "it's worth less than this account gives": "价值低于此账户付出的",
+    "card swaps: couldn't read its own trade link - not listed this time": "卡牌交换：读不到自己的交易链接 - 这次不上榜",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} 的卡牌交换已开启：在限制范围内与其他 nocat.farm 用户交换多余的卡牌",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} 的卡牌交换已关闭：不再交换任何东西，nocat.lol 也会忘掉它",
+    "held by scam watch - no swaps until 'scamwatch ok'": "被防诈骗暂停 - 输入 'scamwatch ok' 前不交换",
+    "waiting for its day": "等它的一天开始",
+    "{0} swaps today - the most for a day": "今天已交换 {0} 次 - 一天的上限",
+    "next swap from about {0}": "下次交换大约从 {0} 开始",
+    "no swap to send right now": "目前没有要发送的交换",
+    "card swap with {0} done · {1} card(s) each way": "与 {0} 的卡牌交换完成 · 双方各 {1} 张",
+    "card swap offer to {0} taken back · not accepted in 2 days": "给 {0} 的交换报价已撤回 · 2 天内未被接受",
+    "card swap with {0} didn't go through": "与 {0} 的卡牌交换没有成功",
+    "card swap with {0} skipped · {1}": "跳过与 {0} 的卡牌交换 · {1}",
+    "Steam didn't say whether the trade would be held": "Steam 没说这次交易会不会被暂挂",
+    "the trade would be held": "交易会被暂挂",
+    "couldn't read its cards": "读不到它的卡牌",
+    "Steam didn't say what's on its offers": "Steam 没说它的报价里有什么",
+    "Steam hasn't said its wallet currency yet": "Steam 还没告诉它的钱包货币",
+    "waiting for prices": "等待价格",
+    "nothing in it fits any more": "里面已经没有合适的了",
+    "Steam refused the offer: {0}": "Steam 拒绝了这个报价：{0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "卡牌交换 · 已向 {0} 发送报价 · 双方各 {1} 张",
+    "card swap · you give {0} · you get {1}": "卡牌交换 · 你付出 {0} · 你得到 {1}",
+    "card swap · confirm the offer to {0} on your phone": "卡牌交换 · 请在手机上确认给 {0} 的报价",
+    "sent a swap to {0}": "已向 {0} 发送交换",
+    "a card swap nocat.lol paired": "nocat.lol 配对的卡牌交换",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol 配对的卡牌交换 · 先检查，再接受或拒绝",
+    "offer {0} is from an account that once sent a bad swap · left for you": "报价 {0} 来自曾发送过不良交换的账户 · 留给你处理",
+    "from an account that once sent a bad swap": "来自曾发送过不良交换的账户",
+    "not now": "现在不行",
+    "offer {0} isn't a good swap now ({1}) - declining": "报价 {0} 现在不是好交换（{1}）- 正在拒绝",
+    "card swap · you'd give {0} · you'd get {1}": "卡牌交换 · 你会付出 {0} · 你会得到 {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "交换报价 {0} 与配对的不一致（{1}）· 留给你处理",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "报价 {0} 自称是 nocat.lol 没配对过的卡牌交换 · 留给你处理",
+    "Turn on card swaps?": "开启卡牌交换？",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "这是它现在能交换的，以及它遵守的限制。在你按下开启之前不会交换任何东西。",
+    "spare cards to swap": "可交换的多余卡牌",
+    "in {0} games": "分布在 {0} 个游戏",
+    "swaps a day, at most": "每天最多交换次数",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "只限普通集换式卡牌 - 绝不交换闪亮卡牌、背景或表情",
+    "One for one, in the same game, and only when it helps your sets": "同一游戏内一换一，并且只在对你的卡套有帮助时",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "绝不交出你的卡套需要的卡、某张卡的最后一张，或你的「绝不动」清单里的东西",
+    "Each swap worth at most {0} less than what it gives": "每次交换的价值最多比付出的少 {0}",
+    "Never when Steam would hold the trade": "Steam 会暂挂交易时绝不交换",
+    "Also when Steam would hold the trade": "即使 Steam 会暂挂交易也交换",
+    "Its offers are confirmed by its authenticator here": "它的报价由这里的验证器确认",
+    "Its offers wait for you to confirm them on your phone": "它的报价要等你在手机上确认",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "还不知道它的钱包货币 - 知道之前不交换任何东西",
+    "1 card still needs a price first.": "还有 1 张卡需要先定价。",
+    "{0} cards still need a price first.": "还有 {0} 张卡需要先定价。",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "给 {0} 的交换报价与 nocat.lol 说的不符 · 已撤回",
+    "it was paired more than 2 days ago": "配对已超过 2 天",
+    "Steam's name for a card in it doesn't fit its game": "其中一张卡的 Steam 名称与它的游戏不符",
+    "a card in it is already on another offer or swap": "其中一张卡已在别的报价或交换里",
+    "it would leave fewer than {0} of {1}": "{1} 会剩下不到 {0} 张",
+    "card swap offer to {0} taken back · {1}": "给 {0} 的交换报价已撤回 · {1}",
+    "card swap offer to {0} taken back · swaps are off": "给 {0} 的交换报价已撤回 · 交换已关闭",
+    "offer {0} · left for you · Steam won't say whether it would be held": "报价 {0} · 留给你处理 · Steam 不说会不会被暂挂",
+    "that swap was already done or dropped": "这次交换已经完成或已放弃",
+    "not signed in to Steam": "未登录 Steam",
+    "swap sign-in failed · {0}": "交换登录失败 · {0}",
+    "Steam's sign-in page didn't load": "Steam 的登录页面没有加载",
+    "Steam says it isn't signed in on the web": "Steam 表示网页端未登录",
+    "no sign-in form on Steam's page": "Steam 的页面上没有登录表单",
+    "Steam didn't answer the sign-in": "Steam 没有回应登录",
+    "Steam answered {0} and showed the sign-in page again": "Steam 返回 {0}，并再次显示了登录页面",
+    "Steam answered {0} and showed its login page": "Steam 返回 {0}，并显示了其账户登录页",
+    "Steam answered {0} and sent it nowhere": "Steam 返回 {0}，没有跳转到任何地方",
+    "Steam sent it to {0}, not nocat.lol": "Steam 跳转到了 {0}，而不是 nocat.lol",
+    "Steam's answer wasn't a sign-in": "Steam 的回应不是登录",
+    "Steam's answer was for another account": "Steam 的回应属于另一个账户",
+    "Steam's answer was too long": "Steam 的回应太长",
+    "card swap · confirm the offer to {0} from Steam's email": "卡牌交换 · 请在 Steam 的邮件里确认给 {0} 的报价",
+    "then off for the night": "然后就睡了",
+    "short break · then off for the night": "短暂休息 · 然后就睡了",
+    "meal break · then off for the night": "吃饭休息 · 然后就睡了",
+    "nothing left to craft - sets sold instead": "没有要合成的了 - 卡组改为出售",
+    "weighing sets against the levels they'd buy": "正在比较卡组和它能买到的等级",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "出售 {0} 卡组而不合成：{1} 约可买 {2} 级",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "{0} 卡组：{2} 张卡中已上架 {1} 张 · 其余等下次查看",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam 要求每次市场购买都附上账单信息，而此账户没有保存 - 先在市场上手动买一张卡（这样会保存），之后就能购买",
+    "{0} not bought · not confirmed in the Steam app": "{0} 未购买 · 未在 Steam 应用中确认",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} 笔卡牌购买一天内未确认 · 已放弃，什么也没买",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "请在 Steam 应用中确认卡牌购买 · {1} 的 {0} 张卡",
+    "its price fell since the set was weighed - not listed": "评估卡组之后价格下跌了 - 未上架",
+    "{0}: crafted · {1}": "{0}：已合成 · {1}",
+    "{0}: not crafted yet · {1} · a card is worth {2}": "{0}：暂不合成 · {1} · 有一张卡价值 {2}",
+    "couldn't price its cards": "无法给它的卡片定价",
+    "Steam won't let it buy cards, so the money couldn't be spent": "Steam 不允许它买卡片，所以钱花不出去",
+    "its set isn't known whole on the market": "它的卡组在市场上没有完整的信息",
+    "selling sets instead of crafting is off": "出售卡组代替合成已关闭",
+    "buying cards is off": "购买卡片已关闭",
+    "{0} sets ready, crafted together": "{0} 套卡组已集齐，一起合成",
+    "only {0} sets are weighed a look": "每次只比较 {0} 套卡组",
+    "buying cards isn't running": "购买卡片没有在运行",
+    "no price in its wallet's currency": "没有钱包货币的价格",
+    "no market price for {0} right now": "{0} 现在没有市场价格",
+    "{0} sold only {1} time(s) in the last day": "{0} 过去一天只卖出 {1} 次",
+    "{0}: its price isn't clear right now": "{0}：现在价格不明确",
+    "{0} pays nothing on the market": "{0} 在市场上卖不到钱",
+    "{0} buys about {1} levels": "{0} 约可买 {1} 级",
+    "set worth {0} buys no badge level today": "价值 {0} 的卡组今天买不到徽章等级",
+    "set worth {0} buys only {1} level": "价值 {0} 的卡组只能买 {1} 级",
+    "It would sell instead of crafting": "会出售而不合成的",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "{0} 卡组：扣除 Steam 手续费后 {1} 约可买 {2} 个徽章等级，比合成得到的 1 级多",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "先买最便宜的徽章等级 - 已开始的徽章或全新的整套，哪个便宜买哪个",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "如果 Steam 要求在 Steam 应用中确认购买，你在手机上确认 - 一次一套；不确认的话一天后放弃",
+    "set finder · couldn't look · {0}": "卡组查找 · 无法查看 · {0}",
+    "set finder · couldn't read its list, starting over · {0}": "卡组查找 · 无法读取列表，从头开始 · {0}",
+    "set finder · couldn't save its list · {0}": "卡组查找 · 无法保存列表 · {0}",
+    "Set price": "整套价格",
+    "XP per 1.00": "每 1.00 的 XP",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "还不知道任何整套 - 卡组查找会一点一点地读取市场。",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "卡组查找今天看了 {1} 张卡牌中最便宜的 {0} 张，已知 {2} 个整套。上次查看：{3}。",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "只有在“购买最便宜的整套”打开时才会买这些。",
+    "Cheapest whole sets on the market": "市场上最便宜的整套",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "卡组查找 · 跳过 {0} · 其 robots.txt 没有响应 ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "卡组查找 · 跳过 {0} · 其 robots.txt 不允许",
+    "set finder · {0} skipped · it didn't answer ({1})": "卡组查找 · 跳过 {0} · 没有响应 ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "卡组查找 · 跳过 {0} · 无法读取其列表",
+    "set finder · {0} games to look at first, from {1}": "卡组查找 · 先查看 {0} 个游戏，来自 {1}",
+    "{0} was paused - stopped before the next item": "{0} 已暂停 - 在下一件物品之前停下",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "出售能拿到 {0}，比它的 {1} 宝石值钱（{2}）—— 保留",
+    "{0} · found in the inventory after its order": "{0} · 下单后在库存中找到",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "售价 {0}，你得到 {1} —— 低于你设定的最低 {2}，但比它的 {3} 宝石值钱（{4}）",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} 宝石，价值 {1} —— 出售能拿到 {2}",
+    "worth {0}, over your price limit now - skipped": "价值 {0}，现在超过你的价格上限 - 已跳过",
+    "more cards wait · confirm the ones in the Steam app first": "其余卡牌在等待 · 请先在 Steam 应用中确认这些",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} 宝石，价值 {1} —— 出售只能拿到 {2}，低于你设定的最低 {3}",
+    "bought {0} ({1}) · {2}": "已购买 {0}（{1}）· {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "现在没人在卖，但最近卖出过 {0} —— 比它的宝石值钱 —— 保留",
+    "on your keep list now - skipped": "现在在你的保留列表中 - 已跳过",
+    "Put right": "已修正",
+    "settings copied from {0}": "已从 {0} 复制设置",
+    "Its settings come from {0}. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on.": "设置来自 {0}。多余物品、Steam 点数、卡牌购买、卡牌交换和“在 Steam 中打开”会保持关闭，直到你自己打开。",
+    "Settings copied from {0}": "已从 {0} 复制设置",
+    "No such account.": "没有这个账户。",
+    "Copy settings": "复制设置",
+    "settings copied from {0} · 1 switch left off for you to turn on": "已从 {0} 复制设置 · 1 个开关保持关闭，需你自己打开",
+    "Copy another account's settings onto this one. Shows what changes first.": "把另一个账户的设置复制到这个账户。会先显示哪些会改变。",
+    "Settings copied from {0}. Turn these on yourself after their preview: {1}": "已从 {0} 复制设置。请在预览后自己打开这些: {1}",
+    "{0} settings change": "有 {0} 项设置会改变",
+    "Stays off - turn it on yourself after its preview": "保持关闭 - 在预览后自己打开",
+    "Pick an account": "选择一个账户",
+    "whether it runs, and whether you sign into it yourself": "是否运行，以及你是否自己登录它",
+    "Goes off, as on the account copied from": "会关闭，和被复制的账户一样",
+    "With {0} itself taken out": "去掉了 {0} 自己",
+    "Start with another account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview.": "用另一个账户的设置代替默认值开始 - 除了登录和只属于那个账户的内容，其余全部复制。多余物品、Steam 点数、卡牌购买、卡牌交换和“在 Steam 中打开”会保持关闭，直到你在预览后自己打开。",
+    "{0} already has the same settings - nothing to copy.": "{0} 已经是相同的设置 - 没有要复制的。",
+    "Setting": "设置",
+    "the trade link token": "交易链接令牌",
+    "Pick two different accounts.": "请选择两个不同的账户。",
+    "Copy settings from": "从此账户复制设置",
+    "Copy settings onto {0}": "把设置复制到 {0}",
+    "Now": "现在",
+    "notes and log colour": "备注和日志颜色",
+    "the sign-in, password and authenticator": "登录、密码和验证器",
+    "settings copied from {0} · {1} switches left off for you to turn on": "已从 {0} 复制设置 · {1} 个开关保持关闭，需你自己打开",
+    "One setting changes": "有 1 项设置会改变",
+    "Working out what it would change...": "正在计算会改变什么...",
+    "Copy settings from…": "从此账户复制设置…",
+    "Never copied": "永不复制",
+    "After": "之后",
+    "the proxy and the device name": "代理和设备名称",
+    "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "选择要从哪个账户复制。按下“复制设置”之前什么都不会改变，被复制的账户也保持原样。",
+    "none - the defaults": "无 - 使用默认值",
+    "set finder · couldn't save what it shared · {0}": "卡组查找 · 无法保存已分享的内容 · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "卡组查找 · 共享列表 · 发送 {0} 个，从其他副本取得 {1} 个",
+    "set finder · nocat.lol didn't answer · {0}": "卡组查找 · nocat.lol 没有响应 · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "宝石保持散装 · 还不确定它们值多少等级",
+    "saving tradable gems for a sack to sell": "正在为要出售的一袋宝石攒可交易宝石",
+    "gems: today's listings are done · more tomorrow": "宝石：今天的上架已完成 · 明天继续",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "已把 1,000 个宝石装成一袋待售 · 每 1,000 个宝石约 {0} 级",
+    "saving tradable gems for a {0} pack to sell": "正在为要出售的 {0} 补充包攒可交易宝石",
+    "the {0} pack's price moved · weighed again later": "{0} 补充包的价格变了 · 稍后重新比较",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于出售 · 每 1,000 个宝石约 {1} 级",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "已制作 {0} 补充包用于打开并出售其卡牌 · 每 1,000 个宝石约 {1} 级",
+    "Commenting is on hold on every account until {0}.": "所有账户的评论已暂停，直到 {0}。",
+    "Resume now": "立即恢复",
+    "Pause rep4rep for...": "暂停 rep4rep...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "暂停所有账户的评论，到时会自行恢复——重启后也一样。",
+    "{0} hours": "{0} 小时",
+    "rep4rep held for {0} hours": "rep4rep 已暂停 {0} 小时",
+    "rep4rep commenting carries on": "rep4rep 继续评论",
+    "Disconnect": "断开连接",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "忘记这个聊天。“连接 Telegram”按钮会重新出现，可以连接另一个。",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "忘记这个 Discord 账户——在你重新连接之前，机器人不听任何人的命令。",
+    "to": "至",
+    "0 = {0}": "0 = {0}",
+    "seconds": "秒",
+    "days": "天",
+    "ms": "毫秒",
+    "wallet currency": "钱包货币",
+    "points": "点数",
+    "backups": "份备份",
+    "reviews": "条评测",
+    "times a day": "次／天",
+    "no limit": "不限",
+    "spend nothing": "不花任何钱",
+    "keep forever": "永久保留",
+    "never again": "不再尝试",
+    "Settle in after signing in": "登录后先缓一缓",
+    "Sittings": "每次游玩",
+    "Breaks": "休息",
+    "On a break, go Away after": "休息时多久后变为离开",
+    "Sleeps": "睡眠",
+    "After waking, wait": "醒来后等待",
+    "Background jobs wait after signing in": "登录后后台任务等待",
+    "After the last card, keep playing": "最后一张卡后继续玩",
+    "Farm cards only between": "只在此时段挂卡",
+    "While grinding, one achievement every": "刷成就时每个成就间隔",
+    "Move to another game at": "换下一个游戏的进度",
+    "Come back to a game after": "回到一个游戏前隔",
+    "Wait between items, human mode": "物品之间的等待，拟人模式",
+    "Wait between steps": "步骤之间的等待",
+    "Wait between steps, human mode": "步骤之间的等待，拟人模式",
+    "Look for scams every": "检查诈骗的间隔",
+    "Check health every": "检查健康状况的间隔",
+    "Accept a gift after": "接受礼物前等待",
+    "Answer a trade offer after": "回复交易报价前等待",
+    "Accept a friend request after": "接受好友请求前等待",
+    "Gap between comments": "评论间隔",
+    "Only post between": "只在此时段发布",
+    "Install by itself between": "自行安装的时段",
+    "Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.": "从外部登录时要求 Telegram 验证码已关闭 - 只凭密码就能进来。",
+    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Your other accounts\").": "自动确认：与 {0} 的交易。其他一切都在这里等待。可在「设置」的「交易」中通过「你的其他账号」更改。",
+    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Your other accounts\").": "没有什么会自动确认——一切都在这里等你。可在「设置」的「交易」中通过「你的其他账号」更改。",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "未在估值。若要重新开启，请进入设置，选择 {0}，勾选\"显示高级\"，然后在\"交易\"下勾选\"显示库存价值\"。",
+    "Tap a chip to switch it on or off. Each one says what it counts.": "点一下标签即可打开或关闭。每个都会说明它算什么。",
+    "extra card copies": "多出的卡牌副本",
+    "cards of finished badges": "已完成徽章的卡牌",
+    "foils": "闪卡",
+    "backgrounds": "背景",
+    "emoticons": "表情",
+    "default": "默认",
+    "needs a sign-in": "需要登录",
+    "Scam warnings": "诈骗警告",
+    "Health alerts": "账户健康",
+    "done hunting for today (Hunt at most a day)": "今天的狩猎结束了（每天最多狩猎）",
+    "{0} is done for today (Hunt at most a day) - back tomorrow": "{0} 今天到此为止（每天最多狩猎）- 明天继续",
+    "on - no games to hunt (pick some under \"Hunt these games\")": "已开启 - 没有可狩猎的游戏（在“狩猎这些游戏”里挑几个）",
+    "{0} left out - it's on \"Never play these games\"": "{0} 被排除——它在“永不玩这些游戏”里",
+    "{0}: alerts about bans are part of account health now, which is off on this account - turn it on to get them": "{0}：封禁警告现在属于账户健康，而这个账号关着它——打开才能收到",
+    "{0}: your own accounts are in \"Your other accounts\" now, both ways - as before": "{0}：你自己的账号现在在“你的其他账号”里，双向——和以前一样",
+    "Badges": "徽章",
+    "Card swaps": "换卡",
+    "Commands from the chats": "来自聊天的命令",
+    "Dashboard & phone": "面板与手机",
+    "General": "常规",
+    "Items and spending": "物品与花费",
+    "Open from outside": "从外部打开",
+    "Safety": "安全",
+    "Steam connection & logs": "Steam 连接与日志",
+    "When you use it yourself": "你自己用的时候",
+    "Your other accounts": "你的其他账号",
+    "Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.": "这里的一切在你打开之前都是关着的，每一项都会先给你看它要做什么并征得同意。在那之前不会出售、换宝石、开包、购买或花费任何东西。",
+    "Every game it owns, a batch at a time. Games still within Steam's 2 hours for a refund are left alone.": "它拥有的每个游戏，一批一批轮流挂。仍在 Steam 退款 2 小时内的游戏不碰。",
+    "A QR code to scan, and how to open it from outside your home.": "一个可扫描的二维码，以及在家以外怎么打开。",
+    "A daily backup": "每日备份",
+    "Advanced setup": "高级设置",
+    "After the cards are done, what should it idle?": "卡牌挂完后，挂什么？",
+    "Card drops, problems that need you, scam warnings - you pick which.": "掉卡、需要你处理的问题、诈骗警告——你来挑选要哪些。",
+    "Everything in one locked file each day, to put back on any PC.": "每天把一切存进一个加密文件，可在任何电脑上恢复。",
+    "Fewer questions": "少问几个问题",
+    "Games I pick": "我挑的游戏",
+    "Get messages on Telegram or Discord": "在 Telegram 或 Discord 上收消息",
+    "I also use this account in my own Steam app": "我也在自己的 Steam 应用里用这个账号",
+    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "它每小时在 nocat.lol 匿名计数一次——只有一个随机编号和账号数量。设置里“更新与插件”下的“把我算作用户”可以关掉。",
+    "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "先挂交易卡牌。挂完后，可以继续挂游戏来增加时长。",
+    "It stays signed in and does nothing once the cards are done.": "卡牌挂完后保持登录，什么都不做。",
+    "Language: {0}": "语言：{0}",
+    "More": "更多",
+    "My main account": "我的主账号",
+    "My whole library": "我的整个游戏库",
+    "Nothing": "什么都不挂",
+    "Sign in with a QR code instead": "改用二维码登录",
+    "Tap them below.": "在下面点选。",
+    "When you like": "随时可以",
+    "nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.": "nocat.farm 会登录你的 Steam 账号、挂交易卡牌、玩游戏累积时长、领取免费东西——全都在这台电脑上。这里为账号挑合适的设置；以后什么都能改。",
+    "its wallet already pays for every level priced today": "钱包余额已经够买今天定价的所有等级",
+    "couldn't read the open buy orders: {0}": "无法读取未完成的购买订单：{0}",
+    "worth {0} now - over your price limit, kept": "现在价值 {0} - 超过你的价格上限，留着",
+    "on your keep list - never sold": "在你的保留列表里 - 绝不出售",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "为出售而制作：它的卡牌不管你的价格上限是多少都会卖掉；保留列表里的游戏绝不会动",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}：市场上已有它的购买订单 · 撤回自己的订单，你自己下的订单不动",
+    "{0}: not crafted yet · {1}": "{0}：暂不合成 · {1}",
+    "it asks for a card promised to a card swap": "它要的卡已经许给了一次换卡",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "现在卖能拿 {0}，比它的 {1} 宝石价值（{2}）多 - 留着",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "未上架：你只能拿到 {0}，不比它的宝石价值（{1}）多",
+    "no price right now - kept until it has one": "现在没有价格 - 先留着，等有价格再说",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "宝石：没有宝石袋的最新价格 - 这次什么都不上架",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}：暂不合成 · {1} · 不知道它的卡值多少",
+    "it would leave fewer than {0} copies of a card you keep": "会让你保留的卡剩不到 {0} 张",
+    "an order for {0} was left open on the market · taken back, nothing bought": "{0} 的订单还挂在市场上 · 已撤回，什么也没买",
+    "it asks for {0}, on your keep list": "它要的 {0} 在你的保留列表里",
+    "the market stopped answering before what its money buys was priced": "还没算出这笔钱能买什么，市场就不再响应了",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} 过去一天只卖出 {1} 次 - 先等等，这套卡价值 {2}（{3} 级）",
+    "it has no Steam wallet to spend the money from": "它没有 Steam 钱包可以花这笔钱",
+    "on your keep list - its set is crafted, never sold": "在你的保留列表里 - 这套卡会合成，绝不出售",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "卖掉比留着更值的卡牌：手头没有库存可用来上架 - 下次查看时再说",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}：{2} 张卡牌中上架了 {1} 张 · 其余等下次查看",
+    "selling buys about {0} levels, keeping makes {1}": "卖掉约能买 {0} 级，留着能升 {1} 级",
+    "keeping makes {0} level(s), selling buys about {1}": "留着能升 {0} 级，卖掉约能买 {1} 级",
+    "cards worth more sold than kept: not weighed · {0}": "卖掉比留着更值的卡牌：未比较 · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}：卡牌已保留 - 不确定卖掉是否更值 · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}：它的卡牌又值得留着了 · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}：{1} 张卡牌比它们能升的等级更值钱 - 以约 {2} 出售 ≈ {3} 个便宜等级",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0}（{1}）x{2} · 最低 {3} · 每张你得 {4}",
+    "its price fell since it was weighed - not listed": "比较之后价格下跌了 - 未上架",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "出售 {0} 的闪亮卡组而不合成：{1} 约能买 {2} 级",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "出售 {0} 套 {1} 卡组而不合成：{2} 约能买 {3} 级",
+    "sets worth more sold than crafted wait uncrafted · {0}": "卖掉比合成更值的卡组暂不合成 · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "卖掉而未合成的卡组剩下的卡牌 - 能卖 {0}",
+    "what's left of a set sold instead of crafted pays nothing": "卖掉而未合成的卡组剩下的卡牌卖不到钱",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "目前不知道钱能买到什么 - 买卡还没给接下来的等级定价",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}：{1} 张闪亮卡牌比它们的等级更值钱 - 以约 {2} 出售 ≈ {3} 个便宜等级",
+    "its cards are being sold - worth more than the levels they'd make": "它的卡牌正在出售 - 比它们能升的等级更值钱",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} 约能买 {1} 级 · {2} 几乎卖不动，但这套卡已经等得够久了 - 照样上架",
+    "{0} sets worth {1} buy only {2} levels": "价值 {1} 的 {0} 套卡组只能买 {2} 级",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} 约能买 {1} 级，但 Steam 不让它自己买卡 - 等到可以为止",
+    "Level price now: {0} a level (100 XP)": "当前等级价格：每级 {0}（100 XP）",
+    "No limit a week ({0} spent this week)": "每周不设上限（本周已花 {0}）",
+    "No limit": "不设上限",
+    "At most {0} for one badge level": "一个徽章等级最多 {0}",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "卡组查找在过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个，已知 {2} 个整套。上次查看：{3}。",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "不设上限：钱包里有多少就花多少，最便宜的等级先买 - 每个等级的最高价仍然有效。",
+    "No limit a day ({0} spent in the last day)": "每天不设上限（过去一天已花 {0}）",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "卡组查找 · 过去 24 小时在市场上核对了最便宜的 {1} 个整套中的 {0} 个 · 已知 {2} 个整套",
+    "sets": "套",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "购买卡牌 · 还有钱买更多便宜的等级 - {0} 分钟后再看",
+    "automatic": "自动",
+    "Time between looks, human mode": "两次查看之间的时间（真人模式）",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "购买卡牌：低于 0 且不是 -1（不限）的花费上限现在为 0 - 设置之前不会购买任何东西",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "再卖的话钱包会超过上限 - 出售等到大约 {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "Steam 应用中等待确认的上架太多 - 大约 {0} 之前不再上架",
+    "Steam's market is unavailable just now - listing waits until about {0}": "Steam 市场暂时不可用 - 上架等到大约 {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "Steam 市场在 {0} 之前不可用（{1}） - 购买、出售和交换都等到那时",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "Steam 市场不可用（{0}） - 购买、出售和交换都等到它重新开放",
+    "Steam said this account isn't allowed to use the market": "Steam 表示此账户不能使用市场",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "Steam 应用中等待确认的上架太多 - 确认之前不再上架",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam 不再接受上架 - 钱包会超过上限。出售等待一天；花掉一些钱包余额后即可再次出售",
+    "Steam's market is unavailable just now - listing waits an hour": "Steam 市场暂时不可用 - 上架等待一小时",
+    "Steam's market is open again - buying, selling and swaps go on": "Steam 市场已重新开放 - 购买、出售和交换继续",
+    "Steam refused a listing - nothing more listed this look": "Steam 拒绝了一个上架 - 本次查看不再上架",
+    "gems: Steam refused the last listing - listing again from about {0}": "宝石：Steam 拒绝了上一次上架 - 大约 {0} 起再次上架",
+    "Steam didn't answer - looking for the offer at the next look": "Steam 没有回应 - 下次查看时寻找该报价",
+    "card swap · found the offer sent to {0} before the restart": "卡牌交换 · 找到了重启前发给 {0} 的报价",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "它在 {0} 做了另一件事 - 拟人模式会把事情错开；大约 {1} 起可以继续",
+    "{0} · {1} of {2} card drop(s)": "{0} · 卡牌掉落 {1}/{2}",
+    "every game": "所有游戏",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每周最多花费” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't look at the money settings: {0}": "无法检查金额设置：{0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "已关闭购买卡牌 · 一个花费上限被设为不限 - 请重新打开购买，看看它可能花多少，再确认",
+    "level goal {0} stopped": "等级目标 {0} 已停止",
+    "Steam level {0} (+{1}) · this level cost {2}": "Steam 等级 {0}（+{1}）· 这一级花了 {2}",
+    "Steam level {0} (+{1})": "Steam 等级 {0}（+{1}）",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "等级目标 {0} 已开始：{1} 级，约 {2}（绝不超过 {3}）",
+    "level goal reached: Steam level {0} · {1} spent": "等级目标已达成：Steam 等级 {0} · 花了 {1}",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "购买在等卡组查找：最便宜的 {1} 套中已检查 {0} 套",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“价值超过此数的物品绝不动” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} 只能让你拿到 {1}，不比它的宝石更值钱",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每次交换最多可亏” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“每天最多花费” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't read the Steam level: {0}": "无法读取 Steam 等级：{0}",
+    "couldn't search the market: {0}": "无法搜索市场：{0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} 笔卡牌购买 Steam 一周内都没给出结果 · 按已买入计",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Steam 等级 {0}（+{1}）· {1} 级共 {2}",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "钱包货币为 {0}：“仅当到手至少为此金额时出售” 仍是 {1}，这是美元金额 - {0} 请用约 {2}",
+    "couldn't note the money settings were looked at: {0}": "无法记下已检查过金额设置：{0}",
+    "couldn't note the Steam level: {0}": "无法记下 Steam 等级：{0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "一个徽章等级最多 {0} - 比一个等级的通常价格稍高",
+    "{0} would pay you {1}, under your {2} minimum": "{0} 只能让你拿到 {1}，低于你的最低 {2}",
+    "cards were bought to finish it - crafted, never sold": "为凑齐它买了卡牌 - 合成，绝不出售",
+    "{0}: answered · {1} lines in the log file": "{0}：已回答 · 日志文件中 {1} 行",
+    "Show in the app's log": "在应用日志中显示",
+    "{0} hidden by Show in the app's log": "已被“在应用日志中显示”隐藏 {0} 行",
+    "what it's doing": "正在做什么",
+    "card drops and farming": "卡牌掉落与挂卡",
+    "badges, crafting, level": "徽章、合成、等级",
+    "buying cards": "购买卡牌",
+    "selling, spare items, gems": "出售、多余物品、宝石",
+    "trades and card swaps": "交易与换卡",
+    "comments, friends, rep4rep": "留言、好友、rep4rep",
+    "free games, items, Points": "免费游戏、物品、点数",
+    "answers to commands": "命令的回复",
+    "updates and app messages": "更新与应用消息",
+    "{0}: listing taken down · it can be listed again": "{0}：已下架 · 可以再次上架",
+    "took down {0} - unsold {1} days, its gems are worth more now": "已下架 {0} - {1} 天未售出，现在宝石更值钱"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "所有账号都显示“在 Steam 中打开”按钮",
+      "tip": "在每个账号上显示一键“在 Steam 中打开”按钮（账号卡片和应用窗口里），不用一个个账号去开。按钮会让你的 Steam 桌面应用登录那个账号：关闭 Steam，把 Steam 指向该账号，再重新启动 Steam。Steam 还没记住的账号会打开已填好名字的 Steam 登录界面。不会停止 nocat.farm 挂卡。仅限 Windows。默认关闭。开启时会先准确展示按钮会做什么，并请你确认。如果只想在部分账号上使用，就保持这里关闭，在那些账号的设置里开启“在 Steam 中打开”按钮。"
+    },
+    "SteamOpenButton": {
+      "label": "“在 Steam 中打开”按钮",
+      "tip": "在此账户上 - 在它的卡片和应用窗口中 - 显示一个按钮，无需输入密码即可让你的 Steam 应用登录。按下会关闭 Steam，将 Steam 的已保存账户文件指向此账户，并重新打开 Steam，于是它用 Steam 已记住的登录直接登录。它绝不会让 nocat.farm 停止挂这个账户：Steam 允许登录，只有当你真的启动游戏时才让挂卡让步。仅限 Windows。默认关闭。开启时会先准确显示按钮的操作，并请你确认。"
+    },
     "WebEnabled": {
       "label": "网页面板",
       "tip": "开启网页面板。关掉后一切照常运行，你可以在控制台里输入命令来操作 nocat.farm。"
@@ -3015,7 +3505,7 @@
     },
     "TrayNotifications": {
       "label": "显示气泡提示",
-      "tip": "开启或关闭弹出通知。下面四项决定你会收到哪些弹窗。"
+      "tip": "打开或关闭弹窗通知。下面的种类决定你会收到哪些弹窗。"
     },
     "NotifyEarnings": {
       "label": "有收获时提示",
@@ -3067,7 +3557,7 @@
     },
     "SendDailySummary": {
       "label": "发送每日总结",
-      "tip": "每天一次，列出每个账户过去 24 小时做了什么：累计时长、卡牌和评论。在「日志里的每日总结」设定的时间发送。"
+      "tip": "每天一次，每个账号过去 24 小时做了什么：累积时长、卡牌和评论。在“每日总结时间”（日志）发送。"
     },
     "SendComments": {
       "label": "发送个人资料评论",
@@ -3086,7 +3576,7 @@
       "tip": "你的所有账号会依次加入的 Steam 群组。默认有 nocat.farm 群组，可以修改或清空。粘贴群组链接或它的短名称，用逗号分隔。只加入公开群组，需要批准或邀请的会跳过。"
     },
     "Rep4RepEnabled": {
-      "label": "到底用不用 rep4rep",
+      "label": "使用 rep4rep",
       "tip": "开启 rep4rep。这是一个可选的第三方网站，用户在上面互相交换 Steam 个人资料评论。关掉后，所有账户上的 rep4rep 功能和设置都会隐藏。"
     },
     "Rep4RepApiToken": {
@@ -3106,7 +3596,7 @@
       "tip": "开着游戏时，这个账户多久在日志里汇报一次自己在做什么（分钟）。0 表示跟随全局日志设置，-1 表示保持安静。"
     },
     "StatusQuietEveryMinutes": {
-      "label": "休息时则每隔",
+      "label": "休息时报告状态的间隔",
       "tip": "同上，但用于这个账户在睡觉、休息、暂停或已下线的时候。0 表示跟随全局日志设置，-1 表示保持安静。"
     },
     "Language": {
@@ -3114,7 +3604,7 @@
       "tip": "面板、状态行和日志行使用的语言。还没翻译的内容会显示英文。在控制台输入的命令，回复仍为英文。"
     },
     "MarketCurrency": {
-      "label": "库存价格使用",
+      "label": "库存价值显示货币",
       "tip": "库存估值使用的货币。选你的 Steam 商店用的那种，总额才会和市场对得上。更改后会重新查询所有价格。",
       "choices": "1 美元 | 20 加元 | 21 澳元 | 2 英镑 | 3 欧元 | 5 俄罗斯卢布 | 7 巴西雷亚尔 | 8 日元 | 23 人民币 | 24 印度卢比"
     },
@@ -3126,16 +3616,8 @@
       "label": "日志里的每日总结",
       "tip": "每天在日志里写一份各账户过去 24 小时的收获摘要：累积的小时数、卡牌和 rep4rep 评论，以及至今累积的全部。每个运行中的游戏都算，和 Steam 的算法一样：32 个游戏跑 1 小时就是 32 小时。随时输入 stats 查看。"
     },
-    "DailyReportHour": {
-      "label": "总结时间 · 小时",
-      "tip": "每日总结在几点写入（本地时间）。开启「发送每日总结」时，也在这个时间发送。"
-    },
-    "DailyReportMinute": {
-      "label": "总结时间 · 分钟",
-      "tip": "每日总结在该小时的第几分钟写入。9 点加 30 分就是 09:30。"
-    },
     "Enabled": {
-      "label": "已启用",
+      "label": "运行这个账号",
       "tip": "登录这个账户。关掉后保留它的设置，但完全不去动这个账户。"
     },
     "SteamLogin": {
@@ -3152,11 +3634,11 @@
     },
     "OnlineStatus": {
       "label": "显示状态为",
-      "tip": "这个账户在好友眼里的状态。隐身时照样玩游戏、刷卡，只是没人看得到。开启「拟人模式」后，这只是玩游戏时的状态，所以保持在线即可。",
+      "tip": "这个账号在好友眼里的样子。隐身照样玩、照样挂卡，只是没人看得到。拟人模式下这只是玩游戏时的状态——休息时会自己变成离开、夜里变成离线——所以保持在线即可。",
       "choices": "0 离线 | 1 在线 | 2 忙碌 | 3 离开 | 4 打盹 | 5 想交易 | 6 想玩游戏 | 7 隐身"
     },
     "IUseThisAccount": {
-      "label": "这个账户我自己也登录",
+      "label": "我也在自己的 Steam 应用里用这个账号",
       "tip": "如果你自己的 Steam 应用也登录这个账户，请开启。这样它就不会改在线状态，因为改状态会把你踢出好友和聊天。其他一切照常运行。"
     },
     "StartPaused": {
@@ -3173,24 +3655,24 @@
       "placeholder": "主挂机账号，别动"
     },
     "LegitMode": {
-      "label": "拟人模式",
-      "tip": "像真人一样玩：一次一个游戏，时长真实，有休息、用餐、休息日，夜里下线。开启时会隐藏像机器人的设置，关闭后它们原样恢复。"
+      "label": "像人一样玩（拟人模式）",
+      "tip": "像人一样玩：一次一个游戏、真实的游玩时段、休息、吃饭、休息日，夜里离线。开着时机器人模式的设置会隐藏，关掉后原样恢复。"
     },
     "BreakAwayAfterMinMinutes": {
       "label": "休息时，至少过这么久才显示离开",
-      "tip": "仅拟人模式。休息开始多少分钟后状态变为离开或离线，就像真正闲置的 Steam 客户端。更短的休息保持在线。"
+      "tip": "休息开始多少分钟后状态变为离开或离线，就像真正闲置的 Steam 客户端。更短的休息保持在线。"
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "……最多",
+      "label": "休息时最多多久后变为离开",
       "tip": "休息开始后最多多少分钟，状态会变为离开或离线。"
     },
     "LegitStopMaxSeconds": {
       "label": "停止时最多再收尾",
-      "tip": "停止账户时，它会再随机玩几秒（最多这么久）才下线，而不是在游戏中途突然消失。0 表示立即停止。只在开启「拟人模式」时使用。"
+      "tip": "你停止账号时，它会再随机玩几秒（最多这么多）才登出，而不是在游戏中途消失。0 表示立即停止。仅拟人模式。"
     },
     "GameWeights": {
       "label": "游戏与频率",
-      "tip": "玩哪些游戏，以及每个游戏占多少百分比的时间，加起来约为 100。第一个是主玩游戏。不写数字就平分剩下的部分，写 440:0 表示让这个游戏坐冷板凳。 这些是一周的平均值——和真人一样，某一天可能偏向某个游戏。“成就冲刺”正在进行的游戏，会分享其他游戏的那一份时间。"
+      "tip": "玩哪些游戏、每个占多少百分比的时间，加起来约 100。第一个是主游戏。不写数字就平分剩下的，写 440:0 则让那个游戏歇着。这是一周的平均值——像人一样，某天可能偏向某个游戏。正在刷成就（成就狩猎）的游戏分享其他游戏的份额。"
     },
     "HourTargets": {
       "label": "时长目标",
@@ -3210,18 +3692,18 @@
     },
     "DayStartTime": {
       "label": "上线时间",
-      "tip": "它上线的时间，例如 11:00。每天都在这个时间前后“最多浮动”的范围内上线，大多数时候接近这个时间，周末稍早一些。"
+      "tip": "上线的时间，比如 11:00。每天都在这个时间的“上线时间浮动”范围内上线，多数日子很接近，周末稍早一点。"
     },
     "DayStartVaryMinutes": {
-      "label": "最多浮动（分钟）",
+      "label": "上线时间浮动",
       "tip": "可以比“上线时间”早或晚多少，单位为分钟。任何情况都不会让它超出这个范围：设为 11:00 和 30，就总在 10:30 到 11:30 之间上线。0 表示每天都是同一分钟。"
     },
     "BedTime": {
       "label": "睡觉时间",
-      "tip": "它晚上停下的时间。过了午夜也可以：02:00 就是上线那天之后的凌晨 2 点。每晚都在这个时间前后“最多浮动”的范围内睡觉，周五和周六稍晚一些。"
+      "tip": "晚上停下的时间。过了午夜也行：02:00 就是上线那天之后的凌晨两点。每晚都在这个时间的“睡觉时间浮动”范围内睡觉，周五周六稍晚一点。"
     },
     "BedVaryMinutes": {
-      "label": "最多浮动（分钟）",
+      "label": "睡觉时间浮动",
       "tip": "可以比“睡觉时间”早或晚多少，单位为分钟。任何情况都不会让它超出这个范围：设为 02:00 和 60，就总在 01:00 到 03:00 之间睡觉。0 表示每晚都是同一分钟。"
     },
     "LateNightExtraHours": {
@@ -3230,11 +3712,11 @@
     },
     "SleepMinHours": {
       "label": "至少睡",
-      "tip": "下一天开始前一晚持续的时长（小时）——在此值与下一个值之间随机，每晚不同。如果一晚太长，放不进“上线时间”允许的最晚时刻之前，就会缩短：它绝不会比那更晚上线。"
+      "tip": "下一天开始前一夜有多长——在两者之间随机，每晚不同。如果长到赶不上最晚的“上线时间”，就会缩短：绝不会更晚上线。"
     },
     "SleepMaxHours": {
-      "label": "…最多",
-      "tip": "该范围的上限（小时）。"
+      "label": "最多睡",
+      "tip": "到第二天之前，一夜最长能有多久。"
     },
     "PureMainDayChancePct": {
       "label": "只玩主玩游戏的天数",
@@ -3242,10 +3724,10 @@
     },
     "WarmUpMinMinutes": {
       "label": "至少先适应",
-      "tip": "登录后开始玩游戏之前的最短等待（分钟）。开启「拟人模式」时也适用，这样它不会立刻启动游戏。"
+      "tip": "登录后开始游戏前最短等多久。打开拟人模式时也适用，免得立刻启动游戏。"
     },
     "WarmUpMaxMinutes": {
-      "label": "最多",
+      "label": "最多缓一缓",
       "tip": "登录后的最长等待（分钟）。登录后 3 分钟内它绝不会开始，所以如果你已经在这个账户上玩，它不会抢过来。"
     },
     "SessionMinMinutes": {
@@ -3282,7 +3764,7 @@
     },
     "CustomGameNameEnabled": {
       "label": "显示自定义游戏名",
-      "tip": "向好友显示一个自定义名称，而不是真实游戏。关掉后，你在下面填的名称会保留，下次还能用。"
+      "tip": "让好友看到自定义名称而不是真实游戏。关掉会把下面的名称留着下次用；清空名称会自动关掉。"
     },
     "CustomGameName": {
       "label": "显示为",
@@ -3293,8 +3775,8 @@
       "tip": "刷 Steam 集换式卡牌。还有卡可掉的游戏会优先玩，直到不再掉卡为止。"
     },
     "HoursUntilCardDrops": {
-      "label": "掉卡所需时长",
-      "tip": "一个游戏要玩够多少小时 Steam 才会掉卡。如果这个账户在 Steam 消费超过 5 美元就设为 0，这样不会有游戏玩得比需要的更久。"
+      "label": "每个游戏玩这么久后才会掉卡",
+      "tip": "Steam 掉卡前一个游戏需要多少小时。如果这个账号在 Steam 上花过相当于 5 美元或更多，就设为 0，免得玩得比需要的更久。"
     },
     "FarmingOrder": {
       "label": "按此顺序刷",
@@ -3315,11 +3797,11 @@
       "choices": "0 谨慎（慢一倍） | 1 正常 | 2 轻快（快一倍）"
     },
     "AchievementMaxCompletionPct": {
-      "label": "完成度不超过",
+      "label": "一个游戏最多完成",
       "tip": "任何一个游戏最多完成到百分之几。留几个没拿的成就，看起来更像真实的游戏库。游戏达到这里后，狩猎会永久放下它——调高此值它会回来。集中刷命令会忽略这一项。"
     },
     "AchievementBurstMinPct": {
-      "label": "快速连续解锁仅限达到此比例的成就",
+      "label": "只有至少这么多人拥有的成就才会连解",
       "tip": "有时 2 到 3 个成就会在几分钟内接连解锁，就像通关一个关卡。只有至少这个百分比的玩家拥有的成就才会这样解锁 - 更稀有的总是单独解锁，并等待完整的间隔。0 允许任何成就连续解锁；100 关闭连续解锁。"
     },
     "CraftBadges": {
@@ -3331,15 +3813,15 @@
       "tip": "让这个账户发布 rep4rep 分配的个人资料评论。所有账户赚的都计入同一个 rep4rep 积分。"
     },
     "Rep4RepDailyCap": {
-      "label": "每 24 小时上限",
+      "label": "每天最多评论数",
       "tip": "这个账户在任意 24 小时内最多发多少条评论。Steam 对非好友大约允许 10 条，超过可能导致账户被禁止评论。"
     },
     "Rep4RepGapMinMinutes": {
-      "label": "最短间隔",
+      "label": "评论最短间隔",
       "tip": "这个账户两条评论之间的最短间隔（分钟）。"
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "最长间隔",
+      "label": "评论最长间隔",
       "tip": "两条评论之间的最长间隔（分钟）。每次间隔都在两者之间随机选取。"
     },
     "Rep4RepStartHour": {
@@ -3347,7 +3829,7 @@
       "tip": "这个账户一天中最早几点评论。半夜发评论很容易暴露是机器人。"
     },
     "Rep4RepEndHour": {
-      "label": "到几点为止",
+      "label": "发布截止于",
       "tip": "这个账户一天中最晚几点评论。设成和「最早从几点开始发」一样，就是全天都评论。"
     },
     "AcceptFriendRequests": {
@@ -3356,7 +3838,7 @@
     },
     "JoinGroup": {
       "label": "加入共享群组",
-      "tip": "加入“所有账号都加入的群组”里的群组。关闭后只有这个账号不加入。"
+      "tip": "加入“所有账号都加入的群组”（全局设置，所有账号）里的群组。关闭则只让这个账号不加入。拟人模式的新账号一开始就是关闭的，免得一个看起来真实的账号出现在以挂卡工具命名的群组里。"
     },
     "ExtraGroupsToJoin": {
       "label": "也加入这些群组",
@@ -3364,7 +3846,7 @@
     },
     "AutoReplyEnabled": {
       "label": "自动回复消息",
-      "tip": "回复给这个账户发消息的人。关掉后，你写的回复内容会保留，以后还能用。"
+      "tip": "用下面的文字回复给这个账号发消息的人。关掉会保留回复文字以后用；清空文字会自动关掉。"
     },
     "AutoReply": {
       "label": "回复内容",
@@ -3376,40 +3858,40 @@
       "tip": "对每个人每天最多回复一次，这样没人会收到两遍同样的话。"
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "至少等待",
+      "label": "接受好友请求前至少等待",
       "tip": "接受好友请求前的最短等待（分钟）。请求一到就接受，很容易暴露是机器人。"
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "最多等待",
+      "label": "接受好友请求前最多等待",
       "tip": "接受好友请求前的最长等待（分钟）。每个请求的等待时间随机，通常偏向较短的一端。"
     },
     "ActOnlyWhileAwake": {
       "label": "仅在「清醒」时响应",
-      "tip": "仅拟人模式。账户睡觉时，暂缓所有别人看得到的事，比如交易、礼物、邀请、回复、评论和成就。关掉的话，夜里也会响应。"
+      "tip": "账户睡觉时，暂缓所有别人看得到的事，比如交易、礼物、邀请、回复、评论和成就。关掉的话，夜里也会响应。"
     },
     "QuietThingsWaitForDay": {
-      "label": "幕后的事也等到它的白天",
-      "tip": "仅拟人模式。让合成徽章、领取免费游戏、补充包和出售卡牌这类幕后任务，也等到账户醒着的时间再做。关掉的话，它们任何时候都会运行。"
+      "label": "后台任务只在它醒着的时候做",
+      "tip": "让合成徽章、领取免费游戏、补充包和出售卡牌这类幕后任务，也等到账户醒着的时间再做。关掉的话，它们任何时候都会运行。"
     },
     "WakeDelayMinMinutes": {
       "label": "醒来后至少等待",
-      "tip": "仅拟人模式。醒来或登录后，要等多久才做别人看得到的事，比如交易、评论或回复（分钟）。每种事各自随机等待。"
+      "tip": "醒来或登录后，要等多久才做别人看得到的事，比如交易、评论或回复。每类事各自随机等待。"
     },
     "WakeDelayMaxMinutes": {
-      "label": "……最多",
+      "label": "醒来后最多等待",
       "tip": "醒来或登录后的最长等待（分钟）。"
     },
     "QuietDelayMinMinutes": {
-      "label": "登录后，幕后的事至少等待",
-      "tip": "仅拟人模式。登录后要等多久才开始徽章、免费游戏和补充包这类幕后任务（分钟）。每项各自随机等待，不会一起发生。"
+      "label": "登录后后台任务至少等待",
+      "tip": "登录后要等多久才开始徽章、免费游戏、补充包这类后台任务。每项各自随机等待，免得一起涌上来。"
     },
     "QuietDelayMaxMinutes": {
-      "label": "……最多",
+      "label": "登录后后台任务最多等待",
       "tip": "登录后开始幕后任务之前的最长等待（分钟）。"
     },
     "OneTradeAtATime": {
       "label": "一次只回应一个交易报价",
-      "tip": "仅拟人模式。多个交易报价同时到期时（比如早上），会间隔几分钟逐个回应，而不是一起处理。"
+      "tip": "多个交易报价同时到期时（比如早上），会间隔几分钟逐个回应，而不是一起处理。"
     },
     "AcceptDonations": {
       "label": "接受赠送",
@@ -3417,38 +3899,35 @@
     },
     "DonationsWhileAsleep": {
       "label": "睡觉时也接受捐赠",
-      "tip": "仅拟人模式。即使开启了“仅在「清醒」时响应”，也让赠送在夜里通过。其他一切仍然等到早上。"
+      "tip": "即使开启了“仅在「清醒」时响应”，也让赠送在夜里通过。其他一切仍然等到早上。"
     },
     "AcceptGiftedGames": {
       "label": "接受好友赠送的游戏",
       "tip": "把好友送给这个账户的游戏直接加入库中。关掉的话，每份礼物由你自己决定。每份礼物都会先等待，见「接受礼物前至少等待」。"
     },
     "AcceptFairCardSwaps": {
-      "label": "接受公平的卡牌交换",
+      "label": "接受任何人的 1:1 换卡（只接受对你的套组有帮助的）",
       "tip": "接受任何人在同一款游戏内一换一交换卡牌的报价，但前提是能让你的卡组更接近集齐。含闪亮卡或其他物品的报价不会处理。需要手机验证器。"
     },
     "AcceptGifts": {
       "label": "接受礼物和访客通行证",
       "tip": "接受寄给这个账户的 Steam 钱包礼品卡和访客通行证。两者都不会花你一分钱。每份礼物都会先等待，见「接受礼物前至少等待」。"
     },
-    "AcceptFromMasters": {
-      "label": "接受来自你自己账户的任何交易",
-      "tip": "接受来自「你自己的账户」的任何报价，包括会拿走物品的那种。方便把卡牌集中到一个账户，但只能填你自己的账户。"
-    },
     "TradeMasters": {
-      "label": "你自己的账户",
-      "tip": "你自己账户的 SteamID64，用逗号分隔。这里列出的任何人都能从这个账户拿走物品，所以只能添加你自己的账户。"
+      "label": "物品发送到",
+      "tip": "这个账号把物品发到哪里——“每隔多久发送物品”、挂卡结束时和 send 命令都用它：这里的账号名或 Steam 个人资料编号（SteamID64）。用第一个。只用于发送：这里列出的人都不能从这个账号拿走任何东西——那是“你的其他账号”。",
+      "placeholder": "main"
     },
     "DeclineOtherTrades": {
       "label": "其余一律拒绝",
       "tip": "主动拒绝其他所有交易报价，而不是放着不管。关掉的话，没被接受的报价会留着等你自己查看。"
     },
     "TradeDelayMinMinutes": {
-      "label": "至少等待",
+      "label": "回复交易报价前至少等待",
       "tip": "回应交易报价前的最短等待（分钟）。报价到达几秒就接受，看起来像机器人。"
     },
     "TradeDelayMaxMinutes": {
-      "label": "最多等待",
+      "label": "回复交易报价前最多等待",
       "tip": "回应交易报价前的最长等待（分钟）。每个报价的等待时间随机，通常偏向较短的一端。"
     },
     "GiftDelayMinMinutes": {
@@ -3456,12 +3935,12 @@
       "tip": "接受礼物（游戏、礼品卡或访客通行证）前的最短等待（分钟）。"
     },
     "GiftDelayMaxMinutes": {
-      "label": "最多等待",
+      "label": "接受礼物前最多等待",
       "tip": "接受礼物前的最长等待（分钟）。每份礼物的等待时间随机，通常偏向较短的一端。"
     },
     "PauseWhenYouPlay": {
       "label": "你玩游戏时自动让位",
-      "tip": "你自己在这个账户上启动游戏的那一刻就停止挂机，所以它永远不会和你的 Steam 客户端抢。"
+      "tip": "你在这个账号上自己启动游戏的那一刻就停止挂机，绝不和你自己的 Steam 客户端抢。等下面的时间过后再继续。"
     },
     "ResumeDelayMinutes": {
       "label": "恢复前等待",
@@ -3469,7 +3948,7 @@
     },
     "AchievementBoost": {
       "tip": "自动在多款游戏里刷成就，一次一款。“你挑的游戏”用下面的列表。“所有单人游戏”从你的库里挑有成就的单人游戏，玩没玩过都算（打开“只刷你玩过的游戏”可以跳过其余的）。在拟人模式账户上，正在刷成就的游戏会像副游戏一样加入它玩的游戏。",
-      "label": "成就冲刺",
+      "label": "成就狩猎",
       "choices": "0 关闭 | 1 你挑选的游戏 | 2 所有单人游戏"
     },
     "SkipRefundableGames": {
@@ -3478,11 +3957,7 @@
     },
     "ShowInventoryValue": {
       "tip": "按 Steam 市场价格算出这个账户的库存值多少钱，并显示在面板上。只有几张卡的账户可以关掉。",
-      "label": "算出它的库存值多少钱"
-    },
-    "CheckForUpdates": {
-      "tip": "检查新版本，并在日志、Telegram 和 Discord 里提醒。关掉它也会停止夜里自动安装。",
-      "label": "有更新时告知"
+      "label": "显示库存价值"
     },
     "UpdateReminders": {
       "label": "每小时提醒我",
@@ -3501,7 +3976,7 @@
       "tip": "每天休息时最多显示离线几次，免得它在你的好友列表里忽隐忽现。0 表示关闭，所有休息都显示离开。"
     },
     "PlayWhileFarming": {
-      "label": "刷卡时保留自定义名称",
+      "label": "挂卡时也保留自定义名称",
       "tip": "刷卡期间也继续显示自定义名称。关掉的话，刷卡时会显示真实游戏。"
     },
     "GameDevice": {
@@ -3518,8 +3993,8 @@
       "tip": "只刷「优先刷这些」里的游戏，其余还有卡的游戏一概不管。"
     },
     "BlacklistedGames": {
-      "label": "永不碰这些",
-      "tip": "绝不刷、也绝不挂的游戏 AppID。"
+      "label": "永不玩这些游戏",
+      "tip": "这个账号永远不挂卡、不挂时长、不刷、不狩猎的游戏——按名称或商店链接里的编号。"
     },
     "SkipUnplayedGames": {
       "label": "跳过你从未玩过的游戏",
@@ -3536,18 +4011,18 @@
     },
     "FarmFromHour": {
       "label": "仅从此时开始刷卡",
-      "tip": "只从这个整点开始刷卡。把这项和「...直到」都设为午夜，就是任何时候都刷。"
+      "tip": "只在这两个时间之间挂卡。两个都设为午夜就随时挂卡。"
     },
     "FarmUntilHour": {
-      "label": "...直到",
-      "tip": "刷卡到这个整点为止。设得比开始时间早就会跨过午夜，所以从深夜到清晨就是通宵刷。"
+      "label": "挂卡截止于",
+      "tip": "这个时段的结束。设得比开始早就会跨过午夜——从深夜到清晨整夜挂卡。"
     },
     "PostFarmWindDownMinMinutes": {
       "label": "最后一张卡之后，至少再玩",
-      "tip": "仅拟人模式。一个游戏掉完最后一张卡后，会继续玩几分钟，然后休息。两项都设为 0 则立即停止。"
+      "tip": "一个游戏掉完最后一张卡后，会继续玩几分钟，然后休息。两项都设为 0 则立即停止。"
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...最多",
+      "label": "最后一张卡后最多再玩",
       "tip": "掉完最后一张卡后最多再玩多少分钟。"
     },
     "FarmingDelayMinutes": {
@@ -3555,7 +4030,7 @@
       "tip": "刷卡时多久重新检查一次游戏（分钟）。掉卡时 Steam 会立即通知，所以这只是个兜底。"
     },
     "MaxFarmingHoursPerGame": {
-      "label": "超过多久就放弃",
+      "label": "一个游戏多久后放弃",
       "tip": "一个游戏刷了这么多小时后就放弃，换下一个，免得一个卡住的游戏挡住其他游戏。"
     },
     "StopWhenFarmingDone": {
@@ -3563,8 +4038,8 @@
       "tip": "没有卡可刷后把这个账户登出，而不是继续挂机。"
     },
     "AchievementBoostGames": {
-      "label": "刷这些游戏",
-      "tip": "冲刺要依次处理的游戏，填 AppID 或商店链接，用逗号分隔。只在「成就冲刺」设为你挑选的游戏时使用。"
+      "label": "狩猎这些游戏",
+      "tip": "狩猎依次处理的游戏，填游戏 ID 或商店链接，用逗号分隔。只在“成就狩猎”设为你选的游戏时使用。"
     },
     "BoostSessionHours": {
       "label": "每个大约玩",
@@ -3579,7 +4054,7 @@
       "tip": "只让「所有单人游戏」刷这个账户以前启动过的游戏。这是让它只刷符合账户历史的游戏最严格的方式。"
     },
     "InventoryIgnoreGames": {
-      "label": "...但不含这些游戏",
+      "label": "不计入库存价值和交易的游戏",
       "tip": "不计入库存估值、也不参与任何交易的游戏 AppID（商店链接里的数字），用逗号分隔。账户被封禁的游戏永远无法交易 - 封禁监视能看到时会自动添加，你也可以在这里手动填写。"
     },
     "YieldToFamily": {
@@ -3588,19 +4063,19 @@
     },
     "IncludeFamilyLibrary": {
       "label": "包含家庭共享的游戏",
-      "tip": "让刷成就也使用通过 Steam 家庭共享给这个账户的游戏。例如，自有 40 款、共享 200 款，就能从全部 240 款里挑 - 自有游戏总是优先。开启：共享游戏和自有游戏一样算。关闭：只用这个账户自己拥有的游戏。"
+      "tip": "也使用通过 Steam 家庭共享给这个账号的游戏：在里面狩猎成就，“挂整个游戏库”也会挂它们。例如拥有 40 个、共享 200 个，就能从全部 240 个里选——自己的游戏总是优先。关闭：只用这个账号拥有的游戏。"
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "集中刷时，每隔多久出一个成就",
+      "label": "刷成就时最短间隔",
       "tip": "集中刷时成就解锁的间隔（分钟）。集中刷会一直待在一个游戏里，所以节奏更快、更主动。最简单的先解锁。"
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...最长",
+      "label": "刷成就时最长间隔",
       "tip": "集中刷时两次解锁之间的最长间隔（分钟）。"
     },
     "AchievementNeverGames": {
       "label": "永不在这些游戏里解锁",
-      "tip": "完全不碰的游戏。不会在其中解锁任何成就，成就冲刺也永远不会选中它们。拟人模式下，账户的主玩游戏也会被跳过。"
+      "tip": "完全不碰的游戏。不在里面解锁成就，狩猎也不会选它们。拟人模式下也会跳过账号的主游戏。"
     },
     "AchievementGames": {
       "label": "只限这些游戏",
@@ -3645,23 +4120,23 @@
       "choices": "0 玩得最多的游戏 | 1 任意玩过的游戏"
     },
     "SaleGapMinSeconds": {
-      "label": "机器人账号每步之间等待（秒）",
+      "label": "步骤之间最短等待",
       "tip": "机器人账户上两次提名或投票之间最短等待的秒数 - 例如 5。最长设为 20 时，每次等待是随机的 5 到 20 秒。"
     },
     "SaleGapMaxSeconds": {
-      "label": "...最多（秒）",
+      "label": "步骤之间最长等待",
       "tip": "机器人账户上两步之间最长的等待，单位为秒 - 例如 20。最短设为 5 时，每次等待是随机的 5 到 20 秒。"
     },
     "SaleHumanGapMinMinutes": {
-      "label": "拟人模式每步之间等待（分钟）",
+      "label": "步骤之间最短等待，拟人模式",
       "tip": "拟人模式账户上两次提名或投票之间最短等待的分钟数 - 例如 5。最长设为 30 时，每次等待是随机的 5 到 30 分钟。只在它的一天内进行。"
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...最多（分钟）",
+      "label": "步骤之间最长等待，拟人模式",
       "tip": "拟人模式账户上两步之间最长的等待，单位为分钟 - 例如 30。最短设为 5 时，每次等待是随机的 5 到 30 分钟。"
     },
     "SaleCheckHours": {
-      "label": "查看活动的间隔（小时）",
+      "label": "检查活动的间隔",
       "tip": "多久查看一次 Steam 活动有没有开始，单位为小时 - 例如 6，大约每天看 4 次。活动进行时大约每小时看一次。"
     },
     "SellPerRun": {
@@ -3691,11 +4166,11 @@
       "tip": "这个账户在 Steam 授权设备列表里显示的设备名。留空则使用本机的真实名称。"
     },
     "SharedSecret": {
-      "label": "验证器验证码密钥",
+      "label": "Steam 令牌 shared_secret（来自 .maFile）",
       "tip": "让它能自己输入 Steam Guard 验证码的验证器密钥，这样重启后账户能自行重新登录。把它的 maFile 放进 authenticators 文件夹也有同样效果。请妥善保密。"
     },
     "IdentitySecret": {
-      "label": "验证器确认密钥",
+      "label": "Steam 令牌 identity_secret（来自 .maFile）",
       "tip": "验证器的第二个密钥，用来接受「请在手机上确认」的提示。只有这个账户要送出物品时才需要，因为接收物品从不需要确认。"
     },
     "AccountProxy": {
@@ -3719,7 +4194,7 @@
       "tip": "悄悄忽略来自新建的 0 级私密资料的好友请求，诈骗机器人就长这样。只在开启「接受好友请求」时有效。"
     },
     "RejectInvalidFriendInvites": {
-      "label": "主动拒绝不接受的请求",
+      "label": "拒绝它不接受的好友请求",
       "tip": "主动拒绝不接受的好友请求，而不是让它们留在列表里。关掉的话，它们会留着等你查看。"
     },
     "AutoReplyDelaySeconds": {
@@ -3746,6 +4221,50 @@
       "label": "在屏幕上显示调试细节",
       "tip": "在窗口和控制台里显示额外的调试细节。这些细节无论如何都会保存到日志文件，所以除非你想实时查看，否则保持关闭。"
     },
+    "LogShowDoing": {
+      "label": "显示正在做什么",
+      "tip": "在应用日志中显示每个账号正在做什么: 游玩、挂机、时段、热身、休息和睡觉 - 例如“grinding Portal · 41m left”或“asleep · 7 games · up 13:37”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowDrops": {
+      "label": "显示卡牌掉落与挂卡",
+      "tip": "在应用日志中显示卡牌掉落和挂卡 - 例如“Portal 掉落一张卡 - 还剩 2 张”或“没有卡了 · 挂机你的游戏”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowBadges": {
+      "label": "显示徽章、合成与等级",
+      "tip": "在应用日志中显示合成的徽章、集齐的套卡和 Steam 等级 - 例如“合成了 2 个徽章 - Steam 等级提升”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowBuying": {
+      "label": "显示购买卡牌",
+      "tip": "在应用日志中显示购买卡牌 - 例如“买入 Zane (Destiny Warriors) · 0.10 CAD”或钱包与限额。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowSelling": {
+      "label": "显示出售、多余物品与宝石",
+      "tip": "在应用日志中显示出售、市场上架、多余物品、宝石和补充包 - 例如“以 0.03 CAD 上架 Arena (BitMaster)”或“Room (Epsilon corp.) → 10 宝石”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowTrades": {
+      "label": "显示交易与换卡",
+      "tip": "在应用日志中显示交易报价和换卡 - 例如“接受了好友的报价 123”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowComments": {
+      "label": "显示留言、好友与 rep4rep",
+      "tip": "在应用日志中显示个人资料留言、好友请求、组和 rep4rep - 例如“好友的新留言”或“给某人留言并已计入 (今天 7/10)”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowAchievements": {
+      "label": "显示成就",
+      "tip": "在应用日志中显示成就 - 例如“🏆 Camera Shy · Portal · 11/15”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowFree": {
+      "label": "显示免费游戏、物品与点数",
+      "tip": "在应用日志中显示免费游戏和物品、礼物、Steam 点数和促销活动 - 例如“领取了 2 个免费游戏”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowAnswers": {
+      "label": "显示命令的回复",
+      "tip": "在应用日志中显示稍后才到的命令回复，以及来自 Telegram 和 Discord 的命令。在窗口中输入的内容总会在那里得到回复。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
+    "LogShowApp": {
+      "label": "显示更新与应用消息",
+      "tip": "在应用日志中显示 nocat.farm 自己的消息: 更新、仪表板、已保存的设置、备份、Discord 和 Telegram、每日总结 - 例如“10s 后更新”。 关闭: 这些行只写入日志文件。警告和错误总会显示。"
+    },
     "LogRetentionDays": {
       "label": "日志保留时长",
       "tip": "删除超过这么多天的日志文件。0 表示永久保留。"
@@ -3763,7 +4282,7 @@
       "tip": "等 Steam 回应多久后放弃并重新连接（秒）。"
     },
     "MaxConcurrentFarming": {
-      "label": "最多同时刷",
+      "label": "同时挂卡的账号数",
       "tip": "最多允许多少个账户同时刷集换式卡牌。0 表示不限。"
     },
     "LoginCooldownMinutes": {
@@ -3792,11 +4311,11 @@
       "tip": "上面那个代理的密码（如果需要的话）。"
     },
     "GlobalBlacklistedGames": {
-      "label": "永不碰这些（所有账户）",
+      "label": "永不玩这些游戏（所有账号）",
       "tip": "所有账户都绝不会刷或挂的游戏，填 AppID（商店链接里的数字）。每个账户仍可以在此之上再加自己的。"
     },
     "Rep4RepLearnCap": {
-      "label": "学习真实上限",
+      "label": "Steam 说已到上限时降低每日上限",
       "tip": "如果 Steam 在达到上面设定的数量之前就说这个账户到了每日评论上限，那就把它当成这个账户的上限（不会低于 5）。「评论太频繁」的拒绝是关于评论间隔的，永远不会改变上限。"
     },
     "Rep4RepRetryRefused": {
@@ -3805,11 +4324,11 @@
     },
     "SendOnFarmingFinished": {
       "label": "刷完后把物品寄出去",
-      "tip": "没有卡可刷时，把这个账户收集到的东西发给「你自己的账户」里的第一个账户。"
+      "tip": "没有卡可挂时，把这个账号收集的东西发给“物品发送到”里的账号。"
     },
     "SendEveryHours": {
       "label": "每隔多久寄出物品",
-      "tip": "每隔这么多小时，把这个账户的物品发给「你自己的账户」里的第一个账户，免得卡牌越积越多。第一次发送在开启后一个周期，面板上账户卡片会显示下一次的时间，每次发送都会记在日志里。0 表示关闭。"
+      "tip": "每隔这么多小时把这个账号的物品发给“物品发送到”里的账号，免得卡牌越堆越多。第一次发送在打开后一个周期，面板上的账号卡片会显示下一次的时间，每次发送都记在日志里。"
     },
     "SendItemTypes": {
       "label": "寄什么",
@@ -3817,16 +4336,16 @@
       "placeholder": "卡牌"
     },
     "TradeMasterToken": {
-      "label": "对方的交易链接令牌",
-      "tip": "另一个账户交易链接里的令牌，也就是 &token= 后面的部分。只有两个账户不是好友时才需要。"
+      "label": "接收账号交易链接的令牌",
+      "tip": "“物品发送到”那个账号交易链接里的令牌，即 &token= 后面的部分。只有两个账号不是好友时才需要。"
     },
     "ClearNotifications": {
-      "label": "清除 Steam 的通知",
-      "tip": "把 Steam 通知栏里的一切标为已读，比如评论、礼物和邀请，免得计数一直往上涨。"
+      "label": "清零 Steam 的通知计数",
+      "tip": "把 Steam 通知栏里的一切（评论、礼物、邀请）标为已读，并在每次掉卡时清掉绿色的新物品计数，免得计数一直往上涨。"
     },
     "AchievementIncludeMainGame": {
       "label": "主玩游戏也解锁",
-      "tip": "让「拟人模式」的主玩游戏像其他游戏一样获得成就。最好保持开启，因为几百小时却没有成就会显得奇怪。"
+      "tip": "让拟人模式的主游戏也像其他游戏一样获得成就。最好开着，因为几百小时却没有成就看起来很怪。"
     },
     "PluginsEnabled": {
       "label": "加载插件",
@@ -3837,7 +4356,7 @@
       "tip": "每天分几段刷卡，中间有休息，而不是一直刷。只有在没有别的游戏可挂的账户上才有明显区别。"
     },
     "FarmHoursPerDay": {
-      "label": "每天挂卡小时数",
+      "label": "每天挂卡时长",
       "tip": "各段刷卡时间每天加起来大约多少小时。每天都有变化，周末更长。只在开启「分场次挂卡，而不是一直挂」时使用。"
     },
     "MarketGapSeconds": {
@@ -3849,7 +4368,7 @@
       "tip": "一个价格沿用多少小时后才重新查询。便宜的物品查得更少。时间越长请求越少，但估值更新得越慢。"
     },
     "Rep4RepPauseHours": {
-      "label": "暂停评论（小时）",
+      "label": "暂停评论",
       "tip": "在所有账户上暂停 rep4rep 评论这么多小时，之后自动恢复。重启后倒计时照样继续。设为 0 表示不暂停。"
     },
     "DiscordPresence": {
@@ -3885,16 +4404,12 @@
       "tip": "在你的 Discord 卡片上，这个账号的 Steam 头像会显示在 nocat.farm 标志的角落，点击会打开它的 Steam 个人资料。任何账号都可以，人类模式的也行。留空则用显示的第一个账号。"
     },
     "AutoTradeWith": {
-      "label": "自动与这些账户交易",
-      "tip": "这个账户不问你就与谁交易、以及往哪个方向。账户名或 SteamID64，用逗号分隔，每个后面加 :from（接受对方寄来的）、:to（让对方拿走物品）或 :both - 默认是 :both。例如：farm1, farm2:to。留空 = 当「接受来自你自己账户的任何交易」开启时，与「你自己的账户」里的账户双向交易。捐赠由它自己的开关决定。其他一切都等你处理：在控制台或 Telegram 里用 trade accept 或 trade decline。"
+      "label": "你的其他账号",
+      "tip": "这个账号自动与之交易的你自己的账号，以及方向：这里的账号名或 Steam 个人资料编号（SteamID64），用逗号分隔，每个可加 :from（接受对方发来的）、:to（允许对方拿走物品）或 :both——默认 :both。例如：farm1, farm2:to。只填你自己的账号。留空：谁都不——每个报价都等你处理（在控制台或 Telegram 里 trade accept 或 trade decline）；赠送按它自己的开关。"
     },
     "NotifyTrades": {
       "label": "有交易报价时提示",
       "tip": "每来一个新的交易报价都会弹出提示 - 是谁发来的、你要给出和得到什么、nocat.farm 会怎么处理 - 报价被接受、拒绝或需要确认时也会提示。"
-    },
-    "WatchBans": {
-      "label": "留意封禁",
-      "tip": "每隔几小时查看一次这个账户的封禁 - VAC、游戏封禁、交易封禁、社区封禁 - 出现新的封禁时立刻告诉你（日志、弹窗、Discord/Telegram）。它只查看，绝不更改任何东西。发现账户被封禁的游戏会自动排除在交易之外；集换式卡牌照常交易。"
     },
     "TelegramLogColour": {
       "label": "日志中 Telegram 的颜色",
@@ -3913,15 +4428,15 @@
       "tip": "仅用于不在这台电脑上的反向代理，比如 Docker 前面的 Caddy：填它的地址或网段，比如 172.16.0.0/12。之后会相信它转发的访客地址，来自互联网的人会被当作互联网而不是家里。这台电脑上的代理不用填。其他情况留空。"
     },
     "BoostWeight": {
-      "label": "拟人模式：刷成就游戏的权重",
-      "tip": "仅限拟人模式。正在刷成就的游戏会加入它玩的游戏，这个值决定它出现的频率 - 和“游戏与频率”里的权重一样。它按正常时段玩，有休息和睡觉时间，绝不会打断别的游戏。"
+      "label": "被狩猎游戏出现的频率",
+      "tip": "正在刷成就的游戏会加入它玩的游戏，这个值决定它出现的频率 - 和“游戏与频率”里的权重一样。它按正常时段玩，有休息和睡觉时间，绝不会打断别的游戏。"
     },
     "AutoUpdateFromHour": {
-      "label": "...之间（开始）",
+      "label": "自行安装开始于",
       "tip": "允许自动安装的最早时间。"
     },
     "AutoUpdateUntilHour": {
-      "label": "...之间（结束）",
+      "label": "自行安装截止于",
       "tip": "当晚停止尝试的时间。比开始时间早就会跨过午夜，所以从深夜到清晨也可以。"
     },
     "AutoUpdateWaitHours": {
@@ -3930,7 +4445,7 @@
     },
     "UpdateCheckHours": {
       "label": "检查更新间隔",
-      "tip": "两次检查新版本之间的小时数。nocat.farm 启动时和你输入 update 时也会检查一次。"
+      "tip": "两次查找新版本之间的小时数。nocat.farm 启动时和你输入 update 时也会查找。选“不检查更新”时不使用。"
     },
     "DiscordBotToken": {
       "label": "Discord 机器人令牌",
@@ -3961,36 +4476,36 @@
       "tip": "和 Jellyfin 一样：请路由器把面板的端口转发到这台电脑（UPnP），这样用你的公网地址在任何地方都能打开 - Telegram 和 Discord 的 /dashboard 会给出链接。需要至少 12 个字符的面板密码，并在“监听地址”填 0.0.0.0。互联网上任何人都能到达登录页，输错五次密码会被锁一小时。关闭后会撤掉转发。 链接是未加密的普通 http，请用移动数据或可信的网络登录。"
     },
     "WebSignInCode": {
-      "label": "外部登录时的 Telegram 验证码",
+      "label": "从外部登录时要求 Telegram 验证码",
       "tip": "从家外登录需要密码，然后还要输入发到你 Telegram 的 6 位验证码，所以只有密码不够。在家里和这台电脑上只需要密码。需要先连接 Telegram（设置、通知）；连接之前，从外部登录也只需密码。"
     },
     "WebRemoteOffAfter": {
-      "label": "多少次后关闭「从任何地方打开」",
+      "label": "一天内登录失败这么多次后关闭“随处打开”",
       "tip": "一天内来自互联网的密码和验证码错误达到多少次后，「从任何地方打开」会自动关闭 - 并保持关闭，直到你重新打开（手机页面，或 anywhere on）。在那之前，互联网上的任何访问都进不来，包括手动设置的公网地址。0 表示永不自动关闭。"
     },
     "BoostGamesInRotation": {
-      "label": "轮换的游戏数",
+      "label": "同时狩猎的游戏数",
       "tip": "刷成就同时进行几个游戏。它在这些游戏之间轮流玩，某个休息或完成后，列表里的下一个补上。"
     },
     "BoostHoursPerDay": {
-      "label": "每天最多刷几小时",
+      "label": "每天最多狩猎",
       "tip": "每天花在正刷成就的游戏上的最长时间。拟人模式账户当天剩下的时间里这个游戏会移出它玩的游戏；否则当天停止刷成就。0 表示不限。"
     },
     "BoostSwitchFromPct": {
-      "label": "大约到这里换游戏",
-      "tip": "一个游戏的成就完成到大约这个比例（在这个值和下一个值之间，每个游戏随机不同）时，它会像玩够了的人一样换别的游戏。百分比。"
+      "label": "换游戏的最低进度",
+      "tip": "一个游戏的成就拿到大约这么多时（两者之间的随机点，每个游戏不同），就换到另一个游戏，像一个暂时玩腻了的人。"
     },
     "BoostSwitchToPct": {
-      "label": "...到",
-      "tip": "这个范围的上限。和上面填一样的数就是固定值。"
+      "label": "换游戏的最高进度",
+      "tip": "这个范围的上限。两个数一样就是固定值。"
     },
     "BoostRestDaysMin": {
-      "label": "多久后回到一个游戏",
-      "tip": "离开一个游戏后隔几天再回来玩——在这个值和下一个值之间随机。每次回来都会多推进一点，最多到“最多完成”。"
+      "label": "至少隔多久回到一个游戏",
+      "tip": "回到离开过的游戏前隔几天——两者之间的随机数。每次回来都会多推进一点，最多到“一个游戏最多完成”。"
     },
     "BoostRestDaysMax": {
-      "label": "...到",
-      "tip": "这个范围的上限，单位是天。"
+      "label": "最多隔多久回到一个游戏",
+      "tip": "回到一个游戏前最多隔几天。"
     },
     "AchievementRealLength": {
       "label": "按游戏真实时长控制节奏",
@@ -4002,12 +4517,12 @@
       "choices": "3 nocat.farm 上的 Steam 账户数 | 0 今日卡牌 | 1 过去一周的小时数 | 2 过去一个月的小时数"
     },
     "SendAroundHour": {
-      "label": "...大约在",
+      "label": "发送物品的大致时间",
       "tip": "每天发送的钟点，比如清晨。在那个小时里的随机一分钟、在「每隔多久发送物品」允许的日子发出。不定时：从开启时起每隔这么多小时。"
     },
     "IdleWholeLibrary": {
       "label": "挂我的整个游戏库",
-      "tip": "在“挂时长的游戏”之后，挂这个账号拥有的每一个游戏。会跳过“永不碰这些”里的游戏、家庭共享的游戏（除非打开了“包含家庭共享的游戏”），以及“保护退款”正在保留的游戏。Steam 一次最多挂 32 个，所以打开“轮换挂机列表”，让每个游戏都轮得到。"
+      "tip": "在“挂时长的游戏”之后，挂这个账号拥有的每一个游戏。会跳过“永不玩这些游戏”里的游戏、家庭共享的游戏（除非打开了“包含家庭共享的游戏”），以及“保护退款”正在保留的游戏。Steam 一次最多挂 32 个，所以打开“轮换挂机列表”，让每个游戏都轮得到。"
     },
     "RotateIdleGames": {
       "label": "轮换挂机列表",
@@ -4036,8 +4551,8 @@
       "tip": "刚进入游戏库的游戏（购买、赠送或免费）会在 3 到 10 天里多得几个时段，并逐日减少，就像在尝试新东西。黑名单或家庭共享的游戏，以及你其他账号正在运行的游戏都不会碰；“保护退款”正在保留的游戏会等保留结束。"
     },
     "LongerRhythms": {
-      "label": "安静期和晚睡夜",
-      "tip": "每月一两次，它会有 2 到 5 天的安静期，每天明显更短；偶尔周五或周六晚上会比平时玩得更晚。休息日和时长设置照样生效。human week 可以看到。"
+      "label": "偶尔清闲一阵",
+      "tip": "每月一两次，会有 2 到 5 天的清闲期，每天明显短一些。休息日和时长设置照样生效。周五周六的晚睡归“周五/六晚睡”管。`human week` 命令能看到这些。"
     },
     "JoinFriends": {
       "label": "有时玩朋友在玩的游戏",
@@ -4065,8 +4580,8 @@
       "tip": "每周报告到来的小时，按本地时间。"
     },
     "OfflineIdleTopGames": {
-      "label": "...没选的话，挂玩得最多的几个",
-      "tip": "「夜间挂的游戏」为空时，夜里就挂这个账号玩得最多的这几个游戏。1 到 2 个看起来最自然——一次挂很多个是 selfcheck 最先指出的问题。"
+      "label": "夜间挂机的常玩游戏数",
+      "tip": "“夜间挂机的游戏”为空时，夜里挂这个账号最常玩的这么多个游戏。1 或 2 个最自然——一次挂很多是 `selfcheck` 命令首先会警告的。"
     },
     "ClaimFree": {
       "label": "领取免费游戏",
@@ -4075,12 +4590,12 @@
     },
     "UpdateMode": {
       "label": "更新",
-      "tip": "有新版本时怎么做。总会先在日志、Telegram 和 Discord 里告诉你。我点击后，等大家都睡了再安装：点更新按钮或 update accept 后，等账号都睡了（没有醒着的人类模式账号、没人在玩、没有待处理的交易或礼物）再安装。我点击后安装：马上安装。夜里自动安装：在下面的时间段里找安静的时候自动安装，并在前后告诉你。update now 总是马上安装。Docker 或 Linux 服务里不适用，需要手动更新。",
-      "choices": "0 我点击后，等大家都睡了再安装 | 1 我点击后安装 | 2 夜里自动安装"
+      "tip": "有新版本时怎么做。问我：它会告诉你（日志、Telegram 和 Discord），用更新按钮或 'update accept' 安装——等你的账号都睡了（没有醒着的拟人模式账号、没人在玩、没有待处理的交易或礼物），或者立刻。夜里自动安装：在下面的时段里挑安静的时候自己安装，前后都会告诉你。不检查更新：从不检查；'update' 仍会检查。Docker 和 Linux 服务不适用，它们需手动更新。",
+      "choices": "0 问我；等账号睡了再安装 | 1 问我；立即安装 | 2 夜里自动安装 | 3 不检查更新"
     },
     "CountMeAsUser": {
       "label": "把我算作用户",
-      "tip": "每小时告诉 nocat.lol 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。"
+      "tip": "每小时告诉 nocat.lol 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。 开启“与其他 nocat.farm 用户分享最便宜的卡组”时，还会在单独的消息中发送找到的卡组的市场价格（见该设置）。"
     },
     "ShareFarmTotals": {
       "label": "分享我的挂卡总数",
@@ -4101,11 +4616,7 @@
     },
     "HealthAlertBans": {
       "label": "出现新封禁时提醒",
-      "tip": "出现封禁时告诉你 - 例如 VAC 封禁、游戏封禁、交易或社区封禁。当“留意封禁”开启时，那边已经会告诉你，所以这里保持安静，避免重复提醒。关闭：这里不发封禁消息。"
-    },
-    "HealthAlertDiscord": {
-      "label": "在 Discord 上提醒健康问题",
-      "tip": "账户有什么变差时，往你的 Discord 频道发一条消息。例如，市场被禁用 7 天，会发一条消息。开启：每次变差都会发送。关闭：一条都不发到 Discord - 健康状态行仍会显示。需要先在「通知」里设置 Discord Webhook。"
+      "tip": "出现新的封禁（VAC、游戏、交易或社区封禁）时告诉你。例如某个游戏出现新的游戏封禁：你会收到一条消息，只发一次。无论如何每隔几小时都会看一次封禁：被封的游戏不参与这个账号的交易，账号卡片也会显示。关闭：新封禁只写进日志。"
     },
     "HealthAlertGuard": {
       "label": "Steam 令牌 变弱时提醒",
@@ -4113,7 +4624,7 @@
     },
     "HealthAlertLimited": {
       "label": "账户受限时提醒",
-      "tip": "Steam 开始把这个账户当作受限账户时告诉你：不能发好友邀请，不能用市场。例如，从未消费满 5 美元的账户就是受限账户。关闭：只在健康状态行显示。"
+      "tip": "Steam 开始把这个账号当作受限账户时告诉你：不能发好友邀请、不能用市场。例如从未花过相当于 5 美元的账号就是受限的。关闭：只有健康状况那一行会显示。"
     },
     "HealthAlertMarket": {
       "label": "市场不可用时提醒",
@@ -4123,37 +4634,17 @@
       "label": "手机号被移除时提醒",
       "tip": "账户上不再绑定手机号时告诉你 - 例如在 Steam 网站上被移除之后。关闭：只在健康状态行显示。"
     },
-    "HealthAlertPopup": {
-      "label": "用弹窗提醒健康问题",
-      "tip": "账户有什么变差时，在这台电脑上显示弹窗。例如，Steam 令牌 从手机应用变成邮件，会弹出一个窗口。开启：每次一个弹窗，前提是“显示气泡提示”已开启。关闭：没有弹窗 - 健康状态行仍会显示。"
-    },
-    "HealthAlertTelegram": {
-      "label": "在 Telegram 上提醒健康问题",
-      "tip": "账户有什么变差时，往你的 Telegram 聊天发一条消息。例如，某个账户开始 15 天的交易暂挂，会发一条消息。开启：每次变差都会发送。关闭：一条都不发到 Telegram - 账户的健康状态行仍会显示。需要先在「通知」里设置 Telegram。"
-    },
     "HealthAlertTradeHold": {
       "label": "出现交易暂挂时提醒",
       "tip": "这个账户的交易开始被暂挂好几天时告诉你 - 例如 Steam 令牌 变更后的 15 天。关闭：只在健康状态行显示。"
     },
     "HealthMaxHours": {
-      "label": "...最长（小时）",
+      "label": "健康检查最长间隔",
       "tip": "两次健康检查之间最长的间隔，单位为小时 - 例如 7。最短设为 5 时，每 5 到 7 小时随机检查一次。"
     },
     "HealthMinHours": {
-      "label": "两次健康检查之间最短等待（小时）",
+      "label": "健康检查最短间隔",
       "tip": "两次健康检查之间最短的间隔，单位为小时 - 例如 5。最长设为 7 时，每 5 到 7 小时随机检查一次。账户登录时总会检查一次。"
-    },
-    "ScamAlertDiscord": {
-      "label": "在 Discord 上发诈骗警告",
-      "tip": "把防诈骗监视的警告发到你的 Discord 频道。例如，某个账户上出现新的 API 密钥，会发一条消息，写明账户。开启：每条警告都发过去。关闭：一条都不发到 Discord - 日志和仪表盘仍会显示。需要先在「通知」里设置 Discord Webhook。"
-    },
-    "ScamAlertPopup": {
-      "label": "用弹窗显示诈骗警告",
-      "tip": "每条防诈骗监视警告都在这台电脑上显示弹窗。例如，某个账户的邮箱变了，会弹出一个写明账户的窗口。开启：每条警告一个弹窗，前提是“显示气泡提示”已开启。关闭：没有弹窗 - 日志和仪表盘仍会显示。"
-    },
-    "ScamAlertTelegram": {
-      "label": "在 Telegram 上发诈骗警告",
-      "tip": "把防诈骗监视的警告发到你的 Telegram 聊天。例如，某个账户上有新设备登录，会发一条消息，写明账户和设备。开启：每条警告都发过去。关闭：一条都不发到 Telegram - 日志和仪表盘仍会显示。需要先在「通知」里设置 Telegram。"
     },
     "ScamWatchApiKey": {
       "label": "检查 API 密钥",
@@ -4172,11 +4663,11 @@
       "tip": "查看账户的已授权设备列表，对新出现的、既不是你的也不是 nocat.farm 自己的设备发出警告 - 例如一个你从没见过的“DESKTOP-8XQ2”。关闭：不检查设备。"
     },
     "ScamWatchMaxMinutes": {
-      "label": "...最长（分钟）",
+      "label": "诈骗检查最长间隔",
       "tip": "两次检查之间最长的间隔，单位为分钟 - 例如 60。最短设为 30 时，每次等待是随机的 30 到 60 分钟。"
     },
     "ScamWatchMinMinutes": {
-      "label": "两次检查之间最短等待（分钟）",
+      "label": "诈骗检查最短间隔",
       "tip": "两次检查之间最短的间隔，单位为分钟 - 例如 30。最长设为 60 时，每次等待是随机的 30 到 60 分钟。每次检查只是打开几个页面，跟在浏览器里打开一样。"
     },
     "ScamWatchRevokeKey": {
@@ -4204,7 +4695,7 @@
       "tip": "在账户卡片上显示一行健康状态 - 等级、封禁、交易暂挂、市场使用、受限账户、Steam 令牌 和手机 - 一旦有什么变差就立刻告诉你。例如，交易暂挂开始时你会收到一条消息，这一行也会显示出来。登录时以及每隔几小时检查一次；它只查看。关闭：没有健康状态行，也没有提醒。"
     },
     "PointsWeeklyCap": {
-      "label": "每周最多花费",
+      "label": "每周最多点数",
       "tip": "任意 7 天内最多花多少点。例如 3000：每周最多 3 个徽章等级，不管有多少点。0 表示什么都不花。"
     },
     "PointsBadgeMaxLevel": {
@@ -4228,20 +4719,36 @@
       "tip": "永远不花的点数，给你留一些。例如设为 1000、有 4,500 点：它最多花 3,500 点，也就是每级 1,000 点的 3 个徽章等级。0 表示可以全部花掉。"
     },
     "PointsCheckEveryHours": {
-      "label": "查看间隔（小时）",
+      "label": "查看点数的间隔",
       "tip": "多久查看一次点数和商店，单位为小时 - 例如 12，每天两次。拟人模式账户只在它的一天内查看。"
+    },
+    "BuyCards": {
+      "label": "购买缺少的卡牌",
+      "tip": "以市场最低价购买徽章升到下一级还缺的卡牌，让它能合成 - 先买最便宜的等级，而且只买整套。例如 5 张里已有 4 张，就花约 0.05 到 0.15 买第 5 张。会花此账户的 Steam 钱包。每个账户默认关闭。打开时会先显示要买什么、花多少，并请你确认；关闭会立即停止。需要打开“用卡牌合成徽章”。"
+    },
+    "BuyFullSets": {
+      "label": "购买最便宜的整套",
+      "tip": "也会为一张卡牌都没有的游戏购买整套卡牌，从最便宜的开始，每套是一个徽章等级（100 XP）。如果某张卡牌在市场上少于 2 张，或者一张特别便宜的卡牌让整套看起来比实际便宜，就跳过那套。关闭：只买已开始的徽章的卡牌。"
+    },
+    "BuyDailyLimit": {
+      "label": "每天最多花费",
+      "tip": "任意 24 小时内最多花多少，按此账户 Steam 钱包的货币计算。例如 1.50：一套 0.60 加一套 0.70 就用满当天，下一套等到明天。绝不会花超过钱包余额。 初始的 1.50 适合美元或欧元；日元用约 225。"
+    },
+    "BuyWeeklyLimit": {
+      "label": "每周最多花费",
+      "tip": "任意 7 天内最多花多少，按此账户 Steam 钱包的货币计算。例如每天 1.50、每周 8.00：每周大约能买满 5 天。0 表示什么都不买。 初始的 8.00 适合美元或欧元；日元用约 1200。"
+    },
+    "BuyCheckHours": {
+      "label": "查找要买的卡的间隔",
+      "tip": "多久查看一次要买的卡牌，单位是小时 - 例如 12，每天两次。拟人模式的账户只在它的一天内查看，每次买一套。"
     },
     "PointsBuySeasonalBadge": {
       "label": "购买季节徽章等级",
       "tip": "允许它购买点数商店当前在卖的徽章的等级，例如夏季收藏 - 每次 Steam 大型特卖都会出一个新的。开启：升级这个徽章。关闭：不买。"
     },
     "BackupRetryMinutes": {
-      "label": "多久后重试（分钟）",
+      "label": "多久后重试",
       "tip": "备份失败后，当天等多久再试。例如 60：凌晨 4 点失败的备份会在 5 点再试。0 表示等到明天。"
-    },
-    "SendBackups": {
-      "label": "发送备份",
-      "tip": "备份失败时发一条消息，并说明原因 - 例如文件夹不在。如果“通知时机”设为每次备份后，每保存一份备份也会发一条。"
     },
     "BackupFolder": {
       "label": "备份保存位置",
@@ -4271,11 +4778,6 @@
       "label": "包含账户和保存的登录",
       "tip": "把每个账户的设置、保存的 Steam 登录和进度（拟人模式的一天、刷成就、rep4rep 计数）放进备份。例如，3 个账户恢复后直接就能登录。关闭：恢复时不带回任何账户。"
     },
-    "BackupNotify": {
-      "label": "通知时机",
-      "tip": "在 Telegram 和 Discord 上什么时候收到备份消息。只在备份失败时：只有备份没能完成才发消息 - 例如文件夹不在、磁盘已满或没有权限。每次备份后：每保存一份备份也发一条。需要在“通知”里打开“发送备份”。",
-      "choices": "0 只在备份失败时 | 1 每次备份后"
-    },
     "PhoneInstallHint": {
       "label": "显示如何装到手机上",
       "tip": "在手机页面上显示一段简短说明，教你把仪表盘放到手机主屏幕上，让它像应用一样打开 - 例如在 Chrome 中：打开菜单，然后选“添加到主屏幕”。开启：显示说明。关闭：隐藏，适合已经装到手机上的情况。"
@@ -4285,7 +4787,7 @@
       "tip": "每天在备份时间上随机加几分钟，最多这么多。例如“备份时间”为凌晨 4 点、这里设 30：在 4:00 到 4:30 之间的某个时刻。0 表示准点运行。"
     },
     "BackupKeep": {
-      "label": "保留最近（份备份）",
+      "label": "保留最近",
       "tip": "文件夹里保留多少份每日备份。例如 7 就保留一周：第 8 份备份会删掉最旧的那份。只会删除它自己的备份文件。"
     },
     "BackupAuto": {
@@ -4305,16 +4807,12 @@
       "tip": "当你的 Steam 家庭里有人正在用某位成员的副本玩一款共享游戏，而另一位成员也拥有它时，就改用那份空闲副本继续，而不是把这款游戏排除。例如，两位成员都有 Stardew Valley，其中一位正在玩：它就借用另一份副本。只改动这一款游戏“向谁借用”，绝不会拿走别人正在用的副本。关闭：等副本空出来再玩这款游戏。仅适用于家庭共享的游戏（“包含家庭共享的游戏”）。"
     },
     "FamilyWaitMinutes": {
-      "label": "家庭成员停下后等待（分钟）",
+      "label": "家人停止游玩后等待",
       "tip": "你的 Steam 家庭里有人停止游玩一款共享游戏后，这款游戏先不动的分钟数，例如 20 —— 他们常常会再开。0 表示立刻使用。"
     },
     "SpareKeepGems": {
-      "label": "至少保留这么多散装宝石",
+      "label": "永不打包、发送或出售的宝石",
       "tip": "永远不装袋、不发送、不出售的宝石。例如设为 500、有 2,450 个宝石：可以动 1,950 个，于是装成 1 袋，1,450 个保持散装。0 表示每满 1000 个都装袋。"
-    },
-    "SpareKeepBackgrounds": {
-      "label": "每种背景保留数量",
-      "tip": "每种背景始终保留的份数。例如 1：3 份中可以动 2 份。0 表示一份都不留，最后一份也可以动。"
     },
     "SpareGems": {
       "label": "之后的宝石",
@@ -4322,7 +4820,7 @@
       "choices": "0 自动 | 1 保持散装（补充包会用） | 2 装成 1000 个一袋并保持可交易 | 3 把宝石袋发到我的另一个账户 | 4 出售宝石袋"
     },
     "SpareGapSeconds": {
-      "label": "物品之间的等待（秒）",
+      "label": "物品之间的等待",
       "tip": "机器人账户上一次查看中两件物品之间的等待 - 每次都会变化。例如 40：5 件物品大约需要 3 分钟。拟人模式账户改用“物品之间的等待，拟人模式”。"
     },
     "SparePerRun": {
@@ -4334,12 +4832,8 @@
       "tip": "库存里显示的完整物品名称，用逗号分隔，例如 Sans, Gordon Freeman (Foil)。一个名字会在所有游戏里保留这件物品。这些总是保留。留空：不按名字保留任何东西。"
     },
     "BoosterCheckHours": {
-      "label": "查看补充包间隔（小时）",
+      "label": "检查卡包的间隔",
       "tip": "两次查看补充包之间的小时数 - 每次会略有变化。例如 24：大约每天一次。"
-    },
-    "SpareKeepEmoticons": {
-      "label": "每种表情保留数量",
-      "tip": "每种表情始终保留的份数。例如 1：3 份中可以动 2 份。0 表示一份都不留，最后一份也可以动。"
     },
     "BoosterUnopened": {
       "label": "不打开的补充包",
@@ -4351,15 +4845,15 @@
       "tip": "把个人资料背景的多余副本算作多余。例如，3 份、保留 1：2 份是多余的。关闭：背景保留。"
     },
     "SparePriceMaxAgeHours": {
-      "label": "价格有效时长（小时）",
+      "label": "价格的有效期",
       "tip": "市场价格多久之内算新鲜。例如 24：昨天早上读到的价格到今天早上就过时了，那件物品会保留到重新定价为止。价格未知的物品总是保留。"
     },
     "BoosterSendTo": {
       "label": "未打开补充包发往",
-      "tip": "你在这里的另一个账户的名字，例如 main - 补充包会通过交易发给它。没有添加验证器时，发送需要在手机上确认。"
+      "tip": "这里另一个账号的名称，例如 main——补充包会通过交易发给它。留空：用“物品发送到”（交易）里的账号。没有添加验证器时，发送需要在手机上确认。"
     },
     "SpareRunHours": {
-      "label": "查看间隔（小时）",
+      "label": "检查多余物品的间隔",
       "tip": "两次查看多余物品之间的小时数 - 每次会略有变化。例如 12：大约每天两次。拟人模式账户只在它的一天内查看。"
     },
     "SpareKeepGames": {
@@ -4368,32 +4862,32 @@
     },
     "SpareSellPrice": {
       "label": "出售价格",
-      "tip": "任何东西的上架价格——上架前会用此账户自己的 Steam 钱包货币重新定价。例如，一件物品今天以 0.30 成交了几次，另有一个 0.10 的抛售挂单：“比真实价格低一分”上架价为 0.29，“与最低价相同”为 0.10，“成交中位价”为 0.30。“比真实价格低一分”（安全的默认值）：过去一天的成交价，或最低挂单价（如果更高）——忽略单个远低于市价的抛售挂单。最近没有成交或没人在卖：保留。其他选项：与最低价相同，或中位价（绝不低于最低价）。",
-      "choices": "0 比真实价格低一分 | 1 与最低价相同 | 2 成交中位价"
+      "tip": "任何东西的上架价格——上架前会用此账户自己的 Steam 钱包货币重新定价。例如，一件物品今天以 0.30 成交了几次，另有一个 0.10 的抛售挂单：“比真实价格低一分”上架价为 0.29，“与最低价相同”为 0.10，“成交中位价”为 0.30。“比真实价格低一分”（安全的默认值）：过去一天的成交价，或最低挂单价（如果更高）——忽略单个远低于市价的抛售挂单。最近没有成交或没人在卖：保留。“比最低价低一分”让你的挂单成为最低价，从而最先卖出：最低价 0.12 → 以 0.11 上架。它同样忽略抛售挂单（上面那个 0.10：以 0.29 上架），当你自己的挂单已是最低价时不会再压低，也绝不低于“重新上架最低价（占近期成交价）”，或低到到手少于“仅当到手至少为此金额时出售”。 其他选项：与最低价相同，或中位价（绝不低于最低价）。",
+      "choices": "0 比真实价格低一分 | 1 与最低价相同 | 2 成交中位价 | 3 比最低价低一分"
     },
     "SpareRelistDays": {
-      "label": "未售出的挂单撤下前（天）",
-      "tip": "未售出的挂单多少天后撤下，并以稍低的价格重新上架。例如 7：1 号以 0.30 上架的卡，到 8 号还没卖出，就以 0.29 重新上架 —— 如果别人在卖 0.26，就以 0.25 上架（抛售挂单不算）。绝不低于“最低不低于”；到了那个价格就一直挂着。只处理 nocat.farm 自己上架的挂单。你自己上架的绝不会动。"
+      "label": "多久后撤下未售出的挂单",
+      "tip": "未售出的挂单多少天后撤下，并以稍低的价格重新上架。例如 7：1 号以 0.30 上架的卡，到 8 号还没卖出，就以 0.29 重新上架 —— 如果别人在卖 0.26，就以 0.25 上架（抛售挂单不算）。绝不低于“重新上架最低价（占近期成交价）”；到了那个价格就一直挂着。只处理 nocat.farm 自己上架的挂单。你自己上架的绝不会动。"
     },
     "SpareMaxPrice": {
       "label": "价值超过此数的物品绝不动",
-      "tip": "价值更高的东西绝不动：不转成宝石，也不出售。以这个账户自己的 Steam 钱包货币计算，例如美元或欧元填 0.25 - 用你自己货币中的等值金额，例如日元填 40。价值取最低挂单价和过去一天成交价中较高的那个：挂单 0.20 但成交价 0.30，价值就是 0.30。"
+      "tip": "价值更高的东西永远不碰：不换宝石，也不出售。用这个账号的 Steam 钱包货币：美元或欧元用 0.25 合适，日元用约 40。价值取最低挂单价和最近一天成交价中较高的那个：挂 0.20 但成交 0.30，就算 0.30。 按你的选择，有两样可以超过它：为徽章等级出售的卡牌（“钱能买到更多等级时，卖掉整套而不是合成”）和为出售而制作的补充包里的卡牌。保留列表里的游戏无论价值多少都绝不会动。"
     },
     "SpareGemMarginPct": {
-      "label": "宝石必须比出售多出（%）",
-      "tip": "宝石的价值必须比出售高出多少，物品才会分解成宝石，单位为百分比。例如 20：如果出售扣除 Steam 手续费后你能拿到 0.10，宝石价值 0.12 或更高就分解成宝石；价值 0.11 就出售。只适用于“宝石和出售两者取优”。"
+      "label": "宝石须比出售高出",
+      "tip": "已不再使用。从 1.8.2 起，只有出售（扣除 Steam 手续费后）比它的宝石至少多拿 0.01 时物品才会出售，否则变成宝石——例如出售能拿到 0.10：宝石值 0.09 或更少就出售；值更多就变宝石。这条规则自己决定，所以宝石永远不会让你亏钱。保留它是为了让旧的设置文件还能加载。"
     },
     "SpareMaxedBadgeCards": {
       "label": "已完成徽章的卡牌",
-      "tip": "把徽章已经完成的游戏的卡牌算作多余 - 5 级，或已合成闪亮徽章 - 但会保留“每种卡牌保留数量”设定的份数。例如，一张卡有 3 份、保留 1：2 份是多余的。关闭：已完成徽章的卡牌保留。"
+      "tip": "把徽章已经完成的游戏的卡牌算作多余 - 5 级，或已合成闪亮徽章 - 但会保留“每种物品保留数量”设定的份数。例如，一张卡有 3 份、保留 1：2 份是多余的。关闭：已完成徽章的卡牌保留。"
     },
     "SpareNewDays": {
-      "label": "新物品不动的时长（天）",
+      "label": "新物品先不动",
       "tip": "物品到手后不动的天数。例如 7：周一掉落的卡，从下周一起才能动。nocat.farm 从它第一次看到这件物品时开始计算。它第一次查看时库存里已有的东西都算旧的，可以马上处理 —— 只有之后进来的物品才要等。0 表示关闭这条规则。"
     },
     "SpareGemsSendTo": {
       "label": "宝石袋发往",
-      "tip": "你在这里的另一个账户的名字，例如 main - 宝石袋会通过交易发给它。只在“之后的宝石”设为发送宝石袋时使用。没有添加验证器时，发送需要在手机上确认。"
+      "tip": "这里另一个账号的名称，例如 main——宝石袋会通过交易发给它。留空：用“物品发送到”（交易）里的账号。没有添加验证器时，发送需要在手机上确认。"
     },
     "OpenBoosterPacks": {
       "label": "打开补充包",
@@ -4402,7 +4896,7 @@
     },
     "SpareAction": {
       "label": "多余物品怎么处理",
-      "tip": "“宝石和出售两者取优”在宝石比出售更值钱（超过下面的差额）时分解成宝石，否则出售 - 例如价值 0.05 的宝石胜过只能让你拿到 0.02 的出售。只分解成宝石：从不出售。只出售：从不分解成宝石。全部保留：只报告哪些是多余的，什么都不改变。",
+      "tip": "“宝石或出售取其优”只有在出售（扣除 Steam 手续费后）比它的宝石至少多拿 0.01 时才出售物品，否则把它变成宝石——所以宝石永远不会让你亏钱，也不会做那些每笔都要手机确认的极小交易。例如出售能拿到 0.07：宝石值 0.06 或更少就出售；值更多就变成宝石。只要宝石：从不出售，出售能比宝石至少多拿 0.01 的物品会保留。只出售：从不做宝石。全部保留：只报告多余的东西，什么都不改。",
       "choices": "0 宝石和出售两者取优 | 1 只分解成宝石 | 2 只出售 | 3 全部保留（只报告）"
     },
     "SpareEmoticons": {
@@ -4419,7 +4913,7 @@
     },
     "SpareDailyValue": {
       "label": "每天最多价值",
-      "tip": "一天内处理的物品加起来最多值多少，以这个账户自己的 Steam 钱包货币计算。例如 1.00：十件 0.10 的物品就用满当天额度，第 11 件等到明天。美元或欧元例如填 1.00 - 用你自己货币中的等值金额，例如日元填 150。"
+      "tip": "一天的物品合起来最多值多少，用这个账号的 Steam 钱包货币：美元或欧元用 1.00 合适，日元用约 150。例如 1.00：10 个 0.10 的物品就满一天，第 11 个等明天。"
     },
     "SpareDailyItems": {
       "label": "每天最多物品数",
@@ -4430,7 +4924,7 @@
       "tip": "让闪亮卡也可以算作多余 - 例如闪亮徽章已合成的闪亮卡的第 2 份。关闭（默认）：闪亮卡总是保留，因为它们更稀有，通常也更值钱。"
     },
     "BoosterOpenNewDays": {
-      "label": "新补充包不动的时长（天）",
+      "label": "新卡包先不开",
       "tip": "补充包到手后保持不开的天数。例如 7：周一到的补充包从下周一起才打开。0 表示立刻打开。nocat.farm 自己制作的补充包不受此限制——会在下一次机会时打开。"
     },
     "SpareExtraCards": {
@@ -4442,12 +4936,12 @@
       "tip": "“多余物品”或补充包每查看一次只发一条消息：转成宝石或上架了多少物品、打开了多少补充包，并列出前 10 个的名字——例如 14 件物品只发一条，而不是 14 条。关闭：这些都不发送。"
     },
     "SpareKeepCopies": {
-      "label": "每种卡牌保留数量",
-      "tip": "每种卡牌始终保留的份数，即使徽章已完成。例如 1：3 份中可以动 2 份。0 表示一份都不留，最后一份也可以动。徽章还需要的卡牌总是保留。"
+      "label": "每种物品保留数量",
+      "tip": "每种卡牌、背景和表情始终保留的份数，即使徽章已完成。例如 1：3 份中可以动 2 份。0 表示一份都不留，最后一份也可以动。徽章还需要的卡牌总是保留。"
     },
     "SpareDumpPct": {
-      "label": "最低挂单比成交价低这么多时保留物品（%）",
-      "tip": "当一件物品的最低挂单价比它的成交价低这么多，而且只有一笔成交支撑这个价格时 - 两个价格互相矛盾 - 就保留它而不上架。例如 50：只以 0.30 成交过一次，最低挂单 0.12（低 60%）：保留。有两笔或更多成交时，会以比成交价低一分的价格上架。0 表示只有一笔成交也上架。只适用于“比真实价格低一分”。"
+      "label": "忽略低于近期成交价这么多的挂单",
+      "tip": "最低挂单价比物品过去一天的成交价低多少才算抛售。例如 50：以 0.30 成交，0.12 的最低挂单（低 60%）就是抛售。“比真实价格低一分”在只有一笔成交支撑这个价格时保留物品——两个价格互相矛盾；有两笔或更多成交时，以比成交价低一分的 0.29 上架。“比最低价低一分”会忽略抛售挂单，同样以 0.29 上架。0：没有挂单算作抛售。"
     },
     "BoosterMake": {
       "label": "制作补充包",
@@ -4455,19 +4949,19 @@
       "choices": "0 关闭 | 1 我选的游戏 | 2 自动 - 最近的徽章"
     },
     "BoosterKeepGems": {
-      "label": "至少保留这么多宝石",
+      "label": "补充包永不动用的宝石",
       "tip": "制作补充包时账户宝石绝不低于的数量。只有宝石够付补充包价格再加上这个数时才会制作。例如 1000、有 1,500 个宝石：做一个 400 的补充包，剩 1,100 个，下一个要等宝石变多。0 表示可以全部用掉。"
     },
     "SpareRelistFloorPct": {
-      "label": "最低不低于（真实成交价的 %）",
+      "label": "重新上架最低价（占近期成交价）",
       "tip": "未售出挂单降价的下限，按该物品过去一天成交价的百分比计。例如 80：成交价 0.30 的卡绝不会低于 0.24 —— 到了这个价格就一直挂着，不再重新上架。最近没有成交就完全不降价。"
     },
     "SpareHumanGapMinMinutes": {
-      "label": "物品之间的等待，拟人模式（分钟）",
+      "label": "物品之间最短等待，拟人模式",
       "tip": "拟人模式账户上两件物品之间最短的等待分钟数。每次等待在这个值和下面的最长值之间随机选取。例如 3 和 20：处理完一件后，等 3 到 20 分钟再处理下一件。"
     },
     "SpareDeclinedDays": {
-      "label": "在手机上拒绝挂单后，多少天后再试（天）",
+      "label": "拒绝上架后等待",
       "tip": "你在 Steam 应用里拒绝某个挂单后，这件物品要等多久。例如 30：你在 1 号拒绝了一张卡的挂单，这张卡（它的每一份）要到 31 号才会再上架。还没上架就被撤下的挂单也算被拒绝，无法确定的也一样。0 表示永不再上架。"
     },
     "SpareHumanPerLook": {
@@ -4476,15 +4970,97 @@
     },
     "SpareMinSale": {
       "label": "仅当到手至少为此金额时出售",
-      "tip": "扣除 Steam 手续费后一笔出售至少要让你到手的金额，按此账户自己的 Steam 钱包货币计。例如 0.05：到手只有 0.03 的卡，若分解成宝石有价值就分解，否则保留。例如美元或欧元填 0.05——用你自己货币的同等金额，例如日元填 5。0 表示什么都卖。"
+      "tip": "扣除 Steam 手续费后一笔出售至少要到手多少，用这个账号的 Steam 钱包货币：美元或欧元用 0.05 合适，日元用约 5。例如 0.05：一张到手 0.03 的卡，若它的宝石价值高于 0.02 就换成宝石，不换宝石就留着。物品绝不会换成价值低于“售价减 0.01”的宝石：宝石价值 0.02 或更低时，那张卡照样以 0.03 卖出。选“只出售”时留着。0 表示什么都卖。"
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "……最长（分钟）",
+      "label": "物品之间最长等待，拟人模式",
       "tip": "拟人模式账户上两件物品之间最长的等待分钟数。例如 20，最短为 3：每次等待在 3 到 20 分钟之间，所以 3 件物品最多大约需要 40 分钟。"
     },
     "CraftFoilBadges": {
       "label": "也合成闪亮徽章",
       "tip": "也把集齐的闪亮卡牌合成闪亮徽章。关闭时只合成普通徽章，闪亮卡牌不动。Steam 拒绝闪亮徽章时，只有闪亮徽章等待 —— 普通徽章继续。"
+    },
+    "SellSetsForLevels": {
+      "label": "钱能买到更多等级时，卖掉整套而不是合成",
+      "tip": "只在“购买缺少的卡牌”打开时才起作用。合成普通徽章之前，它会看这套卡扣除 Steam 手续费后在市场上能卖多少。如果这笔钱能买到的徽章等级明显多于合成得到的 1 级，就改为把这套卡上架出售，并由购买卡牌在其限额内花掉这笔钱。例如，最便宜的等级每级约 0.40 时，一套能卖 5.00 的卡约可买 12 级，而不是 1 级。每个上架都和其他上架一样在 Steam 应用中确认。闪亮卡组和闪亮卡牌也同样比较：闪亮徽章只有 1 级。 为徽章留着的卡牌，如果卖掉比它们能升的等级更值，也会卖掉：卖约 5.70 的 7 张卡牌，按每级 0.40 能买约 14 级，而留着只能升 1 到 2 级。卖出期间不会为该游戏购买卡牌或制作补充包。 这些出售可以超过 “价值超过此数的物品绝不动” - 那个上限是给多余物品用的。保留列表里的游戏绝不会动。"
+    },
+    "CardSwaps": {
+      "label": "与其他 nocat.farm 用户交换多余的卡牌",
+      "tip": "在同一游戏内与其他 nocat.farm 用户一换一交换多余的普通集换式卡牌，让双方都更快集齐卡套。nocat.lol 负责配对账户；此账户在每次交换前会再检查一遍。它绝不交出你的卡套需要的卡或某张卡的最后一张，绝不交换闪亮卡牌、背景或表情，也不动你「绝不动」清单里的东西。开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除。开启时会先展示它会做什么，并请你确认。"
+    },
+    "CardSwapMaxLoss": {
+      "label": "每次交换最多可亏",
+      "tip": "一次交换的价值最多可以比付出的少多少，按市场最低价、用此账户的 Steam 钱包货币计算。例如 0.03：用价值 0.12 的卡换价值 0.09 的卡可以，换 0.08 的就不行。0：交换绝不会更便宜。最近一天没有价格的卡绝不交换。 美元或欧元用 0.03 合适，日元用约 5。"
+    },
+    "CardSwapsPerDay": {
+      "label": "每天最多交换次数",
+      "tip": "一天内最多发送或接受的交换数 - 例如 5。在真人模式的账户上，还会分散在它自己的一天里，间隔 45 分钟到 2 小时。"
+    },
+    "CardSwapSkipHeld": {
+      "label": "跳过 Steam 会暂挂的交换",
+      "tip": "如果 Steam 会把交易暂挂好几天，就绝不与那个账户交换 - 例如某一方刚开始用 Steam Guard 手机应用不久。开启最安全。"
+    },
+    "ShareCheapestSets": {
+      "label": "与其他 nocat.farm 用户分享最便宜的卡组",
+      "tip": "只要有账户在购买最便宜的整套，大约每 6 小时把这个副本在市场上找到的最便宜整套卡牌发送给 nocat.lol，并取回所有其他副本找到的卡组——这样能更早找到便宜的卡组。发送的内容：每套卡组的游戏、卡牌名称、每张卡的最低价、在售数量以及看到的时间——例如一套 5 张、每张 0.03、一小时前看到的卡组。不包含任何关于你或你账户的信息。取回的内容只决定先检查哪些游戏：购买任何东西之前，每张卡都会在 Steam 市场上重新定价。开启：双向分享。关闭：什么都不发送也不取回。仅在“把我算作用户”开启时。"
+    },
+    "GemsForLevels": {
+      "label": "把宝石用在最多的等级上",
+      "tip": "只在“购买缺少的卡牌”开启时起作用。自动补充包制作补充包之前，会按今天的市场价格用四种方式算出 1,000 个宝石值多少徽章等级：卖掉一袋宝石，让购买卡牌花掉这笔钱；制作补充包并原封出售；制作补充包并卖掉其中 3 张卡；或像以前一样为最接近的徽章打开补充包——然后选得到最多的那种。例如，一袋卖 0.45 的宝石约能买 1.8 级便宜的卡组，而为最接近的徽章开补充包约为 0.3 级。用到市场的方式必须明显（高出 15%）胜过更稳妥的方式；价格未知时，宝石保持散装。它绝不会以低于宝石价值的价格出售，每天最多上架 10 件，每次上架都像其他上架一样在 Steam 应用中确认。只出售可交易宝石；不可交易的宝石仍用于最接近的徽章。'booster plan' 会显示这些数字。 为出售而制作的补充包里的卡牌，不管多余物品的价格上限是多少都会卖掉 - 它们本来就是为了赚钱做的。保留列表里的游戏绝不会动。"
+    },
+    "SendScamWarnings": {
+      "label": "发送诈骗警告",
+      "tip": "防诈骗监视的警告：之前没有的 API 密钥、新设备、邮箱、手机或 Steam 令牌被改、全部被登出。例如，一个账号上有新设备登录时，会发一条写明账号和设备的消息。默认开启。"
+    },
+    "SendHealthAlerts": {
+      "label": "发送账户健康警告",
+      "tip": "某个账号的情况变差了：新的封禁、交易暂挂、市场被封、受限账户、Steam 令牌变弱、手机被移除。例如，开始 15 天交易暂挂时会发一条消息。默认开启。"
+    },
+    "NotifyScam": {
+      "label": "诈骗警告时弹窗",
+      "tip": "每条防诈骗警告都在这台电脑上弹窗——例如一个账号的邮箱被改，会弹出一个写明该账号的窗口。"
+    },
+    "NotifyHealth": {
+      "label": "账户健康变化时弹窗",
+      "tip": "某个账号情况变差时在这台电脑上弹窗——例如 Steam 令牌从手机应用变成邮件验证。"
+    },
+    "BackupMessages": {
+      "label": "备份消息",
+      "tip": "Telegram 和 Discord 上的备份消息。仅在失败时：只有备份做不成时才发——例如文件夹不见了或磁盘满了。每次备份后：每份保存好的备份也发一条。关闭：一条都不发。",
+      "choices": "0 关闭 | 1 仅在失败时 | 2 每次备份后"
+    },
+    "DailyReportTime": {
+      "label": "每日总结时间",
+      "tip": "每日总结写入日志的时间（本地时间）——通知里的“每日总结”标签打开时也在此时发送。例如 09:30。"
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "两次查看之间最短等待（真人模式）",
+      "tip": "在还有钱和便宜整套时，真人模式账户两次购买查看之间的最短等待（分钟）- 仅在其一天中。每次在此值和最长值之间随机选择。例如 30 和 90：下一次查看在半小时到一个半小时之后。"
+    },
+    "BuyStopAtLevel": {
+      "label": "到这个 Steam 等级停止购买",
+      "tip": "此账户的 Steam 等级达到这个值后就停止购买卡牌 - 例如 50：到 50 级后不再买任何东西，在此之前只买达到该等级还需要的徽章等级。'levelup' 会告诉你一级要花多少。0 表示永不停止。"
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "每次查看购买的套数（真人模式）",
+      "tip": "真人模式账户每次查看购买多少套，最便宜的先买 - 然后等一会儿再查看，像偶尔买几套的人一样。例如每次 3 套，在其一天中每 30 到 90 分钟查看一次：每天约 25 到 40 套，直到当天的钱或便宜的整套用完。机器人一次查看就买下所有放得下的整套。"
+    },
+    "BuyMaxLevelPrice": {
+      "label": "一个徽章等级最多付",
+      "tip": "一个徽章等级（100 XP）最多付多少 - 一个整套，或已开始的徽章缺少的卡牌 - 以此账户的 Steam 钱包货币计。更贵的等级会等价格降下来，这样便宜的等级用完后，钱不会花在贵的等级上。例如 0.50：0.35 的 5 张卡组会买，0.70 的 9 张卡组会等。0 为自动且偏紧：比一个等级的通常价格高四分之一 - 即卡组查找已知最便宜的 5 个整套的中间值（已知不足 5 个时高一半，或用上周最便宜的等级）。整套约 0.40 时，最多 0.50；便宜的整套用完也不会上涨。在卡组查找检查完最便宜的 30 套之前，整套只买到已知最便宜的再高十分之一为止。美元或欧元用 0.50 合适，日元用约 75。"
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "两次查看之间最长等待（真人模式）",
+      "tip": "真人模式账户两次购买查看之间的最长等待（分钟）。例如最短 30、最长 90：16 小时的一天中约 16 次查看。"
+    },
+    "RefundProtectMinPrice": {
+      "label": "只为高于此价格的游戏保护退款",
+      "tip": "只有花费高于此金额的游戏才会在仍可退款期间被保留不动；更便宜的会立即挂卡。若 Steam 购买记录显示了你实际支付的金额就按它，否则按商店常规价格（促销不会让它变低）；找不到价格的游戏会受到保护。使用此账户的 Steam 钱包货币。例如 5.00：刚买的 0.99 游戏会立即挂卡；20.00 的游戏会一直保留，直到不能再退款。0 表示保护所有游戏。"
+    },
+    "LevelUpLine": {
+      "label": "升级那一行显示",
+      "tip": "此账号的 Steam 等级上升时，在日志里写一行 - 例如“Steam 等级 58（+1）· 这一级花了 0.46 CAD”，或“Steam 等级 60（+3）· 3 级共 1.42 CAD”。费用只算真正花掉的钱：为合成的徽章买的卡牌。挂卡得到的卡牌不算钱。若 Telegram 或 Discord 开了卡牌消息，也会发到那里。关闭：不写这一行。",
+      "choices": "3 等级和花费 | 1 只显示等级 | 0 关闭"
     }
   }
 }

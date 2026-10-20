@@ -21,7 +21,11 @@ internal static class FairSwap {
 
 	/// <summary>The rule itself, on its own so it can be tested without Steam.</summary>
 	/// <param name="ours">How many of each card this account holds, tradable or not.</param>
-	internal static (bool Fair, Said Why) Judge(IReadOnlyList<Card> giving, IReadOnlyList<Card> receiving, IReadOnlyDictionary<Card, int> ours) {
+	internal static (bool Fair, Said Why) Judge(IReadOnlyList<Card> giving, IReadOnlyList<Card> receiving, IReadOnlyDictionary<Card, int> ours) =>
+		JudgeKeeping(giving, receiving, ours, 1);
+
+	/// <summary>The rule, with "Keep this many of each card" (<paramref name="keep"/>): never fewer copies of a card given away than that afterwards.</summary>
+	internal static (bool Fair, Said Why) JudgeKeeping(IReadOnlyList<Card> giving, IReadOnlyList<Card> receiving, IReadOnlyDictionary<Card, int> ours, int keep) {
 		if ((giving.Count == 0) || (receiving.Count == 0)) {
 			return (false, new Said("one side is empty"));
 		}
@@ -53,6 +57,10 @@ internal static class FairSwap {
 
 					if (after < 0) {
 						return (false, new Said("asks for cards this account doesn't have"));
+					}
+
+					if ((keep > 1) && (after < keep)) {
+						return (false, new Said("it would leave fewer than {0} copies of a card you keep", keep));
 					}
 
 					goingAfter.Add(after);
@@ -116,6 +124,28 @@ internal static class FairSwap {
 			return (false, new Said("not one for one"));
 		}
 
+		// 1.8.2: cards of a game it just bought cards of for a badge stay until they're crafted.
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+
+		if (cards.Giving.Any(c => bought.Contains(c.Game))) {
+			return (false, new Said("it gives a card bought for a badge - kept until it's crafted"));
+		}
+
+		// 1.8.2, as a card swap nocat.lol paired: never a card on a keep list (its game or its name), never a copy promised to
+		// a paired swap - those don't count as held either - and "Keep this many of each card" kept.
+		DateTime now = DateTime.UtcNow;
+		CardExchange.Rules rules = CardExchange.RulesOf(bot, now);
+
+		if (offer.Giving.FirstOrDefault(i => rules.Keeps(i.Game, i.Name, i.Hash)) is { } kept) {
+			return (false, new Said("it asks for {0}, on your keep list", kept.Name));
+		}
+
+		HashSet<ulong> reserved = CardExchange.Reserved(bot.Name, bot.SteamId, now);
+
+		if (offer.Giving.Any(i => reserved.Contains(i.AssetId))) {
+			return (false, new Said("it asks for a card promised to a card swap"));
+		}
+
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
 		if (inventory is not { Complete: true }) {
@@ -131,7 +161,8 @@ internal static class FairSwap {
 
 			string type = Text(d, "type");
 
-			if (!type.EndsWith("Trading Card", StringComparison.Ordinal) || type.Contains("Foil", StringComparison.Ordinal)) {
+			if (!type.EndsWith("Trading Card", StringComparison.Ordinal) || type.Contains("Foil", StringComparison.Ordinal)
+				|| reserved.Contains(Num64(Text(asset, "assetid")))) {
 				continue;
 			}
 
@@ -146,7 +177,7 @@ internal static class FairSwap {
 			}
 		}
 
-		return Judge(cards.Giving, cards.Receiving, ours);
+		return JudgeKeeping(cards.Giving, cards.Receiving, ours, rules.Keep);
 	}
 
 	/// <summary>The same test by offer id - what the 'fairswap' command asks.</summary>

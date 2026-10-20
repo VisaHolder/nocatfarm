@@ -82,6 +82,7 @@ const DENY_HANDLER = {
   authAct: 'confirms or denies on Steam',
   startTutorial: 'walked through step by step on its own below',
   tutorialOpenImport: 'the walkthrough, walked through on its own',
+  doCopySettings: "copies another account's settings over this one - walked through on its own below",
 };
 const DENY_ACT = {
   start: 'signs in to Steam',
@@ -116,7 +117,8 @@ const SKIP_SETTING = {
   NotifySocial: 'pop-ups on this PC',
   NotifyProblems: 'pop-ups on this PC',
   NotifyTrades: 'pop-ups on this PC',
-  CheckForUpdates: 'asks GitHub for a newer version',
+  NotifyScam: 'pop-ups on this PC',
+  NotifyHealth: 'pop-ups on this PC',
   UpdateMode: 'could install a newer version mid-test',
   DiscordPresence: "shows on the Discord running on this PC",
   ...(PING_STUB ? {} : { CountMeAsUser: 'tells nocat.lol this copy is running (no --ping-stub to send it to instead)' }),
@@ -127,6 +129,7 @@ const SKIP_SETTING = {
   Enabled: 'signs the account in to Steam',
   SharedSecret: 'an authenticator secret - the Authenticator page is tested with the one in the fixture',
   IdentitySecret: 'an authenticator secret - confirmations are fetched from Steam',
+  ...(process.platform === 'win32' ? {} : { SteamOpenEveryAccount: 'Open in Steam is Windows only for now', SteamOpenButton: 'Open in Steam is Windows only for now' }),
 };
 // Switched last and put back first, each saved on its own: they change which other settings exist (human mode hides the
 // robot ones, rep4rep off hides its sections) and the server rewrites fields when they change.
@@ -744,6 +747,9 @@ async function change(def, target) {
     const pill = page.locator(`#settingsBody .langpick .p[onclick*="editAndRender('${n}'"]`).first();
     if (!(await pill.count())) return { why: 'no control for it on screen' };
     await pill.click();
+  } else if (kind === 'Bool' && tag.startsWith('span')) {
+    // A switch drawn as a chip in a row of them ("What counts as spare": [foils] [backgrounds]...).
+    await box.click();
   } else if (kind === 'Bool') {
     await field(n).locator('label.switch').first().click();
     await settle(150);
@@ -858,6 +864,8 @@ async function putBack(def, orig, target, defaults) {
     const pill = page.locator(`#settingsBody .langpick .p[onclick*="editAndRender('${n}'"]`).first();
     if (!(await pill.count())) return false;
     await pill.click();
+  } else if (def.Kind === 'Bool' && tag.startsWith('span')) {
+    await box.click();
   } else if (def.Kind === 'Bool') {
     await field(n).locator('label.switch').first().click();
     await settle(150);
@@ -899,10 +907,16 @@ async function putBack(def, orig, target, defaults) {
   return true;
 }
 
-// Spare items and Steam Points (per account) are turned on only through a pop-up that shows what they'd do: ticked, the
-// pop-up comes up with a preview; Cancel leaves it off; ticked again and "Turn on" switches it on; unticked it's off at once.
-// Saved straight away by the pop-up (not by the Save button), so they're walked here on their own, outside the batches.
-const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints'];
+// Spare items, Steam Points, Open in Steam, buying cards and card swaps (per account) are turned on only through a pop-up
+// that shows what they'd do: ticked, the pop-up comes up with a preview; Cancel leaves it off; ticked again and "Turn on"
+// switches it on; unticked it's off at once. Saved straight away by the pop-up (not by the Save button), so they're walked
+// here on their own, outside the batches.
+const CONFIRM_SWITCH = ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'];
+// 1.8.2: the one switch of this kind in the global settings - Open in Steam on every account.
+const GLOBAL_CONFIRM_SWITCH = ['SteamOpenEveryAccount'];
+// The ones whose part of a section is all theirs (1.8.2: Spare items, Steam Points and Buying cards are parts of Items
+// and spending): off, the part shows only the switch.
+const OWN_SECTION = ['SpareItems', 'SpendPoints', 'BuyCards'];
 
 async function confirmSwitchScenario(n, target, who) {
   const saved = async () => valuesOf(await api('/api/config'), target)[n];
@@ -912,10 +926,16 @@ async function confirmSwitchScenario(n, target, who) {
   if (was) await tick();   // off first: off is off at once, no pop-up
   check(`settings ${who}: ${n} is off to start with`, (await saved()) === false && !(await modalOpen()));
   // Off, its section is the switch and one line saying what turning it on does - its other settings are hidden.
-  const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(@class,"section")][1]');
+  const sectionOf = () => field(n).locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " part ") or contains(@class,"section")][1]');
   const offRows = await sectionOf().locator('[data-setting]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null || e.closest('label.switch')).map((e) => e.dataset.setting));
-  check(`settings ${who}: with ${n} off its section shows only that switch and a line saying what it does`,
-    offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
+  const dependents = ((target ? schema.Bot : schema.Global) || []).filter((d) => d.ShowWhen === `${n}=true`).map((d) => d.Name);
+  if (OWN_SECTION.includes(n)) {
+    check(`settings ${who}: with ${n} off its part shows only that switch and a line saying what it does`,
+      offRows.length === 1 && offRows[0] === n && (await field(n).locator('.offhint').count()) === 1, offRows.join(', '));
+  } else {
+    check(`settings ${who}: with ${n} off the settings under it are hidden${dependents.length ? ', and a line says what it does' : ''}`,
+      offRows.includes(n) && !offRows.some((r) => dependents.includes(r)) && (await field(n).locator('.offhint').count()) === (dependents.length ? 1 : 0), offRows.join(', '));
+  }
 
   await tick();
   const asked = (await modalOpen()) && (await page.locator('#switchGo').count()) > 0;
@@ -941,8 +961,10 @@ async function confirmSwitchScenario(n, target, who) {
   const onRows = await sectionOf().locator('.field [data-setting]').count();
   const titles = await sectionOf().locator('.sgroup > .sgtitle').count();
   const indented = await sectionOf().locator('.field.sub').count();
-  check(`settings ${who}: with ${n} on its settings show in titled boxes, the dependent ones indented`, onRows > 3 && titles >= 2 && (n !== 'SpareItems' || indented >= 1) && (await field(n).locator('.offhint').count()) === 0,
-    `${onRows} rows, ${titles} titles, ${indented} indented`);
+  if (target) {
+    check(`settings ${who}: with ${n} on its settings show in titled boxes, the dependent ones indented`, onRows > 3 && titles >= 2 && (n !== 'SpareItems' || indented >= 1) && (await field(n).locator('.offhint').count()) === 0,
+      `${onRows} rows, ${titles} titles, ${indented} indented`);
+  }
 
   await tick();
   check(`settings ${who}: unticked - ${n} is off at once, no pop-up`, !(await modalOpen()) && (await saved()) === false && !(await ticked()));
@@ -997,7 +1019,7 @@ async function settingsRound(target) {
         shown = await shownSettings();
         continue;
       }
-      if (target && CONFIRM_SWITCH.includes(n)) {
+      if ((target ? CONFIRM_SWITCH : GLOBAL_CONFIRM_SWITCH).includes(n)) {
         try { await confirmSwitchScenario(n, target, who); } catch (e) { check(`settings ${who}: ${n} switch`, false, String(e.message || e).split(/\r?\n/)[0]); await closeModalIfOpen(); }
         shown = await shownSettings();
         continue;
@@ -1105,6 +1127,15 @@ async function settingsRound(target) {
       }, { name: target, back });
       after = await api('/api/config');
     }
+  }
+  // 1.8.2: emptying the auto-reply or the custom game name switches it off by itself, and putting an empty one back
+  // emptied it again - so a switch that was on goes back through the page's own save (the text isn't changed by that).
+  const followed = target ? ['AutoReplyEnabled', 'CustomGameNameEnabled'].filter((n) => defs.some((d) => d.Name === n) && !same(valuesOf(after, target)[n], orig[n])) : [];
+  if (followed.length) {
+    note(`${who}: ${followed.join(', ')} put back through the page's own save - emptying its text switched it off`);
+    const back = Object.fromEntries(followed.map((n) => [n, orig[n]]));
+    await evalq(async ({ name, back }) => { await loadConfig(); await postBot(name, { ...config.Bots[name], ...back }); await loadConfig(); renderSettings(); }, { name: target, back });
+    after = await api('/api/config');
   }
   const left = defs.filter((d) => d.Kind !== 'Secret' && !same(valuesOf(after, target)[d.Name], orig[d.Name]))
     .map((d) => `${d.Name}: ${JSON.stringify(valuesOf(after, target)[d.Name])} (was ${JSON.stringify(orig[d.Name])})`);
@@ -1294,6 +1325,66 @@ if (PING_STUB) {
     pills.length === 4 && pills[0] === 'Steam accounts on nocat.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
   check('discord card: Steam accounts on nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
     && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
+}
+
+// ── 1.8.2: copy settings from another account ────────────────────────────────
+// Add account offers it (and picks the source's kind); an account's Settings page has "Copy settings from...", which shows
+// every change first, changes nothing on Cancel, and copies on "Copy settings" - the account's own things kept and the
+// switches with a go-ahead off. The account is put back afterwards.
+{
+  await gotoView('accounts');
+  await evalq(() => showAddAccount());
+  await settle(300);
+  const offered = await page.locator('#a-copy option').allTextContents();
+  check('copy settings: Add account offers "Copy settings from" - none, or each account', offered.length === 4 && ['human', 'robot', 'authbot'].every((n) => offered.includes(n)), offered.join(', '));
+  await page.selectOption('#a-copy', 'human');
+  await settle(200);
+  check('copy settings: picking an account to copy from picks its kind too, and says where the settings come from',
+    await page.locator('#a-type-human.on').count() === 1 && await page.locator('#a-copy-note:not(.hidden)').count() === 1);
+  await page.selectOption('#a-copy', 'robot');
+  await settle(200);
+  check('copy settings: ...a robot picks robot', await page.locator('#a-type-robot.on').count() === 1);
+  await closeModalIfOpen();
+
+  const before = (await api('/api/config')).Bots.robot;
+  await settingsOn('robot');
+  check('copy settings: an account\'s settings have "Copy settings from..."', await page.locator('#copySettingsBtn').isVisible());
+  await page.click('#copySettingsBtn');
+  await settle(300);
+  check('copy settings: it asks which account first, with Copy settings not pressable yet', (await modalOpen()) && await page.locator('#copyGo').isDisabled());
+  await page.selectOption('#copyFrom', 'human');
+  await page.waitForSelector('#copyPreview table tr:nth-child(2)', { timeout: 10000 }).catch(() => {});
+  const rows = await page.locator('#copyPreview table tr').count();
+  const preview = (await page.locator('#copyPreview').textContent()) || '';
+  check('copy settings: the preview lists each change and what is never copied',
+    rows > 2 && /Never copied/.test(preview) && !(await page.locator('#copyGo').isDisabled()), preview.slice(0, 200));
+  await page.locator('#modal button.ghost').first().click();
+  await settle(300);
+  check('copy settings: Cancel changes nothing', !(await modalOpen()) && same((await api('/api/config')).Bots.robot, before));
+
+  await page.click('#copySettingsBtn');
+  await settle(300);
+  await page.selectOption('#copyFrom', 'human');
+  await page.waitForFunction(() => { const b = document.getElementById('copyGo'); return b && !b.disabled; }, null, { timeout: 10000 }).catch(() => {});
+  await page.click('#copyGo');
+  await settle(800);
+  const after = (await api('/api/config')).Bots.robot;
+  const human = (await api('/api/config')).Bots.human;
+  check('copy settings: Copy settings copies them - the account keeps its own mode (robot stays robot), the rest comes across',
+    !(await modalOpen()) && after.LegitMode === before.LegitMode && after.Rep4Rep === human.Rep4Rep, JSON.stringify({ LegitMode: after.LegitMode, Rep4Rep: after.Rep4Rep }));
+  check("copy settings: ...the account's own sign-in and notes are kept, and the switches with a go-ahead are off",
+    after.SteamLogin === before.SteamLogin && after.Notes === before.Notes && after.Enabled === before.Enabled
+    && ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'].every((n) => after[n] === false));
+  check('copy settings: the account copied from is unchanged', human.Notes === 'e2e human' && human.SteamLogin === 'not_a_real_account');
+  await healthy('copy settings: the page is healthy after copying');
+
+  // Put the robot back as it was, through the same save the page makes.
+  const back = await api('/api/bots/robot/config', 'POST', before);
+  const restored = (await api('/api/config')).Bots.robot;
+  check('copy settings: the robot is put back as it was', back.ok && restored.LegitMode === false && same(restored.IdleGames, before.IdleGames) && restored.Rep4Rep === before.Rep4Rep,
+    JSON.stringify({ LegitMode: restored.LegitMode, IdleGames: restored.IdleGames }));
+  await evalq(() => loadConfig().then(() => renderSettings()));
+  await settle(300);
 }
 
 // ── 6. the keyboard ──────────────────────────────────────────────────────────

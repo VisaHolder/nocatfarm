@@ -131,9 +131,10 @@ public sealed class LiveConsole : IDisposable {
 
 	/// <summary>
 	/// DEBUG only with "Show debug detail" on, like the window, the plain console and the dashboard. The board showed it
-	/// regardless, and its few log rows filled with "reusing web token" and pushed out the lines worth reading.
+	/// regardless, and its few log rows filled with "reusing web token" and pushed out the lines worth reading. And only the
+	/// kinds of line the "Show in the app's log" chips show (Core/LogShow.cs) - from the next line on.
 	/// </summary>
-	private static bool Shown(Log.Entry entry) => (entry.Level != "DEBUG") || Log.DebugEnabled;
+	private static bool Shown(Log.Entry entry) => ((entry.Level != "DEBUG") || Log.DebugEnabled) && Core.LogShow.Shows(entry);
 
 	private void OnLogged(Log.Entry entry) {
 		if (!Shown(entry)) {

@@ -375,7 +375,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		}
 
 		if (finished.Count > 0) {
-			lines.Add($"   finished with ({finished.Count}) - at \"Finish no more than\" ({Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100)}%) or nothing left, never picked again: "
+			lines.Add($"   finished with ({finished.Count}) - at \"Never complete more of a game than\" ({Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100)}%) or nothing left, never picked again: "
 				+ string.Join(", ", finished.Take(5).Select(GameNames.Of)) + (finished.Count > 5 ? ", ..." : ""));
 		}
 
@@ -706,7 +706,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			HuntTarget = 0;
 			_status = _sweeping ? new Said("on - working out which games are worth hunting")
 				: Bot.Cfg.AchievementBoost == 2 ? new Said("on - no single-player games with achievements found")
-				: new Said("on - no games to hunt (pick some under \"Boost these games\")");
+				: new Said("on - no games to hunt (pick some under \"Hunt these games\")");
 
 			return;
 		}
@@ -721,7 +721,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		LoadHunt();
 
 		if (DailyLimitReached) {
-			_status = new Said("done hunting for today (Hunt at most, hours a day)");
+			_status = new Said("done hunting for today (Hunt at most a day)");
 
 			return;
 		}
@@ -802,7 +802,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		}
 
 		_status = DailyLimitReached
-			? new Said("{0} is done for today (Hunt at most, hours a day) - back tomorrow", GameNames.Of(HuntTarget))
+			? new Said("{0} is done for today (Hunt at most a day) - back tomorrow", GameNames.Of(HuntTarget))
 			: new Said("{0} is in its games - {1} of about {2} played", GameNames.Of(HuntTarget), Fmt.Hm((int) _huntMinutes), Fmt.Hm(_huntGoal));
 	}
 

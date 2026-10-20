@@ -1092,6 +1092,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	// ── endpoints ───────────────────────────────────────────────────────────
 	private void MapApi(WebApplication app) {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
+		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,
@@ -1237,7 +1238,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 				Text = e.Text,
 				// Lines in a row of the same kind from one account show as one row there (Core/LogStack.cs).
 				Kind = LogStack.KindOf(e),
-				Value = LogStack.ValueOf(e.Said)
+				Value = LogStack.ValueOf(e.Said),
+				// What it's about, as the "Show in the app's log" chip that shows it (Core/LogShow.cs) - null for a warning or an
+				// error, which always show, and for a line no rule knows. The page hides it while that chip is off.
+				Show = e.Level is "WARN" or "ERROR" ? null : LogShow.KindOf(e)
 			}))));
 
 		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names
@@ -1323,6 +1327,10 @@ public sealed partial class WebHost : IAsyncDisposable {
 			GlobalDefaults = Settings.GlobalDefaults,
 			BotDefaults = Settings.BotDefaults,
 			GroupOrder = Settings.GroupOrder,   // the order of the titled boxes in a section
+			Pairs = Settings.RowPairs.Select(static p => new[] { p.Min, p.Max }),   // "shortest / longest" drawn as one row
+			Units = Settings.Units(),   // "minutes" after the box, the label doesn't say it
+			ChipRows = Settings.ChipRows,   // several switches drawn as one row of chips
+			PanelRows = Settings.PanelRows,   // drawn by their section's own panel, not as rows
 
 			// Sent rather than repeated in app.js. The same palette paints the window, the console board and
 			// this page, and a second copy in JavaScript is precisely how the two "what is this account doing"
@@ -1855,6 +1863,67 @@ public sealed partial class WebHost : IAsyncDisposable {
 			return Results.Json(new { ok = true, said = Switches.Set(bot, which, on) });
 		});
 
+		// 1.8.2: press the Open in Steam button - sign this PC's Steam client into the account. Refuses unless the button
+		// is turned on for it, no game is running in the client, and the client already remembers it. Windows only.
+		app.MapPost("/api/bots/{name}/steam-open", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			(string code, string said) = await SteamOpen.OpenAsync(bot).ConfigureAwait(false);
+
+			// 1.8.2: Steam is on the sign-in - the card shows the Steam Guard code (when nocat.farm has its authenticator).
+			return Results.Json(new { ok = code is SteamOpen.Ok or SteamOpen.SignIn, code, said, login = bot.Cfg.SteamLogin });
+		});
+
+		// 1.8.2: what pressing the button would do, for its confirm dialog - read-only, from the local Steam files - and the
+		// account's Steam Guard code right now when Steam would open on its sign-in and nocat.farm has its authenticator.
+		// Only the 5-character code, never a secret.
+		app.MapGet("/api/bots/{name}/steam-open", (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
+			}
+
+			SteamOpen.Numbers n = SteamOpen.Look(bot);
+			(string Code, int SecondsLeft)? guard = n.SignIn ? SteamOpen.GuardCode(bot) : null;
+
+			return Results.Json(new { ok = true, data = n, GuardCode = guard?.Code, SecondsLeft = guard?.SecondsLeft ?? 0 });
+		});
+
+		// 1.8.2: "Open in Steam buttons on every account" - its preview (every account, and whether Steam remembers each),
+		// and its Turn on / off: the global setting and its go-ahead in one step.
+		app.MapGet("/api/steam-open/everyone/preview", (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			(string text, SwitchPreview.SteamOpenAllNumbers data) = SwitchPreview.LookEveryone(_mgr.All);
+
+			return Results.Json(new { ok = true, text, data });
+		});
+
+		app.MapPost("/api/steam-open/everyone", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
+
+			if ((sent?["On"] is not JsonValue onValue) || !onValue.TryGetValue(out bool on)) {
+				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
+			}
+
+			return Results.Json(new { ok = true, said = Switches.SetEveryone(Live.Global, on) });
+		});
+
 		// ── account lifecycle ──
 		// The walkthrough marks itself done. A one-line endpoint rather than a config round-trip, so finishing
 		// the tutorial cannot accidentally write back a whole settings object the user never edited.
@@ -2069,15 +2138,37 @@ public sealed partial class WebHost : IAsyncDisposable {
 				? new() { SteamLogin = body.Name, SignInWithQr = true }
 				: new() { SteamLogin = body.SteamLogin!, SteamPassword = body.Password ?? "" };
 
-			// Set before it's added, so its very first sign-in already behaves the way it was asked to - an
-			// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
-			if (body.Human) {
+			// 1.8.2: "Copy settings from" - everything but what's this account's own comes from the other one, its switches with
+			// a go-ahead left off. The human or robot picked here still decides the mode.
+			SettingsCopy.Plan? copied = null;
+
+			if (!string.IsNullOrWhiteSpace(body.CopyFrom)) {
+				if (_mgr.Get(body.CopyFrom) is not { } source) {
+					return Results.Json(new { ok = false, error = Loc.T("No such account.") }, statusCode: 400);
+				}
+
+				copied = SettingsCopy.ForNewAccount(source, cfg, body.Name, body.Human);
+
+				if (copied.Error is { } copyError) {
+					return Results.Json(new { ok = false, error = copyError }, statusCode: 400);
+				}
+
+				cfg = copied.Result;
+				Switches.Settle(cfg, body.Name);
+			} else if (body.Human) {
+				// Set before it's added, so its very first sign-in already behaves the way it was asked to - an
+				// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
 				cfg.LegitMode = true;
 				Settings.ApplyLegitMode(cfg, false);
+				Settings.NewHumanAccount(cfg);
 			}
 
 			cfg.IUseThisAccount = body.SelfSignIn;
 			Bot? bot = await _mgr.AddAsync(body.Name, cfg).ConfigureAwait(false);
+
+			if ((bot != null) && (copied != null)) {
+				SettingsCopy.LogCopied(bot.Name, body.CopyFrom!, copied);
+			}
 
 			return bot == null
 				? Results.Json(new { ok = false, error = "Couldn't add that account." }, statusCode: 500)
@@ -2756,6 +2847,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
+			// What goes with a change (one switch for both notification counters, an emptied reply switching its switch off).
+			Settings.Follow(body, [.. Settings.Bot.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d))).Select(static d => d.Name)]);
+
 			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
 			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
 			// now, from the same helper the console uses, so the two paths cannot drift apart again.
@@ -2816,6 +2910,13 @@ public sealed partial class WebHost : IAsyncDisposable {
 			}
 
 			List<string> adjusted = Clamp(body, Settings.Global);
+
+			// What goes with a change: the scam or health chip changed takes back a channel left off on its own from before.
+			Settings.Follow(body, [.. Settings.Global.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d))).Select(static d => d.Name)]);
+
+			// 1.8.2: Open in Steam on every account is turned on only through its preview (/api/steam-open/everyone), never by
+			// a plain save; off clears its go-ahead.
+			Switches.SettleEveryone(body);
 
 			// The password is left out: the check reads the live config, so a new one is in force the moment it is
 			// saved - telling people it waits for a restart had them leaving the old one "active" that wasn't.
@@ -3172,6 +3273,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			DiscordOwner = Notifier.DiscordConnected ? Notifier.DiscordOwner : "",
 			DiscordOwnerId = _mgr.Global.DiscordOwnerId,
 			UpdateProgress = SelfUpdate.Progress,
+			// 1.8.2: the "Show in the app's log" chips that are off - an open Log tab follows a change made with 'set'.
+			LogShowOff = LogShow.Off(_mgr.Global),
 			InventoryPending = fleetWaiting.Count,
 			// How many market requests the prices still waiting will take - every account's together, an item two of them
 			// hold counted once, as it is asked once - and how long that is at the market pace, for the tile's "about 14
@@ -3186,6 +3289,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
 				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
+				(DateTime From, DateTime To)? upWindow = StateTime.Window(b);
 
 				return new {
 					Name = b.Name,
@@ -3197,6 +3301,11 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Status = Loc.T(Commands.StateWord(b)),
 					// The end of a human-mode break or night, so the chip can say "on a break · 5m to go" / "asleep · up ~09:30".
 					Until = StateTime.Until(b),
+					// Asleep after bedtime, the next day isn't planned yet: the window it gets up in - "asleep · up 13:15-14:45".
+					UpFrom = upWindow?.From.ToUniversalTime(),
+					UpTo = upWindow?.To.ToUniversalTime(),
+					// On a break that bedtime comes in the middle of: "on a break · then off for the night".
+					IntoBed = StateTime.IntoBed(b),
 					Detail = Loc.T(b.StatusText),
 					Persona = Loc.T(b.PersonaWord),
 					// The dashboard dims a hidden persona. It used to test Persona === 'invisible', which is
@@ -3213,6 +3322,13 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Online = b.IsOnline,
 					Paused = b.Paused,
 					Blocked = b.PlayingBlocked,
+					// 1.8.2: the Open in Steam button - whether it's turned on for this account, and whether this PC can do it.
+					SteamOpen = Core.SteamOpen.On(b.Cfg, b.Name),
+					SteamOpenSupported = Core.SteamOpen.Supported,
+					// 1.8.2: the button left Steam on this account's sign-in: its Steam Guard code (5 characters, never a secret)
+					// and the seconds it has left, when nocat.farm has its authenticator. Empty otherwise.
+					SteamOpenCode = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } guard) ? guard.Code : "",
+					SteamOpenCodeLeft = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } left) ? left.SecondsLeft : 0,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,
@@ -3223,6 +3339,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Games = b.GamesRemaining,
 					Rep4Rep = b.Cfg.Rep4Rep,
 					Legit = b.Cfg.LegitMode,
+					// 1.8.2: human mode outside its day right now (asleep, done for the day, a day off) - the set-up's last screen says so.
+					OffForNow = BotManager.ModuleOf<HumanMode>(b)?.Current is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff,
 					InventoryValue = b.Inventory.Total,
 					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
@@ -3427,6 +3545,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 		/// <summary>You sign into it from your own Steam client as well (<see cref="BotConfig.IUseThisAccount"/>).</summary>
 		public bool SelfSignIn { get; set; }
+
+		/// <summary>1.8.2: the account whose settings it starts with (<see cref="SettingsCopy"/>), or empty for the defaults.</summary>
+		public string? CopyFrom { get; set; }
 	}
 
 	public async ValueTask DisposeAsync() => await StopListeningAsync().ConfigureAwait(false);

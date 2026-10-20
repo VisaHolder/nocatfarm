@@ -575,7 +575,9 @@ public static class AsfImport {
 		if (masters.Count > 0) {
 			bot.TradeMasters = string.Join(", ", masters);
 			bot.CommandMasters = bot.TradeMasters;
-			bot.AcceptFromMasters = true;
+			// ASF's Master may trade with the bot both ways: "Your other accounts", as "Accept anything from your own
+			// accounts" was before 1.8.2.
+			bot.AutoTradeWith = bot.TradeMasters;
 		}
 	}
 

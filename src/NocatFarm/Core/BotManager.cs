@@ -142,6 +142,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new EventItems(bot));
 		bot.AddModule(new SaleEvents(bot));
 		bot.AddModule(new PointsSpender(bot));
+		bot.AddModule(new CardBuyer(bot));       // 1.8.2
 		bot.AddModule(new BanWatch(bot));
 		bot.AddModule(new ScamWatch(bot));       // 1.8.0
 		bot.AddModule(new AccountHealth(bot));   // 1.8.0
@@ -151,6 +152,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Upkeep(bot));
 		bot.AddModule(new Heartbeat(bot));
+		bot.AddModule(new CardSwaps(bot));   // 1.8.2: card swaps with other nocat.farm users
 	}
 
 	/// <summary>

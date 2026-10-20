@@ -156,6 +156,9 @@ public sealed partial class WebSession : IDisposable {
 	// ── requests ────────────────────────────────────────────────────────────
 	public async Task<string?> GetAsync(Uri url, CancellationToken ct = default) => await SendAsync(url, null, null, true, ct).ConfigureAwait(false);
 
+	/// <summary>GET from a page: with the page it's asked from (the Referer a browser sends) - the market answers some reads only then.</summary>
+	public async Task<string?> GetFromAsync(Uri url, Uri referer, CancellationToken ct = default) => await SendAsync(url, null, referer, true, ct).ConfigureAwait(false);
+
 	/// <summary>
 	/// POST a form. The sessionid is injected from the cookie jar per request rather than cached, so if Steam ever
 	/// replaces the cookie the body and the cookie stay in agreement automatically.
@@ -182,15 +185,40 @@ public sealed partial class WebSession : IDisposable {
 	/// session, no sessionid cookie, the host shut for a rate limit - so whatever it was for didn't happen. With Sent true
 	/// and no body, Steam may well have acted on it: the answer just never came back.
 	/// </summary>
-	public async Task<(string? Body, bool Sent)> PostTrackedAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
+	/// <param name="errorVerdict">Hand back a JSON body that came with an error status, as <see cref="PostAsync"/> does.</param>
+	public async Task<(string? Body, bool Sent)> PostTrackedAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default, bool errorVerdict = false) {
 		SendNote note = new();
-		string? body = await SendAsync(url, form, referer, true, ct, note: note).ConfigureAwait(false);
+		string? body = await SendAsync(url, form, referer, true, ct, errorVerdict: errorVerdict, note: note).ConfigureAwait(false);
 
 		return (body, note.Sent || (body != null));
 	}
 
+	/// <summary>A page of Steam's Community Market (signed in here: this account's own market requests).</summary>
+	internal static bool IsMarket(Uri url) => url.Host.Equals(Community.Host, StringComparison.OrdinalIgnoreCase) && url.AbsolutePath.StartsWith("/market", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// A market request that finishes something already sent - an order's status, taking an order back, sending again one
+	/// the owner confirmed (a createbuyorder with its confirmation) - and so always goes, whatever the hourly cap says.
+	/// </summary>
+	internal static bool MarketMust(Uri url, IEnumerable<KeyValuePair<string, string>>? form) {
+		string path = url.AbsolutePath;
+
+		return path.StartsWith("/market/getbuyorderstatus", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/market/cancelbuyorder", StringComparison.OrdinalIgnoreCase)
+			|| (path.StartsWith("/market/createbuyorder", StringComparison.OrdinalIgnoreCase)
+				&& (form?.FirstOrDefault(static f => f.Key == "confirmation").Value is { Length: > 0 } confirmation) && (confirmation != "0"));
+	}
+
 	private async Task<string?> SendAsync(Uri url, IEnumerable<KeyValuePair<string, string>>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false, SendNote? note = null) {
 		if (!skipReadyCheck && NeedsRefresh && !await RefreshAsync(!Ready, ct).ConfigureAwait(false)) {
+			return null;
+		}
+
+		bool market = IsMarket(url);
+
+		// 1.8.2: the hourly cap on this account's signed-in market requests (see Limiters.MarketPerHour). Not sent past it.
+		if (market && allowRetry && !Limiters.MarketTurn(_bot.Name, DateTime.UtcNow, MarketMust(url, form))) {
+			Log.DebugOnChange($"marketcap:{_bot.Name}", $"market requests held back: {Limiters.MarketPerHour} sent in the last hour", _bot.Name);
+
 			return null;
 		}
 
@@ -268,7 +296,7 @@ public sealed partial class WebSession : IDisposable {
 				// has asked too often, and every further request while it stands makes it last longer. Shut the
 				// whole host for everybody instead, and don't print the generic error page that comes with it.
 				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
-					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
+					TimeSpan shut = Limiters.NoteRateLimited(url.Host, market);
 
 					if (shut > TimeSpan.Zero) {
 						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
@@ -300,7 +328,7 @@ public sealed partial class WebSession : IDisposable {
 				return errorVerdict && failure.StartsWith('{') ? failure : null;
 			}
 
-			Limiters.NoteWebOk(url.Host);
+			Limiters.NoteWebOk(url.Host, market);
 			body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;   // genuinely shutting down
@@ -360,7 +388,7 @@ public sealed partial class WebSession : IDisposable {
 				// still has to shut the host - otherwise the one caller that wants failure bodies is the one
 				// caller that goes on hammering a live rate limit.
 				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
-					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
+					TimeSpan shut = Limiters.NoteRateLimited(url.Host, IsMarket(url));
 
 					if (shut > TimeSpan.Zero) {
 						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
@@ -376,7 +404,7 @@ public sealed partial class WebSession : IDisposable {
 					Log.Debug($"POST {Loggable(url)} -> {(int) response.StatusCode}", _bot.Name);
 				}
 
-				Limiters.NoteWebOk(url.Host);
+				Limiters.NoteWebOk(url.Host, IsMarket(url));
 
 				return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 			}).ConfigureAwait(false);
@@ -556,5 +584,6 @@ public sealed partial class WebSession : IDisposable {
 		// Not _refreshLock: a refresh still running when the account is removed releases it afterwards, and a disposed
 		// semaphore throws there. It holds nothing that needs freeing.
 		_http.Dispose();
+		_noRedirect?.Dispose();
 	}
 }

@@ -48,21 +48,12 @@
 
     <p class="lead" data-t="Let's add your first Steam account.">Let's add your first Steam account.</p>
 
-    <div class="form2">
-      <label for="w-name"><span data-t="Name">Name</span><i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam." data-t-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
-      <input id="w-name" type="text" placeholder="mybot" data-t-ph="mybot" autocomplete="off">
-
-      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email." data-t-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
-      <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
-
-      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it." data-t-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
-      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
-    </div>
-
+    <!-- The same questions as the walkthrough's, in the same order: what kind of account, its Steam login, an optional
+         password; the nickname under More. -->
     <p class="welcome-ask"><b data-t="What kind of account is it?">What kind of account is it?</b></p>
     <div class="pickcards">
       <div class="pickcard" id="w-type-human" role="button" tabindex="0" onclick="welcomePickType(true)">
-        <b data-t="My main - I play on it">My main - I play on it</b>
+        <b data-t="My main account">My main account</b>
         <span data-t="Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.">Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.</span>
       </div>
       <div class="pickcard" id="w-type-robot" role="button" tabindex="0" onclick="welcomePickType(false)">
@@ -70,6 +61,24 @@
         <span data-t="Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.">Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.</span>
       </div>
     </div>
+
+    <div class="form2">
+      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email." data-t-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
+      <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
+
+      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it." data-t-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
+      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
+    </div>
+
+    <label class="tut-check hidden" id="w-self-row"><input id="w-self" type="checkbox">
+      <span data-t="I also use this account in my own Steam app">I also use this account in my own Steam app</span></label>
+
+    <details class="tut-more"><summary data-t="More">More</summary>
+      <div class="form2">
+        <label for="w-name"><span data-t="Nickname (optional)">Nickname (optional)</span><i class="info" data-tip="What this account is called in nocat.farm. Leave it empty and it uses the Steam account name." data-t-tip="What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."></i></label>
+        <input id="w-name" type="text" placeholder="same as the Steam account name" data-t-ph="same as the Steam account name" autocomplete="off">
+      </div>
+    </details>
 
     <p id="welcomeError" class="error"></p>
     <div class="wbtns">

@@ -58,6 +58,12 @@ public sealed class GlobalConfig {
 	/// and the window size get.
 	/// </summary>
 	public bool TutorialDone { get; set; }
+
+	/// <summary>
+	/// Somebody chose the language - in the installer, or by changing it here (1.8.2). Then the walkthrough doesn't ask again:
+	/// two language questions in a row was one too many. Set by itself, so it has no entry in Settings.cs.
+	/// </summary>
+	public bool LanguagePicked { get; set; }
 	public int WebRefreshSeconds { get; set; } = 3;
 	public int WebSessionDays { get; set; } = 7;
 
@@ -74,6 +80,12 @@ public sealed class GlobalConfig {
 
 	/// <summary>A pop-up for every new trade offer, and when one is accepted, declined or needs confirming.</summary>
 	public bool NotifyTrades { get; set; } = true;
+
+	/// <summary>A pop-up for each scam-watch warning (1.8.2: one of the pop-up kinds, where it was its own switch).</summary>
+	public bool NotifyScam { get; set; } = true;
+
+	/// <summary>A pop-up when something about an account gets worse.</summary>
+	public bool NotifyHealth { get; set; } = true;
 
 	// ── rep4rep ──
 	// Master switch for the whole rep4rep feature. Off = nothing rep4rep-related runs on any account, and the
@@ -207,19 +219,39 @@ public sealed class GlobalConfig {
 	public bool SendAchievements { get; set; }
 	public bool SendRep4Rep { get; set; }
 
-	// ── scam watch and account health - where their alerts go, and devices that are yours ──
-	/// <summary>Scam-watch warnings to Telegram / Discord / as a pop-up.</summary>
-	public bool ScamAlertTelegram { get; set; } = true;
-	public bool ScamAlertDiscord { get; set; } = true;
-	public bool ScamAlertPopup { get; set; } = true;
+	// ── scam watch and account health - one chip each among the notifications (1.8.2), and devices that are yours ──
+	/// <summary>Scam-watch warnings to Telegram and Discord, like every other kind: whichever is set up gets them.</summary>
+	public bool SendScamWarnings { get; set; } = true;
+
+	/// <summary>Account-health alerts (something got worse) to Telegram and Discord.</summary>
+	public bool SendHealthAlerts { get; set; } = true;
 
 	/// <summary>Device names on the authorised-devices list that are yours, comma separated - never reported as new.</summary>
 	public string ScamWatchTrustedDevices { get; set; } = "";
 
-	/// <summary>Account-health alerts (something got worse) to Telegram / Discord / as a pop-up.</summary>
-	public bool HealthAlertTelegram { get; set; } = true;
-	public bool HealthAlertDiscord { get; set; } = true;
-	public bool HealthAlertPopup { get; set; } = true;
+	/// <summary>
+	/// Retired per-channel switches (to 1.8.1 scam watch and account health had Telegram / Discord / pop-up each). Read so an
+	/// old file carries over (<see cref="ConfigStore.MigrateAlertRouting"/>): the pop-ups become <see cref="NotifyScam"/> and
+	/// <see cref="NotifyHealth"/> and go; a channel turned off on its own - the other one on - stays off for that channel
+	/// until the chip is changed, and is written only while it does. Null: the chip decides.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? ScamAlertTelegram { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? ScamAlertDiscord { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? ScamAlertPopup { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? HealthAlertTelegram { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? HealthAlertDiscord { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? HealthAlertPopup { get; set; }
 
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
 	/// with the nocat.farm group; anyone can change or clear it.</summary>
@@ -245,11 +277,19 @@ public sealed class GlobalConfig {
 	public bool BackupIncludeHistory { get; set; } = true;
 	public bool BackupIncludeLogs { get; set; }
 
-	/// <summary>0: tell me only when a backup fails. 1: after every backup too.</summary>
-	public int BackupNotify { get; set; }
+	/// <summary>Backup messages on Telegram and Discord (1.8.2: one choice where there were "Send backups" and "Tell me"):
+	/// 0 none, 1 only when a backup fails, 2 after every backup too.</summary>
+	public int BackupMessages { get; set; } = 1;
 	public bool BackupLocalCopy { get; set; } = true;
 	public int BackupRetryMinutes { get; set; } = 60;
-	public bool SendBackups { get; set; } = true;
+
+	/// <summary>Retired "Tell me" (0 only when one fails, 1 after every backup) and "Send backups" - only read, so an old
+	/// file carries over to <see cref="BackupMessages"/> (<see cref="ConfigStore.MigrateBackupMessages"/>). Never written now.</summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? BackupNotify { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? SendBackups { get; set; }
 
 	// ── phone app (wwwroot/manifest.webmanifest, sw.js) ──
 	/// <summary>The how-to on the Phone page for putting the dashboard on a phone's home screen.</summary>
@@ -294,8 +334,18 @@ public sealed class GlobalConfig {
 	// comments, running total - written to the log/console at a chosen time (default 09:30). The per-minute
 	// heartbeat says what an account is doing NOW; this answers "what did I get overnight?" in one place.
 	public bool DailyReportEnabled { get; set; } = true;
-	public int DailyReportHour { get; set; } = 9;
-	public int DailyReportMinute { get; set; } = 30;
+
+	/// <summary>When it's written (and sent), in minutes from midnight - 09:30 is 570. 1.8.2: one time where there were an
+	/// hour and a minute.</summary>
+	public int DailyReportTime { get; set; } = (9 * 60) + 30;
+
+	/// <summary>Retired hour and minute of the daily summary - only read, so an old file carries over to
+	/// <see cref="DailyReportTime"/> (<see cref="ConfigStore.MigrateDailyReportTime"/>). Never written now.</summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? DailyReportHour { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? DailyReportMinute { get; set; }
 
 	// ── weekly report ──
 	// Off by default: once a week, this week next to last week - see Core/WeeklyReport.cs.
@@ -320,13 +370,26 @@ public sealed class GlobalConfig {
 	/// <summary>How many hours a market price is trusted before it is looked up again.</summary>
 	public int PriceCacheHours { get; set; } = 24;
 
-	public bool CheckForUpdates { get; set; } = true;
+	/// <summary>Retired "Notify if an update is available" - off is <see cref="Core.UpdateModes.Off"/> now
+	/// (<see cref="ConfigStore.MigrateCheckForUpdates"/>). Only read; never written.</summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? CheckForUpdates { get; set; }
+
+	/// <summary>Looks for new versions at all: every choice but "don't look for updates".</summary>
+	[JsonIgnore]
+	public bool LooksForUpdates => UpdateMode != Core.UpdateModes.Off;
 
 	/// <summary>The hourly "this copy is running" to nocat.lol behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
 	public bool CountMeAsUser { get; set; } = true;
 
 	/// <summary>The ping also carries the hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
 	public bool ShareFarmTotals { get; set; } = true;
+
+	/// <summary>
+	/// 1.8.2: the set finder sends nocat.lol the cheapest whole card sets it knows (market prices only) and takes back the
+	/// ones every copy has seen, as candidates - see Core/SetShare.cs. Only with CountMeAsUser on; off sends and fetches nothing.
+	/// </summary>
+	public bool ShareCheapestSets { get; set; } = true;
 
 	public bool UpdateReminders { get; set; } = true;
 
@@ -398,6 +461,25 @@ public sealed class GlobalConfig {
 	/// </summary>
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
+
+	// ── Show in the app's log (1.8.2) ── which kinds of line the window and the dashboard's Log tab show (Core/LogShow.cs).
+	// All on: nothing is hidden until a chip is turned off. The log file keeps every line, and warnings and errors always show.
+	public bool LogShowDoing { get; set; } = true;
+	public bool LogShowDrops { get; set; } = true;
+	public bool LogShowBadges { get; set; } = true;
+	public bool LogShowBuying { get; set; } = true;
+	public bool LogShowSelling { get; set; } = true;
+	public bool LogShowTrades { get; set; } = true;
+	public bool LogShowComments { get; set; } = true;
+	public bool LogShowAchievements { get; set; } = true;
+	public bool LogShowFree { get; set; } = true;
+	public bool LogShowAnswers { get; set; } = true;
+	public bool LogShowApp { get; set; } = true;
+
+	// ── Open in Steam (1.8.2) ── the button on every account at once. Off by default; like each account's own switch,
+	// its go-ahead lives outside the settings (SteamOpenLedger.Everyone), so this alone can't switch it on - the
+	// preview's Turn on does.
+	public bool SteamOpenEveryAccount { get; set; }
 }
 
 public sealed class BotConfig {
@@ -448,12 +530,11 @@ public sealed class BotConfig {
 	// ── what it plays ──
 	public List<uint> IdleGames { get; set; } = [];
 	/// <summary>
-	/// Whether to show the custom name at all.
-	///
-	/// Defaults TRUE so configs written before this existed behave identically - for them the text box WAS the
-	/// switch, and an empty name still shows nothing either way.
+	/// Whether to show the custom name at all. Off for a new account since 1.8.2 - on with no name typed it did nothing and
+	/// read as if it did; emptying the name turns it off (Settings.Follow). An account from before keeps what it had
+	/// (<see cref="ConfigStore.MigrateNewDefaults"/>).
 	/// </summary>
-	public bool CustomGameNameEnabled { get; set; } = true;
+	public bool CustomGameNameEnabled { get; set; }
 
 	public string CustomGameName { get; set; } = "";
 	public bool PlayWhileFarming { get; set; } = true;
@@ -481,8 +562,17 @@ public sealed class BotConfig {
 	/// (<see cref="Core.RefundGuard"/>). It was this plus three more settings - gifted games too, family games too, and
 	/// how many days - which are folded in now: their old keys in a file (ProtectGiftedGames, RefundHoldDays,
 	/// HoldNewFamilyGames) aren't read, and are gone from it at its next save.
+	/// On for a new account since 1.8.2: idling a just-bought game past Steam's 2 hours loses the refund. An account from
+	/// before keeps what it had (<see cref="ConfigStore.MigrateNewDefaults"/>).
 	/// </summary>
-	public bool SkipRefundableGames { get; set; }
+	public bool SkipRefundableGames { get; set; } = true;
+
+	/// <summary>
+	/// 1.8.2: "Protect refunds only for games over", in the wallet's own currency: a refundable game that cost this or less
+	/// isn't held - it's farmed right away (<see cref="Core.RefundGuard"/>). What it cost is what was paid when the purchase
+	/// history shows it, else the store's regular price; not known - protected. 0: every refundable game, as before.
+	/// </summary>
+	public float RefundProtectMinPrice { get; set; }
 
 	/// <summary>When a human-mode account farms cards - <see cref="Modules.FarmWhen"/>. The day's sittings by default.</summary>
 	public int FarmCardsWhen { get; set; }
@@ -592,8 +682,13 @@ public sealed class BotConfig {
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
 	public int AchievementMaxCompletionPct { get; set; } = 90;
 
-	/// <summary>Look for VAC, game, trade and community bans every few hours, and say so when a new one appears.</summary>
-	public bool WatchBans { get; set; } = true;
+	/// <summary>
+	/// Retired "Watch for bans" (1.8.2): the ban look always runs now - it only reads, and the banned games it finds are
+	/// left out of trades - and the alert for a new ban is account health's (<see cref="HealthAlertBans"/>). Off in an old
+	/// file turns that alert off (<see cref="ConfigStore.MigrateWatchBans"/>). Only read; never written.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? WatchBans { get; set; }
 
 	// ── scam watch ──
 	/// <summary>Look for the signs of a stolen account or a trade scam (an API key, a new device, changed email/phone/Guard, every session signed out).</summary>
@@ -673,8 +768,20 @@ public sealed class BotConfig {
 	public bool? ClaimFreeDlcBase { get; set; }
 	public bool CraftBadges { get; set; }
 
+	/// <summary>"Level-up line shows" (1.8.2, Core/LevelUps.cs): 3 the level and what it cost, 1 the level only, 0 no line.</summary>
+	public int LevelUpLine { get; set; } = Core.LevelUps.LevelAndCost;
+
 	/// <summary>"Also craft foil badges" (1.8.1): with crafting on, foil sets too. Off levels with normal badges only.</summary>
 	public bool CraftFoilBadges { get; set; } = true;
+
+	/// <summary>
+	/// "Sell sets worth more than the levels they'd buy" (1.8.2, Modules/SetSale.cs): before crafting a normal badge, a set
+	/// whose market price buys clearly more badge levels than the one its craft makes is listed for sale instead, and buying
+	/// cards spends the money. On by default, but it does nothing unless buying cards is on (and turned on through its
+	/// preview). 1.8.2: foil sets and a game's several sets are weighed too, and cards held for a badge that are worth more
+	/// sold than the levels they'd make are sold (Modules/DearCards.cs).
+	/// </summary>
+	public bool SellSetsForLevels { get; set; } = true;
 
 	/// <summary>
 	/// Retired "Open booster packs" switch - carried over to <see cref="OpenBoosterPacks"/> (ConfigStore.MigrateSpare). Still
@@ -743,6 +850,14 @@ public sealed class BotConfig {
 
 	/// <summary>Gems a booster pack never takes the account below.</summary>
 	public int BoosterKeepGems { get; set; }
+
+	/// <summary>
+	/// 1.8.2 "Use gems for the most levels" (Modules/GemsChoice.cs): with buying cards on and "Make booster packs" automatic,
+	/// gems go whichever way buys the most badge levels at today's prices - a sack sold, a pack sold sealed, a pack opened and
+	/// its cards sold, or the closest badge - with a safety margin, and kept loose when it isn't sure. On by default; it does
+	/// nothing while buying cards is off.
+	/// </summary>
+	public bool GemsForLevels { get; set; } = true;
 	public bool ClaimEventItems { get; set; } = true;
 
 	/// <summary>0 off, 1 during sales, 2 every day.</summary>
@@ -812,6 +927,46 @@ public sealed class BotConfig {
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public bool PointsOk { get; set; }
 
+	// ── Buying cards (see Modules/CardBuyer.cs) - 1.8.2 ──
+
+	/// <summary>
+	/// Buy the missing cards of the badges it's levelling, at the cheapest listing. Off by default on every account: it spends
+	/// the wallet's money. Turned on only through its preview (Core/Switches.cs), its go-ahead kept beside its spending
+	/// (Modules.BuyLedger), never here.
+	/// </summary>
+	public bool BuyCards { get; set; }
+
+	/// <summary>
+	/// Also buy the cheapest whole sets, for any game. On by default since 1.8.2's quick set finder - it only does anything
+	/// while <see cref="BuyCards"/> is on; a settings file that already says keeps what it says.
+	/// </summary>
+	public bool BuyFullSets { get; set; } = true;
+
+	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
+	public float BuyDailyLimit { get; set; } = 1.50f;
+
+	/// <summary>The most it spends in any 7 days, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
+	public float BuyWeeklyLimit { get; set; } = 8.00f;
+
+	/// <summary>
+	/// The most it pays for one badge level (100 XP) - a whole set, or a started badge's missing cards - in the wallet's own
+	/// currency. 0: automatic, a little over what a level usually costs (BuyPlan.UsualLevel). A dearer level waits.
+	/// </summary>
+	public float BuyMaxLevelPrice { get; set; }
+
+	/// <summary>Buying stops once the account's Steam level is this or more. 0: never.</summary>
+	public int BuyStopAtLevel { get; set; }
+
+	/// <summary>Sets one look buys on a human-mode account (a robot buys every one that fits).</summary>
+	public int BuyHumanSetsPerLook { get; set; } = 3;
+
+	/// <summary>Minutes between two looks that buy on a human-mode account while money and cheap levels are left, picked at random in between, only in its day.</summary>
+	public int BuyHumanGapMinMinutes { get; set; } = 30;
+	public int BuyHumanGapMaxMinutes { get; set; } = 90;
+
+	/// <summary>How often it looks, in hours.</summary>
+	public int BuyCheckHours { get; set; } = 12;
+
 	/// <summary>
 	/// Retired "Sell duplicate cards" switch - carried over to <see cref="SpareItems"/> (ConfigStore.MigrateSpare). Still
 	/// written, for a rollback to 1.7.x, whose seller lists cards straight away with no preview: true only when this version
@@ -862,11 +1017,18 @@ public sealed class BotConfig {
 	public int SpareAction { get; set; }
 	public bool SpareMaxedBadgeCards { get; set; } = true;
 	public bool SpareExtraCards { get; set; } = true;
+	/// <summary>Copies of each card, background and emoticon always kept (1.8.2: one number where there were three).</summary>
 	public int SpareKeepCopies { get; set; } = 1;
 	public bool SpareBackgrounds { get; set; } = true;
-	public int SpareKeepBackgrounds { get; set; } = 1;
 	public bool SpareEmoticons { get; set; } = true;
-	public int SpareKeepEmoticons { get; set; } = 1;
+
+	/// <summary>Retired keep-counts of backgrounds and emoticons - only read: the largest of the three becomes
+	/// <see cref="SpareKeepCopies"/> (<see cref="ConfigStore.MigrateSpareKeep"/>). Never written now.</summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? SpareKeepBackgrounds { get; set; }
+
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public int? SpareKeepEmoticons { get; set; }
 	public bool SpareFoils { get; set; }
 
 	/// <summary>Never touch items worth more than this, in the account's own currency.</summary>
@@ -882,8 +1044,9 @@ public sealed class BotConfig {
 	public int SpareGapSeconds { get; set; } = 40;
 	public int SparePriceMaxAgeHours { get; set; } = 24;
 
-	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price. 3 was "a cent under
-	/// the cheapest" until 1.8.1 - it followed dumps down, and a saved 3 becomes 0 (ConfigStore.MigrateSellPrice).</summary>
+	/// <summary>0 a cent under the real price, 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
+	/// cheapest (back in 1.8.2, never following a dumped listing down - see ListingPrice.UnderCheapest). Anything else becomes 0
+	/// (ConfigStore.MigrateSellPrice).</summary>
 	public int SpareSellPrice { get; set; }
 
 	/// <summary>A cheapest listing this many percent or more under the median sale price is a dump and doesn't set the price.</summary>
@@ -1097,7 +1260,9 @@ public sealed class BotConfig {
 	// ── friends & messages ──
 	public bool AcceptFriendRequests { get; set; }
 	public bool AcceptGroupInvites { get; set; }
-	/// <summary>This account joins the groups in the global "Groups every account joins" list.</summary>
+	/// <summary>This account joins the groups in the global "Groups every account joins" list. On for a robot account; a
+	/// new human-mode account starts with it off (<see cref="Settings.NewHumanAccount"/>) - a believable account isn't in a
+	/// group named after the farming tool, on its public profile.</summary>
 	public bool JoinGroup { get; set; } = true;
 
 	/// <summary>Steam groups only this account joins, on top of the global list.</summary>
@@ -1105,12 +1270,11 @@ public sealed class BotConfig {
 	public bool IgnoreSuspiciousInvites { get; set; } = true;
 	public bool RejectInvalidFriendInvites { get; set; }
 	/// <summary>
-	/// Whether to auto-reply at all.
-	///
-	/// Defaults TRUE so accounts configured before this setting existed behave exactly as they did - for them
-	/// the text box was the switch, and it still reads as one because an empty message replies to nobody.
+	/// Whether to auto-reply at all. Off for a new account since 1.8.2 - on with no text it replied to nobody and read as
+	/// if it did; emptying the text turns it off (Settings.Follow). An account from before keeps what it had
+	/// (<see cref="ConfigStore.MigrateNewDefaults"/>).
 	/// </summary>
-	public bool AutoReplyEnabled { get; set; } = true;
+	public bool AutoReplyEnabled { get; set; }
 
 	public string AutoReply { get; set; } = "";
 	public bool AutoReplyOncePerDay { get; set; } = true;
@@ -1150,14 +1314,42 @@ public sealed class BotConfig {
 	public int GiftDelayMinMinutes { get; set; } = 2;
 	public int GiftDelayMaxMinutes { get; set; } = 15;
 	public bool AcceptFairCardSwaps { get; set; }
-	public bool AcceptFromMasters { get; set; }
+
+	// ── 1.8.2: card swaps with other nocat.farm users (Core/CardExchange.cs) ──
+	/// <summary>
+	/// Swap spare normal cards one for one with other nocat.farm users' accounts. Only turned on through its preview: the
+	/// go-ahead lives in config/state/cardswaps-&lt;account&gt;.json, never here (see <see cref="Core.Switches"/>).
+	/// </summary>
+	public bool CardSwaps { get; set; }
+
+	/// <summary>The most a swap may be worth less than what it gives, in the wallet's currency. 0: never worth less.</summary>
+	public float CardSwapMaxLoss { get; set; } = 0.03f;
+
+	/// <summary>Never swap with an account when the trade would be held.</summary>
+	public bool CardSwapSkipHeld { get; set; } = true;
+
+	/// <summary>Swaps sent or accepted in a day, at most.</summary>
+	public int CardSwapsPerDay { get; set; } = 5;
+
+	/// <summary>
+	/// Retired "Accept anything from your own accounts" (1.8.2): "Your other accounts" (<see cref="AutoTradeWith"/>) is the one
+	/// list now. On in an old file with that list empty, the accounts in <see cref="TradeMasters"/> go into it both ways -
+	/// exactly what it did (<see cref="ConfigStore.MigrateOwnAccounts"/>). Only read; never written.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? AcceptFromMasters { get; set; }
+
+	/// <summary>
+	/// Where items are sent ("Send items to"): account names or SteamID64s, the first one the receiver of
+	/// <see cref="SendEveryHours"/>, <see cref="SendOnFarmingFinished"/> - and of the gem sacks and unopened packs when their
+	/// own "send to" is empty. Sending only: nobody listed here may take anything (that's <see cref="AutoTradeWith"/>).
+	/// </summary>
 	public string TradeMasters { get; set; } = "";
 
 	/// <summary>
-	/// Who this account trades with by itself, and which way: names or SteamID64s, each optionally ":from" (accept what
-	/// they send), ":to" (let them take items - confirmed by itself when the authenticator is here) or ":both" (the
-	/// default). Empty = "Your own accounts" both ways, when "Accept anything from your own accounts" is on.
-	/// Everything else waits for you: trade accept / trade decline.
+	/// "Your other accounts": who this account trades with by itself, and which way - names or SteamID64s, each optionally
+	/// ":from" (accept what they send), ":to" (let them take items - confirmed by itself when the authenticator is here) or
+	/// ":both" (the default). Empty: nobody - every offer waits for you (trade accept / trade decline), donations aside.
 	/// </summary>
 	public string AutoTradeWith { get; set; } = "";
 	public bool DeclineOtherTrades { get; set; }
@@ -1177,6 +1369,11 @@ public sealed class BotConfig {
 	// ── staying out of the way ──
 	public bool PauseWhenYouPlay { get; set; } = true;
 	public int ResumeDelayMinutes { get; set; } = 5;
+
+	// ── Open in Steam (1.8.2) ── whether the one-click "sign my Steam app into this account" button is shown. Off by
+	// default; its go-ahead lives outside the settings (SteamOpenLedger), so this alone can't switch it on - the
+	// preview's Turn on does. Windows only.
+	public bool SteamOpenButton { get; set; }
 }
 
 /// <summary>
@@ -1188,7 +1385,7 @@ public static class Live {
 	public static GlobalConfig Global { get; set; } = new();
 }
 
-public static class ConfigStore {
+public static partial class ConfigStore {
 	public static string Root { get; private set; } = AppContext.BaseDirectory;
 	public static string ConfigDir => Path.Combine(Root, "config");
 	public static string GlobalPath => Path.Combine(ConfigDir, "nocatFarm.json");
@@ -1327,6 +1524,15 @@ public static class ConfigStore {
 			bool migrated = MigrateUpdates(loaded);
 			migrated |= MigrateDiscordNames(loaded, text);
 			migrated |= MigrateShareTotals(loaded, text);
+			// 1.8.2: settings that became one - the alert chips, backup messages, the summary's time, "don't look for updates".
+			migrated |= MigrateAlertRouting(loaded);
+			migrated |= MigrateBackupMessages(loaded);
+			migrated |= MigrateDailyReportTime(loaded);
+			migrated |= MigrateCheckForUpdates(loaded);
+
+			// 1.8.2: "Open in Steam buttons on every account" on in the file without its go-ahead (a file copied from another
+			// PC, typed in by hand) goes back off - it's turned on only through its preview.
+			migrated |= Core.Switches.SettleEveryone(loaded);
 
 			if ((plain && Secrets.Available) || migrated) {
 				SaveGlobal(loaded);
@@ -1760,19 +1966,20 @@ public static class ConfigStore {
 	}
 
 	/// <summary>
-	/// 1.8.1: the selling price "a cent under the cheapest" is gone - it followed a dumped listing down and sold under what
-	/// an item really sells for. A saved choice of it becomes "a cent under the real price", the safe default, said once.
+	/// A selling price that isn't one of the choices (a hand edit, a newer version's) becomes "a cent under the real price",
+	/// the safe default, said once. 3 is a choice again since 1.8.2: "a cent under the cheapest", which no longer follows a
+	/// dumped listing down - 1.8.1 had turned every saved 3 into 0 already.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back.</returns>
 	public static bool MigrateSellPrice(BotConfig cfg, string name = "") {
-		if (cfg.SpareSellPrice is >= 0 and <= 2) {
+		if (cfg.SpareSellPrice is >= 0 and <= 3) {
 			return false;
 		}
 
 		cfg.SpareSellPrice = 0;
 
 		if (name.Length > 0) {
-			Log.Info(new Said("{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price", name), name);
+			Log.Info(new Said("{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price", name), name);
 		}
 
 		return true;
@@ -1787,7 +1994,7 @@ public static class ConfigStore {
 			return false;
 		}
 
-		bool spare = cfg.SpareItems, points = cfg.SpendPoints;
+		bool spare = cfg.SpareItems, points = cfg.SpendPoints, buy = cfg.BuyCards;
 
 		if (!Core.Switches.Settle(cfg, name)) {
 			return false;
@@ -1799,6 +2006,10 @@ public static class ConfigStore {
 
 		if (points && !cfg.SpendPoints) {
 			Log.Attention(new Said("{0}: spending Steam Points is off until you turn it on in Settings - it shows what it would buy first", name), name);
+		}
+
+		if (buy && !cfg.BuyCards) {
+			Log.Attention(new Said("{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first", name), name);
 		}
 
 		return true;
@@ -1917,7 +2128,8 @@ public static class ConfigStore {
 		bool seenBefore = File.Exists(seen);
 
 		try {
-			BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(ReadShared(file), Json);
+			string text = ReadShared(file);
+			BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(text, Json);
 
 			if (cfg == null) {
 				return null;
@@ -1950,6 +2162,12 @@ public static class ConfigStore {
 			migrated |= MigrateBoosterMake(cfg);
 			migrated |= MigrateSpare(cfg, name);
 			migrated |= MigrateSellPrice(cfg, name);
+			// 1.8.2: settings that became one, and the defaults that changed (an account from before keeps its old ones).
+			migrated |= MigrateWatchBans(cfg, name);
+			migrated |= MigrateOwnAccounts(cfg, name);
+			migrated |= MigrateSpareKeep(cfg);
+			migrated |= FixSpendLimits(cfg, name);
+			migrated |= MigrateNewDefaults(cfg, text);
 			migrated |= SettleSwitches(cfg, name);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and
 			// saving the account drops OfflineIdleTopGames from the file, and the next update read that as a file from
@@ -2141,8 +2359,14 @@ public static class ConfigStore {
 		("state", "scamwatch-", ".json"), ("state", "health-", ".json"),   // scam watch, account health
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
 		("state", "spare-", ".json"),
+		("state", "buy-", ".json"),   // money spent buying cards, and its go-ahead (Modules/CardBuyer.cs)
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
-		("state", "boosters-", ".json")   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
+		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
+		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
+		("state", "cardswaps-", ".json"),   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)
+		("state", "gems-", ".json"),   // 1.8.2 "Use gems for the most levels": what it still has to list (Modules/GemsChoice.cs)
+		("state", "markethold-", ".json"),   // 1.8.2 the market hold (Core/MarketHold.cs)
+		("state", "refundprices-", ".json")   // 1.8.2 what its refundable games cost (Core/RefundGuard.Price.cs)
 	];
 
 	/// <summary>

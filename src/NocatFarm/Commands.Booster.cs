@@ -41,10 +41,17 @@ public static partial class Commands {
 			}
 
 			Dictionary<uint, DateTime> made = BotManager.ModuleOf<Boosters>(b)?.AutoMemory.Made ?? BoosterPick.Memory.Load(b.Name).Made;
-			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow);
+			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow, DearCards.Marked(b));
 			bool dayOpen = HumanWaits(b, BotManager.ModuleOf<Boosters>(b)?.DayGate) == null;
 
-			return BoosterPick.Explain(b.Name, b.Cfg.BoosterMake, page, ranking, b.Cfg.BoosterKeepGems, dayOpen, b.Cfg.CraftBadges, b.Cfg.OpenBoosterPacks);
+			string plan = BoosterPick.Explain(b.Name, b.Cfg.BoosterMake, page, ranking, b.Cfg.BoosterKeepGems, dayOpen, b.Cfg.CraftBadges, b.Cfg.OpenBoosterPacks);
+
+			// 1.8.2: what 1,000 gems are worth in levels each way, and what it would do with them - and the sealed packs that
+			// came in, each weighed (by default nothing opens or sells them).
+			string gems = await Boosters.GemsPreviewAsync(b, page, ranking, inventory, CancellationToken.None).ConfigureAwait(false);
+			string? packs = await Boosters.PacksPreviewAsync(b, inventory, badges.Levels, CancellationToken.None).ConfigureAwait(false);
+
+			return plan + Environment.NewLine + "  " + gems + (packs == null ? "" : Environment.NewLine + "  " + packs);
 		}, ReplyWithin, oneAtATime: true, cannot: static b => !b.IsOnline || !b.Web.Ready ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
 	}
 }

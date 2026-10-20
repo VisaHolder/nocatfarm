@@ -223,6 +223,17 @@ def used_keys(files):
                 if value:
                     keys.setdefault(value, f"{rel}:{src.count(chr(10), 0, m.start()) + 1}")
 
+    # The settings page translates what Settings.cs names a section, a part, a titled box and a range row by its English
+    # text - t(section), t(def.Group) - so each of those is a key as well. A new box title used to show in English everywhere
+    # with nothing noticing.
+    settings_src = io.open(ROOT / "Config" / "Settings.cs", encoding="utf-8").read()
+
+    for m in re.finditer(r'(?:\bconst string Sec\w+ = |\b(?:Group|Part|Range): )(?=")', settings_src):
+        value, _ = cs_literal(settings_src, m.end())
+
+        if value:
+            keys.setdefault(value, f"Config/Settings.cs:{settings_src.count(chr(10), 0, m.start()) + 1}")
+
     js = ROOT / "wwwroot" / "app.js"
     src = io.open(js, encoding="utf-8").read()
 

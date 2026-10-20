@@ -161,7 +161,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	private bool _saidNothingLeft;
 
 	public override string Name => "cards";
-	public override string Status => _settling && (BotManager.ModuleOf<HumanMode>(Bot) is { } w) ? SettlingSaid(w) : _status;
+	public override string Status => _settling && (BotManager.ModuleOf<HumanMode>(Bot) is { } w) ? SettlingSaid(w, Bot) : _status;
 
 	/// <summary>
 	/// Set while the farmer waits out human mode's settle after signing in. The wait is re-checked once a minute, so
@@ -170,8 +170,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private volatile bool _settling;
 
-	private static Said SettlingSaid(HumanMode warmup) {
+	/// <remarks>1.8.2: an account whose badges were read and have no cards left says so, and one not read yet says it looks
+	/// first - not "then farming".</remarks>
+	internal static Said SettlingSaid(HumanMode warmup, Bot bot) {
+		if ((bot.CardsCheckedAt != null) && (bot.CardsRemaining == 0)) {
+			return new Said("nothing left to farm");
+		}
+
 		int mins = warmup.WarmUpMinutesLeft;
+
+		// Its badges not read yet: whether it has cards isn't known - it looks once it's settled.
+		if (bot.CardsCheckedAt == null) {
+			return mins > 0 ? new Said("settling in first (~{0}m), then looking for cards", mins) : new Said("settling in first, then looking for cards");
+		}
 
 		return mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
 	}
@@ -295,15 +306,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// A grind that ends is the same: the status read "standing by - grinding Team Fortress 2" for up to five minutes
 			// after 'grind off', on an account already back to idling.
 			bool grinding = Bot.Grinding;
+			uint dropsFirst = Bot.DropsFirstApp;
+			bool protecting = Bot.Cfg.SkipRefundableGames;
+			int refundHeld = Bot.Refunds.Generation;
 
 			for (int slept = 0; slept < waitMinutes; slept++) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 					return;
 				}
 
-				// Farming switched off, a game just added to the account (it may have cards), or the grind over - look now,
-				// not in hours.
-				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)) {
+				// Farming switched off, a game just added to the account (it may have cards), the grind over, a game put first
+				// with 'drops', or "Protect refunds" changed (a game it held may have cards) - look now, not in hours.
+				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)
+					|| (Bot.DropsFirstApp != dropsFirst) || (Bot.Cfg.SkipRefundableGames != protecting) || (Bot.Refunds.Generation != refundHeld)) {
 					break;
 				}
 			}
@@ -569,7 +584,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// The owner-safety part still applies, though. Skipping it started night farming seconds after signing in,
 		// while Steam's word that the owner is playing can still be minutes behind.
 		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp && !(warmup.InBed && warmup.SafeToPlay)) {
-			_status = SettlingSaid(warmup);
+			_status = SettlingSaid(warmup, Bot);
 			_settling = true;
 
 			return 1;
@@ -1629,8 +1644,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
-			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays)) {
+			// Free games carry today's date too, and no amount of playing one costs anybody a refund. 1.8.2: nor one that cost no
+			// more than "Protect refunds only for games over" (Bot.Refunds.Cheap - not known yet: left alone).
+			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays) && !Bot.Refunds.Cheap(appId)) {
 				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(RefundableForDays)).ToString("d")), Bot.Name);
 				byApp.Remove(appId);
 			}

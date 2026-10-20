@@ -15,8 +15,8 @@ public static class SpareRun {
 	/// <summary>Gem values asked for in one look.</summary>
 	private const int GemValuesPerLook = 20;
 
-	/// <summary>What one go did.</summary>
-	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped);
+	/// <summary>What one go did. <paramref name="Refused"/>: 1.8.2 - Steam refused a listing, and the look ended there.</summary>
+	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped, bool Refused = false);
 
 	/// <summary>
 	/// Do the plan's gems and sales, most valuable first: at most the per-look number, and nothing past today's item or
@@ -39,6 +39,7 @@ public static class SpareRun {
 		string? sold = null;
 		int listed = 0;
 		bool limited = false;   // a look stopped by today's limit - see the end of the pass
+		bool refused = false;   // Steam refused a listing: the look ends there
 
 		// Passes over the plan: one, unless sales held back at the market free slots today's limit was short of.
 		while (true) {
@@ -71,6 +72,13 @@ public static class SpareRun {
 				// Held by scam watch: nothing goes on the market, and nothing is counted against today's caps for it.
 				if ((d.Verdict == SpareVerdict.Sell) && steam.Held) {
 					stopped = Modules.ScamWatch.OnHold(account);
+
+					continue;
+				}
+
+				// 1.8.2: Steam's market blocked for the account (or listing paused after a refusal): the same - kept, not counted.
+				if ((d.Verdict == SpareVerdict.Sell) && (steam.MarketHeld is { } market)) {
+					stopped = market;
 
 					continue;
 				}
@@ -124,6 +132,32 @@ public static class SpareRun {
 					limited = false;
 
 					break;
+				}
+
+				// The settings as they are now, right before it goes: turned off, paused, on the keep list, over the price limit.
+				if (steam.StillOk(d.Item, d.PriceCents) is { } no) {
+					ledger.Unreserve(d.PriceCents, nowLocal());
+
+					if (no.All) {
+						stopped = no.Why;
+						limited = false;
+
+						break;
+					}
+
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), no.Why), account);
+
+					continue;
+				}
+
+				// 1.8.2: an item that had no price at all (nobody selling it, no sale lately) is priced now, in the wallet's money,
+				// before it becomes gems: no answer, worth more than the price limit, or selling now paying more than its gems -
+				// it's kept.
+				if (await steam.BeforeGemsAsync(d, ct).ConfigureAwait(false) is { } wait) {
+					ledger.Unreserve(d.PriceCents, nowLocal());
+					Log.Info(new Said("{0} ({1}): {2}", d.Item.Name, GameNames.Of(d.Item.Game), wait), account);
+
+					continue;
 				}
 
 				HashSet<ulong> claimed = steam.Claim([d.Item.AssetId]);
@@ -234,6 +268,14 @@ public static class SpareRun {
 				listed += listedNow;
 				GiveBack(ledger, toSell, listedNow, nowLocal);
 
+				// 1.8.2: Steam refused a listing - the look ends here. Its slots went back above, and a second pass only listed
+				// the same way into the same refusal, up to six times a look.
+				if (steam.Refused != null) {
+					refused = true;
+					limited = false;
+					stopped = new Said("Steam refused a listing - nothing more listed this look");
+				}
+
 				foreach (SpareDecision d in toSell) {
 					if (steam.ListedFor(d.Item.AssetId) is { } at) {
 						note.Listed(d.Item, at.Price, steam.ListedCents(d.Item.AssetId));
@@ -260,7 +302,7 @@ public static class SpareRun {
 
 		note.Send();
 
-		return new Done(gemItems, gems, listed, sold, stopped);
+		return new Done(gemItems, gems, listed, sold, stopped, refused);
 	}
 
 	/// <summary>An item turned into gems, as the log says it: "Metro (Tom Clancy's The Division) → 80 gems" - why is a DEBUG line.</summary>
@@ -287,6 +329,131 @@ public static class SpareRun {
 		ledger.Approved ? null : new Said("Spare items was turned off on {0} - stopped before the next item", account);
 
 	/// <summary>
+	/// 1.8.2: why the account must stop now, asked right before each turn into gems, listing or send - a look takes minutes
+	/// and the owner can change things meanwhile: Spare items turned off, the account paused, or scam watch holding it. Null
+	/// while it may go on.
+	/// </summary>
+	public static Said? Halted(Bot bot) =>
+		!Switches.SpareOn(bot.Cfg, bot.Name) ? new Said("Spare items was turned off on {0} - stopped before the next item", bot.Name)
+			: bot.Paused ? new Said("{0} was paused - stopped before the next item", bot.Name)
+			: Modules.ScamWatch.HeldBack(bot) != null ? Modules.ScamWatch.OnHold(bot.Name)
+			: null;
+
+	/// <summary>
+	/// 1.8.2: whether this one item may still go, by the settings as they are NOW, not as they were when the look planned
+	/// it: <see cref="Halted"/> (All: the look stops), then the keep list (items and games), then - for cards, backgrounds
+	/// and emoticons - the price limit against <paramref name="worthCents"/>, the freshest price known. Null when it may go.
+	/// </summary>
+	public static (Said Why, bool All)? StillOk(Bot bot, SpareItem item, int worthCents) {
+		if (Halted(bot) is { } halted) {
+			return (halted, true);
+		}
+
+		SpareRules now = SpareRules.From(bot.Cfg);
+
+		if (now.KeepGames.Contains(item.Game) || now.KeepNames.Contains(item.Name) || now.KeepNames.Contains(item.Hash)) {
+			return (new Said("on your keep list now - skipped"), false);
+		}
+
+		if ((item.Kind is SpareKind.Card or SpareKind.FoilCard or SpareKind.Background or SpareKind.Emoticon or SpareKind.BoosterPack) && (worthCents > now.MaxPriceCents)) {
+			return (new Said("worth {0}, over your price limit now - skipped", Spare.Money(worthCents, (int) bot.WalletCurrency)), false);
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// 1.8.2: whether an item about to become gems may, with its price read again right before (<paramref name="now"/>, in the
+	/// wallet's money): no answer - kept until it has one; worth more than the price limit - kept; selling now paying at least
+	/// a cent more than its gems (<see cref="Spare.SellingPays"/>) - kept, no fresh sack price to tell - kept. Null when it
+	/// may become gems. Asked for an item the look had no price for at all, and one whose price was only an estimate from the
+	/// dollar search or over an hour old (<see cref="NeedsPriceBeforeGems"/>) - a single dumped listing on the search made a
+	/// 0.30 card look like gems. Ones that can't go to the market aren't asked about.
+	/// </summary>
+	public static Said? BeforeGems(SpareDecision d, MarketQuote? now, MarketPrice? sack, SpareRules rules, int currency, DateTime utcNow) {
+		if (!d.Item.Sellable || (d.Verdict != SpareVerdict.Gems)) {
+			return null;
+		}
+
+		if ((now == null) || (now.Currency != currency)) {
+			return new Said("no price right now - kept until it has one");
+		}
+
+		MarketPrice price = now.Price;
+		int worth = ListingPrice.Worth(price);
+
+		if (worth <= 0) {
+			return null;   // still nobody selling it, and no sale lately: gems
+		}
+
+		if (worth > rules.MaxPriceCents) {
+			return new Said("worth {0} now - over your price limit, kept", Spare.Money(worth, currency));
+		}
+
+		// What selling would pay now: at the price it would list for, or - with no sure price - the most it's worth, so it's
+		// never turned into gems on a low guess.
+		int sale = price.Cents > 0 && (ListingPrice.For(price, rules.SellPrice, rules.DumpPct, 0, rules.FloorPct).Cents is int list) ? Seller.ReceiveFor(list) : Seller.ReceiveFor(worth);
+
+		if ((sale <= 0) || (d.GemValue <= 0)) {
+			return null;
+		}
+
+		if ((sack is not { Cents: > 0 } s) || (utcNow - s.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+			return new Said("the price of gems isn't known yet - kept");
+		}
+
+		decimal gems = Spare.GemsWorth(d.GemValue, s.Cents);
+
+		return Spare.SellingPays(gems, sale)
+			? new Said("selling now pays {0}, more than its {1} gems are worth ({2}) - kept", Spare.Money(sale, currency), d.GemValue, Spare.Money(gems, currency))
+			: null;
+	}
+
+	/// <summary>
+	/// 1.8.2: what an unsold listing's gems are worth, for stepping it down (<see cref="SpareListings.StepTo"/>) - by a copy of
+	/// the same item still in the inventory, its gem value as Steam said it, at a sack's price no older than "Trust a price
+	/// for". Null when not known, or with "sell only" (gems aren't weighed then).
+	/// </summary>
+	public static Func<string, decimal?>? StepGems(IReadOnlyList<SpareItem> items, SpareRules rules, int currency) {
+		if ((rules.Action != 0) || (SparePrices.SackPays(currency, rules.DumpPct) is not { Cents: > 0 } sack) || (DateTime.UtcNow - sack.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+			return null;
+		}
+
+		Dictionary<string, SpareItem> byHash = new(StringComparer.Ordinal);
+
+		foreach (SpareItem i in items.Where(static i => i.GooType > 0)) {
+			byHash.TryAdd(i.Hash, i);
+		}
+
+		return hash => byHash.TryGetValue(hash, out SpareItem? item) && (SteamGems.KnownValue(item) is int goo and > 0) ? Spare.GemsWorth(goo, sack.Cents) : null;
+	}
+
+	/// <summary>
+	/// 1.8.2: whether an item about to become gems has its price read again first (<see cref="BeforeGems"/>): one that can go to
+	/// the market, unless its own price in the wallet's money was read in the last hour.
+	/// </summary>
+	public static bool NeedsPriceBeforeGems(SpareDecision d, int currency, DateTime utcNow) =>
+		d.Item.Sellable && (d.Verdict == SpareVerdict.Gems)
+		&& ((d.PriceCents <= 0) || (MarketQuotes.Of(d.Item.Hash, currency) is not { } own) || (utcNow - own.When > Modules.GemsChoice.ActFresh) || (utcNow < own.When.AddMinutes(-5)));
+
+	/// <summary>
+	/// 1.8.2: each listing by the settings as they are right then, not as they were when the look planned it: the keep list
+	/// first (<see cref="StillOk"/>), then priced by <paramref name="priced"/> with the rules read again for this one - so
+	/// the price limit is the one set now, against the fresh price. Turned off, paused or held stops the listing loop itself.
+	/// </summary>
+	public static Seller.Reprice Guarded(Bot bot, IReadOnlyList<SpareDecision> items, Func<SpareRules, Seller.Reprice> priced) {
+		Dictionary<ulong, SpareItem> byAsset = [];
+
+		foreach (SpareDecision d in items) {
+			byAsset[d.Item.AssetId] = d.Item;
+		}
+
+		return (offer, ct) => byAsset.TryGetValue(offer.AssetId, out SpareItem? item) && (StillOk(bot, item, 0) is { All: false } no)
+			? Task.FromResult<(Seller.Offer?, Said)>((null, no.Why))
+			: priced(SpareRules.From(bot.Cfg))(offer, ct);
+	}
+
+	/// <summary>
 	/// How each spare-items listing is priced just before it goes up: again from the market, in the account's own wallet
 	/// currency, by the selling price setting. Kept instead when it can't be priced for certain, when a card, background or
 	/// emoticon is now worth more than the price limit, or when it's now worth more than was counted for it against the
@@ -297,8 +464,15 @@ public static class SpareRun {
 	/// <param name="stepGone">The market went up since that step, by market name: the step is forgotten.</param>
 	/// <param name="ledger">Today's caps: a price that went up since it was counted is listed while their value has room
 	/// for it (<see cref="Fits"/>). None: only at or under what was counted.</param>
+	/// <param name="oursOf">Our own cheapest listing of an item still up, by market name (0 none): "a cent under the cheapest"
+	/// keeps level with it when it's the cheapest (see <see cref="OurListings.UpFor"/>).</param>
+	/// <param name="sack">1.8.2: a sack of gems' price, as the look weighs gems by: with "best of gems or selling", an item
+	/// with gems is listed only when today's price pays at least a cent more than its gems are worth - else it's kept, and
+	/// the next look turns it into gems by the same rule. No fresh sack price: kept.</param>
+	/// <param name="paidOf">1.8.2: the most paid for one copy of a card bought for a badge, by market name (0: none) - a copy of it is
+	/// never listed to pay less (buying cards' list, config/state/buy-&lt;account&gt;.json).</param>
 	public static Seller.Reprice Repricer(IReadOnlyList<SpareDecision> items, SpareRules rules, int currency, Func<string, SpareListings.Step?>? stepOf = null,
-		Action<string>? stepGone = null, SpareLedger? ledger = null) {
+		Action<string>? stepGone = null, SpareLedger? ledger = null, Func<string, int>? oursOf = null, MarketPrice? sack = null, Func<string, long>? paidOf = null) {
 		Dictionary<ulong, SpareDecision> byAsset = [];
 
 		foreach (SpareDecision d in items) {
@@ -307,11 +481,21 @@ public static class SpareRun {
 
 		return (offer, ct) => {
 			SpareDecision? d = byAsset.GetValueOrDefault(offer.AssetId);
-			bool limited = d?.Item.Kind is SpareKind.Card or SpareKind.FoilCard or SpareKind.Background or SpareKind.Emoticon;
+			bool limited = d?.Item.Kind is SpareKind.Card or SpareKind.FoilCard or SpareKind.Background or SpareKind.Emoticon or SpareKind.BoosterPack;
 			int counted = d?.PriceCents ?? 0;
+			decimal? gemsWorth = null;
+
+			if ((rules.Action == 0) && (d?.GemValue is int gems and > 0)) {
+				if ((sack is not { Cents: > 0 } s) || (DateTime.UtcNow - s.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+					return Task.FromResult<(Seller.Offer?, Said)>((null, new Said("the price of gems isn't known yet - kept")));
+				}
+
+				gemsWorth = Spare.GemsWorth(gems, s.Cents);
+			}
 
 			return Seller.RepriceAsync(offer, currency, rules.SellPrice, rules.DumpPct, limited ? rules.MaxPriceCents : null, worth => Fits(ledger, rules, counted, worth, DateTime.Now), ct,
-				stepOf?.Invoke(offer.Hash), rules.MinSaleCents, rules.FloorPct, stepGone == null ? null : () => stepGone(offer.Hash));
+				stepOf?.Invoke(offer.Hash), (int) Math.Clamp(Math.Max(rules.MinSaleCents, paidOf?.Invoke(offer.Hash) ?? 0), 0, int.MaxValue), rules.FloorPct,
+				stepGone == null ? null : () => stepGone(offer.Hash), oursOf?.Invoke(offer.Hash) ?? 0, gemsWorth);
 		};
 	}
 
@@ -373,14 +557,15 @@ public static class SpareRun {
 		}
 
 		// The look's number, the wait before it, then whether it may still go: off, held, or human mode's day over.
-		async Task<bool> MayGo() => ((budget == null) || await budget.TakeAsync(steam.PauseAsync, ct).ConfigureAwait(false))
-			&& ledger.Approved && steam.MayAct && !steam.Held;
+		// 1.8.2: and the settings as they are now (turned off, paused, the keep list) - right before it goes.
+		async Task<bool> MayGo(SpareItem item) => ((budget == null) || await budget.TakeAsync(steam.PauseAsync, ct).ConfigureAwait(false))
+			&& ledger.Approved && steam.MayAct && !steam.Held && (steam.StillOk(item, 0) is null);
 
 		if (items.Where(static i => (i.Kind == SpareKind.Gems) && i.Tradable).OrderByDescending(static i => i.Amount).FirstOrDefault() is { } stack) {
 			int sacks = (int) ((Math.Max(0, (long) stack.Amount - Math.Max(0, keepGems))) / 1000);
 
 			if (sacks > 0) {
-				if (!await MayGo().ConfigureAwait(false)) {
+				if (!await MayGo(stack).ConfigureAwait(false)) {
 					return Told(said, account);
 				}
 
@@ -390,14 +575,14 @@ public static class SpareRun {
 		}
 
 		if ((choice == 3) && (sacksHeld.Count > 0) && (sendTo.Trim().Length > 0)) {
-			if (await MayGo().ConfigureAwait(false)) {
+			if (await MayGo(sacksHeld[0]).ConfigureAwait(false)) {
 				string sent = await steam.SendAsync(sacksHeld, sendTo, ct).ConfigureAwait(false);
 
 				if (sent.Length > 0) {
 					said.Add(new Said("sacks of gems: {0}", sent));
 				}
 			}
-		} else if ((choice == 4) && (sacksHeld.FirstOrDefault(static s => s.Marketable) is { } sack) && (sackSale(sack) is { } sale) && await MayGo().ConfigureAwait(false)
+		} else if ((choice == 4) && (sacksHeld.FirstOrDefault(static s => s.Marketable) is { } sack) && (sackSale(sack) is { } sale) && await MayGo(sack).ConfigureAwait(false)
 			&& ledger.TryReserve(sale.PriceCents, rules.DailyItems, rules.DailyValueCents, nowLocal())) {
 			ledger.Save();
 			(int listed, string text) = await steam.SellAsync([sale], ct).ConfigureAwait(false);
@@ -650,7 +835,7 @@ public static class SpareRun {
 		MarketPrice? p = SparePrices.Of(item, currency);
 
 		if ((p is not { Cents: > 0 } price) || (DateTime.UtcNow - price.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))
-			|| (ListingPrice.For(price, rules.SellPrice, rules.DumpPct).Cents is not int list)) {
+			|| (ListingPrice.For(price, rules.SellPrice, rules.DumpPct, rules.MinSaleCents, rules.FloorPct).Cents is not int list)) {
 			return null;
 		}
 
@@ -693,7 +878,8 @@ public static class SpareRun {
 			return (null, "Steam wouldn't say what's on the market - try again in a while");
 		}
 
-		HashSet<ulong> busy = [.. promised, .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
+		// 1.8.2: cards promised to a card swap nocat.lol paired stay for it - never sold or turned into gems meanwhile.
+		HashSet<ulong> busy = [.. CardExchange.NotForSale(bot, promised, DateTime.UtcNow), .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
 		List<SpareItem> items = Spare.Read(inventory);
 		DateTime now = DateTime.UtcNow;
 		SpareLedger ledger = SpareLedger.Load(bot.Name);
@@ -728,9 +914,10 @@ public static class SpareRun {
 
 		LiveSpareSteam steam = new(bot);
 		Func<SpareItem, Said?> waiting = OurListings.WaitingWhy(OurListings.Load(bot.Name));
-		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting);
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought);
 		SparePlan plan = priceThem
-			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action == 0) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
+			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
 
 		return (new Look(plan, currency, items, busy, ledger, rules, StillToPrice(plan, currency, rules), spread, PricingMinutesLeft(plan, currency, rules)), null);
@@ -745,7 +932,7 @@ public static class SpareRun {
 	/// </summary>
 	/// <param name="plan">Decides from the prices as they're held now.</param>
 	/// <param name="packGames">Booster packs are opened "only when the cards are worth more": their games' shortlists too.</param>
-	/// <param name="sackWanted">A sack of gems' price is needed (best of gems or selling, or selling sacks).</param>
+	/// <param name="sackWanted">A sack of gems' price is needed (best of gems or selling, gems only - gems are never made of what sells for more - or selling sacks).</param>
 	public static async Task<SparePlan> PriceAsync(Func<SparePlan> plan, IReadOnlyList<SpareItem> items, SpareRules rules, int currency, int quotes, bool packGames,
 		bool sackWanted, ISpareSteam steam, CancellationToken ct) {
 		SparePlan now = plan();
@@ -798,11 +985,15 @@ public static class SpareRun {
 
 		now = plan();
 
+		// Gem values a few a look (kept on disk since 1.8.2, so a restart doesn't start over), the ones the most items wait on
+		// first. One Steam didn't answer waits a while, so the same few never take every turn while the rest wait.
 		if (rules.Action is 0 or 1) {
 			int asked = 0;
+			DateTime at = DateTime.UtcNow;
 
 			foreach (SpareItem item in now.Decisions.Where(static d => d.Verdict is SpareVerdict.Unpriced or SpareVerdict.Gems or SpareVerdict.Sell or SpareVerdict.Keep)
-				.Select(static d => d.Item).Where(static i => (i.GooType > 0) && (SteamGems.KnownValue(i) == null)).DistinctBy(static i => i.GooKey)) {
+				.Select(static d => d.Item).Where(i => (i.GooType > 0) && SteamGems.Ask(i, at)).GroupBy(static i => i.GooKey)
+				.OrderByDescending(static g => g.Count()).Select(static g => g.First())) {
 				if (asked++ >= GemValuesPerLook) {
 					break;
 				}
@@ -869,15 +1060,33 @@ public static class SpareRun {
 		OurListings.History? history = OurListings.Undecided(bot.Name) || OurListings.Gone(ours, listings, now) ? await Seller.HistoryAsync(bot, ct).ConfigureAwait(false) : null;
 		(List<OurListings.Entry> declined, List<OurListings.Entry> soldNow, List<OurListings.Entry> live) = OurListings.ReviewAll(bot.Name, listings, history, now);
 
+		// A few each on a line of their own; more at once (a batch confirmed in the Steam app) is one line - each one is
+		// still in the log file.
 		foreach (OurListings.Entry e in live) {
-			Log.Good(LiveSaid(e.Hash, e.BuyerCents, currency), bot.Name);
+			Say(live.Count > EachOwnLine, LiveSaid(e.Hash, e.BuyerCents, currency), bot.Name);
+		}
+
+		if (live.Count > EachOwnLine) {
+			Log.Good(LiveAllSaid(live, currency), bot.Name);
 		}
 
 		foreach (OurListings.Entry s in soldNow) {
-			Log.Good(SoldSaid(s, currency), bot.Name);
+			Say(soldNow.Count > EachOwnLine, SoldSaid(s, currency), bot.Name);
+		}
+
+		if (soldNow.Count > EachOwnLine) {
+			Log.Good(SoldAllSaid(soldNow, currency), bot.Name);
 		}
 
 		foreach (OurListings.Entry d in declined) {
+			// 1.8.2: one that was up on the market and came down unsold was taken down - by you, not turned down on the phone: it
+			// may be listed again ("Don't list declined items again" is for listings never confirmed).
+			if (d.Active) {
+				Log.Info(new Said("{0}: listing taken down · it can be listed again", Seller.CardName(d.Hash)), bot.Name);
+
+				continue;
+			}
+
 			memory.AddDecline(d.Hash, d.AssetId, now);
 			Log.Info(DeclinedSaid(d.Hash, rules.DeclinedDays), bot.Name);
 		}
@@ -903,6 +1112,27 @@ public static class SpareRun {
 
 		return true;
 	}
+
+	/// <summary>One listing's line: in the window, or - one of many said together - only in the log file.</summary>
+	private static void Say(bool many, Said said, string account) {
+		if (many) {
+			Log.Debug(said, account);
+		} else {
+			Log.Good(said, account);
+		}
+	}
+
+	/// <summary>Listings gone up (or sold) at once that still get a line each; more than this are one line.</summary>
+	public const int EachOwnLine = 3;
+
+	/// <summary>"29 listings on the market · 1.04 CAD" - many gone up at once, what buyers pay for them all.</summary>
+	public static Said LiveAllSaid(IReadOnlyCollection<OurListings.Entry> live, int currency) => live.All(static e => e.BuyerCents > 0)
+		? new Said("{0} listings on the market · {1}", live.Count, Spare.Money(live.Sum(static e => (long) e.BuyerCents), currency))
+		: new Said("{0} listings on the market", live.Count);
+
+	/// <summary>"sold 5 items · you got 0.85 CAD" - many sold since the last look.</summary>
+	public static Said SoldAllSaid(IReadOnlyCollection<OurListings.Entry> sold, int currency) =>
+		new("sold {0} items · you got {1}", sold.Count, Spare.Money(sold.Sum(static e => (long) e.YouGetCents), currency));
 
 	/// <summary>"Starry Background 1 is on the market · 0.22 CAD" - a listing of ours up for buyers, at what they pay.</summary>
 	public static Said LiveSaid(string hash, int buyerCents, int currency) => buyerCents > 0
@@ -957,7 +1187,7 @@ public static class SpareRun {
 	public const int QuotesAsked = 20, QuotesBackground = 60;
 
 	private static SparePlan Decide(IReadOnlyList<SpareItem> items, SpareBadges badges, SpareRules rules, SpareLedger ledger, IReadOnlySet<ulong> busy,
-		int currency, SpareListings memory, Func<SpareItem, Said?> waiting) {
+		int currency, SpareListings memory, Func<SpareItem, Said?> waiting, IReadOnlySet<uint> bought) {
 		DateTime now = DateTime.UtcNow;
 
 		return Spare.Plan(new SpareInput {
@@ -968,10 +1198,11 @@ public static class SpareRun {
 			Busy = busy,
 			Price = PriceFor(currency, rules),
 			Currency = currency,
-			Sack = SparePrices.Sack(currency),
+			Sack = SparePrices.SackPays(currency, rules.DumpPct),
 			GemValue = static i => i.GooType > 0 ? SteamGems.KnownValue(i) : 0,
 			Declined = i => memory.DeclinedWhy(i, rules.DeclinedDays, now) ?? waiting(i),
-			StepOf = i => memory.StepOf(i.Hash, now)
+			StepOf = i => memory.StepOf(i.Hash, now),
+			BoughtGames = bought
 		});
 	}
 
@@ -981,7 +1212,8 @@ public static class SpareRun {
 	/// <summary>What a look said, and whether a sooner look is wanted: items left that a later look in its day can do, or
 	/// items still waiting for their first price. Spacing: on a human-mode account, the time to its next look that does
 	/// items (see <see cref="SpareSpread"/>). Busy: another look was already working on the account - nothing was done.</summary>
-	public sealed record Ran(string Said, bool MoreToDo, bool StillPricing, TimeSpan? Spacing = null, bool Busy = false);
+	/// <param name="Refused">1.8.2: Steam refused a listing in it - the next look waits an hour or two.</param>
+	public sealed record Ran(string Said, bool MoreToDo, bool StillPricing, TimeSpan? Spacing = null, bool Busy = false, bool Refused = false);
 
 	// ── one look at a time ──────────────────────────────────────────────────
 	/// <summary>The accounts a look is working on right now - a 'spare do' or the timed look, never both.</summary>
@@ -1044,6 +1276,13 @@ public static class SpareRun {
 			Log.Debug($"spare items left alone: {Columns.ClipChars(left, LeftAloneMax, "...")}", bot.Name);
 		}
 
+		// 1.8.2: items over the price limit are never touched - the owner's rule. Said once a day, in one line with what
+		// they're worth together, so raising the limit is a choice; every hour it was a line nobody needed again.
+		if ((OverLimitSaid(look.Plan, look.Rules.MaxPriceCents, look.Currency) is { } over) && look.Ledger.OverLimitDue(DateTime.Now)) {
+			look.Ledger.Save();
+			Log.Info(over, bot.Name);
+		}
+
 		if (!act) {
 			Briefs[bot.Name] = Brief(look, null);
 
@@ -1067,7 +1306,7 @@ public static class SpareRun {
 		LookBudget? budget = LookBudget.After(bot.Cfg.LegitMode, look.Rules.PerRun, done.GemItems + done.Sold);
 
 		// Gems afterwards: from the inventory as it was - packed gems and sacks are read again next look.
-		List<Said> gems = await GemsAfterAsync(look.Items, GemsChoice(bot.Cfg), Math.Max(0, bot.Cfg.SpareKeepGems), bot.Cfg.SpareGemsSendTo, steam,
+		List<Said> gems = await GemsAfterAsync(look.Items, GemsChoice(bot.Cfg), Math.Max(0, bot.Cfg.SpareKeepGems), Looting.SendToName(bot.Cfg, bot.Cfg.SpareGemsSendTo, bot.Name), steam,
 			s => SaleOf(s, look.Currency, look.Rules, new Said("sack of gems")), look.Rules, look.Ledger, static () => DateTime.Now, bot.Name, ct, budget).ConfigureAwait(false);
 
 		// Selling, where it's chosen: its own listings unsold after the days set come down, to go up again a step cheaper -
@@ -1075,13 +1314,13 @@ public static class SpareRun {
 		// each one: turned off, held or human mode's day over part way stops the rest.
 		if ((look.Rules.Action is 0 or 2) && (AfterStop(look.Ledger, steam, bot.Name) == null)) {
 			await Seller.StepDownAsync(bot, Math.Clamp(bot.Cfg.SpareRelistDays, 1, 60), ct, () => AfterStop(look.Ledger, steam, bot.Name), budget,
-				bot.Cfg.LegitMode ? steam.PauseAsync : null).ConfigureAwait(false);
+				bot.Cfg.LegitMode ? steam.PauseAsync : null, StepGems(look.Items, look.Rules, look.Currency)).ConfigureAwait(false);
 		}
 
 		bool more = (look.Plan.Actions.Count > done.GemItems + done.Sold) && look.Ledger.Fits(0, look.Rules.DailyItems, look.Rules.DailyValueCents, DateTime.Now);
 		Briefs[bot.Name] = Brief(look, done);
 
-		return new Ran(Answer(bot.Name, look, done, gems), more, pricing, look.Spread?.Spacing);
+		return new Ran(Answer(bot.Name, look, done, gems), more, pricing, look.Spread?.Spacing, Refused: done.Refused);
 	}
 
 	/// <summary>
@@ -1170,11 +1409,11 @@ public static class SpareRun {
 
 		// What else turning it on starts, by the account's other settings: packs it doesn't open and gem sacks leave too.
 		string also = (Math.Clamp(bot.Cfg.BoosterUnopened, 0, 2) switch {
-			1 => $"{Environment.NewLine}Also: booster packs it doesn't open are sent to {Named(bot.Cfg.BoosterSendTo)}.",
+			1 => $"{Environment.NewLine}Also: booster packs it doesn't open are sent to {Named(Looting.SendToName(bot.Cfg, bot.Cfg.BoosterSendTo, bot.Name))}.",
 			2 => $"{Environment.NewLine}Also: booster packs it doesn't open are sold, within these limits.",
 			_ => ""
 		}) + (GemsChoice(bot.Cfg) switch {
-			3 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and the sacks sent to {Named(bot.Cfg.SpareGemsSendTo)}.",
+			3 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and the sacks sent to {Named(Looting.SendToName(bot.Cfg, bot.Cfg.SpareGemsSendTo, bot.Name))}.",
 			4 => $"{Environment.NewLine}Also: gems are packed into sacks of 1000 and one sack is sold each look, within these limits.",
 			_ => ""
 		});
@@ -1304,6 +1543,18 @@ public static class SpareRun {
 		string.Join(", ", plan.Decisions.Where(static d => d.Verdict is not (SpareVerdict.Gems or SpareVerdict.Sell))
 			.GroupBy(static d => d.Why.ToEnglish()).OrderByDescending(static g => g.Count()).Select(static g => $"{g.Count()} {g.Key}{Named(g)}"));
 
+	/// <summary>
+	/// 1.8.2: "2 item(s) worth 3.54 CAD are over your 0.75 price limit - raise it to sell them": the items a look never
+	/// touches for being worth more than "Never touch items worth more than", in one line - null when there are none.
+	/// </summary>
+	public static Said? OverLimitSaid(SparePlan plan, int maxCents, int currency) {
+		List<SpareDecision> over = [.. plan.Decisions.Where(static d => d.Verdict == SpareVerdict.OverLimit)];
+
+		return over.Count == 0 ? null
+			: new Said("{0} item(s) worth {1} are over your {2} price limit - raise it to sell them", over.Count,
+				Spare.Money(over.Sum(static d => (long) d.PriceCents), currency), Spare.Money(maxCents));
+	}
+
 	/// <summary>The "spare items left alone" debug line is cut at this many characters - it ran to 2,500 with every name.</summary>
 	public const int LeftAloneMax = 300;
 
@@ -1379,8 +1630,10 @@ public static class SpareRun {
 
 		memory.ReleaseAndSay(cfg.BoosterMake, cfg.BoosterNeverOpen, DateTime.UtcNow, bot.Name);
 		HashSet<ulong> own = memory.Ids();
+		// 1.8.2: packs automatic made to sell (Modules/Boosters.Gems.cs) are left to it, like ones on the market.
+		HashSet<ulong> forSale = memory.ForSaleIds();
 		List<Spare.PackDecision> packs = Spare.PlanPacks(look.Items, choice, Math.Clamp(cfg.BoosterOpenNewDays, 0, 30), cfg.BoosterNeverOpen,
-			look.Ledger.Received, look.Busy, SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own);
+			look.Ledger.Received, forSale.Count == 0 ? look.Busy : new HashSet<ulong>(look.Busy.Concat(forSale)), SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own);
 
 		if (act && (cfg.BoosterUnopened == 2)) {
 			int quoted = 0;
@@ -1425,7 +1678,7 @@ public static class SpareRun {
 			}).ConfigureAwait(false);
 		sb.AppendLine().Append(CultureInfo.InvariantCulture, $"{bot.Name}: opened {opened}");
 
-		Said? unopened = await UnopenedAsync(packs, Math.Clamp(cfg.BoosterUnopened, 0, 2), cfg.BoosterSendTo, steam,
+		Said? unopened = await UnopenedAsync(packs, Math.Clamp(cfg.BoosterUnopened, 0, 2), Looting.SendToName(cfg, cfg.BoosterSendTo, bot.Name), steam,
 			p => SaleOf(p, look.Currency, look.Rules, new Said("worth more sealed")), look.Rules, look.Ledger, static () => DateTime.Now, ct, bot.Name).ConfigureAwait(false);
 
 		if (unopened is { } u) {

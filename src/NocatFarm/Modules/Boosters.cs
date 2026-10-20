@@ -353,11 +353,12 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 	public sealed record Made(bool Ok, uint Gems, uint Tradable, uint Untradable, string? Why, ulong ItemId = 0, bool NoAnswer = false);
 
 	/// <summary>Make one booster pack, and say which item it became when Steam does.</summary>
-	public static async Task<Made> MakeAsync(Bot bot, Offer offer, uint tradable, uint untradable, CancellationToken ct = default) {
+	/// <param name="prefer">1.8.2: which gems, in Steam's terms ("1" tradable first, "3" untradable first) - the setting's choice when not given.</param>
+	public static async Task<Made> MakeAsync(Bot bot, Offer offer, uint tradable, uint untradable, CancellationToken ct = default, string? prefer = null) {
 		(string? answer, bool sent) = await bot.Web.PostTrackedAsync(new Uri(WebSession.Community, "/tradingcards/ajaxcreatebooster/"), new Dictionary<string, string> {
 			["appid"] = offer.AppId.ToString(CultureInfo.InvariantCulture),
 			["series"] = offer.Series.ToString(CultureInfo.InvariantCulture),
-			["tradability_preference"] = GemsToSpend(bot, offer.Price, tradable, untradable)
+			["tradability_preference"] = prefer ?? GemsToSpend(bot, offer.Price, tradable, untradable)
 		}, new Uri(WebSession.Community, "/tradingcards/boostercreator/"), ct).ConfigureAwait(false);
 
 		// Sent and no answer: Steam may have made it. Never sent (no session): nothing happened.

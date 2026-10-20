@@ -321,6 +321,7 @@ public static class IdlerImport {
 			if (pick.Human && !bot.LegitMode) {
 				bot.LegitMode = true;
 				Settings.ApplyLegitMode(bot, false);
+				Settings.NewHumanAccount(bot);
 				notes.Add(new Said("{0}: set to human mode", name));
 			}
 
@@ -469,7 +470,7 @@ public static class IdlerImport {
 			said.Add(new Said("rep4rep on"));
 		}
 
-		if (c.TradeMasters.Length > 0) {
+		if (c.AutoTradeWith.Length > 0) {
 			said.Add(new Said("who may take its items"));
 		}
 

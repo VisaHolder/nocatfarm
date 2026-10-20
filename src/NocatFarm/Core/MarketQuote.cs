@@ -205,8 +205,8 @@ public static class ListingPrice {
 
 	/// <summary>
 	/// The buyer's price for one item, or null with the reason it's kept instead. <paramref name="strategy"/>: 0 a cent
-	/// under the real price (the default), 1 the same as the cheapest listing, 2 the median sale price - anything else is
-	/// read as 0 (see <see cref="Choice"/>). <paramref name="dumpPct"/>: under the default, a cheapest listing this many percent or more under the
+	/// under the real price (the default), 1 the same as the cheapest listing, 2 the median sale price, 3 a cent under the
+	/// cheapest (see <see cref="UnderCheapest"/>) - anything else is read as 0 (see <see cref="Choice"/>). <paramref name="dumpPct"/>: under the default, a cheapest listing this many percent or more under the
 	/// median with only one sale behind it is a contradiction, and the item is kept (0 = list it anyway). It never moves the
 	/// price itself: the price is the higher of the two, so a listing under the median never sets it.
 	/// </summary>
@@ -219,7 +219,11 @@ public static class ListingPrice {
 	/// cheapest listing (the two would have met), and every choice here lists at a cent under the cheapest listing or
 	/// higher. The order book itself is only on the item's page, in the currency of the country asking, not the wallet's.
 	/// </remarks>
-	public static (int? Cents, Said Why) For(MarketPrice price, int strategy, int dumpPct) {
+	/// <param name="minReceive">Only for "a cent under the cheapest": "Only sell if you get at least" - see <see cref="UnderCheapest"/>.</param>
+	/// <param name="floorPct">Only for "a cent under the cheapest": "Never go lower than", in percent of the sale price; 0 none.</param>
+	/// <param name="ours">Only for "a cent under the cheapest": what a buyer pays for our own cheapest listing of the item still
+	/// up (<see cref="OurListings.UpFor"/>), 0 none.</param>
+	public static (int? Cents, Said Why) For(MarketPrice price, int strategy, int dumpPct, int minReceive = 0, int floorPct = 0, int ours = 0) {
 		int lowest = price.Cents;
 		int median = price.Median ?? 0;
 
@@ -234,6 +238,8 @@ public static class ListingPrice {
 				// The median - but never under a cent below the cheapest listing: that would be giving it away.
 				return median > 0 ? (Math.Max(Math.Max(Floor, median), Seller.UndercutFor(lowest)), default)
 					: (null, new Said("no sale in the last day, so no median - kept"));
+			case 3:
+				return (UnderCheapest(lowest, median, dumpPct, minReceive, floorPct, ours), default);
 		}
 
 		if (median <= 0) {
@@ -253,10 +259,40 @@ public static class ListingPrice {
 	}
 
 	/// <summary>
-	/// The selling price choice as it may be: 0, 1 or 2. "A cent under the cheapest" (3, until 1.8.1) followed a dumped
-	/// listing down and sold under what an item really sells for - anything that isn't one of the three is the safe default.
+	/// The selling price choice as it may be: 0, 1, 2 or 3 - anything that isn't one of them is the safe default.
 	/// </summary>
-	public static int Choice(int saved) => saved is >= 0 and <= 2 ? saved : 0;
+	public static int Choice(int saved) => saved is >= 0 and <= 3 ? saved : 0;
+
+	/// <summary>
+	/// "A cent under the cheapest" (1.8.2): a cent under the cheapest listing, so ours is the cheapest and sells first -
+	/// cheapest 0.12, listed at 0.11. The 1.8.0 one of that name followed a dumped listing down; this one doesn't:
+	/// <list type="bullet">
+	/// <item>A cheapest listing <paramref name="dumpPct"/> percent or more under what it sold for over the last day is a dump,
+	/// and ignored: it goes a cent under the sale price instead. priceoverview only says the cheapest listing, never the
+	/// second-cheapest, so the sale price is the next real price there is.</item>
+	/// <item>Our own listing already the cheapest (<paramref name="ours"/> is the cheapest): listed at the same price, never
+	/// under ourselves.</item>
+	/// <item>Never under <paramref name="floorPct"/> percent of the sale price when there is one, nor the market's 3 cents
+	/// (you get 0.01).</item>
+	/// <item>A cent under that would pay under <paramref name="minReceive"/>: the least that pays it, while that's no more
+	/// than the price it undercuts. When even that pays under it, the price stays and the minimum decides (gems or kept) -
+	/// never a listing above the cheapest only to make the minimum.</item>
+	/// </list>
+	/// </summary>
+	internal static int UnderCheapest(int lowest, int median, int dumpPct, int minReceive, int floorPct, int ours) {
+		bool mine = (ours > 0) && (ours == lowest);
+		bool dump = !mine && (median > 0) && (dumpPct > 0) && (lowest * 100L < median * (100L - Math.Clamp(dumpPct, 0, 99)));
+		int beat = dump ? median : lowest;
+		int price = Math.Max(Floor, mine ? lowest : beat - 1);
+
+		if ((median > 0) && (floorPct > 0)) {
+			price = Math.Max(price, (int) Math.Ceiling(median * Math.Clamp(floorPct, 1, 100) / 100m));
+		}
+
+		int least = minReceive > 0 ? minReceive + Seller.FeesFor(minReceive) : 0;
+
+		return least <= beat ? Math.Max(price, least) : price;
+	}
 
 	/// <summary>What the item is worth, for the price limit and the day's value cap: the higher of the cheapest listing and the median.</summary>
 	public static int Worth(MarketPrice price) => Math.Max(price.Cents, price.Median ?? 0);

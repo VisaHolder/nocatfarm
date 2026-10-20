@@ -141,11 +141,14 @@ public readonly record struct BotStatus(
 			playing = true;
 
 			if (bot.GrindUntil is { } until) {
-				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
+				// Rounded up, never below a minute: the last seconds of a grind read "1m left", not "0m left".
+				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(1, Math.Ceiling((until - DateTime.UtcNow).TotalMinutes))));
 			}
-		} else if (bot.DropsFirstActive && !bot.Paused) {
-			doing = new Said("going for {0}: {1} of {2} card drop(s)", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
-			playing = bot.IsFarming;
+		} else if (bot.DropsFirstActive && !bot.Paused && bot.IsFarming && human is not { Current: not HumanMode.Phase.Off }) {
+			// Only while its game is really on: between sittings (warming up, a break, another game) the line below says what
+			// is true, and "going for" read as if it were playing it.
+			doing = new Said("{0} · {1} of {2} card drop(s)", new Said("playing {0}", GameNames.Of(bot.DropsFirstApp)), bot.DropsFirstGot, bot.DropsFirstWant);
+			playing = true;
 		} else if (bot.Paused) {
 			doing = new Said("paused");
 		} else if (bot.PlayingBlocked) {
@@ -160,9 +163,14 @@ public readonly record struct BotStatus(
 			doing = human.Doing;
 			(done, total) = human.Session;
 			playing = human.PlayingNow != 0;
+			quiet = human.Current is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff;
 
 			if (total > 0) {
 				sitting = new Said("{0}/{1}", Fmt.Hm(done), Fmt.Hm(total));
+			} else if (quiet) {
+				// Asleep or done for the day: the wake window ("up 13:15-14:45"), or nothing while it's any moment now - never a
+				// countdown, which after bedtime was counting to the wrong day's wake.
+				sitting = human.UpWindowNow is { } w ? new Said("up {0}", HumanMode.WindowWords(w.From, w.To)) : default;
 			} else if (human.NextChange is { } next) {
 				int left = (int) Math.Max(0, (next - DateTime.UtcNow).TotalMinutes);
 				sitting = left > 0 ? new Said("{0} to go", Fmt.Hm(left)) : new Said("any moment");
@@ -178,15 +186,25 @@ public readonly record struct BotStatus(
 
 			// The log's line: what's left of the sitting, when it's up again or back - not two pairs of numbers.
 			HumanMode.Phase phase = human.Current;
-			quiet = phase is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff;
 			logDoing = human.LogDoing;
 
+			// Card drops it was told to go for ('drops'): the same line as any sitting, with how many have dropped.
+			if (bot.DropsFirstActive && (human.PlayingNow == bot.DropsFirstApp)) {
+				doing = new Said("{0} · {1} of {2} card drop(s)", doing, bot.DropsFirstGot, bot.DropsFirstWant);
+				logDoing = new Said("{0} · {1} of {2} card drop(s)", logDoing, bot.DropsFirstGot, bot.DropsFirstWant);
+			}
+
 			if (total > 0) {
-				logSitting = new Said("{0} left", Fmt.Hm(Math.Max(0, total - done)));
+				// Never "0m left": the last minute of a sitting is still a minute, and then it ends with a break or the next game.
+				logSitting = new Said("{0} left", Fmt.Hm(Math.Max(1, total - done)));
 			} else if (human.NextChange is { } wake) {
 				int left = (int) Math.Max(0, (wake - DateTime.UtcNow).TotalMinutes);
 				logSitting = left <= 0 ? new Said("any moment")
+					// After bedtime the next day isn't planned yet: when it gets up is a window, not the day before's time.
+					: quiet && (human.UpWindowNow is { } window) ? new Said("up {0}", HumanMode.WindowWords(window.From, window.To))
 					: quiet ? new Said("up in {0}", Fmt.Hm(left))
+					// Bedtime comes in the middle of the break: it isn't back tonight.
+					: human.BreakIntoBed ? new Said("then off for the night")
 					: phase is HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak ? new Said("back in {0}", Fmt.Hm(left))
 					: new Said("{0} to go", Fmt.Hm(left));
 			}

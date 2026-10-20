@@ -39,7 +39,8 @@ public static class Seller {
 	/// card a new asset id.</param>
 	public sealed record Offer(ulong AssetId, string Game, string Card, int LowestCents, int BuyerCents, int YouGetCents, string Hash = "");
 
-	public sealed record Plan(List<Offer> Offers, int Duplicates, int Unpriced, string? Problem);
+	/// <param name="Gems">1.8.2: each listed card's gems by asset id (null: its gem value isn't known) - what 'sell do' weighs selling against.</param>
+	public sealed record Plan(List<Offer> Offers, int Duplicates, int Unpriced, string? Problem, IReadOnlyDictionary<ulong, int?>? Gems = null);
 
 	/// <summary>Steam's cut on top of what the seller receives: 5% for Steam, 10% for the game, each at least a cent.</summary>
 	public static int FeesFor(int receive) => Math.Max(1, receive * 5 / 100) + Math.Max(1, receive * 10 / 100);
@@ -69,7 +70,14 @@ public static class Seller {
 	public static string Money(int cents, Bot bot) => (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture)
 		+ (bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? "" : " " + bot.WalletCurrency);
 
-	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct) {
+	/// <summary>
+	/// Copies of each card 'sell' keeps: none of a finished badge's, every level's worth of a set it holds whole - or will,
+	/// with buying cards on (it buys the missing ones) - and otherwise one.
+	/// </summary>
+	public static int KeepCopies(int levelsLeft, bool wholeSet, bool buying) => levelsLeft <= 0 ? 0 : wholeSet || buying ? levelsLeft : 1;
+
+	/// <param name="read">1.8.2: hears the inventory once it's read whole - so a preview after it uses the same read, not a second one.</param>
+	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct, Action<InventoryContents>? read = null) {
 		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant.
 		if (WalletCurrency(bot) is not int currency) {
 			return new Plan([], 0, 0, "Steam hasn't said this account's wallet currency yet - try again in a minute");
@@ -91,11 +99,16 @@ public static class Seller {
 			return new Plan([], 0, 0, "couldn't read all of its inventory - Steam stopped part way; try again in a while");
 		}
 
+		read?.Invoke(inventory);
+
 		// Cards promised in a trade that's still waiting aren't this account's to sell - and don't count towards its sets
 		// either, since they're about to leave. Not knowing is a reason to wait, not to guess: listing one breaks the trade.
-		if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+		if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } waiting) {
 			return new Plan([], 0, 0, "Steam wouldn't say which cards are in a waiting trade - try again in a while");
 		}
+
+		// 1.8.2: nor are its cards promised to a card swap nocat.lol paired.
+		HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 		// game -> card -> the copies held (asset ids), marketable normal cards only
 		Dictionary<uint, Dictionary<string, List<ulong>>> cards = [];
@@ -132,13 +145,19 @@ public static class Seller {
 		int unpriced = 0;
 		int lookups = 0;
 
+		// 1.8.2: with buying cards on, a set it's missing cards of will be finished by buying them, so its copies are kept for
+		// the levels still to come; a game it just bought cards of keeps them all until they're crafted.
+		bool buying = Modules.CardBuyer.On(bot);
+		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
+
 		// The games with the most spare copies first - that's where a price lookup sells the most.
 		foreach ((uint game, Dictionary<string, List<ulong>> held) in cards.OrderByDescending(static c => c.Value.Values.Sum(static v => v.Count - 1))) {
 			int levelsLeft = MaxBadgeLevel - badges.GameLevels.GetValueOrDefault(game);
 			int spare = held.Values.Sum(v => Math.Max(0, v.Count - Math.Max(1, levelsLeft)));
 
-			if ((levelsLeft > 0) && (spare == 0)) {
-				continue;   // nothing spare even on the generous reading - no need to ask the market
+			// Bought for a badge, or nothing spare even on the generous reading - no need to ask the market.
+			if (bought.Contains(game) || ((levelsLeft > 0) && (spare == 0))) {
+				continue;
 			}
 
 			if (lookups >= MaxLookups) {
@@ -157,7 +176,7 @@ public static class Seller {
 			}
 
 			bool wholeSet = (set.Size > 0) && set.Cards.Keys.All(held.ContainsKey);
-			int keep = levelsLeft <= 0 ? 0 : wholeSet ? levelsLeft : 1;
+			int keep = KeepCopies(levelsLeft, wholeSet, buying);
 
 			foreach ((string hash, List<ulong> copies) in held) {
 				foreach (ulong asset in copies.Skip(keep)) {
@@ -177,10 +196,45 @@ public static class Seller {
 			}
 		}
 
+		// 1.8.2: never a card of a game - or a card - on the keep list.
+		SpareRules keepList = SpareRules.From(bot.Cfg);
+		offers.RemoveAll(o => OnKeepList(o, keepList));
+
+		// 1.8.2: what each card's gems are worth, so a sale never pays less than its gems - each game's gem value asked at
+		// most once, a few games a look; one not known keeps its cards. And a sack's price to value gems by.
+		Dictionary<ulong, SpareItem> items = [];
+
+		foreach (SpareItem i in Spare.Read(inventory)) {
+			items[i.AssetId] = i;
+		}
+
+		Dictionary<string, int?> gooOf = new(StringComparer.Ordinal);
+		Dictionary<ulong, int?> gems = [];
+		LiveSpareSteam steam = new(bot);
+
+		foreach (Offer o in offers.OrderByDescending(static o => o.LowestCents)) {
+			if (!items.TryGetValue(o.AssetId, out SpareItem? item)) {
+				gems[o.AssetId] = null;
+
+				continue;
+			}
+
+			if (!gooOf.TryGetValue(item.GooKey, out int? goo)) {
+				goo = SteamGems.KnownValue(item) ?? (gooOf.Count < MaxLookups ? await steam.GemValueAsync(item, ct).ConfigureAwait(false) : null);
+				gooOf[item.GooKey] = goo;
+			}
+
+			gems[o.AssetId] = goo;
+		}
+
+		if ((gems.Values.Any(static g => g > 0)) && Stale(SparePrices.Sack(currency), keepList)) {
+			await SparePrices.PriceSackAsync(currency, ct).ConfigureAwait(false);
+		}
+
 		// Most valuable first: if only a few go today, they should be the ones worth the most. Each priced in the wallet's own
 		// currency, by the account's selling price rule - one market request a card, so only as many as are listed.
 		List<Offer> priced = [];
-		Reprice rule = OwnRule(bot, currency);
+		Reprice rule = OwnRule(bot, currency, gems);
 		Dictionary<string, Offer?> byCard = new(StringComparer.Ordinal);
 
 		foreach (Offer o in offers.OrderByDescending(static o => o.LowestCents)) {
@@ -189,8 +243,12 @@ public static class Seller {
 			}
 
 			if (!byCard.TryGetValue(o.Hash, out Offer? same)) {
-				(same, _) = await rule(o, ct).ConfigureAwait(false);
+				(same, Said why) = await rule(o, ct).ConfigureAwait(false);
 				byCard[o.Hash] = same;
+
+				if (same == null) {
+					Log.Debug(KeptSaid(o, why), bot.Name);
+				}
 			}
 
 			if (same == null) {
@@ -202,11 +260,21 @@ public static class Seller {
 			priced.Add(o with { LowestCents = same.LowestCents, BuyerCents = same.BuyerCents, YouGetCents = same.YouGetCents });
 		}
 
-		return new Plan([.. priced.OrderByDescending(static o => o.YouGetCents)], duplicates, unpriced, null);
+		return new Plan([.. priced.OrderByDescending(static o => o.YouGetCents)], duplicates, unpriced, null, gems);
 	}
+
+	/// <summary>A price too old to go by ("Trust a price for"), or none.</summary>
+	private static bool Stale(MarketPrice? price, SpareRules rules) => (price is not { Cents: > 0 } p) || (DateTime.UtcNow - p.At > TimeSpan.FromHours(rules.PriceMaxAgeHours));
 
 	/// <summary>"391540-Sans" is the card "Sans".</summary>
 	internal static string CardName(string hash) => hash.IndexOf('-') is int dash and > 0 ? hash[(dash + 1)..] : hash;
+
+	/// <summary>"391540-Sans" is an item of game 391540 (0: no game in its name).</summary>
+	internal static uint GameOf(string hash) => (hash.IndexOf('-') is int dash and > 0) && uint.TryParse(hash.AsSpan(0, dash), NumberStyles.None, CultureInfo.InvariantCulture, out uint app) ? app : 0;
+
+	/// <summary>1.8.2: an item on the keep list - its game ("Never touch items from these games"), or itself by name.</summary>
+	internal static bool OnKeepList(Offer offer, SpareRules rules) =>
+		((GameOf(offer.Hash) is uint app and > 0) && rules.KeepGames.Contains(app)) || rules.KeepNames.Contains(offer.Card) || ((offer.Hash.Length > 0) && rules.KeepNames.Contains(offer.Hash));
 
 	// ── listing ──────────────────────────────────────────────────────────────
 	/// <summary>
@@ -234,8 +302,13 @@ public static class Seller {
 	/// under what the listing had - never under <paramref name="floorPct"/> percent of the real price (see <see cref="SpareListings.Capped"/>).</param>
 	/// <param name="minReceive">Kept when the account would get less than this ("Only sell if you get at least").</param>
 	/// <param name="stepGone">Called when the market went up since the step: the step is stale and goes.</param>
+	/// <param name="ours">What a buyer pays for our own cheapest listing of this item still up, 0 none: "a cent under the
+	/// cheapest" never goes under it when it's the cheapest (see <see cref="ListingPrice.UnderCheapest"/>).</param>
+	/// <param name="gemsWorth">1.8.2: what the item's gems are worth (null: not weighed against gems) - kept when selling at
+	/// today's price wouldn't pay at least a cent more (<see cref="Spare.SellingPays"/>); the next look turns it into gems.</param>
 	public static async Task<(Offer? Offer, Said Why)> RepriceAsync(Offer offer, int currency, int strategy, int dumpPct, int? maxWorth,
-		Func<int, bool>? fits, CancellationToken ct, SpareListings.Step? step = null, int minReceive = 0, int floorPct = 80, Action? stepGone = null) {
+		Func<int, bool>? fits, CancellationToken ct, SpareListings.Step? step = null, int minReceive = 0, int floorPct = 80, Action? stepGone = null, int ours = 0,
+		decimal? gemsWorth = null) {
 		if ((currency <= 0) || (offer.Hash.Length == 0)) {
 			return (null, new Said("no price in this account's currency, not listed"));
 		}
@@ -244,7 +317,7 @@ public static class Seller {
 			return (null, new Said("no price yet, tries later"));
 		}
 
-		(int? list, Said why) = ListingPrice.For(quote.Price, strategy, dumpPct);
+		(int? list, Said why) = ListingPrice.For(quote.Price, strategy, dumpPct, minReceive, floorPct, ours);
 
 		if (list is not int buyer) {
 			return (null, why);
@@ -270,13 +343,20 @@ public static class Seller {
 			return (null, new Said("not listed: you'd get {0}, under your {1} minimum", Spare.Money(receive, currency), Spare.Money(minReceive, currency)));
 		}
 
+		// 1.8.2, gems never lose money: at today's price, selling has to pay at least a cent more than the gems are worth.
+		if ((receive > 0) && (gemsWorth is decimal gems) && !Spare.SellingPays(gems, receive)) {
+			return (null, new Said("not listed: you'd get {0}, not more than its gems are worth ({1})", Spare.Money(receive, currency), Spare.Money(gems, currency)));
+		}
+
 		// Last, once nothing else keeps it: a price that went up since it was counted is fine while today's value limit
 		// still has room for it (and that room is taken now) - Starry Background 1, counted at 0.16, was kept at 0.23.
 		if ((receive > 0) && (fits?.Invoke(worth) == false)) {
 			return (null, new Said(WentUpWhy, Spare.Money(worth, currency)));
 		}
 
-		return receive > 0 ? (offer with { LowestCents = quote.Lowest ?? 0, BuyerCents = buyer, YouGetCents = receive }, default)
+		// 1.8.2: what a buyer is really charged - what the account gets and Steam's fees on it, which can be a cent under the
+		// price aimed at - so "never under our own listing" goes by what's really up.
+		return receive > 0 ? (offer with { LowestCents = quote.Lowest ?? 0, BuyerCents = receive + FeesFor(receive), YouGetCents = receive }, default)
 			: (null, new Said("the market pays nothing for it"));
 	}
 
@@ -286,11 +366,37 @@ public static class Seller {
 	/// <summary>"listed Scout (Team Fortress 2) for 0.15 CAD · you get 0.13 CAD" - each listing as it goes up.</summary>
 	public static Said ListedSaid(Offer offer, string price, string youGet) => new("listed {0} ({1}) for {2} · you get {3}", offer.Card, offer.Game, price, youGet);
 
-	/// <summary>The account's own selling price rule, for anything that has no other: 'sell', and stale listings put up again.</summary>
-	public static Reprice OwnRule(Bot bot, int currency) {
+	/// <summary>
+	/// The account's own selling price rule, for anything that has no other: 'sell'. 1.8.2: by the spare items limits too -
+	/// never anything worth more than "Never touch items worth more than", never for less than "Only sell if you get at
+	/// least", and - with <paramref name="gems"/> - never for less than a cent more than its gems are worth (a card whose gem
+	/// value or the sack's price isn't known is kept).
+	/// </summary>
+	public static Reprice OwnRule(Bot bot, int currency, IReadOnlyDictionary<ulong, int?>? gems = null) {
 		int strategy = ListingPrice.Choice(bot.Cfg.SpareSellPrice), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		int floorPct = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100);
+		SpareRules rules = SpareRules.From(bot.Cfg);
 
-		return (o, ct) => RepriceAsync(o, currency, strategy, dump, null, null, ct);
+		return (o, ct) => {
+			decimal? gemsWorth = null;
+
+			if (gems != null) {
+				if (!gems.TryGetValue(o.AssetId, out int? goo) || (goo is null)) {
+					return Task.FromResult<(Offer?, Said)>((null, new Said("its gem value isn't known yet - kept")));
+				}
+
+				if (goo > 0) {
+					if (Stale(SparePrices.Sack(currency), rules)) {
+						return Task.FromResult<(Offer?, Said)>((null, new Said("the price of gems isn't known yet - kept")));
+					}
+
+					gemsWorth = Spare.GemsWorth(goo.Value, SparePrices.SackPays(currency, rules.DumpPct)!.Value.Cents);
+				}
+			}
+
+			return RepriceAsync(o, currency, strategy, dump, rules.MaxPriceCents, null, ct, minReceive: rules.MinSaleCents, floorPct: floorPct,
+				ours: OurListings.UpFor(OurListings.Load(bot.Name), o.Hash), gemsWorth: gemsWorth);
+		};
 	}
 
 	/// <summary>List them, a little apart, then confirm them if this account can. Returns a summary.</summary>
@@ -300,11 +406,17 @@ public static class Seller {
 	/// <param name="hold">Asked before each listing too: a reason to stop (spare items put back to preview only), or null.</param>
 	/// <param name="pause">The wait between two listings: 20 seconds to a minute when not given (a human-mode account's
 	/// spare items wait minutes).</param>
+	/// <param name="refused">1.8.2: told Steam's reason when it refused a listing ("" when it gave none).</param>
 	public static async Task<string> SellAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct, Func<bool>? mayAct = null,
-		Reprice? reprice = null, Func<Said?>? hold = null, Action<Offer>? onListed = null, Func<CancellationToken, Task>? pause = null) {
+		Reprice? reprice = null, Func<Said?>? hold = null, Action<Offer>? onListed = null, Func<CancellationToken, Task>? pause = null, Action<string>? refused = null) {
 		// Held by scam watch: nothing goes on the market by itself (ScamWatch.HeldBack).
 		if (Modules.ScamWatch.HeldBack(bot) is { } held) {
 			return held;
+		}
+
+		// 1.8.2: Steam's market blocked for this account, or listing paused after Steam's refusal: nothing listed.
+		if (MarketHold.SellBlocked(bot) is { } market) {
+			return $"{bot.Name}: nothing listed - {market.ToEnglish()}";
 		}
 
 		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant: nothing is
@@ -313,18 +425,38 @@ public static class Seller {
 			return new Said("{0}: Steam hasn't said this account's wallet currency yet - nothing listed", bot.Name).ToString();
 		}
 
+		// 1.8.2, the last word whatever asked: never an item of a game on the keep list ("Never touch items from these
+		// games"), nor an item on it by name.
+		SpareRules keep = SpareRules.From(bot.Cfg);
+		List<Offer> onKeepList = [.. offers.Where(o => OnKeepList(o, keep))];
+
+		foreach (Offer o in onKeepList) {
+			Log.Info(KeptSaid(o, new Said("on your keep list - never sold")), bot.Name);
+		}
+
+		if (onKeepList.Count > 0) {
+			offers = [.. offers.Where(o => !OnKeepList(o, keep))];
+
+			if (offers.Count == 0) {
+				return $"{bot.Name}: nothing listed - {(onKeepList.Count == 1 ? "it's" : "they're all")} on the keep list";
+			}
+		}
+
 		// Claimed, then checked against the waiting trades once more. The plan read them a while ago (pricing takes
 		// minutes), and a send that went out since would lose its whole offer to one of these listings - see
 		// Bot.ClaimItems. A send starting from now on leaves the claimed ones out.
 		HashSet<ulong> claimed = bot.ClaimItems(offers.Select(static o => o.AssetId));
 
 		try {
-			if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+			if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } waiting) {
 				return new Said("{0}: Steam wouldn't say which items are in a waiting trade - try again in a while", bot.Name).ToString();
 			}
 
+			// 1.8.2: never a card promised to a card swap nocat.lol paired, either.
+			HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
+
 			return await SellClaimedAsync(bot, [.. offers.Where(o => claimed.Contains(o.AssetId) && !promised.Contains(o.AssetId))], ct, mayAct,
-				reprice ?? OwnRule(bot, currency), hold, onListed, pause).ConfigureAwait(false);
+				reprice ?? OwnRule(bot, currency), hold, onListed, pause, refused).ConfigureAwait(false);
 		} finally {
 			bot.ReleaseItems(claimed);
 		}
@@ -383,8 +515,10 @@ public static class Seller {
 
 			refusal = no ?? "no answer";
 
-			if (up.Count == 0) {
-				break;   // the first one refused - the rest would be refused for the same reason
+			// The first one refused - the rest would be refused for the same reason. 1.8.2: and whenever Steam's reason is a
+			// lasting one (not allowed, too many waiting for a confirmation, the wallet full, the market unavailable).
+			if ((up.Count == 0) || MarketHold.Lasting(MarketHold.Classify(no))) {
+				break;
 			}
 		}
 
@@ -392,7 +526,7 @@ public static class Seller {
 	}
 
 	private static async Task<string> SellClaimedAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct, Func<bool>? mayAct, Reprice reprice, Func<Said?>? hold,
-		Action<Offer>? onListed, Func<CancellationToken, Task>? pause) {
+		Action<Offer>? onListed, Func<CancellationToken, Task>? pause, Action<string>? refused) {
 		DateTime started = DateTime.UtcNow;
 
 		Said? Stop() {
@@ -402,6 +536,11 @@ public static class Seller {
 
 			if (Modules.ScamWatch.HeldBack(bot) != null) {
 				return Modules.ScamWatch.OnHold(bot.Name);
+			}
+
+			// 1.8.2: Steam's market blocked meanwhile (or listing paused after a refusal): the rest wait.
+			if (MarketHold.SellBlocked(bot) is { } market) {
+				return market;
 			}
 
 			return hold?.Invoke();
@@ -414,7 +553,7 @@ public static class Seller {
 				["assetid"] = offer.AssetId.ToString(CultureInfo.InvariantCulture),
 				["amount"] = "1",
 				["price"] = offer.YouGetCents.ToString(CultureInfo.InvariantCulture)
-			}, new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), token).ConfigureAwait(false);
+			}, new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), token, errorVerdict: true).ConfigureAwait(false);
 
 			if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
 				Stats.Record(Stats.KindListed, bot.Name);
@@ -434,11 +573,19 @@ public static class Seller {
 			// The automatic seller drops the summary this ends up in, so the reason is written down here as well.
 			Log.Debug($"market listing of {offer.Card} ({offer.Game}, asset {offer.AssetId}) refused: {Log.Scrub(Message(body) ?? (body == null ? "no answer" : body[..Math.Min(150, body.Length)]))}", bot.Name);
 
-			// Steam says why in the body ("You have too many listings pending confirmation", a market ban, ...).
-			return (false, Message(body));
+			// Steam says why in the body ("You have too many listings pending confirmation", a market ban, ...) - kept with an
+			// error status too (errorVerdict). 1.8.2: a lasting reason holds the market, or pauses listing, for every part.
+			string? why = Message(body);
+			MarketHold.Refused(bot, MarketHold.Classify(why), DateTime.UtcNow);
+
+			return (false, why);
 		}
 
 		Listed done = await ListEachAsync(offers, Stop, reprice, Post, pause ?? (static token => Task.Delay(Rng.Seconds(20, 60), token)), ct).ConfigureAwait(false);
+
+		if (done.Refusal != null) {
+			refused?.Invoke(done.Refusal == "no answer" ? "" : done.Refusal);
+		}
 
 		foreach ((Offer offer, Said why) in done.Kept) {
 			// Worth more than the price limit by now: never sold, so nothing you need to read - only the debug log.
@@ -488,16 +635,13 @@ public static class Seller {
 
 		List<Listing> now = await ListingsAsync(bot, ct).ConfigureAwait(false) ?? [];
 
-		foreach (ulong listing in MatchPending(now, up, started)) {
-			await Task.Delay(Rng.Seconds(2, 5), ct).ConfigureAwait(false);
-
-			if (await bot.ConfirmMobileAsync(listing, true, ct).ConfigureAwait(false)) {
-				confirmed++;
-				// Confirmed by nocat.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
-				Listing live = now.First(l => l.Id == listing);
-				OurListings.Mark(bot.Name, live);
-				Log.Good(SpareRun.LiveSaid(live.Hash, live.BuyerCents, (int) bot.WalletCurrency), bot.Name);
-			}
+		// 1.8.2: the confirmations list read once for the whole batch, not one to three times a listing.
+		foreach (ulong listing in await bot.ConfirmManyAsync(MatchPending(now, up, started), ct).ConfigureAwait(false)) {
+			confirmed++;
+			// Confirmed by nocat.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
+			Listing live = now.First(l => l.Id == listing);
+			OurListings.Mark(bot.Name, live);
+			Log.Good(SpareRun.LiveSaid(live.Hash, live.BuyerCents, (int) bot.WalletCurrency), bot.Name);
 		}
 
 		return sb.Append($", {confirmed} confirmed on its authenticator.").ToString();
@@ -535,11 +679,12 @@ public static class Seller {
 
 		List<Listing>? found = ParseListings(json);
 
+		// 1.8.2: an answer it can't read is "not known" - never "no listings", which would take every listing for gone.
 		if (found == null) {
 			Log.Debug($"market listings: Steam's answer had no listings in it: {Log.Scrub(json[..Math.Min(150, json.Length)])}", bot.Name);
 		}
 
-		return found ?? [];
+		return found;
 	}
 
 	/// <summary>
@@ -731,14 +876,15 @@ public static class Seller {
 	/// default rule a listing can sit a cent under what it sells for, above a dump; taken down for that, it went straight
 	/// back up at the same price every week, each time with a phone confirmation. No price for certain: left up.
 	/// </summary>
-	public static bool Undercut(Listing listing, MarketQuote? quote, int strategy, int dumpPct) {
+	/// <param name="floorPct">"Never go lower than", for "a cent under the cheapest" (see <see cref="ListingPrice.UnderCheapest"/>).</param>
+	public static bool Undercut(Listing listing, MarketQuote? quote, int strategy, int dumpPct, int floorPct = 0) {
 		int lowest = quote?.Lowest ?? 0;
 
 		if ((lowest <= 0) || (listing.YouGetCents + FeesFor(listing.YouGetCents) <= lowest)) {
 			return false;
 		}
 
-		return (ListingPrice.For(quote!.Price, strategy, dumpPct).Cents is int buyer) && (ReceiveFor(buyer) is int receive and > 0) && (receive < listing.YouGetCents);
+		return (ListingPrice.For(quote!.Price, strategy, dumpPct, floorPct: floorPct).Cents is int buyer) && (ReceiveFor(buyer) is int receive and > 0) && (receive < listing.YouGetCents);
 	}
 
 	/// <summary>
@@ -748,7 +894,8 @@ public static class Seller {
 	/// <param name="oursOnly">Only listings nocat.farm put up itself (<see cref="OurListings"/>) - what Spare items does by
 	/// itself. Without it ('sell relist', which you type) every one of the account's card listings counts.</param>
 	public static async Task<(int Removed, int Stale)> RelistAsync(Bot bot, CancellationToken ct, int days = 7, bool oursOnly = false) {
-		if (Modules.ScamWatch.HeldBack(bot) != null) {
+		// 1.8.2: never taken down while the market is held - it couldn't go up again.
+		if ((Modules.ScamWatch.HeldBack(bot) != null) || (MarketHold.SellBlocked(bot) != null)) {
 			return (0, 0);
 		}
 
@@ -764,6 +911,7 @@ public static class Seller {
 		List<Listing> stale = [];
 		int lookups = 0;
 		int strategy = ListingPrice.Choice(bot.Cfg.SpareSellPrice), dump = Math.Clamp(bot.Cfg.SpareDumpPct, 0, 95);
+		int floorPct = Math.Clamp(bot.Cfg.SpareRelistFloorPct, 1, 100);
 
 		// A week old (or the days set under Spare items), and somebody now sells the same card for less than the buyer would pay for ours.
 		foreach (Listing l in listings.Where(l => !l.AwaitingConfirmation && !l.OnHold && (l.Game != 0) && (DateTime.UtcNow - l.Created > TimeSpan.FromDays(Math.Max(1, days))))) {
@@ -775,13 +923,17 @@ public static class Seller {
 			// took every week-old Canadian listing for undercut, and put it up again a quarter cheaper.
 			lookups++;
 
-			if (Undercut(l, await FetchForListingAsync(l.Hash, currency, ct).ConfigureAwait(false), strategy, dump)) {
+			if (Undercut(l, await FetchForListingAsync(l.Hash, currency, ct).ConfigureAwait(false), strategy, dump, floorPct)) {
 				stale.Add(l);
 			}
 		}
 
 		foreach (Listing listing in stale) {
 			await Task.Delay(Rng.Seconds(4, 10), ct).ConfigureAwait(false);
+
+			if (MarketHold.SellBlocked(bot) != null) {
+				break;   // held meanwhile: the rest stay up
+			}
 
 			string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, $"/market/removelisting/{listing.Id}"), [],
 				new Uri(WebSession.Community, "/market/"), ct).ConfigureAwait(false);
@@ -806,9 +958,10 @@ public static class Seller {
 	/// <param name="stop">Asked before each one comes down: a reason to stop (Spare items turned off, scam watch, human mode), or null.</param>
 	/// <param name="budget">A human-mode look's number and gap (see <see cref="LookBudget"/>); none on a robot account.</param>
 	/// <param name="pause">The human-mode wait between two; a robot waits a few seconds.</param>
+	/// <param name="gemsOf">1.8.2: what an item's gems are worth, by market name (null: not known) - a step that wouldn't pay more stays up.</param>
 	public static async Task<int> StepDownAsync(Bot bot, int days, CancellationToken ct, Func<Said?>? stop = null, LookBudget? budget = null,
-		Func<CancellationToken, Task<bool>>? pause = null) {
-		if ((Modules.ScamWatch.HeldBack(bot) != null) || (stop?.Invoke() != null) || (WalletCurrency(bot) is not int currency)
+		Func<CancellationToken, Task<bool>>? pause = null, Func<string, decimal?>? gemsOf = null) {
+		if ((Modules.ScamWatch.HeldBack(bot) != null) || (MarketHold.SellBlocked(bot) != null) || (stop?.Invoke() != null) || (WalletCurrency(bot) is not int currency)
 			|| (await ListingsAsync(bot, ct).ConfigureAwait(false) is not { } listings)) {
 			return 0;
 		}
@@ -833,8 +986,15 @@ public static class Seller {
 			// What a buyer really pays for ours - as listed, not worked back from what we get (a cent off at times).
 			int ours = OurListings.BuyerPrice(l, record);
 
-			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump) is int to) {
+			// 1.8.2: never a step that pays under "Only sell if you get at least", or no more than its gems are worth.
+			decimal? gemsNow = gemsOf?.Invoke(l.Hash);
+
+			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsNow) is int to) {
 				steps.Add(new Step(l, ours, to));
+			} else if ((gemsNow is decimal gems) && (gems > 0) && (SpareListings.StepTo(ours, quote.Price, floorPct, dump) is int stepped)
+				&& !Spare.SellingPays(gems, ReceiveFor(stepped))) {
+				// 1.8.2: a cent lower would pay no more than its gems are worth now - taken down, and the next look turns it into gems.
+				steps.Add(new Step(l, ours, 0));
 			}
 		}
 
@@ -849,11 +1009,17 @@ public static class Seller {
 			return body != null;
 		}
 
-		List<Step> done = await StepDownEachAsync(steps, stop ?? (static () => null), budget,
+		List<Step> done = await StepDownEachAsync(steps, () => MarketHold.SellBlocked(bot) ?? stop?.Invoke(), budget,
 			pause ?? (static async token => { await Task.Delay(Rng.Seconds(4, 10), token).ConfigureAwait(false); return true; }), Remove, ct).ConfigureAwait(false);
 
 		foreach (Step s in done) {
 			OurListings.Mark(bot.Name, s.Listing, settled: true);
+			if (s.To == 0) {
+				Log.Info(new Said("took down {0} - unsold {1} days, its gems are worth more now", CardName(s.Listing.Hash), (int) (now - s.Listing.Created).TotalDays), bot.Name);
+
+				continue;
+			}
+
 			SpareListings memory = SpareListings.Load(bot.Name);
 			memory.AddStep(s.Listing.Hash, s.From, s.To, DateTime.UtcNow);
 			memory.Save();

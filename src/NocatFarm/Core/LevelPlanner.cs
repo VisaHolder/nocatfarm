@@ -249,7 +249,8 @@ public static class LevelPlanner {
 	}
 
 	// ── badges ───────────────────────────────────────────────────────────────
-	internal sealed record BadgeState(int Level, int Xp, Dictionary<uint, int> GameLevels);
+	/// <param name="FoilLevels">1.8.2: each game's foil badge (0 or 1) - a level of its own, apart from the normal badge.</param>
+	internal sealed record BadgeState(int Level, int Xp, Dictionary<uint, int> GameLevels, Dictionary<uint, int>? FoilLevels = null);
 
 	internal static async Task<BadgeState?> BadgesAsync(Bot bot, CancellationToken ct) {
 		string? json = await bot.Web.ApiGetAsync("IPlayerService", "GetBadges", new Dictionary<string, string> {
@@ -268,20 +269,24 @@ public static class LevelPlanner {
 			return null;
 		}
 
-		Dictionary<uint, int> games = [];
+		Dictionary<uint, int> games = [], foils = [];
 
 		if (res.TryGetProperty("badges", out JsonElement list)) {
 			foreach (JsonElement b in list.EnumerateArray()) {
 				// Game badges carry an appid; border_color 1 is the foil badge, which is a separate, single level.
-				if (b.TryGetProperty("appid", out JsonElement a) && a.TryGetUInt32(out uint app)
-					&& (!b.TryGetProperty("border_color", out JsonElement border) || (border.GetInt32() == 0))
-					&& b.TryGetProperty("level", out JsonElement lv)) {
-					games[app] = lv.GetInt32();
+				if (b.TryGetProperty("appid", out JsonElement a) && a.TryGetUInt32(out uint app) && b.TryGetProperty("level", out JsonElement lv)) {
+					bool foil = b.TryGetProperty("border_color", out JsonElement border) && (border.GetInt32() != 0);
+					(foil ? foils : games)[app] = lv.GetInt32();
 				}
 			}
 		}
 
-		return new BadgeState(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games);
+		BadgeState state = new(res.GetProperty("player_level").GetInt32(), xp.GetInt32(), games, foils);
+
+		// 1.8.2: the Steam level went up since it was last said - one line.
+		LevelUps.Seen(bot, state.Level);
+
+		return state;
 	}
 
 	// ── cards held ───────────────────────────────────────────────────────────
@@ -290,6 +295,35 @@ public static class LevelPlanner {
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
 		return inventory == null ? [] : NormalCards(inventory);
+	}
+
+	/// <summary>1.8.2: foil trading cards in an inventory: game -> market name -> copies - for weighing what they're worth sold.</summary>
+	public static Dictionary<uint, Dictionary<string, int>> FoilCards(InventoryContents inventory) {
+		Dictionary<uint, Dictionary<string, int>> cards = [];
+
+		foreach (JsonElement asset in inventory.Assets) {
+			if (inventory.DescriptionOf(asset) is not { } d) {
+				continue;
+			}
+
+			string type = InventoryContents.Text(d, "type");
+
+			if (!type.EndsWith("Trading Card", StringComparison.OrdinalIgnoreCase) || !type.Contains("Foil", StringComparison.OrdinalIgnoreCase)
+				|| !uint.TryParse(InventoryContents.Text(d, "market_fee_app"), out uint app) || (app == 0)) {
+				continue;
+			}
+
+			string hash = InventoryContents.Text(d, "market_hash_name");
+			int amount = int.TryParse(InventoryContents.Text(asset, "amount"), out int n) ? Math.Max(1, n) : 1;
+
+			if (!cards.TryGetValue(app, out Dictionary<string, int>? game)) {
+				cards[app] = game = new Dictionary<string, int>(StringComparer.Ordinal);
+			}
+
+			game[hash] = game.GetValueOrDefault(hash) + amount;
+		}
+
+		return cards;
 	}
 
 	/// <summary>Normal (not foil) trading cards in an inventory: game -> market name -> copies. Foils are never counted.</summary>
@@ -361,7 +395,7 @@ public static class LevelPlanner {
 
 		Dictionary<string, int> cards = new(StringComparer.Ordinal);
 		string game = GameNames.Of(app);
-		int total = 0;
+		int total = 0, others = 0;
 		bool asked = false;
 
 		// The market hands out fewer than asked per page (ten, signed out), so page by what actually came back.
@@ -390,14 +424,17 @@ public static class LevelPlanner {
 			}
 
 			foreach (JsonElement r in results.EnumerateArray()) {
-				string hash = r.TryGetProperty("hash_name", out JsonElement h) ? h.GetString() ?? "" : "";
-				cards[hash] = r.TryGetProperty("sell_listings", out JsonElement l) && (l.GetInt32() > 0) && r.TryGetProperty("sell_price", out JsonElement p) ? p.GetInt32() : 0;
 				got++;
 
-				if (r.TryGetProperty("asset_description", out JsonElement d) && InventoryContents.Text(d, "type") is { Length: > 13 } type
-					&& type.EndsWith(" Trading Card", StringComparison.Ordinal)) {
-					game = type[..^13];
+				// Only this game's normal cards: a foil or anything else the search lets in is never part of the set.
+				if (SetCard(r, app) is not { } card) {
+					others++;
+
+					continue;
 				}
+
+				cards[card.Hash] = card.Price;
+				game = card.Game;
 			}
 
 			start += got;
@@ -407,7 +444,8 @@ public static class LevelPlanner {
 			}
 		}
 
-		SetPrice set = new(app, game, cards.Count == total ? total : 0, cards, DateTime.UtcNow.Ticks, cur);
+		// Known whole only when every result was read: the set's cards, and nothing else that came with them.
+		SetPrice set = new(app, game, (cards.Count > 0) && (cards.Count + others == total) ? cards.Count : 0, cards, DateTime.UtcNow.Ticks, cur);
 
 		lock (SetsGate) {
 			_sets![Key(app, cur)] = set;
@@ -417,8 +455,30 @@ public static class LevelPlanner {
 		return (set, true);
 	}
 
+	/// <summary>
+	/// One market search result, if it's a normal trading card of this game: its type ends " Trading Card" without "Foil",
+	/// and its market name starts with "&lt;app&gt;-". Its price is 0 when nobody is selling it. Null for anything else.
+	/// </summary>
+	internal static (string Hash, int Price, string Game)? SetCard(JsonElement r, uint app) {
+		if (r.ValueKind != JsonValueKind.Object) {
+			return null;
+		}
+
+		string hash = r.TryGetProperty("hash_name", out JsonElement h) && (h.ValueKind == JsonValueKind.String) ? h.GetString() ?? "" : "";
+		string type = r.TryGetProperty("asset_description", out JsonElement d) && (d.ValueKind == JsonValueKind.Object) ? InventoryContents.Text(d, "type") : "";
+
+		if (!hash.StartsWith($"{app}-", StringComparison.Ordinal) || (type.Length <= 13) || !type.EndsWith(" Trading Card", StringComparison.Ordinal)
+			|| type.Contains("Foil", StringComparison.OrdinalIgnoreCase)) {
+			return null;
+		}
+
+		static int Int(JsonElement e, string name) => e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.Number) && v.TryGetInt32(out int n) ? n : 0;
+
+		return (hash, Int(r, "sell_listings") > 0 ? Math.Max(0, Int(r, "sell_price")) : 0, type[..^13]);
+	}
+
 	/// <summary>Games whose cards are the cheapest on the market right now, cheapest first - null when the market didn't answer.</summary>
-	private static async Task<List<uint>?> CheapestGamesAsync(Bot bot, CancellationToken ct) {
+	internal static async Task<List<uint>?> CheapestGamesAsync(Bot bot, CancellationToken ct) {
 		List<uint> games = [];
 
 		for (int start = 0, page = 0; (start < 200) && (page < 4); page++) {
@@ -458,6 +518,29 @@ public static class LevelPlanner {
 		}
 
 		return games;
+	}
+
+	/// <summary>A game's card prices as last read (US cents, by market name), however old - never a request. Null when never read.</summary>
+	internal static Dictionary<string, int>? KnownSet(uint app) {
+		lock (SetsGate) {
+			_sets ??= LoadSets();
+
+			return _sets.TryGetValue(Key(app, UsDollar), out SetPrice? set) ? new Dictionary<string, int>(set.Cards, StringComparer.Ordinal) : null;
+		}
+	}
+
+	/// <summary>
+	/// 1.8.2: a game's set as last read when it was read whole (US cents, by market name), and when - however old, never a
+	/// request. Null when it was never read whole.
+	/// </summary>
+	internal static (Dictionary<string, int> Cards, DateTime At)? HeldWhole(uint app) {
+		lock (SetsGate) {
+			_sets ??= LoadSets();
+
+			return _sets.TryGetValue(Key(app, UsDollar), out SetPrice? set) && (set.Size > 0) && (set.Cards.Count == set.Size)
+				? (new Dictionary<string, int>(set.Cards, StringComparer.Ordinal), new DateTime(set.At, DateTimeKind.Utc))
+				: null;
+		}
 	}
 
 	private static Dictionary<string, SetPrice> LoadSets() {

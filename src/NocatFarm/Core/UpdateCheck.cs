@@ -22,6 +22,9 @@ public static class UpdateModes {
 
 	/// <summary>Installs by itself at a quiet time in the night hours.</summary>
 	public const int AtNight = 2;
+
+	/// <summary>Doesn't look for new versions at all (1.8.2: "Notify if an update is available" off). 'update' still looks.</summary>
+	public const int Off = 3;
 }
 
 public static class UpdateCheck {
@@ -193,7 +196,7 @@ public static class UpdateCheck {
 	/// reminders are switched off. A notice said once at three in the morning is a notice nobody saw.
 	/// </summary>
 	public static void RemindIfDue() {
-		if ((Available == null) || IsSkipped(Available) || SelfUpdate.Busy || !Live.Global.CheckForUpdates || !Live.Global.UpdateReminders
+		if ((Available == null) || IsSkipped(Available) || SelfUpdate.Busy || !Live.Global.LooksForUpdates || !Live.Global.UpdateReminders
 			|| (DateTime.UtcNow - _remindedAt < TimeSpan.FromHours(1))) {
 			return;
 		}
@@ -246,7 +249,7 @@ public static class UpdateCheck {
 	public static async Task<string?> LookAsync(CancellationToken ct = default, bool force = false, bool quiet = false) {
 		TimeSpan every = TimeSpan.FromHours(Math.Clamp(Live.Global.UpdateCheckHours, 1, 24));
 
-		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < every))) {
+		if (!force && (!Live.Global.LooksForUpdates || (DateTime.UtcNow - _lastLooked < every))) {
 			return null;
 		}
 
@@ -348,7 +351,7 @@ public static class UpdateCheck {
 	public static void AutoInstallIfDue(BotManager mgr) {
 		GlobalConfig g = Live.Global;
 
-		if (Commands.ExitRequested || (g.UpdateMode != UpdateModes.AtNight) || !g.CheckForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
+		if (Commands.ExitRequested || (g.UpdateMode != UpdateModes.AtNight) || !g.LooksForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
 			|| (DateTime.UtcNow - _seenAt < TimeSpan.FromHours(Math.Max(0, g.AutoUpdateWaitHours)))
 			|| (DateTime.UtcNow - _autoTriedAt < TimeSpan.FromHours(4))) {
 			return;

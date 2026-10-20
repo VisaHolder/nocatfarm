@@ -1,5 +1,64 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "O mercado da Steam está bloqueado ({0}) - comprar, vender e trocar esperam até a Steam liberar, e para isso é preciso uma compra na Steam nesta conta",
+    "settling in first (~{0}m), then looking for cards": "se ajeitando primeiro (~{0}m), depois procura cartas",
+    "settling in first, then looking for cards": "se ajeitando primeiro, depois procura cartas",
+    "it's the small hours - this plan ends at bed tonight, {0}": "é madrugada - este plano termina na hora de dormir hoje à noite, {0}",
+    "{0} to confirm in your email": "{0} para confirmar no seu e-mail",
+    "Goes off - turn it on again yourself after its preview": "Desliga - ligue de novo você mesmo depois da prévia",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Você pode fechar esta janela - o nocat.farm continua rodando pelo relógio. A página Contas mostra o que cada conta está fazendo, e é lá que você adiciona outra.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "O modo humano está ligado: agora está fora do dia desta conta, então ela descansa até o dia começar - depois se ajeita por alguns minutos e joga, com pausas e hora de dormir.",
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "O Steam está no login de {0}: digite a senha (e o código do Steam Guard se pedir), deixe Lembrar de mim marcado - da próxima vez é um clique",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "O Steam não fechou - se ele mostrar uma caixa de mensagem, feche-a e tente de novo",
+    "Open in Steam is on for every account: each one shows the one-click button": "Abrir no Steam está ligado em todas as contas: cada uma mostra o botão de um clique",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "Abrir no Steam está desligado para todas as contas: só aparece nas contas ligadas uma a uma",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "O Steam ainda não lembra desta conta, então abre o login do Steam com o nome já preenchido: digite a senha uma vez e deixe Lembrar de mim marcado.",
+    "Steam Guard code: {0}": "Código do Steam Guard: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "O Steam está no login desta conta: digite este código quando o Steam pedir.",
+    "Turn on Open in Steam for every account?": "Ligar Abrir no Steam em todas as contas?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "Isso mostra o botão Abrir no Steam em todas as contas, assim você não precisa ligar uma a uma. Nada muda até você apertar Ligar aqui.",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Seu app do Steam ainda não lembra desta conta: o botão abre o login do Steam com o nome já preenchido. Digite a senha uma vez (e o código do Steam Guard se pedir) com \"Lembrar de mim\" marcado - depois é um clique.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Desliga no Steam \"Perguntar qual conta usar sempre que o Steam iniciar\" se estiver ligado - senão o Steam ignoraria a conta indicada.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "Abre o Steam de novo do jeito que um clique duplo faz, para ele entrar direto nesta conta - ou, na primeira vez, abrir o login com o nome já preenchido.",
+    "ready - Steam remembers it": "pronta - o Steam lembra dela",
+    "opens Steam's sign-in the first time": "abre o login do Steam na primeira vez",
+    "sign in once with Remember me": "entre uma vez com Lembrar de mim",
+    "Every account": "Todas as contas",
+    "What pressing one does": "O que apertar um faz",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "O Steam está configurado para perguntar qual conta usar sempre que inicia - isso desliga essa opção, senão o Steam ignoraria a conta.",
+    "Open in Steam: sign your Steam app into this account": "Abrir no Steam: entrar com esta conta no seu app do Steam",
+    "signing your Steam app into {0} - it closes and opens again": "entrando com {0} no seu app do Steam - ele fecha e abre de novo",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "Abrir no Steam não está ligado para {0} - ligue primeiro nas configurações dele",
+    "Open in Steam only works on Windows for now": "Abrir no Steam por enquanto só funciona no Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "o Steam não parece estar instalado neste PC, então não há nada para abrir",
+    "a game is open in Steam - close it first, then open {0}": "há um jogo aberto no Steam - feche-o primeiro e depois abra {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "entre uma vez em {0} no Steam com \"Lembrar de mim\" marcado, e então este botão funciona",
+    "couldn't open {0} in Steam": "não foi possível abrir {0} no Steam",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "Abrir no Steam está ligado para {0}: um botão entra com essa conta no seu app do Steam em um clique",
+    "Open in Steam is off for {0}: the button is hidden": "Abrir no Steam está desligado para {0}: o botão fica oculto",
+    "couldn't change Steam's saved accounts - {0}": "não foi possível alterar as contas salvas do Steam - {0}",
+    "couldn't back up Steam's saved accounts first, so nothing was changed": "não foi possível fazer backup das contas salvas do Steam primeiro, então nada foi alterado",
+    "one Open in Steam is already running - wait for it to finish": "já há um Abrir no Steam em andamento - espere ele terminar",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Entre com esta conta no seu app do Steam em um clique. Fecha o Steam e abre de novo. Continua farmando esta conta.",
+    "Open in Steam": "Abrir no Steam",
+    "Windows only for now": "Por enquanto só no Windows",
+    "Turn on the Open in Steam button?": "Ligar o botão Abrir no Steam?",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Isso mostra um botão nesta conta que entra com ela no seu app do Steam em um clique. É exatamente o que ele faz ao ser pressionado. O botão não faz nada até você pressionar Ligar aqui.",
+    "Closes your Steam app (the polite way, letting it finish).": "Fecha seu app do Steam (do jeito educado, deixando-o terminar).",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Aponta os arquivos de contas salvas do Steam para esta conta - só esta; as outras contas ficam intactas.",
+    "Open in Steam only works on Windows for now.": "Abrir no Steam por enquanto só funciona no Windows.",
+    "Steam doesn't look installed on this PC.": "o Steam não parece estar instalado neste PC.",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Há um jogo aberto no Steam agora - o botão não troca enquanto um estiver rodando.",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Seu app do Steam ainda não lembra desta conta. Entre uma vez no Steam com \"Lembrar de mim\" marcado, e então este botão funciona.",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Seu app do Steam lembra desta conta, então o botão pode entrar sem senha.",
+    "It never types a password and never touches your login tokens.": "Nunca digita uma senha e nunca mexe nos seus tokens de login.",
+    "It backs up the files it changes first, and keeps the last three backups.": "Primeiro faz backup dos arquivos que altera e guarda os três últimos backups.",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "Nunca impede o nocat.farm de farmar esta conta - o Steam só recua o farm quando você realmente abre um jogo.",
+    "What pressing it does": "O que pressionar faz",
+    "Safe by design": "Seguro por design",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Entrar com {0} no seu app do Steam? O Steam vai fechar e abrir de novo.",
+    "Signing Steam into {0}…": "Entrando com {0} no Steam…",
+    "Done.": "Pronto.",
     "That's not a command - did you mean '{0}'?": "Isso não é um comando - você quis dizer '{0}'?",
     "That's not a command - 'help' lists them.": "Isso não é um comando - 'help' lista todos.",
     "Overview": "Visão geral",
@@ -389,7 +448,6 @@
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Há quanto tempo esta conta jogou este jogo. A Steam não solta nada até passar do limiar nas configurações desta conta.",
     "Dashboard": "Painel",
     "Running in the background": "Rodando em segundo plano",
-    "rep4rep account": "Conta do rep4rep",
     "Steam connection": "Conexão com a Steam",
     "Logging": "Log",
     "What it plays": "O que ele joga",
@@ -397,7 +455,6 @@
     "rep4rep commenting": "Comentários do rep4rep",
     "Friends & messages": "Amigos e mensagens",
     "Trades": "Trocas",
-    "Staying out of the way": "Ficando fora do caminho",
     "Log": "Log",
     "/week": "/semana",
     "About {0} of an average week once the main-game-only days are counted in.": "Cerca de {0} de uma semana média, já contando os dias só com o jogo principal.",
@@ -528,7 +585,6 @@
     "Free event items": "Itens grátis de eventos",
     "Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.": "Jogos grátis, pacotes de cartas com gemas e trocas justas de cartas são um botão cada nas Configurações, por conta.",
     "Gifts": "Presentes",
-    "Use rep4rep at all": "Usar rep4rep, sim ou não",
     "{0} - Steam wallet gift cards and guest passes people send you.": "{0} - cartões-presente Steam e passes de convidado que alguém te mandar.",
     "{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.": "{0} - o adesivo diário durante uma promoção da Steam e qualquer coisa da loja de pontos que custe 0 pontos.",
     "couldn't read the free-game state: {0}": "não foi possível ler o estado dos jogos grátis: {0}",
@@ -706,7 +762,6 @@
     "{0}: {1}h in - the next ones need more hours in it": "{0}: {1}h jogadas - as próximas precisam de mais horas",
     "tomorrow {0}": "amanhã {0}",
     "yesterday {0}": "ontem {0}",
-    "on - no games to hunt (pick some under \"Boost these games\")": "ligado - nenhum jogo para caçar (escolha alguns em \\\"Impulsionar estes jogos\\\")",
     "couldn't read the price book: {0}": "não foi possível ler o registro de preços: {0}",
     "couldn't save the price book: {0}": "não foi possível salvar o registro de preços: {0}",
     "couldn't read the library: {0}": "não foi possível ler a biblioteca: {0}",
@@ -857,7 +912,7 @@
     "unwanted": "indesejada",
     "trade offer refused. Steam said: {0}": "oferta de troca recusada. A Steam disse: {0}",
     "using {0}'s own trade token - it is one of your accounts": "usando o token de troca do próprio {0} - é uma das suas contas",
-    "crafted {0} badge(s) - Steam level up": "criado(s) {0} emblema(s) - subiu de nível na Steam",
+    "crafted {0} badge(s): {1} · +{2} XP": "{0} insígnia(s) criada(s): {1} · +{2} XP",
     "craft refused - backing off {0}h rather than retrying": "criação recusada - recuando {0}h em vez de tentar de novo",
     "{0} completed card set(s) ready to craft": "{0} conjunto(s) de cartas completo(s) prontos para criar",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "outra coisa está definindo o status desta conta (diz {0}, pedimos {1}) - recuando",
@@ -975,11 +1030,8 @@
     "You can skip this and come back from the Overview page.": "Você pode pular e voltar pela página Visão geral.",
     "Show advanced": "Mostrar avançadas",
     "What kind of account is it?": "Que tipo de conta é?",
-    "This picks the right settings for it. Anything can be changed later, per account.": "Isto escolhe as configurações certas. Tudo pode ser mudado depois, por conta.",
-    "My main - I play on it": "Minha principal - eu jogo nela",
     "A spare or farm account": "Uma conta reserva ou de farm",
     "Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.": "Modo robô: farma cartas e deixa jogos rodando o dia todo na velocidade máxima. Melhor para contas que ninguém olha.",
-    "I also sign into it from my own Steam app": "Eu também entro nela pelo meu próprio app da Steam",
     "Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.": "Aí o nocat.farm nunca muda o status online dela - se mudasse, a Steam desconectaria o seu próprio cliente de Amigos e Chat.",
     "Importing several? You pick which ones on the next step.": "Importando várias? Você escolhe quais no próximo passo.",
     "Pick one first": "Escolha uma primeiro",
@@ -1015,7 +1067,6 @@
     "Its game list didn't load - add games by their store link below.": "A lista de jogos dela não carregou - adicione jogos pelo link da loja abaixo.",
     ", and {0} now and then": " e, de vez em quando, {0}",
     "Add": "Adicionar",
-    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Ela farma cartas colecionáveis primeiro. Quando terminar, joga estes jogos para somar horas. Toque nos que quiser - ou em nenhum.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "Ela vai jogar principalmente {0}{1}, com pausas, refeições e hora de dormir. Primeiro ela se acomoda por alguns minutos, como alguém que acabou de abrir a Steam.",
     "Its daily routine": "A rotina diária dela",
     "Looking at its games...": "Olhando os jogos dela...",
@@ -1031,7 +1082,6 @@
     "The side games share the rest. You can fine-tune all of this later under Settings.": "Os jogos secundários dividem o resto. Dá para ajustar tudo isso depois em Configurações.",
     "Time on the main game: {0}%": "Tempo no jogo principal: {0}%",
     "What does it play?": "O que ela joga?",
-    "What should it idle?": "O que ela deve idlar?",
     "leave empty to show the real game": "deixe vazio para mostrar o jogo real",
     "none - that is fine": "nenhum - tudo bem",
     "tap one above": "toque em um acima",
@@ -1291,8 +1341,6 @@
     "you give": "você dá",
     "you get": "você recebe",
     "Confirmation": "Confirmação",
-    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Trade by itself with\").": "Confirmadas sozinhas: trocas com {0}. Todo o resto espera aqui. Mude isso em Configurações, Trocas (“Trocar sozinha com”).",
-    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Trade by itself with\").": "Nada é confirmado sozinho - tudo espera aqui por você. Mude isso em Configurações, Trocas (“Trocar sozinha com”).",
     "Steam didn't take that": "A Steam não aceitou isso",
     "Confirmed {0}": "{0} confirmada(s)",
     "Denied {0}": "{0} recusada(s)",
@@ -1331,8 +1379,6 @@
     "Pop-ups": "Pop-ups",
     "Inventory prices": "Preços do inventário",
     "Updates & plugins": "Atualizações e plugins",
-    "Badges & selling": "Insígnias e vendas",
-    "Inventory & bans": "Inventário e banimentos",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Seu Discord mostra Playing nocat.farm enquanto ele está aberto, como um jogo. Você pode mudar isso quando quiser em Configurações, Perfil do Discord.",
     "Trades & items": "Trocas e itens",
     "Steam Guard": "Steam Guard",
@@ -1417,9 +1463,7 @@
     "Windows has this network set to Public, where the rule doesn't apply. Set it to Private (Settings > Network & internet > your network), then press it again.": "O Windows marcou esta rede como Pública, onde a regra não vale. Mude para Privada (Configurações > Rede e Internet > sua rede) e toque de novo.",
     "couldn't encrypt {0} in place: {1}": "não foi possível criptografar {0} no lugar: {1}",
     "couldn't look up how long {0} takes: {1}": "não foi possível ver quanto tempo {0} leva: {1}",
-    "done hunting for today (Hunt at most, hours a day)": "caça encerrada por hoje (Caçar no máximo, horas por dia)",
     "every game on the list is resting for now - it comes back to them in a few days": "todos os jogos da lista estão descansando - ele volta a eles em alguns dias",
-    "{0} is done for today (Hunt at most, hours a day) - back tomorrow": "{0} terminou por hoje (Caçar no máximo, horas por dia) - volta amanhã",
     "{0}: couldn't read it": "{0}: não deu para ler",
     "ASF played it as a different device - choose one under \"Play as if on\" in its settings": "O ASF jogava nela como outro dispositivo - escolha um em \"Jogar como se fosse em\" nas configurações dela",
     "its ASF password is encrypted with a key of its own, so it wasn't copied - the login token signs in, or it asks for the password once": "a senha do ASF está criptografada com uma chave própria, então não foi copiada - o token de login entra, ou ela pede a senha uma vez",
@@ -1699,7 +1743,6 @@
     "rep4rep hold lifted - commenting resumes": "pausa do rep4rep removida - comentários voltam",
     "achievement ceiling is one figure now: 90%": "o teto de conquistas agora é um valor só: 90%",
     "setting moved: when to farm cards = only at night": "ajuste movido: quando farmar cartas = só à noite",
-    "going for {0}: {1} of {2} card drop(s)": "atrás de {0}: {1} de {2} drops de cartas",
     "Discord bot: to link it, press Connect Discord in Settings": "bot do Discord: para vincular, aperte Conectar Discord nas Configurações",
     "Discord bot: no / commands in a server - invite it again": "bot do Discord: sem comandos / num servidor - convide de novo",
     "Discord connected - only {0} can use its commands": "Discord conectado - só {0} pode usar os comandos",
@@ -2011,7 +2054,6 @@
     "{0}: skipped, another account in this import signs in as {1} too": "{0}: pulada, outra conta desta importação também entra como {1}",
     "Commands only work in a private chat with this bot - a group gets the notifications.": "Os comandos só funcionam num chat privado com este bot - um grupo recebe as notificações.",
     "... and {0} more line(s) - type it in the dashboard's Console for the whole reply": "... e mais {0} linha(s) - digite no Console do painel para ver a resposta inteira",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick \"Work out what its inventory is worth\".": "Não está sendo avaliada. Para ligar de novo, abra Configurações, escolha {0}, marque \"Mostrar avançadas\", abra \"Inventário e banimentos\" e marque \"Calcular quanto vale o inventário dela\".",
     "Couldn't switch it on for {0}": "Não deu para ligar para {0}",
     "only what they send": "só o que eles mandam",
     "they can take items": "eles podem levar itens",
@@ -2203,7 +2245,6 @@
     "Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.": "Não foi possível enviar o código de login ao Telegram. Tente de novo daqui a pouco, ou entre em casa.",
     "Wrong code - {0} tries left.": "Código errado - restam {0} tentativas.",
     "That code has run out. Type the password again for a new one.": "Esse código expirou. Digite a senha de novo para receber outro.",
-    "Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.": "O código no Telegram para logins de fora está desligado - só a senha já deixa alguém entrar.",
     "From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.": "De fora, só a senha não basta: também é preciso um código de 6 dígitos enviado para o seu Telegram.",
     "Connect Telegram and signing in from outside will also take a code sent to it.": "Conecte o Telegram e entrar de fora também vai pedir um código enviado para ele.",
     "6-digit code": "Código de 6 dígitos",
@@ -2513,7 +2554,6 @@
     "the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes": "as cartas não são enviadas antes de sair - o vigia de golpes está segurando as trocas desta conta. Elas vão depois de 'scamwatch ok {0}' ou quando o farm terminar da próxima vez",
     "scam watch is holding {0}'s trades - doing this anyway because you asked. Type 'scamwatch ok {0}' once you've checked": "o vigia de golpes está segurando as trocas de {0} - fazendo mesmo assim porque você pediu. Digite 'scamwatch ok {0}' depois de verificar",
     "held by scam watch - nothing done by itself; trade accept or decline {0} {1}": "segurado pelo vigia de golpes - nada é feito sozinho; trade accept ou decline {0} {1}",
-    "account health couldn't read the bans: {0}": "a saúde da conta não conseguiu ler os banimentos: {0}",
     "its sent offers are being cancelled, trades carry on (stopping them is off) - type 'scamwatch ok {0}' to clear the warning": "as ofertas enviadas por ela estão sendo canceladas, as trocas continuam (pará-las está desligado) - digite 'scamwatch ok {0}' para limpar o alerta",
     "nothing was stopped (both reactions are off) - type 'scamwatch ok {0}' to clear the warning": "nada foi parado (as duas reações estão desligadas) - digite 'scamwatch ok {0}' para limpar o alerta",
     "a Steam Web API key appeared that wasn't there before": "apareceu uma chave da Steam Web API que não existia antes",
@@ -2623,7 +2663,6 @@
     "{0} is back on the overnight list": "{0} voltou para a lista da noite",
     "{0} left out - held back so it can still be refunded": "{0} ficou de fora - guardado para ainda poder ser reembolsado",
     "couldn't read the software this account holds: {0}": "não deu para ler os programas desta conta: {0}",
-    "{0} left out - it's on \"Never touch these\"": "{0} ficou de fora - está em \"Nunca tocar nestes\"",
     "library: {0} piece(s) of software owned too ({1})": "biblioteca: também tem {0} programa(s) ({1})",
     "its cards are worth about {0}, the pack {1}": "as cartas valem cerca de {0}, o pacote {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "vende por {0}, você recebe {1} - mais do que valem as {2} gemas ({3})",
@@ -2636,7 +2675,6 @@
     "needed for the badge": "necessária para a insígnia",
     "on your keep list": "está na sua lista para guardar",
     "it doesn't turn into gems": "não vira gemas",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} gemas, valendo {1} - supera vender ({2}) em {3}% ou mais",
     "unopened booster packs: listed {0} - {1}": "pacotes de cartas fechados: {0} anunciado(s) - {1}",
     "next look at booster packs around {0}": "próxima olhada nos pacotes de cartas por volta de {0}",
     "today's limit of {0} in value is reached": "o limite de valor de hoje de {0} foi atingido",
@@ -2661,6 +2699,9 @@
     "couldn't pack gems into sacks: {0}": "não deu para empacotar as gemas em sacos: {0}",
     "a copy you keep": "uma cópia que você guarda",
     "trade-locked": "bloqueado para troca",
+    "kept until {0} - selling pays more": "guardado até {0} - vender rende mais",
+    "kept until it can be traded - selling pays more": "guardado até poder ser trocado - vender rende mais",
+    "{0} gems - it can never be traded or sold": "{0} gemas - nunca poderá ser trocado nem vendido",
     "nobody sells it, so there's no price - kept": "ninguém vende, então não há preço - guardado",
     "Steam refused one - trying again next time": "a Steam recusou um - tenta de novo na próxima vez",
     "next look at spare items around {0}": "próxima olhada nos itens sobrando por volta de {0}",
@@ -2692,7 +2733,10 @@
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "estatísticas ao vivo: o que esperava para ser enviado estava corrompido - guardado como farm-totals.json.broken; a contagem continua a partir de agora, sem recuperação",
     "human mode (its day ended or you're playing on it)": "modo humano (o dia dela acabou ou você está jogando nela)",
     "nobody is selling it right now - kept, there's no price to go by": "ninguém está vendendo agora - mantido, não há preço de referência",
-    "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "O nocat.farm nunca vende, transforma em gemas, abre ou gasta nada sozinho. Itens sobrando, abrir e criar pacotes de cartas e gastar Pontos Steam ficam desligados até você ligá-los nas configurações de uma conta - e vender, gemas e Pontos Steam mostram primeiro o que fariam e pedem sua confirmação. As únicas coisas que ele pega sozinho são grátis: itens de eventos durante as promoções do Steam, e jogos grátis se você ligar isso.",
+    "nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "O nocat.farm nunca vende, transforma em gemas, abre, compra, troca ou gasta nada sozinho. Itens sobrando, abrir e criar pacotes de cartas, gastar Pontos Steam, comprar cartas e a troca de cartas ficam desligados até você ligá-los nas configurações de uma conta - e vender, gemas, Pontos Steam, comprar cartas e a troca de cartas mostram primeiro o que fariam e pedem sua confirmação. As únicas coisas que ele pega sozinho são grátis: itens de eventos durante as promoções do Steam, e jogos grátis se você ligar isso.",
+    "it gives a card this account keeps": "dá uma carta que esta conta guarda",
+    "bought for a badge - kept until it's crafted": "comprada para uma insígnia - guardada até ser criada",
+    "it gives a card bought for a badge - kept until it's crafted": "dá uma carta comprada para uma insígnia - guardada até ser criada",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: o Steam ainda não informou a moeda da carteira desta conta - nada foi anunciado",
     "No preview - try again in a minute.": "Sem prévia - tente de novo em um minuto.",
     "Not changed - try again.": "Não foi alterado - tente de novo.",
@@ -2703,6 +2747,45 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "Itens sobrando está ligado para {0}: transforma itens sobrando em gemas ou os vende, dentro dos limites",
     "Spare items was turned off on {0} - stopped before the next item": "Itens sobrando foi desligado em {0} - parou antes do próximo item",
     "Spending Steam Points is off for {0}: nothing is spent": "Gastar Pontos Steam está desligado para {0}: nada é gasto",
+    "Buying cards": "Comprar cartas",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: comprar cartas está desligado até você ligar nas Configurações - primeiro mostra o que compraria",
+    "up {0}": "acorda {0}",
+    "buy order for {0} · no clear answer · {1}": "ordem de compra de {0} · sem resposta clara · {1}",
+    "buy order {0} · not settled yet · {1}": "ordem de compra {0} · ainda não resolvida · {1}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Comprar cartas está ligado para {0}: compra sozinho as cartas que faltam para os emblemas, dentro dos limites",
+    "Buying cards is off for {0}: nothing is bought": "Comprar cartas está desligado para {0}: nada é comprado",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "A Steam pede que cada compra desta conta no mercado seja confirmada por e-mail, o que o nocat.farm não consegue fazer",
+    "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "O Steam não disse como as compras no mercado desta conta são confirmadas, então nada é comprado desta vez",
+    "couldn't save the card buying list: {0}": "não foi possível salvar a lista de compras de cartas: {0}",
+    "couldn't read the card buying list: {0}": "não foi possível ler a lista de compras de cartas: {0}",
+    "buying cards: next look around {0}": "comprar cartas: próxima olhada por volta de {0}",
+    "couldn't look at buying cards: {0}": "não foi possível olhar a compra de cartas: {0}",
+    "unsure if {0} was bought · counted as spent": "não se sabe se {0} foi comprado · contado como gasto",
+    "card buying stopped · its spending list can't be read or saved": "compra de cartas parada · a lista de gastos não pode ser lida nem salva",
+    "buying {0} turned down · {1}": "compra de {0} recusada · {1}",
+    "buying {0} turned down": "compra de {0} recusada",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "comprou {0} carta(s) · {1} · {2} conjunto(s) para criar",
+    "next up {0} · goes to bed {1}": "próximo despertar {0} · vai dormir {1}",
+    "{0} · that sitting's over": "{0} · essa sessão acabou",
+    "Turn on buying cards?": "Ligar comprar cartas?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Isto é o que ele compraria em seguida e por quanto, e os limites que respeita. Ele gasta da carteira Steam desta conta. Nada é comprado até você apertar Ligar.",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Não está conectado, então ainda não pode olhar o mercado. Estes são os limites que vai respeitar.",
+    "Couldn't look at the market: {0}": "Não foi possível olhar o mercado: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "\"Criar emblemas com as cartas\" está desligado - nada é comprado até ligar, senão as cartas só ficariam paradas.",
+    "card to buy": "carta para comprar",
+    "cards to buy": "cartas para comprar",
+    "{0} for {1} badge level(s)": "{0} por {1} nível(is) de emblema",
+    "badge levels": "níveis de emblema",
+    "wallet: {0}": "carteira: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Um conjunto completo de {0} ({1} cartas) por {2} - nível {3} para {4}, cerca de {5} XP por 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} de {1} cartas de {2} ({3}) por {4} - nível {5} para {6}, cerca de {7} XP por 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Gasta no máximo {0} por dia ({1} gasto no último dia)",
+    "Spends at most {0} a week ({1} spent this week)": "Gasta no máximo {0} por semana ({1} gasto nesta semana)",
+    "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Nunca mais do que tem na carteira. Só conjuntos inteiros são planejados, e cada preço é conferido antes - se um mudar no meio, o resto do conjunto espera a próxima olhada",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Cada carta pelo preço mais barato do mercado, conferido de novo logo antes de comprar",
+    "Only badges it has started - not full sets": "Só emblemas já começados - não conjuntos completos",
+    "Only during its day (human mode), one set at a time": "Só durante o dia dela (modo humano), um conjunto por vez",
+    "Badge crafting turns each finished set into a level": "Criar emblemas transforma cada conjunto completo em um nível",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Gastar Pontos Steam está ligado para {0}: compra níveis de insígnia sozinho, dentro dos limites",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Pontos Steam: gastar está desligado - ligue nas Configurações para ver o que compraria",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Pontos Steam: gastaria {0} pontos em {1} nível(is) de {2} (+{3} XP) - nada é gasto até gastar ser ligado nas Configurações",
@@ -2737,7 +2820,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "os pacotes estão completando conjuntos de cartas, mas \"Criar emblemas com as cartas\" está desligado - conjuntos completos esperam até ligar",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "você recusou o anúncio dele no celular - não é anunciado de novo por mais {0} dia(s)",
     "couldn't read which listings you declined: {0}": "não deu para ler quais anúncios você recusou: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: o preço de venda \"um centavo abaixo do mais barato\" não existe mais - agora anuncia um centavo abaixo do preço real",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: a configuração do preço de venda não era uma das opções - agora anuncia um centavo abaixo do preço real",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: a Steam não disse quais itens estão numa troca pendente - tente de novo daqui a pouco",
     "you'd get {0} - under your {1} minimum": "você receberia {0} - abaixo do seu mínimo de {1}",
     "couldn't write down which listings you declined: {0}": "não deu para anotar quais anúncios você recusou: {0}",
@@ -2745,17 +2828,15 @@
     "spread over its day: about {0} a look, next look ~{1}": "espalhado pelo dia dela: cerca de {0} por olhada, próxima olhada ~{1}",
     "spread over its day: about {0} a look - its last look today": "espalhado pelo dia dela: cerca de {0} por olhada - é a última olhada de hoje",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "ainda precificando {0} item(ns) - a Steam pediu para ir mais devagar, a precificação volta por volta de {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} gemas - vender pagaria {1}, abaixo do seu mínimo de {2}",
     "{0} gems - nobody sells it on the market": "{0} gemas - ninguém vende no mercado",
     "you declined its listing on your phone - never listed again": "você recusou o anúncio dele no celular - nunca mais é anunciado",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "As gemas são empacotadas em sacos de 1000 e os sacos enviados para {0}",
     "Daily backup": "Backup diário",
-    "up ~{0}": "subiu ~{0}",
+    "up ~{0}": "acorda ~{0}",
     "to sell": "para vender",
     "Value: at most {0} a day": "Valor: no máximo {0} por dia",
     "Booster packs it doesn't open are sent to {0}": "Os pacotes de cartas que ele não abre são enviados para {0}",
     "Keep everything: it only reports, nothing changes": "Guardar tudo: só informa, nada muda",
-    "Your own accounts": "Suas próprias contas",
     "Next Fest": "Next Fest",
     "Making packs": "Criar pacotes",
     "New items are not held back": "Itens novos não ficam retidos",
@@ -2841,6 +2922,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} está agora em \"Nunca abrir pacotes destes jogos\" - o pacote que ele criou para o jogo fica fechado",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "um anúncio dele ainda está esperando no seu celular - nenhuma outra cópia é anunciada até isso ser resolvido",
     "worth {0} - over your price limit, never touched": "vale {0} - acima do seu limite de preço, nunca é tocado",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} item(ns) no valor de {1} estão acima do seu limite de preço de {2} - aumente-o para vendê-los",
     "worth {0} now - over your price limit, not listed": "agora vale {0} - acima do seu limite de preço, não foi anunciado",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "prévia de itens sobrando de {0}: {1} para gemas, {2} para vender. Nada acontece até você ligar Itens sobrando nas configurações dela - 'spare preview {0}' mostra cada um.",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} baixado de {2} para {3} - {1} dias sem vender",
@@ -2957,9 +3039,417 @@
     "done grinding · back to the usual day": "grind concluído · de volta ao dia normal",
     "{0} is on the market · {1}": "{0} está no mercado · {1}",
     "{0} is on the market": "{0} está no mercado",
-    "couldn't look at the listings waiting on a confirmation: {0}": "não deu para ver os anúncios aguardando confirmação: {0}"
+    "{0} listings on the market · {1}": "{0} anúncios no mercado · {1}",
+    "{0} listings on the market": "{0} anúncios no mercado",
+    "sold {0} items · you got {1}": "{0} itens vendidos · você recebeu {1}",
+    "couldn't look at the listings waiting on a confirmation: {0}": "não deu para ver os anúncios aguardando confirmação: {0}",
+    "its cards have changed since": "as cartas dela mudaram desde então",
+    "no fresh price for some of its cards": "não há preço recente para algumas das cartas",
+    "it would set back a set now": "agora faria um conjunto regredir",
+    "it would lose more than your limit": "perderia mais do que o seu limite",
+    "not a swap nocat.lol paired with this account": "não é uma troca que o nocat.lol pareou com esta conta",
+    "it has something that isn't a normal trading card": "tem algo que não é uma carta colecionável normal",
+    "it isn't the swap nocat.lol paired": "não é a troca que o nocat.lol pareou",
+    "no fresh price yet for {0}": "ainda não há preço recente para {0}",
+    "it's worth less than this account gives": "vale menos do que esta conta dá",
+    "card swaps: couldn't read its own trade link - not listed this time": "troca de cartas: não deu para ler o próprio link de troca - não listada desta vez",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "A troca de cartas está ligada para {0}: troca cartas sobrando com outros usuários do nocat.farm, dentro dos limites",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "A troca de cartas está desligada para {0}: nada é trocado, e o nocat.lol a esquece",
+    "held by scam watch - no swaps until 'scamwatch ok'": "retido pelo alerta de golpes - sem trocas até 'scamwatch ok'",
+    "waiting for its day": "esperando o dia dela",
+    "{0} swaps today - the most for a day": "{0} trocas hoje - o máximo por dia",
+    "next swap from about {0}": "próxima troca a partir de cerca de {0}",
+    "no swap to send right now": "nenhuma troca para enviar agora",
+    "card swap with {0} done · {1} card(s) each way": "troca de cartas com {0} feita · {1} carta(s) para cada lado",
+    "card swap offer to {0} taken back · not accepted in 2 days": "oferta de troca para {0} retirada · não aceita em 2 dias",
+    "card swap with {0} didn't go through": "a troca de cartas com {0} não foi concluída",
+    "card swap with {0} skipped · {1}": "troca de cartas com {0} pulada · {1}",
+    "Steam didn't say whether the trade would be held": "a Steam não disse se a troca ficaria retida",
+    "the trade would be held": "a troca ficaria retida",
+    "couldn't read its cards": "não deu para ler as cartas",
+    "Steam didn't say what's on its offers": "a Steam não disse o que está nas ofertas",
+    "Steam hasn't said its wallet currency yet": "a Steam ainda não informou a moeda da carteira",
+    "waiting for prices": "esperando preços",
+    "nothing in it fits any more": "nada mais serve",
+    "Steam refused the offer: {0}": "a Steam recusou a oferta: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "troca de cartas · oferta enviada para {0} · {1} carta(s) para cada lado",
+    "card swap · you give {0} · you get {1}": "troca de cartas · você dá {0} · você recebe {1}",
+    "card swap · confirm the offer to {0} on your phone": "troca de cartas · confirme a oferta para {0} no seu celular",
+    "sent a swap to {0}": "troca enviada para {0}",
+    "a card swap nocat.lol paired": "uma troca de cartas pareada pelo nocat.lol",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "uma troca de cartas pareada pelo nocat.lol · conferida e depois aceita ou recusada",
+    "offer {0} is from an account that once sent a bad swap · left for you": "a oferta {0} é de uma conta que já mandou uma troca ruim · deixada para você",
+    "from an account that once sent a bad swap": "de uma conta que já mandou uma troca ruim",
+    "not now": "agora não",
+    "offer {0} isn't a good swap now ({1}) - declining": "a oferta {0} não é uma boa troca agora ({1}) - recusando",
+    "card swap · you'd give {0} · you'd get {1}": "troca de cartas · você daria {0} · você receberia {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "a oferta de troca {0} não é o que foi pareado ({1}) · deixada para você",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "a oferta {0} diz ser uma troca que o nocat.lol não pareou · deixada para você",
+    "Turn on card swaps?": "Ligar a troca de cartas?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Isto é o que ela poderia trocar agora e os limites que respeita. Nada é trocado até você apertar Ligar.",
+    "spare cards to swap": "cartas sobrando para trocar",
+    "in {0} games": "em {0} jogos",
+    "swaps a day, at most": "trocas por dia, no máximo",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Só cartas colecionáveis normais - nunca brilhantes, fundos ou emoticons",
+    "One for one, in the same game, and only when it helps your sets": "Uma por uma, no mesmo jogo, e só quando ajuda os seus conjuntos",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Nunca uma carta que seus conjuntos precisam, a última cópia de uma ou algo das suas listas de nunca mexer",
+    "Each swap worth at most {0} less than what it gives": "Cada troca vale no máximo {0} a menos do que dá",
+    "Never when Steam would hold the trade": "Nunca quando a Steam reteria a troca",
+    "Also when Steam would hold the trade": "Também quando a Steam reteria a troca",
+    "Its offers are confirmed by its authenticator here": "As ofertas são confirmadas pelo autenticador daqui",
+    "Its offers wait for you to confirm them on your phone": "As ofertas esperam você confirmar no celular",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "A moeda da carteira ainda não é conhecida - nada é trocado até ser",
+    "1 card still needs a price first.": "1 carta ainda precisa de um preço antes.",
+    "{0} cards still need a price first.": "{0} cartas ainda precisam de um preço antes.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "a oferta de troca para {0} não era o que o nocat.lol disse · retirada",
+    "it was paired more than 2 days ago": "foi pareada há mais de 2 dias",
+    "Steam's name for a card in it doesn't fit its game": "o nome de uma carta no Steam não combina com o jogo dela",
+    "a card in it is already on another offer or swap": "uma carta dela já está em outra oferta ou troca",
+    "it would leave fewer than {0} of {1}": "ficariam menos de {0} de {1}",
+    "card swap offer to {0} taken back · {1}": "oferta de troca para {0} retirada · {1}",
+    "card swap offer to {0} taken back · swaps are off": "oferta de troca para {0} retirada · as trocas estão desligadas",
+    "offer {0} · left for you · Steam won't say whether it would be held": "oferta {0} · fica com você · o Steam não diz se ficaria retida",
+    "that swap was already done or dropped": "essa troca já foi feita ou descartada",
+    "not signed in to Steam": "não conectado à Steam",
+    "swap sign-in failed · {0}": "login para trocas falhou · {0}",
+    "Steam's sign-in page didn't load": "a página de login da Steam não carregou",
+    "Steam says it isn't signed in on the web": "a Steam diz que não está conectado na web",
+    "no sign-in form on Steam's page": "nenhum formulário de login na página da Steam",
+    "Steam didn't answer the sign-in": "a Steam não respondeu ao login",
+    "Steam answered {0} and showed the sign-in page again": "a Steam respondeu {0} e mostrou de novo a página de autorização",
+    "Steam answered {0} and showed its login page": "a Steam respondeu {0} e mostrou a página de login",
+    "Steam answered {0} and sent it nowhere": "a Steam respondeu {0} e não redirecionou para lugar nenhum",
+    "Steam sent it to {0}, not nocat.lol": "a Steam enviou para {0}, não para o nocat.lol",
+    "Steam's answer wasn't a sign-in": "a resposta da Steam não era um login",
+    "Steam's answer was for another account": "a resposta da Steam era de outra conta",
+    "Steam's answer was too long": "a resposta da Steam era longa demais",
+    "card swap · confirm the offer to {0} from Steam's email": "troca de cartas · confirme a oferta para {0} pelo e-mail da Steam",
+    "then off for the night": "depois vai dormir",
+    "short break · then off for the night": "pausa curta · depois vai dormir",
+    "meal break · then off for the night": "pausa para refeição · depois vai dormir",
+    "nothing left to craft - sets sold instead": "nada mais para criar - conjuntos vendidos no lugar",
+    "weighing sets against the levels they'd buy": "comparando conjuntos com os níveis que comprariam",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "vendendo o conjunto {0} em vez de criar: {1} compra cerca de {2} níveis",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "conjunto {0}: {1} de {2} cartas anunciadas · o resto espera a próxima olhada",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "A Steam pede dados de cobrança em cada compra do mercado e esta conta não tem nenhum salvo - compre uma carta à mão no mercado uma vez (isso os salva), depois ele pode comprar",
+    "{0} not bought · not confirmed in the Steam app": "{0} não comprada · não confirmada no app da Steam",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} compra(s) de cartas sem confirmação em um dia · deixada(s) de lado, nada comprado",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "confirme a compra de cartas no app da Steam · {0} carta(s) para {1}",
+    "its price fell since the set was weighed - not listed": "o preço caiu desde que o conjunto foi avaliado - não anunciada",
+    "{0}: crafted · {1}": "{0}: criado · {1}",
+    "{0}: not crafted yet · {1} · a card is worth {2}": "{0}: ainda não criado · {1} · uma carta vale {2}",
+    "couldn't price its cards": "não conseguiu pôr preço nas cartas dele",
+    "Steam won't let it buy cards, so the money couldn't be spent": "a Steam não deixa comprar cartas, então o dinheiro não poderia ser gasto",
+    "its set isn't known whole on the market": "o conjunto dele não é conhecido inteiro no mercado",
+    "selling sets instead of crafting is off": "vender conjuntos em vez de criar está desligado",
+    "buying cards is off": "comprar cartas está desligado",
+    "{0} sets ready, crafted together": "{0} conjuntos prontos, criados juntos",
+    "only {0} sets are weighed a look": "só {0} conjuntos são comparados por olhada",
+    "buying cards isn't running": "comprar cartas não está rodando",
+    "no price in its wallet's currency": "sem preço na moeda da carteira",
+    "no market price for {0} right now": "sem preço de mercado para {0} agora",
+    "{0} sold only {1} time(s) in the last day": "{0} só vendeu {1} vez(es) no último dia",
+    "{0}: its price isn't clear right now": "{0}: o preço dela não está claro agora",
+    "{0} pays nothing on the market": "{0} não rende nada no mercado",
+    "{0} buys about {1} levels": "{0} compra cerca de {1} níveis",
+    "set worth {0} buys no badge level today": "um conjunto que vale {0} não compra nenhum nível de insígnia hoje",
+    "set worth {0} buys only {1} level": "um conjunto que vale {0} compra só {1} nível",
+    "It would sell instead of crafting": "Venderia em vez de criar",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "O conjunto {0}: {1} depois da taxa da Steam compra cerca de {2} níveis de emblema, mais que o 1 que criar dá",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "O nível de emblema mais barato primeiro - um emblema já começado ou um conjunto novo inteiro, o que custar menos",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Se a Steam pedir para confirmar as compras no app da Steam, você confirma no celular - um conjunto por vez; se não, são deixadas de lado depois de um dia",
+    "set finder · couldn't look · {0}": "buscador de conjuntos · não conseguiu olhar · {0}",
+    "set finder · couldn't read its list, starting over · {0}": "buscador de conjuntos · não conseguiu ler a lista, recomeçando · {0}",
+    "set finder · couldn't save its list · {0}": "buscador de conjuntos · não conseguiu salvar a lista · {0}",
+    "Set price": "Preço do conjunto",
+    "XP per 1.00": "XP por 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Nenhum conjunto completo conhecido ainda - o buscador de conjuntos lê o mercado aos poucos.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "O buscador de conjuntos viu hoje as {0} cartas mais baratas de {1} e conhece {2} conjuntos completos. Última olhada: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Só compra estes com \"Comprar os conjuntos completos mais baratos\" ligado.",
+    "Cheapest whole sets on the market": "Os conjuntos completos mais baratos do mercado",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "buscador de conjuntos · {0} ignorado · o robots.txt não respondeu ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "buscador de conjuntos · {0} ignorado · o robots.txt não permite",
+    "set finder · {0} skipped · it didn't answer ({1})": "buscador de conjuntos · {0} ignorado · não respondeu ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "buscador de conjuntos · {0} ignorado · a lista não pôde ser lida",
+    "set finder · {0} games to look at first, from {1}": "buscador de conjuntos · {0} jogos para olhar primeiro, de {1}",
+    "{0} was paused - stopped before the next item": "{0} foi pausado - parou antes do próximo item",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "vender pagaria {0}, mais do que valem as {1} gemas ({2}) - mantido",
+    "{0} · found in the inventory after its order": "{0} · encontrado no inventário depois da ordem",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "vende por {0}, você recebe {1} - abaixo do seu mínimo de {2}, mas mais do que valem as {3} gemas ({4})",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} gemas, valendo {1} - vender pagaria {2}",
+    "worth {0}, over your price limit now - skipped": "vale {0}, agora acima do seu limite de preço - pulado",
+    "more cards wait · confirm the ones in the Steam app first": "mais cartas esperam · confirme primeiro as do app da Steam",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} gemas, valendo {1} - vender pagaria {2}, abaixo do seu mínimo de {3}",
+    "bought {0} ({1}) · {2}": "comprou {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "ninguém vende agora, mas vendeu por {0} há pouco - mais que as gemas - mantido",
+    "on your keep list now - skipped": "agora está na sua lista de manter - pulado",
+    "Put right": "Corrigido",
+    "settings copied from {0}": "configurações copiadas de {0}",
+    "Its settings come from {0}. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on.": "As configurações vêm de {0}. Itens sobrando, Pontos Steam, comprar cartas, troca de cartas e Abrir no Steam ficam desligados até você ligá-los.",
+    "Settings copied from {0}": "Configurações copiadas de {0}",
+    "No such account.": "Essa conta não existe.",
+    "Copy settings": "Copiar configurações",
+    "settings copied from {0} · 1 switch left off for you to turn on": "configurações copiadas de {0} · 1 chave fica desligada para você ligar",
+    "Copy another account's settings onto this one. Shows what changes first.": "Copia as configurações de outra conta para esta. Mostra antes o que muda.",
+    "Settings copied from {0}. Turn these on yourself after their preview: {1}": "Configurações copiadas de {0}. Ligue estas você mesmo depois da prévia: {1}",
+    "{0} settings change": "{0} configurações mudam",
+    "Stays off - turn it on yourself after its preview": "Fica desligado - ligue você mesmo depois da prévia",
+    "Pick an account": "Escolha uma conta",
+    "whether it runs, and whether you sign into it yourself": "se ela roda e se você mesmo entra nela",
+    "Goes off, as on the account copied from": "Desliga, como na conta de origem",
+    "With {0} itself taken out": "Sem o próprio {0}",
+    "Start with another account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview.": "Começa com as configurações de outra conta em vez das padrão - tudo menos o login e o que é só daquela conta. Itens sobrando, Pontos Steam, comprar cartas, troca de cartas e Abrir no Steam ficam desligados até você ligá-los depois da prévia.",
+    "{0} already has the same settings - nothing to copy.": "{0} já tem as mesmas configurações - nada para copiar.",
+    "Setting": "Configuração",
+    "the trade link token": "o token do link de troca",
+    "Pick two different accounts.": "Escolha duas contas diferentes.",
+    "Copy settings from": "Copiar configurações de",
+    "Copy settings onto {0}": "Copiar configurações para {0}",
+    "Now": "Agora",
+    "notes and log colour": "as notas e a cor no log",
+    "the sign-in, password and authenticator": "o login, a senha e o autenticador",
+    "settings copied from {0} · {1} switches left off for you to turn on": "configurações copiadas de {0} · {1} chaves ficam desligadas para você ligar",
+    "One setting changes": "Uma configuração muda",
+    "Working out what it would change...": "Calculando o que mudaria...",
+    "Copy settings from…": "Copiar configurações de…",
+    "Never copied": "Nunca copiado",
+    "After": "Depois",
+    "the proxy and the device name": "o proxy e o nome do dispositivo",
+    "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Escolha a conta de onde copiar. Nada muda até você apertar Copiar configurações, e a conta de origem fica como está.",
+    "none - the defaults": "nenhuma - as padrão",
+    "set finder · couldn't save what it shared · {0}": "buscador de conjuntos · não conseguiu salvar o que compartilhou · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "buscador de conjuntos · listas compartilhadas · {0} enviados, {1} pegos de outras cópias",
+    "set finder · nocat.lol didn't answer · {0}": "buscador de conjuntos · o nocat.lol não respondeu · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "gemas guardadas soltas · ainda não se sabe quantos níveis valem",
+    "saving tradable gems for a sack to sell": "juntando gemas negociáveis para um saco para vender",
+    "gems: today's listings are done · more tomorrow": "gemas: os anúncios de hoje acabaram · mais amanhã",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1.000 gemas empacotadas num saco para vender · cerca de {0} níveis por 1.000 gemas",
+    "saving tradable gems for a {0} pack to sell": "juntando gemas negociáveis para um pacote de {0} para vender",
+    "the {0} pack's price moved · weighed again later": "o preço do pacote de {0} mudou · comparado de novo mais tarde",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "pacote de {0} criado para vender · cerca de {1} níveis por 1.000 gemas",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "pacote de {0} criado para abrir e vender as cartas · cerca de {1} níveis por 1.000 gemas",
+    "Commenting is on hold on every account until {0}.": "Os comentários estão em pausa em todas as contas até {0}.",
+    "Resume now": "Retomar agora",
+    "Pause rep4rep for...": "Pausar o rep4rep por...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Pausa os comentários em todas as contas e depois eles voltam sozinhos - mesmo depois de reiniciar.",
+    "{0} hours": "{0} horas",
+    "rep4rep held for {0} hours": "rep4rep pausado por {0} horas",
+    "rep4rep commenting carries on": "o rep4rep continua comentando",
+    "Disconnect": "Desconectar",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Esquece este chat. O botão Conectar Telegram volta, para conectar outro.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Esquece esta conta do Discord - o bot não obedece a ninguém até você conectar de novo.",
+    "to": "a",
+    "0 = {0}": "0 = {0}",
+    "seconds": "segundos",
+    "days": "dias",
+    "ms": "ms",
+    "wallet currency": "na moeda da carteira",
+    "points": "pontos",
+    "backups": "backups",
+    "reviews": "avaliações",
+    "times a day": "vezes por dia",
+    "no limit": "sem limite",
+    "spend nothing": "não gasta nada",
+    "keep forever": "guardar para sempre",
+    "never again": "nunca mais",
+    "Settle in after signing in": "Se acomodar depois de entrar",
+    "Sittings": "Sessões",
+    "Breaks": "Pausas",
+    "On a break, go Away after": "Na pausa, ficar Ausente após",
+    "Sleeps": "Dorme",
+    "After waking, wait": "Ao acordar, esperar",
+    "Background jobs wait after signing in": "Tarefas em segundo plano esperam após entrar",
+    "After the last card, keep playing": "Depois da última carta, continuar jogando",
+    "Farm cards only between": "Farmar cartas só entre",
+    "While grinding, one achievement every": "No grind, uma conquista a cada",
+    "Move to another game at": "Passar para outro jogo em",
+    "Come back to a game after": "Voltar a um jogo após",
+    "Wait between items, human mode": "Espera entre itens, modo humano",
+    "Wait between steps": "Espera entre etapas",
+    "Wait between steps, human mode": "Espera entre etapas, modo humano",
+    "Look for scams every": "Procurar golpes a cada",
+    "Check health every": "Verificar a saúde a cada",
+    "Accept a gift after": "Aceitar um presente após",
+    "Answer a trade offer after": "Responder a uma oferta de troca após",
+    "Accept a friend request after": "Aceitar um pedido de amizade após",
+    "Gap between comments": "Intervalo entre comentários",
+    "Only post between": "Publicar só entre",
+    "Install by itself between": "Instalar sozinho entre",
+    "Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.": "Pedir um código do Telegram ao entrar de fora está desligado - só a senha já deixa alguém entrar.",
+    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Your other accounts\").": "Confirmadas sozinhas: trocas com {0}. Todo o resto espera aqui. Mude isso em Configurações, Trocas (“Suas outras contas”).",
+    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Your other accounts\").": "Nada é confirmado sozinho - tudo espera aqui por você. Mude isso em Configurações, Trocas (“Suas outras contas”).",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "Não está sendo avaliada. Para ligar de novo, abra Configurações, escolha {0}, marque \"Mostrar avançadas\" e, em Trocas, marque \"Mostrar o valor do inventário\".",
+    "Tap a chip to switch it on or off. Each one says what it counts.": "Toque num chip para ligar ou desligar. Cada um diz o que conta.",
+    "extra card copies": "cópias extras de cartas",
+    "cards of finished badges": "cartas de insígnias completas",
+    "foils": "cartas brilhantes",
+    "backgrounds": "fundos",
+    "emoticons": "emoticons",
+    "default": "padrão",
+    "needs a sign-in": "precisa de login",
+    "Scam warnings": "Alertas de golpe",
+    "Health alerts": "Saúde da conta",
+    "done hunting for today (Hunt at most a day)": "terminou de caçar por hoje (Caçar no máximo por dia)",
+    "{0} is done for today (Hunt at most a day) - back tomorrow": "{0} terminou por hoje (Caçar no máximo por dia) - volta amanhã",
+    "on - no games to hunt (pick some under \"Hunt these games\")": "ligado - nenhum jogo para caçar (escolha alguns em “Caçar estes jogos”)",
+    "{0} left out - it's on \"Never play these games\"": "{0} ficou de fora - está em “Nunca jogar estes jogos”",
+    "{0}: alerts about bans are part of account health now, which is off on this account - turn it on to get them": "{0}: os alertas de banimento agora fazem parte da saúde da conta, que está desligada nesta conta - ligue para recebê-los",
+    "{0}: your own accounts are in \"Your other accounts\" now, both ways - as before": "{0}: suas próprias contas agora estão em “Suas outras contas”, nos dois sentidos - como antes",
+    "Badges": "Insígnias",
+    "Card swaps": "Trocas de cartas",
+    "Commands from the chats": "Comandos pelos chats",
+    "Dashboard & phone": "Painel e celular",
+    "General": "Geral",
+    "Items and spending": "Itens e gastos",
+    "Open from outside": "Abrir de fora",
+    "Safety": "Segurança",
+    "Steam connection & logs": "Conexão com a Steam e registros",
+    "When you use it yourself": "Quando você mesmo usa",
+    "Your other accounts": "Suas outras contas",
+    "Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.": "Tudo aqui fica desligado até você ligar, e cada um mostra antes o que faria e pergunta. Antes disso nada é vendido, virado em gemas, aberto, comprado ou gasto.",
+    "Every game it owns, a batch at a time. Games still within Steam's 2 hours for a refund are left alone.": "Todos os jogos que ela tem, um lote por vez. Jogos ainda dentro das 2 horas da Steam para reembolso ficam em paz.",
+    "A QR code to scan, and how to open it from outside your home.": "Um código QR para escanear e como abrir de fora de casa.",
+    "A daily backup": "Um backup diário",
+    "Advanced setup": "Configuração avançada",
+    "After the cards are done, what should it idle?": "Quando as cartas acabarem, o que ele deve rodar?",
+    "Card drops, problems that need you, scam warnings - you pick which.": "Cartas que caem, problemas que precisam de você, alertas de golpe - você escolhe quais.",
+    "Everything in one locked file each day, to put back on any PC.": "Tudo num arquivo trancado por dia, para restaurar em qualquer PC.",
+    "Fewer questions": "Menos perguntas",
+    "Games I pick": "Jogos que eu escolher",
+    "Get messages on Telegram or Discord": "Receber mensagens no Telegram ou Discord",
+    "I also use this account in my own Steam app": "Também uso esta conta no meu próprio app da Steam",
+    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Ele se conta no nocat.lol uma vez por hora, anonimamente - só um número aleatório e quantas contas. “Contar como usuário”, em Configurações, Atualizações e plugins, desliga isso.",
+    "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "Primeiro farma as cartas colecionáveis. Quando acabarem, pode continuar rodando jogos para somar horas.",
+    "It stays signed in and does nothing once the cards are done.": "Fica conectada e não faz nada quando as cartas acabam.",
+    "Language: {0}": "Idioma: {0}",
+    "More": "Mais",
+    "My main account": "Minha conta principal",
+    "My whole library": "Toda a minha biblioteca",
+    "Nothing": "Nada",
+    "Sign in with a QR code instead": "Entrar com um código QR em vez disso",
+    "Tap them below.": "Toque neles abaixo.",
+    "When you like": "Quando quiser",
+    "nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.": "O nocat.farm entra nas suas contas Steam, farma as cartas colecionáveis, joga para as horas contarem e pega coisas grátis - tudo deste PC. Isto escolhe as configurações certas para a conta; tudo pode ser mudado depois.",
+    "its wallet already pays for every level priced today": "a carteira já paga todos os níveis com preço hoje",
+    "couldn't read the open buy orders: {0}": "não conseguiu ler as ordens de compra abertas: {0}",
+    "worth {0} now - over your price limit, kept": "agora vale {0} - acima do seu limite de preço, mantido",
+    "on your keep list - never sold": "na sua lista de manter - nunca vendido",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "feito para vender: as cartas são vendidas não importa o que seu limite de preço diga; jogos na sua lista de manter nunca são tocados",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: já há uma ordem de compra aberta no mercado · a própria é retirada, uma que você criou fica como está",
+    "{0}: not crafted yet · {1}": "{0}: ainda não criado · {1}",
+    "it asks for a card promised to a card swap": "pede uma carta prometida a uma troca de cartas",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "vender agora rende {0}, mais do que valem as {1} gemas dele ({2}) - mantido",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "não anunciado: você receberia {0}, não mais do que valem as gemas dele ({1})",
+    "no price right now - kept until it has one": "sem preço agora - mantido até ter um",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "gemas: sem preço recente para um saco de gemas - nada é anunciado desta vez",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: ainda não criado · {1} · não se sabe quanto valem as cartas dele",
+    "it would leave fewer than {0} copies of a card you keep": "deixaria menos de {0} cópias de uma carta que você mantém",
+    "an order for {0} was left open on the market · taken back, nothing bought": "uma ordem de {0} ficou aberta no mercado · retirada, nada comprado",
+    "it asks for {0}, on your keep list": "pede {0}, que está na sua lista de manter",
+    "the market stopped answering before what its money buys was priced": "o mercado parou de responder antes de saber o que o dinheiro compraria",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} só vendeu {1} vez(es) no último dia - esperando, o conjunto vale {2} ({3} níveis)",
+    "it has no Steam wallet to spend the money from": "não tem carteira Steam para gastar o dinheiro",
+    "on your keep list - its set is crafted, never sold": "na sua lista de manter - o conjunto é criado, nunca vendido",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "cartas que valem mais vendidas do que guardadas: o inventário não está à mão para anunciá-las - na próxima olhada",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: {1} de {2} cartas anunciadas · o resto espera a próxima olhada",
+    "selling buys about {0} levels, keeping makes {1}": "vender compra cerca de {0} níveis, guardar dá {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "guardar dá {0} nível(is), vender compra cerca de {1}",
+    "cards worth more sold than kept: not weighed · {0}": "cartas que valem mais vendidas do que guardadas: não comparado · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: cartas guardadas - não é certo que valham mais vendidas · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: suas cartas voltaram a valer mais guardadas · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas valem mais que seus níveis - vendendo por cerca de {2} ≈ {3} níveis baratos",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · menor {3} · você recebe {4} por cada",
+    "its price fell since it was weighed - not listed": "o preço caiu desde que foi comparado - não anunciado",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "vendendo o conjunto brilhante de {0} em vez de criar: {1} compra cerca de {2} níveis",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "vendendo {0} conjuntos de {1} em vez de criar: {2} compra cerca de {3} níveis",
+    "sets worth more sold than crafted wait uncrafted · {0}": "conjuntos que valem mais vendidos do que criados esperam sem ser criados · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "o que sobrou de um conjunto vendido em vez de criado - rende {0}",
+    "what's left of a set sold instead of crafted pays nothing": "o que sobrou de um conjunto vendido em vez de criado não rende nada",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "não se sabe agora o que o dinheiro compra - a compra de cartas ainda não precificou os próximos níveis",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} cartas brilhantes valem mais que seu nível - vendendo por cerca de {2} ≈ {3} níveis baratos",
+    "its cards are being sold - worth more than the levels they'd make": "suas cartas estão sendo vendidas - valem mais que os níveis que dariam",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} compra cerca de {1} níveis · {2} quase não vende, mas o conjunto já esperou o bastante - anunciado mesmo assim",
+    "{0} sets worth {1} buy only {2} levels": "{0} conjuntos que valem {1} compram só {2} níveis",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} compra cerca de {1} níveis, mas a Steam não deixa a conta comprar cartas sozinha - esperando até poder",
+    "Level price now: {0} a level (100 XP)": "Preço do nível agora: {0} por nível (100 XP)",
+    "No limit a week ({0} spent this week)": "Sem limite por semana ({0} gasto nesta semana)",
+    "No limit": "Sem limite",
+    "At most {0} for one badge level": "No máximo {0} por um nível de insígnia",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "O buscador de conjuntos verificou no mercado {0} dos {1} conjuntos mais baratos nas últimas 24 horas e conhece {2} conjuntos completos. Última olhada: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Sem limite: gasta o que a carteira tiver, os níveis mais baratos primeiro - o máximo por nível continua valendo.",
+    "No limit a day ({0} spent in the last day)": "Sem limite por dia ({0} gasto no último dia)",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "buscador de conjuntos · {0} dos {1} conjuntos mais baratos verificados no mercado nas últimas 24 horas · {2} conjuntos completos conhecidos",
+    "sets": "conjuntos",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "compra de cartas · sobra dinheiro para mais níveis baratos - próxima olhada em {0} minutos",
+    "automatic": "automático",
+    "Time between looks, human mode": "Tempo entre olhadas, modo humano",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "compra de cartas: um limite de gasto abaixo de 0 que não era -1 (sem limite) agora é 0 - nada é comprado até você ajustar",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "a carteira passaria do máximo se vendesse mais - a venda espera até por volta das {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "anúncios demais esperam confirmação no app da Steam - nenhum outro até por volta das {0}",
+    "Steam's market is unavailable just now - listing waits until about {0}": "o mercado da Steam está indisponível agora - os anúncios esperam até por volta das {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "o mercado da Steam está bloqueado até {0} ({1}) - compras, vendas e trocas esperam até lá",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "o mercado da Steam está bloqueado ({0}) - compras, vendas e trocas esperam até ele abrir de novo",
+    "Steam said this account isn't allowed to use the market": "a Steam diz que esta conta não pode usar o mercado",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "anúncios demais esperam confirmação no app da Steam - nenhum outro até eles serem confirmados",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "a Steam não aceita mais anúncios - a carteira passaria do máximo. A venda espera um dia; gastar parte da carteira deixa vender de novo",
+    "Steam's market is unavailable just now - listing waits an hour": "o mercado da Steam está indisponível agora - os anúncios esperam uma hora",
+    "Steam's market is open again - buying, selling and swaps go on": "o mercado da Steam abriu de novo - compras, vendas e trocas continuam",
+    "Steam refused a listing - nothing more listed this look": "a Steam recusou um anúncio - nada mais é anunciado nesta olhada",
+    "gems: Steam refused the last listing - listing again from about {0}": "gemas: a Steam recusou o último anúncio - nova tentativa por volta das {0}",
+    "Steam didn't answer - looking for the offer at the next look": "a Steam não respondeu - a oferta será procurada na próxima olhada",
+    "card swap · found the offer sent to {0} before the restart": "troca de cartas · encontrada a oferta enviada para {0} antes do reinício",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "fez outra coisa às {0} - o modo humano espaça as coisas; pode seguir por volta das {1}",
+    "{0} · {1} of {2} card drop(s)": "{0} · {1} de {2} carta(s)",
+    "every game": "todos os jogos",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Gastar no máximo por semana” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't look at the money settings: {0}": "não foi possível verificar as configurações de dinheiro: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "compra de cartas desligada · um limite de gasto foi colocado em sem limite - ligue a compra de novo para ver quanto pode gastar e confirme",
+    "level goal {0} stopped": "meta de nível {0} parada",
+    "Steam level {0} (+{1}) · this level cost {2}": "Nível Steam {0} (+{1}) · este nível custou {2}",
+    "Steam level {0} (+{1})": "Nível Steam {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "meta de nível {0} iniciada: {1} níveis por cerca de {2} (nunca acima de {3})",
+    "level goal reached: Steam level {0} · {1} spent": "meta de nível alcançada: nível Steam {0} · {1} gastos",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "a compra espera o buscador de conjuntos: {0} de {1} conjuntos mais baratos verificados",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Não mexer em itens que valham mais de” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} te daria {1}, não mais do que valem suas gemas",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “O máximo que uma troca pode perder” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Gastar no máximo por dia” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't read the Steam level: {0}": "não foi possível ler o nível Steam: {0}",
+    "couldn't search the market: {0}": "não foi possível pesquisar o mercado: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} compra(s) de cartas cujo fim o Steam não disse em uma semana · contadas como compradas",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Nível Steam {0} (+{1}) · {2} por {1} níveis",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "carteira em {0}: “Só vender se você receber pelo menos” ainda está em {1}, um valor em dólares - para {0} use cerca de {2}",
+    "couldn't note the money settings were looked at: {0}": "não foi possível anotar que as configurações de dinheiro foram verificadas: {0}",
+    "couldn't note the Steam level: {0}": "não foi possível anotar o nível Steam: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "No máximo {0} por um nível de insígnia - um pouco acima do que um nível costuma custar",
+    "{0} would pay you {1}, under your {2} minimum": "{0} te daria {1}, abaixo do seu mínimo de {2}",
+    "cards were bought to finish it - crafted, never sold": "cartas foram compradas para completá-lo - criado, nunca vendido",
+    "{0}: answered · {1} lines in the log file": "{0}: respondido · {1} linhas no arquivo de log",
+    "Show in the app's log": "Mostrar no log do app",
+    "{0} hidden by Show in the app's log": "{0} ocultas por Mostrar no log do app",
+    "what it's doing": "o que está fazendo",
+    "card drops and farming": "drops de cartas e farm",
+    "badges, crafting, level": "insígnias, criação, nível",
+    "buying cards": "compra de cartas",
+    "selling, spare items, gems": "venda, itens sobrando, gemas",
+    "trades and card swaps": "trocas e trocas de cartas",
+    "comments, friends, rep4rep": "comentários, amigos, rep4rep",
+    "free games, items, Points": "jogos e itens grátis, Pontos",
+    "answers to commands": "respostas a comandos",
+    "updates and app messages": "atualizações e mensagens do app",
+    "{0}: listing taken down · it can be listed again": "{0}: anúncio retirado · pode ser anunciado de novo",
+    "took down {0} - unsold {1} days, its gems are worth more now": "retirado {0} - {1} dias sem vender, as gemas valem mais agora"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "Botões Abrir no Steam em todas as contas",
+      "tip": "Mostra o botão de um clique Abrir no Steam em todas as contas - no cartão e na janela do app - para você não precisar ligar conta por conta. O botão faz o seu app do Steam entrar nessa conta: fecha o Steam, aponta o Steam para a conta e abre o Steam de novo. Uma conta que o Steam ainda não lembra abre o login do Steam com o nome já preenchido. Nunca impede o nocat.farm de farmar. Só no Windows. Desligado por padrão. Ao ligar, primeiro mostra exatamente o que o botão faz e pede confirmação. Para ter só em algumas contas, deixe isto desligado e ligue Botão Abrir no Steam nas configurações dessas contas."
+    },
+    "SteamOpenButton": {
+      "label": "Botão Abrir no Steam",
+      "tip": "Mostra um botão nesta conta - no cartão dela e na janela do app - que entra com ela no seu app do Steam sem digitar senha. Pressionar fecha o Steam, aponta os arquivos de contas salvas do Steam para esta conta e abre o Steam de novo, então ele entra direto com o login que o Steam já lembra. Nunca impede o nocat.farm de farmar esta conta: o Steam permite o login e só recua o farm quando você realmente abre um jogo. Só no Windows. Desligado por padrão. Ao ligar, primeiro mostra exatamente o que o botão faz e pede confirmação."
+    },
     "WebEnabled": {
       "label": "Painel web",
       "tip": "Liga o painel web. Desligado, tudo continua funcionando e você controla o nocat.farm digitando comandos no console."
@@ -3015,7 +3505,7 @@
     },
     "TrayNotifications": {
       "label": "Mostrar pop-ups",
-      "tip": "Liga ou desliga os pop-ups. As quatro opções abaixo escolhem quais pop-ups você recebe."
+      "tip": "Liga ou desliga as notificações pop-up. Os tipos abaixo escolhem quais você recebe."
     },
     "NotifyEarnings": {
       "label": "Avisar quando você ganhar",
@@ -3067,7 +3557,7 @@
     },
     "SendDailySummary": {
       "label": "Enviar o resumo diário",
-      "tip": "Uma vez por dia, o que cada conta fez nas últimas 24 horas: horas acumuladas, cartas e comentários. Enviado no horário definido para “Resumo diário no log”."
+      "tip": "Uma vez por dia, o que cada conta fez nas últimas 24 horas: horas acumuladas, cartas e comentários. Enviado no horário de “Resumo diário às” (Log)."
     },
     "SendComments": {
       "label": "Enviar comentários no perfil",
@@ -3086,7 +3576,7 @@
       "tip": "Grupos Steam em que todas as suas contas entram, uma depois da outra. Começa com o grupo nocat.farm, e você pode mudar ou apagar. Cole o link de um grupo ou o nome curto, separados por vírgulas. Só entra em grupos abertos, os que pedem aprovação ou convite são pulados."
     },
     "Rep4RepEnabled": {
-      "label": "Usar rep4rep, sim ou não",
+      "label": "Usar o rep4rep",
       "tip": "Liga o rep4rep, um site de terceiros opcional onde usuários trocam comentários de perfil Steam. Desligado, todos os recursos e opções do rep4rep ficam ocultos em todas as contas."
     },
     "Rep4RepApiToken": {
@@ -3106,7 +3596,7 @@
       "tip": "Com que frequência esta conta escreve no log o que está fazendo enquanto um jogo está aberto, em minutos. 0 usa a opção principal de log e -1 deixa em silêncio."
     },
     "StatusQuietEveryMinutes": {
-      "label": "E enquanto descansa, a cada",
+      "label": "Em repouso, dizer o que faz a cada",
       "tip": "O mesmo, mas para quando esta conta está dormindo, numa pausa, pausada ou desconectada. 0 usa a opção principal de log e -1 deixa em silêncio."
     },
     "Language": {
@@ -3114,7 +3604,7 @@
       "tip": "O idioma do painel, dos status e das linhas do log. O que ainda não foi traduzido aparece em inglês. Respostas a comandos digitados no console continuam em inglês."
     },
     "MarketCurrency": {
-      "label": "Preços do inventário em",
+      "label": "Mostrar o valor do inventário em",
       "tip": "A moeda em que os valores do inventário aparecem. Escolha a mesma da sua loja Steam para os totais baterem com o mercado. Trocar faz checar todos os preços de novo.",
       "choices": "1 dólar americano | 20 dólar canadense | 21 dólar australiano | 2 libra esterlina | 3 euro | 5 rublo russo | 7 real brasileiro | 8 iene japonês | 23 yuan chinês | 24 rupia indiana"
     },
@@ -3126,16 +3616,8 @@
       "label": "Resumo diário no log",
       "tip": "Escreve todo dia no log um resumo do que cada conta ganhou nas últimas 24 horas: horas acumuladas, cartas e comentários do rep4rep, e tudo o que acumulou até agora. Todo jogo aberto conta, como a Steam conta - 32 jogos por uma hora são 32 horas. Digite stats para ver quando quiser."
     },
-    "DailyReportHour": {
-      "label": "Hora do resumo · hora",
-      "tip": "A hora em que o resumo diário é escrito, no horário local - e enviado, quando “Enviar o resumo diário” está ligado."
-    },
-    "DailyReportMinute": {
-      "label": "Hora do resumo · minuto",
-      "tip": "O minuto da hora em que o resumo diário é escrito. Hora 9 e minuto 30 significa 09:30."
-    },
     "Enabled": {
-      "label": "Ativada",
+      "label": "Rodar esta conta",
       "tip": "Conecta esta conta. Desligue para manter as configurações dela, mas deixar a conta totalmente em paz."
     },
     "SteamLogin": {
@@ -3152,11 +3634,11 @@
     },
     "OnlineStatus": {
       "label": "Aparecer como",
-      "tip": "Como esta conta aparece para os seus amigos. Invisível ainda joga e farma, só que ninguém vê. Com o “Modo humano” ligado, este é só o status enquanto joga, então deixe em Online.",
+      "tip": "Como seus amigos veem esta conta. Invisível continua jogando e farmando, só que ninguém vê. No modo humano isto é só o status enquanto joga - nas pausas fica Ausente sozinho e à noite offline -, então deixe em Online.",
       "choices": "0 offline | 1 online | 2 ocupado | 3 ausente | 4 dormindo | 5 quer trocar | 6 quer jogar | 7 invisível"
     },
     "IUseThisAccount": {
-      "label": "Eu uso esta conta",
+      "label": "Também uso esta conta no meu próprio app da Steam",
       "tip": "Ligue para uma conta que você também usa no seu próprio app da Steam. Assim ela nunca muda o status online, porque isso desconectaria você de Amigos e Chat. Todo o resto continua rodando."
     },
     "StartPaused": {
@@ -3173,24 +3655,24 @@
       "placeholder": "idler principal, não mexer"
     },
     "LegitMode": {
-      "label": "Modo humano",
-      "tip": "Joga como uma pessoa: um jogo por vez, sessões realistas, pausas, refeições, dias de folga e offline à noite. As opções de robô ficam ocultas enquanto está ligado e voltam sem mudança quando você desliga."
+      "label": "Jogar como uma pessoa (modo humano)",
+      "tip": "Joga como uma pessoa: um jogo por vez, sessões realistas, pausas, refeições, dias de folga e offline à noite. As opções do modo robô ficam escondidas enquanto ele está ligado e voltam como estavam ao desligar."
     },
     "BreakAwayAfterMinMinutes": {
       "label": "Numa pausa, ausente depois de pelo menos",
-      "tip": "Só no modo humano. Quantos minutos depois do início de uma pausa o status muda para Ausente ou offline, como um cliente Steam parado de verdade. Pausas mais curtas continuam online."
+      "tip": "Quantos minutos depois do início de uma pausa o status muda para Ausente ou offline, como um cliente Steam parado de verdade. Pausas mais curtas continuam online."
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "...até",
+      "label": "Na pausa, ficar Ausente após no máximo",
       "tip": "O máximo de minutos depois do início de uma pausa antes de o status mudar para Ausente ou offline."
     },
     "LegitStopMaxSeconds": {
       "label": "Ao parar, encerrar por até",
-      "tip": "Quando você para a conta, ela continua jogando alguns segundos aleatórios, até este número, antes de sair, em vez de sumir no meio do jogo. 0 para na hora. Só vale quando o “Modo humano” está ligado."
+      "tip": "Quando você para a conta, ela continua jogando alguns segundos aleatórios, até esta quantidade, antes de sair, em vez de sumir no meio do jogo. 0 para na hora. Só no modo humano."
     },
     "GameWeights": {
       "label": "Jogos e com que frequência",
-      "tip": "Quais jogos ela joga e que porcentagem do tempo cada um recebe, somando uns 100. O primeiro é o jogo principal. Deixe um sem número para dividir o que sobrar, ou escreva 440:0 para deixar um jogo no banco. São médias de uma semana: um dia pode pender para um jogo, como o de uma pessoa. O jogo em que o \"Impulso de conquistas\" está divide a parte dos outros jogos."
+      "tip": "Quais jogos ele joga e que porcentagem do tempo cada um recebe, somando uns 100. O primeiro é o jogo principal. Deixe um número de fora para dividir o resto, ou escreva 440:0 para deixar um jogo no banco. São médias de uma semana - um dia pode pender para um jogo, como uma pessoa. O jogo da caça de conquistas divide a parte dos outros jogos."
     },
     "HourTargets": {
       "label": "Metas de horas",
@@ -3210,18 +3692,18 @@
     },
     "DayStartTime": {
       "label": "Entra às",
-      "tip": "O horário em que ela fica online, por exemplo 11:00. Todo dia ela entra dentro de “Varia até” em torno desse horário, quase sempre perto dele e um pouco mais cedo nos fins de semana."
+      "tip": "A hora em que ele entra, como 11:00. Todo dia ele entra dentro de “Entra, com variação de” em torno dessa hora, quase sempre perto e um pouco antes nos fins de semana."
     },
     "DayStartVaryMinutes": {
-      "label": "Varia até (minutos)",
+      "label": "Entra, com variação de",
       "tip": "Quanto ela pode se afastar de “Entra às”, para antes ou depois, em minutos. Nada a tira desse intervalo: com 11:00 e 30 ela sempre entra entre 10:30 e 11:30. 0 é o mesmo minuto todo dia."
     },
     "BedTime": {
       "label": "Vai dormir às",
-      "tip": "O horário em que ela para durante a noite. Depois da meia-noite tudo bem: 02:00 são duas da manhã, depois do dia em que entrou. Toda noite ela vai dormir dentro de “Varia até” em torno desse horário, um pouco mais tarde na sexta e no sábado."
+      "tip": "A hora em que ele para à noite. Depois da meia-noite pode: 02:00 são duas da manhã, depois do dia em que entrou. Toda noite vai dormir dentro de “Vai dormir, com variação de” em torno dessa hora, um pouco mais tarde nas sextas e sábados."
     },
     "BedVaryMinutes": {
-      "label": "Varia até (minutos)",
+      "label": "Vai dormir, com variação de",
       "tip": "Quanto ela pode se afastar de “Vai dormir às”, para antes ou depois, em minutos. Nada a tira desse intervalo: com 02:00 e 60 ela sempre vai dormir entre 01:00 e 03:00. 0 é o mesmo minuto toda noite."
     },
     "LateNightExtraHours": {
@@ -3230,11 +3712,11 @@
     },
     "SleepMinHours": {
       "label": "Dorme pelo menos",
-      "tip": "Quanto dura uma noite antes que o dia seguinte possa começar, em horas - uma duração aleatória entre este valor e o próximo, diferente a cada noite. Uma noite longa demais para caber antes do horário mais tarde que “Entra às” permite é encurtada: ela nunca entra mais tarde que isso."
+      "tip": "Quanto dura uma noite antes que o dia seguinte possa começar - uma duração aleatória entre os dois, diferente a cada noite. Uma noite longa demais para caber antes do “Entra às” mais tardio é cortada: ele nunca entra mais tarde."
     },
     "SleepMaxHours": {
-      "label": "...até",
-      "tip": "O topo desse intervalo, em horas."
+      "label": "Dorme no máximo",
+      "tip": "O máximo que uma noite pode durar antes do dia seguinte."
     },
     "PureMainDayChancePct": {
       "label": "Dias só com o jogo principal",
@@ -3242,10 +3724,10 @@
     },
     "WarmUpMinMinutes": {
       "label": "Se ambientar por pelo menos",
-      "tip": "A menor espera depois de entrar antes de começar um jogo, em minutos. Também vale quando você liga o “Modo humano”, para ela não abrir um jogo na hora."
+      "tip": "A menor espera depois de entrar antes de abrir um jogo. Vale também quando você liga o modo humano, para não abrir um jogo na hora."
     },
     "WarmUpMaxMinutes": {
-      "label": "E no máximo",
+      "label": "Se acomodar no máximo",
       "tip": "A maior espera depois de entrar, em minutos. Ela nunca começa nos primeiros 3 minutos após entrar, então não consegue tomar a conta se você já estiver jogando nela."
     },
     "SessionMinMinutes": {
@@ -3282,7 +3764,7 @@
     },
     "CustomGameNameEnabled": {
       "label": "Mostrar um nome de jogo próprio",
-      "tip": "Mostra aos seus amigos um nome próprio em vez do jogo real. Desligar guarda o nome que você digitou abaixo para a próxima vez."
+      "tip": "Mostra aos seus amigos um nome seu em vez do jogo real. Desligar guarda o nome abaixo para a próxima vez; apagar o nome desliga."
     },
     "CustomGameName": {
       "label": "Mostrar como",
@@ -3293,8 +3775,8 @@
       "tip": "Farma cartas colecionáveis da Steam. Jogos com cartas restantes são jogados até elas pararem de cair, antes de qualquer outra coisa."
     },
     "HoursUntilCardDrops": {
-      "label": "Horas antes das cartas caírem",
-      "tip": "De quantas horas um jogo precisa antes de a Steam soltar as cartas dele. Use 0 se esta conta já gastou mais de US$ 5 na Steam, para nada jogar mais do que precisa."
+      "label": "Jogar cada jogo este tempo antes de cartas caírem",
+      "tip": "Quantas horas um jogo precisa antes de a Steam soltar as cartas. Ponha 0 se esta conta já gastou o equivalente a US$5 ou mais na Steam, para nada jogar mais do que precisa."
     },
     "FarmingOrder": {
       "label": "Farmar nesta ordem",
@@ -3315,11 +3797,11 @@
       "choices": "0 cauteloso (duas vezes mais lento) | 1 normal | 2 rápido (duas vezes mais rápido)"
     },
     "AchievementMaxCompletionPct": {
-      "label": "Não concluir mais que",
+      "label": "Nunca completar mais de um jogo do que",
       "tip": "O máximo que ela vai completar de qualquer jogo, em porcentagem. Deixar algumas sem ganhar parece uma biblioteca de verdade. Quando um jogo chega lá, a caça o deixa de vez - aumente este valor e ele volta. O comando grind ignora isto."
     },
     "AchievementBurstMinPct": {
-      "label": "Sequências rápidas só para conquistas de pelo menos",
+      "label": "Sequências rápidas só para conquistas que pelo menos",
       "tip": "Às vezes 2 ou 3 conquistas chegam com poucos minutos de diferença, como ao terminar uma fase. Só as conquistas que pelo menos essa porcentagem de jogadores tem podem chegar assim - as mais raras sempre chegam sozinhas, com a espera completa. 0 deixa qualquer conquista vir em sequência; 100 desliga as sequências."
     },
     "CraftBadges": {
@@ -3331,15 +3813,15 @@
       "tip": "Deixa esta conta postar os comentários de perfil que o rep4rep distribui. Todas as contas ganham para os mesmos pontos do rep4rep."
     },
     "Rep4RepDailyCap": {
-      "label": "Máximo por 24 horas",
+      "label": "Comentários por dia, no máximo",
       "tip": "O máximo de comentários que esta conta posta em quaisquer 24 horas. A Steam permite uns 10 em quem não é amigo, e passar disso pode render um banimento de comentários."
     },
     "Rep4RepGapMinMinutes": {
-      "label": "Intervalo mínimo",
+      "label": "Menor intervalo entre comentários",
       "tip": "O menor tempo entre dois comentários desta conta, em minutos."
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "Intervalo máximo",
+      "label": "Maior intervalo entre comentários",
       "tip": "O maior tempo entre comentários, em minutos. Cada intervalo é sorteado entre os dois."
     },
     "Rep4RepStartHour": {
@@ -3347,7 +3829,7 @@
       "tip": "A hora mais cedo do dia em que esta conta comenta. Comentários no meio da madrugada entregam um robô fácil."
     },
     "Rep4RepEndHour": {
-      "label": "Até",
+      "label": "Publicar só até",
       "tip": "A hora mais tarde do dia em que esta conta comenta. Use o mesmo valor de “Só postar a partir das” para comentar o dia todo."
     },
     "AcceptFriendRequests": {
@@ -3356,7 +3838,7 @@
     },
     "JoinGroup": {
       "label": "Entrar nos grupos compartilhados",
-      "tip": "Entra nos grupos de \"Grupos que todas as contas entram\". Desligue para deixar só esta conta de fora."
+      "tip": "Entra nos grupos de “Grupos que todas as contas entram” (configurações globais, Todas as contas). Desligado deixa só esta conta de fora. Desligado desde o início numa conta nova em modo humano, para uma conta convincente não ficar num grupo com o nome da ferramenta."
     },
     "ExtraGroupsToJoin": {
       "label": "Entrar também nestes grupos",
@@ -3364,7 +3846,7 @@
     },
     "AutoReplyEnabled": {
       "label": "Responder às mensagens",
-      "tip": "Responde a quem manda mensagem para esta conta. Desligar mantém o texto da resposta salvo para depois."
+      "tip": "Responde a quem manda mensagem para esta conta com o texto abaixo. Desligar guarda o texto para depois; apagar o texto desliga."
     },
     "AutoReply": {
       "label": "Responder com",
@@ -3376,40 +3858,40 @@
       "tip": "Envia a resposta no máximo uma vez por dia para cada pessoa, para ninguém receber a mesma frase duas vezes."
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "Esperar pelo menos",
+      "label": "Aceitar um pedido de amizade após pelo menos",
       "tip": "A menor espera antes de aceitar um pedido de amizade, em minutos. Aceitar no segundo em que chega entrega um robô fácil."
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "E no máximo",
+      "label": "Aceitar um pedido de amizade após no máximo",
       "tip": "A maior espera antes de aceitar um pedido de amizade, em minutos. Cada pedido recebe uma espera aleatória, geralmente mais perto do mínimo."
     },
     "ActOnlyWhileAwake": {
       "label": "Reagir só quando estiver acordada",
-      "tip": "Só no modo humano. Segura tudo o que os outros podem ver, como trocas, presentes, convites, respostas, comentários e conquistas, enquanto a conta dorme. Desligue para responder à noite também."
+      "tip": "Segura tudo o que os outros podem ver, como trocas, presentes, convites, respostas, comentários e conquistas, enquanto a conta dorme. Desligue para responder à noite também."
     },
     "QuietThingsWaitForDay": {
-      "label": "Coisas nos bastidores também esperam o dia dela",
-      "tip": "Só no modo humano. Faz as tarefas em segundo plano, como criar emblemas, resgatar jogos grátis, pacotes de cartas e vender cartas, também esperarem o horário acordado da conta. Desligado, elas rodam a qualquer hora."
+      "label": "Tarefas em segundo plano só nas horas acordado",
+      "tip": "Faz as tarefas em segundo plano, como criar emblemas, resgatar jogos grátis, pacotes de cartas e vender cartas, também esperarem o horário acordado da conta. Desligado, elas rodam a qualquer hora."
     },
     "WakeDelayMinMinutes": {
       "label": "Ao acordar, esperar pelo menos",
-      "tip": "Só no modo humano. Quanto tempo depois de acordar ou entrar antes de fazer coisas que os outros veem, como trocas, comentários ou respostas, em minutos. Cada tipo recebe sua própria espera aleatória."
+      "tip": "Quanto espera depois de acordar ou entrar antes de fazer coisas que os outros veem, como trocas, comentários ou respostas. Cada tipo tem sua própria espera aleatória."
     },
     "WakeDelayMaxMinutes": {
-      "label": "...até",
+      "label": "Ao acordar, esperar no máximo",
       "tip": "A maior espera depois de acordar ou entrar, em minutos."
     },
     "QuietDelayMinMinutes": {
-      "label": "Depois de entrar, coisas nos bastidores esperam pelo menos",
-      "tip": "Só no modo humano. Quanto tempo depois de entrar antes de as tarefas em segundo plano, como emblemas, jogos grátis e pacotes de cartas, começarem, em minutos. Cada uma recebe sua própria espera aleatória para não rodarem todas de uma vez."
+      "label": "Tarefas em segundo plano esperam após entrar, pelo menos",
+      "tip": "Quanto espera depois de entrar antes de começar tarefas em segundo plano como insígnias, jogos grátis e pacotes de cartas. Cada uma tem sua própria espera aleatória para não chegarem todas juntas."
     },
     "QuietDelayMaxMinutes": {
-      "label": "...até",
+      "label": "Tarefas em segundo plano esperam após entrar, no máximo",
       "tip": "A maior espera depois de entrar antes de as tarefas em segundo plano começarem, em minutos."
     },
     "OneTradeAtATime": {
       "label": "Responder uma oferta de troca por vez",
-      "tip": "Só no modo humano. Quando várias ofertas de troca vencem ao mesmo tempo, como de manhã, ela responde com alguns minutos entre cada uma em vez de todas juntas."
+      "tip": "Quando várias ofertas de troca vencem ao mesmo tempo, como de manhã, ela responde com alguns minutos entre cada uma em vez de todas juntas."
     },
     "AcceptDonations": {
       "label": "Aceitar doações",
@@ -3417,38 +3899,35 @@
     },
     "DonationsWhileAsleep": {
       "label": "Aceitar doações enquanto dorme",
-      "tip": "Só no modo humano. Deixa as doações passarem à noite mesmo com “Reagir só quando estiver acordada” ligado. Todo o resto continua esperando a manhã."
+      "tip": "Deixa as doações passarem à noite mesmo com “Reagir só quando estiver acordada” ligado. Todo o resto continua esperando a manhã."
     },
     "AcceptGiftedGames": {
       "label": "Aceitar jogos presenteados",
       "tip": "Coloca direto na biblioteca desta conta os jogos que amigos dão de presente. Desligue para decidir cada presente você mesmo. Cada presente espera antes, veja “Aceitar um presente após”."
     },
     "AcceptFairCardSwaps": {
-      "label": "Aceitar trocas justas de cartas",
+      "label": "Aceitar trocas de cartas 1:1 de qualquer um (só as que ajudam seus conjuntos)",
       "tip": "Aceita trocas de uma carta por uma de qualquer pessoa, dentro do mesmo jogo, mas só quando elas deixam seus conjuntos mais perto de completos. Ofertas com cartas brilhantes ou outros itens ficam de lado. Precisa do autenticador móvel."
     },
     "AcceptGifts": {
       "label": "Aceitar presentes e passes de convidado",
       "tip": "Aceita cartões-presente da carteira Steam e passes de convidado enviados a esta conta. Nenhum deles pode custar nada. Cada presente espera antes, veja “Aceitar um presente após”."
     },
-    "AcceptFromMasters": {
-      "label": "Aceitar qualquer coisa das suas próprias contas",
-      "tip": "Aceita qualquer oferta das contas em “Suas próprias contas”, mesmo as que levam itens. Útil para juntar cartas numa conta, mas só liste contas que são suas."
-    },
     "TradeMasters": {
-      "label": "Suas próprias contas",
-      "tip": "SteamID64s das suas próprias contas, separados por vírgulas. Qualquer um listado aqui pode levar itens desta conta, então só adicione contas que são suas."
+      "label": "Enviar itens para",
+      "tip": "Para onde esta conta envia os itens - com Enviar itens a cada, quando o farm termina e com o comando send: um nome de conta aqui ou um número de perfil da Steam (SteamID64). O primeiro é usado. Só para enviar: ninguém listado aqui pode pegar nada desta conta - isso é “Suas outras contas”.",
+      "placeholder": "main"
     },
     "DeclineOtherTrades": {
       "label": "Recusar todo o resto",
       "tip": "Recusa todas as outras ofertas de troca em vez de deixá-las paradas. Desligado, as ofertas não aceitas ficam para você conferir."
     },
     "TradeDelayMinMinutes": {
-      "label": "Esperar pelo menos",
+      "label": "Responder a uma oferta de troca após pelo menos",
       "tip": "A menor espera antes de responder uma oferta de troca, em minutos. Aceitar segundos depois de chegar parece coisa de robô."
     },
     "TradeDelayMaxMinutes": {
-      "label": "E no máximo",
+      "label": "Responder a uma oferta de troca após no máximo",
       "tip": "A maior espera antes de responder uma oferta de troca, em minutos. Cada oferta recebe uma espera aleatória, geralmente mais perto do mínimo."
     },
     "GiftDelayMinMinutes": {
@@ -3456,12 +3935,12 @@
       "tip": "A menor espera antes de aceitar um presente, como um jogo, cartão-presente ou passe de convidado, em minutos."
     },
     "GiftDelayMaxMinutes": {
-      "label": "E no máximo",
+      "label": "Aceitar um presente após no máximo",
       "tip": "A maior espera antes de aceitar um presente, em minutos. Cada presente recebe uma espera aleatória, geralmente mais perto do mínimo."
     },
     "PauseWhenYouPlay": {
       "label": "Sair da frente quando você jogar",
-      "tip": "Para de rodar jogos no momento em que você mesmo abre um jogo nesta conta, para nunca brigar com o seu próprio cliente Steam."
+      "tip": "Para de rodar jogos assim que você mesmo abre um jogo nesta conta, para nunca brigar com o seu próprio cliente da Steam. Volta depois da espera abaixo."
     },
     "ResumeDelayMinutes": {
       "label": "Esperar antes de retomar",
@@ -3469,7 +3948,7 @@
     },
     "AchievementBoost": {
       "tip": "Caça conquistas em vários jogos sozinho, um jogo de cada vez. \"Jogos que você escolhe\" usa a lista abaixo. \"Todos os single-player\" escolhe jogos single-player com conquistas da sua biblioteca, jogados ou não (ligue \"Caçar só em jogos que você jogou\" para pular o resto). Numa conta em modo humano, o jogo que está sendo caçado entra nos jogos que ele joga, como um jogo secundário.",
-      "label": "Impulso de conquistas",
+      "label": "Caça de conquistas",
       "choices": "0 desligado | 1 jogos que você escolher | 2 todos os de um jogador"
     },
     "SkipRefundableGames": {
@@ -3478,11 +3957,7 @@
     },
     "ShowInventoryValue": {
       "tip": "Calcula quanto vale o inventário desta conta pelos preços do mercado da Steam e mostra no painel. Desligue em contas que só guardam algumas cartas.",
-      "label": "Calcular quanto vale o inventário dela"
-    },
-    "CheckForUpdates": {
-      "tip": "Procura uma versão nova e avisa no log, no Telegram e no Discord. Desligar também para a instalação sozinha à noite.",
-      "label": "Avisar se houver atualização"
+      "label": "Mostrar o valor do inventário"
     },
     "UpdateReminders": {
       "label": "Lembrar a cada hora",
@@ -3501,7 +3976,7 @@
       "tip": "O máximo de vezes por dia que ela aparece offline numa pausa, para não ficar piscando na sua lista de amigos. 0 desliga isto, e toda pausa aparece como Ausente."
     },
     "PlayWhileFarming": {
-      "label": "Manter o nome ao farmar",
+      "label": "Manter o nome personalizado ao farmar cartas",
       "tip": "Mantém o nome próprio aparecendo enquanto as cartas são farmadas. Desligue para mostrar o jogo real durante o farm de cartas."
     },
     "GameDevice": {
@@ -3518,8 +3993,8 @@
       "tip": "Só farma os jogos de “Farmar estes primeiro” e ignora todos os outros jogos com cartas restantes."
     },
     "BlacklistedGames": {
-      "label": "Nunca tocar nestes",
-      "tip": "IDs de jogos que nunca são farmados nem ficam rodando."
+      "label": "Nunca jogar estes jogos",
+      "tip": "Jogos que esta conta nunca farma, roda, grinda ou caça - pelo nome ou pelo número no link da loja."
     },
     "SkipUnplayedGames": {
       "label": "Pular jogos que você nunca jogou",
@@ -3536,18 +4011,18 @@
     },
     "FarmFromHour": {
       "label": "Farmar cartas só a partir das",
-      "tip": "Farma cartas só a partir desta hora. Deixe esta e “...até” na meia-noite para farmar a qualquer hora."
+      "tip": "Farma cartas só entre essas horas. Deixe as duas na meia-noite para farmar a qualquer hora."
     },
     "FarmUntilHour": {
-      "label": "...até",
-      "tip": "Farma cartas até esta hora. Use uma hora antes da hora de início para passar da meia-noite - do fim da noite até a madrugada farma durante a noite."
+      "label": "Farmar cartas só até",
+      "tip": "O fim dessa faixa. Antes do início, passa da meia-noite - do fim da noite até o começo da manhã farma durante a noite."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Depois da última carta, continuar pelo menos",
-      "tip": "Só no modo humano. Depois que um jogo solta a última carta, ela continua jogando por alguns minutos e depois faz uma pausa. Deixe os dois em 0 para parar na hora."
+      "tip": "Depois que um jogo solta a última carta, ela continua jogando por alguns minutos e depois faz uma pausa. Deixe os dois em 0 para parar na hora."
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...até",
+      "label": "Depois da última carta, continuar jogando no máximo",
       "tip": "O máximo de minutos que ela continua jogando depois da última carta."
     },
     "FarmingDelayMinutes": {
@@ -3555,7 +4030,7 @@
       "tip": "Com que frequência ela verifica de novo um jogo durante o farm, em minutos. A Steam avisa das cartas na hora em que caem, então isto é só um reforço."
     },
     "MaxFarmingHoursPerGame": {
-      "label": "Desistir depois de",
+      "label": "Desistir de um jogo após",
       "tip": "Desiste de um jogo depois de tantas horas e passa para o próximo, para um jogo travado não bloquear o resto."
     },
     "StopWhenFarmingDone": {
@@ -3563,8 +4038,8 @@
       "tip": "Desconecta esta conta quando não sobra carta, em vez de ficar rodando jogos."
     },
     "AchievementBoostGames": {
-      "label": "Impulsionar estes jogos",
-      "tip": "Os jogos que o impulso vai percorrendo, como IDs de jogos ou links da loja separados por vírgulas. Só vale quando “Impulso de conquistas” está em jogos que você escolher."
+      "label": "Caçar estes jogos",
+      "tip": "Os jogos que a caça percorre, como IDs de jogo ou links da loja separados por vírgulas. Só usado quando “Caça de conquistas” está em jogos que você escolhe."
     },
     "BoostSessionHours": {
       "label": "Jogar cada um por cerca de",
@@ -3579,7 +4054,7 @@
       "tip": "Só deixa “todos os de um jogador” caçar jogos que esta conta já abriu antes. É o jeito mais rígido de ficar nos jogos que combinam com o histórico da conta."
     },
     "InventoryIgnoreGames": {
-      "label": "...menos estes jogos",
+      "label": "Deixar estes jogos fora do valor do inventário e das trocas",
       "tip": "IDs de jogos (o número no link da loja) para deixar fora do valor do inventário e de todas as trocas, separados por vírgulas. Jogos em que a conta está banida nunca podem ser trocados - a vigilância de banimentos adiciona esses jogos sozinha quando consegue vê-los, e você também pode colocá-los aqui."
     },
     "YieldToFamily": {
@@ -3588,19 +4063,19 @@
     },
     "IncludeFamilyLibrary": {
       "label": "Incluir jogos compartilhados da família",
-      "tip": "Deixa a caça às conquistas usar também jogos compartilhados com esta conta pela Família Steam. Por exemplo, com 40 jogos próprios e 200 compartilhados, ele pode escolher entre os 240 - os jogos próprios sempre vêm primeiro. Ligado: jogos compartilhados contam como próprios. Desligado: só os jogos que esta conta tem."
+      "tip": "Também usa jogos compartilhados com esta conta pela Família Steam: caça conquistas neles, e “Rodar toda a minha biblioteca” também os roda. Por exemplo, com 40 jogos próprios e 200 compartilhados, pode escolher entre os 240 - os próprios vêm sempre primeiro. Desligado: só os jogos desta conta."
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "Ao insistir, uma conquista a cada",
+      "label": "No grind, menor intervalo entre conquistas",
       "tip": "De quanto em quanto tempo as conquistas desbloqueiam durante uma insistência, em minutos. A insistência fica num jogo só, então é um ritmo ativo e mais rápido. As mais fáceis vêm primeiro."
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...até",
+      "label": "No grind, maior intervalo entre conquistas",
       "tip": "O maior intervalo entre desbloqueios na insistência, em minutos."
     },
     "AchievementNeverGames": {
       "label": "Nunca nestes jogos",
-      "tip": "Jogos para deixar totalmente em paz. Nenhuma conquista é desbloqueada neles e os impulsos nunca os escolhem. No modo humano, o jogo principal da conta também fica de fora."
+      "tip": "Jogos deixados totalmente em paz. Nenhuma conquista é desbloqueada neles e a caça nunca os escolhe. No modo humano o jogo principal da conta também é pulado."
     },
     "AchievementGames": {
       "label": "Só estes jogos",
@@ -3645,23 +4120,23 @@
       "choices": "0 o jogo que mais jogou | 1 qualquer jogo que jogou"
     },
     "SaleGapMinSeconds": {
-      "label": "Contas robô esperam entre passos (segundos)",
+      "label": "Menor espera entre etapas",
       "tip": "Segundos entre duas indicações ou votos numa conta robô, a espera mais curta - por exemplo 5. Com a mais longa em 20, cada espera é um tempo aleatório de 5 a 20 segundos."
     },
     "SaleGapMaxSeconds": {
-      "label": "...até (segundos)",
+      "label": "Maior espera entre etapas",
       "tip": "A espera mais longa entre dois passos numa conta robô, em segundos - por exemplo 20. Com a mais curta em 5, cada espera é um tempo aleatório de 5 a 20 segundos."
     },
     "SaleHumanGapMinMinutes": {
-      "label": "O modo humano espera entre passos (minutos)",
+      "label": "Menor espera entre etapas, modo humano",
       "tip": "Minutos entre duas indicações ou votos numa conta em modo humano, a espera mais curta - por exemplo 5. Com a mais longa em 30, cada espera é um tempo aleatório de 5 a 30 minutos. Só dentro do dia dela."
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...até (minutos)",
+      "label": "Maior espera entre etapas, modo humano",
       "tip": "A espera mais longa entre dois passos numa conta em modo humano, em minutos - por exemplo 30. Com a mais curta em 5, cada espera é um tempo aleatório de 5 a 30 minutos."
     },
     "SaleCheckHours": {
-      "label": "Procurar eventos a cada (horas)",
+      "label": "Procurar eventos a cada",
       "tip": "Com que frequência ele olha se começou um evento da Steam, em horas - por exemplo 6, cerca de 4 olhadas por dia. Durante um evento, olha mais ou menos a cada hora."
     },
     "SellPerRun": {
@@ -3691,11 +4166,11 @@
       "tip": "O nome de aparelho que esta conta mostra na lista de aparelhos autorizados da Steam. Deixe vazio para usar o nome real deste PC."
     },
     "SharedSecret": {
-      "label": "Segredo de códigos do autenticador",
+      "label": "shared_secret do Steam Guard (do .maFile)",
       "tip": "O segredo do autenticador que permite digitar os códigos do Steam Guard sozinho, para a conta entrar de novo sozinha depois de reiniciar o PC. Colocar o maFile dela na pasta de autenticadores faz o mesmo. Mantenha em segredo."
     },
     "IdentitySecret": {
-      "label": "Segredo de confirmação do autenticador",
+      "label": "identity_secret do Steam Guard (do .maFile)",
       "tip": "O segundo segredo do autenticador, usado para aceitar os pedidos de “confirme no seu celular”. Só é preciso quando esta conta dá itens, já que receber nunca precisa de confirmação."
     },
     "AccountProxy": {
@@ -3719,7 +4194,7 @@
       "tip": "Ignora em silêncio pedidos de amizade de perfis novos, privados e de nível 0, que é a cara dos robôs golpistas. Só funciona quando “Aceitar pedidos de amizade” está ligado."
     },
     "RejectInvalidFriendInvites": {
-      "label": "Recusar o que você não aceita",
+      "label": "Recusar os pedidos de amizade que ele não aceita",
       "tip": "Recusa os pedidos de amizade que ela não aceita, em vez de deixá-los na lista. Desligado, eles ficam lá para você olhar."
     },
     "AutoReplyDelaySeconds": {
@@ -3746,6 +4221,50 @@
       "label": "Mostrar detalhe de depuração na tela",
       "tip": "Mostra detalhes extras de depuração na janela e no console. Esses detalhes sempre vão para o arquivo de log de qualquer jeito, então deixe desligado, a menos que queira acompanhar ao vivo."
     },
+    "LogShowDoing": {
+      "label": "Mostrar o que está fazendo",
+      "tip": "Mostra no log do app o que cada conta está fazendo: jogando, idle, sessões, aquecimento, pausas e hora de dormir - por exemplo \"grinding Portal · 41m left\" ou \"asleep · 7 games · up 13:37\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowDrops": {
+      "label": "Mostrar drops de cartas e farm",
+      "tip": "Mostra os drops de cartas e o farm de cartas no log do app - por exemplo \"carta dropou em Portal - faltam 2\" ou \"sem cartas · idle nos seus jogos\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowBadges": {
+      "label": "Mostrar insígnias, criação e nível",
+      "tip": "Mostra as insígnias criadas, os conjuntos prontos e o nível Steam no log do app - por exemplo \"2 insígnia(s) criada(s) - nível Steam subiu\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowBuying": {
+      "label": "Mostrar compra de cartas",
+      "tip": "Mostra a compra de cartas no log do app - por exemplo \"comprou Zane (Destiny Warriors) · 0.10 CAD\" ou a carteira e os limites. Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowSelling": {
+      "label": "Mostrar venda, itens sobrando e gemas",
+      "tip": "Mostra vendas, anúncios no mercado, itens sobrando, gemas e pacotes de cartas no log do app - por exemplo \"anunciou Arena (BitMaster) por 0.03 CAD\" ou \"Room (Epsilon corp.) → 10 gemas\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowTrades": {
+      "label": "Mostrar trocas e trocas de cartas",
+      "tip": "Mostra as ofertas de troca e as trocas de cartas no log do app - por exemplo \"aceitou a oferta 123 de um amigo\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowComments": {
+      "label": "Mostrar comentários, amigos e rep4rep",
+      "tip": "Mostra comentários no perfil, pedidos de amizade, grupos e rep4rep no log do app - por exemplo \"novo comentário de um amigo\" ou \"comentou em alguém e foi creditado (7/10 hoje)\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowAchievements": {
+      "label": "Mostrar conquistas",
+      "tip": "Mostra as conquistas no log do app - por exemplo \"🏆 Camera Shy · Portal · 11/15\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowFree": {
+      "label": "Mostrar jogos e itens grátis e Pontos",
+      "tip": "Mostra jogos e itens grátis, presentes, Pontos Steam e eventos de promoção no log do app - por exemplo \"resgatou 2 jogo(s) grátis\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowAnswers": {
+      "label": "Mostrar respostas a comandos",
+      "tip": "Mostra no log do app as respostas a comandos que chegam depois, e os comandos vindos do Telegram e do Discord. O que você digita na janela sempre é respondido lá. Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
+    "LogShowApp": {
+      "label": "Mostrar atualizações e mensagens do app",
+      "tip": "Mostra as mensagens do próprio nocat.farm no log do app: atualizações, o painel, configurações salvas, backups, Discord e Telegram, o resumo diário - por exemplo \"atualização em 10s\". Desligado: essas linhas vão só para o arquivo de log. Avisos e erros sempre aparecem."
+    },
     "LogRetentionDays": {
       "label": "Guardar os logs por",
       "tip": "Apaga arquivos de log com mais de tantos dias. 0 guarda para sempre."
@@ -3763,7 +4282,7 @@
       "tip": "Quanto esperar a Steam responder antes de desistir e reconectar, em segundos."
     },
     "MaxConcurrentFarming": {
-      "label": "Farmar no máximo",
+      "label": "Contas farmando ao mesmo tempo",
       "tip": "Quantas contas podem farmar cartas ao mesmo tempo. 0 significa sem limite."
     },
     "LoginCooldownMinutes": {
@@ -3792,11 +4311,11 @@
       "tip": "Senha do proxy acima, se ele pedir uma."
     },
     "GlobalBlacklistedGames": {
-      "label": "Nunca encostar nestes (todas as contas)",
+      "label": "Nunca jogar estes jogos (todas as contas)",
       "tip": "Jogos que nenhuma conta vai farmar nem deixar rodando, pelo ID do jogo (o número no link da loja). Cada conta ainda pode adicionar os seus por cima."
     },
     "Rep4RepLearnCap": {
-      "label": "Aprender o limite real",
+      "label": "Baixar o limite diário quando a Steam disser que chegou",
       "tip": "Quando a Steam diz que a conta chegou ao limite diário de comentários antes do número definido acima, esse vira o limite dela (nunca abaixo de 5). Uma recusa por \"comentando com muita frequência\" é sobre o intervalo entre comentários e nunca o muda."
     },
     "Rep4RepRetryRefused": {
@@ -3805,11 +4324,11 @@
     },
     "SendOnFarmingFinished": {
       "label": "Enviar os itens quando o farm terminar",
-      "tip": "Quando não sobra carta para farmar, envia o que esta conta coletou para a primeira conta em “Suas próprias contas”."
+      "tip": "Quando não há mais cartas para farmar, envia o que esta conta juntou para a conta em “Enviar itens para”."
     },
     "SendEveryHours": {
       "label": "Enviar os itens a cada",
-      "tip": "Envia os itens desta conta para a primeira conta em “Suas próprias contas” a cada tantas horas, para as cartas não se acumularem. O primeiro envio acontece um período depois de ligar, o cartão da conta no painel mostra quando é o próximo e cada envio fica no log. 0 desliga."
+      "tip": "Envia os itens desta conta para a conta em “Enviar itens para” a cada tantas horas, para as cartas não se acumularem. O primeiro envio é um período depois de ligar, o cartão da conta no painel mostra quando é o próximo, e cada envio fica no registro."
     },
     "SendItemTypes": {
       "label": "O que enviar",
@@ -3817,16 +4336,16 @@
       "placeholder": "cartas"
     },
     "TradeMasterToken": {
-      "label": "Token do link de troca dela",
-      "tip": "O token do link de troca da outra conta, a parte depois de &token=. Só é preciso se as duas contas não forem amigas."
+      "label": "Token do link de troca da conta que recebe",
+      "tip": "O token do link de troca da conta em “Enviar itens para”, a parte depois de &token=. Só precisa se as duas contas não forem amigas."
     },
     "ClearNotifications": {
-      "label": "Limpar as notificações da Steam",
-      "tip": "Marca como lido tudo na bandeja de notificações da Steam, como comentários, presentes e convites, para os contadores não ficarem subindo."
+      "label": "Zerar os contadores de notificação da Steam",
+      "tip": "Marca como lido tudo na bandeja de notificações da Steam - comentários, presentes, convites - e zera o contador verde de itens novos a cada carta que cai, para os contadores não ficarem subindo."
     },
     "AchievementIncludeMainGame": {
       "label": "Conquistar também no jogo principal",
-      "tip": "Deixa o jogo principal do “Modo humano” ganhar conquistas como qualquer outro jogo. Melhor deixar ligado, já que centenas de horas sem nenhuma conquista parece estranho."
+      "tip": "Deixa o jogo principal do modo humano ganhar conquistas como qualquer outro jogo. Melhor deixar ligado, porque centenas de horas sem conquistas parecem estranhas."
     },
     "PluginsEnabled": {
       "label": "Carregar plugins",
@@ -3837,7 +4356,7 @@
       "tip": "Farma cartas em alguns blocos por dia, com pausas entre eles, em vez de sem parar. Só faz diferença de verdade numa conta sem mais nada para deixar rodando."
     },
     "FarmHoursPerDay": {
-      "label": "Horas de farm por dia",
+      "label": "Farmar este tempo por dia",
       "tip": "Mais ou menos quantas horas por dia os blocos de farm somam. Varia a cada dia e dura mais nos fins de semana. Só vale quando “Farmar em sessões, não direto” está ligado."
     },
     "MarketGapSeconds": {
@@ -3849,7 +4368,7 @@
       "tip": "Por quantas horas um preço é reaproveitado antes de ser checado de novo. Itens baratos são checados com menos frequência. Mais tempo significa menos requisições, mas os valores atualizam mais devagar."
     },
     "Rep4RepPauseHours": {
-      "label": "Pausar comentários por (horas)",
+      "label": "Pausar os comentários por",
       "tip": "Pausa os comentários do rep4rep em todas as contas por tantas horas e depois volta sozinho. A contagem continua mesmo reiniciando. Use 0 para não pausar."
     },
     "DiscordPresence": {
@@ -3885,16 +4404,12 @@
       "tip": "A conta cujo avatar da Steam fica no canto do logo do nocat.farm no seu cartão do Discord - clicar abre o perfil da Steam dela. Qualquer conta serve, inclusive em modo humano. Vazio usa a primeira conta mostrada."
     },
     "AutoTradeWith": {
-      "label": "Trocar sozinha com",
-      "tip": "Com quem esta conta troca sem te perguntar, e em qual sentido. Nomes de conta ou SteamID64s, separados por vírgulas, cada um com :from (aceitar o que enviam), :to (deixar que levem itens) ou :both - :both é o padrão. Exemplo: farm1, farm2:to. Vazio = as contas em “Suas próprias contas”, nos dois sentidos, quando “Aceitar qualquer coisa das suas próprias contas” está ligado. As doações seguem a própria chave. Todo o resto espera por você: trade accept ou trade decline, no console ou no Telegram."
+      "label": "Suas outras contas",
+      "tip": "Suas próprias contas com que esta troca sozinha, e em que sentido: nomes de conta aqui ou números de perfil da Steam (SteamID64), separados por vírgulas, cada um com :from (aceitar o que mandam), :to (deixar pegar itens) ou :both - :both é o padrão. Exemplo: farm1, farm2:to. Só coloque contas suas. Vazio: ninguém - toda oferta espera por você (trade accept ou trade decline, no console ou no Telegram); doações seguem o próprio botão."
     },
     "NotifyTrades": {
       "label": "Avisar sobre ofertas de troca",
       "tip": "Mostra um pop-up para cada nova oferta de troca - de quem é, o que você daria e receberia, e o que o nocat.farm vai fazer - e quando uma é aceita, recusada ou precisa de confirmação."
-    },
-    "WatchBans": {
-      "label": "Vigiar banimentos",
-      "tip": "Confere os banimentos desta conta a cada algumas horas - VAC, banimentos de jogo, banimento de trocas, banimento da comunidade - e te avisa na hora (log, pop-up, Discord/Telegram) quando aparece um novo. Só olha; nunca muda nada. Jogos em que ela encontra a conta banida ficam de fora das trocas sozinhos; as cartas colecionáveis continuam sendo trocadas."
     },
     "TelegramLogColour": {
       "label": "Cor do Telegram no log",
@@ -3913,15 +4428,15 @@
       "tip": "Só para um proxy reverso que não está neste PC, como o Caddy na frente do Docker: o endereço ou a faixa dele, como 172.16.0.0/12. O endereço do visitante que ele repassa passa a ser aceito, então quem vem da internet conta como internet e não como casa. Um proxy neste PC não precisa de nada aqui. Fora isso, deixe vazio."
     },
     "BoostWeight": {
-      "label": "Modo humano: peso do jogo caçado",
-      "tip": "Só no modo humano. O jogo que está sendo caçado entra nos jogos que ele joga, e isto é a frequência com que aparece - um peso como os de \"Jogos e com que frequência\". Ele é jogado em sessões normais, com pausas e hora de dormir, sem nunca cortar outro jogo."
+      "label": "Com que frequência o jogo caçado aparece",
+      "tip": "O jogo que está sendo caçado entra nos jogos que ele joga, e isto é a frequência com que aparece - um peso como os de \"Jogos e com que frequência\". Ele é jogado em sessões normais, com pausas e hora de dormir, sem nunca cortar outro jogo."
     },
     "AutoUpdateFromHour": {
-      "label": "...entre",
+      "label": "Instalar sozinho a partir de",
       "tip": "O horário mais cedo em que pode instalar sozinho."
     },
     "AutoUpdateUntilHour": {
-      "label": "...e",
+      "label": "Instalar sozinho até",
       "tip": "O horário em que para de tentar naquela noite. Antes do horário de início passa da meia-noite, então do fim da noite até o começo da manhã funciona."
     },
     "AutoUpdateWaitHours": {
@@ -3930,7 +4445,7 @@
     },
     "UpdateCheckHours": {
       "label": "Procurar atualizações a cada",
-      "tip": "Horas entre duas buscas por uma versão nova. Também procura uma vez quando o nocat.farm inicia, e sempre que você digita update."
+      "tip": "Horas entre duas buscas por uma versão nova. Também procura ao iniciar o nocat.farm e sempre que você digita update. Não com “não procurar atualizações”."
     },
     "DiscordBotToken": {
       "label": "Token do bot do Discord",
@@ -3961,36 +4476,36 @@
       "tip": "Como o Jellyfin: pede ao seu roteador para redirecionar a porta do painel para este PC (UPnP), para abrir de qualquer lugar no seu endereço de internet - /dashboard no Telegram e no Discord dá o link. Precisa de uma senha do painel com pelo menos 12 caracteres e 0.0.0.0 em \"Escutar em\". Qualquer um na internet chega à tela de login, e cinco senhas erradas bloqueiam por uma hora. Desligar remove o redirecionamento. O link é http comum, sem criptografia - entre pelos dados móveis ou por uma rede de confiança."
     },
     "WebSignInCode": {
-      "label": "Código no Telegram para logins de fora",
+      "label": "Pedir um código do Telegram ao entrar de fora",
       "tip": "Entrar de fora da sua casa pede a senha e depois um código de 6 dígitos enviado para o seu Telegram, então só a senha não basta. Em casa e neste PC, só a senha é pedida. Precisa do Telegram conectado (Configurações, Notificações); até lá, de fora também basta a senha."
     },
     "WebRemoteOffAfter": {
-      "label": "Desligar Abrir de qualquer lugar após",
+      "label": "Desligar Abrir de qualquer lugar após tantas falhas de login por dia",
       "tip": "Senhas e códigos errados vindos da internet em um dia antes de Abrir de qualquer lugar se desligar sozinho - e ficar desligado até você ligar de novo (página Celular, ou anywhere on). Até lá nada da internet entra, nem por um endereço público definido à mão. 0 nunca desliga."
     },
     "BoostGamesInRotation": {
-      "label": "Jogos em rodízio",
+      "label": "Jogos caçados ao mesmo tempo",
       "tip": "Quantos jogos a caça tem em andamento ao mesmo tempo. Ela alterna entre eles e, quando um descansa ou termina, o próximo da lista entra."
     },
     "BoostHoursPerDay": {
-      "label": "Caçar no máximo, horas por dia",
+      "label": "Caçar no máximo por dia",
       "tip": "O máximo de tempo por dia no jogo sendo caçado. Numa conta em modo humano, o jogo sai dos jogos dele pelo resto do dia; senão a caça para por hoje. 0 é sem limite."
     },
     "BoostSwitchFromPct": {
-      "label": "Troca de jogo por volta de",
-      "tip": "Quando um jogo tem mais ou menos esta parte das conquistas - um ponto aleatório entre este e o próximo ajuste, diferente para cada jogo - ele vai para outro, como alguém que cansou dele por enquanto. Em porcentagem."
+      "label": "Passar para outro jogo a partir de",
+      "tip": "Quando um jogo tem mais ou menos esta parte das conquistas - um ponto aleatório entre os dois, diferente para cada jogo -, passa para outro, como uma pessoa que cansou de um jogo por enquanto."
     },
     "BoostSwitchToPct": {
-      "label": "...até",
-      "tip": "O topo desse intervalo. O mesmo número de cima deixa exato."
+      "label": "Passar para outro jogo no máximo em",
+      "tip": "O topo dessa faixa. O mesmo número duas vezes deixa exato."
     },
     "BoostRestDaysMin": {
-      "label": "Volta a um jogo depois de",
-      "tip": "Quantos dias até voltar a um jogo que deixou - um número aleatório entre este e o próximo ajuste. A cada volta para um pouco mais adiante, até \"Terminar no máximo\"."
+      "label": "Voltar a um jogo após pelo menos",
+      "tip": "Quantos dias antes de voltar a um jogo que deixou - um número aleatório entre os dois. Cada vez que volta, para um pouco mais adiante, até “Nunca completar mais de um jogo do que”."
     },
     "BoostRestDaysMax": {
-      "label": "...até",
-      "tip": "O topo desse intervalo, em dias."
+      "label": "Voltar a um jogo após no máximo",
+      "tip": "O máximo de dias antes de voltar a um jogo."
     },
     "AchievementRealLength": {
       "label": "Ritmo pela duração real dos jogos",
@@ -4002,12 +4517,12 @@
       "choices": "3 contas Steam no nocat.farm | 0 cartas hoje | 1 horas na última semana | 2 horas no último mês"
     },
     "SendAroundHour": {
-      "label": "...por volta das",
+      "label": "Enviar itens por volta de",
       "tip": "A hora do dia para enviar - de madrugada, por exemplo. Sai num minuto aleatório dessa hora, nos dias que \"Enviar itens a cada\" permite. Sem hora fixa: a cada tantas horas desde que foi ligado."
     },
     "IdleWholeLibrary": {
       "label": "Minha biblioteca inteira",
-      "tip": "Roda todos os jogos que a conta tem, depois dos de \"Jogos em segundo plano\". Pula os de \"Nunca tocar nestes\", jogos compartilhados da família (a menos que \"Incluir jogos compartilhados da família\" esteja ligado) e jogos que \"Proteger reembolsos\" está segurando. A Steam roda 32 ao mesmo tempo, então ligue \"Rodízio da lista\" para cada jogo ter sua vez."
+      "tip": "Roda todos os jogos que a conta tem, depois dos de \"Jogos em segundo plano\". Pula os de \"Nunca jogar estes jogos\", jogos compartilhados da família (a menos que \"Incluir jogos compartilhados da família\" esteja ligado) e jogos que \"Proteger reembolsos\" está segurando. A Steam roda 32 ao mesmo tempo, então ligue \"Rodízio da lista\" para cada jogo ter sua vez."
     },
     "RotateIdleGames": {
       "label": "Rodízio da lista",
@@ -4036,8 +4551,8 @@
       "tip": "Um jogo que acabou de chegar à biblioteca, comprado, presenteado ou grátis, ganha sessões extras por 3 a 10 dias, menos a cada dia, como quem experimenta algo novo. Jogos na lista negra ou compartilhados pela família e jogos que suas outras contas estão rodando ficam de fora, e um jogo que \"Proteger reembolsos\" está segurando espera até isso acabar."
     },
     "LongerRhythms": {
-      "label": "Fases calmas e noites longas",
-      "tip": "Uma ou duas vezes por mês ela tem uma fase calma de 2 a 5 dias com dias bem mais curtos, e de vez em quando uma noite de sexta ou sábado vai mais tarde que o normal. Os dias de folga e as configurações de horas continuam valendo. human week mostra isso."
+      "label": "Fases calmas de vez em quando",
+      "tip": "Uma ou duas vezes por mês ele tem uma fase calma de 2 a 5 dias com dias bem mais curtos. Os dias de folga e as opções de horas continuam valendo. As noites tardias de sexta e sábado são do “Fica acordado até mais tarde sex/sáb”. O comando `human week` as mostra."
     },
     "JoinFriends": {
       "label": "Às vezes jogar o que um amigo está jogando",
@@ -4065,8 +4580,8 @@
       "tip": "A hora em que o relatório semanal chega, no horário local."
     },
     "OfflineIdleTopGames": {
-      "label": "...ou, sem nenhum escolhido, os mais jogados",
-      "tip": "Com “Jogos para a noite” vazio, à noite ela roda esta quantidade dos jogos mais jogados da conta. 1 ou 2 parece o mais natural - muitos ao mesmo tempo é a primeira coisa que o selfcheck aponta."
+      "label": "Jogos mais jogados à noite",
+      "tip": "Sem nada em “Jogos para rodar à noite”, ele roda à noite esta quantidade dos jogos mais jogados da conta. 1 ou 2 parece o mais natural - muitos de uma vez é a primeira coisa que o comando `selfcheck` avisa."
     },
     "ClaimFree": {
       "label": "Resgatar jogos grátis",
@@ -4075,12 +4590,12 @@
     },
     "UpdateMode": {
       "label": "Atualizações",
-      "tip": "O que acontece quando sai uma versão nova. Sempre avisa primeiro, no log e no Telegram e Discord. Instalar quando eu clicar, quando todos dormirem: o botão Atualizar ou update accept instala quando suas contas estão dormindo - nenhuma conta no modo humano acordada, ninguém jogando, nenhuma troca ou presente esperando. Instalar quando eu clicar: na hora. Instalar sozinha à noite: instala sozinha nas horas abaixo, num momento tranquilo, e avisa antes e depois. update now sempre instala na hora. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
-      "choices": "0 instalar quando eu clicar, quando todos dormirem | 1 instalar quando eu clicar | 2 instalar sozinha à noite"
+      "tip": "O que acontece quando sai uma versão nova. Me pergunte: ele avisa (no registro, no Telegram e no Discord) e o botão Atualizar ou 'update accept' instala - quando suas contas estiverem dormindo (nenhuma conta em modo humano acordada, ninguém jogando, nenhuma troca ou presente esperando) ou na hora. Instalar sozinha à noite: instala sozinha nas horas abaixo, num momento calmo, e avisa antes e depois. Não procurar atualizações: nunca procura; 'update' procura mesmo assim. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
+      "choices": "0 me pergunte; instalar quando minhas contas dormirem | 1 me pergunte; instalar na hora | 2 instalar sozinha à noite | 3 não procurar atualizações"
     },
     "CountMeAsUser": {
       "label": "Contar como usuário",
-      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, emblemas, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada."
+      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, emblemas, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
     },
     "ShareFarmTotals": {
       "label": "Compartilhar meus totais de farm",
@@ -4101,11 +4616,7 @@
     },
     "HealthAlertBans": {
       "label": "Avisar sobre um novo banimento",
-      "tip": "Avisa quando aparece um banimento - por exemplo, um banimento VAC, de jogo, de troca ou da comunidade. Enquanto Vigiar banimentos estiver ligado, ele já avisa, então este fica quieto para não avisar duas vezes. Desligado: nenhuma mensagem de banimento daqui."
-    },
-    "HealthAlertDiscord": {
-      "label": "Alertas de saúde no Discord",
-      "tip": "Manda uma mensagem para o seu canal do Discord quando algo em uma conta piora. Por exemplo, o mercado bloqueado por 7 dias manda uma mensagem. Ligado: toda piora é enviada. Desligado: nenhuma vai para o Discord - a linha de Saúde continua mostrando. Precisa do webhook do Discord configurado em Notificações."
+      "tip": "Avisa quando aparece um banimento novo - VAC, de jogo, de trocas ou de comunidade. Por exemplo, um banimento novo em um jogo: você recebe uma mensagem, uma vez só. Os banimentos são olhados a cada poucas horas de qualquer jeito: jogos em que a conta está banida ficam fora das trocas, e o cartão da conta mostra. Desligado: um banimento novo só vai para o registro."
     },
     "HealthAlertGuard": {
       "label": "Avisar quando o Steam Guard enfraquecer",
@@ -4113,7 +4624,7 @@
     },
     "HealthAlertLimited": {
       "label": "Avisar sobre conta limitada",
-      "tip": "Avisa quando a Steam começa a tratar esta conta como limitada: sem convites de amizade, sem mercado. Por exemplo, uma conta que nunca gastou 5 dólares é limitada. Desligado: só a linha de Saúde mostra."
+      "tip": "Avisa quando a Steam passa a tratar esta conta como limitada: sem convites de amizade, sem mercado. Por exemplo, uma conta que nunca gastou o equivalente a US$5 é limitada. Desligado: só a linha de saúde mostra."
     },
     "HealthAlertMarket": {
       "label": "Avisar quando o mercado for bloqueado",
@@ -4123,37 +4634,17 @@
       "label": "Avisar quando o telefone for removido",
       "tip": "Avisa quando a conta não tem mais um número de telefone - por exemplo, depois de ele ser removido no site da Steam. Desligado: só a linha de Saúde mostra."
     },
-    "HealthAlertPopup": {
-      "label": "Alertas de saúde como pop-up",
-      "tip": "Mostra um pop-up neste PC quando algo em uma conta piora. Por exemplo, o Steam Guard passando do app do celular para o e-mail abre uma janela. Ligado: um pop-up a cada vez, desde que Mostrar pop-ups esteja ligado. Desligado: nenhum pop-up - a linha de Saúde continua mostrando."
-    },
-    "HealthAlertTelegram": {
-      "label": "Alertas de saúde no Telegram",
-      "tip": "Manda uma mensagem para o seu chat do Telegram quando algo em uma conta piora. Por exemplo, uma retenção de troca de 15 dias começando em uma conta manda uma mensagem. Ligado: toda piora é enviada. Desligado: nenhuma vai para o Telegram - a linha de Saúde da conta continua mostrando. Precisa do Telegram configurado em Notificações."
-    },
     "HealthAlertTradeHold": {
       "label": "Avisar sobre retenção de troca",
       "tip": "Avisa quando as trocas desta conta começam a ficar retidas por dias - por exemplo, 15 dias depois de o Steam Guard mudar. Desligado: só a linha de Saúde mostra."
     },
     "HealthMaxHours": {
-      "label": "...até (horas)",
+      "label": "Maior espera entre verificações de saúde",
       "tip": "O maior tempo entre duas verificações de saúde, em horas - por exemplo 7. Com o menor em 5, uma verificação vem a cada 5 a 7 horas, ao acaso."
     },
     "HealthMinHours": {
-      "label": "Menor espera entre verificações de saúde (horas)",
+      "label": "Menor espera entre verificações de saúde",
       "tip": "O menor tempo entre duas verificações de saúde, em horas - por exemplo 5. Com o maior em 7, uma verificação vem a cada 5 a 7 horas, ao acaso. Sempre verifica uma vez quando a conta faz login."
-    },
-    "ScamAlertDiscord": {
-      "label": "Alertas antigolpe no Discord",
-      "tip": "Manda os alertas do vigia antigolpe para o seu canal do Discord. Por exemplo, uma nova chave da API em uma conta manda uma mensagem com o nome da conta. Ligado: todo alerta vai para lá. Desligado: nenhum vai para o Discord - o log e o painel continuam mostrando. Precisa do webhook do Discord configurado em Notificações."
-    },
-    "ScamAlertPopup": {
-      "label": "Alertas antigolpe como pop-up",
-      "tip": "Mostra um pop-up neste PC para cada alerta do vigia antigolpe. Por exemplo, um e-mail alterado em uma conta abre uma janela com o nome da conta. Ligado: um pop-up para cada alerta, desde que Mostrar pop-ups esteja ligado. Desligado: nenhum pop-up - o log e o painel continuam mostrando."
-    },
-    "ScamAlertTelegram": {
-      "label": "Alertas antigolpe no Telegram",
-      "tip": "Manda os alertas do vigia antigolpe para o seu chat do Telegram. Por exemplo, um dispositivo novo fazendo login em uma conta manda uma mensagem com o nome da conta e do dispositivo. Ligado: todo alerta vai para lá. Desligado: nenhum vai para o Telegram - o log e o painel continuam mostrando. Precisa do Telegram configurado em Notificações."
     },
     "ScamWatchApiKey": {
       "label": "Verificar chave da API",
@@ -4172,11 +4663,11 @@
       "tip": "Olha a lista de dispositivos autorizados da conta e avisa sobre um que seja novo e não seja seu nem do próprio nocat.farm - por exemplo, um \"DESKTOP-8XQ2\" que você nunca viu. Desligado: os dispositivos não são verificados."
     },
     "ScamWatchMaxMinutes": {
-      "label": "...até (minutos)",
+      "label": "Maior espera entre buscas de golpes",
       "tip": "O maior tempo entre duas olhadas, em minutos - por exemplo 60. Com o menor em 30, cada espera é um tempo aleatório de 30 a 60 minutos."
     },
     "ScamWatchMinMinutes": {
-      "label": "Menor espera entre olhadas (minutos)",
+      "label": "Menor espera entre buscas de golpes",
       "tip": "O menor tempo entre duas olhadas, em minutos - por exemplo 30. Com o maior em 60, cada espera é um tempo aleatório de 30 a 60 minutos. Cada olhada são algumas visualizações de página, igual a abri-las num navegador."
     },
     "ScamWatchRevokeKey": {
@@ -4204,7 +4695,7 @@
       "tip": "Mostra uma linha de Saúde no cartão da conta - nível, banimentos, retenção de troca, acesso ao mercado, conta limitada, Steam Guard e telefone - e avisa você na hora em que algo piora. Por exemplo, quando começa uma retenção de troca, você recebe uma mensagem e a linha mostra isso. Verificada no login e a cada poucas horas; ele só olha. Desligado: sem linha de Saúde e sem alertas."
     },
     "PointsWeeklyCap": {
-      "label": "Gastar no máximo, por semana",
+      "label": "Pontos por semana, no máximo",
       "tip": "O máximo de pontos que ele gasta em quaisquer 7 dias. Por exemplo 3000: no máximo 3 níveis de insígnia por semana, não importa quantos pontos haja. 0 não gasta nada."
     },
     "PointsBadgeMaxLevel": {
@@ -4228,20 +4719,36 @@
       "tip": "Pontos que ele nunca gasta, para sobrar alguns para você. Por exemplo, 1000 com 4.500 pontos: ele pode gastar 3.500, que são 3 níveis de insígnia a 1.000 cada. 0 deixa gastar todos."
     },
     "PointsCheckEveryHours": {
-      "label": "Olhar a cada (horas)",
+      "label": "Olhar os pontos a cada",
       "tip": "De quanto em quanto tempo ele olha os pontos e a loja, em horas - por exemplo 12, duas vezes por dia. Uma conta em modo humano só olha durante o dia dela."
+    },
+    "BuyCards": {
+      "label": "Comprar as cartas que faltam",
+      "tip": "Compra as cartas que faltam para o próximo nível de um emblema, pelo preço mais barato do mercado, para que possa ser criado - o nível mais barato primeiro, e só conjuntos inteiros. Por exemplo, com 4 de 5 cartas ele compra a 5ª, por cerca de 0,05 a 0,15. Gasta da carteira Steam desta conta. Desligado por padrão em todas as contas. Ao ligar, primeiro mostra o que compraria e por quanto, e pede confirmação; desligar para na hora. Precisa de \"Criar emblemas com as cartas\" ligado."
+    },
+    "BuyFullSets": {
+      "label": "Comprar os conjuntos completos mais baratos",
+      "tip": "Também compra conjuntos completos de cartas de jogos dos quais não tem nenhuma carta, os mais baratos primeiro, um nível de emblema (100 XP) cada. Ficam de fora conjuntos em que uma carta tem menos de 2 no mercado, ou uma carta muito barata faz o conjunto parecer mais barato do que é. Desligado: só cartas para emblemas já começados."
+    },
+    "BuyDailyLimit": {
+      "label": "Gastar no máximo por dia",
+      "tip": "O máximo que gasta em 24 horas, na moeda da carteira Steam desta conta. Por exemplo 1,50: um conjunto de 0,60 e outro de 0,70 enchem o dia; o próximo espera até amanhã. Nunca gasta mais do que tem na carteira. O 1,50 inicial serve para dólares ou euros; para ienes use cerca de 225."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Gastar no máximo por semana",
+      "tip": "O máximo que gasta em 7 dias, na moeda da carteira Steam desta conta. Por exemplo 8,00 com 1,50 por dia: cerca de 5 dias inteiros de compras por semana. 0 não compra nada. O 8,00 inicial serve para dólares ou euros; para ienes use cerca de 1200."
+    },
+    "BuyCheckHours": {
+      "label": "Procurar cartas para comprar a cada",
+      "tip": "Com que frequência procura cartas para comprar, em horas - por exemplo 12, duas vezes por dia. Uma conta em modo humano só olha durante o dia dela, e compra um conjunto por vez."
     },
     "PointsBuySeasonalBadge": {
       "label": "Comprar níveis da insígnia sazonal",
       "tip": "Deixa comprar níveis da insígnia que a Loja de Pontos está vendendo agora, por exemplo a Summer Collection - uma nova chega com cada grande promoção da Steam. Ligado: ele sobe o nível dessa insígnia. Desligado: não compra."
     },
     "BackupRetryMinutes": {
-      "label": "Tentar de novo depois de (minutos)",
+      "label": "Tentar de novo após",
       "tip": "Depois que um backup falha, quanto esperar antes de tentar de novo naquele dia. Por exemplo 60: um backup que falhou às 4 da manhã tenta de novo às 5. 0 espera até amanhã."
-    },
-    "SendBackups": {
-      "label": "Enviar backups",
-      "tip": "Uma mensagem quando um backup falha, e o motivo - por exemplo, a pasta sumiu. Com Me avisar em depois de cada backup, também uma para cada backup salvo."
     },
     "BackupFolder": {
       "label": "Salvar backups em",
@@ -4271,11 +4778,6 @@
       "label": "Incluir contas e logins salvos",
       "tip": "Coloca no backup as configurações de cada conta, o login da Steam salvo e o progresso (o dia do modo humano, a caça às conquistas, as contagens do rep4rep). Por exemplo, 3 contas voltam prontas para entrar. Desligado: restaurar não traz nenhuma conta."
     },
-    "BackupNotify": {
-      "label": "Me avisar",
-      "tip": "Quando você fica sabendo dos backups no Telegram e no Discord. Só quando um backup falha: uma mensagem só se não deu para fazer um - por exemplo, a pasta sumiu, o disco está cheio ou falta permissão. Depois de cada backup: também uma mensagem para cada backup salvo. Precisa de Enviar backups ligado em Notificações.",
-      "choices": "0 só quando um backup falha | 1 depois de cada backup"
-    },
     "PhoneInstallHint": {
       "label": "Mostrar como instalar no celular",
       "tip": "Mostra na página Celular um passo a passo curto para colocar o painel na tela inicial do celular, para abrir como um app - por exemplo no Chrome: o menu, depois Adicionar à tela inicial. Ligado: o passo a passo aparece. Desligado: fica escondido, para quando já estiver no seu celular."
@@ -4285,7 +4787,7 @@
       "tip": "Um número aleatório de minutos somado à hora do backup a cada dia, até este máximo. Por exemplo, 30 com Fazer backup às 4 da manhã: em algum momento entre 4:00 e 4:30. 0 faz na hora exata."
     },
     "BackupKeep": {
-      "label": "Manter os últimos (backups)",
+      "label": "Manter os últimos",
       "tip": "Quantos backups diários ficam na pasta. Por exemplo, 7 guarda uma semana: o 8º backup apaga o mais antigo. Só os próprios arquivos de backup são apagados."
     },
     "BackupAuto": {
@@ -4305,16 +4807,12 @@
       "tip": "Quando alguém da sua Família Steam está jogando um jogo compartilhado na cópia de um membro e outro membro também tem o jogo, ele troca para essa cópia livre e continua, em vez de deixar o jogo de fora. Por exemplo, dois membros têm Stardew Valley e um está jogando: ele pega emprestada a outra cópia. Só muda o membro de quem pega emprestado daquele jogo, nunca uma cópia que alguém está usando. Desligado: ele deixa o jogo de lado até a cópia ficar livre. Só para jogos compartilhados da família (\"Incluir jogos compartilhados da família\")."
     },
     "FamilyWaitMinutes": {
-      "label": "Esperar depois que um membro da família para (minutos)",
+      "label": "Esperar depois que um familiar parar",
       "tip": "Minutos que um jogo compartilhado da família fica quieto depois que alguém da sua Família Steam para de jogar, por exemplo 20 - muitas vezes a pessoa volta. 0 usa na hora."
     },
     "SpareKeepGems": {
-      "label": "Manter pelo menos estas gemas soltas",
+      "label": "Gemas nunca empacotadas, enviadas ou vendidas",
       "tip": "Gemas que nunca são empacotadas, enviadas ou vendidas. Por exemplo, 500 com 2.450 gemas: 1.950 podem ir, então 1 saco é feito e 1.450 ficam soltas. 0 empacota cada 1000 completo."
-    },
-    "SpareKeepBackgrounds": {
-      "label": "Guardar esta quantidade de cada fundo",
-      "tip": "Cópias de cada fundo sempre mantidas. Por exemplo 1: de 3 cópias, 2 podem ir. 0 não mantém nenhuma, então a última cópia também pode ir."
     },
     "SpareGems": {
       "label": "As gemas depois",
@@ -4322,7 +4820,7 @@
       "choices": "0 automático | 1 deixar soltas (pacotes de cartas usam) | 2 empacotar em sacos de 1000 e manter trocáveis | 3 enviar os sacos para outra conta minha | 4 vender os sacos"
     },
     "SpareGapSeconds": {
-      "label": "Espera entre itens (segundos)",
+      "label": "Espera entre itens",
       "tip": "A espera entre dois itens numa olhada numa conta robô - varia a cada vez. Por exemplo 40: 5 itens levam cerca de 3 minutos. Uma conta em modo humano usa \"Espera entre itens, modo humano\" no lugar."
     },
     "SparePerRun": {
@@ -4334,12 +4832,8 @@
       "tip": "Nomes completos dos itens como o inventário mostra, separados por vírgulas, ex. Sans, Gordon Freeman (Foil). Um nome guarda esse item em todos os jogos. Estes são sempre guardados. Vazio: nada é guardado pelo nome."
     },
     "BoosterCheckHours": {
-      "label": "Procurar pacotes a cada (horas)",
+      "label": "Procurar pacotes a cada",
       "tip": "Horas entre procuras por pacotes de cartas - varia um pouco a cada vez. Por exemplo 24: mais ou menos uma vez por dia."
-    },
-    "SpareKeepEmoticons": {
-      "label": "Guardar esta quantidade de cada emoticon",
-      "tip": "Cópias de cada emoticon sempre mantidas. Por exemplo 1: de 3 cópias, 2 podem ir. 0 não mantém nenhuma, então a última cópia também pode ir."
     },
     "BoosterUnopened": {
       "label": "Pacotes que ele não abre",
@@ -4351,15 +4845,15 @@
       "tip": "Conta como sobrando as cópias extras de um fundo de perfil. Por exemplo, 3 cópias guardando 1: 2 estão sobrando. Desligado: os fundos ficam."
     },
     "SparePriceMaxAgeHours": {
-      "label": "Confiar num preço por (horas)",
+      "label": "Confiar num preço por",
       "tip": "Por quanto tempo um preço do mercado conta como recente. Por exemplo 24: um preço lido ontem de manhã já está velho hoje de manhã, e esse item fica guardado até ter preço de novo. Um item sem preço conhecido fica sempre guardado."
     },
     "BoosterSendTo": {
       "label": "Enviar pacotes fechados para",
-      "tip": "O nome de outra conta sua aqui, por ex. main - os pacotes vão para ela numa troca. Enviar precisa de confirmação no celular, a menos que o autenticador esteja adicionado."
+      "tip": "Outra das suas contas aqui, pelo nome, ex. main - os pacotes vão para ela numa troca. Vazio: a conta em “Enviar itens para” (Trocas). Enviar precisa de confirmação no celular, a menos que o autenticador esteja adicionado."
     },
     "SpareRunHours": {
-      "label": "Olhar a cada (horas)",
+      "label": "Procurar itens sobrando a cada",
       "tip": "Horas entre olhadas nos itens sobrando - varia um pouco a cada vez. Por exemplo 12: mais ou menos duas vezes por dia. Uma conta em modo humano só olha durante o dia dela."
     },
     "SpareKeepGames": {
@@ -4368,32 +4862,32 @@
     },
     "SpareSellPrice": {
       "label": "Preço de venda",
-      "tip": "Por quanto qualquer coisa é anunciada, com o preço recalculado na moeda da carteira Steam desta conta logo antes de entrar no mercado. Por exemplo, um item que foi vendido a 0.30 algumas vezes hoje, com um anúncio jogado a 0.10: um centavo abaixo do preço real anuncia a 0.29, igual ao mais barato a 0.10, a mediana a 0.30. \"Um centavo abaixo do preço real\" (o padrão seguro): o preço de venda do último dia, ou o anúncio mais barato se for maior - um anúncio jogado muito abaixo é ignorado. Sem vendas recentes ou ninguém vendendo: mantido. Os outros: igual ao mais barato, ou a mediana (nunca abaixo do mais barato).",
-      "choices": "0 um centavo abaixo do preço real | 1 igual ao mais barato | 2 o preço de venda mediano"
+      "tip": "Por quanto qualquer coisa é anunciada, com o preço recalculado na moeda da carteira Steam desta conta logo antes de entrar no mercado. Por exemplo, um item que foi vendido a 0.30 algumas vezes hoje, com um anúncio jogado a 0.10: um centavo abaixo do preço real anuncia a 0.29, igual ao mais barato a 0.10, a mediana a 0.30. \"Um centavo abaixo do preço real\" (o padrão seguro): o preço de venda do último dia, ou o anúncio mais barato se for maior - um anúncio jogado muito abaixo é ignorado. Sem vendas recentes ou ninguém vendendo: mantido. \"Um centavo abaixo do mais barato\" deixa o seu como o mais barato, para vender primeiro: mais barato a 0.12 → anuncia a 0.11. Também ignora um anúncio jogado (o de 0.10 acima: anuncia a 0.29), nunca fica abaixo do seu próprio anúncio quando ele já é o mais barato, nem abaixo de \"Menor preço ao reanunciar, do preço de venda recente\" ou tão baixo que você receba menos que \"Só vender se você receber pelo menos\". Os outros: igual ao mais barato, ou a mediana (nunca abaixo do mais barato).",
+      "choices": "0 um centavo abaixo do preço real | 1 igual ao mais barato | 2 o preço de venda mediano | 3 um centavo abaixo do mais barato"
     },
     "SpareRelistDays": {
-      "label": "Tirar anúncios não vendidos depois de (dias)",
-      "tip": "Dias até um anúncio não vendido ser tirado e anunciado de novo um pouco mais barato. Por exemplo 7: uma carta anunciada a 0.30 no dia 1, ainda não vendida no dia 8, volta a 0.29 - ou a 0.25 quando outra pessoa vende a 0.26 (um anúncio jogado não conta). Nunca abaixo de \"Nunca abaixo de\"; nesse preço ele fica no ar. Só anúncios que o próprio nocat.farm criou. Anúncios que você mesmo criou nunca são tocados."
+      "label": "Retirar anúncios não vendidos após",
+      "tip": "Dias até um anúncio não vendido ser tirado e anunciado de novo um pouco mais barato. Por exemplo 7: uma carta anunciada a 0.30 no dia 1, ainda não vendida no dia 8, volta a 0.29 - ou a 0.25 quando outra pessoa vende a 0.26 (um anúncio jogado não conta). Menor preço ao reanunciar, do preço de venda recente \"Menor preço ao reanunciar, do preço de venda recente\"; nesse preço ele fica no ar. Só anúncios que o próprio nocat.farm criou. Anúncios que você mesmo criou nunca são tocados."
     },
     "SpareMaxPrice": {
       "label": "Não mexer em itens que valham mais de",
-      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta, ex. 0.25 para dólares ou euros - use o mesmo valor na sua moeda, ex. 40 para ienes. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30."
+      "tip": "Nada que valha mais é tocado: nunca vira gemas, nunca é vendido. Na moeda da carteira Steam desta conta: 0.25 serve para dólares ou euros; para ienes use uns 40. O valor é o maior entre o anúncio mais barato e o preço de venda do último dia: anunciado a 0.20 mas vendido a 0.30 vale 0.30. Duas coisas podem passar dele, por sua escolha: cartas vendidas por níveis de insígnia (“Vender um conjunto em vez de criar quando o dinheiro compra mais níveis”) e cartas de pacotes que ele faz para vender. Jogos na sua lista de manter nunca são tocados, valham o que valerem."
     },
     "SpareGemMarginPct": {
-      "label": "As gemas precisam superar a venda em (%)",
-      "tip": "Quanto as gemas precisam valer a mais do que a venda para um item virar gemas, em porcentagem. Por exemplo 20: se vender te paga 0.10 depois das taxas da Steam, gemas que valem 0.12 ou mais ganham e ele vira gemas; valendo 0.11, é vendido. Só para \"o melhor entre gemas ou venda\"."
+      "label": "As gemas precisam superar a venda em",
+      "tip": "Não é mais usado. Desde a 1.8.2 um item só é vendido quando a venda te paga (depois das taxas da Steam) pelo menos 0.01 a mais do que valem as gemas dele, e senão vira gemas - por exemplo, a venda paga 0.10: com gemas valendo 0.09 ou menos, é vendido; valendo mais, gemas. Essa regra decide sozinha, assim as gemas nunca te fazem perder dinheiro. Mantido para que arquivos de configuração antigos ainda carreguem."
     },
     "SpareMaxedBadgeCards": {
       "label": "Cartas de insígnias completas",
-      "tip": "Conta como sobrando as cartas de um jogo cuja insígnia já está completa - nível 5, ou a insígnia brilhante feita - guardando as cópias definidas em \"Guardar esta quantidade de cada carta\". Por exemplo, 3 cópias de uma carta guardando 1: 2 estão sobrando. Desligado: as cartas de insígnias completas ficam."
+      "tip": "Conta como sobrando as cartas de um jogo cuja insígnia já está completa - nível 5, ou a insígnia brilhante feita - guardando as cópias definidas em \"Guardar esta quantidade de cada item\". Por exemplo, 3 cópias de uma carta guardando 1: 2 estão sobrando. Desligado: as cartas de insígnias completas ficam."
     },
     "SpareNewDays": {
-      "label": "Deixar itens novos em paz por (dias)",
+      "label": "Deixar itens novos em paz por",
       "tip": "Dias que um item fica intocado depois de chegar. Por exemplo 7: uma carta que cai numa segunda-feira pode ir a partir da segunda seguinte. O nocat.farm conta a partir da primeira vez que viu o item. Tudo o que já está no inventário na primeira olhada conta como antigo e pode ir na hora - só esperam os itens que chegam depois disso. 0 desliga a regra."
     },
     "SpareGemsSendTo": {
       "label": "Enviar os sacos para",
-      "tip": "O nome de outra conta sua aqui, por ex. main - os sacos vão para ela numa troca. Só é usado quando \"As gemas depois\" envia os sacos. Enviar precisa de confirmação no celular, a não ser que o autenticador esteja adicionado."
+      "tip": "Outra das suas contas aqui, pelo nome, ex. main - os sacos vão para ela numa troca. Vazio: a conta em “Enviar itens para” (Trocas). Enviar precisa de confirmação no celular, a menos que o autenticador esteja adicionado."
     },
     "OpenBoosterPacks": {
       "label": "Abrir pacotes de cartas",
@@ -4402,7 +4896,7 @@
     },
     "SpareAction": {
       "label": "O que fazer com itens sobrando",
-      "tip": "O melhor entre gemas ou venda transforma um item em gemas quando as gemas valem mais do que vendê-lo (pela margem abaixo), e o vende caso contrário - por exemplo, gemas que valem 0.05 ganham de uma venda que te paga 0.02. Só gemas: nunca vende. Só vender: nunca faz gemas. Guardar tudo: só informa o que sobra, nada muda.",
+      "tip": "O melhor entre gemas ou vender só vende um item quando a venda te paga (depois das taxas da Steam) pelo menos 0.01 a mais do que valem as gemas dele, e senão o transforma em gemas - assim as gemas nunca te fazem perder dinheiro, e vendas minúsculas, que precisam cada uma do seu celular, não acontecem. Por exemplo, uma venda que te paga 0.07: com gemas valendo 0.06 ou menos, é vendido; valendo mais, vira gemas. Só gemas: nunca vende, e mantém um item que venderia por pelo menos 0.01 a mais que as gemas. Só vender: nunca faz gemas. Manter tudo: só informa o que sobra, nada muda.",
       "choices": "0 o melhor entre gemas ou venda | 1 só gemas | 2 só vender | 3 guardar tudo (só informar)"
     },
     "SpareEmoticons": {
@@ -4419,7 +4913,7 @@
     },
     "SpareDailyValue": {
       "label": "Valor por dia, no máximo",
-      "tip": "O máximo que os itens de um dia podem valer juntos, na moeda da carteira Steam desta conta. Por exemplo 1.00: dez itens a 0.10 completam o dia e o 11º espera até amanhã. Ex. 1.00 para dólares ou euros - use o mesmo valor na sua moeda, ex. 150 para ienes."
+      "tip": "O máximo que os itens de um dia podem valer juntos, na moeda da carteira Steam desta conta: 1.00 serve para dólares ou euros; para ienes use uns 150. Por exemplo 1.00: dez itens de 0.10 enchem o dia e o próximo espera até amanhã."
     },
     "SpareDailyItems": {
       "label": "Itens por dia, no máximo",
@@ -4430,7 +4924,7 @@
       "tip": "Deixa as cartas brilhantes contarem como sobrando também - por exemplo, uma 2ª cópia de uma brilhante cuja insígnia brilhante já foi feita. Desligado (o padrão): as brilhantes sempre ficam, já que são mais raras e muitas vezes valem mais."
     },
     "BoosterOpenNewDays": {
-      "label": "Deixar pacotes novos em paz por (dias)",
+      "label": "Deixar pacotes novos em paz por",
       "tip": "Dias que um pacote fica fechado depois de chegar. Por exemplo 7: um pacote de uma segunda-feira abre a partir da segunda seguinte. 0 abre na hora. Pacotes que o próprio nocat.farm criou não ficam esperando - são abertos na próxima chance."
     },
     "SpareExtraCards": {
@@ -4442,12 +4936,12 @@
       "tip": "Uma mensagem por olhada de Itens sobrando ou nos pacotes de cartas: quantos itens viraram gemas ou foram anunciados e quantos pacotes foram abertos, com os 10 primeiros pelo nome - por exemplo, uma mensagem para 14 itens, não 14. Desligado: nada disso é enviado."
     },
     "SpareKeepCopies": {
-      "label": "Guardar esta quantidade de cada carta",
-      "tip": "Cópias de cada carta sempre mantidas, mesmo com a insígnia completa. Por exemplo 1: de 3 cópias, 2 podem ir. 0 não mantém nenhuma, então a última cópia também pode ir. Cartas que uma insígnia ainda precisa são sempre mantidas."
+      "label": "Guardar esta quantidade de cada item",
+      "tip": "Cópias de cada carta, fundo e emoticon sempre mantidas, mesmo com a insígnia completa. Por exemplo 1: de 3 cópias, 2 podem ir. 0 não mantém nenhuma, então a última cópia também pode ir. Cartas que uma insígnia ainda precisa são sempre mantidas."
     },
     "SpareDumpPct": {
-      "label": "Manter um item se o anúncio mais barato estiver tão abaixo das vendas (%)",
-      "tip": "Mantém um item em vez de anunciá-lo quando o anúncio mais barato está tão abaixo do preço de venda, e só uma venda sustenta esse preço - os dois preços se contradizem. Por exemplo 50: vendido uma vez a 0.30, anúncio mais barato a 0.12 (60% abaixo): mantido. Com duas ou mais vendas, é anunciado um centavo abaixo do preço de venda. 0 anuncia também com uma só venda. Só para \"um centavo abaixo do preço real\"."
+      "label": "Ignorar anúncios tão abaixo das vendas",
+      "tip": "Quanto abaixo do preço de venda do último dia o anúncio mais barato precisa estar para contar como jogado. Por exemplo 50: vendido a 0.30, um anúncio mais barato a 0.12 (60% abaixo) está jogado. \"Um centavo abaixo do preço real\" mantém o item quando só uma venda sustenta esse preço - os dois preços se contradizem; com duas ou mais vendas, anuncia um centavo abaixo do preço de venda, a 0.29. \"Um centavo abaixo do mais barato\" ignora o anúncio jogado e também anuncia a 0.29. 0: nenhum anúncio conta como jogado."
     },
     "BoosterMake": {
       "label": "Criar pacotes de cartas",
@@ -4455,19 +4949,19 @@
       "choices": "0 desligado | 1 jogos que eu escolho | 2 automático - insígnia mais perto"
     },
     "BoosterKeepGems": {
-      "label": "Guardar pelo menos estas gemas",
+      "label": "Gemas que os pacotes nunca usam",
       "tip": "Gemas abaixo das quais um pacote nunca deixa a conta. Um pacote só é criado enquanto as gemas cobrem o preço dele mais este número. Por exemplo 1000 com 1.500 gemas: um pacote de 400 é criado e sobram 1.100, e o próximo espera mais gemas. 0 pode usar todas."
     },
     "SpareRelistFloorPct": {
-      "label": "Nunca abaixo de (% do preço real de venda)",
+      "label": "Menor preço ao reanunciar, do preço de venda recente",
       "tip": "O mais baixo que um anúncio não vendido desce, em porcentagem do preço pelo qual o item vendeu no último dia. Por exemplo 80: uma carta que vendeu a 0.30 nunca desce abaixo de 0.24 - nesse preço ela fica no ar e não é anunciada de novo. Sem vendas recentes, nada é baixado."
     },
     "SpareHumanGapMinMinutes": {
-      "label": "Espera entre itens, modo humano (minutos)",
+      "label": "Menor espera entre itens, modo humano",
       "tip": "A espera mais curta entre dois itens numa conta em modo humano, em minutos. Cada espera é sorteada entre esta e a mais longa abaixo. Por exemplo 3 e 20: depois de um item, espera de 3 a 20 minutos antes do próximo."
     },
     "SpareDeclinedDays": {
-      "label": "Se você recusar um anúncio no celular, tentar de novo depois de (dias)",
+      "label": "Depois de recusar um anúncio, esperar",
       "tip": "Quanto tempo um item espera depois que você recusa o anúncio dele no app da Steam. Por exemplo 30: você recusa o anúncio de uma carta no dia 1, e essa carta - cada cópia dela - só é anunciada de novo no dia 31. Um anúncio tirado antes de chegar a entrar no mercado também conta como recusado, assim como um sobre o qual ele não tem certeza. 0 nunca anuncia de novo."
     },
     "SpareHumanPerLook": {
@@ -4476,15 +4970,97 @@
     },
     "SpareMinSale": {
       "label": "Só vender se você receber pelo menos",
-      "tip": "O mínimo que uma venda precisa te render depois das taxas da Steam, na moeda da carteira Steam desta conta. Por exemplo 0.05: uma carta que te renderia 0.03 vira gemas se as gemas dela valem alguma coisa, e se não, é mantida. por ex. 0.05 para dólares ou euros - use o mesmo valor na sua própria moeda, por ex. 5 para ienes. 0 vende qualquer coisa."
+      "tip": "O mínimo que uma venda precisa te render depois das taxas da Steam, na moeda da carteira Steam desta conta: 0.05 serve para dólares ou euros; para ienes use uns 5. Por exemplo 0.05: uma carta que te renderia 0.03 vira gemas quando as gemas valem mais que 0.02, e é mantida quando não vira gemas. Um item nunca vira gemas que valham menos que a venda menos 0.01: com gemas de 0.02 ou menos, essa carta é vendida pelos 0.03 do mesmo jeito. Em “só vender” ela é mantida. 0 vende qualquer coisa."
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "...até (minutos)",
+      "label": "Maior espera entre itens, modo humano",
       "tip": "A espera mais longa entre dois itens numa conta em modo humano, em minutos. Por exemplo 20, com 3 como a mais curta: cada espera fica entre 3 e 20 minutos, então 3 itens levam até uns 40 minutos."
     },
     "CraftFoilBadges": {
       "label": "Criar também emblemas brilhantes",
       "tip": "Transforma também os conjuntos completos de cartas brilhantes em emblemas brilhantes. Desligado, cria só emblemas normais e deixa as cartas brilhantes em paz. Se a Steam recusar um emblema brilhante, só os brilhantes esperam - os normais continuam."
+    },
+    "SellSetsForLevels": {
+      "label": "Vender um conjunto em vez de criar quando o dinheiro compra mais níveis",
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um emblema laminado é um nível. Também vende cartas guardadas para um emblema que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo. Essas vendas podem passar de “Não mexer em itens que valham mais de” - esse limite é para os itens sobrando. Jogos na sua lista de manter nunca são tocados."
+    },
+    "CardSwaps": {
+      "label": "Trocar cartas sobrando com outros usuários do nocat.farm",
+      "tip": "Troca cartas colecionáveis normais sobrando, uma por uma, com outros usuários do nocat.farm, no mesmo jogo, para os dois lados completarem conjuntos mais cedo. O nocat.lol pareia as contas; esta conta confere cada troca de novo antes. Nunca dá uma carta que seus conjuntos precisam nem a última cópia de uma, nunca cartas brilhantes, fundos ou emoticons, e nada das suas listas de \"nunca mexer\". Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois. Ao ligar, primeiro mostra o que faria e pede confirmação."
+    },
+    "CardSwapMaxLoss": {
+      "label": "O máximo que uma troca pode perder",
+      "tip": "Quanto uma troca pode valer a menos do que dá, pelo preço mais barato do mercado, na moeda da carteira Steam desta conta. Por exemplo 0.03: cartas de 0.12 por cartas de 0.09 tudo bem; por 0.08, não. 0: uma troca nunca vale menos. Uma carta sem preço do último dia nunca é trocada. 0,03 serve para dólares ou euros; para ienes use cerca de 5."
+    },
+    "CardSwapsPerDay": {
+      "label": "Trocas por dia, no máximo",
+      "tip": "O máximo de trocas que ela envia ou aceita em um dia - por exemplo 5. Numa conta em modo humano, elas também se espalham pelo próprio dia dela, de 45 minutos a 2 horas de intervalo."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Pular trocas que a Steam reteria",
+      "tip": "Nunca troca com uma conta quando a Steam reteria a troca por dias - por exemplo, quando um lado tem o app Steam Guard há pouco tempo. Ligado é o mais seguro."
+    },
+    "ShareCheapestSets": {
+      "label": "Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm",
+      "tip": "Enquanto uma conta compra os conjuntos completos mais baratos, manda ao nocat.lol, mais ou menos a cada 6 horas, os conjuntos completos de cartas mais baratos que esta cópia achou no mercado, e pega de volta os que todas as outras cópias acharam - assim acha conjuntos baratos muito antes. O que vai: o jogo de cada conjunto, os nomes das cartas, o menor preço de cada carta, quantas estão à venda e quando isso foi visto - por exemplo um conjunto de 5 cartas a 0,03 cada, visto há uma hora. Nada sobre você ou suas contas. O que volta só diz quais jogos olhar primeiro: cada carta é avaliada de novo no mercado da Steam antes de qualquer compra. Ligado: compartilhado nos dois sentidos. Desligado: nada é enviado nem buscado. Só enquanto \"Contar como usuário\" estiver ligado."
+    },
+    "GemsForLevels": {
+      "label": "Usar as gemas para o máximo de níveis",
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de emblema 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o emblema mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o emblema mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o emblema mais próximo. 'booster plan' mostra os números. Cartas de pacotes que ele faz para vender são vendidas não importa o que o limite de preço dos itens sobrando diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
+    },
+    "SendScamWarnings": {
+      "label": "Enviar alertas de golpe",
+      "tip": "Os alertas da vigia antigolpe: uma chave de API que não estava lá, um dispositivo novo, e-mail, telefone ou Steam Guard trocados, tudo desconectado. Por exemplo, um dispositivo novo entrando numa conta envia uma mensagem com a conta e o dispositivo. Ligado por padrão."
+    },
+    "SendHealthAlerts": {
+      "label": "Enviar alertas de saúde da conta",
+      "tip": "Algo numa conta piorou: um banimento novo, retenção de trocas, o mercado bloqueado, conta limitada, Steam Guard mais fraco, o telefone removido. Por exemplo, uma retenção de 15 dias começando envia uma mensagem. Ligado por padrão."
+    },
+    "NotifyScam": {
+      "label": "Pop-up para alertas de golpe",
+      "tip": "Mostra um pop-up neste PC para cada alerta da vigia antigolpe - por exemplo, um e-mail trocado numa conta abre uma janela com o nome da conta."
+    },
+    "NotifyHealth": {
+      "label": "Pop-up para a saúde da conta",
+      "tip": "Mostra um pop-up neste PC quando algo numa conta piora - por exemplo, o Steam Guard passa do app do celular para o e-mail."
+    },
+    "BackupMessages": {
+      "label": "Mensagens de backup",
+      "tip": "Mensagens de backup no Telegram e no Discord. Só quando um falhar: uma mensagem só se não deu para fazer o backup - por exemplo, a pasta sumiu ou o disco está cheio. Depois de cada backup: também uma mensagem para cada backup salvo. Desligado: nenhuma.",
+      "choices": "0 desligado | 1 só quando um falhar | 2 depois de cada backup"
+    },
+    "DailyReportTime": {
+      "label": "Resumo diário às",
+      "tip": "Quando o resumo diário é escrito no registro, no horário local - e enviado, quando o chip Resumo diário em Notificações está ligado. Por exemplo 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Espera mais curta entre olhadas, modo humano",
+      "tip": "A espera mais curta entre duas olhadas que compram numa conta em modo humano, enquanto sobram dinheiro e conjuntos baratos, em minutos - só no dia dela. Cada espera é sorteada entre este valor e o mais longo. Por exemplo 30 e 90: a próxima olhada vem entre meia hora e uma hora e meia depois."
+    },
+    "BuyStopAtLevel": {
+      "label": "Parar de comprar no nível Steam",
+      "tip": "A compra de cartas para quando esta conta chega a este nível Steam - por exemplo 50: no nível 50 não compra mais nada, e no caminho compra só os níveis de insígnia que ainda faltam para chegar lá. 'levelup' diz quanto custa um nível. 0 nunca para."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Conjuntos por olhada, modo humano",
+      "tip": "Quantos conjuntos uma olhada compra numa conta em modo humano, os mais baratos primeiro - depois espera um pouco até a próxima olhada, como alguém que compra alguns conjuntos de vez em quando. Por exemplo 3 conjuntos por olhada, uma olhada a cada 30 a 90 minutos no dia dela: uns 25 a 40 conjuntos por dia, até acabar o dinheiro do dia ou os conjuntos baratos. Um robô compra numa olhada todo conjunto que cabe."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "No máximo por um nível de insígnia",
+      "tip": "O máximo que paga por um nível de insígnia (100 XP) - um conjunto completo, ou as cartas que faltam a uma insígnia começada - na moeda da carteira Steam desta conta. Um nível mais caro espera os preços baixarem, para o dinheiro não ir para níveis caros quando os baratos acabarem. Por exemplo 0,50: um conjunto de 5 cartas a 0,35 é comprado, um de 9 cartas a 0,70 espera. 0 é automático e justo: um quarto acima do que um nível costuma custar - o meio dos 5 conjuntos completos mais baratos que o buscador de conjuntos conhece (metade acima enquanto conhecer menos, ou o nível mais barato da última semana). Com conjuntos a cerca de 0,40, até 0,50; não sobe quando os conjuntos baratos acabam. Até o buscador ter verificado os 30 conjuntos mais baratos, conjuntos completos só são comprados até um décimo acima do mais barato conhecido. 0,50 serve para dólares ou euros; para ienes use cerca de 75."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Espera mais longa entre olhadas, modo humano",
+      "tip": "A espera mais longa entre duas olhadas que compram numa conta em modo humano, em minutos. Por exemplo 90, com 30 como a mais curta: umas 16 olhadas num dia de 16 horas."
+    },
+    "RefundProtectMinPrice": {
+      "label": "Proteger reembolsos só para jogos acima de",
+      "tip": "Só os jogos que custaram mais que isso ficam de lado enquanto podem ser reembolsados; um mais barato é farmado na hora. Usa o que você pagou quando o histórico de compras da Steam mostra; senão, o preço normal da loja (uma promoção nunca o abaixa); um preço que não encontra fica protegido. Na moeda da carteira Steam desta conta. Por exemplo 5,00: um jogo de 0,99 que você acabou de comprar é farmado na hora; um de 20,00 fica de lado até não poder mais ser reembolsado. 0 protege todos os jogos."
+    },
+    "LevelUpLine": {
+      "label": "A linha de subida de nível mostra",
+      "tip": "Uma linha no registro quando o nível Steam desta conta sobe - por exemplo “Nível Steam 58 (+1) · este nível custou 0,46 CAD” ou “Nível Steam 60 (+3) · 1,42 CAD por 3 níveis”. O custo é só dinheiro realmente gasto: as cartas compradas para as insígnias criadas. Cartas farmadas não custam nada. Também vai para o Telegram ou Discord quando as novidades de cartas estão ligadas lá. Desligado: nenhuma linha.",
+      "choices": "3 o nível e quanto custou | 1 só o nível | 0 desligado"
     }
   }
 }

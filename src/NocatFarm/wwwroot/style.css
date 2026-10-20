@@ -1701,6 +1701,31 @@ a.loglink:hover { color: #79b8ff; }
 .swpop .pricing { margin: var(--s3) 0 0; padding: 8px 12px; border-left: 3px solid var(--warn); background: var(--panel2); font-size: 13px; }
 .swpop .problem { margin: 0 0 var(--s3); padding: 8px 12px; border-left: 3px solid var(--line2); background: var(--panel2); font-size: 13px; }
 .swpop .waiting { color: var(--muted); font-size: 13px; padding: 12px 0; }
+/* 1.8.2 set finder: the cheapest whole sets, a small table under what it would buy. */
+.swpop table.marketsets td, .swpop table.marketsets th { font-variant-numeric: tabular-nums; padding-top: 4px; padding-bottom: 4px; }
+.swpop table.marketsets td:first-child { white-space: normal; overflow-wrap: anywhere; }
+.swpop table.marketsets td:not(:first-child), .swpop table.marketsets th:not(:first-child) { text-align: right; white-space: nowrap; }
+.swpop p.finder { margin: 6px 0 0; }
 /* Turn on / Cancel stay in reach while a long preview scrolls on a phone. */
 #modalCard:has(.swpop) > .actions { position: sticky; bottom: -16px; background: var(--panel); padding: 10px 0 16px; margin-bottom: -16px; }
 @media (max-width: 420px) { .swpop .num { padding: 8px; } .swpop .num b { font-size: 19px; } }
+/* 1.8.2 Open in Steam: the Steam Guard code to type on Steam's sign-in - on the account card and in the button's confirm. */
+.steamcode { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px; border: 1px solid var(--line); background: var(--panel2); font-size: 13px; color: var(--muted); }
+.steamcode b { font-size: 18px; letter-spacing: 4px; color: var(--text); user-select: all; font-weight: 600; }
+.steamcode button { margin-left: auto; }
+/* 1.8.2 Copy settings from another account: the list of what changes scrolls inside its pop-up. */
+.copylist { max-height: 300px; overflow: auto; margin-bottom: var(--s3); }
+.copylist td { font-size: 13px; overflow-wrap: anywhere; }
+/* 1.8.2 settings clean-up: a "shortest / longest" pair in one row (Breaks: [2] to [30] minutes), the unit after a box. */
+.field .pairctl { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 100%; }
+.field .ctl input[type=number].pairnum { width: 84px; max-width: 84px; }
+.field .pairto, .field .unit { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.field .ctl .withunit { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+/* 1.8.2: a part of a section - "Spare items" in "Items and spending" - under a heading of its own, and indented in the jump list. */
+.section > .part { margin-top: var(--s4); }
+.section > .part > h4 { font-size: 12.5px; margin: 0 0 10px; color: var(--text); letter-spacing: .4px; padding-bottom: 6px; border-bottom: 1px dashed var(--line2); max-width: 880px; }
+#settingsBody .section h4 { scroll-margin-top: 76px; }
+.jump .j.sub { padding-left: 22px; font-size: 12px; }
+.field.chips .langpick { margin: 0; }
+.field .proxysignin { margin-top: 6px; font-size: 12.5px; }
+@media (max-width: 900px) { .jump .j.sub { display: none; } }

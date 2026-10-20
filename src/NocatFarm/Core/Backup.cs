@@ -113,7 +113,7 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy)-(?<name>[^/\\:*?""<>|]+)\.json" +
 		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
@@ -332,6 +332,7 @@ public static partial class Backup {
 		sb.AppendLine("  rep4rep-, keys, report    rep4rep counts, the key queue, the daily/weekly report");
 		sb.AppendLine("  points-, spare-           Steam Points spent this week, spare items' daily counts (never an ok to spend:");
 		sb.AppendLine("                            whether Spare items and Steam Points are on stays as it is on the PC you restore on)");
+		sb.AppendLine("  buy-                      money spent buying cards this week (never an ok to buy, the same way)");
 		sb.AppendLine("  manifest.json             what this backup is, so nocat.farm knows it on restore");
 		sb.AppendLine();
 		sb.AppendLine("Not inside: logs, caches (prices, game names), and anything nocat.farm rebuilds by itself.");
@@ -581,8 +582,9 @@ public static partial class Backup {
 			}
 
 			bool points = rel.StartsWith("state/points-", StringComparison.OrdinalIgnoreCase), spare = rel.StartsWith("state/spare-", StringComparison.OrdinalIgnoreCase);
+			bool buy = rel.StartsWith("state/buy-", StringComparison.OrdinalIgnoreCase);
 
-			if (!points && !spare) {
+			if (!points && !spare && !buy) {
 				return data;
 			}
 
@@ -592,6 +594,26 @@ public static partial class Backup {
 				here = File.Exists(full) ? File.ReadAllText(full) : null;
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				// nothing readable here: nothing approved here
+			}
+
+			// Buying cards (1.8.2): this PC's go-ahead stays, and the money spent comes back added to what's here.
+			if (buy) {
+				Modules.BuyLedger.Stored cameBuy = JsonSerializer.Deserialize<Modules.BuyLedger.Stored>(data) ?? new Modules.BuyLedger.Stored();
+				Modules.BuyLedger.Stored? mineBuy = null;
+
+				try {
+					mineBuy = here == null ? null : JsonSerializer.Deserialize<Modules.BuyLedger.Stored>(here);
+				} catch (JsonException) {
+					// unreadable here: no go-ahead, and the backup's list stands
+				}
+
+				// A purchase waiting on the phone in the backup stays counted, but is never sent again from it (1.8.2).
+				return JsonSerializer.SerializeToUtf8Bytes(new Modules.BuyLedger.Stored {
+					Ok = mineBuy?.Ok ?? false,
+					Entries = [.. (cameBuy.Entries ?? []).Select(static e => e with { Confirm = null }).Concat(mineBuy?.Entries ?? []).DistinctBy(static e => (e.At, e.Card, e.Cents)).OrderBy(static e => e.At)],
+					Sold = [.. (cameBuy.Sold ?? []).Concat(mineBuy?.Sold ?? []).Distinct().OrderBy(static e => e.At)],
+					Waits = [.. (mineBuy?.Waits ?? cameBuy.Waits ?? [])]
+				});
 			}
 
 			if (points) {
@@ -709,6 +731,7 @@ public static partial class Backup {
 					Secrets.ForgetKey();
 					SpareLedger.ForgetLoaded();
 					Modules.PointsLedger.ForgetLoaded();
+					Modules.BuyLedger.ForgetLoaded();
 					Lifetime.Reload();
 					History.Reload();
 					DailyReport.Reload();

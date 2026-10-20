@@ -422,7 +422,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 		// One red line per warning - in the window, the console and the log file, and to the chats: which account, what
 		// changed, and what nocat.farm did about it. Never the key, the address or anything else secret: only the words.
 		foreach (Hit h in found) {
-			Log.Alarm(Line(Bot.Name, h, Bot.Cfg), Bot.Name, Topic.ScamWatch, g.ScamAlertPopup);
+			Log.Alarm(Line(Bot.Name, h, Bot.Cfg), Bot.Name, Topic.ScamWatch, g.NotifyScam);
 		}
 	}
 
@@ -522,7 +522,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 			s.KeyFingerprint = "";
 			Log.Alarm(new Said("SCAM WATCH on {0}: revoked the new API key", Bot.Name), Bot.Name, Topic.ScamWatch, popup: false);
 		} else {
-			Log.Alarm(new Said("SCAM WATCH on {0}: couldn't revoke the API key - revoke it yourself at {1}", Bot.Name, ApiKeyPage), Bot.Name, Topic.ScamWatch, Live.Global.ScamAlertPopup);
+			Log.Alarm(new Said("SCAM WATCH on {0}: couldn't revoke the API key - revoke it yourself at {1}", Bot.Name, ApiKeyPage), Bot.Name, Topic.ScamWatch, Live.Global.NotifyScam);
 		}
 	}
 

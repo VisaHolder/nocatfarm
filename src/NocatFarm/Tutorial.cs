@@ -1,4 +1,5 @@
 using System.Text;
+using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm;
@@ -82,7 +83,9 @@ public static class Tutorial {
 		sb.AppendLine("Some things happen by themselves: free event items (sale stickers, 0-point Points Shop items) and");
 		sb.AppendLine("gifts sent to the account are collected. 'tutorial free' covers those and the ones you switch on.");
 		sb.AppendLine();
-		sb.AppendLine("That's it. It runs in the tray - close the window and it keeps going.");
+		sb.AppendLine(OperatingSystem.IsWindows() && Live.Global.Tray
+			? "That's it. It runs in the tray - close the window and it keeps going."
+			: "That's it. It keeps going by itself - close the window and it carries on.");
 		sb.AppendLine();
 		sb.AppendLine("  status            what everything is doing right now");
 		sb.AppendLine("  config <name>     every setting for an account, with its value");
@@ -173,9 +176,9 @@ public static class Tutorial {
 			"Trades",
 			"",
 			"  set <name> AcceptDonations true       accept offers that ask for NOTHING",
-			"  set <name> TradeMasters 7656119...    accounts you own",
-			"  set <name> AcceptFromMasters true     let those take items",
-			"  send <name>                           sweep this account's cards to the first master",
+			"  set <name> AutoTradeWith farm2        your other accounts: trade with them by itself",
+			"  set <name> TradeMasters main          where 'send' sends items (a name or SteamID64)",
+			"  send <name>                           sweep this account's cards to that account",
 			"  set <name> SendEveryHours 24          ...or do that by itself once a day",
 			"  send <name> to <other> [types]        send items to any of your other accounts",
 			"  set <name> TradeDelayMaxMinutes 30    each offer waits 2-30 minutes, most often nearer 2",

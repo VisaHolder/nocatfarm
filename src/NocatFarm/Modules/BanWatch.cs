@@ -72,7 +72,9 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			if (Bot.Cfg.WatchBans && Bot.IsOnline && Bot.Web.Ready) {
+			// Always: it only reads, and the games an account is banned in are left out of its trades. Telling you about a new
+			// ban is account health's alert (1.8.2 - "Watch for bans" was a second switch for the same thing).
+			if (Bot.IsOnline && Bot.Web.Ready) {
 				try {
 					await CheckAsync(ct).ConfigureAwait(false);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -129,21 +131,27 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
 
+		// 1.8.2: a trade ban holds the market - nothing bought, listed or swapped - and takes it off nocat.lol's swap list.
+		MarketHold.FromBans(Bot, now, DateTime.UtcNow);
+
 		if (before == null) {
 			// The first look: whatever is there was there before nocat.farm was watching - say it once, calmly.
 			if (now.Any) {
 				Log.Info(new Said("bans on record: {0}", Summary(now)), Bot.Name);
 			}
 		} else {
-			// With the ban watch itself off, account health tells about a new ban (its own alert): said here only in the log,
-			// or one ban - read by health's own look, or by 'bans' typed - would be two messages.
+			// A new ban is account health's alert ("Alert on a new ban", 1.8.2 - "Watch for bans" was a second switch for the
+			// same thing). Health tells it when it's worse to health; when it isn't - already banned, or health hasn't a reading
+			// to compare with yet - these lines are that alert. One ban is never two messages, and with the alert (or health)
+			// off it's only the log.
 			bool healthTells = BotManager.ModuleOf<AccountHealth>(Bot) is { } health && health.BansRead(now);
+			bool alert = !healthTells && Bot.Cfg.WatchHealth && Bot.Cfg.HealthAlertBans;
 
 			foreach (Said news in News(new Bans(before.Vac, before.Game, before.Community, before.Economy, before.DaysSinceLast), now)) {
-				if (healthTells) {
-					Log.Warn(news, Bot.Name);
+				if (alert) {
+					Log.Alarm(news, Bot.Name, Topic.Health, Live.Global.NotifyHealth, red: false);
 				} else {
-					Log.Attention(news, Bot.Name, Topic.Problems);
+					Log.Warn(news, Bot.Name);
 				}
 			}
 		}

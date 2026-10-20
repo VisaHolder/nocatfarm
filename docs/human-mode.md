@@ -76,17 +76,32 @@ set myaccount BedVaryMinutes 60                      # ...give or take an hour: 
 ```
 
 *Gets on at* and *Goes to bed at* are times to the minute (the console also takes `9:45pm` or a plain hour), and each
-has its own *Varies by up to (minutes)*: 2 hours for getting on and 1 hour for bed by default, 0 to 6 hours. That is
+has its own *give or take*: 2 hours for getting on and 1 hour for bed by default, 0 to 6 hours. That is
 a hard limit. Most days land near the set time and never on the same minute two days running, but nothing takes a
 day outside its window: weekends start a little earlier and Friday and Saturday nights go a little later (*Stays up
 later Fri/Sat*), both inside it; *Learn from how I play* leans toward your times only inside it; and a night too
-long for *Sleeps at least* to fit is cut short, so it gets on in the later half of the window rather than late. Set
+long for *Sleeps* to fit is cut short, so it gets on in the later half of the window rather than late. Set
 a variation of 0 and it's that exact minute every day. A bedtime at or before the time it gets on is the next
 morning's, so 02:00 is two in the morning after the day. A window that crosses midnight for getting on keeps to the
 day itself: 00:30 give or take an hour gets on between 00:00 and 01:30. An account set up before these settings
 keeps its times: the hour it had, 13, is 13:00, and the old names `DayStartHour` and `BedHour` still work at the
 console. `human myaccount` shows today's planned times and the windows ("up 10:47 · bed 01:12 · gets on
 10:30-11:30 · goes to bed 01:00-03:00"), and so does the Human mode panel on the dashboard.
+
+When the day ends - bedtime, done for today, or a day off - it picks the next day's wake time there and then, by
+the same rules (a different minute each day, earlier at weekends, after a night's sleep, inside the window), and
+saves it. So all night it says the real time ("asleep · up 13:52", "next up 13:52", "back tomorrow around 13:52"),
+a restart keeps it, and it gets up at that very time. The rest of the day (its hours, bedtime) is still planned when
+it wakes. Before a time is picked - the first start after bedtime - it shows the window instead ("up 13:15-14:45").
+`human reroll` picks it again, and so does changing *Gets on at* so the time no longer fits.
+
+No break runs into bed. A short break or a meal has to be over at least 12 minutes before bedtime; if it wouldn't
+be, the account goes to bed then instead, a little early, and the night and the next wake count from then. If
+bedtime still comes in the middle of a break (the day was planned again during it), it says "short break · then off
+for the night" rather than "back in ...".
+
+A sitting cut off by a restart is carried on after the warm-up only if at least 2 minutes of it are left; with less,
+it ends there the way any sitting does - a break, or the next game - rather than "carrying on" for a moment.
 
 Some days go on the main game alone (*Days on the main game only*, 25%), so side games show up in bursts. That
 lowers their weekly share, and the dashboard and `human` show the real weekly figure next to the one you set.
@@ -152,9 +167,9 @@ play that aren't in the list), and `habits myaccount forget` wipes it.
 days, fewer each day, at most 3 sittings a day. Blacklisted or family-shared games and games your other accounts
 are running are left alone, and with *Protect refunds* on a game still refundable waits until that ends.
 
-*Quiet spells and late nights*: once or twice a month a quiet spell of 2 to 5 days with days about half as long, and
-now and then a Friday or Saturday night that runs one to two and a half hours later. Days off and the hours still
-apply, and `human week` shows the same quiet spells and late nights the real days will have.
+*Quiet spells now and then*: once or twice a month a quiet spell of 2 to 5 days with days about half as long. Days
+off and the hours still apply, and `human week` shows the same quiet spells the real days will have. Later Friday and
+Saturday nights are *Stays up later Fri/Sat*'s alone (since 1.8.2 - this switch used to add some too).
 
 *Sometimes play what a friend is playing*: when a Steam friend is in a game this account owns, now and then (at most
 twice a day, only while it's up and between sittings) its next sitting is that game. Your own accounts, anything they
@@ -169,10 +184,10 @@ This matters for any account you also play on, human mode or not.
 *Stand down when you play* (on) stops nocat.farm playing the moment you start a game on that account yourself. While
 you're on it, it doesn't change the account's status either. The right one goes back on once you're done.
 *Wait before resuming* (5 minutes) is how long after you stop before it carries on; a human-mode account waits a
-random time, up to three times that. *I sign into this one myself* (off) means it never changes the online status,
+random time, up to three times that. *I also use this account in my own Steam app* (off) means it never changes the online status,
 so your own Steam app keeps Friends & Chat.
 
-*Clear Steam's notifications* (on) marks the notification tray read on every sign-in, and *Clear the new-items
+*Clear Steam's notification counters* (on) marks the notification tray read on every sign-in, and *Clear the new-items
 badge* (on) clears the green counter after each drop. If you use the account yourself and want to see those, turn
 them off.
 

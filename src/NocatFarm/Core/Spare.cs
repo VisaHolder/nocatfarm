@@ -12,10 +12,21 @@ public enum SpareKind { Other, Card, FoilCard, Background, Emoticon, BoosterPack
 /// <param name="Game">The game it belongs to (market_fee_app); 0 when it belongs to none.</param>
 /// <param name="Hash">Its market name ("440-Scout"), the same for every copy - what a price is kept under.</param>
 /// <param name="GooType">The item type Steam's "Turn into gems" action asks about, 0 when it has no such action.</param>
+/// <param name="TradableAfter">1.8.2: when a locked item can be traded and sold - Steam's "Tradable/Marketable After" (UTC);
+/// <see cref="DateTime.MaxValue"/> when Steam says the lock ends but the date can't be read; null for no lock that ends.</param>
 public sealed record SpareItem(ulong AssetId, uint Game, SpareKind Kind, string Hash, string Name, bool Tradable, bool Marketable,
-	uint Amount = 1, int GooType = 0, int GooBorder = 0) {
+	uint Amount = 1, int GooType = 0, int GooBorder = 0, DateTime? TradableAfter = null) {
 	/// <summary>Where its gem value is kept: the same for every item of this game, type and border.</summary>
 	public string GooKey => $"{Game}:{GooType}:{GooBorder}";
+
+	/// <summary>1.8.2: can't be traded or sold yet, but Steam says when it can (an item from a badge or a craft, 7 days).</summary>
+	public bool LockedForNow => !Tradable && (TradableAfter != null);
+
+	/// <summary>1.8.2: can never be traded or sold - not tradable, not marketable, and no date it ends. Gems are all it can be.</summary>
+	public bool LockedForGood => !Tradable && !Marketable && (TradableAfter == null);
+
+	/// <summary>1.8.2: can go to the market now, or once its lock ends - so its price counts against its gems.</summary>
+	public bool Sellable => Marketable || LockedForNow;
 }
 
 /// <summary>
@@ -112,9 +123,9 @@ public sealed record SpareRules {
 		ExtraCards = c.SpareExtraCards,
 		KeepCopies = Math.Clamp(c.SpareKeepCopies, 0, 10),
 		Backgrounds = c.SpareBackgrounds,
-		KeepBackgrounds = Math.Clamp(c.SpareKeepBackgrounds, 0, 10),
+		KeepBackgrounds = Math.Clamp(c.SpareKeepCopies, 0, 10),   // one keep-count for every kind since 1.8.2
 		Emoticons = c.SpareEmoticons,
-		KeepEmoticons = Math.Clamp(c.SpareKeepEmoticons, 0, 10),
+		KeepEmoticons = Math.Clamp(c.SpareKeepCopies, 0, 10),
 		Foils = c.SpareFoils,
 		MaxPriceCents = Math.Clamp(Cents(Math.Clamp(c.SpareMaxPrice, 0f, 1_000_000f)), 1, 100_000_000),   // the wallet's own currency: yen, won and rupiah need big numbers
 		NewDays = Math.Clamp(c.SpareNewDays, 0, 30),
@@ -191,7 +202,7 @@ public sealed class SpareInput {
 	/// <summary>Steam's id of the wallet currency the prices are in - only for saying so ("0.57 CAD"); 0 says nothing.</summary>
 	public int Currency { get; init; }
 
-	/// <summary>A sack of 1000 gems' lowest listing, in the wallet's currency.</summary>
+	/// <summary>What a sack of 1000 gems pays after Steam's fee, in the wallet's currency (1.8.2: not its buyer price - see <see cref="SparePrices.SackPays"/>).</summary>
 	public MarketPrice? Sack { get; init; }
 
 	/// <summary>Gems an item turns into: 0 none, null not known.</summary>
@@ -204,6 +215,9 @@ public sealed class SpareInput {
 
 	/// <summary>The step an unsold listing of this item was given when it was taken down to go up cheaper - or null.</summary>
 	public Func<SpareItem, SpareListings.Step?> StepOf { get; init; } = static _ => null;
+
+	/// <summary>1.8.2: games whose cards buying cards bought for a badge lately - their normal cards stay until it's crafted.</summary>
+	public IReadOnlySet<uint> BoughtGames { get; init; } = new HashSet<uint>();
 }
 
 /// <summary>
@@ -213,7 +227,8 @@ public sealed class SpareInput {
 /// <remarks>
 /// Spare means: cards of a badge already at its top level, card copies beyond what the badge still needs, and backgrounds
 /// and emoticons past the copies kept. Never spare, each on its own: anything that came in within the last days, anything
-/// on the keep list, foil cards unless switched on, a trade-locked item, anything on the market or in a trade offer, the
+/// on the keep list, foil cards unless switched on, a trade-locked item that never trades and has no gems (1.8.2: one
+/// locked for a while, or for good with gems, is weighed - see Decide), anything on the market or in a trade offer, the
 /// last copy of anything, anything worth more than the price limit, and anything without a fresh price - it waits for one
 /// rather than deciding on a guess.
 /// </remarks>
@@ -240,13 +255,68 @@ public static partial class Spare {
 			LearnGameName(game, d);
 			uint amount = uint.TryParse(InventoryContents.Text(asset, "amount"), NumberStyles.None, CultureInfo.InvariantCulture, out uint a) ? Math.Max(1, a) : 1;
 			(int type, int border) = GooOf(d);
+			bool tradable = InventoryContents.Text(d, "tradable") == "1";
 
 			items.Add(new SpareItem(id, game, KindOf(d), InventoryContents.Text(d, "market_hash_name"), InventoryContents.Text(d, "name"),
-				InventoryContents.Text(d, "tradable") == "1", InventoryContents.Text(d, "marketable") == "1", amount, type, border));
+				tradable, InventoryContents.Text(d, "marketable") == "1", amount, type, border, tradable ? null : LockEnds(d)));
 		}
 
 		return items;
 	}
+
+	/// <summary>
+	/// 1.8.2: when an item that can't be traded now can be: the description's cache_expiration, else its owner line
+	/// "Tradable/Marketable After [date]1792998000[/date]" / "Tradable After: Oct 26, 2026 (7:00:00) GMT" / "Tradable After:
+	/// 2026-10-26". <see cref="DateTime.MaxValue"/> when such a line is there but its date can't be read - a lock that ends,
+	/// never mistaken for one that doesn't. Null with neither: it can never be traded.
+	/// </summary>
+	public static DateTime? LockEnds(JsonElement description) {
+		const DateTimeStyles Utc = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
+
+		if (DateTime.TryParse(InventoryContents.Text(description, "cache_expiration"), CultureInfo.InvariantCulture, Utc, out DateTime cached)) {
+			return cached;
+		}
+
+		if (!description.TryGetProperty("owner_descriptions", out JsonElement lines) || (lines.ValueKind != JsonValueKind.Array)) {
+			return null;
+		}
+
+		foreach (JsonElement line in lines.EnumerateArray()) {
+			Match m = LockLine().Match(HtmlTag().Replace(InventoryContents.Text(line, "value"), " "));
+
+			if (!m.Success) {
+				continue;
+			}
+
+			string when = m.Groups[1].Value;
+
+			if ((DateTag().Match(when) is { Success: true } tag) && long.TryParse(tag.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out long unix)
+				&& (unix is > 0 and < 253_402_300_799)) {
+				return DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+			}
+
+			string plain = Zone().Replace(Clock().Replace(when, "$1"), "").Trim();
+
+			return DateTime.TryParse(plain, CultureInfo.InvariantCulture, Utc, out DateTime at) ? at : DateTime.MaxValue;
+		}
+
+		return null;
+	}
+
+	[GeneratedRegex(@"(?:Tradable|Marketable)[^:\[]*?After:?\s*(.+)", RegexOptions.IgnoreCase)]
+	private static partial Regex LockLine();
+
+	[GeneratedRegex(@"\[date\]\s*([0-9]+)\s*\[/date\]", RegexOptions.IgnoreCase)]
+	private static partial Regex DateTag();
+
+	[GeneratedRegex("<[^>]*>")]
+	private static partial Regex HtmlTag();
+
+	[GeneratedRegex(@"\(([0-9:]+)\)")]
+	private static partial Regex Clock();
+
+	[GeneratedRegex(@"\b(?:GMT|UTC)\b")]
+	private static partial Regex Zone();
 
 	/// <summary>
 	/// The game's name as the item's own "Game" tag says it ("Spacebase DF-9") - free with the inventory, and there for games
@@ -380,11 +450,17 @@ public static partial class Spare {
 			return new Said("on your keep list");
 		}
 
+		if ((item.Kind == SpareKind.Card) && input.BoughtGames.Contains(item.Game)) {
+			return new Said("bought for a badge - kept until it's crafted");
+		}
+
 		if ((item.Kind == SpareKind.FoilCard) && !r.Foils) {
 			return new Said("a foil card - foils are switched off");
 		}
 
-		if (!item.Tradable) {
+		// 1.8.2: a lock that ends, or one that never does on an item that turns into gems, is weighed like any spare item
+		// (Decide). Left alone: an item that never trades and has no gems, and one the market takes but trades don't.
+		if (!item.Tradable && !item.LockedForNow && !(item.LockedForGood && (item.GooType > 0))) {
 			return new Said("trade-locked");
 		}
 
@@ -428,7 +504,8 @@ public static partial class Spare {
 			// What's leaving anyway (on the market, in an offer) isn't a copy that stays - it's protected, and doesn't count.
 			List<SpareItem> staying = [.. copies.Where(c => !input.Busy.Contains(c.AssetId))];
 			List<(SpareItem Item, Said Why)> covered = [.. staying.Select(c => (c, Protection(c, input))).Where(static p => p.Item2 != null).Select(static p => (p.c, p.Item2!.Value))];
-			List<SpareItem> free = [.. staying.Where(c => covered.TrueForAll(p => p.Item.AssetId != c.AssetId))];
+			// 1.8.2: copies locked for now last - the ones kept are those that can't be sold yet, and a copy that can goes first.
+			List<SpareItem> free = [.. staying.Where(c => covered.TrueForAll(p => p.Item.AssetId != c.AssetId)).OrderBy(static c => c.LockedForNow)];
 
 			foreach (SpareItem busy in copies.Where(c => input.Busy.Contains(c.AssetId))) {
 				decisions.Add(new SpareDecision(busy, SpareVerdict.Protected, new Said("on the market or in a trade offer")));
@@ -450,7 +527,7 @@ public static partial class Spare {
 				SpareItem item = free[i];
 
 				if (i < spareCount) {
-					decisions.Add(Choose(item, input));
+					decisions.Add(Decide(item, input));
 				} else {
 					decisions.Add(new SpareDecision(item, SpareVerdict.NotSpare, item.Kind is SpareKind.Card or SpareKind.FoilCard && (keep > r.KeepCopies)
 						? new Said("needed for the badge")
@@ -460,6 +537,51 @@ public static partial class Spare {
 		}
 
 		return new SparePlan(decisions);
+	}
+
+	/// <summary>
+	/// 1.8.2: a spare item, trade-locked or not. Locked for now: weighed at the market price of the same item as if it could be
+	/// sold - gems winning are made now (Steam turns a locked item into gems), selling winning keeps it until the lock ends and
+	/// it's weighed again. Locked for good: gems, as it can never be sold.
+	/// </summary>
+	private static SpareDecision Decide(SpareItem item, SpareInput input) {
+		if (item.LockedForGood) {
+			return NeverSold(item, input);
+		}
+
+		if (!item.LockedForNow) {
+			return Choose(item, input);
+		}
+
+		SpareDecision d = Choose(item with { Tradable = true, Marketable = true }, input) with { Item = item };
+
+		if (d.Verdict != SpareVerdict.Sell) {
+			return d;
+		}
+
+		return new SpareDecision(item, SpareVerdict.Keep, item.TradableAfter == DateTime.MaxValue
+			? new Said("kept until it can be traded - selling pays more")
+			: new Said("kept until {0} - selling pays more", DateOnly.FromDateTime(item.TradableAfter!.Value).ToString("O", CultureInfo.InvariantCulture)), d.PriceCents, d.GemValue);
+	}
+
+	/// <summary>1.8.2: an item that can never be traded or sold: gems where gems are allowed, else kept.</summary>
+	private static SpareDecision NeverSold(SpareItem item, SpareInput input) {
+		SpareRules r = input.Rules;
+
+		if (r.Action == 3) {
+			return new SpareDecision(item, SpareVerdict.Keep, new Said("you chose to keep everything - only reported"));
+		}
+
+		if (r.Action == 2) {
+			return new SpareDecision(item, SpareVerdict.Keep, new Said("the market pays nothing for it"));
+		}
+
+		// Kept rather than "unpriced" while its gems aren't known: it has no price to wait for, only its gem value.
+		return input.GemValue(item) switch {
+			null => new SpareDecision(item, SpareVerdict.Keep, new Said("its gem value isn't known yet - kept")),
+			<= 0 => new SpareDecision(item, SpareVerdict.Keep, new Said("worth nothing as gems or on the market")),
+			int goo => new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - it can never be traded or sold", goo), 0, goo)
+		};
 	}
 
 	/// <summary>A spare item: gems, sell or keep - or wait, when its price isn't known.</summary>
@@ -477,9 +599,27 @@ public static partial class Spare {
 			if ((r.Action is 0 or 1) && (item.GooType > 0)) {
 				int? goo = input.GemValue(item);
 
-				return goo is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"))
-					: goo > 0 ? new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - nobody sells it on the market", goo), 0, goo.Value, 0, 0)
-					: new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
+				if (goo is not > 0) {
+					return goo is null ? new SpareDecision(item, SpareVerdict.Unpriced, new Said("its gem value isn't known yet - kept"))
+						: new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
+				}
+
+				// Nobody lists it now, but it sold lately: gems only when they're worth what that sale would pay, less a cent.
+				int median = item.Marketable ? Math.Max(0, price.Median ?? 0) : 0;
+				int lately = median > 0 ? Seller.ReceiveFor(median) : 0;
+
+				if (lately > 0) {
+					if ((input.Sack is not { Cents: > 0 } lateSack) || (input.Now - lateSack.At > maxAge)) {
+						return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"));
+					}
+
+					if (SellingPays(GemsWorth(goo.Value, lateSack.Cents), lately)) {
+						return new SpareDecision(item, SpareVerdict.Keep, new Said("nobody sells it now, but it sold for {0} lately - more than its gems - kept",
+							Money(median, input.Currency)));
+					}
+				}
+
+				return new SpareDecision(item, SpareVerdict.Gems, new Said("{0} gems - nobody sells it on the market", goo), 0, goo.Value, 0, 0);
 			}
 
 			return new SpareDecision(item, SpareVerdict.Unpriced, new Said("nobody sells it, so there's no price - kept"));
@@ -494,7 +634,7 @@ public static partial class Spare {
 			return new SpareDecision(item, SpareVerdict.OverLimit, new Said("worth {0} - over your price limit, never touched", Cash(worth)), worth);
 		}
 
-		(int? listed, Said noPrice) = ListingPrice.For(price, r.SellPrice, r.DumpPct);
+		(int? listed, Said noPrice) = ListingPrice.For(price, r.SellPrice, r.DumpPct, r.MinSaleCents, r.FloorPct);
 
 		// An unsold listing taken down to go up cheaper: at the step it was given, while the market hasn't gone up since, and
 		// never under the floor.
@@ -524,24 +664,70 @@ public static partial class Spare {
 			case 3:
 				return Keep(new Said("you chose to keep everything - only reported"));
 			case 1:
-				return gems is null ? NoGemValue() : gems > 0 ? Gems(new Said("{0} gems", gems)) : Keep(new Said("it doesn't turn into gems"));
+				return GemsOnly();
 			case 2:
 				return declined is { } no ? Keep(no)
 					: tooLittle ? Keep(Little())
 					: receive > 0 ? Sell(new Said("sells for {0}, you get {1}", Cash(list), Cash(receive))) : Keep(new Said("the market pays nothing for it"));
 		}
 
-		// Selling would pay under the minimum: gems when they're worth anything, kept when they're not.
+		// Selling would pay under the minimum: gems - but only when the gems are worth what the sale pays, less a cent.
+		// Gems worth less: sold all the same (it pays at least 0.01). No gems at all: kept.
 		if (tooLittle && (declined == null)) {
-			return gems is null ? NoGemValue()
-				: gems > 0 ? Gems(new Said("{0} gems - selling would pay {1}, under your {2} minimum", gems, Cash(receive), Cash(r.MinSaleCents)))
-				: Keep(Little());
+			if (gems is null) {
+				return NoGemValue();
+			}
+
+			if (gems == 0) {
+				return Keep(Little());
+			}
+
+			if (!sackKnown) {
+				return GemsPriceUnknown();
+			}
+
+			decimal worthAsGems = GemsWorth(gems.Value, input.Sack!.Value.Cents);
+
+			return SellingPays(worthAsGems, receive)
+				? Sell(new Said("sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})", Cash(list), Cash(receive), Cash(r.MinSaleCents), gems, Cash(worthAsGems)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}, under your {3} minimum", gems, Cash(worthAsGems), Cash(receive), Cash(r.MinSaleCents)));
 		}
 
 		SpareDecision best = Best();
 
 		// Its listing was declined on the phone: not listed again for now - turned into gems only where gems won anyway.
 		return (declined is { } why) && (best.Verdict != SpareVerdict.Gems) ? Keep(why) : best;
+
+		// Gems only (1.8.2): gems, unless selling would pay at least a cent more than the gems are worth - then it's kept.
+		// What selling would pay: at the price it would list for, or - with no sure price - the most it's worth, so an
+		// item is never turned into gems on a low guess.
+		SpareDecision GemsOnly() {
+			if (gems is null) {
+				return NoGemValue();
+			}
+
+			if (gems == 0) {
+				return Keep(new Said("it doesn't turn into gems"));
+			}
+
+			int sale = !item.Marketable ? 0 : listed != null ? receive : Seller.ReceiveFor(worth);
+
+			if (sale <= 0) {
+				return Gems(new Said("{0} gems", gems));
+			}
+
+			if (!sackKnown) {
+				return GemsPriceUnknown();
+			}
+
+			decimal worthAsGems = GemsWorth(gems.Value, input.Sack!.Value.Cents);
+
+			return SellingPays(worthAsGems, sale)
+				? Keep(new Said("selling would pay {0}, more than its {1} gems are worth ({2}) - kept", Cash(sale), gems, Cash(worthAsGems)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}", gems, Cash(worthAsGems), Cash(sale)));
+		}
+
+		SpareDecision GemsPriceUnknown() => new(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
 
 		// Best of the two.
 		SpareDecision Best() {
@@ -558,22 +744,28 @@ public static partial class Spare {
 			}
 
 			if (!sackKnown) {
-				return new SpareDecision(item, SpareVerdict.Unpriced, new Said("the price of gems isn't known yet - kept"), worth);
+				return GemsPriceUnknown();
 			}
 
 			decimal gemsWorth = GemsWorth(gems.Value, input.Sack!.Value.Cents);
 
-			return GemsWin(gemsWorth, receive, r.MarginPct)
-				? Gems(new Said("{0} gems, worth {1} - beats selling ({2}) by {3}% or more", gems, Cash(gemsWorth), Cash(receive), r.MarginPct))
-				: Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)));
+			return SellingPays(gemsWorth, receive)
+				? Sell(new Said("sells for {0}, you get {1} - more than its {2} gems are worth ({3})", Cash(list), Cash(receive), gems, Cash(gemsWorth)))
+				: Gems(new Said("{0} gems, worth {1} - selling would pay {2}", gems, Cash(gemsWorth), Cash(receive)));
 		}
 	}
 
 	/// <summary>What some gems are worth: their share of a sack of 1000, in cents.</summary>
 	public static decimal GemsWorth(int gems, int sackCents) => gems * (decimal) sackCents / 1000m;
 
-	/// <summary>Gems beat selling: worth at least the margin more than the market pays after fees.</summary>
-	public static bool GemsWin(decimal gemsWorth, int receiveCents, int marginPct) => gemsWorth >= receiveCents * (1m + (marginPct / 100m));
+	/// <summary>
+	/// 1.8.2, the owner's rule - gems never lose money: an item is sold only when selling pays at least a cent more (after
+	/// Steam's fees, in the wallet's currency) than its gems are worth; otherwise it becomes gems. So never gems worth less
+	/// than the sale less a cent, and never a sale that pays less than its gems - each sale needs a phone confirmation, and
+	/// Steam's fee eats tiny ones. Decides between the two on its own: "Gems must beat selling by" and "Only sell if you get
+	/// at least" can't make an item gems that selling pays more for.
+	/// </summary>
+	public static bool SellingPays(decimal gemsWorth, int receiveCents) => receiveCents >= gemsWorth + 1m;
 
 	/// <summary>Cents as money, "0.25" - the account's own currency, whichever it is.</summary>
 	public static string Money(decimal cents) {

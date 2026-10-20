@@ -83,6 +83,15 @@ public sealed partial class MainWindow : IDisposable {
 	/// </summary>
 	private readonly List<Core.LogStack.Row> _rows = [];
 
+	/// <summary>
+	/// Every line it was given, shown or not - so turning a "Show in the app's log" chip back on brings its lines back, and
+	/// turning one off takes them away, without a restart (Core/LogShow.cs). <see cref="_rows"/> is built from these.
+	/// </summary>
+	private readonly List<Log.Entry> _given = [];
+
+	/// <summary>The chips that were off when <see cref="_rows"/> was built.</summary>
+	private string _shownOff = Core.LogShow.Off(Config.Live.Global);
+
 	/// <summary>Where the stacked rows were drawn this time, for the click that opens or closes one.</summary>
 	private readonly List<(int Y, int H, Core.LogStack.Row Row)> _stackHits = [];
 
@@ -304,12 +313,50 @@ public sealed partial class MainWindow : IDisposable {
 		lock (_logGate) {
 			// The entry is kept whole - time, account and line drawn in fixed columns at paint time. Pre-joining them into
 			// one string is what makes a log look like a wall - the eye has nothing to line up on.
-			Core.LogStack.Add(_rows, entry);
+			_given.Add(entry);
 
-			while (_rows.Count > 200) {
-				_rows.RemoveAt(0);
+			while (_given.Count > 1000) {
+				_given.RemoveAt(0);
+			}
+
+			// Under chips changed since: built again from every line, and this one is in it.
+			if (!FollowChips() && Core.LogShow.Shows(entry)) {
+				Core.LogStack.Add(_rows, entry);
+				TrimRows();
 			}
 		}
+	}
+
+	private void TrimRows() {
+		while (_rows.Count > 200) {
+			_rows.RemoveAt(0);
+		}
+	}
+
+	/// <summary>
+	/// The rows again from every line given, when the "Show in the app's log" chips changed since they were built. Returns
+	/// whether it did. Under <see cref="_logGate"/>.
+	/// </summary>
+	private bool FollowChips() {
+		string off = Core.LogShow.Off(Config.Live.Global);
+
+		if (string.Equals(off, _shownOff, StringComparison.Ordinal)) {
+			return false;
+		}
+
+		_shownOff = off;
+		_rows.Clear();
+		_logScroll = 0;
+
+		foreach (Log.Entry e in _given) {
+			if (Core.LogShow.Shows(e)) {
+				Core.LogStack.Add(_rows, e);
+			}
+		}
+
+		TrimRows();
+
+		return true;
 	}
 
 	private static int ColourOf(string level) => level switch {
@@ -324,6 +371,7 @@ public sealed partial class MainWindow : IDisposable {
 	public void ClearLog() {
 		lock (_logGate) {
 			_rows.Clear();
+			_given.Clear();
 			_logScroll = 0;
 		}
 
@@ -667,6 +715,11 @@ public sealed partial class MainWindow : IDisposable {
 
 				return IntPtr.Zero;
 
+			case WmPrintClient:
+				PaintInto(wParam);
+
+				return IntPtr.Zero;
+
 			case WmCtlColorEdit: {
 				// An EDIT paints itself, so the only way to make it match is to hand back the colours and a
 				// background brush every time it asks. Without this it is a white box on a black window.
@@ -868,6 +921,7 @@ public sealed partial class MainWindow : IDisposable {
 				int lines;
 
 				lock (_logGate) {
+					FollowChips();
 					lines = Core.LogStack.Shown(_rows).Count();
 				}
 
@@ -884,6 +938,24 @@ public sealed partial class MainWindow : IDisposable {
 
 				if (id != _hoverId) {
 					_hoverId = id;
+					Invalidate();
+				}
+
+				// The account row's Steam button has a tooltip (its label is one word).
+				(int X, int Y, int W, int H)? steamTip = null;
+
+				if (_sheet && (id < 0)) {
+					int mx = LoWord(lParam), my = HiWord(lParam);
+
+					foreach ((int hx, int hy, int hw, int hh, _, char what) in _hits) {
+						if ((what == 'o') && (mx >= hx) && (mx < hx + hw) && (my >= hy) && (my < hy + hh)) {
+							steamTip = (hx, hy, hw, hh);
+						}
+					}
+				}
+
+				if (steamTip != _steamTip) {
+					_steamTip = steamTip;
 					Invalidate();
 				}
 
@@ -906,6 +978,7 @@ public sealed partial class MainWindow : IDisposable {
 				_tracking = false;
 				_overLink = false;
 				_hoverId = -1;
+				_steamTip = null;
 				Invalidate();
 
 				return IntPtr.Zero;
@@ -1045,11 +1118,29 @@ public sealed partial class MainWindow : IDisposable {
 
 				break;
 
-			case 'c':
-				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> cards " + name)));
+			case 'o':
+				// A real action on the PC (Steam closes and reopens), so it asks first - the dashboard button asks too.
+				const uint MbYesNo = 0x4, MbIconQuestion = 0x20, IdYes = 6;
+				string ask = Core.Loc.T("Sign your Steam app into {0}? Steam will close and open again.", name);
+
+				// 1.8.2: an account Steam doesn't remember yet opens on Steam's sign-in - say so, with its Steam Guard code
+				// when nocat.farm has its authenticator (Ctrl+C copies a message box's text).
+				if ((_mgr.Get(name) is { } who) && Core.SteamOpen.Look(who).SignIn) {
+					ask += "\n\n" + Core.Loc.T("Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.");
+
+					if (Core.SteamOpen.GuardCode(who) is { } guard) {
+						ask += "\n\n" + Core.Loc.T("Steam Guard code: {0}", guard.Code);
+					}
+				}
+
+				if (MessageBox(_hwnd, ask, Core.Loc.T("Open in Steam"), MbYesNo | MbIconQuestion) != IdYes) {
+					break;
+				}
+
+				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> steam open " + name)));
 				_ = Task.Run(async () => {
 					try {
-						string output = await Commands.RunAsync(_mgr, "cards " + name).ConfigureAwait(false);
+						string output = await Commands.RunAsync(_mgr, "steam open " + name).ConfigureAwait(false);
 
 						foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
 							if (line.Length > 0) {
@@ -1057,7 +1148,7 @@ public sealed partial class MainWindow : IDisposable {
 							}
 						}
 					} catch (Exception e) {
-						Log.Failed("the cards button", e, name);
+						Log.Failed("the Open in Steam button", e, name);
 					}
 
 					Invalidate();
@@ -1115,6 +1206,7 @@ public sealed partial class MainWindow : IDisposable {
 	private void SetSheet(bool open) {
 		_sheet = open;
 		_accountScroll = 0;
+		_steamTip = null;
 
 		if (_input != IntPtr.Zero) {
 			ShowWindow(_input, open ? SwHide : SwShow);
@@ -1226,6 +1318,18 @@ public sealed partial class MainWindow : IDisposable {
 	private void Paint(IntPtr hwnd) {
 		IntPtr dc = BeginPaint(hwnd, out PaintStruct ps);
 
+		try {
+			PaintInto(dc);
+		} finally {
+			EndPaint(hwnd, ref ps);
+		}
+	}
+
+	/// <summary>
+	/// The whole frame into <paramref name="dc"/>: the screen's DC on WM_PAINT, or the one Windows hands over on
+	/// WM_PRINTCLIENT (PrintWindow, thumbnails), so a copy of the window looks exactly like the window.
+	/// </summary>
+	private void PaintInto(IntPtr dc) {
 		// Draw the whole frame into a bitmap and blit it once. Painting straight to the screen at one frame a
 		// second makes every text run visibly flash.
 		IntPtr mem = CreateCompatibleDC(dc);
@@ -1282,7 +1386,6 @@ public sealed partial class MainWindow : IDisposable {
 			SelectObject(mem, old);
 			DeleteObject(bmp);
 			DeleteDC(mem);
-			EndPaint(hwnd, ref ps);
 		}
 	}
 
@@ -1338,7 +1441,43 @@ public sealed partial class MainWindow : IDisposable {
 	/// row that then has to grow to fit them. It scrolls, so the number of accounts stops being a layout problem.
 	/// </summary>
 	/// <summary>What the two button columns plus the right margin occupy, so the text lays out around them.</summary>
-	private const int ButtonBlock = 14 + (58 * 2) + 5;
+	/// <remarks>
+	/// 1.8.2: every row is the same 2 x 2 grid of equal buttons - [stop][pause] / [profile][Steam] - the Steam slot left
+	/// empty on an account without the Open in Steam button, so the columns line up down the list. (The cards button went:
+	/// the 'cards' command and the dashboard still show what's left to farm.)
+	/// </remarks>
+	private const int ButtonBlock = SheetBtnRight + (SheetBtnW * 2) + SheetBtnGap;
+
+	// ── the account list's measures (1.8.2) ──
+	private const int SheetBtnW = 50;       // each of the four row buttons
+	private const int SheetBtnH = 20;
+	private const int SheetBtnGap = 4;      // between them, both ways
+	private const int SheetBtnRight = 12;   // from the last button to the panel's edge
+	private const int SheetToButtons = 14;  // from the middle column to the buttons
+	private const int SheetToDetail = 12;   // from what the account is doing to the middle column
+	private const int SheetSide = 40;       // the panel's margin left, right and at the bottom of the window
+	private const int SheetTop = 12;        // from the title bar to the panel
+	private const int SheetRow = 54;        // one account's row: never stretched, the rows start at the top
+	private const int SheetHeaderH = 38;    // ACCOUNTS, + add account, close - fixed while the rows scroll
+	private const int SheetFooterH = 6;
+
+	/// <summary>
+	/// 1.8.2: where the account list sits in a window whose content is <paramref name="height"/> tall below a title bar of
+	/// <paramref name="titleH"/>: from just under the title bar down to the bottom, with the same margin at the bottom as
+	/// at the sides, so nothing is left empty under it. Rows keep their height and start at the top; when there are more
+	/// accounts than fit, the rows scroll inside the panel under its fixed header.
+	/// </summary>
+	/// <returns>The panel's top and height, how many rows show at once, and whether it scrolls.</returns>
+	public static (int Top, int Height, int Visible, bool Scrolls) SheetLayout(int height, int titleH, int count) {
+		int top = titleH + SheetTop;
+		int panel = Math.Max(SheetHeaderH + SheetRow + SheetFooterH, height - SheetSide - top);
+		int fits = Math.Max(1, (panel - SheetHeaderH - SheetFooterH) / SheetRow);
+
+		return (top, panel, Math.Max(1, Math.Min(Math.Max(1, count), fits)), count > fits);
+	}
+
+	/// <summary>The account row's Steam button under the pointer, for its tooltip: where it is drawn. Null when none.</summary>
+	private (int X, int Y, int W, int H)? _steamTip;
 
 	/// <summary>
 	/// Every command, in a panel that scrolls by itself.
@@ -1403,20 +1542,11 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, TitleH, _w, _h - TitleH, Rgb(6, 6, 6));
 
 		List<Bot> all = _mgr.All.ToList();
-		const int SheetRow = 54;
-		const int HeaderH = 38;
-		const int FooterH = 14;
-		const int MaxVisible = 6;
 
-		int visible = Math.Clamp(all.Count, 1, MaxVisible);
-		bool scrolls = all.Count > visible;
-
-		// Sized to what it holds. Three accounts do not need a panel the height of the window - the empty half
-		// just reads as something failing to load.
-		int w = _w - 80;
-		int h = HeaderH + (visible * SheetRow) + FooterH + (scrolls ? 18 : 0);
-		int x = (_w - w) / 2;
-		int top = TitleH + Math.Max(12, ((_h - TitleH - h) / 2) - 30);
+		// Down to the bottom of the window, the same margin there as at the sides (see SheetLayout).
+		(int top, int h, int visible, bool scrolls) = SheetLayout(_h, TitleH, all.Count);
+		int w = _w - (2 * SheetSide);
+		int x = SheetSide;
 
 		Fill(dc, x, top, w, h, Surface);
 		Outline(dc, x, top, w, h, Border);
@@ -1427,54 +1557,58 @@ public sealed partial class MainWindow : IDisposable {
 
 		int room = visible;
 		_accountScroll = Math.Clamp(_accountScroll, 0, Math.Max(0, all.Count - room));
+		List<Bot> shown = [.. all.Skip(_accountScroll).Take(room)];
 
-		int y = top + HeaderH;
+		// Columns measured from the panel, not nailed to absolute pixels. The buttons on the right; the middle column (the
+		// sitting's time, the day's hours, rep4rep) as wide as its widest line and just left of them; what each account is
+		// doing gets everything else, so a long status is shown whole rather than cut short beside a gap.
+		int textLeft = x + 30;
+		int buttonsX = (x + w) - ButtonBlock;
+		int widest = 0;
 
-		foreach (Bot bot in all.Skip(_accountScroll).Take(room)) {
+		foreach (Bot b in shown) {
+			(_, string si, int dn, int tt, string td, _, int dt, string sd) = Describe(b);
+			string top1 = tt > 0 ? $"{Fmt.Hm(dn)} of {Fmt.Hm(tt)}" : si;
+			string bottom = string.Join("   ", new[] { dt > 0 ? td : "", sd }.Where(static t => t.Length > 0));
+			widest = Math.Max(widest, Math.Max(TextWidth(dc, top1, _fontSmall), TextWidth(dc, bottom, _fontSmall)));
+		}
+
+		// Never more than 45% of the room, so what the account is doing always keeps the larger share.
+		int detailW = Math.Min(widest, ((buttonsX - SheetToButtons - textLeft) * 45) / 100);
+		int detailX = buttonsX - SheetToButtons - detailW;
+		int doingW = Math.Max(40, (detailW > 0 ? detailX - SheetToDetail : buttonsX - SheetToButtons) - textLeft);
+
+		int y = top + SheetHeaderH;
+
+		foreach (Bot bot in shown) {
 			(string doing, string sitting, int done, int total, string today, _, int dayTotal, string said) = Describe(bot);
+			bool online = bot.IsOnline, running = bot.Running, paused = bot.Paused;
 
-			int dot = bot.IsOnline ? bot.Paused || bot.PlayingBlocked ? Amber : Green : TextDim;
-			Fill(dc, x + 14, y + 10, 6, 6, dot);
+			// The two button rows, and the two text lines beside them.
+			int block = y + 4;
+			int line1 = block;
+			int line2 = block + 18;
 
-			int nameColour = bot.IsOnline ? NameColour.Of(bot.Cfg.LogColour)?.Win32 ?? Accent : TextDim;
-			Text(dc, bot.Name, x + 30, y + 4, _fontBold, nameColour);
-			_hits.Add((x + 30, y, TextWidth(dc, bot.Name, _fontBold) + 8, 18, bot.Name, 'n'));
+			int dot = online ? paused || bot.PlayingBlocked ? Amber : Green : TextDim;
+			Fill(dc, x + 14, line1 + 6, 6, 6, dot);
 
-			// Columns measured from the panel, not nailed to absolute pixels.
-			//
-			// The detail column used to start at a hard-coded x + 300 while the buttons were pinned to the right
-			// edge, so in a small window the two closed to about 60px apart and everything between them collapsed
-			// to "rep4rep: ..." and "42m of 4h..." - an ellipsis where the number should be, which is worse than
-			// showing nothing at all. It now takes a share of whatever room exists, and if that share is too
-			// small to finish a sentence the column is dropped and the space goes to what the account is doing.
-			const int MinDetail = 110;
-			int textLeft = x + 30;
-			int textRoom = (x + w - ButtonBlock) - textLeft;
-			int detailW = (textRoom * 40) / 100;
+			int nameColour = online ? NameColour.Of(bot.Cfg.LogColour)?.Win32 ?? Accent : TextDim;
+			Text(dc, bot.Name, textLeft, line1, _fontBold, nameColour);
+			_hits.Add((textLeft, line1 - 4, TextWidth(dc, bot.Name, _fontBold) + 8, 18, bot.Name, 'n'));
 
-			if (detailW < MinDetail) {
-				detailW = 0;
-			}
-
-			int doingW = Math.Max(40, textRoom - detailW - (detailW > 0 ? 12 : 0));
-			int detailX = (x + w - ButtonBlock) - detailW;
-
-			Clipped(dc, doing, textLeft, y + 22, doingW, _fontSmall, TextMid);
+			Clipped(dc, doing, textLeft, line2, doingW, _fontSmall, TextMid);
 
 			string detail = total > 0 ? $"{Fmt.Hm(done)} of {Fmt.Hm(total)}" : sitting;
 
 			if ((detail.Length > 0) && (detailW > 0)) {
-				Clipped(dc, detail, detailX, y + 4, detailW, _fontSmall, TextNormal);
+				Clipped(dc, detail, detailX, line1, detailW, _fontSmall, TextNormal);
 			}
 
 			// Both, when there is something to say for each. The old line picked one and silently dropped the
 			// other, so switching rep4rep on made the hours-played figure disappear with no explanation.
 			//
-			// Measured rather than joined and hoped for. Joining unconditionally just moved the problem: an
-			// account with a day figure AND a comment count overflowed the column and the row read
-			// "12m of 6h40m today   rep4rep:..." - the ellipsis this column was reworked to get rid of, back
-			// again. So try the pair, then the pair without the second "today" (the first one already said it),
-			// then whichever single fact still fits. Something true and whole beats two things cut in half.
+			// Measured rather than joined and hoped for: the pair, then the pair without the second "today" (the first
+			// one already said it), then whichever single fact still fits. Something true and whole beats two things cut in half.
 			if (detailW > 0) {
 				string day = dayTotal > 0 ? today : "";
 				string trimmed = said.EndsWith(" today", StringComparison.Ordinal) && (day.Length > 0)
@@ -1491,30 +1625,60 @@ public sealed partial class MainWindow : IDisposable {
 						continue;
 					}
 
-					Clipped(dc, candidate, detailX, y + 22, detailW, _fontSmall, TextDim);
+					Clipped(dc, candidate, detailX, line2, detailW, _fontSmall, TextDim);
 
 					break;
 				}
 			}
 
-			// Every action for this account, in fixed positions so they are in the same place on every row.
-			const int BtnW = 58;
-			const int BtnH = 20;
-			const int Gap = 5;
-			int bx = (x + w) - ButtonBlock;
+			// [stop][pause] / [profile][Steam]: one grid on every row, the Steam slot empty where its button is off.
+			int right = buttonsX + SheetBtnW + SheetBtnGap;
+			int row2 = block + SheetBtnH + SheetBtnGap;
 
-			RowButton(dc, bot.Running ? "stop" : "start", bx, y + 4, BtnW, BtnH, bot.Name, 'x', bot.Running ? Red : Green);
-			RowButton(dc, bot.Paused ? "resume" : "pause", bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
-			RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
-			RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
+			RowButton(dc, running ? "stop" : "start", buttonsX, block, SheetBtnW, SheetBtnH, bot.Name, 'x', running ? Red : Green);
+			RowButton(dc, paused ? "resume" : "pause", right, block, SheetBtnW, SheetBtnH, bot.Name, 'p', Amber);
+			RowButton(dc, "profile", buttonsX, row2, SheetBtnW, SheetBtnH, bot.Name, 'n', TextMid);
+
+			if (Core.SteamOpen.On(bot.Cfg, bot.Name)) {
+				RowButton(dc, "Steam", right, row2, SheetBtnW, SheetBtnH, bot.Name, 'o', Accent);
+			}
 
 			y += SheetRow;
 			Fill(dc, x + 8, y - 2, w - 16, 1, Rgb(28, 28, 28));
 		}
 
+		// More accounts than fit: a slim scrollbar in the right-hand gutter, beside the rows - the wheel scrolls them.
 		if (scrolls) {
-			Text(dc, $"showing {_accountScroll + 1}-{Math.Min(all.Count, _accountScroll + room)} of {all.Count}  ·  scroll for the rest",
-				x + 14, top + h - 16, _fontSmall, TextDim);
+			int trackTop = top + SheetHeaderH;
+			int trackH = visible * SheetRow;
+			int thumbH = Math.Max(16, (trackH * visible) / all.Count);
+			int maxScroll = Math.Max(1, all.Count - visible);
+			int thumbY = trackTop + (((trackH - thumbH) * _accountScroll) / maxScroll);
+
+			Fill(dc, x + w - 8, trackTop, 3, trackH, Rgb(24, 24, 24));
+			Fill(dc, x + w - 8, thumbY, 3, thumbH, TextDim);
+
+			// Where it is, in the room under the rows when there's room for a line.
+			if (h - SheetHeaderH - (visible * SheetRow) >= 20) {
+				Text(dc, $"showing {_accountScroll + 1}-{Math.Min(all.Count, _accountScroll + visible)} of {all.Count}  ·  scroll for the rest",
+					x + 14, top + h - 20, _fontSmall, TextDim);
+			}
+		}
+
+		// The Steam button's tooltip, last so it sits over the rows: under the button, its right edge on the button's.
+		if (_steamTip is { } tip) {
+			string says = Core.Loc.T("Open in Steam: sign your Steam app into this account");
+			int tw = TextWidth(dc, says, _fontSmall) + 16;
+			int tx = Math.Clamp((tip.X + tip.W) - tw, 4, Math.Max(4, _w - tw - 4));
+			int ty = tip.Y + tip.H + 4;
+
+			if (ty + 22 > _h - 4) {
+				ty = tip.Y - 26;
+			}
+
+			Fill(dc, tx, ty, tw, 22, Panel);
+			Outline(dc, tx, ty, tw, 22, Border);
+			Text(dc, says, tx + 8, ty + 3, _fontSmall, TextBright);
 		}
 	}
 
@@ -1573,7 +1737,9 @@ public sealed partial class MainWindow : IDisposable {
 		int total;
 
 		lock (_logGate) {
-			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented.
+			// What shows: a stack is one row (its newest line's time and colour), opened its lines under it, indented. Under the
+			// "Show in the app's log" chips as they are now.
+			FollowChips();
 			List<(Core.LogStack.Row Row, Log.Entry Entry, int Depth, bool Head)> shown = [.. Core.LogStack.Shown(_rows)];
 			total = shown.Count;
 			_logScroll = Math.Clamp(_logScroll, 0, Math.Max(0, total - room));
@@ -2270,6 +2436,7 @@ public sealed partial class MainWindow : IDisposable {
 	// ── Win32 ───────────────────────────────────────────────────────────────
 	private const int WmDestroy = 0x0002;
 	private const int WmPaint = 0x000F;
+	private const int WmPrintClient = 0x0318;
 	private const int WmClose = 0x0010;
 	private const int WmEraseBkgnd = 0x0014;
 	private const int WmSetFont = 0x0030;
@@ -2434,6 +2601,7 @@ public sealed partial class MainWindow : IDisposable {
 	[DllImport("user32.dll")] private static extern IntPtr SetTimer(IntPtr hwnd, IntPtr id, int elapse, IntPtr func);
 	[DllImport("user32.dll")] private static extern bool ReleaseCapture();
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int MessageBox(IntPtr hwnd, string text, string caption, uint type);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool SetWindowText(IntPtr hwnd, string text);
 	[DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);

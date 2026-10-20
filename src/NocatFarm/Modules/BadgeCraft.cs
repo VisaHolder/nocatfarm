@@ -16,7 +16,7 @@ namespace NocatFarm.Modules;
 ///    craft everything it listed, and never re-read after each craft. Steam's own UI reloads every time -
 ///    do not copy that.
 /// </summary>
-public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
+public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 	private const int SweepLowHours = 22;
 	private const int SweepHighHours = 26;
 	private const int CraftGapLowSeconds = 6;
@@ -32,6 +32,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 	private DateTime _nextSweep = DateTime.MinValue;
 	private HumanGate? _gate;
+
+	/// <summary>The gate a human-mode account's crafting - and a set sold instead (<see cref="SetSale.ListAsync"/>) - keeps to: its own day.</summary>
+	internal HumanGate Gate => _gate ??= HumanGate.OwnDay(Bot);
 
 	/// <summary>The last sweep left sets uncrafted on purpose (human mode crafts a few at a time) - look again sooner.</summary>
 	private bool _moreToCraft;
@@ -79,7 +82,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			// its own day - not at 4am while it's asleep.
 			_gate ??= HumanGate.OwnDay(Bot);
 
-			if ((DateTime.UtcNow < _nextSweep) || !_gate.Open) {
+			if ((DateTime.UtcNow < _nextSweep) || !Gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 					return;
 				}
@@ -92,11 +95,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			try {
 				int made = await SweepAsync(ct).ConfigureAwait(false);
 
+				if (made > 0) {
+					Gate.Acted();   // 1.8.2: a badge crafted shows on the account - the other things wait a little after it
+				}
+
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
 					_backoffUntil = DateTime.UtcNow + wait;
 				} else if (_moreToCraft) {
-					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
+					wait = Rng.HumanMinutes(25, 75);   // the rest of the sets within the hour or so, like somebody crafting a few now and then
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -148,14 +155,23 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// is actually complete (<paramref name="setComplete"/>: the inventory holds a whole normal set); then it crafts at its
 	/// next chance in its own day (the loop's gate). A look already due sooner stays; Steam's back-off is never cut short.
 	/// </summary>
-	public void LookSoon(bool setComplete = false) {
+	/// <summary>
+	/// 'craft now &lt;account&gt;': the next look right away - its day and Steam's back-off still apply (the loop's gate).
+	/// </summary>
+	public void LookNow() {
+		if (DateTime.UtcNow >= _backoffUntil) {
+			_nextSweep = DateTime.UtcNow;
+		}
+	}
+
+	public void LookSoon(bool setComplete = false, bool bought = false) {
 		if (Bot.Cfg.LegitMode && !setComplete) {
 			return;
 		}
 
-		DateTime soon = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 40) : Rng.Minutes(10, 40));
+		DateTime soon = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(3, 10) : Rng.Minutes(2, 6));   // 1.8.2: a set just finished is crafted within minutes - the next buying look sees its level
 
-		if ((_pulledTo != DateTime.MinValue) && (soon < _pulledTo + PullGap)) {
+		if (!bought && (_pulledTo != DateTime.MinValue) && (soon < _pulledTo + PullGap)) {   // 1.8.2: cards bought for a set don't wait out the packs' gap
 			soon = _pulledTo + PullGap;
 		}
 
@@ -197,60 +213,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		_status = new Said("checking for completed sets");
 
-		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p=1"), ct).ConfigureAwait(false);
-
-		if (html == null) {
+		if (await ReadyAsync(ct).ConfigureAwait(false) is not { } ready) {
 			_status = new Said("couldn't read the badges page");
 
 			return 0;
 		}
-
-		List<Craftable> ready = Parse(html);
-		List<(uint App, bool Foil)> linked = ReadyLinks(html);
-
-		// Foil badges: only with "Also craft foil badges" on, and not while Steam's refusal of one has foils waiting.
-		bool foils = Bot.Cfg.CraftFoilBadges && (DateTime.UtcNow >= _foilBackoffUntil);
-
-		// Steam paginates at ~60 badges. Reading only page 1 meant a big library never crafted anything past it.
-		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
-
-		for (int page = 2; page <= pages; page++) {
-			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);   // a person pages through, not all at once
-
-			string? more = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p={page}"), ct).ConfigureAwait(false);
-
-			if (more == null) {
-				break;
-			}
-
-			foreach (Craftable c in Parse(more)) {
-				if (!ready.Exists(existing => SameSet(existing, c.AppId, c.Border > 0))) {
-					ready.Add(c);
-				}
-			}
-
-			linked.AddRange(ReadyLinks(more));
-		}
-
-		// The badges list only LINKS a finished set's craft button to the game's card page; the numbers the craft needs
-		// are on that page, in Profile_CraftGameBadge(...). Looking for them on the list alone found nothing to craft,
-		// ever. Each set still to read costs one page, a few seconds apart.
-		foreach ((uint app, bool foil) in CardPagesToRead(linked.Where(l => foils || !l.Foil), ready)) {
-			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);
-
-			string? cards = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{app}/?l=english" + (foil ? "&border=1" : "")), ct).ConfigureAwait(false);
-
-			if ((cards != null) && (ParseCardsPage(cards) is { } c) && (c.AppId == app)) {
-				if (!ready.Contains(c)) {
-					ready.Add(c);
-				}
-			} else if (cards != null) {
-				// The list said this set is ready; its page not offering the craft is worth knowing about.
-				Log.Debug($"{GameNames.Of(app)}: the card page has no craft button to read ({cards.Length} chars) - left for the next sweep", Bot.Name);
-			}
-		}
-
-		ready = ToCraft(ready, foils);
 
 		if (ready.Count == 0) {
 			_status = new Said("nothing ready to craft");
@@ -260,10 +227,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		Log.Info(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
 		int made = 0;
+		List<string> craftedNames = [];
 
 		// A human-mode account crafts a few and gets on with its day - the rest wait for a later sweep. Twenty badges
 		// a few seconds apart is a burst nobody makes by hand.
-		int most = Bot.Cfg.LegitMode ? Rng.Next(1, 4) : ready.Count;
+		int most = ready.Count;   // 1.8.2: every ready set - somebody on the badges page crafts them all, one after another
 		_moreToCraft = ready.Count > most;
 		ready = [.. ready.Take(most)];
 
@@ -277,6 +245,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		if (inventory is not { Complete: true }) {
 			_status = new Said("couldn't read the inventory - crafting later");
 			_moreToCraft = true;
+
+			return 0;
+		}
+
+		// 1.8.2 smart levelling: a normal set whose market price buys clearly more levels is listed for sale instead.
+		ready = await SellInsteadAsync(ready, inventory, ct).ConfigureAwait(false);
+
+		if (ready.Count == 0) {
+			_status = new Said("nothing left to craft - sets sold instead");
 
 			return 0;
 		}
@@ -349,9 +326,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				made++;
 				_crafted++;
+				craftedNames.Add(c.Border == 0 ? GameNames.Of(c.AppId) : $"{GameNames.Of(c.AppId)} (foil)");
 				Stats.Record(Stats.KindBadge, Bot.Name);
 
-				bool more = await Sleep(Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);
+				// 1.8.2: the cards bought for this badge are spent - no longer kept out of selling and swaps.
+				if (c.Border == 0) {
+					BuyLedger.Of(Bot.Name).Crafted(c.AppId, DateTime.UtcNow);
+				}
+
+				bool more = await Sleep(Bot.Cfg.LegitMode ? Rng.Seconds(15, 45) : Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);   // human mode: a click, the page, the next
 
 				// Handed back after the gap, not the moment it's crafted: a send that read the inventory just before the
 				// craft still lists the copies it ate, and finding them claimed a few seconds longer keeps them out of its
@@ -371,12 +354,80 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		if (made > 0) {
-			Log.Reward(new Said("crafted {0} badge(s) - Steam level up", made), Bot.Name);
+			Log.Reward(new Said("crafted {0} badge(s): {1} · +{2} XP", made, string.Join(", ", craftedNames), made * 100), Bot.Name);
+
+			// 1.8.2: the new Steam level, said once (with what the cards bought for these badges cost).
+			try {
+				if (await Bot.GetLevelAsync().ConfigureAwait(false) is uint level) {
+					LevelUps.Seen(Bot, (int) level);
+				}
+			} catch (Exception e) when (e is not OperationCanceledException) {
+				Log.Debug(new Said("couldn't read the Steam level: {0}", Log.Describe(e)), Bot.Name);
+			}
 		}
 
 		_status = new Said("{0} crafted since start", _crafted);
 
 		return made;
+	}
+
+	/// <summary>
+	/// The finished sets to craft, from the badges pages and the card page of each set they only link to - normal sets
+	/// first, foils only when they're crafted now. Null when the badges page couldn't be read.
+	/// </summary>
+	private async Task<List<Craftable>?> ReadyAsync(CancellationToken ct) {
+		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p=1"), ct).ConfigureAwait(false);
+
+		if (html == null) {
+			return null;
+		}
+
+		List<Craftable> ready = Parse(html);
+		List<(uint App, bool Foil)> linked = ReadyLinks(html);
+
+		// Foil badges: only with "Also craft foil badges" on, and not while Steam's refusal of one has foils waiting.
+		bool foils = Bot.Cfg.CraftFoilBadges && (DateTime.UtcNow >= _foilBackoffUntil);
+
+		// Steam paginates at ~60 badges. Reading only page 1 meant a big library never crafted anything past it.
+		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
+
+		for (int page = 2; page <= pages; page++) {
+			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);   // a person pages through, not all at once
+
+			string? more = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p={page}"), ct).ConfigureAwait(false);
+
+			if (more == null) {
+				break;
+			}
+
+			foreach (Craftable c in Parse(more)) {
+				if (!ready.Exists(existing => SameSet(existing, c.AppId, c.Border > 0))) {
+					ready.Add(c);
+				}
+			}
+
+			linked.AddRange(ReadyLinks(more));
+		}
+
+		// The badges list only LINKS a finished set's craft button to the game's card page; the numbers the craft needs
+		// are on that page, in Profile_CraftGameBadge(...). Looking for them on the list alone found nothing to craft,
+		// ever. Each set still to read costs one page, a few seconds apart.
+		foreach ((uint app, bool foil) in CardPagesToRead(linked.Where(l => foils || !l.Foil), ready)) {
+			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);
+
+			string? cards = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{app}/?l=english" + (foil ? "&border=1" : "")), ct).ConfigureAwait(false);
+
+			if ((cards != null) && (ParseCardsPage(cards) is { } c) && (c.AppId == app)) {
+				if (!ready.Contains(c)) {
+					ready.Add(c);
+				}
+			} else if (cards != null) {
+				// The list said this set is ready; its page not offering the craft is worth knowing about.
+				Log.Debug($"{GameNames.Of(app)}: the card page has no craft button to read ({cards.Length} chars) - left for the next sweep", Bot.Name);
+			}
+		}
+
+		return ToCraft(ready, foils);
 	}
 
 	/// <summary>

@@ -22,7 +22,8 @@ public static class TradeOffers {
 	/// <summary>One item in an offer, with what Steam says it is.</summary>
 	/// <param name="Game">The game a community item belongs to (market_fee_app); 0 when Steam didn't say.</param>
 	/// <param name="Icon">Steam's picture for it - https://community.cloudflare.steamstatic.com/economy/image/&lt;Icon&gt;/96fx96f.</param>
-	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "");
+	/// <param name="Hash">Its market name ("440-Scout") - what a price is kept under (1.8.2 card swaps). Empty when Steam didn't say.</param>
+	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "");
 
 	/// <param name="Giving">What this account would hand over.</param>
 	/// <param name="Receiving">What this account would get.</param>
@@ -30,7 +31,9 @@ public static class TradeOffers {
 	/// once a trade is held - whether an offer WOULD be held is <see cref="HoldAsync"/>.</param>
 	/// <param name="ConfirmationMethod">0 none; otherwise it's accepted (or sent) and waiting on an email (1) or the
 	/// phone (2) - so it isn't to be accepted again, and the cards on its giving side are already spoken for.</param>
-	public sealed record Offer(ulong Id, ulong Partner, int State, bool Ours, DateTime? HoldUntil, List<Item> Giving, List<Item> Receiving, int ConfirmationMethod = 0) {
+	/// <param name="Message">The note the sender wrote on it - a 1.8.2 card swap says which match it is.</param>
+	public sealed record Offer(ulong Id, ulong Partner, int State, bool Ours, DateTime? HoldUntil, List<Item> Giving, List<Item> Receiving, int ConfirmationMethod = 0,
+		string Message = "") {
 		public bool IsPureDonation => (Giving.Count == 0) && (Receiving.Count > 0);
 
 		/// <summary>Accepted by this account, waiting on the phone or an email before anything moves.</summary>
@@ -145,10 +148,15 @@ public static class TradeOffers {
 	/// through at once; null when Steam didn't say. This is the only way to know BEFORE accepting - an offer's own
 	/// hold date is only set once it's already held.
 	/// </summary>
-	public static async Task<TimeSpan?> HoldAsync(Bot bot, ulong partner, CancellationToken ct = default) {
-		string? json = await bot.Web.ApiGetAsync("IEconService", "GetTradeHoldDurations", new Dictionary<string, string> {
-			["steamid_target"] = partner.ToString(CultureInfo.InvariantCulture)
-		}, ct).ConfigureAwait(false);
+	/// <param name="token">The partner's trade link token, for a partner that isn't a Steam friend (1.8.2 card swaps).</param>
+	public static async Task<TimeSpan?> HoldAsync(Bot bot, ulong partner, CancellationToken ct = default, string token = "") {
+		Dictionary<string, string> args = new() { ["steamid_target"] = partner.ToString(CultureInfo.InvariantCulture) };
+
+		if (token.Length > 0) {
+			args["trade_offer_access_token"] = token;
+		}
+
+		string? json = await bot.Web.ApiGetAsync("IEconService", "GetTradeHoldDurations", args, ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(json)) {
 			return null;
@@ -227,7 +235,7 @@ public static class TradeOffers {
 		}
 
 		return new Offer(id, AccountBase + account, state, ours, escrow > 0 ? DateTimeOffset.FromUnixTimeSeconds(escrow).UtcDateTime : null,
-			giving, receiving, confirmation);
+			giving, receiving, confirmation, Text(o, "message"));
 	}
 
 	private static List<Item>? Items(JsonElement o, string side, Dictionary<string, JsonElement> descriptions) {
@@ -251,7 +259,8 @@ public static class TradeOffers {
 			uint game = described && uint.TryParse(Text(d, "market_fee_app"), out uint g) ? g : 0;
 
 			items.Add(new Item(app, Text(i, "contextid"), asset, classId, instanceId, Math.Max(1, amount),
-				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : ""));
+				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : "",
+				described ? Text(d, "market_hash_name") : ""));
 		}
 
 		return items;

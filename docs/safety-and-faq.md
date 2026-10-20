@@ -39,6 +39,22 @@ opened, and items the market history says sold. Each is counted only once Steam 
 per hour (60 items into gems, 10 badges, 30 packs, 60 sold). There's nothing from before 1.8.1 for these: the history
 only started keeping them then. Turn the setting off and none of these numbers is sent.
 
+The shared cheapest-sets list (1.8.2, *Share cheapest sets with other nocat.farm users*, right under *Share my farming
+totals*, on while *Count me as a user* is): only while an account buys the cheapest full sets, about every 6 hours the
+set finder sends nocat.lol the cheapest whole card sets it found on the market - each set's game, its cards' names,
+each card's cheapest price in US cents, how many are for sale and how long ago that was seen - with the same random
+install ID, and takes back the cheapest ones every copy found. Nothing about you or your accounts. What comes back only
+says which games to check first: every card is priced again on the Steam market before anything is bought, so a wrong
+price there can't cost you money. Turn it off (or *Count me as a user*) and nothing is sent or fetched.
+
+Card swaps with other nocat.farm users (1.8.2, *Swap spare cards with other nocat.farm users*, off on every account) talk to
+nocat.lol only for accounts you turned them on for: the same random install ID, and for each of those accounts its
+SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Every few weeks each account
+also signs in to nocat.lol through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID
+it is, can't sign in or trade, and nocat.lol keeps only the date. Never an account name, password or login. Turning
+swaps off on an account deletes its SteamID and trade link from nocat.lol within a minute or two, and its old matches
+within the hour; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
+
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
 the internet, ten wrong passwords in an hour from any addresses pause signing in from outside for an hour, and every

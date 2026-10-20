@@ -37,6 +37,27 @@ public sealed class SpareLedger {
 	public int DoneItems { get; set; }
 	public int DoneCents { get; set; }
 
+	/// <summary>1.8.2: the day (local, yyyy-MM-dd) the items over the price limit were last said in the log - once a day.</summary>
+	public string OverLimitSaid { get; set; } = "";
+
+	/// <summary>
+	/// 1.8.2: whether the items over the price limit are due to be said today - once a day, by this PC's date, kept over
+	/// a restart. True once a day, and noted (saved by the caller).
+	/// </summary>
+	public bool OverLimitDue(DateTime local) {
+		string day = local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+		lock (Gate) {
+			if (OverLimitSaid == day) {
+				return false;
+			}
+
+			OverLimitSaid = day;
+
+			return true;
+		}
+	}
+
 	[System.Text.Json.Serialization.JsonIgnore]
 	public string Account { get; private set; } = "";
 

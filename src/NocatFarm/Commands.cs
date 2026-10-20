@@ -56,16 +56,18 @@ public static partial class Commands {
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
-		new("add", "<name> <steamLogin|qr> [human|robot]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made."),
+		new("add", "<name> <steamLogin|qr> [human|robot] [from <account>]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. 'from <account>' starts it with that account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone; Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview."),
+		new("copy", "settings <from> <to> [yes]", GroupAccounts, "Copy one account's settings onto another, so you don't set it up twice. 'copy settings new new2' shows every change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Kept as new2 has them: whatever spends money, gems or points, its money limits, trading, sending items, 'Accept commands from' and human mode. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 		new("stuck", "", GroupAccounts, "The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off.", "alarm"),
+		new("steam", "[account|all] | open <account> | on|off <account|all>", GroupAccounts, "Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops nocat.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
 		new("persona", "<account> [state]", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now."),
-		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'."),
+		new("nickname", "<account> [profile name]", GroupPlaying, "Change the name everybody sees on the profile and friends list - without a name, it shows the one it has now. Not the custom game name, that's 'gamename'."),
 		new("grind", "<account|all> <appID> <hours> | <account|all> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
@@ -79,14 +81,18 @@ public static partial class Commands {
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
 			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
-		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
+		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees - and, with buying cards on, games whose cards are worth more sold than the levels they'd make (buying cards sells those), 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. \"Deal with spare items\" does it by itself (see 'spare')."),
 		new("booster", "[account|all] | <account> <appIDs> | plan [account|all] | open [account|all] | open <account> do", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the \"Make booster packs\" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. \"Open booster packs\" does it by itself.", "boosters"),
 		new("spare", "preview [account|all] | on|off <account> | do <account>", GroupCards, "Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day).", "gems"),
-		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
+		new("craft", "now <account> | preview <account>", GroupCards, "'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing."),
+		new("buy", "[account|all] | preview [account|all] | on|off|do <account>", GroupCards, "Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent."),
+		new("sets", "[account]", GroupCards, "The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys."),
+		new("levelup", "<account> <level> [buy [yes]] | <account> stop", GroupCards, "What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
 		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "", "loot"),
+		new("swaps", "[account] | preview|on|off|check <account> | sync", GroupTrades, "Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and nocat.lol deletes its SteamID and trade link. 'swaps sync' asks nocat.lol for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to nocat.lol and turns nothing on."),
 
 		new("2fa", "[account]", GroupGuard, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
 		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
@@ -117,7 +123,7 @@ public static partial class Commands {
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
-		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all>", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
+		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all> | hold <hours>|off", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it.", "r4r"),
 
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
@@ -294,7 +300,8 @@ public static partial class Commands {
 
 			// 'add <name> <login> [human|robot|qr]' takes no password - one typed on the end anyway stays out.
 			case "add":
-				return Slots(line, parts, (w, i) => (i < 3) || (w.ToLowerInvariant() is "human" or "robot" or "qr") ? null : "***");
+				return Slots(line, parts, (w, i) => (i < 3) || (w.ToLowerInvariant() is "human" or "robot" or "qr" or "from")
+					|| parts[i - 1].Equals("from", StringComparison.OrdinalIgnoreCase) ? null : "***");
 
 			// 'redeem [account] <key|file> [key...]': a key in any shape it takes. A path is where the keys are, not one; anything
 			// else - a key half typed ('AAAA-BBBB-CCCC'), a password pasted in the wrong place - is masked as well.
@@ -614,7 +621,9 @@ public static partial class Commands {
 			// With no account these go over every account - claiming event items on all of them, every account's trades,
 			// wallet, inventory and bans - which from one account's chat reached past it.
 			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "events" or "value" or "level"
-			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare";
+			or "balance" or "points" or "bans" or "scamwatch" or "health" or "spare"
+			// 1.8.2
+			or "buy" or "sets";
 
 	/// <summary>
 	/// A Steam-chat line with this account's name put in after the command, for a command that takes the account first and,
@@ -651,6 +660,10 @@ public static partial class Commands {
 			// Spending Steam Points, or agreeing to it, can't be undone - the owner's word too. 'points spend preview' is only a look.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "points") && PointsNeedsOwner(words[1..]))
 			|| SpareRefusesFromChat(words)
+			// Turning buying cards on, or buying now, spends money - the owner's word too. 'buy preview' is only a look.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "buy") && BuyNeedsOwner(words[1..]))
+			// 1.8.2: starting a level goal spends money too.
+			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "levelup") && words[1..].Any(static w => w.Equals("yes", StringComparison.OrdinalIgnoreCase)))
 			|| SpendsFromChat(words)
 			// 'scamwatch ok' lifts a scam watch hold - the owner's word, never a chat's: whoever took the account could send it.
 			|| ((words.Length > 1) && (Resolve(words[0])?.Name == "scamwatch") && words[1..].Any(static w => w.Equals("ok", StringComparison.OrdinalIgnoreCase)));
@@ -663,6 +676,10 @@ public static partial class Commands {
 	public static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
 			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini"
+			// 1.8.2: another account's settings written over this one's - as 'set' is.
+			or "copy"
+			// Open in Steam signs this PC's Steam client in - it only makes sense at the PC, never from a chat.
+			or "steam"
 			// Who has been at the dashboard (addresses, devices, and signing everybody out), a zip of every saved login,
 			// and the reports that show every account.
 			or "visitors" or "backup" or "report" or "stuck"
@@ -966,7 +983,7 @@ public static partial class Commands {
 				"scamwatch" or "scam" => ScamWatchCommand(mgr, rest),           // 1.8.0
 				"health" => await HealthCommandAsync(mgr, rest).ConfigureAwait(false),   // 1.8.0
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
-				"levelup" or "lvlup" => LevelUp(mgr, rest),
+				"levelup" or "lvlup" => await LevelUpAsync(mgr, rest).ConfigureAwait(false),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, AllIsEvery(rest)).ConfigureAwait(false),
 				"human" => Human(mgr, AllIsEvery(rest)),
 				"habits" => Habits(mgr, AllIsEvery(rest)),
@@ -989,6 +1006,9 @@ public static partial class Commands {
 				"level" => await LevelAsync(mgr, rest).ConfigureAwait(false),
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
+				"buy" => await BuyCardsAsync(mgr, rest).ConfigureAwait(false),
+				"sets" => await SetsAsync(mgr, rest).ConfigureAwait(false),
+				"craft" => await CraftAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
 				"spare" or "gems" => await GemsAsync(mgr, rest).ConfigureAwait(false),
 				"freegames" => await FreeGamesAsync(mgr, rest).ConfigureAwait(false),
@@ -997,12 +1017,15 @@ public static partial class Commands {
 				"events" => Events(mgr, rest),
 				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
+				"swaps" => await SwapsAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest, line).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest, atThisPc).ConfigureAwait(false),
 				"cards" => Cards(mgr, AllIsEvery(rest)),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
+				"copy" => CopySettings(mgr, rest),
+				"steam" => await SteamAsync(mgr, rest).ConfigureAwait(false),
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
 				"enable" => Enable(mgr, rest, true),
 				"disable" => Enable(mgr, rest, false),
@@ -1859,13 +1882,20 @@ public static partial class Commands {
 		return $"Dashboard set to the {want} theme. Reload the page to see it.";
 	}
 
-	private static string About() =>
-		$"""
+	// 1.8.2: says it counts itself only while "Count me as a user" is on.
+	public static string About() => Live.Global.CountMeAsUser
+		? $"""
 		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue. Once an hour it tells nocat.lol it's running, to count
 		Steam accounts: a random install ID, the version, the platform and how many accounts
 		are signed in (just the number), nothing else. Count me as a user turns it off.
+		"""
+		: $"""
+		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
+		Everything runs on this PC. Your accounts never leave it; the only thing that talks
+		to rep4rep is the task queue. Count me as a user is off, so it doesn't count itself
+		on nocat.lol.
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
@@ -1879,12 +1909,19 @@ public static partial class Commands {
 			sb.AppendLine($"  One of: {def.Choices}");
 		}
 
+		// The unit the dashboard draws after the box - the label no longer says it.
+		string unit = Settings.UnitOf(def) is { } u ? (u == "%" ? "%" : " " + u) : "";
+
 		if (def.Min > double.MinValue || def.Max < double.MaxValue) {
-			sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}.");
+			sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}{unit}.");
+		}
+
+		if (def.Zero != null) {
+			sb.AppendLine($"  0 = {def.Zero}.");
 		}
 
 		object? fallback = Settings.Read(defaults, def.Name);
-		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}");
+		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}{(fallback is int or float or double ? unit : "")}");
 
 		if (def.NeedsRestart) {
 			sb.AppendLine("  Takes effect the next time nocat.farm starts.");
@@ -2079,7 +2116,8 @@ public static partial class Commands {
 				sb.AppendLine($"    {bar} waiting on you: {b.GuardPrompt}");
 			}
 
-			foreach (IBotModule m in b.Modules) {
+			// 1.8.2: a disabled account does nothing - its modules' last words ("grinding", "settling in") were stale.
+			foreach (IBotModule m in b.Cfg.Enabled ? b.Modules : []) {
 				// Module statuses are localised, so a bare `is not ("idle" or "off")` only ever matched in
 				// English and printed a wall of resting modules in every other language. Compare against the
 				// same words in the same language.
@@ -2290,7 +2328,7 @@ public static partial class Commands {
 
 	private static async Task<string> AddAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "add <name> <steamLogin|qr> [human|robot]\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password\n  human      your main: human mode, it keeps a believable day\n  robot      a spare or farm account: full speed, around the clock (the default)";
+			return "add <name> <steamLogin|qr> [human|robot] [from <account>]\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password\n  human      your main: human mode, it keeps a believable day\n  robot      a spare or farm account: full speed, around the clock (the default)\n  from       start with another account's settings instead of the defaults";
 		}
 
 		string name = args[0];
@@ -2310,18 +2348,23 @@ public static partial class Commands {
 		}
 
 		bool qr = args[1].Equals("qr", StringComparison.OrdinalIgnoreCase);
-		string? kind = args.Length > 2 ? args[2].ToLowerInvariant() : null;
 
-		if (kind is not (null or "human" or "robot")) {
-			return "The last word is 'human' (your main - human mode) or 'robot' (a farm account, full speed).";
+		// 1.8.2: 'human' or 'robot', and 'from <account>' to start with that account's settings (Commands.Copy.cs).
+		NewAccount made = AddConfig(mgr, name, args);
+
+		if (made.Wrong != null) {
+			return made.Wrong;
 		}
 
-		BotConfig cfg = qr ? new BotConfig { SteamLogin = name, SignInWithQr = true } : new BotConfig { SteamLogin = args[1] };
-		cfg.LegitMode = kind == "human";
+		(BotConfig cfg, string? kind, string? copyFrom, SettingsCopy.Plan? copied) = (made.Cfg!, made.Kind, made.CopiedFrom, made.Copied);
 		Bot? bot = await mgr.AddAsync(name, cfg).ConfigureAwait(false);
 
 		if (bot == null) {
 			return $"Couldn't add '{name}'.";
+		}
+
+		if (copied != null) {
+			SettingsCopy.LogCopied(bot.Name, copyFrom!, copied);
 		}
 
 		// A brand new account plays nothing until it is told what to. The app window has no form for that, so
@@ -2335,7 +2378,8 @@ public static partial class Commands {
 		}
 
 		// Always say which it became: leaving the word off used to make a robot without a word about it.
-		string kindNote = kind == "human" ? " It's in human mode."
+		string kindNote = copied != null ? CopiedNote(name, copyFrom!, copied)
+			: kind == "human" ? " It's in human mode."
 			: $" It's a robot account (full speed). For your main, add 'human' at the end instead - or type: set {name} LegitMode true";
 
 		return qr
@@ -3119,7 +3163,7 @@ public static partial class Commands {
 			}
 
 			if (!bot.Cfg.ShowInventoryValue) {
-				lines.Add($"{bot.Name}: not being valued (its \"Work out what its inventory is worth\" setting is off)");
+				lines.Add($"{bot.Name}: not being valued (its \"Show inventory value\" setting is off)");
 
 				continue;
 			}
@@ -3319,9 +3363,30 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
-	private static string LevelUp(BotManager mgr, string[] args) {
-		if ((args.Length < 2) || !int.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out int target) || (target < 1)) {
-			return "levelup <account> <level>      what reaching that Steam level would cost";
+	internal const string LevelUpUsage = "levelup <account> <level>          what reaching that Steam level would cost\n"
+		+ "levelup <account> <level> buy      the same, as a level goal - nothing is bought\n"
+		+ "levelup <account> <level> buy yes  start it: buying cards buys those levels, then stops\n"
+		+ "levelup <account> stop             end a level goal";
+
+	/// <summary>
+	/// 'levelup': what reaching a Steam level costs - at once, from the prices already known (1.8.2) - and a level goal that
+	/// buys those levels ('buy yes'), or ends one ('stop').
+	/// </summary>
+	private static async Task<string> LevelUpAsync(BotManager mgr, string[] args) {
+		if ((args.Length == 2) && args[1].Equals("stop", StringComparison.OrdinalIgnoreCase)) {
+			if (mgr.Get(args[0]) is not { } who) {
+				return NoSuchAccount(mgr, args[0]);
+			}
+
+			return BotManager.ModuleOf<CardBuyer>(who)?.StopGoal() == true ? $"{who.Name}: level goal stopped - nothing more is bought for it." : $"{who.Name}: no level goal to stop.";
+		}
+
+		bool buy = (args.Length >= 3) && args[2].Equals("buy", StringComparison.OrdinalIgnoreCase);
+		bool yes = buy && (args.Length == 4) && args[3].Equals("yes", StringComparison.OrdinalIgnoreCase);
+
+		if ((args.Length < 2) || (args.Length > 4) || ((args.Length >= 3) && !buy) || ((args.Length == 4) && !yes)
+			|| !int.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out int target) || (target < 1)) {
+			return LevelUpUsage.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
 		}
 
 		if (mgr.Get(args[0]) is not { } bot) {
@@ -3332,7 +3397,57 @@ public static partial class Commands {
 			return $"{bot.Name}: not logged in";
 		}
 
-		return LevelPlanner.Ask(bot, Math.Min(target, 5000));
+		target = Math.Min(target, 5000);
+
+		// Without buying cards running, the old plan worked out in the background.
+		if (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer) {
+			return buy ? $"{bot.Name}: buying cards isn't running on it." : LevelPlanner.Ask(bot, target);
+		}
+
+		CardBuyer.GoalPreview p = await buyer.GoalPreviewAsync(target, CancellationToken.None).ConfigureAwait(false);
+		string said = LevelGoalSaid(bot.Name, p, buy && !yes, buy);
+
+		if (!yes || (p.Problem.Length > 0)) {
+			return said;
+		}
+
+		return buyer.StartGoal(p) is { } why
+			? said + Environment.NewLine + $"{bot.Name}: level goal not started - {why}."
+			: said + Environment.NewLine + $"{bot.Name}: level goal {target} started - it buys these levels at its own pace{(bot.Cfg.LegitMode ? ", in its day" : "")}, never over {BuyPlan.Money(p.Total * 11 / 10, p.Currency)}, and stops at level {target}. 'buy {bot.Name}' shows how far it got; 'levelup {bot.Name} stop' ends it.";
+	}
+
+	/// <summary>A level estimate written out (English, like every console reply).</summary>
+	/// <param name="buy">1.8.2: shown as a level goal - says when the wallet holds less than its total.</param>
+	public static string LevelGoalSaid(string name, CardBuyer.GoalPreview p, bool askYes, bool buy = false) {
+		if (p.Problem.Length > 0) {
+			return $"{name}: {p.Problem}.";
+		}
+
+		string M(long cents) => BuyPlan.Money(cents, p.Currency);
+		List<string> lines = [
+			$"{name}: level {p.Level} -> {p.Target}: {p.Needed} badge level(s) of 100 XP{(p.Held > 0 ? $", {p.Held} of them from sets it holds once crafted" : "")}.",
+			$"{name}: to buy: {p.Costs.Count} level(s) for about {M(p.Total)} - {p.Known} from known prices{(p.Costs.Count > p.Known ? $", {p.Costs.Count - p.Known} at the set finder's prices" : "")}"
+				+ (p.MaxLevel > 0 ? $", none over {M(p.MaxLevel)} a level." : ".")
+		];
+
+		if (p.Missing > 0) {
+			lines.Add($"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate.");
+		}
+
+		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
+		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Wallet < p.Total)) {
+			lines.Add($"{name}: the wallet has {M(p.Wallet)} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
+		}
+
+		if (p.Costs.Count > 0) {
+			lines.Add($"{name}: about {p.Days.ToString("0.#", CultureInfo.InvariantCulture)} day(s) at its pace. Every card is priced again right before it's bought.");
+		}
+
+		lines.Add(askYes
+			? $"{name}: nothing bought - 'levelup {name} {p.Target} buy yes' starts it as a level goal (never over {M(p.Total * 11 / 10)}); 'levelup {name} stop' ends one."
+			: $"{name}: 'levelup {name} {p.Target} buy' shows it as a level goal.");
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	private static async Task<string> BansAsync(BotManager mgr, string[] args) {
@@ -3395,6 +3510,18 @@ public static partial class Commands {
 		return await SlowAsync(job, [bot], _ => verb == "cancel" ? trading.CancelSentAsync(args[2]) : trading.AnswerAsync(verb == "accept", args[2]), ReplyWithin).ConfigureAwait(false);
 	}
 
+	/// <summary>1.8.2: Steam Guard by email only (no authenticator here): its offers are confirmed from Steam's email, not a phone.</summary>
+	internal static bool EmailGuard(Bot bot) => !bot.CanConfirmTrades && (BotManager.ModuleOf<AccountHealth>(bot)?.Last?.Guard == "email");
+
+	/// <summary>An offer's state in a few words for 'offers' - confirmed in the email on an email-guard account (1.8.2).</summary>
+	public static string OfferState(TradeOffers.Offer o, bool emailGuard) => o.State switch {
+		TradeOffers.Active when o.AwaitingConfirmation => (o.ConfirmationMethod == 1) || emailGuard ? "needs confirming in your email" : "needs confirming on your phone",
+		TradeOffers.Active => "waiting",
+		TradeOffers.NeedsConfirmation => (o.ConfirmationMethod == 1) || emailGuard ? "needs confirming in your email" : "needs confirming on your phone",
+		TradeOffers.InEscrow => "in a trade hold",
+		_ => $"state {o.State}"
+	};
+
 	private static async Task<string> OffersAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
 			return problem!;
@@ -3425,12 +3552,7 @@ public static partial class Commands {
 
 			foreach (TradeOffers.Offer o in live.OrderBy(static o => o.Ours)) {
 				string who = mgr.All.FirstOrDefault(b => b.SteamId == o.Partner)?.Name ?? o.Partner.ToString(CultureInfo.InvariantCulture);
-				string state = o.State switch {
-					TradeOffers.Active => "waiting",
-					TradeOffers.NeedsConfirmation => "needs confirming on your phone",
-					TradeOffers.InEscrow => "in a trade hold",
-					_ => $"state {o.State}"
-				};
+				string state = OfferState(o, EmailGuard(bot));
 				string hold = o.HoldUntil is { } until ? $", hold until {until.ToLocalTime():d MMM HH:mm}" : "";
 
 				// Offers it received get their short number - the one 'trade accept' and the announcements use.
@@ -4308,7 +4430,7 @@ public static partial class Commands {
 	internal static string PersonaNow(Bot bot, SettingDef def) {
 		string set = Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus);
 		string shows = !bot.IsOnline ? $"signed out, so friends see it offline - set to {set}"
-			: bot.Cfg.IUseThisAccount ? $"left to your own Steam client (\"I sign into this one myself\" is on) - set to {set} for when that's off"
+			: bot.Cfg.IUseThisAccount ? $"left to your own Steam client (\"I also use this account in my own Steam app\" is on) - set to {set} for when that's off"
 			: bot.PersonaOverridden ? $"{bot.PersonaReallyWord} - your own Steam client is overriding the {bot.PersonaWord} it sets"
 			: bot.EffectivePersona != bot.Cfg.OnlineStatus ? $"{bot.PersonaWord} for now - set to {set}"
 			: set;
@@ -4497,6 +4619,9 @@ public static partial class Commands {
 	/// name - the whole answer goes to the debug log. Null, or nothing for that account: every line of it, as INFO.</param>
 	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null, Func<string, string?>? Brief = null);
 
+	/// <summary>An answer that comes back later with more lines than this is one line in the window, the rest in the log file.</summary>
+	private const int LongAnswer = 4;
+
 	/// <summary>
 	/// Run a slow command's work, account by account, and answer within <paramref name="wait"/>: what each finished account
 	/// said, and for the rest that it's going on and the log says when it's done - where its answer then goes, under the
@@ -4606,16 +4731,30 @@ public static partial class Commands {
 				// One line, where the command has one: 'spare preview' item by item was 25 INFO lines. The whole answer is in the
 				// debug log, and asking again answers with it straight away.
 				if (job.Brief?.Invoke(name) is { Length: > 0 } brief) {
-					Log.Info(MaskedReply(job.What, brief, typed), source);
+					Log.Answer(MaskedReply(job.What, brief, typed), source);
 					Log.Debug(Columns.ClipChars(SpareRun.OneLine(MaskedReply(job.What, done.Result.Reply, typed)), 300, "..."), source);
 
 					return;
 				}
 
-				foreach (string line in done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)) {
+				List<string> answer = [.. done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)];
+
+				// A long answer is one line in the window - what was asked and how long the answer is - and the whole of it in the log
+				// file (1.8.2: a buy preview was 13 lines). Asking again where it can answer at once (the dashboard, chat) shows it all.
+				if (answer.Count > LongAnswer) {
+					Log.Answer(new Said("{0}: answered · {1} lines in the log file", job.Key ?? job.What, answer.Count), source);
+
+					foreach (string line in answer) {
+						Log.Debug(MaskedReply(job.What, Unnamed(line, name), typed), source);
+					}
+
+					return;
+				}
+
+				foreach (string line in answer) {
 					// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
 					// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
-					Log.Info(MaskedReply(job.What, Unnamed(line, name), typed), source);
+					Log.Answer(MaskedReply(job.What, Unnamed(line, name), typed), source);
 				}
 			}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default), source);
 		}
@@ -4730,12 +4869,17 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> NicknameAsync(BotManager mgr, string[] args, string line) {
-		if (args.Length < 2) {
+		if (args.Length < 1) {
 			return "nickname <account> <profile name>";
 		}
 
 		if (mgr.Get(args[0]) is not { } bot) {
 			return NoSuchAccount(mgr, args[0]);
+		}
+
+		// 1.8.2: no name - the one it has now.
+		if (args.Length < 2) {
+			return NicknameNow(bot.Name, bot.SteamName);
 		}
 
 		string name = Tail(line, 2);   // as typed - put back together from its words, a no-break space in it was a space
@@ -4751,6 +4895,12 @@ public static partial class Commands {
 			_ => $"{bot.Name}: sent - Steam hasn't shown \"{name}\" yet, so check the profile in a minute"
 		};
 	}
+
+	/// <summary>'nickname &lt;account&gt;' alone: its profile name now, and how to change it.</summary>
+	public static string NicknameNow(string account, string? steamName) =>
+		string.IsNullOrEmpty(steamName)
+			? $"{account}: its profile name isn't known until it's logged in. 'nickname {account} <profile name>' changes it."
+			: $"{account}: profile name is \"{steamName}\". 'nickname {account} <profile name>' changes it.";
 
 	private static async Task<string> LevelAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
@@ -4955,18 +5105,28 @@ public static partial class Commands {
 			return stale == 0 ? $"{bot.Name}: no week-old listing the market has gone under." : $"{bot.Name}: took down {removed} of {stale} stale listing(s) - the next sell lists them again at today's price.";
 		}
 
-		Seller.Plan plan = await Seller.PlanAsync(bot, count, CancellationToken.None).ConfigureAwait(false);
+		InventoryContents? inventory = null;
+		Seller.Plan plan = await Seller.PlanAsync(bot, count, CancellationToken.None, read: i => inventory = i).ConfigureAwait(false);
 
 		if (plan.Problem != null) {
 			return $"{bot.Name}: {plan.Problem}";
 		}
 
-		if (plan.Offers.Count == 0) {
+		if ((plan.Offers.Count == 0) && (what == "do")) {
 			return plan.Duplicates == 0 ? $"{bot.Name}: no spare cards - every copy is still useful for a badge." : $"{bot.Name}: {plan.Duplicates} spare card(s), but none with a price to go under yet.";
 		}
 
+		if (plan.Offers.Count == 0) {
+			// 1.8.2: a copy kept for a badge may still be worth more sold than the levels it makes - said with the cards that are.
+			string none = plan.Duplicates == 0 ? $"{bot.Name}: no spare cards - every copy is still useful for a badge." : $"{bot.Name}: {plan.Duplicates} spare card(s), but none with a price to go under yet.";
+
+			return string.Join(Environment.NewLine, [none, .. await DearPreviewAsync(bot, inventory).ConfigureAwait(false)]);
+		}
+
 		if (what == "do") {
-			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None).ConfigureAwait(false);
+			// Priced again right before each goes up by the same rule: the price limit, the minimum, never under its gems.
+			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None,
+				reprice: Seller.OwnRule(bot, bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency, plan.Gems ?? new Dictionary<ulong, int?>())).ConfigureAwait(false);
 		}
 
 		StringBuilder sb = new();
@@ -4982,9 +5142,25 @@ public static partial class Commands {
 			sb.AppendLine($"  already on the market: {up.Count(static l => !l.AwaitingConfirmation)} listing(s), {up.Count(static l => l.AwaitingConfirmation)} waiting on a confirmation");
 		}
 
-		sb.Append($"  'sell {bot.Name} do' lists them{(bot.CanConfirmTrades ? " and confirms them on its authenticator" : " - then confirm them in the Steam app")}.");
+		sb.AppendLine($"  'sell {bot.Name} do' lists them{(bot.CanConfirmTrades ? " and confirms them on its authenticator" : " - then confirm them in the Steam app")}.");
+		sb.AppendJoin(Environment.NewLine, await DearPreviewAsync(bot, inventory).ConfigureAwait(false));
 
 		return sb.ToString();
+	}
+
+	/// <summary>
+	/// 1.8.2, 'sell &lt;account&gt; preview': the games whose cards are worth more sold than the levels they'd make
+	/// (<see cref="DearCards"/>) - each card, its price, what selling pays, the levels kept against the levels sold, and the
+	/// word. Read only; on the inventory the preview just read.
+	/// </summary>
+	private static async Task<List<string>> DearPreviewAsync(Bot bot, InventoryContents? inventory) {
+		if (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer) {
+			return DearCards.PreviewLines(bot.Name, new DearCards.Look([]), "buying cards isn't running");
+		}
+
+		(DearCards.Look look, string off) = await buyer.WeighDearAsync(inventory, CancellationToken.None).ConfigureAwait(false);
+
+		return DearCards.PreviewLines(bot.Name, look, off);
 	}
 
 	private static async Task<string> QueueAsync(BotManager mgr, string[] args) {
@@ -5270,6 +5446,28 @@ public static partial class Commands {
 		string? who = args.Length > 1 ? args[1] : null;
 
 		switch (sub) {
+			// "Pause rep4rep for..." - every account, a number of hours, kept through restarts. It used to be a setting
+			// (Rep4RepPauseHours), which is an action rather than a preference; the setting still works underneath.
+			case "hold": {
+				int hours = who == null ? -1
+					: who.Equals("off", StringComparison.OrdinalIgnoreCase) ? 0
+					: int.TryParse(who, NumberStyles.None, CultureInfo.InvariantCulture, out int h) ? h : -1;
+
+				if (hours is < 0 or > 720) {
+					return "rep4rep hold <hours> - 1 to 720, or 'rep4rep hold off' to end it";
+				}
+
+				lock (ConfigStore.GlobalEditGate) {
+					Live.Global.Rep4RepPauseHours = hours;
+					Live.Global.Rep4RepHoldFrom = null;   // a new hold starts now, not when an old one did
+					ConfigStore.SaveGlobal(Live.Global);
+				}
+
+				ApplyGlobalSideEffects(mgr, Settings.FindGlobal("Rep4RepPauseHours")!);
+
+				return hours == 0 ? "rep4rep: no hold - commenting carries on" : $"rep4rep: commenting held on every account for {hours}h";
+			}
+
 			case "points": {
 				if (!mgr.Rep4Rep.HasToken) {
 					return "No rep4rep API token set. Get one from rep4rep.com under Settings, then:  set Rep4RepApiToken <token>";
@@ -5493,8 +5691,9 @@ public static partial class Commands {
 		int width = defs.Max(static d => d.Name.Length) + 2;
 
 		foreach (string section in defs.Select(static d => d.Section).Distinct()) {
-			List<SettingDef> shown = defs.Where(d => (d.Section == section) && (showAdvanced || !d.Advanced)).ToList();
-			hidden += defs.Count(d => (d.Section == section) && d.Advanced && !showAdvanced);
+			// An internal knob (Hidden) is listed with the advanced ones: 'config all' shows every setting there is.
+			List<SettingDef> shown = defs.Where(d => (d.Section == section) && (showAdvanced || (!d.Advanced && !d.Hidden))).ToList();
+			hidden += defs.Count(d => (d.Section == section) && (d.Advanced || d.Hidden) && !showAdvanced);
 
 			if (shown.Count == 0) {
 				continue;
@@ -5614,6 +5813,9 @@ public static partial class Commands {
 				// its go-ahead goes back off, and off clears the go-ahead - as a dashboard save does.
 				Switches.Settle(bot.Cfg, bot.Name);
 
+				// What goes with it - as a dashboard save does (Settings.Follow).
+				Settings.Follow(bot.Cfg, [def.Name]);
+
 				// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
 				// The dashboard fixed one such pair; this fixes all of them, on both paths.
 				pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
@@ -5670,6 +5872,7 @@ public static partial class Commands {
 				return failure;
 			}
 
+			Settings.Follow(mgr.Global, [globalDef.Name]);
 			ConfigStore.SaveGlobal(mgr.Global);
 			mgr.ApplyGlobal(mgr.Global);
 		}
@@ -5821,6 +6024,14 @@ public static partial class Commands {
 				Log.Configure(mgr.Global.FileLogging, mgr.Global.Debug, ConfigStore.Root, mgr.Global.LogRetentionDays);
 
 				break;
+			case Core.LogShow.Doing or Core.LogShow.Drops or Core.LogShow.Badges or Core.LogShow.Buying or Core.LogShow.Selling or Core.LogShow.Trades
+				or Core.LogShow.Comments or Core.LogShow.Achievements or Core.LogShow.Free or Core.LogShow.Answers or Core.LogShow.App:
+				// "Show in the app's log": the window redraws its log under the new chips now, not at the next line (Core/LogShow.cs).
+				if (OperatingSystem.IsWindows()) {
+					Window?.Invalidate();
+				}
+
+				break;
 			case "StartWithWindows":
 				if (OperatingSystem.IsWindows()) {
 					Windows.WindowsIntegration.SetStartWithWindows(mgr.Global.StartWithWindows);
@@ -5867,7 +6078,8 @@ public static partial class Commands {
 		ImportScan scan = IdlerImport.Scan(args[0], path);
 
 		if (!scan.Found) {
-			return $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}"
+			// 1.8.2: no empty "Looked in:" line - 'import auto' without a folder looks nowhere (its note says to pick one).
+			return (scan.Looked.Count > 0 ? $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}" : "Nothing to import was found.")
 				+ string.Concat(scan.Notes.Select(static n => "\n  " + n))
 				// The example in the shape of a path on this machine: a C:\ one was no help on Linux, a Mac or in Docker.
 				+ $"\nPoint at it directly:  import {args[0]} {(OperatingSystem.IsWindows() ? @"C:\path\to\it" : "/path/to/it")}";

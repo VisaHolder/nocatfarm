@@ -94,6 +94,8 @@ Beyond that:
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
+- Card swaps with other nocat.farm users (off until you turn them on, per account): spare normal cards swapped one
+  for one with other people's accounts, paired by nocat.lol, checked by both sides, never a card your sets need.
 - For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
   and market listings to confirm or deny, like the Steam app.
 - A new VAC, game, trade or community ban is reported straight away, and that game's items are kept out of trades.
@@ -114,17 +116,21 @@ Beyond that:
   game really takes, so "finish the game" never lands 3 hours into a 20-hour game. An optional hunter picks games to
   earn them in.
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
-account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
-things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
+until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
+what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
+Steam sales, and free games if you turn that on.
 
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
   or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's
   own wallet currency. Turning it on shows what it would do first and asks you to confirm.
 - Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
   choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
-  once you turn it on (it shows what it would buy first and asks you to confirm). Nothing that sells, opens or uses up your items is on by default.
+  once you turn it on (it shows what it would buy first and asks you to confirm). Buying cards (off until you turn
+  it on) buys the cards your badges are missing at the cheapest price, whole sets only, within a day's and a week's
+  spending limit (1.50 and 8.00 in your wallet's currency) - and, if you like, the cheapest full sets. Nothing that
+  sells, opens or uses up your items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.
 - Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and
@@ -253,10 +259,12 @@ Once an hour it tells nocat.lol it's running, to count Steam accounts: a random 
 and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
 also carries a few numbers, the game-hours banked, the cards dropped, and the items turned into gems, badges crafted,
 packs opened and items sold, for the totals on nocat.lol's nocat.farm page (*Share my farming totals* turns just that
-off). *Count me as a user* turns it all off.
+off). While an account buys the cheapest full sets, about every 6 hours it also shares the cheapest card sets it found
+on the market - market prices only - and takes back the ones other copies found (*Share cheapest sets with other
+nocat.farm users* turns just that off). *Count me as a user* turns it all off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
-you also use in your own Steam app, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.
+you also use in your own Steam app, turn on *I also use this account in my own Steam app* and it won't kick you off Friends & Chat.
 
 Automating your accounts is against Steam's Subscriber Agreement and can get an account limited or banned.
 nocat.farm is built to be gentle, but only run it on accounts you're OK with risking.

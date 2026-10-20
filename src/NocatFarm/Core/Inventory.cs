@@ -36,8 +36,36 @@ public static class Inventory {
 	/// <summary>A hundred thousand items. Past that, something is wrong and paging on forever is not the answer.</summary>
 	private const int MaxPages = 50;
 
-	public static Task<InventoryContents?> ReadAsync(Bot bot, uint app, string context, CancellationToken ct) =>
-		ReadAsync((uri, c) => bot.Web.GetAsync(uri, c), bot.SteamId, app, context, ct, source: bot.Name);
+	/// <summary>
+	/// The least time between two reads of the same inventory. Steam turns a second read within a few seconds down with
+	/// a 500 "duplicate request (29)" - live 2026-10-20: 'sell preview' then 'spare preview' a second apart, and the second
+	/// said "couldn't read its inventory"; 25 seconds apart both worked. The card market waits the same 20 seconds.
+	/// </summary>
+	internal static TimeSpan ReadGap { get; set; } = TimeSpan.FromSeconds(20);
+
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> ReadGates = new();
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> LastRead = new();
+
+	/// <summary>One account's inventory, one read at a time and <see cref="ReadGap"/> apart - a second look waits rather than fails.</summary>
+	public static async Task<InventoryContents?> ReadAsync(Bot bot, uint app, string context, CancellationToken ct) {
+		string key = $"{bot.SteamId}/{app}/{context}";
+		SemaphoreSlim gate = ReadGates.GetOrAdd(key, static _ => new SemaphoreSlim(1, 1));
+		await gate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			if (LastRead.TryGetValue(key, out DateTime last) && (DateTime.UtcNow - last is var since) && (since < ReadGap)) {
+				await Task.Delay(ReadGap - since, ct).ConfigureAwait(false);
+			}
+
+			try {
+				return await ReadAsync((uri, c) => bot.Web.GetAsync(uri, c), bot.SteamId, app, context, ct, source: bot.Name).ConfigureAwait(false);
+			} finally {
+				LastRead[key] = DateTime.UtcNow;
+			}
+		} finally {
+			gate.Release();
+		}
+	}
 
 	/// <param name="get">How to fetch one page. Passed in so the paging can be exercised against a public inventory
 	/// without an account.</param>

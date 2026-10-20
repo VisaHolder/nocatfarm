@@ -13,7 +13,7 @@ achievements myaccount 440 lock ACH_NAME    # put one back
 
 But unlocking a whole list at once shows on the profile forever, all with one timestamp. **Earn achievements over
 time** (`UnlockAchievements`, off) is the gentle way. It unlocks them only in a game the account is actually
-playing, roughly one every hour or two of play, and never finishes more than 90% of a game (*Finish no more than*). Rare
+playing, roughly one every hour or two of play, and never finishes more than 90% of a game (*Never complete more of a game than*). Rare
 achievements only open up as playtime builds, and milestones wait for the achievements they depend on. *How fast*
 (careful, normal or brisk) doubles or halves every wait - see [How fast](#how-fast). *Never in these games* keeps it out of games you pick, *Only
 these games* limits it to a list, and *Earn them in the main game too* (on) decides whether a human-mode account's
@@ -28,7 +28,7 @@ co-op campaign are skipped; "in the Campaign or in Co-op" isn't, and Team Fortre
 Single Player or together in Multiplayer" (The Forest), "Complete 10 missions or multiplayer games" (Halo), "7 minutes
 on solo, or 4 minutes on multiplayer" (PAYDAY 2). Words only count where they mean other players: "co-op moves", "the
 chicken coop", "an online forum" and "a Master-ranked weapon" don't, and "versus" in a name alone ("Man versus
-Machine") doesn't either. Skipped ones don't count towards *Finish no more than*. Turning human mode on or off sets it
+Machine") doesn't either. Skipped ones don't count towards *Never complete more of a game than*. Turning human mode on or off sets it
 to match - unless you change it in the same save; after that it stays what you set.
 
 ### How fast
@@ -48,7 +48,7 @@ most games (the usual figures - a few games have their own):
 
 So in a long sitting, once the first few are in, it's about one every 1-2.5 hours on normal, every 2-5 hours on
 careful and every 30-75 minutes on brisk, with the odd cluster of two or three. The chance of a cluster (45% early on, 12% after, 25% in a grind) doesn't change.
-Only common achievements cluster: *Quick bursts only for achievements at least* (10% of players by default, behind Show
+Only common achievements cluster: *Quick bursts only for achievements held by at least* (10% of players by default, behind Show
 advanced) - a rarer one never comes a few minutes after another. It ends the cluster and waits the full time, in a
 `grind` too. 0 lets any achievement cluster; 100 turns clusters off. No
 pace changes which achievements are open: the rarity floor goes by hours played, and the order rules, counters,
@@ -80,7 +80,7 @@ New Game+ one or a step of a ladder. On top of that, nothing comes out of sequen
 - an achievement with a counter ("Complete 100 parries") is never unlocked before the game's own counter for it gets
   there. Steam shows that counter next to the achievement, so "37 of 100" beside an unlocked one is a giveaway. Nothing
   writes the counter, so these wait for real play - and a ladder of counted steps waits with them. While they're short
-  they don't count towards *Finish no more than* or the hunter's "far enough"; that's worked out again every look.
+  they don't count towards *Never complete more of a game than* or the hunter's "far enough"; that's worked out again every look.
 
 When nothing left in a game could open at any number of hours - all of it waits on the game's own counters, is too
 rare for this account ever (under 1%), or waits on others that stay locked - the game is done for now and the hunter
@@ -95,7 +95,7 @@ An achievement Steam says a client can't set, whatever the game's list says, is 
 being tried every hour - only when Steam says so (it puts the stat back, or answers "access denied"), or refuses one
 while others in the same game went through. A plain failure, a timeout, or a family member taking a shared game back
 leaves nothing behind, and a game that's "Steam only" because of refusals is looked at again when the first one runs
-out. A game with only one to three achievements stops at *Finish no more than* as it rounds: three at 90% is all three,
+out. A game with only one to three achievements stops at *Never complete more of a game than* as it rounds: three at 90% is all three,
 three at 50% is two.
 
 It also knows how long each game really takes (*Pace by how long games really take*, on). It looks up a typical
@@ -177,7 +177,7 @@ letters or more of it) or appID. Only a game with add-ons Steam doesn't explain 
 from Steam chat (see [Commands by Steam chat](settings.md#commands-by-steam-chat)). Games left paused before this
 version stay left alone.
 
-Those achievements don't count towards *Finish no more than* or the hunter's "far enough", and the status says how
+Those achievements don't count towards *Never complete more of a game than* or the hunter's "far enough", and the status says how
 many were left alone. `dlc myaccount Call of Duty` lists a game's DLC with achievements, whether the account owns
 each, and how many of them it already has - and which add-ons Steam doesn't explain, why, and how many achievements it
 can't place. `dlc myaccount` lists the games it plays where add-ons matter. (`dlcach` still works.) In
@@ -191,8 +191,8 @@ unlocked recently.
 
 ## The hunter
 
-*Achievement boost* (off) picks games to play so there's always something to earn. It needs *Earn achievements over
-time* on as well, and has two modes. *games you pick* works through *Boost these games*. *all single-player* finds
+*Achievement hunt* (off) picks games to play so there's always something to earn. It needs *Earn achievements over
+time* on as well, and has two modes. *games you pick* works through *Hunt these games*. *all single-player* finds
 single-player games with achievements in the library, played or not. It skips DLC, demos and games with fewer than
 200 reviews (*Only hunt games with at least*; games you pick by hand are always allowed). *Only hunt games you've
 played* narrows it to games the account has launched before.
@@ -204,11 +204,11 @@ row.
 When a game reaches about 65-75% of its achievements (*Move to another game at about* / *...up to*), the hunter has
 had enough of it for now. The exact point is random and different for every game. That game then rests for 3-14 days
 (*Come back to a game after* / *...to*) and the next game on the list takes its slot. Each time it comes back, it
-goes a little further in, up to your *Finish no more than* limit. A game that gets there, or has nothing left to earn,
-is left for good (raise *Finish no more than* and it comes back); `hunt` lists them apart. Only a `grind` you type goes
+goes a little further in, up to your *Never complete more of a game than* limit. A game that gets there, or has nothing left to earn,
+is left for good (raise *Never complete more of a game than* and it comes back); `hunt` lists them apart. Only a `grind` you type goes
 to 100%.
 
-*Hunt at most, hours a day* caps the hunting per day (0, the default, means no limit). Once the day's hours are
+*Hunt at most a day* caps the hunting per day (0, the default, means no limit). Once the day's hours are
 played, a human-mode account drops the hunt game from its games until tomorrow, and a robot account stops hunting
 for the day.
 

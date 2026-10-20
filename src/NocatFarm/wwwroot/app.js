@@ -340,7 +340,7 @@ async function refreshInventory(name) {
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
   // Where the switch really is: under Inventory & bans, and only with Show advanced ticked - it said Trades.
-  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick "Work out what its inventory is worth".', b.Name);
+  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick "Show inventory value".', b.Name);
   if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
   if (!rows.length) return t('Nothing with a market price in this inventory.');
@@ -374,10 +374,20 @@ const clock = (iso) => { const d = new Date(iso); return String(d.getHours()).pa
 function stateText(b) {
   if (!b.Until) return b.Status;
   if (b.Group === 'break') {
+    // Bedtime comes in the middle of the break: it isn't back tonight.
+    if (b.IntoBed) return `${b.Status} · ${t('then off for the night')}`;
     const left = Math.ceil((new Date(b.Until).getTime() - Date.now()) / 60000);
     return `${b.Status} · ${left > 0 ? tf('{0} to go', hm(left)) : t('any moment')}`;
   }
-  if (b.Group === 'asleep' || b.Group === 'nightidle') return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
+  if (b.Group === 'asleep' || b.Group === 'nightidle') {
+    // Its wake has come and gone while it's still asleep: it gets up any moment, not at a time in the past.
+    if (new Date(b.Until).getTime() <= Date.now()) return `${b.Status} · ${t('any moment')}`;
+    // After bedtime the next day isn't planned yet: the window it gets up in, not the day before's wake time.
+    if (b.UpFrom && b.UpTo) {
+      return `${b.Status} · ${tf('up {0}', clock(b.UpFrom) === clock(b.UpTo) ? clock(b.UpFrom) : `${clock(b.UpFrom)}-${clock(b.UpTo)}`)}`;
+    }
+    return `${b.Status} · ${tf('up ~{0}', clock(b.Until))}`;
+  }
   return b.Status;
 }
 
@@ -1280,8 +1290,14 @@ function renderAccounts() {
           : `<button data-tip="${esc(t('Log this account in.'))}" data-act="start" data-bot="${esc(b.Name)}">${esc(t('Start'))}</button>`}
         ${b.State !== 'Stopped' ? `<button class="ghost" data-tip="${esc(t('Log this account out. It stays configured.'))}" data-act="stop" data-bot="${esc(b.Name)}">${esc(t('Stop'))}</button>` : ''}
         <button class="ghost" data-tip="${esc(t('What this account still has left to farm.'))}" data-act="cards" data-bot="${esc(b.Name)}">${esc(t('Cards'))}</button>
+        ${b.SteamOpen ? (b.SteamOpenSupported
+          ? `<button class="ghost" data-tip="${esc(t('Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.'))}" data-act="steamopen" data-bot="${esc(b.Name)}">${esc(t('Open in Steam'))}</button>`
+          : `<button class="ghost" disabled data-tip="${esc(t('Windows only for now'))}">${esc(t('Open in Steam'))}</button>`) : ''}
         <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
-      </div></div>`;
+      </div>
+      ${b.SteamOpenCode ? `<div class="steamcode" data-tip="${esc(t('Steam is on the sign-in for this account: type this code when Steam asks for it.'))}">
+        <span>${esc(t('Steam Guard code'))}</span><b>${esc(b.SteamOpenCode)}</b>
+        <button class="ghost" data-act="steamcode" data-bot="${esc(b.Name)}">${esc(t('Copy'))}</button></div>` : ''}</div>`;
   });
 
   paintCards(bots.map((b) => b.Name), cards);
@@ -1423,10 +1439,11 @@ function showAddAccount() {
       <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
       <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
     </div>
+    ${copySourcePick()}
     <p style="margin:14px 0 8px"><b>${esc(t('What kind of account is it?'))}</b></p>
     <div class="pickcards">
       <div class="pickcard" id="a-type-human" role="button" tabindex="0" onclick="addPickType(true)">
-        <b>${esc(t('My main - I play on it'))}</b>
+        <b>${esc(t('My main account'))}</b>
         <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
       </div>
       <div class="pickcard" id="a-type-robot" role="button" tabindex="0" onclick="addPickType(false)">
@@ -1450,12 +1467,126 @@ function addPickType(human) {
 
 async function createBot() {
   if (addType === null) { $('addError').textContent = t('Pick one first'); return; }
-  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: addType });
+  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: addType,
+    CopyFrom: ($('a-copy') && $('a-copy').value) || '' });
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();
   // The page's settings copy learns about the new account now, so its Settings button opens it (not Global).
   loadConfig().catch(() => {});
+}
+
+// ── 1.8.2: copy settings from another account ──────────────────────────
+// On Add account ("Copy settings from"), and on an account's Settings page ("Copy settings from..."): everything but what
+// belongs to that account alone comes across. The switches turned on after a preview always end up off.
+function copyAccounts(except) {
+  const names = config && config.Bots ? Object.keys(config.Bots) : (state && state.Bots ? state.Bots.map((b) => b.Name) : []);
+  return names.filter((n) => n !== except);
+}
+
+function copySourcePick() {
+  const names = copyAccounts(null);
+  if (!names.length) return '';
+  return `<div class="form2" style="margin-top:10px">
+      <label for="a-copy">${esc(t('Copy settings from'))}${tipIcon(t("Start with another account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview."))}</label>
+      <select id="a-copy" onchange="addCopyPicked(this.value)"><option value="">${esc(t('none - the defaults'))}</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
+    </div>
+    <p id="a-copy-note" class="muted small hidden"></p>`;
+}
+
+// Picking an account to copy from picks its kind too - human or robot can still be changed below.
+function addCopyPicked(name) {
+  const note = $('a-copy-note');
+  if (!name) { note.classList.add('hidden'); return; }
+  const src = config && config.Bots ? config.Bots[name] : null;
+  if (src) addPickType(!!src.LegitMode);
+  note.textContent = tf('Its settings come from {0}. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on.', name);
+  note.classList.remove('hidden');
+}
+
+function openCopySettings(to) {
+  if (Object.keys(pending).length && !confirm(t('You have unsaved changes here. Discard them?'))) return;
+  const names = copyAccounts(to);
+  modal(`
+    <h2>${esc(tf('Copy settings onto {0}', to))}</h2>
+    <p>${esc(t('Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.'))}</p>
+    <div class="form2">
+      <label for="copyFrom">${esc(t('Copy settings from'))}</label>
+      <select id="copyFrom" data-to="${esc(to)}" onchange="copyPreview(this.dataset.to, this.value)"><option value="">${esc(t('Pick an account'))}</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select>
+    </div>
+    <div class="swpop" id="copyPreview"></div>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button id="copyGo" data-to="${esc(to)}" disabled onclick="doCopySettings(this.dataset.to)">${esc(t('Copy settings'))}</button>
+    </div>`);
+  if (names.length === 1) { $('copyFrom').value = names[0]; copyPreview(to, names[0]); }
+}
+
+async function copyPreview(to, from) {
+  const box = $('copyPreview');
+  $('copyGo').disabled = true;
+  if (!from) { box.innerHTML = ''; return; }
+  box.innerHTML = `<p class="waiting">${esc(t('Working out what it would change...'))}</p>`;
+  let r = null;
+  try { r = await api(`/api/bots/${encodeURIComponent(to)}/copy-settings/preview?from=${encodeURIComponent(from)}`); } catch { r = null; }
+  if (!$('copyFrom') || $('copyFrom').value !== from) return;   // another account picked meanwhile
+  if (!r || !r.ok || !r.data) { box.innerHTML = `<p class="problem">${esc((r && r.error) || t('No preview - try again in a minute.'))}</p>`; return; }
+  box.innerHTML = copyPreviewHtml(r.data);
+  $('copyGo').disabled = !r.data.Changes.length;
+}
+
+// A switch or setting by its label, in the page's language.
+function copyLabel(name) {
+  const def = (schema && schema.Bot || []).find((d) => d.Name === name);
+  return def ? tSetting(def, 'label') : name;
+}
+
+// A value as the settings page would say it.
+function copyValueText(name, v) {
+  const def = (schema && schema.Bot || []).find((d) => d.Name === name);
+  if (Array.isArray(v)) return v.length ? v.join(', ') : t('none');
+  if (!def) return String(v);
+  if (def.Kind === 'Bool') return v ? t('on') : t('off');
+  if (def.Kind === 'Hour') return hourLabel(Number(v));
+  if (def.Kind === 'Time') return timeLabel(Number(v));
+  if (def.Kind === 'Choice') return (parseChoices(tSetting(def, 'choices')).find((o) => o.value === Number(v)) || {}).label || String(v);
+  if (v === '' || v === null || v === undefined) return t('none');
+  return String(v);
+}
+
+function copyPreviewHtml(d) {
+  const rows = d.Changes.map((c) => `<tr><td>${esc(copyLabel(c.Name))}</td><td class="muted">${esc(copyValueText(c.Name, c.Before))}</td><td>${esc(copyValueText(c.Name, c.After))}</td></tr>`).join('');
+  const list = (items) => `<ul class="limits">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  // 1.8.2: a switch on there now goes off - said so, not "stays off" under a change that reads on -> off.
+  const stays = d.LeftOff.filter((x) => !d.TurnedOff.includes(x));
+  const again = d.LeftOff.filter((x) => d.TurnedOff.includes(x));
+  const goes = d.TurnedOff.filter((x) => !d.LeftOff.includes(x));
+  return `${d.Changes.length
+      ? `<h4>${esc(d.Changes.length === 1 ? t('One setting changes') : tf('{0} settings change', d.Changes.length))}</h4>
+        <div class="tablewrap copylist"><table><tr><th>${esc(t('Setting'))}</th><th>${esc(t('Now'))}</th><th>${esc(t('After'))}</th></tr>${rows}</table></div>`
+      : `<p>${esc(tf('{0} already has the same settings - nothing to copy.', d.To))}</p>`}
+    ${stays.length ? `<h4>${esc(t('Stays off - turn it on yourself after its preview'))}</h4>${list(stays.map(copyLabel))}` : ''}
+    ${again.length ? `<h4>${esc(t('Goes off - turn it on again yourself after its preview'))}</h4>${list(again.map(copyLabel))}` : ''}
+    ${goes.length ? `<h4>${esc(t('Goes off, as on the account copied from'))}</h4>${list(goes.map(copyLabel))}` : ''}
+    ${d.Cleared.length ? `<h4>${esc(tf('With {0} itself taken out', d.To))}</h4>${list(d.Cleared.map(copyLabel))}` : ''}
+    ${d.Adjusted.length ? `<h4>${esc(t('Put right'))}</h4>${list(d.Adjusted)}` : ''}
+    <h4>${esc(t('Never copied'))}</h4>${list([t('the sign-in, password and authenticator'), t('the proxy and the device name'), t('notes and log colour'),
+      t('whether it runs, and whether you sign into it yourself'), t('the trade link token')])}`;
+}
+
+async function doCopySettings(to) {
+  const from = $('copyFrom') ? $('copyFrom').value : '';
+  if (!from) return;
+  $('copyGo').disabled = true;
+  let r = null;
+  try { r = await post(`/api/bots/${encodeURIComponent(to)}/copy-settings`, { From: from }); } catch { r = null; }
+  if (!r || !r.ok) { toast((r && r.error) || t('Not changed - try again.'), true); if ($('copyGo')) $('copyGo').disabled = false; return; }
+  pending = {};
+  closeModal();
+  await loadConfig();
+  renderSettings();
+  const left = (r.data && r.data.LeftOff) || [];
+  toast(left.length ? tf('Settings copied from {0}. Turn these on yourself after their preview: {1}', from, left.map(copyLabel).join(', ')) : tf('Settings copied from {0}', from));
 }
 
 // ── importing from another idler ─────────────────────────────────────
@@ -1740,11 +1871,22 @@ function welcomePickType(human) {
   welcomeType = human;
   $('w-type-human').classList.toggle('on', human);
   $('w-type-robot').classList.toggle('on', !human);
+  // The same follow-up the walkthrough asks a human-mode account - it was lost on this form.
+  $('w-self-row').classList.toggle('hidden', !human);
 }
 
+// The same as the walkthrough's account step: the nickname is optional (the Steam login names it), and a human-mode account
+// says whether you use it in your own Steam app too.
 async function createFirstBot() {
   if (welcomeType === null) { $('welcomeError').textContent = t('Pick one first'); return; }
-  const res = await post('/api/bots', { Name: $('w-name').value.trim(), SteamLogin: $('w-login').value.trim(), Password: $('w-pass').value, Human: welcomeType });
+  const login = $('w-login').value.trim();
+  const typed = $('w-name').value.trim();
+  if (typed && !/^[A-Za-z0-9_-]+$/.test(typed)) {
+    $('welcomeError').textContent = t("Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config.");
+    return;
+  }
+  const res = await post('/api/bots', { Name: typed || nameFromLogin(login), SteamLogin: login, Password: $('w-pass').value, Human: welcomeType,
+    SelfSignIn: welcomeType === true && $('w-self').checked });
   if (!res.ok) { $('welcomeError').textContent = res.error; return; }
   sessionStorage.setItem('skip-welcome', '1');
   await refresh();
@@ -2031,8 +2173,8 @@ function renderAuthList() {
 
   if (rules && d.Rules) {
     rules.innerHTML = `<p class="muted small auth-rules">${d.Rules.length
-      ? tf('Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades ("Trade by itself with").', d.Rules.map((r) => `<b>${esc(r.Who)}</b> (${esc(t(r.Way))})`).join(', '))
-      : esc(t('Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades ("Trade by itself with").'))}</p>`;
+      ? tf('Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades ("Your other accounts").', d.Rules.map((r) => `<b>${esc(r.Who)}</b> (${esc(t(r.Way))})`).join(', '))
+      : esc(t('Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades ("Your other accounts").'))}</p>`;
   }
 }
 
@@ -2301,6 +2443,7 @@ async function pickTutorialLanguage(code) {
   if (config && config.Global) {
     config.Global.Language = code;
     await postGlobal(config.Global).catch(() => {});
+    config.Global.LanguagePicked = true;   // the server marks it too, as the language changes (Settings.Follow)
   }
 
   await loadLanguage(code);
@@ -2471,27 +2614,45 @@ const tutSwitch = (id, on, onchange, title, text) => `<label class="tut-switch" 
     <span><b>${esc(title)}</b>${text ? `<span class="muted small">${esc(text)}</span>` : ''}</span>
     <span class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} onchange="${onchange}"><span></span></span></label>`;
 
-/// The steps, in order, for the mode picked. Worked out again on every draw: saying yes to the phone adds the password
-/// step after it, and the bar grows by one.
+/// The steps, in order. The fewest questions (1.8.2): the language only if nobody has picked one (the installer asks too),
+/// what kind of account it is, and the account - then one follow-up once it's signed in, and the rest as optional cards on
+/// the last screen. "Advanced setup" (a link on the first screen) adds the phone, from anywhere, the password,
+/// notifications and the update hours before the account. Replayed with accounts already here, it starts on the welcome.
 function tutSteps() {
   const adv = tutorialMode === 'advanced';
   const hasAccounts = !!(state && state.Bots && state.Bots.length);
-  return ['language', 'welcome', 'phone', adv ? 'anywhere' : null,
-    // Easy never asks about from anywhere, so only a yes to the phone brings the password step.
-    adv || (tutDash && tutDash.phone === true) ? 'password' : null,
-    adv ? 'notify' : null, 'updates', hasAccounts ? null : 'type', 'final'].filter(Boolean);
+  const askLanguage = !(config && config.Global && config.Global.LanguagePicked);
+  return [askLanguage ? 'language' : null, hasAccounts ? 'welcome' : 'type',
+    adv ? 'phone' : null, adv ? 'anywhere' : null, adv ? 'password' : null, adv ? 'notify' : null, adv ? 'updates' : null,
+    'final'].filter(Boolean);
+}
+
+/// The first screen's small print: restoring from another PC, the full tour, and the language (when it wasn't asked).
+function tutFirstLinks() {
+  const lang = LANGUAGES.find((l) => l.code === ((config && config.Global && config.Global.Language) || 'en'));
+  const langLink = config && config.Global && config.Global.LanguagePicked
+    ? ` · <a href="#" onclick="tutPickLanguageAgain();return false">${esc(tf('Language: {0}', lang ? lang.name : 'English'))}</a>` : '';
+  return `<p class="muted small tut-links">${esc(t('Moving from another PC?'))} <a href="#" onclick="pickRestoreFile();return false">${esc(t('Restore from a backup file'))}</a>
+    · <a href="#" onclick="tutorialMode=tutorialMode==='advanced'?'easy':'advanced';renderTutorial();return false">${esc(tutorialMode === 'advanced' ? t('Fewer questions') : t('Advanced setup'))}</a>${langLink}</p>`;
+}
+
+/// The language again, from the first screen's link - the step is left out once a language was picked.
+function tutPickLanguageAgain() {
+  if (config && config.Global) config.Global.LanguagePicked = false;
+  tutorialStep = 0;
+  renderTutorial();
 }
 
 function tutStepName(key) {
   switch (key) {
     case 'language': return t('Language');
     case 'welcome': return t('Welcome');
+    case 'type': return t('Account type');
     case 'phone': return t('Phone');
     case 'anywhere': return t('From anywhere');
     case 'password': return t('Password');
     case 'notify': return t('Notifications');
     case 'updates': return t('Updates');
-    case 'type': return t('Account type');
     default: return state && state.Bots && state.Bots.length ? t('Done') : t('Account');
   }
 }
@@ -2995,8 +3156,6 @@ async function tutSaveUpdates() {
   // Anything else is left as it is.
   const mode = d.autoUpdate ? 2 : (g.UpdateMode === 2 ? (g.UpdateWhenAsked === 1 ? 0 : 1) : g.UpdateMode);
   if (mode !== g.UpdateMode) changes.UpdateMode = mode;
-  // Looking for updates switched off stops installing them too - so switching installing on has to switch it back on.
-  if (mode === 2 && g.CheckForUpdates === false) changes.CheckForUpdates = true;
 
   if (tutorialMode === 'advanced') {
     const clamp = (v, lo, hi, was) => (Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : was);
@@ -3021,16 +3180,19 @@ function tutStepType() {
   // What the account is for - asked once there is no account yet, and turned into its settings when it's added.
   const importing = !!(imp && imp.tutorial) && !tutorialManual;
   const importAccts = (importing && imp.scan && imp.scan.Accounts) || [];
+  // The first screen of a new install: the welcome in a line, and the one question that sets dozens of defaults.
   return {
+    hero: true,
     title: t('What kind of account is it?'),
-    lead: esc(t('This picks the right settings for it. Anything can be changed later, per account.')),
+    lead: esc(t('nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.')),
     body: `<div class="pickcards tut-cards">
-        ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main - I play on it'),
+        ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main account'),
           t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}
         ${tutCard(tutorialHuman === false, 'tutorialPickType(false)', tutIcon('bolt'), t('A spare or farm account'),
           t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}
       </div>
-      ${importAccts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}`,
+      ${importAccts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}
+      ${tutFirstLinks()}`,
     act: () => {
       if (tutorialHuman === null) { toast(t('Pick one first'), true); return; }
       tutForward();
@@ -3038,10 +3200,10 @@ function tutStepType() {
   };
 }
 
-/// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened or spent by default.
+/// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened, bought, swapped or spent by default.
 function safeItemsNote() {
   return `<div class="tut-note safe-items"><b>${esc(t('Your items are safe by default'))}</b>
-    <span>${esc(t("nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
+    <span>${esc(t("nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
 }
 
 function tutStepFinal() {
@@ -3084,13 +3246,15 @@ function tutStepFinal() {
           `<input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off" spellcheck="false">`)}
         ${field('tut-pass', t('Password'), t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'),
           `<input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">`)}
-        ${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
-          `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}
       </div>
-      ${tutorialMode === 'advanced' ? `<label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
-        <span>${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>` : ''}
       ${tutorialHuman === true ? `<label class="tut-check"><input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">
-        <span>${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+        <span>${esc(t('I also use this account in my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+      <details class="tut-more"><summary>${esc(t('More'))}</summary>
+        <div class="tut-fields">${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
+          `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}</div>
+        <label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
+          <span>${esc(t('Sign in with a QR code instead'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>
+      </details>
       <p id="tutError" class="error"></p>
       <p class="muted small"><a style="cursor:pointer" role="button" tabindex="0" onclick="${imp && imp.tutorial ? 'tutorialManual=false;renderTutorial()' : 'tutorialOpenImport()'}">${esc(t('Coming from another idler? Import from it'))}</a></p>
       ${tips}`,
@@ -3163,10 +3327,10 @@ async function startTutorialSetup(name, steps) {
   if (!schema) schema = await api('/api/settings/schema').catch(() => null);
   const d = (schema && schema.BotDefaults) || {};
   tutSetup = {
-    name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '',
+    name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '', idleKind: 'pick',
     routine: {
-      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartTime: d.DayStartTime ?? 660,
-      BedTime: d.BedTime ?? 60, DayOffChancePct: d.DayOffChancePct ?? 10,
+      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartTime: d.DayStartTime ?? 780,
+      BedTime: d.BedTime ?? 120, DayOffChancePct: d.DayOffChancePct ?? 5,
     },
   };
   tutShow({ key: 'setup-loading', at: tutBarSteps - 1, kicker: tf('SETTING UP {0}', name.toUpperCase()),
@@ -3245,17 +3409,23 @@ function renderTutorialSetup() {
     };
     body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
       <div class="form2 tut-form2">
-        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartTime', 0, 1439)}${field('BedTime', 0, 1439)}${field('DayOffChancePct', 0, 90)}
+        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartTime', 0, 1439)}${field('BedTime', 0, 1439)}${field('DayOffChancePct', 0, 60)}
       </div>
       <p id="tutRoutinePreview" class="muted small" style="margin-top:12px"></p>`;
   } else {
-    title = t('What should it idle?');
-    body = `<p>${esc(t('It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.'))}</p>
-      ${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
+    title = t('After the cards are done, what should it idle?');
+    const kind = (k, label, text) => tutCard(s.idleKind === k, `tutSetup.idleKind='${k}';renderTutorialSetup()`, tutIcon(k === 'all' ? 'globe' : k === 'pick' ? 'easy' : 'home'), label, text);
+    body = `<p>${esc(t('It farms trading cards first. Once they are done, it can keep playing games to add hours.'))}</p>
+      <div class="pickcards tut-cards">
+        ${kind('none', t('Nothing'), t('It stays signed in and does nothing once the cards are done.'))}
+        ${kind('pick', t('Games I pick'), t('Tap them below.'))}
+        ${kind('all', t('My whole library'), t('Every game it owns, a batch at a time. Games still within Steam\'s 2 hours for a refund are left alone.'))}
+      </div>
+      ${s.idleKind === 'pick' ? `${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
       <div style="display:flex;gap:6px;margin:6px 0 12px"><input id="tutAddGame" type="text" placeholder="${esc(t('Not in the list? Paste a store link or game ID'))}" style="flex:1">
-        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>
-      <div class="tut-field"><label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
-      <input id="tut-custom" type="text" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value"></div>`;
+        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>` : ''}
+      ${tutorialMode === 'advanced' ? `<div class="tut-field"><label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
+      <input id="tut-custom" type="text" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value"></div>` : ''}`;
   }
 
   tutShow({
@@ -3327,7 +3497,10 @@ async function tutSaveSetup() {
   }
   if (s.steps.includes('routine')) Object.assign(changes, s.routine);
   if (s.steps.includes('idle')) {
-    changes.IdleGames = [...s.idle];
+    // Nothing, the games picked, or the whole library a batch at a time - with refunds protected (on for a new account).
+    changes.IdleGames = s.idleKind === 'pick' ? [...s.idle] : [];
+    changes.IdleWholeLibrary = s.idleKind === 'all';
+    if (s.idleKind === 'all') { changes.RotateIdleGames = true; changes.SkipRefundableGames = true; }
     if (s.customName.trim()) { changes.CustomGameName = s.customName.trim(); changes.CustomGameNameEnabled = true; }
   }
 
@@ -3351,7 +3524,9 @@ function tutShowDone() {
   tutSetup = null;
   let what;
 
-  if (b && b.Legit) {
+  if (b && b.Legit && b.OffForNow) {
+    what = tutOffForNow();
+  } else if (b && b.Legit) {
     what = s && s.main
       ? tf('It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.',
         gameLabel(s.main), s.sides.size ? tf(', and {0} now and then', [...s.sides].map(gameLabel).join(', ')) : '')
@@ -3367,16 +3542,43 @@ function tutShowDone() {
     title: t("You're all set"),
     badge: true,
     body: `<p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
-      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
+      <p class="muted small">${esc(tutCloseNote())}</p>
       ${safeItemsNote()}
       ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
       ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
         <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span></div>` : ''}
+      ${tutOptionalCards()}
       ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
-        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}`,
+        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
+      ${config && config.Global && config.Global.CountMeAsUser === false ? ''
+        : `<p class="muted small">${esc(t('It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`}`,
     skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
     next: t('Show me my account'),
   }, finishSignin);
+}
+
+// 1.8.2: "in the tray" only while the tray icon is on (and on Windows, where there is one).
+function tutCloseNote() {
+  const tray = !(config && config.Global && config.Global.Tray === false) && !(state && state.Windows === false);
+  return tray
+    ? t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.')
+    : t('You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.');
+}
+
+// 1.8.2: human mode outside its day as the set-up ends - it goes straight to sleep, not "settles in, then plays".
+function tutOffForNow() {
+  return t("Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.");
+}
+
+/// The rest of the set-up, as cards on the last screen rather than more steps - each opens its own place.
+function tutOptionalCards() {
+  const card = (onclick, icon, title, text) => tutCard(false, `finishSignin().then(() => ${onclick})`, tutIcon(icon), title, text);
+  return `<p class="tut-kicker" style="margin-top:14px">${esc(t('When you like'))}</p>
+    <div class="pickcards tut-cards tut-optional">
+      ${card("go('phone')", 'phone', t('Use it from your phone'), t('A QR code to scan, and how to open it from outside your home.'))}
+      ${card("goSetting('TelegramBotToken')", 'bolt', t('Get messages on Telegram or Discord'), t('Card drops, problems that need you, scam warnings - you pick which.'))}
+      ${card("goSetting('BackupAuto')", 'home', t('A daily backup'), t('Everything in one locked file each day, to put back on any PC.'))}
+    </div>`;
 }
 
 // The first-run question for the Discord card: saved the moment it's ticked, nothing else to press.
@@ -3430,8 +3632,10 @@ function renderSignin() {
   // robot's idle list, are the full tour's.
   if (b && b.Online && !tutorialSetupDone) {
     tutorialSetupDone = true;
+    // One follow-up for each kind: a human-mode account's games (and, in the full tour, its routine); a robot's what to
+    // idle once its cards are done - asked every time, or it went quiet once the cards were farmed.
     const adv = tutorialMode === 'advanced';
-    const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : (adv ? ['idle'] : []);
+    const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : ['idle'];
     if (steps.length) {
       startTutorialSetup(b.Name, steps);
       return;
@@ -3441,12 +3645,12 @@ function renderSignin() {
   if (b && b.Online) {
     title = t("You're all set");
     const what = b.Legit
-      ? t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.')
+      ? (b.OffForNow ? tutOffForNow() : t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.'))
       : (b.Cards > 0
         ? tf('It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.', b.Cards, b.Games)
         : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.'));
     body = `<p>${esc(tf('{0} is signed in.', b.Name))} ${esc(what)}</p>
-      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>`;
+      <p class="muted small">${esc(tutCloseNote())}</p>`;
     key = 'signin-done';
     next = t('Show me my account');
     act = finishSignin;
@@ -4004,7 +4208,7 @@ function phoneSafeCard(p) {
       <li>${esc(t('Ten wrong passwords from the internet in an hour, from any addresses, pause signing in from outside for an hour.'))}</li>
       ${p.OffAfter > 0 ? `<li>${esc(tf('{0} wrong passwords or codes from the internet in a day switch Open from anywhere off by itself.', p.OffAfter))}</li>` : ''}
       <li>${esc(t('Every sign-in from outside your home is sent to Telegram and Discord.'))}</li>
-      <li>${esc(!p.SignInCode ? t('Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.')
+      <li>${esc(!p.SignInCode ? t('Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.')
         : p.CodeReady ? t('From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.')
         : t('Connect Telegram and signing in from outside will also take a code sent to it.'))}</li>
       <li>${esc(t("It's plain http, not encrypted - use a password you don't use anywhere else."))}</li>
@@ -4054,6 +4258,8 @@ document.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'start': case 'stop': case 'pause': case 'resume': act(name, el.dataset.act); break;
     case 'cards': openBot(name); break;
+    case 'steamopen': openInSteam(name); break;
+    case 'steamcode': copySteamCode(name); break;
     case 'settings': closeModal(); openBotSettings(name); break;
     case 'remove': removeBot(name); break;
     case 'postnow': postNow(name); break;
@@ -4346,7 +4552,14 @@ function renderLog() {
     $('logBot').value = who;
   }
 
-  const rows = logLines.filter((l) => logLevels[l.Level] !== false && (!who || l.Source === who) &&
+  // "Show in the app's log" (Settings, Logging): a kind whose chip is off stays out of here - the log file and Copy keep it.
+  const kept = logLines.filter(logChipShows);
+  const chipHidden = logLines.length - kept.length;
+  if (chipHidden > 0) {
+    $('logLevels').insertAdjacentHTML('beforeend', `<span class="muted small" style="margin-left:8px">${esc(tf("{0} hidden by Show in the app's log", chipHidden))}</span>`);
+  }
+
+  const rows = kept.filter((l) => logLevels[l.Level] !== false && (!who || l.Source === who) &&
     (!q || l.Text.toLowerCase().includes(q) || l.Source.toLowerCase().includes(q)));
 
   const body = $('logBody');
@@ -4357,6 +4570,29 @@ function renderLog() {
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
+}
+
+// 1.8.2: the chips that are off, as the status says them ("LogShowDrops,LogShowApp") - put into the settings the page holds,
+// so a chip changed outside the page shows at once. True when one moved.
+function syncLogShow(off) {
+  if (typeof off !== 'string' || !config || !config.Global) return false;
+  const offs = new Set(off.split(',').filter(Boolean));
+  let moved = false;
+  for (const k of LOG_SHOW_KINDS) {
+    const on = !offs.has(k);
+    if (config.Global[k] !== on) { config.Global[k] = on; moved = true; }
+  }
+  return moved;
+}
+
+const LOG_SHOW_KINDS = ['LogShowDoing', 'LogShowDrops', 'LogShowBadges', 'LogShowBuying', 'LogShowSelling', 'LogShowTrades', 'LogShowComments',
+  'LogShowAchievements', 'LogShowFree', 'LogShowAnswers', 'LogShowApp'];
+
+// A line's "Show in the app's log" chip, as the server says it (Core/LogShow.cs): Show names the setting, and the line stays
+// out while that is off. Warnings, errors and lines of no known kind come with none and always show.
+function logChipShows(l) {
+  const g = (config && config.Global) || {};
+  return !l.Show || g[l.Show] !== false;
 }
 
 // ── stacked rows ─────────────────────────────────────────────────────
@@ -4660,7 +4896,8 @@ function selectSettings(name) {
 // Matched on the data-section attribute, not the heading text: the heading is translated and the jump link
 // carries the English name, so comparing what is on screen stopped finding anything in every language but one.
 function jumpTo(section) {
-  const find = () => document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`);
+  const find = () => document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`)
+    || document.querySelector(`#settingsBody .section h4[data-part="${CSS.escape(section)}"]`);
   let target = find();
 
   // A section made only of advanced settings isn't drawn while Show advanced is off (and a search or "only
@@ -4677,13 +4914,15 @@ function jumpTo(section) {
 }
 
 function settingsDefs() {
-  const all = settingsTarget === GLOBAL ? schema.Global : schema.Bot;
+  // An internal knob (Hidden) is never drawn - not even with Show advanced on - and isn't counted among the hidden
+  // advanced ones. It still works from the console, the JSON files and plugins.
+  const all = (settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden);
   if (r4rOn()) return all;
 
-  // rep4rep is switched off: drop both its sections ("rep4rep account" and "rep4rep commenting") from the
+  // rep4rep is switched off: drop its section ("rep4rep") and each account's "rep4rep commenting" part from the
   // settings entirely - jump links and all - but keep the master toggle itself so it can be turned back on.
   return all.filter((d) =>
-    (d.Section !== 'rep4rep account' && d.Section !== 'rep4rep commenting') || d.Name === 'Rep4RepEnabled');
+    (d.Section !== REP4REP_GLOBAL && d.Part !== 'rep4rep commenting') || d.Name === 'Rep4RepEnabled');
 }
 function settingsValues() { return settingsTarget === GLOBAL ? config.Global : config.Bots[settingsTarget]; }
 function settingsDefaults() { return settingsTarget === GLOBAL ? schema.GlobalDefaults : schema.BotDefaults; }
@@ -4724,8 +4963,11 @@ function renderSettings() {
     .filter((d) => !(d.Mode === 'rage' && jumpLegit) && !(d.Mode === 'legit' && !jumpLegit)
       && !(settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name) && !PANEL_SECTIONS.has(d.Section)))
     .map((d) => d.Section))];
+  const partsOf = (n) => [...new Set(settingsDefs().filter((d) => d.Section === n && d.Part
+    && !(d.Mode === 'rage' && jumpLegit) && !(d.Mode === 'legit' && !jumpLegit)).map((d) => d.Part))];
   const jump = `<div class="jump">${sectionNames.map((n) =>
-    `<a class="j" role="button" tabindex="0" data-jump="${esc(n)}">${esc(t(n))}</a>`).join('')}</div>`;
+    `<a class="j" role="button" tabindex="0" data-jump="${esc(n)}">${esc(t(n))}</a>` + partsOf(n).map((p) =>
+      `<a class="j sub" role="button" tabindex="0" data-jump="${esc(p)}">${esc(t(p))}</a>`).join('')).join('')}</div>`;
 
   $('settingsNavBots').innerHTML = Object.keys(config.Bots).length
     ? Object.keys(config.Bots).map((n) =>
@@ -4750,19 +4992,31 @@ function renderSettings() {
         <span class="muted small">config/${esc(settingsTarget)}.json</span>
         <span class="spacer"></span>
         ${botActions(settingsTarget)}
+        ${copyAccounts(settingsTarget).length ? `<button class="ghost" id="copySettingsBtn" data-bot="${esc(settingsTarget)}" onclick="openCopySettings(this.dataset.bot)" data-tip="${esc(t("Copy another account's settings onto this one. Shows what changes first."))}">${esc(t('Copy settings from…'))}</button>` : ''}
         <button class="danger" data-act="remove" data-bot="${esc(settingsTarget)}">${esc(t('Remove'))}</button></div>`;
 
   const sections = [...new Set(defs.map((d) => d.Section))];
   let html = '';
   let hiddenAdvanced = 0;
-  const found = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
-    || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q);
+  const foundOne = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
+    || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q)
+    || (!!d.Range && (t(d.Range).toLowerCase().includes(q) || d.Range.toLowerCase().includes(q)));
+  // A "shortest / longest" pair is one row, and so is a chip row - either half found or changed shows it.
+  const rowMates = (d) => [d, ...(pairLongest(d) ? [pairLongest(d)] : []), ...(chipRowOf(d, 'first') || []).filter((x) => x !== d)];
+  const found = (d) => rowMates(d).some(foundOne);
+  const changedRow = (d) => rowMates(d).some((x) => isChanged(x, values, defaults));
 
   for (const section of sections) {
     const legitOn = settingsTarget !== GLOBAL && !!liveValue('LegitMode', values);
 
     const fields = defs.filter((d) => {
       if (d.Section !== section) return false;
+      // The "longest" of a pair is drawn in the row of its "shortest" ("Breaks: 2 to 30 minutes"), and the switches of a
+      // chip row ("What counts as spare") in the row of its first.
+      if (pairShortest(d) || chipRowOf(d, 'rest')) return false;
+      // A proxy's user name and password only once it needs a sign-in; Telegram's and Discord's commands only once there's
+      // a bot to take them.
+      if (!proxyPartShown(d, values) || !chatCommandsShown(d)) return false;
       // Human mode hides the settings that would give the account away, and the human-only settings stay out
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
@@ -4774,7 +5028,7 @@ function renderSettings() {
       if (settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name)) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
       if (!found(d)) return false;
-      if (onlyChanged && !isChanged(d, values, defaults)) return false;
+      if (onlyChanged && !changedRow(d)) return false;
       return true;
     });
 
@@ -4787,7 +5041,7 @@ function renderSettings() {
     const panelHit = intro && settingsTarget === GLOBAL && (q || onlyChanged) && defs.some((d) => d.Section === section
       && PANEL_ROWS.has(d.Name) && found(d) && (!onlyChanged || isChanged(d, values, defaults)));
     if (!fields.length && !panelHit && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
-    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${groupedFields(section, fields, values, defaults)}</div>`;
+    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${partsHtml(section, fields, values, defaults)}</div>`;
   }
 
   // Only on a real account, and only when nothing is being searched or filtered - it is not a setting and
@@ -4978,7 +5232,7 @@ function pacerLine(live, name, hrs, done) {
     case 'SteamOnly':
       return `<p class="muted small">${tf('Playing {0} — {1}; the rest can only be awarded by Steam itself.', name, done)}</p>`;
     case 'Capped': {
-      const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Finish no more than' }, 'label'));
+      const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Never complete more of a game than' }, 'label'));
       return `<p class="muted small">${tf('Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.', name, done, live.CeilingPercent, setting)}</p>`;
     }
     case 'NeedsHours':
@@ -5028,8 +5282,10 @@ function sectionIntro(section, values) {
       ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
       ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts'],
       ['SendPoints', 'Steam Points']];
-    kinds.push(['SendBackups', 'Backups']);
     kinds.push(['SendItems', 'Spare items & packs']);   // 1.8.0: gems, sales and booster packs
+    // 1.8.2: scam watch and account health, where they were two sections of three switches each. Backups have their own
+    // choice under Backups ("Backup messages").
+    kinds.push(['SendScamWarnings', 'Scam warnings'], ['SendHealthAlerts', 'Health alerts']);
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
       <b>${esc(t('Get notified on Discord or Telegram'))}</b>
@@ -5048,22 +5304,30 @@ function sectionIntro(section, values) {
     return discordCardIntro(val);
   }
 
+  // "Pause rep4rep for..." is an action, not a setting: a few buttons, and while a hold is on, until when and a way out.
+  if (section === REP4REP_GLOBAL && settingsTarget === GLOBAL && val('Rep4RepEnabled')) return rep4repHoldPanel(values);
+
   // Going back to an older version, and a zip from this PC - beside the settings for updating.
   if (section === 'Updates & plugins' && settingsTarget === GLOBAL) {
     return otherVersionsPanel();
   }
 
   // Where the files are, one click away - the log on screen is only the last few hundred lines.
-  if (section === 'Logging' && settingsTarget === GLOBAL) {
+  if (section === 'Logging' && settingsTarget === GLOBAL) {   // the Logging part of "Steam connection & logs"
     return `<div class="explain"><b>${esc(t('Log files'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.'))}</p>
       <button class="ghost" onclick="openLogFolder()">${esc(t('Open the log folder'))}</button></div>`;
   }
 
-  if (section === 'Dashboard' && settingsTarget === GLOBAL) {
+  if (section === 'Dashboard & phone' && settingsTarget === GLOBAL) {
     return `<div class="explain"><b>${esc(t('Open on your phone'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.'))}</p>
       <button class="ghost" onclick="go('phone')">${esc(t('Open on your phone'))}</button></div>`;
+  }
+
+  // The features that sell, open, buy, swap or spend: together at the end, and all off until you turn them on.
+  if (section === 'Items and spending' && settingsTarget !== GLOBAL) {
+    return `<div class="explain">${esc(t('Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.'))}</div>`;
   }
 
   // Steam Points: spending is permanent, so the section says plainly where this account stands. One switch: turning it on
@@ -5639,12 +5903,15 @@ function settingDefOf(name) {
   return ((settingsTarget === GLOBAL ? schema.Global : schema.Bot) || []).find((d) => d.Name === name) || null;
 }
 
-// Its own answer only: the setting it names has the value it wants (or, with !=, anything but it).
+// Its own answer only: the setting it names has the value it wants (or, with !=, anything but it). "SpareSellPrice=0|3":
+// any of those answers.
 function shownByOwnAnswer(def, values) {
   if (!def.ShowWhen) return true;
   const at = def.ShowWhen.indexOf('=');
   const not = def.ShowWhen[at - 1] === '!';
-  const same = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values)) === def.ShowWhen.slice(at + 1);
+  const want = def.ShowWhen.slice(at + 1);
+  const value = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values));
+  const same = want.split('|').includes(value);
   return not ? !same : same;
 }
 
@@ -6068,15 +6335,91 @@ const GUARDED_OFF = {
   },
 };
 
-// Spare items and Steam Points are one switch each, saved straight away: turning one on first shows what it would do and
-// asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step. Off is off, at once, and clears it.
-const CONFIRMED_ON = { SpareItems: 'spare', SpendPoints: 'points' };
+// Spare items, Steam Points, Open in Steam, buying cards and card swaps are one switch each, saved straight away: turning
+// one on first shows what it would do and asks (Turn on / Cancel) - "Turn on" switches it on and approves it in one step.
+// Off is off, at once, and clears it. One row each: the word its preview is asked by (/api/bots/{name}/switch/{word}/preview),
+// and the pop-up's title, its first line, and what it draws from the preview's numbers.
+const SWITCH_POPUPS = {
+  SpareItems: {
+    word: 'spare',
+    title: () => t('Turn on Spare items?'),
+    intro: () => t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.'),
+    html: (d) => sparePreviewHtml(d),
+  },
+  SpendPoints: {
+    word: 'points',
+    title: () => t('Turn on spending Steam Points?'),
+    intro: () => t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'),
+    html: (d) => pointsPreviewHtml(d),
+  },
+  SteamOpenButton: {
+    word: 'steamopen',
+    title: () => t('Turn on the Open in Steam button?'),
+    intro: () => t('This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.'),
+    html: (d) => steamOpenPreviewHtml(d),
+  },
+  BuyCards: {
+    word: 'buy',
+    title: () => t('Turn on buying cards?'),
+    intro: () => t("This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on."),
+    html: (d) => buyPreviewHtml(d),
+  },
+  CardSwaps: {
+    word: 'swaps',
+    title: () => t('Turn on card swaps?'),
+    intro: () => t('This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.'),
+    html: (d) => swapsPreviewHtml(d),
+  },
+};
+
+// 1.8.2: the one switch of this kind in the global settings - Open in Steam on every account. The same pattern: ticking it
+// shows what it would do and asks; Turn on switches it on with its go-ahead; off is off at once.
+const GLOBAL_SWITCH_POPUPS = {
+  SteamOpenEveryAccount: {
+    title: () => t('Turn on Open in Steam for every account?'),
+    intro: () => t('This shows the Open in Steam button on every account, so you don\'t have to turn it on one at a time. Nothing changes until you press Turn on here.'),
+    html: (d) => steamOpenAllPreviewHtml(d),
+  },
+};
+
+function confirmGlobalSwitch(name) {
+  const pop = GLOBAL_SWITCH_POPUPS[name];
+  if (!pop) return;
+  modal(`
+    <h2>${esc(pop.title())}</h2>
+    <p>${esc(pop.intro())}</p>
+    <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button id="switchGo" data-setting="${esc(name)}" onclick="globalSwitchTo(this.dataset.setting, true)">${esc(t('Turn on'))}</button>
+    </div>`);
+  const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
+  const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
+  api('/api/steam-open/everyone/preview')
+    .then((r) => show(r && r.data ? pop.html(r.data) : none))
+    .catch(() => show(none));
+}
+
+async function globalSwitchTo(name, on) {
+  try {
+    const r = await post('/api/steam-open/everyone', { On: on });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'failed');
+    delete pending[name];
+    closeModal();
+    await loadConfig();
+    renderSettings();
+    toast(on ? t('Turned on.') : t('Turned off.'));
+  } catch (e) {
+    toast(t('Not changed - try again.'), true);
+  }
+}
 
 function confirmSwitch(name, account) {
+  const pop = SWITCH_POPUPS[name];
+  if (!pop) return;
   modal(`
-    <h2>${esc(name === 'SpareItems' ? t('Turn on Spare items?') : t('Turn on spending Steam Points?'))}</h2>
-    <p>${esc(name === 'SpareItems' ? t('This is what it would do now, and the limits it keeps to. Nothing is sold or turned into gems until you press Turn on.')
-      : t('This is what it would buy now, and the limits it keeps to. Points spent are gone for good. Nothing is spent until you press Turn on.'))}</p>
+    <h2>${esc(pop.title())}</h2>
+    <p>${esc(pop.intro())}</p>
     <div class="swpop" id="switchPreview"><p class="waiting">${esc(t('Working out what it would do...'))}</p></div>
     <div class="actions">
       <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
@@ -6085,9 +6428,118 @@ function confirmSwitch(name, account) {
     </div>`);
   const show = (html) => { const el = $('switchPreview'); if (el) el.innerHTML = html; };
   const none = `<p class="problem">${esc(t('No preview - try again in a minute.'))}</p>`;
-  api(`/api/bots/${encodeURIComponent(account)}/switch/${CONFIRMED_ON[name]}/preview`)
-    .then((r) => show(r && r.data ? (r.data.Kind === 'points' ? pointsPreviewHtml(r.data) : sparePreviewHtml(r.data)) : none))
+  api(`/api/bots/${encodeURIComponent(account)}/switch/${pop.word}/preview`)
+    .then((r) => show(r && r.data ? pop.html(r.data) : none))
     .catch(() => show(none));
+}
+
+// What the Open in Steam button does on the PC, and whether this PC and Steam are ready for it.
+function steamOpenPreviewHtml(d) {
+  return `${steamOpenNote(d)}<h4>${esc(t('What pressing it does'))}</h4><ul class="limits">${steamOpenSteps().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${steamOpenSafe().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// One account's Open in Steam look in a line: ready, the first sign-in, or why it can't. 1.8.2: an account Steam doesn't
+// remember opens Steam's sign-in with its name filled in.
+function steamOpenNote(d) {
+  if (!d.Supported) return `<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`;
+  if (!d.SteamFound) return `<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>`;
+  if (d.GameRunning) return `<p class="problem">${esc(t("A game is open in Steam right now - the button won't switch while one is running."))}</p>`;
+  if (d.Remembered) return `<p class="pricing">${esc(t('Your Steam app remembers this account, so the button can sign it in with no password.'))}</p>`;
+  if (d.SignIn) return `<p class="pricing">${esc(t('Your Steam app doesn\'t remember this account yet: the button opens Steam\'s sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with "Remember me" ticked - after that it\'s one click.'))}</p>`;
+  return `<p class="problem">${esc(t('Your Steam app doesn\'t remember this account yet. Sign into it once in Steam with "Remember me" ticked, then this button works.'))}</p>`;
+}
+
+function steamOpenSteps() {
+  return [
+    t('Closes your Steam app (the polite way, letting it finish).'),
+    t("Points Steam's saved-accounts files at this account - only this one; other accounts are left alone."),
+    t('Turns off Steam\'s "Ask which account to use each time Steam starts" if it\'s on - otherwise Steam would ignore the account it\'s pointed at.'),
+    t('Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.'),
+  ];
+}
+
+function steamOpenSafe() {
+  return [
+    t('It never types a password and never touches your login tokens.'),
+    t('It backs up the files it changes first, and keeps the last three backups.'),
+    t('It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.'),
+  ];
+}
+
+// 1.8.2: "Open in Steam buttons on every account" - every account's look, and what pressing a button does.
+function steamOpenAllPreviewHtml(d) {
+  if (!d.Supported) return `<p class="problem">${esc(t('Open in Steam only works on Windows for now.'))}</p>`;
+  const rows = (d.Accounts || []).map((n) => `<li><b>${esc(n.Account)}</b>: ${esc(!n.SteamFound ? t("Steam doesn't look installed on this PC.")
+    : n.Remembered ? t('ready - Steam remembers it') : n.SignIn ? t('opens Steam\'s sign-in the first time') : t('sign in once with Remember me'))}</li>`).join('');
+  return `${!d.SteamFound ? `<p class="problem">${esc(t("Steam doesn't look installed on this PC."))}</p>` : ''}
+    <h4>${esc(t('Every account'))}</h4><ul class="limits">${rows || `<li>${esc(t('No accounts yet.'))}</li>`}</ul>
+    <h4>${esc(t('What pressing one does'))}</h4><ul class="limits">${steamOpenSteps().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <h4>${esc(t('Safe by design'))}</h4><ul class="limits muted">${steamOpenSafe().map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// Press the Open in Steam button on an account card: it asks first (Steam closes and opens again). 1.8.2: for an account
+// Steam doesn't remember yet it says Steam opens on its sign-in, and shows the Steam Guard code to type when nocat.farm
+// has its authenticator - only the 5-character code, refreshed as it runs out.
+let steamOpenTimer = null;
+async function openInSteam(name) {
+  let look = null;
+  try { look = await api(`/api/bots/${encodeURIComponent(name)}/steam-open`); } catch (e) { look = null; }
+  const d = (look && look.data) || {};
+  modal(`
+    <h2>${esc(t('Open in Steam'))}</h2>
+    <p>${esc(tf('Sign your Steam app into {0}? Steam will close and open again.', name))}</p>
+    ${look ? steamOpenNote(d) : ''}
+    ${d.AsksWhichAccount ? `<p class="muted small">${esc(t('Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.'))}</p>` : ''}
+    <div id="steamOpenCode">${steamCodeHtml(look)}</div>
+    <div class="actions">
+      <button class="ghost" onclick="closeSteamOpen()">${esc(t('Cancel'))}</button>
+      <button id="steamOpenGo" data-bot="${esc(name)}" onclick="pressSteamOpen(this.dataset.bot)">${esc(t('Open in Steam'))}</button>
+    </div>`);
+  clearInterval(steamOpenTimer);
+  if (look && look.GuardCode) {
+    let left = look.SecondsLeft;
+    steamOpenTimer = setInterval(async () => {
+      if ($('modal').classList.contains('hidden') || !$('steamOpenCode')) { clearInterval(steamOpenTimer); return; }
+      if (--left > 0) return;
+      try { const again = await api(`/api/bots/${encodeURIComponent(name)}/steam-open`); left = again.SecondsLeft || 30; const box = $('steamOpenCode'); if (box) box.innerHTML = steamCodeHtml(again); } catch (e) { left = 5; }
+    }, 1000);
+  }
+}
+
+function steamCodeHtml(look) {
+  if (!look || !look.GuardCode) return '';
+  return `<div class="steamcode"><span>${esc(t('Steam Guard code'))}</span><b>${esc(look.GuardCode)}</b>
+    <button class="ghost" data-code="${esc(look.GuardCode)}" onclick="copyText(this.dataset.code, t('Code copied'))">${esc(t('Copy'))}</button></div>`;
+}
+
+function closeSteamOpen() { clearInterval(steamOpenTimer); closeModal(); }
+
+async function pressSteamOpen(name) {
+  closeSteamOpen();
+  toast(tf('Signing Steam into {0}…', name));
+  try {
+    const r = await post(`/api/bots/${encodeURIComponent(name)}/steam-open`, {});
+    toast(steamOpenSaid(r, name), !(r && r.ok));
+    if (r && r.code === 'sign-in') refresh();
+  } catch (e) {
+    toast(t("That didn't work"), true);
+  }
+}
+
+// What a press did, in the page's language where it's one of the usual outcomes.
+function steamOpenSaid(r, name) {
+  if (!r) return t("That didn't work");
+  if (r.code === 'ok') return tf('signing your Steam app into {0} - it closes and opens again', name);
+  if (r.code === 'sign-in') return tf("Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click", r.login || name);
+  if (r.code === 'steam-busy' && r.said && r.said.startsWith("Steam wouldn't close")) return t("Steam wouldn't close - if it shows a message box, close it, then try again");
+  return r.said || (r.ok ? t('Done.') : t("That didn't work"));
+}
+
+// The Steam Guard code on an account card, while Steam is on its sign-in.
+function copySteamCode(name) {
+  const b = ((state && state.Bots) || []).find((x) => x.Name === name);
+  if (b && b.SteamOpenCode) copyText(b.SteamOpenCode, t('Code copied'));
 }
 
 // One big figure in the pop-up: the number, what it is, and a small line under it.
@@ -6137,6 +6589,36 @@ function sparePreviewHtml(d) {
   return `${top.join('')}${big}${pace}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>${pricing}`;
 }
 
+// 1.8.2: what card swaps could do now, from the server's numbers - the spare cards it could swap, and its limits in plain words.
+function swapsPreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the inventory yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(tf("Couldn't look at the inventory: {0}", d.Problem))}</p>`);
+
+  const big = d.SignedIn && !d.Problem ? `<div class="big">
+    ${bigNumber(d.Cards, t('spare cards to swap'), d.Games ? tf('in {0} games', grouped(d.Games)) : '', !d.Cards)}
+    ${bigNumber(d.PerDay, t('swaps a day, at most'), '', true)}
+  </div>` : '';
+
+  const limits = [
+    t('Normal trading cards only - never foils, backgrounds or emoticons'),
+    t('One for one, in the same game, and only when it helps your sets'),
+    t('Never a card your sets need, the last copy of one, or anything on your never-touch lists'),
+    tf('Each swap worth at most {0} less than what it gives', d.MaxLoss),
+    d.SkipHeld ? t('Never when Steam would hold the trade') : t('Also when Steam would hold the trade'),
+  ];
+  if (d.Human) limits.push(t('Only during its day (human mode)'));
+  limits.push(d.Confirms ? t('Its offers are confirmed by its authenticator here') : t('Its offers wait for you to confirm them on your phone'));
+  limits.push(t("While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them"));
+  limits.push(d.Currency ? tf("Prices in {0}, this account's wallet currency", d.Currency) : t('Its wallet currency is not known yet - nothing is swapped until it is'));
+
+  const pricing = d.SignedIn && d.Unpriced > 0
+    ? `<p class="pricing">${esc(d.Unpriced === 1 ? t('1 card still needs a price first.') : tf('{0} cards still need a price first.', grouped(d.Unpriced)))}</p>`
+    : '';
+
+  return `${top.join('')}${big}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>${pricing}`;
+}
+
 // What spending Steam Points would buy, from the server's numbers.
 function pointsPreviewHtml(d) {
   const top = [];
@@ -6170,6 +6652,72 @@ function pointsPreviewHtml(d) {
   return `${top.join('')}${big}${buys}${notes}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
 }
 
+// What buying cards would buy next, from the server's numbers: each set, its cards and price, the XP for the money, and
+// the limits. Money comes already written out in the wallet's currency ("0.35 CAD").
+function buyPreviewHtml(d) {
+  const top = [];
+  if (!d.SignedIn) top.push(`<p class="problem">${esc(t("Not signed in, so it can't look at the market yet. These are the limits it will keep to."))}</p>`);
+  else if (d.Problem) top.push(`<p class="problem">${esc(d.Blocker ? d.Problem : tf("Couldn't look at the market: {0}", d.Problem))}</p>`);
+  // Why Steam won't let it buy by itself: no billing details saved to send, or each purchase confirmed by email. (A
+  // purchase confirmed in the Steam app waits for your phone - not a block since 1.8.2, so 3 is never sent.)
+  const blocked = [null,
+    t("Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy"),
+    t("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
+    null,
+    t("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time")][d.Blocked];
+  if (blocked) top.push(`<p class="problem">${esc(blocked)}</p>`);
+  if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
+
+  const big = d.SignedIn && !d.Problem ? `<div class="big">
+    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards)}
+    ${bigNumber(d.Sets.length, t('badge levels'), d.Wallet ? tf('wallet: {0}', d.Wallet) : '', true)}
+  </div>` : '';
+
+  const sets = d.Sets.length
+    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.FullSet
+      ? tf('A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00', s.Game, s.Cards, s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit))
+      : tf('{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00', s.Cards, s.SetSize, s.Game, s.Names.join(', '), s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit)))}</li>`).join('')}</ul>`
+    : '';
+  // Smart levelling: whole sets worth more sold than crafted - badge crafting lists them, each confirmed on your phone.
+  const sells = (d.Sells || []).length
+    ? `<h4>${esc(t('It would sell instead of crafting'))}</h4><ul class="limits">${d.Sells.map((s) => `<li>${esc(tf("The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes", s.Game, s.Money, grouped(s.Levels)))}</li>`).join('')}</ul>`
+    : '';
+  const notes = d.Notes.length ? `<ul class="limits muted">${d.Notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+  const market = d.SignedIn && !d.Problem ? buyMarketHtml(d) : '';
+
+  const limits = [
+    d.DayNoLimit ? tf('No limit a day ({0} spent in the last day)', d.DaySpent) : tf('Spends at most {0} a day ({1} spent in the last day)', d.DayLimit, d.DaySpent),
+    d.WeekNoLimit ? tf('No limit a week ({0} spent this week)', d.WeekSpent) : tf('Spends at most {0} a week ({1} spent this week)', d.WeekLimit, d.WeekSpent),
+    t('Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look'),
+    t('Each card at the cheapest price on the market, checked again right before it buys'),
+    d.FullSets ? t('The cheapest badge level first - a badge it has started or a whole new set, whichever costs less') : t('Only badges it has started - not full sets'),
+    ...(d.LevelPrice ? [tf('Level price now: {0} a level (100 XP)', d.LevelPrice)] : []),
+    ...(d.MaxLevel ? [d.MaxLevelAuto ? tf('At most {0} for one badge level - a little over what a level usually costs', d.MaxLevel) : tf('At most {0} for one badge level', d.MaxLevel)] : []),
+    t('If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not'),
+  ];
+  if (d.OwnDayOnly) limits.push(t('Only during its day (human mode), one set at a time'));
+  limits.push(t('Badge crafting turns each finished set into a level'));
+
+  return `${top.join('')}${big}${sets}${sells}${notes}${market}<h4>${esc(t('Limits'))}</h4><ul class="limits">${limits.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+
+// 1.8.2 set finder: the cheapest whole sets on the market for badges it can still level, and how far the finder has got.
+// Only shown - every card is priced again on the market before anything is bought.
+function buyMarketHtml(d) {
+  const rows = d.Market || [];
+  const f = d.Finder;
+  const table = rows.length
+    ? `<div class="tablewrap"><table class="marketsets"><tr><th>${esc(t('Game'))}</th><th>${esc(t('Set price'))}</th><th>${esc(t('Cards'))}</th><th>${esc(t('XP per 1.00'))}</th></tr>${rows.map((r) => `<tr><td>${esc(r.Game)}</td><td>${esc(r.Cost)}</td><td>${r.Cards}</td><td>${grouped(r.XpPerUnit)}</td></tr>`).join('')}</table></div>`
+    : `<p class="muted small finder">${esc(t('No whole sets known yet - the set finder reads the market a little at a time.'))}</p>`;
+  const covered = f && f.LastLook
+    ? `<p class="muted small finder">${esc(f.Candidates
+      ? tf('The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.', grouped(f.Checked), grouped(f.Candidates), grouped(f.Known), f.LastLook)
+      : tf('The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.', grouped(f.Walked), grouped(f.Total), grouped(f.Known), f.LastLook))}</p>`
+    : '';
+  const off = rows.length && !d.FullSets ? `<p class="muted small finder">${esc(t('It buys these only with "Buy the cheapest full sets" on.'))}</p>` : '';
+  return `<h4>${esc(t('Cheapest whole sets on the market'))}</h4>${table}${off}${covered}`;
+}
+
 async function switchTo(name, account, on) {
   try {
     const r = await post(`/api/bots/${encodeURIComponent(account)}/switch`, { Feature: name, On: on });
@@ -6185,7 +6733,15 @@ async function switchTo(name, account, on) {
 }
 
 function editBool(name, el) {
-  if (CONFIRMED_ON[name] && settingsTarget !== GLOBAL) {
+  if (GLOBAL_SWITCH_POPUPS[name] && settingsTarget === GLOBAL) {
+    const on = el.checked;
+    el.checked = !on;   // as it is, until it's done
+    if (on) confirmGlobalSwitch(name);
+    else globalSwitchTo(name, false);
+    return;
+  }
+
+  if (SWITCH_POPUPS[name] && settingsTarget !== GLOBAL) {
     const on = el.checked;
     el.checked = !on;   // as it is, until it's done
     if (on) confirmSwitch(name, settingsTarget);
@@ -6352,6 +6908,20 @@ function dayWindows(start, startVary, bed, bedVary) {
   return { on: span(Math.max(0, at - sv), Math.min(1439, at + sv)), bed: span(Math.max(0, bedAt - bv), Math.min(2879, bedAt + bv)) };
 }
 
+// A section's settings, each run of one part (Part: "Spare items" in "Items and spending") under that part's own heading and
+// intro - the part's boxes ordered by its own GroupOrder - and what's straight in the section as before.
+function partsHtml(section, fields, values, defaults) {
+  const runs = [];
+  fields.forEach((d) => {
+    const part = d.Part || '';
+    if (!runs.length || runs[runs.length - 1].part !== part) runs.push({ part, fields: [] });
+    runs[runs.length - 1].fields.push(d);
+  });
+  return runs.map((r) => (r.part
+    ? `<div class="part"><h4 data-part="${esc(r.part)}">${esc(t(r.part))}</h4>${sectionIntro(r.part, values)}${groupedFields(r.part, r.fields, values, defaults)}</div>`
+    : groupedFields(section, r.fields, values, defaults))).join('');
+}
+
 // A section's settings in small titled boxes (each setting's Group: "What it does", "Limits", "Selling"...), the boxes
 // in the order the server gives for the section (GroupOrder), then any others as they first come. A setting shown only
 // under another one in the same box (its ShowWhen) is indented under it. A section with no groups is drawn as before.
@@ -6401,13 +6971,189 @@ function groupedFields(section, fields, values, defaults) {
 function offHint(def, values) {
   if (def.Kind !== 'Bool' || liveValue(def.Name, values)) return '';
   const own = (settingsTarget === GLOBAL ? schema.Global : schema.Bot) || [];
-  if (!own.some((d) => d.ShowWhen === `${def.Name}=true`)) return '';
+  if (!own.some((d) => !d.Hidden && d.ShowWhen === `${def.Name}=true`)) return '';
   const tip = tSetting(def, 'tip') || '';
   const first = (sentenceEnd ? tip.split(sentenceEnd)[0] : tip).trim();
   return `<div class="offhint">${esc(first)} <span>${esc(t('Its settings show here once it is on.'))}</span></div>`;
 }
 
+// The "shortest / longest" pairs the server draws as one row (Settings.RowPairs): the longest of a shortest, and the
+// shortest of a longest - only when both are settings of what's open.
+function pairLongest(def) {
+  const pair = ((schema && schema.Pairs) || []).find((p) => p[0] === def.Name);
+  return pair ? settingDefOf(pair[1]) : null;
+}
+
+function pairShortest(def) {
+  const pair = ((schema && schema.Pairs) || []).find((p) => p[1] === def.Name);
+  return pair && settingDefOf(pair[0]) ? settingDefOf(pair[0]) : null;
+}
+
+// What a number is counted in, after its box ("minutes", "wallet currency") - Settings.UnitOf, sent with the schema. Each
+// word written out so the translation check sees it.
+function unitWord(u) {
+  switch (u) {
+    case 'minutes': return t('minutes');
+    case 'hours': return t('hours');
+    case 'seconds': return t('seconds');
+    case 'days': return t('days');
+    case 'ms': return t('ms');
+    case 'wallet currency': return t('wallet currency');
+    case 'points': return t('points');
+    case 'backups': return t('backups');
+    case 'reviews': return t('reviews');
+    case 'times a day': return t('times a day');
+    case 'sets': return t('sets');
+    default: return u || '';
+  }
+}
+
+function unitOf(def) { return ((schema && schema.Units) || {})[def.Name] || ''; }
+
+// What 0 means where it means something of its own - "0 = no limit" by the box, not only in the (i).
+function zeroWord(z) {
+  switch (z) {
+    case 'no limit': return t('no limit');
+    case 'spend nothing': return t('spend nothing');
+    case 'off': return t('off');
+    case 'keep forever': return t('keep forever');
+    case 'never again': return t('never again');
+    case 'never': return t('never');
+    case 'automatic': return t('automatic');
+    case 'every game': return t('every game');
+    default: return z || '';
+  }
+}
+
+function unitHtml(def) {
+  const u = unitOf(def);
+  const zero = def.Zero ? tf('0 = {0}', zeroWord(def.Zero)) : '';
+  return (u ? `<span class="unit">${esc(unitWord(u))}</span>` : '') + (zero ? `<span class="unit zero">${esc(zero)}</span>` : '');
+}
+
+// One box of a pair: a number, or an hour of the day in the viewer's own clock. Each keeps its own data-setting.
+function pairBox(def, values) {
+  const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
+  const id = 'f-' + def.Name;
+  if (def.Kind === 'Hour') {
+    return hourSelect(`id="${id}" data-setting="${def.Name}" style="max-width:150px" onchange="editAndRender('${def.Name}',parseInt(this.value))"`,
+      cur, def.Min > -1e300 ? def.Min : 0, def.Max < 1e300 ? def.Max : 23);
+  }
+  return `<input type="number" id="${id}" data-setting="${def.Name}" class="pairnum" value="${esc(cur)}"
+    ${def.Min > -1e300 ? `min="${def.Min}"` : ''} ${def.Max < 1e300 ? `max="${def.Max}"` : ''}
+    aria-label="${esc(tSetting(def, 'label'))}" onchange="editAndRender('${def.Name}',parseInt(this.value)||0)">`;
+}
+
+// "Breaks: [2] to [30] minutes" - the two settings of a pair in one row, under the row's own label. Its (i) explains both.
+function pairHtml(lo, hi, values, defaults, depth) {
+  const changed = pending[lo.Name] !== undefined || pending[hi.Name] !== undefined;
+  const shown = (d) => (d.Kind === 'Hour' ? hourLabel(Number(defaults[d.Name])) : String(defaults[d.Name]));
+  const tip = `${tSetting(lo, 'tip')} ${tSetting(hi, 'tip')}`;
+  const revert = `editAndRender('${lo.Name}',${JSON.stringify(defaults[lo.Name])});editAndRender('${hi.Name}',${JSON.stringify(defaults[hi.Name])})`;
+  return `<div class="field pair ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
+    <label for="f-${lo.Name}">${labelWithTip(t(lo.Range), tip)}</label>
+    <div class="ctl"><span class="pairctl">${pairBox(lo, values)}<span class="pairto">${esc(t('to'))}</span>${pairBox(hi, values)}${unitHtml(lo)}</span></div>
+    <div class="meta">
+      ${lo.NeedsRestart || hi.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
+      <span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="${esc(revert)}">${esc(tf('default {0}', `${shown(lo)} - ${shown(hi)}`))}</span>
+    </div></div>`;
+}
+
+// A row of chips for several switches that answer one question - "What counts as spare": [extra card copies] [foils]...
+// (Settings.ChipRows). 'first' gives the row's switches when this is its first, 'rest' says whether it's one of the others.
+function chipRowOf(def, which) {
+  const rows = (schema && schema.ChipRows) || {};
+  for (const names of Object.values(rows)) {
+    const at = names.indexOf(def.Name);
+    if (at < 0) continue;
+    if (which === 'rest') return at > 0 && !!settingDefOf(names[0]);
+    return at === 0 ? names.map(settingDefOf).filter(Boolean) : null;
+  }
+  return which === 'rest' ? false : null;
+}
+
+function chipRowLabel(def) {
+  const rows = (schema && schema.ChipRows) || {};
+  return Object.keys(rows).find((k) => rows[k][0] === def.Name) || '';
+}
+
+// Each switch's word on its chip.
+function chipWord(name) {
+  switch (name) {
+    case 'SpareExtraCards': return t('extra card copies');
+    case 'SpareMaxedBadgeCards': return t('cards of finished badges');
+    case 'SpareFoils': return t('foils');
+    case 'SpareBackgrounds': return t('backgrounds');
+    case 'SpareEmoticons': return t('emoticons');
+    case 'LogShowDoing': return t("what it's doing");
+    case 'LogShowDrops': return t('card drops and farming');
+    case 'LogShowBadges': return t('badges, crafting, level');
+    case 'LogShowBuying': return t('buying cards');
+    case 'LogShowSelling': return t('selling, spare items, gems');
+    case 'LogShowTrades': return t('trades and card swaps');
+    case 'LogShowComments': return t('comments, friends, rep4rep');
+    case 'LogShowAchievements': return t('achievements');
+    case 'LogShowFree': return t('free games, items, Points');
+    case 'LogShowAnswers': return t('answers to commands');
+    case 'LogShowApp': return t('updates and app messages');
+    default: return name;
+  }
+}
+
+function chipRowHtml(first, defs, values, defaults, depth) {
+  const val = (d) => (pending[d.Name] !== undefined ? pending[d.Name] : values[d.Name]);
+  const changed = defs.some((d) => pending[d.Name] !== undefined);
+  const label = chipRowLabel(first);
+  const tip = t('Tap a chip to switch it on or off. Each one says what it counts.');
+  return `<div class="field chips ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
+    <label>${labelWithTip(t(label), tip)}</label>
+    <div class="ctl"><div class="langpick">${defs.map((d) =>
+      `<span class="p ${val(d) ? 'on' : ''}" role="button" tabindex="0" data-setting="${d.Name}" data-tip="${esc(tSetting(d, 'tip'))}" onclick="editAndRender('${d.Name}', ${!val(d)})">${esc(chipWord(d.Name))}</span>`).join('')}</div></div>
+    <div class="meta"><span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0"
+      onclick="${esc(defs.map((d) => `editAndRender('${d.Name}',${JSON.stringify(defaults[d.Name])})`).join(';'))}">${esc(t('default'))}</span></div></div>`;
+}
+
+// The proxy row: the address, and "needs a sign-in" opening its user name and password (they stay open while either is set).
+const PROXY_SIGNIN = { WebProxy: ['WebProxyUsername', 'WebProxyPassword'], AccountProxy: ['AccountProxyUsername', 'AccountProxyPassword'] };
+let proxyOpen = {};
+
+function proxyOwnerOf(def) {
+  return Object.keys(PROXY_SIGNIN).find((k) => PROXY_SIGNIN[k].includes(def.Name)) || null;
+}
+
+function proxyNeedsSignIn(owner, values) {
+  const [user, pass] = PROXY_SIGNIN[owner];
+  const v = (n) => (pending[n] !== undefined ? pending[n] : values[n]);
+  return !!proxyOpen[owner] || !!(v(user) || '').trim() || secretIsSet(pass) || (typeof pending[pass] === 'string' && pending[pass].length > 0);
+}
+
+function proxyPartShown(def, values) {
+  const owner = proxyOwnerOf(def);
+  return !owner || proxyNeedsSignIn(owner, values);
+}
+
+function proxySignInBox(def, values) {
+  if (!PROXY_SIGNIN[def.Name]) return '';
+  const on = proxyNeedsSignIn(def.Name, values);
+  return `<label class="tut-check proxysignin"><input type="checkbox" ${on ? 'checked' : ''} onchange="proxyOpen['${def.Name}']=this.checked;renderSettings()">
+    <span>${esc(t('needs a sign-in'))}</span></label>`;
+}
+
+// Telegram's and Discord's commands need a bot first: until its token is saved, the switch does nothing.
+function chatCommandsShown(def) {
+  const token = { TelegramCommands: 'TelegramBotToken', DiscordCommands: 'DiscordBotToken' }[def.Name];
+  return !token || settingsTarget !== GLOBAL || secretIsSet(token) || (typeof pending[token] === 'string' && pending[token].length > 0);
+}
+
 function fieldHtml(def, values, defaults, depth = 0) {
+  // The shortest of a pair draws the row for both, and the first switch of a chip row the whole row.
+  const longest = def.Range ? pairLongest(def) : null;
+  if (longest) return pairHtml(def, longest, values, defaults, depth);
+  const chipDefs = chipRowOf(def, 'first');
+  if (chipDefs) return chipRowHtml(def, chipDefs, values, defaults, depth);
+  // A proxy's user name and password sit under it.
+  if (proxyOwnerOf(def)) depth = Math.max(depth, 1);
+
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
   const changed = pending[def.Name] !== undefined;
@@ -6430,11 +7176,22 @@ function fieldHtml(def, values, defaults, depth = 0) {
       break;
     }
     case 'Int':
-    case 'Float':
-      ctl = `<input type="number" id="${id}" data-setting="${def.Name}" style="max-width:140px" value="${esc(cur)}"
+    case 'Float': {
+      const box = `<input type="number" id="${id}" data-setting="${def.Name}" style="max-width:140px" value="${esc(cur)}"
              ${def.Min > -1e300 ? `min="${def.Min}"` : ''} ${def.Max < 1e300 ? `max="${def.Max}"` : ''} ${def.Kind === 'Float' ? 'step="any"' : ''}
              onchange="editAndRender('${def.Name}',${def.Kind === 'Float' ? 'parseFloat' : 'parseInt'}(this.value)||0)">`;
+      // The unit after the box ("minutes"), and what 0 means where it means something of its own.
+      const after = unitHtml(def);
+      ctl = after ? `<span class="withunit">${box}${after}</span>` : box;
+      // 1.8.2: a money limit that can be off - a "No limit" tick box beside it (kept as -1); off again, back to the default.
+      if (def.NoLimit) {
+        const off = Number(cur) < 0;
+        const back = (settingsDefaults() || {})[def.Name];
+        ctl = `<span class="withunit">${off ? '' : ctl}<label class="nolimit" title="${esc(t('No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.'))}">`
+          + `<input type="checkbox" id="${id}-nolimit" ${off ? 'checked' : ''} onchange="editAndRender('${def.Name}', this.checked ? -1 : ${Number(back) > 0 ? Number(back) : 1})"> ${esc(t('No limit'))}</label></span>`;
+      }
       break;
+    }
     case 'Secret': {
       const isSet = secretIsSet(def.Name);
       const cleared = cur === CLEAR_SECRET;
@@ -6540,7 +7297,7 @@ function fieldHtml(def, values, defaults, depth = 0) {
 
   return `<div class="field ${changed ? 'changed' : ''}${depth ? ` sub sub${Math.min(depth, 3)}` : ''}">
     <label for="${id}">${labelWithTip(tSetting(def, 'label'), tSetting(def, 'tip'))}</label>
-    <div class="ctl">${ctl}</div>
+    <div class="ctl">${ctl}${proxySignInBox(def, values)}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
       ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
@@ -6585,12 +7342,30 @@ function edit(name, value) {
 // avatars, and the two buttons.
 const PANEL_SECTIONS = new Set(['Discord profile']);
 
-// Settings drawn by a section's own panel (chips and switches) instead of as rows.
-const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
-  'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
-  'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns', 'SendPoints']);
-PANEL_ROWS.add('SendBackups');
-PANEL_ROWS.add('SendItems');   // 1.8.0: drawn as a chip with the other notification kinds
+// Settings drawn by a section's own panel (chips and switches) instead of as rows - Settings.PanelRows, from the schema, so
+// the server's count of what a page shows uses the same list.
+const PANEL_ROWS = { has: (name) => ((schema && schema.PanelRows) || []).includes(name) };
+
+// The rep4rep hold: every account's commenting paused for some hours, kept through restarts ('rep4rep hold').
+const REP4REP_GLOBAL = 'rep4rep';
+function rep4repHoldPanel(values) {
+  const until = values.Rep4RepHoldUntil ? new Date(values.Rep4RepHoldUntil) : null;
+  if (until && until > new Date()) {
+    return `<div class="explain"><b>${esc(tf('Commenting is on hold on every account until {0}.', until.toLocaleString()))}</b>
+      <div style="margin-top:8px"><button class="ghost" onclick="rep4repHold(0)">${esc(t('Resume now'))}</button></div></div>`;
+  }
+  return `<div class="explain"><b>${esc(t('Pause rep4rep for...'))}</b>
+    <p style="margin:6px 0 8px">${esc(t('Holds commenting on every account, then it starts again by itself - restarts included.'))}</p>
+    ${[6, 12, 24, 48].map((h) => `<button class="ghost" onclick="rep4repHold(${h})">${esc(tf('{0} hours', h))}</button>`).join(' ')}</div>`;
+}
+
+async function rep4repHold(hours) {
+  const r = await post('/api/command', { Line: hours ? `rep4rep hold ${hours}` : 'rep4rep hold off' }).catch(() => null);
+  if (!r || typeof r.output !== 'string') toast(t("Couldn't reach nocat.farm"), true);
+  else toast(hours ? tf('rep4rep held for {0} hours', hours) : t('rep4rep commenting carries on'));
+  await loadConfig().catch(() => {});
+  if (view === 'settings') renderSettings();
+}
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
@@ -6732,7 +7507,8 @@ function telegramConnectInner() {
       <span class="muted small">${esc(t('Opens your bot - press Start there and it connects.'))}</span></div>`;
   }
   if (state && state.TelegramConnected) {
-    return `<div class="tgconnect"><span class="muted small">${esc(t('Telegram is connected.'))}</span></div>`;
+    return `<div class="tgconnect"><span class="muted small">${esc(t('Telegram is connected.'))}</span>
+      <button class="ghost small" onclick="disconnectChat('TelegramChatId')" data-tip="${esc(t('Forgets this chat. Connect Telegram comes back, to connect a different one.'))}">${esc(t('Disconnect'))}</button></div>`;
   }
   return '';
 }
@@ -6771,9 +7547,21 @@ function discordConnectInner() {
     ${state.DiscordInviteUrl ? `<a class="btn" href="${esc(state.DiscordInviteUrl)}" target="_blank" rel="noopener">${esc(t('Add the bot to your server'))}</a>` : ''}
     <button class="ghost" onclick="discordConnectCode(this)">${esc(t('Connect Discord'))}</button>
     <span class="muted small">${esc(who)}</span>
+    ${state.DiscordConnected ? `<button class="ghost small" onclick="disconnectChat('DiscordOwnerId')" data-tip="${esc(t('Forgets this Discord account - the bot obeys nobody until you connect again.'))}">${esc(t('Disconnect'))}</button>` : ''}
     ${discordCode ? `<span class="small" style="flex-basis:100%">${tf('Send {0} to your bot in Discord - the code works once, for {1} minutes.',
       `<code>/connect code: ${esc(discordCode.code)}</code>`, discordCode.minutes)}</span>` : ''}
   </div>`;
+}
+
+// The chat Telegram is connected to, or the Discord account the bot obeys, forgotten - they aren't rows on the settings
+// page: Connect fills them in, and this is the way back out.
+async function disconnectChat(key) {
+  await loadConfig().catch(() => {});
+  if (!config || !config.Global) return;
+  const res = await postGlobal({ ...config.Global, [key]: '' }).catch(() => null);
+  if (!res || !res.ok) { toast((res && res.error) || t('Save failed'), true); return; }
+  await loadConfig().catch(() => {});
+  refresh();
 }
 
 async function discordConnectCode(btn) {
@@ -7203,10 +7991,10 @@ async function refresh() {
     // button) asked from the same place and both appended it, so the Log showed every line twice.
     const last = logLines.length ? logLines[logLines.length - 1].Seq : 0;
     const fresh = got.filter((e) => e.Seq > last);
-    if (fresh.length) {
-      logLines = logLines.concat(fresh).slice(-1000);
-      if (view === 'log') renderLog();
-    }
+    // 1.8.2: a "Show in the app's log" chip changed elsewhere ('set' in the console, Telegram): the Log tab follows it now.
+    const chipsMoved = syncLogShow(state.LogShowOff);
+    if (fresh.length) logLines = logLines.concat(fresh).slice(-1000);
+    if ((fresh.length || chipsMoved) && view === 'log') renderLog();
 
     render();
   } catch {

@@ -5,8 +5,8 @@
 This page takes you from the download to a running account, then through the handful of things most people change.
 You don't need to have used an idler before.
 
-The app works the same way: the first-run walkthrough offers **Easy** or **Advanced**, and the Settings page
-shows the everyday switches first, with a **Show advanced** box for everything else.
+The app works the same way: the first-run setup asks as little as it can - what kind of account, and the account -
+and the Settings page shows the everyday switches first, with a **Show advanced** box for everything else.
 
 ## Words to know
 
@@ -65,49 +65,44 @@ For a scripted install, see [the setup's command line](settings.md#the-setups-co
 
 ## 2. The first-run setup
 
-The first time the dashboard opens, it walks you through a short setup. A bar along the top shows how far along you
-are. Every step has **Back**, most have **Skip**, and you can close it at any point. **Show the walkthrough again**
-on the Overview page replays it.
+The first time the dashboard opens, it asks the fewest questions it can. A bar along the top shows how far along you
+are, every step has **Back**, and you can close it at any point. **Show the walkthrough again** on the Overview page
+replays it.
 
-1. **Language.** It switches as soon as you pick one.
-2. **Easy or Advanced.** Easy is the default: a few plain questions about your phone, updates and the account,
-   about two minutes in all. Advanced adds opening it from anywhere, Discord and Telegram, and the update hours,
-   and ends by opening every setting of the account. It's for people who've used ArchiSteamFarm or something like
-   it. Moving from another PC? *Restore from a backup file* on this first screen puts back a daily backup (see
-   [Daily backups](dashboard.md#daily-backups-that-open-on-any-pc)).
-3. **Your phone.** *Yes, set it up* opens the dashboard to your Wi-Fi. You pick a dashboard password, then scan a QR
-   code with your phone. If Windows Firewall is in the way, the button to let it through is right there. *Not now*
-   keeps the dashboard on this PC.
-4. **From anywhere** (Advanced). The same thing for away from home. Your router forwards the port, the way it does
-   for Jellyfin. This needs a password of at least 12 characters.
-5. **Password.** Comes up after a yes to the phone, and always in Advanced. A meter shows how strong it is.
-6. **Notifications** (Advanced). Connect Telegram or Discord, and choose whether you're told when an update
-   installs.
-7. **Keep it up to date.** One switch: install new versions at night while your accounts sleep. Advanced also sets
-   the hours, the wait after a release and how often it looks. In Docker, or run as a Linux service, this step
-   explains how to update by hand instead.
-8. **What kind of account is it?** Asked when you have no accounts yet.
-   - *My main - I play on it* adds it in human mode, so it acts like a person. You can also tick
-     *I also sign into it from my own Steam app*. Then nocat.farm never changes its online status, so it never
-     kicks you off Friends & Chat.
+1. **Language** - only if nobody picked one yet. The installer asks it, so after installing it's skipped; the first
+   screen has a link to change it.
+2. **What kind of account is it?** The one question that sets dozens of defaults:
+   - *My main account* adds it in human mode, so it acts like a person.
    - *A spare or farm account* is robot mode: it farms cards and idles games around the clock at full speed.
 
-   The **Human mode** switch in the account's settings changes this later.
-
-Then the account itself. Type the **Steam account name**: what you type to sign in to Steam, not your display name
-or email. The **password** is optional; leave it empty and you're asked once when it signs in. A nickname for the
-account in nocat.farm is optional too. In Advanced you can tick **Sign in with a QR code** instead and scan a code
-with the Steam app, so nothing is typed at all.
+   The **Human mode** switch in the account's settings changes this later. Moving from another PC? *Restore from a
+   backup file* on this screen puts back a daily backup (see [Daily backups](dashboard.md#daily-backups-that-open-on-any-pc)).
+   **Advanced setup**, beside it, adds your phone, opening it from anywhere, a dashboard password, Discord and Telegram
+   and the update hours before the account, and ends on every setting of the account - for people who've used
+   ArchiSteamFarm or something like it.
+3. **The account.** Type the **Steam account name**: what you type to sign in to Steam, not your display name or
+   email. The **password** is optional; leave it empty and you're asked once when it signs in. For your main account
+   you can tick *I also use this account in my own Steam app* - then nocat.farm never changes its online status, so it
+   never kicks you off Friends & Chat. Under **More**: a nickname for the account in nocat.farm, and *Sign in with a
+   QR code instead*, to scan a code with the Steam app so nothing is typed at all.
 
 If the setup finds another idler with accounts in it (ArchiSteamFarm, Idle Master, HourBoostr, Steam Game
 Idler...), it lists those accounts instead. Tick the ones to bring, tick **Human mode** on the ones you play on
 yourself, and press **Import them**. *Coming from another idler? Import from it* under the form picks a different
 one. Close the other idler first, so two programs aren't signed in to the same account.
 
-The Steam Guard code, password or QR code is asked for right there in the setup. Once it's signed in you can pick
-its games. A human-mode account shows its most-played games: tap a main game and a few side games, and Advanced
-also asks for its routine (hours a day, when it gets on, bedtime). A farm account can pick games to idle and a
-custom game name. **Skip - use the defaults** is always there.
+The Steam Guard code, password or QR code is asked for right there in the setup. Once it's signed in there's one
+question more, from the account's own games:
+
+- a human-mode account: tap its main game and a few side games (Advanced setup also asks for its routine - hours a
+  day, when it gets on, bedtime);
+- a robot account: what it idles once its cards are done - **nothing**, **games I pick**, or **my whole library**, a
+  batch at a time. Games still within Steam's 2 hours for a refund are left alone either way (*Protect refunds* is on
+  for a new account).
+
+**Skip - use the defaults** is always there. The last screen says what the account is doing, that your items are safe,
+and has the rest as cards to open when you like: **Use it from your phone**, **Get messages on Telegram or Discord**,
+**A daily backup**, and the **Show on my Discord profile** switch.
 
 From then on nocat.farm keeps a Steam login token and signs itself in. No password is stored unless you type one
 into the settings.
@@ -123,28 +118,31 @@ It also, without being asked:
 - accepts gifts (wallet gift cards, guest passes, games friends send) and donations (offers where you give nothing)
 - collects free event items: the daily sticker during a Steam sale, and anything free in the Points Shop
 - goes through the discovery queue during Steam sales, for the sale items and badge progress
-- watches for bans and tells you straight away if one appears
+- looks at its bans every few hours, and tells you straight away if a new one appears (account health's *Alert on a
+  new ban*)
 - watches for the signs of a stolen account (a new API key or device, a changed email, phone or Steam Guard) and
   holds that account's trades until you've checked (see [Scam watch](trades.md#scam-watch))
 - shows a Health line on each account card and tells you when something gets worse
 - during Steam sales nominates and votes in the Steam Awards - a human-mode account one step at a time, inside its
   day (see [Sale events](cards-and-idling.md#sale-events))
-- joins the nocat.farm Steam group, which you can change or clear (see
-  [Steam groups](phone-and-notifications.md#steam-groups))
+- on a robot account, joins the nocat.farm Steam group, which you can change or clear (a human-mode account added new
+  doesn't join it - see [Steam groups](phone-and-notifications.md#steam-groups))
 - clears Steam's notification counters
 - writes a daily summary in the log at 09:30
 - checks for updates every 2 hours and tells you what's new, but only installs one by itself if you set *Updates*
-  to *install by itself at night*
+  to *install by itself at night* (or never looks, with *don't look for updates*)
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens or spends anything by itself.
-Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an
-account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only
-things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.
+**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
+until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
+what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
+Steam sales, and free games if you turn that on.
 
-These stay **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
+These stay **off** until you turn them on: human mode (unless you picked "My main account"), claiming free games, earning
 achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
-Points on levels, making booster packs from gems, crafting badges, fair card swaps, daily backups, Discord and
-Telegram, rep4rep, and plugins. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
+Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, card swaps with
+other nocat.farm users, the auto-reply, a custom game name, daily backups, Discord and Telegram, rep4rep, and plugins.
+On the account's Settings page these are together at the end, under **Items and spending**. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
 added account - farm accounts too - until you turn it on.
 
 ## 4. Finding your way around
@@ -186,8 +184,14 @@ plays and its bedtime.
 **Claim free games**: *Free stuff → Claim free games*, set to *games* (or *games and DLC* for free DLC too). Paid
 games that Steam gives away free-to-keep get added to the account.
 
-**I sign into this one myself**: *Account → I sign into this one myself*. Turn it on for any account you also use in
+**I also use this account in my own Steam app**: *Account → I sign into this one myself*. Turn it on for any account you also use in
 your own Steam app.
+
+**A second account like the first**: in **+ Add account**, pick the first one under *Copy settings from*, or open an
+account's settings and press **Copy settings from...** (`copy settings myaccount myaccount2`). It shows what would
+change first. Its sign-in and what belongs to that account alone are never copied, and Spare items, Steam Points,
+buying cards, card swaps and Open in Steam stay off until you turn them on. See
+[Copying settings](accounts.md#copying-settings-from-another-account).
 
 **Notifications on your phone**: *Global settings → Notifications*. Paste a Discord webhook or connect a Telegram
 bot; [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) has the steps.
@@ -270,7 +274,7 @@ Check the **Log** tab first. It says what happened in plain words. Some common o
 | "Steam Guard code needed", or it asks for a password | Type the answer in the bar at the top of the dashboard, or at the `?` prompt in the app window. `answer <text>` works too. |
 | An account stopped trying to sign in | After 3 failed sign-ins in a row it stops, so Steam doesn't block your connection. Check the password, then `start myaccount`. |
 | "Rate-limited" or "too many logins" | Steam slows down a PC that asks too much, usually after lots of restarts. It waits it out by itself. |
-| Steam kicks you off Friends & Chat | Turn on *I sign into this one myself* for that account. |
+| Steam kicks you off Friends & Chat | Turn on *I also use this account in my own Steam app* for that account. |
 | Friends see the real game, not your custom name | The account card warns "Steam shows …" and nocat.farm puts the name back by itself. Human-mode accounts have no custom name, on purpose. |
 | Nothing is farming | Type `cards myaccount`. With no cards left it idles its games, if it has any. If it says it's waiting, human mode may have it asleep or on a break; `human myaccount` shows its day. |
 | The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out: for a minute on this PC, an hour from anywhere else. The page counts down; type `dashboard unlock` in the app window (or on Telegram) to skip the wait. |

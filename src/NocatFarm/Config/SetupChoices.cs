@@ -110,6 +110,11 @@ public static class SetupChoices {
 
 				return 2;
 			}
+
+			// The installer asked for the language: the dashboard's walkthrough doesn't ask it again.
+			if (name.Equals("Language", StringComparison.OrdinalIgnoreCase)) {
+				g.LanguagePicked = true;
+			}
 		}
 
 		// Checked: the choices said "saved" whether or not they were, and were simply gone at the first start.

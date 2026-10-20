@@ -46,7 +46,8 @@ public static class BoosterPick {
 	public sealed record Candidate(uint App, string Name, uint Price, int SetSize, int Level, int Have, int Missing, int Craftable);
 
 	/// <summary>The games in order, closest first, and how many were left out and why.</summary>
-	public sealed record Ranking(IReadOnlyList<Candidate> Ranked, int Maxed, int Finished, int NeverOpen, int MadeToday);
+	/// <param name="Dear">1.8.2: games whose cards are worth more sold than the levels they'd make (<see cref="DearCards"/>) - never packed for.</param>
+	public sealed record Ranking(IReadOnlyList<Candidate> Ranked, int Maxed, int Finished, int NeverOpen, int MadeToday, int Dear = 0);
 
 	/// <summary>What automatic does next: make a pack for <see cref="Next"/>, or nothing for now, and why.</summary>
 	public sealed record Choice(Candidate? Next, Said Why, bool WaitingForGems = false);
@@ -57,12 +58,13 @@ public static class BoosterPick {
 	/// <summary>
 	/// Every game the booster creator lists, closest normal badge first: fewest cards missing for the next level, then the
 	/// cheaper pack. Left out: a badge at level 5, a badge the cards held already finish, a game whose packs are never
-	/// opened, and a game made in the last day (Steam's own "unavailable", or made here).
+	/// opened, and a game made in the last day (Steam's own "unavailable", or made here). 1.8.2: and a game whose cards are
+	/// worth more sold than kept (<paramref name="dear"/>) - its cards are being sold, so a pack for it would be wasted.
 	/// </summary>
 	public static Ranking Rank(Boosters.Page page, IReadOnlyDictionary<uint, int> normalLevels, IReadOnlyDictionary<uint, Dictionary<string, int>> normalCards,
-		IReadOnlyCollection<uint> neverOpen, IReadOnlyDictionary<uint, DateTime> madeAt, DateTime now) {
+		IReadOnlyCollection<uint> neverOpen, IReadOnlyDictionary<uint, DateTime> madeAt, DateTime now, IReadOnlyCollection<uint>? dear = null) {
 		List<Candidate> ranked = [];
-		int maxed = 0, finished = 0, never = 0, today = 0;
+		int maxed = 0, finished = 0, never = 0, today = 0, sold = 0;
 
 		foreach (Boosters.Offer offer in page.Offers.Values) {
 			int size = SetSize(offer.Price);
@@ -81,6 +83,12 @@ public static class BoosterPick {
 
 			if (neverOpen.Contains(offer.AppId)) {
 				never++;
+
+				continue;
+			}
+
+			if (dear?.Contains(offer.AppId) == true) {
+				sold++;
 
 				continue;
 			}
@@ -106,7 +114,7 @@ public static class BoosterPick {
 			ranked.Add(new Candidate(offer.AppId, offer.Name, offer.Price, size, level, have, size - have, complete));
 		}
 
-		return new Ranking([.. ranked.OrderBy(static c => c.Missing).ThenBy(static c => c.Price).ThenBy(static c => c.App)], maxed, finished, never, today);
+		return new Ranking([.. ranked.OrderBy(static c => c.Missing).ThenBy(static c => c.Price).ThenBy(static c => c.App)], maxed, finished, never, today, sold);
 	}
 
 	/// <summary>
@@ -174,7 +182,18 @@ public static class BoosterPick {
 	/// <param name="Maybe">Steam didn't answer the request: whether it was made is known only once the inventory or the
 	/// booster creator page says.</param>
 	/// <param name="SetSize">Cards in the game's set (0: not known).</param>
-	public sealed record OwnPack(uint App, string Name, ulong Asset, ulong After, DateTime At, bool Maybe = false, int SetSize = 0);
+	/// <param name="For">1.8.2, what it was made for: 0 the closest badge (opened), <see cref="ToSell"/> sold sealed,
+	/// <see cref="ToOpenAndSell"/> opened and its cards sold - see <see cref="GemsChoice"/>.</param>
+	public sealed record OwnPack(uint App, string Name, ulong Asset, ulong After, DateTime At, bool Maybe = false, int SetSize = 0, int For = 0);
+
+	/// <summary>1.8.2: a pack made to be sold sealed - never opened, sent or sold by anything else while it's its own.</summary>
+	public const int ToSell = 1;
+
+	/// <summary>1.8.2: a pack made to be opened and its cards sold.</summary>
+	public const int ToOpenAndSell = 2;
+
+	/// <summary>1.8.2: gems a pack costs for a set of this many cards (6000 / cards, rounded) - 0 when the size isn't known.</summary>
+	public static int PackGems(int setSize) => setSize > 0 ? (int) Math.Round(GemsPerSetOfPacks / (double) setSize, MidpointRounding.AwayFromZero) : 0;
 
 	/// <summary>How long a pack it made stays its own to open. Older, it follows "Open booster packs" like any other.</summary>
 	public static readonly TimeSpan OwnFor = TimeSpan.FromDays(2);
@@ -278,10 +297,10 @@ public static class BoosterPick {
 			}
 		}
 
-		/// <summary>How many packs are still to open.</summary>
+		/// <summary>How many packs are still to open (1.8.2: not the ones made to sell sealed).</summary>
 		public int CountOwed() {
 			lock (_gate) {
-				return Owed.Count;
+				return Owed.Count(static o => o.For != ToSell);
 			}
 		}
 
@@ -292,10 +311,20 @@ public static class BoosterPick {
 			}
 		}
 
-		/// <summary>The item ids of the packs still to open that are known.</summary>
+		/// <summary>The item ids of the packs still to open that are known (1.8.2: not the ones made to sell sealed).</summary>
 		public HashSet<ulong> Ids() {
 			lock (_gate) {
-				return [.. Owed.Where(static o => o.Asset != 0).Select(static o => o.Asset)];
+				return [.. Owed.Where(static o => (o.Asset != 0) && (o.For != ToSell)).Select(static o => o.Asset)];
+			}
+		}
+
+		/// <summary>
+		/// 1.8.2: the item ids of the packs made to sell (sealed, or opened and their cards sold) that are known - out of
+		/// "Open booster packs" and "Packs it doesn't open": only automatic lists or opens them, and notes the cards.
+		/// </summary>
+		public HashSet<ulong> ForSaleIds() {
+			lock (_gate) {
+				return [.. Owed.Where(static o => (o.Asset != 0) && (o.For != 0)).Select(static o => o.Asset)];
 			}
 		}
 
@@ -431,6 +460,41 @@ public static class BoosterPick {
 	}
 
 	/// <summary>
+	/// 1.8.2: the games automatic booster packs is working on - every one it made a pack for that's still to open. Buying
+	/// cards leaves them to the packs. A game it's only saving gems for isn't: with 211 of 1,200 gems that pack is weeks
+	/// away, and buying may finish the set first when that's the cheapest level (live, 2026-10-19). None unless "Make booster
+	/// packs" is automatic.
+	/// </summary>
+	public static IReadOnlyCollection<uint> Busy(Bot bot) {
+		if (bot.Cfg.BoosterMake != Auto) {
+			return [];
+		}
+
+		Boosters? boosters = BotManager.ModuleOf<Boosters>(bot);
+
+		return Busy(bot.Cfg.BoosterMake, (boosters?.AutoMemory ?? Memory.Load(bot.Name)).Snapshot(), 0);
+	}
+
+	/// <summary>
+	/// <see cref="Busy(Bot)"/> on its own: the packs still to open, and <paramref name="savingFor"/> - a game whose pack can
+	/// be made now (the gems are there) - when automatic.
+	/// </summary>
+	public static IReadOnlyCollection<uint> Busy(int make, IEnumerable<OwnPack> owed, uint savingFor) {
+		if (make != Auto) {
+			return [];
+		}
+
+		// 1.8.2: a pack made to sell (sealed or its cards) isn't levelling its game's badge - buying can go on with it.
+		HashSet<uint> games = [.. owed.Where(static o => o.For == 0).Select(static o => o.App).Where(static a => a != 0)];
+
+		if (savingFor != 0) {
+			games.Add(savingFor);
+		}
+
+		return games;
+	}
+
+	/// <summary>
 	/// Whether the cards held already make a whole normal set of a game the booster creator lists whose badge isn't at
 	/// level 5 - a level waiting to be crafted.
 	/// </summary>
@@ -469,7 +533,7 @@ public static class BoosterPick {
 		}
 
 		sb.AppendLine().Append(CultureInfo.InvariantCulture,
-			$"  Left out: {ranking.Maxed} at badge level 5, {ranking.Finished} the cards held already finish, {ranking.NeverOpen} never opened, {ranking.MadeToday} made in the last day.");
+			$"  Left out: {ranking.Maxed} at badge level 5, {ranking.Finished} the cards held already finish, {ranking.NeverOpen} never opened, {ranking.MadeToday} made in the last day{(ranking.Dear > 0 ? $", {ranking.Dear} whose cards are worth more sold than kept" : "")}.");
 		sb.AppendLine().Append("  The best case is about 2,000 gems a level (a set's worth of packs with no repeats); each card already missing makes it more.");
 
 		if (!crafting) {

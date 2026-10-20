@@ -45,7 +45,10 @@ public static class Log {
 	/// </remarks>
 	/// <param name="Kind">What it stacks as in the views, when the sentence alone doesn't say (Core/LogStack.cs): the
 	/// heartbeat is the account's status line, any sentence at all.</param>
-	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said, string? Kind = null) {
+	/// <param name="Show">What it is about for the "Show in the app's log" chips (Core/LogShow.cs), when it was written as one -
+	/// an answer to a command, a trade. Null: its sentence says.</param>
+	/// <param name="About">The notification topic it was sent under, if any - what LogShow falls back on.</param>
+	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said, string? Kind = null, string? Show = null, Topic? About = null) {
 		/// <summary>
 		/// The line in whatever language is selected right now - always ONE line. A line break inside it took more
 		/// rows than the live board had counted, so every redraw scrolled and the header repeated down the screen,
@@ -277,9 +280,18 @@ public static class Log {
 	public static void Status(Core.Said text, string source) => Write("INFO", source, text, ConsoleColor.Gray, kind: Core.LogStack.Heartbeat);
 	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
 
+	/// <summary>
+	/// An answer to a command that comes back later, in the log under the account it's about - an INFO line like any other,
+	/// marked as an answer for the "Show in the app's log" chips (Core/LogShow.cs).
+	/// </summary>
+	public static void Answer(string text, string source) => Write("INFO", source, new Core.Said(text), ConsoleColor.Gray, show: Core.LogShow.Answers);
+
+	/// <inheritdoc cref="Answer(string, string)"/>
+	public static void Answer(Core.Said text, string source) => Write("INFO", source, text, ConsoleColor.Gray, show: Core.LogShow.Answers);
+
 	/// <summary>A trade offer event: the log, the trades pop-up, and Discord/Telegram's Trades topic.</summary>
 	public static void Trade(Core.Said text, string source, bool good = false) {
-		Write(good ? "GOOD" : "INFO", source, text, good ? ConsoleColor.Yellow : ConsoleColor.Cyan);
+		Write(good ? "GOOD" : "INFO", source, text, good ? ConsoleColor.Yellow : ConsoleColor.Cyan, show: Core.LogShow.Trades);
 		Notify?.Invoke(NotifyKind.Trade, source, text.ToString());
 		Publish(Topic.Trades, source, text);
 	}
@@ -294,7 +306,7 @@ public static class Log {
 
 	/// <summary>Something social happened - somebody commented on a profile.</summary>
 	public static void Event(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Social) {
-		Write("GOOD", source, text, ConsoleColor.Cyan);
+		Write("GOOD", source, text, ConsoleColor.Cyan, about: topic);
 		Notify?.Invoke(NotifyKind.Social, source, text.ToString());
 		Publish(topic, source, text);
 	}
@@ -303,7 +315,7 @@ public static class Log {
 	public static void Reward(string text, string source = "nocat.farm", Topic topic = Topic.Cards) => Reward(new Core.Said(text), source, topic);
 
 	public static void Reward(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Cards) {
-		Write("GOOD", source, text, ConsoleColor.Yellow);
+		Write("GOOD", source, text, ConsoleColor.Yellow, about: topic);
 		Notify?.Invoke(NotifyKind.Earning, source, text.ToString());
 		Publish(topic, source, text);
 	}
@@ -313,7 +325,7 @@ public static class Log {
 	/// in the reward colour, and nothing else. The pop-up and Discord/Telegram get one message when the look ends
 	/// (Core/ItemsNote.cs) - one each was about 20 Telegram messages in 10 minutes.
 	/// </summary>
-	public static void Earned(Core.Said text, string source) => Write("GOOD", source, text, ConsoleColor.Yellow);
+	public static void Earned(Core.Said text, string source) => Write("GOOD", source, text, ConsoleColor.Yellow, about: Topic.Items);
 
 	/// <summary>Something needs a human: a Steam Guard code, a password, a decision.</summary>
 	public static void Attention(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Attention(new Core.Said(text), source, topic);
@@ -488,6 +500,17 @@ public static class Log {
 		return true;
 	}
 
+	/// <summary>The same, for a line with values - compared by its English, values filled in.</summary>
+	public static bool DebugOnChange(string key, Core.Said text, string source = "nocat.farm") {
+		if (!OnChange(key, text.ToEnglish())) {
+			return false;
+		}
+
+		Debug(text, source);
+
+		return true;
+	}
+
 	private static bool OnChange(string key, string text) {
 		DateTime now = DateTime.UtcNow;
 
@@ -563,9 +586,10 @@ public static class Log {
 		Append(file, lines.ToString(), debug: true);
 	}
 
-	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true, string? kind = null) {
+	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true, string? kind = null, string? show = null,
+		Topic? about = null) {
 		DateTime now = DateTime.Now;
-		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said, kind);
+		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said, kind, show, about);
 
 		// Rendered once, here, for the console and the file. Both are written as it happens, in the language
 		// selected at that moment; only the entry in the ring can be re-rendered later.

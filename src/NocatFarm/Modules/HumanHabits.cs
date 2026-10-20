@@ -693,9 +693,6 @@ internal static class HumanHabits {
 	/// <summary>The chance a quiet spell starts on any given day - with 2-5 days each, one or two spells a month.</summary>
 	internal const double QuietStartChance = 0.06;
 
-	/// <summary>How often a Friday or Saturday night turns into a late one, on top of the usual later bed.</summary>
-	internal const double LateNightChance = 0.3;
-
 	/// <summary>
 	/// A Random that gives the same numbers for the same account, day and purpose every time - so a day decided now, a
 	/// restart later and 'human week' last Tuesday all agree. string.GetHashCode changes every run, so this is FNV.
@@ -722,8 +719,8 @@ internal static class HumanHabits {
 
 	/// <summary>
 	/// This day's rhythm for this account. A quiet spell can start on any day; a day is in one when a spell started on it
-	/// or on one of the four before it and hasn't run out. Late nights only on a free night (Friday, Saturday), and never
-	/// in a quiet spell.
+	/// or on one of the four before it and hasn't run out. No late nights since 1.8.2: Friday and Saturday nights are
+	/// "Stays up later Fri/Sat"'s alone (LateNightExtraHours) - "Quiet spells now and then" is only the quiet spells.
 	/// </summary>
 	internal static DayRhythm RhythmFor(string account, DateTime date) {
 		bool quiet = false;
@@ -738,11 +735,8 @@ internal static class HumanHabits {
 
 		Random day = Seeded(account, date.Date, 2);
 		int pct = day.Next(40, 66);
-		bool free = date.DayOfWeek is DayOfWeek.Friday or DayOfWeek.Saturday;
-		bool late = !quiet && free && (day.NextDouble() < LateNightChance);
-		int lateMinutes = day.Next(60, 151);
 
-		return new DayRhythm(quiet, pct, late, late ? lateMinutes : 0);
+		return new DayRhythm(quiet, pct, false, 0);
 	}
 
 	// ── new games ──
@@ -762,8 +756,11 @@ internal static class HumanHabits {
 	/// When the trying-out starts: the day it arrived - or, for a game refund protection is holding, the day that hold
 	/// ends, since it can't be touched before then anyway.
 	/// </summary>
-	internal static DateTime TrialStart(AppOwnership owned, BotConfig cfg) =>
-		cfg.SkipRefundableGames && owned.Refundable ? owned.Since.AddDays(Core.RefundGuard.HoldDays) : owned.Since;
+	internal static DateTime TrialStart(AppOwnership owned, BotConfig cfg) => TrialStartOf(owned, cfg, cheap: false);
+
+	/// <param name="cheap">1.8.2: it cost no more than "Protect refunds only for games over" - not held, so no later start.</param>
+	internal static DateTime TrialStartOf(AppOwnership owned, BotConfig cfg, bool cheap) =>
+		cfg.SkipRefundableGames && owned.Refundable && !cheap ? owned.Since.AddDays(Core.RefundGuard.HoldDays) : owned.Since;
 
 	/// <summary>How keen on it today: all in on its first day, less each day after, nothing once its days are up.</summary>
 	internal static double TrialStrength(DateTime start, DateTime now, int days) {

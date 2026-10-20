@@ -30,6 +30,9 @@ public sealed partial class Boosters {
 	/// <summary>What automatic made and still has to open (loaded on first use).</summary>
 	internal BoosterPick.Memory AutoMemory => _memory ??= BoosterPick.Memory.Load(Bot.Name);
 
+	/// <summary>1.8.2: the game automatic is saving gems for at its last look (0: none) - see <see cref="BoosterPick.Busy(Core.Bot)"/>.</summary>
+	internal uint SavingFor { get; private set; }
+
 	private async Task AutoTickAsync(CancellationToken ct) {
 		_dayGate ??= DayGate;
 
@@ -104,8 +107,28 @@ public sealed partial class Boosters {
 			CraftSoon(setComplete: true);
 		}
 
-		BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, normal, Bot.Cfg.BoosterNeverOpen, AutoMemory.Made, DateTime.UtcNow);
-		BoosterPick.Choice choice = BoosterPick.Choose(ranking, page.Gems, Bot.Cfg.BoosterKeepGems, dayOpen: true);
+		BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, normal, Bot.Cfg.BoosterNeverOpen, AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot));
+
+		// 1.8.2 "Use gems for the most levels": with buying cards on, the gems maths first (Boosters.Gems.cs) - a sack or a
+		// pack to sell, or the closest badge as always. Untradable gems only ever go to the badge.
+		bool untradableOnly = false;
+
+		if (GemsChoice.Applies(Bot.Cfg, CardBuyer.On(Bot))) {
+			GemsGo go = await GemsStepAsync(page, ranking, inventory, ct).ConfigureAwait(false);
+
+			if (go == GemsGo.Handled) {
+				return;
+			}
+
+			untradableOnly = go == GemsGo.BadgeUntradable;
+		} else {
+			LastGems = null;
+		}
+
+		BoosterPick.Choice choice = untradableOnly ? BoosterPick.Choose(ranking, page.UntradableGems, 0, dayOpen: true)
+			: BoosterPick.Choose(ranking, page.Gems, Bot.Cfg.BoosterKeepGems, dayOpen: true);
+
+		SavingFor = choice.WaitingForGems && (ranking.Ranked.Count > 0) ? ranking.Ranked[0].App : 0;
 
 		if (choice.Next is not { } next) {
 			_autoStatus = choice.Why;
@@ -118,7 +141,7 @@ public sealed partial class Boosters {
 		ulong after = inventory.Assets.Select(static a => ulong.TryParse(InventoryContents.Text(a, "assetid"), NumberStyles.None, CultureInfo.InvariantCulture, out ulong id) ? id : 0).DefaultIfEmpty(0ul).Max();
 
 		await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
-		Made made = await MakeAsync(Bot, offer, page.TradableGems, page.UntradableGems, ct).ConfigureAwait(false);
+		Made made = await MakeAsync(Bot, offer, page.TradableGems, page.UntradableGems, ct, prefer: untradableOnly ? "3" : null).ConfigureAwait(false);
 
 		if (!made.Ok && made.NoAnswer) {
 			// No answer isn't no pack: Steam may well have made it. Noted as maybe made - the inventory showing a new pack
@@ -154,7 +177,7 @@ public sealed partial class Boosters {
 		// Opened after a short while, like somebody looking at what they made; a robot then goes on to the next game.
 		_openNext = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(3, 20) : Rng.Minutes(1, 3));
 		_autoNext = DateTime.UtcNow + Rng.Minutes(1, 2);
-		_dayGate!.Space(5, 30);
+		SpaceOut();
 		_autoStatus = new Said("made a {0} booster pack - opening it soon", offer.Name);
 	}
 
@@ -192,8 +215,9 @@ public sealed partial class Boosters {
 				continue;
 			}
 
-			// A booster-packs look may have opened it meanwhile (SpareRun.PacksAsync opens these too).
-			if (!AutoMemory.Ids().Contains(asset)) {
+			// A booster-packs look may have opened it meanwhile (SpareRun.PacksAsync opens these too). 1.8.2: one made to
+			// sell sealed is never opened (Boosters.Gems.cs lists it).
+			if ((own.For == BoosterPick.ToSell) || !AutoMemory.Ids().Contains(asset)) {
 				continue;
 			}
 
@@ -224,6 +248,8 @@ public sealed partial class Boosters {
 			}
 
 			opened = true;
+			// 1.8.2: a pack opened to sell its cards - they're listed at the next looks, by their own copies (not one held before).
+			OpenedToSell(Bot, own, result.cards, held.Where(i => (i.Kind == SpareKind.Card) && (i.Game == own.App) && (i.AssetId != 0)).Select(static i => i.AssetId));
 			note.Opened(name, result.cards);
 			HashSet<string> before = held.Where(i => (i.Kind == SpareKind.Card) && (i.Game == own.App)).Select(static i => i.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 			Log.Earned(SpareRun.OpenedSaid(name, result.cards, SpareRun.NewForBadge(before, result.cards)), Bot.Name);
@@ -245,7 +271,7 @@ public sealed partial class Boosters {
 		_openNext = AutoMemory.CountOwed() > 0 ? DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(5, 30) : Rng.Minutes(10, 20)) : DateTime.MinValue;
 
 		if (opened) {
-			_dayGate!.Space(5, 30);
+			SpaceOut();
 			CraftSoon();
 		}
 	}

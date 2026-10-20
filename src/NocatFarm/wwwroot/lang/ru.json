@@ -1,5 +1,64 @@
 {
   "ui": {
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Торговая площадка Steam заблокирована ({0}) - покупка, продажа и обмены ждут, пока Steam её не откроет, а для этого нужна покупка в Steam на этом аккаунте",
+    "settling in first (~{0}m), then looking for cards": "сначала обживается (~{0} мин), потом ищет карточки",
+    "settling in first, then looking for cards": "сначала обживается, потом ищет карточки",
+    "it's the small hours - this plan ends at bed tonight, {0}": "сейчас глубокая ночь - этот план заканчивается сегодня ночью отбоем в {0}",
+    "{0} to confirm in your email": "{0} ждут подтверждения в почте",
+    "Goes off - turn it on again yourself after its preview": "Выключается - включи снова сам после предпросмотра",
+    "You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.": "Это окно можно закрыть - nocat.farm продолжает работать по часам. На странице «Аккаунты» видно, что делает каждый аккаунт, и там же добавляется ещё один.",
+    "Human mode is on: it's outside this account's day right now, so it rests until its day starts - then it settles in for a few minutes and plays, with breaks and a bedtime.": "Режим человека включён: сейчас не день этого аккаунта, поэтому он отдыхает, пока не начнётся его день - потом несколько минут обживается и играет, с перерывами и отбоем.",
+    "Steam is on the sign-in for {0}: type its password (and Steam Guard code if asked), keep Remember me ticked - next time it's one click": "Steam на входе в {0}: введи пароль (и код Steam Guard, если спросит), оставь галочку «Запомнить меня» - в следующий раз это один клик",
+    "Steam wouldn't close - if it shows a message box, close it, then try again": "Steam не закрылся - если он показывает окно с сообщением, закрой его и попробуй снова",
+    "Open in Steam is on for every account: each one shows the one-click button": "«Открыть в Steam» включено для всех аккаунтов: у каждого есть кнопка в один клик",
+    "Open in Steam is off for every account: only accounts turned on one by one show it": "«Открыть в Steam» для всех аккаунтов выключено: кнопка есть только у аккаунтов, где она включена отдельно",
+    "Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.": "Steam ещё не помнит этот аккаунт, поэтому откроется вход в Steam с уже вписанным именем: введи пароль один раз и оставь галочку «Запомнить меня».",
+    "Steam Guard code: {0}": "Код Steam Guard: {0}",
+    "Steam is on the sign-in for this account: type this code when Steam asks for it.": "Steam на входе в этот аккаунт: введи этот код, когда Steam его попросит.",
+    "Turn on Open in Steam for every account?": "Включить «Открыть в Steam» для всех аккаунтов?",
+    "This shows the Open in Steam button on every account, so you don't have to turn it on one at a time. Nothing changes until you press Turn on here.": "Кнопка «Открыть в Steam» появится у всех аккаунтов, не нужно включать её по одному. Ничего не изменится, пока ты не нажмёшь здесь «Включить».",
+    "Your Steam app doesn't remember this account yet: the button opens Steam's sign-in with its name filled in. Type its password once (and its Steam Guard code if asked) with \"Remember me\" ticked - after that it's one click.": "Твоё приложение Steam ещё не помнит этот аккаунт: кнопка откроет вход в Steam с уже вписанным именем. Введи пароль один раз (и код Steam Guard, если спросит) с галочкой «Запомнить меня» - потом это один клик.",
+    "Turns off Steam's \"Ask which account to use each time Steam starts\" if it's on - otherwise Steam would ignore the account it's pointed at.": "Выключает в Steam «Спрашивать, какой аккаунт использовать при каждом запуске Steam», если это включено, - иначе Steam проигнорирует указанный аккаунт.",
+    "Starts Steam again the way a double-click does, so it signs straight into this account - or, the first time, opens its sign-in with the name filled in.": "Снова запускает Steam так же, как двойной щелчок, чтобы он сразу вошёл в этот аккаунт - или в первый раз открыл вход с уже вписанным именем.",
+    "ready - Steam remembers it": "готово - Steam его помнит",
+    "opens Steam's sign-in the first time": "в первый раз откроет вход в Steam",
+    "sign in once with Remember me": "войди один раз с «Запомнить меня»",
+    "Every account": "Все аккаунты",
+    "What pressing one does": "Что делает нажатие",
+    "Steam is set to ask which account to use each time it starts - this turns that off, or Steam would ignore the account.": "Steam настроен спрашивать при каждом запуске, какой аккаунт использовать, - это будет выключено, иначе Steam проигнорирует аккаунт.",
+    "Open in Steam: sign your Steam app into this account": "Открыть в Steam: войти в приложение Steam под этим аккаунтом",
+    "signing your Steam app into {0} - it closes and opens again": "вхожу в приложение Steam под {0} - оно закроется и откроется снова",
+    "Open in Steam isn't turned on for {0} - turn it on in its settings first": "«Открыть в Steam» не включено для {0} - сначала включите в его настройках",
+    "Open in Steam only works on Windows for now": "«Открыть в Steam» пока работает только в Windows",
+    "Steam doesn't look installed on this PC, so there's nothing to open": "Похоже, Steam не установлен на этом ПК, так что открывать нечего",
+    "a game is open in Steam - close it first, then open {0}": "в Steam открыта игра - сначала закройте её, затем откройте {0}",
+    "sign into {0} once in Steam with \"Remember me\" ticked, then this button works": "войдите в Steam под {0} один раз, отметив «Запомнить меня», и тогда эта кнопка заработает",
+    "couldn't open {0} in Steam": "не удалось открыть {0} в Steam",
+    "Open in Steam is on for {0}: a one-click button signs your Steam app into it": "«Открыть в Steam» включено для {0}: кнопка в один клик входит в ваше приложение Steam под этим аккаунтом",
+    "Open in Steam is off for {0}: the button is hidden": "«Открыть в Steam» выключено для {0}: кнопка скрыта",
+    "couldn't change Steam's saved accounts - {0}": "не удалось изменить сохранённые аккаунты Steam - {0}",
+    "couldn't back up Steam's saved accounts first, so nothing was changed": "не удалось сначала сделать резервную копию сохранённых аккаунтов Steam, поэтому ничего не изменено",
+    "one Open in Steam is already running - wait for it to finish": "«Открыть в Steam» уже выполняется - дождитесь завершения",
+    "Sign your Steam app into this account in one click. Closes Steam and opens it again. It keeps farming this account.": "Войдите в приложение Steam под этим аккаунтом в один клик. Закрывает Steam и открывает снова. Фарм этого аккаунта продолжается.",
+    "Open in Steam": "Открыть в Steam",
+    "Windows only for now": "Пока только Windows",
+    "Turn on the Open in Steam button?": "Включить кнопку «Открыть в Steam»?",
+    "This shows a button on this account that signs your Steam app into it in one click. This is exactly what pressing it does. The button does nothing until you press Turn on here.": "Это показывает у этого аккаунта кнопку, которая в один клик входит в ваше приложение Steam. Вот что именно она делает при нажатии. Кнопка ничего не делает, пока вы не нажмёте «Включить» здесь.",
+    "Closes your Steam app (the polite way, letting it finish).": "Закрывает приложение Steam (аккуратно, давая ему завершиться).",
+    "Points Steam's saved-accounts files at this account - only this one; other accounts are left alone.": "Направляет файлы сохранённых аккаунтов Steam на этот аккаунт - только на него; другие аккаунты не трогаются.",
+    "Open in Steam only works on Windows for now.": "«Открыть в Steam» пока работает только в Windows.",
+    "Steam doesn't look installed on this PC.": "Похоже, Steam не установлен на этом ПК.",
+    "A game is open in Steam right now - the button won't switch while one is running.": "Сейчас в Steam открыта игра - кнопка не переключит, пока игра запущена.",
+    "Your Steam app doesn't remember this account yet. Sign into it once in Steam with \"Remember me\" ticked, then this button works.": "Ваше приложение Steam ещё не помнит этот аккаунт. Войдите в Steam один раз, отметив «Запомнить меня», и тогда эта кнопка заработает.",
+    "Your Steam app remembers this account, so the button can sign it in with no password.": "Ваше приложение Steam помнит этот аккаунт, поэтому кнопка может войти без пароля.",
+    "It never types a password and never touches your login tokens.": "Он никогда не вводит пароль и не трогает ваши токены входа.",
+    "It backs up the files it changes first, and keeps the last three backups.": "Сначала делает резервную копию изменяемых файлов и хранит последние три копии.",
+    "It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.": "Он никогда не прекращает фарм этого аккаунта в nocat.farm - Steam отступает только когда вы действительно запускаете игру.",
+    "What pressing it does": "Что делает нажатие",
+    "Safe by design": "Безопасно по замыслу",
+    "Sign your Steam app into {0}? Steam will close and open again.": "Войти в приложение Steam под {0}? Steam закроется и откроется снова.",
+    "Signing Steam into {0}…": "Вход в Steam под {0}…",
+    "Done.": "Готово.",
     "That's not a command - did you mean '{0}'?": "Это не команда - может быть, вы имели в виду '{0}'?",
     "That's not a command - 'help' lists them.": "Это не команда - 'help' покажет их список.",
     "Overview": "Обзор",
@@ -389,7 +448,6 @@
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Сколько этот аккаунт наиграл в эту игру. Steam ничего не выдаёт, пока не пройден порог из настроек этого аккаунта.",
     "Dashboard": "Панель",
     "Running in the background": "Работа в фоне",
-    "rep4rep account": "Аккаунт rep4rep",
     "Steam connection": "Подключение к Steam",
     "Logging": "Журнал",
     "What it plays": "Во что играет",
@@ -397,7 +455,6 @@
     "rep4rep commenting": "Комментирование rep4rep",
     "Friends & messages": "Друзья и сообщения",
     "Trades": "Обмены",
-    "Staying out of the way": "Не мешать",
     "Log": "Журнал",
     "/week": "/неделя",
     "About {0} of an average week once the main-game-only days are counted in.": "Примерно {0} средней недели, если учесть дни только с основной игрой.",
@@ -528,7 +585,6 @@
     "Free event items": "Бесплатные предметы событий",
     "Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.": "Бесплатные игры, наборы карточек из самоцветов и честные обмены карточками - по одному переключателю в Настройках, для каждого аккаунта.",
     "Gifts": "Подарки",
-    "Use rep4rep at all": "Пользоваться rep4rep вообще",
     "{0} - Steam wallet gift cards and guest passes people send you.": "{0} - подарочные карты Steam и гостевые пропуска, которые вам присылают.",
     "{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.": "{0} - ежедневная наклейка во время распродажи Steam и всё в магазине очков за 0 очков.",
     "couldn't read the free-game state: {0}": "не удалось прочитать состояние бесплатных игр: {0}",
@@ -706,7 +762,6 @@
     "{0}: {1}h in - the next ones need more hours in it": "{0}: {1}ч наиграно - для следующих нужно больше часов",
     "tomorrow {0}": "завтра {0}",
     "yesterday {0}": "вчера {0}",
-    "on - no games to hunt (pick some under \"Boost these games\")": "включено - нет игр для охоты (выберите их в \\\"Бустить эти игры\\\")",
     "couldn't read the price book: {0}": "не удалось прочитать книгу цен: {0}",
     "couldn't save the price book: {0}": "не удалось сохранить книгу цен: {0}",
     "couldn't read the library: {0}": "не удалось прочитать библиотеку: {0}",
@@ -857,7 +912,7 @@
     "unwanted": "нежелательное",
     "trade offer refused. Steam said: {0}": "предложение обмена отклонено. Steam ответил: {0}",
     "using {0}'s own trade token - it is one of your accounts": "используем собственный токен обмена {0} - это один из ваших аккаунтов",
-    "crafted {0} badge(s) - Steam level up": "создано значков: {0} - уровень Steam повышен",
+    "crafted {0} badge(s): {1} · +{2} XP": "создано значков: {0}: {1} · +{2} опыта",
     "craft refused - backing off {0}h rather than retrying": "создание отклонено - пауза {0}ч вместо повтора",
     "{0} completed card set(s) ready to craft": "готово к созданию наборов карточек: {0}",
     "something else is setting this account's persona (it says {0}, we asked for {1}) - backing off": "что-то ещё задаёт статус этого аккаунта (показывает {0}, мы просили {1}) - отступаем",
@@ -975,11 +1030,8 @@
     "You can skip this and come back from the Overview page.": "Можно пропустить и вернуться со страницы «Обзор».",
     "Show advanced": "Показать расширенные",
     "What kind of account is it?": "Что это за аккаунт?",
-    "This picks the right settings for it. Anything can be changed later, per account.": "Это подберёт подходящие настройки. Всё можно поменять позже, для каждого аккаунта.",
-    "My main - I play on it": "Мой основной - я на нём играю",
     "A spare or farm account": "Запасной или для фарма",
     "Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.": "Режим робота: фармит карточки и держит игры запущенными круглые сутки на полной скорости. Лучше всего для аккаунтов, на которые никто не смотрит.",
-    "I also sign into it from my own Steam app": "Я тоже захожу в него из своего приложения Steam",
     "Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.": "Тогда nocat.farm никогда не меняет его статус в сети - иначе Steam выкинет твой собственный клиент из «Друзей и чата».",
     "Importing several? You pick which ones on the next step.": "Импортируешь несколько? Какие именно - выберешь на следующем шаге.",
     "Pick one first": "Сначала выбери вариант",
@@ -1015,7 +1067,6 @@
     "Its game list didn't load - add games by their store link below.": "Список его игр не загрузился — добавьте игры ниже по ссылке из магазина.",
     ", and {0} now and then": ", а иногда в {0}",
     "Add": "Добавить",
-    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Сначала он фармит карточки. Когда они закончатся, он играет в эти игры, чтобы набить часы. Нажмите на те, что нравятся, — или ни на одну.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "В основном он будет играть в {0}{1}, с перерывами, едой и отходом ко сну. Сначала он несколько минут осваивается, как человек, который только что открыл Steam.",
     "Its daily routine": "Его распорядок дня",
     "Looking at its games...": "Смотрим его игры...",
@@ -1031,7 +1082,6 @@
     "The side games share the rest. You can fine-tune all of this later under Settings.": "Дополнительные игры делят остальное время. Всё это можно потом точнее настроить в «Настройках».",
     "Time on the main game: {0}%": "Время в основной игре: {0}%",
     "What does it play?": "Во что он играет?",
-    "What should it idle?": "Что запускать в простое?",
     "leave empty to show the real game": "оставьте пустым, чтобы показывать настоящую игру",
     "none - that is fine": "ни одной — это нормально",
     "tap one above": "нажмите на одну выше",
@@ -1291,8 +1341,6 @@
     "you give": "вы отдаёте",
     "you get": "вы получаете",
     "Confirmation": "Подтверждение",
-    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Trade by itself with\").": "Подтверждаются сами: обмены с {0}. Всё остальное ждёт здесь. Изменить это можно в «Настройки», «Обмены» («Сам обмениваться с»).",
-    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Trade by itself with\").": "Ничего не подтверждается само - всё ждёт здесь вас. Изменить это можно в «Настройки», «Обмены» («Сам обмениваться с»).",
     "Steam didn't take that": "Steam это не принял",
     "Confirmed {0}": "Подтверждено: {0}",
     "Denied {0}": "Отклонено: {0}",
@@ -1331,8 +1379,6 @@
     "Pop-ups": "Всплывающие уведомления",
     "Inventory prices": "Цены инвентаря",
     "Updates & plugins": "Обновления и плагины",
-    "Badges & selling": "Значки и продажа",
-    "Inventory & bans": "Инвентарь и баны",
     "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Пока nocat.farm открыт, ваш Discord показывает Playing nocat.farm, как игру. Это можно изменить в любой момент в разделе Настройки, Профиль Discord.",
     "Trades & items": "Обмены и предметы",
     "Steam Guard": "Steam Guard",
@@ -1417,9 +1463,7 @@
     "Windows has this network set to Public, where the rule doesn't apply. Set it to Private (Settings > Network & internet > your network), then press it again.": "Windows считает эту сеть общественной, там правило не действует. Сделайте её частной (Параметры > Сеть и Интернет > ваша сеть) и нажмите снова.",
     "couldn't encrypt {0} in place: {1}": "не удалось зашифровать {0} на месте: {1}",
     "couldn't look up how long {0} takes: {1}": "не удалось узнать, сколько длится {0}: {1}",
-    "done hunting for today (Hunt at most, hours a day)": "на сегодня охота окончена (не больше стольких часов в день)",
     "every game on the list is resting for now - it comes back to them in a few days": "все игры из списка сейчас отдыхают - он вернётся к ним через несколько дней",
-    "{0} is done for today (Hunt at most, hours a day) - back tomorrow": "{0} на сегодня всё (не больше стольких часов в день) - завтра снова",
     "{0}: couldn't read it": "{0}: не удалось прочитать",
     "ASF played it as a different device - choose one under \"Play as if on\" in its settings": "ASF выдавал его за другое устройство - выбери его в настройках, в пункте «Играть будто на»",
     "its ASF password is encrypted with a key of its own, so it wasn't copied - the login token signs in, or it asks for the password once": "его пароль из ASF зашифрован собственным ключом, поэтому не скопирован - войдёт по токену входа или один раз спросит пароль",
@@ -1699,7 +1743,6 @@
     "rep4rep hold lifted - commenting resumes": "пауза rep4rep снята - комментарии продолжаются",
     "achievement ceiling is one figure now: 90%": "потолок достижений теперь одно число: 90%",
     "setting moved: when to farm cards = only at night": "настройка перенесена: когда фармить карты = только ночью",
-    "going for {0}: {1} of {2} card drop(s)": "добываем {0}: {1} из {2} дропов карт",
     "Discord bot: to link it, press Connect Discord in Settings": "бот Discord: чтобы привязать, нажмите «Подключить Discord» в настройках",
     "Discord bot: no / commands in a server - invite it again": "бот Discord: нет /-команд на сервере - пригласите заново",
     "Discord connected - only {0} can use its commands": "Discord подключён - команды доступны только {0}",
@@ -2011,7 +2054,6 @@
     "{0}: skipped, another account in this import signs in as {1} too": "{0}: пропущено, другой аккаунт в этом импорте тоже входит как {1}",
     "Commands only work in a private chat with this bot - a group gets the notifications.": "Команды работают только в личном чате с этим ботом - группа получает уведомления.",
     "... and {0} more line(s) - type it in the dashboard's Console for the whole reply": "... и ещё {0} строк(и) - введите это в Консоли панели, чтобы увидеть весь ответ",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick \"Work out what its inventory is worth\".": "Не оценивается. Чтобы включить обратно, откройте Настройки, выберите {0}, отметьте «Показать расширенные», разверните «Инвентарь и баны» и отметьте «Считать, сколько стоит его инвентарь».",
     "Couldn't switch it on for {0}": "Не удалось включить для {0}",
     "only what they send": "только то, что присылают",
     "they can take items": "могут забирать предметы",
@@ -2203,7 +2245,6 @@
     "Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.": "Не удалось отправить код входа в Telegram. Попробуйте позже или войдите из дома.",
     "Wrong code - {0} tries left.": "Неверный код - осталось попыток: {0}.",
     "That code has run out. Type the password again for a new one.": "Срок действия кода истёк. Введите пароль ещё раз, чтобы получить новый.",
-    "Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.": "Код в Telegram для входа извне выключен - одного пароля достаточно, чтобы войти.",
     "From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.": "Извне одного пароля мало: нужен ещё 6-значный код, отправленный в ваш Telegram.",
     "Connect Telegram and signing in from outside will also take a code sent to it.": "Подключите Telegram, и для входа извне понадобится ещё код, отправленный туда.",
     "6-digit code": "6-значный код",
@@ -2513,7 +2554,6 @@
     "the cards aren't sent before logging out - scam watch is holding this account's trades. They go after 'scamwatch ok {0}' or when farming next finishes": "карточки не отправляются перед выходом - защита от мошенников приостановила обмены этого аккаунта. Они уйдут после 'scamwatch ok {0}' или когда фарм в следующий раз закончится",
     "scam watch is holding {0}'s trades - doing this anyway because you asked. Type 'scamwatch ok {0}' once you've checked": "защита от мошенников держит обмены {0} - делаю всё равно, потому что вы попросили. Введите 'scamwatch ok {0}', когда проверите",
     "held by scam watch - nothing done by itself; trade accept or decline {0} {1}": "задержано защитой от мошенников - само ничего не делается; trade accept или decline {0} {1}",
-    "account health couldn't read the bans: {0}": "состояние аккаунта: не удалось прочитать баны: {0}",
     "its sent offers are being cancelled, trades carry on (stopping them is off) - type 'scamwatch ok {0}' to clear the warning": "его отправленные предложения отменяются, обмены продолжаются (их остановка выключена) - введите 'scamwatch ok {0}', чтобы сбросить предупреждение",
     "nothing was stopped (both reactions are off) - type 'scamwatch ok {0}' to clear the warning": "ничего не остановлено (обе реакции выключены) - введите 'scamwatch ok {0}', чтобы сбросить предупреждение",
     "a Steam Web API key appeared that wasn't there before": "появился ключ Steam Web API, которого раньше не было",
@@ -2623,7 +2663,6 @@
     "{0} is back on the overnight list": "{0} снова в списке на ночь",
     "{0} left out - held back so it can still be refunded": "{0} пропущена - отложена, чтобы её ещё можно было вернуть",
     "couldn't read the software this account holds: {0}": "не удалось прочитать программы этого аккаунта: {0}",
-    "{0} left out - it's on \"Never touch these\"": "{0} пропущена - она в списке «Никогда не трогать»",
     "library: {0} piece(s) of software owned too ({1})": "библиотека: ещё есть программы: {0} ({1})",
     "its cards are worth about {0}, the pack {1}": "его карточки стоят около {0}, набор {1}",
     "sells for {0}, you get {1} - more than its {2} gems are worth ({3})": "продаётся за {0}, вы получите {1} - больше, чем стоят его {2} самоцв. ({3})",
@@ -2636,7 +2675,6 @@
     "needed for the badge": "нужно для значка",
     "on your keep list": "в вашем списке «оставить»",
     "it doesn't turn into gems": "не превращается в самоцветы",
-    "{0} gems, worth {1} - beats selling ({2}) by {3}% or more": "{0} самоцв. на {1} - выгоднее продажи ({2}) на {3}% или больше",
     "unopened booster packs: listed {0} - {1}": "неоткрытые наборы карточек: выставлено {0} - {1}",
     "next look at booster packs around {0}": "следующая проверка наборов карточек около {0}",
     "today's limit of {0} in value is reached": "достигнут дневной лимит стоимости: {0}",
@@ -2661,6 +2699,9 @@
     "couldn't pack gems into sacks: {0}": "не удалось упаковать самоцветы в мешки: {0}",
     "a copy you keep": "копия, которую вы оставляете",
     "trade-locked": "заблокирован для обмена",
+    "kept until {0} - selling pays more": "оставлено до {0} - продажа выгоднее",
+    "kept until it can be traded - selling pays more": "оставлено, пока не станет доступно для обмена - продажа выгоднее",
+    "{0} gems - it can never be traded or sold": "{0} самоцветов - его нельзя ни обменять, ни продать",
     "nobody sells it, so there's no price - kept": "никто не продаёт, значит цены нет - остаётся",
     "Steam refused one - trying again next time": "Steam отказал в одном - попробует в следующий раз",
     "next look at spare items around {0}": "следующая проверка лишних предметов около {0}",
@@ -2692,7 +2733,10 @@
     "live stats: what was waiting to be sent was broken - kept as farm-totals.json.broken; counting goes on from now, with no catch-up": "живая статистика: то, что ждало отправки, было повреждено - сохранено как farm-totals.json.broken; подсчёт продолжается с этого момента, без досылки прошлого",
     "human mode (its day ended or you're playing on it)": "человеческий режим (его день закончился или ты на нём играешь)",
     "nobody is selling it right now - kept, there's no price to go by": "сейчас никто не продаёт - оставлено, не на какую цену опереться",
-    "nocat.farm never sells, turns into gems, opens or spends anything by itself. Spare items, opening and making booster packs, and spending Steam Points are all off until you switch them on in an account's settings - and selling, gems and Steam Points show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm никогда сам ничего не продаёт, не превращает в самоцветы, не открывает и не тратит. Лишние предметы, открытие и создание наборов карточек и трата очков Steam выключены, пока ты не включишь их в настройках аккаунта, - а продажа, самоцветы и очки Steam сначала показывают, что сделают, и просят подтвердить. Сам он забирает только бесплатное: предметы событий во время распродаж Steam и бесплатные игры, если ты это включишь.",
+    "nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on.": "nocat.farm никогда сам ничего не продаёт, не превращает в самоцветы, не открывает, не покупает, не обменивает и не тратит. Лишние предметы, открытие и создание наборов карточек, трата очков Steam, покупка карточек и обмен карточками выключены, пока ты не включишь их в настройках аккаунта, - а продажа, самоцветы, очки Steam, покупка карточек и обмен карточками сначала показывают, что сделают, и просят подтвердить. Сам он забирает только бесплатное: предметы событий во время распродаж Steam и бесплатные игры, если ты это включишь.",
+    "it gives a card this account keeps": "отдаёт карточку, которую этот аккаунт оставляет себе",
+    "bought for a badge - kept until it's crafted": "куплена для значка - остаётся до создания",
+    "it gives a card bought for a badge - kept until it's crafted": "отдаёт карточку, купленную для значка, - она остаётся до создания",
     "{0}: Steam hasn't said this account's wallet currency yet - nothing listed": "{0}: Steam ещё не сообщил валюту кошелька этого аккаунта - ничего не выставлено",
     "No preview - try again in a minute.": "Нет предпросмотра - попробуй ещё раз через минуту.",
     "Not changed - try again.": "Не изменено - попробуй ещё раз.",
@@ -2703,6 +2747,45 @@
     "Spare items is on for {0}: it turns spare items into gems or sells them, within its limits": "«Лишние предметы» включены для {0}: превращает лишние предметы в самоцветы или продаёт их в своих пределах",
     "Spare items was turned off on {0} - stopped before the next item": "«Лишние предметы» выключены на {0} - остановлено перед следующим предметом",
     "Spending Steam Points is off for {0}: nothing is spent": "Трата очков Steam выключена для {0}: ничего не тратится",
+    "Buying cards": "Покупка карточек",
+    "{0}: buying cards is off until you turn it on in Settings - it shows what it would buy first": "{0}: покупка карточек выключена, пока вы не включите её в настройках - сначала покажет, что купила бы",
+    "up {0}": "встанет {0}",
+    "buy order for {0} · no clear answer · {1}": "заявка на покупку {0} · нет ясного ответа · {1}",
+    "buy order {0} · not settled yet · {1}": "заявка на покупку {0} · ещё не ясно · {1}",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Покупка карточек включена для {0}: сама покупает недостающие карточки для значков в своих пределах",
+    "Buying cards is off for {0}: nothing is bought": "Покупка карточек выключена для {0}: ничего не покупается",
+    "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "Steam требует подтверждать каждую покупку этого аккаунта на торговой площадке по почте, а nocat.farm так не умеет",
+    "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "Steam не сказал, как подтверждаются покупки на торговой площадке для этого аккаунта, поэтому в этот раз ничего не покупается",
+    "couldn't save the card buying list: {0}": "не удалось сохранить список покупок карточек: {0}",
+    "couldn't read the card buying list: {0}": "не удалось прочитать список покупок карточек: {0}",
+    "buying cards: next look around {0}": "покупка карточек: следующая проверка около {0}",
+    "couldn't look at buying cards: {0}": "не удалось проверить покупку карточек: {0}",
+    "unsure if {0} was bought · counted as spent": "неясно, куплен ли {0} · считается потраченным",
+    "card buying stopped · its spending list can't be read or saved": "покупка карточек остановлена · список трат не удаётся прочитать или сохранить",
+    "buying {0} turned down · {1}": "покупка {0} отклонена · {1}",
+    "buying {0} turned down": "покупка {0} отклонена",
+    "bought {0} card(s) · {1} · {2} set(s) to craft": "куплено карточек: {0} · {1} · наборов к сборке: {2}",
+    "next up {0} · goes to bed {1}": "следующий подъём {0} · ложится {1}",
+    "{0} · that sitting's over": "{0} · этот сеанс окончен",
+    "Turn on buying cards?": "Включить покупку карточек?",
+    "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Вот что она купила бы дальше и за сколько, и пределы, которых она держится. Она тратит кошелёк Steam этого аккаунта. Ничего не покупается, пока вы не нажмёте «Включить».",
+    "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Не выполнен вход, поэтому она пока не может посмотреть торговую площадку. Вот пределы, которых она будет держаться.",
+    "Couldn't look at the market: {0}": "Не удалось посмотреть торговую площадку: {0}",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "«Собирать значки из карточек» выключено - ничего не покупается, пока это не включено, иначе карточки просто лежали бы.",
+    "card to buy": "карточка к покупке",
+    "cards to buy": "карточек к покупке",
+    "{0} for {1} badge level(s)": "{0} за уровни значков: {1}",
+    "badge levels": "уровней значков",
+    "wallet: {0}": "кошелёк: {0}",
+    "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Полный набор {0} ({1} карточек) за {2} - уровень с {3} до {4}, около {5} XP за 1,00",
+    "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} из {1} карточек для {2} ({3}) за {4} - уровень с {5} до {6}, около {7} XP за 1,00",
+    "Spends at most {0} a day ({1} spent in the last day)": "Тратит не больше {0} в день (за последние сутки потрачено {1})",
+    "Spends at most {0} a week ({1} spent this week)": "Тратит не больше {0} в неделю (на этой неделе потрачено {1})",
+    "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Никогда больше, чем есть в кошельке. Планируются только целые наборы, и каждая цена проверяется заранее - если какая-то изменится на полпути, остаток набора ждёт следующей проверки",
+    "Each card at the cheapest price on the market, checked again right before it buys": "Каждая карточка по самой низкой цене на торговой площадке, с повторной проверкой прямо перед покупкой",
+    "Only badges it has started - not full sets": "Только начатые значки - не полные наборы",
+    "Only during its day (human mode), one set at a time": "Только в течение его дня (человеческий режим), по одному набору за раз",
+    "Badge crafting turns each finished set into a level": "Сборка значков превращает каждый собранный набор в уровень",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Трата очков Steam включена для {0}: сам покупает уровни значка в своих пределах",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Очки Steam: трата выключена - включи её в настройках, чтобы увидеть, что он купил бы",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Очки Steam: потратил бы {0} очков на {1} уровн(я/ей) {2} (+{3} опыта) - ничего не тратится, пока трата не включена в настройках",
@@ -2737,7 +2820,7 @@
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "наборы заполняют комплекты карточек, но «Собирать значки из карточек» выключено - готовые комплекты ждут, пока его не включат",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "вы отклонили его лот на телефоне - не выставляется ещё {0} дн.",
     "couldn't read which listings you declined: {0}": "не удалось прочитать, какие лоты вы отклонили: {0}",
-    "{0}: the selling price \"a cent under the cheapest\" is gone - it now lists a cent under the real price": "{0}: цены продажи «на цент ниже самого дешёвого» больше нет - теперь выставляется на цент ниже настоящей цены",
+    "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: настройка цены продажи не была одним из её вариантов - теперь выставляется на цент ниже настоящей цены",
     "{0}: Steam wouldn't say which items are in a waiting trade - try again in a while": "{0}: Steam не сказал, какие предметы в ожидающем обмене, - попробуйте чуть позже",
     "you'd get {0} - under your {1} minimum": "вы получили бы {0} - меньше вашего минимума {1}",
     "couldn't write down which listings you declined: {0}": "не удалось записать, какие лоты вы отклонили: {0}",
@@ -2745,17 +2828,15 @@
     "spread over its day: about {0} a look, next look ~{1}": "распределено по его дню: около {0} за проверку, следующая проверка ~{1}",
     "spread over its day: about {0} a look - its last look today": "распределено по его дню: около {0} за проверку - это его последняя проверка сегодня",
     "still pricing {0} item(s) - Steam asked to slow down, pricing resumes around {1}": "ещё оценивается {0} предмет(ов) - Steam попросил притормозить, оценка продолжится около {1}",
-    "{0} gems - selling would pay {1}, under your {2} minimum": "{0} самоцветов - продажа дала бы {1}, меньше вашего минимума {2}",
     "{0} gems - nobody sells it on the market": "{0} самоцветов - на торговой площадке это никто не продаёт",
     "you declined its listing on your phone - never listed again": "вы отклонили его лот на телефоне - больше никогда не выставляется",
     "Gems are packed into sacks of 1000 and the sacks sent to {0}": "Самоцветы упаковываются в мешки по 1000, а мешки отправляются на {0}",
     "Daily backup": "Ежедневная копия",
-    "up ~{0}": "вверх ~{0}",
+    "up ~{0}": "встанет ~{0}",
     "to sell": "на продажу",
     "Value: at most {0} a day": "Стоимость: не больше {0} в день",
     "Booster packs it doesn't open are sent to {0}": "Неоткрытые наборы карточек отправляются на {0}",
     "Keep everything: it only reports, nothing changes": "Оставлять всё: только отчёт, ничего не меняется",
-    "Your own accounts": "Ваши аккаунты",
     "Next Fest": "Next Fest",
     "Making packs": "Создание наборов",
     "New items are not held back": "Новые предметы не придерживаются",
@@ -2841,6 +2922,7 @@
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} теперь в списке «Не открывать наборы этих игр» - сделанный для неё набор карточек останется закрытым",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "его лот всё ещё ждёт подтверждения на телефоне - другие копии не выставляются, пока это не решится",
     "worth {0} - over your price limit, never touched": "стоит {0} - дороже твоего лимита цены, никогда не трогается",
+    "{0} item(s) worth {1} are over your {2} price limit - raise it to sell them": "{0} предмет(ов) на {1} дороже твоего лимита цены {2} - подними его, чтобы продать их",
     "worth {0} now - over your price limit, not listed": "сейчас стоит {0} - дороже твоего лимита цены, не выставлено",
     "spare items preview for {0}: {1} to gems, {2} to sell. Nothing happens until you turn Spare items on in its settings - 'spare preview {0}' shows each one.": "предпросмотр лишних предметов для {0}: {1} в самоцветы, {2} на продажу. Ничего не происходит, пока ты не включишь Лишние предметы в его настройках - 'spare preview {0}' показывает каждый.",
     "lowered {0} from {2} to {3} - unsold {1} days": "{0} подешевел с {2} до {3} - не продавался {1} дн.",
@@ -2957,9 +3039,417 @@
     "done grinding · back to the usual day": "гринд окончен · обычный день",
     "{0} is on the market · {1}": "{0} на торговой площадке · {1}",
     "{0} is on the market": "{0} на торговой площадке",
-    "couldn't look at the listings waiting on a confirmation: {0}": "не удалось проверить лоты, ждущие подтверждения: {0}"
+    "{0} listings on the market · {1}": "{0} лотов на торговой площадке · {1}",
+    "{0} listings on the market": "{0} лотов на торговой площадке",
+    "sold {0} items · you got {1}": "продано предметов: {0} · вы получили {1}",
+    "couldn't look at the listings waiting on a confirmation: {0}": "не удалось проверить лоты, ждущие подтверждения: {0}",
+    "its cards have changed since": "его карточки с тех пор изменились",
+    "no fresh price for some of its cards": "для некоторых его карточек нет свежей цены",
+    "it would set back a set now": "сейчас это отбросило бы набор назад",
+    "it would lose more than your limit": "потеря превысила бы твой лимит",
+    "not a swap nocat.lol paired with this account": "это не обмен, который nocat.lol подобрал для этого аккаунта",
+    "it has something that isn't a normal trading card": "в нём есть что-то, что не является обычной коллекционной карточкой",
+    "it isn't the swap nocat.lol paired": "это не тот обмен, который подобрал nocat.lol",
+    "no fresh price yet for {0}": "для {0} пока нет свежей цены",
+    "it's worth less than this account gives": "это стоит меньше, чем отдаёт этот аккаунт",
+    "card swaps: couldn't read its own trade link - not listed this time": "обмен карточками: не удалось прочитать свою ссылку для обмена - в этот раз не в списке",
+    "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "Обмен карточками включён для {0}: он меняет лишние карточки с другими пользователями nocat.farm в пределах своих лимитов",
+    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "Обмен карточками выключен для {0}: ничего не меняется, и nocat.lol его забывает",
+    "held by scam watch - no swaps until 'scamwatch ok'": "задержано защитой от мошенников - никаких обменов до 'scamwatch ok'",
+    "waiting for its day": "ждёт своего дня",
+    "{0} swaps today - the most for a day": "{0} обменов сегодня - максимум за день",
+    "next swap from about {0}": "следующий обмен примерно с {0}",
+    "no swap to send right now": "сейчас нечего отправлять",
+    "card swap with {0} done · {1} card(s) each way": "обмен карточками с {0} завершён · по {1} карт. в каждую сторону",
+    "card swap offer to {0} taken back · not accepted in 2 days": "предложение обмена для {0} отозвано · не принято за 2 дня",
+    "card swap with {0} didn't go through": "обмен карточками с {0} не состоялся",
+    "card swap with {0} skipped · {1}": "обмен карточками с {0} пропущен · {1}",
+    "Steam didn't say whether the trade would be held": "Steam не сказал, будет ли обмен задержан",
+    "the trade would be held": "обмен был бы задержан",
+    "couldn't read its cards": "не удалось прочитать его карточки",
+    "Steam didn't say what's on its offers": "Steam не сказал, что в его предложениях",
+    "Steam hasn't said its wallet currency yet": "Steam ещё не сообщил валюту кошелька",
+    "waiting for prices": "ждёт цены",
+    "nothing in it fits any more": "ничего больше не подходит",
+    "Steam refused the offer: {0}": "Steam отклонил предложение: {0}",
+    "card swap · offer sent to {0} · {1} card(s) each way": "обмен карточками · предложение отправлено {0} · по {1} карт. в каждую сторону",
+    "card swap · you give {0} · you get {1}": "обмен карточками · отдаёшь {0} · получаешь {1}",
+    "card swap · confirm the offer to {0} on your phone": "обмен карточками · подтверди предложение для {0} на телефоне",
+    "sent a swap to {0}": "обмен отправлен {0}",
+    "a card swap nocat.lol paired": "обмен карточками, подобранный nocat.lol",
+    "a card swap nocat.lol paired · checked, then accepted or declined": "обмен карточками, подобранный nocat.lol · проверяется, потом принимается или отклоняется",
+    "offer {0} is from an account that once sent a bad swap · left for you": "предложение {0} от аккаунта, который однажды прислал плохой обмен · оставлено тебе",
+    "from an account that once sent a bad swap": "от аккаунта, который однажды прислал плохой обмен",
+    "not now": "не сейчас",
+    "offer {0} isn't a good swap now ({1}) - declining": "предложение {0} сейчас невыгодно ({1}) - отклоняю",
+    "card swap · you'd give {0} · you'd get {1}": "обмен карточками · отдал бы {0} · получил бы {1}",
+    "card swap offer {0} isn't what was paired ({1}) · left for you": "предложение обмена {0} не совпадает с подобранным ({1}) · оставлено тебе",
+    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "предложение {0} называет себя обменом, который nocat.lol не подбирал · оставлено тебе",
+    "Turn on card swaps?": "Включить обмен карточками?",
+    "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Вот что он мог бы обменять сейчас, и лимиты, которых он держится. Ничего не меняется, пока ты не нажмёшь «Включить».",
+    "spare cards to swap": "лишних карточек для обмена",
+    "in {0} games": "в {0} играх",
+    "swaps a day, at most": "обменов в день, не больше",
+    "Normal trading cards only - never foils, backgrounds or emoticons": "Только обычные коллекционные карточки - никогда металлические, фоны или смайлики",
+    "One for one, in the same game, and only when it helps your sets": "Один к одному, в одной игре, и только когда это помогает твоим наборам",
+    "Never a card your sets need, the last copy of one, or anything on your never-touch lists": "Никогда карточку, нужную твоим наборам, последний экземпляр или что-то из списков «не трогать»",
+    "Each swap worth at most {0} less than what it gives": "Каждый обмен стоит не больше чем на {0} меньше того, что он отдаёт",
+    "Never when Steam would hold the trade": "Никогда, если Steam задержал бы обмен",
+    "Also when Steam would hold the trade": "Даже если Steam задержал бы обмен",
+    "Its offers are confirmed by its authenticator here": "Его предложения подтверждает аутентификатор здесь",
+    "Its offers wait for you to confirm them on your phone": "Его предложения ждут, пока ты подтвердишь их на телефоне",
+    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их",
+    "Its wallet currency is not known yet - nothing is swapped until it is": "Валюта кошелька ещё неизвестна - ничего не меняется, пока она не станет известна",
+    "1 card still needs a price first.": "1 карточке сначала ещё нужна цена.",
+    "{0} cards still need a price first.": "{0} карточкам сначала ещё нужна цена.",
+    "card swap offer to {0} wasn't what nocat.lol said · taken back": "предложение обмена для {0} не совпало с тем, что сказал nocat.lol · отозвано",
+    "it was paired more than 2 days ago": "пара составлена больше 2 дней назад",
+    "Steam's name for a card in it doesn't fit its game": "название карточки в Steam не подходит к её игре",
+    "a card in it is already on another offer or swap": "карточка из него уже в другом предложении или обмене",
+    "it would leave fewer than {0} of {1}": "осталось бы меньше {0} из {1}",
+    "card swap offer to {0} taken back · {1}": "предложение обмена для {0} отозвано · {1}",
+    "card swap offer to {0} taken back · swaps are off": "предложение обмена для {0} отозвано · обмены выключены",
+    "offer {0} · left for you · Steam won't say whether it would be held": "предложение {0} · оставлено тебе · Steam не говорит, будет ли задержка",
+    "that swap was already done or dropped": "этот обмен уже сделан или отменён",
+    "not signed in to Steam": "не выполнен вход в Steam",
+    "swap sign-in failed · {0}": "вход для обменов не удался · {0}",
+    "Steam's sign-in page didn't load": "страница входа Steam не загрузилась",
+    "Steam says it isn't signed in on the web": "Steam говорит, что вход в веб не выполнен",
+    "no sign-in form on Steam's page": "на странице Steam нет формы входа",
+    "Steam didn't answer the sign-in": "Steam не ответил на вход",
+    "Steam answered {0} and showed the sign-in page again": "Steam ответил {0} и снова показал страницу входа",
+    "Steam answered {0} and showed its login page": "Steam ответил {0} и показал страницу авторизации",
+    "Steam answered {0} and sent it nowhere": "Steam ответил {0} и никуда не перенаправил",
+    "Steam sent it to {0}, not nocat.lol": "Steam перенаправил на {0}, а не на nocat.lol",
+    "Steam's answer wasn't a sign-in": "ответ Steam не был входом",
+    "Steam's answer was for another account": "ответ Steam был для другого аккаунта",
+    "Steam's answer was too long": "ответ Steam слишком длинный",
+    "card swap · confirm the offer to {0} from Steam's email": "обмен карточками · подтверди предложение для {0} в письме от Steam",
+    "then off for the night": "потом спать",
+    "short break · then off for the night": "короткий перерыв · потом спать",
+    "meal break · then off for the night": "перерыв на еду · потом спать",
+    "nothing left to craft - sets sold instead": "собирать больше нечего - наборы проданы вместо этого",
+    "weighing sets against the levels they'd buy": "сравнивает наборы с уровнями, которые на них можно купить",
+    "selling the {0} set instead of crafting: {1} buys about {2} levels": "продаёт набор {0} вместо сборки: на {1} можно купить около {2} уровней",
+    "{0} set: {1} of {2} cards listed · the rest wait for the next look": "набор {0}: выставлено {1} из {2} карточек · остальные ждут следующего просмотра",
+    "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy": "Steam требует платёжные данные при каждой покупке на торговой площадке, а на этом аккаунте они не сохранены - купите один раз карточку вручную на площадке (так они сохранятся), после этого он сможет покупать",
+    "{0} not bought · not confirmed in the Steam app": "{0} не куплена · не подтверждена в приложении Steam",
+    "{0} card purchase(s) not confirmed in a day · let go, nothing bought": "{0} покупк(и) карточек не подтверждены за день · отменено, ничего не куплено",
+    "confirm the card purchase in the Steam app · {0} card(s) for {1}": "подтвердите покупку карточек в приложении Steam · {0} карточк(и) для {1}",
+    "its price fell since the set was weighed - not listed": "её цена упала с тех пор, как набор оценили - не выставлена",
+    "{0}: crafted · {1}": "{0}: собран · {1}",
+    "{0}: not crafted yet · {1} · a card is worth {2}": "{0}: пока не собран · {1} · одна карточка стоит {2}",
+    "couldn't price its cards": "не удалось оценить его карточки",
+    "Steam won't let it buy cards, so the money couldn't be spent": "Steam не даёт покупать карточки, так что деньги нельзя было бы потратить",
+    "its set isn't known whole on the market": "его набор не известен на торговой площадке целиком",
+    "selling sets instead of crafting is off": "продажа наборов вместо сборки выключена",
+    "buying cards is off": "покупка карточек выключена",
+    "{0} sets ready, crafted together": "готово наборов: {0}, собираются вместе",
+    "only {0} sets are weighed a look": "за один просмотр сравнивается наборов: не больше {0}",
+    "buying cards isn't running": "покупка карточек не работает",
+    "no price in its wallet's currency": "нет цены в валюте его кошелька",
+    "no market price for {0} right now": "сейчас нет рыночной цены для {0}",
+    "{0} sold only {1} time(s) in the last day": "{0} продали всего {1} раз(а) за последний день",
+    "{0}: its price isn't clear right now": "{0}: его цена сейчас неясна",
+    "{0} pays nothing on the market": "{0} ничего не приносит на торговой площадке",
+    "{0} buys about {1} levels": "на {0} можно купить около {1} уровней",
+    "set worth {0} buys no badge level today": "набор стоимостью {0} сегодня не покупает ни одного уровня значка",
+    "set worth {0} buys only {1} level": "набор стоимостью {0} покупает только {1} уровень",
+    "It would sell instead of crafting": "Продаст вместо сборки",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "Набор {0}: {1} после комиссии Steam покупает около {2} уровней значков - больше, чем 1 от сборки",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "Сначала самый дешёвый уровень значка - начатый значок или целый новый набор, что дешевле",
+    "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Если Steam просит подтверждать покупки в приложении Steam, вы подтверждаете их на телефоне - по одному набору; без подтверждения через день они отменяются",
+    "set finder · couldn't look · {0}": "поиск наборов · не удалось посмотреть · {0}",
+    "set finder · couldn't read its list, starting over · {0}": "поиск наборов · не удалось прочитать список, начинает заново · {0}",
+    "set finder · couldn't save its list · {0}": "поиск наборов · не удалось сохранить список · {0}",
+    "Set price": "Цена набора",
+    "XP per 1.00": "XP за 1,00",
+    "No whole sets known yet - the set finder reads the market a little at a time.": "Полных наборов пока не известно - поиск наборов читает торговую площадку понемногу.",
+    "The set finder has looked at the {0} cheapest of {1} cards today and knows {2} whole sets. Last look: {3}.": "Поиск наборов сегодня просмотрел {0} самых дешёвых карточек из {1} и знает полных наборов: {2}. Последний просмотр: {3}.",
+    "It buys these only with \"Buy the cheapest full sets\" on.": "Покупает их только при включённом «Покупать самые дешёвые полные наборы».",
+    "Cheapest whole sets on the market": "Самые дешёвые полные наборы на торговой площадке",
+    "set finder · {0} skipped · its robots.txt didn't answer ({1})": "поиск наборов · {0} пропущен · robots.txt не ответил ({1})",
+    "set finder · {0} skipped · its robots.txt doesn't allow it": "поиск наборов · {0} пропущен · robots.txt этого не разрешает",
+    "set finder · {0} skipped · it didn't answer ({1})": "поиск наборов · {0} пропущен · нет ответа ({1})",
+    "set finder · {0} skipped · its list couldn't be read": "поиск наборов · {0} пропущен · список не удалось прочитать",
+    "set finder · {0} games to look at first, from {1}": "поиск наборов · игр для первой проверки: {0}, из {1}",
+    "{0} was paused - stopped before the next item": "{0} поставлен на паузу - остановлено перед следующим предметом",
+    "selling would pay {0}, more than its {1} gems are worth ({2}) - kept": "продажа дала бы {0}, больше, чем стоят его {1} самоцв. ({2}) - оставлено",
+    "{0} · found in the inventory after its order": "{0} · найдено в инвентаре после заказа",
+    "sells for {0}, you get {1} - under your {2} minimum, but more than its {3} gems are worth ({4})": "продаётся за {0}, вы получите {1} - меньше вашего минимума {2}, но больше, чем стоят его {3} самоцв. ({4})",
+    "{0} gems, worth {1} - selling would pay {2}": "{0} самоцв. на {1} - продажа дала бы {2}",
+    "worth {0}, over your price limit now - skipped": "стоит {0}, теперь дороже вашего лимита цены - пропущено",
+    "more cards wait · confirm the ones in the Steam app first": "остальные карточки ждут · сначала подтвердите эти в приложении Steam",
+    "{0} gems, worth {1} - selling would pay {2}, under your {3} minimum": "{0} самоцв. на {1} - продажа дала бы {2}, меньше вашего минимума {3}",
+    "bought {0} ({1}) · {2}": "куплено {0} ({1}) · {2}",
+    "nobody sells it now, but it sold for {0} lately - more than its gems - kept": "сейчас никто не продаёт, но недавно продано за {0} - дороже самоцветов - оставлено",
+    "on your keep list now - skipped": "теперь в вашем списке «оставить» - пропущено",
+    "Put right": "Исправлено",
+    "settings copied from {0}": "настройки скопированы с {0}",
+    "Its settings come from {0}. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on.": "Настройки берутся с {0}. «Лишние предметы», очки Steam, покупка карточек, обмен карточками и «Открыть в Steam» остаются выключенными, пока ты их не включишь.",
+    "Settings copied from {0}": "Настройки скопированы с {0}",
+    "No such account.": "Такого аккаунта нет.",
+    "Copy settings": "Скопировать настройки",
+    "settings copied from {0} · 1 switch left off for you to turn on": "настройки скопированы с {0} · 1 переключатель оставлен выключенным - включи его сам",
+    "Copy another account's settings onto this one. Shows what changes first.": "Копирует настройки другого аккаунта на этот. Сначала показывает, что изменится.",
+    "Settings copied from {0}. Turn these on yourself after their preview: {1}": "Настройки скопированы с {0}. Включи их сам после предпросмотра: {1}",
+    "{0} settings change": "Меняется настроек: {0}",
+    "Stays off - turn it on yourself after its preview": "Остаётся выключенным - включи сам после предпросмотра",
+    "Pick an account": "Выбери аккаунт",
+    "whether it runs, and whether you sign into it yourself": "работает ли он и входишь ли ты в него сам",
+    "Goes off, as on the account copied from": "Выключается, как на исходном аккаунте",
+    "With {0} itself taken out": "Без самого {0}",
+    "Start with another account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone. Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview.": "Начинает с настроек другого аккаунта вместо стандартных - всё, кроме входа и того, что принадлежит только тому аккаунту. «Лишние предметы», очки Steam, покупка карточек, обмен карточками и «Открыть в Steam» остаются выключенными, пока ты не включишь их после предпросмотра.",
+    "{0} already has the same settings - nothing to copy.": "У {0} уже те же настройки - копировать нечего.",
+    "Setting": "Настройка",
+    "the trade link token": "токен ссылки для обмена",
+    "Pick two different accounts.": "Выбери два разных аккаунта.",
+    "Copy settings from": "Скопировать настройки с",
+    "Copy settings onto {0}": "Скопировать настройки на {0}",
+    "Now": "Сейчас",
+    "notes and log colour": "заметки и цвет в логе",
+    "the sign-in, password and authenticator": "вход, пароль и аутентификатор",
+    "settings copied from {0} · {1} switches left off for you to turn on": "настройки скопированы с {0} · переключателей оставлено выключенными: {1} - включи их сам",
+    "One setting changes": "Меняется одна настройка",
+    "Working out what it would change...": "Выясняю, что изменится...",
+    "Copy settings from…": "Скопировать настройки с…",
+    "Never copied": "Никогда не копируется",
+    "After": "После",
+    "the proxy and the device name": "прокси и имя устройства",
+    "Pick the account to copy from. Nothing changes until you press Copy settings, and the account you copy from stays as it is.": "Выбери аккаунт, с которого копировать. Ничего не меняется, пока ты не нажмёшь «Скопировать настройки», а исходный аккаунт остаётся как есть.",
+    "none - the defaults": "нет - стандартные",
+    "set finder · couldn't save what it shared · {0}": "поиск наборов · не удалось сохранить, чем поделился · {0}",
+    "set finder · shared lists · {0} sent, {1} taken from other copies": "поиск наборов · общие списки · отправлено {0}, взято {1} у других копий",
+    "set finder · nocat.lol didn't answer · {0}": "поиск наборов · nocat.lol не ответил · {0}",
+    "gems kept loose · not sure yet what they're worth in levels": "самоцветы остаются россыпью · пока неясно, сколько уровней они стоят",
+    "saving tradable gems for a sack to sell": "копит обмениваемые самоцветы на мешок для продажи",
+    "gems: today's listings are done · more tomorrow": "самоцветы: на сегодня всё выставлено · ещё завтра",
+    "packed 1,000 gems into a sack to sell · about {0} levels per 1,000 gems": "1 000 самоцветов упакованы в мешок для продажи · около {0} уровней на 1 000 самоцветов",
+    "saving tradable gems for a {0} pack to sell": "копит обмениваемые самоцветы на набор {0} для продажи",
+    "the {0} pack's price moved · weighed again later": "цена набора {0} изменилась · пересчитает позже",
+    "{0} pack made to sell · about {1} levels per 1,000 gems": "сделан набор {0} для продажи · около {1} уровней на 1 000 самоцветов",
+    "{0} pack made to open and sell its cards · about {1} levels per 1,000 gems": "сделан набор {0}, чтобы открыть и продать карточки · около {1} уровней на 1 000 самоцветов",
+    "Commenting is on hold on every account until {0}.": "Комментарии приостановлены на всех аккаунтах до {0}.",
+    "Resume now": "Продолжить сейчас",
+    "Pause rep4rep for...": "Приостановить rep4rep на...",
+    "Holds commenting on every account, then it starts again by itself - restarts included.": "Приостанавливает комментарии на всех аккаунтах, потом они возобновляются сами - даже после перезапуска.",
+    "{0} hours": "{0} ч",
+    "rep4rep held for {0} hours": "rep4rep приостановлен на {0} ч",
+    "rep4rep commenting carries on": "rep4rep продолжает комментировать",
+    "Disconnect": "Отключить",
+    "Forgets this chat. Connect Telegram comes back, to connect a different one.": "Забывает этот чат. Снова появится кнопка «Подключить Telegram», чтобы подключить другой.",
+    "Forgets this Discord account - the bot obeys nobody until you connect again.": "Забывает этот аккаунт Discord - бот никого не слушается, пока вы не подключите его снова.",
+    "to": "до",
+    "0 = {0}": "0 = {0}",
+    "seconds": "секунд",
+    "days": "дней",
+    "ms": "мс",
+    "wallet currency": "в валюте кошелька",
+    "points": "очков",
+    "backups": "копий",
+    "reviews": "обзоров",
+    "times a day": "раз в день",
+    "no limit": "без ограничения",
+    "spend nothing": "ничего не тратить",
+    "keep forever": "хранить всегда",
+    "never again": "больше никогда",
+    "Settle in after signing in": "Освоиться после входа",
+    "Sittings": "Заходы",
+    "Breaks": "Перерывы",
+    "On a break, go Away after": "На перерыве уходить в «Нет на месте» через",
+    "Sleeps": "Спит",
+    "After waking, wait": "После пробуждения ждать",
+    "Background jobs wait after signing in": "Фоновые задачи ждут после входа",
+    "After the last card, keep playing": "После последней карты играть ещё",
+    "Farm cards only between": "Фармить карточки только с",
+    "While grinding, one achievement every": "При гринде одно достижение каждые",
+    "Move to another game at": "Переходить к другой игре при",
+    "Come back to a game after": "Возвращаться к игре через",
+    "Wait between items, human mode": "Пауза между предметами, человеческий режим",
+    "Wait between steps": "Пауза между шагами",
+    "Wait between steps, human mode": "Пауза между шагами, человеческий режим",
+    "Look for scams every": "Проверять на мошенничество каждые",
+    "Check health every": "Проверять состояние каждые",
+    "Accept a gift after": "Принимать подарок через",
+    "Answer a trade offer after": "Отвечать на предложение обмена через",
+    "Accept a friend request after": "Принимать заявку в друзья через",
+    "Gap between comments": "Интервал между комментариями",
+    "Only post between": "Публиковать только с",
+    "Install by itself between": "Устанавливать само с",
+    "Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.": "Запрос кода из Telegram при входе извне выключен - одного пароля достаточно, чтобы войти.",
+    "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Your other accounts\").": "Подтверждаются сами: обмены с {0}. Всё остальное ждёт здесь. Изменить это можно в «Настройки», «Обмены» («Ваши другие аккаунты»).",
+    "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Your other accounts\").": "Ничего не подтверждается само - всё ждёт вас здесь. Изменить это можно в «Настройки», «Обмены» («Ваши другие аккаунты»).",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "Не оценивается. Чтобы включить обратно, откройте Настройки, выберите {0}, отметьте «Показать расширенные» и в «Обменах» отметьте «Показывать стоимость инвентаря».",
+    "Tap a chip to switch it on or off. Each one says what it counts.": "Нажмите на плашку, чтобы включить или выключить. Каждая говорит, что она считает.",
+    "extra card copies": "лишние копии карточек",
+    "cards of finished badges": "карточки готовых значков",
+    "foils": "металлические карточки",
+    "backgrounds": "фоны",
+    "emoticons": "смайлики",
+    "default": "по умолчанию",
+    "needs a sign-in": "нужен вход",
+    "Scam warnings": "Предупреждения о мошенничестве",
+    "Health alerts": "Состояние аккаунта",
+    "done hunting for today (Hunt at most a day)": "на сегодня охота окончена (Охотиться не больше в день)",
+    "{0} is done for today (Hunt at most a day) - back tomorrow": "{0} на сегодня всё (Охотиться не больше в день) - завтра снова",
+    "on - no games to hunt (pick some under \"Hunt these games\")": "вкл. - нет игр для охоты (выберите их в «Охотиться в этих играх»)",
+    "{0} left out - it's on \"Never play these games\"": "{0} пропущена - она в «Никогда не играть в эти игры»",
+    "{0}: alerts about bans are part of account health now, which is off on this account - turn it on to get them": "{0}: предупреждения о банах теперь часть состояния аккаунта, а оно на этом аккаунте выключено - включите, чтобы их получать",
+    "{0}: your own accounts are in \"Your other accounts\" now, both ways - as before": "{0}: ваши собственные аккаунты теперь в «Ваши другие аккаунты», в обе стороны - как и раньше",
+    "Badges": "Значки",
+    "Card swaps": "Обмен карточками",
+    "Commands from the chats": "Команды из чатов",
+    "Dashboard & phone": "Панель и телефон",
+    "General": "Общие",
+    "Items and spending": "Предметы и траты",
+    "Open from outside": "Открывать извне",
+    "Safety": "Безопасность",
+    "Steam connection & logs": "Подключение к Steam и журналы",
+    "When you use it yourself": "Когда вы пользуетесь им сами",
+    "Your other accounts": "Ваши другие аккаунты",
+    "Everything here is off until you turn it on, and each one shows what it would do and asks first. Nothing is sold, turned into gems, opened, bought or spent before that.": "Всё здесь выключено, пока вы это не включите, и каждое сначала показывает, что сделает, и спрашивает. До этого ничего не продаётся, не превращается в самоцветы, не открывается, не покупается и не тратится.",
+    "Every game it owns, a batch at a time. Games still within Steam's 2 hours for a refund are left alone.": "Все игры, что у него есть, по очереди партиями. Игры, которые ещё в пределах 2 часов Steam для возврата, не трогаются.",
+    "A QR code to scan, and how to open it from outside your home.": "QR-код для сканирования и как открыть его вне дома.",
+    "A daily backup": "Ежедневная копия",
+    "Advanced setup": "Расширенная настройка",
+    "After the cards are done, what should it idle?": "Когда карточки закончатся, что ему держать запущенным?",
+    "Card drops, problems that need you, scam warnings - you pick which.": "Выпавшие карточки, проблемы, которым нужны вы, предупреждения о мошенничестве - вы выбираете, какие.",
+    "Everything in one locked file each day, to put back on any PC.": "Каждый день всё в одном закрытом файле, чтобы восстановить на любом ПК.",
+    "Fewer questions": "Меньше вопросов",
+    "Games I pick": "Игры, которые я выберу",
+    "Get messages on Telegram or Discord": "Получать сообщения в Telegram или Discord",
+    "I also use this account in my own Steam app": "Я тоже пользуюсь этим аккаунтом в своём приложении Steam",
+    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Раз в час он анонимно отмечается на nocat.lol - только случайный номер и число аккаунтов. «Считать меня пользователем» в Настройках, «Обновления и плагины», это выключает.",
+    "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "Сначала фармит коллекционные карточки. Когда они закончатся, может дальше держать игры, чтобы копить часы.",
+    "It stays signed in and does nothing once the cards are done.": "Остаётся в сети и ничего не делает, когда карточки закончатся.",
+    "Language: {0}": "Язык: {0}",
+    "More": "Ещё",
+    "My main account": "Мой основной аккаунт",
+    "My whole library": "Вся моя библиотека",
+    "Nothing": "Ничего",
+    "Sign in with a QR code instead": "Войти по QR-коду вместо этого",
+    "Tap them below.": "Нажмите на них ниже.",
+    "When you like": "Когда захотите",
+    "nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.": "nocat.farm входит в ваши аккаунты Steam, фармит их коллекционные карточки, играет, чтобы засчитывались часы, и забирает бесплатное - всё с этого ПК. Здесь выбираются подходящие настройки для аккаунта; всё можно изменить потом.",
+    "its wallet already pays for every level priced today": "кошелёк уже оплачивает все уровни, оценённые сегодня",
+    "couldn't read the open buy orders: {0}": "не удалось прочитать открытые заявки на покупку: {0}",
+    "worth {0} now - over your price limit, kept": "сейчас стоит {0} - выше вашего лимита цены, остаётся",
+    "on your keep list - never sold": "в вашем списке «оставить» - никогда не продаётся",
+    "made to sell: its cards are sold whatever your price limit says; games on your keep list are never touched": "сделан на продажу: его карточки продаются, что бы ни говорил твой лимит цены; игры из твоего списка «оставить» никогда не трогаются",
+    "{0}: a buy order for it is already open on the market · its own is taken back, one you placed is left alone": "{0}: на рынке уже открыта заявка на покупку · своя отзывается, вашу он не трогает",
+    "{0}: not crafted yet · {1}": "{0}: пока не собран · {1}",
+    "it asks for a card promised to a card swap": "просит карточку, обещанную для обмена карточками",
+    "selling now pays {0}, more than its {1} gems are worth ({2}) - kept": "продажа сейчас даст {0}, больше, чем стоят его {1} самоцветов ({2}) - остаётся",
+    "not listed: you'd get {0}, not more than its gems are worth ({1})": "не выставлено: вы получили бы {0}, не больше, чем стоят его самоцветы ({1})",
+    "no price right now - kept until it has one": "сейчас цены нет - остаётся, пока она не появится",
+    "gems: no fresh price for a sack of gems - nothing listed this look": "самоцветы: нет свежей цены мешка самоцветов - в этот раз ничего не выставляется",
+    "{0}: not crafted yet · {1} · what its cards are worth isn't known": "{0}: пока не собран · {1} · неизвестно, сколько стоят его карточки",
+    "it would leave fewer than {0} copies of a card you keep": "оставит меньше {0} копий карточки, которую вы храните",
+    "an order for {0} was left open on the market · taken back, nothing bought": "заявка на {0} осталась открытой на рынке · отозвана, ничего не куплено",
+    "it asks for {0}, on your keep list": "просит {0} из вашего списка «оставить»",
+    "the market stopped answering before what its money buys was priced": "рынок перестал отвечать, прежде чем стало ясно, что можно купить на эти деньги",
+    "{0} sold only {1} time(s) in the last day - waiting, the set is worth {2} ({3} levels)": "{0} продали всего {1} раз(а) за последний день - ждёт, набор стоит {2} ({3} ур.)",
+    "it has no Steam wallet to spend the money from": "у него нет кошелька Steam, чтобы потратить эти деньги",
+    "on your keep list - its set is crafted, never sold": "в вашем списке «оставить» - набор собирается, никогда не продаётся",
+    "cards worth more sold than kept: the inventory isn't at hand to list them - the next look": "карты, которые выгоднее продать, чем оставить: инвентаря нет под рукой, чтобы выставить их - при следующем осмотре",
+    "{0}: {1} of {2} cards listed · the rest wait for the next look": "{0}: выставлено {1} из {2} карт · остальные ждут следующего осмотра",
+    "selling buys about {0} levels, keeping makes {1}": "продажа купит около {0} уровней, если оставить - {1}",
+    "keeping makes {0} level(s), selling buys about {1}": "если оставить - {0} уровень(я), продажа купит около {1}",
+    "cards worth more sold than kept: not weighed · {0}": "карты, которые выгоднее продать, чем оставить: не взвешено · {0}",
+    "{0}: cards kept - not sure they're worth more sold · {1}": "{0}: карты оставлены - нет уверенности, что их выгоднее продать · {1}",
+    "{0}: its cards are worth keeping again · {1}": "{0}: её карты снова выгоднее оставить · {1}",
+    "{0}: {1} cards worth more than their levels - selling for about {2} ≈ {3} cheap levels": "{0}: {1} карт дороже своих уровней - продаются примерно за {2} ≈ {3} дешёвых уровней",
+    "{0} ({1}) x{2} · lowest {3} · you get {4} each": "{0} ({1}) x{2} · самая низкая {3} · вы получите {4} за штуку",
+    "its price fell since it was weighed - not listed": "цена упала с тех пор, как её взвесили - не выставлено",
+    "selling the {0} foil set instead of crafting: {1} buys about {2} levels": "продаю металлический набор {0} вместо создания: {1} купит около {2} уровней",
+    "selling {0} {1} sets instead of crafting: {2} buys about {3} levels": "продаю {0} наборов {1} вместо создания: {2} купит около {3} уровней",
+    "sets worth more sold than crafted wait uncrafted · {0}": "наборы, которые выгоднее продать, чем создать, ждут несозданными · {0}",
+    "what's left of a set sold instead of crafted - it pays {0}": "остаток набора, проданного вместо создания - даст {0}",
+    "what's left of a set sold instead of crafted pays nothing": "остаток набора, проданного вместо создания, ничего не даст",
+    "what money buys isn't known right now - buying cards hasn't priced its next levels": "сейчас неизвестно, что купят деньги - покупка карт ещё не оценила следующие уровни",
+    "{0}: {1} foil cards worth more than their level - selling for about {2} ≈ {3} cheap levels": "{0}: {1} металлических карт дороже своего уровня - продаются примерно за {2} ≈ {3} дешёвых уровней",
+    "its cards are being sold - worth more than the levels they'd make": "её карты продаются - они дороже уровней, которые дали бы",
+    "{0} buys about {1} levels · {2} hardly sells, but the set has waited long enough - listed all the same": "{0} купит около {1} уровней · {2} почти не продаётся, но набор ждал достаточно долго - выставлен всё равно",
+    "{0} sets worth {1} buy only {2} levels": "{0} наборов стоимостью {1} купят лишь {2} уровней",
+    "{0} buys about {1} levels, but Steam won't let it buy cards by itself - waiting until it can": "{0} купит около {1} уровней, но Steam не даёт ему покупать карты самому - ждёт, пока сможет",
+    "Level price now: {0} a level (100 XP)": "Цена уровня сейчас: {0} за уровень (100 XP)",
+    "No limit a week ({0} spent this week)": "Без лимита в неделю (на этой неделе потрачено {0})",
+    "No limit": "Без лимита",
+    "At most {0} for one badge level": "Не больше {0} за один уровень значка",
+    "The set finder has checked {0} of the {1} cheapest sets on the market in the last 24 hours and knows {2} whole sets. Last look: {3}.": "Поиск наборов за последние 24 часа проверил на торговой площадке {0} из {1} самых дешёвых наборов и знает полных наборов: {2}. Последний просмотр: {3}.",
+    "No limit: it spends whatever the wallet holds, the cheapest levels first - the most to pay for one level still applies.": "Без лимита: тратит всё, что есть в кошельке, сначала самые дешёвые уровни - предел за один уровень по-прежнему действует.",
+    "No limit a day ({0} spent in the last day)": "Без лимита в день (за последние сутки потрачено {0})",
+    "set finder · {0} of the {1} cheapest sets checked in the last 24 hours · {2} whole sets known": "поиск наборов · за последние 24 часа на торговой площадке проверено {0} из {1} самых дешёвых наборов · известно полных наборов: {2}",
+    "sets": "наборов",
+    "buying cards · money left for more cheap levels - next look in {0} minutes": "покупка карточек · остались деньги на другие дешёвые уровни - следующий просмотр через {0} мин.",
+    "automatic": "автоматически",
+    "Time between looks, human mode": "Время между просмотрами, режим человека",
+    "buying cards: a spending limit below 0 that wasn't -1 (no limit) is 0 now - nothing is bought until it's set": "покупка карточек: лимит трат ниже 0, кроме -1 (без лимита), теперь 0 - ничего не покупается, пока вы его не зададите",
+    "the wallet would go over its most if more sold - selling waits until about {0}": "кошелёк превысил бы свой максимум при дальнейших продажах - продажа ждёт примерно до {0}",
+    "too many listings wait for a confirmation in the Steam app - no more listed until about {0}": "слишком много лотов ждут подтверждения в приложении Steam - новых не будет примерно до {0}",
+    "Steam's market is unavailable just now - listing waits until about {0}": "рынок Steam сейчас недоступен - выставление ждёт примерно до {0}",
+    "Steam's market is blocked until {0} ({1}) - buying, selling and swaps wait until then": "рынок Steam закрыт до {0} ({1}) - покупки, продажи и обмены ждут до тех пор",
+    "Steam's market is blocked ({0}) - buying, selling and swaps wait until it opens again": "рынок Steam закрыт ({0}) - покупки, продажи и обмены ждут, пока он снова не откроется",
+    "Steam said this account isn't allowed to use the market": "Steam сообщает, что этому аккаунту нельзя пользоваться рынком",
+    "too many listings wait for a confirmation in the Steam app - no more listed until they're confirmed": "слишком много лотов ждут подтверждения в приложении Steam - новых не будет, пока их не подтвердят",
+    "Steam won't list more - the wallet would go over its most. Selling waits a day; spending some of the wallet lets it sell again": "Steam больше не принимает лоты - кошелёк превысил бы свой максимум. Продажа ждёт день; если потратить часть кошелька, продавать снова можно",
+    "Steam's market is unavailable just now - listing waits an hour": "рынок Steam сейчас недоступен - выставление ждёт час",
+    "Steam's market is open again - buying, selling and swaps go on": "рынок Steam снова открыт - покупки, продажи и обмены продолжаются",
+    "Steam refused a listing - nothing more listed this look": "Steam отклонил лот - в этом заходе больше ничего не выставляется",
+    "gems: Steam refused the last listing - listing again from about {0}": "самоцветы: Steam отклонил последний лот - новая попытка примерно с {0}",
+    "Steam didn't answer - looking for the offer at the next look": "Steam не ответил - предложение будет найдено при следующем заходе",
+    "card swap · found the offer sent to {0} before the restart": "обмен карточками · найдено предложение, отправленное {0} до перезапуска",
+    "it did something else at {0} - human mode spaces things out; it can go ahead from about {1}": "он сделал что-то другое в {0} - человеческий режим растягивает действия по времени; сможет продолжить примерно с {1}",
+    "{0} · {1} of {2} card drop(s)": "{0} · {1} из {2} карт",
+    "every game": "все игры",
+    "wallet in {0}: \"Spend at most a week\" is still {1}, a dollar amount - for {0} use about {2}": "кошелёк в {0}: «Тратить не больше в неделю» всё ещё {1} - это сумма в долларах; для {0} поставь около {2}",
+    "couldn't look at the money settings: {0}": "не удалось проверить денежные настройки: {0}",
+    "buying cards turned off · a spend limit was set to no limit - turn buying on again to see what it may spend and say yes": "покупка карточек выключена · лимит трат поставлен на «без лимита» - включи покупку снова, посмотри, сколько она может потратить, и подтверди",
+    "level goal {0} stopped": "цель уровня {0} остановлена",
+    "Steam level {0} (+{1}) · this level cost {2}": "Уровень Steam {0} (+{1}) · этот уровень стоил {2}",
+    "Steam level {0} (+{1})": "Уровень Steam {0} (+{1})",
+    "level goal {0} started: {1} levels for about {2} (never over {3})": "цель уровня {0} начата: {1} ур. примерно за {2} (не больше {3})",
+    "level goal reached: Steam level {0} · {1} spent": "цель уровня достигнута: уровень Steam {0} · потрачено {1}",
+    "buying waits for the set finder: {0} of {1} cheapest sets checked": "покупка ждёт поиск наборов: проверено {0} из {1} самых дешёвых наборов",
+    "wallet in {0}: \"Never touch items worth more than\" is still {1}, a dollar amount - for {0} use about {2}": "кошелёк в {0}: «Не трогать предметы дороже» всё ещё {1} - это сумма в долларах; для {0} поставь около {2}",
+    "{0} would pay you {1}, not more than its gems are worth": "{0} принесёт тебе {1} - не больше, чем стоят его самоцветы",
+    "wallet in {0}: \"Most a swap may lose\" is still {1}, a dollar amount - for {0} use about {2}": "кошелёк в {0}: «Сколько обмен может потерять, не больше» всё ещё {1} - это сумма в долларах; для {0} поставь около {2}",
+    "wallet in {0}: \"Spend at most a day\" is still {1}, a dollar amount - for {0} use about {2}": "кошелёк в {0}: «Тратить не больше в день» всё ещё {1} - это сумма в долларах; для {0} поставь около {2}",
+    "couldn't read the Steam level: {0}": "не удалось прочитать уровень Steam: {0}",
+    "couldn't search the market: {0}": "не удалось выполнить поиск на торговой площадке: {0}",
+    "{0} card purchase(s) Steam never said the end of in a week · counted as bought": "{0} покупк(и) карточек, о которых Steam за неделю так и не сказал итога · считаются купленными",
+    "Steam level {0} (+{1}) · {2} for {1} levels": "Уровень Steam {0} (+{1}) · {2} за {1} ур.",
+    "wallet in {0}: \"Only sell if you get at least\" is still {1}, a dollar amount - for {0} use about {2}": "кошелёк в {0}: «Продавать, только если получите хотя бы» всё ещё {1} - это сумма в долларах; для {0} поставь около {2}",
+    "couldn't note the money settings were looked at: {0}": "не удалось отметить, что денежные настройки проверены: {0}",
+    "couldn't note the Steam level: {0}": "не удалось записать уровень Steam: {0}",
+    "At most {0} for one badge level - a little over what a level usually costs": "Не больше {0} за один уровень значка - чуть выше обычной цены уровня",
+    "{0} would pay you {1}, under your {2} minimum": "{0} принесёт тебе {1} - меньше твоего минимума {2}",
+    "cards were bought to finish it - crafted, never sold": "карточки купили, чтобы его собрать, - создаётся, не продаётся",
+    "{0}: answered · {1} lines in the log file": "{0}: ответ · {1} строк в файле журнала",
+    "Show in the app's log": "Показывать в журнале приложения",
+    "{0} hidden by Show in the app's log": "{0} скрыто настройкой «Показывать в журнале приложения»",
+    "what it's doing": "что он сейчас делает",
+    "card drops and farming": "выпадение карточек и фарм",
+    "badges, crafting, level": "значки, создание, уровень",
+    "buying cards": "покупка карточек",
+    "selling, spare items, gems": "продажа, лишние предметы, самоцветы",
+    "trades and card swaps": "обмены и обмен карточками",
+    "comments, friends, rep4rep": "комментарии, друзья, rep4rep",
+    "free games, items, Points": "бесплатные игры, предметы, очки",
+    "answers to commands": "ответы на команды",
+    "updates and app messages": "обновления и сообщения приложения",
+    "{0}: listing taken down · it can be listed again": "{0}: лот снят · можно выставить снова",
+    "took down {0} - unsold {1} days, its gems are worth more now": "снят {0} - не продан {1} дн., самоцветы теперь стоят больше"
   },
   "settings": {
+    "SteamOpenEveryAccount": {
+      "label": "Кнопки «Открыть в Steam» у всех аккаунтов",
+      "tip": "Показывает кнопку «Открыть в Steam» в один клик у всех аккаунтов - на карточке и в окне приложения, - чтобы не включать её у каждого по отдельности. Кнопка входит в твоё приложение Steam под этим аккаунтом: закрывает Steam, направляет Steam на аккаунт и снова запускает Steam. Аккаунт, который Steam ещё не помнит, откроется на входе в Steam с уже вписанным именем. Никогда не мешает nocat.farm фармить. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтвердить. Если нужно только у некоторых аккаунтов, оставь это выключенным и включи кнопку «Открыть в Steam» в настройках этих аккаунтов."
+    },
+    "SteamOpenButton": {
+      "label": "Кнопка «Открыть в Steam»",
+      "tip": "Показывает у этого аккаунта кнопку - на его карточке и в окне приложения - которая входит в ваше приложение Steam без ввода пароля. Нажатие закрывает Steam, направляет файлы сохранённых аккаунтов Steam на этот аккаунт и снова запускает Steam, так что он сразу входит под логином, который Steam уже помнит. Он никогда не прекращает фарм этого аккаунта в nocat.farm: Steam разрешает вход и отступает только когда вы действительно запускаете игру. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтверждение."
+    },
     "WebEnabled": {
       "label": "Веб-панель",
       "tip": "Включает веб-панель. Без неё всё тоже работает, а nocat.farm управляется командами в консоли."
@@ -3015,7 +3505,7 @@
     },
     "TrayNotifications": {
       "label": "Показывать всплывающие уведомления",
-      "tip": "Включает или выключает всплывающие уведомления. Четыре настройки ниже выбирают, какие именно вы получаете."
+      "tip": "Включает или выключает всплывающие уведомления. Виды ниже выбирают, какие вы получаете."
     },
     "NotifyEarnings": {
       "label": "Уведомлять о заработке",
@@ -3067,7 +3557,7 @@
     },
     "SendDailySummary": {
       "label": "Отправлять ежедневную сводку",
-      "tip": "Раз в день: что каждый аккаунт сделал за последние 24 часа - накопленные часы, карточки и комментарии. Отправляется во время, заданное для «Ежедневная сводка в журнале»."
+      "tip": "Раз в день — что каждый аккаунт сделал за последние 24 часа: накопленные часы, карточки и комментарии. Отправляется во время из «Ежедневная сводка в» (Журнал)."
     },
     "SendComments": {
       "label": "Отправлять комментарии в профиле",
@@ -3086,7 +3576,7 @@
       "tip": "Группы Steam, в которые по очереди вступают все твои аккаунты. Сначала там группа nocat.farm, её можно изменить или убрать. Вставь ссылку на группу или её короткое имя, через запятую. Вступает только в открытые группы, с одобрением или по приглашению пропускает."
     },
     "Rep4RepEnabled": {
-      "label": "Пользоваться rep4rep вообще",
+      "label": "Использовать rep4rep",
       "tip": "Включает rep4rep — необязательный сторонний сайт, где пользователи обмениваются комментариями в профилях Steam. Если выключено, все функции и настройки rep4rep скрыты на всех аккаунтах."
     },
     "Rep4RepApiToken": {
@@ -3106,7 +3596,7 @@
       "tip": "Как часто этот аккаунт пишет в журнал, чем занят, пока открыта игра, в минутах. 0 берёт основную настройку журнала, -1 — молчать."
     },
     "StatusQuietEveryMinutes": {
-      "label": "А в покое — каждые",
+      "label": "В покое сообщать, что делает, каждые",
       "tip": "То же самое, но когда аккаунт спит, на перерыве, на паузе или вышел. 0 берёт основную настройку журнала, -1 — молчать."
     },
     "Language": {
@@ -3114,7 +3604,7 @@
       "tip": "Язык панели, статусов и строк журнала. Всё, что ещё не переведено, показывается на английском. Ответы на команды в консоли остаются на английском."
     },
     "MarketCurrency": {
-      "label": "Цены инвентаря в",
+      "label": "Показывать стоимость инвентаря в",
       "tip": "Валюта, в которой показывается стоимость инвентаря. Выберите ту, что в вашем магазине Steam, чтобы суммы совпадали с площадкой. При смене все цены проверяются заново.",
       "choices": "1 доллар США | 20 канадский доллар | 21 австралийский доллар | 2 фунт стерлингов | 3 евро | 5 российский рубль | 7 бразильский реал | 8 японская иена | 23 китайский юань | 24 индийская рупия"
     },
@@ -3126,16 +3616,8 @@
       "label": "Ежедневная сводка в журнале",
       "tip": "Раз в день пишет в журнал сводку того, что каждый аккаунт заработал за последние 24 часа: накопленные часы, карточки и комментарии rep4rep, и всё накопленное на сегодня. Считается каждая запущенная игра, как считает Steam: 32 игры за час - это 32 часа. Введите stats, чтобы посмотреть в любой момент."
     },
-    "DailyReportHour": {
-      "label": "Время сводки · час",
-      "tip": "Час, в который пишется ежедневная сводка, по местному времени, - и отправляется, когда включено «Отправлять ежедневную сводку»."
-    },
-    "DailyReportMinute": {
-      "label": "Время сводки · минута",
-      "tip": "Минута часа, в которую пишется ежедневная сводка. Час 9 и минута 30 — это 09:30."
-    },
     "Enabled": {
-      "label": "Включён",
+      "label": "Запускать этот аккаунт",
       "tip": "Входит в этот аккаунт. Выключите, чтобы сохранить настройки, но совсем не трогать аккаунт."
     },
     "SteamLogin": {
@@ -3152,11 +3634,11 @@
     },
     "OnlineStatus": {
       "label": "Показывать статус",
-      "tip": "Как этот аккаунт видят ваши друзья. Невидимка всё равно играет и фармит, просто никто этого не видит. При включённом «Человеческий режим» это статус только во время игры, так что оставьте «в сети».",
+      "tip": "Как этот аккаунт видят друзья. «Невидимка» всё равно играет и фармит, просто никто не видит. В человеческом режиме это лишь статус во время игры — на перерывах он сам ставит «Нет на месте», ночью «Не в сети», — так что оставьте «В сети».",
       "choices": "0 не в сети | 1 в сети | 2 занят | 3 отошёл | 4 спит | 5 хочет обменяться | 6 хочет играть | 7 невидимка"
     },
     "IUseThisAccount": {
-      "label": "Я сам захожу в этот аккаунт",
+      "label": "Я тоже пользуюсь этим аккаунтом в своём приложении Steam",
       "tip": "Включите для аккаунта, в который вы заходите и в своём приложении Steam. Тогда статус в сети никогда не меняется, иначе вас выкинет из друзей и чата. Всё остальное работает."
     },
     "StartPaused": {
@@ -3173,24 +3655,24 @@
       "placeholder": "основной айдлер, не трогать"
     },
     "LegitMode": {
-      "label": "Человеческий режим",
-      "tip": "Играет как человек: по одной игре, правдоподобные сессии, перерывы, еда, выходные и офлайн ночью. Похожие на бота настройки скрыты, пока он включён, и возвращаются без изменений, когда вы его выключите."
+      "label": "Играть как человек (человеческий режим)",
+      "tip": "Играет как человек: одна игра за раз, правдоподобные заходы, перерывы, еда, выходные и офлайн ночью. Настройки режима робота скрыты, пока он включён, и возвращаются без изменений, когда вы его выключите."
     },
     "BreakAwayAfterMinMinutes": {
       "label": "На перерыве «нет на месте» не раньше",
-      "tip": "Только в человеческом режиме. Через сколько минут перерыва статус меняется на «отошёл» или «не в сети», как у настоящего простаивающего клиента Steam. Короткие перерывы остаются в сети."
+      "tip": "Через сколько минут перерыва статус меняется на «отошёл» или «не в сети», как у настоящего простаивающего клиента Steam. Короткие перерывы остаются в сети."
     },
     "BreakAwayAfterMaxMinutes": {
-      "label": "...до",
+      "label": "На перерыве уходить в «Нет на месте» не позже чем через",
       "tip": "Через сколько минут перерыва максимум статус меняется на «отошёл» или «не в сети»."
     },
     "LegitStopMaxSeconds": {
       "label": "При остановке доигрывать до",
-      "tip": "Когда вы останавливаете аккаунт, он ещё несколько случайных секунд, не больше этого числа, играет и только потом выходит, а не исчезает посреди игры. 0 — останавливаться сразу. Используется, только когда включён «Человеческий режим»."
+      "tip": "Когда вы останавливаете аккаунт, он ещё несколько случайных секунд, до стольких, играет перед выходом, а не исчезает посреди игры. 0 — сразу. Только в человеческом режиме."
     },
     "GameWeights": {
       "label": "Игры и как часто",
-      "tip": "Во что он играет и какой процент времени получает каждая игра, в сумме около 100. Первая игра основная. Не указывайте число, чтобы игра делила остаток, или напишите 440:0, чтобы отставить игру. Это средние за неделю - один день может уйти в сторону одной игры, как у человека. Игра, которой сейчас занят \"Разгон достижений\", делит долю остальных игр."
+      "tip": "В какие игры он играет и какой процент времени получает каждая, всего около 100. Первая — основная игра. Пропустите число, чтобы поделить остаток, или напишите 440:0, чтобы отложить игру. Это средние за неделю — один день может уйти в одну игру, как у человека. Игра, в которой идёт охота за достижениями, делит долю других игр."
     },
     "HourTargets": {
       "label": "Цели по часам",
@@ -3210,18 +3692,18 @@
     },
     "DayStartTime": {
       "label": "Заходит в",
-      "tip": "Время, когда он заходит в сеть, например 11:00. Каждый день он заходит в пределах «Отклонение до» от этого времени, чаще всего рядом с ним, а в выходные чуть раньше."
+      "tip": "Время, когда он заходит, например 11:00. Каждый день он заходит в пределах «Заходит, плюс-минус» от этого времени, чаще всего близко, а по выходным чуть раньше."
     },
     "DayStartVaryMinutes": {
-      "label": "Отклонение до (минут)",
+      "label": "Заходит, плюс-минус",
       "tip": "Насколько раньше или позже «Заходит в» он может зайти, в минутах. За эти пределы его ничто не выведет: при 11:00 и 30 он всегда заходит между 10:30 и 11:30. 0 — одна и та же минута каждый день."
     },
     "BedTime": {
       "label": "Ложится в",
-      "tip": "Время, когда он заканчивает на ночь. После полуночи тоже можно: 02:00 — это два часа ночи после дня, когда он зашёл. Каждую ночь он ложится в пределах «Отклонение до» от этого времени, в пятницу и субботу чуть позже."
+      "tip": "Время, когда он заканчивает на ночь. Можно после полуночи: 02:00 — это два часа ночи после дня, когда он зашёл. Каждую ночь он ложится в пределах «Ложится спать, плюс-минус» от этого времени, по пятницам и субботам чуть позже."
     },
     "BedVaryMinutes": {
-      "label": "Отклонение до (минут)",
+      "label": "Ложится спать, плюс-минус",
       "tip": "Насколько раньше или позже «Ложится в» он может лечь, в минутах. За эти пределы его ничто не выведет: при 02:00 и 60 он всегда ложится между 01:00 и 03:00. 0 — одна и та же минута каждую ночь."
     },
     "LateNightExtraHours": {
@@ -3230,11 +3712,11 @@
     },
     "SleepMinHours": {
       "label": "Спит не меньше",
-      "tip": "Сколько длится ночь, прежде чем может начаться следующий день, в часах - случайная длина между этим и следующим значением, каждую ночь разная. Ночь, которая не помещается до самого позднего времени, что разрешает «Заходит в», сокращается: позже он никогда не заходит."
+      "tip": "Сколько длится ночь, прежде чем может начаться следующий день, — случайная длина между двумя значениями, каждую ночь разная. Слишком длинная ночь, чтобы закончиться до самого позднего «Заходит в», укорачивается: позже он не заходит."
     },
     "SleepMaxHours": {
-      "label": "...до",
-      "tip": "Верхняя граница этого диапазона, в часах."
+      "label": "Спит не больше",
+      "tip": "Сколько самое большее может длиться ночь до следующего дня."
     },
     "PureMainDayChancePct": {
       "label": "Дни только с основной игрой",
@@ -3242,10 +3724,10 @@
     },
     "WarmUpMinMinutes": {
       "label": "Осваиваться не меньше",
-      "tip": "Минимальное ожидание после входа перед запуском игры, в минутах. Действует и при включении «Человеческий режим», чтобы игра не запускалась мгновенно."
+      "tip": "Самое короткое ожидание после входа, прежде чем запустить игру. Действует и при включении человеческого режима, чтобы игра не запускалась мгновенно."
     },
     "WarmUpMaxMinutes": {
-      "label": "И не больше",
+      "label": "Осваиваться не дольше",
       "tip": "Максимальное ожидание после входа, в минутах. Он никогда не начинает раньше 3 минут после входа, чтобы не перехватить аккаунт, если вы уже в нём играете."
     },
     "SessionMinMinutes": {
@@ -3282,7 +3764,7 @@
     },
     "CustomGameNameEnabled": {
       "label": "Показывать своё название игры",
-      "tip": "Показывает друзьям ваше название вместо настоящей игры. Если выключить, введённое ниже название сохранится на следующий раз."
+      "tip": "Показывает друзьям своё название вместо настоящей игры. Выключение сохраняет название ниже на потом; пустое название выключает это."
     },
     "CustomGameName": {
       "label": "Показывать как",
@@ -3293,8 +3775,8 @@
       "tip": "Фармит коллекционные карточки Steam. Игры, в которых остались карточки, играются в первую очередь, пока карточки не перестанут выпадать."
     },
     "HoursUntilCardDrops": {
-      "label": "Часов до выпадения карточек",
-      "tip": "Сколько часов нужно игре, прежде чем Steam начнёт выдавать карточки. Поставьте 0, если этот аккаунт потратил в Steam больше $5, чтобы ничего не играло дольше нужного."
+      "label": "Играть в каждую игру столько, прежде чем могут выпасть карточки",
+      "tip": "Сколько часов нужно игре, прежде чем Steam выдаст её карточки. Поставьте 0, если этот аккаунт потратил в Steam сумму, эквивалентную 5 долларам США или больше, чтобы ничего не играло дольше нужного."
     },
     "FarmingOrder": {
       "label": "Фармить в таком порядке",
@@ -3315,11 +3797,11 @@
       "choices": "0 осторожно (вдвое медленнее) | 1 обычно | 2 бодро (вдвое быстрее)"
     },
     "AchievementMaxCompletionPct": {
-      "label": "Проходить не больше чем на",
+      "label": "Никогда не проходить игру больше чем на",
       "tip": "Сколько процентов любой игры он максимум пройдёт. Несколько неполученных достижений выглядят как настоящая библиотека. Когда игра доходит до этого, охота оставляет её навсегда - поднимите значение, и она вернётся. Команда grind это игнорирует."
     },
     "AchievementBurstMinPct": {
-      "label": "Быстрые серии только для достижений от",
+      "label": "Быстрые серии только для достижений, которые есть хотя бы у",
       "tip": "Иногда 2-3 достижения приходят с разницей в несколько минут, как после прохождения уровня. Так могут прийти только достижения, которые есть хотя бы у такого процента игроков, - более редкие всегда приходят по одному, после полного ожидания. 0 разрешает серии для любых достижений; 100 отключает серии."
     },
     "CraftBadges": {
@@ -3331,15 +3813,15 @@
       "tip": "Разрешает этому аккаунту писать комментарии в профилях, которые раздаёт rep4rep. Все аккаунты зарабатывают в одни и те же очки rep4rep."
     },
     "Rep4RepDailyCap": {
-      "label": "Не больше за 24 часа",
+      "label": "Комментариев в день, не больше",
       "tip": "Сколько комментариев этот аккаунт максимум пишет за любые 24 часа. Steam разрешает около 10 не друзьям, а превышение может привести к бану комментариев."
     },
     "Rep4RepGapMinMinutes": {
-      "label": "Минимальный промежуток",
+      "label": "Самый короткий интервал между комментариями",
       "tip": "Минимальное время между двумя комментариями этого аккаунта, в минутах."
     },
     "Rep4RepGapMaxMinutes": {
-      "label": "Максимальный промежуток",
+      "label": "Самый долгий интервал между комментариями",
       "tip": "Максимальное время между комментариями, в минутах. Каждый промежуток выбирается случайно между этими двумя."
     },
     "Rep4RepStartHour": {
@@ -3347,7 +3829,7 @@
       "tip": "Самый ранний час дня, когда этот аккаунт комментирует. Комментарии посреди ночи легко выдают бота."
     },
     "Rep4RepEndHour": {
-      "label": "До",
+      "label": "Публиковать только до",
       "tip": "Самый поздний час дня, когда этот аккаунт комментирует. Поставьте то же значение, что в «Публиковать не раньше», чтобы комментировать круглые сутки."
     },
     "AcceptFriendRequests": {
@@ -3356,7 +3838,7 @@
     },
     "JoinGroup": {
       "label": "Вступать в общие группы",
-      "tip": "Вступает в группы из «Группы, куда вступают все аккаунты». Выключи, чтобы оставить в стороне только этот аккаунт."
+      "tip": "Вступает в группы из «Группы, куда вступают все аккаунты» (общие настройки, «Все аккаунты»). Выкл. — только этот аккаунт остаётся вне их. У нового аккаунта в человеческом режиме выключено с самого начала, чтобы правдоподобный аккаунт не состоял в группе с названием инструмента для фарма."
     },
     "ExtraGroupsToJoin": {
       "label": "Также вступить в эти группы",
@@ -3364,7 +3846,7 @@
     },
     "AutoReplyEnabled": {
       "label": "Отвечать на сообщения",
-      "tip": "Отвечает тем, кто пишет этому аккаунту. Если выключить, текст ответа сохранится на потом."
+      "tip": "Отвечает тем, кто пишет этому аккаунту, текстом ниже. Выключение сохраняет текст на потом; пустой текст выключает это."
     },
     "AutoReply": {
       "label": "Отвечать текстом",
@@ -3376,40 +3858,40 @@
       "tip": "Отправляет ответ каждому не чаще раза в день, чтобы никто не получил одно и то же дважды."
     },
     "FriendRequestDelayMinMinutes": {
-      "label": "Ждать не меньше",
+      "label": "Принимать заявку в друзья не раньше чем через",
       "tip": "Минимальное ожидание перед принятием заявки в друзья, в минутах. Принять в ту же секунду — верный признак бота."
     },
     "FriendRequestDelayMaxMinutes": {
-      "label": "И не больше",
+      "label": "Принимать заявку в друзья не позже чем через",
       "tip": "Максимальное ожидание перед принятием заявки в друзья, в минутах. Каждая заявка ждёт случайное время, обычно ближе к минимуму."
     },
     "ActOnlyWhileAwake": {
       "label": "Реагировать только когда не спит",
-      "tip": "Только в человеческом режиме. Придерживает всё, что видят другие — обмены, подарки, приглашения, ответы, комментарии и достижения, — пока аккаунт спит. Выключите, чтобы отвечать и ночью."
+      "tip": "Придерживает всё, что видят другие — обмены, подарки, приглашения, ответы, комментарии и достижения, — пока аккаунт спит. Выключите, чтобы отвечать и ночью."
     },
     "QuietThingsWaitForDay": {
-      "label": "Фоновые дела тоже ждут его дня",
-      "tip": "Только в человеческом режиме. Фоновые дела — сборка значков, бесплатные игры, бустеры и продажа карточек — тоже ждут часов, когда аккаунт не спит. Если выключено, они идут в любое время."
+      "label": "Фоновые задачи только в часы бодрствования",
+      "tip": "Фоновые дела — сборка значков, бесплатные игры, бустеры и продажа карточек — тоже ждут часов, когда аккаунт не спит. Если выключено, они идут в любое время."
     },
     "WakeDelayMinMinutes": {
       "label": "После пробуждения ждать не меньше",
-      "tip": "Только в человеческом режиме. Через сколько минут после пробуждения или входа он начинает делать то, что видят другие: обмены, комментарии или ответы. Для каждого вида своё случайное ожидание."
+      "tip": "Сколько ждать после пробуждения или входа, прежде чем делать то, что видят другие, — обмены, комментарии, ответы. У каждого вида своё случайное ожидание."
     },
     "WakeDelayMaxMinutes": {
-      "label": "...до",
+      "label": "После пробуждения ждать не дольше",
       "tip": "Максимальное ожидание после пробуждения или входа, в минутах."
     },
     "QuietDelayMinMinutes": {
-      "label": "После входа фоновые дела ждут не меньше",
-      "tip": "Только в человеческом режиме. Через сколько минут после входа начинаются фоновые дела: значки, бесплатные игры и бустеры. У каждого своё случайное ожидание, чтобы они не начинались все разом."
+      "label": "Фоновые задачи ждут после входа не меньше",
+      "tip": "Сколько ждать после входа, прежде чем начнутся фоновые задачи вроде значков, бесплатных игр и наборов карточек. У каждой своё случайное ожидание, чтобы не всё сразу."
     },
     "QuietDelayMaxMinutes": {
-      "label": "...до",
+      "label": "Фоновые задачи ждут после входа не дольше",
       "tip": "Максимальное ожидание после входа перед фоновыми делами, в минутах."
     },
     "OneTradeAtATime": {
       "label": "Отвечать на предложения обмена по одному",
-      "tip": "Только в человеческом режиме. Когда несколько предложений обмена нужно обработать сразу, например утром, он отвечает на них с разницей в несколько минут, а не все вместе."
+      "tip": "Когда несколько предложений обмена нужно обработать сразу, например утром, он отвечает на них с разницей в несколько минут, а не все вместе."
     },
     "AcceptDonations": {
       "label": "Принимать подарки",
@@ -3417,38 +3899,35 @@
     },
     "DonationsWhileAsleep": {
       "label": "Принимать пожертвования во сне",
-      "tip": "Только в человеческом режиме. Пропускает пожертвования ночью, даже когда включено «Реагировать только когда не спит». Всё остальное по-прежнему ждёт утра."
+      "tip": "Пропускает пожертвования ночью, даже когда включено «Реагировать только когда не спит». Всё остальное по-прежнему ждёт утра."
     },
     "AcceptGiftedGames": {
       "label": "Принимать подаренные игры",
       "tip": "Сразу добавляет в библиотеку игры, которые друзья дарят этому аккаунту. Выключите, чтобы решать о каждом подарке самому. Каждый подарок сначала ждёт, см. «Принять подарок не раньше чем через»."
     },
     "AcceptFairCardSwaps": {
-      "label": "Принимать честные обмены карточками",
+      "label": "Принимать обмен карточек 1:1 от кого угодно (только полезный для ваших наборов)",
       "tip": "Принимает обмены карточек один к одному от кого угодно в пределах одной игры, но только если они приближают ваши наборы к завершению. Предложения с металлическими карточками или другими предметами не трогаются. Нужен мобильный аутентификатор."
     },
     "AcceptGifts": {
       "label": "Принимать подарки и гостевые пропуска",
       "tip": "Принимает подарочные карты кошелька Steam и гостевые пропуска для этого аккаунта. Ни то ни другое ничего не стоит. Каждый подарок сначала ждёт, см. «Принять подарок не раньше чем через»."
     },
-    "AcceptFromMasters": {
-      "label": "Принимать что угодно со своих же аккаунтов",
-      "tip": "Принимает любое предложение от аккаунтов из «Ваши аккаунты», даже те, что забирают предметы. Удобно, чтобы собрать карточки на одном аккаунте, но указывайте только свои аккаунты."
-    },
     "TradeMasters": {
-      "label": "Ваши аккаунты",
-      "tip": "SteamID64 ваших собственных аккаунтов, через запятую. Любой из списка может забирать предметы с этого аккаунта, так что добавляйте только свои аккаунты."
+      "label": "Отправлять предметы на",
+      "tip": "Куда этот аккаунт отправляет свои предметы — с «Отправлять предметы каждые», когда фарм закончен, и командой send: имя аккаунта здесь или номер профиля Steam (SteamID64). Используется первый. Только для отправки: никто из списка не может ничего забрать с этого аккаунта — это «Ваши другие аккаунты».",
+      "placeholder": "main"
     },
     "DeclineOtherTrades": {
       "label": "Отклонять всё остальное",
       "tip": "Отклоняет все остальные предложения обмена, а не оставляет их. Если выключено, непринятые предложения остаются, чтобы вы проверили их сами."
     },
     "TradeDelayMinMinutes": {
-      "label": "Ждать не меньше",
+      "label": "Отвечать на предложение обмена не раньше чем через",
       "tip": "Минимальное ожидание перед ответом на предложение обмена, в минутах. Принять через пару секунд после прихода — похоже на бота."
     },
     "TradeDelayMaxMinutes": {
-      "label": "И не больше",
+      "label": "Отвечать на предложение обмена не позже чем через",
       "tip": "Максимальное ожидание перед ответом на предложение обмена, в минутах. Каждое предложение ждёт случайное время, обычно ближе к минимуму."
     },
     "GiftDelayMinMinutes": {
@@ -3456,12 +3935,12 @@
       "tip": "Минимальное ожидание перед принятием подарка — игры, подарочной карты или гостевого пропуска, в минутах."
     },
     "GiftDelayMaxMinutes": {
-      "label": "И не больше",
+      "label": "Принять подарок не позже чем через",
       "tip": "Максимальное ожидание перед принятием подарка, в минутах. Каждый подарок ждёт случайное время, обычно ближе к минимуму."
     },
     "PauseWhenYouPlay": {
       "label": "Уступать, когда вы играете",
-      "tip": "Перестаёт крутить игры, как только вы сами запускаете игру на этом аккаунте, чтобы никогда не мешать вашему клиенту Steam."
+      "tip": "Сразу перестаёт держать игры, когда вы сами запускаете игру на этом аккаунте, чтобы не мешать вашему клиенту Steam. Продолжает после ожидания ниже."
     },
     "ResumeDelayMinutes": {
       "label": "Ждать перед возвратом",
@@ -3469,7 +3948,7 @@
     },
     "AchievementBoost": {
       "tip": "Сам охотится за достижениями в нескольких играх, по одной игре за раз. «Выбранные игры» берёт список ниже. «Все одиночные» выбирает из библиотеки одиночные игры с достижениями, запущенные или нет (включите «Охотиться только в играх, где уже играли», чтобы пропустить остальные). На аккаунте в человеческом режиме игра, в которой идёт охота, добавляется к его играм как побочная.",
-      "label": "Разгон достижений",
+      "label": "Охота за достижениями",
       "choices": "0 выключено | 1 выбранные игры | 2 все одиночные"
     },
     "SkipRefundableGames": {
@@ -3478,11 +3957,7 @@
     },
     "ShowInventoryValue": {
       "tip": "Считает, сколько стоит инвентарь этого аккаунта по ценам торговой площадки Steam, и показывает это в панели. Выключите на аккаунтах, где лежит всего несколько карточек.",
-      "label": "Считать, сколько стоит его инвентарь"
-    },
-    "CheckForUpdates": {
-      "tip": "Проверяет новую версию и сообщает в журнал, в Telegram и Discord. Выключение останавливает и установку ночью самому.",
-      "label": "Сообщать о доступном обновлении"
+      "label": "Показывать стоимость инвентаря"
     },
     "UpdateReminders": {
       "label": "Напоминать каждый час",
@@ -3501,7 +3976,7 @@
       "tip": "Сколько раз в день он максимум показывается не в сети на перерыве, чтобы не мигать в списке друзей. 0 выключает это, и все перерывы показываются как «отошёл»."
     },
     "PlayWhileFarming": {
-      "label": "Оставлять название при фарме",
+      "label": "Оставлять своё название при фарме карточек",
       "tip": "Оставляет своё название, пока фармятся карточки. Выключите, чтобы во время фарма карточек была видна настоящая игра."
     },
     "GameDevice": {
@@ -3518,8 +3993,8 @@
       "tip": "Фармит только игры из «Сначала эти» и не трогает остальные игры с карточками."
     },
     "BlacklistedGames": {
-      "label": "Никогда не трогать",
-      "tip": "ID игр, которые никогда не фармятся и не крутятся."
+      "label": "Никогда не играть в эти игры",
+      "tip": "Игры, которые этот аккаунт никогда не фармит, не держит запущенными, не гриндит и не использует для охоты, — по названию или по числу из ссылки в магазине."
     },
     "SkipUnplayedGames": {
       "label": "Пропускать никогда не запущенные",
@@ -3536,18 +4011,18 @@
     },
     "FarmFromHour": {
       "label": "Фармить карточки только с",
-      "tip": "Фармит карточки только с этого часа. Оставьте и его, и «...до» на полуночи, чтобы фармить в любое время."
+      "tip": "Фармит карточки только в эти часы. Оставьте оба на полночи, чтобы фармить в любое время."
     },
     "FarmUntilHour": {
-      "label": "...до",
-      "tip": "Фармит карточки до этого часа. Поставьте раньше часа начала, чтобы захватить полночь: с позднего вечера до раннего утра — фарм ночью."
+      "label": "Фармить карточки только до",
+      "tip": "Конец этого окна. Раньше начала — переходит через полночь: с позднего вечера до раннего утра фармит ночью."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "После последней карточки играть ещё не меньше",
-      "tip": "Только в человеческом режиме. Когда у игры выпала последняя карточка, он играет в неё ещё несколько минут, а потом делает перерыв. Поставьте оба на 0, чтобы останавливаться сразу."
+      "tip": "Когда у игры выпала последняя карточка, он играет в неё ещё несколько минут, а потом делает перерыв. Поставьте оба на 0, чтобы останавливаться сразу."
     },
     "PostFarmWindDownMaxMinutes": {
-      "label": "...до",
+      "label": "После последней карты играть не дольше",
       "tip": "Сколько минут максимум он играет после последней карточки."
     },
     "FarmingDelayMinutes": {
@@ -3555,7 +4030,7 @@
       "tip": "Как часто перепроверять игру во время фарма, в минутах. Steam сообщает о выпадении сразу, так что это просто запасной вариант."
     },
     "MaxFarmingHoursPerGame": {
-      "label": "Сдаваться через",
+      "label": "Бросать игру через",
       "tip": "Бросает игру после стольких часов и переходит к следующей, чтобы одна застрявшая игра не держала остальные."
     },
     "StopWhenFarmingDone": {
@@ -3563,8 +4038,8 @@
       "tip": "Выходит из этого аккаунта, когда карточек не осталось, а не продолжает крутить игры."
     },
     "AchievementBoostGames": {
-      "label": "Прокачивать эти игры",
-      "tip": "Игры, по которым идёт разгон, ID или ссылки на магазин через запятую. Используется, только когда «Разгон достижений» стоит на выбранных играх."
+      "label": "Охотиться в этих играх",
+      "tip": "Игры, по которым идёт охота, — ID игр или ссылки на магазин через запятую. Используется, только когда «Охота за достижениями» стоит на играх, которые вы выбираете."
     },
     "BoostSessionHours": {
       "label": "Играть в каждую примерно",
@@ -3579,7 +4054,7 @@
       "tip": "Разрешает «все одиночные» охотиться только в играх, которые этот аккаунт уже запускал. Самый строгий способ держаться игр, которые подходят истории аккаунта."
     },
     "InventoryIgnoreGames": {
-      "label": "...кроме этих игр",
+      "label": "Не учитывать эти игры в стоимости инвентаря и обменах",
       "tip": "ID игр (число в ссылке на магазин), которые не учитываются в стоимости инвентаря и исключаются из всех обменов, через запятую. Игры, где аккаунт забанен, никогда не участвуют в обменах - слежка за банами сама добавляет их, когда может их увидеть, и вы тоже можете указать их здесь."
     },
     "YieldToFamily": {
@@ -3588,19 +4063,19 @@
     },
     "IncludeFamilyLibrary": {
       "label": "Включать игры из семейной библиотеки",
-      "tip": "Позволяет охоте за достижениями брать и игры, доступные этому аккаунту через Steam Family. Например, при 40 своих играх и 200 общих выбор идёт из всех 240 - свои всегда первыми. Включено: общие игры считаются как свои. Выключено: только игры этого аккаунта."
+      "tip": "Использует и игры, которыми с этим аккаунтом делятся через семью Steam: охотится в них за достижениями, а «Запускать всю мою библиотеку» запускает и их. Например, при 40 своих и 200 общих играх он выбирает из всех 240 — свои всегда первыми. Выкл.: только игры этого аккаунта."
     },
     "AchievementGrindGapMinMinutes": {
-      "label": "Во время гринда — достижение каждые",
+      "label": "При гринде самый короткий интервал между достижениями",
       "tip": "С каким промежутком открываются достижения во время гринда, в минутах. Гринд сидит в одной игре, так что темп быстрее и активнее. Самые лёгкие идут первыми."
     },
     "AchievementGrindGapMaxMinutes": {
-      "label": "...до",
+      "label": "При гринде самый долгий интервал между достижениями",
       "tip": "Самый длинный промежуток между открытиями во время гринда, в минутах."
     },
     "AchievementNeverGames": {
       "label": "Никогда в этих играх",
-      "tip": "Игры, которые не трогаются совсем. В них не открываются достижения, и разгон их никогда не выбирает. В человеческом режиме основная игра аккаунта тоже пропускается."
+      "tip": "Игры, которые полностью оставляются в покое. В них не открываются достижения, и охота их не выбирает. В человеческом режиме пропускается и основная игра аккаунта."
     },
     "AchievementGames": {
       "label": "Только эти игры",
@@ -3645,23 +4120,23 @@
       "choices": "0 самая наигранная игра | 1 любая сыгранная игра"
     },
     "SaleGapMinSeconds": {
-      "label": "Аккаунты-роботы ждут между шагами (секунды)",
+      "label": "Самая короткая пауза между шагами",
       "tip": "Секунды между двумя номинациями или голосами на аккаунте-роботе, самое короткое ожидание - например, 5. При самом долгом 20 каждое ожидание - случайно от 5 до 20 секунд."
     },
     "SaleGapMaxSeconds": {
-      "label": "...до (секунды)",
+      "label": "Самая долгая пауза между шагами",
       "tip": "Самое долгое ожидание между двумя шагами на аккаунте-роботе, в секундах - например, 20. При самом коротком 5 каждое ожидание - случайно от 5 до 20 секунд."
     },
     "SaleHumanGapMinMinutes": {
-      "label": "Человеческий режим ждёт между шагами (минуты)",
+      "label": "Самая короткая пауза между шагами, человеческий режим",
       "tip": "Минуты между двумя номинациями или голосами на аккаунте в человеческом режиме, самое короткое ожидание - например, 5. При самом долгом 30 каждое ожидание - случайно от 5 до 30 минут. Только в течение его дня."
     },
     "SaleHumanGapMaxMinutes": {
-      "label": "...до (минуты)",
+      "label": "Самая долгая пауза между шагами, человеческий режим",
       "tip": "Самое долгое ожидание между двумя шагами на аккаунте в человеческом режиме, в минутах - например, 30. При самом коротком 5 каждое ожидание - случайно от 5 до 30 минут."
     },
     "SaleCheckHours": {
-      "label": "Искать события каждые (часы)",
+      "label": "Искать события каждые",
       "tip": "Как часто проверять, не началось ли событие Steam, в часах - например, 6, это около 4 проверок в день. Во время события проверяет примерно раз в час."
     },
     "SellPerRun": {
@@ -3691,11 +4166,11 @@
       "tip": "Имя устройства, которое этот аккаунт показывает в списке авторизованных устройств Steam. Оставьте пустым, чтобы использовать настоящее имя этого ПК."
     },
     "SharedSecret": {
-      "label": "Секрет кодов аутентификатора",
+      "label": "shared_secret Steam Guard (из .maFile)",
       "tip": "Секрет аутентификатора, с которым коды Steam Guard вводятся сами, и аккаунт снова входит после перезагрузки без вас. То же самое делает его maFile в папке authenticators. Никому его не показывайте."
     },
     "IdentitySecret": {
-      "label": "Секрет подтверждений аутентификатора",
+      "label": "identity_secret Steam Guard (из .maFile)",
       "tip": "Второй секрет аутентификатора, для подтверждения запросов «подтвердите на телефоне». Нужен, только если этот аккаунт отдаёт предметы: получение подтверждать не нужно."
     },
     "AccountProxy": {
@@ -3719,7 +4194,7 @@
       "tip": "Молча игнорирует заявки в друзья от новых закрытых профилей 0 уровня — так выглядят боты-мошенники. Работает, только когда включено «Принимать заявки в друзья»."
     },
     "RejectInvalidFriendInvites": {
-      "label": "Отклонять то, что не принимаете",
+      "label": "Отклонять заявки в друзья, которые он не принимает",
       "tip": "Отклоняет заявки в друзья, которые не принимает, а не оставляет их в списке. Если выключено, они остаются, чтобы вы сами посмотрели."
     },
     "AutoReplyDelaySeconds": {
@@ -3746,6 +4221,50 @@
       "label": "Показывать отладочные подробности на экране",
       "tip": "Показывает дополнительные отладочные подробности в окне и консоли. Они и так всегда пишутся в файл журнала, так что включайте, только если хотите смотреть их вживую."
     },
+    "LogShowDoing": {
+      "label": "Показывать, что он сейчас делает",
+      "tip": "Показывает в журнале приложения, что делает каждый аккаунт: игра, простой, сеансы, разогрев, перерывы и сон - например «grinding Portal · 41m left» или «asleep · 7 games · up 13:37». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowDrops": {
+      "label": "Показывать выпадение карточек и фарм",
+      "tip": "Показывает выпадение карточек и фарм карточек в журнале приложения - например «выпала карточка в Portal - осталось 2» или «карточек нет · игры в простое». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowBadges": {
+      "label": "Показывать значки, создание и уровень",
+      "tip": "Показывает созданные значки, готовые наборы и уровень Steam в журнале приложения - например «создано значков: 2 - уровень Steam вырос». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowBuying": {
+      "label": "Показывать покупку карточек",
+      "tip": "Показывает покупку карточек в журнале приложения - например «куплено Zane (Destiny Warriors) · 0.10 CAD» или кошелёк и лимиты. Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowSelling": {
+      "label": "Показывать продажу, лишние предметы и самоцветы",
+      "tip": "Показывает продажи, лоты на торговой площадке, лишние предметы, самоцветы и наборы карточек в журнале приложения - например «выставлено Arena (BitMaster) за 0.03 CAD» или «Room (Epsilon corp.) → 10 самоцветов». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowTrades": {
+      "label": "Показывать обмены и обмен карточками",
+      "tip": "Показывает предложения обмена и обмен карточками в журнале приложения - например «принято предложение 123 от друга». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowComments": {
+      "label": "Показывать комментарии, друзей и rep4rep",
+      "tip": "Показывает комментарии в профиле, заявки в друзья, группы и rep4rep в журнале приложения - например «новый комментарий от друга» или «прокомментировано у кого-то и засчитано (7/10 сегодня)». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowAchievements": {
+      "label": "Показывать достижения",
+      "tip": "Показывает достижения в журнале приложения - например «🏆 Camera Shy · Portal · 11/15». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowFree": {
+      "label": "Показывать бесплатные игры, предметы и очки",
+      "tip": "Показывает бесплатные игры и предметы, подарки, очки Steam и события распродаж в журнале приложения - например «получено бесплатных игр: 2». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowAnswers": {
+      "label": "Показывать ответы на команды",
+      "tip": "Показывает в журнале приложения ответы на команды, которые приходят позже, и команды из Telegram и Discord. На то, что ты вводишь в окне, ответ всегда приходит там. Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
+    "LogShowApp": {
+      "label": "Показывать обновления и сообщения приложения",
+      "tip": "Показывает собственные сообщения nocat.farm в журнале приложения: обновления, панель, сохранённые настройки, резервные копии, Discord и Telegram, ежедневную сводку - например «обновление через 10s». Выключено: эти строки идут только в файл журнала. Предупреждения и ошибки показываются всегда."
+    },
     "LogRetentionDays": {
       "label": "Хранить журналы",
       "tip": "Удаляет файлы журнала старше стольких дней. 0 хранит их всегда."
@@ -3763,7 +4282,7 @@
       "tip": "Сколько ждать ответа Steam, прежде чем сдаться и переподключиться, в секундах."
     },
     "MaxConcurrentFarming": {
-      "label": "Фармить не больше",
+      "label": "Аккаунтов фармит одновременно",
       "tip": "Сколько аккаунтов могут фармить карточки одновременно. 0 — без ограничений."
     },
     "LoginCooldownMinutes": {
@@ -3792,11 +4311,11 @@
       "tip": "Пароль для прокси выше, если он нужен."
     },
     "GlobalBlacklistedGames": {
-      "label": "Никогда не трогать (все аккаунты)",
+      "label": "Никогда не играть в эти игры (все аккаунты)",
       "tip": "Игры, которые ни один аккаунт никогда не фармит и не крутит, по ID игры (число в ссылке на магазин). Каждый аккаунт может добавить к ним свои."
     },
     "Rep4RepLearnCap": {
-      "label": "Выучить настоящий лимит",
+      "label": "Снижать дневной лимит, когда Steam говорит, что он достигнут",
       "tip": "Если Steam сообщает, что аккаунт достиг дневного лимита комментариев раньше заданного выше числа, это становится его лимитом (не ниже 5). Отказ «слишком частые комментарии» касается промежутка между комментариями и лимит не меняет."
     },
     "Rep4RepRetryRefused": {
@@ -3805,11 +4324,11 @@
     },
     "SendOnFarmingFinished": {
       "label": "Отправлять вещи, когда фарм окончен",
-      "tip": "Когда карточек для фарма не осталось, отправляет собранное этим аккаунтом первому аккаунту из «Ваши аккаунты»."
+      "tip": "Когда фармить больше нечего, отправляет собранное этим аккаунтом на аккаунт из «Отправлять предметы на»."
     },
     "SendEveryHours": {
       "label": "Отправлять вещи каждые",
-      "tip": "Отправляет предметы этого аккаунта первому аккаунту из «Ваши аккаунты» раз в столько часов, чтобы карточки не копились. Первая отправка — через один период после включения, карточка аккаунта в панели показывает, когда следующая, и каждая отправка видна в журнале. 0 выключает это."
+      "tip": "Отправляет предметы этого аккаунта на аккаунт из «Отправлять предметы на» каждые столько часов, чтобы карточки не копились. Первая отправка — через один период после включения, карточка аккаунта на панели показывает, когда следующая, и каждая отправка есть в журнале."
     },
     "SendItemTypes": {
       "label": "Что отправлять",
@@ -3817,16 +4336,16 @@
       "placeholder": "карточки"
     },
     "TradeMasterToken": {
-      "label": "Их токен из ссылки на обмен",
-      "tip": "Токен из ссылки на обмен другого аккаунта, часть после &token=. Нужен, только если эти два аккаунта не друзья."
+      "label": "Токен ссылки на обмен получающего аккаунта",
+      "tip": "Токен из ссылки на обмен аккаунта из «Отправлять предметы на» — часть после &token=. Нужен, только если аккаунты не в друзьях."
     },
     "ClearNotifications": {
-      "label": "Сбрасывать уведомления Steam",
-      "tip": "Отмечает прочитанным всё в уведомлениях Steam — комментарии, подарки и приглашения, чтобы счётчики не росли."
+      "label": "Сбрасывать счётчики уведомлений Steam",
+      "tip": "Отмечает прочитанным всё в уведомлениях Steam — комментарии, подарки, приглашения — и сбрасывает зелёный счётчик новых предметов при каждой выпавшей карточке, чтобы счётчики не росли."
     },
     "AchievementIncludeMainGame": {
       "label": "Получать и в основной игре",
-      "tip": "Разрешает основной игре из «Человеческий режим» получать достижения, как и остальным. Лучше оставить включённым: сотни часов без достижений выглядят странно."
+      "tip": "Позволяет основной игре человеческого режима получать достижения, как любой другой. Лучше оставить включённым: сотни часов без достижений выглядят странно."
     },
     "PluginsEnabled": {
       "label": "Загружать плагины",
@@ -3837,7 +4356,7 @@
       "tip": "Фармит карточки несколькими блоками в день с перерывами, а не без остановки. Реально важно только для аккаунта, которому больше нечего крутить."
     },
     "FarmHoursPerDay": {
-      "label": "Часов фарма в день",
+      "label": "Фармить столько в день",
       "tip": "Примерно сколько часов в день занимают блоки фарма. Каждый день по-разному, в выходные дольше. Используется, только когда включено «Фармить сессиями, а не подряд»."
     },
     "MarketGapSeconds": {
@@ -3849,7 +4368,7 @@
       "tip": "Сколько часов цена используется повторно, прежде чем её проверят снова. Дешёвые предметы проверяются реже. Дольше — меньше запросов, но стоимость обновляется медленнее."
     },
     "Rep4RepPauseHours": {
-      "label": "Приостановить комментарии на (часы)",
+      "label": "Приостановить комментарии на",
       "tip": "Приостанавливает комментарии rep4rep на всех аккаунтах на столько часов, потом они возобновляются сами. Отсчёт идёт и через перезапуски. 0 — без паузы."
     },
     "DiscordPresence": {
@@ -3885,16 +4404,12 @@
       "tip": "Аккаунт, чей аватар Steam стоит в углу логотипа nocat.farm на вашей карточке Discord - по нажатию открывается его профиль Steam. Подойдёт любой аккаунт, и в режиме человека тоже. Пусто - берётся первый показанный аккаунт."
     },
     "AutoTradeWith": {
-      "label": "Сам обмениваться с",
-      "tip": "С кем этот аккаунт обменивается, не спрашивая вас, и в какую сторону. Имена аккаунтов или SteamID64 через запятую, у каждого :from (принимать то, что они присылают), :to (позволять им забирать предметы) или :both - :both по умолчанию. Пример: farm1, farm2:to. Пусто = аккаунты из «Ваши аккаунты», в обе стороны, когда включено «Принимать что угодно со своих же аккаунтов». Для пожертвований есть свой переключатель. Всё остальное ждёт вас: trade accept или trade decline, в консоли или в Telegram."
+      "label": "Ваши другие аккаунты",
+      "tip": "Ваши собственные аккаунты, с которыми этот меняется сам, и в какую сторону: имена аккаунтов здесь или номера профилей Steam (SteamID64) через запятую, у каждого :from (принимать, что присылают), :to (давать забирать предметы) или :both — :both по умолчанию. Пример: farm1, farm2:to. Пишите только свои аккаунты. Пусто: никто — каждое предложение ждёт вас (trade accept или trade decline в консоли или в Telegram); пожертвования — по своему переключателю."
     },
     "NotifyTrades": {
       "label": "Уведомлять о предложениях обмена",
       "tip": "Показывает уведомление о каждом новом предложении обмена - от кого оно, что вы отдадите и получите и что сделает nocat.farm - а также когда предложение принято, отклонено или требует подтверждения."
-    },
-    "WatchBans": {
-      "label": "Следить за банами",
-      "tip": "Каждые несколько часов смотрит баны этого аккаунта - VAC, игровые баны, бан на обмен, бан в сообществе - и сразу сообщает вам (журнал, уведомление, Discord/Telegram), когда появляется новый. Только смотрит и никогда ничего не меняет. Игры, в которых он находит бан аккаунта, сами исключаются из обменов; коллекционные карточки по-прежнему обмениваются."
     },
     "TelegramLogColour": {
       "label": "Цвет Telegram в журнале",
@@ -3913,15 +4428,15 @@
       "tip": "Только для обратного прокси не на этом ПК, например Caddy перед Docker: его адрес или диапазон, например 172.16.0.0/12. Тогда адресу посетителя, который он передаёт, верят, и люди из интернета считаются интернетом, а не домом. Прокси на этом ПК здесь ничего не нужно. Иначе оставьте пустым."
     },
     "BoostWeight": {
-      "label": "Человеческий режим: вес игры для охоты",
-      "tip": "Только в человеческом режиме. Игра, в которой идёт охота, добавляется к играм, в которые он играет, и это - как часто она выпадает, вес как в «Игры и как часто». Играется обычными сессиями, с перерывами и сном, и никогда не обрывает другую игру."
+      "label": "Как часто попадается игра охоты",
+      "tip": "Игра, в которой идёт охота, добавляется к играм, в которые он играет, и это - как часто она выпадает, вес как в «Игры и как часто». Играется обычными сессиями, с перерывами и сном, и никогда не обрывает другую игру."
     },
     "AutoUpdateFromHour": {
-      "label": "...между",
+      "label": "Устанавливать само с",
       "tip": "Самый ранний час, когда можно ставить самому."
     },
     "AutoUpdateUntilHour": {
-      "label": "...и",
+      "label": "Устанавливать само до",
       "tip": "Час, когда он перестаёт пытаться в эту ночь. Раньше начального часа - переход через полночь, так что с позднего вечера до раннего утра работает."
     },
     "AutoUpdateWaitHours": {
@@ -3930,7 +4445,7 @@
     },
     "UpdateCheckHours": {
       "label": "Проверять обновления каждые",
-      "tip": "Часы между двумя проверками новой версии. Также проверяет один раз при запуске nocat.farm и каждый раз, когда вы вводите update."
+      "tip": "Часы между двумя поисками новой версии. Также ищет при запуске nocat.farm и каждый раз, когда вы вводите update. Не при «не искать обновления»."
     },
     "DiscordBotToken": {
       "label": "Токен бота Discord",
@@ -3961,36 +4476,36 @@
       "tip": "Как Jellyfin: просит роутер пробросить порт панели на этот ПК (UPnP), чтобы она открывалась откуда угодно по вашему интернет-адресу, - ссылку даёт /dashboard в Telegram и Discord. Нужен пароль панели не короче 12 символов и 0.0.0.0 в «Слушать на». Страница входа доступна любому в интернете, а пять неверных паролей блокируют на час. Выключение убирает проброс. Ссылка - обычный http без шифрования, поэтому входите через мобильный интернет или доверенную сеть."
     },
     "WebSignInCode": {
-      "label": "Код в Telegram для входа извне",
+      "label": "Спрашивать код из Telegram при входе извне",
       "tip": "Для входа не из дома нужен пароль, а затем 6-значный код, отправленный в ваш Telegram, так что одного пароля мало. Дома и на этом ПК нужен только пароль. Нужен подключённый Telegram («Настройки», «Уведомления»); пока его нет, извне тоже хватает пароля."
     },
     "WebRemoteOffAfter": {
-      "label": "Выключать «Открывать откуда угодно» после",
+      "label": "Выключать «Открывать откуда угодно» после стольких неудачных входов за день",
       "tip": "Сколько неверных паролей и кодов из интернета за день, прежде чем «Открывать откуда угодно» выключится само - и останется выключенным, пока вы не включите его снова (страница «Телефон» или anywhere on). До тех пор из интернета никто не войдёт, в том числе через вручную заданный публичный адрес. 0 - никогда не выключать."
     },
     "BoostGamesInRotation": {
-      "label": "Игр в ротации",
+      "label": "Игр охоты одновременно",
       "tip": "Сколько игр охота ведёт одновременно. Чередует их, а когда одна отдыхает или закончена, её место занимает следующая из списка."
     },
     "BoostHoursPerDay": {
-      "label": "Охотиться не больше, часов в день",
+      "label": "Охотиться не больше в день",
       "tip": "Максимум времени в день на игру, в которой идёт охота. На аккаунте в человеческом режиме игра до конца дня пропадает из его игр; иначе охота на сегодня прекращается. 0 - без ограничений."
     },
     "BoostSwitchFromPct": {
-      "label": "Переходит к другой игре примерно при",
-      "tip": "Когда у игры набирается примерно столько достижений - случайная точка между этим и следующим значением, у каждой игры своя, - он переходит к другой, как человек, которому пока хватит. В процентах."
+      "label": "Переходить к другой игре от",
+      "tip": "Когда в игре получено примерно столько достижений — случайная точка между двумя значениями, своя для каждой игры, — он переходит к другой, как человек, которому игра пока надоела."
     },
     "BoostSwitchToPct": {
-      "label": "...до",
-      "tip": "Верх этого диапазона. То же число, что выше, делает его точным."
+      "label": "Переходить к другой игре не позже",
+      "tip": "Верхняя граница. Одно и то же число дважды делает её точной."
     },
     "BoostRestDaysMin": {
-      "label": "Возвращается к игре через",
-      "tip": "Сколько дней до возвращения к оставленной игре - случайное число между этим и следующим значением. С каждым возвращением останавливается чуть дальше, до «Завершать не больше»."
+      "label": "Возвращаться к игре не раньше чем через",
+      "tip": "Сколько дней до возвращения к оставленной игре — случайное число между двумя. Каждый раз он останавливается чуть дальше, до «Никогда не проходить игру больше чем на»."
     },
     "BoostRestDaysMax": {
-      "label": "...до",
-      "tip": "Верх этого диапазона, в днях."
+      "label": "Возвращаться к игре не позже чем через",
+      "tip": "Наибольшее число дней до возвращения к игре."
     },
     "AchievementRealLength": {
       "label": "Темп по реальной длине игр",
@@ -4002,12 +4517,12 @@
       "choices": "3 аккаунты Steam на nocat.farm | 0 карточки за сегодня | 1 часы за неделю | 2 часы за месяц"
     },
     "SendAroundHour": {
-      "label": "...около",
+      "label": "Отправлять предметы около",
       "tip": "Час отправки - например, раннее утро. Уходит в случайную минуту этого часа, в дни, которые позволяет «Отправлять предметы каждые». Без точного времени: каждые столько часов с момента включения."
     },
     "IdleWholeLibrary": {
       "label": "Вся моя библиотека",
-      "tip": "Фармит часы во всех играх аккаунта, после тех, что в «Игры для фарма часов». Пропускает игры из «Никогда не трогать», игры из семейной библиотеки (если не включено «Включать игры из семейной библиотеки») и игры, которые придерживает «Беречь возвраты». Steam запускает 32 игры одновременно, так что включите «Ротация списка», чтобы очередь дошла до каждой."
+      "tip": "Фармит часы во всех играх аккаунта, после тех, что в «Игры для фарма часов». Пропускает игры из «Никогда не играть в эти игры», игры из семейной библиотеки (если не включено «Включать игры из семейной библиотеки») и игры, которые придерживает «Беречь возвраты». Steam запускает 32 игры одновременно, так что включите «Ротация списка», чтобы очередь дошла до каждой."
     },
     "RotateIdleGames": {
       "label": "Ротация списка",
@@ -4036,8 +4551,8 @@
       "tip": "Игра, которая только что появилась в библиотеке, купленная, подаренная или бесплатная, получает дополнительные сеансы на 3–10 дней, каждый день меньше, как когда пробуешь что-то новое. Игры из чёрного списка или из семейной библиотеки и игры, запущенные на твоих других аккаунтах, не трогаются, а игра, которую придерживает «Беречь возвраты», ждёт, пока это не закончится."
     },
     "LongerRhythms": {
-      "label": "Тихие периоды и поздние ночи",
-      "tip": "Раз или два в месяц у него бывает тихий период на 2–5 дней с заметно более короткими днями, а иногда вечер пятницы или субботы затягивается дольше обычного. Выходные дни и настройки часов по-прежнему действуют. human week их показывает."
+      "label": "Иногда спокойные периоды",
+      "tip": "Раз или два в месяц у него спокойный период на 2–5 дней с заметно более короткими днями. Выходные и настройки часов по-прежнему действуют. Поздние ночи по пятницам и субботам — это «Ложится позже в пт/сб». Команда `human week` их показывает."
     },
     "JoinFriends": {
       "label": "Иногда играть в то, во что играет друг",
@@ -4065,8 +4580,8 @@
       "tip": "Час, когда приходит еженедельный отчёт, по местному времени."
     },
     "OfflineIdleTopGames": {
-      "label": "...или, если ни одна не выбрана, самые наигранные",
-      "tip": "Если «Игры на ночь» пуст, ночью крутится столько самых наигранных игр аккаунта. 1 или 2 выглядят естественнее всего - много сразу selfcheck отмечает первым делом."
+      "label": "Любимых игр на ночь",
+      "tip": "Если в «Игры на ночь» ничего нет, ночью он держит запущенными столько самых играемых игр аккаунта. 1–2 выглядят естественнее всего — много сразу команда `selfcheck` отмечает первым делом."
     },
     "ClaimFree": {
       "label": "Забирать бесплатные игры",
@@ -4075,12 +4590,12 @@
     },
     "UpdateMode": {
       "label": "Обновления",
-      "tip": "Что делать, когда выходит новая версия. Сначала всегда сообщает в журнале, Telegram и Discord. Ставить по клику, когда все спят: кнопка «Обновить» или update accept ставит её, когда аккаунты спят - ни один аккаунт в режиме человека не бодрствует, никто не играет, не ждут обмены или подарки. Ставить по клику: сразу. Ставить самой ночью: ставит сама в часы ниже, в спокойное время, и сообщает до и после. update now всегда ставит сразу. Не в Docker и не как служба Linux - там обновляют вручную.",
-      "choices": "0 ставить по клику, когда все спят | 1 ставить по клику | 2 ставить самой ночью"
+      "tip": "Что происходит, когда выходит новая версия. Спросить меня: сообщает (в журнале, в Telegram и Discord), а кнопка «Обновить» или 'update accept' ставит её — когда аккаунты спят (ни один аккаунт в человеческом режиме не бодрствует, никто не играет, нет ожидающих обменов и подарков) или сразу. Ставить самой ночью: ставит сама в часы ниже, в спокойный момент, и сообщает до и после. Не искать обновления: никогда не ищет; 'update' всё равно ищет. Не в Docker и не как служба Linux — там обновляют вручную.",
+      "choices": "0 спросить меня; ставить, когда аккаунты спят | 1 спросить меня; ставить сразу | 2 ставить самой ночью | 3 не искать обновления"
     },
     "CountMeAsUser": {
       "label": "Считать меня пользователем",
-      "tip": "Раз в час сообщает nocat.lol, что эта копия работает, чтобы на его странице можно было считать пользователей. Отправляет случайный номер, созданный для этой установки, версию приложения, платформу и сколько ваших аккаунтов Steam в сети (только число, например 3), плюс суммы часов и карточек и остальное (самоцветы, значки, наборы, проданные предметы), если вы ими делитесь (следующая настройка) - и больше ничего: ни имён аккаунтов, ни Steam ID, ни настроек. Так и получается счётчик аккаунтов Steam. Выключено: ничего не отправляется."
+      "tip": "Раз в час сообщает nocat.lol, что эта копия работает, чтобы на его странице можно было считать пользователей. Отправляет случайный номер, созданный для этой установки, версию приложения, платформу и сколько ваших аккаунтов Steam в сети (только число, например 3), плюс суммы часов и карточек и остальное (самоцветы, значки, наборы, проданные предметы), если вы ими делитесь (следующая настройка) - и больше ничего: ни имён аккаунтов, ни Steam ID, ни настроек. Так и получается счётчик аккаунтов Steam. Выключено: ничего не отправляется. С включённым «Делиться самыми дешёвыми наборами с другими пользователями nocat.farm» отправляет ещё и рыночные цены найденных наборов карточек, отдельным сообщением (см. эту настройку)."
     },
     "ShareFarmTotals": {
       "label": "Делиться моими итогами фарма",
@@ -4101,11 +4616,7 @@
     },
     "HealthAlertBans": {
       "label": "Сообщать о новом бане",
-      "tip": "Сообщает, когда появляется бан - например, бан VAC, игровой бан, бан обменов или сообщества. Пока включено «Следить за банами», о нём уже сообщает та настройка, поэтому эта молчит, чтобы не говорить дважды. Выключено: отсюда сообщений о банах нет."
-    },
-    "HealthAlertDiscord": {
-      "label": "Оповещения о состоянии в Discord",
-      "tip": "Отправляет сообщение в ваш канал Discord, когда что-то в аккаунте ухудшается. Например, рынок закрыт на 7 дней - одно сообщение. Включено: отправляется каждое ухудшение. Выключено: в Discord ничего не идёт - строка «Состояние» всё равно это показывает. Нужен вебхук Discord, настроенный в разделе «Уведомления»."
+      "tip": "Сообщает, когда появляется новый бан — VAC, игровой, торговый или в сообществе. Например, новый игровой бан в одной игре: придёт одно сообщение, один раз. Баны в любом случае проверяются раз в несколько часов: игры с баном не попадают в обмены аккаунта, и его карточка их показывает. Выкл.: новый бан только пишется в журнал."
     },
     "HealthAlertGuard": {
       "label": "Сообщать, когда Steam Guard слабеет",
@@ -4113,7 +4624,7 @@
     },
     "HealthAlertLimited": {
       "label": "Сообщать об ограниченном аккаунте",
-      "tip": "Сообщает, когда Steam начинает считать этот аккаунт ограниченным: нельзя приглашать в друзья, нет рынка. Например, аккаунт, на котором ни разу не потратили 5 долларов, ограничен. Выключено: это показывает только строка «Состояние»."
+      "tip": "Сообщает, когда Steam начинает считать этот аккаунт ограниченным: без приглашений в друзья и торговой площадки. Например, ограничен аккаунт, который ни разу не потратил сумму, эквивалентную 5 долларам США. Выкл.: это показывает только строка состояния."
     },
     "HealthAlertMarket": {
       "label": "Сообщать, когда рынок закрыт",
@@ -4123,37 +4634,17 @@
       "label": "Сообщать, когда телефон удалён",
       "tip": "Сообщает, когда к аккаунту больше не привязан номер телефона - например, после того как его удалили на сайте Steam. Выключено: это показывает только строка «Состояние»."
     },
-    "HealthAlertPopup": {
-      "label": "Оповещения о состоянии всплывающим уведомлением",
-      "tip": "Показывает всплывающее уведомление на этом ПК, когда что-то в аккаунте ухудшается. Например, Steam Guard перешёл с приложения на телефоне на почту - одно окошко. Включено: уведомление каждый раз, если включено «Показывать всплывающие уведомления». Выключено: без уведомления - строка «Состояние» всё равно это показывает."
-    },
-    "HealthAlertTelegram": {
-      "label": "Оповещения о состоянии в Telegram",
-      "tip": "Отправляет сообщение в ваш чат Telegram, когда что-то в аккаунте ухудшается. Например, начало удержания обмена на 15 дней на одном аккаунте - одно сообщение. Включено: отправляется каждое ухудшение. Выключено: в Telegram ничего не идёт - строка «Состояние» аккаунта всё равно это показывает. Нужен Telegram, настроенный в разделе «Уведомления»."
-    },
     "HealthAlertTradeHold": {
       "label": "Сообщать об удержании обмена",
       "tip": "Сообщает, когда обмены этого аккаунта начинают удерживаться на несколько дней - например, 15 дней после изменения Steam Guard. Выключено: это показывает только строка «Состояние»."
     },
     "HealthMaxHours": {
-      "label": "...до (часы)",
+      "label": "Самая долгая пауза между проверками состояния",
       "tip": "Самый долгий промежуток между двумя проверками состояния, в часах - например, 7. При самом коротком 5 проверка идёт каждые 5-7 часов, случайно."
     },
     "HealthMinHours": {
-      "label": "Самая короткая пауза между проверками состояния (часы)",
+      "label": "Самая короткая пауза между проверками состояния",
       "tip": "Самый короткий промежуток между двумя проверками состояния, в часах - например, 5. При самом долгом 7 проверка идёт каждые 5-7 часов, случайно. При входе аккаунта проверка выполняется всегда."
-    },
-    "ScamAlertDiscord": {
-      "label": "Предупреждения о мошенничестве в Discord",
-      "tip": "Отправляет предупреждения защиты от мошенников в ваш канал Discord. Например, новый ключ API на одном аккаунте - одно сообщение с именем аккаунта. Включено: туда идёт каждое предупреждение. Выключено: в Discord ничего не идёт - журнал и панель всё равно их показывают. Нужен вебхук Discord, настроенный в разделе «Уведомления»."
-    },
-    "ScamAlertPopup": {
-      "label": "Предупреждения о мошенничестве всплывающим уведомлением",
-      "tip": "Показывает всплывающее уведомление на этом ПК при каждом предупреждении защиты от мошенников. Например, изменённая почта на одном аккаунте - одно окошко с именем аккаунта. Включено: уведомление при каждом предупреждении, если включено «Показывать всплывающие уведомления». Выключено: без уведомления - журнал и панель всё равно его показывают."
-    },
-    "ScamAlertTelegram": {
-      "label": "Предупреждения о мошенничестве в Telegram",
-      "tip": "Отправляет предупреждения защиты от мошенников в ваш чат Telegram. Например, вход с нового устройства на одном аккаунте - одно сообщение с именем аккаунта и устройства. Включено: туда идёт каждое предупреждение. Выключено: в Telegram ничего не идёт - журнал и панель всё равно их показывают. Нужен Telegram, настроенный в разделе «Уведомления»."
     },
     "ScamWatchApiKey": {
       "label": "Проверять ключ API",
@@ -4172,11 +4663,11 @@
       "tip": "Смотрит список авторизованных устройств аккаунта и предупреждает о новом, которое не ваше и не принадлежит самому nocat.farm - например, о «DESKTOP-8XQ2», которого вы никогда не видели. Выключено: устройства не проверяются."
     },
     "ScamWatchMaxMinutes": {
-      "label": "...до (минуты)",
+      "label": "Самая долгая пауза между проверками на мошенничество",
       "tip": "Самый долгий промежуток между двумя проверками, в минутах - например, 60. При самом коротком 30 каждое ожидание - случайно от 30 до 60 минут."
     },
     "ScamWatchMinMinutes": {
-      "label": "Самая короткая пауза между проверками (минуты)",
+      "label": "Самая короткая пауза между проверками на мошенничество",
       "tip": "Самый короткий промежуток между двумя проверками, в минутах - например, 30. При самом долгом 60 каждое ожидание - случайно от 30 до 60 минут. Каждая проверка - это несколько просмотров страниц, как если бы вы открыли их в браузере."
     },
     "ScamWatchRevokeKey": {
@@ -4204,7 +4695,7 @@
       "tip": "Показывает одну строку «Состояние» на карточке аккаунта - уровень, баны, удержание обмена, доступ к рынку, ограниченный аккаунт, Steam Guard и телефон - и сразу сообщает, когда что-то ухудшается. Например, когда начинается удержание обмена, вы получаете одно сообщение, и строка это показывает. Проверяется при входе и раз в несколько часов; только смотрит. Выключено: ни строки «Состояние», ни оповещений."
     },
     "PointsWeeklyCap": {
-      "label": "Тратить не больше, за неделю",
+      "label": "Очков в неделю, не больше",
       "tip": "Больше всего очков, которые он тратит за любые 7 дней. Например, 3000: не больше 3 уровней значка в неделю, сколько бы ни было очков. 0 не тратит ничего."
     },
     "PointsBadgeMaxLevel": {
@@ -4228,20 +4719,36 @@
       "tip": "Очки, которые он никогда не тратит, чтобы вам что-то осталось. Например, 1000 при 4500 очках: можно потратить 3500, это 3 уровня значка по 1000. 0 разрешает потратить все."
     },
     "PointsCheckEveryHours": {
-      "label": "Проверять каждые (часы)",
+      "label": "Смотреть очки каждые",
       "tip": "Как часто он смотрит очки и магазин, в часах - например, 12, дважды в день. Аккаунт в человеческом режиме смотрит только в течение своего дня."
+    },
+    "BuyCards": {
+      "label": "Покупать недостающие карточки",
+      "tip": "Покупает карточки, которых значку не хватает до следующего уровня, по самой низкой цене на торговой площадке, чтобы его можно было собрать - сначала самый дешёвый уровень, и только целые наборы. Например, если есть 4 из 5 карточек, покупает 5-ю, примерно за 0,05-0,15. Тратит кошелёк Steam этого аккаунта. По умолчанию выключено на каждом аккаунте. При включении сначала показывает, что купила бы и за сколько, и просит подтвердить; выключение сразу останавливает. Нужно включённое «Собирать значки из карточек»."
+    },
+    "BuyFullSets": {
+      "label": "Покупать самые дешёвые полные наборы",
+      "tip": "Также покупает полные наборы карточек для игр, от которых у аккаунта нет ни одной карточки, сначала самые дешёвые, каждый - один уровень значка (100 XP). Наборы, где какой-то карточки меньше 2 на торговой площадке или одна очень дешёвая карточка делает набор дешевле, чем он есть, пропускаются. Выключено: только карточки для начатых значков."
+    },
+    "BuyDailyLimit": {
+      "label": "Тратить не больше в день",
+      "tip": "Больше всего, что она тратит за 24 часа, в валюте кошелька Steam этого аккаунта. Например, 1,50: набор за 0,60 и ещё один за 0,70 заполняют день; следующий набор ждёт до завтра. Никогда не тратит больше, чем есть в кошельке. Начальные 1,50 подходят для долларов или евро; для иен поставь около 225."
+    },
+    "BuyWeeklyLimit": {
+      "label": "Тратить не больше в неделю",
+      "tip": "Больше всего, что она тратит за 7 дней, в валюте кошелька Steam этого аккаунта. Например, 8,00 при 1,50 в день: около 5 полных дней покупок в неделю. 0 - ничего не покупает. Начальные 8,00 подходят для долларов или евро; для иен поставь около 1200."
+    },
+    "BuyCheckHours": {
+      "label": "Искать карточки для покупки каждые",
+      "tip": "Как часто она ищет карточки для покупки, в часах - например, 12, дважды в день. Аккаунт в человеческом режиме проверяет только в течение своего дня и покупает по одному набору за раз."
     },
     "PointsBuySeasonalBadge": {
       "label": "Покупать уровни сезонного значка",
       "tip": "Разрешает покупать уровни значка, который сейчас продаёт магазин очков, например Summer Collection - новый появляется с каждой большой распродажей Steam. Включено: качает этот значок. Выключено: не покупает его."
     },
     "BackupRetryMinutes": {
-      "label": "Повторить через (минуты)",
+      "label": "Повторить через",
       "tip": "После неудачной копии - сколько ждать до новой попытки в тот же день. Например, 60: копия, не удавшаяся в 4 утра, пробует снова в 5 утра. 0 - ждать до завтра."
-    },
-    "SendBackups": {
-      "label": "Отправлять резервные копии",
-      "tip": "Сообщение, когда копия не удалась, и почему - например, нет папки. Если «Сообщать» стоит на «после каждой копии», ещё и по одному на каждую сохранённую копию."
     },
     "BackupFolder": {
       "label": "Сохранять копии в",
@@ -4271,11 +4778,6 @@
       "label": "Включать аккаунты и сохранённые входы",
       "tip": "Кладёт в копию настройки каждого аккаунта, его сохранённый вход в Steam и прогресс (день человеческого режима, охоту за достижениями, счётчики rep4rep). Например, 3 аккаунта возвращаются готовыми ко входу. Выключено: восстановление не вернёт ни одного аккаунта."
     },
-    "BackupNotify": {
-      "label": "Сообщать",
-      "tip": "Когда вы узнаёте о копиях в Telegram и Discord. «Только при сбое копии»: сообщение, только если копию сделать не удалось - например, нет папки, диск заполнен или нет прав. «После каждой копии»: ещё и сообщение о каждой сохранённой копии. Нужно включить «Отправлять резервные копии» в разделе «Уведомления».",
-      "choices": "0 только при сбое копии | 1 после каждой копии"
-    },
     "PhoneInstallHint": {
       "label": "Показывать, как установить на телефон",
       "tip": "Показывает на странице «Телефон» короткую инструкцию, как добавить панель на главный экран телефона, чтобы она открывалась как приложение - например, в Chrome: меню, затем «Добавить на главный экран». Включено: инструкция видна. Выключено: скрыта - когда панель уже на телефоне."
@@ -4285,7 +4787,7 @@
       "tip": "Случайное число минут, которое каждый день добавляется ко времени копии, не больше этого. Например, 30 при «Делать копию в» на 4 утра: где-то между 4:00 и 4:30. 0 - ровно в начале часа."
     },
     "BackupKeep": {
-      "label": "Хранить последние (копии)",
+      "label": "Хранить последние",
       "tip": "Сколько ежедневных копий остаётся в папке. Например, 7 - это неделя: 8-я копия удаляет самую старую. Удаляются только его собственные файлы копий."
     },
     "BackupAuto": {
@@ -4305,16 +4807,12 @@
       "tip": "Когда кто-то из вашей семьи Steam играет в общую игру на копии одного участника, а у другого участника она тоже есть, переключается на эту свободную копию и продолжает, вместо того чтобы пропускать игру. Например, Stardew Valley есть у двух участников и один в неё играет: берётся другая копия. Меняется только участник «брать у» этой одной игры, и никогда - копия, которой кто-то пользуется. Выключено: игра ждёт, пока копия освободится. Только для игр из семейной библиотеки («Включать игры из семейной библиотеки»)."
     },
     "FamilyWaitMinutes": {
-      "label": "Ждать после того, как член семьи закончит (минуты)",
+      "label": "Ждать после того, как член семьи закончит",
       "tip": "Сколько минут общая семейная игра остаётся нетронутой после того, как кто-то из вашей семьи Steam перестал в неё играть, например 20 - часто начинают снова. 0 - берёт сразу."
     },
     "SpareKeepGems": {
-      "label": "Оставлять россыпью не меньше самоцветов",
+      "label": "Самоцветы, которые никогда не упаковываются, не отправляются и не продаются",
       "tip": "Самоцветы, которые никогда не упаковываются, не отправляются и не продаются. Например, 500 при 2450 самоцветах: уйти могут 1950, так что получится 1 мешок, а 1450 останутся россыпью. При 0 упаковывается каждая полная 1000."
-    },
-    "SpareKeepBackgrounds": {
-      "label": "Оставлять столько каждого фона",
-      "tip": "Сколько копий каждого фона всегда оставлять. Например, 1: из 3 копий 2 могут уйти. 0 - не оставлять ни одной, тогда может уйти и последняя."
     },
     "SpareGems": {
       "label": "Самоцветы потом",
@@ -4322,7 +4820,7 @@
       "choices": "0 автоматически | 1 оставлять россыпью (их тратят наборы) | 2 упаковывать в мешки по 1000 и оставлять передаваемыми | 3 отправлять мешки на другой мой аккаунт | 4 продавать мешки"
     },
     "SpareGapSeconds": {
-      "label": "Пауза между предметами (секунды)",
+      "label": "Пауза между предметами",
       "tip": "Пауза между двумя предметами в одной проверке на аккаунте-роботе - каждый раз по-разному. Например, 40: 5 предметов занимают около 3 минут. Аккаунт в человеческом режиме вместо этого использует «Пауза между предметами, человеческий режим»."
     },
     "SparePerRun": {
@@ -4334,12 +4832,8 @@
       "tip": "Полные названия предметов, как их показывает инвентарь, через запятую, например Sans, Gordon Freeman (Foil). Название сохраняет этот предмет во всех играх. Они всегда остаются. Пусто: по названию ничего не сохраняется."
     },
     "BoosterCheckHours": {
-      "label": "Проверять наборы каждые (часы)",
+      "label": "Искать наборы каждые",
       "tip": "Часы между проверками наборов карточек - каждый раз немного по-разному. Например, 24: примерно раз в день."
-    },
-    "SpareKeepEmoticons": {
-      "label": "Оставлять столько каждого смайлика",
-      "tip": "Сколько копий каждого смайлика всегда оставлять. Например, 1: из 3 копий 2 могут уйти. 0 - не оставлять ни одной, тогда может уйти и последняя."
     },
     "BoosterUnopened": {
       "label": "Наборы, которые не открываются",
@@ -4351,15 +4845,15 @@
       "tip": "Считает лишними дополнительные копии фона профиля. Например, 3 копии при 1: 2 лишние. Выключено: фоны остаются."
     },
     "SparePriceMaxAgeHours": {
-      "label": "Доверять цене (часы)",
+      "label": "Доверять цене",
       "tip": "Сколько цена с площадки считается свежей. Например, 24: цена, прочитанная вчера утром, к сегодняшнему утру устарела, и предмет остаётся, пока его не оценят заново. Предмет с неизвестной ценой остаётся всегда."
     },
     "BoosterSendTo": {
       "label": "Отправлять неоткрытые наборы на",
-      "tip": "Имя другого вашего аккаунта здесь, например main - наборы уходят на него обменом. Отправку нужно подтвердить на телефоне, если не добавлен аутентификатор."
+      "tip": "Другой ваш аккаунт здесь, по имени, например main — наборы уходят ему обменом. Пусто: аккаунт из «Отправлять предметы на» (Обмены). Отправку нужно подтвердить на телефоне, если не добавлен аутентификатор."
     },
     "SpareRunHours": {
-      "label": "Проверять каждые (часы)",
+      "label": "Искать лишние предметы каждые",
       "tip": "Часы между проверками лишних предметов - каждый раз немного по-разному. Например, 12: примерно дважды в день. Аккаунт в человеческом режиме проверяет только в течение своего дня."
     },
     "SpareKeepGames": {
@@ -4368,32 +4862,32 @@
     },
     "SpareSellPrice": {
       "label": "Цена продажи",
-      "tip": "За сколько выставляется что угодно - цена пересчитывается в собственной валюте кошелька Steam этого аккаунта прямо перед выставлением. Например, предмет сегодня несколько раз продавался за 0.30, а один лот сброшен за 0.10: «на цент ниже настоящей цены» выставит за 0.29, «как самый дешёвый» - за 0.10, «медианная цена продажи» - за 0.30. «На цент ниже настоящей цены» (безопасно, по умолчанию): за сколько он продавался за последний день или самый дешёвый лот, если он дороже - один лот, сброшенный намного ниже, не учитывается. Нет недавних продаж или никто не продаёт: остаётся. Остальные: как самый дешёвый или медиана (никогда не ниже самого дешёвого).",
-      "choices": "0 на цент ниже настоящей цены | 1 как самый дешёвый | 2 медианная цена продажи"
+      "tip": "За сколько выставляется что угодно - цена пересчитывается в собственной валюте кошелька Steam этого аккаунта прямо перед выставлением. Например, предмет сегодня несколько раз продавался за 0.30, а один лот сброшен за 0.10: «на цент ниже настоящей цены» выставит за 0.29, «как самый дешёвый» - за 0.10, «медианная цена продажи» - за 0.30. «На цент ниже настоящей цены» (безопасно, по умолчанию): за сколько он продавался за последний день или самый дешёвый лот, если он дороже - один лот, сброшенный намного ниже, не учитывается. Нет недавних продаж или никто не продаёт: остаётся. «На цент ниже самого дешёвого» делает ваш лот самым дешёвым, чтобы он продался первым: самый дешёвый 0.12 → выставит за 0.11. Сброшенный лот он тоже не учитывает (тот за 0.10 выше: выставит за 0.29), никогда не опускается ниже вашего собственного лота, если тот уже самый дешёвый, и никогда ниже «Наименьшая цена при перевыставлении, от цены продаж» или так низко, что вы получите меньше, чем «Продавать, только если получите хотя бы». Остальные: как самый дешёвый или медиана (никогда не ниже самого дешёвого).",
+      "choices": "0 на цент ниже настоящей цены | 1 как самый дешёвый | 2 медианная цена продажи | 3 на цент ниже самого дешёвого"
     },
     "SpareRelistDays": {
-      "label": "Снимать непроданные лоты через (дни)",
-      "tip": "Через сколько дней непроданный лот снимается и выставляется снова чуть дешевле. Например, 7: карточка, выставленная за 0.30 1-го числа и всё ещё не проданная 8-го, выставляется снова за 0.29 - или за 0.25, когда кто-то другой продаёт её за 0.26 (сброшенный лот не считается). Никогда не ниже «Никогда не ниже»; по этой цене лот так и остаётся. Только лоты, которые nocat.farm выставил сам. Лоты, выставленные вами, никогда не трогаются."
+      "label": "Снимать непроданные лоты через",
+      "tip": "Через сколько дней непроданный лот снимается и выставляется снова чуть дешевле. Например, 7: карточка, выставленная за 0.30 1-го числа и всё ещё не проданная 8-го, выставляется снова за 0.29 - или за 0.25, когда кто-то другой продаёт её за 0.26 (сброшенный лот не считается). Наименьшая цена при перевыставлении, от цены продаж «Наименьшая цена при перевыставлении, от цены продаж»; по этой цене лот так и остаётся. Только лоты, которые nocat.farm выставил сам. Лоты, выставленные вами, никогда не трогаются."
     },
     "SpareMaxPrice": {
       "label": "Не трогать предметы дороже",
-      "tip": "Всё, что дороже, никогда не трогается: не превращается в самоцветы и не продаётся. В собственной валюте кошелька Steam этого аккаунта, например 0.25 для долларов или евро - в своей валюте укажите ту же стоимость, например 40 для иен. Стоимость - большее из самого дешёвого лота и цены, за которую он продавался за последний день: выставлен за 0.20, но продан за 0.30 - стоит 0.30."
+      "tip": "Всё, что дороже, никогда не трогается: ни в самоцветы, ни на продажу. В валюте кошелька Steam этого аккаунта: 0.25 подходит для долларов или евро; для иен поставьте около 40. Стоимость — большее из самого дешёвого лота и цены продажи за последний день: выставлено за 0.20, но продано за 0.30 — стоит 0.30. Две вещи могут быть дороже - так ты выбрал: карточки, продаваемые ради уровней значков («Продавать набор вместо создания, когда на деньги можно купить больше уровней»), и карточки из наборов, которые он делает на продажу. Игры из твоего списка «оставить» никогда не трогаются, сколько бы они ни стоили."
     },
     "SpareGemMarginPct": {
-      "label": "Самоцветы должны выигрывать у продажи на (%)",
-      "tip": "На сколько самоцветы должны стоить больше продажи, чтобы предмет стал самоцветами, в процентах. Например, 20: если продажа приносит вам 0.10 после комиссий Steam, самоцветы на 0.12 и больше выигрывают, и предмет становится самоцветами; на 0.11 - он продаётся. Только для «лучшее из самоцветов и продажи»."
+      "label": "Самоцветы должны выгоднее продажи на",
+      "tip": "Больше не используется. С 1.8.2 предмет продаётся, только если продажа даст вам (после комиссии Steam) хотя бы на 0.01 больше, чем стоят его самоцветы, а иначе становится самоцветами - например, продажа даёт 0.10: при самоцветах на 0.09 или меньше он продаётся; дороже - самоцветы. Это правило решает само, так что самоцветы никогда не стоят вам денег. Оставлено, чтобы старые файлы настроек ещё загружались."
     },
     "SpareMaxedBadgeCards": {
       "label": "Карточки завершённых значков",
-      "tip": "Считает лишними карточки игры, чей значок уже готов - 5-й уровень или созданный металлический значок, - оставляя копии, заданные в «Оставлять столько каждой карточки». Например, 3 копии одной карточки при 1: 2 лишние. Выключено: карточки готовых значков остаются."
+      "tip": "Считает лишними карточки игры, чей значок уже готов - 5-й уровень или созданный металлический значок, - оставляя копии, заданные в «Оставлять столько каждого предмета». Например, 3 копии одной карточки при 1: 2 лишние. Выключено: карточки готовых значков остаются."
     },
     "SpareNewDays": {
-      "label": "Не трогать новые предметы (дни)",
+      "label": "Не трогать новые предметы",
       "tip": "Сколько дней предмет не трогают после прихода. Например, 7: карточка, выпавшая в понедельник, может уйти со следующего понедельника. nocat.farm считает с первого раза, когда увидел предмет. Всё, что уже лежит в инвентаре при первой проверке, считается старым и может уйти сразу - ждут только предметы, пришедшие после этого. 0 выключает правило."
     },
     "SpareGemsSendTo": {
       "label": "Отправлять мешки на",
-      "tip": "Имя другого вашего аккаунта здесь, например main - мешки уходят на него обменом. Используется, только когда «Самоцветы потом» отправляет мешки. Отправку нужно подтвердить на телефоне, если не добавлен аутентификатор."
+      "tip": "Другой ваш аккаунт здесь, по имени, например main — мешки уходят ему обменом. Пусто: аккаунт из «Отправлять предметы на» (Обмены). Отправку нужно подтвердить на телефоне, если не добавлен аутентификатор."
     },
     "OpenBoosterPacks": {
       "label": "Открывать наборы карточек",
@@ -4402,7 +4896,7 @@
     },
     "SpareAction": {
       "label": "Что делать с лишними предметами",
-      "tip": "«Лучшее из самоцветов и продажи» превращает предмет в самоцветы, когда они стоят больше его продажи (на запас ниже), а иначе продаёт - например, самоцветы на 0.05 выигрывают у продажи, которая принесёт вам 0.02. «Только самоцветы»: никогда не продаёт. «Только продавать»: никогда не делает самоцветы. «Оставлять всё (только отчёт)»: только сообщает, что лишнее, ничего не меняется.",
+      "tip": "«Лучшее из самоцветов и продажи» продаёт предмет, только если продажа даст вам (после комиссии Steam) хотя бы на 0.01 больше, чем стоят его самоцветы, а иначе превращает его в самоцветы - так самоцветы никогда не стоят вам денег, а крошечных продаж, каждая из которых требует телефона, не бывает. Например, продажа, которая даст вам 0.07: при самоцветах на 0.06 или меньше предмет продаётся; дороже - становится самоцветами. Только самоцветы: никогда не продаёт и оставляет предмет, который продался бы хотя бы на 0.01 дороже его самоцветов. Только продажа: никогда не делает самоцветы. Оставить всё: только сообщает, что лишнее, ничего не меняется.",
       "choices": "0 лучшее из самоцветов и продажи | 1 только самоцветы | 2 только продавать | 3 оставлять всё (только отчёт)"
     },
     "SpareEmoticons": {
@@ -4419,7 +4913,7 @@
     },
     "SpareDailyValue": {
       "label": "Не больше стоимости в день",
-      "tip": "Сколько максимум могут стоить вместе предметы за день, в собственной валюте кошелька Steam этого аккаунта. Например, 1.00: десять предметов по 0.10 заполняют день, а 11-й ждёт завтра. 1.00 - для долларов или евро; в своей валюте укажите ту же стоимость, например 150 для иен."
+      "tip": "Сколько предметы за день могут стоить вместе, не больше, в валюте кошелька Steam этого аккаунта: 1.00 подходит для долларов или евро; для иен поставьте около 150. Например, 1.00: десять предметов по 0.10 заполняют день, а одиннадцатый ждёт до завтра."
     },
     "SpareDailyItems": {
       "label": "Не больше предметов в день",
@@ -4430,7 +4924,7 @@
       "tip": "Разрешает считать лишними и металлические карточки - например, 2-ю копию металлической карточки, чей металлический значок создан. Выключено (по умолчанию): металлические всегда остаются - они реже и часто дороже."
     },
     "BoosterOpenNewDays": {
-      "label": "Не трогать новые наборы (дни)",
+      "label": "Не трогать новые наборы",
       "tip": "Сколько дней набор остаётся закрытым после прихода. Например, 7: набор, пришедший в понедельник, открывается со следующего понедельника. 0 открывает сразу. Наборы, которые nocat.farm сделал сам, не задерживаются - они открываются при первой возможности."
     },
     "SpareExtraCards": {
@@ -4442,12 +4936,12 @@
       "tip": "Одно сообщение на каждую проверку «Лишних предметов» или наборов карточек: сколько предметов превращено в самоцветы или выставлено и сколько наборов открыто, первые 10 по названию - например, одно сообщение на 14 предметов, а не 14. Выключено: ничего из этого не отправляется."
     },
     "SpareKeepCopies": {
-      "label": "Оставлять столько каждой карточки",
-      "tip": "Сколько копий каждой карточки всегда оставлять, даже когда значок готов. Например, 1: из 3 копий 2 могут уйти. 0 - не оставлять ни одной, тогда может уйти и последняя. Карточки, ещё нужные значку, остаются всегда."
+      "label": "Оставлять столько каждого предмета",
+      "tip": "Сколько копий каждой карточки, фона и смайлика всегда оставлять, даже когда значок готов. Например, 1: из 3 копий 2 могут уйти. 0 — не оставлять ни одной, тогда может уйти и последняя. Карточки, ещё нужные значку, остаются всегда."
     },
     "SpareDumpPct": {
-      "label": "Оставить предмет, если самый дешёвый лот настолько ниже продаж (%)",
-      "tip": "Оставляет предмет, а не выставляет его, когда самый дешёвый лот настолько ниже цены его продаж и эту цену подтверждает только одна продажа - две цены противоречат друг другу. Например, 50: продан один раз за 0.30, самый дешёвый лот 0.12 (на 60% ниже) - остаётся. При двух и более продажах он выставляется на цент ниже цены продаж. 0 выставляет и при одной продаже. Только для «на цент ниже настоящей цены»."
+      "label": "Не считать лоты настолько ниже продаж",
+      "tip": "Насколько самый дешёвый лот должен быть ниже цены продаж предмета за последний день, чтобы считаться сброшенным. Например, 50: продан за 0.30, самый дешёвый лот за 0.12 (на 60% ниже) - сброшен. «На цент ниже настоящей цены» оставляет предмет, когда эту цену подтверждает только одна продажа - две цены противоречат друг другу; при двух и более продажах выставляет на цент ниже цены продаж, за 0.29. «На цент ниже самого дешёвого» не учитывает сброшенный лот и тоже выставляет за 0.29. 0: ни один лот не считается сброшенным."
     },
     "BoosterMake": {
       "label": "Делать наборы карточек",
@@ -4455,19 +4949,19 @@
       "choices": "0 выкл. | 1 игры, которые я выберу | 2 автоматически - ближайший значок"
     },
     "BoosterKeepGems": {
-      "label": "Оставлять не меньше самоцветов",
+      "label": "Самоцветы, которые наборы никогда не тратят",
       "tip": "Сколько самоцветов набор никогда не трогает. Набор делается, только пока самоцветов хватает на его цену плюс это число. Например, 1000 при 1500 самоцветах: делается набор за 400, остаётся 1100, а следующий ждёт новых самоцветов. 0 может потратить все."
     },
     "SpareRelistFloorPct": {
-      "label": "Никогда не ниже (% настоящей цены продажи)",
+      "label": "Наименьшая цена при перевыставлении, от цены продаж",
       "tip": "Ниже какой цены непроданный лот не опускается, в процентах от того, за сколько предмет продавался за последний день. Например, 80: карточка, проданная за 0.30, никогда не опускается ниже 0.24 - по этой цене она остаётся и снова не выставляется. Без недавних продаж цена вообще не снижается."
     },
     "SpareHumanGapMinMinutes": {
-      "label": "Пауза между предметами, человеческий режим (минуты)",
+      "label": "Самая короткая пауза между предметами, человеческий режим",
       "tip": "Самая короткая пауза между двумя предметами на аккаунте в человеческом режиме, в минутах. Каждая пауза выбирается случайно между этой и самой длинной ниже. Например, 3 и 20: после одного предмета он ждёт от 3 до 20 минут перед следующим."
     },
     "SpareDeclinedDays": {
-      "label": "Если вы отклонили лот на телефоне, пробовать снова через (дни)",
+      "label": "После отклонённого лота ждать",
       "tip": "Сколько предмет ждёт после того, как вы отклонили его лот в приложении Steam. Например, 30: вы отклоняете лот карточки 1-го числа, и эта карточка - каждая её копия - не выставляется снова до 31-го. Лот, снятый ещё до того, как он появился на площадке, тоже считается отклонённым, как и тот, про который нельзя сказать точно. 0 больше никогда его не выставляет."
     },
     "SpareHumanPerLook": {
@@ -4476,15 +4970,97 @@
     },
     "SpareMinSale": {
       "label": "Продавать, только если получите хотя бы",
-      "tip": "Сколько самое меньшее продажа должна принести вам после комиссий Steam, в собственной валюте кошелька Steam этого аккаунта. Например, 0.05: карточка, которая принесла бы 0.03, превращается в самоцветы, если они чего-то стоят, а иначе остаётся. например 0.05 для долларов или евро - укажите то же значение в своей валюте, например 5 для иен. 0 продаёт что угодно."
+      "tip": "Минимум, который продажа должна принести вам после комиссии Steam, в валюте кошелька Steam этого аккаунта: 0.05 подходит для долларов или евро; для иен поставьте около 5. Например, 0.05: карточка, которая принесла бы 0.03, становится самоцветами, если её самоцветы стоят больше 0.02, а иначе остаётся. Предмет никогда не превращается в самоцветы дешевле продажи минус 0.01: при самоцветах за 0.02 или меньше карточка всё равно продаётся за 0.03. При «только продавать» она остаётся. 0 — продавать что угодно."
     },
     "SpareHumanGapMaxMinutes": {
-      "label": "...до (минуты)",
+      "label": "Самая долгая пауза между предметами, человеческий режим",
       "tip": "Самая длинная пауза между двумя предметами на аккаунте в человеческом режиме, в минутах. Например, 20 при самой короткой 3: каждая пауза длится от 3 до 20 минут, так что 3 предмета занимают примерно до 40 минут."
     },
     "CraftFoilBadges": {
       "label": "Собирать и металлические значки",
       "tip": "Собирает в значки и полные наборы металлических карточек. Выключено - собирает только обычные значки и не трогает металлические карточки. Если Steam отклонит металлический значок, ждут только металлические - обычные продолжаются."
+    },
+    "SellSetsForLevels": {
+      "label": "Продавать набор вместо создания, когда на деньги можно купить больше уровней",
+      "tip": "Работает, только пока включено «Покупать недостающие карточки». Перед сборкой обычного значка смотрит, сколько набор приносит на торговой площадке после комиссии Steam. Если на эти деньги можно купить явно больше уровней значков, чем 1 от сборки, он выставляет набор на продажу, а покупка карточек тратит деньги в своих лимитах. Например, набор, который приносит 5,00, когда самые дешёвые уровни стоят около 0,40 каждый, покупает около 12 уровней вместо 1. Каждый лот вы подтверждаете в приложении Steam, как любой лот. Металлические наборы и карты взвешиваются так же: металлический значок - это один уровень. Он также продаёт карты, хранимые для значка, если проданными они стоят больше, чем уровни, которые они дадут: 7 карт примерно за 5,70 купят около 14 уровней по 0,40 вместо 1 или 2, которые они дали бы, если их оставить. Пока они продаются, для этой игры ничего не покупается и не делаются наборы. Эти продажи могут быть дороже «Не трогать предметы дороже» - этот лимит для лишних предметов. Игры из твоего списка «оставить» никогда не трогаются."
+    },
+    "CardSwaps": {
+      "label": "Меняться лишними карточками с другими пользователями nocat.farm",
+      "tip": "Меняет лишние обычные коллекционные карточки один к одному с другими пользователями nocat.farm, в одной игре, чтобы обе стороны быстрее собирали наборы. nocat.lol подбирает пары аккаунтов; этот аккаунт ещё раз проверяет каждый обмен. Он никогда не отдаёт карточку, нужную твоим наборам, или последний экземпляр, никогда металлические карточки, фоны или смайлики и ничего из списков «не трогать». Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их. При включении он сначала показывает, что будет делать, и просит подтвердить."
+    },
+    "CardSwapMaxLoss": {
+      "label": "Сколько обмен может потерять, не больше",
+      "tip": "Насколько обмен может стоить меньше того, что он отдаёт, по самой низкой цене на торговой площадке, в валюте кошелька Steam этого аккаунта. Например 0.03: карточки за 0.12 на карточки за 0.09 - можно, на 0.08 - нельзя. 0: обмен никогда не дешевле. Карточка без цены за последние сутки никогда не меняется. 0,03 подходит для долларов или евро; для иен поставь около 5."
+    },
+    "CardSwapsPerDay": {
+      "label": "Обменов в день, не больше",
+      "tip": "Наибольшее число обменов, которые он отправляет или принимает за день - например 5. На аккаунте в человеческом режиме они ещё и распределяются по его собственному дню, с промежутками от 45 минут до 2 часов."
+    },
+    "CardSwapSkipHeld": {
+      "label": "Пропускать обмены, которые Steam задержал бы",
+      "tip": "Никогда не меняется с аккаунтом, если Steam задержал бы обмен на несколько дней - например, когда у одной стороны приложение Steam Guard недавно. Включено - безопаснее всего."
+    },
+    "ShareCheapestSets": {
+      "label": "Делиться самыми дешёвыми наборами с другими пользователями nocat.farm",
+      "tip": "Пока какой-нибудь аккаунт покупает самые дешёвые полные наборы, примерно раз в 6 часов отправляет nocat.lol самые дешёвые полные наборы карточек, которые эта копия нашла на торговой площадке, и забирает те, что нашли все другие копии, - так дешёвые наборы находятся гораздо раньше. Что отправляется: игра каждого набора, названия его карточек, самая низкая цена каждой карточки, сколько выставлено и когда это видели - например, набор из 5 карточек по 0,03, увиденный час назад. Ничего о вас или ваших аккаунтах. То, что приходит, лишь говорит, какие игры проверить первыми: каждая карточка заново оценивается на торговой площадке Steam перед любой покупкой. Включено: обмен в обе стороны. Выключено: ничего не отправляется и не забирается. Только пока включено «Считать меня пользователем»."
+    },
+    "GemsForLevels": {
+      "label": "Тратить самоцветы на максимум уровней",
+      "tip": "Работает, только пока включено «Покупать недостающие карточки». Прежде чем автоматические наборы сделают набор, считает по сегодняшним ценам торговой площадки, сколько уровней значков стоят 1 000 самоцветов, четырьмя способами: продать мешок самоцветов и дать покупке карточек потратить деньги, сделать набор и продать его запечатанным, сделать набор и продать его 3 карточки или, как раньше, открывать наборы для ближайшего значка - и выбирает то, что даёт больше всего. Например, мешок, который приносит 0,45, покупает около 1,8 уровня дешёвых наборов, а наборы для ближайшего значка дают около 0,3. Способ через торговую площадку должен явно (на 15%) обойти более надёжный; если цены неизвестны, самоцветы остаются россыпью. Никогда не продаёт дешевле, чем стоят самоцветы, выставляет не больше 10 вещей в день, и каждое выставление вы подтверждаете в приложении Steam, как любое другое. Продаются только обмениваемые самоцветы; необмениваемые по-прежнему идут на ближайший значок. 'booster plan' показывает цифры. Карточки из наборов, которые он делает на продажу, продаются, что бы ни говорил лимит цены лишних предметов, - они сделаны ради денег. Игры из твоего списка «оставить» никогда не трогаются."
+    },
+    "SendScamWarnings": {
+      "label": "Отправлять предупреждения о мошенничестве",
+      "tip": "Предупреждения защиты от мошенников: API-ключ, которого раньше не было, новое устройство, сменились почта, телефон или Steam Guard, выход отовсюду. Например, вход нового устройства в один аккаунт — одно сообщение с аккаунтом и устройством. По умолчанию включено."
+    },
+    "SendHealthAlerts": {
+      "label": "Отправлять предупреждения о состоянии аккаунта",
+      "tip": "С аккаунтом что-то стало хуже: новый бан, задержка обменов, закрытая торговая площадка, ограниченный аккаунт, более слабый Steam Guard, удалённый телефон. Например, начало 15-дневной задержки обменов — одно сообщение. По умолчанию включено."
+    },
+    "NotifyScam": {
+      "label": "Всплывать при предупреждениях о мошенничестве",
+      "tip": "Показывает на этом ПК всплывающее окно при каждом предупреждении защиты от мошенников — например, смена почты на одном аккаунте открывает одно окно с его названием."
+    },
+    "NotifyHealth": {
+      "label": "Всплывать при проблемах с аккаунтом",
+      "tip": "Показывает на этом ПК всплывающее окно, когда с аккаунтом что-то становится хуже — например, Steam Guard переходит с приложения на почту."
+    },
+    "BackupMessages": {
+      "label": "Сообщения о копиях",
+      "tip": "Сообщения о копиях в Telegram и Discord. Только при сбое: сообщение, только если копию не удалось сделать — например, нет папки или диск полон. После каждой копии: ещё и сообщение о каждой сохранённой. Выкл.: никаких.",
+      "choices": "0 выкл. | 1 только при сбое | 2 после каждой копии"
+    },
+    "DailyReportTime": {
+      "label": "Ежедневная сводка в",
+      "tip": "Когда ежедневная сводка пишется в журнал, по местному времени, — и отправляется, если в «Уведомлениях» включена плашка «Ежедневная сводка». Например, 09:30."
+    },
+    "BuyHumanGapMinMinutes": {
+      "label": "Самая короткая пауза между просмотрами, режим человека",
+      "tip": "Самая короткая пауза между двумя просмотрами с покупкой на аккаунте в режиме человека, пока остаются деньги и дешёвые наборы, в минутах - только в его день. Каждая пауза выбирается случайно между этим значением и самым длинным. Например, 30 и 90: следующий просмотр будет через полчаса - полтора часа."
+    },
+    "BuyStopAtLevel": {
+      "label": "Перестать покупать на уровне Steam",
+      "tip": "Покупка карточек прекращается, как только этот аккаунт достигнет этого уровня Steam - например, 50: на уровне 50 он больше ничего не покупает, а по пути покупает только уровни значков, которых ещё не хватает. 'levelup' говорит, сколько стоит уровень. 0 - никогда не прекращать."
+    },
+    "BuyHumanSetsPerLook": {
+      "label": "Наборов за просмотр, режим человека",
+      "tip": "Сколько наборов покупает один просмотр на аккаунте в режиме человека, сначала самые дешёвые, - потом он ждёт до следующего просмотра, как человек, который время от времени покупает несколько наборов. Например, 3 набора за просмотр и просмотр каждые 30-90 минут в его день: около 25-40 наборов в день, пока не кончатся деньги на день или дешёвые наборы. Робот за один просмотр покупает все наборы, которые помещаются."
+    },
+    "BuyMaxLevelPrice": {
+      "label": "Не больше за один уровень значка",
+      "tip": "Больше всего, что он платит за один уровень значка (100 XP) - полный набор или карточки, которых не хватает начатому значку, - в валюте кошелька Steam этого аккаунта. Более дорогой уровень ждёт, пока цены не упадут, чтобы деньги не уходили на дорогие уровни, когда дешёвые закончатся. Например, 0,50: набор из 5 карточек за 0,35 покупается, набор из 9 карточек за 0,70 ждёт. 0 - автоматически и впритык: на четверть выше обычной цены уровня - середины 5 самых дешёвых полных наборов, которые знает поиск наборов (на половину выше, пока он знает меньше, или самого дешёвого уровня за последнюю неделю). При наборах около 0,40 - до 0,50; не растёт, когда дешёвые наборы кончаются. Пока поиск наборов не проверил 30 самых дешёвых наборов, полные наборы покупаются не дороже самого дешёвого известного плюс десятая часть. 0,50 подходит для долларов или евро; для иен поставь около 75."
+    },
+    "BuyHumanGapMaxMinutes": {
+      "label": "Самая длинная пауза между просмотрами, режим человека",
+      "tip": "Самая длинная пауза между двумя просмотрами с покупкой на аккаунте в режиме человека, в минутах. Например, 90 при самой короткой 30: около 16 просмотров за 16-часовой день."
+    },
+    "RefundProtectMinPrice": {
+      "label": "Защищать возврат только для игр дороже",
+      "tip": "Только игры, стоившие больше этой суммы, не трогаются, пока их можно вернуть; более дешёвая фармится сразу. Берётся то, что вы заплатили, если это видно в истории покупок Steam, иначе обычная цена в магазине (скидка её никогда не снижает); игра, цену которой найти не удалось, защищена. В валюте кошелька Steam этого аккаунта. Например, 5,00: только что купленная игра за 0,99 фармится сразу, а игра за 20,00 не трогается, пока её нельзя будет вернуть. 0 защищает все игры."
+    },
+    "LevelUpLine": {
+      "label": "Строка о новом уровне показывает",
+      "tip": "Одна строка в журнале, когда уровень Steam этого аккаунта растёт, - например «Уровень Steam 58 (+1) · этот уровень стоил 0,46 CAD» или «Уровень Steam 60 (+3) · 1,42 CAD за 3 ур.». Стоимость - только реально потраченные деньги: карточки, купленные для созданных значков. Нафармленные карточки ничего не стоят. Отправляется и в Telegram или Discord, если там включены новости о карточках. Выкл.: строки нет.",
+      "choices": "3 уровень и его цена | 1 только уровень | 0 выкл."
     }
   }
 }

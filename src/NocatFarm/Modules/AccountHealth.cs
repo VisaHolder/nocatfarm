@@ -137,19 +137,13 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 			Log.Failed("account health: reading the level", e, Bot.Name);
 		}
 
-		// The ban watch switched off reads no bans - so health reads them itself, on its own schedule, when it's to alert them.
-		if (!Bot.Cfg.WatchBans && Bot.Cfg.HealthAlertBans && (BotManager.ModuleOf<BanWatch>(Bot) is { } bans) && Ready) {
-			try {
-				await bans.CheckAsync(ct).ConfigureAwait(false);
-			} catch (Exception e) when (e is not OperationCanceledException) {
-				Log.Debug(new Said("account health couldn't read the bans: {0}", Log.Describe(e)), Bot.Name);
-			}
-		}
-
 		TimeSpan? hold = await (HoldOf ?? OwnHoldAsync)(ct).ConfigureAwait(false);
 		string? marketPage = await (Fetch != null ? Fetch(MarketPage, ct) : Bot.Web.GetAsync(MarketPage, ct)).ConfigureAwait(false);
 		NoteMarket(marketPage);
 		Market? market = ParseMarket(marketPage, DateTime.UtcNow);
+
+		// 1.8.2: the market hold - nothing bought, listed or swapped while the page says it's blocked (it tells that itself).
+		MarketHold.FromMarketPage(Bot, market, DateTime.UtcNow);
 		ScamWatch.Details? details = BotManager.ModuleOf<ScamWatch>(Bot) is { } scam ? await scam.DetailsAsync(TimeSpan.FromHours(2), ct).ConfigureAwait(false) : null;
 
 		// The first Steam Guard from Steam's two-factor service is a baseline: the page's shield guess before it (or "not
@@ -187,8 +181,9 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 					Log.Info(new Said("account health: {0}", item.Words), Bot.Name);
 				}
 			} else if ((int) item.Level > was) {
-				if (Alerts(Bot.Cfg, item.Key)) {
-					Log.Alarm(new Said("account health got worse: {0}", item.Words), Bot.Name, Topic.Health, Live.Global.HealthAlertPopup, red: false);
+				// The market blocked is told by the market hold, with what waits for it - not twice.
+				if (Alerts(Bot.Cfg, item.Key) && !((item.Key == "market") && MarketHold.On(Bot.Name))) {
+					Log.Alarm(new Said("account health got worse: {0}", item.Words), Bot.Name, Topic.Health, Live.Global.NotifyHealth, red: false);
 				} else {
 					Log.Warn(new Said("account health got worse: {0}", item.Words), Bot.Name);
 				}
@@ -210,10 +205,9 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// A ban reading just taken (BanWatch): with the ban watch off, health is the one that alerts a new ban - applied now, so
-	/// it's told at once and exactly once, whoever read it. False when the ban watch should say it itself: health off, its
-	/// ban alert off, the ban watch on, no ban reading known before to compare with, or bans already red here - another
-	/// ban then isn't "worse" to health, and only the ban watch's own line would tell it.
+	/// A ban reading just taken (BanWatch): health alerts a new ban - applied now, so it's told at once and exactly once,
+	/// whoever read it. False when health doesn't: health off, its ban alert off, no ban level known here yet to compare
+	/// with, or bans already red - another ban then isn't "worse" to health, and the ban look's own lines are the alert.
 	/// </summary>
 	internal bool BansRead(BanWatch.Bans bans) {
 		if (!Bot.Cfg.WatchHealth || !Alerts(Bot.Cfg, "bans") || !State.Levels.TryGetValue("bans", out int was)
@@ -227,11 +221,11 @@ public sealed partial class AccountHealth(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Whether an item's getting worse is alerted (rather than only logged). A ban is told by the ban watch already
-	/// while that is on - said twice, it would be two messages for one ban.
+	/// Whether an item's getting worse is alerted (rather than only logged). A new ban too: since 1.8.2 this is the one ban
+	/// alert - the ban watch only reads, and says it in the log.
 	/// </summary>
 	public static bool Alerts(BotConfig cfg, string key) => key switch {
-		"bans" => cfg.HealthAlertBans && !cfg.WatchBans,
+		"bans" => cfg.HealthAlertBans,
 		"tradehold" => cfg.HealthAlertTradeHold,
 		"market" => cfg.HealthAlertMarket,
 		"limited" => cfg.HealthAlertLimited,

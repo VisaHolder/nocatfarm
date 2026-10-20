@@ -82,7 +82,7 @@ public sealed partial class HumanMode {
 
 			Said reason = rule switch {
 				NightOut.Banned => new Said("{0} left out - Steam has this account banned in it", name),
-				NightOut.Blacklisted => new Said("{0} left out - it's on \"Never touch these\"", name),
+				NightOut.Blacklisted => new Said("{0} left out - it's on \"Never play these games\"", name),
 				NightOut.Refund => new Said("{0} left out - held back so it can still be refunded", name),
 				NightOut.FamilyOff => new Said("{0} left out - it's a family game and \"Include family-shared games\" is off", name),
 				NightOut.Family => Bot.Library.FamilyReason(app) is { IsEmpty: false } family ? family : new Said("{0} left out - someone in your Steam Family is using it", name),

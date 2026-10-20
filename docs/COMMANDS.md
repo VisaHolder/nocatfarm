@@ -14,10 +14,10 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 
 | | |
 |---|---|
-| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` |
+| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `copy` `remove` `enable` `disable` `stuck` `steam` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
-| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `levelup` |
-| **[Trades & items](#trades--items)** | `offers` `trade` `send` |
+| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `craft` `buy` `sets` `levelup` |
+| **[Trades & items](#trades--items)** | `offers` `trade` `send` `swaps` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
 | **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `events` `redeem` `keys` |
@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-81 commands in all.
+87 commands in all.
 
 ## Accounts
 
@@ -39,11 +39,13 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `restart <account\|all>` | Stop then start again. |
 | `pause <account\|all> [minutes]` | Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself. |
 | `resume <account\|all>` | Undo a pause. |
-| `add <name> <steamLogin\|qr> [human\|robot]` | Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. |
+| `add <name> <steamLogin\|qr> [human\|robot] [from <account>]` | Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made. 'from <account>' starts it with that account's settings instead of the defaults - everything except its sign-in and what belongs to that account alone; Spare items, Steam Points, buying cards, card swaps and Open in Steam stay off until you turn them on after their preview. |
+| `copy settings <from> <to> [yes]` | Copy one account's settings onto another, so you don't set it up twice. 'copy settings new new2' shows every change on new2 and changes nothing; add 'yes' to copy them. Never copied: the sign-in, password and authenticator, the proxy, device name, notes, log colour, whether it runs, whether you sign into it yourself, and the trade link token. Kept as new2 has them: whatever spends money, gems or points, its money limits, trading, sending items, 'Accept commands from' and human mode. Spare items, Steam Points, buying cards, card swaps and Open in Steam always end up off on the account copied to - turn them on yourself after their preview. The account copied from isn't changed. |
 | `remove <account>` <br>also `delete` | Delete an account and its stored login token. |
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep the account configured but never log it in. |
 | `stuck` <br>also `alarm` | The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off. |
+| `steam [account\|all] \| open <account> \| on\|off <account\|all>` | Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops nocat.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on. |
 
 ## Playing
 
@@ -52,7 +54,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `play <account> <appIDs\|none>` | Set the games this account idles for playtime. |
 | `gamename <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it. |
 | `persona <account> [state]` | What the account shows your friends: online \| offline \| busy \| away \| snooze \| looking to trade \| looking to play \| invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now. |
-| `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'. |
+| `nickname <account> [profile name]` | Change the name everybody sees on the profile and friends list - without a name, it shows the one it has now. Not the custom game name, that's 'gamename'. |
 | `grind <account\|all> <appID> <hours> \| <account\|all> off` | Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs. |
 | `human [account] [week\|reroll]` | What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings. |
 | `habits [account] [forget]` | What human mode has learned from you playing on the account yourself (days seen, the hours you're usually on, your top games), and whether "Learn from how I play" is using it yet. 'habits <account> forget' wipes it and it starts learning again. |
@@ -68,10 +70,13 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `cards [account]` | What is still left to farm, and about how long it will take. |
 | `drops <account> [appID\|next] [count\|all] \| <account> off` | You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming ("When to farm cards") needs no command. |
 | `match [do]` | Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself. |
-| `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. "Deal with spare items" does it by itself (see 'spare'). |
+| `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees - and, with buying cards on, games whose cards are worth more sold than the levels they'd make (buying cards sells those), 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. "Deal with spare items" does it by itself (see 'spare'). |
 | `booster [account\|all] \| <account> <appIDs> \| plan [account\|all] \| open [account\|all] \| open <account> do` <br>also `boosters` | Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the "Make booster packs" setting does it by itself every day. 'booster plan' shows which game automatic would make a pack for next and why - cards held and missing, the pack's price, and roughly how many gems the next badge level takes. 'booster open' shows every sealed pack and whether it would be opened, and why (new, on the market, worth more sealed); 'booster open <account> do' opens those now and says what came out. "Open booster packs" does it by itself. |
 | `spare preview [account\|all] \| on\|off <account> \| do <account>` <br>also `gems` | Spare items: 'spare preview' shows exactly what it would turn into gems or sell, and why - item by item, with today's caps and how many are still being priced; nothing it leaves alone. 'spare on <account>' turns it on (the same as the switch in its settings, after its preview), 'spare off <account>' turns it off. 'spare do <account>' does the next few now (only while it's on; on a human-mode account only in its day). |
-| `levelup <account> <level>` <br>also `lvlup` | What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background. |
+| `craft now <account> \| preview <account>` | 'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing. |
+| `buy [account\|all] \| preview [account\|all] \| on\|off\|do <account>` | Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent. |
+| `sets [account]` | The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys. |
+| `levelup <account> <level> [buy [yes]] \| <account> stop` <br>also `lvlup` | What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal. |
 
 ## Trades & items
 
@@ -80,6 +85,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `offers [account\|all]` | Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold. |
 | `trade accept\|decline <account> <number\|all> \| cancel <account> <offer id\|all>` | Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation. |
 | `send <account\|all> [to <account>] [types]` | Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account. |
+| `swaps [account] \| preview\|on\|off\|check <account> \| sync` | Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and nocat.lol deletes its SteamID and trade link. 'swaps sync' asks nocat.lol for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to nocat.lol and turns nothing on. |
 
 ## Steam Guard
 
@@ -128,7 +134,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 
 | Command | What it does |
 |---|---|
-| `rep4rep [status\|points\|profiles] \| tasks <account> \| now\|pause\|resume\|clear\|rest <account\|all>` <br>also `r4r` | Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on\|off. |
+| `rep4rep [status\|points\|profiles] \| tasks <account> \| now\|pause\|resume\|clear\|rest <account\|all> \| hold <hours>\|off` <br>also `r4r` | Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on\|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it. |
 
 ## Settings
 

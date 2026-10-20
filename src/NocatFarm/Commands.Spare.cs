@@ -42,7 +42,9 @@ public static partial class Commands {
 		HashSet<string> rest = [.. words[1..].Select(static w => w.ToLowerInvariant())];
 
 		return ((name == "spare") && (rest.Contains("on") || rest.Contains("ok") || rest.Contains("do") || rest.Contains("now")))
-			|| ((name == "booster") && rest.Contains("open") && (rest.Contains("do") || rest.Contains("now")));
+			|| ((name == "booster") && rest.Contains("open") && (rest.Contains("do") || rest.Contains("now")))
+			|| ((name == "swaps") && rest.Contains("on"))   // 1.8.2: card swaps are turned on by the owner only
+			|| ((name == "swaps") && rest.Contains("check"));   // and only the owner signs an account in through Steam to try it
 	}
 
 	/// <summary>The words after 'open' in 'booster open ...' or 'booster &lt;account&gt; open ...' - null when it isn't that.</summary>
@@ -114,15 +116,33 @@ public static partial class Commands {
 	private static string? SpareBrief(string account) => SpareRun.Briefs.TryRemove(account, out string? brief) ? brief : null;
 
 	/// <summary>
-	/// 'set': Spare items and Steam Points are only turned on after their preview. 'set &lt;account&gt; SpareItems on' answers
+	/// 'set': a switch (<see cref="Switches.All"/>) is only turned on after its preview. 'set &lt;account&gt; SpareItems on' answers
 	/// with the preview and how to confirm ('spare on &lt;account&gt;'); 'off' turns it off at once. Everything else is 'set' as ever.
 	/// </summary>
 	private static async Task<string> SetAsync(BotManager mgr, string[] args, string line) {
+		// 1.8.2: 'set SteamOpenEveryAccount on' - the global switch for Open in Steam on every account, the same way: on only
+		// shows its preview and how to turn it on ('steam on all'); off turns it off at once.
+		if ((args.Length >= 1) && KeyOf(args[0]).Key.Equals(Switches.SteamOpenEveryone, StringComparison.OrdinalIgnoreCase)) {
+			string value = Unquote(SetValue(line, Words(line), 1)).Trim().ToLowerInvariant();
+			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
+
+			if (on == false) {
+				Switches.SetEveryone(mgr.Global, false);
+
+				return $"{Switches.SteamOpenEveryone} = off";
+			}
+
+			if (on == true) {
+				return SteamOpen.EveryoneOn(mgr.Global)
+					? $"{Switches.SteamOpenEveryone} = on"
+					: $"{SteamEveryonePreview(mgr)}{Environment.NewLine}{Switches.SteamOpenEveryone} is still off.";
+			}
+		}
+
 		if ((args.Length >= 2) && (mgr.Get(args[0]) is { } bot) && (Switches.FeatureOf(KeyOf(args[1]).Key) is { } feature)) {
 			string value = Unquote(SetValue(line, Words(line), 2)).Trim().ToLowerInvariant();
 			// Every word 'set' reads as on or off ('y', 'n' too): one it doesn't is answered by 'set' as wrong, and changes nothing.
 			bool? on = Config.Settings.IsTrue(value) ? true : Config.Settings.IsFalse(value) ? false : null;
-			string word = feature == Switches.Spare ? "spare" : "points";
 
 			if (on == false) {
 				Switches.Set(bot, feature, false);
@@ -131,15 +151,13 @@ public static partial class Commands {
 			}
 
 			if (on == true) {
-				bool already = feature == Switches.Spare ? Switches.SpareOn(bot.Cfg, bot.Name) : bot.Cfg.SpendPoints && PointsLedger.Approved(bot);
-
-				if (already) {
+				if (Switches.IsOn(bot, feature)) {
 					return $"{bot.Name}.{feature} = on";
 				}
 
 				string preview = await SwitchPreviewAsync(bot, feature, CancellationToken.None).ConfigureAwait(false);
 
-				return $"{preview}{Environment.NewLine}{bot.Name}.{feature} is still off. To turn it on, type: {word} on {bot.Name}";
+				return $"{preview}{Environment.NewLine}{bot.Name}.{feature} is still off. To turn it on, type: {Switches.CommandOf(feature)} on {bot.Name}";
 			}
 		}
 
@@ -147,8 +165,9 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// What turning Spare items or Steam Points on would do, for the confirm popup and for 'set &lt;account&gt; SpareItems on':
-	/// from the prices already held, with the limits. English, as console replies are.
+	/// What turning a switch on would do, for 'set &lt;account&gt; SpareItems on' and the preview commands: the same look as the
+	/// dashboard's pop-up (<see cref="SwitchPreview.LookAsync"/>), with the limits. English, as console replies are. Spare items
+	/// answers from the prices already held, so it's quick.
 	/// </summary>
 	public static async Task<string> SwitchPreviewAsync(Bot bot, string feature, CancellationToken ct) {
 		if (feature == Switches.Spare) {
@@ -161,15 +180,11 @@ public static partial class Commands {
 			return await SpareRun.QuickPreviewAsync(bot, ct).ConfigureAwait(false) + Environment.NewLine + limits;
 		}
 
-		string keeps = $"It keeps at least {PointsPlan.N(bot.Cfg.PointsKeepAtLeast)} points and spends at most {PointsPlan.N(bot.Cfg.PointsWeeklyCap)} a week{(bot.Cfg.LegitMode ? ", only during its day" : "")}. Points spent are gone for good.";
+		(string text, _) = await SwitchPreview.LookAsync(bot, feature, ct).ConfigureAwait(false);
 
-		if (!bot.IsOnline || !bot.Web.Ready || (BotManager.ModuleOf<PointsSpender>(bot) is not { } spender)) {
-			return $"{bot.Name}: not signed in, so it can't look at its points yet.{Environment.NewLine}{keeps}";
-		}
-
-		PointsSpender.Result result = await spender.LookAsync(PointsSpender.Mode.Preview, ct).ConfigureAwait(false);
-
-		return string.Join(Environment.NewLine, PointsSaid(bot, PointsSpender.Mode.Preview, result).Append(keeps));
+		return feature == Switches.SteamOpenButton
+			? text + Environment.NewLine + "Pressing the button closes Steam, points its saved accounts at this one, and starts Steam again. It never stops nocat.farm farming this account."
+			: text;
 	}
 
 	/// <summary>

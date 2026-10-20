@@ -53,6 +53,18 @@ public interface ISpareSteam {
 	bool Held => false;
 
 	/// <summary>
+	/// 1.8.2: whether this item may still go, right before it's turned into gems, listed or sent - by the settings as they are
+	/// now (<see cref="SpareRun.StillOk"/>). Null when it may; All: the look stops there.
+	/// </summary>
+	(Said Why, bool All)? StillOk(SpareItem item, int worthCents) => null;
+
+	/// <summary>
+	/// 1.8.2: right before an item the look had no price for at all becomes gems - its price read now, and the price limit
+	/// and the gems rule checked again (<see cref="SpareRun.BeforeGems"/>). Null when it may become gems.
+	/// </summary>
+	Task<Said?> BeforeGemsAsync(SpareDecision d, CancellationToken ct) => Task.FromResult<Said?>(null);
+
+	/// <summary>
 	/// What an item really went up for in the last <see cref="SellAsync"/> - priced again just before listing, so not the
 	/// plan's figure - with the wallet's currency: the buyer's price and what you get. Null when it wasn't listed.
 	/// </summary>
@@ -60,6 +72,12 @@ public interface ISpareSteam {
 
 	/// <summary>The same in cents of the wallet's currency: what you get, and the currency. Null when it wasn't listed.</summary>
 	(int YouGetCents, int Currency)? ListedCents(ulong assetId) => null;
+
+	/// <summary>1.8.2: Steam's reason for refusing a listing in the last <see cref="SellAsync"/> ("" when it gave none); null when none was refused.</summary>
+	string? Refused => null;
+
+	/// <summary>1.8.2: Steam's market held for this account, or listing paused after a refusal (<see cref="MarketHold.SellBlocked"/>) - nothing is listed. Null when it may list.</summary>
+	Said? MarketHeld => null;
 }
 
 /// <summary>The real Steam, for one account. <paramref name="mayAct"/>: the human-mode gate the run keeps to (none: always).
@@ -71,9 +89,44 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 
 	public bool MayAct => mayAct?.Invoke() ?? true;
 
+	/// <summary>By the settings as they are now; the price limit against the freshest price known for it, or the look's.</summary>
+	public (Said Why, bool All)? StillOk(SpareItem item, int worthCents) {
+		MarketPrice? fresh = SpareRun.PriceFor((int) bot.WalletCurrency, SpareRules.From(bot.Cfg))(item);
+
+		return SpareRun.StillOk(bot, item, fresh is { } p ? Math.Max(worthCents, ListingPrice.Worth(p)) : worthCents);
+	}
+
+	public async Task<Said?> BeforeGemsAsync(SpareDecision d, CancellationToken ct) {
+		int currency = bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) bot.WalletCurrency;
+
+		// 1.8.2: also an item priced only by an estimate from the dollar search, or over an hour ago - read again in the wallet's money.
+		if (!SpareRun.NeedsPriceBeforeGems(d, currency, DateTime.UtcNow)) {
+			return null;
+		}
+
+		if (currency <= 0) {
+			return new Said("no price right now - kept until it has one");
+		}
+
+		SpareRules rules = SpareRules.From(bot.Cfg);
+		MarketQuote? now = await MarketQuotes.FetchAsync(d.Item.Hash, currency, ct).ConfigureAwait(false);
+
+		if ((SparePrices.Sack(currency) is not { Cents: > 0 } sack) || (DateTime.UtcNow - sack.At > TimeSpan.FromHours(rules.PriceMaxAgeHours))) {
+			if ((now != null) && (ListingPrice.Worth(now.Price) > 0)) {
+				await SparePrices.PriceSackAsync(currency, ct).ConfigureAwait(false);
+			}
+		}
+
+		return SpareRun.BeforeGems(d, now, SparePrices.SackPays(currency, rules.DumpPct), rules, currency, DateTime.UtcNow);
+	}
+
 	private Uri Profile(string path) => new(WebSession.Community, $"/profiles/{bot.SteamId}/{path}");
 
 	public bool Held => Modules.ScamWatch.HeldBack(bot) != null;
+
+	public Said? MarketHeld => MarketHold.SellBlocked(bot);
+
+	public string? Refused { get; private set; }
 	private Uri Inventory => Profile("inventory/");
 
 	public async Task<int?> GemValueAsync(SpareItem item, CancellationToken ct) {
@@ -91,6 +144,8 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 
 		if (value != null) {
 			SteamGems.Remember(item, value.Value);
+		} else {
+			SteamGems.NoAnswer(item, DateTime.UtcNow);
 		}
 
 		return value;
@@ -169,18 +224,20 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 			return (0, new Said("{0}: Steam hasn't said this account's wallet currency yet - nothing listed", bot.Name).ToString());
 		}
 
+		Refused = null;
 		List<Seller.Offer> offers = [.. items.Select(d => new Seller.Offer(d.Item.AssetId, GameNames.Of(d.Item.Game), d.Item.Name, d.PriceCents, d.ListCents, d.ReceiveCents, d.Item.Hash))];
 		int currency = (int) bot.WalletCurrency;
-		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct,
-			SpareRun.Repricer(items, SpareRules.From(bot.Cfg), currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
-				hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name)),
-			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name),
+		Seller.Reprice reprice = SpareRun.Guarded(bot, items, rules => SpareRun.Repricer(items, rules, currency, hash => SpareListings.Load(bot.Name).StepOf(hash, DateTime.UtcNow),
+			hash => SpareListings.Forget(bot.Name, hash), SpareLedger.Load(bot.Name), hash => OurListings.UpFor(OurListings.Load(bot.Name), hash), SparePrices.SackPays(currency, SpareRules.From(bot.Cfg).DumpPct),
+			hash => Modules.BuyLedger.Of(bot.Name).PaidFor(hash, currency)));
+		string said = await Seller.SellAsync(bot, offers, ct, () => MayAct, reprice,
+			() => SpareRun.Hold(SpareLedger.Load(bot.Name), bot.Name) ?? SpareRun.Halted(bot),
 			o => {
 				_listed[o.AssetId] = (Spare.Money(o.BuyerCents, currency), Spare.Money(o.YouGetCents, currency));
 				_listedCents[o.AssetId] = (o.YouGetCents, currency);
 			},
 			// A human-mode account's listings are spread out like its gems; a robot keeps the market's own gap.
-			bot.Cfg.LegitMode ? async t => await PauseAsync(t).ConfigureAwait(false) : null).ConfigureAwait(false);
+			bot.Cfg.LegitMode ? async t => await PauseAsync(t).ConfigureAwait(false) : null, refused: why => Refused = why).ConfigureAwait(false);
 
 		// "name: listed 3 of 5, ..." - the count is the first number after "listed".
 		int at = said.IndexOf("listed ", StringComparison.Ordinal);
@@ -284,27 +341,103 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 /// Only Steam's yes counts, as for crafting (BadgeCraft.Succeeded): a number other than 1, false, a page or nothing is a no.
 /// </remarks>
 public static class SteamGems {
-	private static readonly Dictionary<string, (int Value, DateTime At)> Values = new(StringComparer.Ordinal);
+	private static Dictionary<string, (int Value, DateTime At)>? _values;
 
-	/// <summary>A gem value is kept a week: Steam sets it per game and type, and it rarely moves.</summary>
-	private static readonly TimeSpan ValueLife = TimeSpan.FromDays(7);
+	/// <summary>
+	/// A gem value is kept a month: Steam sets it per game, type and border, and it rarely moves. 1.8.2: kept on disk too
+	/// (config/state/gemvalues.json) - held only in memory, every restart forgot them all: one account's 445-564 items sat
+	/// "gem value isn't known yet" all day, 20 learned a look and every update starting over (5 restarts on 2026-10-19).
+	/// </summary>
+	private static readonly TimeSpan ValueLife = TimeSpan.FromDays(30);
+
+	/// <summary>1.8.2: a lookup Steam didn't answer isn't asked again for this long - the next ones get their turn.</summary>
+	public static readonly TimeSpan FailedWait = TimeSpan.FromHours(6);
+
+	/// <summary>When a lookup last got no answer, by <see cref="SpareItem.GooKey"/> - in memory only.</summary>
+	private static readonly Dictionary<string, DateTime> Failed = new(StringComparer.Ordinal);
+
+	private static readonly Lock Gate = new();
+
+	private static string FilePath => Path.Combine(ConfigStore.ConfigDir, "state", "gemvalues.json");
+
+	/// <summary>One saved gem value: <see cref="SpareItem.GooKey"/>, the gems, when Steam said it (UTC ticks).</summary>
+	public sealed record Saved(string Key, int Value, long At);
+
+	private static Dictionary<string, (int Value, DateTime At)> Values() {
+		if (_values != null) {
+			return _values;
+		}
+
+		_values = new Dictionary<string, (int, DateTime)>(StringComparer.Ordinal);
+
+		try {
+			if (File.Exists(FilePath) && JsonSerializer.Deserialize<List<Saved>>(File.ReadAllText(FilePath)) is { } list) {
+				foreach (Saved v in list.Where(static v => (v.Key.Length > 0) && (v.Value >= 0) && (DateTime.UtcNow - new DateTime(v.At, DateTimeKind.Utc) < ValueLife))) {
+					_values[v.Key] = (v.Value, new DateTime(v.At, DateTimeKind.Utc));
+				}
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
+			Log.Failed("couldn't read the saved gem values", e);
+		}
+
+		return _values;
+	}
+
+	private static void Save() {
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+			AtomicFile.Write(FilePath, JsonSerializer.Serialize(Values().Where(static v => DateTime.UtcNow - v.Value.At < ValueLife)
+				.Select(static v => new Saved(v.Key, v.Value.Value, v.Value.At.Ticks)).ToList()));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Failed("couldn't save the gem values", e);
+		}
+	}
 
 	public static int? KnownValue(SpareItem item) {
-		lock (Values) {
-			return Values.TryGetValue(item.GooKey, out var v) && (DateTime.UtcNow - v.At < ValueLife) ? v.Value : null;
+		lock (Gate) {
+			return Values().TryGetValue(item.GooKey, out var v) && (DateTime.UtcNow - v.At < ValueLife) ? v.Value : null;
 		}
 	}
 
 	public static void Remember(SpareItem item, int value) {
-		lock (Values) {
-			Values[item.GooKey] = (value, DateTime.UtcNow);
+		lock (Gate) {
+			Values()[item.GooKey] = (value, DateTime.UtcNow);
+			Failed.Remove(item.GooKey);
+			Save();
 		}
 	}
 
-	/// <summary>Only the checks: start from nothing known.</summary>
+	/// <summary>1.8.2: Steam didn't say an item's gem value - not asked again for <see cref="FailedWait"/>.</summary>
+	public static void NoAnswer(SpareItem item, DateTime now) {
+		lock (Gate) {
+			Failed[item.GooKey] = now;
+		}
+	}
+
+	/// <summary>1.8.2: whether an item's gem value is worth asking for now: not known, and not asked in vain lately.</summary>
+	public static bool Ask(SpareItem item, DateTime now) {
+		if (KnownValue(item) != null) {
+			return false;
+		}
+
+		lock (Gate) {
+			return !Failed.TryGetValue(item.GooKey, out DateTime at) || (now - at >= FailedWait);
+		}
+	}
+
+	/// <summary>Only the checks: start from nothing known (the file is left as it is).</summary>
 	internal static void Forget() {
-		lock (Values) {
-			Values.Clear();
+		lock (Gate) {
+			_values = new Dictionary<string, (int, DateTime)>(StringComparer.Ordinal);
+			Failed.Clear();
+		}
+	}
+
+	/// <summary>Only the checks: as if the program had just started - the values are read from the file again.</summary>
+	public static void ForgetLoaded() {
+		lock (Gate) {
+			_values = null;
+			Failed.Clear();
 		}
 	}
 
@@ -561,7 +694,8 @@ public static class SparePrices {
 		}
 
 		// The shortlist has the cheapest listing only: taken as the real price too, two sales behind it - the listing rule
-		// then reads it as it is. What it really sells for is asked right before listing.
+		// then reads it as it is. What it really sells for is asked right before listing - and (1.8.2) right before it becomes
+		// gems (SpareRun.NeedsPriceBeforeGems), so one dumped listing on the search never turns a card into gems.
 		return new MarketPrice(Math.Max(1, cents), g.When, Math.Max(1, cents), 2);
 	}
 
@@ -583,6 +717,18 @@ public static class SparePrices {
 
 	/// <summary>A sack of gems' price in the account's own wallet currency, as held now.</summary>
 	public static MarketPrice? Sack(int currency) => currency > 0 ? MarketQuotes.Of(SackHash, currency)?.Price : null;
+
+	/// <summary>
+	/// 1.8.2: what a sack of gems really pays - listed a cent under the cheapest (a dumped listing ignored), after Steam's
+	/// fee - with when it was read: what gems are worth wherever they're weighed against selling. A sack's buyer price
+	/// overvalued them by about a sixth (0.94 CAD, where a sack pays 0.81), so items were turned into gems that selling paid
+	/// more for. Cents 0 when nobody sells one; null when it was never priced in this currency.
+	/// </summary>
+	public static MarketPrice? SackPays(int currency, int dumpPct) => Sack(currency) is { } sack ? Pays(sack, dumpPct) : null;
+
+	/// <summary>What a sack listed at this price pays after the fee (<see cref="SackPays"/>).</summary>
+	public static MarketPrice Pays(MarketPrice sack, int dumpPct) =>
+		new((sack.Cents > 0) && (ListingPrice.For(sack, 3, Math.Clamp(dumpPct, 0, 95)).Cents is int buyer) ? Seller.ReceiveFor(buyer) : 0, sack.At, null, sack.Sales);
 
 	/// <summary>
 	/// The prices a pack decision needs: the pack's own and each plain card of its set - both in US dollars, from one

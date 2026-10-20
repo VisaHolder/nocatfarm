@@ -498,6 +498,9 @@ if (!shutdown.IsCancellationRequested) {
 
 	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on nocat.farm". Sends nothing while it's off.
 	NocatFarm.Core.UserCount.Start();
+	NocatFarm.Core.CardExchange.Start();   // 1.8.2 card swaps: says nothing unless an account has them on
+	NocatFarm.Core.SetFinder.Start(manager);   // 1.8.2 the cheapest whole sets on the market: looks only while an account buys full sets, or after 'sets'
+	NocatFarm.Core.SetShare.Start(manager);   // 1.8.2 the shared cheapest-sets list: only while the finder looks and sharing is on
 
 	// The daily password-locked backup (Settings, Backups) - off until it's set up. Looks once a minute.
 	NocatFarm.Core.BackupSchedule.Start();
@@ -581,6 +584,7 @@ Log.Info("shutting down...");
 // No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.
 NocatFarm.Core.UpdateCheck.Stop();
 NocatFarm.Core.UserCount.Stop();
+NocatFarm.Core.CardExchange.Stop();
 
 // Closed straight after an update: that's somebody closing it, not the new version failing to start.
 NocatFarm.Core.SelfUpdate.ConfirmStarted();
