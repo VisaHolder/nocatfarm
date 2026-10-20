@@ -129,6 +129,7 @@ const SKIP_SETTING = {
   Enabled: 'signs the account in to Steam',
   SharedSecret: 'an authenticator secret - the Authenticator page is tested with the one in the fixture',
   IdentitySecret: 'an authenticator secret - confirmations are fetched from Steam',
+  ...(process.platform === 'win32' ? {} : { SteamOpenEveryAccount: 'Open in Steam is Windows only for now', SteamOpenButton: 'Open in Steam is Windows only for now' }),
 };
 // Switched last and put back first, each saved on its own: they change which other settings exist (human mode hides the
 // robot ones, rep4rep off hides its sections) and the server rewrites fields when they change.
