@@ -13,7 +13,7 @@ public static class SpareRun {
 	private const int GamesPerLook = 20;
 
 	/// <summary>Gem values asked for in one look.</summary>
-	private const int GemValuesPerLook = 20;
+	private const int GemValuesPerLook = 80;   // 1.8.3: was 20 - 222 items sat a week waiting on theirs; a page read each, not the market
 
 	/// <summary>What one go did. <paramref name="Refused"/>: 1.8.2 - Steam refused a listing, and the look ended there.</summary>
 	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped, bool Refused = false);

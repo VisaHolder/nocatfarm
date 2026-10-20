@@ -138,6 +138,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 			return 0;
 		}
 
+		await Task.Delay(Rng.Seconds(1, 3), ct).ConfigureAwait(false);   // 1.8.3: up to 80 a look now - the gems dialog opened item after item, not a burst
 		string? body = await bot.Web.GetAsync(new Uri(WebSession.Community,
 			$"/auction/ajaxgetgoovalueforitemtype/?appid={item.Game}&item_type={item.GooType}&border_color={item.GooBorder}"), ct).ConfigureAwait(false);
 		int? value = SteamGems.ParseGooValue(body);

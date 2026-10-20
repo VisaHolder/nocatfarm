@@ -43,7 +43,7 @@ public sealed class SetFinder {
 	public const int PagesABatch = 2;
 
 	/// <summary>Market requests a batch makes at most while the cheapest sets are due - whole sets first, then the walk.</summary>
-	public const int RequestsABatch = 16;
+	public const int RequestsABatch = 40;   // 1.8.3: was 16 - about 160 an hour while catching up, inside the background's half of the cap
 
 	/// <summary>Market requests a batch makes at most once the cheapest sets are fresh.</summary>
 	public const int RequestsABatchIdle = 4;

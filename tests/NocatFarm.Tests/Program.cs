@@ -26552,8 +26552,8 @@ await CommandSweep.RunAsync(Check);
 // ── 1.8.1: the inventory value leaves room for selling ──
 {
 	string ivSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "InventoryValue.cs"));
-	Check("market share: the inventory value gets a quarter of the hour's market requests (90 of 360), selling the rest",
-		(NocatFarm.PriceBook.BackgroundShare == NocatFarm.PriceBook.DefaultHourCap / 4) && ivSrc.Contains("PriceBook.Background.Value = true", StringComparison.Ordinal)
+	Check("market share: the inventory value and set finder get half the hour's market requests (180 of 360), selling the rest",
+		(NocatFarm.PriceBook.BackgroundShare == NocatFarm.PriceBook.DefaultHourCap / 2) && ivSrc.Contains("PriceBook.Background.Value = true", StringComparison.Ordinal)
 		&& ivSrc.Contains("PriceBook.Background.Value = false", StringComparison.Ordinal), $"{NocatFarm.PriceBook.BackgroundShare}");
 }
 
@@ -32427,7 +32427,7 @@ static class SetFinderChecks {
 			capP.SetValue(null, 40);
 			before = market.Calls;
 			var greedy = new NocatFarm.Core.SetFinder(Path.Combine(root, "config", "state", "pacing-share.json"));
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < 30; i++) {
 				await greedy.BatchAsync(now, CancellationToken.None);
 			}
 			int finderSent = market.Calls - before;
@@ -32439,8 +32439,8 @@ static class SetFinderChecks {
 
 			bool listing = await AsListing();
 			bool other = (await NocatFarm.PriceBook.MarketGetAsync("/market/priceoverview/?appid=753&currency=1&market_hash_name=11-Card", CancellationToken.None)).Asked;
-			Check("set finder: only the background's share of the hour (a quarter of the cap) - the listings' reserve and the rest stay free",
-				(finderSent == NocatFarm.PriceBook.BackgroundShare) && (NocatFarm.PriceBook.BackgroundShare == 10) && listing && other,
+			Check("set finder: only the background's share of the hour (half the cap) - the listings' reserve and the rest stay free",
+				(finderSent == NocatFarm.PriceBook.BackgroundShare) && (NocatFarm.PriceBook.BackgroundShare == 20) && listing && other,
 				$"the finder sent {finderSent} of a cap of 40; a listing {(listing ? "went" : "waited")}, another request {(other ? "went" : "waited")}");
 		} finally {
 			capP.SetValue(null, null);
@@ -35584,7 +35584,7 @@ static class GemsFixChecks {
 			NocatFarm.Core.SteamGems.ForgetLoaded();
 			NocatFarm.Core.SparePrices.Get = static (_, _) => Task.FromResult<(string?, bool)>((null, false));
 			List<NocatFarm.Core.SpareItem> items = [G(10, 5000, 2)];   // the one Steam won't say
-			for (uint g = 1; g <= 24; g++) {
+			for (uint g = 1; g <= 90; g++) {
 				items.Add(G(10 + g, 5000 + g, 2));
 			}
 			for (ulong n = 0; n < 5; n++) {
@@ -35602,8 +35602,8 @@ static class GemsFixChecks {
 			NocatFarm.Core.SteamGems.ForgetLoaded();   // a restart
 			await NocatFarm.Core.SpareRun.PriceAsync(() => plan, items, gemRules, 1, 0, false, false, steam, CancellationToken.None);
 			List<uint> third = [.. steam.Asked];
-			Check("gems fix: 20 gem values a look, the one the most items wait on first; the next look asks only the ones still unknown, not the one Steam didn't answer; after a restart only that one again",
-				(first.Count == 20) && (first[0] == 5099) && first.Contains(5000u) && (second.Count == 6) && !second.Intersect(first).Any() && third.SequenceEqual([5000u]),
+			Check("gems fix: 80 gem values a look (1.8.3, was 20), the one the most items wait on first; the next look asks only the ones still unknown, not the one Steam didn't answer; after a restart only that one again",
+				(first.Count == 80) && (first[0] == 5099) && first.Contains(5000u) && (second.Count == 12) && !second.Intersect(first).Any() && third.SequenceEqual([5000u]),
 				$"{string.Join(",", first)} | {string.Join(",", second)} | {string.Join(",", third)}");
 			NocatFarm.Core.SparePrices.Reset();
 			NocatFarm.Core.SteamGems.ForgetLoaded();
@@ -35801,8 +35801,8 @@ static class QuickSetsChecks {
 			int knownAt6h = quick.Known(at).Count;
 			Check("quick sets: the 100 cheapest checked within about two hours, the 300 cheapest within about six",
 				(knownAt2h >= 100) && (knownAt6h >= 300), $"{knownAt2h} after 2h, {knownAt6h} after 6h ({batches} batches)");
-			Check("quick sets: never more than the batch's requests, batches 12 to 18 minutes apart - about 64 requests an hour, 80 at most",
-				(maxRequests <= NocatFarm.Core.SetFinder.RequestsABatch) && (NocatFarm.Core.SetFinder.RequestsABatch == 16) && (in4 <= 64)
+			Check("quick sets: never more than the batch's requests, batches 12 to 18 minutes apart - about 160 requests an hour, 200 at most",
+				(maxRequests <= NocatFarm.Core.SetFinder.RequestsABatch) && (NocatFarm.Core.SetFinder.RequestsABatch == 40) && (in4 <= 160)
 				&& Enumerable.Range(0, 50).Select(static _ => NocatFarm.Core.SetFinder.CatchUpGap()).All(static g => (g >= TimeSpan.FromMinutes(12)) && (g <= TimeSpan.FromMinutes(18))),
 				$"most {maxRequests} a batch, {in4} in the first 4 batches");
 			var covered = quick.Covered(at);
@@ -36894,7 +36894,8 @@ static class MoneyFixChecks {
 					}
 					list.Add(app);
 				}
-				var f = new NocatFarm.Core.SetFinder(State("warm"), fm.Get);
+				int asked = 0;   // the market answers 14 reads, then stops - a batch's worth whatever the batch's size
+				var f = new NocatFarm.Core.SetFinder(State("warm"), (u, ct) => ++asked > 14 ? Task.FromResult<string?>(null) : fm.Get(u, ct));
 				f.Seed(list, DateTime.UtcNow);
 				await f.BatchAsync(DateTime.UtcNow, CancellationToken.None);
 				return (f, cm);
