@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "chegou nos últimos {0} dia(s)",
     "worth nothing on the market, gem value not known": "não vale nada no mercado, valor em gemas desconhecido",
     "on the market or in a trade offer": "no mercado ou numa oferta de troca",
+    "on your profile - equipped or in a showcase": "no seu perfil - equipado ou em uma vitrine",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "não deu para ler o que está no perfil - usando a última leitura (há {0})",
     "extra card copies are switched off": "cópias extras de cartas estão desligadas",
     "duplicate backgrounds are switched off": "fundos duplicados estão desligados",
     "the market pays nothing for it": "o mercado não paga nada por ele",

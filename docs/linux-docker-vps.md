@@ -9,8 +9,9 @@ On the first start the language follows `LANG` (`LANG=de_DE.UTF-8` starts it in 
 
 ## From the zip
 
-1. Download `nocat.farm-v<version>_linux-x64.zip` (Intel/AMD) or `nocat.farm-v<version>_linux-arm64.zip` (Raspberry
-   Pi, ARM servers) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest).
+1. Download `nocat.farm-v<version>_linux-x64.zip` (Intel/AMD), `nocat.farm-v<version>_linux-arm64.zip` (Raspberry
+   Pi, ARM servers) or `nocat.farm-v<version>_linux-arm.zip` (32-bit ARM: older Pis, an Android TV box running Debian
+   in Termux) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest).
 2. Unzip it into its own folder and start it:
 
    ```

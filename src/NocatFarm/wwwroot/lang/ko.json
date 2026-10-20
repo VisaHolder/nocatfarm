@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "최근 {0}일 안에 들어왔습니다",
     "worth nothing on the market, gem value not known": "장터에서는 가치가 없고 보석 가치도 모릅니다",
     "on the market or in a trade offer": "장터에 있거나 교환 제안에 들어 있습니다",
+    "on your profile - equipped or in a showcase": "프로필에 표시됨 - 장착 중이거나 진열장에 있음",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "프로필 내용을 읽지 못함 - 마지막으로 읽은 내용 사용 ({0} 전)",
     "extra card copies are switched off": "여분의 카드 사본은 꺼져 있습니다",
     "duplicate backgrounds are switched off": "중복 배경은 꺼져 있습니다",
     "the market pays nothing for it": "장터에서 받을 돈이 없습니다",

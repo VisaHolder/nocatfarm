@@ -196,6 +196,9 @@ public sealed class SpareInput {
 	/// <summary>Items on the market or in a waiting trade offer.</summary>
 	public IReadOnlySet<ulong> Busy { get; init; } = new HashSet<ulong>();
 
+	/// <summary>1.8.3: items equipped on the profile or shown in a showcase (<see cref="ProfileShown"/>) - never touched.</summary>
+	public IReadOnlySet<ulong> Shown { get; init; } = new HashSet<ulong>();
+
 	/// <summary>An item's price in the account's wallet currency - null when it was never priced in it.</summary>
 	public Func<SpareItem, MarketPrice?> Price { get; init; } = static _ => null;
 
@@ -444,6 +447,10 @@ public static partial class Spare {
 
 		if (input.Busy.Contains(item.AssetId)) {
 			return new Said("on the market or in a trade offer");
+		}
+
+		if (input.Shown.Contains(item.AssetId)) {
+			return new Said("on your profile - equipped or in a showcase");
 		}
 
 		if (r.KeepGames.Contains(item.Game) || r.KeepNames.Contains(item.Name) || r.KeepNames.Contains(item.Hash)) {

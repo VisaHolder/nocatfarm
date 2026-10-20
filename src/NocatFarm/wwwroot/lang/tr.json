@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "son {0} gün içinde geldi",
     "worth nothing on the market, gem value not known": "pazarda değersiz, mücevher değeri bilinmiyor",
     "on the market or in a trade offer": "pazarda ya da bir takas teklifinde",
+    "on your profile - equipped or in a showcase": "profilinde - kuşanılmış ya da bir vitrinde",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "profilinde ne olduğu okunamadı - son okumaya göre ({0} önce)",
     "extra card copies are switched off": "fazla kart kopyaları kapalı",
     "duplicate backgrounds are switched off": "kopya arka planlar kapalı",
     "the market pays nothing for it": "pazar bunun için hiçbir şey ödemiyor",

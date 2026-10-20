@@ -56,7 +56,7 @@ folder and run **`nocatFarm.exe`**. Settings, logs and login tokens all stay in 
 closing it and deleting the folder. It updates itself the same way the installed one does.
 
 The files ending in `_osx-arm64` (M1 and newer) and `_osx-x64` (Intel) are for a Mac, and `_linux-x64` and
-`_linux-arm64` for Linux; see [Linux, Mac and Docker](linux-docker-vps.md).
+`_linux-arm64` (and `_linux-arm` for 32-bit ARM) for Linux; see [Linux, Mac and Docker](linux-docker-vps.md).
 
 Either way there's nothing else to install, not even .NET. A small window opens, and the dashboard opens in your
 browser at `http://127.0.0.1:7242/`.

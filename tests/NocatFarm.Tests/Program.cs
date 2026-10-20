@@ -26549,6 +26549,25 @@ await CommandSweep.RunAsync(Check);
 		(NocatFarm.PriceBook.ResumesAt != null) || (NocatFarm.Core.SpareRun.PricingLine(503, 40).ToEnglish() == "still pricing 503 item(s) - about 40 min"));
 }
 
+// ── 1.8.3: what the profile shows is never sold, turned into gems or swapped ──
+{
+	string psEquipped = """{"response":{"profile_background":{"communityitemid":"38716211394","appid":595340},"mini_profile_background":{},"avatar_frame":{"communityitemid":"555"},"animated_avatar":{}}}""";
+	string psPage = "<script>g_rgProfileData = {\"steamid\":\"1\"};</script><a href=\"https://steamcommunity.com/id/x/inventory/#753_6_38717999587\">hat</a><a href=\"inventory/#730_2_999\">skin</a>";
+	var psShown = NocatFarm.Core.ProfileShown.Parse(psEquipped, psPage);
+	Check("profile: the equipped background and frame, and a showcase's Steam item, are what it shows - a CS2 skin isn't a Steam item",
+		psShown is { Count: 3 } && psShown.Contains(38716211394UL) && psShown.Contains(555UL) && psShown.Contains(38717999587UL), psShown == null ? "null" : string.Join(",", psShown));
+	Check("profile: an answer that isn't Steam's - nothing known, so nothing is touched",
+		(NocatFarm.Core.ProfileShown.Parse(null, psPage) == null) && (NocatFarm.Core.ProfileShown.Parse(psEquipped, "<html>sign in</html>") == null)
+		&& (NocatFarm.Core.ProfileShown.Parse("{}", psPage) == null));
+	string psSpareSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Spare.cs"));
+	string psRunSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SpareRun.cs"));
+	string psSwapSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "CardExchange.Sync.cs"));
+	Check("profile: spare items keeps what's shown, a look that can't read the profile does nothing, and swaps leave shown cards out",
+		psSpareSrc.Contains("if (input.Shown.Contains(item.AssetId)) {", StringComparison.Ordinal)
+		&& psRunSrc.Contains("\"Steam wouldn't say what's on its profile - try again in a while\"", StringComparison.Ordinal)
+		&& psSwapSrc.Contains(".. Reserved(bot.Name, bot.SteamId, now), .. shown];", StringComparison.Ordinal));
+}
+
 // ── 1.8.1: the inventory value leaves room for selling ──
 {
 	string ivSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "InventoryValue.cs"));
@@ -32770,7 +32789,8 @@ static class BuyFixChecks {
 				(off.Inner.Resumed.Count == 0) && (offBuyer.Ledger.OnPhone.Count == 1));
 			Check("phone: finishing what the owner confirmed runs outside a human-mode account's day; nothing new starts outside it",
 				buyerSrc.Contains("await ResumePhoneAsync(ct, Stopped(finishing: true) == null, result)", StringComparison.Ordinal)
-				&& buyerSrc.Contains("if (!finishing && !Gate.Open) {", StringComparison.Ordinal)
+				&& buyerSrc.Contains("if (!finishing && !midSet && !Gate.Open) {", StringComparison.Ordinal)
+				&& buyerSrc.Contains("if (Stopped(midSet: !ReferenceEquals(card, step.Cards[0])) is { } stop) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("bool buying = On(Bot) && Gate.Open;", StringComparison.Ordinal));
 			TimeSpan soon = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromMinutes(5)), later = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromHours(1)),
 				last = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromHours(10));

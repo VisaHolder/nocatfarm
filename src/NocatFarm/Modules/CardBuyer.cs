@@ -2800,7 +2800,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// itself. <paramref name="finishing"/>: only finishing purchases the owner already confirmed - a human-mode account's day
 	/// doesn't stop that.
 	/// </summary>
-	private (string Problem, bool Lasting)? Stopped(bool finishing = false) {
+	private (string Problem, bool Lasting)? Stopped(bool finishing = false, bool midSet = false) {
 		if (!On(Bot)) {
 			return ("buying cards is off", true);
 		}
@@ -2822,7 +2822,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return ("it's paused - nothing bought", true);
 		}
 
-		if (!finishing && !Gate.Open) {
+		// 1.8.3: not between two cards of one set - something else on the account (a gems action, say) shut the gate halfway
+		// through Dota 2 and left 4 of its 8 cards bought. A person buying a set finishes it.
+		if (!finishing && !midSet && !Gate.Open) {
 			return ($"not now - {Gate.Waiting().ToEnglish()}", false);
 		}
 
@@ -3415,8 +3417,9 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				await Task.Delay(Bot.Cfg.LegitMode ? Rng.Seconds(20, 90) : Rng.Seconds(3, 10), ct).ConfigureAwait(false);
 			}
 
-			// The rules once more, on what's true now - the last word before anything is spent.
-			if (Stopped() is { } stop) {
+			// The rules once more, on what's true now - the last word before anything is spent. Once a set is started, its
+			// day doesn't stop it halfway (1.8.3).
+			if (Stopped(midSet: !ReferenceEquals(card, step.Cards[0])) is { } stop) {
 				result.Problem = stop.Problem == "buying cards is off" ? "buying cards was turned off - stopped" : stop.Problem;
 				result.Lasting = stop.Lasting;
 
