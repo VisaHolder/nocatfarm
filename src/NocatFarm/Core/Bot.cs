@@ -881,6 +881,7 @@ public sealed class Bot : IAsyncDisposable {
 	private DateTime _lastPersonaAssert;
 	private DateTime _nextPersonaAssert;
 	private DateTime _lastNameHeal;
+	private DateTime _lastRelaunch;   // last stop-and-re-announce, so a re-assert lets Steam settle after it
 
 	// The one re-send allowed while something else holds the persona has been spent. Cleared when it is ours again.
 	private bool _contestRetried;
@@ -3833,6 +3834,21 @@ public sealed class Bot : IAsyncDisposable {
 				|| !_announcedApps.SequenceEqual(apps)
 				|| ((_announcedLabel != null) && (_announcedLabel != label)));   // name just turned on - put it on top
 
+		// The same set again, with a name over it, is never sent as-is - that plain re-send is the very thing that
+		// knocks the name off (see the shortcut above). It used to go out whenever Steam's echo hadn't confirmed the
+		// name yet: after a sign-in the idler re-asserted at +9s and +36s, before Steam had settled, and 'old' sat on
+		// Rust until the heal caught it 90 seconds later. So: just after a relaunch, leave Steam to settle; later, a
+		// name Steam says is NOT showing gets the full relaunch rather than the re-send that would lose it again.
+		if (!relaunch && !force && !string.IsNullOrWhiteSpace(label) && (apps.Count > 0)) {
+			if (DateTime.UtcNow.Subtract(_lastRelaunch).TotalSeconds < 60) {
+				return;
+			}
+
+			if ((PlayingAsSeen.Length > 0) && (PlayingAsSeen != label)) {
+				relaunch = true;
+			}
+		}
+
 		// Captured before _announcedApps is overwritten below - the persona re-apply further down needs to
 		// know whether this call actually CHANGED anything, and by then the record has already been updated.
 		bool gamesChanged = (_announcedApps == null) || !_announcedApps.SequenceEqual(apps);
@@ -3846,6 +3862,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		if (relaunch) {
+			_lastRelaunch = DateTime.UtcNow;
 			Client.Send(BuildGamesPlayed(null, []));
 			Log.Debug("game list changed - restarting the session so the custom name stays on top", Name);
 
