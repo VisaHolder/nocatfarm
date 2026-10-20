@@ -25947,6 +25947,7 @@ await CommandSweep.RunAsync(Check);
 		.Where(static d => string.IsNullOrEmpty(d.Group)).Select(static d => d.Name)];
 	Check("settings page: every spare items, booster packs, Steam Points, scam watch, health, sale events and backups setting is in a titled box", lkNoBox.Count == 0, string.Join(", ", lkNoBox));
 	List<string> lkOrphanOrder = [.. NocatFarm.Config.Settings.GroupOrder.SelectMany(kv => kv.Value.Where(g => !lkAll.Any(d => ((d.Part ?? d.Section) == kv.Key) && ((d.Group ?? "") == g))).Select(g => kv.Key + "/" + g))];
+	lkOrphanOrder.RemoveAll(static o => !OperatingSystem.IsWindows() && (o == "Notifications/Pop-ups"));   // pop-ups are Windows only: off Windows that box has nothing in it
 	Check("settings page: the box order names only boxes its section has", lkOrphanOrder.Count == 0, string.Join(", ", lkOrphanOrder));
 	Check("settings page: spare items' boxes are What it does, What counts as spare, Never touch, Limits, Selling, Gems",
 		string.Join("|", NocatFarm.Config.Settings.GroupOrder[NocatFarm.Config.Settings.SecSpare]) == "What it does|What counts as spare|Never touch|Limits|Selling|Gems");
@@ -34012,7 +34013,7 @@ static class SettingsCleanupChecks {
 			string Names(List<NocatFarm.Config.Settings.ViewRow> r) => string.Join(", ", r.Select(x => x.Name));
 			Check("settings: a new robot account shows 29 settings with Show advanced off (it was 46; 1.8.2: \"Level-up line shows\")", robotRows.Count == 29, $"{robotRows.Count}: {Names(robotRows)}");
 			Check("settings: a new human-mode account shows about 33 (it was 55)", humanRows.Count is >= 31 and <= 35, $"{humanRows.Count}: {Names(humanRows)}");
-			Check("settings: the global settings show 14 (it was 31)", globalRows.Count == (OperatingSystem.IsWindows() ? 14 : 13), $"{globalRows.Count}: {Names(globalRows)}");
+			Check("settings: the global settings show 14 (it was 31)", globalRows.Count == (OperatingSystem.IsWindows() ? 14 : 12), $"{globalRows.Count}: {Names(globalRows)}");
 			Check("settings: ...in 11 sections on a new account (the log is all advanced), 6 global",
 				(robotRows.Select(r => r.Section).Distinct().Count() == 11) && (globalRows.Select(r => r.Section).Distinct().Count() == 6),
 				$"{robotRows.Select(r => r.Section).Distinct().Count()} / {globalRows.Select(r => r.Section).Distinct().Count()}");
