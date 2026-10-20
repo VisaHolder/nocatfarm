@@ -3875,7 +3875,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 
 		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
 
-		return !bot.Stopping && ((human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind
+		return !bot.Stopping && ((human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle or Phase.DoneForToday or Phase.DayOff)) && !human.NightGrind
 			&& human.WarmedUp && !human._offlineBreak));
 	}
 
