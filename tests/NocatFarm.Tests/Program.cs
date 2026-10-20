@@ -28765,6 +28765,9 @@ await RefundPriceChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "
 // ── 1.8.2 "Show in the app's log": what the window and the dashboard show by kind; the file keeps everything ──
 await LogShowChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.2 trade-locked spare items: gems now when worth more, else kept until the lock ends; locked for good - gems; keep lists and caps as any; fakes only ──
+await LockedSpareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -37468,5 +37471,169 @@ static class LogShowChecks {
 		}
 
 		await Task.CompletedTask;
+	}
+}
+
+static class LockedSpareChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-locked-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+
+		try {
+			DateTime now = new(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc);
+			DateTime ends = new(2026, 10, 26, 7, 0, 0, DateTimeKind.Utc);
+			const uint G = 570;   // a Dota 2 background from a badge, like the owner's
+
+			// A background: tradable, locked until 2026-10-26, or never tradable. Turns into gems (type 3) unless gooType 0.
+			NocatFarm.Core.SpareItem Bg(ulong id, bool tradable = true, DateTime? after = null, string name = "Uncommon Sky", int gooType = 3) =>
+				new(id, G, NocatFarm.Core.SpareKind.Background, $"{G}-{name}", name, tradable, tradable, 1, gooType, 0, tradable ? null : after);
+
+			// Prices a minute old, a sack of gems at 300 (40 gems = 12 cents), everything in a month ago.
+			NocatFarm.Core.SparePlan Plan(List<NocatFarm.Core.SpareItem> items, NocatFarm.Core.SpareRules rules, int? cents, int? gems = 40) =>
+				NocatFarm.Core.Spare.Plan(new NocatFarm.Core.SpareInput {
+					Items = items,
+					Badges = new NocatFarm.Core.SpareBadges([], []),
+					Rules = rules,
+					Received = _ => now.AddDays(-30),
+					Price = _ => cents is int c ? new NocatFarm.Core.MarketPrice(c, now.AddMinutes(-1), c, 20) : null,
+					Sack = new NocatFarm.Core.MarketPrice(300, now.AddMinutes(-1)),
+					GemValue = _ => gems,
+					Now = now
+				});
+
+			NocatFarm.Core.SpareDecision Of(NocatFarm.Core.SparePlan p, ulong id) => p.Decisions.Single(d => d.Item.AssetId == id);
+			string All(NocatFarm.Core.SparePlan p) => string.Join(" | ", p.Decisions.Select(static d => $"{d.Item.AssetId}:{d.Verdict}:{d.Why.ToEnglish()}"));
+			var rules = new NocatFarm.Core.SpareRules { On = true };
+
+			// ── reading the lock's end from the inventory
+			DateTime? Ends(string json) {
+				using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
+				return NocatFarm.Core.Spare.LockEnds(doc.RootElement);
+			}
+
+			Check("locked: the end read from cache_expiration, a [date] tag, \"Tradable After: 2026-10-26\" and Steam's long form",
+				Ends("""{"cache_expiration":"2026-10-26T07:00:00Z"}""") == ends
+				&& Ends("""{"owner_descriptions":[{"type":"html","value":" "},{"type":"html","value":"Tradable/Marketable After [date]1792998000[/date]"}]}""") == DateTimeOffset.FromUnixTimeSeconds(1792998000).UtcDateTime
+				&& Ends("""{"owner_descriptions":[{"type":"html","value":"Tradable After: 2026-10-26"}]}""") == new DateTime(2026, 10, 26, 0, 0, 0, DateTimeKind.Utc)
+				&& Ends("""{"owner_descriptions":[{"type":"html","value":"Tradable After: Oct 26, 2026 (7:00:00) GMT"}]}""") == ends,
+				$"{Ends("""{"owner_descriptions":[{"type":"html","value":"Tradable After: Oct 26, 2026 (7:00:00) GMT"}]}""")}");
+			Check("locked: a lock line whose date can't be read still ends (never taken for a lock for good); no line at all - for good",
+				Ends("""{"owner_descriptions":[{"type":"html","value":"Tradable After: soon-ish"}]}""") == DateTime.MaxValue
+				&& Ends("""{"owner_descriptions":[{"type":"html","value":"Crafted by you"}]}""") == null && Ends("""{"name":"x"}""") == null);
+
+			NocatFarm.Core.InventoryContents inv = new() { Complete = true };
+			using (System.Text.Json.JsonDocument a = System.Text.Json.JsonDocument.Parse("""[{"assetid":"10","classid":"1","instanceid":"0","amount":"1"},{"assetid":"11","classid":"2","instanceid":"0","amount":"1"},{"assetid":"12","classid":"3","instanceid":"0","amount":"1"}]"""),
+				d = System.Text.Json.JsonDocument.Parse("""
+					[{"classid":"1","instanceid":"0","market_fee_app":"570","market_hash_name":"570-Uncommon Sky","name":"Uncommon Sky","type":"Dota 2 Uncommon Profile Background","tradable":0,"marketable":0,
+					  "owner_descriptions":[{"type":"html","value":"Tradable After: 2026-10-26"}],"tags":[{"category":"item_class","internal_name":"item_class_3"}]},
+					 {"classid":"2","instanceid":"0","market_fee_app":"570","market_hash_name":"570-Uncommon Sky","name":"Uncommon Sky","type":"Dota 2 Uncommon Profile Background","tradable":0,"marketable":0,
+					  "tags":[{"category":"item_class","internal_name":"item_class_3"}]},
+					 {"classid":"3","instanceid":"0","market_fee_app":"570","market_hash_name":"570-Uncommon Sky","name":"Uncommon Sky","type":"Dota 2 Uncommon Profile Background","tradable":1,"marketable":1,
+					  "cache_expiration":"2026-10-26T07:00:00Z","tags":[{"category":"item_class","internal_name":"item_class_3"}]}]
+					""")) {
+				inv.Assets.AddRange(a.RootElement.EnumerateArray().Select(static e => e.Clone()));
+				foreach (System.Text.Json.JsonElement e in d.RootElement.EnumerateArray()) {
+					inv.Descriptions[NocatFarm.Core.InventoryContents.KeyOf(e)] = e.Clone();
+				}
+			}
+
+			List<NocatFarm.Core.SpareItem> read = NocatFarm.Core.Spare.Read(inv);
+			Check("locked: the inventory reader gives a locked item its date, a never-tradable one none, a tradable one none (whatever else it says)",
+				read.Count == 3 && read[0] is { LockedForNow: true, LockedForGood: false, Sellable: true } && read[0].TradableAfter == new DateTime(2026, 10, 26, 0, 0, 0, DateTimeKind.Utc)
+				&& read[1] is { LockedForNow: false, LockedForGood: true, Sellable: false, TradableAfter: null } && read[2] is { Tradable: true, TradableAfter: null, LockedForNow: false },
+				string.Join(" | ", read.Select(static i => $"{i.AssetId}:{i.Tradable}:{i.TradableAfter}")));
+
+			// ── locked for now: gems now when they're worth more, else kept until it can be sold
+			var gemsWin = Plan([Bg(10, false, ends), Bg(11, false, ends)], rules, 3);
+			Check("locked for now: its gems worth more than selling pays - turned into gems now",
+				Of(gemsWin, 10).Verdict == NocatFarm.Core.SpareVerdict.Gems && Of(gemsWin, 10).GemValue == 40 && Of(gemsWin, 10).Item.LockedForNow
+				&& Of(gemsWin, 11).Verdict == NocatFarm.Core.SpareVerdict.NotSpare && gemsWin.Actions.Count == 1, All(gemsWin));
+			var sellWins = Plan([Bg(10, false, ends), Bg(11, false, ends)], rules, 20, 10);
+			Check("locked for now: selling pays more - kept, with the date it can be sold, and weighed again then",
+				Of(sellWins, 10).Verdict == NocatFarm.Core.SpareVerdict.Keep && Of(sellWins, 10).Why.ToEnglish() == "kept until 2026-10-26 - selling pays more" && sellWins.Actions.Count == 0,
+				All(sellWins));
+			var unlocked = Plan([Bg(10), Bg(11)], rules, 20, 10);
+			Check("locked for now: the same item once tradable - sold", unlocked.Actions.Single().Verdict == NocatFarm.Core.SpareVerdict.Sell, All(unlocked));
+			var noDate = Plan([Bg(10, false, DateTime.MaxValue), Bg(11, false, DateTime.MaxValue)], rules, 20, 10);
+			Check("locked for now, its date unreadable: kept - \"until it can be traded\"",
+				Of(noDate, 10).Verdict == NocatFarm.Core.SpareVerdict.Keep && Of(noDate, 10).Why.ToEnglish() == "kept until it can be traded - selling pays more", All(noDate));
+			var noPrice = Plan([Bg(10, false, ends), Bg(11, false, ends)], rules, null);
+			Check("locked for now, no price known: kept until it has one (never gems on a guess)",
+				Of(noPrice, 10).Verdict == NocatFarm.Core.SpareVerdict.Unpriced && noPrice.Actions.Count == 0, All(noPrice));
+			var noGemValue = Plan([Bg(10, false, ends), Bg(11, false, ends)], rules, 3, null);
+			Check("locked for now, its gem value unknown: kept", noGemValue.Actions.Count == 0, All(noGemValue));
+			var overLimit = Plan([Bg(10, false, ends), Bg(11, false, ends)], rules, 30, 400);
+			Check("locked for now: worth more than the price limit - never touched, even as gems",
+				Of(overLimit, 10).Verdict == NocatFarm.Core.SpareVerdict.OverLimit && overLimit.Actions.Count == 0, All(overLimit));
+			var underMin = Plan([Bg(10, false, ends), Bg(11, false, ends)], new NocatFarm.Core.SpareRules { On = true, MinSaleCents = 50 }, 20, 10);
+			Check("locked for now: a sale under the minimum that still beats the gems (the 1-cent rule) - kept for it, not gems",
+				Of(underMin, 10).Verdict == NocatFarm.Core.SpareVerdict.Keep && Of(underMin, 10).Why.ToEnglish().StartsWith("kept until 2026-10-26", StringComparison.Ordinal), All(underMin));
+			var sellOnly = Plan([Bg(10, false, ends), Bg(11, false, ends)], new NocatFarm.Core.SpareRules { On = true, Action = 2 }, 20, 10);
+			var keepAll = Plan([Bg(10, false, ends), Bg(11, false, ends)], new NocatFarm.Core.SpareRules { On = true, Action = 3 }, 3);
+			Check("locked for now: sell only - kept until it can be sold; keep everything - only reported",
+				Of(sellOnly, 10).Verdict == NocatFarm.Core.SpareVerdict.Keep && Of(sellOnly, 10).Why.ToEnglish() == "kept until 2026-10-26 - selling pays more"
+				&& keepAll.Actions.Count == 0, All(sellOnly) + " // " + All(keepAll));
+			var gemsOnly = Plan([Bg(10, false, ends), Bg(11, false, ends)], new NocatFarm.Core.SpareRules { On = true, Action = 1 }, 20, 10);
+			Check("locked for now: gems only, selling pays more - kept, not gems", gemsOnly.Actions.Count == 0, All(gemsOnly));
+			var mixed = Plan([Bg(10), Bg(11, false, ends)], rules, 20, 10);
+			Check("locked for now: of a tradable and a locked copy (keep 1), the tradable one goes and the locked one is the copy kept",
+				Of(mixed, 10).Verdict == NocatFarm.Core.SpareVerdict.Sell && Of(mixed, 11).Verdict == NocatFarm.Core.SpareVerdict.NotSpare, All(mixed));
+
+			// ── locked for good: gems, as it can never be sold
+			var forGood = Plan([Bg(20, false), Bg(21, false)], rules, 20, 10);
+			Check("locked for good: turned into gems - it can never be sold, whatever the market pays for tradable copies",
+				Of(forGood, 20).Verdict == NocatFarm.Core.SpareVerdict.Gems && Of(forGood, 20).Why.ToEnglish() == "10 gems - it can never be traded or sold" && forGood.Actions.Count == 1,
+				All(forGood));
+			var forGoodNoGoo = Plan([Bg(20, false, gooType: 0), Bg(21, false, gooType: 0)], rules, 20);
+			Check("locked for good, no gems for it: left alone", forGoodNoGoo.Actions.Count == 0 && Of(forGoodNoGoo, 20).Why.ToEnglish() == "trade-locked", All(forGoodNoGoo));
+			var forGoodUnknown = Plan([Bg(20, false), Bg(21, false)], rules, null, null);
+			Check("locked for good, its gem value not known yet: kept (not waiting on a price it'll never have)",
+				forGoodUnknown.Actions.Count == 0 && forGoodUnknown.Count(NocatFarm.Core.SpareVerdict.Unpriced) == 0, All(forGoodUnknown));
+			var forGoodSellOnly = Plan([Bg(20, false), Bg(21, false)], new NocatFarm.Core.SpareRules { On = true, Action = 2 }, 20);
+			Check("locked for good: sell only - kept", forGoodSellOnly.Actions.Count == 0, All(forGoodSellOnly));
+			var oddOne = Plan([new(30, G, NocatFarm.Core.SpareKind.Background, $"{G}-Odd", "Odd", false, true, 1, 3, 0), new(31, G, NocatFarm.Core.SpareKind.Background, $"{G}-Odd", "Odd", false, true, 1, 3, 0)], rules, 3);
+			Check("locked: not tradable but marketable, no date - still left alone as trade-locked", oddOne.Actions.Count == 0 && Of(oddOne, 30).Why.ToEnglish() == "trade-locked", All(oddOne));
+
+			// ── the keep lists and the new-items rule cover locked items as any
+			var kept = Plan([Bg(10, false, ends), Bg(11, false, ends), Bg(20, false, name: "Rare Sea"), Bg(21, false, name: "Rare Sea")],
+				new NocatFarm.Core.SpareRules { On = true, KeepNames = NocatFarm.Core.Spare.Names("uncommon sky, Rare Sea") }, 3);
+			var keptGame = Plan([Bg(10, false, ends), Bg(11, false, ends), Bg(20, false), Bg(21, false)], new NocatFarm.Core.SpareRules { On = true, KeepGames = [G] }, 3);
+			Check("locked: the keep list (names and games) is respected - nothing turned into gems",
+				kept.Actions.Count == 0 && Of(kept, 10).Why.ToEnglish() == "on your keep list" && Of(kept, 20).Why.ToEnglish() == "on your keep list" && keptGame.Actions.Count == 0,
+				All(kept));
+
+			// ── right before gems: a locked-for-now item's price is read again; one locked for good isn't asked about
+			NocatFarm.Core.SpareDecision tempGems = Of(gemsWin, 10), goodGems = Of(forGood, 20);
+			Check("locked: right before gems, one locked for now has its price read again (no answer - kept); one locked for good goes straight on",
+				NocatFarm.Core.SpareRun.NeedsPriceBeforeGems(tempGems, 1, now) && NocatFarm.Core.SpareRun.BeforeGems(tempGems, null, null, rules, 1, now) != null
+				&& !NocatFarm.Core.SpareRun.NeedsPriceBeforeGems(goodGems, 1, now) && NocatFarm.Core.SpareRun.BeforeGems(goodGems, null, null, rules, 1, now) == null);
+
+			// ── doing it: today's item cap and the per-look number count locked items like any
+			var both = Plan([Bg(10, false, ends), Bg(11, false, ends), Bg(12, false, ends), Bg(20, false, name: "Rare Sea"), Bg(21, false, name: "Rare Sea"), Bg(22, false, name: "Rare Sea")], rules, 3);
+			var fake = new FakeSpareSteam();
+			var ledger = NocatFarm.Core.SpareLedger.Load("harness-locked");
+			ledger.Approved = true;
+			DateTime localNow = new(2026, 10, 19, 15, 0, 0, DateTimeKind.Local);
+			await NocatFarm.Core.SpareRun.ActAsync(both, new NocatFarm.Core.SpareRules { On = true, PerRun = 50, DailyItems = 3 }, ledger, fake, "harness-locked", () => localNow, CancellationToken.None);
+			var fake2 = new FakeSpareSteam();
+			var ledger2 = NocatFarm.Core.SpareLedger.Load("harness-locked-run");
+			ledger2.Approved = true;
+			await NocatFarm.Core.SpareRun.ActAsync(both, new NocatFarm.Core.SpareRules { On = true, PerRun = 2 }, ledger2, fake2, "harness-locked-run", () => localNow, CancellationToken.None);
+			Check("locked: 4 to gems in the plan - today's cap (3) and the per-look number (2) stop them like any item",
+				both.Actions.Count == 4 && fake.Ground.Count == 3 && fake2.Ground.Count == 2, $"{both.Actions.Count} · {fake.Ground.Count} · {fake2.Ground.Count} · {All(both)}");
+
+			Check("locked: the old blanket \"trade-locked\" skip is gone from the never-touch rules",
+				File.ReadAllText(Path.Combine(repo, "src", "NocatFarm", "Core", "Spare.cs")).Contains("if (!item.Tradable && !item.LockedForNow && !(item.LockedForGood && (item.GooType > 0))) {", StringComparison.Ordinal));
+		} finally {
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			TestTemp.Gone(root);
+		}
 	}
 }
