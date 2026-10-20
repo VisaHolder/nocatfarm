@@ -3686,6 +3686,10 @@
       "label": "Godzin w weekend",
       "tip": "Mniej więcej ile godzin gra w sobotę i niedzielę. Dłuższe weekendy sprawiają, że tydzień wygląda prawdziwiej."
     },
+    "HoursVaryPct": {
+      "label": "Godziny wahają się najwyżej o",
+      "tip": "Jak bardzo godziny danego dnia mogą odbiegać od godzin powyżej, w procentach w górę lub w dół. Na przykład 10 przy 8 godzinach w dni robocze: każdy dzień roboczy gra od 7h12m do 8h48m. 0 zostawia zwykły rozrzut - spokojny dzień może być o połowę krótszy, długi o ćwierć dłuższy."
+    },
     "DayOffChancePct": {
       "label": "Szansa na dzień wolny",
       "tip": "Procentowa szansa, że danego dnia w ogóle nie gra. Prawdziwi ludzie nie grają codziennie."

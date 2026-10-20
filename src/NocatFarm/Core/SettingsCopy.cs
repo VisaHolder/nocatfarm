@@ -69,7 +69,7 @@ public static class SettingsCopy {
 		// Account
 		nameof(BotConfig.OnlineStatus), nameof(BotConfig.LevelUpLine), nameof(BotConfig.UIMode), nameof(BotConfig.ClearInventoryNotifications), nameof(BotConfig.ClearNotifications),
 		// Human
-		nameof(BotConfig.GameWeights), nameof(BotConfig.HourTargets), nameof(BotConfig.WeekdayHours), nameof(BotConfig.WeekendHours),
+		nameof(BotConfig.GameWeights), nameof(BotConfig.HourTargets), nameof(BotConfig.WeekdayHours), nameof(BotConfig.WeekendHours), nameof(BotConfig.HoursVaryPct),
 		nameof(BotConfig.DayOffChancePct), nameof(BotConfig.DayStartTime), nameof(BotConfig.DayStartVaryMinutes), nameof(BotConfig.BedTime),
 		nameof(BotConfig.BedVaryMinutes), nameof(BotConfig.LateNightExtraHours), nameof(BotConfig.SleepMinHours), nameof(BotConfig.SleepMaxHours),
 		nameof(BotConfig.PureMainDayChancePct), nameof(BotConfig.LearnFromOwner), nameof(BotConfig.LearnFollow), nameof(BotConfig.LearnWeekends),

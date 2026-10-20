@@ -3686,6 +3686,10 @@
       "label": "Stunden am Wochenende",
       "tip": "Ungefähr wie viele Stunden es am Samstag und Sonntag spielt. Längere Wochenenden lassen die Woche echter wirken."
     },
+    "HoursVaryPct": {
+      "label": "Stunden schwanken um höchstens",
+      "tip": "Wie weit die Stunden eines Tages von den Stunden oben abweichen dürfen, in Prozent nach oben und unten. Zum Beispiel 10 bei 8 Stunden an Wochentagen: jeder Wochentag spielt zwischen 7h12m und 8h48m. 0 lässt die übliche Streuung - ein ruhiger Tag etwa die Hälfte, ein langer ein Viertel mehr."
+    },
     "DayOffChancePct": {
       "label": "Chance auf einen freien Tag",
       "tip": "Die Chance in Prozent, dass es an einem Tag gar nicht spielt. Echte Menschen zocken nicht jeden einzelnen Tag."

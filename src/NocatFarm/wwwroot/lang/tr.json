@@ -3686,6 +3686,10 @@
       "label": "Hafta sonu saat",
       "tip": "Cumartesi ve pazar kabaca kaç saat oynadığı. Daha uzun hafta sonları haftayı daha gerçekçi gösterir."
     },
+    "HoursVaryPct": {
+      "label": "Saatler en fazla şu kadar değişir",
+      "tip": "Bir günün saatlerinin yukarıdaki saatlerden yüzde olarak ne kadar sapabileceği. Örneğin hafta içi 8 saatle 10: her hafta içi günü 7h12m ile 8h48m arasında oynar. 0 olağan aralığı korur - sakin bir gün yarısı kadar, uzun bir gün dörtte bir fazla olabilir."
+    },
     "DayOffChancePct": {
       "label": "İzin günü olasılığı",
       "tip": "Herhangi bir gün hiç oynamama olasılığı, yüzde olarak. Gerçek insanlar her gün oyun oynamaz."

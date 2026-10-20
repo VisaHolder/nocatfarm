@@ -1701,8 +1701,10 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 		} else {
 			int roll = Roll(0, 99);
 
-			// a quiet day · a normal day · a long one
-			target = roll < 20 ? Roll(full * 55 / 100, full * 80 / 100)
+			// a quiet day · a normal day · a long one - 1.8.3: within "Hours vary by up to" either way when it's set
+			int vary = Math.Clamp(cfg.HoursVaryPct, 0, 50);
+			target = vary > 0 ? Roll(full * (100 - vary) / 100, full * (100 + vary) / 100)
+				: roll < 20 ? Roll(full * 55 / 100, full * 80 / 100)
 				: roll < 65 ? Roll(full * 80 / 100, full * 105 / 100)
 				: Roll(full * 105 / 100, full * 125 / 100);
 

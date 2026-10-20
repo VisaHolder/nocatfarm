@@ -3686,6 +3686,10 @@
       "label": "Horas el fin de semana",
       "tip": "Más o menos cuántas horas juega el sábado y el domingo. Fines de semana más largos hacen que la semana parezca más real."
     },
+    "HoursVaryPct": {
+      "label": "Las horas varían como máximo",
+      "tip": "Cuánto pueden alejarse las horas de un día de las horas de arriba, en porcentaje hacia arriba o abajo. Por ejemplo 10 con 8 horas entre semana: cada día entre semana juega entre 7h12m y 8h48m. 0 mantiene la variación habitual: un día tranquilo puede ser la mitad y uno largo un cuarto más."
+    },
     "DayOffChancePct": {
       "label": "Probabilidad de día libre",
       "tip": "El porcentaje de probabilidad de que un día no juegue nada. La gente real no juega todos los días."

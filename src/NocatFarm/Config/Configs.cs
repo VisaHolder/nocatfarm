@@ -1132,6 +1132,10 @@ public sealed class BotConfig {
 	// how the day is shaped
 	public int WeekdayHours { get; set; } = 6;
 	public int WeekendHours { get; set; } = 9;
+
+	/// <summary>1.8.3: how far a day's hours may stray from the weekday/weekend hours, in percent either way. 0: the usual
+	/// spread (a quiet day 55-80%, a normal 80-105%, a long one 105-125%).</summary>
+	public int HoursVaryPct { get; set; }
 	public int DayOffChancePct { get; set; } = 5;
 	// When it gets on and goes to bed: a time of day in minutes from midnight (11:30 is 690), and how far either way a
 	// day may land - a hard limit, nothing the day's roll does takes it outside. Bed at or before the time it gets on is

@@ -3686,6 +3686,10 @@
       "label": "Heures le week-end",
       "tip": "Environ combien d'heures il joue le samedi et le dimanche. Des week-ends plus longs rendent la semaine plus crédible."
     },
+    "HoursVaryPct": {
+      "label": "Les heures varient d'au plus",
+      "tip": "De combien les heures d'une journée peuvent s'écarter des heures ci-dessus, en pourcentage dans un sens ou dans l'autre. Par exemple 10 avec 8 heures en semaine : chaque jour de semaine joue entre 7h12m et 8h48m. 0 garde l'écart habituel - une journée calme peut faire la moitié, une longue un quart de plus."
+    },
     "DayOffChancePct": {
       "label": "Probabilité d'un jour sans jouer",
       "tip": "La probabilité en pourcentage qu'il ne joue pas du tout un jour donné. Les vraies personnes ne jouent pas tous les jours."

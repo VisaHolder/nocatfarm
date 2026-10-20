@@ -3686,6 +3686,10 @@
       "label": "Horas no fim de semana",
       "tip": "Mais ou menos quantas horas ela joga no sábado e no domingo. Fins de semana mais longos deixam a semana mais realista."
     },
+    "HoursVaryPct": {
+      "label": "As horas variam no máximo",
+      "tip": "Quanto as horas de um dia podem se afastar das horas acima, em porcentagem para cima ou para baixo. Por exemplo 10 com 8 horas nos dias úteis: cada dia útil joga entre 7h12m e 8h48m. 0 mantém a variação de sempre - um dia calmo pode ser metade, um longo um quarto a mais."
+    },
     "DayOffChancePct": {
       "label": "Chance de folga",
       "tip": "A chance, em porcentagem, de ela não jogar nada num dia. Pessoas de verdade não jogam todo santo dia."
