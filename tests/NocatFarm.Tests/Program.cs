@@ -37059,7 +37059,7 @@ static class MoneyFixChecks {
 				(NocatFarm.Core.SpareListings.StepTo(31, mp, 80, 50) == 30) && (NocatFarm.Core.SpareListings.StepTo(31, mp, 80, 50, minReceive: pays30 + 1) == null)
 				&& (NocatFarm.Core.SpareListings.StepTo(31, mp, 80, 50, minReceive: pays30) == 30)
 				&& (NocatFarm.Core.SpareListings.StepTo(31, mp, 80, 50, gemsWorth: pays30) == null) && (NocatFarm.Core.SpareListings.StepTo(31, mp, 80, 50, gemsWorth: pays30 - 1) == 30)
-				&& Src("src/NocatFarm/Core/Seller.cs").Contains("SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsOf?.Invoke(l.Hash))", StringComparison.Ordinal),
+				&& Src("src/NocatFarm/Core/Seller.cs").Contains("SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsNow)", StringComparison.Ordinal),
 				$"pays {pays30}");
 
 			// ── 13. unsure purchases: fresh ones asked first, stale ones still asked a few a look, a week old settled as bought ──
