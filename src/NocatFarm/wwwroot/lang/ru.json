@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "комментарии, друзья, rep4rep",
     "free games, items, Points": "бесплатные игры, предметы, очки",
     "answers to commands": "ответы на команды",
-    "updates and app messages": "обновления и сообщения приложения"
+    "updates and app messages": "обновления и сообщения приложения",
+    "{0}: listing taken down · it can be listed again": "{0}: лот снят · можно выставить снова",
+    "took down {0} - unsold {1} days, its gems are worth more now": "снят {0} - не продан {1} дн., самоцветы теперь стоят больше"
   },
   "settings": {
     "SteamOpenEveryAccount": {

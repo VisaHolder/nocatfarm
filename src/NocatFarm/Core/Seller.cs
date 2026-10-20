@@ -987,8 +987,14 @@ public static class Seller {
 			int ours = OurListings.BuyerPrice(l, record);
 
 			// 1.8.2: never a step that pays under "Only sell if you get at least", or no more than its gems are worth.
-			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsOf?.Invoke(l.Hash)) is int to) {
+			decimal? gemsNow = gemsOf?.Invoke(l.Hash);
+
+			if (SpareListings.StepTo(ours, quote.Price, floorPct, dump, SpareRules.From(bot.Cfg).MinSaleCents, gemsNow) is int to) {
 				steps.Add(new Step(l, ours, to));
+			} else if ((gemsNow is decimal gems) && (gems > 0) && (SpareListings.StepTo(ours, quote.Price, floorPct, dump) is int stepped)
+				&& !Spare.SellingPays(gems, ReceiveFor(stepped))) {
+				// 1.8.2: a cent lower would pay no more than its gems are worth now - taken down, and the next look turns it into gems.
+				steps.Add(new Step(l, ours, 0));
 			}
 		}
 
@@ -1008,6 +1014,12 @@ public static class Seller {
 
 		foreach (Step s in done) {
 			OurListings.Mark(bot.Name, s.Listing, settled: true);
+			if (s.To == 0) {
+				Log.Info(new Said("took down {0} - unsold {1} days, its gems are worth more now", CardName(s.Listing.Hash), (int) (now - s.Listing.Created).TotalDays), bot.Name);
+
+				continue;
+			}
+
 			SpareListings memory = SpareListings.Load(bot.Name);
 			memory.AddStep(s.Listing.Hash, s.From, s.To, DateTime.UtcNow);
 			memory.Save();

@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "留言、好友、rep4rep",
     "free games, items, Points": "免费游戏、物品、点数",
     "answers to commands": "命令的回复",
-    "updates and app messages": "更新与应用消息"
+    "updates and app messages": "更新与应用消息",
+    "{0}: listing taken down · it can be listed again": "{0}：已下架 · 可以再次上架",
+    "took down {0} - unsold {1} days, its gems are worth more now": "已下架 {0} - {1} 天未售出，现在宝石更值钱"
   },
   "settings": {
     "SteamOpenEveryAccount": {

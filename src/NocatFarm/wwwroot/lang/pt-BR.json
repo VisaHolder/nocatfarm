@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "comentários, amigos, rep4rep",
     "free games, items, Points": "jogos e itens grátis, Pontos",
     "answers to commands": "respostas a comandos",
-    "updates and app messages": "atualizações e mensagens do app"
+    "updates and app messages": "atualizações e mensagens do app",
+    "{0}: listing taken down · it can be listed again": "{0}: anúncio retirado · pode ser anunciado de novo",
+    "took down {0} - unsold {1} days, its gems are worth more now": "retirado {0} - {1} dias sem vender, as gemas valem mais agora"
   },
   "settings": {
     "SteamOpenEveryAccount": {

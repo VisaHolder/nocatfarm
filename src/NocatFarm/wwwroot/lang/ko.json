@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "댓글, 친구, rep4rep",
     "free games, items, Points": "무료 게임, 아이템, 포인트",
     "answers to commands": "명령에 대한 답",
-    "updates and app messages": "업데이트와 앱 메시지"
+    "updates and app messages": "업데이트와 앱 메시지",
+    "{0}: listing taken down · it can be listed again": "{0}: 판매 등록 취소 · 다시 등록할 수 있음",
+    "took down {0} - unsold {1} days, its gems are worth more now": "{0} 내림 - {1}일 동안 안 팔림, 지금은 보석 가치가 더 높음"
   },
   "settings": {
     "SteamOpenEveryAccount": {

@@ -1079,6 +1079,14 @@ public static class SpareRun {
 		}
 
 		foreach (OurListings.Entry d in declined) {
+			// 1.8.2: one that was up on the market and came down unsold was taken down - by you, not turned down on the phone: it
+			// may be listed again ("Don't list declined items again" is for listings never confirmed).
+			if (d.Active) {
+				Log.Info(new Said("{0}: listing taken down · it can be listed again", Seller.CardName(d.Hash)), bot.Name);
+
+				continue;
+			}
+
 			memory.AddDecline(d.Hash, d.AssetId, now);
 			Log.Info(DeclinedSaid(d.Hash, rules.DeclinedDays), bot.Name);
 		}

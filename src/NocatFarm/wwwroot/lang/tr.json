@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "yorumlar, arkadaşlar, rep4rep",
     "free games, items, Points": "ücretsiz oyunlar, eşyalar, Puanlar",
     "answers to commands": "komutlara yanıtlar",
-    "updates and app messages": "güncellemeler ve uygulama mesajları"
+    "updates and app messages": "güncellemeler ve uygulama mesajları",
+    "{0}: listing taken down · it can be listed again": "{0}: ilan kaldırıldı · yeniden listelenebilir",
+    "took down {0} - unsold {1} days, its gems are worth more now": "{0} kaldırıldı - {1} gündür satılmadı, mücevherleri artık daha değerli"
   },
   "settings": {
     "SteamOpenEveryAccount": {

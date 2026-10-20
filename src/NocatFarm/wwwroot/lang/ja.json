@@ -3429,7 +3429,9 @@
     "comments, friends, rep4rep": "コメント・フレンド・rep4rep",
     "free games, items, Points": "無料ゲーム・アイテム・ポイント",
     "answers to commands": "コマンドへの返答",
-    "updates and app messages": "アップデートとアプリのメッセージ"
+    "updates and app messages": "アップデートとアプリのメッセージ",
+    "{0}: listing taken down · it can be listed again": "{0}: 出品を取り下げ · 再出品できます",
+    "took down {0} - unsold {1} days, its gems are worth more now": "{0} を取り下げ - {1} 日売れず、今はジェムの方が価値が高い"
   },
   "settings": {
     "SteamOpenEveryAccount": {
