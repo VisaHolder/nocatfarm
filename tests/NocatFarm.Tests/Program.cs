@@ -27879,7 +27879,7 @@ await CommandSweep.RunAsync(Check);
 		Check("human mode: a few sets a look (\"Sets per look, human mode\"), spaced out",
 			bcBuyerSrc.Contains("foreach (BuyStep step in plan.Steps.Take(SetsALook(Bot.Cfg))) {", StringComparison.Ordinal) && bcBuyerSrc.Contains("Gate.Space(30, 120)", StringComparison.Ordinal));
 		Check("craft afterwards: a whole set bought makes badge crafting look soon",
-			bcBuyerSrc.Contains("BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true)", StringComparison.Ordinal));
+			bcBuyerSrc.Contains("BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true, bought: true)", StringComparison.Ordinal));
 
 		// ── the switch: on only through its preview ──
 		var bcSw = new NocatFarm.Core.Bot("bc-switch", new NocatFarm.Config.BotConfig { BuyCards = true });
