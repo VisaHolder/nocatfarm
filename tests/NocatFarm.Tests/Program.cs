@@ -26549,11 +26549,30 @@ await CommandSweep.RunAsync(Check);
 		(NocatFarm.PriceBook.ResumesAt != null) || (NocatFarm.Core.SpareRun.PricingLine(503, 40).ToEnglish() == "still pricing 503 item(s) - about 40 min"));
 }
 
+// ── 1.8.3: what the profile shows is never sold, turned into gems or swapped ──
+{
+	string psEquipped = """{"response":{"profile_background":{"communityitemid":"38716211394","appid":595340},"mini_profile_background":{},"avatar_frame":{"communityitemid":"555"},"animated_avatar":{}}}""";
+	string psPage = "<script>g_rgProfileData = {\"steamid\":\"1\"};</script><a href=\"https://steamcommunity.com/id/x/inventory/#753_6_38717999587\">hat</a><a href=\"inventory/#730_2_999\">skin</a>";
+	var psShown = NocatFarm.Core.ProfileShown.Parse(psEquipped, psPage);
+	Check("profile: the equipped background and frame, and a showcase's Steam item, are what it shows - a CS2 skin isn't a Steam item",
+		psShown is { Count: 3 } && psShown.Contains(38716211394UL) && psShown.Contains(555UL) && psShown.Contains(38717999587UL), psShown == null ? "null" : string.Join(",", psShown));
+	Check("profile: an answer that isn't Steam's - nothing known, so nothing is touched",
+		(NocatFarm.Core.ProfileShown.Parse(null, psPage) == null) && (NocatFarm.Core.ProfileShown.Parse(psEquipped, "<html>sign in</html>") == null)
+		&& (NocatFarm.Core.ProfileShown.Parse("{}", psPage) == null));
+	string psSpareSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Spare.cs"));
+	string psRunSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SpareRun.cs"));
+	string psSwapSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "CardExchange.Sync.cs"));
+	Check("profile: spare items keeps what's shown, a look that can't read the profile does nothing, and swaps leave shown cards out",
+		psSpareSrc.Contains("if (input.Shown.Contains(item.AssetId)) {", StringComparison.Ordinal)
+		&& psRunSrc.Contains("\"Steam wouldn't say what's on its profile - try again in a while\"", StringComparison.Ordinal)
+		&& psSwapSrc.Contains(".. Reserved(bot.Name, bot.SteamId, now), .. shown];", StringComparison.Ordinal));
+}
+
 // ── 1.8.1: the inventory value leaves room for selling ──
 {
 	string ivSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "InventoryValue.cs"));
-	Check("market share: the inventory value gets a quarter of the hour's market requests (90 of 360), selling the rest",
-		(NocatFarm.PriceBook.BackgroundShare == NocatFarm.PriceBook.DefaultHourCap / 4) && ivSrc.Contains("PriceBook.Background.Value = true", StringComparison.Ordinal)
+	Check("market share: the inventory value and set finder get half the hour's market requests (180 of 360), selling the rest",
+		(NocatFarm.PriceBook.BackgroundShare == NocatFarm.PriceBook.DefaultHourCap / 2) && ivSrc.Contains("PriceBook.Background.Value = true", StringComparison.Ordinal)
 		&& ivSrc.Contains("PriceBook.Background.Value = false", StringComparison.Ordinal), $"{NocatFarm.PriceBook.BackgroundShare}");
 }
 
@@ -32209,18 +32228,29 @@ static class SetFinderChecks {
 			NocatFarm.Core.SetFinder.RecordCard Rc(string h, int c, DateTime at) => new(h, c, 10, at);
 			DateTime tm = t0;
 			int took = merged.Merge([
-				new(1, 777, [.. Enumerable.Range(1, 5).Select(i => Rc($"777-Card {i}", 1, tm))]),                  // says 0.05
+				new(1, 777, [.. Enumerable.Range(1, 5).Select(i => Rc($"777-Card {i}", 1, tm.AddHours(-21)))]),    // says 0.05, a day ago
 				new(2, 778, [.. Enumerable.Range(1, 5).Select(i => Rc($"778-Card {i}", 1, tm))]),                  // another version
 				new(1, 779, [.. Enumerable.Range(1, 5).Select(i => Rc($"123-Card {i}", 1, tm))]),                  // another game's cards
 				new(1, 780, [.. Enumerable.Range(1, 5).Select(i => Rc($"780-Card {i}", 1, tm.AddDays(1)))]),       // seen in the future
 				new(1, 781, [.. Enumerable.Range(1, 5).Select(i => Rc($"781-Card {i}", 1, tm.AddDays(-3)))]),      // too old
 			], tm);
-			Check("set finder: an outside set is only a candidate - never known, never a price - and a wrong or stale one isn't taken at all",
+			Check("set finder: an outside set read over 20 hours ago is only a candidate - never known, never a price - and a wrong or stale one isn't taken at all",
 				(took == 1) && (merged.Known(tm).Count == 0) && merged.ToFill(tm).SequenceEqual([777u]), $"{took} {string.Join(",", merged.ToFill(tm))}");
 			await merged.BatchAsync(tm, CancellationToken.None);
 			Check("set finder: read on the real market, the outside set is known at the market's price, not the one it was said to cost",
 				merged.Known(tm).SingleOrDefault() is { App: 777, UsdCents: 30 } && (outside.Asked.Count(static a => a.Contains("tag_app_777", StringComparison.Ordinal)) == 1),
 				string.Join(",", merged.Known(tm).Select(static k => $"{k.App}:{k.UsdCents}")));
+
+			// 1.8.3: one another copy read within the last 20 hours is known as it is - not read again by every copy.
+			var fresh2 = new NocatFarm.Core.SetFinder(State("merged-fresh"), outside.Get);
+			int askedBefore = outside.Asked.Count;
+			int took2 = fresh2.Merge([new(1, 777, [.. Enumerable.Range(1, 5).Select(i => Rc($"777-Card {i}", 6, tm.AddHours(-1)))])], tm);
+			await fresh2.BatchAsync(tm, CancellationToken.None);
+			Check("set finder: an outside set read within 20 hours is known at its price, not read again, and never sent back as this copy's own",
+				(took2 == 1) && fresh2.Known(tm).SingleOrDefault() is { App: 777, UsdCents: 30 } && !fresh2.ToFill(tm).Contains(777u)
+				&& !outside.Asked.Skip(askedBefore).Any(static a => a.Contains("tag_app_777", StringComparison.Ordinal))
+				&& (fresh2.Records(tm, own: true).Count == 0) && (fresh2.Records(tm).Count == 1),
+				string.Join(",", fresh2.Known(tm).Select(static k => $"{k.App}:{k.UsdCents}")));
 
 			// ── buying: the cheapest next level, a whole new set or a started badge ──
 			var mkt = new FakeSetMarket();
@@ -32416,7 +32446,7 @@ static class SetFinderChecks {
 			capP.SetValue(null, 40);
 			before = market.Calls;
 			var greedy = new NocatFarm.Core.SetFinder(Path.Combine(root, "config", "state", "pacing-share.json"));
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < 30; i++) {
 				await greedy.BatchAsync(now, CancellationToken.None);
 			}
 			int finderSent = market.Calls - before;
@@ -32428,8 +32458,8 @@ static class SetFinderChecks {
 
 			bool listing = await AsListing();
 			bool other = (await NocatFarm.PriceBook.MarketGetAsync("/market/priceoverview/?appid=753&currency=1&market_hash_name=11-Card", CancellationToken.None)).Asked;
-			Check("set finder: only the background's share of the hour (a quarter of the cap) - the listings' reserve and the rest stay free",
-				(finderSent == NocatFarm.PriceBook.BackgroundShare) && (NocatFarm.PriceBook.BackgroundShare == 10) && listing && other,
+			Check("set finder: only the background's share of the hour (half the cap) - the listings' reserve and the rest stay free",
+				(finderSent == NocatFarm.PriceBook.BackgroundShare) && (NocatFarm.PriceBook.BackgroundShare == 20) && listing && other,
 				$"the finder sent {finderSent} of a cap of 40; a listing {(listing ? "went" : "waited")}, another request {(other ? "went" : "waited")}");
 		} finally {
 			capP.SetValue(null, null);
@@ -32759,7 +32789,8 @@ static class BuyFixChecks {
 				(off.Inner.Resumed.Count == 0) && (offBuyer.Ledger.OnPhone.Count == 1));
 			Check("phone: finishing what the owner confirmed runs outside a human-mode account's day; nothing new starts outside it",
 				buyerSrc.Contains("await ResumePhoneAsync(ct, Stopped(finishing: true) == null, result)", StringComparison.Ordinal)
-				&& buyerSrc.Contains("if (!finishing && !Gate.Open) {", StringComparison.Ordinal)
+				&& buyerSrc.Contains("if (!finishing && !midSet && !Gate.Open) {", StringComparison.Ordinal)
+				&& buyerSrc.Contains("if (Stopped(midSet: !ReferenceEquals(card, step.Cards[0])) is { } stop) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("bool buying = On(Bot) && Gate.Open;", StringComparison.Ordinal));
 			TimeSpan soon = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromMinutes(5)), later = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromHours(1)),
 				last = NocatFarm.Modules.CardBuyer.PhoneGap(TimeSpan.FromHours(10));
@@ -33280,9 +33311,9 @@ static class SetShareChecks {
 				new(1, 503, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"503-C{i}", 100_001, 5, now.AddMinutes(-5)))]),
 			};
 			Check("set sharing: a set with anything nocat.lol would refuse is left out, not sent", NocatFarm.Core.SetShare.Sets(odd, now).Count == 0);
-			Check("set sharing: at most 300 sets go",
-				NocatFarm.Core.SetShare.Sets(Enumerable.Range(1, 400).Select(a => new NocatFarm.Core.SetFinder.SetRecord(1, (uint) a,
-					[.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"{a}-C{i}", 3, 5, now))])).ToList(), now).Count == 300);
+			Check("set sharing: at most 1000 sets go",
+				NocatFarm.Core.SetShare.Sets(Enumerable.Range(1, 1200).Select(a => new NocatFarm.Core.SetFinder.SetRecord(1, (uint) a,
+					[.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"{a}-C{i}", 3, 5, now))])).ToList(), now).Count == 1000);
 			Check("set sharing: the same prices a minute later are no news - only a price changing is",
 				(NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now)) == NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now.AddMinutes(1))))
 				&& (NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(records, now)) != NocatFarm.Core.SetShare.Signature(NocatFarm.Core.SetShare.Sets(
@@ -33298,8 +33329,9 @@ static class SetShareChecks {
 				(NocatFarm.Core.SetShare.Parse("<html>", now).Count == 0) && (NocatFarm.Core.SetShare.Parse("""{"v":2,"s":[]}""", now).Count == 0) && (NocatFarm.Core.SetShare.Parse("[]", now).Count == 0));
 			int before = finder.Known(now).Count;
 			int taken = finder.Merge(parsed, now);
-			Check("set sharing: what comes back is only a candidate - which game to read first, never a known set or a price",
-				(taken == 1) && (finder.Known(now).Count == before) && finder.ToFill(now).Contains(900u), string.Join(",", finder.ToFill(now)));
+			Check("set sharing: what comes back, read by another copy within the hour, is known here - not read again - and never sent back as this copy's",
+				(taken == 1) && (finder.Known(now).Count == before + 1) && !finder.ToFill(now).Contains(900u)
+				&& finder.Records(now).Any(static r => r.App == 900) && !finder.Records(now, own: true).Any(static r => r.App == 900), string.Join(",", finder.ToFill(now)));
 
 			// ── one go, against a pretend nocat.lol ──
 			var site = new FakeSetsSite { Table = table };
@@ -33320,10 +33352,10 @@ static class SetShareChecks {
 			Check("set sharing: a plain nocat.farm User-Agent, JSON, and nothing about any account",
 				site.Calls[0].UserAgent.StartsWith("nocat.farm/", StringComparison.Ordinal) && site.Calls[0].ContentType.StartsWith("application/json", StringComparison.Ordinal)
 				&& !site.Calls[0].Body.Contains("steam", StringComparison.OrdinalIgnoreCase));
-			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(5), CancellationToken.None);
-			Check("set sharing: gentle - nothing again for 6 hours", site.Calls.Count == 2);
-			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(6.1), CancellationToken.None);
-			Check("set sharing: 6 hours on with nothing new, only the fetch - the same sets aren't sent again",
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(1.5), CancellationToken.None);
+			Check("set sharing: gentle - nothing again for 2 hours", site.Calls.Count == 2);
+			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(2.1), CancellationToken.None);
+			Check("set sharing: 2 hours on with nothing new, only the fetch - the same sets aren't sent again",
 				(site.Calls.Count == 3) && (site.Calls[2].Method == "GET"));
 			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(24.2), CancellationToken.None);
 			Check("set sharing: a day on, the same sets go again so nocat.lol's copy of them doesn't age out",
@@ -33332,7 +33364,7 @@ static class SetShareChecks {
 			int calls = site.Calls.Count;
 			var down = await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(31), CancellationToken.None);
 			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(32), CancellationToken.None);
-			Check("set sharing: nocat.lol not answering is nothing - no error, and it doesn't ask again for 6 hours",
+			Check("set sharing: nocat.lol not answering is nothing - no error, and it doesn't ask again for 2 hours",
 				!down.Sent && (down.Taken == 0) && (site.Calls.Count == calls + 1), site.Calls.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 			Check("set sharing: the setting - on, beside 'Share my farming totals', shown only while 'Count me as a user' is on, its words say what goes",
@@ -35572,7 +35604,7 @@ static class GemsFixChecks {
 			NocatFarm.Core.SteamGems.ForgetLoaded();
 			NocatFarm.Core.SparePrices.Get = static (_, _) => Task.FromResult<(string?, bool)>((null, false));
 			List<NocatFarm.Core.SpareItem> items = [G(10, 5000, 2)];   // the one Steam won't say
-			for (uint g = 1; g <= 24; g++) {
+			for (uint g = 1; g <= 90; g++) {
 				items.Add(G(10 + g, 5000 + g, 2));
 			}
 			for (ulong n = 0; n < 5; n++) {
@@ -35590,8 +35622,8 @@ static class GemsFixChecks {
 			NocatFarm.Core.SteamGems.ForgetLoaded();   // a restart
 			await NocatFarm.Core.SpareRun.PriceAsync(() => plan, items, gemRules, 1, 0, false, false, steam, CancellationToken.None);
 			List<uint> third = [.. steam.Asked];
-			Check("gems fix: 20 gem values a look, the one the most items wait on first; the next look asks only the ones still unknown, not the one Steam didn't answer; after a restart only that one again",
-				(first.Count == 20) && (first[0] == 5099) && first.Contains(5000u) && (second.Count == 6) && !second.Intersect(first).Any() && third.SequenceEqual([5000u]),
+			Check("gems fix: 80 gem values a look (1.8.3, was 20), the one the most items wait on first; the next look asks only the ones still unknown, not the one Steam didn't answer; after a restart only that one again",
+				(first.Count == 80) && (first[0] == 5099) && first.Contains(5000u) && (second.Count == 12) && !second.Intersect(first).Any() && third.SequenceEqual([5000u]),
 				$"{string.Join(",", first)} | {string.Join(",", second)} | {string.Join(",", third)}");
 			NocatFarm.Core.SparePrices.Reset();
 			NocatFarm.Core.SteamGems.ForgetLoaded();
@@ -35789,8 +35821,8 @@ static class QuickSetsChecks {
 			int knownAt6h = quick.Known(at).Count;
 			Check("quick sets: the 100 cheapest checked within about two hours, the 300 cheapest within about six",
 				(knownAt2h >= 100) && (knownAt6h >= 300), $"{knownAt2h} after 2h, {knownAt6h} after 6h ({batches} batches)");
-			Check("quick sets: never more than the batch's requests, batches 12 to 18 minutes apart - about 64 requests an hour, 80 at most",
-				(maxRequests <= NocatFarm.Core.SetFinder.RequestsABatch) && (NocatFarm.Core.SetFinder.RequestsABatch == 16) && (in4 <= 64)
+			Check("quick sets: never more than the batch's requests, batches 12 to 18 minutes apart - about 160 requests an hour, 200 at most",
+				(maxRequests <= NocatFarm.Core.SetFinder.RequestsABatch) && (NocatFarm.Core.SetFinder.RequestsABatch == 40) && (in4 <= 160)
 				&& Enumerable.Range(0, 50).Select(static _ => NocatFarm.Core.SetFinder.CatchUpGap()).All(static g => (g >= TimeSpan.FromMinutes(12)) && (g <= TimeSpan.FromMinutes(18))),
 				$"most {maxRequests} a batch, {in4} in the first 4 batches");
 			var covered = quick.Covered(at);
@@ -36882,7 +36914,8 @@ static class MoneyFixChecks {
 					}
 					list.Add(app);
 				}
-				var f = new NocatFarm.Core.SetFinder(State("warm"), fm.Get);
+				int asked = 0;   // the market answers 14 reads, then stops - a batch's worth whatever the batch's size
+				var f = new NocatFarm.Core.SetFinder(State("warm"), (u, ct) => ++asked > 14 ? Task.FromResult<string?>(null) : fm.Get(u, ct));
 				f.Seed(list, DateTime.UtcNow);
 				await f.BatchAsync(DateTime.UtcNow, CancellationToken.None);
 				return (f, cm);

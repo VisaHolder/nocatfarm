@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "最近 {0} 天内收到",
     "worth nothing on the market, gem value not known": "在市场上不值钱，宝石价值未知",
     "on the market or in a trade offer": "在市场上或在交易报价中",
+    "on your profile - equipped or in a showcase": "在你的个人资料上 - 已装备或在展柜中",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "无法读取个人资料上的内容 - 按上次读取({0}前)",
     "extra card copies are switched off": "多余的卡牌副本已关闭",
     "duplicate backgrounds are switched off": "重复的背景已关闭",
     "the market pays nothing for it": "市场上卖不出钱",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "周末时长",
       "tip": "周六周日大约玩多少小时。周末玩得久一些，一周看起来更真实。"
+    },
+    "HoursVaryPct": {
+      "label": "每天时长最多浮动",
+      "tip": "每天的游戏时长可以比上面的小时数上下浮动多少（百分比）。例如工作日8小时设10：每个工作日玩7h12m到8h48m。0 保持通常的浮动——安静的一天约一半，长的一天多四分之一。"
     },
     "DayOffChancePct": {
       "label": "休息一天的概率",

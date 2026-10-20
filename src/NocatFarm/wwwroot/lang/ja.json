@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "直近 {0} 日以内に届きました",
     "worth nothing on the market, gem value not known": "マーケットでは価値がなく、ジェムの価値も不明です",
     "on the market or in a trade offer": "マーケットに出品中か、トレードオファーに入っています",
+    "on your profile - equipped or in a showcase": "プロフィールに表示中 - 装備中またはショーケース内",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "プロフィールの内容を読めませんでした - 前回の読み取りを使います({0}前)",
     "extra card copies are switched off": "余分なカードの重複はオフです",
     "duplicate backgrounds are switched off": "重複した背景はオフです",
     "the market pays nothing for it": "マーケットでは値がつきません",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "週末の時間",
       "tip": "土曜と日曜に遊ぶおおよその時間数です。週末を長めにすると、1 週間がより本物らしく見えます。"
+    },
+    "HoursVaryPct": {
+      "label": "時間の変動幅",
+      "tip": "1日のプレイ時間が上の時間からどれだけ上下してよいか（パーセント）。例えば平日8時間で10なら、平日は毎日7h12m〜8h48m。0はいつもの幅のまま（静かな日は約半分、長い日は4分の1多い）。"
     },
     "DayOffChancePct": {
       "label": "休む日の確率",

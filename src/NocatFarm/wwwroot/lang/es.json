@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "llegó en los últimos {0} día(s)",
     "worth nothing on the market, gem value not known": "no vale nada en el mercado y no se sabe cuántas gemas da",
     "on the market or in a trade offer": "en el mercado o en una oferta de intercambio",
+    "on your profile - equipped or in a showcase": "en tu perfil - equipado o en un escaparate",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "no se pudo leer lo que hay en su perfil - se usa la última lectura (hace {0})",
     "extra card copies are switched off": "las copias de más de cromos están desactivadas",
     "duplicate backgrounds are switched off": "los fondos repetidos están desactivados",
     "the market pays nothing for it": "el mercado no paga nada por él",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "Horas el fin de semana",
       "tip": "Más o menos cuántas horas juega el sábado y el domingo. Fines de semana más largos hacen que la semana parezca más real."
+    },
+    "HoursVaryPct": {
+      "label": "Las horas varían como máximo",
+      "tip": "Cuánto pueden alejarse las horas de un día de las horas de arriba, en porcentaje hacia arriba o abajo. Por ejemplo 10 con 8 horas entre semana: cada día entre semana juega entre 7h12m y 8h48m. 0 mantiene la variación habitual: un día tranquilo puede ser la mitad y uno largo un cuarto más."
     },
     "DayOffChancePct": {
       "label": "Probabilidad de día libre",

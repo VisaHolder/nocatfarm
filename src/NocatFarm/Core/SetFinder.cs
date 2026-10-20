@@ -43,7 +43,7 @@ public sealed class SetFinder {
 	public const int PagesABatch = 2;
 
 	/// <summary>Market requests a batch makes at most while the cheapest sets are due - whole sets first, then the walk.</summary>
-	public const int RequestsABatch = 16;
+	public const int RequestsABatch = 40;   // 1.8.3: was 16 - about 160 an hour while catching up, inside the background's half of the cap
 
 	/// <summary>Market requests a batch makes at most once the cheapest sets are fresh.</summary>
 	public const int RequestsABatchIdle = 4;
@@ -124,6 +124,9 @@ public sealed class SetFinder {
 		public long FilledAt { get; set; }
 
 		public Dictionary<string, Card> Cards { get; set; } = new(StringComparer.Ordinal);
+
+		/// <summary>1.8.3: its cards came from another copy's read (<see cref="Merge"/>), not this one's - never sent back as its own.</summary>
+		public bool Outside { get; set; }
 	}
 
 	internal sealed class Table {
@@ -147,7 +150,7 @@ public sealed class SetFinder {
 
 		public Dictionary<uint, Game> Games { get; set; } = [];
 
-		/// <summary>Sets from outside (<see cref="Merge"/>): only which games to read first - never a known set or a price.</summary>
+		/// <summary>Sets from outside (<see cref="Merge"/>): which games to read first.</summary>
 		public Dictionary<uint, Hint> Hints { get; set; } = [];
 
 		/// <summary>When the public lists were last read (<see cref="SetSeeds"/>).</summary>
@@ -236,10 +239,10 @@ public sealed class SetFinder {
 		}
 	}
 
-	/// <summary>Every set it knows whole now, as plain records, the cheapest first.</summary>
-	public IReadOnlyList<SetRecord> Records(DateTime now) {
+	/// <summary>Every set it knows whole now, as plain records, the cheapest first. <paramref name="own"/>: only the ones it read itself.</summary>
+	public IReadOnlyList<SetRecord> Records(DateTime now, bool own = false) {
 		lock (_gate) {
-			return [.. Load().Games.Where(g => Whole(g.Value, now))
+			return [.. Load().Games.Where(g => Whole(g.Value, now) && !(own && g.Value.Outside))
 				.Select(g => new SetRecord(RecordVersion, g.Key, [.. g.Value.Cards.OrderBy(static c => c.Key, StringComparer.Ordinal)
 					.Select(static c => new RecordCard(c.Key, c.Value.Usd, c.Value.Listings, new DateTime(c.Value.At, DateTimeKind.Utc)))]))
 				.OrderBy(static r => r.UsdCents).ThenBy(static r => r.App)];
@@ -247,9 +250,9 @@ public sealed class SetFinder {
 	}
 
 	/// <summary>
-	/// Sets from outside (another copy's finder, say), taken in as candidates only: each says which game to read next and
-	/// nothing more - never a known set, never a price anything is bought at (buying cards prices every card on the real
-	/// market before it buys, and only the finder's own reads make a set known). A record is left out unless it's this
+	/// Sets from outside (another copy's finder, say). Each orders which game to read next; one read in the last
+	/// <see cref="RefillAfter"/> is also known here as it is (1.8.3), so copies don't all read the same sets - never a price
+	/// anything is bought at (buying cards prices every card on the real market before it buys). A record is left out unless it's this
 	/// version, every card is this game's ("&lt;app&gt;-"), there are 5 to 300 of them, each priced 1 cent to 1,000.00 and seen
 	/// in the last <see cref="CardLife"/> (never in the future). How many were taken in.
 	/// </summary>
@@ -274,6 +277,26 @@ public sealed class SetFinder {
 				h.UsdCents = r.UsdCents;
 				h.At = r.Cards.Min(static c => c.SeenUtc).Ticks;
 				taken++;
+
+				// 1.8.3: read by another copy lately - known here as it is, so this copy doesn't read the same set again (most
+				// prices barely move in a day). Safe: buying prices every card on the real market before it buys, so a wrong
+				// price costs a market read, never money. Its own read, if newer, is kept.
+				DateTime oldest = r.Cards.Min(static c => c.SeenUtc);
+
+				if ((now - oldest < RefillAfter) && (r.Cards.Count <= 15)) {
+					t.Games.TryGetValue(r.App, out Game? mine);
+
+					if ((mine == null) || !Whole(mine, now) || (mine.FilledAt < oldest.Ticks)) {
+						Game g = mine ?? new Game();
+						g.Name = (mine?.Name is { Length: > 0 } known) ? known : GameNames.Of(r.App);
+						g.Size = r.Cards.Count;
+						g.SizeAt = now.Ticks;
+						g.FilledAt = oldest.Ticks;
+						g.Outside = true;
+						g.Cards = r.Cards.ToDictionary(static c => c.Hash, static c => new Card { Usd = c.UsdCents, Listings = c.Listings, At = c.SeenUtc.Ticks }, StringComparer.Ordinal);
+						t.Games[r.App] = g;
+					}
+				}
 			}
 
 			Save();
@@ -368,6 +391,19 @@ public sealed class SetFinder {
 
 		lock (_gate) {
 			return now - new DateTime(Load().AskedAt, DateTimeKind.Utc) < AskedFor;
+		}
+	}
+
+	/// <summary>Started badges whose sets aren't known - read before anything else (<see cref="Want"/>).</summary>
+	private HashSet<uint> _wanted = [];
+
+	/// <summary>
+	/// 1.8.3: an account holds cards of these games but the finder doesn't know their sets: they're read first, so buying
+	/// can price the few cards each is missing - often the cheapest level there is. Replaces the last call's list.
+	/// </summary>
+	public void Want(IEnumerable<uint> apps) {
+		lock (_gate) {
+			_wanted = [.. apps];
 		}
 	}
 
@@ -611,6 +647,7 @@ public sealed class SetFinder {
 			}
 
 			if ((cards.Count > 0) && (cards.Count + others == total)) {
+				game.Outside = false;
 				game.Size = cards.Count;
 				game.SizeAt = now.Ticks;
 				game.Cards = cards;
@@ -630,7 +667,7 @@ public sealed class SetFinder {
 		lock (_gate) {
 			Table t = Load();
 
-			return t.FillsToday >= FillsADay ? [] : [.. Candidates(t, now).Where(static c => c.Due).Select(static c => c.App)];
+			return t.FillsToday >= FillsADay ? [] : [.. Candidates(t, now, _wanted).Where(static c => c.Due).Select(static c => c.App)];
 		}
 	}
 
@@ -639,7 +676,7 @@ public sealed class SetFinder {
 		lock (_gate) {
 			Table t = Load();
 
-			return (t.FillsToday < FillsADay) && Candidates(t, now).Take(KeepFresh).Any(static c => c.Due);
+			return (t.FillsToday < FillsADay) && Candidates(t, now, _wanted).Take(KeepFresh).Any(static c => c.Due);
 		}
 	}
 
@@ -651,7 +688,7 @@ public sealed class SetFinder {
 	/// nearest cheaper-placed game it has read costs (nothing read yet: first of all, in the list's order). A game with a card
 	/// seen lately that nobody sells is left out.
 	/// </summary>
-	private static List<(uint App, long Key, int Rank, bool Due)> Candidates(Table t, DateTime now) {
+	private static List<(uint App, long Key, int Rank, bool Due)> Candidates(Table t, DateTime now, IReadOnlyCollection<uint>? wanted = null) {
 		Dictionary<uint, (long Key, bool Has)> keys = [];
 		HashSet<uint> left = [];
 
@@ -698,8 +735,22 @@ public sealed class SetFinder {
 			keys[app] = (nearest, false);
 		}
 
+		// 1.8.3: the public list's games never read whole go first, in the list's order. A game the walk saw one cheap card
+		// of was guessed at its seen cards plus the walk's cheapest price for each unseen one - 16 cents for most, below any
+		// real set - so the day's reads went on hundreds of those guesses (each turning out 40 cents or more) and the list's
+		// own top sets (Torchlight: Infinite at 0.32, 4th on it) were never read at all.
+		// Badges an account has started but whose set isn't known (Want): ahead of everything - their missing cards can be the
+		// cheapest level of all, and nothing can be planned on them until the set is read.
+		foreach (uint app in wanted ?? []) {
+			if (!left.Contains(app)) {
+				keys.TryAdd(app, (0, false));
+			}
+		}
+
 		return [.. keys.Select(k => (App: k.Key, k.Value.Key, Rank: t.Hints.TryGetValue(k.Key, out Hint? h) && (h.Rank > 0) ? h.Rank : int.MaxValue, Due: Due(t, k.Key, now)))
-			.OrderBy(static c => c.Key).ThenBy(static c => c.Rank).ThenBy(static c => c.App)];
+			.OrderBy(c => (wanted?.Contains(c.App) == true) && !(t.Games.TryGetValue(c.App, out Game? g) && Whole(g, now)) ? 0
+				: (c.Rank != int.MaxValue) && !(t.Games.TryGetValue(c.App, out Game? g2) && Before(g2)) ? 1 : 2)
+			.ThenBy(static c => c.Key).ThenBy(static c => c.Rank).ThenBy(static c => c.App)];
 	}
 
 	/// <summary>Read whole before, every card listed then - its price then (maybe stale) orders it.</summary>
@@ -758,7 +809,8 @@ public sealed class SetFinder {
 		lock (_gate) {
 			Table t = Load();
 			HashSet<uint> listed = [.. t.Hints.Where(static h => (h.Value.Rank > 0) || (h.Value.UsdCents > 0)).Select(static h => h.Key)];
-			List<uint> cheapest = [.. Candidates(t, now).Select(static c => c.App).Where(listed.Contains).Take(WarmUpSets)];
+			List<uint> cheapest = [.. Candidates(t, now).OrderBy(static c => c.Key).ThenBy(static c => c.Rank).ThenBy(static c => c.App)   // by what each likely costs, not the reading order
+				.Select(static c => c.App).Where(listed.Contains).Take(WarmUpSets)];
 			int done = cheapest.Count(a => t.Games.TryGetValue(a, out Game? g) && (g.FilledAt > 0) && (now - new DateTime(g.FilledAt, DateTimeKind.Utc) < TimeSpan.FromHours(24)));
 
 			return (done, cheapest.Count);

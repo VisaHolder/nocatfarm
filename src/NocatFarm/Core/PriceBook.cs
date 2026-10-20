@@ -95,8 +95,8 @@ public static partial class PriceBook {
 	private static readonly Queue<DateTime> SentTimes = new();
 
 	/// <summary>
-	/// True for the requests of the inventory value - a number to look at, never what anything is decided by. Those get a
-	/// quarter of the hour's cap (<see cref="BackgroundShare"/>), so selling, gems and the level planner always have room.
+	/// True for the requests of the inventory value and the set finder - never what a sale is decided by. Those get half
+	/// the hour's cap (<see cref="BackgroundShare"/>), so selling, gems and the level planner always have room.
 	/// </summary>
 	/// <remarks>
 	/// Live, 2026-10-13: the inventory value of 300 unpriced items asked 120 times in 16 minutes, the whole hour's cap, and
@@ -117,8 +117,8 @@ public static partial class PriceBook {
 	/// <summary>The background's requests in the last hour - the same clock as <see cref="SentTimes"/>.</summary>
 	private static readonly Queue<DateTime> BackgroundTimes = new();
 
-	/// <summary>The most background requests in any hour: a quarter of the cap.</summary>
-	public static int BackgroundShare => Math.Max(1, HourCap / 4);
+	/// <summary>The most background requests in any hour: half the cap (1.8.3, was a quarter - the set finder reads the cheapest sets faster).</summary>
+	public static int BackgroundShare => Math.Max(1, HourCap / 2);
 
 	/// <summary>"The hourly cap is reached" said once per hour it is, in the debug log.</summary>
 	private static DateTime _capSaidUntil = DateTime.MinValue;

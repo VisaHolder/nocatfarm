@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "son {0} gün içinde geldi",
     "worth nothing on the market, gem value not known": "pazarda değersiz, mücevher değeri bilinmiyor",
     "on the market or in a trade offer": "pazarda ya da bir takas teklifinde",
+    "on your profile - equipped or in a showcase": "profilinde - kuşanılmış ya da bir vitrinde",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "profilinde ne olduğu okunamadı - son okumaya göre ({0} önce)",
     "extra card copies are switched off": "fazla kart kopyaları kapalı",
     "duplicate backgrounds are switched off": "kopya arka planlar kapalı",
     "the market pays nothing for it": "pazar bunun için hiçbir şey ödemiyor",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "Hafta sonu saat",
       "tip": "Cumartesi ve pazar kabaca kaç saat oynadığı. Daha uzun hafta sonları haftayı daha gerçekçi gösterir."
+    },
+    "HoursVaryPct": {
+      "label": "Saatler en fazla şu kadar değişir",
+      "tip": "Bir günün saatlerinin yukarıdaki saatlerden yüzde olarak ne kadar sapabileceği. Örneğin hafta içi 8 saatle 10: her hafta içi günü 7h12m ile 8h48m arasında oynar. 0 olağan aralığı korur - sakin bir gün yarısı kadar, uzun bir gün dörtte bir fazla olabilir."
     },
     "DayOffChancePct": {
       "label": "İzin günü olasılığı",

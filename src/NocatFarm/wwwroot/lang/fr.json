@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "arrivé ces {0} dernier(s) jour(s)",
     "worth nothing on the market, gem value not known": "ne vaut rien sur le marché, valeur en gemmes inconnue",
     "on the market or in a trade offer": "sur le marché ou dans une offre d'échange",
+    "on your profile - equipped or in a showcase": "sur ton profil - équipé ou dans une vitrine",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "impossible de lire ce qu'il y a sur son profil - je garde la dernière lecture (il y a {0})",
     "extra card copies are switched off": "les copies de cartes en plus sont désactivées",
     "duplicate backgrounds are switched off": "les arrière-plans en double sont désactivés",
     "the market pays nothing for it": "le marché n'en donne rien",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "Heures le week-end",
       "tip": "Environ combien d'heures il joue le samedi et le dimanche. Des week-ends plus longs rendent la semaine plus crédible."
+    },
+    "HoursVaryPct": {
+      "label": "Les heures varient d'au plus",
+      "tip": "De combien les heures d'une journée peuvent s'écarter des heures ci-dessus, en pourcentage dans un sens ou dans l'autre. Par exemple 10 avec 8 heures en semaine : chaque jour de semaine joue entre 7h12m et 8h48m. 0 garde l'écart habituel - une journée calme peut faire la moitié, une longue un quart de plus."
     },
     "DayOffChancePct": {
       "label": "Probabilité d'un jour sans jouer",

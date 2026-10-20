@@ -6,6 +6,7 @@
     nocat.farm-v<version>-portable.zip      Windows (win-x64) portable - also the one the in-app updater installs
     nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
+    nocat.farm-v<version>_linux-arm.zip     Linux on 32-bit ARM (older Pis, Android TV boxes running Debian in Termux)
   The Mac zips (_osx-arm64, _osx-x64) are NOT made here: a Mac only runs a signed app, and it's only signed when
   built on a Mac. After creating the release: gh workflow run macos.yml -f tag=v<version>
 
@@ -27,7 +28,7 @@
   Nothing for Windows, no installer, no docs regenerated.
 #>
 param(
-    [ValidateSet('', 'linux-x64', 'linux-arm64')][string]$OnlyRid = '',
+    [ValidateSet('', 'linux-x64', 'linux-arm64', 'linux-arm')][string]$OnlyRid = '',
     [string]$AsVersion = ''
 )
 
@@ -186,7 +187,7 @@ if ($iscc) {
 # ==== Linux ==============================================================================================
 # Self-contained as well, so it runs on a box with no .NET. The csproj makes these a plain console program
 # (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./nocatFarm.
-foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-arm64') })) {
+foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-arm64', 'linux-arm') })) {
     $lstage = Join-Path $dist "nocat.farm-$rid"
     if (Test-Path $lstage) { Remove-Item $lstage -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $lstage | Out-Null
@@ -207,4 +208,4 @@ foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-ar
 }
 
 Write-Host 'Clean: no accounts, tokens, or logs included.' -ForegroundColor Green
-Write-Host 'Upload the setup and all three zips to the release, then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray
+Write-Host 'Upload the setup and all four zips to the release, then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray

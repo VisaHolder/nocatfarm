@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "최근 {0}일 안에 들어왔습니다",
     "worth nothing on the market, gem value not known": "장터에서는 가치가 없고 보석 가치도 모릅니다",
     "on the market or in a trade offer": "장터에 있거나 교환 제안에 들어 있습니다",
+    "on your profile - equipped or in a showcase": "프로필에 표시됨 - 장착 중이거나 진열장에 있음",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "프로필 내용을 읽지 못함 - 마지막으로 읽은 내용 사용 ({0} 전)",
     "extra card copies are switched off": "여분의 카드 사본은 꺼져 있습니다",
     "duplicate backgrounds are switched off": "중복 배경은 꺼져 있습니다",
     "the market pays nothing for it": "장터에서 받을 돈이 없습니다",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "주말 시간",
       "tip": "토요일과 일요일에 대략 몇 시간 플레이할지입니다. 주말을 길게 하면 한 주가 더 자연스러워 보입니다."
+    },
+    "HoursVaryPct": {
+      "label": "시간 변동 폭 최대",
+      "tip": "하루 플레이 시간이 위의 시간에서 위아래로 얼마나 벗어날 수 있는지(퍼센트). 예: 평일 8시간에 10이면 평일마다 7h12m~8h48m. 0은 평소 폭 그대로 - 조용한 날은 약 절반, 긴 날은 4분의 1 더."
     },
     "DayOffChancePct": {
       "label": "쉬는 날 확률",

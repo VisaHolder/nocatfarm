@@ -35,6 +35,9 @@ public readonly record struct BotStatus(
 	/// </summary>
 	public bool QuietToday { get; private init; }
 
+	/// <summary>On a short or meal break in human mode - the break's own line already said when it's back.</summary>
+	public bool OnBreak { get; private init; }
+
 	/// <summary>The log's shorter words, where they differ: "asleep · 8 games", "8m left", "up in 2h10m", "2h10m today".</summary>
 	public Said LogDoing { get; private init; }
 
@@ -129,6 +132,7 @@ public readonly record struct BotStatus(
 		Said today = default;
 		Said logDoing = default, logSitting = default, logToday = default;
 		bool quiet = false;
+		bool onBreak = false;
 		int done = 0, total = 0, dayDone = 0, dayTotal = 0;
 		bool playing = false;
 
@@ -186,6 +190,7 @@ public readonly record struct BotStatus(
 
 			// The log's line: what's left of the sitting, when it's up again or back - not two pairs of numbers.
 			HumanMode.Phase phase = human.Current;
+			onBreak = phase is HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak;
 			logDoing = human.LogDoing;
 
 			// Card drops it was told to go for ('drops'): the same line as any sitting, with how many have dropped.
@@ -258,6 +263,7 @@ public readonly record struct BotStatus(
 		return new BotStatus(doing, persona, sitting, today, said, warning, done, total, dayDone, dayTotal) {
 			AtTheKeyboard = playing,
 			QuietToday = quiet || (today.English == "nothing to farm"),
+			OnBreak = onBreak,
 			LogDoing = logDoing,
 			LogSitting = logSitting,
 			LogToday = logToday

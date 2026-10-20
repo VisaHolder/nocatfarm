@@ -2720,6 +2720,8 @@
     "came in within the last {0} day(s)": "przyszło w ciągu ostatnich {0} dni",
     "worth nothing on the market, gem value not known": "nic niewarte na rynku, wartość w klejnotach nieznana",
     "on the market or in a trade offer": "na rynku albo w ofercie wymiany",
+    "on your profile - equipped or in a showcase": "na twoim profilu - założone lub w gablocie",
+    "couldn't read what's on its profile - going by the last read ({0} ago)": "nie udało się odczytać, co jest na profilu - używam ostatniego odczytu (sprzed {0})",
     "extra card copies are switched off": "dodatkowe kopie kart są wyłączone",
     "duplicate backgrounds are switched off": "zduplikowane tła są wyłączone",
     "the market pays nothing for it": "rynek nic za to nie płaci",
@@ -3685,6 +3687,10 @@
     "WeekendHours": {
       "label": "Godzin w weekend",
       "tip": "Mniej więcej ile godzin gra w sobotę i niedzielę. Dłuższe weekendy sprawiają, że tydzień wygląda prawdziwiej."
+    },
+    "HoursVaryPct": {
+      "label": "Godziny wahają się najwyżej o",
+      "tip": "Jak bardzo godziny danego dnia mogą odbiegać od godzin powyżej, w procentach w górę lub w dół. Na przykład 10 przy 8 godzinach w dni robocze: każdy dzień roboczy gra od 7h12m do 8h48m. 0 zostawia zwykły rozrzut - spokojny dzień może być o połowę krótszy, długi o ćwierć dłuższy."
     },
     "DayOffChancePct": {
       "label": "Szansa na dzień wolny",

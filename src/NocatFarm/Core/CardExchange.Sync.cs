@@ -455,8 +455,13 @@ public static partial class CardExchange {
 			return null;
 		}
 
+		// 1.8.3: a card shown on the profile (a showcase's) is never swapped away.
+		if (await ProfileShown.ReadAsync(bot, ct).ConfigureAwait(false) is not { } shown) {
+			return null;
+		}
+
 		DateTime now = DateTime.UtcNow;
-		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. Reserved(bot.Name, bot.SteamId, now)];
+		HashSet<ulong> busy = [.. TradeOffers.Committed(live), .. Reserved(bot.Name, bot.SteamId, now), .. shown];
 		List<OwnCard> cards = ReadCards(inventory);
 		Rules rules = RulesOf(bot, now);   // its never-touch lists, and games it just bought cards of for a badge
 

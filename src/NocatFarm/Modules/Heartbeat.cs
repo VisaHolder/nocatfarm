@@ -142,6 +142,12 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// tells a repeat from a fresh start. A Said, never Loc.T's finished text, so the row re-renders in a new language.
 		// 1.8.2: asleep, done for the day, nothing to do - the same line again every interval says nothing new: said once,
 		// and again only when it changes ("asleep · up 13:17" twenty minutes apart read like it went to sleep twice).
+		// A break says "meal break · back in ~35m" when it starts and the next sitting says when it's over; a status line a
+		// minute later only repeated it ("meal break · back in 33m").
+		if (status.OnBreak) {
+			return;
+		}
+
 		Said line = status.Line();
 		string text = line.ToEnglish();
 

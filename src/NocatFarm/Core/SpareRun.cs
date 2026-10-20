@@ -13,7 +13,7 @@ public static class SpareRun {
 	private const int GamesPerLook = 20;
 
 	/// <summary>Gem values asked for in one look.</summary>
-	private const int GemValuesPerLook = 20;
+	private const int GemValuesPerLook = 80;   // 1.8.3: was 20 - 222 items sat a week waiting on theirs; a page read each, not the market
 
 	/// <summary>What one go did. <paramref name="Refused"/>: 1.8.2 - Steam refused a listing, and the look ended there.</summary>
 	public sealed record Done(int GemItems, int Gems, int Sold, string? SellSaid, Said? Stopped, bool Refused = false);
@@ -878,6 +878,11 @@ public static class SpareRun {
 			return (null, "Steam wouldn't say what's on the market - try again in a while");
 		}
 
+		// 1.8.3: what the profile shows (the equipped background, a showcase's items) is never sold or turned into gems.
+		if (await ProfileShown.ReadAsync(bot, ct).ConfigureAwait(false) is not { } shown) {
+			return (null, "Steam wouldn't say what's on its profile - try again in a while");
+		}
+
 		// 1.8.2: cards promised to a card swap nocat.lol paired stay for it - never sold or turned into gems meanwhile.
 		HashSet<ulong> busy = [.. CardExchange.NotForSale(bot, promised, DateTime.UtcNow), .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
 		List<SpareItem> items = Spare.Read(inventory);
@@ -915,7 +920,7 @@ public static class SpareRun {
 		LiveSpareSteam steam = new(bot);
 		Func<SpareItem, Said?> waiting = OurListings.WaitingWhy(OurListings.Load(bot.Name));
 		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
-		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought);
+		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought, shown);
 		SparePlan plan = priceThem
 			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
@@ -1187,7 +1192,7 @@ public static class SpareRun {
 	public const int QuotesAsked = 20, QuotesBackground = 60;
 
 	private static SparePlan Decide(IReadOnlyList<SpareItem> items, SpareBadges badges, SpareRules rules, SpareLedger ledger, IReadOnlySet<ulong> busy,
-		int currency, SpareListings memory, Func<SpareItem, Said?> waiting, IReadOnlySet<uint> bought) {
+		int currency, SpareListings memory, Func<SpareItem, Said?> waiting, IReadOnlySet<uint> bought, IReadOnlySet<ulong> shown) {
 		DateTime now = DateTime.UtcNow;
 
 		return Spare.Plan(new SpareInput {
@@ -1196,6 +1201,7 @@ public static class SpareRun {
 			Rules = rules,
 			Received = ledger.Received,
 			Busy = busy,
+			Shown = shown,
 			Price = PriceFor(currency, rules),
 			Currency = currency,
 			Sack = SparePrices.SackPays(currency, rules.DumpPct),
