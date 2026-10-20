@@ -3129,7 +3129,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 
 			// Confirmed on the phone and bought: a set may be whole now - badge crafting looks soon.
-			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0);
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0, bought: true);
 		}
 
 		if (Ledger.OnPhone.Count == 0) {
@@ -3523,7 +3523,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			result.Finished.Add(step);
 
 			// The set is whole: badge crafting looks soon rather than at its daily round.
-			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true);
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true, bought: true);
 		}
 
 		// A set waiting on the phone is the only one: the next set waits until it's confirmed.
@@ -3623,7 +3623,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 		if (proven > 0) {
 			// A set may be whole now - badge crafting looks soon.
-			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0);
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: Ledger.OnPhone.Count == 0, bought: true);
 		}
 
 		return proven;

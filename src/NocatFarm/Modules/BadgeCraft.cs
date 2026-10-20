@@ -146,7 +146,7 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Pulled-forward looks (<see cref="LookSoon"/>) are at least this far apart - each one reads the badge pages again.</summary>
-	public static readonly TimeSpan PullGap = TimeSpan.FromMinutes(20);
+	public static readonly TimeSpan PullGap = TimeSpan.FromHours(2);
 
 	/// <summary>
 	/// A set may be complete now (a booster pack made to finish it was just opened): the next look comes in 10-40 minutes
@@ -164,14 +164,14 @@ public sealed partial class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	public void LookSoon(bool setComplete = false) {
+	public void LookSoon(bool setComplete = false, bool bought = false) {
 		if (Bot.Cfg.LegitMode && !setComplete) {
 			return;
 		}
 
 		DateTime soon = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(3, 10) : Rng.Minutes(2, 6));   // 1.8.2: a set just finished is crafted within minutes - the next buying look sees its level
 
-		if ((_pulledTo != DateTime.MinValue) && (soon < _pulledTo + PullGap)) {
+		if (!bought && (_pulledTo != DateTime.MinValue) && (soon < _pulledTo + PullGap)) {   // 1.8.2: cards bought for a set don't wait out the packs' gap
 			soon = _pulledTo + PullGap;
 		}
 
