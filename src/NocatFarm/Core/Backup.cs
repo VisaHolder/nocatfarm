@@ -113,7 +113,7 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy|listed)-(?<name>[^/\\:*?""<>|]+)\.json" +
 		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
@@ -333,6 +333,7 @@ public static partial class Backup {
 		sb.AppendLine("  points-, spare-           Steam Points spent this week, spare items' daily counts (never an ok to spend:");
 		sb.AppendLine("                            whether Spare items and Steam Points are on stays as it is on the PC you restore on)");
 		sb.AppendLine("  buy-                      money spent buying cards this week (never an ok to buy, the same way)");
+		sb.AppendLine("  listed-                   the market listings nocat.farm put up, so it can still take them down and relist them");
 		sb.AppendLine("  manifest.json             what this backup is, so nocat.farm knows it on restore");
 		sb.AppendLine();
 		sb.AppendLine("Not inside: logs, caches (prices, game names), and anything nocat.farm rebuilds by itself.");
