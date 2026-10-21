@@ -35881,7 +35881,7 @@ static class QuickSetsChecks {
 			// The day's cap: no more than so many sets a day, then nothing until tomorrow.
 			var capped = new FakeSetMarket();
 			List<uint> many = [];
-			for (int i = 0; i < 700; i++) {
+			for (int i = 0; i < 2600; i++) {
 				uint app = (uint) (40_000 + i);
 				capped.AddSet(app, $"C{i}", 5, 3, 10, walk: false);
 				many.Add(app);
@@ -35894,8 +35894,8 @@ static class QuickSetsChecks {
 			int filledToday = Fills(capped);
 			capped.Asked.Clear();
 			var none = await daily.BatchAsync(t0.AddMinutes(151 * 7), CancellationToken.None);
-			Check("quick sets: at most the day's sets a day (600 - about 780 requests, under a tenth of the market's day), then nothing until tomorrow",
-				(filledToday == NocatFarm.Core.SetFinder.FillsADay) && (NocatFarm.Core.SetFinder.FillsADay == 600) && (Fills(capped) == 0) && !none.More,
+			Check("quick sets: at most the day's sets a day (2,400 since 1.8.5 - about 3,100 requests, inside the background's half of the market's day), then nothing until tomorrow",
+				(filledToday == NocatFarm.Core.SetFinder.FillsADay) && (NocatFarm.Core.SetFinder.FillsADay == 2400) && (Fills(capped) == 0) && !none.More,
 				$"{filledToday} read, then {Fills(capped)}");
 
 			// The public list's place is kept after a set is read, and a new list replaces it.

@@ -535,6 +535,8 @@
     "manual reset": "手动重置",
     "no Steam web session": "没有 Steam 网页会话",
     "not registered on rep4rep": "未在 rep4rep 注册",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "购买暂停:本周的 {0} 额度已用完(最近 7 天 {1})- 较早的购买满 7 天后会再买",
+    "buying waits: today's {0} is spent - more tomorrow": "购买暂停:今天的 {0} 额度已用完 - 明天继续",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com 没有响应 - 15 分钟后重试",
     "nothing ready to craft": "没有可制作的",
     "off": "关闭",

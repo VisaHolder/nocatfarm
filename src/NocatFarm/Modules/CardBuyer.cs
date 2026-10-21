@@ -2791,6 +2791,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 	/// <summary>1.8.2: the accounts told the set finder is still warming up - told once, until it's done.</summary>
 	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> WarmSaid = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> LimitSaid = new(StringComparer.OrdinalIgnoreCase);   // 1.8.5: the limit-spent line, once
 
 	/// <summary>1.8.2: the block last told about for sets waiting uncrafted - told once, until it clears.</summary>
 	private BuyBlock _saidSetsBlocked = BuyBlock.None;
@@ -2885,8 +2886,20 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);   // 1.8.2: what the gems maths turns money into
 		NoteLevelPrice(plan);
 
+		// 1.8.5: the day's or the week's limit used up - said once, in those words. It used to say "waits for the set finder"
+		// all day, when the week's 15.00 had been spent and nothing could have been bought anyway.
+		bool weekOut = plan.WeekLimit - plan.WeekSpent <= 0, dayOut = plan.DayLimit - plan.DaySpent <= 0;
+
+		if (!weekOut && !dayOut) {
+			LimitSaid.TryRemove(Bot.Name, out _);
+		} else if (buying && LimitSaid.TryAdd(Bot.Name, true)) {
+			Log.Info(weekOut
+				? new Said("buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days", BuyPlan.Money(plan.WeekLimit, plan.Currency), BuyPlan.Money(plan.WeekSpent, plan.Currency))
+				: new Said("buying waits: today's {0} is spent - more tomorrow", BuyPlan.Money(plan.DayLimit, plan.Currency)), Bot.Name);
+		}
+
 		// 1.8.2: the set finder still warming up - said once in plain words (the preview shows it in its notes).
-		if (plan.WarmUp.Length == 0) {
+		if ((plan.WarmUp.Length == 0) || weekOut || dayOut) {
 			WarmSaid.TryRemove(Bot.Name, out _);
 		} else if (buying && WarmSaid.TryAdd(Bot.Name, true)) {
 			Log.Info(new Said("buying waits for the set finder: {0} of {1} cheapest sets checked", plan.WarmUpChecked, plan.WarmUpNeeded), Bot.Name);

@@ -535,6 +535,8 @@
     "manual reset": "ручной сброс",
     "no Steam web session": "нет веб-сессии Steam",
     "not registered on rep4rep": "не зарегистрирован на rep4rep",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "покупка ждёт: недельный лимит {0} потрачен ({1} за последние 7 дней) - снова купит, когда старым покупкам будет больше 7 дней",
+    "buying waits: today's {0} is spent - more tomorrow": "покупка ждёт: дневной лимит {0} потрачен - завтра ещё",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com не отвечает - повтор через 15м",
     "nothing ready to craft": "создавать нечего",
     "off": "выключено",

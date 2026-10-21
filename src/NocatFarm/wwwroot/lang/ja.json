@@ -535,6 +535,8 @@
     "manual reset": "手動リセット",
     "no Steam web session": "Steam のウェブセッションがありません",
     "not registered on rep4rep": "rep4rep に未登録",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "購入待ち: 今週の上限 {0} を使い切りました(過去7日で {1})- 古い購入が7日を過ぎると再開します",
+    "buying waits: today's {0} is spent - more tomorrow": "購入待ち: 今日の上限 {0} を使い切りました - また明日",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com が応答しません - 15分後に再試行",
     "nothing ready to craft": "作成できるものはありません",
     "off": "オフ",

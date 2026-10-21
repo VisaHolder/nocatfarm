@@ -535,6 +535,8 @@
     "manual reset": "elle sıfırlama",
     "no Steam web session": "Steam web oturumu yok",
     "not registered on rep4rep": "rep4rep'e kayıtlı değil",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "satın alma bekliyor: bu haftanın {0} limiti harcandı (son 7 günde {1}) - eski alımlar 7 günü geçince yeniden alır",
+    "buying waits: today's {0} is spent - more tomorrow": "satın alma bekliyor: bugünün {0} limiti harcandı - yarın devam",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com yanıt vermiyor - 15 dk sonra yeniden denenecek",
     "nothing ready to craft": "üretilecek bir şey yok",
     "off": "kapalı",

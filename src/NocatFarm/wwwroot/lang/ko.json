@@ -535,6 +535,8 @@
     "manual reset": "수동 초기화",
     "no Steam web session": "스팀 웹 세션 없음",
     "not registered on rep4rep": "rep4rep에 등록되지 않음",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "구매 대기: 이번 주 한도 {0}를 모두 썼어요 (최근 7일 {1}) - 예전 구매가 7일이 지나면 다시 삽니다",
+    "buying waits: today's {0} is spent - more tomorrow": "구매 대기: 오늘 한도 {0}를 모두 썼어요 - 내일 다시",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com이 응답하지 않음 - 15분 후 다시 시도",
     "nothing ready to craft": "제작할 것이 없음",
     "off": "꺼짐",

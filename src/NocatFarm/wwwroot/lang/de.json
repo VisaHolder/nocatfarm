@@ -535,6 +535,8 @@
     "manual reset": "manuell zurückgesetzt",
     "no Steam web session": "keine Steam-Websitzung",
     "not registered on rep4rep": "nicht bei rep4rep registriert",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "Kaufen wartet: das Wochenbudget von {0} ist ausgegeben ({1} in den letzten 7 Tagen) - es kauft wieder, sobald ältere Käufe 7 Tage zurückliegen",
+    "buying waits: today's {0} is spent - more tomorrow": "Kaufen wartet: das Tagesbudget von {0} ist ausgegeben - morgen mehr",
     "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com antwortet nicht - neuer Versuch in 15m",
     "nothing ready to craft": "nichts zum Fertigen bereit",
     "off": "aus",

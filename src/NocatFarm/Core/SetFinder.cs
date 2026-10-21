@@ -49,7 +49,7 @@ public sealed class SetFinder {
 	public const int RequestsABatchIdle = 4;
 
 	/// <summary>Whole sets read a day, at most.</summary>
-	public const int FillsADay = 600;
+	public const int FillsADay = 2400;   // 1.8.5: was 600 - at the 1.8.3 pace that was used up by 09:30 and nothing more was read all day
 
 	/// <summary>The cheapest candidate sets kept fresh at the quick pace.</summary>
 	public const int KeepFresh = 300;
