@@ -323,6 +323,7 @@ shutdown.Token.Register(static () => Commands.RequestExit());
 // Not on Windows, where nothing sends it and closing works the way it always has.
 using PosixSignalRegistration? sigterm = OperatingSystem.IsWindows() ? null : PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx => {
 	ctx.Cancel = true;
+	NocatFarm.Core.RunState.Why = "system";   // the machine or a service manager stopping it - said when it's back
 	Quit();
 });
 
@@ -460,6 +461,19 @@ await NocatFarm.Plugins.PluginHost.LoadAllAsync(manager, CancellationToken.None)
 // notifications of that startup, and an update's one-by-one sign-out all need to work from the first second.
 NocatFarm.Core.Notifier.Start(manager);
 NocatFarm.Core.SelfUpdate.NotifierReady();
+
+// 1.8.4: back by itself after a crash, a power cut or the machine restarting - said, so a box with no screen isn't silent
+// about it. Closed on purpose or restarted by an update: nothing. A moment later, so Telegram and Discord are listening.
+{
+	DateTime startedAt = DateTime.UtcNow;
+
+	if (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Begin(startedAt), startedAt, manager.All.Count(static b => b.Cfg.Enabled)) is { } backUp) {
+		_ = Task.Run(async () => {
+			await Task.Delay(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+			Log.Attention(backUp, backUp, new NocatFarm.Core.Said("nocat.farm is back up"), Topic.Problems);
+		});
+	}
+}
 NocatFarm.Core.DiscordPresence.Start(manager);
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
@@ -580,6 +594,7 @@ try {
 }
 
 Log.Info("shutting down...");
+NocatFarm.Core.RunState.End();   // closed, not crashed - the next start says nothing unless the system stopped it
 
 // No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.
 NocatFarm.Core.UpdateCheck.Stop();

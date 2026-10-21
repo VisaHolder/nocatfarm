@@ -2142,8 +2142,9 @@ public static partial class Commands {
 		}
 
 		if (b.State == BotState.Online) {
+			// 1.8.4: says whose turn it is - "stood down" read like a fault, and stayed up after the owner had got off.
 			if (b.PlayingBlocked) {
-				return "stood down";
+				return "you're on it";
 			}
 
 			if (b.Stopping) {
@@ -2177,7 +2178,7 @@ public static partial class Commands {
 					HumanMode.Phase.WarmingUp => "settling in",
 					HumanMode.Phase.SwitchingGame => "switching game",
 					HumanMode.Phase.DayOff => "day off",
-					HumanMode.Phase.StoodDown => "stood down",
+					HumanMode.Phase.StoodDown => "back after you",   // you've got off - it picks back up in a few minutes
 					_ => "online"
 				};
 			}
