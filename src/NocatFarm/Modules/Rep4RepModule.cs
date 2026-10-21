@@ -499,6 +499,14 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		}
 
 		if (await ProfileIdAsync(ct).ConfigureAwait(false) == null) {
+			// 1.8.4: the site not answering isn't the account missing or the token wrong - said once, and looked at again soon.
+			if (_api.Unanswered) {
+				_status = new Said("rep4rep.com isn't answering - trying again in 15m");
+				Log.DebugOnChange($"r4rdown:{Bot.Name}", "rep4rep.com isn't answering - trying again in 15m", Bot.Name);
+
+				return 15 * 60;
+			}
+
 			_status = new Said("not registered on rep4rep");
 			Log.Warn(Live.Global.Rep4RepAutoAddProfiles
 				? new Said("rep4rep won't add this account - check the API token")
