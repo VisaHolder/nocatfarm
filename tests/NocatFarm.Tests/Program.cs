@@ -7416,7 +7416,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("exit: nothing cancels the shutdown token without the flag (Register), and only ExitHandler cancels it directly",
 		prog.Contains("shutdown.Token.Register(static () => Commands.RequestExit());", StringComparison.Ordinal)
 		&& (System.Text.RegularExpressions.Regex.Matches(prog, @"shutdown\.Cancel(Async)?\(").Count == 1));
-	Check("exit: the update timer is stopped on the way out", prog.Contains("Log.Info(\"shutting down...\");\n\n// No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.\nNocatFarm.Core.UpdateCheck.Stop();", StringComparison.Ordinal));
+	Check("exit: the update timer is stopped on the way out", prog.Contains("Log.Info(\"shutting down...\");\nNocatFarm.Core.RunState.End();   // closed, not crashed - the next start says nothing unless the system stopped it\n\n// No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.\nNocatFarm.Core.UpdateCheck.Stop();", StringComparison.Ordinal));
 	Check("exit: closed while accounts start, the timers, the port forward and the browser tab aren't started",
 		prog.Contains("if (!shutdown.IsCancellationRequested) {\n\t// Once-a-day", StringComparison.Ordinal) && prog.Contains("!NocatFarm.Core.SelfUpdate.OnTrial && !shutdown.IsCancellationRequested) {", StringComparison.Ordinal));
 }
@@ -26547,6 +26547,25 @@ await CommandSweep.RunAsync(Check);
 {
 	Check("pricing: the time left comes from games and own lookups, not one request an item (503 items read 'about 208 min' for under an hour)",
 		(NocatFarm.PriceBook.ResumesAt != null) || (NocatFarm.Core.SpareRun.PricingLine(503, 40).ToEnglish() == "still pricing 503 item(s) - about 40 min"));
+}
+
+// ── 1.8.4: back up by itself after a crash, a power cut or a reboot - said once it's running again ──
+{
+	DateTime rsNow = new(2026, 10, 20, 20, 0, 0, DateTimeKind.Utc);
+	var crashed = NocatFarm.Core.RunState.Read($"running {rsNow.AddMinutes(-7).Ticks}");
+	Check("run state: a run that never closed is said when it's back, with how long ago it was last seen running",
+		crashed is { System: false } && (NocatFarm.Core.RunState.Line(crashed, rsNow, 3)?.ToEnglish() is { } l1)
+		&& l1.Contains("unexpected stop", StringComparison.Ordinal) && l1.Contains("7m ago", StringComparison.Ordinal) && l1.Contains("3 account(s)", StringComparison.Ordinal));
+	Check("run state: closed on purpose or by an update - nothing said; the machine stopping it - said; the first run - nothing",
+		(NocatFarm.Core.RunState.Read("stopped you") == null) && (NocatFarm.Core.RunState.Read("stopped update") == null)
+		&& NocatFarm.Core.RunState.Read("stopped system") is { System: true } && (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Read("stopped system"), rsNow, 1)?.ToEnglish() ?? "").Contains("machine shut it down", StringComparison.Ordinal)
+		&& (NocatFarm.Core.RunState.Read(null) == null) && (NocatFarm.Core.RunState.Read("") == null) && (NocatFarm.Core.RunState.Line(null, rsNow, 3) == null)
+		&& NocatFarm.Core.RunState.Read("running garbage") is { LastSeen: null, System: false });
+	string rsProgram = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Program.cs"));
+	string rsUpdate = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SelfUpdate.cs"));
+	Check("run state: marked running at start, closed on the way out, SIGTERM counts as the system, an update's restart as an update",
+		rsProgram.Contains("NocatFarm.Core.RunState.Begin(startedAt)", StringComparison.Ordinal) && rsProgram.Contains("NocatFarm.Core.RunState.End();", StringComparison.Ordinal)
+		&& rsProgram.Contains("NocatFarm.Core.RunState.Why = \"system\";", StringComparison.Ordinal) && rsUpdate.Contains("RunState.Why = \"update\";", StringComparison.Ordinal));
 }
 
 // ── 1.8.3: what the profile shows is never sold, turned into gems or swapped ──

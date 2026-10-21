@@ -1029,7 +1029,10 @@ public static class SelfUpdate {
 	internal static Action<ProcessStartInfo> StartSwap { get; set; } = static swap => Process.Start(swap)?.Dispose();
 
 	/// <summary>Closes nocat.farm once the swap script has it. Swappable for the same reason.</summary>
-	internal static Action ExitForSwap { get; set; } = Commands.RequestExit;
+	internal static Action ExitForSwap { get; set; } = static () => {
+		RunState.Why = "update";   // 1.8.4: an update's restart isn't news
+		Commands.RequestExit();
+	};
 
 	/// <summary>Where it got to, for the dashboard to show.</summary>
 	public static string Progress { get; private set; } = "";
