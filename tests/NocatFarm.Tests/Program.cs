@@ -26549,6 +26549,15 @@ await CommandSweep.RunAsync(Check);
 		(NocatFarm.PriceBook.ResumesAt != null) || (NocatFarm.Core.SpareRun.PricingLine(503, 40).ToEnglish() == "still pricing 503 item(s) - about 40 min"));
 }
 
+// ── 1.8.5: a listing already at Steam's least (0.03, you get 0.01) under the minimum sale comes down for gems ──
+{
+	string s185 = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Seller.cs"));
+	Check("step down: a listing that can't go a cent lower and pays under 'Only sell if you get at least' (or less than its gems) comes down, so the next look turns it into gems",
+		s185.Contains("(SpareListings.StepTo(ours, quote.Price, floorPct, dump) == null)", StringComparison.Ordinal)
+		&& s185.Contains("(ReceiveFor(ours) < SpareRules.From(bot.Cfg).MinSaleCents)", StringComparison.Ordinal)
+		&& (NocatFarm.Core.Seller.ReceiveFor(3) == 1));
+}
+
 // ── 1.8.4: back up by itself after a crash, a power cut or a reboot - said once it's running again ──
 {
 	DateTime rsNow = new(2026, 10, 20, 20, 0, 0, DateTimeKind.Utc);
