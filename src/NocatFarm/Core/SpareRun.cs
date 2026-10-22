@@ -515,7 +515,7 @@ public static class SpareRun {
 	/// module's, so a command and the module agree) is open - its day, settled in, you not playing on it.
 	/// </summary>
 	internal static bool StillMayAct(Bot bot, Modules.HumanGate? gate) =>
-		gate?.Open ?? (!bot.Cfg.LegitMode || (!bot.Stopping && !bot.PlayingBlocked && Modules.HumanMode.UpFor(bot)));
+		gate?.OpenForARound ?? (!bot.Cfg.LegitMode || (!bot.Stopping && !bot.PlayingBlocked && Modules.HumanMode.UpFor(bot)));
 
 	/// <summary>The gate spare items keep to on this account: the module's own, or none (in a check without the module).</summary>
 	internal static Modules.HumanGate? SpareGate(Bot bot) => BotManager.ModuleOf<Modules.SpareItems>(bot)?.Gate;
