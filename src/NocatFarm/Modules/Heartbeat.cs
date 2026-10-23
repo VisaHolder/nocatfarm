@@ -155,6 +155,15 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// 1.8.5: human mode already said it a moment ago as it went to sleep ("asleep · 8 games · up 13:33" at 02:11, and this
+		// line again at 02:12) - the same words from this account in the last 15 minutes count as said.
+		if (status.QuietToday && Log.Recent(60).Any(e => (e.Source == Bot.Name) && (DateTime.Now - e.When < TimeSpan.FromMinutes(15))
+			&& string.Equals(e.Said.ToEnglish(), text, StringComparison.Ordinal))) {
+			_lastQuiet = text;
+
+			return;
+		}
+
 		_lastQuiet = status.QuietToday ? text : null;
 		Log.Status(line, Bot.Name);
 	}
