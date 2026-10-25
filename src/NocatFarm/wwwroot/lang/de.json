@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "{0} zurückgezogen - {1} Tage unverkauft, die Edelsteine sind jetzt mehr wert"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Immer in der Geldbörse lassen",
+      "tip": "Das Kartenkaufen bringt die Steam-Geldbörse dieses Kontos nie unter diesen Betrag, in der eigenen Geldbörsen-Währung. Zum Beispiel 20,00: lädst du 100,00 auf, gibt es höchstens 80,00 aus - die 20,00 bleiben für dich. 0 lässt es alles nutzen (aber nie mehr als die Tages- und Wochengrenze)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Knöpfe „In Steam öffnen“ bei jedem Konto",
       "tip": "Zeigt bei jedem Konto den Ein-Klick-Knopf „In Steam öffnen“ - auf der Konto-Karte und im App-Fenster - damit du ihn nicht Konto für Konto einschalten musst. Der Knopf meldet deine Steam-Desktop-App bei diesem Konto an: er schließt Steam, richtet Steam auf das Konto aus und startet Steam wieder. Ein Konto, das Steam noch nicht kennt, öffnet Steams Anmeldung mit schon eingetragenem Namen. Es hält nocat.farm nie vom Farmen ab. Nur unter Windows. Standardmäßig aus. Beim Einschalten wird zuerst genau gezeigt, was der Knopf tut, und du wirst um Bestätigung gebeten. Wenn du es nur bei manchen Konten willst, lass das hier aus und schalte in deren Einstellungen den Knopf „In Steam öffnen“ ein."

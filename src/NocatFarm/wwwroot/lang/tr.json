@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "{0} kaldırıldı - {1} gündür satılmadı, mücevherleri artık daha değerli"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Cüzdanda her zaman bırak",
+      "tip": "Kart satın alma bu hesabın Steam cüzdanını asla bu tutarın altına düşürmez (cüzdanın kendi para biriminde). Örneğin 20,00: 100,00 eklersen en fazla 80,00 harcar - 20,00 sana kalır. 0 hepsini kullanmasına izin verir (yine de günlük ve haftalık sınırları asla aşmaz)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Her hesapta Steam'de aç düğmeleri",
       "tip": "Tek tıklık Steam'de aç düğmesini her hesapta gösterir - hesap kartında ve uygulama penceresinde - böylece hesap hesap açman gerekmez. Düğme, Steam masaüstü uygulamanda o hesapla oturum açar: Steam'i kapatır, Steam'i hesaba yönlendirir ve Steam'i yeniden başlatır. Steam'in henüz hatırlamadığı bir hesap, adı doldurulmuş Steam oturum açma ekranında açılır. nocat.farm'ın farm yapmasını asla durdurmaz. Yalnızca Windows. Varsayılan olarak kapalı. Açınca önce düğmenin tam olarak ne yaptığını gösterir ve onay ister. Yalnızca bazı hesaplarda istiyorsan bunu kapalı bırak ve o hesapların ayarlarında Steam'de aç düğmesini aç."

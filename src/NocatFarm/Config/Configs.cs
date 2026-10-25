@@ -945,6 +945,9 @@ public sealed class BotConfig {
 	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;
 
+	/// <summary>1.8.5: "Always keep in the wallet" - buying never takes the wallet below this (wallet currency; 0: off).</summary>
+	public float BuyKeepInWallet { get; set; }
+
 	/// <summary>The most it spends in any 7 days, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyWeeklyLimit { get; set; } = 8.00f;
 

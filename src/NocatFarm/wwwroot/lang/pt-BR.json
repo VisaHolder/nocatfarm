@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "retirado {0} - {1} dias sem vender, as gemas valem mais agora"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Sempre manter na carteira",
+      "tip": "Comprar cartas nunca deixa a carteira Steam desta conta abaixo deste valor, na moeda dela. Por exemplo 20,00: você adiciona 100,00 e ele gasta no máximo 80,00 - os 20,00 ficam para você. 0 deixa usar tudo (nunca passando dos limites do dia e da semana)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Botões Abrir no Steam em todas as contas",
       "tip": "Mostra o botão de um clique Abrir no Steam em todas as contas - no cartão e na janela do app - para você não precisar ligar conta por conta. O botão faz o seu app do Steam entrar nessa conta: fecha o Steam, aponta o Steam para a conta e abre o Steam de novo. Uma conta que o Steam ainda não lembra abre o login do Steam com o nome já preenchido. Nunca impede o nocat.farm de farmar. Só no Windows. Desligado por padrão. Ao ligar, primeiro mostra exatamente o que o botão faz e pede confirmação. Para ter só em algumas contas, deixe isto desligado e ligue Botão Abrir no Steam nas configurações dessas contas."

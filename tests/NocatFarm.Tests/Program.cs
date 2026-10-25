@@ -27771,6 +27771,13 @@ await CommandSweep.RunAsync(Check);
 		Check("plan: never more than the wallet holds - the next set that doesn't fit stops the plan",
 			(bcPoorPlan.Steps.Count == 1) && (bcPoorPlan.Steps[0].App == 100) && (bcPoorPlan.Room == 12) && bcPoorPlan.Notes.Any(static n => n.Contains("wallet", StringComparison.Ordinal)),
 			string.Join("; ", bcPoorPlan.Notes));
+		var bcKeepMarket = BcMarket();
+		bcKeepMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(100, 20, false, 0);
+		var bcKeepPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyKeepInWallet = 0.88f }, bcKeepMarket);
+		var bcKeepAll = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyKeepInWallet = 5f }, bcKeepMarket);
+		Check("plan 1.8.5: \"Always keep in the wallet\" is never spent - 1.00 in it with 0.88 kept leaves 0.12; keeping more than it holds buys nothing",
+			(bcKeepPlan.Keep == 88) && (bcKeepPlan.Room == 12) && (bcKeepPlan.Steps.Count == 1) && (bcKeepAll.Room == 0) && (bcKeepAll.Steps.Count == 0)
+			&& (NocatFarm.Modules.BuyPlan.KeepCents(new NocatFarm.Config.BotConfig()) == 0), $"{bcKeepPlan.Room} / {bcKeepAll.Room}");
 		var bcSpentLedger = new NocatFarm.Modules.BuyLedger(Path.Combine(bcRoot, "config", "state", "buy-spent.json"));
 		bcSpentLedger.Add(new NocatFarm.Modules.BuyLedger.Entry(DateTime.UtcNow.AddHours(-2), 145, 20, 1, "x"));
 		var bcSpentPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true }, BcMarket(), ledger: bcSpentLedger);

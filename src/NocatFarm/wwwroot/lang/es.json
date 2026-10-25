@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "retirado {0} - {1} días sin venderse, sus gemas valen más ahora"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Dejar siempre en el monedero",
+      "tip": "Comprar cromos nunca deja el monedero de Steam de esta cuenta por debajo de esta cantidad, en su propia moneda. Por ejemplo 20,00: añades 100,00 y gasta como mucho 80,00 - los 20,00 quedan para ti. 0 le deja usarlo todo (sin pasar nunca los límites del día y de la semana)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Botones Abrir en Steam en todas las cuentas",
       "tip": "Muestra el botón de un clic Abrir en Steam en todas las cuentas - en su tarjeta y en la ventana de la app - para que no tengas que activarlo cuenta por cuenta. El botón inicia sesión en tu app de escritorio de Steam con esa cuenta: cierra Steam, apunta Steam a la cuenta y vuelve a iniciar Steam. Una cuenta que Steam todavía no recuerda abre el inicio de sesión de Steam con su nombre ya puesto. Nunca impide que nocat.farm farmee. Solo en Windows. Desactivado de forma predeterminada. Al activarlo, primero muestra exactamente lo que hace el botón y te pide confirmación. Para tenerlo solo en algunas cuentas, deja esto desactivado y activa Botón Abrir en Steam en los ajustes de esas cuentas."

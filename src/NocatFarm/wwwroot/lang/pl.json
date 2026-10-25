@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "wycofano {0} - nie sprzedane od {1} dni, klejnoty są teraz warte więcej"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Zawsze zostaw w portfelu",
+      "tip": "Kupowanie kart nigdy nie zmniejsza portfela Steam tego konta poniżej tej kwoty, w jego własnej walucie. Na przykład 20,00: dodajesz 100,00, a wyda najwyżej 80,00 - 20,00 zostaje dla ciebie. 0 pozwala użyć wszystkiego (nigdy ponad limit dnia i tygodnia)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Przyciski Otwórz w Steam na każdym koncie",
       "tip": "Pokazuje przycisk Otwórz w Steam na jedno kliknięcie na każdym koncie - na karcie konta i w oknie aplikacji - żebyś nie musiał włączać go konto po koncie. Przycisk loguje twoją aplikację Steam na to konto: zamyka Steam, kieruje Steam na konto i uruchamia Steam ponownie. Konto, którego Steam jeszcze nie pamięta, otwiera logowanie Steam z wpisaną nazwą. Nigdy nie przerywa farmienia nocat.farm. Tylko Windows. Domyślnie wyłączone. Włączenie najpierw pokazuje dokładnie, co robi przycisk, i prosi o potwierdzenie. Jeśli chcesz go tylko na niektórych kontach, zostaw to wyłączone i włącz Przycisk Otwórz w Steam w ustawieniach tych kont."

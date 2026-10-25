@@ -503,6 +503,12 @@ public sealed class BuyPlan {
 	/// <summary>What may be spent now: inside the day's and the week's limits, and never more than the wallet holds.</summary>
 	public long Room { get; set; }
 
+	/// <summary>1.8.5: what "Always keep in the wallet" leaves in it, in cents (0: off).</summary>
+	public long Keep { get; set; }
+
+	/// <summary>1.8.5: "Always keep in the wallet" in cents.</summary>
+	public static long KeepCents(BotConfig cfg) => cfg.BuyKeepInWallet > 0 ? Cents(cfg.BuyKeepInWallet) : 0;
+
 	public List<BuyStep> Steps { get; } = [];
 
 	/// <summary>
@@ -857,7 +863,9 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		plan.Room = Math.Max(0, Math.Min(Math.Min(plan.DayLimit - plan.DaySpent, plan.WeekLimit - plan.WeekSpent), wallet.Balance));
+		// 1.8.5: "Always keep in the wallet" - never spent.
+		plan.Keep = KeepCents(cfg);
+		plan.Room = Math.Max(0, Math.Min(Math.Min(plan.DayLimit - plan.DaySpent, plan.WeekLimit - plan.WeekSpent), wallet.Balance - plan.Keep));
 
 		// 1.8.2: a level goal's own budget - what's left of it is the most this look spends.
 		if (goalBudget is long goalLeft) {
@@ -3492,8 +3500,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				dayLeft = weekLeft = GoalLeft(goalNow);
 			}
 
-			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere)) {
-				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";
+			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere - BuyPlan.KeepCents(Bot.Cfg))) {
+				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds (past what's always kept) - nothing more bought";
 
 				return Asked(step, onPhone, result, false);
 			}

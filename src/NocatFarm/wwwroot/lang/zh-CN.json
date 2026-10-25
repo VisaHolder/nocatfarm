@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "已下架 {0} - {1} 天未售出，现在宝石更值钱"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "钱包中始终保留",
+      "tip": "买卡永远不会让此账号的 Steam 钱包低于这个数额（按钱包货币）。例如 20.00：充值 100.00，它最多花 80.00 - 20.00 留给你。0 表示可以全部使用（但绝不超过每日和每周上限）。"
+    },
     "SteamOpenEveryAccount": {
       "label": "所有账号都显示“在 Steam 中打开”按钮",
       "tip": "在每个账号上显示一键“在 Steam 中打开”按钮（账号卡片和应用窗口里），不用一个个账号去开。按钮会让你的 Steam 桌面应用登录那个账号：关闭 Steam，把 Steam 指向该账号，再重新启动 Steam。Steam 还没记住的账号会打开已填好名字的 Steam 登录界面。不会停止 nocat.farm 挂卡。仅限 Windows。默认关闭。开启时会先准确展示按钮会做什么，并请你确认。如果只想在部分账号上使用，就保持这里关闭，在那些账号的设置里开启“在 Steam 中打开”按钮。"

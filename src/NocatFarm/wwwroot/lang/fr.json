@@ -3467,6 +3467,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "{0} retiré - invendu depuis {1} jours, ses gemmes valent plus maintenant"
   },
   "settings": {
+    "BuyKeepInWallet": {
+      "label": "Toujours garder dans le porte-monnaie",
+      "tip": "L'achat de cartes ne fait jamais descendre le porte-monnaie Steam de ce compte sous ce montant, dans sa propre devise. Par exemple 20,00 : tu ajoutes 100,00 et il dépense au plus 80,00 - les 20,00 restent pour toi. 0 le laisse tout utiliser (sans jamais dépasser les limites du jour et de la semaine)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Boutons Ouvrir dans Steam sur chaque compte",
       "tip": "Affiche le bouton en un clic Ouvrir dans Steam sur chaque compte - sur sa carte et dans la fenêtre de l'appli - pour ne pas avoir à l'activer compte par compte. Le bouton connecte ton application Steam de bureau à ce compte : il ferme Steam, dirige Steam vers le compte et relance Steam. Un compte que Steam ne connaît pas encore s'ouvre sur la connexion de Steam avec son nom déjà rempli. Il n'empêche jamais nocat.farm de farmer. Windows uniquement. Désactivé par défaut. L'activer montre d'abord exactement ce que fait le bouton et te demande de confirmer. Pour ne l'avoir que sur certains comptes, laisse ceci désactivé et active Bouton Ouvrir dans Steam dans les paramètres de ces comptes."
