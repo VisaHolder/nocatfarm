@@ -28923,6 +28923,38 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		&& (NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Utc, []) == null), utcSaid);
 }
 
+// ── 1.8.5 fixes from the TV box: rep4rep.com down isn't the token, the buying limit said in words, saves survive a power cut,
+// the app's own listings travel in backups ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string Src(params string[] parts) => File.ReadAllText(Path.Combine([src, .. parts])).Replace("\r\n", "\n");
+	string r4r = Src("Rep4Rep", "Rep4RepApi.cs"), r4rMod = Src("Modules", "Rep4RepModule.cs");
+	Check("rep4rep 1.8.5: no answer from rep4rep.com (a 503) isn't 'not registered' - the profile isn't added again, the token isn't blamed",
+		r4r.Contains("Unanswered = (body == null) && HasToken;", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || Unanswered) {", StringComparison.Ordinal)
+		&& r4rMod.Contains("if (_api.Unanswered) {", StringComparison.Ordinal));
+	string buyer = Src("Modules", "CardBuyer.cs");
+	Check("buying 1.8.5: the week's or the day's limit spent is said once in those words, not 'waits for the set finder'",
+		buyer.Contains("buying waits: this week's {0} is spent ({1} in the last 7 days)", StringComparison.Ordinal) && buyer.Contains("LimitSaid.TryAdd(Bot.Name, true)", StringComparison.Ordinal)
+		&& buyer.Contains("LimitSaid.TryRemove(Bot.Name, out _);", StringComparison.Ordinal));
+	string atomic = Src("AtomicFile.cs");
+	string afDir = Path.Combine(Path.GetTempPath(), "nf-atomic-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(afDir);
+
+	try {
+		string afFile = Path.Combine(afDir, "cheevo-new.json");
+		File.WriteAllText(afFile, "old");
+		NocatFarm.AtomicFile.Write(afFile, "{\"ok\":true}");
+		Check("saves 1.8.5: written to disk (flushed) before the swap - a power cut left a file of zero bytes; the new text replaces the old whole",
+			(atomic.Split("Flush(flushToDisk: true)").Length - 1 == 2) && (File.ReadAllText(afFile) == "{\"ok\":true}") && (Directory.GetFiles(afDir).Length == 1));
+	} finally {
+		Directory.Delete(afDir, true);
+	}
+
+	var pattern = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+	Check("backups 1.8.5: the listings nocat.farm made go in a backup - an account moved to another machine still takes down and relists its own",
+		pattern.IsMatch("state/listed-new.json") && !pattern.IsMatch("state/listed-new.json.bak"));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
