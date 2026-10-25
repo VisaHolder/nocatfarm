@@ -1,5 +1,9 @@
 {
   "ui": {
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam 不允许出售其卡牌 - 留作徽章",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}：卡牌被 Steam 锁定至 {1} - 之后出售",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}：Steam 目前不允许其卡牌上架市场 - 允许后出售",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam 结束了会话 (ServiceUnavailable) - 正在自行重连，不是登录限制",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam 市场被封锁（{0}）- 购买、出售和交换都要等 Steam 解除，而解除需要用此账户在 Steam 上消费一次",
     "settling in first (~{0}m), then looking for cards": "先缓冲（约{0}分钟），然后查找卡牌",
     "settling in first, then looking for cards": "先缓冲，然后查找卡牌",

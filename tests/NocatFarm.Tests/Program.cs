@@ -35202,6 +35202,30 @@ static class DearCardsChecks {
 				&& !NocatFarm.Modules.DearCards.Wins(4, 4) && NocatFarm.Modules.DearCards.Wins(5, 4) && !NocatFarm.Modules.DearCards.Wins(0, 0),
 				dearer.Why);
 
+			// 1.8.5: cards Steam has locked for good make levels but are never money; locked for now (a pack made with gems in
+			// their 7 days) still count - they're sold once the lock ends, and said once meanwhile, not "selling" every look.
+			var lockedForGood = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), Quotes(), cheap, 50, forSale: new Dictionary<string, int>());
+			var noShield = Held().Where(c => c.Key != A("Shield")).ToDictionary(static c => c.Key, static c => c.Value);
+			var partly = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), Quotes(), cheap, 50, forSale: noShield);
+			Check("dear 1.8.5: no card Steam ever lets go on the market - kept for the badge, nothing listed; one such card left out of what's sold",
+				lockedForGood is { Dear: false, Unsure: false, Kept: 2, Listing: 0 } && lockedForGood.Why.StartsWith("Steam doesn't let its cards be sold", StringComparison.Ordinal)
+				&& partly.Cards.All(c => c.Hash != A("Shield")) && (partly.Listing == arcane.Listing - Held()[A("Shield")]),
+				$"{lockedForGood.Why} / {partly.Listing} of {arcane.Listing}");
+
+			DateTime ends = new(2026, 10, 26, 7, 0, 0, DateTimeKind.Utc);
+			List<NocatFarm.Core.SpareItem> lockedItems = [
+				new(1, Arcane, NocatFarm.Core.SpareKind.Card, A("Heart"), "Heart", false, false, TradableAfter: ends),
+				new(2, Arcane, NocatFarm.Core.SpareKind.Card, A("Shield"), "Shield", false, false),
+				new(3, Arcane, NocatFarm.Core.SpareKind.Card, A("Skull"), "Skull", true, true),
+				new(4, Arcane, NocatFarm.Core.SpareKind.FoilCard, A("Heart") + " (Foil)", "Heart (Foil)", true, true)];
+			var forSale = NocatFarm.Modules.DearCards.ForSaleOf(lockedItems, Arcane, false);
+			string until = NocatFarm.Modules.DearCards.LockedSaid(arcane with { Cards = [.. arcane.Cards.Where(c => c.Hash == A("Heart"))] }, lockedItems).ToEnglish();
+			string noDate = NocatFarm.Modules.DearCards.LockedSaid(arcane with { Cards = [.. arcane.Cards.Where(c => c.Hash == A("Shield"))] }, lockedItems).ToEnglish();
+			Check("dear 1.8.5: for sale = marketable or locked for now (not locked for good, not the foil); the lock's end is said (Pony Island said 'selling' every look for days)",
+				(forSale.Count == 2) && forSale.ContainsKey(A("Heart")) && forSale.ContainsKey(A("Skull")) && !forSale.ContainsKey(A("Shield"))
+				&& until.StartsWith("Arcane Raise: its cards are locked by Steam until " + ends.ToLocalTime().ToString("MMM d HH:mm", System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)
+				&& noDate.Contains("right now - sold once it does", StringComparison.Ordinal), $"{string.Join(",", forSale.Keys)} / {until} / {noDate}");
+
 			var noPrice = Quotes();
 			noPrice[A("Shield")] = null;
 			var silent = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), noPrice, cheap, 50);

@@ -1,5 +1,9 @@
 {
   "ui": {
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam がカードの販売を許可していません - バッジ用に保持",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: カードは {1} まで Steam にロックされています - その後に販売",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: 今は Steam がカードのマーケット出品を許可していません - 許可され次第販売",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam がセッションを終了しました (ServiceUnavailable) - 自動で再接続します。ログイン制限ではありません",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam マーケットがブロックされています（{0}）- 購入・販売・交換は Steam が解除するまで待ちます。解除にはこのアカウントで Steam での購入が必要です",
     "settling in first (~{0}m), then looking for cards": "まず落ち着いてから（約{0}分）カードを探します",
     "settling in first, then looking for cards": "まず落ち着いてからカードを探します",

@@ -1,5 +1,9 @@
 {
   "ui": {
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam kartlarının satılmasına izin vermiyor - rozet için tutuldu",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: kartları {1} tarihine kadar Steam tarafından kilitli - sonra satılacak",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam şu an kartlarının pazara konmasına izin vermiyor - izin verince satılacak",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam oturumu sonlandırdı (ServiceUnavailable) - kendi kendine yeniden bağlanıyor, giriş kısıtlaması değil",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steam pazarı engelli ({0}) - alım, satım ve takaslar Steam engeli kaldırana kadar bekler; bunun için bu hesapla Steam'de bir satın alma gerekir",
     "settling in first (~{0}m), then looking for cards": "önce yerleşiyor (~{0}dk), sonra kart arıyor",
     "settling in first, then looking for cards": "önce yerleşiyor, sonra kart arıyor",

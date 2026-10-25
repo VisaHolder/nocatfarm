@@ -1,5 +1,9 @@
 {
   "ui": {
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam ne laisse pas vendre ses cartes - gardées pour le badge",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0} : ses cartes sont bloquées par Steam jusqu'au {1} - vendues ensuite",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0} : Steam ne laisse pas mettre ses cartes sur le marché pour l'instant - vendues dès que possible",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam a fermé la session (ServiceUnavailable) - reconnexion toute seule, pas une limite de connexion",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Le marché Steam est bloqué ({0}) - achats, ventes et échanges attendent que Steam le débloque, ce qui demande un achat sur Steam avec ce compte",
     "settling in first (~{0}m), then looking for cards": "s'installe d'abord (~{0}m), puis cherche des cartes",
     "settling in first, then looking for cards": "s'installe d'abord, puis cherche des cartes",

@@ -2574,9 +2574,18 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return;
 		}
 
+		List<SpareItem>? items = null;
+
 		foreach (DearCards.Verdict v in DearCards.ThisLook(result.Dear, Bot.Cfg.LegitMode)) {
 			if (ct.IsCancellationRequested) {
 				return;
+			}
+
+			// 1.8.5: none of its cards can go on the market yet (Steam's lock) - said once, not "selling" every look
+			if (DearCards.Offers(v, SetSale.Copies(inventory, v.App, v.Foil)).Count == 0) {
+				DearCards.SayLocked(Bot.Name, v, items ??= Spare.Read(inventory));
+
+				continue;
 			}
 
 			Log.Info(DearCards.SellingSaid(v), Bot.Name);
@@ -2650,6 +2659,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			MinReceive = SpareRules.From(Bot.Cfg).MinSaleCents,
 			GemsWorth = DearCards.KnownGemsWorth(inventory, plan.Currency, SpareRules.From(Bot.Cfg).DumpPct)
 		};
+
+		// 1.8.5: a card Steam has locked for good is never counted as money
+		if (inventory != null) {
+			List<SpareItem> items = Spare.Read(inventory);
+			extra = extra with { ForSale = (app, foil) => DearCards.ForSaleOf(items, app, foil) };
+		}
 
 		return await DearCards.WeighAsync(plan, _market, Bot.Cfg, CardExchange.BoughtGames(Bot.Name, now), dear,
 			GemsChoice.CostsOf(Bot.Name, plan.Currency, now), ct, extra).ConfigureAwait(false);

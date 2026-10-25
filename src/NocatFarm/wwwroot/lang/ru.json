@@ -1,5 +1,9 @@
 {
   "ui": {
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam не даёт продать её карточки - оставлены для значка",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: Steam заблокировал её карточки до {1} - продадутся после",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam сейчас не даёт выставить её карточки на торговую площадку - продадутся, когда разрешит",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam завершил сеанс (ServiceUnavailable) - переподключается сам, это не ограничение входа",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Торговая площадка Steam заблокирована ({0}) - покупка, продажа и обмены ждут, пока Steam её не откроет, а для этого нужна покупка в Steam на этом аккаунте",
     "settling in first (~{0}m), then looking for cards": "сначала обживается (~{0} мин), потом ищет карточки",
     "settling in first, then looking for cards": "сначала обживается, потом ищет карточки",
