@@ -1,5 +1,6 @@
 {
   "ui": {
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "このマシンの時計は UTC に設定されており、{0} の一日 (起床、就寝、プレイ時間) はそれに従います - タイムゾーンを設定してください (Linux: TZ=地域/都市)。あなたの時間で動くようになります",
     "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm が復帰しました - マシンが {0} 頃に再起動しました (停電または再起動)。最後に動作を確認したのは {1} 前 · {2} 個のアカウントがサインイン中",
     "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm が予期せず停止した後に復帰しました (クラッシュ - マシンは動作し続けていました) - 最後に動作を確認したのは {0} 前 · {1} 個のアカウントがサインイン中",
     "{0} accepted your trade offer · you gave {1}": "{0} があなたのトレードオファーを承認しました · 渡したもの: {1}",

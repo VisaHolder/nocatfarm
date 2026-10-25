@@ -474,6 +474,12 @@ NocatFarm.Core.SelfUpdate.NotifierReady();
 			Log.Event(backUp, "nocat.farm", Topic.Problems);   // good news, so the log's green - still under Problems, so Telegram and Discord get it
 		});
 	}
+
+	// 1.8.5: a human-mode day (waking, bed, its hours) follows this machine's clock - one left on UTC (a TV box, a container)
+	// lives it hours off. Said once a start.
+	if (NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Local, [.. manager.All.Where(static b => b.Cfg.Enabled && b.Cfg.LegitMode).Select(static b => b.Name)]) is { } clock) {
+		Log.Attention(clock);
+	}
 }
 NocatFarm.Core.DiscordPresence.Start(manager);
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;

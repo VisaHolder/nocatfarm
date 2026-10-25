@@ -9,6 +9,14 @@ namespace NocatFarm.Modules;
 /// night without a word, and the only sign was a "3 game(s)" where there had been 4.
 /// </summary>
 public sealed partial class HumanMode {
+	/// <summary>
+	/// 1.8.5: the warning for human-mode accounts living by a clock set to UTC - null when the machine has a real time zone or
+	/// nothing runs in human mode. reap's TV box ran on UTC: its accounts woke and slept 2.5 hours off until TZ was set.
+	/// </summary>
+	public static Said? ClockWarning(TimeZoneInfo zone, IReadOnlyList<string> human) =>
+		(human.Count == 0) || (zone.BaseUtcOffset != TimeSpan.Zero) || zone.SupportsDaylightSavingTime ? null
+			: new Said("this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours", string.Join(", ", human));
+
 	/// <summary>Why a game the night would bank is left out of it, or <see cref="No"/> when it isn't.</summary>
 	internal enum NightOut {
 		No,

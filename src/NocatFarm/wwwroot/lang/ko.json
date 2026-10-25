@@ -1,5 +1,6 @@
 {
   "ui": {
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "이 기기의 시계가 UTC로 설정되어 있고, {0}의 하루(기상, 취침, 플레이 시간)가 이를 따름 - 시간대를 설정하세요 (Linux: TZ=지역/도시) 그래야 당신의 시간대로 움직입니다",
     "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm 다시 실행 중 - 기기가 {0}쯤 다시 시작됨 (정전 또는 재부팅), 마지막 실행 확인 {1} 전 · 계정 {2}개 로그인 중",
     "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm가 예기치 않게 멈춘 뒤 다시 실행 중 (충돌 - 기기는 계속 켜져 있었음) - 마지막 실행 확인 {0} 전 · 계정 {1}개 로그인 중",
     "{0} accepted your trade offer · you gave {1}": "{0}님이 거래 제안을 수락함 · 보낸 것: {1}",

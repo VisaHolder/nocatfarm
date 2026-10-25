@@ -1,5 +1,6 @@
 {
   "ui": {
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "die Uhr dieses Rechners steht auf UTC, und der Tag von {0} (Aufwachen, Schlafen, die Spielzeiten) richtet sich danach - stell die Zeitzone ein (unter Linux: TZ=Gebiet/Stadt), damit er deinen Stunden folgt",
     "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm läuft wieder - der Rechner wurde gegen {0} neu gestartet (Stromausfall oder Neustart), zuletzt laufend gesehen vor {1} · {2} Konto/Konten melden sich an",
     "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm läuft wieder nach einem unerwarteten Stopp (ein Absturz - der Rechner lief weiter) - zuletzt laufend gesehen vor {0} · {1} Konto/Konten melden sich an",
     "{0} accepted your trade offer · you gave {1}": "{0} hat dein Tauschangebot angenommen · du hast {1} gegeben",

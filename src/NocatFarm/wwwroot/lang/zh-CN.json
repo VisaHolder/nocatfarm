@@ -1,5 +1,6 @@
 {
   "ui": {
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "这台机器的时钟设置为 UTC，{0} 的一天（起床、睡觉、游戏时间）都按它来 - 请设置时区（Linux 上：TZ=地区/城市），让它按你的时间作息",
     "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm 已恢复 - 机器约在 {0} 重新启动（断电或重启），上次看到运行是 {1} 前 · {2} 个账号正在登录",
     "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm 在意外停止后已恢复（崩溃 - 机器一直在运行）- 上次看到运行是 {0} 前 · {1} 个账号正在登录",
     "{0} accepted your trade offer · you gave {1}": "{0} 接受了你的交易报价 · 你给出了 {1}",

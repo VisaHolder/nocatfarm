@@ -28907,6 +28907,15 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		&& (NocatFarm.Core.RunState.Booted("cpu 1\n", "5 5", rsNow) == null) && (NocatFarm.Core.RunState.Booted($"btime {bt}\n", "x", rsNow) == null));
 }
 
+// ── 1.8.5 a machine on UTC: human-mode accounts live its clock - said once at start; a real time zone, or no human mode - nothing ──
+{
+	var st = TimeZoneInfo.CreateCustomTimeZone("St Johns test", TimeSpan.FromHours(-3.5), "St Johns test", "St Johns test");
+	string utcSaid = NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Utc, ["new", "old"])?.ToEnglish() ?? "";
+	Check("clock: UTC with human-mode accounts - warned, naming them; a real zone or no human-mode account - nothing",
+		utcSaid.Contains("clock is set to UTC, and the day of new, old", StringComparison.Ordinal) && (NocatFarm.Modules.HumanMode.ClockWarning(st, ["new"]) == null)
+		&& (NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Utc, []) == null), utcSaid);
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
