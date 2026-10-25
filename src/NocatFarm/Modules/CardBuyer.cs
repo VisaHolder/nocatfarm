@@ -503,6 +503,12 @@ public sealed class BuyPlan {
 	/// <summary>What may be spent now: inside the day's and the week's limits, and never more than the wallet holds.</summary>
 	public long Room { get; set; }
 
+	/// <summary>1.8.5: what "Always keep in the wallet" leaves in it, in cents (0: off).</summary>
+	public long Keep { get; set; }
+
+	/// <summary>1.8.5: "Always keep in the wallet" in cents.</summary>
+	public static long KeepCents(BotConfig cfg) => cfg.BuyKeepInWallet > 0 ? Cents(cfg.BuyKeepInWallet) : 0;
+
 	public List<BuyStep> Steps { get; } = [];
 
 	/// <summary>
@@ -857,7 +863,9 @@ public sealed class BuyPlan {
 			return plan;
 		}
 
-		plan.Room = Math.Max(0, Math.Min(Math.Min(plan.DayLimit - plan.DaySpent, plan.WeekLimit - plan.WeekSpent), wallet.Balance));
+		// 1.8.5: "Always keep in the wallet" - never spent.
+		plan.Keep = KeepCents(cfg);
+		plan.Room = Math.Max(0, Math.Min(Math.Min(plan.DayLimit - plan.DaySpent, plan.WeekLimit - plan.WeekSpent), wallet.Balance - plan.Keep));
 
 		// 1.8.2: a level goal's own budget - what's left of it is the most this look spends.
 		if (goalBudget is long goalLeft) {
@@ -2574,9 +2582,18 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return;
 		}
 
+		List<SpareItem>? items = null;
+
 		foreach (DearCards.Verdict v in DearCards.ThisLook(result.Dear, Bot.Cfg.LegitMode)) {
 			if (ct.IsCancellationRequested) {
 				return;
+			}
+
+			// 1.8.5: none of its cards can go on the market yet (Steam's lock) - said once, not "selling" every look
+			if (DearCards.Offers(v, SetSale.Copies(inventory, v.App, v.Foil)).Count == 0) {
+				DearCards.SayLocked(Bot.Name, v, items ??= Spare.Read(inventory));
+
+				continue;
 			}
 
 			Log.Info(DearCards.SellingSaid(v), Bot.Name);
@@ -2650,6 +2667,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			MinReceive = SpareRules.From(Bot.Cfg).MinSaleCents,
 			GemsWorth = DearCards.KnownGemsWorth(inventory, plan.Currency, SpareRules.From(Bot.Cfg).DumpPct)
 		};
+
+		// 1.8.5: a card Steam has locked for good is never counted as money
+		if (inventory != null) {
+			List<SpareItem> items = Spare.Read(inventory);
+			extra = extra with { ForSale = (app, foil) => DearCards.ForSaleOf(items, app, foil) };
+		}
 
 		return await DearCards.WeighAsync(plan, _market, Bot.Cfg, CardExchange.BoughtGames(Bot.Name, now), dear,
 			GemsChoice.CostsOf(Bot.Name, plan.Currency, now), ct, extra).ConfigureAwait(false);
@@ -2791,6 +2814,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 	/// <summary>1.8.2: the accounts told the set finder is still warming up - told once, until it's done.</summary>
 	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> WarmSaid = new(StringComparer.OrdinalIgnoreCase);
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> LimitSaid = new(StringComparer.OrdinalIgnoreCase);   // 1.8.5: the limit-spent line, once
 
 	/// <summary>1.8.2: the block last told about for sets waiting uncrafted - told once, until it clears.</summary>
 	private BuyBlock _saidSetsBlocked = BuyBlock.None;
@@ -2885,8 +2909,20 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		GemsChoice.NoteCosts(Bot.Name, plan, DateTime.UtcNow);   // 1.8.2: what the gems maths turns money into
 		NoteLevelPrice(plan);
 
+		// 1.8.5: the day's or the week's limit used up - said once, in those words. It used to say "waits for the set finder"
+		// all day, when the week's 15.00 had been spent and nothing could have been bought anyway.
+		bool weekOut = plan.WeekLimit - plan.WeekSpent <= 0, dayOut = plan.DayLimit - plan.DaySpent <= 0;
+
+		if (!weekOut && !dayOut) {
+			LimitSaid.TryRemove(Bot.Name, out _);
+		} else if (buying && LimitSaid.TryAdd(Bot.Name, true)) {
+			Log.Info(weekOut
+				? new Said("buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days", BuyPlan.Money(plan.WeekLimit, plan.Currency), BuyPlan.Money(plan.WeekSpent, plan.Currency))
+				: new Said("buying waits: today's {0} is spent - more tomorrow", BuyPlan.Money(plan.DayLimit, plan.Currency)), Bot.Name);
+		}
+
 		// 1.8.2: the set finder still warming up - said once in plain words (the preview shows it in its notes).
-		if (plan.WarmUp.Length == 0) {
+		if ((plan.WarmUp.Length == 0) || weekOut || dayOut) {
 			WarmSaid.TryRemove(Bot.Name, out _);
 		} else if (buying && WarmSaid.TryAdd(Bot.Name, true)) {
 			Log.Info(new Said("buying waits for the set finder: {0} of {1} cheapest sets checked", plan.WarmUpChecked, plan.WarmUpNeeded), Bot.Name);
@@ -3464,8 +3500,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				dayLeft = weekLeft = GoalLeft(goalNow);
 			}
 
-			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere)) {
-				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds - nothing more bought";
+			if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere - BuyPlan.KeepCents(Bot.Cfg))) {
+				result.Problem = "that would go over the day's or the week's limit, or more than the wallet holds (past what's always kept) - nothing more bought";
 
 				return Asked(step, onPhone, result, false);
 			}

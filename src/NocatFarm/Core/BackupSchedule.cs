@@ -238,6 +238,11 @@ public static class BackupSchedule {
 		Said saved = new("backup saved: {0} ({1} KB)", path, kb);
 		Log.Good(saved);
 
+		// 1.8.5: the locked file to the Telegram chat too, off this thread - never holding up the next backup.
+		if (g.BackupToTelegram && Notifier.TelegramConnected) {
+			_ = Task.Run(() => Notifier.SendBackupAsync(path, CancellationToken.None));
+		}
+
 		if (wasFailing) {
 			Log.Publish(Topic.Backups, "nocat.farm", new Said("backups work again - {0}", Path.GetFileName(path)));
 		} else if (g.BackupMessages == 2) {

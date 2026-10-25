@@ -467,14 +467,23 @@ NocatFarm.Core.SelfUpdate.NotifierReady();
 {
 	DateTime startedAt = DateTime.UtcNow;
 
-	if (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Begin(startedAt), startedAt, manager.All.Count(static b => b.Cfg.Enabled)) is { } backUp) {
+	if (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Begin(startedAt), startedAt, manager.All.Count(static b => b.Cfg.Enabled),
+	NocatFarm.Core.RunState.MachineStarted(startedAt)) is { } backUp) {
 		_ = Task.Run(async () => {
 			await Task.Delay(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
-			Log.Attention(backUp, backUp, new NocatFarm.Core.Said("nocat.farm is back up"), Topic.Problems);
+			Log.Event(backUp, "nocat.farm", Topic.Problems);   // good news, so the log's green - still under Problems, so Telegram and Discord get it
 		});
+	}
+
+	// 1.8.5: a human-mode day (waking, bed, its hours) follows this machine's clock - one left on UTC (a TV box, a container)
+	// lives it hours off. Said once a start.
+	if (NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Local, [.. manager.All.Where(static b => b.Cfg.Enabled && b.Cfg.LegitMode).Select(static b => b.Name)]) is { } clock) {
+		Log.Attention(clock);
 	}
 }
 NocatFarm.Core.DiscordPresence.Start(manager);
+NocatFarm.Core.OutageWatch.Start(manager);
+NocatFarm.Core.BoxHealth.Start();   // 1.8.5: overheating, storage or memory running out - warned once   // 1.8.5: every account cut off for 5m+ and back - said once
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
 // The day-by-day totals behind the dashboard's history charts. Before the accounts start, so the first card of the

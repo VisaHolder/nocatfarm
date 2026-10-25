@@ -8,13 +8,22 @@ namespace NocatFarm;
 /// at best re-rolls the day and at worst throws away a login token and forces a password re-prompt. Writing to a
 /// sibling ".tmp" and moving it over the target is atomic on the same volume, so a reader only ever sees the old
 /// file or the whole new one, never a half.
+///
+/// 1.8.5: and the new copy is on the disk before the rename. Without that a power cut right after it - a TV box being
+/// unplugged - left the renamed file full of zeros (the name moved, the data never got written), and the achievement hunt
+/// started over: "couldn't read the achievement state: '0x00'".
 /// </summary>
 public static class AtomicFile {
 	public static void Write(string path, string content) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 
 		try {
-			File.WriteAllText(tmp, content);
+			using (FileStream f = new(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
+				byte[] bytes = new System.Text.UTF8Encoding(false).GetBytes(content);
+				f.Write(bytes);
+				f.Flush(flushToDisk: true);
+			}
+
 			MoveOver(tmp, path);
 		} catch {
 			TryDelete(tmp);   // a half-written copy of a secret must not be left lying next to it
@@ -51,7 +60,12 @@ public static class AtomicFile {
 	public static async Task WriteAsync(string path, string content) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 		try {
-			await File.WriteAllTextAsync(tmp, content).ConfigureAwait(false);
+			await using (FileStream f = new(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true)) {
+				byte[] bytes = new System.Text.UTF8Encoding(false).GetBytes(content);
+				await f.WriteAsync(bytes).ConfigureAwait(false);
+				f.Flush(flushToDisk: true);
+			}
+
 			MoveOver(tmp, path);
 		} catch {
 			TryDelete(tmp);

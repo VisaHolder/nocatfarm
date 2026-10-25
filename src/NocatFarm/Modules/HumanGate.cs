@@ -61,6 +61,14 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 	/// <summary>For things the account does by itself that show on it afterwards: only in its own day, settled in.</summary>
 	public static HumanGate OwnDay(Bot bot) => new(bot, followsDay: true, ownDay: true);
 
+	/// <summary>
+	/// 1.8.5: for the next step of a round already under way - open, or shut only because something else just showed on the
+	/// account (a card bought, a craft, a comment). That spacing is for starting things; asked between the items of a round
+	/// it ended the round instead ("stopped part way", 0 done) every time buying or rep4rep moved, so old listings and the
+	/// gems backlog hardly moved all day. The account's own reasons (asleep, a break, you on it, signing off) still stop it.
+	/// </summary>
+	public bool OpenForARound => Open || (_ready && (DateTime.UtcNow >= _openAt) && (OtherShown() != null));
+
 	/// <summary>Whether it may act now. Each time the account becomes ready again (signed in, woke up), a fresh wait starts.</summary>
 	public bool Open {
 		get {

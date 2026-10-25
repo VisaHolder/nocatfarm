@@ -58,8 +58,41 @@ public static class RunState {
 		};
 	}
 
+	/// <summary>
+	/// 1.8.5: when the machine last started (UTC), or null when it can't be told for sure. Linux: /proc/stat's btime, trusted
+	/// only when /proc/uptime agrees with it - inside proot (Termux on an Android box) both are made up (btime in 2023, uptime
+	/// minutes) and a made-up one would call every reboot a crash. Windows and macOS: the time since boot the system counts.
+	/// </summary>
+	public static DateTime? MachineStarted(DateTime now) {
+		if (!OperatingSystem.IsLinux()) {
+			return now - TimeSpan.FromMilliseconds(Environment.TickCount64);
+		}
+
+		try {
+			return Booted(File.ReadAllText("/proc/stat"), File.ReadAllText("/proc/uptime"), now);
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return null;
+		}
+	}
+
+	/// <summary>The boot time /proc/stat and /proc/uptime agree on (within 2 minutes), else null.</summary>
+	public static DateTime? Booted(string stat, string uptime, DateTime now) {
+		string? btime = stat.Split('\n').FirstOrDefault(static l => l.StartsWith("btime ", StringComparison.Ordinal));
+
+		if ((btime == null) || !long.TryParse(btime[6..].Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out long unix) || (unix <= 0)
+			|| !double.TryParse(uptime.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Float, CultureInfo.InvariantCulture, out double up)) {
+			return null;
+		}
+
+		DateTime byStat = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime, byUptime = now - TimeSpan.FromSeconds(up);
+
+		return ((byStat - byUptime).Duration() <= TimeSpan.FromMinutes(2)) && (byStat <= now) ? byStat : null;
+	}
+
 	/// <summary>The line for Telegram and the log, or null when there's nothing to say.</summary>
-	public static Said? Line(Ended? last, DateTime now, int accounts) {
+	/// <param name="machineStarted">1.8.5: when the machine last started (<see cref="MachineStarted"/>) - after the run was last
+	/// seen: the machine restarted; before: nocat.farm alone stopped (a crash). Null: not known - the line says either.</param>
+	public static Said? Line(Ended? last, DateTime now, int accounts, DateTime? machineStarted = null) {
 		if (last == null) {
 			return null;
 		}
@@ -68,9 +101,18 @@ public static class RunState {
 			return new Said("nocat.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in", accounts);
 		}
 
-		if (last.LastSeen is { } seen && (now > seen)) {
+		if (last.LastSeen is { } seen && (now > seen) && (machineStarted is { } booted)) {
+			string ago = Fmt.Hm(Math.Max(1, (int) Math.Ceiling((now - seen).TotalMinutes)));
+
+			return booted > seen
+				? new Said("nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in",
+					(Func<string>) (() => Fmt.Clock(booted)), ago, accounts)
+				: new Said("nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in", ago, accounts);
+		}
+
+		if (last.LastSeen is { } seenAt && (now > seenAt)) {
 			return new Said("nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in",
-				Fmt.Hm(Math.Max(1, (int) Math.Ceiling((now - seen).TotalMinutes))), accounts);
+				Fmt.Hm(Math.Max(1, (int) Math.Ceiling((now - seenAt).TotalMinutes))), accounts);
 		}
 
 		return new Said("nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in", accounts);

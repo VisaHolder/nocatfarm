@@ -1,5 +1,35 @@
 {
   "ui": {
+    "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "резервная копия не отправлена в Telegram - в ней {0} МБ, больше лимита Telegram в 50 МБ",
+    "nocat.farm backup · {0} · password-locked": "резервная копия nocat.farm · {0} · защищена паролем",
+    "backup sent to Telegram: {0}": "резервная копия отправлена в Telegram: {0}",
+    "the backup couldn't be sent to Telegram ({0}) - it's still saved on this machine": "не удалось отправить резервную копию в Telegram ({0}) - она всё равно сохранена на этой машине",
+    "Machine": "Машина",
+    "{0} memory free": "свободно памяти: {0}",
+    "{0} storage free": "свободно места: {0}",
+    "{0}°C": "{0}°C",
+    "the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off": "машина перегревается - {0}°C дольше {1} минут; дайте ей воздуха (или вентилятор), иначе она может замедлиться или выключиться сама",
+    "storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room": "место, где nocat.farm хранит файлы, почти закончилось - свободно {0}; журналам и резервным копиям нужно место",
+    "the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped": "у машины почти кончилась память - свободно {0}; nocat.farm (или что-то рядом) может быть остановлен",
+    "couldn't look at the machine's health: {0}": "не удалось проверить состояние машины: {0}",
+    "back online after {0} offline · all {1} account(s) signed back in": "снова в сети после {0} без связи · все аккаунты ({1}) снова вошли",
+    "couldn't look at the connection: {0}": "не удалось проверить соединение: {0}",
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "часы этой машины стоят на UTC, и день {0} (подъём, сон, часы игры) идёт по ним - задайте часовой пояс (в Linux: TZ=Регион/Город), чтобы он жил по вашему времени",
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm снова работает - машина перезапустилась (отключение питания или перезагрузка) около {0}, последний раз работал {1} назад · входят аккаунтов: {2}",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm снова работает после неожиданной остановки (сбой - машина продолжала работать) - последний раз работал {0} назад · входят аккаунтов: {1}",
+    "{0} accepted your trade offer · you gave {1}": "{0} принял ваше предложение обмена · вы отдали {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} принял ваше предложение обмена · вы отдали {1}, получили {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} отклонил ваше предложение обмена (вы бы отдали {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} ответил на ваше предложение обмена встречным",
+    "your trade offer to {0} expired": "срок вашего предложения обмена для {0} истёк",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "ваше предложение обмена для {0} отменено - его не подтвердили вовремя",
+    "your trade offer to {0} can't go through any more - its items are gone": "ваше предложение обмена для {0} больше не может пройти - его предметов больше нет",
+    "couldn't note which sent offers were said: {0}": "не удалось записать, о каких отправленных предложениях уже сказано: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "не удалось проверить отправленные предложения обмена: {0}: {1}",
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam не даёт продать её карточки - оставлены для значка",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: Steam заблокировал её карточки до {1} - продадутся после",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam сейчас не даёт выставить её карточки на торговую площадку - продадутся, когда разрешит",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam завершил сеанс (ServiceUnavailable) - переподключается сам, это не ограничение входа",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Торговая площадка Steam заблокирована ({0}) - покупка, продажа и обмены ждут, пока Steam её не откроет, а для этого нужна покупка в Steam на этом аккаунте",
     "settling in first (~{0}m), then looking for cards": "сначала обживается (~{0} мин), потом ищет карточки",
     "settling in first, then looking for cards": "сначала обживается, потом ищет карточки",
@@ -535,6 +565,9 @@
     "manual reset": "ручной сброс",
     "no Steam web session": "нет веб-сессии Steam",
     "not registered on rep4rep": "не зарегистрирован на rep4rep",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "покупка ждёт: недельный лимит {0} потрачен ({1} за последние 7 дней) - снова купит, когда старым покупкам будет больше 7 дней",
+    "buying waits: today's {0} is spent - more tomorrow": "покупка ждёт: дневной лимит {0} потрачен - завтра ещё",
+    "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com не отвечает - повтор через 15м",
     "nothing ready to craft": "создавать нечего",
     "off": "выключено",
     "offline": "не в сети",
@@ -2725,7 +2758,6 @@
     "nocat.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in": "nocat.farm снова работает после того, как устройство его остановило (перезапуск или остановка) · входит аккаунтов: {0}",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm снова работает после неожиданной остановки (сбой, отключение питания или перезапуск устройства) - последний раз работал {0} назад · входит аккаунтов: {1}",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in": "nocat.farm снова работает после неожиданной остановки (сбой, отключение питания или перезапуск устройства) · входит аккаунтов: {0}",
-    "nocat.farm is back up": "nocat.farm снова работает",
     "couldn't read what's on its profile - going by the last read ({0} ago)": "не удалось прочитать, что на профиле - беру последнее чтение ({0} назад)",
     "extra card copies are switched off": "лишние копии карточек отключены",
     "duplicate backgrounds are switched off": "дубликаты фонов отключены",
@@ -3449,6 +3481,14 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "снят {0} - не продан {1} дн., самоцветы теперь стоят больше"
   },
   "settings": {
+    "BackupToTelegram": {
+      "label": "Отправлять ежедневную копию в Telegram",
+      "tip": "Когда Telegram подключён, каждая ежедневная копия отправляется и в его чат файлом - она переживёт поломку машины. Уходит только копия, защищённая паролем, логины открытым текстом - никогда; для восстановления нужен пароль копии. Например, сломалась ТВ-приставка: аккаунты возвращаются из файла в чате. Telegram принимает файлы до 50 МБ."
+    },
+    "BuyKeepInWallet": {
+      "label": "Всегда оставлять в кошельке",
+      "tip": "Покупка карточек никогда не опускает кошелёк Steam этого аккаунта ниже этой суммы, в его собственной валюте. Например 20,00: пополните на 100,00 - потратит не больше 80,00, а 20,00 останутся вам. 0 позволяет тратить всё (но никогда сверх лимитов на день и неделю)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Кнопки «Открыть в Steam» у всех аккаунтов",
       "tip": "Показывает кнопку «Открыть в Steam» в один клик у всех аккаунтов - на карточке и в окне приложения, - чтобы не включать её у каждого по отдельности. Кнопка входит в твоё приложение Steam под этим аккаунтом: закрывает Steam, направляет Steam на аккаунт и снова запускает Steam. Аккаунт, который Steam ещё не помнит, откроется на входе в Steam с уже вписанным именем. Никогда не мешает nocat.farm фармить. Только Windows. По умолчанию выключено. При включении сначала показывает, что именно делает кнопка, и просит подтвердить. Если нужно только у некоторых аккаунтов, оставь это выключенным и включи кнопку «Открыть в Steam» в настройках этих аккаунтов."

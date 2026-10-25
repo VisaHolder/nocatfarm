@@ -11,6 +11,29 @@ public static partial class Commands {
 	/// <summary>Sets 'sets' lists.</summary>
 	internal const int SetsShown = 20;
 
+	/// <summary>
+	/// 1.8.5: the rows, with any game whose name isn't known asked of Steam's store first (best effort, a few seconds at
+	/// most) - "app 1085220" in 'sets' was Figment 2: Creed Valley.
+	/// </summary>
+	private static async Task<string> NamedAsync(Func<IReadOnlyList<SetFinder.Row>> rows, Func<IReadOnlyList<SetFinder.Row>, string> said) {
+		IReadOnlyList<SetFinder.Row> first = rows();
+		List<uint> unknown = [.. first.Select(static r => r.App).Where(static a => !GameNames.IsKnown(a))];
+
+		if (unknown.Count == 0) {
+			return said(first);
+		}
+
+		using CancellationTokenSource quick = new(TimeSpan.FromSeconds(8));
+
+		try {
+			await GameNames.ResolveAsync(unknown, quick.Token).ConfigureAwait(false);
+		} catch (OperationCanceledException) {
+			// only cosmetic - the stand-in shows
+		}
+
+		return said(rows());
+	}
+
 	private static Task<string> SetsAsync(BotManager mgr, string[] args) {
 		if (args.Length > 1) {
 			return Task.FromResult(SetsUsage + " - one account, or none for every game.");
@@ -22,7 +45,7 @@ public static partial class Commands {
 		SetFinder.Coverage covered = finder.Covered(now);
 
 		if (args.Length == 0) {
-			return Task.FromResult(SetsSaid(null, finder.Cheapest(null, 0, SetsShown, now), 0, covered));
+			return NamedAsync(() => finder.Cheapest(null, 0, SetsShown, now), rows => SetsSaid(null, rows, 0, covered));
 		}
 
 		if (mgr.Get(args[0]) is not { } bot) {
@@ -37,7 +60,7 @@ public static partial class Commands {
 
 			int cur = b.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) b.WalletCurrency;
 
-			return SetsSaid(b.Name, finder.Cheapest(levels, cur, SetsShown, DateTime.UtcNow), cur, covered);
+			return await NamedAsync(() => finder.Cheapest(levels, cur, SetsShown, DateTime.UtcNow), rows => SetsSaid(b.Name, rows, cur, covered)).ConfigureAwait(false);
 		}, ReplyWithin, cannot: static b => !b.IsOnline || !b.Web.Ready ? $"{b.Name}: not logged in" : null);
 	}
 

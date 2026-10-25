@@ -515,7 +515,7 @@ public static class SpareRun {
 	/// module's, so a command and the module agree) is open - its day, settled in, you not playing on it.
 	/// </summary>
 	internal static bool StillMayAct(Bot bot, Modules.HumanGate? gate) =>
-		gate?.Open ?? (!bot.Cfg.LegitMode || (!bot.Stopping && !bot.PlayingBlocked && Modules.HumanMode.UpFor(bot)));
+		gate?.OpenForARound ?? (!bot.Cfg.LegitMode || (!bot.Stopping && !bot.PlayingBlocked && Modules.HumanMode.UpFor(bot)));
 
 	/// <summary>The gate spare items keep to on this account: the module's own, or none (in a check without the module).</summary>
 	internal static Modules.HumanGate? SpareGate(Bot bot) => BotManager.ModuleOf<Modules.SpareItems>(bot)?.Gate;
@@ -1306,6 +1306,18 @@ public static class SpareRun {
 		// The loose gems it starts with: an answer that isn't a clear yes is checked against them (GemsIfGoneAsync).
 		long gemsAtStart = look.Items.Where(static i => i.Kind == SpareKind.Gems).Sum(static i => (long) i.Amount);
 		LiveSpareSteam steam = new(bot, () => StillMayAct(bot, SpareGate(bot)), look.Spread, gemsAtStart);
+
+		// Selling, where it's chosen: its own listings unsold after the days set come down, to go up again a step cheaper -
+		// never under the floor - or for gems. Only listings nocat.farm put up itself - never one you listed by hand. Asked
+		// again before each one: turned off, held or human mode's day over part way stops the rest.
+		// 1.8.5: first, with a share of its own (a third of the look's number on a human-mode account). After the items it
+		// only ever got what they left - with 326 items waiting for gems that was nothing, and 62 listings sat for days.
+		if ((look.Rules.Action is 0 or 2) && (AfterStop(look.Ledger, steam, bot.Name) == null)) {
+			LookBudget? stepBudget = bot.Cfg.LegitMode ? new LookBudget(Math.Max(1, look.Rules.PerRun / 3), false) : null;
+			await Seller.StepDownAsync(bot, Math.Clamp(bot.Cfg.SpareRelistDays, 1, 60), ct, () => AfterStop(look.Ledger, steam, bot.Name), stepBudget,
+				bot.Cfg.LegitMode ? steam.PauseAsync : null, StepGems(look.Items, look.Rules, look.Currency)).ConfigureAwait(false);
+		}
+
 		Done done = await ActAsync(look.Plan, look.Rules, look.Ledger, steam, bot.Name, static () => DateTime.Now, ct).ConfigureAwait(false);
 
 		// What follows the items on a human-mode account counts against the same "items a look" and waits the same gaps.
@@ -1314,14 +1326,6 @@ public static class SpareRun {
 		// Gems afterwards: from the inventory as it was - packed gems and sacks are read again next look.
 		List<Said> gems = await GemsAfterAsync(look.Items, GemsChoice(bot.Cfg), Math.Max(0, bot.Cfg.SpareKeepGems), Looting.SendToName(bot.Cfg, bot.Cfg.SpareGemsSendTo, bot.Name), steam,
 			s => SaleOf(s, look.Currency, look.Rules, new Said("sack of gems")), look.Rules, look.Ledger, static () => DateTime.Now, bot.Name, ct, budget).ConfigureAwait(false);
-
-		// Selling, where it's chosen: its own listings unsold after the days set come down, to go up again a step cheaper -
-		// never under the floor. Only listings nocat.farm put up itself - never one you listed by hand. Asked again before
-		// each one: turned off, held or human mode's day over part way stops the rest.
-		if ((look.Rules.Action is 0 or 2) && (AfterStop(look.Ledger, steam, bot.Name) == null)) {
-			await Seller.StepDownAsync(bot, Math.Clamp(bot.Cfg.SpareRelistDays, 1, 60), ct, () => AfterStop(look.Ledger, steam, bot.Name), budget,
-				bot.Cfg.LegitMode ? steam.PauseAsync : null, StepGems(look.Items, look.Rules, look.Currency)).ConfigureAwait(false);
-		}
 
 		bool more = (look.Plan.Actions.Count > done.GemItems + done.Sold) && look.Ledger.Fits(0, look.Rules.DailyItems, look.Rules.DailyValueCents, DateTime.Now);
 		Briefs[bot.Name] = Brief(look, done);

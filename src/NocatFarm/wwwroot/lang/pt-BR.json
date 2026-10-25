@@ -1,5 +1,35 @@
 {
   "ui": {
+    "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "o backup não foi enviado ao Telegram - tem {0} MB, acima dos 50 MB do Telegram",
+    "nocat.farm backup · {0} · password-locked": "backup do nocat.farm · {0} · protegido por senha",
+    "backup sent to Telegram: {0}": "backup enviado ao Telegram: {0}",
+    "the backup couldn't be sent to Telegram ({0}) - it's still saved on this machine": "não foi possível enviar o backup ao Telegram ({0}) - ele continua salvo nesta máquina",
+    "Machine": "Máquina",
+    "{0} memory free": "{0} de memória livre",
+    "{0} storage free": "{0} de armazenamento livre",
+    "{0}°C": "{0}°C",
+    "the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off": "a máquina está esquentando - {0}°C há mais de {1} minutos; dê ventilação (ou um ventilador), ou ela pode ficar lenta ou desligar sozinha",
+    "storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room": "o armazenamento onde o nocat.farm guarda os arquivos está quase cheio - {0} livre; logs e backups precisam de espaço",
+    "the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped": "a máquina está quase sem memória - {0} livre; o nocat.farm (ou algo ao lado) pode ser parado",
+    "couldn't look at the machine's health: {0}": "não foi possível verificar o estado da máquina: {0}",
+    "back online after {0} offline · all {1} account(s) signed back in": "de volta online após {0} offline · todas as {1} conta(s) entraram de novo",
+    "couldn't look at the connection: {0}": "não foi possível verificar a conexão: {0}",
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "o relógio desta máquina está em UTC, e o dia de {0} (acordar, dormir, as horas em que joga) segue ele - defina o fuso horário (no Linux: TZ=Área/Cidade) para que siga seus horários",
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm voltou - a máquina reiniciou (queda de energia ou reinício) por volta de {0}, visto rodando pela última vez há {1} · {2} conta(s) entrando",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm voltou depois de parar inesperadamente (uma falha - a máquina continuou ligada) - visto rodando pela última vez há {0} · {1} conta(s) entrando",
+    "{0} accepted your trade offer · you gave {1}": "{0} aceitou sua oferta de troca · você deu {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} aceitou sua oferta de troca · você deu {1} e recebeu {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} recusou sua oferta de troca (você daria {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} respondeu sua oferta de troca com uma contraoferta",
+    "your trade offer to {0} expired": "sua oferta de troca para {0} expirou",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "sua oferta de troca para {0} foi cancelada - não foi confirmada a tempo",
+    "your trade offer to {0} can't go through any more - its items are gone": "sua oferta de troca para {0} não pode mais ser concluída - os itens sumiram",
+    "couldn't note which sent offers were said: {0}": "não foi possível anotar quais ofertas enviadas já foram avisadas: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "não foi possível verificar as ofertas de troca enviadas: {0}: {1}",
+    "Steam doesn't let its cards be sold - kept for the badge": "O Steam não deixa vender as cartas - guardadas para a insígnia",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: as cartas estão bloqueadas pelo Steam até {1} - vendidas depois",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: o Steam não deixa as cartas irem ao mercado agora - vendidas quando deixar",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "O Steam encerrou a sessão (ServiceUnavailable) - reconectando sozinho, não é limite de login",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "O mercado da Steam está bloqueado ({0}) - comprar, vender e trocar esperam até a Steam liberar, e para isso é preciso uma compra na Steam nesta conta",
     "settling in first (~{0}m), then looking for cards": "se ajeitando primeiro (~{0}m), depois procura cartas",
     "settling in first, then looking for cards": "se ajeitando primeiro, depois procura cartas",
@@ -535,6 +565,9 @@
     "manual reset": "reinicialização manual",
     "no Steam web session": "sem sessão web da Steam",
     "not registered on rep4rep": "não registrada no rep4rep",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "compras esperando: o limite da semana de {0} foi gasto ({1} nos últimos 7 dias) - volta a comprar quando as compras antigas passarem de 7 dias",
+    "buying waits: today's {0} is spent - more tomorrow": "compras esperando: o limite de hoje de {0} foi gasto - mais amanhã",
+    "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com não está respondendo - tentando de novo em 15m",
     "nothing ready to craft": "nada pronto para fabricar",
     "off": "desligado",
     "offline": "offline",
@@ -2725,7 +2758,6 @@
     "nocat.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in": "o nocat.farm voltou depois que a máquina o fechou (reinício ou parada) · {0} conta(s) entrando",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in": "o nocat.farm voltou após uma parada inesperada (travamento, queda de energia ou reinício da máquina) - visto rodando pela última vez há {0} · {1} conta(s) entrando",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in": "o nocat.farm voltou após uma parada inesperada (travamento, queda de energia ou reinício da máquina) · {0} conta(s) entrando",
-    "nocat.farm is back up": "o nocat.farm voltou",
     "couldn't read what's on its profile - going by the last read ({0} ago)": "não deu para ler o que está no perfil - usando a última leitura (há {0})",
     "extra card copies are switched off": "cópias extras de cartas estão desligadas",
     "duplicate backgrounds are switched off": "fundos duplicados estão desligados",
@@ -3449,6 +3481,14 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "retirado {0} - {1} dias sem vender, as gemas valem mais agora"
   },
   "settings": {
+    "BackupToTelegram": {
+      "label": "Enviar o backup diário ao Telegram",
+      "tip": "Com o Telegram conectado, cada backup diário também vai para o chat como arquivo - assim sobrevive se a máquina morrer. Só vai o backup protegido por senha, nunca logins em texto puro; restaurar pede a senha do backup. Por exemplo uma TV box que quebra: as contas voltam pelo arquivo no chat. O Telegram aceita arquivos de até 50 MB."
+    },
+    "BuyKeepInWallet": {
+      "label": "Sempre manter na carteira",
+      "tip": "Comprar cartas nunca deixa a carteira Steam desta conta abaixo deste valor, na moeda dela. Por exemplo 20,00: você adiciona 100,00 e ele gasta no máximo 80,00 - os 20,00 ficam para você. 0 deixa usar tudo (nunca passando dos limites do dia e da semana)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Botões Abrir no Steam em todas as contas",
       "tip": "Mostra o botão de um clique Abrir no Steam em todas as contas - no cartão e na janela do app - para você não precisar ligar conta por conta. O botão faz o seu app do Steam entrar nessa conta: fecha o Steam, aponta o Steam para a conta e abre o Steam de novo. Uma conta que o Steam ainda não lembra abre o login do Steam com o nome já preenchido. Nunca impede o nocat.farm de farmar. Só no Windows. Desligado por padrão. Ao ligar, primeiro mostra exatamente o que o botão faz e pede confirmação. Para ter só em algumas contas, deixe isto desligado e ligue Botão Abrir no Steam nas configurações dessas contas."

@@ -64,7 +64,13 @@ jobs:
           file "$APP/nocatFarm"
 
       - name: unit tests
-        run: cd tests/NocatFarm.Tests && dotnet run -c Release
+        # The test project is one very large file: compiled with the default server GC and parallel build nodes it ran
+        # GitHub's runner out of memory ("the runner has lost communication"). One build node, no compiler server, and a
+        # workstation GC with a heap cap keep it inside the runner - every test still runs.
+        env:
+          DOTNET_gcServer: "0"
+          DOTNET_GCHeapHardLimitPercent: "0x46"
+        run: cd tests/NocatFarm.Tests && dotnet run -c Release -m:1 -p:UseSharedCompilation=false -nodeReuse:false
 
       - name: live Steam connection and idling (anonymous - no account)
         timeout-minutes: 4

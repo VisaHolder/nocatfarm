@@ -912,6 +912,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>When an unconfirmed stand-down should be announced, if it is still in force by then.</summary>
 	private DateTime? _blockWarnDue;
 	private EResult _lastLogOnResult = EResult.Invalid;
+
+	/// <summary>1.8.5: that result came with Steam ending a session that was signed in (a log-off), not with a sign-in being refused.</summary>
+	private bool _resultFromLogOff;
 	private DateTime _lastPacket = DateTime.UtcNow;
 
 	// Card drops arrive as a push from Steam. The farmer waits on this instead of re-scraping on a timer, so a
@@ -2137,6 +2140,7 @@ public sealed class Bot : IAsyncDisposable {
 		long logon = Interlocked.Increment(ref _logonGen);
 		_lastPacket = DateTime.UtcNow;
 		_lastLogOnResult = cb.Result > EResult.OK ? cb.Result : EResult.Invalid;
+		_resultFromLogOff = false;   // a sign-in's own answer
 
 		if (!string.IsNullOrEmpty(cb.IPCountryCode)) {
 			Country = cb.IPCountryCode;
@@ -2301,6 +2305,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	private void OnLoggedOff(SteamUser.LoggedOffCallback cb) {
 		_lastLogOnResult = cb.Result > EResult.OK ? cb.Result : EResult.Invalid;
+		_resultFromLogOff = true;
 
 		if (cb.Result == EResult.LoggedInElsewhere) {
 			// The owner just started playing on this account, so Steam handed them the session. Expected, not a
@@ -2404,7 +2409,9 @@ public sealed class Bot : IAsyncDisposable {
 
 		State = BotState.Reconnecting;
 		EResult reason = _lastLogOnResult;
+		bool fromLogOff = _resultFromLogOff;
 		_lastLogOnResult = EResult.Invalid;
+		_resultFromLogOff = false;
 
 		try {
 			switch (reason) {
@@ -2453,6 +2460,17 @@ public sealed class Bot : IAsyncDisposable {
 					// deletes it; treating the same result as a Steam-wide throttle as well sat every other account out
 					// for half an hour, with a "rate-limiting" warning, because one account's password was changed.
 					if (reason == EResult.ServiceUnavailable && SteamMaintenance.LikelyNow) {
+						await BackOffAndWaitAsync().ConfigureAwait(false);
+
+						break;
+					}
+
+					// 1.8.5: Steam ending ONE signed-in session with it (kylro, 19:24 and 01:55, the others staying on) is a hiccup on
+					// its side, not the login throttle - that comes back on a sign-in. It sat every account out for 25 minutes with a
+					// "rate-limiting logins" warning. This account reconnects on its own back-off; a sign-in Steam then refuses with
+					// it still serves the shared cooldown.
+					if ((reason == EResult.ServiceUnavailable) && fromLogOff) {
+						Log.Debug("Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle", Name);
 						await BackOffAndWaitAsync().ConfigureAwait(false);
 
 						break;

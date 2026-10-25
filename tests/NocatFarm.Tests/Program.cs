@@ -26549,6 +26549,15 @@ await CommandSweep.RunAsync(Check);
 		(NocatFarm.PriceBook.ResumesAt != null) || (NocatFarm.Core.SpareRun.PricingLine(503, 40).ToEnglish() == "still pricing 503 item(s) - about 40 min"));
 }
 
+// ── 1.8.5: a listing already at Steam's least (0.03, you get 0.01) under the minimum sale comes down for gems ──
+{
+	string s185 = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Seller.cs"));
+	Check("step down: a listing that can't go a cent lower and pays under 'Only sell if you get at least' (or less than its gems) comes down, so the next look turns it into gems",
+		s185.Contains("(SpareListings.StepTo(ours, quote.Price, floorPct, dump) == null)", StringComparison.Ordinal)
+		&& s185.Contains("(ReceiveFor(ours) < SpareRules.From(bot.Cfg).MinSaleCents)", StringComparison.Ordinal)
+		&& (NocatFarm.Core.Seller.ReceiveFor(3) == 1));
+}
+
 // ── 1.8.4: back up by itself after a crash, a power cut or a reboot - said once it's running again ──
 {
 	DateTime rsNow = new(2026, 10, 20, 20, 0, 0, DateTimeKind.Utc);
@@ -27762,6 +27771,13 @@ await CommandSweep.RunAsync(Check);
 		Check("plan: never more than the wallet holds - the next set that doesn't fit stops the plan",
 			(bcPoorPlan.Steps.Count == 1) && (bcPoorPlan.Steps[0].App == 100) && (bcPoorPlan.Room == 12) && bcPoorPlan.Notes.Any(static n => n.Contains("wallet", StringComparison.Ordinal)),
 			string.Join("; ", bcPoorPlan.Notes));
+		var bcKeepMarket = BcMarket();
+		bcKeepMarket.Wallet = new NocatFarm.Modules.CardMarket.Wallet(100, 20, false, 0);
+		var bcKeepPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyKeepInWallet = 0.88f }, bcKeepMarket);
+		var bcKeepAll = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyKeepInWallet = 5f }, bcKeepMarket);
+		Check("plan 1.8.5: \"Always keep in the wallet\" is never spent - 1.00 in it with 0.88 kept leaves 0.12; keeping more than it holds buys nothing",
+			(bcKeepPlan.Keep == 88) && (bcKeepPlan.Room == 12) && (bcKeepPlan.Steps.Count == 1) && (bcKeepAll.Room == 0) && (bcKeepAll.Steps.Count == 0)
+			&& (NocatFarm.Modules.BuyPlan.KeepCents(new NocatFarm.Config.BotConfig()) == 0), $"{bcKeepPlan.Room} / {bcKeepAll.Room}");
 		var bcSpentLedger = new NocatFarm.Modules.BuyLedger(Path.Combine(bcRoot, "config", "state", "buy-spent.json"));
 		bcSpentLedger.Add(new NocatFarm.Modules.BuyLedger.Entry(DateTime.UtcNow.AddHours(-2), 145, 20, 1, "x"));
 		var bcSpentPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true }, BcMarket(), ledger: bcSpentLedger);
@@ -28809,6 +28825,197 @@ await LockedSpareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "
 
 // ── 1.8.2 live-test polish: a quick buy preview that leads with blocks, 'buy do' on a held market, a small-hours reroll, the wallet in 'levelup', swaps and trade holds, email confirmations; fakes only ──
 await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
+// ── 1.8.5 sent trade offers: each one that ends is said once - accepted (green), declined, expired; never one its sender took back,
+// never old history, never twice (restarts included) ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-sent-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		NocatFarm.Core.TradeOffers.Item It(ulong asset, string name) => new(753, "6", asset, asset, 0, 1, "Pony Island Trading Card", name, 405640, true);
+		NocatFarm.Core.TradeOffers.Offer Sent(ulong id, int state, int gave = 3) =>
+			new(id, 76561198000000001, state, true, null, [.. Enumerable.Range(1, gave).Select(i => It((ulong) (id * 10 + (ulong) i), "Louey"))], []);
+		var sbot = new NocatFarm.Core.Bot("harness-sent", new NocatFarm.Config.BotConfig());
+		List<NocatFarm.Core.TradeOffers.Offer> now = [];
+		List<DateTime> asked = [];
+		NocatFarm.Modules.Trading Watcher() => new(sbot) {
+			ReadSent = (since, _) => { asked.Add(since); return Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([.. now]); },
+			ReadName = static (_, _) => Task.FromResult("pookie")
+		};
+		List<string> SaidNow(long since) => [.. Log.Recent(500).Where(e => (e.Seq > since) && (e.Source == "harness-sent")).Select(static e => $"{e.Level} {e.Said.ToEnglish()}")];
+		long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+		var w = Watcher();
+		now = [Sent(1, NocatFarm.Core.TradeOffers.Accepted)];
+		long m0 = Mark();
+		await w.WatchSentAsync(CancellationToken.None);
+		Check("sent offers: the first look ever only notes the time - nothing from before is dug up", (asked.Count == 0) && (SaidNow(m0).Count == 0)
+			&& NocatFarm.Modules.Trading.LoadSent("harness-sent").Since != default);
+
+		NocatFarm.Modules.Trading.SentGap = TimeSpan.Zero;
+		now = [Sent(2, NocatFarm.Core.TradeOffers.Accepted), Sent(3, NocatFarm.Core.TradeOffers.Declined, 1), Sent(4, NocatFarm.Core.TradeOffers.Active),
+			Sent(5, 6), Sent(6, NocatFarm.Core.TradeOffers.Expired)];
+		long m1 = Mark();
+		await w.WatchSentAsync(CancellationToken.None);
+		List<string> said = SaidNow(m1);
+		Check("sent offers: accepted said green with what went, declined and expired said once each; still out or taken back by its sender - nothing",
+			(said.Count == 3) && said.Contains("GOOD pookie accepted your trade offer · you gave 3 item(s): 3× Louey")
+			&& said.Contains("INFO pookie declined your trade offer (you'd have given 1 item(s): Louey)") && said.Contains("INFO your trade offer to pookie expired"),
+			string.Join(" | ", said));
+
+		long m2 = Mark();
+		await Watcher().WatchSentAsync(CancellationToken.None);   // a restart: a new module, the same file
+		Check("sent offers: never said twice - a restart reads from the last look (with a little overlap) and remembers what it said",
+			(SaidNow(m2).Count == 0) && (asked.Count == 2) && (asked[1] > asked[0].AddMinutes(-6)), string.Join(" | ", SaidNow(m2)));
+
+		Check("sent offers: a countered offer, one Steam cancelled unconfirmed, and one whose items are gone each get a plain line",
+			(NocatFarm.Modules.Trading.SentSaid(Sent(7, NocatFarm.Core.TradeOffers.Countered), "pookie")?.ToEnglish() == "pookie answered your trade offer with a counter-offer")
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(8, NocatFarm.Core.TradeOffers.CanceledBySecondFactor), "pookie")?.ToEnglish().Contains("wasn't confirmed in time", StringComparison.Ordinal) == true)
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(9, NocatFarm.Core.TradeOffers.InvalidItems), "pookie")?.ToEnglish().Contains("its items are gone", StringComparison.Ordinal) == true)
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(10, 6), "pookie") == null));
+	} finally {
+		NocatFarm.Modules.Trading.SentGap = TimeSpan.FromMinutes(15);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
+// ── 1.8.5 'sets': a game written down as "app 1085220" shows its real name once it's known ──
+{
+	// 999971 was named by its item's Game tag in the spare items checks above - nothing learned here (learning saves the names file)
+	Check("sets: the stand-in \"app N\" gives way to the real name; a real name written down stays; unknown stays the stand-in",
+		(NocatFarm.Core.SetFinder.Named(999_971, "app 999971") == "Spacebase Made Up") && (NocatFarm.Core.SetFinder.Named(999_971, "") == "Spacebase Made Up")
+		&& (NocatFarm.Core.SetFinder.Named(999_002, "Kept Name") == "Kept Name") && (NocatFarm.Core.SetFinder.Named(999_003, "app 999003") == "app 999003"));
+}
+
+// ── 1.8.5 back up: the machine restarting told apart from nocat.farm alone stopping, when the boot time can be trusted ──
+{
+	DateTime rsNow = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	var ended = NocatFarm.Core.RunState.Read($"running {rsNow.AddMinutes(-30).Ticks}");
+	string restarted = NocatFarm.Core.RunState.Line(ended, rsNow, 3, rsNow.AddMinutes(-4))?.ToEnglish() ?? "";
+	string crashed = NocatFarm.Core.RunState.Line(ended, rsNow, 3, rsNow.AddDays(-2))?.ToEnglish() ?? "";
+	string unknown = NocatFarm.Core.RunState.Line(ended, rsNow, 3, null)?.ToEnglish() ?? "";
+	Check("run state 1.8.5: booted after it was last seen - the machine restarted; booted before - a crash; not known - either (as before)",
+		restarted.Contains("the machine restarted (a power cut or a reboot) at about", StringComparison.Ordinal) && restarted.Contains("30m ago", StringComparison.Ordinal)
+		&& crashed.Contains("stopped unexpectedly (a crash - the machine kept running)", StringComparison.Ordinal)
+		&& unknown.Contains("(a crash, a power cut or the machine restarting)", StringComparison.Ordinal), $"{restarted} | {crashed} | {unknown}");
+	long bt = new DateTimeOffset(rsNow.AddHours(-5)).ToUnixTimeSeconds();
+	Check("run state 1.8.5: /proc/stat's boot time is trusted only when /proc/uptime agrees - proot on an Android box makes both up",
+		(NocatFarm.Core.RunState.Booted($"cpu 1 2 3\nbtime {bt}\nprocesses 9\n", "18000.50 9.0", rsNow) == rsNow.AddHours(-5))
+		&& (NocatFarm.Core.RunState.Booted("btime 1680020856\n", "124.08 932.80", rsNow) == null)
+		&& (NocatFarm.Core.RunState.Booted("cpu 1\n", "5 5", rsNow) == null) && (NocatFarm.Core.RunState.Booted($"btime {bt}\n", "x", rsNow) == null));
+}
+
+// ── 1.8.5 a machine on UTC: human-mode accounts live its clock - said once at start; a real time zone, or no human mode - nothing ──
+{
+	var st = TimeZoneInfo.CreateCustomTimeZone("St Johns test", TimeSpan.FromHours(-3.5), "St Johns test", "St Johns test");
+	string utcSaid = NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Utc, ["new", "old"])?.ToEnglish() ?? "";
+	Check("clock: UTC with human-mode accounts - warned, naming them; a real zone or no human-mode account - nothing",
+		utcSaid.Contains("clock is set to UTC, and the day of new, old", StringComparison.Ordinal) && (NocatFarm.Modules.HumanMode.ClockWarning(st, ["new"]) == null)
+		&& (NocatFarm.Modules.HumanMode.ClockWarning(TimeZoneInfo.Utc, []) == null), utcSaid);
+}
+
+// ── 1.8.5 fixes from the TV box: rep4rep.com down isn't the token, the buying limit said in words, saves survive a power cut,
+// the app's own listings travel in backups ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string Src(params string[] parts) => File.ReadAllText(Path.Combine([src, .. parts])).Replace("\r\n", "\n");
+	string r4r = Src("Rep4Rep", "Rep4RepApi.cs"), r4rMod = Src("Modules", "Rep4RepModule.cs");
+	Check("rep4rep 1.8.5: no answer from rep4rep.com (a 503) isn't 'not registered' - the profile isn't added again, the token isn't blamed",
+		r4r.Contains("Unanswered = (body == null) && HasToken;", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || Unanswered) {", StringComparison.Ordinal)
+		&& r4rMod.Contains("if (_api.Unanswered) {", StringComparison.Ordinal));
+	string buyer = Src("Modules", "CardBuyer.cs");
+	Check("buying 1.8.5: the week's or the day's limit spent is said once in those words, not 'waits for the set finder'",
+		buyer.Contains("buying waits: this week's {0} is spent ({1} in the last 7 days)", StringComparison.Ordinal) && buyer.Contains("LimitSaid.TryAdd(Bot.Name, true)", StringComparison.Ordinal)
+		&& buyer.Contains("LimitSaid.TryRemove(Bot.Name, out _);", StringComparison.Ordinal));
+	string atomic = Src("AtomicFile.cs");
+	string afDir = Path.Combine(Path.GetTempPath(), "nf-atomic-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(afDir);
+
+	try {
+		string afFile = Path.Combine(afDir, "cheevo-new.json");
+		File.WriteAllText(afFile, "old");
+		NocatFarm.AtomicFile.Write(afFile, "{\"ok\":true}");
+		Check("saves 1.8.5: written to disk (flushed) before the swap - a power cut left a file of zero bytes; the new text replaces the old whole",
+			(atomic.Split("Flush(flushToDisk: true)").Length - 1 == 2) && (File.ReadAllText(afFile) == "{\"ok\":true}") && (Directory.GetFiles(afDir).Length == 1));
+	} finally {
+		Directory.Delete(afDir, true);
+	}
+
+	var pattern = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+	Check("backups 1.8.5: the listings nocat.farm made go in a backup - an account moved to another machine still takes down and relists its own",
+		pattern.IsMatch("state/listed-new.json") && !pattern.IsMatch("state/listed-new.json.bak"));
+}
+
+// ── 1.8.5 the internet gone for every account and back: one line when it's over; one account reconnecting, a short blip or the first sign-in - nothing ──
+{
+	DateTime o0 = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	var on = NocatFarm.Core.BotState.Online;
+	var re = NocatFarm.Core.BotState.Reconnecting;
+	var stopped = NocatFarm.Core.BotState.Stopped;
+	var w = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(w, var s0) = NocatFarm.Core.OutageWatch.Step(w, [NocatFarm.Core.BotState.LoggingIn, re, re], o0);
+	(w, var s1) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(9));
+	bool firstQuiet = (s0 == null) && (s1 == null) && w.Up;
+	(w, var s2) = NocatFarm.Core.OutageWatch.Step(w, [re, on, on], o0.AddMinutes(10));
+	(w, var s3) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(30));
+	bool oneQuiet = (s2 == null) && (s3 == null);
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, re], o0.AddMinutes(40));
+	(w, var s4) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(42));
+	bool blipQuiet = s4 == null;
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, stopped], o0.AddMinutes(50));
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, stopped], o0.AddMinutes(58));
+	(w, var s5) = NocatFarm.Core.OutageWatch.Step(w, [on, re, stopped], o0.AddMinutes(63));
+	(w, var s6) = NocatFarm.Core.OutageWatch.Step(w, [on, on, stopped], o0.AddMinutes(64));
+	(w, var s7) = NocatFarm.Core.OutageWatch.Step(w, [on, on, stopped], o0.AddMinutes(65));
+	Check("outage: every account (meant to be on) cut off 5m+ - said once when all are back, with how long; the first sign-in, one account, a 2m blip - nothing",
+		firstQuiet && oneQuiet && blipQuiet && (s5 == null) && (s6?.ToEnglish() == "back online after 14m offline · all 2 account(s) signed back in") && (s7 == null),
+		s6?.ToEnglish() ?? "nothing said");
+}
+
+// ── 1.8.5 the machine's health: memory, storage, heat - said plainly; a warning once each, again only after it recovered ──
+{
+	DateTime h0 = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	string line = NocatFarm.Core.BoxHealth.Line(new(2458, 3174, 54.4))?.ToEnglish() ?? "";
+	Check("health: the line says what's known, nothing when nothing is", (line == "2.4 GB memory free · 3.1 GB storage free · 54°C")
+		&& (NocatFarm.Core.BoxHealth.Line(new(null, 800, null))?.ToEnglish() == "800 MB storage free") && (NocatFarm.Core.BoxHealth.Line(new(null, null, null)) == null), line);
+	var hw = new NocatFarm.Core.BoxHealth.Watch(null, new HashSet<string>());
+	(hw, var w0) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 85), h0);
+	(hw, var w1) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 86), h0.AddMinutes(9));
+	(hw, var w2) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 84), h0.AddMinutes(10));
+	(hw, var w3) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 84), h0.AddMinutes(11));
+	(hw, var w4) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 600, 60), h0.AddMinutes(12));
+	(hw, var w5) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 600, 85), h0.AddMinutes(13));
+	(hw, var w6) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 60), h0.AddMinutes(14));
+	(hw, var w7) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 5000, 60), h0.AddMinutes(15));
+	Check("health: hot only after 10 minutes over 80°C; each warning once; storage under 1 GB and memory under 200 MB warned; again only after recovering",
+		(w0.Count == 0) && (w1.Count == 0) && (w2.Count == 1) && w2[0].ToEnglish().StartsWith("the machine is running hot - 84°C for over 10 minutes", StringComparison.Ordinal)
+		&& (w3.Count == 0) && (w4.Count == 2) && (w5.Count == 0) && (w6.Count == 0) && (w7.Count == 1) && w7[0].ToEnglish().Contains("nearly out of memory - 150 MB free", StringComparison.Ordinal),
+		string.Join(" | ", w2.Concat(w4).Concat(w7).Select(static x => x.ToEnglish())));
+}
+
+// ── 1.8.5 the daily backup to Telegram: on by default, only the password-locked file ever goes, three tries, never held up ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string schedule = File.ReadAllText(Path.Combine(src, "Core", "BackupSchedule.cs"));
+	string notifier = File.ReadAllText(Path.Combine(src, "Core", "Notifier.cs"));
+	Check("backup to Telegram: on by default; sent after the backup is saved, off its thread, only with Telegram connected",
+		new NocatFarm.Config.GlobalConfig().BackupToTelegram && (NocatFarm.Config.Settings.FindGlobal("BackupToTelegram")?.Kind == NocatFarm.Config.SettingKind.Bool)
+		&& schedule.Contains("if (g.BackupToTelegram && Notifier.TelegramConnected) {", StringComparison.Ordinal)
+		&& schedule.Contains("_ = Task.Run(() => Notifier.SendBackupAsync(path, CancellationToken.None));", StringComparison.Ordinal));
+	Check("backup to Telegram: only a .nfbackup (password-locked) file ever goes, by sendDocument, three tries; nothing without a chat",
+		notifier.Contains("!path.EndsWith(\".nfbackup\", StringComparison.OrdinalIgnoreCase)", StringComparison.Ordinal)
+		&& notifier.Contains("/sendDocument\"", StringComparison.Ordinal) && notifier.Contains("for (int attempt = 0; attempt < 3; attempt++) {", StringComparison.Ordinal)
+		&& !NocatFarm.Core.Notifier.SendBackupAsync(Path.Combine(Path.GetTempPath(), "secret.key"), CancellationToken.None).GetAwaiter().GetResult());
+}
 
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
@@ -35193,6 +35400,30 @@ static class DearCardsChecks {
 				&& !NocatFarm.Modules.DearCards.Wins(4, 4) && NocatFarm.Modules.DearCards.Wins(5, 4) && !NocatFarm.Modules.DearCards.Wins(0, 0),
 				dearer.Why);
 
+			// 1.8.5: cards Steam has locked for good make levels but are never money; locked for now (a pack made with gems in
+			// their 7 days) still count - they're sold once the lock ends, and said once meanwhile, not "selling" every look.
+			var lockedForGood = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), Quotes(), cheap, 50, forSale: new Dictionary<string, int>());
+			var noShield = Held().Where(c => c.Key != A("Shield")).ToDictionary(static c => c.Key, static c => c.Value);
+			var partly = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), Quotes(), cheap, 50, forSale: noShield);
+			Check("dear 1.8.5: no card Steam ever lets go on the market - kept for the badge, nothing listed; one such card left out of what's sold",
+				lockedForGood is { Dear: false, Unsure: false, Kept: 2, Listing: 0 } && lockedForGood.Why.StartsWith("Steam doesn't let its cards be sold", StringComparison.Ordinal)
+				&& partly.Cards.All(c => c.Hash != A("Shield")) && (partly.Listing == arcane.Listing - Held()[A("Shield")]),
+				$"{lockedForGood.Why} / {partly.Listing} of {arcane.Listing}");
+
+			DateTime ends = new(2026, 10, 26, 7, 0, 0, DateTimeKind.Utc);
+			List<NocatFarm.Core.SpareItem> lockedItems = [
+				new(1, Arcane, NocatFarm.Core.SpareKind.Card, A("Heart"), "Heart", false, false, TradableAfter: ends),
+				new(2, Arcane, NocatFarm.Core.SpareKind.Card, A("Shield"), "Shield", false, false),
+				new(3, Arcane, NocatFarm.Core.SpareKind.Card, A("Skull"), "Skull", true, true),
+				new(4, Arcane, NocatFarm.Core.SpareKind.FoilCard, A("Heart") + " (Foil)", "Heart (Foil)", true, true)];
+			var forSale = NocatFarm.Modules.DearCards.ForSaleOf(lockedItems, Arcane, false);
+			string until = NocatFarm.Modules.DearCards.LockedSaid(arcane with { Cards = [.. arcane.Cards.Where(c => c.Hash == A("Heart"))] }, lockedItems).ToEnglish();
+			string noDate = NocatFarm.Modules.DearCards.LockedSaid(arcane with { Cards = [.. arcane.Cards.Where(c => c.Hash == A("Shield"))] }, lockedItems).ToEnglish();
+			Check("dear 1.8.5: for sale = marketable or locked for now (not locked for good, not the foil); the lock's end is said (Pony Island said 'selling' every look for days)",
+				(forSale.Count == 2) && forSale.ContainsKey(A("Heart")) && forSale.ContainsKey(A("Skull")) && !forSale.ContainsKey(A("Shield"))
+				&& until.StartsWith("Arcane Raise: its cards are locked by Steam until " + ends.ToLocalTime().ToString("MMM d HH:mm", System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)
+				&& noDate.Contains("right now - sold once it does", StringComparison.Ordinal), $"{string.Join(",", forSale.Keys)} / {until} / {noDate}");
+
 			var noPrice = Quotes();
 			noPrice[A("Shield")] = null;
 			var silent = NocatFarm.Modules.DearCards.Decide(Arcane, "Arcane Raise", Cad, 1, set, Held(), noPrice, cheap, 50);
@@ -35881,7 +36112,7 @@ static class QuickSetsChecks {
 			// The day's cap: no more than so many sets a day, then nothing until tomorrow.
 			var capped = new FakeSetMarket();
 			List<uint> many = [];
-			for (int i = 0; i < 700; i++) {
+			for (int i = 0; i < 2600; i++) {
 				uint app = (uint) (40_000 + i);
 				capped.AddSet(app, $"C{i}", 5, 3, 10, walk: false);
 				many.Add(app);
@@ -35894,8 +36125,8 @@ static class QuickSetsChecks {
 			int filledToday = Fills(capped);
 			capped.Asked.Clear();
 			var none = await daily.BatchAsync(t0.AddMinutes(151 * 7), CancellationToken.None);
-			Check("quick sets: at most the day's sets a day (600 - about 780 requests, under a tenth of the market's day), then nothing until tomorrow",
-				(filledToday == NocatFarm.Core.SetFinder.FillsADay) && (NocatFarm.Core.SetFinder.FillsADay == 600) && (Fills(capped) == 0) && !none.More,
+			Check("quick sets: at most the day's sets a day (2,400 since 1.8.5 - about 3,100 requests, inside the background's half of the market's day), then nothing until tomorrow",
+				(filledToday == NocatFarm.Core.SetFinder.FillsADay) && (NocatFarm.Core.SetFinder.FillsADay == 2400) && (Fills(capped) == 0) && !none.More,
 				$"{filledToday} read, then {Fills(capped)}");
 
 			// The public list's place is kept after a set is read, and a new list replaces it.
@@ -36522,7 +36753,7 @@ static class SafeChecks182 {
 			var wResult = await Buyer(NewBot(), wMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("buying: the wallet is read once for the set, not once a card - each card checked against that, less what the set spent",
 				(wInner.Bought.Count == 2) && (wResult.Bought.Count == 2)
-				&& buyerSrc.Contains("if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere)) {", StringComparison.Ordinal),
+				&& buyerSrc.Contains("if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere - BuyPlan.KeepCents(Bot.Cfg))) {", StringComparison.Ordinal),
 				$"{wInner.Bought.Count} bought, {wMarket.WalletReads} wallet reads, {wResult.Problem}");
 
 			var naBot = NewBot();

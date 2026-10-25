@@ -49,7 +49,7 @@ public sealed class SetFinder {
 	public const int RequestsABatchIdle = 4;
 
 	/// <summary>Whole sets read a day, at most.</summary>
-	public const int FillsADay = 600;
+	public const int FillsADay = 2400;   // 1.8.5: was 600 - at the 1.8.3 pace that was used up by 09:30 and nothing more was read all day
 
 	/// <summary>The cheapest candidate sets kept fresh at the quick pace.</summary>
 	public const int KeepFresh = 300;
@@ -288,7 +288,7 @@ public sealed class SetFinder {
 
 					if ((mine == null) || !Whole(mine, now) || (mine.FilledAt < oldest.Ticks)) {
 						Game g = mine ?? new Game();
-						g.Name = (mine?.Name is { Length: > 0 } known) ? known : GameNames.Of(r.App);
+						g.Name = (mine?.Name is { Length: > 0 } known) ? known : GameNames.IsKnown(r.App) ? GameNames.Of(r.App) : "";
 						g.Size = r.Cards.Count;
 						g.SizeAt = now.Ticks;
 						g.FilledAt = oldest.Ticks;
@@ -775,11 +775,18 @@ public sealed class SetFinder {
 	private static bool Whole(Game g, DateTime now) =>
 		(g.Size > 0) && (g.Cards.Count == g.Size) && g.Cards.Values.All(c => (c.Usd > 0) && Fresh(c, now));
 
+	/// <summary>
+	/// 1.8.5: a set's game name - the one written down, unless it's only the "app 1085220" stand-in and the real name is known
+	/// by now ('sets' showed "app 1085220" for Figment 2: Creed Valley).
+	/// </summary>
+	public static string Named(uint app, string stored) =>
+		(stored.Length > 0) && (stored != "app " + app.ToString(System.Globalization.CultureInfo.InvariantCulture)) ? stored : GameNames.Of(app);
+
 	/// <summary>Every set known whole now, the cheapest first (US cents).</summary>
 	public IReadOnlyList<KnownSet> Known(DateTime now) {
 		lock (_gate) {
 			return [.. Load().Games.Where(g => Whole(g.Value, now))
-				.Select(g => new KnownSet(g.Key, g.Value.Name.Length > 0 ? g.Value.Name : GameNames.Of(g.Key), [.. g.Value.Cards.Keys.Order(StringComparer.Ordinal)],
+				.Select(g => new KnownSet(g.Key, Named(g.Key, g.Value.Name), [.. g.Value.Cards.Keys.Order(StringComparer.Ordinal)],
 					g.Value.Cards.ToDictionary(static c => c.Key, static c => c.Value.Usd, StringComparer.Ordinal),
 					g.Value.Cards.Values.Min(static c => c.Listings), new DateTime(g.Value.Cards.Values.Min(static c => c.At), DateTimeKind.Utc)))
 				.OrderBy(static k => k.UsdCents).ThenBy(static k => k.App)];

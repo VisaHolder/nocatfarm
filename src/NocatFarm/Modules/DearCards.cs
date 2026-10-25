@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Collections.Concurrent;
 using NocatFarm.Config;
 using NocatFarm.Core;
@@ -87,6 +88,9 @@ public static class DearCards {
 	/// </summary>
 	public sealed record Extra(IReadOnlyDictionary<uint, Dictionary<string, int>>? Foils = null, IReadOnlyDictionary<uint, int>? FoilLevels = null,
 		IReadOnlyCollection<uint>? Leftovers = null, Func<uint, bool, DateTime?>? WaitingSince = null) {
+		/// <summary>1.8.5: the copies of a game's cards (normal, or foil) that can go on the market, now or once Steam's lock ends. Null: every copy held.</summary>
+		public Func<uint, bool, IReadOnlyDictionary<string, int>>? ForSale { get; init; }
+
 		/// <summary>
 		/// 1.8.2: what each next level money buys costs without this game's own levels (its missing cards are kept's cost - never
 		/// counted twice), past what the wallet pays for. Null when not given: the costs handed to the look, as they are.
@@ -148,19 +152,30 @@ public static class DearCards {
 	/// <param name="paid">1.8.2: the most paid for one copy of a card bought for a badge (0: none) - never sold for less, unless selling still
 	/// clearly wins counting that loss.</param>
 	/// <param name="boughtCopies">1.8.2: how many copies of a card were bought (the rest of those held came some other way).</param>
+	/// <param name="forSale">1.8.5: the copies of each card that can go on the market, now or once Steam's lock ends (null: every
+	/// copy held) - a card locked for good still makes its levels, but is never counted as money.</param>
 	public static Verdict Decide(uint app, string game, int currency, int level, IReadOnlyList<string> set, IReadOnlyDictionary<string, int> held,
 		IReadOnlyDictionary<string, MarketQuote?> quotes, IReadOnlyList<long> costs, int dumpPct, bool foil = false, bool waited = false, bool leftover = false,
 		int minReceive = 0, Func<string, decimal?>? gemsWorth = null, IReadOnlyDictionary<string, int>? weighed = null, Func<string, long>? paid = null,
-		Func<string, int>? boughtCopies = null) {
+		Func<string, int>? boughtCopies = null, IReadOnlyDictionary<string, int>? forSale = null) {
 		if (currency <= 0) {
 			return NotSure(app, game, currency, new Said("no price in its wallet's currency")) with { Foil = foil };
 		}
 
 		int kept = leftover ? 0 : KeptLevels(level, set, held, foil ? 1 : MaxLevel);
+		int Selling(string hash) => Math.Min(held.GetValueOrDefault(hash), forSale?.GetValueOrDefault(hash) ?? int.MaxValue);
+
+		// 1.8.5: none of its cards held can ever go on the market: kept for the badge.
+		if (!set.Any(c => Selling(c) > 0)) {
+			Said locked = new("Steam doesn't let its cards be sold - kept for the badge");
+
+			return new Verdict(app, game, currency, false, false, kept, 0, 0, 0, 0, locked.ToEnglish(), [], foil) { Reason = locked };
+		}
+
 		List<Card> cards = [];
 		(string Name, int Sales)? thin = null;
 
-		foreach (string hash in set.Where(c => held.GetValueOrDefault(c) > 0)) {
+		foreach (string hash in set.Where(c => Selling(c) > 0)) {
 			string name = Seller.CardName(hash);
 
 			if ((quotes.GetValueOrDefault(hash) is not { } quote) || (quote.Currency != currency) || (quote.Lowest is not int lowest)) {
@@ -182,7 +197,7 @@ public static class DearCards {
 			// set sold never for over a tenth less than the set was weighed at - those copies are kept.
 			bool pays = (receive > 0) && (receive >= minReceive) && (gemsWorth?.Invoke(hash) is not decimal gems || (gems <= 0) || Spare.SellingPays(gems, receive))
 				&& ((weighed == null) || !weighed.TryGetValue(hash, out int was) || (receive * 10L >= was * 9L));
-			cards.Add(new Card(hash, held[hash], lowest, buyer, receive, quote.Sales, sells && pays));
+			cards.Add(new Card(hash, Selling(hash), lowest, buyer, receive, quote.Sales, sells && pays));
 		}
 
 		// Kept, each level still needs the cards missing for it bought: that money is spared by selling.
@@ -386,7 +401,7 @@ public static class DearCards {
 			Verdict v = stopped && set.Cards.Any(c => (held.GetValueOrDefault(c) > 0) && (quotes.GetValueOrDefault(c) == null))
 				? NotSure(g.App, set.Game, cur, new Said("couldn't price its cards"), kept) with { Foil = g.Foil }
 				: Decide(g.App, set.Game, cur, g.Level, set.Cards, held, quotes, gameCosts, dump, g.Foil, waited, leftover, extra?.MinReceive ?? 0, extra?.GemsWorth,
-					leftover ? extra?.Weighed?.Invoke(g.App) : null, extra?.Paid, extra?.BoughtCopies);
+					leftover ? extra?.Weighed?.Invoke(g.App) : null, extra?.Paid, extra?.BoughtCopies, extra?.ForSale?.Invoke(g.App, g.Foil));
 			verdicts.Add(v);
 
 			if (stopped) {
@@ -543,6 +558,40 @@ public static class DearCards {
 		}
 
 		return hash => byHash.TryGetValue(hash, out SpareItem? item) ? item.GooType > 0 ? SteamGems.KnownValue(item) is int goo ? Spare.GemsWorth(goo, sack.Cents) : null : 0m : null;
+	}
+
+	/// <summary>
+	/// 1.8.5: a game's cards that can go on the market, now or once Steam's lock ends, by card - normal or foil. A card locked
+	/// for good (no date it ends) isn't one.
+	/// </summary>
+	public static IReadOnlyDictionary<string, int> ForSaleOf(IReadOnlyList<SpareItem> items, uint app, bool foil) =>
+		items.Where(i => (i.Game == app) && (i.Kind == (foil ? SpareKind.FoilCard : SpareKind.Card)) && i.Sellable)
+			.GroupBy(static i => i.Hash, StringComparer.Ordinal).ToDictionary(static g => g.Key, static g => g.Sum(static i => (int) i.Amount), StringComparer.Ordinal);
+
+	/// <summary>
+	/// 1.8.5: why none of a dear game's cards went up - Steam's lock on them (the cards of a pack made with gems still in their
+	/// 7 days are locked for what's left of it). new said "Pony Island: 6 cards worth more than their levels - selling for about
+	/// 1.04 CAD" every look for days and listed none.
+	/// </summary>
+	public static Said LockedSaid(Verdict v, IReadOnlyList<SpareItem> items) {
+		HashSet<string> hashes = [.. v.Cards.Where(static c => c.Sold).Select(static c => c.Hash)];
+		DateTime? ends = items.Where(i => (i.Game == v.App) && hashes.Contains(i.Hash) && !i.Marketable && (i.TradableAfter is DateTime at) && (at != DateTime.MaxValue))
+			.Min(static i => i.TradableAfter);
+
+		const string DayClock = "MMM d HH:mm";
+
+		return ends is DateTime when
+			? new Said("{0}: its cards are locked by Steam until {1} - sold after that", v.Game, when.ToLocalTime().ToString(DayClock, CultureInfo.InvariantCulture))
+			: new Said("{0}: Steam doesn't let its cards go on the market right now - sold once it does", v.Game);
+	}
+
+	/// <summary>1.8.5: <see cref="LockedSaid"/>, once a game until it changes - at Debug, never the "selling" line.</summary>
+	public static void SayLocked(string account, Verdict v, IReadOnlyList<SpareItem> items) {
+		Said said = LockedSaid(v, items);
+
+		if (SaidOnce(account, v.App, said.ToEnglish())) {
+			Log.Debug(said, account);
+		}
 	}
 
 	private static bool SaidOnce(string account, uint app, string why) {

@@ -1,5 +1,35 @@
 {
   "ui": {
+    "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "die Sicherung wurde nicht an Telegram geschickt - sie ist {0} MB groß, über Telegrams 50 MB",
+    "nocat.farm backup · {0} · password-locked": "nocat.farm-Sicherung · {0} · mit Passwort geschützt",
+    "backup sent to Telegram: {0}": "Sicherung an Telegram geschickt: {0}",
+    "the backup couldn't be sent to Telegram ({0}) - it's still saved on this machine": "die Sicherung konnte nicht an Telegram geschickt werden ({0}) - sie ist trotzdem auf diesem Rechner gespeichert",
+    "Machine": "Rechner",
+    "{0} memory free": "{0} Arbeitsspeicher frei",
+    "{0} storage free": "{0} Speicherplatz frei",
+    "{0}°C": "{0}°C",
+    "the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off": "der Rechner läuft heiß - {0}°C seit über {1} Minuten; gib ihm Luft (oder einen Lüfter), sonst drosselt er oder schaltet sich ab",
+    "storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room": "der Speicher, auf dem nocat.farm seine Dateien hat, ist fast voll - {0} frei; Logs und Sicherungen brauchen Platz",
+    "the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped": "dem Rechner geht der Arbeitsspeicher aus - {0} frei; nocat.farm (oder etwas daneben) könnte beendet werden",
+    "couldn't look at the machine's health: {0}": "konnte den Zustand des Rechners nicht prüfen: {0}",
+    "back online after {0} offline · all {1} account(s) signed back in": "wieder online nach {0} offline · alle {1} Konto/Konten wieder angemeldet",
+    "couldn't look at the connection: {0}": "konnte die Verbindung nicht prüfen: {0}",
+    "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "die Uhr dieses Rechners steht auf UTC, und der Tag von {0} (Aufwachen, Schlafen, die Spielzeiten) richtet sich danach - stell die Zeitzone ein (unter Linux: TZ=Gebiet/Stadt), damit er deinen Stunden folgt",
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm läuft wieder - der Rechner wurde gegen {0} neu gestartet (Stromausfall oder Neustart), zuletzt laufend gesehen vor {1} · {2} Konto/Konten melden sich an",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm läuft wieder nach einem unerwarteten Stopp (ein Absturz - der Rechner lief weiter) - zuletzt laufend gesehen vor {0} · {1} Konto/Konten melden sich an",
+    "{0} accepted your trade offer · you gave {1}": "{0} hat dein Tauschangebot angenommen · du hast {1} gegeben",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} hat dein Tauschangebot angenommen · du hast {1} gegeben und {2} bekommen",
+    "{0} declined your trade offer (you'd have given {1})": "{0} hat dein Tauschangebot abgelehnt (du hättest {1} gegeben)",
+    "{0} answered your trade offer with a counter-offer": "{0} hat auf dein Tauschangebot mit einem Gegenangebot geantwortet",
+    "your trade offer to {0} expired": "dein Tauschangebot an {0} ist abgelaufen",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "dein Tauschangebot an {0} wurde storniert - es wurde nicht rechtzeitig bestätigt",
+    "your trade offer to {0} can't go through any more - its items are gone": "dein Tauschangebot an {0} kann nicht mehr durchgehen - seine Gegenstände sind weg",
+    "couldn't note which sent offers were said: {0}": "konnte nicht notieren, welche gesendeten Angebote gemeldet wurden: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "konnte gesendete Tauschangebote nicht prüfen: {0}: {1}",
+    "Steam doesn't let its cards be sold - kept for the badge": "Steam lässt ihre Karten nicht verkaufen - für das Abzeichen behalten",
+    "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: ihre Karten sind von Steam gesperrt bis {1} - danach verkauft",
+    "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam lässt ihre Karten gerade nicht auf den Markt - verkauft, sobald es geht",
+    "Steam ended the session (ServiceUnavailable) - reconnecting on its own, not a login throttle": "Steam hat die Sitzung beendet (ServiceUnavailable) - verbindet sich selbst neu, keine Anmeldesperre",
     "Steam's market is blocked ({0}) - buying, selling and swaps wait until Steam lifts it, which takes a purchase on Steam on this account": "Steams Markt ist gesperrt ({0}) - Kaufen, Verkaufen und Tausch warten, bis Steam die Sperre aufhebt, und dafür braucht es einen Kauf auf Steam mit diesem Konto",
     "settling in first (~{0}m), then looking for cards": "kommt erst an (~{0}m), dann sucht es nach Karten",
     "settling in first, then looking for cards": "kommt erst an, dann sucht es nach Karten",
@@ -535,6 +565,9 @@
     "manual reset": "manuell zurückgesetzt",
     "no Steam web session": "keine Steam-Websitzung",
     "not registered on rep4rep": "nicht bei rep4rep registriert",
+    "buying waits: this week's {0} is spent ({1} in the last 7 days) - it buys again as older purchases pass 7 days": "Kaufen wartet: das Wochenbudget von {0} ist ausgegeben ({1} in den letzten 7 Tagen) - es kauft wieder, sobald ältere Käufe 7 Tage zurückliegen",
+    "buying waits: today's {0} is spent - more tomorrow": "Kaufen wartet: das Tagesbudget von {0} ist ausgegeben - morgen mehr",
+    "rep4rep.com isn't answering - trying again in 15m": "rep4rep.com antwortet nicht - neuer Versuch in 15m",
     "nothing ready to craft": "nichts zum Fertigen bereit",
     "off": "aus",
     "offline": "offline",
@@ -2725,7 +2758,6 @@
     "nocat.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in": "nocat.farm läuft wieder, nachdem das Gerät es beendet hat (Neustart oder Stopp) · {0} Konto/Konten melden sich an",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm läuft wieder nach einem unerwarteten Stopp (Absturz, Stromausfall oder Neustart des Geräts) - zuletzt laufend gesehen vor {0} · {1} Konto/Konten melden sich an",
     "nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in": "nocat.farm läuft wieder nach einem unerwarteten Stopp (Absturz, Stromausfall oder Neustart des Geräts) · {0} Konto/Konten melden sich an",
-    "nocat.farm is back up": "nocat.farm läuft wieder",
     "couldn't read what's on its profile - going by the last read ({0} ago)": "konnte nicht lesen, was auf seinem Profil ist - nimmt das letzte Lesen (vor {0})",
     "extra card copies are switched off": "zusätzliche Kartenkopien sind ausgeschaltet",
     "duplicate backgrounds are switched off": "doppelte Hintergründe sind ausgeschaltet",
@@ -3449,6 +3481,14 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "{0} zurückgezogen - {1} Tage unverkauft, die Edelsteine sind jetzt mehr wert"
   },
   "settings": {
+    "BackupToTelegram": {
+      "label": "Tägliche Sicherung an Telegram schicken",
+      "tip": "Ist Telegram verbunden, geht jede tägliche Sicherung auch als Datei in den Chat - so übersteht sie, wenn der Rechner kaputtgeht. Nur die mit Passwort geschützte Sicherung, nie Anmeldedaten im Klartext; zum Wiederherstellen braucht es das Sicherungspasswort. Zum Beispiel eine TV-Box, die kaputtgeht: ihre Konten kommen aus der Datei im Chat zurück. Telegram nimmt Dateien bis 50 MB."
+    },
+    "BuyKeepInWallet": {
+      "label": "Immer in der Geldbörse lassen",
+      "tip": "Das Kartenkaufen bringt die Steam-Geldbörse dieses Kontos nie unter diesen Betrag, in der eigenen Geldbörsen-Währung. Zum Beispiel 20,00: lädst du 100,00 auf, gibt es höchstens 80,00 aus - die 20,00 bleiben für dich. 0 lässt es alles nutzen (aber nie mehr als die Tages- und Wochengrenze)."
+    },
     "SteamOpenEveryAccount": {
       "label": "Knöpfe „In Steam öffnen“ bei jedem Konto",
       "tip": "Zeigt bei jedem Konto den Ein-Klick-Knopf „In Steam öffnen“ - auf der Konto-Karte und im App-Fenster - damit du ihn nicht Konto für Konto einschalten musst. Der Knopf meldet deine Steam-Desktop-App bei diesem Konto an: er schließt Steam, richtet Steam auf das Konto aus und startet Steam wieder. Ein Konto, das Steam noch nicht kennt, öffnet Steams Anmeldung mit schon eingetragenem Namen. Es hält nocat.farm nie vom Farmen ab. Nur unter Windows. Standardmäßig aus. Beim Einschalten wird zuerst genau gezeigt, was der Knopf tut, und du wirst um Bestätigung gebeten. Wenn du es nur bei manchen Konten willst, lass das hier aus und schalte in deren Einstellungen den Knopf „In Steam öffnen“ ein."

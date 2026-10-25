@@ -208,7 +208,9 @@ public sealed class Rep4RepApi : IDisposable {
 	public async Task<string?> ResolveProfileIdAsync(ulong steamId, bool autoAdd = true, CancellationToken ct = default) {
 		string? id = await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 
-		if (id != null || !autoAdd) {
+		// 1.8.4: rep4rep.com down (a 503 after the box restarted) isn't "not registered" - nothing is added, nothing is blamed
+		// on the token; the caller just looks again later.
+		if (id != null || !autoAdd || Unanswered) {
 			return id;
 		}
 
@@ -217,8 +219,12 @@ public sealed class Rep4RepApi : IDisposable {
 		return await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 	}
 
+	/// <summary>The last profile list asked for got no answer (rep4rep.com down, a 5xx, no connection) - not a "not found".</summary>
+	public bool Unanswered { get; private set; }
+
 	private async Task<string?> FindProfileIdAsync(ulong steamId, CancellationToken ct) {
 		string? body = await GetAsync("/user/steamprofiles", ct).ConfigureAwait(false);
+		Unanswered = (body == null) && HasToken;
 
 		if (body == null) {
 			return null;

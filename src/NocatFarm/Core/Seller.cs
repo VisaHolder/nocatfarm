@@ -995,6 +995,12 @@ public static class Seller {
 				&& !Spare.SellingPays(gems, ReceiveFor(stepped))) {
 				// 1.8.2: a cent lower would pay no more than its gems are worth now - taken down, and the next look turns it into gems.
 				steps.Add(new Step(l, ours, 0));
+			} else if ((SpareListings.StepTo(ours, quote.Price, floorPct, dump) == null)
+				&& ((ReceiveFor(ours) < SpareRules.From(bot.Cfg).MinSaleCents) || ((gemsNow is decimal floorGems) && (floorGems > 0) && !Spare.SellingPays(floorGems, ReceiveFor(ours))))) {
+				// 1.8.5: already as low as it can go (0.03, Steam's least - you get 0.01), so no step at all, and that skipped the gems
+				// check above: 62 backgrounds and emoticons sat at 0.03 for days. Under "Only sell if you get at least", or paying
+				// less than its gems: down, and the next look turns it into gems. ("1c isn't worth it.")
+				steps.Add(new Step(l, ours, 0));
 			}
 		}
 

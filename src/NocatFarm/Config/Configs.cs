@@ -280,6 +280,9 @@ public sealed class GlobalConfig {
 	/// <summary>Backup messages on Telegram and Discord (1.8.2: one choice where there were "Send backups" and "Tell me"):
 	/// 0 none, 1 only when a backup fails, 2 after every backup too.</summary>
 	public int BackupMessages { get; set; } = 1;
+
+	/// <summary>1.8.5: each daily backup (the password-locked file) is also sent to the connected Telegram chat.</summary>
+	public bool BackupToTelegram { get; set; } = true;
 	public bool BackupLocalCopy { get; set; } = true;
 	public int BackupRetryMinutes { get; set; } = 60;
 
@@ -944,6 +947,9 @@ public sealed class BotConfig {
 
 	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;
+
+	/// <summary>1.8.5: "Always keep in the wallet" - buying never takes the wallet below this (wallet currency; 0: off).</summary>
+	public float BuyKeepInWallet { get; set; }
 
 	/// <summary>The most it spends in any 7 days, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyWeeklyLimit { get; set; } = 8.00f;
