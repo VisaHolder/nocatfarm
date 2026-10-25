@@ -467,7 +467,8 @@ NocatFarm.Core.SelfUpdate.NotifierReady();
 {
 	DateTime startedAt = DateTime.UtcNow;
 
-	if (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Begin(startedAt), startedAt, manager.All.Count(static b => b.Cfg.Enabled)) is { } backUp) {
+	if (NocatFarm.Core.RunState.Line(NocatFarm.Core.RunState.Begin(startedAt), startedAt, manager.All.Count(static b => b.Cfg.Enabled),
+	NocatFarm.Core.RunState.MachineStarted(startedAt)) is { } backUp) {
 		_ = Task.Run(async () => {
 			await Task.Delay(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
 			Log.Event(backUp, "nocat.farm", Topic.Problems);   // good news, so the log's green - still under Problems, so Telegram and Discord get it

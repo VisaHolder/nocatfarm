@@ -28889,6 +28889,24 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		&& (NocatFarm.Core.SetFinder.Named(999_002, "Kept Name") == "Kept Name") && (NocatFarm.Core.SetFinder.Named(999_003, "app 999003") == "app 999003"));
 }
 
+// ── 1.8.5 back up: the machine restarting told apart from nocat.farm alone stopping, when the boot time can be trusted ──
+{
+	DateTime rsNow = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	var ended = NocatFarm.Core.RunState.Read($"running {rsNow.AddMinutes(-30).Ticks}");
+	string restarted = NocatFarm.Core.RunState.Line(ended, rsNow, 3, rsNow.AddMinutes(-4))?.ToEnglish() ?? "";
+	string crashed = NocatFarm.Core.RunState.Line(ended, rsNow, 3, rsNow.AddDays(-2))?.ToEnglish() ?? "";
+	string unknown = NocatFarm.Core.RunState.Line(ended, rsNow, 3, null)?.ToEnglish() ?? "";
+	Check("run state 1.8.5: booted after it was last seen - the machine restarted; booted before - a crash; not known - either (as before)",
+		restarted.Contains("the machine restarted (a power cut or a reboot) at about", StringComparison.Ordinal) && restarted.Contains("30m ago", StringComparison.Ordinal)
+		&& crashed.Contains("stopped unexpectedly (a crash - the machine kept running)", StringComparison.Ordinal)
+		&& unknown.Contains("(a crash, a power cut or the machine restarting)", StringComparison.Ordinal), $"{restarted} | {crashed} | {unknown}");
+	long bt = new DateTimeOffset(rsNow.AddHours(-5)).ToUnixTimeSeconds();
+	Check("run state 1.8.5: /proc/stat's boot time is trusted only when /proc/uptime agrees - proot on an Android box makes both up",
+		(NocatFarm.Core.RunState.Booted($"cpu 1 2 3\nbtime {bt}\nprocesses 9\n", "18000.50 9.0", rsNow) == rsNow.AddHours(-5))
+		&& (NocatFarm.Core.RunState.Booted("btime 1680020856\n", "124.08 932.80", rsNow) == null)
+		&& (NocatFarm.Core.RunState.Booted("cpu 1\n", "5 5", rsNow) == null) && (NocatFarm.Core.RunState.Booted($"btime {bt}\n", "x", rsNow) == null));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();

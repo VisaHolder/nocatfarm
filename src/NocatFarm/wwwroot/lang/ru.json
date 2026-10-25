@@ -1,5 +1,7 @@
 {
   "ui": {
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm снова работает - машина перезапустилась (отключение питания или перезагрузка) около {0}, последний раз работал {1} назад · входят аккаунтов: {2}",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm снова работает после неожиданной остановки (сбой - машина продолжала работать) - последний раз работал {0} назад · входят аккаунтов: {1}",
     "{0} accepted your trade offer · you gave {1}": "{0} принял ваше предложение обмена · вы отдали {1}",
     "{0} accepted your trade offer · you gave {1}, got {2}": "{0} принял ваше предложение обмена · вы отдали {1}, получили {2}",
     "{0} declined your trade offer (you'd have given {1})": "{0} отклонил ваше предложение обмена (вы бы отдали {1})",

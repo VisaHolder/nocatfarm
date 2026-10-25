@@ -1,5 +1,7 @@
 {
   "ui": {
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm 다시 실행 중 - 기기가 {0}쯤 다시 시작됨 (정전 또는 재부팅), 마지막 실행 확인 {1} 전 · 계정 {2}개 로그인 중",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm가 예기치 않게 멈춘 뒤 다시 실행 중 (충돌 - 기기는 계속 켜져 있었음) - 마지막 실행 확인 {0} 전 · 계정 {1}개 로그인 중",
     "{0} accepted your trade offer · you gave {1}": "{0}님이 거래 제안을 수락함 · 보낸 것: {1}",
     "{0} accepted your trade offer · you gave {1}, got {2}": "{0}님이 거래 제안을 수락함 · 보낸 것: {1}, 받은 것: {2}",
     "{0} declined your trade offer (you'd have given {1})": "{0}님이 거래 제안을 거절함 (보낼 예정이었던 것: {1})",

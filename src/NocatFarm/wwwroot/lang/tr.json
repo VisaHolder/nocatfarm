@@ -1,5 +1,7 @@
 {
   "ui": {
+    "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm yeniden çalışıyor - makine yaklaşık {0} saatinde yeniden başladı (elektrik kesintisi veya yeniden başlatma), en son {1} önce çalışırken görüldü · {2} hesap giriş yapıyor",
+    "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm beklenmedik şekilde durduktan sonra yeniden çalışıyor (çökme - makine çalışmaya devam etti) - en son {0} önce çalışırken görüldü · {1} hesap giriş yapıyor",
     "{0} accepted your trade offer · you gave {1}": "{0} takas teklifini kabul etti · verdiğin: {1}",
     "{0} accepted your trade offer · you gave {1}, got {2}": "{0} takas teklifini kabul etti · verdiğin: {1}, aldığın: {2}",
     "{0} declined your trade offer (you'd have given {1})": "{0} takas teklifini reddetti (vereceğin: {1})",
