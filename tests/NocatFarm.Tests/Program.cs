@@ -28890,9 +28890,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 
 // ── 1.8.5 'sets': a game written down as "app 1085220" shows its real name once it's known ──
 {
-	NocatFarm.Core.GameNames.Learn(999_001, "Figment Test: Creed Valley");
+	// 999971 was named by its item's Game tag in the spare items checks above - nothing learned here (learning saves the names file)
 	Check("sets: the stand-in \"app N\" gives way to the real name; a real name written down stays; unknown stays the stand-in",
-		(NocatFarm.Core.SetFinder.Named(999_001, "app 999001") == "Figment Test: Creed Valley") && (NocatFarm.Core.SetFinder.Named(999_001, "") == "Figment Test: Creed Valley")
+		(NocatFarm.Core.SetFinder.Named(999_971, "app 999971") == "Spacebase Made Up") && (NocatFarm.Core.SetFinder.Named(999_971, "") == "Spacebase Made Up")
 		&& (NocatFarm.Core.SetFinder.Named(999_002, "Kept Name") == "Kept Name") && (NocatFarm.Core.SetFinder.Named(999_003, "app 999003") == "app 999003"));
 }
 

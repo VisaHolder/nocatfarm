@@ -948,7 +948,7 @@ public static partial class Settings {
 			"Backup messages on Telegram and Discord. Only when one fails: a message only if a backup couldn't be made - for example the folder is missing or the disk is full. After every backup: a message for each backup saved too. Off: none.",
 			Advanced: true, Choices: "0 off | 1 only when one fails | 2 after every backup", Group: "Messages"),
 		new("BackupToTelegram", "Send the daily backup to Telegram", SecBackups, SettingKind.Bool,
-			"With Telegram connected, each daily backup is also sent to its chat as a file - so it survives the machine dying. Only the password-locked backup goes, never logins in plain text; restoring it needs the backup password. For example a TV box that breaks: its accounts come back from the file in the chat. Telegram takes files up to 50 MB.", Group: "Messages"),
+			"With Telegram connected, each daily backup is also sent to its chat as a file - so it survives the machine dying. Only the password-locked backup goes, never logins in plain text; restoring it needs the backup password. For example a TV box that breaks: its accounts come back from the file in the chat. Telegram takes files up to 50 MB.", Advanced: true, Group: "Messages"),
 		// ── All accounts ──
 		new("StuckAlarm", "Restart a stuck account", SecAllAccounts, SettingKind.Bool,
 			"If an account that should be playing hasn't banked any hours for a few hours - disconnected, stuck signing in, failed, or its games gone - it tells you (on Telegram and Discord too) and restarts that account once. Never for an account you stopped, paused or are playing on, or one human mode has asleep, done for the day or on a day off. At most one restart per account every 12 hours."),
