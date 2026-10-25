@@ -578,8 +578,10 @@ public static class DearCards {
 		DateTime? ends = items.Where(i => (i.Game == v.App) && hashes.Contains(i.Hash) && !i.Marketable && (i.TradableAfter is DateTime at) && (at != DateTime.MaxValue))
 			.Min(static i => i.TradableAfter);
 
+		const string DayClock = "MMM d HH:mm";
+
 		return ends is DateTime when
-			? new Said("{0}: its cards are locked by Steam until {1} - sold after that", v.Game, when.ToLocalTime().ToString("MMM d HH:mm", CultureInfo.InvariantCulture))
+			? new Said("{0}: its cards are locked by Steam until {1} - sold after that", v.Game, when.ToLocalTime().ToString(DayClock, CultureInfo.InvariantCulture))
 			: new Said("{0}: Steam doesn't let its cards go on the market right now - sold once it does", v.Game);
 	}
 
