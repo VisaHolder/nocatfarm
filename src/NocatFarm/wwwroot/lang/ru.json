@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0} принял ваше предложение обмена · вы отдали {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} принял ваше предложение обмена · вы отдали {1}, получили {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} отклонил ваше предложение обмена (вы бы отдали {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} ответил на ваше предложение обмена встречным",
+    "your trade offer to {0} expired": "срок вашего предложения обмена для {0} истёк",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "ваше предложение обмена для {0} отменено - его не подтвердили вовремя",
+    "your trade offer to {0} can't go through any more - its items are gone": "ваше предложение обмена для {0} больше не может пройти - его предметов больше нет",
+    "couldn't note which sent offers were said: {0}": "не удалось записать, о каких отправленных предложениях уже сказано: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "не удалось проверить отправленные предложения обмена: {0}: {1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam не даёт продать её карточки - оставлены для значка",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: Steam заблокировал её карточки до {1} - продадутся после",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam сейчас не даёт выставить её карточки на торговую площадку - продадутся, когда разрешит",

@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0} takas teklifini kabul etti · verdiğin: {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} takas teklifini kabul etti · verdiğin: {1}, aldığın: {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} takas teklifini reddetti (vereceğin: {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} takas teklifine karşı teklifle yanıt verdi",
+    "your trade offer to {0} expired": "{0} kişisine gönderdiğin takas teklifinin süresi doldu",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "{0} kişisine gönderdiğin takas teklifi iptal edildi - zamanında onaylanmadı",
+    "your trade offer to {0} can't go through any more - its items are gone": "{0} kişisine gönderdiğin takas teklifi artık gerçekleşemez - eşyaları yok",
+    "couldn't note which sent offers were said: {0}": "hangi gönderilen tekliflerin bildirildiği not edilemedi: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "gönderilen takas teklifleri kontrol edilemedi: {0}: {1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam kartlarının satılmasına izin vermiyor - rozet için tutuldu",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: kartları {1} tarihine kadar Steam tarafından kilitli - sonra satılacak",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: Steam şu an kartlarının pazara konmasına izin vermiyor - izin verince satılacak",

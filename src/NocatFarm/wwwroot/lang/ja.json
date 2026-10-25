@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0} があなたのトレードオファーを承認しました · 渡したもの: {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} があなたのトレードオファーを承認しました · 渡したもの: {1}、受け取ったもの: {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} があなたのトレードオファーを拒否しました (渡す予定だったもの: {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} があなたのトレードオファーにカウンターオファーで応えました",
+    "your trade offer to {0} expired": "{0} へのトレードオファーの期限が切れました",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "{0} へのトレードオファーはキャンセルされました - 時間内に確認されませんでした",
+    "your trade offer to {0} can't go through any more - its items are gone": "{0} へのトレードオファーはもう成立できません - アイテムがなくなりました",
+    "couldn't note which sent offers were said: {0}": "どの送信済みオファーを通知したか記録できませんでした: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "送信済みトレードオファーを確認できませんでした: {0}: {1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam がカードの販売を許可していません - バッジ用に保持",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: カードは {1} まで Steam にロックされています - その後に販売",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: 今は Steam がカードのマーケット出品を許可していません - 許可され次第販売",

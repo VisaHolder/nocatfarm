@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0}님이 거래 제안을 수락함 · 보낸 것: {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0}님이 거래 제안을 수락함 · 보낸 것: {1}, 받은 것: {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0}님이 거래 제안을 거절함 (보낼 예정이었던 것: {1})",
+    "{0} answered your trade offer with a counter-offer": "{0}님이 거래 제안에 역제안으로 답함",
+    "your trade offer to {0} expired": "{0}님에게 보낸 거래 제안이 만료됨",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "{0}님에게 보낸 거래 제안이 취소됨 - 제때 확인되지 않음",
+    "your trade offer to {0} can't go through any more - its items are gone": "{0}님에게 보낸 거래 제안은 더 이상 진행될 수 없음 - 아이템이 사라짐",
+    "couldn't note which sent offers were said: {0}": "어떤 보낸 제안을 알렸는지 기록할 수 없음: {0}",
+    "couldn't check sent trade offers: {0}: {1}": "보낸 거래 제안을 확인할 수 없음: {0}: {1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam이 카드 판매를 허용하지 않음 - 배지용으로 보관",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0}: 카드가 {1}까지 Steam에 잠겨 있음 - 그 후에 판매",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}: 지금은 Steam이 카드를 장터에 올리지 못하게 함 - 허용되면 판매",

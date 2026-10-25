@@ -19,6 +19,9 @@ public static class TradeOffers {
 	public const int NeedsConfirmation = 9;
 	public const int InEscrow = 11;
 
+	/// <summary>1.8.5: how a sent offer can end - said in the log (<c>Trading.SentWatch</c>). Cancelled by the sender (6) isn't.</summary>
+	public const int Accepted = 3, Countered = 4, Expired = 5, InvalidItems = 8, Declined = 7, CanceledBySecondFactor = 10;
+
 	/// <summary>One item in an offer, with what Steam says it is.</summary>
 	/// <param name="Game">The game a community item belongs to (market_fee_app); 0 when Steam didn't say.</param>
 	/// <param name="Icon">Steam's picture for it - https://community.cloudflare.steamstatic.com/economy/image/&lt;Icon&gt;/96fx96f.</param>
@@ -45,7 +48,17 @@ public static class TradeOffers {
 	private const ulong AccountBase = 76561197960265728UL;
 
 	/// <summary>The account's live offers (active, awaiting confirmation or in a hold). Null when Steam didn't answer.</summary>
-	public static async Task<List<Offer>?> ActiveAsync(Bot bot, bool received, bool sent, CancellationToken ct = default) {
+	public static Task<List<Offer>?> ActiveAsync(Bot bot, bool received, bool sent, CancellationToken ct = default) =>
+		ReadAsync(bot, received, sent, DateTime.UtcNow, static o => o.State is Active or NeedsConfirmation or InEscrow, ct);
+
+	/// <summary>
+	/// 1.8.5: the offers this account sent that are live or changed since <paramref name="since"/> - accepted, declined, expired
+	/// as well (one read: Steam's "active only" includes every offer that changed after the cutoff). Null when Steam didn't answer.
+	/// </summary>
+	public static Task<List<Offer>?> SentChangedAsync(Bot bot, DateTime since, CancellationToken ct = default) =>
+		ReadAsync(bot, false, true, since, static o => o.Ours, ct);
+
+	private static async Task<List<Offer>?> ReadAsync(Bot bot, bool received, bool sent, DateTime cutoff, Func<Offer, bool> keep, CancellationToken ct) {
 		List<Offer> offers = [];
 		string cursor = "";
 
@@ -56,7 +69,7 @@ public static class TradeOffers {
 				["get_received_offers"] = received ? "1" : "0",
 				["get_sent_offers"] = sent ? "1" : "0",
 				["active_only"] = "1",
-				["time_historical_cutoff"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
+				["time_historical_cutoff"] = new DateTimeOffset(DateTime.SpecifyKind(cutoff, DateTimeKind.Utc)).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
 				["get_descriptions"] = "1",
 				["language"] = "english"
 			};
@@ -89,7 +102,7 @@ public static class TradeOffers {
 						// Only live ones, whatever else Steam includes.
 						if (Read(o, descriptions) is not { } offer) {
 							Log.DebugOnChange($"offerread:{bot.Name}", $"trade offers: skipped offer {Text(o, "tradeofferid")} - couldn't read its id, partner or items", bot.Name);
-						} else if (offer.State is Active or NeedsConfirmation or InEscrow) {
+						} else if (keep(offer)) {
 							offers.Add(offer);
 						}
 					}

@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0} 接受了你的交易报价 · 你给出了 {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} 接受了你的交易报价 · 你给出了 {1}，得到了 {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} 拒绝了你的交易报价（你本会给出 {1}）",
+    "{0} answered your trade offer with a counter-offer": "{0} 用还价回复了你的交易报价",
+    "your trade offer to {0} expired": "你发给 {0} 的交易报价已过期",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "你发给 {0} 的交易报价已被取消 - 未及时确认",
+    "your trade offer to {0} can't go through any more - its items are gone": "你发给 {0} 的交易报价无法再完成 - 物品已不在",
+    "couldn't note which sent offers were said: {0}": "无法记录哪些已发送的报价已通知：{0}",
+    "couldn't check sent trade offers: {0}: {1}": "无法检查已发送的交易报价：{0}：{1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam 不允许出售其卡牌 - 留作徽章",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0}：卡牌被 Steam 锁定至 {1} - 之后出售",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0}：Steam 目前不允许其卡牌上架市场 - 允许后出售",

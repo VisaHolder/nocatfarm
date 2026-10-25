@@ -195,10 +195,24 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				}
 			}
 
+			// 1.8.5: what became of the offers it sent (by hand too) - asleep or not, it's only reading.
+			if (Bot.IsOnline && Bot.Web.Ready) {
+				try {
+					await WatchSentAsync(ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+					throw;
+				} catch (Exception e) {
+					Log.Debug(new Said("couldn't check sent trade offers: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+				}
+			}
+
 			// Sleeps until the gap runs out OR Steam says an offer arrived, whichever comes first. That is what
 			// makes the long gap safe: nothing waits an hour, it just stops asking when there is nothing to ask.
+			// Never longer than the sent offers' gap (1.8.5).
+			TimeSpan gap = NextGap();
+
 			try {
-				await Bot.WaitForTradeOfferAsync(NextGap(), ct).ConfigureAwait(false);
+				await Bot.WaitForTradeOfferAsync(gap < SentGap ? gap : SentGap, ct).ConfigureAwait(false);
 			} catch (OperationCanceledException) {
 				return;
 			}

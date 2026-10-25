@@ -28819,6 +28819,68 @@ await LockedSpareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "
 // ── 1.8.2 live-test polish: a quick buy preview that leads with blocks, 'buy do' on a held market, a small-hours reroll, the wallet in 'levelup', swaps and trade holds, email confirmations; fakes only ──
 await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// ── 1.8.5 sent trade offers: each one that ends is said once - accepted (green), declined, expired; never one its sender took back,
+// never old history, never twice (restarts included) ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-sent-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		NocatFarm.Core.TradeOffers.Item It(ulong asset, string name) => new(753, "6", asset, asset, 0, 1, "Pony Island Trading Card", name, 405640, true);
+		NocatFarm.Core.TradeOffers.Offer Sent(ulong id, int state, int gave = 3) =>
+			new(id, 76561198000000001, state, true, null, [.. Enumerable.Range(1, gave).Select(i => It((ulong) (id * 10 + (ulong) i), "Louey"))], []);
+		var sbot = new NocatFarm.Core.Bot("harness-sent", new NocatFarm.Config.BotConfig());
+		List<NocatFarm.Core.TradeOffers.Offer> now = [];
+		List<DateTime> asked = [];
+		NocatFarm.Modules.Trading Watcher() => new(sbot) {
+			ReadSent = (since, _) => { asked.Add(since); return Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([.. now]); },
+			ReadName = static (_, _) => Task.FromResult("pookie")
+		};
+		List<string> SaidNow(long since) => [.. Log.Recent(500).Where(e => (e.Seq > since) && (e.Source == "harness-sent")).Select(static e => $"{e.Level} {e.Said.ToEnglish()}")];
+		long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+		var w = Watcher();
+		now = [Sent(1, NocatFarm.Core.TradeOffers.Accepted)];
+		long m0 = Mark();
+		await w.WatchSentAsync(CancellationToken.None);
+		Check("sent offers: the first look ever only notes the time - nothing from before is dug up", (asked.Count == 0) && (SaidNow(m0).Count == 0)
+			&& NocatFarm.Modules.Trading.LoadSent("harness-sent").Since != default);
+
+		NocatFarm.Modules.Trading.SentGap = TimeSpan.Zero;
+		now = [Sent(2, NocatFarm.Core.TradeOffers.Accepted), Sent(3, NocatFarm.Core.TradeOffers.Declined, 1), Sent(4, NocatFarm.Core.TradeOffers.Active),
+			Sent(5, 6), Sent(6, NocatFarm.Core.TradeOffers.Expired)];
+		long m1 = Mark();
+		await w.WatchSentAsync(CancellationToken.None);
+		List<string> said = SaidNow(m1);
+		Check("sent offers: accepted said green with what went, declined and expired said once each; still out or taken back by its sender - nothing",
+			(said.Count == 3) && said.Contains("GOOD pookie accepted your trade offer · you gave 3 item(s): 3× Louey")
+			&& said.Contains("INFO pookie declined your trade offer (you'd have given 1 item(s): Louey)") && said.Contains("INFO your trade offer to pookie expired"),
+			string.Join(" | ", said));
+
+		long m2 = Mark();
+		await Watcher().WatchSentAsync(CancellationToken.None);   // a restart: a new module, the same file
+		Check("sent offers: never said twice - a restart reads from the last look (with a little overlap) and remembers what it said",
+			(SaidNow(m2).Count == 0) && (asked.Count == 2) && (asked[1] > asked[0].AddMinutes(-1)), string.Join(" | ", SaidNow(m2)));
+
+		Check("sent offers: a countered offer, one Steam cancelled unconfirmed, and one whose items are gone each get a plain line",
+			(NocatFarm.Modules.Trading.SentSaid(Sent(7, NocatFarm.Core.TradeOffers.Countered), "pookie")?.ToEnglish() == "pookie answered your trade offer with a counter-offer")
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(8, NocatFarm.Core.TradeOffers.CanceledBySecondFactor), "pookie")?.ToEnglish().Contains("wasn't confirmed in time", StringComparison.Ordinal) == true)
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(9, NocatFarm.Core.TradeOffers.InvalidItems), "pookie")?.ToEnglish().Contains("its items are gone", StringComparison.Ordinal) == true)
+			&& (NocatFarm.Modules.Trading.SentSaid(Sent(10, 6), "pookie") == null));
+	} finally {
+		NocatFarm.Modules.Trading.SentGap = TimeSpan.FromMinutes(15);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();

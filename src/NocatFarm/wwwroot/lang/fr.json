@@ -1,5 +1,14 @@
 {
   "ui": {
+    "{0} accepted your trade offer · you gave {1}": "{0} a accepté ton offre d'échange · tu as donné {1}",
+    "{0} accepted your trade offer · you gave {1}, got {2}": "{0} a accepté ton offre d'échange · tu as donné {1} et reçu {2}",
+    "{0} declined your trade offer (you'd have given {1})": "{0} a refusé ton offre d'échange (tu aurais donné {1})",
+    "{0} answered your trade offer with a counter-offer": "{0} a répondu à ton offre d'échange par une contre-offre",
+    "your trade offer to {0} expired": "ton offre d'échange à {0} a expiré",
+    "your trade offer to {0} was cancelled - it wasn't confirmed in time": "ton offre d'échange à {0} a été annulée - elle n'a pas été confirmée à temps",
+    "your trade offer to {0} can't go through any more - its items are gone": "ton offre d'échange à {0} ne peut plus aboutir - ses objets ne sont plus là",
+    "couldn't note which sent offers were said: {0}": "impossible de noter quelles offres envoyées ont été annoncées : {0}",
+    "couldn't check sent trade offers: {0}: {1}": "impossible de vérifier les offres d'échange envoyées : {0} : {1}",
     "Steam doesn't let its cards be sold - kept for the badge": "Steam ne laisse pas vendre ses cartes - gardées pour le badge",
     "{0}: its cards are locked by Steam until {1} - sold after that": "{0} : ses cartes sont bloquées par Steam jusqu'au {1} - vendues ensuite",
     "{0}: Steam doesn't let its cards go on the market right now - sold once it does": "{0} : Steam ne laisse pas mettre ses cartes sur le marché pour l'instant - vendues dès que possible",
