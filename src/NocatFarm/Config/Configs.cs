@@ -280,6 +280,9 @@ public sealed class GlobalConfig {
 	/// <summary>Backup messages on Telegram and Discord (1.8.2: one choice where there were "Send backups" and "Tell me"):
 	/// 0 none, 1 only when a backup fails, 2 after every backup too.</summary>
 	public int BackupMessages { get; set; } = 1;
+
+	/// <summary>1.8.5: each daily backup (the password-locked file) is also sent to the connected Telegram chat.</summary>
+	public bool BackupToTelegram { get; set; } = true;
 	public bool BackupLocalCopy { get; set; } = true;
 	public int BackupRetryMinutes { get; set; } = 60;
 

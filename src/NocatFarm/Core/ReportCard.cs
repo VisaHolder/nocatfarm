@@ -126,7 +126,8 @@ public sealed class ReportCard {
 	/// <summary>The "// SYSTEM" lines: which version this is and how long it has been running.</summary>
 	internal static Section System() => new(new Said("System"), default, [
 		new Row(new Said("Version"), new Said("{0}", Build.Version)),
-		new Row(new Said("Uptime"), new Said("{0}", Uptime()))
+		new Row(new Said("Uptime"), new Said("{0}", Uptime())),
+		.. BoxHealth.Line(BoxHealth.Read()) is { } health ? [new Row(new Said("Machine"), health)] : (Row[]) []   // 1.8.5
 	]);
 
 	/// <summary>How long the app has been running: "1d 2h 47m", "3h 5m".</summary>

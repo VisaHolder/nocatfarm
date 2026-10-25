@@ -2127,6 +2127,10 @@ public static partial class Commands {
 			}
 		}
 
+		// 1.8.5: the machine itself - memory, storage, heat - and how long nocat.farm has been up.
+		sb.AppendLine();
+		sb.AppendLine($"  nocat.farm up {ReportCard.Uptime()}{(BoxHealth.Line(BoxHealth.Read()) is { } health ? " · " + health : "")}");
+
 		return sb.ToString().TrimEnd();
 	}
 

@@ -698,6 +698,67 @@ public static partial class Notifier {
 	public static async Task<bool> SendPrivateNowAsync(string text, CancellationToken ct) =>
 		HasTelegram && (await PostTelegramAsync(WebUtility.HtmlEncode(text), ct).ConfigureAwait(false)).Ok;
 
+	/// <summary>Telegram's limit for a file a bot sends.</summary>
+	public const long TelegramFileLimit = 50L * 1024 * 1024;
+
+	/// <summary>
+	/// 1.8.5: a daily backup (the password-locked .nfbackup - nothing else ever goes) sent to the Telegram chat as a file. Tried
+	/// three times a minute apart; one quiet line in the log if it never goes.
+	/// </summary>
+	public static async Task<bool> SendBackupAsync(string path, CancellationToken ct) {
+		if (!HasTelegram || !path.EndsWith(".nfbackup", StringComparison.OrdinalIgnoreCase) || !File.Exists(path)) {
+			return false;
+		}
+
+		long size = new FileInfo(path).Length;
+
+		if (size > TelegramFileLimit) {
+			Log.Info(new Said("the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB", size / (1024 * 1024)));
+
+			return false;
+		}
+
+		string why = "";
+
+		for (int attempt = 0; attempt < 3; attempt++) {
+			if (attempt > 0) {
+				await Task.Delay(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
+			}
+
+			try {
+				using MultipartFormDataContent form = new();
+				form.Add(new StringContent(G.TelegramChatId), "chat_id");
+				form.Add(new StringContent(new Said("nocat.farm backup · {0} · password-locked", Path.GetFileName(path)).ToString()), "caption");
+				await using FileStream file = File.OpenRead(path);
+				form.Add(new StreamContent(file), "document", Path.GetFileName(path));
+				(HttpResponseMessage? sent, string error) = await TryPostAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/sendDocument", form, ct).ConfigureAwait(false);
+
+				if (sent == null) {
+					why = error;
+
+					continue;
+				}
+
+				using HttpResponseMessage r = sent;
+
+				if (r.IsSuccessStatusCode) {
+					Log.Debug(new Said("backup sent to Telegram: {0}", Path.GetFileName(path)));
+
+					return true;
+				}
+
+				why = "HTTP " + ((int) r.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture)
+					+ ErrorField(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false), "description");
+			} catch (IOException e) {
+				why = Log.Describe(e);
+			}
+		}
+
+		Log.Info(new Said("the backup couldn't be sent to Telegram ({0}) - it's still saved on this machine", why));
+
+		return false;
+	}
+
 	private static async Task<(bool Ok, string Why)> PostTelegramAsync(string html, CancellationToken ct) {
 		string token = G.TelegramBotToken;
 		object payload = new { chat_id = G.TelegramChatId, text = html, parse_mode = "HTML", disable_web_page_preview = true };

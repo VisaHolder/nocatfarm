@@ -482,6 +482,8 @@ NocatFarm.Core.SelfUpdate.NotifierReady();
 	}
 }
 NocatFarm.Core.DiscordPresence.Start(manager);
+NocatFarm.Core.OutageWatch.Start(manager);
+NocatFarm.Core.BoxHealth.Start();   // 1.8.5: overheating, storage or memory running out - warned once   // 1.8.5: every account cut off for 5m+ and back - said once
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
 // The day-by-day totals behind the dashboard's history charts. Before the accounts start, so the first card of the

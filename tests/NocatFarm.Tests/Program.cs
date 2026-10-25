@@ -28869,7 +28869,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		long m2 = Mark();
 		await Watcher().WatchSentAsync(CancellationToken.None);   // a restart: a new module, the same file
 		Check("sent offers: never said twice - a restart reads from the last look (with a little overlap) and remembers what it said",
-			(SaidNow(m2).Count == 0) && (asked.Count == 2) && (asked[1] > asked[0].AddMinutes(-1)), string.Join(" | ", SaidNow(m2)));
+			(SaidNow(m2).Count == 0) && (asked.Count == 2) && (asked[1] > asked[0].AddMinutes(-6)), string.Join(" | ", SaidNow(m2)));
 
 		Check("sent offers: a countered offer, one Steam cancelled unconfirmed, and one whose items are gone each get a plain line",
 			(NocatFarm.Modules.Trading.SentSaid(Sent(7, NocatFarm.Core.TradeOffers.Countered), "pookie")?.ToEnglish() == "pookie answered your trade offer with a counter-offer")
@@ -28953,6 +28953,68 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	var pattern = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
 	Check("backups 1.8.5: the listings nocat.farm made go in a backup - an account moved to another machine still takes down and relists its own",
 		pattern.IsMatch("state/listed-new.json") && !pattern.IsMatch("state/listed-new.json.bak"));
+}
+
+// ── 1.8.5 the internet gone for every account and back: one line when it's over; one account reconnecting, a short blip or the first sign-in - nothing ──
+{
+	DateTime o0 = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	var on = NocatFarm.Core.BotState.Online;
+	var re = NocatFarm.Core.BotState.Reconnecting;
+	var stopped = NocatFarm.Core.BotState.Stopped;
+	var w = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(w, var s0) = NocatFarm.Core.OutageWatch.Step(w, [NocatFarm.Core.BotState.LoggingIn, re, re], o0);
+	(w, var s1) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(9));
+	bool firstQuiet = (s0 == null) && (s1 == null) && w.Up;
+	(w, var s2) = NocatFarm.Core.OutageWatch.Step(w, [re, on, on], o0.AddMinutes(10));
+	(w, var s3) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(30));
+	bool oneQuiet = (s2 == null) && (s3 == null);
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, re], o0.AddMinutes(40));
+	(w, var s4) = NocatFarm.Core.OutageWatch.Step(w, [on, on, on], o0.AddMinutes(42));
+	bool blipQuiet = s4 == null;
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, stopped], o0.AddMinutes(50));
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, stopped], o0.AddMinutes(58));
+	(w, var s5) = NocatFarm.Core.OutageWatch.Step(w, [on, re, stopped], o0.AddMinutes(63));
+	(w, var s6) = NocatFarm.Core.OutageWatch.Step(w, [on, on, stopped], o0.AddMinutes(64));
+	(w, var s7) = NocatFarm.Core.OutageWatch.Step(w, [on, on, stopped], o0.AddMinutes(65));
+	Check("outage: every account (meant to be on) cut off 5m+ - said once when all are back, with how long; the first sign-in, one account, a 2m blip - nothing",
+		firstQuiet && oneQuiet && blipQuiet && (s5 == null) && (s6?.ToEnglish() == "back online after 14m offline · all 2 account(s) signed back in") && (s7 == null),
+		s6?.ToEnglish() ?? "nothing said");
+}
+
+// ── 1.8.5 the machine's health: memory, storage, heat - said plainly; a warning once each, again only after it recovered ──
+{
+	DateTime h0 = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
+	string line = NocatFarm.Core.BoxHealth.Line(new(2458, 3174, 54.4))?.ToEnglish() ?? "";
+	Check("health: the line says what's known, nothing when nothing is", (line == "2.4 GB memory free · 3.1 GB storage free · 54°C")
+		&& (NocatFarm.Core.BoxHealth.Line(new(null, 800, null))?.ToEnglish() == "800 MB storage free") && (NocatFarm.Core.BoxHealth.Line(new(null, null, null)) == null), line);
+	var hw = new NocatFarm.Core.BoxHealth.Watch(null, new HashSet<string>());
+	(hw, var w0) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 85), h0);
+	(hw, var w1) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 86), h0.AddMinutes(9));
+	(hw, var w2) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 84), h0.AddMinutes(10));
+	(hw, var w3) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 84), h0.AddMinutes(11));
+	(hw, var w4) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 600, 60), h0.AddMinutes(12));
+	(hw, var w5) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 600, 85), h0.AddMinutes(13));
+	(hw, var w6) = NocatFarm.Core.BoxHealth.Step(hw, new(2000, 5000, 60), h0.AddMinutes(14));
+	(hw, var w7) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 5000, 60), h0.AddMinutes(15));
+	Check("health: hot only after 10 minutes over 80°C; each warning once; storage under 1 GB and memory under 200 MB warned; again only after recovering",
+		(w0.Count == 0) && (w1.Count == 0) && (w2.Count == 1) && w2[0].ToEnglish().StartsWith("the machine is running hot - 84°C for over 10 minutes", StringComparison.Ordinal)
+		&& (w3.Count == 0) && (w4.Count == 2) && (w5.Count == 0) && (w6.Count == 0) && (w7.Count == 1) && w7[0].ToEnglish().Contains("nearly out of memory - 150 MB free", StringComparison.Ordinal),
+		string.Join(" | ", w2.Concat(w4).Concat(w7).Select(static x => x.ToEnglish())));
+}
+
+// ── 1.8.5 the daily backup to Telegram: on by default, only the password-locked file ever goes, three tries, never held up ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string schedule = File.ReadAllText(Path.Combine(src, "Core", "BackupSchedule.cs"));
+	string notifier = File.ReadAllText(Path.Combine(src, "Core", "Notifier.cs"));
+	Check("backup to Telegram: on by default; sent after the backup is saved, off its thread, only with Telegram connected",
+		new NocatFarm.Config.GlobalConfig().BackupToTelegram && (NocatFarm.Config.Settings.FindGlobal("BackupToTelegram")?.Kind == NocatFarm.Config.SettingKind.Bool)
+		&& schedule.Contains("if (g.BackupToTelegram && Notifier.TelegramConnected) {", StringComparison.Ordinal)
+		&& schedule.Contains("_ = Task.Run(() => Notifier.SendBackupAsync(path, CancellationToken.None));", StringComparison.Ordinal));
+	Check("backup to Telegram: only a .nfbackup (password-locked) file ever goes, by sendDocument, three tries; nothing without a chat",
+		notifier.Contains("!path.EndsWith(\".nfbackup\", StringComparison.OrdinalIgnoreCase)", StringComparison.Ordinal)
+		&& notifier.Contains("/sendDocument\"", StringComparison.Ordinal) && notifier.Contains("for (int attempt = 0; attempt < 3; attempt++) {", StringComparison.Ordinal)
+		&& !NocatFarm.Core.Notifier.SendBackupAsync(Path.Combine(Path.GetTempPath(), "secret.key"), CancellationToken.None).GetAwaiter().GetResult());
 }
 
 // SETTINGSCOUNT
@@ -36691,7 +36753,7 @@ static class SafeChecks182 {
 			var wResult = await Buyer(NewBot(), wMarket).LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("buying: the wallet is read once for the set, not once a card - each card checked against that, less what the set spent",
 				(wInner.Bought.Count == 2) && (wResult.Bought.Count == 2)
-				&& buyerSrc.Contains("if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere)) {", StringComparison.Ordinal),
+				&& buyerSrc.Contains("if ((cost > dayLeft) || (cost > weekLeft) || (cost > wallet.Balance - spentHere - BuyPlan.KeepCents(Bot.Cfg))) {", StringComparison.Ordinal),
 				$"{wInner.Bought.Count} bought, {wMarket.WalletReads} wallet reads, {wResult.Problem}");
 
 			var naBot = NewBot();

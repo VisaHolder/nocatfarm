@@ -1,5 +1,19 @@
 {
   "ui": {
+    "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "la sauvegarde n'a pas été envoyée sur Telegram - elle fait {0} Mo, plus que les 50 Mo de Telegram",
+    "nocat.farm backup · {0} · password-locked": "sauvegarde nocat.farm · {0} · protégée par mot de passe",
+    "backup sent to Telegram: {0}": "sauvegarde envoyée sur Telegram : {0}",
+    "the backup couldn't be sent to Telegram ({0}) - it's still saved on this machine": "la sauvegarde n'a pas pu être envoyée sur Telegram ({0}) - elle reste enregistrée sur cette machine",
+    "Machine": "Machine",
+    "{0} memory free": "{0} de mémoire libre",
+    "{0} storage free": "{0} de stockage libre",
+    "{0}°C": "{0} °C",
+    "the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off": "la machine chauffe - {0} °C depuis plus de {1} minutes ; donne-lui de l'air (ou un ventilateur), sinon elle peut ralentir ou s'éteindre",
+    "storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room": "le stockage où nocat.farm garde ses fichiers est presque plein - {0} libre ; les journaux et sauvegardes ont besoin de place",
+    "the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped": "la machine n'a presque plus de mémoire - {0} libre ; nocat.farm (ou autre chose à côté) pourrait être arrêté",
+    "couldn't look at the machine's health: {0}": "impossible de vérifier l'état de la machine : {0}",
+    "back online after {0} offline · all {1} account(s) signed back in": "de retour en ligne après {0} hors ligne · les {1} compte(s) se sont reconnectés",
+    "couldn't look at the connection: {0}": "impossible de vérifier la connexion : {0}",
     "this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours": "l'horloge de cette machine est réglée sur UTC, et la journée de {0} (réveil, coucher, ses heures de jeu) la suit - règle le fuseau horaire (sous Linux : TZ=Zone/Ville) pour qu'elle suive tes heures",
     "nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in": "nocat.farm est de retour - la machine a redémarré (coupure de courant ou redémarrage) vers {0}, vu en marche pour la dernière fois il y a {1} · {2} compte(s) se connectent",
     "nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in": "nocat.farm est de retour après un arrêt inattendu (un plantage - la machine a continué de tourner) - vu en marche pour la dernière fois il y a {0} · {1} compte(s) se connectent",
@@ -3467,6 +3481,10 @@
     "took down {0} - unsold {1} days, its gems are worth more now": "{0} retiré - invendu depuis {1} jours, ses gemmes valent plus maintenant"
   },
   "settings": {
+    "BackupToTelegram": {
+      "label": "Envoyer la sauvegarde quotidienne sur Telegram",
+      "tip": "Avec Telegram connecté, chaque sauvegarde quotidienne est aussi envoyée dans son chat en fichier - elle survit si la machine meurt. Seule la sauvegarde protégée par mot de passe part, jamais les identifiants en clair ; la restaurer demande le mot de passe de sauvegarde. Par exemple une box TV qui casse : ses comptes reviennent depuis le fichier du chat. Telegram accepte les fichiers jusqu'à 50 Mo."
+    },
     "BuyKeepInWallet": {
       "label": "Toujours garder dans le porte-monnaie",
       "tip": "L'achat de cartes ne fait jamais descendre le porte-monnaie Steam de ce compte sous ce montant, dans sa propre devise. Par exemple 20,00 : tu ajoutes 100,00 et il dépense au plus 80,00 - les 20,00 restent pour toi. 0 le laisse tout utiliser (sans jamais dépasser les limites du jour et de la semaine)."

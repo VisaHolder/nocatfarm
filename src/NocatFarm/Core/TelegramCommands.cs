@@ -583,6 +583,10 @@ public static partial class Notifier {
 		sb.AppendLine();
 		sb.AppendLine(Section(new Said("System")));
 		sb.AppendLine(Row(new Said("Uptime"), v.Uptime));
+
+		if (BoxHealth.Line(BoxHealth.Read()) is { } health) {
+			sb.AppendLine(Row(new Said("Machine"), health.ToString()));   // 1.8.5
+		}
 		sb.AppendLine(Row(new Said("Version"), v.NewVersion is { } nv
 			? (SelfUpdate.Supported ? new Said("{0} - {1} is out, send /update accept", Build.Version, nv) : new Said("{0} - {1} is out, send /update to see how to install it", Build.Version, nv)).ToString()
 			: Build.Version));
