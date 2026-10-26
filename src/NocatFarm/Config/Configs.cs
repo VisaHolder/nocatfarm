@@ -2357,6 +2357,7 @@ public static partial class ConfigStore {
 		("state", "spare-", ".json"),
 		("state", "buy-", ".json"),   // money spent buying cards, and its go-ahead (Modules/CardBuyer.cs)
 		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
+		("state", "levels-", ".json"),   // 1.8.7: its levelling figures for the weekly report (Core/LevelReport.cs)
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)
 		("state", "cardswaps-", ".json"),   // 1.8.2 card swaps: its go-ahead, today's count, its matches (Core/CardExchange.cs)

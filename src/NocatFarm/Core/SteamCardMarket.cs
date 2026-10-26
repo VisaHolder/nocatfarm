@@ -70,6 +70,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 
 		_foils = badges.FoilLevels;
 		SteamLevel = (badges.Level, badges.Xp);
+		LevelReport.NoteXp(bot.Name, badges.Level, badges.Xp, DateTime.UtcNow);   // 1.8.7: for the weekly levelling line
 
 		return badges.GameLevels;
 	}

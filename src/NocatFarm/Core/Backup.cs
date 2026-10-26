@@ -113,7 +113,7 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy|listed)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy|listed|levels)-(?<name>[^/\\:*?""<>|]+)\.json" +
 		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 

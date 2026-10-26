@@ -1081,6 +1081,7 @@ public static class SpareRun {
 		}
 
 		foreach (OurListings.Entry s in soldNow) {
+			LevelReport.NoteSale(bot.Name, s.YouGetCents, currency, now);   // 1.8.7: for the weekly levelling line
 			Say(soldNow.Count > EachOwnLine, SoldSaid(s, currency), bot.Name);
 		}
 

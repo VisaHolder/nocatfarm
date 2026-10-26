@@ -1,5 +1,14 @@
 {
   "ui": {
+    "couldn't note the levelling figures: {0}": "не удалось записать данные об уровнях: {0}",
+    "+{0} XP (level {1} -> {2})": "+{0} XP (уровень {1} -> {2})",
+    "+{0} XP (level {1})": "+{0} XP (уровень {1})",
+    "sold {0}": "продано на {0}",
+    "spent {0}": "потрачено {0}",
+    "level {0} in about {1} day(s) at this pace": "уровень {0} примерно через {1} дн. при таком темпе",
+    "level {0} in about {1} weeks at this pace": "уровень {0} примерно через {1} нед. при таком темпе",
+    "{0} market listing(s) on {1} waiting for your phone since {2} - confirm or cancel them in the Steam app": "{0} лот(ов) на торговой площадке у {1} ждут вашего телефона с {2} - подтвердите или отмените их в приложении Steam",
+    "Levelling": "Уровни",
     "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "Снаружи открывается по https с собственным сертификатом nocat.farm - установите его на телефон один раз (он приходит в Telegram, или введите 'dashboard cert').",
     "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "Снаружи открывается только по https, с собственным сертификатом nocat.farm - 'dashboard cert' отправляет его в Telegram, чтобы один раз установить на телефон.",
     "dashboard certificate {0} couldn't be read - a new one is made: {1}": "не удалось прочитать сертификат панели {0} - создаётся новый: {1}",

@@ -191,7 +191,17 @@ is on, then a line for all accounts - laid out like the daily summary, zeros lef
 If the PC was off that day, it comes when it's next on. `report week` shows it any time; `report` alone shows the
 daily summary.
 
-"Put up for sale" is what nocat.farm listed. Steam doesn't say when a listing sells, so sales aren't counted.
+"Put up for sale" is what nocat.farm listed.
+
+Below that, **Levelling** has a line for each account that levelled, sold or bought cards that week: the XP it gained
+and the level it went to, what its own listings sold for, what buying cards spent, and how long its next goal takes at
+that pace - *Stop buying at Steam level* when it's set, else level 100 (then the next hundred). For example
+`new: +1,200 XP (level 52 -> 54) · sold 0.92 CAD · spent 6.40 CAD · level 100 in about 9 weeks at this pace`.
+
+**Listings waiting for your phone.** A listing nocat.farm put up that has waited 3 hours for its confirmation on your
+phone is said once, under *Send problems that need you*: `3 market listing(s) on new waiting for your phone since 14:10
+- confirm or cancel them in the Steam app`. The same ones aren't said again while they wait; a new one that starts
+waiting is.
 
 ## Stuck accounts
 
