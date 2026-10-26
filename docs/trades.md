@@ -20,6 +20,19 @@ new trade offer 4 from SomeGuy: you get 1 item(s): ..., you give 3 item(s): ... 
 It also tells you when an offer is accepted, declined, needs confirming, or is gone (cancelled, answered elsewhere
 or expired).
 
+Offers an account **sent** are followed too - ones nocat.farm sent and ones you sent by hand on Steam, so you don't have to
+sign in to see what happened. Every 15 minutes it looks, and each one that ended is said once, in the log, as a pop-up and
+on Discord/Telegram (*Send trades*):
+
+```
+pookie accepted your trade offer · you gave 3 item(s): 3× Louey
+pookie declined your trade offer (you'd have given 1 item(s): Azazel.exe)
+your trade offer to pookie expired
+```
+
+A counter-offer, an offer Steam cancelled because it wasn't confirmed in time, and one whose items are gone get a line
+too. One you took back yourself (or `trade cancel`) isn't said, and nothing from before it started looking is dug up.
+
 ```
 offers myaccount                  # every live offer, with the same numbers
 trade accept myaccount 4          # accept offer 4
