@@ -628,7 +628,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 		// 1.8.6: from the internet only over HTTPS - a password typed over plain HTTP can be read on the way. At home (and on
 		// this PC) plain HTTP still opens it.
-		if (direct && _cfg.WebRemoteAccess && !request.IsHttps) {
+		if (direct && !request.IsHttps) {
 			ctx.Response.Headers.Connection = "close";
 
 			return "Open from anywhere only opens over https:// - put https:// in front of this address. The first time, install the dashboard's certificate on the phone (type 'dashboard cert' - it goes to Telegram).";
@@ -1095,6 +1095,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
 			HttpOnly = true,
 			SameSite = SameSiteMode.Strict,
+			Secure = ctx.Request.IsHttps,   // 1.8.6: signed in over https, never sent back over plain http (an old http link)
 			Expires = expires
 		});
 

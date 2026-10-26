@@ -114,7 +114,7 @@ public static class DashboardLinks {
 			: [.. HomeAddresses().Select(ip => $"http://{ip}:{port}/")];
 
 		return new Links($"http://127.0.0.1:{port}/", home, hasPassword && (anyAddress || oneAddress), hasPassword, anyAddress || oneAddress,
-			Outside(g.WebPublicAddress, port) ?? RemoteAccess.Link,
+			Outside(g.WebPublicAddress, port, "https") ?? RemoteAccess.Link,   // 1.8.6: from outside it only opens over https
 			OperatingSystem.IsWindows() && !Platform.IsLoopback(g.WebHost ?? "") && (FirewallAllows(port) == false),
 			Platform.InContainer && (Platform.HomeAddress == null),
 			Web.WebHost.Current?.NeedsRestart ?? false,
@@ -165,7 +165,9 @@ public static class DashboardLinks {
 	/// its own port - "https://farm.example.com" was handed out as https://farm.example.com:7242/, which nothing answers.
 	/// And the port goes after the name, not after a path: "example.com/farm" came out as example.com/farm:7242.
 	/// </remarks>
-	internal static string? Outside(string? typed, int port) {
+	/// <param name="scheme">1.8.6: the scheme when none was typed - https for the address the internet uses (the dashboard
+	/// answers https on its own port), http at home.</param>
+	internal static string? Outside(string? typed, int port, string scheme = "http") {
 		string t = (typed ?? "").Trim().TrimEnd('/');
 
 		if (t.Length == 0) {
@@ -173,7 +175,7 @@ public static class DashboardLinks {
 		}
 
 		int at = t.IndexOf("://", StringComparison.Ordinal);
-		string scheme = at < 0 ? "http" : t[..at];
+		scheme = at < 0 ? scheme : t[..at];
 		string rest = at < 0 ? t : t[(at + 3)..];
 		int slash = rest.IndexOf('/');
 		string name = slash < 0 ? rest : rest[..slash];
@@ -182,7 +184,8 @@ public static class DashboardLinks {
 		// A bracketed IPv6 address has colons of its own - only one after the closing bracket is a port.
 		bool hasPort = name.StartsWith('[') ? name.Contains("]:", StringComparison.Ordinal) : name.Contains(':');
 
-		if (!hasPort && !scheme.Equals("https", StringComparison.OrdinalIgnoreCase)) {
+		// https typed by hand is a proxy or tunnel in front of it, on its own port; https by default is the dashboard's own
+		if (!hasPort && ((at < 0) || !scheme.Equals("https", StringComparison.OrdinalIgnoreCase))) {
 			name += ":" + port;
 		}
 

@@ -666,7 +666,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	await Map(7242);
 	Check("upnp: asks the router to forward the port to this PC, for an hour", Sent().Any(r => r.Contains("#AddPortMapping\"") && r.Contains("<NewExternalPort>7242<")
 		&& r.Contains("<NewInternalPort>7242<") && r.Contains("<NewInternalClient>127.0.0.1<") && r.Contains("<NewLeaseDuration>3600<") && r.Contains("<NewProtocol>TCP<")));
-	Check("upnp: the link is the router's internet address", Link() == "http://203.0.113.7:7242/", Link() ?? "null");
+	Check("upnp: the link is the router's internet address", Link() == "https://203.0.113.7:7242/", Link() ?? "null");
 	await Unmap();
 	Check("upnp: switched off, the forward is taken away", Sent()[^1].Contains("#DeletePortMapping\"") && Sent()[^1].Contains("<NewExternalPort>7242<") && (Link() == null));
 
@@ -29165,10 +29165,17 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		string host = File.ReadAllText(Path.Combine(src, "Web", "WebHost.cs"));
 		string remote = File.ReadAllText(Path.Combine(src, "Core", "RemoteAccess.cs"));
 		Check("https: from the internet only over HTTPS (at home and on this PC plain HTTP still opens); the link it hands out is https",
-			host.Contains("if (direct && _cfg.WebRemoteAccess && !request.IsHttps) {", StringComparison.Ordinal)
+			host.Contains("if (direct && !request.IsHttps) {", StringComparison.Ordinal) && host.Contains("Secure = ctx.Request.IsHttps,", StringComparison.Ordinal)
 			&& host.Contains("o.ConfigureEndpointDefaults(static l => l.Use(TlsSniff.Middleware(DashboardCert.Current)));", StringComparison.Ordinal)
 			&& remote.Contains("$" + "\"https://{ExternalIp}:{m.Port}/\"", StringComparison.Ordinal)
 			&& remote.Contains("await Web.DashboardCert.EnsureSentAsync(CancellationToken.None).ConfigureAwait(false);", StringComparison.Ordinal));
+		var constraints = caAgain.Extensions["2.5.29.30"];
+		string pfxText = File.ReadAllText(pfx);
+		Check("https 1.8.6: the authority can only vouch for the dashboard's own names (Name Constraints, critical), and its key is sealed on disk",
+			(constraints != null) && constraints.Critical && !pfxText.StartsWith("MII", StringComparison.Ordinal)
+			&& ((string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["myhome.duckdns.org", 7242, "https"]) == "https://myhome.duckdns.org:7242/")
+			&& ((string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["https://farm.example.com", 7242, "https"]) == "https://farm.example.com/"),
+			pfxText[..Math.Min(12, pfxText.Length)]);
 		string install = NocatFarm.Web.DashboardCert.InstallSaid("AB:CD").ToEnglish();
 		Check("https: the phone gets the certificate with how to install it (Android and iPhone) and its fingerprint",
 			install.Contains("Android:", StringComparison.Ordinal) && install.Contains("iPhone:", StringComparison.Ordinal) && install.EndsWith("AB:CD", StringComparison.Ordinal));

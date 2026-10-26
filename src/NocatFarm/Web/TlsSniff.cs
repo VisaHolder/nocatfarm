@@ -21,10 +21,15 @@ internal static class TlsSniff {
 		PipeReader input = ctx.Transport.Input;
 		ReadResult first;
 
-		try {
-			first = await input.ReadAsync(ctx.ConnectionClosed).ConfigureAwait(false);
-		} catch (OperationCanceledException) {
-			return;
+		// 1.8.6: a socket that never sends a byte is let go after 15 seconds - Kestrel's own timeouts only start after this step
+		using (CancellationTokenSource firstByte = CancellationTokenSource.CreateLinkedTokenSource(ctx.ConnectionClosed)) {
+			firstByte.CancelAfter(TimeSpan.FromSeconds(15));
+
+			try {
+				first = await input.ReadAsync(firstByte.Token).ConfigureAwait(false);
+			} catch (Exception e) when (e is OperationCanceledException or IOException or ConnectionResetException) {
+				return;
+			}
 		}
 
 		if (first.Buffer.IsEmpty) {
@@ -58,7 +63,7 @@ internal static class TlsSniff {
 				ApplicationProtocols = [SslApplicationProtocol.Http11],
 				ClientCertificateRequired = false
 			}, handshake.Token).ConfigureAwait(false);
-		} catch (Exception e) when (e is AuthenticationException or IOException or OperationCanceledException) {
+		} catch (Exception e) {   // 1.8.6: whatever went wrong (a certificate that couldn't be made too) ends this connection only
 			// A browser that doesn't trust the certificate yet ends the handshake itself - not worth more than a debug line.
 			Log.DebugOnChange("dashboard:tls", $"dashboard: an HTTPS visitor left during the handshake ({e.GetType().Name})");
 			await ssl.DisposeAsync().ConfigureAwait(false);

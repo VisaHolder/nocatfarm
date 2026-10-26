@@ -21,6 +21,7 @@ namespace NocatFarm.Web;
 /// </remarks>
 public static class DashboardCert {
 	private static readonly Lock Gate = new();
+	private static DateTime _checkedAt;
 	private static X509Certificate2? _ca, _leaf;
 
 	private static string State => Path.Combine(ConfigStore.ConfigDir, "state");
@@ -47,6 +48,7 @@ public static class DashboardCert {
 			using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 			CertificateRequest req = new("CN=nocat.farm dashboard, O=nocat.farm", key, HashAlgorithmName.SHA256);
 			req.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, true, 0, true));
+			req.CertificateExtensions.Add(NameConstraints());   // 1.8.6: it can only vouch for the dashboard's own names
 			req.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
 			req.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(req.PublicKey, false));
 			X509Certificate2 made = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(10));
@@ -65,6 +67,12 @@ public static class DashboardCert {
 	/// </summary>
 	public static X509Certificate2 Current() {
 		lock (Gate) {
+			// 1.8.6: asked on every https connection - the names are only looked at again every few minutes, never per handshake
+			if ((_leaf != null) && (DateTime.UtcNow - _checkedAt < TimeSpan.FromMinutes(5))) {
+				return _leaf;
+			}
+
+			_checkedAt = DateTime.UtcNow;
 			X509Certificate2 ca = Authority();
 			HashSet<string> names = Names();
 
@@ -150,6 +158,7 @@ public static class DashboardCert {
 	internal static void Forget() {
 		lock (Gate) {
 			_ca = _leaf = null;
+			_checkedAt = default;
 			MadeNow = false;
 		}
 	}
@@ -185,8 +194,8 @@ public static class DashboardCert {
 			names.Add(outside);
 		}
 
-		if (Uri.TryCreate(Live.Global.WebPublicAddress, UriKind.Absolute, out Uri? pub) && (pub.Host.Length > 0)) {
-			names.Add(pub.Host);
+		if (DashboardLinks.Outside(Live.Global.WebPublicAddress, 1) is { } typed && Uri.TryCreate(typed, UriKind.Absolute, out Uri? pub) && (pub.DnsSafeHost.Length > 0)) {
+			names.Add(pub.DnsSafeHost);   // without an IPv6 address's brackets, as the certificate holds it
 		}
 
 		return names;
@@ -206,22 +215,64 @@ public static class DashboardCert {
 
 	private static X509Certificate2? Load(string path) {
 		try {
-			return File.Exists(path) ? X509CertificateLoader.LoadPkcs12FromFile(path, null, X509KeyStorageFlags.Exportable) : null;
-		} catch (Exception e) when (e is CryptographicException or IOException or UnauthorizedAccessException) {
+			return File.Exists(path) ? X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(Secrets.Unprotect(File.ReadAllText(path).Trim())), null, X509KeyStorageFlags.Exportable) : null;
+		} catch (Exception e) when (e is CryptographicException or IOException or UnauthorizedAccessException or FormatException) {
 			Log.Debug(new Said("dashboard certificate {0} couldn't be read - a new one is made: {1}", Path.GetFileName(path), Log.Describe(e)));
 
 			return null;
 		}
 	}
 
+	/// <summary>
+	/// 1.8.6: the keys sealed like every other secret (Windows' own protection, or secret.key elsewhere), written once and
+	/// whole - never a half-written key that quietly makes a new authority and every phone install it again.
+	/// </summary>
 	private static void Save(string path, X509Certificate2 cert) {
 		Directory.CreateDirectory(State);
-		AtomicFile.Write(path, Convert.ToBase64String(cert.Export(X509ContentType.Pkcs12)));
-		byte[] raw = Convert.FromBase64String(File.ReadAllText(path));
-		File.WriteAllBytes(path, raw);
+		AtomicFile.Write(path, Secrets.Protect(Convert.ToBase64String(cert.Export(X509ContentType.Pkcs12)), "nocat.farm"));
 
 		if (!OperatingSystem.IsWindows()) {
-			File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);   // the keys - nobody else on the machine
+			File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);   // and nobody else on the machine
 		}
+	}
+
+	/// <summary>
+	/// 1.8.6: Name Constraints on the authority - it can only vouch for nocat.farm, localhost, this machine's name and a
+	/// public address set by hand (and any IP address, which is how it's opened from outside). Stolen, its key still can't
+	/// make a phone that trusts it believe a bank or a mail site.
+	/// </summary>
+	internal static X509Extension NameConstraints() {
+		System.Formats.Asn1.AsnWriter w = new(System.Formats.Asn1.AsnEncodingRules.DER);
+
+		using (w.PushSequence()) {
+			using (w.PushSequence(new System.Formats.Asn1.Asn1Tag(System.Formats.Asn1.TagClass.ContextSpecific, 0, true))) {
+				HashSet<string> dns = new(StringComparer.OrdinalIgnoreCase) { "nocat.farm", "localhost" };
+
+				if (Environment.MachineName is { Length: > 0 } machine && Uri.CheckHostName(machine) == UriHostNameType.Dns) {
+					dns.Add(machine);
+				}
+
+				if (DashboardLinks.Outside(Live.Global.WebPublicAddress, 1) is { } typed && Uri.TryCreate(typed, UriKind.Absolute, out Uri? pub)
+					&& (Uri.CheckHostName(pub.DnsSafeHost) == UriHostNameType.Dns)) {
+					dns.Add(pub.DnsSafeHost);
+				}
+
+				foreach (string name in dns) {
+					using (w.PushSequence()) {
+						w.WriteCharacterString(System.Formats.Asn1.UniversalTagNumber.IA5String, name.ToLowerInvariant(),
+							new System.Formats.Asn1.Asn1Tag(System.Formats.Asn1.TagClass.ContextSpecific, 2));
+					}
+				}
+
+				// every IPv4 and IPv6 address: address and mask, all zero
+				foreach (int length in new[] { 8, 32 }) {
+					using (w.PushSequence()) {
+						w.WriteOctetString(new byte[length], new System.Formats.Asn1.Asn1Tag(System.Formats.Asn1.TagClass.ContextSpecific, 7));
+					}
+				}
+			}
+		}
+
+		return new X509Extension(new Oid("2.5.29.30"), w.Encode(), true);
 	}
 }
