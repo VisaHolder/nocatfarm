@@ -1332,8 +1332,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	g.WebPassword = "a-long-test-password";
 	g.WebPublicAddress = "myname.duckdns.org";
 	NocatFarm.Core.DashboardLinks.Links opened = NocatFarm.Core.DashboardLinks.For(g);
-	Check("phone: 0.0.0.0 with a password is open at home, and a typed public address gets the port",
-		opened.OpenAtHome && opened.ListensBeyondThisPc && opened.Outside == "http://myname.duckdns.org:7242/", opened.Outside ?? "null");
+	Check("phone: 0.0.0.0 with a password is open at home, and a typed public address gets the port and https (1.8.6)",
+		opened.OpenAtHome && opened.ListensBeyondThisPc && opened.Outside == "https://myname.duckdns.org:7242/", opened.Outside ?? "null");
 
 	// /dashboard on Telegram and Discord: the same three rows and the same list, in their own dress.
 	MethodInfo tg = typeof(NocatFarm.Core.Notifier).GetMethod("DashboardHtml", BindingFlags.Static | BindingFlags.NonPublic)!;
@@ -3823,7 +3823,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("sign-in: old guesses whose time is up don't count - a typo today after four last week is one, not a lockout", After((4, now.AddDays(-4))) == 1);
 	Check("sign-in: one typo after a lockout ran out doesn't start another", After((5, now.AddSeconds(-1))) == 1);
 
-	string? Out(string typed) => (string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", Internal)!.Invoke(null, [typed, 7242]);
+	string? Out(string typed) => (string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", Internal)!.Invoke(null, [typed, 7242, "http"]);
 	Check("public address: a bare name gets the port", Out("myname.duckdns.org") == "http://myname.duckdns.org:7242/", Out("myname.duckdns.org") ?? "null");
 	Check("public address: a port typed is kept", Out("http://1.2.3.4:8080") == "http://1.2.3.4:8080/", Out("http://1.2.3.4:8080") ?? "null");
 	Check("public address: https (a proxy in front) is left on its own port", Out("https://farm.example.com") == "https://farm.example.com/", Out("https://farm.example.com") ?? "null");

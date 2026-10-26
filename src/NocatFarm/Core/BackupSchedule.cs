@@ -209,7 +209,8 @@ public static class BackupSchedule {
 			written = await Task.Run(() => LockedBackup.WriteNow(g, now)).ConfigureAwait(false);
 		} catch (LockedBackup.Failed f) {
 			return (false, Failure(s, now, f.Why));
-		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or CryptographicException or InvalidDataException) {
+		} catch (Exception e) {
+			// 1.8.6: any failure is a failed backup - said and counted (the day's retries and warnings), never a silent retry a minute
 			return (false, Failure(s, now, new Said("couldn't make the backup: {0}", Log.Describe(e))));
 		}
 
