@@ -781,6 +781,18 @@ public static partial class Backup {
 				// Files that did go back are read first, so what runs is what's on disk.
 				if (wrote && !replaced) {
 					try {
+						// 1.8.6: the key and the settings as they are on disk now - a restore that stopped after secret.key went back
+						// left the old key in memory (logins unreadable) and the old settings to be saved over the restored ones.
+						Secrets.ForgetKey();
+
+						lock (ConfigStore.GlobalEditGate) {
+							GlobalConfig onDisk = ConfigStore.LoadGlobal();
+
+							if (!ConfigStore.GlobalBroken) {
+								mgr.ApplyGlobal(onDisk);
+							}
+						}
+
 						await mgr.ReplaceAllFromDiskAsync().ConfigureAwait(false);
 					} catch (Exception e) {
 						Log.Failed("restore: reading the accounts again after it failed", e);

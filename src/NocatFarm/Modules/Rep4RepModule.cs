@@ -1289,7 +1289,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		return true;
 	}
 
-	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
+	/// <summary>Pause commenting for a full 24h - the comments made before age out of the rolling window by the time it ends.</summary>
 	/// <returns>Whether the rest was set - false when this account's commenting history can't be read.</returns>
 	public async Task<bool> RestFullDayAsync(string reason) {
 		await StateAsync().ConfigureAwait(false);
@@ -1300,7 +1300,8 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
 		_state.BlockReason = reason;
-		_state.ClearWindow();   // baseline now - old comments won't count against tomorrow's fresh batch
+		// 1.8.6: the record of the last 24h is kept - emptied here, 'rep4rep clear' lifting the rest early let the account post a
+		// second full day of comments within 24 hours (Steam's limit). After a whole day's rest they've aged out anyway.
 		_state.Strikes = 0;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;

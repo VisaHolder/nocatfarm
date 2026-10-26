@@ -29196,6 +29196,22 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	}
 }
 
+// ── 1.8.6 last bug check: a rest keeps the day's comment record (rest then clear can't post a second full day); a restore that
+// fails part way reads the key and the settings from disk again ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string r4r = File.ReadAllText(Path.Combine(src, "Modules", "Rep4RepModule.cs"));
+	string backup = File.ReadAllText(Path.Combine(src, "Core", "Backup.cs"));
+	Check("rep4rep 1.8.6: 'rep4rep rest' keeps the last 24h of comments counted - 'rep4rep clear' early can't post a second full day",
+		!r4r.Contains("ClearWindow()", StringComparison.Ordinal) && !File.ReadAllText(Path.Combine(src, "Rep4Rep", "Rep4RepState.cs")).Contains("void ClearWindow", StringComparison.Ordinal));
+	int fin = backup.IndexOf("if (wrote && !replaced) {", StringComparison.Ordinal);
+	Check("restore 1.8.6: stopped part way, the key and the settings are read from disk again before the accounts start",
+		(fin > 0) && backup.IndexOf("Secrets.ForgetKey();", fin, StringComparison.Ordinal) is > 0 and var k && (k - fin < 600)
+		&& backup.IndexOf("mgr.ApplyGlobal(onDisk);", fin, StringComparison.Ordinal) > 0);
+	Check("backups 1.8.6: any failure making one is a failed backup, said and counted - not a silent retry every minute",
+		File.ReadAllText(Path.Combine(src, "Core", "BackupSchedule.cs")).Contains("// 1.8.6: any failure is a failed backup", StringComparison.Ordinal));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
