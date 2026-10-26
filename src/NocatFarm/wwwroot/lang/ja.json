@@ -1,5 +1,11 @@
 {
   "ui": {
+    "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "外部からは nocat.farm 独自の証明書を使った https で開きます - スマホに一度インストールしてください (Telegram に届きます。または 'dashboard cert' と入力)。",
+    "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "外部からは nocat.farm 独自の証明書を使った https でのみ開きます - 'dashboard cert' で Telegram に送り、スマホに一度インストールしてください。",
+    "dashboard certificate {0} couldn't be read - a new one is made: {1}": "ダッシュボードの証明書 {0} を読めませんでした - 新しく作ります: {1}",
+    "couldn't make the dashboard's certificate: {0}": "ダッシュボードの証明書を作れませんでした: {0}",
+    "couldn't send {0} to Telegram": "{0} を Telegram に送れませんでした",
+    "nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}": "nocat.farm ダッシュボードの証明書 - 一度インストールすると、スマホが https でダッシュボードを信頼します (警告ページなし)。Android: ファイルを開くか、設定 > セキュリティ > 暗号化と認証情報 > 証明書のインストール > CA 証明書。iPhone: ファイルを開き、設定 > ダウンロード済みのプロファイル > インストール、次に 設定 > 一般 > 情報 > 証明書信頼設定 > オンにする。フィンガープリント (SHA-256) を確認: {0}",
     "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "バックアップは Telegram に送られませんでした - {0} MB あり、Telegram の 50 MB を超えています",
     "nocat.farm backup · {0} · password-locked": "nocat.farm バックアップ · {0} · パスワード保護済み",
     "backup sent to Telegram: {0}": "バックアップを Telegram に送信しました: {0}",
@@ -1608,7 +1614,6 @@
     "Let it through the firewall": "ファイアウォールを通す",
     "Open it from anywhere?": "どこからでも開けるようにしますか?",
     "Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.": "外出先からモバイルデータでアカウントを確認できます。Jellyfin と同じように、nocat.farm がルーターにダッシュボードをこの PC へ通すよう頼みます。ほかのアプリは不要です。",
-    "The link is plain http, not encrypted. Sign in on mobile data or a network you trust.": "リンクは暗号化されていない普通の http です。モバイルデータか信頼できるネットワークでサインインしてください。",
     "It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.": "強いパスワードが必要です: 12 文字以上。5 回間違えると、その相手は 1 時間締め出されます。",
     "Some routers and internet providers don't allow it. If yours doesn't, it says why.": "ルーターやプロバイダーによっては使えません。その場合は理由が表示されます。",
     "You pick a strong password next.": "次に強いパスワードを決めます。",
@@ -1735,7 +1740,6 @@
     "Keep it safe": "安全に使う",
     "Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.": "外出先用のリンクを知っている人はサインイン ページまでは来られますが、パスワードがなければそれ以上は進めません。",
     "Five wrong passwords lock that address out for an hour.": "パスワードを 5 回間違えると、そのアドレスは 1 時間締め出されます。",
-    "It's plain http, not encrypted - use a password you don't use anywhere else.": "暗号化されていない普通の http です - 他では使っていないパスワードにしてください。",
     "Turn Open from anywhere off": "「どこからでも開く」をオフにする",
     "not ready yet - see below": "まだ準備できていません - 下を参照",
     "Still to do - on the PC, open the dashboard's Phone page, each is one tap there:": "残りの作業 - PC でダッシュボードのスマホ ページを開けば、どれもワンタップです:",
@@ -4524,7 +4528,7 @@
     },
     "WebRemoteAccess": {
       "label": "どこからでも開く",
-      "tip": "Jellyfin と同じく、ルーターにダッシュボードのポートをこの PC へ転送してもらい（UPnP）、インターネットのアドレスでどこからでも開けるようにします。リンクは Telegram と Discord の /dashboard で。12 文字以上のダッシュボードのパスワードと「待ち受けアドレス」の 0.0.0.0 が必要です。サインイン画面にはインターネットの誰でも届き、5 回間違えると 1 時間締め出されます。オフにすると転送を消します。 リンクは暗号化されない http なので、モバイル通信か信頼できるネットワークでサインインしてください。"
+      "tip": "Jellyfin と同じく、ルーターにダッシュボードのポートをこの PC へ転送してもらい（UPnP）、インターネットのアドレスでどこからでも開けるようにします。 リンクは Telegram と Discord の /dashboard で。 12 文字以上のダッシュボードのパスワードと「待ち受けアドレス」の 0. 0. 0. 0 が必要です。 サインイン画面にはインターネットの誰でも届き、5 回間違えると 1 時間締め出されます。 オフにすると転送を消します。 インターネットからは nocat.farm 独自の証明書を使った https でのみ開きます: 証明書は Telegram に届くのでスマホに一度インストールしてください ('dashboard cert' で再送)。その後はリンクが警告ページなしで開きます。"
     },
     "WebSignInCode": {
       "label": "外部からのサインインに Telegram のコードを求める",

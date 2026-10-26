@@ -48,7 +48,7 @@ public static partial class RemoteAccess {
 	public static string? Problem { get; private set; }
 
 	/// <summary>The dashboard's address from anywhere, while the forward is in place.</summary>
-	public static string? Link => (_mapped is { } m) && (ExternalIp != null) ? $"http://{ExternalIp}:{m.Port}/" : null;
+	public static string? Link => (_mapped is { } m) && (ExternalIp != null) ? $"https://{ExternalIp}:{m.Port}/" : null;   // 1.8.6: only over HTTPS
 
 	public static void Start() {
 		if (_stopped) {
@@ -103,6 +103,11 @@ public static partial class RemoteAccess {
 		try {
 			GlobalConfig g = Live.Global;
 			bool wanted = g.WebRemoteAccess && g.WebEnabled;
+
+			// 1.8.6: open from anywhere is HTTPS - the dashboard's certificate is made (once) and sent to the phone (once)
+			if (wanted) {
+				await Web.DashboardCert.EnsureSentAsync(CancellationToken.None).ConfigureAwait(false);
+			}
 
 			if (!wanted) {
 				Problem = null;

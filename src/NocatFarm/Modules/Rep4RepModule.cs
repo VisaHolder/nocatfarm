@@ -66,7 +66,10 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 
 	/// <summary>The profile lookup in flight, shared: the loop and a "Post now" both finding no id used to ask rep4rep
 	/// twice at once - and with auto-add on, that could add the account twice.</summary>
-	private Task<string?>? _resolving;
+	private Task<(string? Id, bool Unanswered)>? _resolving;
+
+	/// <summary>1.8.6: this account's last lookup got no answer from rep4rep.com at all.</summary>
+	private bool _unanswered;
 	private readonly Lock _resolveGate = new();
 
 	private async Task<string?> ProfileIdAsync(CancellationToken ct) {
@@ -74,15 +77,15 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 			return have;
 		}
 
-		Task<string?> lookup;
+		Task<(string? Id, bool Unanswered)> lookup;
 
 		lock (_resolveGate) {
 			bool autoAdd = Live.Global.Rep4RepAutoAddProfiles;
-			lookup = _resolving ??= Task.Run(() => _api.ResolveProfileIdAsync(Bot.SteamId, autoAdd, CancellationToken.None));
+			lookup = _resolving ??= Task.Run(() => _api.ResolveAsync(Bot.SteamId, autoAdd, CancellationToken.None));
 		}
 
 		try {
-			string? id = await lookup.WaitAsync(ct).ConfigureAwait(false);
+			(string? id, _unanswered) = await lookup.WaitAsync(ct).ConfigureAwait(false);
 
 			if (id != null) {
 				_profileId = id;
@@ -500,7 +503,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 
 		if (await ProfileIdAsync(ct).ConfigureAwait(false) == null) {
 			// 1.8.4: the site not answering isn't the account missing or the token wrong - said once, and looked at again soon.
-			if (_api.Unanswered) {
+			if (_unanswered) {
 				_status = new Said("rep4rep.com isn't answering - trying again in 15m");
 				Log.DebugOnChange($"r4rdown:{Bot.Name}", "rep4rep.com isn't answering - trying again in 15m", Bot.Name);
 
@@ -1286,7 +1289,7 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		return true;
 	}
 
-	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
+	/// <summary>Pause commenting for a full 24h - the comments made before age out of the rolling window by the time it ends.</summary>
 	/// <returns>Whether the rest was set - false when this account's commenting history can't be read.</returns>
 	public async Task<bool> RestFullDayAsync(string reason) {
 		await StateAsync().ConfigureAwait(false);
@@ -1297,7 +1300,8 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
 		_state.BlockReason = reason;
-		_state.ClearWindow();   // baseline now - old comments won't count against tomorrow's fresh batch
+		// 1.8.6: the record of the last 24h is kept - emptied here, 'rep4rep clear' lifting the rest early let the account post a
+		// second full day of comments within 24 hours (Steam's limit). After a whole day's rest they've aged out anyway.
 		_state.Strikes = 0;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;

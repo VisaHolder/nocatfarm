@@ -16,14 +16,16 @@ public static class OutageWatch {
 	public sealed record Watch(DateTime? Since, bool Long, bool Up = false);
 
 	/// <summary>Cut off from Steam, and trying to get back (not stopped on purpose).</summary>
-	public static bool Lost(BotState s) => s is BotState.Connecting or BotState.Reconnecting or BotState.Failed or BotState.LoggingIn;
+	public static bool Lost(BotState s) => s is BotState.Connecting or BotState.Reconnecting or BotState.LoggingIn;
 
 	/// <summary>
 	/// One look at the accounts meant to be signed in (stopped ones left out): the watch from here, and the line to say when
 	/// a long outage just ended (every one of them signed in again).
 	/// </summary>
 	public static (Watch Next, Said? Line) Step(Watch w, IReadOnlyList<BotState> states, DateTime now) {
-		List<BotState> meant = [.. states.Where(static s => s != BotState.Stopped)];
+		// 1.8.6: an account that can't sign in (a wrong password) or waits for a Steam Guard code is the owner's to fix - never
+		// counted: one such account kept an outage open for days, or never let the watch start.
+		List<BotState> meant = [.. states.Where(static s => s is not (BotState.Stopped or BotState.Failed or BotState.NeedsGuard))];
 
 		if (!w.Up) {
 			return ((meant.Count > 0) && meant.All(static s => s == BotState.Online) ? w with { Up = true } : w, null);
@@ -35,7 +37,7 @@ public static class OutageWatch {
 			return (new Watch(since, w.Long || (now - since >= AtLeast), true), null);
 		}
 
-		if (w.Long && (w.Since is { } from) && meant.All(static s => s == BotState.Online)) {
+		if (w.Long && (w.Since is { } from) && (meant.Count > 0) && meant.All(static s => s == BotState.Online)) {
 			return (new Watch(null, false, true), new Said("back online after {0} offline · all {1} account(s) signed back in",
 				Fmt.Hm(Math.Max(1, (int) (now - from).TotalMinutes)), meant.Count));
 		}

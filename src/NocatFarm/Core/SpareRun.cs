@@ -493,8 +493,13 @@ public static class SpareRun {
 				gemsWorth = Spare.GemsWorth(gems, s.Cents);
 			}
 
+			// 1.8.6: under "Only sell if you get at least" it's still sold when that beats its gems (best of both) - as the preview
+			// and the setting say ("sold for the 0.03 all the same"). The minimum refused it here, so the preview's Sell was taken
+			// back every look and the item never moved. Then its gems' worth is the floor (RepriceAsync's gemsWorth).
+			int minSale = gemsWorth is decimal ? 0 : rules.MinSaleCents;
+
 			return Seller.RepriceAsync(offer, currency, rules.SellPrice, rules.DumpPct, limited ? rules.MaxPriceCents : null, worth => Fits(ledger, rules, counted, worth, DateTime.Now), ct,
-				stepOf?.Invoke(offer.Hash), (int) Math.Clamp(Math.Max(rules.MinSaleCents, paidOf?.Invoke(offer.Hash) ?? 0), 0, int.MaxValue), rules.FloorPct,
+				stepOf?.Invoke(offer.Hash), (int) Math.Clamp(Math.Max(minSale, paidOf?.Invoke(offer.Hash) ?? 0), 0, int.MaxValue), rules.FloorPct,
 				stepGone == null ? null : () => stepGone(offer.Hash), oursOf?.Invoke(offer.Hash) ?? 0, gemsWorth);
 		};
 	}

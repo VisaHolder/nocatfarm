@@ -424,6 +424,8 @@ spends the account's Steam wallet, so it's careful:
   details are saved for next time. They're never written to the log, shown, or kept by nocat.farm.
 - **Limits.** *Spend at most a day* (1.50) and *Spend at most a week* (8.00), in the wallet's own currency, over any
   24 hours and any 7 days by Steam's clock (a wrong PC clock can't move them) - and never more than the wallet holds.
+  *Always keep in the wallet* (0, off) never lets buying take the wallet below an amount you pick: add 100.00 with 20.00
+  kept and it spends at most 80.00. When the day's or the week's money is spent it says so once, in those words.
   It reads the wallet first; if Steam doesn't say how this account's purchases are confirmed, it buys nothing that look.
 - **Checked again right before buying.** Every card of a set is priced again before the first one is bought: if any
   moved, that set isn't started and waits for the next look. Each card's price and the wallet are read once more just

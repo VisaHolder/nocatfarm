@@ -15,6 +15,7 @@ using NocatFarm.Windows;
 //  and one settings registry, so anything you can click you can type, and the other way round.
 // ─────────────────────────────────────────────────────────────────────────────
 
+Build.MarkStarted();   // 1.8.6: the uptime's start - Process.StartTime is made up on an Android box
 string root = AppContext.BaseDirectory;
 bool forceNoWeb = false;
 bool forceNoTray = false;

@@ -350,7 +350,10 @@ public sealed partial class Boosters {
 		List<SpareItem> items = Spare.Read(inventory);
 		int floor = Math.Clamp(Bot.Cfg.SpareRelistFloorPct, 1, 100), dump = Math.Clamp(Bot.Cfg.SpareDumpPct, 0, 95);
 
-		Seller.Reprice Priced(int minReceive, int? maxWorth = null) => (o, token) => Seller.RepriceAsync(o, cur, 3, dump, maxWorth, null, token, minReceive: minReceive, floorPct: floor,
+		// 1.8.6: never under "Only sell if you get at least" either - a card from a pack opened to sell, worth 0.01 in gems, went
+		// up paying 0.02 with the minimum at 0.05. Over its gems' worth AND over the minimum.
+		int minSale = SpareRules.From(Bot.Cfg).MinSaleCents;
+		Seller.Reprice Priced(int minReceive, int? maxWorth = null) => (o, token) => Seller.RepriceAsync(o, cur, 3, dump, maxWorth, null, token, minReceive: Math.Max(minReceive, minSale), floorPct: floor,
 			ours: OurListings.UpFor(OurListings.Load(Bot.Name), o.Hash));
 
 		async Task<int> ListAsync(IReadOnlyList<Seller.Offer> offers, Seller.Reprice reprice, Action<Seller.Offer>? each = null) {

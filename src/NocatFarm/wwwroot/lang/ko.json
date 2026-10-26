@@ -1,5 +1,11 @@
 {
   "ui": {
+    "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "외부에서는 nocat.farm 자체 인증서로 https로 열림 - 휴대폰에 한 번 설치하세요 (Telegram으로 오거나 'dashboard cert' 입력).",
+    "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "외부에서는 nocat.farm 자체 인증서로 https로만 열림 - 'dashboard cert'로 Telegram에 보내 휴대폰에 한 번 설치하세요.",
+    "dashboard certificate {0} couldn't be read - a new one is made: {1}": "대시보드 인증서 {0}을(를) 읽을 수 없음 - 새로 만듦: {1}",
+    "couldn't make the dashboard's certificate: {0}": "대시보드 인증서를 만들 수 없음: {0}",
+    "couldn't send {0} to Telegram": "{0}을(를) Telegram에 보낼 수 없음",
+    "nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}": "nocat.farm 대시보드 인증서 - 한 번 설치하면 휴대폰이 https로 대시보드를 신뢰함 (경고 페이지 없음). Android: 파일을 열거나 설정 > 보안 > 암호화 및 사용자 인증 정보 > 인증서 설치 > CA 인증서. iPhone: 파일을 열고 설정 > 다운로드된 프로파일 > 설치, 그다음 설정 > 일반 > 정보 > 인증서 신뢰 설정 > 켜기. 지문(SHA-256) 확인: {0}",
     "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "백업을 Telegram에 보내지 않음 - {0} MB로 Telegram 한도 50 MB를 넘음",
     "nocat.farm backup · {0} · password-locked": "nocat.farm 백업 · {0} · 비밀번호로 잠김",
     "backup sent to Telegram: {0}": "백업을 Telegram에 보냄: {0}",
@@ -1608,7 +1614,6 @@
     "Let it through the firewall": "방화벽 통과시키기",
     "Open it from anywhere?": "어디서나 열까요?",
     "Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.": "집 밖에서도 모바일 데이터로 계정을 확인하세요. Jellyfin처럼 nocat.farm이 공유기에 대시보드를 이 PC로 넘겨 달라고 요청합니다. 다른 앱은 필요 없습니다.",
-    "The link is plain http, not encrypted. Sign in on mobile data or a network you trust.": "링크는 암호화되지 않은 일반 http입니다. 모바일 데이터나 믿을 수 있는 네트워크에서 로그인하세요.",
     "It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.": "강한 비밀번호가 필요합니다: 12자 이상. 다섯 번 틀리면 한 시간 동안 막힙니다.",
     "Some routers and internet providers don't allow it. If yours doesn't, it says why.": "일부 공유기나 인터넷 회사는 허용하지 않습니다. 그럴 경우 이유를 알려 줍니다.",
     "You pick a strong password next.": "다음에 강한 비밀번호를 정합니다.",
@@ -1735,7 +1740,6 @@
     "Keep it safe": "안전하게 쓰기",
     "Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.": "밖에서 쓰는 링크를 가진 사람은 로그인 페이지까지는 올 수 있지만, 비밀번호 없이는 그 이상 들어올 수 없습니다.",
     "Five wrong passwords lock that address out for an hour.": "비밀번호를 5번 틀리면 그 주소는 1시간 동안 차단됩니다.",
-    "It's plain http, not encrypted - use a password you don't use anywhere else.": "암호화되지 않은 일반 http입니다 - 다른 곳에서 쓰지 않는 비밀번호를 쓰세요.",
     "Turn Open from anywhere off": "'어디서나 열기' 끄기",
     "not ready yet - see below": "아직 준비되지 않음 - 아래 참고",
     "Still to do - on the PC, open the dashboard's Phone page, each is one tap there:": "남은 일 - PC에서 대시보드의 휴대폰 페이지를 열면 각각 한 번에 할 수 있습니다:",
@@ -4524,7 +4528,7 @@
     },
     "WebRemoteAccess": {
       "label": "어디서나 열기",
-      "tip": "Jellyfin처럼: 공유기에 대시보드 포트를 이 PC로 전달해 달라고 요청해서(UPnP), 인터넷 주소로 어디서나 열리게 합니다 - Telegram과 Discord의 /dashboard가 링크를 줍니다. 12자 이상의 대시보드 비밀번호와 '수신 주소'의 0.0.0.0이 필요합니다. 로그인 화면에는 인터넷의 누구나 닿을 수 있고, 비밀번호를 다섯 번 틀리면 한 시간 동안 막힙니다. 끄면 전달을 다시 없앱니다. 링크는 암호화되지 않은 http이므로 모바일 데이터나 믿을 수 있는 네트워크에서 로그인하세요."
+      "tip": "Jellyfin처럼: 공유기에 대시보드 포트를 이 PC로 전달해 달라고 요청해서(UPnP), 인터넷 주소로 어디서나 열리게 합니다 - Telegram과 Discord의 /dashboard가 링크를 줍니다. 12자 이상의 대시보드 비밀번호와 '수신 주소'의 0. 0. 0. 0이 필요합니다. 로그인 화면에는 인터넷의 누구나 닿을 수 있고, 비밀번호를 다섯 번 틀리면 한 시간 동안 막힙니다. 끄면 전달을 다시 없앱니다. 인터넷에서는 nocat.farm 자체 인증서로 https로만 열림: Telegram으로 받아 휴대폰에 한 번 설치하면 ('dashboard cert'로 다시 보냄) 링크가 경고 페이지 없이 열림."
     },
     "WebSignInCode": {
       "label": "외부에서 로그인할 때 Telegram 코드 요구",

@@ -10,11 +10,19 @@ namespace NocatFarm.Modules;
 /// </summary>
 public sealed partial class HumanMode {
 	/// <summary>
+	/// 1.8.6: the machine's zone is UTC itself (none set) - by its name: Iceland and much of West Africa are UTC+0 with no
+	/// summer time too, and are real places people live.
+	/// </summary>
+	public static bool IsUtc(TimeZoneInfo zone) => (zone.Id == TimeZoneInfo.Utc.Id)
+		|| zone.Id is "UTC" or "Etc/UTC" or "Etc/UCT" or "UCT" or "Etc/Universal" or "Universal" or "Etc/Zulu" or "Zulu" or "Etc/GMT" or "GMT"
+			or "Etc/GMT0" or "Etc/GMT+0" or "Etc/GMT-0" or "Etc/Greenwich" or "Greenwich" or "Coordinated Universal Time";
+
+	/// <summary>
 	/// 1.8.5: the warning for human-mode accounts living by a clock set to UTC - null when the machine has a real time zone or
 	/// nothing runs in human mode. reap's TV box ran on UTC: its accounts woke and slept 2.5 hours off until TZ was set.
 	/// </summary>
 	public static Said? ClockWarning(TimeZoneInfo zone, IReadOnlyList<string> human) =>
-		(human.Count == 0) || (zone.BaseUtcOffset != TimeSpan.Zero) || zone.SupportsDaylightSavingTime ? null
+		(human.Count == 0) || !IsUtc(zone) ? null
 			: new Said("this machine's clock is set to UTC, and the day of {0} (waking, bed, the hours it plays) follows it - set the time zone (on Linux: TZ=Area/City) so it lives your hours", string.Join(", ", human));
 
 	/// <summary>Why a game the night would bank is left out of it, or <see cref="No"/> when it isn't.</summary>

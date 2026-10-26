@@ -484,7 +484,11 @@ public sealed partial class WebHost : IAsyncDisposable {
 			_listening = $"{listenHost}:{listenPort}";
 			// An IPv6 address goes in brackets ("::" is http://[::]:7242): bare, the colons read as a port and it never opened.
 			builder.WebHost.UseUrls($"http://{Platform.UrlHost(listenHost)}:{listenPort}");
-			builder.WebHost.ConfigureKestrel(static o => o.AddServerHeader = false);
+			builder.WebHost.ConfigureKestrel(static o => {
+				o.AddServerHeader = false;
+				// 1.8.6: HTTPS on the same port, with the dashboard's own certificate - plain HTTP carries on beside it
+				o.ConfigureEndpointDefaults(static l => l.Use(TlsSniff.Middleware(DashboardCert.Current)));
+			});
 
 			// PascalCase on the wire, matching the config FILES exactly. ASP.NET's default is camelCase, which
 			// meant the settings page read every key as undefined - it showed empty boxes and would have SAVED
@@ -620,6 +624,14 @@ public sealed partial class WebHost : IAsyncDisposable {
 			Visitors.Note(Visitors.What.TurnedAway, direct ? ctx.Connection.RemoteIpAddress!.ToString() : WhoIsSigningIn(ctx).Ip, false, request.Headers.UserAgent.FirstOrDefault());
 
 			return "Open from anywhere is off, so this dashboard only opens at home.";
+		}
+
+		// 1.8.6: from the internet only over HTTPS - a password typed over plain HTTP can be read on the way. At home (and on
+		// this PC) plain HTTP still opens it.
+		if (direct && !request.IsHttps) {
+			ctx.Response.Headers.Connection = "close";
+
+			return "Open from anywhere only opens over https:// - put https:// in front of this address. The first time, install the dashboard's certificate on the phone (type 'dashboard cert' - it goes to Telegram).";
 		}
 
 		// With a password, somebody who bound it to 0.0.0.0 opens it by the PC's LAN address or name, so any Host is
@@ -1083,6 +1095,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
 			HttpOnly = true,
 			SameSite = SameSiteMode.Strict,
+			Secure = ctx.Request.IsHttps,   // 1.8.6: signed in over https, never sent back over plain http (an old http link)
 			Expires = expires
 		});
 

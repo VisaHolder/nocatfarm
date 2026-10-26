@@ -24,10 +24,10 @@ public static class BoxHealth {
 	private static long? Memory() {
 		try {
 			if (OperatingSystem.IsLinux() && File.Exists("/proc/meminfo")) {
-				string? line = File.ReadLines("/proc/meminfo").FirstOrDefault(static l => l.StartsWith("MemAvailable:", StringComparison.Ordinal));
+				string[] parts = (File.ReadLines("/proc/meminfo").FirstOrDefault(static l => l.StartsWith("MemAvailable:", StringComparison.Ordinal)) ?? "")
+					.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-				return line != null && long.TryParse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1], NumberStyles.None, CultureInfo.InvariantCulture, out long kb) && (kb > 0)
-					? kb / 1024 : null;
+				return (parts.Length > 1) && long.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out long kb) && (kb > 0) ? kb / 1024 : null;
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			// not readable here
@@ -89,18 +89,21 @@ public static class BoxHealth {
 		List<Said> warn = [];
 		DateTime? hotSince = h.TempC is >= HotC ? w.HotSince ?? now : null;
 
-		void Check(string key, bool bad, Func<Said> line) {
-			if (!bad) {
+		// 1.8.6: recovered only well clear of the line - memory hovering at 190, 210, 195 MB warned every few minutes.
+		void Check(string key, bool bad, bool clear, Func<Said> line) {
+			if (bad) {
+				if (said.Add(key)) {
+					warn.Add(line());
+				}
+			} else if (clear) {
 				said.Remove(key);
-			} else if (said.Add(key)) {
-				warn.Add(line());
 			}
 		}
 
-		Check("hot", (hotSince is { } since) && (now - since >= HotFor), () => new Said("the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off",
+		Check("hot", (hotSince is { } since) && (now - since >= HotFor), h.TempC is not >= HotC - 5, () => new Said("the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off",
 			Math.Round(h.TempC ?? 0).ToString(CultureInfo.InvariantCulture), (int) HotFor.TotalMinutes));
-		Check("storage", h.StorageMb is < LowStorageMb, () => new Said("storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room", Size(h.StorageMb ?? 0)));
-		Check("memory", h.MemoryMb is < LowMemoryMb, () => new Said("the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped", Size(h.MemoryMb ?? 0)));
+		Check("storage", h.StorageMb is < LowStorageMb, h.StorageMb is not < LowStorageMb * 3 / 2, () => new Said("storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room", Size(h.StorageMb ?? 0)));
+		Check("memory", h.MemoryMb is < LowMemoryMb, h.MemoryMb is not < LowMemoryMb * 3 / 2, () => new Said("the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped", Size(h.MemoryMb ?? 0)));
 
 		return (new Watch(hotSince, said), warn);
 	}

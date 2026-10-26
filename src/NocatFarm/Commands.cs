@@ -139,7 +139,7 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window."),
-		new("dashboard", "[unlock]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. To open it from anywhere, see 'anywhere'.", "web|link", "unlock"),
+		new("dashboard", "[unlock|cert]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'.", "web|link", "unlock"),
 		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
 		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
@@ -1044,6 +1044,8 @@ public static partial class Commands {
 				"screen" or "monitor" or "display" => await ScreenAsync(rest).ConfigureAwait(false),
 				"dashboard" or "web" or "link" => (rest.Length > 0) && rest[0].Equals("unlock", StringComparison.OrdinalIgnoreCase)
 					? Unlock()
+					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "cert" or "certificate"
+						? await DashboardCertAsync().ConfigureAwait(false)   // 1.8.6: the certificate for the phone, again
 					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "anywhere" or "remote"
 						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
 						: DashboardLinks.Text(mgr.Global),
@@ -2132,6 +2134,20 @@ public static partial class Commands {
 		sb.AppendLine($"  nocat.farm up {ReportCard.Uptime()}{(BoxHealth.Line(BoxHealth.Read()) is { } health ? " · " + health : "")}");
 
 		return sb.ToString().TrimEnd();
+	}
+
+	/// <summary>
+	/// 1.8.6 'dashboard cert': the dashboard's certificate for the phone - sent to Telegram when it's connected, with its
+	/// fingerprint and how to install it; and where the file is, for any other way to get it there.
+	/// </summary>
+	private static async Task<string> DashboardCertAsync() {
+		System.Security.Cryptography.X509Certificates.X509Certificate2 ca = Web.DashboardCert.Authority();
+		Web.DashboardCert.Current();
+		string print = Web.DashboardCert.Fingerprint(ca);
+		bool sent = Notifier.TelegramConnected && await Web.DashboardCert.SendAsync(CancellationToken.None).ConfigureAwait(false);
+
+		return (sent ? "Sent to Telegram: the dashboard's certificate, with how to install it on your phone." : "Telegram isn't connected - copy this file to your phone and open it there:")
+			+ $"\n  {Web.DashboardCert.CrtPath}\n  fingerprint (SHA-256): {print}\n  Then open it as https://<address>:<port>/ - from outside your home it only opens over https.";
 	}
 
 	public static string StateWord(Bot b) {
@@ -3440,8 +3456,9 @@ public static partial class Commands {
 		}
 
 		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
-		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Wallet < p.Total)) {
-			lines.Add($"{name}: the wallet has {M(p.Wallet)} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
+		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Usable < p.Total)) {
+			string keeping = p.Keep > 0 ? $" (keeping {M(p.Keep)})" : "";
+			lines.Add($"{name}: the wallet has {M(p.Wallet)}{keeping} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
 		}
 
 		if (p.Costs.Count > 0) {

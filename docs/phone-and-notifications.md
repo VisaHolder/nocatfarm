@@ -112,7 +112,9 @@ The weekly report has no switch here: when *Weekly report* is on, it's sent too.
 Scam watch warnings and account health alerts are two of the chips, like the rest, and two of the pop-up kinds (1.8.2 -
 they had a switch per place before; one you'd switched off on its own stays off for that place until you change the
 chip). Backups have their own choice under Backups, *Backup messages*: off, only when one fails (the default), or after
-every backup.
+every backup. With Telegram connected, *Send the daily backup to Telegram* (on, Show advanced) also sends each daily
+backup to the chat as a file, so it survives the machine dying - only the password-locked backup, never logins in plain
+text; restoring it needs the backup password. Telegram takes files up to 50 MB.
 
 A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
 pretty good player"*. If Steam is still checking a comment, it says so instead.
@@ -158,6 +160,27 @@ that stopped getting hours, a new ban, Steam blocking comments, a new version), 
 has been running. If the PC was off at that time, it's written on the next start. With *Send the daily summary* on, it
 goes to Discord and Telegram too. `report` and `stats` show the same figures any time, with each account's total
 hours; `stats` adds cards and comments by hour.
+
+## The machine itself
+
+`status`, Telegram's `/status` and the daily summary end with how the machine nocat.farm runs on is doing, for example
+`nocat.farm up 1d 4h 12m · 2.4 GB memory free · 7.0 GB storage free · 54°C` - memory and the temperature only where
+they can be read (most Linux machines; many Android boxes and PCs don't show the temperature). It warns once, under
+*Send problems that need you*, when the CPU stays over 80°C for 10 minutes, storage where its files are drops under 1 GB,
+or memory under 200 MB - and again only after it has recovered well clear of that.
+
+When every account loses Steam for more than 5 minutes - the internet going down, say - one line says so once they're
+all back: `back online after 14m offline · all 3 account(s) signed back in`. One account reconnecting by itself isn't
+said, nor is one that can't sign in or waits for a Steam Guard code.
+
+When nocat.farm comes back by itself after it wasn't closed properly, it says so, and where the machine's start time
+can be trusted (Windows, Mac and Linux - not inside Termux on an Android box) it says which it was:
+`the machine restarted (a power cut or a reboot) at about 22:31`, or `stopped unexpectedly (a crash - the machine kept
+running)`. Closed on purpose, shut down with the machine, or restarted by an update: nothing is said.
+
+If the machine's clock is set to UTC (no time zone - common on a TV box or in a container) and an account uses human
+mode, it says so at start: that account's day - waking, bed, the hours it plays - follows the machine's clock. Set the
+time zone (on Linux `TZ=America/St_Johns`, your own `Area/City`).
 
 ## Weekly report
 

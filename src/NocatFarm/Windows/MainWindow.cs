@@ -760,6 +760,10 @@ public sealed partial class MainWindow : IDisposable {
 				// Windows is shutting down or signing out. The process is ended soon after this returns, so what the
 				// clean exit would save is saved here: where the window was, and the running totals.
 				if (wParam != IntPtr.Zero) {
+					// 1.8.6: the machine shutting down - never said as a crash at the next start, even if Windows ends the process
+					// before the clean exit writes it (Fast Startup keeps the tick count, so the boot time can't tell).
+					Core.RunState.Why = "system";
+					Core.RunState.End();
 					SavePlace();
 					BotManager.Flush();
 					_exit();

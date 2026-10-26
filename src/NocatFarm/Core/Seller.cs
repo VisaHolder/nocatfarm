@@ -863,8 +863,17 @@ public static class Seller {
 			Take(l, o => o.AssetId == l.AssetId);
 		}
 
-		foreach (Listing l in waiting.Where(l => !ours.Contains(l.Id) && (l.Hash.Length > 0) && (l.Created >= since.AddMinutes(-2)))) {
-			Take(l, o => (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents));
+		// 1.8.6: never when it can't be told which is ours - the owner listing the same card at the same price while a run went on
+		// had theirs confirmed by the authenticator. Those are left for the phone.
+		List<Listing> loose = [.. waiting.Where(l => !ours.Contains(l.Id) && (l.Hash.Length > 0) && (l.Created >= since.AddMinutes(-2)))];
+
+		foreach (Listing l in loose) {
+			int listingsLikeIt = loose.Count(o => !ours.Contains(o.Id) && (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents));
+			int cardsLikeIt = left.Count(o => (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents));
+
+			if (listingsLikeIt <= cardsLikeIt) {
+				Take(l, o => (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents));
+			}
 		}
 
 		return ours;

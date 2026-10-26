@@ -666,7 +666,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	await Map(7242);
 	Check("upnp: asks the router to forward the port to this PC, for an hour", Sent().Any(r => r.Contains("#AddPortMapping\"") && r.Contains("<NewExternalPort>7242<")
 		&& r.Contains("<NewInternalPort>7242<") && r.Contains("<NewInternalClient>127.0.0.1<") && r.Contains("<NewLeaseDuration>3600<") && r.Contains("<NewProtocol>TCP<")));
-	Check("upnp: the link is the router's internet address", Link() == "http://203.0.113.7:7242/", Link() ?? "null");
+	Check("upnp: the link is the router's internet address", Link() == "https://203.0.113.7:7242/", Link() ?? "null");
 	await Unmap();
 	Check("upnp: switched off, the forward is taken away", Sent()[^1].Contains("#DeletePortMapping\"") && Sent()[^1].Contains("<NewExternalPort>7242<") && (Link() == null));
 
@@ -1332,8 +1332,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	g.WebPassword = "a-long-test-password";
 	g.WebPublicAddress = "myname.duckdns.org";
 	NocatFarm.Core.DashboardLinks.Links opened = NocatFarm.Core.DashboardLinks.For(g);
-	Check("phone: 0.0.0.0 with a password is open at home, and a typed public address gets the port",
-		opened.OpenAtHome && opened.ListensBeyondThisPc && opened.Outside == "http://myname.duckdns.org:7242/", opened.Outside ?? "null");
+	Check("phone: 0.0.0.0 with a password is open at home, and a typed public address gets the port and https (1.8.6)",
+		opened.OpenAtHome && opened.ListensBeyondThisPc && opened.Outside == "https://myname.duckdns.org:7242/", opened.Outside ?? "null");
 
 	// /dashboard on Telegram and Discord: the same three rows and the same list, in their own dress.
 	MethodInfo tg = typeof(NocatFarm.Core.Notifier).GetMethod("DashboardHtml", BindingFlags.Static | BindingFlags.NonPublic)!;
@@ -3748,7 +3748,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("listings: ours are found by asset id or, re-numbered, by card and price - nothing else", pending.Order().SequenceEqual(new ulong[] { 10, 11 }), string.Join(",", pending));
 		List<NocatFarm.Core.Seller.Listing> twoLike = [new(20, 90, "440-B", 6, DateTime.UtcNow, true), new(21, 91, "440-B", 6, DateTime.UtcNow, true)];
 		var one = (List<ulong>) typeof(NocatFarm.Core.Seller).GetMethod("MatchPending", Stat)!.Invoke(null, [twoLike, listed, runStart])!;
-		Check("listings: one card listed confirms one listing, not every one that looks like it", one.Count == 1, string.Join(",", one));
+		Check("listings 1.8.6: two that look like the one card listed - which is ours can't be told, so neither is confirmed (left for the phone)",
+			one.Count == 0, string.Join(",", one));
 
 		// Crafts and packs: only an explicit yes.
 		MethodInfo succeeded = typeof(NocatFarm.Modules.BadgeCraft).GetMethod("Succeeded", Stat)!;
@@ -3822,7 +3823,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("sign-in: old guesses whose time is up don't count - a typo today after four last week is one, not a lockout", After((4, now.AddDays(-4))) == 1);
 	Check("sign-in: one typo after a lockout ran out doesn't start another", After((5, now.AddSeconds(-1))) == 1);
 
-	string? Out(string typed) => (string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", Internal)!.Invoke(null, [typed, 7242]);
+	string? Out(string typed) => (string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", Internal)!.Invoke(null, [typed, 7242, "http"]);
 	Check("public address: a bare name gets the port", Out("myname.duckdns.org") == "http://myname.duckdns.org:7242/", Out("myname.duckdns.org") ?? "null");
 	Check("public address: a port typed is kept", Out("http://1.2.3.4:8080") == "http://1.2.3.4:8080/", Out("http://1.2.3.4:8080") ?? "null");
 	Check("public address: https (a proxy in front) is left on its own port", Out("https://farm.example.com") == "https://farm.example.com/", Out("https://farm.example.com") ?? "null");
@@ -20502,9 +20503,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		appJs.Contains("if (!window.isSecureContext || !('serviceWorker' in navigator)) return;", StringComparison.Ordinal)
 		&& appJs.Contains("navigator.serviceWorker.register('sw.js').catch(() => {});", StringComparison.Ordinal)
 		&& appJs.Contains("  registerShell();", StringComparison.Ordinal));
-	Check("phone app: the Phone page says alerts come through Telegram or Discord - nothing about https",
+	Check("phone app: the Phone page says alerts come through Telegram or Discord (no web push); from outside it's https with the app's own certificate (1.8.6)",
 		appJs.Contains("Alerts on your phone come through Telegram or Discord - set them up under Notifications.", StringComparison.Ordinal)
-		&& !appJs.Contains("PushManager", StringComparison.Ordinal) && !appJs.Contains("certificate", StringComparison.Ordinal));
+		&& !appJs.Contains("PushManager", StringComparison.Ordinal) && appJs.Contains("'dashboard cert' sends it to Telegram to install on your phone once.", StringComparison.Ordinal));
 	Check("phone app: no web push anywhere", !Directory.GetFiles(Path.Combine(repo, "src", "NocatFarm"), "*.cs", SearchOption.AllDirectories)
 		.Any(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) && File.ReadAllText(f).Contains("VAPID", StringComparison.OrdinalIgnoreCase)));
 	Check("phone app: the install hint is a setting, on by default - in Dashboard & phone, behind Show advanced (1.8.2)",
@@ -21017,7 +21018,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var human = new NocatFarm.Config.BotConfig { SellDuplicates = true, LegitMode = true };
 		bool changed = NocatFarm.Config.ConfigStore.MigrateSpare(human, "harness-human");
 		Check("migration: Sell duplicate cards on - spare items starts OFF (never on-but-waiting), and says once where to turn it on",
-			changed && !human.SpareItems && !human.SellDuplicates && !NocatFarm.Core.SpareLedger.Load("harness-human").Approved
+			changed && !human.SpareItems && (human.SellDuplicates == null) && !NocatFarm.Core.SpareLedger.Load("harness-human").Approved
 			&& heard.Any(static h => h.Text.Contains("Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do", StringComparison.Ordinal)),
 			string.Join(" | ", heard.Select(static h => h.Text)));
 		Check("migration: a human-mode account that had packs off never starts opening them silently", human.OpenBoosterPacks == 0);
@@ -21034,8 +21035,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.ConfigStore.MigrateSpare(chosen, "harness-chosen");
 		Check("migration: a choice already made in 1.8.0 is never overwritten by the old switches", !chosen.SpareItems && chosen.OpenBoosterPacks == 0);
 		string written = System.Text.Json.JsonSerializer.Serialize(human);
-		Check("migration: the old switches are written as mirrors of the new ones (for a rollback to 1.7.x) - selling only after 'spare ok' (fix FE 1)",
-			written.Contains("\"SellDuplicates\":false", StringComparison.Ordinal) && written.Contains("\"UnpackBoosterPacks\":false", StringComparison.Ordinal), written);
+		Check("migration 1.8.6: the old Sell duplicate cards switch is never written any more (no 1.7.x to roll back to); packs' mirror stays",
+			!written.Contains("SellDuplicates", StringComparison.Ordinal) && written.Contains("\"UnpackBoosterPacks\":false", StringComparison.Ordinal), written);
 
 		// ── commands
 		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
@@ -22609,8 +22610,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var fcOld = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 		var as173 = System.Text.Json.JsonSerializer.Deserialize<Config173Switches>(File.ReadAllText(Path.Combine(fcRoot, "config", "fc-roll.json")), fcOld)!;
 		var as173Off = System.Text.Json.JsonSerializer.Deserialize<Config173Switches>(File.ReadAllText(Path.Combine(fcRoot, "config", "fc-roll2.json")), fcOld)!;
-		Check("saved by 1.8.0, read the way 1.7.3 reads it - spare items on is \"Sell duplicate cards\" on, \"always\" is \"Open booster packs\" on",
-			as173.SellDuplicates && as173.UnpackBoosterPacks && !as173Off.SellDuplicates && !as173Off.UnpackBoosterPacks);
+		Check("saved now, read the way 1.7.3 reads it - \"Sell duplicate cards\" never on (1.8.6: no 1.7.x left), \"always\" is \"Open booster packs\" on",
+			!as173.SellDuplicates && as173.UnpackBoosterPacks && !as173Off.SellDuplicates && !as173Off.UnpackBoosterPacks);   // 1.8.6: selling is never written for 1.7.x
 		var rollBack = NocatFarm.Config.ConfigStore.LoadBot("fc-roll")!;
 		Check("read back by 1.8.0, the mirrors change nothing and nothing needs writing again",
 			rollBack.SpareItems && (rollBack.OpenBoosterPacks == 2) && !NocatFarm.Config.ConfigStore.MigrateSpare(rollBack, "fc-roll"));
@@ -23324,21 +23325,20 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	try {
 		string FeFile(string name) => Path.Combine(feTmp, "config", name + ".json");
 		bool FeMirror(string name, string key) => System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FeFile(name)))![key]!.GetValue<bool>();
+		bool FeHas(string name, string key) => System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FeFile(name)))!.AsObject().ContainsKey(key);
 
 		// ── finding 1: what 1.7.x reads as "Sell duplicate cards" and "Open booster packs" ──
 		bool FeSells(string name, bool spare, int action, bool ok) {
 			NocatFarm.Core.SpareLedger.Load(name).Approved = ok;
 			NocatFarm.Config.ConfigStore.SaveBot(name, new NocatFarm.Config.BotConfig { SpareItems = spare, SpareAction = action });
 
-			return FeMirror(name, "SellDuplicates");
+			return FeHas(name, "SellDuplicates");
 		}
 
-		Check("spare items on but no 'spare ok' - 1.7.x is NOT told to sell (it lists with no preview)", !FeSells("fe-m1", true, 0, false));
-		Check("gems only, with ok - 1.7.x is not told to sell", !FeSells("fe-m2", true, 1, true));
-		Check("keep everything, with ok - 1.7.x is not told to sell", !FeSells("fe-m3", true, 3, true));
-		Check("spare items off, with ok - 1.7.x is not told to sell", !FeSells("fe-m4", false, 0, true));
-		Check("best of both, with ok - 1.7.x keeps selling", FeSells("fe-m5", true, 0, true));
-		Check("sell only, with ok - 1.7.x keeps selling", FeSells("fe-m6", true, 2, true));
+		// 1.8.6: no 1.7.x release is kept - the "Sell duplicate cards" mirror for a rollback to it is never written, whatever is set
+		Check("1.8.6: \"Sell duplicate cards\" is never written for 1.7.x any more - on or off, with or without the ok",
+			!FeSells("fe-m1", true, 0, false) && !FeSells("fe-m2", true, 1, true) && !FeSells("fe-m3", true, 3, true) && !FeSells("fe-m4", false, 0, true)
+			&& !FeSells("fe-m5", true, 0, true) && !FeSells("fe-m6", true, 2, true));
 		bool FeOpens(string name, int packs) {
 			NocatFarm.Config.ConfigStore.SaveBot(name, new NocatFarm.Config.BotConfig { OpenBoosterPacks = packs });
 
@@ -23377,7 +23377,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		FeAs173("fe-r1", static j => { j["SellDuplicates"] = false; j["UnpackBoosterPacks"] = false; });   // both turned off on 1.7.3
 		NocatFarm.Core.Rollback.RestoreMissing("1.8.0");
 		var feR1 = NocatFarm.Config.ConfigStore.LoadBot("fe-r1")!;
-		Check("\"Sell duplicate cards\" turned off on 1.7.3 stays off coming forward (spare items off)", !feR1.SpareItems);
+		Check("1.8.6: \"Sell duplicate cards\" isn't read back from a 1.7.x rollback any more - spare items comes back as it was", feR1.SpareItems);
 		Check("\"Open booster packs\" turned off on 1.7.3 stays off coming forward (never)", feR1.OpenBoosterPacks == 0, $"{feR1.OpenBoosterPacks}");
 		Check("the rest of spare items still comes back from the copy", feR1.SpareKeepCopies == 3, $"{feR1.SpareKeepCopies}");
 
@@ -23487,11 +23487,11 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		feBots[feH.Name] = feH;
 		NocatFarm.Config.ConfigStore.SaveBot(feH.Name, feH.Cfg);
 		await Commands.RunAsync(feMgr, "spare ok fe-hold");
-		bool feOkMirror = FeMirror("fe-hold", "SellDuplicates");
+		bool feOkMirror = !FeHas("fe-hold", "SellDuplicates");
 		string feHoldSaid = await Commands.RunAsync(feMgr, "spare hold fe-hold");
 		Check("'spare hold' (the old word for off) turns it off and takes the ok back, and says so",
 			!NocatFarm.Core.SpareLedger.Load("fe-hold").Approved && !feH.Cfg.SpareItems && feHoldSaid.Contains("Spare items is off", StringComparison.Ordinal), feHoldSaid);
-		Check("...and 1.7.x is no longer told to sell on it (on after the ok, off after the hold)", feOkMirror && !FeMirror("fe-hold", "SellDuplicates"));
+		Check("...and nothing is written for 1.7.x either way (1.8.6)", feOkMirror && !FeHas("fe-hold", "SellDuplicates"));
 		await Commands.RunAsync(feMgr, "gems fe-hold ok");
 		await Commands.RunAsync(feMgr, "gems fe-hold hold");
 		Check("either order, and as 'gems'", !NocatFarm.Core.SpareLedger.Load("fe-hold").Approved);
@@ -28930,8 +28930,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	string Src(params string[] parts) => File.ReadAllText(Path.Combine([src, .. parts])).Replace("\r\n", "\n");
 	string r4r = Src("Rep4Rep", "Rep4RepApi.cs"), r4rMod = Src("Modules", "Rep4RepModule.cs");
 	Check("rep4rep 1.8.5: no answer from rep4rep.com (a 503) isn't 'not registered' - the profile isn't added again, the token isn't blamed",
-		r4r.Contains("Unanswered = (body == null) && HasToken;", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || Unanswered) {", StringComparison.Ordinal)
-		&& r4rMod.Contains("if (_api.Unanswered) {", StringComparison.Ordinal));
+		r4r.Contains("return (null, HasToken);", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || unanswered) {", StringComparison.Ordinal)
+		&& r4rMod.Contains("(string? id, _unanswered) = await lookup.WaitAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal)
+		&& r4rMod.Contains("if (_unanswered) {", StringComparison.Ordinal) && !r4r.Contains("public bool Unanswered", StringComparison.Ordinal));
 	string buyer = Src("Modules", "CardBuyer.cs");
 	Check("buying 1.8.5: the week's or the day's limit spent is said once in those words, not 'waits for the set finder'",
 		buyer.Contains("buying waits: this week's {0} is spent ({1} in the last 7 days)", StringComparison.Ordinal) && buyer.Contains("LimitSaid.TryAdd(Bot.Name, true)", StringComparison.Ordinal)
@@ -28979,6 +28980,16 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	Check("outage: every account (meant to be on) cut off 5m+ - said once when all are back, with how long; the first sign-in, one account, a 2m blip - nothing",
 		firstQuiet && oneQuiet && blipQuiet && (s5 == null) && (s6?.ToEnglish() == "back online after 14m offline · all 2 account(s) signed back in") && (s7 == null),
 		s6?.ToEnglish() ?? "nothing said");
+
+	// 1.8.5 edge: a long outage, then every account paused (so none are "meant to be on") - never a false "back online · all 0 accounts"
+	var pw = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [on, on], o0);                         // up
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [re, re], o0.AddMinutes(10));           // both lost - outage starts
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [re, re], o0.AddMinutes(16));           // 6m later -> a long outage
+	(pw, var p1) = NocatFarm.Core.OutageWatch.Step(pw, new List<NocatFarm.Core.BotState>(), o0.AddMinutes(18));   // all paused mid-outage
+	(pw, var p2) = NocatFarm.Core.OutageWatch.Step(pw, [on, on], o0.AddMinutes(25));      // back
+	Check("outage edge: all accounts paused during an outage never fire a false 'all 0 accounts' line; the real return still fires once they're back",
+		(p1 == null) && (p2?.ToEnglish() == "back online after 15m offline · all 2 account(s) signed back in"), p1?.ToEnglish() ?? $"p2={p2?.ToEnglish()}");
 }
 
 // ── 1.8.5 the machine's health: memory, storage, heat - said plainly; a warning once each, again only after it recovered ──
@@ -29015,6 +29026,192 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		notifier.Contains("!path.EndsWith(\".nfbackup\", StringComparison.OrdinalIgnoreCase)", StringComparison.Ordinal)
 		&& notifier.Contains("/sendDocument\"", StringComparison.Ordinal) && notifier.Contains("for (int attempt = 0; attempt < 3; attempt++) {", StringComparison.Ordinal)
 		&& !NocatFarm.Core.Notifier.SendBackupAsync(Path.Combine(Path.GetTempPath(), "secret.key"), CancellationToken.None).GetAwaiter().GetResult());
+}
+
+// ── 1.8.6 review fixes: real UTC+0 places aren't warned, a failed account never holds an outage open, health warnings
+// clear only well past the line, the uptime is the app's own, sent offers on their own clock, Windows shutdown isn't a crash ──
+{
+	var reykjavik = TimeZoneInfo.CreateCustomTimeZone("Atlantic/Reykjavik", TimeSpan.Zero, "Reykjavik", "Reykjavik");
+	var etcUtc = TimeZoneInfo.CreateCustomTimeZone("Etc/UTC", TimeSpan.Zero, "UTC", "UTC");
+	Check("clock 1.8.6: UTC by its name only - Iceland (UTC+0, no summer time) is a real place, never warned",
+		NocatFarm.Modules.HumanMode.IsUtc(TimeZoneInfo.Utc) && NocatFarm.Modules.HumanMode.IsUtc(etcUtc) && !NocatFarm.Modules.HumanMode.IsUtc(reykjavik)
+		&& (NocatFarm.Modules.HumanMode.ClockWarning(reykjavik, ["new"]) == null));
+
+	DateTime rf0 = new(2026, 10, 26, 12, 0, 0, DateTimeKind.Utc);
+	var on = NocatFarm.Core.BotState.Online;
+	var re = NocatFarm.Core.BotState.Reconnecting;
+	var failed = NocatFarm.Core.BotState.Failed;
+	var w = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [on, on, failed], rf0);
+	bool startsWithFailed = w.Up;
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, failed], rf0.AddMinutes(1));
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, failed], rf0.AddMinutes(8));
+	(w, var back) = NocatFarm.Core.OutageWatch.Step(w, [on, on, failed], rf0.AddMinutes(10));
+	Check("outage 1.8.6: an account that can't sign in is left out - the watch starts, and the outage ends when the others are back",
+		startsWithFailed && (back?.ToEnglish() == "back online after 9m offline · all 2 account(s) signed back in"), back?.ToEnglish() ?? "nothing said");
+
+	var hw = new NocatFarm.Core.BoxHealth.Watch(null, new HashSet<string>());
+	(hw, var m1) = NocatFarm.Core.BoxHealth.Step(hw, new(190, 5000, null), rf0);
+	(hw, var m2) = NocatFarm.Core.BoxHealth.Step(hw, new(210, 5000, null), rf0.AddMinutes(1));
+	(hw, var m3) = NocatFarm.Core.BoxHealth.Step(hw, new(195, 5000, null), rf0.AddMinutes(2));
+	(hw, var m4) = NocatFarm.Core.BoxHealth.Step(hw, new(400, 5000, null), rf0.AddMinutes(3));
+	(hw, var m5) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 5000, null), rf0.AddMinutes(4));
+	Check("health 1.8.6: memory hovering at 190, 210, 195 MB is one warning; it clears only well past the line (300 MB), then warns again",
+		(m1.Count == 1) && (m2.Count == 0) && (m3.Count == 0) && (m4.Count == 0) && (m5.Count == 1));
+
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string all = string.Join("\n", Directory.GetFiles(src, "*.cs", SearchOption.AllDirectories).Where(static f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal)).Select(File.ReadAllText));
+	string program = File.ReadAllText(Path.Combine(src, "Program.cs"));
+	string trading = File.ReadAllText(Path.Combine(src, "Modules", "Trading.cs"));
+	string window = File.ReadAllText(Path.Combine(src, "Windows", "MainWindow.cs"));
+	Check("uptime 1.8.6: from the app's own start, never Process.StartTime (made up under proot on a TV box)",
+		!all.Contains("Process.GetCurrentProcess().StartTime", StringComparison.Ordinal) && program.Contains("Build.MarkStarted();", StringComparison.Ordinal)
+		&& (DateTime.UtcNow - NocatFarm.Build.StartedUtc < TimeSpan.FromHours(6)));
+	Check("trades 1.8.6: sent offers on their own clock - the received-offers loop waits its own gap again",
+		trading.Contains("_ = Task.Run(() => SentLoopAsync(ct), CancellationToken.None);", StringComparison.Ordinal)
+		&& trading.Contains("await Bot.WaitForTradeOfferAsync(NextGap(), ct).ConfigureAwait(false);", StringComparison.Ordinal));
+	Check("run state 1.8.6: Windows shutting down is the system's stop, written at once - never a crash at the next start",
+		window.Contains("Core.RunState.Why = \"system\";", StringComparison.Ordinal) && window.Contains("Core.RunState.End();", StringComparison.Ordinal));
+}
+
+// ── 1.8.6 money review: a listing the owner made by hand is never taken for ours (paired once by Steam's listing id, never
+// guessed when two look alike); cards made from gems never go under the minimum; a sale under the minimum that beats the
+// gems goes through as the preview says ──
+{
+	DateTime ln = new(2026, 10, 26, 10, 0, 0, DateTimeKind.Utc);
+	var pair = typeof(NocatFarm.Core.OurListings).GetMethod("Pair", BindingFlags.NonPublic | BindingFlags.Static)!;
+	Dictionary<int, NocatFarm.Core.Seller.Listing> Paired(List<NocatFarm.Core.Seller.Listing> on, List<NocatFarm.Core.OurListings.Entry> recs) =>
+		(Dictionary<int, NocatFarm.Core.Seller.Listing>) pair.Invoke(null, [on, recs])!;
+	var ours = new NocatFarm.Core.OurListings.Entry(5, "440-Sans", 13, ln, Tracked: true);
+
+	// Linked once by its listing id: after it sold, the owner's own Sans at the same price 20 minutes later isn't it.
+	var linked = ours with { ListingId = 700, Active = true };
+	var ownersOwn = Paired([new(701, 0, "440-Sans", 13, ln.AddMinutes(20), false)], [linked]);
+	var stillOurs = Paired([new(700, 0, "440-Sans", 13, ln.AddMinutes(1), false)], [linked]);
+	// Never linked yet, and two look alike (ours and the owner's): neither is taken.
+	var twoAlike = Paired([new(710, 0, "440-Sans", 13, ln.AddMinutes(1), true), new(711, 0, "440-Sans", 13, ln.AddMinutes(2), false)], [ours]);
+	var oneAlike = Paired([new(710, 0, "440-Sans", 13, ln.AddMinutes(1), true)], [ours]);
+	var (judged, _) = NocatFarm.Core.OurListings.Judge([ours], [new(712, 0, "440-Sans", 13, ln.AddMinutes(1), false)], true, new NocatFarm.Core.OurListings.History([], DateTime.MinValue), ln.AddHours(1));
+	Check("listings 1.8.6: linked once, ours is followed by Steam's listing id - the owner's own same card at the same price is never taken for it, nor a guess between two",
+		(ownersOwn.Count == 0) && (stillOurs.Count == 1) && (twoAlike.Count == 0) && (oneAlike.Count == 1) && (judged.Single().ListingId == 712),
+		$"{ownersOwn.Count} {stillOurs.Count} {twoAlike.Count} {oneAlike.Count} {judged.Single().ListingId}");
+
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string gemsSrc = File.ReadAllText(Path.Combine(src, "Modules", "Boosters.Gems.cs"));
+	string runSrc = File.ReadAllText(Path.Combine(src, "Core", "SpareRun.cs"));
+	Check("gems 1.8.6: packs and cards made from gems are never listed under \"Only sell if you get at least\" (nor under their gems' worth)",
+		gemsSrc.Contains("minReceive: Math.Max(minReceive, minSale)", StringComparison.Ordinal) && gemsSrc.Contains("int minSale = SpareRules.From(Bot.Cfg).MinSaleCents;", StringComparison.Ordinal));
+	Check("spare 1.8.6: under the minimum but over its gems' worth it's sold, as the preview says - the real run no longer takes the preview's Sell back",
+		runSrc.Contains("int minSale = gemsWorth is decimal ? 0 : rules.MinSaleCents;", StringComparison.Ordinal));
+}
+
+// ── 1.8.6 HTTPS for "Open from anywhere": the dashboard's own certificates, made once and kept; HTTPS and plain HTTP on the
+// one port; plain HTTP refused from the internet; the certificate to the phone through Telegram ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-https-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	var forget = typeof(NocatFarm.Web.DashboardCert).GetMethod("Forget", BindingFlags.NonPublic | BindingFlags.Static)!;
+	Microsoft.AspNetCore.Builder.WebApplication? web = null;
+
+	try {
+		forget.Invoke(null, null);
+		var ca = NocatFarm.Web.DashboardCert.Authority();
+		bool madeNow = NocatFarm.Web.DashboardCert.MadeNow;
+		var leaf = NocatFarm.Web.DashboardCert.Current();
+		string caPrint = ca.Thumbprint, leafPrint = leaf.Thumbprint, caSubject = ca.Subject, leafIssuer = leaf.Issuer;
+		bool leafKey = leaf.HasPrivateKey;
+		forget.Invoke(null, null);   // lets both go, as a restart would
+		var caAgain = NocatFarm.Web.DashboardCert.Authority();
+		var leafAgain = NocatFarm.Web.DashboardCert.Current();
+		string pfx = Path.Combine(tmpRoot, "config", "state", "dashboard-ca.pfx");
+		Check("https: the authority is made once and read back the same after a restart; the certificate it signs too, covering localhost and nocat.farm",
+			madeNow && !NocatFarm.Web.DashboardCert.MadeNow && (caPrint == caAgain.Thumbprint) && (leafPrint == leafAgain.Thumbprint)
+			&& (leafIssuer == caSubject) && leafKey && File.Exists(NocatFarm.Web.DashboardCert.CrtPath)
+			&& File.ReadAllText(NocatFarm.Web.DashboardCert.CrtPath).StartsWith("-----BEGIN CERTIFICATE-----", StringComparison.Ordinal)
+			&& !File.ReadAllText(NocatFarm.Web.DashboardCert.CrtPath).Contains("PRIVATE", StringComparison.Ordinal)
+			&& (OperatingSystem.IsWindows() || (File.GetUnixFileMode(pfx) == (UnixFileMode.UserRead | UnixFileMode.UserWrite)))
+			&& (NocatFarm.Web.DashboardCert.Fingerprint(caAgain).Split(':').Length == 32));
+		Check("https: the certificate's file never goes in a backup (only its public part, nowhere)",
+			((System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!) is var bp
+			&& !bp.IsMatch("state/dashboard-ca.pfx") && !bp.IsMatch("state/dashboard-cert.pfx") && !bp.IsMatch("state/dashboard-ca.crt"));
+
+		// A real server with the dashboard's connection step: HTTPS answered with the certificate, plain HTTP beside it.
+		var sniff = (Func<Microsoft.AspNetCore.Connections.ConnectionDelegate, Microsoft.AspNetCore.Connections.ConnectionDelegate>) typeof(NocatFarm.Web.DashboardCert).Assembly
+			.GetType("NocatFarm.Web.TlsSniff")!.GetMethod("Middleware")!.Invoke(null, [(Func<System.Security.Cryptography.X509Certificates.X509Certificate2>) NocatFarm.Web.DashboardCert.Current])!;
+		var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder();
+		builder.Logging.ClearProviders();
+		builder.WebHost.ConfigureKestrel(o => o.Listen(System.Net.IPAddress.Loopback, 0, l => l.Use(sniff)));
+		web = builder.Build();
+		Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGet(web, "/", (Microsoft.AspNetCore.Http.HttpContext c) => c.Request.IsHttps ? "https" : "http");
+		await web.StartAsync();
+		string url = web.Urls.First().Replace("[::1]", "127.0.0.1", StringComparison.Ordinal);
+		int port = new Uri(url).Port;
+		using var trusted = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, cert, _, _) => {
+			using var chain = new System.Security.Cryptography.X509Certificates.X509Chain();
+			chain.ChainPolicy.TrustMode = System.Security.Cryptography.X509Certificates.X509ChainTrustMode.CustomRootTrust;
+			chain.ChainPolicy.CustomTrustStore.Add(caAgain);
+			chain.ChainPolicy.RevocationMode = System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck;
+			return (cert != null) && chain.Build(cert);
+		} };
+		using var https = new HttpClient(trusted) { Timeout = TimeSpan.FromSeconds(20) };
+		using var plain = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+		string overTls = await https.GetStringAsync($"https://127.0.0.1:{port}/");
+		string overHttp = await plain.GetStringAsync($"http://127.0.0.1:{port}/");
+		string overTlsAgain = await https.GetStringAsync($"https://localhost:{port}/");
+		Check("https: one port answers both - HTTPS with the dashboard's certificate (trusted through its own authority only), plain HTTP beside it",
+			(overTls == "https") && (overHttp == "http") && (overTlsAgain == "https"), $"{overTls} / {overHttp} / {overTlsAgain}");
+
+		string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+		string host = File.ReadAllText(Path.Combine(src, "Web", "WebHost.cs"));
+		string remote = File.ReadAllText(Path.Combine(src, "Core", "RemoteAccess.cs"));
+		Check("https: from the internet only over HTTPS (at home and on this PC plain HTTP still opens); the link it hands out is https",
+			host.Contains("if (direct && !request.IsHttps) {", StringComparison.Ordinal) && host.Contains("Secure = ctx.Request.IsHttps,", StringComparison.Ordinal)
+			&& host.Contains("o.ConfigureEndpointDefaults(static l => l.Use(TlsSniff.Middleware(DashboardCert.Current)));", StringComparison.Ordinal)
+			&& remote.Contains("$" + "\"https://{ExternalIp}:{m.Port}/\"", StringComparison.Ordinal)
+			&& remote.Contains("await Web.DashboardCert.EnsureSentAsync(CancellationToken.None).ConfigureAwait(false);", StringComparison.Ordinal));
+		var constraints = caAgain.Extensions["2.5.29.30"];
+		string pfxText = File.ReadAllText(pfx);
+		Check("https 1.8.6: the authority can only vouch for the dashboard's own names (Name Constraints, critical), and its key is sealed on disk",
+			(constraints != null) && constraints.Critical && !pfxText.StartsWith("MII", StringComparison.Ordinal)
+			&& ((string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["myhome.duckdns.org", 7242, "https"]) == "https://myhome.duckdns.org:7242/")
+			&& ((string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["https://farm.example.com", 7242, "https"]) == "https://farm.example.com/"),
+			pfxText[..Math.Min(12, pfxText.Length)]);
+		string install = NocatFarm.Web.DashboardCert.InstallSaid("AB:CD").ToEnglish();
+		Check("https: the phone gets the certificate with how to install it (Android and iPhone) and its fingerprint",
+			install.Contains("Android:", StringComparison.Ordinal) && install.Contains("iPhone:", StringComparison.Ordinal) && install.EndsWith("AB:CD", StringComparison.Ordinal));
+	} finally {
+		if (web != null) {
+			await web.StopAsync();
+			await web.DisposeAsync();
+		}
+
+		forget.Invoke(null, null);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
+// ── 1.8.6 last bug check: a rest keeps the day's comment record (rest then clear can't post a second full day); a restore that
+// fails part way reads the key and the settings from disk again ──
+{
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string r4r = File.ReadAllText(Path.Combine(src, "Modules", "Rep4RepModule.cs"));
+	string backup = File.ReadAllText(Path.Combine(src, "Core", "Backup.cs"));
+	Check("rep4rep 1.8.6: 'rep4rep rest' keeps the last 24h of comments counted - 'rep4rep clear' early can't post a second full day",
+		!r4r.Contains("ClearWindow()", StringComparison.Ordinal) && !File.ReadAllText(Path.Combine(src, "Rep4Rep", "Rep4RepState.cs")).Contains("void ClearWindow", StringComparison.Ordinal));
+	int fin = backup.IndexOf("if (wrote && !replaced) {", StringComparison.Ordinal);
+	Check("restore 1.8.6: stopped part way, the key and the settings are read from disk again before the accounts start",
+		(fin > 0) && backup.IndexOf("Secrets.ForgetKey();", fin, StringComparison.Ordinal) is > 0 and var k && (k - fin < 600)
+		&& backup.IndexOf("mgr.ApplyGlobal(onDisk);", fin, StringComparison.Ordinal) > 0);
+	Check("backups 1.8.6: any failure making one is a failed backup, said and counted - not a silent retry every minute",
+		File.ReadAllText(Path.Combine(src, "Core", "BackupSchedule.cs")).Contains("// 1.8.6: any failure is a failed backup", StringComparison.Ordinal));
 }
 
 // SETTINGSCOUNT
@@ -33871,7 +34068,7 @@ static class GemsChoiceChecks {
 			string boostersGems = Src("src/NocatFarm/Modules/Boosters.Gems.cs");
 			Check("gems: what it lists goes through the one listing path - inside the account's day, priced again right before, never under the gems' worth",
 				boostersGems.Contains("Seller.SellAsync(Bot, offers, ct, mayAct: () => DayGate.Open", StringComparison.Ordinal)
-				&& boostersGems.Contains("minReceive: minReceive", StringComparison.Ordinal) && boostersGems.Contains("prefer: \"1\"", StringComparison.Ordinal));
+				&& boostersGems.Contains("minReceive: Math.Max(minReceive, minSale)", StringComparison.Ordinal) && boostersGems.Contains("prefer: \"1\"", StringComparison.Ordinal));
 			Check("gems: 'booster plan' and 'buy preview' show the choice and its numbers; the docs explain it",
 				Src("src/NocatFarm/Commands.Booster.cs").Contains("Boosters.GemsPreviewAsync", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/CommandsBuy.cs").Contains("Boosters.GemsPreviewAsync", StringComparison.Ordinal)
@@ -35421,7 +35618,7 @@ static class DearCardsChecks {
 			string noDate = NocatFarm.Modules.DearCards.LockedSaid(arcane with { Cards = [.. arcane.Cards.Where(c => c.Hash == A("Shield"))] }, lockedItems).ToEnglish();
 			Check("dear 1.8.5: for sale = marketable or locked for now (not locked for good, not the foil); the lock's end is said (Pony Island said 'selling' every look for days)",
 				(forSale.Count == 2) && forSale.ContainsKey(A("Heart")) && forSale.ContainsKey(A("Skull")) && !forSale.ContainsKey(A("Shield"))
-				&& until.StartsWith("Arcane Raise: its cards are locked by Steam until " + ends.ToLocalTime().ToString("MMM d HH:mm", System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)
+				&& until.StartsWith("Arcane Raise: its cards are locked by Steam until " + ends.ToLocalTime().ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)
 				&& noDate.Contains("right now - sold once it does", StringComparison.Ordinal), $"{string.Join(",", forSale.Keys)} / {until} / {noDate}");
 
 			var noPrice = Quotes();
@@ -37258,7 +37455,7 @@ static class MoneyFixChecks {
 			Check("bought cards: badge crafting marks the badge crafted; a finished set it bought cards for is crafted, never sold; spare listings never pay under what a card cost",
 				Src("src/NocatFarm/Modules/BadgeCraft.cs").Contains("BuyLedger.Of(Bot.Name).Crafted(c.AppId, DateTime.UtcNow);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Modules/SetSale.Choose.cs").Contains("cards were bought to finish it - crafted, never sold", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Core/SpareRun.cs").Contains("Math.Max(rules.MinSaleCents, paidOf?.Invoke(offer.Hash) ?? 0)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Core/SpareRun.cs").Contains("Math.Max(minSale, paidOf?.Invoke(offer.Hash) ?? 0)", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Core/SpareSteam.cs").Contains("hash => Modules.BuyLedger.Of(bot.Name).PaidFor(hash, currency)", StringComparison.Ordinal));
 			var paidKept = NocatFarm.Modules.DearCards.Decide(Game, "G", Cad, 4, set, held, quotes, [30, 30, 30], 50, paid: h => h == "700-C" ? 500 : 0, boughtCopies: _ => 1);
 			var paidWins = NocatFarm.Modules.DearCards.Decide(Game, "G", Cad, 4, set, held, quotes, costs, 50, paid: h => h == "700-C" ? 50 : 0, boughtCopies: _ => 1);
@@ -38070,6 +38267,14 @@ static class Polish182Checks {
 			Check("levelup buy: the wallet holding less than the plan's total says how far it goes",
 				goalSaid.Contains("lv: the wallet has 0.83 CAD - about 2 of the 3 levels until more money comes in.", StringComparison.Ordinal)
 				&& !rich.Contains("the wallet has", StringComparison.Ordinal) && !plain.Contains("the wallet has", StringComparison.Ordinal), goalSaid);
+
+				// 1.8.5: "Always keep in the wallet" - the preview counts only what buying would really spend, and names what's kept
+				string kept = NocatFarm.Commands.LevelGoalSaid("lv", goal with { Wallet = 83, Keep = 30 }, askYes: true, buy: true);
+				string richKept = NocatFarm.Commands.LevelGoalSaid("lv", goal with { Wallet = 500, Keep = 460 }, askYes: true, buy: true);
+				Check("levelup buy 1.8.5: the kept reserve isn't counted - 0.83 with 0.30 kept buys 1 level not 2, and a rich wallet with most kept still shows the shortfall",
+					(goal.Affordable == 2) && ((goal with { Wallet = 83, Keep = 30 }).Affordable == 1)
+					&& kept.Contains("lv: the wallet has 0.83 CAD (keeping 0.30 CAD) - about 1 of the 3 levels", StringComparison.Ordinal)
+					&& richKept.Contains("(keeping 4.60 CAD) - about 1 of the 3 levels", StringComparison.Ordinal), kept);
 
 			// ── 5: 'swaps on' with a trade hold ──
 			string onHeld = NocatFarm.Commands.SwapsOnSaid("sw", 15, false);

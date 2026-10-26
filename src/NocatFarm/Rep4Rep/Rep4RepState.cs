@@ -49,13 +49,6 @@ public sealed class Rep4RepState {
 		}
 	}
 
-	/// <summary>Empty the rolling window for a clean baseline (used by 'rep4rep rest').</summary>
-	public void ClearWindow() {
-		lock (_sync) {
-			Posts.Clear();
-		}
-	}
-
 	public void MarkDeadTarget(ulong steamId, DateTime until) {
 		lock (_sync) {
 			DeadTargets[steamId.ToString()] = until.Ticks;
