@@ -1,5 +1,11 @@
 {
   "ui": {
+    "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "Dışarıdan nocat.farm'ın kendi sertifikasıyla https üzerinden açılır - telefonuna bir kez kur (Telegram'a gelir ya da 'dashboard cert' yaz).",
+    "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "Dışarıdan yalnızca https üzerinden açılır, nocat.farm'ın kendi sertifikasıyla - 'dashboard cert' onu telefonuna bir kez kurman için Telegram'a gönderir.",
+    "dashboard certificate {0} couldn't be read - a new one is made: {1}": "pano sertifikası {0} okunamadı - yenisi oluşturuluyor: {1}",
+    "couldn't make the dashboard's certificate: {0}": "pano sertifikası oluşturulamadı: {0}",
+    "couldn't send {0} to Telegram": "{0} Telegram'a gönderilemedi",
+    "nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}": "nocat.farm pano sertifikası - bir kez kur, telefonun panoya https üzerinden güvensin (uyarı sayfası olmadan). Android: dosyayı aç ya da Ayarlar > Güvenlik > Şifreleme ve kimlik bilgileri > Sertifika yükle > CA sertifikası. iPhone: dosyayı aç, Ayarlar > Profil İndirildi > Yükle, sonra Ayarlar > Genel > Hakkında > Sertifika Güven Ayarları > aç. Parmak izini (SHA-256) kontrol et: {0}",
     "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "yedek Telegram'a gönderilmedi - {0} MB, Telegram'ın 50 MB sınırının üstünde",
     "nocat.farm backup · {0} · password-locked": "nocat.farm yedeği · {0} · parolayla kilitli",
     "backup sent to Telegram: {0}": "yedek Telegram'a gönderildi: {0}",
@@ -1608,7 +1614,6 @@
     "Let it through the firewall": "Güvenlik duvarından geçir",
     "Open it from anywhere?": "Her yerden açılsın mı?",
     "Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.": "Evden uzaktayken mobil veriyle hesaplarına göz at. Jellyfin gibi: nocat.farm modeminden paneli bu PC'ye geçirmesini ister. Başka uygulama gerekmez.",
-    "The link is plain http, not encrypted. Sign in on mobile data or a network you trust.": "Bağlantı düz http, şifrelenmemiş. Mobil veriyle ya da güvendiğin bir ağda giriş yap.",
     "It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.": "Güçlü bir şifre gerekir: en az 12 karakter. Beş yanlış deneme o kişiyi bir saat kilitler.",
     "Some routers and internet providers don't allow it. If yours doesn't, it says why.": "Bazı modemler ve internet sağlayıcıları buna izin vermez. Seninki vermiyorsa nedenini söyler.",
     "You pick a strong password next.": "Sonra güçlü bir şifre seçeceksin.",
@@ -1735,7 +1740,6 @@
     "Keep it safe": "Güvende tut",
     "Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.": "Evden uzakta bağlantısına sahip olan herkes giriş sayfasına ulaşır, parola olmadan daha fazlasına değil.",
     "Five wrong passwords lock that address out for an hour.": "Beş yanlış parola o adresi bir saatliğine kilitler.",
-    "It's plain http, not encrypted - use a password you don't use anywhere else.": "Düz http, şifrelenmemiş - başka hiçbir yerde kullanmadığın bir parola kullan.",
     "Turn Open from anywhere off": "\"Her yerden aç\"ı kapat",
     "not ready yet - see below": "henüz hazır değil - aşağıya bak",
     "Still to do - on the PC, open the dashboard's Phone page, each is one tap there:": "Yapılacaklar - bilgisayarda panonun Telefon sayfasını aç, orada her biri tek dokunuş:",
@@ -4524,7 +4528,7 @@
     },
     "WebRemoteAccess": {
       "label": "Her yerden aç",
-      "tip": "Jellyfin gibi: yönlendiriciden panelin portunu bu bilgisayara yönlendirmesini ister (UPnP), böylece internet adresinden her yerden açılır - bağlantıyı Telegram ve Discord'daki /dashboard verir. En az 12 karakterlik bir panel şifresi ve \"Dinlenen adres\"te 0.0.0.0 gerekir. Giriş sayfasına internetteki herkes ulaşabilir, beş yanlış şifre bir saat kilitler. Kapatmak yönlendirmeyi kaldırır. Bağlantı şifresiz düz http'dir; bu yüzden mobil veriyle ya da güvendiğin bir ağla giriş yap."
+      "tip": "Jellyfin gibi: yönlendiriciden panelin portunu bu bilgisayara yönlendirmesini ister (UPnP), böylece internet adresinden her yerden açılır - bağlantıyı Telegram ve Discord'daki /dashboard verir. En az 12 karakterlik bir panel şifresi ve \"Dinlenen adres\"te 0. 0. 0. 0 gerekir. Giriş sayfasına internetteki herkes ulaşabilir, beş yanlış şifre bir saat kilitler. Kapatmak yönlendirmeyi kaldırır. İnternetten yalnızca https üzerinden açılır, nocat.farm'ın kendi sertifikasıyla: telefonuna bir kez kurman için Telegram'a gelir ('dashboard cert' yeniden gönderir), sonra bağlantı uyarı sayfası olmadan açılır."
     },
     "WebSignInCode": {
       "label": "Dışarıdan girişte Telegram kodu iste",

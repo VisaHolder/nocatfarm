@@ -19,8 +19,9 @@ public static class OurListings {
 	/// <param name="Settled">Gone from the market, and already judged - sold, taken down, or declined.</param>
 	/// <param name="BuyerCents">What a buyer paid for it as listed - the price a step down starts from. 0 in a record from
 	/// before 1.8.1.</param>
+	/// <param name="ListingId">1.8.6: Steam's id for the listing, once it was first paired - from then on it's matched by that alone.</param>
 	public sealed record Entry(ulong AssetId, string Hash, int YouGetCents, DateTime At, bool Tracked = false, bool Active = false, bool Settled = false,
-		int BuyerCents = 0);
+		int BuyerCents = 0, ulong ListingId = 0);
 
 	/// <summary>One sale in the account's market history: the item, what the seller got (0 when Steam didn't say) and when.</summary>
 	public sealed record Sale(ulong AssetId, string Hash, int YouGetCents, DateTime At);
@@ -92,8 +93,8 @@ public static class OurListings {
 		Dictionary<int, Seller.Listing> paired = [];
 		HashSet<Seller.Listing> used = [];
 
-		foreach (Seller.Listing l in all.Where(static l => l.AssetId != 0)) {
-			int at = Free(e => e.AssetId == l.AssetId);
+		foreach (Seller.Listing l in all.Where(static l => (l.AssetId != 0) || (l.Id != 0))) {
+			int at = Free(e => ((e.ListingId != 0) && (e.ListingId == l.Id)) || ((l.AssetId != 0) && (e.AssetId == l.AssetId)));
 
 			if (at >= 0) {
 				paired[at] = l;
@@ -101,8 +102,20 @@ public static class OurListings {
 			}
 		}
 
+		// 1.8.6: by the same card at the same price only for a record never paired yet, and never when it can't be told which is
+		// ours - the owner listing the same card at the same price within the half hour made their listing ours, and it was
+		// later taken down as unsold. Left unpaired, nothing of the owner's is touched.
+		bool Loose(Entry e, Seller.Listing l) => (e.ListingId == 0) && (e.Hash == l.Hash) && (e.YouGetCents == l.YouGetCents) && ((l.Created - e.At).Duration() <= Slack);
+
 		foreach (Seller.Listing l in all.Where(l => !used.Contains(l) && (l.Hash.Length > 0))) {
-			int at = Free(e => (e.Hash == l.Hash) && (e.YouGetCents == l.YouGetCents) && ((l.Created - e.At).Duration() <= Slack));
+			int listingsLikeIt = all.Count(o => !used.Contains(o) && (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents) && ours.Any(e => !e.Settled && Loose(e, o)));
+			int recordsLikeIt = ours.Count(e => !e.Settled && Loose(e, l));
+
+			if (listingsLikeIt > recordsLikeIt) {
+				continue;
+			}
+
+			int at = Free(e => Loose(e, l));
 
 			if (at >= 0) {
 				paired[at] = l;
@@ -161,7 +174,8 @@ public static class OurListings {
 			}
 
 			if (paired.TryGetValue(i, out Seller.Listing? l)) {
-				entries.Add(l.AwaitingConfirmation ? e : e with { Active = true });
+				Entry linked = (l.Id != 0) && (e.ListingId == 0) ? e with { ListingId = l.Id } : e;
+				entries.Add(l.AwaitingConfirmation ? linked : linked with { Active = true });
 
 				continue;
 			}

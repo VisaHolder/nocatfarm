@@ -1,5 +1,11 @@
 {
   "ui": {
+    "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "从外部通过 https 打开，使用 nocat.farm 自己的证书 - 在手机上安装一次（会发到 Telegram，或输入 'dashboard cert'）。",
+    "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "从外部只能通过 https 打开，使用 nocat.farm 自己的证书 - 'dashboard cert' 会把它发到 Telegram，在手机上安装一次即可。",
+    "dashboard certificate {0} couldn't be read - a new one is made: {1}": "无法读取控制面板证书 {0} - 正在新建：{1}",
+    "couldn't make the dashboard's certificate: {0}": "无法创建控制面板证书：{0}",
+    "couldn't send {0} to Telegram": "无法将 {0} 发送到 Telegram",
+    "nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}": "nocat.farm 控制面板证书 - 安装一次，手机就会通过 https 信任控制面板（没有警告页）。Android：打开文件，或 设置 > 安全 > 加密与凭据 > 安装证书 > CA 证书。iPhone：打开文件，设置 > 已下载描述文件 > 安装，然后 设置 > 通用 > 关于本机 > 证书信任设置 > 打开。核对指纹（SHA-256）：{0}",
     "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "备份未发送到 Telegram - 它有 {0} MB，超过 Telegram 的 50 MB 上限",
     "nocat.farm backup · {0} · password-locked": "nocat.farm 备份 · {0} · 已用密码加密",
     "backup sent to Telegram: {0}": "备份已发送到 Telegram：{0}",
@@ -1608,7 +1614,6 @@
     "Let it through the firewall": "让它通过防火墙",
     "Open it from anywhere?": "要随时随地打开吗？",
     "Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.": "不在家时也能用移动数据查看账号。和 Jellyfin 一样：nocat.farm 让你的路由器把面板转到这台电脑。不需要其他应用。",
-    "The link is plain http, not encrypted. Sign in on mobile data or a network you trust.": "链接是普通 http，没有加密。请用移动数据或你信任的网络登录。",
     "It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.": "需要一个强密码：至少 12 个字符。输错五次会被锁定一小时。",
     "Some routers and internet providers don't allow it. If yours doesn't, it says why.": "有些路由器和网络运营商不允许这样做。如果你的不行，它会告诉你原因。",
     "You pick a strong password next.": "接下来设一个强密码。",
@@ -1735,7 +1740,6 @@
     "Keep it safe": "注意安全",
     "Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.": "拿到外网链接的人能看到登录页，但没有密码就进不去。",
     "Five wrong passwords lock that address out for an hour.": "输错五次密码，那个地址会被锁一小时。",
-    "It's plain http, not encrypted - use a password you don't use anywhere else.": "这是没有加密的普通 http - 请用一个别处没用过的密码。",
     "Turn Open from anywhere off": "关闭“从任何地方打开”",
     "not ready yet - see below": "还没准备好 - 见下方",
     "Still to do - on the PC, open the dashboard's Phone page, each is one tap there:": "还要做 - 在电脑上打开面板的手机页面，每项点一下就行：",
@@ -4524,7 +4528,7 @@
     },
     "WebRemoteAccess": {
       "label": "从任何地方打开",
-      "tip": "和 Jellyfin 一样：请路由器把面板的端口转发到这台电脑（UPnP），这样用你的公网地址在任何地方都能打开 - Telegram 和 Discord 的 /dashboard 会给出链接。需要至少 12 个字符的面板密码，并在“监听地址”填 0.0.0.0。互联网上任何人都能到达登录页，输错五次密码会被锁一小时。关闭后会撤掉转发。 链接是未加密的普通 http，请用移动数据或可信的网络登录。"
+      "tip": "和 Jellyfin 一样：请路由器把面板的端口转发到这台电脑（UPnP），这样用你的公网地址在任何地方都能打开 - Telegram 和 Discord 的 /dashboard 会给出链接。 需要至少 12 个字符的面板密码，并在“监听地址”填 0. 0. 0. 0。 互联网上任何人都能到达登录页，输错五次密码会被锁一小时。 关闭后会撤掉转发。 从互联网只能通过 https 打开，使用 nocat.farm 自己的证书：它会发到 Telegram，在手机上安装一次（'dashboard cert' 可再次发送），之后链接打开不会再有警告页。"
     },
     "WebSignInCode": {
       "label": "从外部登录时要求 Telegram 验证码",

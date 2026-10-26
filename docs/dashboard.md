@@ -241,8 +241,12 @@ or *Open from anywhere* switching itself off (*Send break-in attempts*). Both ar
 **From anywhere.** Turning on *Open from anywhere* (on the Phone page, or Settings → Dashboard & phone → Open from outside, with Show advanced)
 works like Jellyfin. nocat.farm asks your router to forward the dashboard's port to this PC (UPnP), finds your
 internet address, and gives you a link and QR code that work anywhere. It needs a password of at least 12
-characters, because anyone on the internet can reach the sign-in page. The link is plain http, so use a password you
-don't use anywhere else. The forward is taken away when you turn it off or close nocat.farm, and put back when it
+characters, because anyone on the internet can reach the sign-in page. From the internet it only opens over **https**,
+with nocat.farm's own certificate - no outside service or name. The first time it's turned on, the certificate goes to your
+Telegram chat with how to install it on the phone (or type `dashboard cert`; without Telegram, it says where the file is):
+install it once and the phone opens the https link with no warning page, from then on. Check the fingerprint the message
+gives against what the phone shows. If your internet address changes, nocat.farm makes its certificate again by itself -
+nothing new to install. At home and on this PC plain http still works. The forward is taken away when you turn it off or close nocat.farm, and put back when it
 starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
 had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
 mix of addresses, pause signing in from outside for an hour (home still works, and `dashboard unlock` lifts it). And after

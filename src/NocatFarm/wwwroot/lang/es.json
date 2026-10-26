@@ -1,5 +1,11 @@
 {
   "ui": {
+    "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "Desde fuera se abre por https con el certificado propio de nocat.farm - instálalo una vez en tu móvil (llega por Telegram, o escribe 'dashboard cert').",
+    "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "Desde fuera solo se abre por https, con el certificado propio de nocat.farm - 'dashboard cert' lo envía a Telegram para instalarlo una vez en tu móvil.",
+    "dashboard certificate {0} couldn't be read - a new one is made: {1}": "no se pudo leer el certificado del panel {0} - se crea uno nuevo: {1}",
+    "couldn't make the dashboard's certificate: {0}": "no se pudo crear el certificado del panel: {0}",
+    "couldn't send {0} to Telegram": "no se pudo enviar {0} a Telegram",
+    "nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}": "certificado del panel de nocat.farm - instálalo una vez y tu móvil confiará en el panel por https (sin página de aviso). Android: abre el archivo, o Ajustes > Seguridad > Cifrado y credenciales > Instalar un certificado > Certificado de CA. iPhone: abre el archivo, Ajustes > Perfil descargado > Instalar, luego Ajustes > General > Información > Ajustes de confianza de certificados > actívalo. Comprueba la huella (SHA-256): {0}",
     "the backup wasn't sent to Telegram - it's {0} MB, over Telegram's 50 MB": "la copia no se envió a Telegram - pesa {0} MB, más de los 50 MB de Telegram",
     "nocat.farm backup · {0} · password-locked": "copia de nocat.farm · {0} · protegida con contraseña",
     "backup sent to Telegram: {0}": "copia enviada a Telegram: {0}",
@@ -1608,7 +1614,6 @@
     "Let it through the firewall": "Dejarlo pasar por el firewall",
     "Open it from anywhere?": "¿Abrirlo desde cualquier sitio?",
     "Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.": "Mira tus cuentas fuera de casa, con datos móviles. Como Jellyfin: nocat.farm pide a tu router que deje pasar el panel hasta este PC. No hace falta otra app.",
-    "The link is plain http, not encrypted. Sign in on mobile data or a network you trust.": "El enlace es http normal, sin cifrar. Entra con datos móviles o en una red de confianza.",
     "It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.": "Necesita una contraseña fuerte: al menos 12 caracteres. Cinco intentos fallidos bloquean a esa persona durante una hora.",
     "Some routers and internet providers don't allow it. If yours doesn't, it says why.": "Algunos routers y proveedores de internet no lo permiten. Si el tuyo no, te dice por qué.",
     "You pick a strong password next.": "Luego eliges una contraseña fuerte.",
@@ -1735,7 +1740,6 @@
     "Keep it safe": "Mantenlo seguro",
     "Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.": "Quien tenga el enlace de fuera de casa llega a la página de inicio de sesión, y sin la contraseña no pasa de ahí.",
     "Five wrong passwords lock that address out for an hour.": "Cinco contraseñas incorrectas bloquean esa dirección durante una hora.",
-    "It's plain http, not encrypted - use a password you don't use anywhere else.": "Es http normal, sin cifrar - usa una contraseña que no uses en ningún otro sitio.",
     "Turn Open from anywhere off": "Desactivar «Abrir desde cualquier sitio»",
     "not ready yet - see below": "aún no está listo - mira abajo",
     "Still to do - on the PC, open the dashboard's Phone page, each is one tap there:": "Pendiente - en el PC, abre la página Móvil del panel; allí cada cosa es un toque:",
@@ -4524,7 +4528,7 @@
     },
     "WebRemoteAccess": {
       "label": "Abrir desde cualquier sitio",
-      "tip": "Como Jellyfin: pide a tu router que redirija el puerto del panel a este PC (UPnP), para que se abra desde cualquier sitio en tu dirección de internet - /dashboard en Telegram y Discord da el enlace. Necesita una contraseña del panel de al menos 12 caracteres y 0.0.0.0 en «Escuchar en». Cualquiera en internet puede llegar a la página de acceso, y cinco contraseñas erróneas lo bloquean una hora. Apagarlo quita la redirección. El enlace es http sin cifrar, así que entra con datos móviles o una red de confianza."
+      "tip": "Como Jellyfin: pide a tu router que redirija el puerto del panel a este PC (UPnP), para que se abra desde cualquier sitio en tu dirección de internet - /dashboard en Telegram y Discord da el enlace. Necesita una contraseña del panel de al menos 12 caracteres y 0. 0. 0. 0 en «Escuchar en». Cualquiera en internet puede llegar a la página de acceso, y cinco contraseñas erróneas lo bloquean una hora. Apagarlo quita la redirección. Desde internet solo se abre por https, con el certificado propio de nocat.farm: llega por Telegram para instalarlo una vez en el móvil ('dashboard cert' lo envía de nuevo), y luego el enlace se abre sin página de aviso."
     },
     "WebSignInCode": {
       "label": "Pedir un código de Telegram al iniciar sesión desde fuera",

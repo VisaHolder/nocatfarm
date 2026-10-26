@@ -2869,7 +2869,7 @@ function tutStepAnywhere() {
     title: t('Open it from anywhere?'),
     lead: esc(t('Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.')),
     body: `<ul class="tut-list">
-        <li>${esc(t('The link is plain http, not encrypted. Sign in on mobile data or a network you trust.'))}</li>
+        <li>${esc(t("From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert')."))}</li>
         <li>${esc(t('It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.'))}</li>
         <li>${esc(t("Some routers and internet providers don't allow it. If yours doesn't, it says why."))}</li>
       </ul>
@@ -4211,7 +4211,7 @@ function phoneSafeCard(p) {
       <li>${esc(!p.SignInCode ? t('Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.')
         : p.CodeReady ? t('From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.')
         : t('Connect Telegram and signing in from outside will also take a code sent to it.'))}</li>
-      <li>${esc(t("It's plain http, not encrypted - use a password you don't use anywhere else."))}</li>
+      <li>${esc(t("From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once."))}</li>
     </ul>
     ${p.RemoteOn ? `<button class="ghost ph-off" onclick="phoneRemote(false, this)">${esc(t('Turn Open from anywhere off'))}</button>`
       : `<p class="muted small">${esc(t('Off. Only your home Wi-Fi can open it.'))}</p>`}`;

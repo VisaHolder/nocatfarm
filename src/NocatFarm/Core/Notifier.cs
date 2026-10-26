@@ -698,6 +698,36 @@ public static partial class Notifier {
 	public static async Task<bool> SendPrivateNowAsync(string text, CancellationToken ct) =>
 		HasTelegram && (await PostTelegramAsync(WebUtility.HtmlEncode(text), ct).ConfigureAwait(false)).Ok;
 
+	/// <summary>1.8.6: a file (the dashboard's certificate) to the Telegram chat, with a caption. One quiet line if it never goes.</summary>
+	public static async Task<bool> SendFileAsync(string path, string caption, CancellationToken ct) {
+		if (!HasTelegram || !File.Exists(path)) {
+			return false;
+		}
+
+		for (int attempt = 0; attempt < 3; attempt++) {
+			if (attempt > 0) {
+				await Task.Delay(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+			}
+
+			using MultipartFormDataContent form = new();
+			form.Add(new StringContent(G.TelegramChatId), "chat_id");
+			form.Add(new StringContent(caption.Length > 1000 ? caption[..1000] : caption), "caption");
+			await using FileStream file = File.OpenRead(path);
+			form.Add(new StreamContent(file), "document", Path.GetFileName(path));
+			(HttpResponseMessage? sent, _) = await TryPostAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/sendDocument", form, ct).ConfigureAwait(false);
+
+			using (sent) {
+				if (sent?.IsSuccessStatusCode == true) {
+					return true;
+				}
+			}
+		}
+
+		Log.Info(new Said("couldn't send {0} to Telegram", Path.GetFileName(path)));
+
+		return false;
+	}
+
 	/// <summary>Telegram's limit for a file a bot sends.</summary>
 	public const long TelegramFileLimit = 50L * 1024 * 1024;
 
