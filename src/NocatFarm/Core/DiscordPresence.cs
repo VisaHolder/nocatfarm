@@ -69,7 +69,7 @@ public static class DiscordPresence {
 		return null;
 	}
 	private static DateTime _sentAt = DateTime.MinValue;
-	private static readonly long StartedUnix = new DateTimeOffset(Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToUnixTimeSeconds();
+	private static readonly long StartedUnix = new DateTimeOffset(Build.StartedUtc).ToUnixTimeSeconds();
 
 	private static GlobalConfig G => Live.Global;
 

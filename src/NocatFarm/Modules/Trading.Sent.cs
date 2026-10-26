@@ -63,6 +63,27 @@ public sealed partial class Trading {
 		_ => null
 	};
 
+	/// <summary>1.8.5: what became of the offers it sent (by hand too), every <see cref="SentGap"/> - asleep or not, it's only reading.</summary>
+	private async Task SentLoopAsync(CancellationToken ct) {
+		while (!ct.IsCancellationRequested) {
+			if (Bot.IsOnline && Bot.Web.Ready) {
+				try {
+					await WatchSentAsync(ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+					return;
+				} catch (Exception e) {
+					Log.Debug(new Said("couldn't check sent trade offers: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+				}
+			}
+
+			try {
+				await Task.Delay(SentGap > TimeSpan.FromMinutes(1) ? SentGap : TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
+			} catch (OperationCanceledException) {
+				return;
+			}
+		}
+	}
+
 	/// <summary>
 	/// One look at the sent offers every <see cref="SentGap"/>: each one that ended since the last look is said once - the log
 	/// (green when accepted), the trades pop-up and Telegram/Discord's Trades topic. The first look ever starts from now:
@@ -96,6 +117,7 @@ public sealed partial class Trading {
 			if (SentSaid(offer, who) is { } line) {
 				Log.Trade(line, Bot.Name, good: offer.State == TradeOffers.Accepted);
 				said.Add(offer.Id);
+				SaveSent(Bot.Name, new SentState(state.Since, [.. said.TakeLast(500)]));   // 1.8.6: never said twice, even if stopped part-way
 			}
 		}
 

@@ -21017,7 +21017,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var human = new NocatFarm.Config.BotConfig { SellDuplicates = true, LegitMode = true };
 		bool changed = NocatFarm.Config.ConfigStore.MigrateSpare(human, "harness-human");
 		Check("migration: Sell duplicate cards on - spare items starts OFF (never on-but-waiting), and says once where to turn it on",
-			changed && !human.SpareItems && !human.SellDuplicates && !NocatFarm.Core.SpareLedger.Load("harness-human").Approved
+			changed && !human.SpareItems && (human.SellDuplicates == null) && !NocatFarm.Core.SpareLedger.Load("harness-human").Approved
 			&& heard.Any(static h => h.Text.Contains("Spare items replaced Sell duplicate cards - turn it on in Settings to see what it would do", StringComparison.Ordinal)),
 			string.Join(" | ", heard.Select(static h => h.Text)));
 		Check("migration: a human-mode account that had packs off never starts opening them silently", human.OpenBoosterPacks == 0);
@@ -21034,8 +21034,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.ConfigStore.MigrateSpare(chosen, "harness-chosen");
 		Check("migration: a choice already made in 1.8.0 is never overwritten by the old switches", !chosen.SpareItems && chosen.OpenBoosterPacks == 0);
 		string written = System.Text.Json.JsonSerializer.Serialize(human);
-		Check("migration: the old switches are written as mirrors of the new ones (for a rollback to 1.7.x) - selling only after 'spare ok' (fix FE 1)",
-			written.Contains("\"SellDuplicates\":false", StringComparison.Ordinal) && written.Contains("\"UnpackBoosterPacks\":false", StringComparison.Ordinal), written);
+		Check("migration 1.8.6: the old Sell duplicate cards switch is never written any more (no 1.7.x to roll back to); packs' mirror stays",
+			!written.Contains("SellDuplicates", StringComparison.Ordinal) && written.Contains("\"UnpackBoosterPacks\":false", StringComparison.Ordinal), written);
 
 		// ── commands
 		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
@@ -22609,8 +22609,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		var fcOld = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 		var as173 = System.Text.Json.JsonSerializer.Deserialize<Config173Switches>(File.ReadAllText(Path.Combine(fcRoot, "config", "fc-roll.json")), fcOld)!;
 		var as173Off = System.Text.Json.JsonSerializer.Deserialize<Config173Switches>(File.ReadAllText(Path.Combine(fcRoot, "config", "fc-roll2.json")), fcOld)!;
-		Check("saved by 1.8.0, read the way 1.7.3 reads it - spare items on is \"Sell duplicate cards\" on, \"always\" is \"Open booster packs\" on",
-			as173.SellDuplicates && as173.UnpackBoosterPacks && !as173Off.SellDuplicates && !as173Off.UnpackBoosterPacks);
+		Check("saved now, read the way 1.7.3 reads it - \"Sell duplicate cards\" never on (1.8.6: no 1.7.x left), \"always\" is \"Open booster packs\" on",
+			!as173.SellDuplicates && as173.UnpackBoosterPacks && !as173Off.SellDuplicates && !as173Off.UnpackBoosterPacks);   // 1.8.6: selling is never written for 1.7.x
 		var rollBack = NocatFarm.Config.ConfigStore.LoadBot("fc-roll")!;
 		Check("read back by 1.8.0, the mirrors change nothing and nothing needs writing again",
 			rollBack.SpareItems && (rollBack.OpenBoosterPacks == 2) && !NocatFarm.Config.ConfigStore.MigrateSpare(rollBack, "fc-roll"));
@@ -23324,21 +23324,20 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	try {
 		string FeFile(string name) => Path.Combine(feTmp, "config", name + ".json");
 		bool FeMirror(string name, string key) => System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FeFile(name)))![key]!.GetValue<bool>();
+		bool FeHas(string name, string key) => System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FeFile(name)))!.AsObject().ContainsKey(key);
 
 		// ── finding 1: what 1.7.x reads as "Sell duplicate cards" and "Open booster packs" ──
 		bool FeSells(string name, bool spare, int action, bool ok) {
 			NocatFarm.Core.SpareLedger.Load(name).Approved = ok;
 			NocatFarm.Config.ConfigStore.SaveBot(name, new NocatFarm.Config.BotConfig { SpareItems = spare, SpareAction = action });
 
-			return FeMirror(name, "SellDuplicates");
+			return FeHas(name, "SellDuplicates");
 		}
 
-		Check("spare items on but no 'spare ok' - 1.7.x is NOT told to sell (it lists with no preview)", !FeSells("fe-m1", true, 0, false));
-		Check("gems only, with ok - 1.7.x is not told to sell", !FeSells("fe-m2", true, 1, true));
-		Check("keep everything, with ok - 1.7.x is not told to sell", !FeSells("fe-m3", true, 3, true));
-		Check("spare items off, with ok - 1.7.x is not told to sell", !FeSells("fe-m4", false, 0, true));
-		Check("best of both, with ok - 1.7.x keeps selling", FeSells("fe-m5", true, 0, true));
-		Check("sell only, with ok - 1.7.x keeps selling", FeSells("fe-m6", true, 2, true));
+		// 1.8.6: no 1.7.x release is kept - the "Sell duplicate cards" mirror for a rollback to it is never written, whatever is set
+		Check("1.8.6: \"Sell duplicate cards\" is never written for 1.7.x any more - on or off, with or without the ok",
+			!FeSells("fe-m1", true, 0, false) && !FeSells("fe-m2", true, 1, true) && !FeSells("fe-m3", true, 3, true) && !FeSells("fe-m4", false, 0, true)
+			&& !FeSells("fe-m5", true, 0, true) && !FeSells("fe-m6", true, 2, true));
 		bool FeOpens(string name, int packs) {
 			NocatFarm.Config.ConfigStore.SaveBot(name, new NocatFarm.Config.BotConfig { OpenBoosterPacks = packs });
 
@@ -23377,7 +23376,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		FeAs173("fe-r1", static j => { j["SellDuplicates"] = false; j["UnpackBoosterPacks"] = false; });   // both turned off on 1.7.3
 		NocatFarm.Core.Rollback.RestoreMissing("1.8.0");
 		var feR1 = NocatFarm.Config.ConfigStore.LoadBot("fe-r1")!;
-		Check("\"Sell duplicate cards\" turned off on 1.7.3 stays off coming forward (spare items off)", !feR1.SpareItems);
+		Check("1.8.6: \"Sell duplicate cards\" isn't read back from a 1.7.x rollback any more - spare items comes back as it was", feR1.SpareItems);
 		Check("\"Open booster packs\" turned off on 1.7.3 stays off coming forward (never)", feR1.OpenBoosterPacks == 0, $"{feR1.OpenBoosterPacks}");
 		Check("the rest of spare items still comes back from the copy", feR1.SpareKeepCopies == 3, $"{feR1.SpareKeepCopies}");
 
@@ -23487,11 +23486,11 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		feBots[feH.Name] = feH;
 		NocatFarm.Config.ConfigStore.SaveBot(feH.Name, feH.Cfg);
 		await Commands.RunAsync(feMgr, "spare ok fe-hold");
-		bool feOkMirror = FeMirror("fe-hold", "SellDuplicates");
+		bool feOkMirror = !FeHas("fe-hold", "SellDuplicates");
 		string feHoldSaid = await Commands.RunAsync(feMgr, "spare hold fe-hold");
 		Check("'spare hold' (the old word for off) turns it off and takes the ok back, and says so",
 			!NocatFarm.Core.SpareLedger.Load("fe-hold").Approved && !feH.Cfg.SpareItems && feHoldSaid.Contains("Spare items is off", StringComparison.Ordinal), feHoldSaid);
-		Check("...and 1.7.x is no longer told to sell on it (on after the ok, off after the hold)", feOkMirror && !FeMirror("fe-hold", "SellDuplicates"));
+		Check("...and nothing is written for 1.7.x either way (1.8.6)", feOkMirror && !FeHas("fe-hold", "SellDuplicates"));
 		await Commands.RunAsync(feMgr, "gems fe-hold ok");
 		await Commands.RunAsync(feMgr, "gems fe-hold hold");
 		Check("either order, and as 'gems'", !NocatFarm.Core.SpareLedger.Load("fe-hold").Approved);
@@ -28930,8 +28929,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	string Src(params string[] parts) => File.ReadAllText(Path.Combine([src, .. parts])).Replace("\r\n", "\n");
 	string r4r = Src("Rep4Rep", "Rep4RepApi.cs"), r4rMod = Src("Modules", "Rep4RepModule.cs");
 	Check("rep4rep 1.8.5: no answer from rep4rep.com (a 503) isn't 'not registered' - the profile isn't added again, the token isn't blamed",
-		r4r.Contains("Unanswered = (body == null) && HasToken;", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || Unanswered) {", StringComparison.Ordinal)
-		&& r4rMod.Contains("if (_api.Unanswered) {", StringComparison.Ordinal));
+		r4r.Contains("return (null, HasToken);", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || unanswered) {", StringComparison.Ordinal)
+		&& r4rMod.Contains("(string? id, _unanswered) = await lookup.WaitAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal)
+		&& r4rMod.Contains("if (_unanswered) {", StringComparison.Ordinal) && !r4r.Contains("public bool Unanswered", StringComparison.Ordinal));
 	string buyer = Src("Modules", "CardBuyer.cs");
 	Check("buying 1.8.5: the week's or the day's limit spent is said once in those words, not 'waits for the set finder'",
 		buyer.Contains("buying waits: this week's {0} is spent ({1} in the last 7 days)", StringComparison.Ordinal) && buyer.Contains("LimitSaid.TryAdd(Bot.Name, true)", StringComparison.Ordinal)
@@ -29025,6 +29025,52 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		notifier.Contains("!path.EndsWith(\".nfbackup\", StringComparison.OrdinalIgnoreCase)", StringComparison.Ordinal)
 		&& notifier.Contains("/sendDocument\"", StringComparison.Ordinal) && notifier.Contains("for (int attempt = 0; attempt < 3; attempt++) {", StringComparison.Ordinal)
 		&& !NocatFarm.Core.Notifier.SendBackupAsync(Path.Combine(Path.GetTempPath(), "secret.key"), CancellationToken.None).GetAwaiter().GetResult());
+}
+
+// ── 1.8.6 review fixes: real UTC+0 places aren't warned, a failed account never holds an outage open, health warnings
+// clear only well past the line, the uptime is the app's own, sent offers on their own clock, Windows shutdown isn't a crash ──
+{
+	var reykjavik = TimeZoneInfo.CreateCustomTimeZone("Atlantic/Reykjavik", TimeSpan.Zero, "Reykjavik", "Reykjavik");
+	var etcUtc = TimeZoneInfo.CreateCustomTimeZone("Etc/UTC", TimeSpan.Zero, "UTC", "UTC");
+	Check("clock 1.8.6: UTC by its name only - Iceland (UTC+0, no summer time) is a real place, never warned",
+		NocatFarm.Modules.HumanMode.IsUtc(TimeZoneInfo.Utc) && NocatFarm.Modules.HumanMode.IsUtc(etcUtc) && !NocatFarm.Modules.HumanMode.IsUtc(reykjavik)
+		&& (NocatFarm.Modules.HumanMode.ClockWarning(reykjavik, ["new"]) == null));
+
+	DateTime rf0 = new(2026, 10, 26, 12, 0, 0, DateTimeKind.Utc);
+	var on = NocatFarm.Core.BotState.Online;
+	var re = NocatFarm.Core.BotState.Reconnecting;
+	var failed = NocatFarm.Core.BotState.Failed;
+	var w = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [on, on, failed], rf0);
+	bool startsWithFailed = w.Up;
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, failed], rf0.AddMinutes(1));
+	(w, _) = NocatFarm.Core.OutageWatch.Step(w, [re, re, failed], rf0.AddMinutes(8));
+	(w, var back) = NocatFarm.Core.OutageWatch.Step(w, [on, on, failed], rf0.AddMinutes(10));
+	Check("outage 1.8.6: an account that can't sign in is left out - the watch starts, and the outage ends when the others are back",
+		startsWithFailed && (back?.ToEnglish() == "back online after 9m offline · all 2 account(s) signed back in"), back?.ToEnglish() ?? "nothing said");
+
+	var hw = new NocatFarm.Core.BoxHealth.Watch(null, new HashSet<string>());
+	(hw, var m1) = NocatFarm.Core.BoxHealth.Step(hw, new(190, 5000, null), rf0);
+	(hw, var m2) = NocatFarm.Core.BoxHealth.Step(hw, new(210, 5000, null), rf0.AddMinutes(1));
+	(hw, var m3) = NocatFarm.Core.BoxHealth.Step(hw, new(195, 5000, null), rf0.AddMinutes(2));
+	(hw, var m4) = NocatFarm.Core.BoxHealth.Step(hw, new(400, 5000, null), rf0.AddMinutes(3));
+	(hw, var m5) = NocatFarm.Core.BoxHealth.Step(hw, new(150, 5000, null), rf0.AddMinutes(4));
+	Check("health 1.8.6: memory hovering at 190, 210, 195 MB is one warning; it clears only well past the line (300 MB), then warns again",
+		(m1.Count == 1) && (m2.Count == 0) && (m3.Count == 0) && (m4.Count == 0) && (m5.Count == 1));
+
+	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string all = string.Join("\n", Directory.GetFiles(src, "*.cs", SearchOption.AllDirectories).Where(static f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal)).Select(File.ReadAllText));
+	string program = File.ReadAllText(Path.Combine(src, "Program.cs"));
+	string trading = File.ReadAllText(Path.Combine(src, "Modules", "Trading.cs"));
+	string window = File.ReadAllText(Path.Combine(src, "Windows", "MainWindow.cs"));
+	Check("uptime 1.8.6: from the app's own start, never Process.StartTime (made up under proot on a TV box)",
+		!all.Contains("Process.GetCurrentProcess().StartTime", StringComparison.Ordinal) && program.Contains("Build.MarkStarted();", StringComparison.Ordinal)
+		&& (DateTime.UtcNow - NocatFarm.Build.StartedUtc < TimeSpan.FromHours(6)));
+	Check("trades 1.8.6: sent offers on their own clock - the received-offers loop waits its own gap again",
+		trading.Contains("_ = Task.Run(() => SentLoopAsync(ct), CancellationToken.None);", StringComparison.Ordinal)
+		&& trading.Contains("await Bot.WaitForTradeOfferAsync(NextGap(), ct).ConfigureAwait(false);", StringComparison.Ordinal));
+	Check("run state 1.8.6: Windows shutting down is the system's stop, written at once - never a crash at the next start",
+		window.Contains("Core.RunState.Why = \"system\";", StringComparison.Ordinal) && window.Contains("Core.RunState.End();", StringComparison.Ordinal));
 }
 
 // SETTINGSCOUNT

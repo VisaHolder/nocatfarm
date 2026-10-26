@@ -219,7 +219,7 @@ public static partial class Notifier {
 	}
 
 	/// <summary>When nocat.farm opened, give or take a few seconds for Telegram's clock.</summary>
-	private static readonly DateTimeOffset StartedAt = Process.GetCurrentProcess().StartTime.ToUniversalTime().AddSeconds(-5);
+	private static readonly DateTimeOffset StartedAt = new DateTimeOffset(Build.StartedUtc).AddSeconds(-5);
 
 	/// <summary>Messages from before this are old news: opening nocat.farm, or listening again after a stretch of not.</summary>
 	private static DateTimeOffset _listeningSince = StartedAt;

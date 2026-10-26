@@ -132,7 +132,7 @@ public sealed class ReportCard {
 
 	/// <summary>How long the app has been running: "1d 2h 47m", "3h 5m".</summary>
 	internal static string Uptime() {
-		TimeSpan up = DateTime.Now - Process.GetCurrentProcess().StartTime;
+		TimeSpan up = DateTime.UtcNow - Build.StartedUtc;
 
 		return up.TotalDays >= 1 ? $"{(int) up.TotalDays}d {up.Hours}h {up.Minutes}m" : $"{up.Hours}h {up.Minutes}m";
 	}

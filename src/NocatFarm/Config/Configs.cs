@@ -974,26 +974,17 @@ public sealed class BotConfig {
 	public int BuyCheckHours { get; set; } = 12;
 
 	/// <summary>
-	/// Retired "Sell duplicate cards" switch - carried over to <see cref="SpareItems"/> (ConfigStore.MigrateSpare). Still
-	/// written, for a rollback to 1.7.x, whose seller lists cards straight away with no preview: true only when this version
-	/// would sell on the account too - Spare items on, an action that sells, and its go-ahead given (worked out as it's saved,
-	/// <see cref="SellMirror"/>). Read only from a file without SpareItems.
+	/// Retired "Sell duplicate cards" switch - read from a file from before 1.8.0 only, for the carry-over to
+	/// <see cref="SpareItems"/> (ConfigStore.MigrateSpare). 1.8.6: never written any more - the mirror kept for a rollback
+	/// to 1.7.x went, as no 1.7.x release is kept.
 	/// </summary>
-	public bool SellDuplicates {
-		get => _spareItemsSet ? _sellMirror : _sellDuplicates;
-		set => _sellDuplicates = value;
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public bool? SellDuplicates {
+		get => null;
+		set => _sellDuplicates = value == true;
 	}
 
-	private bool _sellDuplicates, _sellMirror;
-
-	/// <summary>What <see cref="SellDuplicates"/> is written as - set on the copy that goes to disk (ConfigStore.SaveBot), false otherwise.</summary>
-	[JsonIgnore]
-	internal bool SellMirror {
-		set => _sellMirror = value;
-	}
-
-	/// <summary>Whether 1.7.x may sell on this account after a rollback: this version would sell too (needs the account's go-ahead).</summary>
-	internal static bool SellsAfterRollback(BotConfig cfg, bool approved) => cfg.SpareItems && (cfg.SpareAction is 0 or 2) && approved;
+	private bool _sellDuplicates;
 
 	/// <summary>The old switch as a file from before 1.8.0 had it - for the carry-over only.</summary>
 	[JsonIgnore]
@@ -2227,10 +2218,6 @@ public static partial class ConfigStore {
 		try {
 			Directory.CreateDirectory(ConfigDir);
 
-			// The "Sell duplicate cards" mirror for a rollback: on only when this version would sell here too - which needs the
-			// account's go-ahead, kept with its spare items (Core.SpareLedger), not in the settings.
-			bool sellMirror = BotConfig.SellsAfterRollback(cfg, Core.SpareLedger.Load(name).Approved);
-
 			lock (SaveGate) {
 				if (HeldByRestore) {
 					Log.Debug($"config: not saving {name}.json - a backup is being restored over it", name);
@@ -2249,7 +2236,6 @@ public static partial class ConfigStore {
 				// Copied inside the lock, like SaveGlobal. Copied before it, a module's save and a dashboard save that
 				// ran together could write in the opposite order to the one they copied in - older settings last.
 				BotConfig onDisk = Secrets.Available ? Sealed(cfg, name) : JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
-				onDisk.SellMirror = sellMirror;
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
 

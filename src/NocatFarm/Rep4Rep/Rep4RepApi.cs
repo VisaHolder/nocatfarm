@@ -205,13 +205,21 @@ public sealed class Rep4RepApi : IDisposable {
 	/// rep4rep's internal id for a Steam account. With <paramref name="autoAdd"/> it registers the profile if
 	/// rep4rep hasn't seen it, which is the step people otherwise have to do by hand on the website.
 	/// </summary>
-	public async Task<string?> ResolveProfileIdAsync(ulong steamId, bool autoAdd = true, CancellationToken ct = default) {
-		string? id = await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
+	public async Task<string?> ResolveProfileIdAsync(ulong steamId, bool autoAdd = true, CancellationToken ct = default) =>
+		(await ResolveAsync(steamId, autoAdd, ct).ConfigureAwait(false)).Id;
+
+	/// <summary>
+	/// <see cref="ResolveProfileIdAsync"/>, and whether rep4rep.com answered at all (Unanswered: down, a 5xx, no connection -
+	/// not a "not found"). 1.8.6: said per lookup - one shared flag let another account's lookup clear it first, and the
+	/// false "check the API token" warning came back.
+	/// </summary>
+	public async Task<(string? Id, bool Unanswered)> ResolveAsync(ulong steamId, bool autoAdd, CancellationToken ct) {
+		(string? id, bool unanswered) = await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 
 		// 1.8.4: rep4rep.com down (a 503 after the box restarted) isn't "not registered" - nothing is added, nothing is blamed
 		// on the token; the caller just looks again later.
-		if (id != null || !autoAdd || Unanswered) {
-			return id;
+		if (id != null || !autoAdd || unanswered) {
+			return (id, unanswered);
 		}
 
 		await PostAsync("/user/steamprofiles/add", new Dictionary<string, string> { ["steamProfile"] = steamId.ToString() }, ct).ConfigureAwait(false);
@@ -219,15 +227,11 @@ public sealed class Rep4RepApi : IDisposable {
 		return await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 	}
 
-	/// <summary>The last profile list asked for got no answer (rep4rep.com down, a 5xx, no connection) - not a "not found".</summary>
-	public bool Unanswered { get; private set; }
-
-	private async Task<string?> FindProfileIdAsync(ulong steamId, CancellationToken ct) {
+	private async Task<(string? Id, bool Unanswered)> FindProfileIdAsync(ulong steamId, CancellationToken ct) {
 		string? body = await GetAsync("/user/steamprofiles", ct).ConfigureAwait(false);
-		Unanswered = (body == null) && HasToken;
 
 		if (body == null) {
-			return null;
+			return (null, HasToken);
 		}
 
 		try {
@@ -236,7 +240,7 @@ public sealed class Rep4RepApi : IDisposable {
 
 			foreach (JsonElement profile in Rows(doc.RootElement)) {
 				if (ReadString(profile, "steamId") == wanted) {
-					return ReadString(profile, "id");
+					return (ReadString(profile, "id"), false);
 				}
 			}
 		} catch (Exception e) {
@@ -244,7 +248,7 @@ public sealed class Rep4RepApi : IDisposable {
 			Unreadable("/user/steamprofiles", e);
 		}
 
-		return null;
+		return (null, false);
 	}
 
 	/// <summary>Every task currently assigned to a profile.</summary>
