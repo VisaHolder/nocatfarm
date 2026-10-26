@@ -3440,8 +3440,9 @@ public static partial class Commands {
 		}
 
 		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
-		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Wallet < p.Total)) {
-			lines.Add($"{name}: the wallet has {M(p.Wallet)} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
+		if (buy && (p.Wallet >= 0) && (p.Costs.Count > 0) && (p.Usable < p.Total)) {
+			string keeping = p.Keep > 0 ? $" (keeping {M(p.Keep)})" : "";
+			lines.Add($"{name}: the wallet has {M(p.Wallet)}{keeping} - about {p.Affordable} of the {p.Costs.Count} levels until more money comes in.");
 		}
 
 		if (p.Costs.Count > 0) {

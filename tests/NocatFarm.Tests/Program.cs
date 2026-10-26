@@ -28979,6 +28979,16 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	Check("outage: every account (meant to be on) cut off 5m+ - said once when all are back, with how long; the first sign-in, one account, a 2m blip - nothing",
 		firstQuiet && oneQuiet && blipQuiet && (s5 == null) && (s6?.ToEnglish() == "back online after 14m offline · all 2 account(s) signed back in") && (s7 == null),
 		s6?.ToEnglish() ?? "nothing said");
+
+	// 1.8.5 edge: a long outage, then every account paused (so none are "meant to be on") - never a false "back online · all 0 accounts"
+	var pw = new NocatFarm.Core.OutageWatch.Watch(null, false);
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [on, on], o0);                         // up
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [re, re], o0.AddMinutes(10));           // both lost - outage starts
+	(pw, _) = NocatFarm.Core.OutageWatch.Step(pw, [re, re], o0.AddMinutes(16));           // 6m later -> a long outage
+	(pw, var p1) = NocatFarm.Core.OutageWatch.Step(pw, new List<NocatFarm.Core.BotState>(), o0.AddMinutes(18));   // all paused mid-outage
+	(pw, var p2) = NocatFarm.Core.OutageWatch.Step(pw, [on, on], o0.AddMinutes(25));      // back
+	Check("outage edge: all accounts paused during an outage never fire a false 'all 0 accounts' line; the real return still fires once they're back",
+		(p1 == null) && (p2?.ToEnglish() == "back online after 15m offline · all 2 account(s) signed back in"), p1?.ToEnglish() ?? $"p2={p2?.ToEnglish()}");
 }
 
 // ── 1.8.5 the machine's health: memory, storage, heat - said plainly; a warning once each, again only after it recovered ──
@@ -38070,6 +38080,14 @@ static class Polish182Checks {
 			Check("levelup buy: the wallet holding less than the plan's total says how far it goes",
 				goalSaid.Contains("lv: the wallet has 0.83 CAD - about 2 of the 3 levels until more money comes in.", StringComparison.Ordinal)
 				&& !rich.Contains("the wallet has", StringComparison.Ordinal) && !plain.Contains("the wallet has", StringComparison.Ordinal), goalSaid);
+
+				// 1.8.5: "Always keep in the wallet" - the preview counts only what buying would really spend, and names what's kept
+				string kept = NocatFarm.Commands.LevelGoalSaid("lv", goal with { Wallet = 83, Keep = 30 }, askYes: true, buy: true);
+				string richKept = NocatFarm.Commands.LevelGoalSaid("lv", goal with { Wallet = 500, Keep = 460 }, askYes: true, buy: true);
+				Check("levelup buy 1.8.5: the kept reserve isn't counted - 0.83 with 0.30 kept buys 1 level not 2, and a rich wallet with most kept still shows the shortfall",
+					(goal.Affordable == 2) && ((goal with { Wallet = 83, Keep = 30 }).Affordable == 1)
+					&& kept.Contains("lv: the wallet has 0.83 CAD (keeping 0.30 CAD) - about 1 of the 3 levels", StringComparison.Ordinal)
+					&& richKept.Contains("(keeping 4.60 CAD) - about 1 of the 3 levels", StringComparison.Ordinal), kept);
 
 			// ── 5: 'swaps on' with a trade hold ──
 			string onHeld = NocatFarm.Commands.SwapsOnSaid("sw", 15, false);

@@ -35,7 +35,7 @@ public static class OutageWatch {
 			return (new Watch(since, w.Long || (now - since >= AtLeast), true), null);
 		}
 
-		if (w.Long && (w.Since is { } from) && meant.All(static s => s == BotState.Online)) {
+		if (w.Long && (w.Since is { } from) && (meant.Count > 0) && meant.All(static s => s == BotState.Online)) {
 			return (new Watch(null, false, true), new Said("back online after {0} offline · all {1} account(s) signed back in",
 				Fmt.Hm(Math.Max(1, (int) (now - from).TotalMinutes)), meant.Count));
 		}

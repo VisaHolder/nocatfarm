@@ -24,10 +24,10 @@ public static class BoxHealth {
 	private static long? Memory() {
 		try {
 			if (OperatingSystem.IsLinux() && File.Exists("/proc/meminfo")) {
-				string? line = File.ReadLines("/proc/meminfo").FirstOrDefault(static l => l.StartsWith("MemAvailable:", StringComparison.Ordinal));
+				string[] parts = (File.ReadLines("/proc/meminfo").FirstOrDefault(static l => l.StartsWith("MemAvailable:", StringComparison.Ordinal)) ?? "")
+					.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-				return line != null && long.TryParse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1], NumberStyles.None, CultureInfo.InvariantCulture, out long kb) && (kb > 0)
-					? kb / 1024 : null;
+				return (parts.Length > 1) && long.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out long kb) && (kb > 0) ? kb / 1024 : null;
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			// not readable here

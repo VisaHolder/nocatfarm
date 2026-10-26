@@ -2209,13 +2209,16 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// <param name="Usual">What a level usually costs - what the levels not found are counted at.</param>
 	/// <param name="Days">About how many days buying them takes at this account's pace.</param>
 	public sealed record GoalPreview(string Problem, int Level, int Xp, int Target, int Needed, int Held, IReadOnlyList<long> Costs, int Known, int Currency,
-		double Days, long MaxLevel, long Usual, long Wallet = -1) {
+		double Days, long MaxLevel, long Usual, long Wallet = -1, long Keep = 0) {
 		public long Total => Costs.Sum();
 
-		/// <summary>1.8.2: how many of the levels to buy the wallet pays for now - the cheapest first.</summary>
+		/// <summary>1.8.5: what the wallet pays for past "Always keep in the wallet" (never below it).</summary>
+		public long Usable => Wallet < 0 ? Wallet : Math.Max(0, Wallet - Keep);
+
+		/// <summary>1.8.2: how many of the levels to buy the wallet pays for now - the cheapest first. 1.8.5: past what's kept.</summary>
 		public int Affordable {
 			get {
-				long left = Wallet;
+				long left = Math.Max(0, Usable);
 				int n = 0;
 
 				foreach (long cost in Costs.Order()) {
@@ -2271,7 +2274,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			return new GoalPreview("", steam.Level, steam.Xp, target, needed, Math.Max(0, needed - toBuy), [.. levels.Select(static l => l.Cost)],
 				levels.Count(l => !plan.Estimated.Contains(l.App)), plan.Currency, GoalDays(Bot.Cfg, toBuy), plan.MaxLevelPrice,
-				plan.UsualLevelPrice > 0 ? plan.UsualLevelPrice : plan.MaxLevelPrice, plan.Wallet);
+				plan.UsualLevelPrice > 0 ? plan.UsualLevelPrice : plan.MaxLevelPrice, plan.Wallet, plan.Keep);
 		} finally {
 			if (steamMarket != null) {
 				steamMarket.ReuseFor = TimeSpan.Zero;
