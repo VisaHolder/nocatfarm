@@ -29120,17 +29120,19 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		var ca = NocatFarm.Web.DashboardCert.Authority();
 		bool madeNow = NocatFarm.Web.DashboardCert.MadeNow;
 		var leaf = NocatFarm.Web.DashboardCert.Current();
-		forget.Invoke(null, null);
+		string caPrint = ca.Thumbprint, leafPrint = leaf.Thumbprint, caSubject = ca.Subject, leafIssuer = leaf.Issuer;
+		bool leafKey = leaf.HasPrivateKey;
+		forget.Invoke(null, null);   // lets both go, as a restart would
 		var caAgain = NocatFarm.Web.DashboardCert.Authority();
 		var leafAgain = NocatFarm.Web.DashboardCert.Current();
 		string pfx = Path.Combine(tmpRoot, "config", "state", "dashboard-ca.pfx");
 		Check("https: the authority is made once and read back the same after a restart; the certificate it signs too, covering localhost and nocat.farm",
-			madeNow && !NocatFarm.Web.DashboardCert.MadeNow && (ca.Thumbprint == caAgain.Thumbprint) && (leaf.Thumbprint == leafAgain.Thumbprint)
-			&& (leaf.Issuer == ca.Subject) && leaf.HasPrivateKey && File.Exists(NocatFarm.Web.DashboardCert.CrtPath)
+			madeNow && !NocatFarm.Web.DashboardCert.MadeNow && (caPrint == caAgain.Thumbprint) && (leafPrint == leafAgain.Thumbprint)
+			&& (leafIssuer == caSubject) && leafKey && File.Exists(NocatFarm.Web.DashboardCert.CrtPath)
 			&& File.ReadAllText(NocatFarm.Web.DashboardCert.CrtPath).StartsWith("-----BEGIN CERTIFICATE-----", StringComparison.Ordinal)
 			&& !File.ReadAllText(NocatFarm.Web.DashboardCert.CrtPath).Contains("PRIVATE", StringComparison.Ordinal)
 			&& (OperatingSystem.IsWindows() || (File.GetUnixFileMode(pfx) == (UnixFileMode.UserRead | UnixFileMode.UserWrite)))
-			&& (NocatFarm.Web.DashboardCert.Fingerprint(ca).Split(':').Length == 32));
+			&& (NocatFarm.Web.DashboardCert.Fingerprint(caAgain).Split(':').Length == 32));
 		Check("https: the certificate's file never goes in a backup (only its public part, nowhere)",
 			((System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!) is var bp
 			&& !bp.IsMatch("state/dashboard-ca.pfx") && !bp.IsMatch("state/dashboard-cert.pfx") && !bp.IsMatch("state/dashboard-ca.crt"));

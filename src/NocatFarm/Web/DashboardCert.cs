@@ -57,7 +57,13 @@ public static class DashboardCert {
 			MadeNow = true;
 			_leaf = null;   // a new authority: the old certificate can't be trusted by it
 
-			return _ca = Load(CaPath) ?? made;
+			if (Load(CaPath) is { } saved) {
+				made.Dispose();   // macOS keeps a key in a temporary keychain file until its certificate is let go
+
+				return _ca = saved;
+			}
+
+			return _ca = made;
 		}
 	}
 
@@ -76,9 +82,16 @@ public static class DashboardCert {
 			X509Certificate2 ca = Authority();
 			HashSet<string> names = Names();
 
-			if ((_leaf ?? Load(LeafPath)) is { HasPrivateKey: true } had && (had.NotAfter > DateTime.Now.AddDays(30)) && (had.Issuer == ca.Subject)
-				&& Covers(had, names)) {
+			X509Certificate2? had = _leaf ?? Load(LeafPath);
+
+			if (had is { HasPrivateKey: true } && (had.NotAfter > DateTime.Now.AddDays(30)) && (had.Issuer == ca.Subject) && Covers(had, names)) {
 				return _leaf = had;
+			}
+
+			// One read from disk and not used is let go at once (macOS keeps each key in a temporary keychain file). The one in use
+			// stays - a handshake under way may still hold it; a new one is made only when the box's address changes.
+			if ((had != null) && !ReferenceEquals(had, _leaf)) {
+				had.Dispose();
 			}
 
 			using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -104,8 +117,13 @@ public static class DashboardCert {
 			using X509Certificate2 signed = req.Create(ca, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(800), serial);
 			X509Certificate2 made = signed.CopyWithPrivateKey(key);
 			Save(LeafPath, made);
+			X509Certificate2 kept = Load(LeafPath) ?? made;
 
-			return _leaf = Load(LeafPath) ?? made;
+			if (!ReferenceEquals(kept, made)) {
+				made.Dispose();
+			}
+
+			return _leaf = kept;
 		}
 	}
 
@@ -157,6 +175,8 @@ public static class DashboardCert {
 	/// <summary>Forget what's loaded - the checks, and a reset.</summary>
 	internal static void Forget() {
 		lock (Gate) {
+			_ca?.Dispose();
+			_leaf?.Dispose();
 			_ca = _leaf = null;
 			_checkedAt = default;
 			MadeNow = false;
