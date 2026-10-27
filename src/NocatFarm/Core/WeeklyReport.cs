@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 using NocatFarm.Config;
+using NocatFarm.Modules;
 
 namespace NocatFarm.Core;
 
@@ -144,11 +145,27 @@ public static class WeeklyReport {
 				(end is { } e && start is { } s) ? e - s : null, (end != null) && (start == null)));
 		}
 
-		return weeks.Count == 0 ? null : Card(weeks, r4r, thisWeek, today.Date.AddDays(-1), attention ?? [], DateTime.Now);
+		// 1.8.7: each account's levelling - XP, sales, spending and the time to its next goal - for the ones that did any of it
+		DateTime fromUtc = thisWeek.ToUniversalTime(), toUtc = today.Date.ToUniversalTime();
+		List<ReportCard.Row> levelling = [];
+
+		foreach (Bot b in fleet) {
+			int currency = b.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? 0 : (int) b.WalletCurrency;
+			BuyLedger ledger = BuyLedger.Of(b.Name);
+			long spent = Math.Max(0, ledger.SpentSince(fromUtc) - ledger.SpentSince(toUtc));
+
+			if (LevelReport.Line(LevelReport.Load(b.Name), fromUtc, toUtc, spent, currency, b.Cfg.BuyStopAtLevel) is { } line) {
+				levelling.Add(new ReportCard.Row(new Said("{0}", b.Name), line));
+			}
+		}
+
+		return weeks.Count == 0 ? null : Card(weeks, r4r, thisWeek, today.Date.AddDays(-1), attention ?? [], DateTime.Now, levelling);
 	}
 
 	/// <summary>The weekly card from plain figures, accounts in the order given - separate so the checks can hand it figures.</summary>
-	public static ReportCard Card(IReadOnlyList<Week> weeks, bool r4r, DateTime first, DateTime last, List<ReportCard.Row> attention, DateTime local) {
+	/// <param name="levelling">1.8.7: each account's levelling line, when it levelled, sold or bought.</param>
+	public static ReportCard Card(IReadOnlyList<Week> weeks, bool r4r, DateTime first, DateTime last, List<ReportCard.Row> attention, DateTime local,
+		List<ReportCard.Row>? levelling = null) {
 		List<ReportCard.Row> rows = [.. weeks.Select(w => Line(new Said("{0}", w.Name), w, partial: false))];
 
 		// A total that silently left out an account whose change isn't known yet would read as the whole story - so it
@@ -167,6 +184,11 @@ public static class WeeklyReport {
 		}
 
 		sections.Add(new(new Said("This week"), default, rows));
+
+		if (levelling is { Count: > 0 }) {
+			sections.Add(new(new Said("Levelling"), default, levelling));
+		}
+
 		sections.Add(ReportCard.System());
 
 		return new ReportCard {

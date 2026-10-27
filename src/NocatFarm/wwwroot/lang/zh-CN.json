@@ -1,5 +1,14 @@
 {
   "ui": {
+    "couldn't note the levelling figures: {0}": "无法记录升级数据：{0}",
+    "+{0} XP (level {1} -> {2})": "+{0} XP（等级 {1} -> {2}）",
+    "+{0} XP (level {1})": "+{0} XP（等级 {1}）",
+    "sold {0}": "售出 {0}",
+    "spent {0}": "花费 {0}",
+    "level {0} in about {1} day(s) at this pace": "按这个速度约 {1} 天到等级 {0}",
+    "level {0} in about {1} weeks at this pace": "按这个速度约 {1} 周到等级 {0}",
+    "{0} market listing(s) on {1} waiting for your phone since {2} - confirm or cancel them in the Steam app": "{1} 上有 {0} 个市场上架自 {2} 起等待你在手机上确认 - 请在 Steam 应用中确认或取消",
+    "Levelling": "升级",
     "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "从外部通过 https 打开，使用 nocat.farm 自己的证书 - 在手机上安装一次（会发到 Telegram，或输入 'dashboard cert'）。",
     "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "从外部只能通过 https 打开，使用 nocat.farm 自己的证书 - 'dashboard cert' 会把它发到 Telegram，在手机上安装一次即可。",
     "dashboard certificate {0} couldn't be read - a new one is made: {1}": "无法读取控制面板证书 {0} - 正在新建：{1}",

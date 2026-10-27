@@ -234,6 +234,37 @@ public static class OurListings {
 		}
 	}
 
+	/// <summary>1.8.7: how long a listing of ours may wait for the owner's phone before it's said once.</summary>
+	public static readonly TimeSpan RemindAfter = TimeSpan.FromHours(3);
+
+	/// <summary>The listings each account was reminded of - each said once while it waits (a restart may say it once more).</summary>
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, HashSet<ulong>> Reminded = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// 1.8.7: listings nocat.farm put up that have waited <see cref="RemindAfter"/> or more for a confirmation on the owner's
+	/// phone - never seen up on the market. Said once when one starts counting, with how many wait and since when; nothing when
+	/// every one waiting was said already (the account's own authenticator confirms its own, so this is the phone ones).
+	/// reap had listings sitting unconfirmed for a day without knowing.
+	/// </summary>
+	internal static Said? PhoneReminder(string account, IReadOnlyList<Entry> entries, DateTime now) {
+		List<Entry> waiting = [.. entries.Where(e => e is { Tracked: true, Active: false, Settled: false } && (now - e.At >= RemindAfter))];
+		HashSet<ulong> told = Reminded.GetOrAdd(account, static _ => []);
+
+		lock (told) {
+			told.IntersectWith(waiting.Select(static e => e.AssetId));   // ones no longer waiting are forgotten
+
+			if (!waiting.Any(e => !told.Contains(e.AssetId))) {
+				return null;
+			}
+
+			told.UnionWith(waiting.Select(static e => e.AssetId));
+			DateTime oldest = waiting.Min(static e => e.At);
+
+			return new Said("{0} market listing(s) on {1} waiting for your phone since {2} - confirm or cancel them in the Steam app", waiting.Count, account,
+				(Func<string>) (() => Fmt.Clock(oldest)));
+		}
+	}
+
 	/// <summary><see cref="Judge"/> on the account's own records, saved. Returns the declined ones.</summary>
 	public static List<Entry> Review(string account, IReadOnlyList<Seller.Listing> listings, History? history, DateTime now) =>
 		ReviewAll(account, listings, history, now).Declined;
@@ -261,6 +292,11 @@ public static class OurListings {
 			(List<Entry> entries, List<Entry> declined, List<Entry> sold) = JudgeAll(all, listings, complete, history, now);
 
 			bool saved = entries.SequenceEqual(all) || Write(account, entries);
+
+			// 1.8.7: listings left waiting for the owner's phone - one nudge, on Telegram and Discord too
+			if (PhoneReminder(account, entries, now) is { } nudge) {
+				Log.Attention(nudge, account);
+			}
 
 			// Each sale counted once, in the history and the live stats on nocat.lol (1.8.1): only once it's written down
 			// as told - one that couldn't be is told again next look, and counted then.

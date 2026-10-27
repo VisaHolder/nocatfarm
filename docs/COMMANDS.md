@@ -16,7 +16,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `copy` `remove` `enable` `disable` `stuck` `steam` |
 | **[Playing](#playing)** | `play` `gamename` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
-| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `craft` `buy` `sets` `levelup` |
+| **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `spare` `craft` `buy` `sets` `addmoney` `levelup` |
 | **[Trades & items](#trades--items)** | `offers` `trade` `send` `swaps` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
@@ -27,7 +27,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-87 commands in all.
+88 commands in all.
 
 ## Accounts
 
@@ -76,6 +76,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `craft now <account> \| preview <account>` | 'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing. |
 | `buy [account\|all] \| preview [account\|all] \| on\|off\|do <account>` | Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent. |
 | `sets [account]` | The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys. |
+| `addmoney <account> <amount>` <br>also `topup` | Before you add money to an account's Steam wallet: what that amount would buy now. 'addmoney new 100' says how many badge levels (and XP) 100 in its wallet currency buys at today's cheapest prices - with what's in the wallet already and less 'Always keep in the wallet' - the level it gets to, and how long buying takes at its 'Spend at most a day' and 'a week' (and human mode's pace). Nothing is bought; prices move, and every card is priced again right before it's bought. |
 | `levelup <account> <level> [buy [yes]] \| <account> stop` <br>also `lvlup` | What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal. |
 
 ## Trades & items
@@ -158,7 +159,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with "rot". |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window. |
-| `dashboard [unlock]` <br>also `web`, `link` | The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. To open it from anywhere, see 'anywhere'. |
+| `dashboard [unlock\|cert]` <br>also `web`, `link` | The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'. |
 | `anywhere [on\|off]` <br>also `remote` | Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too. |
 | `clear` <br>also `cls` | Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
 | `visitors [signout]` <br>also `who` | Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password. |

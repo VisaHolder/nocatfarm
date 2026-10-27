@@ -1,5 +1,14 @@
 {
   "ui": {
+    "couldn't note the levelling figures: {0}": "no se pudieron anotar las cifras de nivel: {0}",
+    "+{0} XP (level {1} -> {2})": "+{0} XP (nivel {1} -> {2})",
+    "+{0} XP (level {1})": "+{0} XP (nivel {1})",
+    "sold {0}": "vendido {0}",
+    "spent {0}": "gastado {0}",
+    "level {0} in about {1} day(s) at this pace": "nivel {0} en unos {1} día(s) a este ritmo",
+    "level {0} in about {1} weeks at this pace": "nivel {0} en unas {1} semanas a este ritmo",
+    "{0} market listing(s) on {1} waiting for your phone since {2} - confirm or cancel them in the Steam app": "{0} anuncio(s) del mercado en {1} esperan tu móvil desde {2} - confírmalos o cancélalos en la app de Steam",
+    "Levelling": "Subir de nivel",
     "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "Desde fuera se abre por https con el certificado propio de nocat.farm - instálalo una vez en tu móvil (llega por Telegram, o escribe 'dashboard cert').",
     "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "Desde fuera solo se abre por https, con el certificado propio de nocat.farm - 'dashboard cert' lo envía a Telegram para instalarlo una vez en tu móvil.",
     "dashboard certificate {0} couldn't be read - a new one is made: {1}": "no se pudo leer el certificado del panel {0} - se crea uno nuevo: {1}",

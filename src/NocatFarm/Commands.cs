@@ -87,6 +87,7 @@ public static partial class Commands {
 		new("craft", "now <account> | preview <account>", GroupCards, "'craft now' looks at the account's badges now: crafts every finished set (or, with buying cards on, sells a set worth more than the levels it would buy) instead of waiting for the day's look. Human mode still waits for its own day. 'craft preview' shows each finished set, whether it would be crafted or sold, and why - it crafts and sells nothing."),
 		new("buy", "[account|all] | preview [account|all] | on|off|do <account>", GroupCards, "Buying missing cards: 'buy preview' shows exactly which cards it would buy next, for which badge, at what price, and the XP for the money - and buys nothing. Nothing is ever bought until it's turned on - the switch in the account's settings, after its preview, or 'buy on <account>'; then it buys by itself within its limits (a day's and a week's spending, never more than the wallet holds, only whole sets), and 'buy do <account>' buys the next ones now. 'buy off <account>' turns it off. Bare 'buy' says what each account has spent."),
 		new("sets", "[account]", GroupCards, "The cheapest whole card sets on the market right now - for any game, played or owned or not (a badge can be crafted without the game) - with each set's price, its cards, and the XP for the money. With an account, only badges it can still level, priced in its wallet's currency. The set finder behind it reads the market a little at a time (up to 3,000 cards a day) while an account buys the cheapest full sets, and for a day after you type 'sets'; it says how much of the market it has looked at and when. Read-only: buying cards prices every card again on the market before it buys."),
+		new("addmoney", "<account> <amount>", GroupCards, "Before you add money to an account's Steam wallet: what that amount would buy now. 'addmoney new 100' says how many badge levels (and XP) 100 in its wallet currency buys at today's cheapest prices - with what's in the wallet already and less 'Always keep in the wallet' - the level it gets to, and how long buying takes at its 'Spend at most a day' and 'a week' (and human mode's pace). Nothing is bought; prices move, and every card is priced again right before it's bought.", "topup"),
 		new("levelup", "<account> <level> [buy [yes]] | <account> stop", GroupCards, "What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
@@ -984,6 +985,7 @@ public static partial class Commands {
 				"health" => await HealthCommandAsync(mgr, rest).ConfigureAwait(false),   // 1.8.0
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
 				"levelup" or "lvlup" => await LevelUpAsync(mgr, rest).ConfigureAwait(false),
+				"addmoney" or "topup" => await AddMoneyAsync(mgr, rest).ConfigureAwait(false),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, AllIsEvery(rest)).ConfigureAwait(false),
 				"human" => Human(mgr, AllIsEvery(rest)),
 				"habits" => Habits(mgr, AllIsEvery(rest)),
@@ -3435,6 +3437,100 @@ public static partial class Commands {
 		return buyer.StartGoal(p) is { } why
 			? said + Environment.NewLine + $"{bot.Name}: level goal not started - {why}."
 			: said + Environment.NewLine + $"{bot.Name}: level goal {target} started - it buys these levels at its own pace{(bot.Cfg.LegitMode ? ", in its day" : "")}, never over {BuyPlan.Money(p.Total * 11 / 10, p.Currency)}, and stops at level {target}. 'buy {bot.Name}' shows how far it got; 'levelup {bot.Name} stop' ends it.";
+	}
+
+	/// <summary>
+	/// 1.8.7 'addmoney &lt;account&gt; &lt;amount&gt;': what adding that much to the wallet would buy, before it's added - the levels at
+	/// today's cheapest known prices (the same list 'levelup' prices), the level it reaches, and how long its limits make it take.
+	/// </summary>
+	private static async Task<string> AddMoneyAsync(BotManager mgr, string[] args) {
+		const string Usage = "addmoney <account> <amount> - what adding that much to its Steam wallet would buy, e.g. 'addmoney new 100'.";
+
+		if ((args.Length != 2) || !decimal.TryParse(args[1].Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal amount)
+			|| (amount <= 0) || (amount > 100_000)) {
+			return Usage;
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return $"{bot.Name}: not logged in";
+		}
+
+		if (BotManager.ModuleOf<CardBuyer>(bot) is not { } buyer) {
+			return $"{bot.Name}: buying cards isn't running on it.";
+		}
+
+		CardBuyer.GoalPreview p = await buyer.GoalPreviewAsync(5000, CancellationToken.None).ConfigureAwait(false);
+
+		return AddMoneySaid(bot.Name, p, (long) Math.Round(amount * 100), BuyPlan.Limit(bot.Cfg.BuyDailyLimit), BuyPlan.Limit(bot.Cfg.BuyWeeklyLimit), bot.Cfg);
+	}
+
+	/// <summary>1.8.7: 'addmoney' written out, from a level preview - English, like every console reply.</summary>
+	/// <param name="add">The amount to add, in the wallet currency's cents.</param>
+	public static string AddMoneySaid(string name, CardBuyer.GoalPreview p, long add, long dayLimit, long weekLimit, BotConfig cfg) {
+		if (p.Problem.Length > 0) {
+			return $"{name}: {p.Problem}.";
+		}
+
+		string M(long cents) => BuyPlan.Money(cents, p.Currency);
+		long wallet = Math.Max(0, p.Wallet);
+		long spendable = Math.Max(0, wallet + add - p.Keep);
+
+		// The cheapest levels first, as buying takes them; past the levels priced now, at what a level usually costs.
+		long left = spendable, spent = 0;
+		int known = 0;
+
+		foreach (long cost in p.Costs.Order()) {
+			if (cost > left) {
+				break;
+			}
+
+			left -= cost;
+			spent += cost;
+			known++;
+		}
+
+		int more = (known == p.Costs.Count) && (p.Usual > 0) ? (int) Math.Min(5000, left / p.Usual) : 0;
+		spent += more * Math.Max(0, p.Usual);
+		int levels = known + more;
+		long xp = p.Xp + (levels * 100L);
+		int reach = p.Level;
+
+		while ((reach < 5000) && (BuyPlan.XpFor(reach + 1) <= xp)) {
+			reach++;
+		}
+
+		List<string> lines = [
+			$"{name}: add {M(add)} - with {M(wallet)} in the wallet{(p.Keep > 0 ? $" and {M(p.Keep)} always kept" : "")}, {M(spendable)} to spend.",
+			levels == 0
+				? $"{name}: that buys no badge level at today's prices (the cheapest is {(p.Costs.Count > 0 ? M(p.Costs.Min()) : "not known yet")})."
+				: $"{name}: about {levels} badge level(s) - {levels * 100:N0} XP - for about {M(spent)}: level {p.Level} -> about {reach}"
+					+ (more > 0 ? $" ({more} of them at today's usual {M(p.Usual)} a level - the set finder hasn't priced that many yet)." : ".")
+		];
+
+		if (levels > 0) {
+			string pace;
+
+			if ((dayLimit <= 0) || (weekLimit <= 0)) {
+				pace = "buying spends nothing now - 'Spend at most a day' or 'a week' is 0";
+			} else {
+				double byDay = dayLimit >= BuyPlan.NoLimit ? 0 : (double) spent / dayLimit;
+				double byWeek = weekLimit >= BuyPlan.NoLimit ? 0 : spent * 7.0 / weekLimit;
+				double byPace = CardBuyer.GoalDays(cfg, levels);
+				double days = Math.Max(Math.Max(byDay, byWeek), byPace);
+				string why = (days == byWeek) && (byWeek > 0) ? $"the week's {M(weekLimit)} sets the pace"
+					: (days == byDay) && (byDay > 0) ? $"the day's {M(dayLimit)} sets the pace"
+					: cfg.LegitMode ? "human mode's pace" : "its pace";
+				pace = $"about {Math.Max(1, Math.Ceiling(days)):0} day(s) to buy - {why}";
+			}
+
+			lines.Add($"{name}: {pace}. Nothing bought - prices move, and every card is priced again right before it's bought.");
+		}
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	/// <summary>A level estimate written out (English, like every console reply).</summary>

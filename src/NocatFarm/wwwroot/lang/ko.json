@@ -1,5 +1,14 @@
 {
   "ui": {
+    "couldn't note the levelling figures: {0}": "레벨 수치를 기록할 수 없음: {0}",
+    "+{0} XP (level {1} -> {2})": "+{0} XP (레벨 {1} -> {2})",
+    "+{0} XP (level {1})": "+{0} XP (레벨 {1})",
+    "sold {0}": "판매 {0}",
+    "spent {0}": "지출 {0}",
+    "level {0} in about {1} day(s) at this pace": "이 속도면 약 {1}일 후 레벨 {0}",
+    "level {0} in about {1} weeks at this pace": "이 속도면 약 {1}주 후 레벨 {0}",
+    "{0} market listing(s) on {1} waiting for your phone since {2} - confirm or cancel them in the Steam app": "{1}의 장터 판매 {0}건이 {2}부터 휴대폰 확인을 기다리는 중 - Steam 앱에서 확인하거나 취소하세요",
+    "Levelling": "레벨업",
     "From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert').": "외부에서는 nocat.farm 자체 인증서로 https로 열림 - 휴대폰에 한 번 설치하세요 (Telegram으로 오거나 'dashboard cert' 입력).",
     "From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once.": "외부에서는 nocat.farm 자체 인증서로 https로만 열림 - 'dashboard cert'로 Telegram에 보내 휴대폰에 한 번 설치하세요.",
     "dashboard certificate {0} couldn't be read - a new one is made: {1}": "대시보드 인증서 {0}을(를) 읽을 수 없음 - 새로 만듦: {1}",

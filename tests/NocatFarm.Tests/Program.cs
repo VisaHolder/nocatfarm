@@ -29214,6 +29214,53 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		File.ReadAllText(Path.Combine(src, "Core", "BackupSchedule.cs")).Contains("// 1.8.6: any failure is a failed backup", StringComparison.Ordinal));
 }
 
+// ── 1.8.7: 'addmoney' says what an amount buys before it's added; listings waiting on the phone are said once; the weekly
+// report's levelling line ──
+{
+	const int Cad = 20;
+	// 'addmoney': 3.00 in the wallet, 1.00 always kept, 10.00 added - 12.00 to spend on levels at 0.30, 0.40, 0.50, then 0.60 usual
+	var gp = new NocatFarm.Modules.CardBuyer.GoalPreview("", 10, (int) NocatFarm.Modules.BuyPlan.XpFor(10), 5000, 4990, 0, [40, 30, 50], 3, Cad, 1, 0, 60, 300, 100);
+	var robotCfg = new NocatFarm.Config.BotConfig { LegitMode = false };
+	string money = NocatFarm.Commands.AddMoneySaid("new", gp, 1000, 150, 800, robotCfg);
+	string zero = NocatFarm.Commands.AddMoneySaid("new", gp, 1000, 150, 0, robotCfg);
+	string noLevel = NocatFarm.Commands.AddMoneySaid("new", gp with { Costs = [5000], Usual = 5000, Wallet = 0, Keep = 0 }, 100, 150, 800, robotCfg);
+	Check("addmoney: wallet plus the amount less what's kept, the cheapest levels first, then at the usual price - the level it reaches and the days its limits take",
+		money.Contains("12.00 CAD to spend", StringComparison.Ordinal) && money.Contains("about 21 badge level(s) - 2,100 XP - for about 12.00 CAD: level 10 -> about 20", StringComparison.Ordinal)
+		&& money.Contains("18 of them at today's usual 0.60 CAD a level", StringComparison.Ordinal) && money.Contains("about 11 day(s) to buy - the week's 8.00 CAD sets the pace", StringComparison.Ordinal)
+		&& zero.Contains("spends nothing now", StringComparison.Ordinal) && noLevel.Contains("buys no badge level", StringComparison.Ordinal), money + " | " + zero + " | " + noLevel);
+
+	// Listings waiting on the phone: once when one has waited 3 hours, not again while the same ones wait, again for a new one.
+	DateTime pn = new(2026, 10, 27, 12, 0, 0, DateTimeKind.Utc);
+	var remind = typeof(NocatFarm.Core.OurListings).GetMethod("PhoneReminder", BindingFlags.NonPublic | BindingFlags.Static)!;
+	NocatFarm.Core.Said? Nudge(List<NocatFarm.Core.OurListings.Entry> e, DateTime at) => (NocatFarm.Core.Said?) remind.Invoke(null, ["harness-phone", e, at]);
+	var w1 = new NocatFarm.Core.OurListings.Entry(1, "440-A", 10, pn.AddHours(-4), Tracked: true);
+	var w2 = new NocatFarm.Core.OurListings.Entry(2, "440-B", 10, pn.AddHours(-1), Tracked: true);
+	var live = new NocatFarm.Core.OurListings.Entry(3, "440-C", 10, pn.AddHours(-5), Tracked: true, Active: true);
+	string first = Nudge([w1, w2, live], pn)?.ToEnglish() ?? "";
+	bool quietAgain = Nudge([w1, w2, live], pn.AddMinutes(30)) == null;
+	string second = Nudge([w1, w2, live], pn.AddHours(3))?.ToEnglish() ?? "";
+	bool quietThen = Nudge([w1, w2], pn.AddHours(4)) == null;
+	Check("phone: listings waiting 3h+ for the phone are said once (how many, since when); the same ones not again; a new one that starts waiting is",
+		first.StartsWith("1 market listing(s) on harness-phone waiting for your phone since", StringComparison.Ordinal) && quietAgain
+		&& second.StartsWith("2 market listing(s) on harness-phone", StringComparison.Ordinal) && quietThen, first + " | " + second);
+
+	// The weekly levelling line.
+	DateTime from = new(2026, 10, 19, 3, 0, 0, DateTimeKind.Utc), to = from.AddDays(7);
+	var book = new NocatFarm.Core.LevelReport.Book([new(from.AddHours(-2), 52, NocatFarm.Modules.BuyPlan.XpFor(52) + 100), new(to.AddHours(-1), 54, NocatFarm.Modules.BuyPlan.XpFor(52) + 1300)],
+		[new(from.AddDays(2), 60, Cad), new(from.AddDays(3), 32, Cad), new(from.AddDays(-3), 999, Cad)]);
+	string lvl = NocatFarm.Core.LevelReport.Line(book, from, to, 640, Cad, 0)?.ToEnglish() ?? "";
+	Check("weekly: XP gained and the level it went to, what sold and what buying spent in the week, and the time to level 100 at this pace",
+		lvl.StartsWith("+1,200 XP (level 52 -> 54) · sold 0.92 CAD · spent 6.40 CAD · level 100 in about", StringComparison.Ordinal) && lvl.EndsWith("weeks at this pace", StringComparison.Ordinal)
+		&& (NocatFarm.Core.LevelReport.Line(new([], []), from, to, 0, Cad, 0) == null)
+		&& (NocatFarm.Core.LevelReport.Goal(54, 0) == 100) && (NocatFarm.Core.LevelReport.Goal(54, 60) == 60) && (NocatFarm.Core.LevelReport.Goal(120, 0) == 200), lvl);
+	var card = NocatFarm.Core.WeeklyReport.Card([new("new", 600, 500, 1, 0, 3, null)], true, from, to, [], DateTime.Now,
+		[new NocatFarm.Core.ReportCard.Row(new NocatFarm.Core.Said("{0}", "new"), new NocatFarm.Core.Said("{0}", lvl))]);
+	var bp = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+	Check("weekly: the levelling lines are their own section of the report; the figures go in a backup and with the account",
+		card.Text().Contains("Levelling", StringComparison.OrdinalIgnoreCase) && card.Text().Contains("+1,200 XP", StringComparison.Ordinal)
+		&& bp.IsMatch("state/levels-new.json") && NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "levels-", ".json")));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
