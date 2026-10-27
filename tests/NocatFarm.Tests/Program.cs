@@ -7125,7 +7125,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("remove, 300 rounds beside reloads: running exactly when the file is there", stressWrong == 0, $"{stressWrong} of 300");
 		Check("remove, 300 rounds beside reloads: removed means gone - no file left to come back at the next start", stressLeft == 0, $"{stressLeft} of 300");
 		Check("remove, 300 rounds beside reloads: no overnight mark left behind for a removed account", marks == 0, $"{marks} left");
-		Check("remove, 300 rounds beside reloads: done in a few seconds", stressTook.Elapsed < TimeSpan.FromSeconds(20), $"{stressTook.Elapsed.TotalSeconds:0.0}s");
+		// GitHub's Intel Macs are several times slower at this than anything else (9-23s there, 2-6s elsewhere) - more room there.
+		bool slowMac = OperatingSystem.IsMacOS() && (System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64);
+		Check("remove, 300 rounds beside reloads: done in a few seconds", stressTook.Elapsed < TimeSpan.FromSeconds(slowMac ? 45 : 20), $"{stressTook.Elapsed.TotalSeconds:0.0}s");
 		await mgr.RemoveAsync("synced");
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
