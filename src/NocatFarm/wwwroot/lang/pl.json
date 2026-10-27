@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "Gra w {0} - nie ma osiągnięć do zdobycia.",
     "Playing {0} — every achievement is already done ({1}).": "Gra w {0} - wszystkie osiągnięcia są już zrobione ({1}).",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "Gra w {0} - {1}; resztę może przyznać tylko sam Steam.",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "Gra w {0} - {1}, czyli twój limit {2}%, więc tu się zatrzymuje. Podnieś „{3}”, żeby kontynuował.",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "Gra w {0} - {1}, czyli jej limit {2}%, więc tu się zatrzymuje. Każda gra zatrzymuje się we własnym punkcie, nigdy powyżej „{3}”.",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "Zdobywa w {0} - {1} rozegrane, {2}. Kolejne wymagają najpierw więcej godzin.",
     "on your never list": "na liście „Nigdy w tych grach”",
     "the main game - left alone": "gra główna - zostawiona w spokoju",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "{0} z {1} zrobione",
     "Game": "Gra",
     "Next": "Dalej",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Zatrzymuje się na {0}% każdej gry i nigdy nie odblokowuje kamienia milowego przed osiągnięciami, których dotyczy.",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "Każda gra zatrzymuje się we własnym punkcie, nigdy powyżej {0}%, a kamień milowy przychodzi dopiero zaraz po osiągnięciach, których dotyczy.",
     "Update": "Aktualizuj",
     "Update to {0}": "Zaktualizuj do {0}",
     "Update to {0}?": "Zaktualizować do {0}?",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "Nigdy nie ukończ więcej gry niż",
-      "tip": "Najwięcej, ile ukończy w jednej grze, w procentach. Kilka niezdobytych wygląda jak prawdziwa biblioteka. Gdy gra to osiągnie, polowanie zostawia ją na dobre - podnieś tę wartość, a wróci. Polecenie grind to ignoruje."
+      "tip": "Najwięcej, ile ukończy w jednej grze, w procentach. Każda gra zatrzymuje się we własnym punkcie między 60% a 95%, nigdy powyżej tej wartości, więc nie wszystkie kończą na tym samym udziale. Kilka niezdobytych wygląda jak prawdziwa biblioteka. Gdy gra to osiągnie, polowanie zostawia ją na dobre - podnieś tę wartość, a wrócą te zatrzymane na niej. Polecenie grind to ignoruje."
     },
     "AchievementBurstMinPct": {
       "label": "Szybkie serie tylko dla osiągnięć, które ma co najmniej",

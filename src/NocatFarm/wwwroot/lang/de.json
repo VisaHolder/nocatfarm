@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "Spielt {0} - es hat keine Erfolge zu verdienen.",
     "Playing {0} — every achievement is already done ({1}).": "Spielt {0} - alle Erfolge sind schon erledigt ({1}).",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "Spielt {0} - {1}; den Rest kann nur Steam selbst vergeben.",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "Spielt {0} - {1}, das ist deine Obergrenze von {2}%, also hält es hier an. Erhöhe „{3}“, damit es weitermacht.",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "Spielt {0} - {1}, das ist seine Obergrenze von {2}%, also hält es hier an. Jedes Spiel hört an seinem eigenen Punkt auf, nie über „{3}“.",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "Verdient gerade in {0} - {1} gespielt, {2}. Die nächsten brauchen erst mehr Spielzeit.",
     "on your never list": "steht in „Nie in diesen Spielen“",
     "the main game - left alone": "das Hauptspiel - bleibt unberührt",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "{0} von {1} erledigt",
     "Game": "Spiel",
     "Next": "Weiter",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Es hört bei {0}% eines Spiels auf und schaltet einen Meilenstein nie vor den Erfolgen frei, deren Meilenstein er ist.",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "Jedes Spiel hört an seinem eigenen Punkt auf, nie über {0}%, und ein Meilenstein kommt erst direkt nach den Erfolgen, deren Meilenstein er ist.",
     "Update": "Aktualisieren",
     "Update to {0}": "Auf {0} aktualisieren",
     "Update to {0}?": "Auf {0} aktualisieren?",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "Nie mehr von einem Spiel abschließen als",
-      "tip": "Wie viel Prozent eines Spiels es höchstens abschließt. Ein paar offene Errungenschaften wirken wie eine echte Bibliothek. Hat ein Spiel das erreicht, lässt die Jagd es endgültig - erhöhst du den Wert, kommt es zurück. Der Befehl grind ignoriert das."
+      "tip": "Wie viel Prozent eines Spiels es höchstens abschließt. Jedes Spiel hört an seinem eigenen Punkt zwischen 60% und 95% auf, nie über diesem Wert, damit nicht alle beim gleichen Anteil enden. Ein paar offene Errungenschaften wirken wie eine echte Bibliothek. Hat ein Spiel das erreicht, lässt die Jagd es endgültig - erhöhst du den Wert, kommen die dort angehaltenen zurück. Der Befehl grind ignoriert das."
     },
     "AchievementBurstMinPct": {
       "label": "Schnelle Serien nur für Erfolge, die mindestens so viele haben",

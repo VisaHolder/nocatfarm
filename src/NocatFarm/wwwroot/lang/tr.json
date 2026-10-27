@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "{0} oynanıyor - kazanılacak başarım yok.",
     "Playing {0} — every achievement is already done ({1}).": "{0} oynanıyor - tüm başarımlar zaten tamam ({1}).",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "{0} oynanıyor - {1}; kalanları yalnızca Steam'in kendisi verebilir.",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "{0} oynanıyor - {1}, bu senin %{2} sınırın, bu yüzden burada durdu. Devam etmesi için “{3}” değerini yükselt.",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "{0} oynanıyor - {1}, bu oyunun %{2} sınırı, bu yüzden burada durdu. Her oyun kendi noktasında durur, asla “{3}” değerinin üstüne çıkmaz.",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "{0} oyununda kazanıyor - {1} oynandı, {2}. Sonrakiler için önce daha fazla saat gerekiyor.",
     "on your never list": "“Bu oyunlarda asla” listesinde",
     "the main game - left alone": "ana oyun - dokunulmuyor",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "{1} içinden {0} tamam",
     "Game": "Oyun",
     "Next": "İleri",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Her oyunun %{0} kadarında durur ve bir kilometre taşını, ait olduğu başarımlardan önce asla açmaz.",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "Her oyun kendi noktasında durur, asla %{0} üstüne çıkmaz; bir kilometre taşı da ancak ait olduğu başarımların hemen ardından gelir.",
     "Update": "Güncelle",
     "Update to {0}": "{0} sürümüne güncelle",
     "Update to {0}?": "{0} sürümüne güncellensin mi?",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "Bir oyunun en fazla şu kadarını tamamla",
-      "tip": "Herhangi bir oyunu en fazla yüzde kaç tamamlayacağı. Birkaçını kazanılmamış bırakmak gerçek bir kütüphane gibi görünür. Bir oyun oraya ulaşınca av onu kalıcı olarak bırakır - bu değeri yükseltirsen geri gelir. grind komutu bunu yok sayar."
+      "tip": "Herhangi bir oyunu en fazla yüzde kaç tamamlayacağı. Her oyun %60 ile %95 arasında kendi noktasında durur, asla bu değerin üstüne çıkmaz; böylece hepsi aynı oranda bitmez. Birkaçını kazanılmamış bırakmak gerçek bir kütüphane gibi görünür. Bir oyun oraya ulaşınca av onu kalıcı olarak bırakır - bu değeri yükseltirsen bu değerde durmuş olanlar geri gelir. grind komutu bunu yok sayar."
     },
     "AchievementBurstMinPct": {
       "label": "Hızlı seriler yalnızca en az şu kadarının sahip olduğu başarımlar için",

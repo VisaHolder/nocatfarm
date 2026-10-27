@@ -13,8 +13,11 @@ achievements myaccount 440 lock ACH_NAME    # put one back
 
 But unlocking a whole list at once shows on the profile forever, all with one timestamp. **Earn achievements over
 time** (`UnlockAchievements`, off) is the gentle way. It unlocks them only in a game the account is actually
-playing, roughly one every hour or two of play, and never finishes more than 90% of a game (*Never complete more of a game than*). Rare
-achievements only open up as playtime builds, and milestones wait for the achievements they depend on. *How fast*
+playing, roughly one every hour or two of play, and never finishes more than 90% of a game (*Never complete more of a game than*).
+Each game stops at its own point between 60% and 95%, never above that setting, so the library isn't all at one share. Rare
+achievements only open up as playtime builds. A milestone ("Achieve 5 of the Sniper achievements", "Unlock 10
+achievements") is never unlocked by itself: it comes a few seconds after the achievement that completes it, the way the
+game would award it. *How fast*
 (careful, normal or brisk) doubles or halves every wait - see [How fast](#how-fast). *Never in these games* keeps it out of games you pick, *Only
 these games* limits it to a list, and *Earn them in the main game too* (on) decides whether a human-mode account's
 main game joins in. Hundreds of hours with no achievements looks odd, so it's best left on.
@@ -40,11 +43,19 @@ most games (the usual figures - a few games have their own):
 | | Normal | Careful | Brisk |
 |---|---|---|---|
 | First 3 in a game: clock gap | 20-120 min | 40-240 min | 10-60 min |
-| First 3 in a game: play needed | 25 min | 50 min | 12 min |
+| First 3 in a game: play needed | 25-40 min | 50-80 min | 12-19 min |
 | After that: clock gap | 60-150 min | 120-300 min | 30-75 min |
-| After that: play needed | 25 min | 50 min | 12 min |
+| After that: play needed | 25-40 min | 50-80 min | 12-19 min |
 | Quick follow-ups (a level's cluster) | 1-4 min | 2-8 min | 1-2 min |
-| During a `grind` (default 12-24 min) | 12-24 min | 24-48 min | 6-12 min |
+| During a `grind`: clock gap (default 12-24 min) | 12-24 min | 24-48 min | 6-12 min |
+| After an unlock in any game | 15-40 min | 15-40 min | 15-40 min |
+
+The play needed is picked again after every unlock, so neither the first few nor a `grind` land on a steady beat: a
+grind's next one comes whenever both its clock gap and that unlock's play are done, usually 25-40 minutes on normal.
+After any unlock, every game on the account waits 15-40 minutes before the next one, as a person only plays one game
+at a time. Quick follow-ups in the same game, and the ones a game awards by itself (milestones, "all other
+achievements"), don't wait for it. A cluster ends with its sitting: after a break, the night or a restart, the next
+one waits the full time.
 
 So in a long sitting, once the first few are in, it's about one every 1-2.5 hours on normal, every 2-5 hours on
 careful and every 30-75 minutes on brisk, with the odd cluster of two or three. The chance of a cluster (45% early on, 12% after, 25% in a grind) doesn't change.
@@ -81,6 +92,10 @@ New Game+ one or a step of a ladder. On top of that, nothing comes out of sequen
   there. Steam shows that counter next to the achievement, so "37 of 100" beside an unlocked one is a giveaway. Nothing
   writes the counter, so these wait for real play - and a ladder of counted steps waits with them. While they're short
   they don't count towards *Never complete more of a game than* or the hunter's "far enough"; that's worked out again every look.
+- an achievement that counts 10 or more of something with no counter of its own ("Kill 1,000 enemies", "Win 50
+  matches") waits the same way while the account's stats in that game are all still zero - nobody wins 50 matches in
+  a game that never recorded a thing. Once the game's stats show real play, it goes like any other. Nothing writes
+  the stats.
 
 When nothing left in a game could open at any number of hours - all of it waits on the game's own counters, is too
 rare for this account ever (under 1%), or waits on others that stay locked - the game is done for now and the hunter

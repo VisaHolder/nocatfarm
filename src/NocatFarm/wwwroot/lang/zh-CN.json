@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "正在玩 {0} —— 它没有可获得的成就。",
     "Playing {0} — every achievement is already done ({1}).": "正在玩 {0} —— 所有成就都已完成（{1}）。",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "正在玩 {0} —— {1}；其余只能由 Steam 自己授予。",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "正在玩 {0} —— {1}，已达到你设定的 {2}% 上限，所以在这里停止。调高“{3}”即可让它继续。",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "正在玩 {0} —— {1}，已达到这款游戏的 {2}% 上限，所以在这里停止。每款游戏停在各自的位置，绝不超过“{3}”。",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "正在 {0} 中获得 —— 已游玩 {1}，{2}。接下来的需要先积累更多游戏时间。",
     "on your never list": "在“永不在这些游戏里解锁”列表中",
     "the main game - left alone": "主力游戏 —— 不去动它",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "已完成 {1} 个中的 {0} 个",
     "Game": "游戏",
     "Next": "下一步",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "每款游戏最多到 {0}% 就停下，并且绝不会在构成里程碑的那些成就之前解锁里程碑。",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "每款游戏停在各自的位置，绝不超过 {0}%；里程碑只会在构成它的那些成就解锁后紧接着到来。",
     "Update": "更新",
     "Update to {0}": "更新到 {0}",
     "Update to {0}?": "要更新到 {0} 吗？",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "一个游戏最多完成",
-      "tip": "任何一个游戏最多完成到百分之几。留几个没拿的成就，看起来更像真实的游戏库。游戏达到这里后，狩猎会永久放下它——调高此值它会回来。集中刷命令会忽略这一项。"
+      "tip": "任何一个游戏最多完成到百分之几。每款游戏停在 60% 到 95% 之间各自的位置，绝不超过此值，这样不会全都停在同一比例。留几个没拿的成就，看起来更像真实的游戏库。游戏达到这里后，狩猎会永久放下它——调高此值，停在这里的游戏会回来。集中刷命令会忽略这一项。"
     },
     "AchievementBurstMinPct": {
       "label": "只有至少这么多人拥有的成就才会连解",

@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "Jugando a {0}: no tiene logros que conseguir.",
     "Playing {0} — every achievement is already done ({1}).": "Jugando a {0}: todos los logros ya están hechos ({1}).",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "Jugando a {0}: {1}; el resto solo lo puede otorgar Steam.",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "Jugando a {0}: {1}, que es tu límite del {2}%, así que se detiene aquí. Sube «{3}» para que siga.",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "Jugando a {0}: {1}, que es su límite del {2}%, así que se detiene aquí. Cada juego se detiene en su propio punto, nunca por encima de «{3}».",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "Consiguiendo en {0}: {1} jugadas, {2}. Los siguientes necesitan antes más horas.",
     "on your never list": "está en «Nunca en estos juegos»",
     "the main game - left alone": "el juego principal - se deja en paz",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "{0} de {1} hechos",
     "Game": "Juego",
     "Next": "Siguiente",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Se detiene en el {0}% de cada juego y nunca desbloquea un hito antes que los logros de los que ese hito depende.",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "Cada juego se detiene en su propio punto, nunca por encima del {0}%, y un hito solo llega justo después de los logros de los que depende.",
     "Update": "Actualizar",
     "Update to {0}": "Actualizar a {0}",
     "Update to {0}?": "¿Actualizar a {0}?",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "No completar nunca más de un juego que",
-      "tip": "Lo máximo que completará de un juego, en porcentaje. Dejar unos cuantos sin conseguir parece una biblioteca real. Cuando un juego llega ahí, la caza lo deja para siempre; si subes este valor, vuelve. El comando grind lo ignora."
+      "tip": "Lo máximo que completará de un juego, en porcentaje. Cada juego se detiene en su propio punto entre el 60% y el 95%, nunca por encima de este valor, para que no todos acaben en la misma proporción. Dejar unos cuantos sin conseguir parece una biblioteca real. Cuando un juego llega ahí, la caza lo deja para siempre; si subes este valor, vuelven los que se detuvieron en él. El comando grind lo ignora."
     },
     "AchievementBurstMinPct": {
       "label": "Rachas rápidas solo para logros que tengan al menos",

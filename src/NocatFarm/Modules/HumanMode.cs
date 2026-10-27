@@ -343,7 +343,7 @@ public sealed partial class HumanMode(Bot bot) : BotModule(bot) {
 	public int TargetMinutesToday => _targetMinutes;
 	public uint PlayingNow => _phase == Phase.Playing ? _game : 0;
 
-	/// <summary>The account's headline game. The achievement pacer deliberately never writes to this one.</summary>
+	/// <summary>The account's headline game. The achievement pacer earns in it like any other unless "Earn them in the main game too" is off.</summary>
 	public uint MainGameId => MainGame();
 
 	/// <summary>What it has learned from you - for 'human week', which rolls its days the way the real ones are.</summary>

@@ -510,7 +510,7 @@
     "Playing {0} — it has no achievements to earn.": "{0} をプレイ中 - 獲得できる実績はありません。",
     "Playing {0} — every achievement is already done ({1}).": "{0} をプレイ中 - 実績はすでにすべて達成済みです（{1}）。",
     "Playing {0} — {1}; the rest can only be awarded by Steam itself.": "{0} をプレイ中 - {1}。残りは Steam 自身しか付与できません。",
-    "Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.": "{0} をプレイ中 - {1}。これは上限の {2}% なので、ここで止まっています。続けるには「{3}」を上げてください。",
+    "Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.": "{0} をプレイ中 - {1}。これはこのゲームの上限 {2}% なので、ここで止まっています。ゲームごとに止まる位置は異なり、「{3}」を超えることはありません。",
     "Earning in {0} — {1} played, {2}. The next ones need more hours in it first.": "{0} で獲得中 - プレイ {1}、{2}。次の実績にはまずもっとプレイ時間が必要です。",
     "on your never list": "「このゲームでは決して」に入っている",
     "the main game - left alone": "メインゲーム - 手を付けない",
@@ -521,7 +521,7 @@
     "{0} of {1} done": "{1} 件中 {0} 件達成",
     "Game": "ゲーム",
     "Next": "次へ",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "1本のゲームにつき {0}% で止まり、マイルストーンをその対象となる実績より先に解除することはありません。",
+    "Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.": "ゲームごとに止まる位置は異なり、{0}% を超えることはありません。マイルストーンは、その対象となる実績を解除した直後にだけ解除されます。",
     "Update": "更新",
     "Update to {0}": "{0} に更新",
     "Update to {0}?": "{0} に更新しますか？",
@@ -3862,7 +3862,7 @@
     },
     "AchievementMaxCompletionPct": {
       "label": "1つのゲームで達成する上限",
-      "tip": "1 本のゲームで達成する最大の割合（%）です。いくつか未獲得のまま残すと、本物のライブラリらしく見えます。ゲームがここまで達すると、ハントはそのゲームを完全に外します。この値を上げると戻ってきます。grind コマンドはこれを無視します。"
+      "tip": "1 本のゲームで達成する最大の割合（%）です。ゲームごとに 60% から 95% の間の決まった位置で止まり、この値を超えることはないので、すべてが同じ割合で終わることはありません。いくつか未獲得のまま残すと、本物のライブラリらしく見えます。ゲームがここまで達すると、ハントはそのゲームを完全に外します。この値を上げると、ここで止まったゲームが戻ってきます。grind コマンドはこれを無視します。"
     },
     "AchievementBurstMinPct": {
       "label": "連続解除はこの割合以上が持つ実績だけ",
