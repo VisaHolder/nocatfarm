@@ -85,7 +85,9 @@ public static class LevelReport {
 	/// the week, in <paramref name="currency"/>.
 	/// </summary>
 	public static Said? Line(Book b, DateTime from, DateTime to, long spent, int currency, int stopAt) {
-		Xp? start = b.Levels.Where(x => x.At <= from).LastOrDefault() ?? b.Levels.FirstOrDefault(x => x.At <= to);
+		// A reading from just before the week (a day at most) starts it; an older one (the app was off) or none (its first week)
+		// starts it at the week's first reading - so a gap's XP isn't said as the week's.
+		Xp? start = b.Levels.LastOrDefault(x => (x.At <= from) && (from - x.At <= TimeSpan.FromDays(1))) ?? b.Levels.FirstOrDefault(x => (x.At > from) && (x.At <= to));
 		Xp? end = b.Levels.LastOrDefault(x => x.At <= to);
 		long gained = (start != null) && (end != null) ? Math.Max(0, end.Total - start.Total) : 0;
 		long sold = b.Sales.Where(s => (s.At > from) && (s.At <= to) && ((currency <= 0) || (s.Currency == currency))).Sum(static s => s.Cents);
@@ -105,7 +107,9 @@ public static class LevelReport {
 		if ((gained > 0) && (end != null)) {
 			int goal = Goal(end.Level, stopAt);
 			long left = Math.Max(0, BuyPlan.XpFor(goal) - end.Total);
-			double weeks = (double) left / gained;
+			// The pace over the time the readings cover (2 days in a first week), not as if it were always a whole week.
+			double days = Math.Max(1, (end.At - start!.At).TotalDays);
+			double weeks = left / (gained / days * 7);
 			parts.Add(left == 0 ? null : weeks < 1.5 ? new Said("level {0} in about {1} day(s) at this pace", goal, Math.Max(1, (int) Math.Ceiling(weeks * 7)))
 				: new Said("level {0} in about {1} weeks at this pace", goal, (int) Math.Ceiling(weeks)));
 		}

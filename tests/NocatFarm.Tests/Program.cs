@@ -29261,6 +29261,33 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		&& bp.IsMatch("state/levels-new.json") && NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "levels-", ".json")));
 }
 
+// ── 1.8.8: the maths check - the weekly pace over the days its readings cover; a level goal's progress leaves out the sets
+// it held; the tax on the market fee splits a price the way Steam does ──
+{
+	DateTime wf = new(2026, 10, 19, 3, 0, 0, DateTimeKind.Utc), wt = wf.AddDays(7);
+	long x52 = NocatFarm.Modules.BuyPlan.XpFor(52);
+	// First week: readings only from day 5 - +1,000 XP in 2 days is 3,500 a week, not 1,000.
+	var firstWeek = new NocatFarm.Core.LevelReport.Book([new(wf.AddDays(5), 52, x52), new(wt.AddHours(-1), 52, x52 + 1000)], []);
+	string fw = NocatFarm.Core.LevelReport.Line(firstWeek, wf, wt, 0, 20, 60)?.ToEnglish() ?? "";
+	long left = NocatFarm.Modules.BuyPlan.XpFor(60) - (x52 + 1000);
+	// 3,800 XP left at about 3,575 a week: 8 days (it was "4 weeks" with the 2 days taken for a week).
+	int expectDays = (int) Math.Ceiling(left / (1000 / Math.Max(1, (wt.AddHours(-1) - wf.AddDays(5)).TotalDays) * 7) * 7);
+	// After a gap: the last reading 3 weeks old doesn't start the week - the week's own first reading does.
+	var gapBook = new NocatFarm.Core.LevelReport.Book([new(wf.AddDays(-21), 50, NocatFarm.Modules.BuyPlan.XpFor(50)), new(wf.AddDays(1), 52, x52), new(wt.AddHours(-1), 52, x52 + 400)], []);
+	string gp2 = NocatFarm.Core.LevelReport.Line(gapBook, wf, wt, 0, 20, 0)?.ToEnglish() ?? "";
+	Check("weekly pace: a first week's 2 days aren't taken for a whole week; a reading from before a gap doesn't start the week",
+		(left == 3800) && (expectDays == 8) && fw.Contains("level 60 in about 8 day(s)", StringComparison.Ordinal) && gp2.StartsWith("+400 XP (level 52)", StringComparison.Ordinal), fw + " | " + gp2);
+
+	var goal = new NocatFarm.Modules.BuyLedger.LevelGoal(60, 6, 300, 20, wf, 10000, 10400, Held: 4);
+	var goal2 = goal with { LastXp = 10700 };
+	Check("level goal: crafting the 4 sets it held isn't 4 of the 6 levels bought; 3 more are",
+		goal.Done == 0 && goal2.Done == 3, $"{goal.Done} {goal2.Done}");
+
+	var w = new NocatFarm.Modules.CardMarket.Wallet(0, 20, false, 0, null, 100);
+	Check("fee tax: at 21 the fees are 2, at 22 (no 'receive' lands on it) 3, at 23 3, at 44 5 - as Steam splits them",
+		w.FeeTax(21) == 2 && w.FeeTax(22) == 3 && w.FeeTax(23) == 3 && w.FeeTax(44) == 5 && w.FeeTax(46) == 6, $"{w.FeeTax(21)} {w.FeeTax(22)} {w.FeeTax(23)} {w.FeeTax(44)} {w.FeeTax(46)}");
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();

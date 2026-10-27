@@ -135,25 +135,9 @@ public static class CardMarket {
 				return 0;
 			}
 
-			long fees;
-
-			if (price - 2 <= 20) {
-				fees = 2;
-			} else {
-				// The fees in a buyer's price: Steam's 5% and the game's 10%, at least 1 each - found the way the page finds them.
-				long net = price * 100 / 115;
-				fees = 0;
-
-				for (int i = 0; i < 3; i++) {
-					fees = Math.Max(1, net * 10 / 100) + Math.Max(1, net * 5 / 100);
-
-					if (net + fees < price) {
-						net++;
-					} else {
-						break;
-					}
-				}
-			}
+			// The fees in a buyer's price, as Steam's page splits them: the most the seller can receive, the rest is fees - at a
+			// price no "receive" lands on exactly (22, 44, ...) the spare cent goes to the fee.
+			long fees = price - Seller.ReceiveFor((int) Math.Min(price, int.MaxValue));
 
 			return (long) Math.Floor((fees * FeeTaxRate / 100) + 0.5);
 		}
@@ -1578,14 +1562,15 @@ public sealed class BuyLedger(string path) {
 	/// 1.8.2, a level goal ('levelup &lt;account&gt; &lt;level&gt; buy yes'): buy the cheapest badge levels up to Steam level
 	/// <paramref name="Target"/> - <paramref name="Levels"/> of them, for about <paramref name="Total"/> as previewed (never
 	/// over a tenth more, <see cref="Budget"/>), in that money - from <paramref name="Started"/>, when the account had
-	/// <paramref name="StartXp"/> XP (<paramref name="LastXp"/>: as last read).
+	/// <paramref name="StartXp"/> XP (<paramref name="LastXp"/>: as last read). 1.8.8: <paramref name="Held"/> - the levels the
+	/// sets it already held make once crafted; not bought, so not counted in <see cref="Done"/>.
 	/// </summary>
-	public sealed record LevelGoal(int Target, int Levels, long Total, int Currency, DateTime Started, int StartXp, int LastXp = 0) {
+	public sealed record LevelGoal(int Target, int Levels, long Total, int Currency, DateTime Started, int StartXp, int LastXp = 0, int Held = 0) {
 		/// <summary>The most the goal may spend: what was previewed and a tenth more.</summary>
 		public long Budget => Total * 11 / 10;
 
 		/// <summary>Badge levels gained since it started, by the XP read.</summary>
-		public int Done => Math.Clamp((Math.Max(LastXp, StartXp) - StartXp) / 100, 0, Math.Max(0, Levels));
+		public int Done => Math.Clamp(((Math.Max(LastXp, StartXp) - StartXp) / 100) - Held, 0, Math.Max(0, Levels));
 	}
 
 	internal sealed class Stored {
@@ -2314,7 +2299,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return p.Problem.Length > 0 ? p.Problem : "no level to buy within the most per level";
 		}
 
-		if (!Ledger.SetGoal(new BuyLedger.LevelGoal(p.Target, p.Costs.Count, p.Total, p.Currency, DateTime.UtcNow, p.Xp, p.Xp))) {
+		if (!Ledger.SetGoal(new BuyLedger.LevelGoal(p.Target, p.Costs.Count, p.Total, p.Currency, DateTime.UtcNow, p.Xp, p.Xp, p.Held))) {
 			return "the list of what it spent on cards couldn't be saved";
 		}
 
