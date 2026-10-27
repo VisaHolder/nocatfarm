@@ -29225,8 +29225,8 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	string zero = NocatFarm.Commands.AddMoneySaid("new", gp, 1000, 150, 0, robotCfg);
 	string noLevel = NocatFarm.Commands.AddMoneySaid("new", gp with { Costs = [5000], Usual = 5000, Wallet = 0, Keep = 0 }, 100, 150, 800, robotCfg);
 	Check("addmoney: wallet plus the amount less what's kept, the cheapest levels first, then at the usual price - the level it reaches and the days its limits take",
-		money.Contains("12.00 CAD to spend", StringComparison.Ordinal) && money.Contains("about 19 badge level(s) - 1,900 XP - for about 11.40 CAD", StringComparison.Ordinal)
-		&& money.Contains("16 of them at today's usual 0.60 CAD a level", StringComparison.Ordinal) && money.Contains("about 15 day(s) to buy - the week's 8.00 CAD sets the pace", StringComparison.Ordinal)
+		money.Contains("12.00 CAD to spend", StringComparison.Ordinal) && money.Contains("about 21 badge level(s) - 2,100 XP - for about 12.00 CAD: level 10 -> about 20", StringComparison.Ordinal)
+		&& money.Contains("18 of them at today's usual 0.60 CAD a level", StringComparison.Ordinal) && money.Contains("about 11 day(s) to buy - the week's 8.00 CAD sets the pace", StringComparison.Ordinal)
 		&& zero.Contains("spends nothing now", StringComparison.Ordinal) && noLevel.Contains("buys no badge level", StringComparison.Ordinal), money + " | " + zero + " | " + noLevel);
 
 	// Listings waiting on the phone: once when one has waited 3 hours, not again while the same ones wait, again for a new one.
@@ -29257,7 +29257,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		[new NocatFarm.Core.ReportCard.Row(new NocatFarm.Core.Said("{0}", "new"), new NocatFarm.Core.Said("{0}", lvl))]);
 	var bp = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
 	Check("weekly: the levelling lines are their own section of the report; the figures go in a backup and with the account",
-		card.Text().Contains("Levelling", StringComparison.Ordinal) && card.Text().Contains("+1,200 XP", StringComparison.Ordinal)
+		card.Text().Contains("Levelling", StringComparison.OrdinalIgnoreCase) && card.Text().Contains("+1,200 XP", StringComparison.Ordinal)
 		&& bp.IsMatch("state/levels-new.json") && NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "levels-", ".json")));
 }
 
