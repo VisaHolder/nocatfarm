@@ -29,14 +29,14 @@ namespace NocatFarm.Modules;
 ///     express both, so each game carries its own <see cref="Profile"/>.
 ///
 ///   • <b>Nobody finishes.</b> Nothing is taken past the account's completion ceiling - a game sitting at
-///     100% on an idled account is itself the giveaway. One figure, set in the settings, applied everywhere.
+///     100% on an idled account is itself the giveaway. 1.8.8: and not every game at the same share either - each
+///     stops at its own figure between 60% and 95%, never above the one in the settings (see <see cref="GameCeiling"/>).
 ///
 ///   • <b>Real unlocks cluster.</b> Finishing a level pops three at once and then nothing for a day. A steady
 ///     one-every-N-minutes metronome does not happen, so bursts are modelled explicitly.
 ///
-/// One rule comes across with it, learned the hard way:
-///   • <b>Never the main game.</b> The account's headline game is the one people look at, so it is left alone
-///     during normal play. (A deliberate grind still earns it - that path is opt-in, so it's yours to make.)
+/// The main game came across as "never touched" and isn't any more: it earns like every other game unless
+/// <c>AchievementIncludeMainGame</c> is turned off (see <see cref="CurrentGames"/>), and a deliberate grind earns it either way.
 /// Games are excluded only if you list them under <c>AchievementNeverGames</c>; nothing is hardcoded off. (VAC
 /// does not act on achievement writes - it's an in-game anti-cheat - so there is no game to block on that basis.)
 /// </remarks>
@@ -197,6 +197,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public Dictionary<string, List<DateTime>> Strikes = []; // API name -> when Steam turned it down lately, whatever it said - see StruckOut
 		public string? SkipOnce;        // turned down on the last look and not parked: the next look picks another, once (not saved)
 		public bool MetaLook = true;    // look on the next tick, outside the spacing, for a "for having the others" one with nothing left to wait for - see MetaLookAsync
+		public double PlayedFactor = 1; // 1.8.8: this unlock's share of the play needed (1-1.6), drawn after each unlock - see PlayedWait
+		public int AccountGap;          // 1.8.8: minutes (15-40) any game waits after an unlock in this one, drawn with it, counted from WroteOkAt - see AccountWaitEnds
 	}
 
 	/// <summary>
@@ -238,7 +240,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// up, or whose owner has played it since.
 	/// </remarks>
 	private Outcome Current(GameState g) =>
-		(g.Last == Outcome.Capped) && (Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100) > g.CappedAt) ? Outcome.Unknown
+		(g.Last == Outcome.Capped) && (CeilingFor(g.App, false) > g.CappedAt) ? Outcome.Unknown
 		: RulesChanged(g) ? Outcome.Unknown
 		: (g.Last is Outcome.CountersOnly or Outcome.NothingOpen or Outcome.Capped or Outcome.SteamOnly) && StopOver(g, DateTime.UtcNow) ? Outcome.Unknown
 		: g.Last;
@@ -711,29 +713,35 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		int ceilingNow = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
-
 		// Unlock times are public. A human-mode account that's asleep (a hunt or drops run into the night) keeps the
 		// minutes but unlocks nothing until morning.
 		bool mayUnlock = MayUnlockNow(Bot);
 
 		// Each game's current sitting: an achievement doesn't pop a minute after launching, whatever was played before.
 		foreach (uint app in running) {
-			if (!_sittingSince.ContainsKey(app)) {
-				_sittingSince[app] = now + Rng.Minutes(10, 30);   // the earliest this sitting may unlock anything
-			}
-
 			GameState g = StateFor(app);
 			Profile prof = ProfileFor(app);
+			bool newSitting = !_sittingSince.ContainsKey(app);
+
+			if (newSitting) {
+				_sittingSince[app] = now + Rng.Minutes(10, 30);   // the earliest this sitting may unlock anything
+			}
 
 			lock (_gate) {
 				g.PlayedMins++;
 				g.RanMins++;
 
+				// 1.8.8: a cluster ends with its sitting. Kept, the next sitting (the next morning, after a restart) opened
+				// with the rest of the old one's quick follow-ups. Cleared as the new one starts: nothing unlocks between the
+				// two, so this is the first moment it can matter.
+				if (newSitting) {
+					EndCluster(g);
+				}
+
 				// The ceiling was raised since this game stopped at it. A capped game backs off for most of a day,
 				// so without this, raising the setting did nothing visible for up to 25 hours - which is exactly
 				// what "broken" looks like from the outside.
-				if ((g.Last == Outcome.Capped) && (ceilingNow > g.CappedAt)) {
+				if ((g.Last == Outcome.Capped) && (CeilingFor(app, false) > g.CappedAt)) {
 					g.Last = Outcome.Unknown;
 					g.NextAllow = now;
 				}
@@ -787,6 +795,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// One unlock per tick across the whole account - two games popping an achievement in the same minute
 			// is not something that happens to a person playing one game at a time. But ONLY when one actually
 			// fired: breaking on a no-op meant the first unlucky game in the list starved every game behind it.
+			// (1.8.8: and Due holds every game 15-40 minutes after an unlock in any of them - see AccountWaitEnds.)
 			if (await TryUnlockOneAsync(app, g, prof, ct).ConfigureAwait(false)) {
 				break;
 			}
@@ -848,6 +857,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			int playedGate = PlayedGate(prof, onboarding, pace);
 			RepaceIfChanged(g, pace);
 
+			// 1.8.8: this unlock's own share of it (1 to 1.6 of the figure - never less than before, only more). The same figure every time beat the grind's
+			// 12-24 minute clock gap whenever it was the longer one, so a grind unlocked exactly every 25 minutes.
+			playedGate = PlayedWait(playedGate, g.PlayedFactor);
+
 			// The played-time gate applies to EVERYTHING, including a grind: you cannot legitimately unlock an
 			// achievement faster than you put the hours in, and a game with 0-1 hours on it must not dump a pile of
 			// them. A grind just plays the game continuously so the hours (and the unlocks) come steadily. The only
@@ -856,8 +869,66 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return false;
 			}
 
-			return DateTime.UtcNow >= g.NextAllow;
+			return (DateTime.UtcNow >= g.NextAllow) && (AccountWaitEnds(g) <= DateTime.UtcNow);
 		}
+	}
+
+	/// <summary>
+	/// 1.8.8: the share of the play needed that this unlock asks for - 1 to 1.6 of the game's figure (never under it: the spread only ever waits longer), drawn after each
+	/// unlock and saved with the game, so a restart doesn't draw again.
+	/// </summary>
+	internal static double DrawPlayedFactor(Random rng) => 1.0 + (rng.NextDouble() * 0.6);
+
+	/// <summary>1.8.8: the minutes of play needed at that share - never under a minute. A share outside 1-1.6 counts as its nearest end.</summary>
+	internal static int PlayedWait(int playedGate, double factor) => Math.Max(1, (int) Math.Round(playedGate * Math.Clamp(factor, 1.0, 1.6)));
+
+	/// <summary>1.8.8: how long, in minutes, every game waits after an unlock anywhere on the account: 15 to 40, drawn with each unlock.</summary>
+	internal static int DrawAccountGap(Random rng) => rng.Next(15, 41);
+
+	/// <summary>
+	/// 1.8.8: when the next unlock in <paramref name="g"/> may come, as far as the rest of the account goes: 15-40 minutes
+	/// after the last unlock in any game. A person plays one game at a time, and a history with one game's unlock two
+	/// minutes after another's reads as several running at once - only one a minute was kept to before. A quick follow-up
+	/// in the same game as the last one (a level's cluster) isn't held, and nor are the ones a game awards by itself (see
+	/// ReadyMetas): they go with the unlock before them. Called under the gate.
+	/// </summary>
+	private DateTime AccountWaitEnds(GameState g) {
+		GameState? last = _games.Values.Where(static x => x.WroteOkAt > DateTime.MinValue).MaxBy(static x => x.WroteOkAt);
+
+		return last == null ? DateTime.MinValue : AccountWaitEnds(last.WroteOkAt, last.AccountGap, (last == g) && g.Quick);
+	}
+
+	/// <summary>1.8.8: the end of that wait from the last unlock on the account - none for a quick follow-up in the same game.</summary>
+	internal static DateTime AccountWaitEnds(DateTime lastUnlock, int gapMinutes, bool sameGameQuick) =>
+		sameGameQuick || (lastUnlock == DateTime.MinValue) ? DateTime.MinValue : lastUnlock.AddMinutes(Math.Clamp(gapMinutes, 15, 40));
+
+	/// <summary>1.8.8: a cluster is over - no more quick follow-ups, the next one waits the full time. Called under the gate.</summary>
+	private static void EndCluster(GameState g) {
+		g.BurstLeft = 0;
+		g.Quick = false;
+	}
+
+	/// <summary>
+	/// 1.8.8: where this game stops. A typed grind finishes it (100%); everything else - normal play and the hunt - stops at
+	/// the game's own figure (<see cref="GameCeiling"/>), never above "Never complete more of a game than".
+	/// </summary>
+	private int CeilingFor(uint app, bool typedGrind) =>
+		typedGrind ? 100 : Math.Min(Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100), GameCeiling(Bot.Name, app));
+
+	/// <summary>
+	/// 1.8.8: one game's own ceiling on one account, 60% to 95%. Every game stopping at exactly 90% is a pattern too - a
+	/// library where everything sits at the same share reads as a setting, not a person. Worked out from the account's name
+	/// and the game's ID alone, so it is the same after every restart and never written anywhere; a stable hash (FNV-1a),
+	/// not string.GetHashCode, which changes from run to run.
+	/// </summary>
+	internal static int GameCeiling(string account, uint app) {
+		uint hash = 2166136261;
+
+		foreach (byte b in System.Text.Encoding.UTF8.GetBytes($"{account.ToLowerInvariant()}:{app.ToString(CultureInfo.InvariantCulture)}")) {
+			hash = unchecked((hash ^ b) * 16777619);
+		}
+
+		return 60 + (int) (hash % 36);
 	}
 
 	/// <summary>Returns true only when an achievement was actually unlocked.</summary>
@@ -892,9 +963,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int total = set.All.Count;
 		int already = set.All.Count(static a => a.Unlocked);
 
-		// A grind works through the WHOLE game (ignores the rarity floor, up to the account's completion cap), but
-		// it still unlocks at the account's own Achievement-pace setting - never instantly, human mode or not. The
-		// only thing human-mode changes about a grind is the game-switch timing, not the achievement speed.
+		// A typed grind works through the WHOLE game (to 100%, past the ceiling - see below), but it still goes by the
+		// rarity floor and the order rules, and unlocks at the account's own Achievement-pace setting - never instantly,
+		// human mode or not. The only thing human-mode changes about a grind is the game-switch timing, not the
+		// achievement speed.
 		bool grind = Bot.Grinding && (Bot.GrindGame == app);
 
 		lock (_gate) {
@@ -972,7 +1044,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				: new Said("{0} achievement(s) from DLC it doesn't own · left alone", held)), Bot.Name);
 		}
 
-		// One ceiling, the one in the settings box.
+		// The ceiling in the settings box is the most any game goes to.
 		//
 		// Every game used to roll its own out of a hardcoded per-game range - Team Fortress 2 drew from 18-28,
 		// landed on 23, and that number was written into the state file for good. It could not be predicted,
@@ -980,10 +1052,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// to "why 23" was a dice roll. A single figure the account holder chooses does the same job and can
 		// actually be reasoned about. A grind ignores it, because that is the explicit "finish this" path.
 		//
+		// 1.8.8: but every game stopping at exactly that figure was a pattern of its own, so each stops at its own share
+		// between 60% and 95% (GameCeiling) - never above the setting, and the same on every restart.
+		//
 		// Only a grind someone typed. The hunter works through the library on its own, hundreds of games, and taking
 		// every one of them to 100% is exactly the pattern the ceiling exists to prevent - it stops where the account
 		// holder said to stop, like normal play.
-		int ceiling = grind && !Bot.GrindIsBoost ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+		int ceiling = CeilingFor(app, grind && !Bot.GrindIsBoost);
 
 		// Nothing left that a client may set. Either the game is finished, or everything still locked is awarded
 		// by Steam itself (Counter-Strike 2's are, bar the one for launching it). Asked before the ceiling, so a
@@ -1117,6 +1192,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Never a "for having the others" one: those go by themselves, straight after the one that completes them.
 		List<Achievement> eligible = [.. Eligible(sorted, set.All, already, floor, hours, typical).Where(static a => TraitsOf(a).Meta == Meta.None)];
 
+		// 1.8.8: nor a milestone of a group ("Achieve 5 of the Sniper achievements"): the game awards those the same way,
+		// seconds after the one that completes the group (see IsMilestone, ReadyMetas).
+		eligible.RemoveAll(a => IsMilestone(a, set.All));
+
 		// Nothing else to earn, and the ones for having the others don't all fit under the ceiling: as far as it goes.
 		if ((eligible.Count == 0) && (ready.Count > 0)) {
 			return Capped();
@@ -1219,7 +1298,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// In a grind - active play, mopping up a game's easy achievements - it's mostly the grind's gap apart (default
 			// ~12-24 min, so ~3-5/hr, never 20), easiest-first, only among what's reachable for the hours in the game (the
 			// rarity floor above), and still Paced() by the account's setting. But not a metronome: now and then a level or
-			// objective pops two or three together, then a longer quiet - exactly how a person's history looks.
+			// objective pops two or three together, then a longer quiet - exactly how a person's history looks. (1.8.8: the
+			// play needed varies per unlock too, and the account-wide 15-40 minutes holds - see Due.)
 			//
 			// Only common ones burst, normal play and grind alike. Three achievements that 1% of players have, eight minutes
 			// apart, is nothing a person does: a rare one never comes a few minutes after another - it ends any burst and
@@ -1246,6 +1326,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.Pulled = false;
 			g.WroteOkAt = DateTime.UtcNow;
 			g.Strikes.Remove(pick.Name);
+
+			// 1.8.8: the next one's share of the play needed, and how long every other game waits after this one.
+			g.PlayedFactor = DrawPlayedFactor(_rng);
+			g.AccountGap = DrawAccountGap(_rng);
 		}
 
 		Said rarity = pick.GlobalPercent is { } percent ? new Said("{0}% have it", percent.ToString("0.#")) : default;
@@ -1258,7 +1342,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		Stats.Record(Stats.KindAchievement, Bot.Name);
 
 		// The last one a "for having the others" one waited on: the game awards it a moment later, with any other one it
-		// completes too. The pick's own spacing stands - this takes no slot of its own. One that doesn't all fit under the
+		// completes too - and, 1.8.8, any milestone of a group it completes. The pick's own spacing stands - this takes no
+		// slot of its own, and the wait across the account counts from the pick. One that doesn't all fit under the
 		// ceiling stays locked, as the pick before it would have.
 		List<Achievement> follow = ReadyMetas(sorted.Candidates, set.All, new HashSet<string>([pick.Name], StringComparer.Ordinal));
 
@@ -1278,6 +1363,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// any that only waited on those ("all other achievements" on "all base game achievements"), as a game awards them in
 	/// the same moment. Only candidates: never one held for DLC, skipped as multiplayer, refused lately, short of a counter
 	/// or Steam's own - and one of those still locked holds the rest as it always did.
+	///
+	/// 1.8.8: milestones of a group too ("Achieve 5 of the Sniper achievements", TF_SNIPER_ACHIEVE_PROGRESS1 - see
+	/// <see cref="IsMilestone"/>): once the group has enough, the game awards it, in the same moment.
 	/// </summary>
 	internal static List<Achievement> ReadyMetas(IReadOnlyCollection<Achievement> candidates, IReadOnlyCollection<Achievement> all, IReadOnlySet<string> justUnlocked) {
 		HashSet<string> going = new(StringComparer.Ordinal);
@@ -1289,8 +1377,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			List<Achievement> after = [.. all.Select(a => !a.Unlocked && (justUnlocked.Contains(a.Name) || going.Contains(a.Name)) ? a with { Unlocked = true } : a)];
 
 			foreach (Achievement m in candidates) {
-				if (m.Unlocked || !m.Settable || m.CounterShort || IsSpecialGlobal(m) || (TraitsOf(m).Meta == Meta.None)
-					|| justUnlocked.Contains(m.Name) || going.Contains(m.Name) || MetaBlocked(m, after)) {
+				if (m.Unlocked || !m.Settable || m.CounterShort || IsSpecialGlobal(m) || justUnlocked.Contains(m.Name) || going.Contains(m.Name)) {
+					continue;
+				}
+
+				bool milestone = (TraitsOf(m).Meta == Meta.None) && IsMilestone(m, all);
+
+				if (milestone ? !MilestoneDone(m, after) : ((TraitsOf(m).Meta == Meta.None) || MetaBlocked(m, after))) {
 					continue;
 				}
 
@@ -1341,7 +1434,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		Sorted sorted = Sort(set, dlc, Bot.Cfg.AchievementSkipMultiplayer, refused);
 		int already = set.All.Count(static a => a.Unlocked);
-		int ceiling = Bot.Grinding && (Bot.GrindGame == app) && !Bot.GrindIsBoost ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+		int ceiling = CeilingFor(app, Bot.Grinding && (Bot.GrindGame == app) && !Bot.GrindIsBoost);
 		List<Achievement> ready = ReadyMetas(sorted.Candidates, set.All, NoNames);
 
 		return (ready.Count > 0) && (already + ready.Count <= CeilingCount(sorted.Reachable, ceiling, prof.OnboardCount))
@@ -1521,7 +1614,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	///     add-ons straight after the base game with none.
 	///   • Multiplayer, on an account that skips those (<see cref="IsMultiplayer"/>).
 	///   • A counted one ("Complete 100 parries") whose counter in the game isn't there: not a candidate, and not counted
-	///     as reachable while it's short - it waits for the game to be played.
+	///     as reachable while it's short - it waits for the game to be played. 1.8.8: so does one whose words count 10 or
+	///     more of something with no counter linked, while the account's stats in the game were never set (NeverPlayed).
 	///   • Steam's own (the schema says so, or Steam refused it in the last week) and Valve's mass-granted GLOBAL_ ones:
 	///     never candidates - but still in reach, as they always were.
 	/// Also marks every achievement that belongs to an add-on (<see cref="Achievement.AddOn"/>) for the order rules.
@@ -1575,6 +1669,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// Nothing writes counters, so it waits for the real count. Still in reach: a lower rung short of its count
 			// holds the higher rungs, as it should.
 			if (a.CounterShort) {
+				counters++;
+
+				continue;
+			}
+
+			// 1.8.8: the same for one that counts something ("Kill 1,000 enemies") with no counter linked to it, in a game
+			// whose own stats on this account were never set at all: never really played, so it can't have the thousand.
+			// Once the stats show real play, it goes like any other. Nothing writes the stats either way.
+			if (set.NeverPlayed && (StatedCount(a) >= 10)) {
 				counters++;
 
 				continue;
@@ -2757,6 +2860,67 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
+	/// 1.8.8: one the game awards by itself the moment a group has enough: a milestone of a group read off its API name
+	/// (TF_SNIPER_ACHIEVE_PROGRESS1, with TF_SNIPER_* achievements to count - see <see cref="MilestoneOf"/>), or one whose
+	/// words count the game's achievements and nothing narrower ("Unlock 10 achievements", "Achieve 25 of the
+	/// achievements"). Never picked like the others - it goes seconds after the unlock that completes it (see
+	/// <see cref="ReadyMetas"/>). One that names a group without an API name to find it by ("5 of the achievements in the
+	/// Sniper pack") isn't one: what it counts can't be told, so it stays an ordinary pick, held by the order rules.
+	/// </summary>
+	internal static bool IsMilestone(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (TraitsOf(a).Meta != Meta.None) {
+			return false;
+		}
+
+		if (MilestoneOf(a, out string family, out _)) {
+			return all.Any(o => (o.Name != a.Name) && !MilestoneOf(o, out _, out _) && o.Name.StartsWith(family + "_", StringComparison.OrdinalIgnoreCase));
+		}
+
+		return AchievementsCounted(a) > 0;
+	}
+
+	/// <summary>1.8.8: a milestone (<see cref="IsMilestone"/>) whose group has enough in <paramref name="all"/> - the game would award it now.</summary>
+	internal static bool MilestoneDone(Achievement a, IReadOnlyCollection<Achievement> all) =>
+		MilestoneOf(a, out _, out _) ? !MilestoneUnearned(a, all) : all.Count(o => o.Unlocked && (o.Name != a.Name)) >= AchievementsCounted(a);
+
+	/// <summary>
+	/// 1.8.8: how many of the game's achievements one counts, when its words count them and nothing narrower: "Unlock 10
+	/// achievements" 10, "Achieve 25 of the achievements" 25; "5 of the achievements in the Sniper pack" and "Complete 5
+	/// missions to unlock this achievement" 0.
+	/// </summary>
+	private static int AchievementsCounted(Achievement a) {
+		Match m = Regex.Match($"{a.Display} {a.Description}".ToLowerInvariant(),
+			@"\b(?:achieve|complete|earn|unlock|obtain|collect|get|have)\s+(\d{1,3})\s+(?:of\s+(?:the|your)\s+)?(?:other\s+|different\s+|steam\s+)?achievements\b(?!\s+(?:in|from|of|for)\b)");
+
+		return m.Success && int.TryParse(m.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? n : 0;
+	}
+
+	/// <summary>
+	/// 1.8.8: the count an achievement's words ask for, when it is 10 or more of something: "Kill 1,000 enemies" 1000, "Win
+	/// 50 matches" 50. Not a time ("in under 10 minutes"), not a count of achievements (those are milestones), and 0 when
+	/// there is none or it is under 10. See <see cref="Sort"/>: on an account whose stats in the game were never set, these
+	/// wait like one short of its counter.
+	/// </summary>
+	internal static int StatedCount(Achievement a) {
+		if ((AchievementsCounted(a) > 0) || (RequiredPriorAchievements(a) > 0) || (TraitsOf(a).Meta != Meta.None)) {
+			return 0;
+		}
+
+		int most = 0;
+
+		foreach (Match m in Regex.Matches($"{a.Display} {a.Description}".ToLowerInvariant(), @"\b(\d{1,3}(?:,\d{3})+|\d{2,9})\s+(?:[a-z'-]+\s+){0,2}?([a-z'-]+s)\b")) {
+			if (Regex.IsMatch(m.Groups[2].Value, @"^(seconds|minutes|hours|days|weeks|years|secs|mins|hrs|achievements)$")
+				|| !int.TryParse(m.Groups[1].Value.Replace(",", "", StringComparison.Ordinal), NumberStyles.None, CultureInfo.InvariantCulture, out int n)) {
+				continue;
+			}
+
+			most = Math.Max(most, n);
+		}
+
+		return most >= 10 ? most : 0;
+	}
+
+	/// <summary>
 	/// Valve's mass-granted community achievements, which are not earned by playing.
 	///
 	/// Left 4 Dead 2's GNOME ALONE is the example: handed out en masse in 2010, so it reads as a comfortable
@@ -2872,7 +3036,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private GameState StateFor(uint app) {
 		lock (_gate) {
 			if (!_games.TryGetValue(app, out GameState? g)) {
-				g = new GameState { App = app };
+				// 1.8.8: its first unlock's share of the play needed is drawn too - not the same figure in every new game.
+				g = new GameState { App = app, PlayedFactor = DrawPlayedFactor(_rng) };
 				_games[app] = g;
 			}
 
@@ -2959,7 +3124,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						kv.Key,
 						GameNames.Of(kv.Key),
 						(int) Math.Max(kv.Value.PlayedMins, Bot.Library.MinutesOn(kv.Key)),
-						Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100),
+						CeilingFor(kv.Key, false),
 						kv.Value.Unlocked,
 						kv.Value.Total,
 						why.Length > 0,
@@ -3048,13 +3213,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		Profile prof = ProfileFor(app);
 		bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
 		int playedGate = PlayedGate(prof, onboarding, Bot.Cfg.AchievementPace);
-		long shortBy = playedGate - (g.PlayedMins - g.MinsAtLastUnlock);
+		long shortBy = PlayedWait(playedGate, g.PlayedFactor) - (g.PlayedMins - g.MinsAtLastUnlock);
 
 		// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
 		// since elapsed and the real hold-up was in-game minutes gave no way to tell waiting from stuck.
-		DateTime next = g.NextAllow;
+		// 1.8.8: the wait after an unlock in another game is one of them (see AccountWaitEnds).
+		DateTime next = g.NextAllow > AccountWaitEnds(g) ? g.NextAllow : AccountWaitEnds(g);
 		Said when =
-			DateTime.UtcNow < g.NextAllow ? new Said("next after {0}", (Func<string>) (() => Fmt.Clock(next)))
+			DateTime.UtcNow < next ? new Said("next after {0}", (Func<string>) (() => Fmt.Clock(next)))
 			: (g.BurstLeft <= 0) && (shortBy > 0) ? new Said("next after {0} more play", Fmt.Hm((int) shortBy))
 			: new Said("next one due");
 
@@ -3128,6 +3294,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Absent from older files: false - every game is looked at once for a "for having the others" achievement with
 		// nothing left to wait for (everything else unlocked before metas went straight after the last one).
 		public bool MetasLooked { get; set; }
+
+		// 1.8.8. Absent from older files: 0 - a share of the play needed is drawn then (see Load), and an account-wide wait
+		// of 0 counts as the shortest, 15 minutes, from the game's last unlock (WroteOkAt, kept since before).
+		public double PlayedFactor { get; set; }
+		public int AccountGap { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -3186,7 +3357,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						PacedFrom = s.PacedFrom,
 						Quick = s.Quick,
 						Strikes = s.Strikes ?? [],
-						MetaLook = !s.MetasLooked
+						MetaLook = !s.MetasLooked,
+						PlayedFactor = s.PlayedFactor is >= 1.0 and <= 1.6 ? s.PlayedFactor : DrawPlayedFactor(_rng),
+						AccountGap = s.AccountGap
 					};
 
 					// A file written before outcomes existed says nothing about them, and a finished or capped game
@@ -3236,7 +3409,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					}
 
 					if ((g.Last == Outcome.Unknown) && (g.Total > 0) && (g.Unlocked >= 0)) {
-						int ceiling = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+						int ceiling = CeilingFor(s.App, false);
 						int ceilingCount = CeilingCount(Reachable(g), ceiling, ProfileFor(s.App).OnboardCount);
 
 						if (g.Unlocked >= g.Total) {
@@ -3320,6 +3493,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						PlayedMins = mins,
 						MinsAtLastUnlock = mins,
 						NextAllow = next,
+						PlayedFactor = DrawPlayedFactor(_rng)
 					};
 
 					taken++;
@@ -3380,6 +3554,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					PacedFrom = kv.Value.PacedFrom,
 					Quick = kv.Value.Quick,
 					MetasLooked = !kv.Value.MetaLook,
+					PlayedFactor = kv.Value.PlayedFactor,
+					AccountGap = kv.Value.AccountGap,
 					Multiplayer = kv.Value.Multiplayer,
 					Rules = kv.Value.Rules,
 					// A copy: the tick changes the live one while this is written out. Only the last week's - older ones

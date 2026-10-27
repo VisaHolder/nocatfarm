@@ -1523,7 +1523,7 @@ public static partial class Settings {
 			"How long it waits between unlocks. Careful doubles every wait and brisk halves them. No pace unlocks anything before the hours played allow it.",
 			Choices: "0 careful (twice as slow) | 1 normal | 2 brisk (twice as fast)", ShowWhen: "UnlockAchievements=true", Group: "Earning"),
 		new("AchievementMaxCompletionPct", "Never complete more of a game than", SecAchievements, SettingKind.Int,
-			"The most of any one game it will ever complete, in percent. Leaving a few unearned looks like a real library. Once a game gets there, the hunt leaves it for good - raise this and it comes back. The grind command ignores this.",
+			"The most of any one game it will ever complete, in percent. Each game stops at its own point between 60% and 95%, never above this, so they don't all end at the same share. Leaving a few unearned looks like a real library. Once a game gets there, the hunt leaves it for good - raise this and the ones stopped at it come back. The grind command ignores this.",
 			Advanced: true, Min: 1, Max: 100, Group: "Earning", ShowWhen: "UnlockAchievements=true"),
 		new("AchievementBurstMinPct", "Quick bursts only for achievements held by at least", SecAchievements, SettingKind.Int,
 			"Sometimes 2 or 3 achievements come a few minutes apart, like finishing a level. Only achievements at least this many percent of players have can come that way - rarer ones always come alone, with the full wait. 0 lets any achievement burst; 100 turns bursts off.",

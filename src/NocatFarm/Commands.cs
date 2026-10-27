@@ -3496,7 +3496,8 @@ public static partial class Commands {
 		int more = (known == p.Costs.Count) && (p.Usual > 0) ? (int) Math.Min(5000, left / p.Usual) : 0;
 		spent += more * Math.Max(0, p.Usual);
 		int levels = known + more;
-		long xp = p.Xp + (levels * 100L);
+		// The sets it already holds make their levels once crafted - counted in the level it gets to, not in what money buys.
+		long xp = p.Xp + ((levels + Math.Max(0, p.Held)) * 100L);
 		int reach = p.Level;
 
 		while ((reach < 5000) && (BuyPlan.XpFor(reach + 1) <= xp)) {
@@ -3507,7 +3508,7 @@ public static partial class Commands {
 			$"{name}: add {M(add)} - with {M(wallet)} in the wallet{(p.Keep > 0 ? $" and {M(p.Keep)} always kept" : "")}, {M(spendable)} to spend.",
 			levels == 0
 				? $"{name}: that buys no badge level at today's prices (the cheapest is {(p.Costs.Count > 0 ? M(p.Costs.Min()) : "not known yet")})."
-				: $"{name}: about {levels} badge level(s) - {levels * 100:N0} XP - for about {M(spent)}: level {p.Level} -> about {reach}"
+				: $"{name}: about {levels} badge level(s) - {levels * 100:N0} XP - for about {M(spent)}: level {p.Level} -> about {reach}{(p.Held > 0 ? $" with the {p.Held} level(s) its own sets make" : "")}"
 					+ (more > 0 ? $" ({more} of them at today's usual {M(p.Usual)} a level - the set finder hasn't priced that many yet)." : ".")
 		];
 

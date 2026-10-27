@@ -7125,7 +7125,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("remove, 300 rounds beside reloads: running exactly when the file is there", stressWrong == 0, $"{stressWrong} of 300");
 		Check("remove, 300 rounds beside reloads: removed means gone - no file left to come back at the next start", stressLeft == 0, $"{stressLeft} of 300");
 		Check("remove, 300 rounds beside reloads: no overnight mark left behind for a removed account", marks == 0, $"{marks} left");
-		Check("remove, 300 rounds beside reloads: done in a few seconds", stressTook.Elapsed < TimeSpan.FromSeconds(20), $"{stressTook.Elapsed.TotalSeconds:0.0}s");
+		// GitHub's Intel Macs are several times slower at this than anything else (9-23s there, 2-6s elsewhere) - more room there.
+		bool slowMac = OperatingSystem.IsMacOS() && (System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64);
+		Check("remove, 300 rounds beside reloads: done in a few seconds", stressTook.Elapsed < TimeSpan.FromSeconds(slowMac ? 45 : 20), $"{stressTook.Elapsed.TotalSeconds:0.0}s");
 		await mgr.RemoveAsync("synced");
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -29259,6 +29261,205 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	Check("weekly: the levelling lines are their own section of the report; the figures go in a backup and with the account",
 		card.Text().Contains("Levelling", StringComparison.OrdinalIgnoreCase) && card.Text().Contains("+1,200 XP", StringComparison.Ordinal)
 		&& bp.IsMatch("state/levels-new.json") && NocatFarm.Config.ConfigStore.AccountFiles.Contains(("state", "levels-", ".json")));
+}
+
+// ── 1.8.8: the maths check - the weekly pace over the days its readings cover; a level goal's progress leaves out the sets
+// it held; the tax on the market fee splits a price the way Steam does ──
+{
+	DateTime wf = new(2026, 10, 19, 3, 0, 0, DateTimeKind.Utc), wt = wf.AddDays(7);
+	long x52 = NocatFarm.Modules.BuyPlan.XpFor(52);
+	// First week: readings only from day 5 - +1,000 XP in 2 days is 3,500 a week, not 1,000.
+	var firstWeek = new NocatFarm.Core.LevelReport.Book([new(wf.AddDays(5), 52, x52), new(wt.AddHours(-1), 52, x52 + 1000)], []);
+	string fw = NocatFarm.Core.LevelReport.Line(firstWeek, wf, wt, 0, 20, 60)?.ToEnglish() ?? "";
+	long left = NocatFarm.Modules.BuyPlan.XpFor(60) - (x52 + 1000);
+	// 3,800 XP left at about 3,575 a week: 8 days (it was "4 weeks" with the 2 days taken for a week).
+	int expectDays = (int) Math.Ceiling(left / (1000 / Math.Max(1, (wt.AddHours(-1) - wf.AddDays(5)).TotalDays) * 7) * 7);
+	// After a gap: the last reading 3 weeks old doesn't start the week - the week's own first reading does.
+	var gapBook = new NocatFarm.Core.LevelReport.Book([new(wf.AddDays(-21), 50, NocatFarm.Modules.BuyPlan.XpFor(50)), new(wf.AddDays(1), 52, x52), new(wt.AddHours(-1), 52, x52 + 400)], []);
+	string gp2 = NocatFarm.Core.LevelReport.Line(gapBook, wf, wt, 0, 20, 0)?.ToEnglish() ?? "";
+	Check("weekly pace: a first week's 2 days aren't taken for a whole week; a reading from before a gap doesn't start the week",
+		(left == 3800) && (expectDays == 8) && fw.Contains("level 60 in about 8 day(s)", StringComparison.Ordinal) && gp2.StartsWith("+400 XP (level 52)", StringComparison.Ordinal), fw + " | " + gp2);
+
+	var goal = new NocatFarm.Modules.BuyLedger.LevelGoal(60, 6, 300, 20, wf, 10000, 10400, Held: 4);
+	var goal2 = goal with { LastXp = 10700 };
+	Check("level goal: crafting the 4 sets it held isn't 4 of the 6 levels bought; 3 more are",
+		goal.Done == 0 && goal2.Done == 3, $"{goal.Done} {goal2.Done}");
+
+	var w = new NocatFarm.Modules.CardMarket.Wallet(0, 20, false, 0, null, 100);
+	Check("fee tax: at 21 the fees are 2, at 22 (no 'receive' lands on it) 3, at 23 3, at 44 5 - as Steam splits them",
+		w.FeeTax(21) == 2 && w.FeeTax(22) == 3 && w.FeeTax(23) == 3 && w.FeeTax(44) == 5 && w.FeeTax(46) == 6, $"{w.FeeTax(21)} {w.FeeTax(22)} {w.FeeTax(23)} {w.FeeTax(44)} {w.FeeTax(46)}");
+}
+
+// ── 1.8.8 pacer: play needed varies per unlock, milestones follow their group, counts wait for real play, a wait across the account, per-game ceilings, clusters end with the sitting ──
+{
+	const BindingFlags SP = BindingFlags.Static | BindingFlags.NonPublic;
+	const BindingFlags IP = BindingFlags.Instance | BindingFlags.NonPublic;
+	Type pacerType = typeof(NocatFarm.Modules.AchievementPacer);
+	Type gs = pacerType.GetNestedType("GameState", BindingFlags.NonPublic)!;
+	string src = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "AchievementPacer.cs")).Replace("\r\n", "\n");
+	object NewState() => Activator.CreateInstance(gs, nonPublic: true)!;
+	void Set(object g, string field, object? value) => gs.GetField(field)!.SetValue(g, value);
+	T StateOf<T>(object g, string field) => (T) gs.GetField(field)!.GetValue(g)!;
+	NocatFarm.Core.Achievement A(string name, string desc, double pct, bool unlocked = false) =>
+		new() { Name = name, Display = name, Description = desc, StatId = 1, Bit = 0, Unlocked = unlocked, Protected = false, GlobalPercent = pct };
+
+	// A1: the play needed between two unlocks is 1-1.6 of the game's figure, drawn per unlock - not 25 minutes every time.
+	MethodInfo drawFactor = pacerType.GetMethod("DrawPlayedFactor", SP)!;
+	MethodInfo playedWait = pacerType.GetMethod("PlayedWait", SP)!;
+	Random seeded = new(1808);
+	List<double> factors = [.. Enumerable.Range(0, 2000).Select(_ => (double) drawFactor.Invoke(null, [seeded])!)];
+	List<int> waits25 = [.. factors.Select(f => (int) playedWait.Invoke(null, [25, f])!)];
+	Check("pacer 1.8.8 play needed: each unlock draws 1-1.6 of the figure - 25 min normal is 25-40 (never under the old 25), and it varies (no fixed rhythm)",
+		factors.All(static f => f is >= 1.0 and <= 1.6) && (factors.Min() < 1.05) && (factors.Max() > 1.55)
+		&& waits25.All(static w => w is >= 25 and <= 40) && (waits25.Distinct().Count() >= 12)
+		&& ((int) playedWait.Invoke(null, [25, 0.0])! == 25) && ((int) playedWait.Invoke(null, [25, 9.0])! == 40) && ((int) playedWait.Invoke(null, [12, 1.6])! == 19) && ((int) playedWait.Invoke(null, [1, 1.0])! == 1),
+		$"{factors.Min():0.00}-{factors.Max():0.00}, {waits25.Min()}-{waits25.Max()} min, {waits25.Distinct().Count()} values");
+	Check("pacer 1.8.8 play needed: drawn after every unlock, for a new game, and used by Due and the status line alike",
+		src.Contains("g.PlayedFactor = DrawPlayedFactor(_rng);", StringComparison.Ordinal)
+		&& src.Contains("g = new GameState { App = app, PlayedFactor = DrawPlayedFactor(_rng) };", StringComparison.Ordinal)
+		&& src.Contains("playedGate = PlayedWait(playedGate, g.PlayedFactor);", StringComparison.Ordinal)
+		&& src.Contains("long shortBy = PlayedWait(playedGate, g.PlayedFactor) - (g.PlayedMins - g.MinsAtLastUnlock);", StringComparison.Ordinal));
+
+	// A2: a milestone of a group goes seconds after the unlock that completes the group - never as a pick of its own.
+	MethodInfo readyMetas = pacerType.GetMethod("ReadyMetas", SP)!;
+	MethodInfo isMilestone = pacerType.GetMethod("IsMilestone", SP)!;
+	string Ready(List<NocatFarm.Core.Achievement> candidates, List<NocatFarm.Core.Achievement> all, params string[] just) =>
+		string.Join(",", ((List<NocatFarm.Core.Achievement>) readyMetas.Invoke(null, [candidates, all, new HashSet<string>(just, StringComparer.Ordinal)])!).Select(static a => a.Name));
+	bool Milestone(NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all) => (bool) isMilestone.Invoke(null, [a, all])!;
+	NocatFarm.Core.Achievement sniperMile = A("TF_SNIPER_ACHIEVE_PROGRESS1", "Achieve 5 of the Sniper achievements", 30);
+	NocatFarm.Core.Achievement sniperLast = A("TF_SNIPER_HEADSHOT_5", "Get a headshot", 40);
+	List<NocatFarm.Core.Achievement> sniper = [sniperMile, sniperLast, .. Enumerable.Range(1, 4).Select(i => A($"TF_SNIPER_KILL_{i}", "Kill a spy", 60, unlocked: true))];
+	NocatFarm.Core.Achievement tenAny = A("ACH_TEN", "Unlock 10 achievements", 20);
+	List<NocatFarm.Core.Achievement> tenGame = [tenAny, A("LAST", "Find the key", 50), .. Enumerable.Range(1, 9).Select(i => A($"A{i}", "Open a door", 70, unlocked: true))];
+	Check("pacer 1.8.8 milestones: 'Achieve 5 of the Sniper achievements' is ready with the unlock of the 5th Sniper one, not before; 'Unlock 10 achievements' with the 10th",
+		(Ready([sniperMile, sniperLast], sniper, "TF_SNIPER_HEADSHOT_5") == "TF_SNIPER_ACHIEVE_PROGRESS1") && (Ready([sniperMile, sniperLast], sniper) == "")
+		&& (Ready([tenAny, tenGame[1]], tenGame, "LAST") == "ACH_TEN") && (Ready([tenAny, tenGame[1]], tenGame) == ""),
+		Ready([sniperMile, sniperLast], sniper, "TF_SNIPER_HEADSHOT_5"));
+	Check("pacer 1.8.8 milestones: a group milestone or an 'N achievements' one is a milestone; one naming a group it can't find, a plain count or 'all achievements' isn't",
+		Milestone(sniperMile, sniper) && Milestone(tenAny, tenGame) && !Milestone(sniperLast, sniper)
+		&& !Milestone(A("X", "Achieve 5 of the achievements in the Sniper pack", 10), [A("X", "", 10), A("Y", "", 10)])
+		&& !Milestone(A("M", "Complete 5 missions to unlock this achievement", 10), [A("Y", "", 10)])
+		&& !Milestone(A("ALL", "Obtain all other achievements", 2), [A("Y", "", 10)])
+		&& !Milestone(A("LONE_PROGRESS2", "Milestone 2", 10), [A("Y", "", 10)]));
+	Check("pacer 1.8.8 milestones: taken out of the ordinary picks, and the follow-up 1-5 seconds after the unlock (within the ceiling, awake only) stands",
+		src.Contains("eligible.RemoveAll(a => IsMilestone(a, set.All));", StringComparison.Ordinal)
+		&& src.Contains("await Task.Delay(TimeSpan.FromSeconds(_rng.Next(1, 6)), ct).ConfigureAwait(false);", StringComparison.Ordinal)
+		&& src.Contains("if ((follow.Count > 0) && (nowUnlocked + follow.Count <= ceilingCount)) {", StringComparison.Ordinal));
+
+	// A3: a count with no counter linked waits while the account's stats in the game were never set; with real play it goes.
+	MethodInfo sortGame = pacerType.GetMethod("Sort", SP)!;
+	MethodInfo statedCount = pacerType.GetMethod("StatedCount", SP)!;
+	int Stated(string desc) => (int) statedCount.Invoke(null, [A("S", desc, 10)])!;
+	List<NocatFarm.Core.Achievement> killGame = [A("KILL1000", "Kill 1,000 enemies", 30), A("WIN50", "Win 50 matches", 20), A("WIN5", "Win 5 matches", 60), A("HAT", "Find a hat", 80)];
+	NocatFarm.Core.DlcAchievements.View killView = new() {
+		Map = new NocatFarm.Core.DlcAchievements.Map { App = 77001, Rule = NocatFarm.Core.DlcAchievements.RuleNow, BuiltAt = DateTime.UtcNow, Names = [.. killGame.Select(static a => a.Name.ToLowerInvariant())] },
+		Trusted = true
+	};
+	(string Candidates, int Counters) SortOf(int stats, int set) {
+		object sorted = sortGame.Invoke(null, [new NocatFarm.Core.AchievementSet { AppId = 77001, All = killGame, CrcStats = 0, PlayStats = stats, PlayStatsSet = set }, killView, false, new HashSet<string>(StringComparer.Ordinal)])!;
+		return (string.Join(",", ((List<NocatFarm.Core.Achievement>) sorted.GetType().GetProperty("Candidates")!.GetValue(sorted)!).Select(static a => a.Name)),
+			(int) sorted.GetType().GetProperty("Counters")!.GetValue(sorted)!);
+	}
+	Check("pacer 1.8.8 counts: 'Kill 1,000 enemies' 1000, 'Win 50 matches' 50; under 10, a time, a level or a count of achievements isn't one",
+		(Stated("Kill 1,000 enemies") == 1000) && (Stated("Win 50 matches") == 50) && (Stated("Win 5 matches") == 0) && (Stated("Finish in under 10 minutes") == 0)
+		&& (Stated("Reach level 10") == 0) && (Stated("Unlock 10 achievements") == 0) && (Stated("Score 2500 points in one round") == 2500),
+		$"{Stated("Kill 1,000 enemies")} {Stated("Win 50 matches")} {Stated("Finish in under 10 minutes")}");
+	Check("pacer 1.8.8 counts: never-set stats hold 'Kill 1,000 enemies' and 'Win 50 matches' like a counter short; real play (or a game without stats) lets them go",
+		(SortOf(5, 0) == ("WIN5,HAT", 2)) && (SortOf(5, 2) == ("KILL1000,WIN50,WIN5,HAT", 0)) && (SortOf(0, 0) == ("KILL1000,WIN50,WIN5,HAT", 0))
+		&& File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Achievements.cs")).Replace("\r\n", "\n")
+			.Contains("PlayStats = playStats.Count, PlayStatsSet = playStats.Count(id => statValues.GetValueOrDefault(id) != 0)", StringComparison.Ordinal),
+		$"{SortOf(5, 0)} | {SortOf(5, 2)}");
+
+	// B2: each game's own ceiling, 60-95, the same every time; never above the setting; a typed grind still 100.
+	MethodInfo gameCeiling = pacerType.GetMethod("GameCeiling", SP)!;
+	int Ceil(string account, uint app) => (int) gameCeiling.Invoke(null, [account, app])!;
+	List<int> ceilings = [.. Enumerable.Range(0, 400).Select(i => Ceil(i % 2 == 0 ? "kylro" : "old", (uint) (10 + (i * 37))))];
+	Check("pacer 1.8.8 ceilings: one per account and game, 60-95, the same on every call (a restart), spread over the range, different across accounts",
+		ceilings.All(static c => c is >= 60 and <= 95) && (ceilings.Distinct().Count() >= 25) && (Ceil("kylro", 440) == Ceil("kylro", 440)) && (Ceil("KYLRO", 440) == Ceil("kylro", 440))
+		&& Enumerable.Range(0, 50).Any(i => Ceil("kylro", (uint) (500 + i)) != Ceil("old", (uint) (500 + i))),
+		$"{ceilings.Min()}-{ceilings.Max()}, {ceilings.Distinct().Count()} values");
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-pacer188-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		// A1: kept over a restart; an older state file without it gets one drawn.
+		File.WriteAllText(Path.Combine(tmpRoot, "config", "state", "cheevo-h188.json"), """
+			[ { "App": 970, "Last": 1, "Total": 10, "Unlocked": 3 },
+			  { "App": 980, "Last": 1, "Total": 10, "Unlocked": 3, "PlayedFactor": 1.3, "AccountGap": 33 } ]
+			""");
+		var bot = new NocatFarm.Core.Bot("h188", new NocatFarm.Config.BotConfig { UnlockAchievements = true, AchievementMaxCompletionPct = 80 });
+		var pacer = new NocatFarm.Modules.AchievementPacer(bot);
+		pacerType.GetMethod("EnsureLoaded", IP)!.Invoke(pacer, []);
+		var pacerGames = (System.Collections.IDictionary) pacerType.GetField("_games", IP)!.GetValue(pacer)!;
+		double oldFactor = StateOf<double>(pacerGames[970u]!, "PlayedFactor");
+		Check("pacer 1.8.8 play needed: an older state file gets a share drawn (1-1.6); a saved one is kept over the restart, not drawn again",
+			(oldFactor is >= 1.0 and <= 1.6) && (StateOf<double>(pacerGames[980u]!, "PlayedFactor") == 1.3) && (StateOf<int>(pacerGames[980u]!, "AccountGap") == 33),
+			$"{oldFactor:0.00}");
+
+		// B2 through the account: never above its 80%, a typed grind 100.
+		MethodInfo ceilingFor = pacerType.GetMethod("CeilingFor", IP)!;
+		List<int> mine = [.. Enumerable.Range(0, 200).Select(i => (int) ceilingFor.Invoke(pacer, [(uint) (20 + i), false])!)];
+		Check("pacer 1.8.8 ceilings: never above 'Never complete more of a game than' (80 here) - some games below it; a typed grind goes to 100",
+			mine.All(static c => c is >= 60 and <= 80) && mine.Any(static c => c < 80) && ((int) ceilingFor.Invoke(pacer, [440u, true])! == 100)
+			&& src.Contains("int ceiling = CeilingFor(app, grind && !Bot.GrindIsBoost);", StringComparison.Ordinal),
+			$"{mine.Min()}-{mine.Max()}");
+
+		// B1: a second game waits 15-40 minutes after another game's unlock; a quick follow-up in the same game doesn't.
+		pacerGames.Clear();
+		MethodInfo due = pacerType.GetMethod("Due", IP)!;
+		object fallback = pacerType.GetMethod("ProfileFor", SP)!.Invoke(null, [12345u])!;
+		DateTime now = DateTime.UtcNow;
+		object first = NewState(), second = NewState();
+		Set(first, "App", 101u);
+		Set(first, "WroteOkAt", now.AddMinutes(-14));
+		Set(first, "AccountGap", 15);
+		Set(second, "App", 102u);
+		Set(second, "PlayedMins", 500L);
+		Set(second, "NextAllow", now.AddHours(-1));
+		pacerGames[101u] = first;
+		pacerGames[102u] = second;
+		bool heldAt14 = !(bool) due.Invoke(pacer, [second, fallback])!;
+		Set(first, "WroteOkAt", now.AddMinutes(-16));
+		bool goesAt16 = (bool) due.Invoke(pacer, [second, fallback])!;
+		Set(first, "AccountGap", 40);
+		bool heldFor40 = !(bool) due.Invoke(pacer, [second, fallback])!;
+		Set(first, "WroteOkAt", now.AddMinutes(-2));
+		Set(first, "PlayedMins", 500L);
+		Set(first, "BurstLeft", 1);
+		Set(first, "Quick", true);
+		Set(first, "NextAllow", now.AddMinutes(-1));
+		bool burstGoes = (bool) due.Invoke(pacer, [first, fallback])! && !(bool) due.Invoke(pacer, [second, fallback])!;
+		MethodInfo waitEnds = pacerType.GetMethod("AccountWaitEnds", SP, [typeof(DateTime), typeof(int), typeof(bool)])!;
+		DateTime Ends(DateTime last, int gap, bool quick) => (DateTime) waitEnds.Invoke(null, [last, gap, quick])!;
+		Check("pacer 1.8.8 across the account: a second game's unlock waits at least 15 minutes after another game's (its drawn 15-40); a quick follow-up in the same game doesn't wait",
+			heldAt14 && goesAt16 && heldFor40 && burstGoes && (Ends(now, 0, false) == now.AddMinutes(15)) && (Ends(now, 99, false) == now.AddMinutes(40))
+			&& (Ends(now, 20, true) == DateTime.MinValue) && (Ends(DateTime.MinValue, 20, false) == DateTime.MinValue)
+			&& Enumerable.Range(0, 500).Select(_ => (int) pacerType.GetMethod("DrawAccountGap", SP)!.Invoke(null, [seeded])!).All(static m => m is >= 15 and <= 40),
+			$"{heldAt14} {goesAt16} {heldFor40} {burstGoes}");
+
+		// B4: a cluster ends with its sitting.
+		object mid = NewState();
+		Set(mid, "BurstLeft", 2);
+		Set(mid, "Quick", true);
+		pacerType.GetMethod("EndCluster", SP)!.Invoke(null, [mid]);
+		int sitting = src.IndexOf("_sittingSince[app] = now + Rng.Minutes(10, 30);", StringComparison.Ordinal);
+		Check("pacer 1.8.8 clusters: a new sitting (after a break, the night, a restart) starts with no quick follow-ups left from the old one",
+			(StateOf<int>(mid, "BurstLeft") == 0) && !StateOf<bool>(mid, "Quick") && (sitting > 0)
+			&& src.Contains("if (newSitting) {\n\t\t\t\t\tEndCluster(g);\n\t\t\t\t}", StringComparison.Ordinal));
+
+		await bot.DisposeAsync();
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
 }
 
 // SETTINGSCOUNT

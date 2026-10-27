@@ -532,7 +532,7 @@ public static class GemsChoice {
 			: plan.Block != BuyBlock.None ? []
 			: [.. plan.LevelCosts];
 
-		Costs[account] = new Noted(now, plan.Currency, levels, plan.Block == BuyBlock.None ? plan.Wallet : 0);
+		Costs[account] = new Noted(now, plan.Currency, levels, plan.Block == BuyBlock.None ? Math.Max(0, plan.Wallet - plan.Keep) : 0);
 	}
 
 	/// <summary>

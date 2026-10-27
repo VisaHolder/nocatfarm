@@ -218,7 +218,7 @@ public static partial class SetSale {
 		// Only the levels past what the wallet already pays for: the money from the set buys those, not the ones it has money for.
 		// 1.8.2: the levels priced and the set finder's cheapest known past them (BuyPlan.Levels).
 		List<long> ranked = [.. plan.LevelCosts.Where(l => l.App != set.App).Select(static l => l.Cost).Where(static c => c > 0)];
-		List<long> more = BuyPlan.BeyondWallet(ranked, plan.Wallet);
+		List<long> more = BuyPlan.BeyondWallet(ranked, Math.Max(0, plan.Wallet - plan.Keep));
 		bool waited = (waitingSince is DateTime since) && (DateTime.UtcNow - since >= WaitAtMost);
 		Verdict v = Mark(Decide(set.App, set.Game, plan.Currency, cards, more, Math.Clamp(cfg.SpareDumpPct, 0, 95), sets, waited, SpareRules.From(cfg).MinSaleCents, gemsWorth, paid));
 

@@ -5233,7 +5233,7 @@ function pacerLine(live, name, hrs, done) {
       return `<p class="muted small">${tf('Playing {0} — {1}; the rest can only be awarded by Steam itself.', name, done)}</p>`;
     case 'Capped': {
       const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Never complete more of a game than' }, 'label'));
-      return `<p class="muted small">${tf('Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.', name, done, live.CeilingPercent, setting)}</p>`;
+      return `<p class="muted small">${tf('Playing {0} — {1}, which is its {2}% ceiling, so it has stopped here. Each game stops at its own point, never above “{3}”.', name, done, live.CeilingPercent, setting)}</p>`;
     }
     case 'NeedsHours':
       return `<p class="earning">${tf('Earning in {0} — {1} played, {2}. The next ones need more hours in it first.', name, hrs, done)}</p>`;
@@ -5359,7 +5359,7 @@ function sectionIntro(section, values) {
         ? tf('Earns achievements slowly, from real playtime, {0}.', t(pace))
         : t('Earns achievements slowly, from real playtime.'))}</b>
       <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
-      ${esc(tf('It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.', cap || 90))}</p>
+      ${esc(tf('Each game stops at its own point, never above {0}%, and a milestone only comes straight after the achievements it is a milestone of.', cap || 90))}</p>
     </div>
     ${huntPanel()}
     ${recentUnlocks()}

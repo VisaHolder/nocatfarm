@@ -134,7 +134,8 @@ that fixes each problem. Without an account name it checks every human-mode acco
 `grind myaccount 730 3` overrides human mode: the account goes on one game for 3 hours, then back to its normal day.
 Those are 3 hours of actual play. If the account has only just signed in and is still settling in, the grind waits
 for that and its end moves back to match, so the warm-up doesn't come out of the 3 hours. With *Earn achievements
-over time* on, a grind earns achievements at its own pace (*While grinding, one achievement every*, 12-24 minutes).
+over time* on, a grind earns achievements at its own pace (*While grinding, one achievement every*, 12-24 minutes, and
+the play each one needs, which changes every time - usually 25-40 minutes).
 
 Every wait is a setting, under Show advanced on a human-mode account:
 

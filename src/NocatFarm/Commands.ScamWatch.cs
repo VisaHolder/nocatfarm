@@ -108,11 +108,14 @@ public static partial class Commands {
 			return new Said("{0}: not checked yet - it checks a few minutes after signing in", bot.Name);
 		}
 
-		string items = string.Join(", ", AccountHealth.Assess(facts).Where(static i => i.Level != AccountHealth.Level.Unknown).Select(static i => i.Words.ToString()));
-		string level = facts.SteamLevel is { } l ? new Said("level {0}", l).ToString() : "";
+		// 1.8.8: what the summary already says (a ban, the market blocked, a trade hold) isn't said again after it.
+		string summary = AccountHealth.Line(facts).ToString();
+		string items = string.Join(", ", AccountHealth.Assess(facts).Where(static i => i.Level != AccountHealth.Level.Unknown).Select(static i => i.Words.ToString())
+			.Where(w => !summary.Contains(w, StringComparison.Ordinal)));
+		string level = (facts.SteamLevel is { } l) && !summary.Contains(new Said("level {0}", l).ToString(), StringComparison.Ordinal) ? new Said("level {0}", l).ToString() : "";
 		string when = checkedAt is { } at ? Fmt.Clock(at) : "?";
 
-		return new Said("{0}: {1} - {2} (checked {3})", bot.Name, AccountHealth.Line(facts),
+		return new Said("{0}: {1} - {2} (checked {3})", bot.Name, summary,
 			string.Join(", ", new[] { level, items }.Where(static p => p.Length > 0)), when);
 	}
 }

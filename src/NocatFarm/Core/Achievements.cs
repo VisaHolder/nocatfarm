@@ -89,6 +89,18 @@ public sealed class AchievementSet {
 	/// </summary>
 	public required uint CrcStats { get; init; }
 
+	/// <summary>1.8.8: how many ordinary stats (kills, wins, distance - not achievement bits) the game's schema has.</summary>
+	public int PlayStats { get; init; }
+
+	/// <summary>1.8.8: how many of those this account has a value other than 0 in. Steam leaves untouched stats out.</summary>
+	public int PlayStatsSet { get; init; }
+
+	/// <summary>
+	/// 1.8.8: the game keeps stats of its own and not one of them was ever set on this account - it was never really
+	/// played, whatever its hours say. A game with no ordinary stats can't tell, and isn't counted as never played.
+	/// </summary>
+	public bool NeverPlayed => (PlayStats > 0) && (PlayStatsSet == 0);
+
 	public IEnumerable<Achievement> Locked => All.Where(static a => !a.Unlocked && a.Settable);
 	public IEnumerable<Achievement> Unlocked => All.Where(static a => a.Unlocked);
 
@@ -335,7 +347,16 @@ public static class Achievements {
 			}
 		}
 
-		AchievementSet set = new() { AppId = appId, All = all, CrcStats = response.crc_stats };
+		// 1.8.8: the game's ordinary stats, and how many of them this account has ever set - see AchievementSet.NeverPlayed.
+		List<uint> playStats = [.. root["stats"].Children
+			.Where(static n => !IsAchievementStat(n["type"]))
+			.Select(static n => uint.TryParse(n.Name, NumberStyles.None, CultureInfo.InvariantCulture, out uint id) ? id : uint.MaxValue)
+			.Where(static id => id != uint.MaxValue)];
+
+		AchievementSet set = new() {
+			AppId = appId, All = all, CrcStats = response.crc_stats,
+			PlayStats = playStats.Count, PlayStatsSet = playStats.Count(id => statValues.GetValueOrDefault(id) != 0)
+		};
 		await AddGlobalPercentagesAsync(set, bot.Name, ct).ConfigureAwait(false);
 
 		return set;
