@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Set - fine at home, but too short for away from home (that needs {0} or more characters).": "Ustawione - w domu wystarczy, ale jest za krótkie poza domem (potrzeba {0} lub więcej znaków).",
     "couldn't note the levelling figures: {0}": "nie udało się zapisać liczb poziomów: {0}",
     "+{0} XP (level {1} -> {2})": "+{0} XP (poziom {1} -> {2})",
     "+{0} XP (level {1})": "+{0} XP (poziom {1})",
@@ -1713,7 +1714,6 @@
     "Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm.": "Przetestuj na telefonie z wyłączonym Wi-Fi, na danych komórkowych. Z wnętrza domu twój własny adres internetowy często się nie otwiera - to wina routera, nie nocat.farm.",
     "Not set. Your phone signs in with it.": "Nieustawione. Telefon loguje się tym hasłem.",
     "Set, and long enough for away from home.": "Ustawione i wystarczająco długie poza domem.",
-    "Set. Away from home needs {0} or more characters.": "Ustawione. Poza domem potrzeba {0} lub więcej znaków.",
     "New password": "Nowe hasło",
     "Change": "Zmień",
     "Saved - restart the dashboard to use it.": "Zapisano - uruchom panel ponownie, żeby tego użyć.",

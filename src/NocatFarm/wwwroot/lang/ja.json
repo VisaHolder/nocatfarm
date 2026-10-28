@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Set - fine at home, but too short for away from home (that needs {0} or more characters).": "設定済み - 自宅では使えますが、外出先には短すぎます ({0} 文字以上が必要です)。",
     "couldn't note the levelling figures: {0}": "レベル上げの数値を記録できませんでした: {0}",
     "+{0} XP (level {1} -> {2})": "+{0} XP (レベル {1} -> {2})",
     "+{0} XP (level {1})": "+{0} XP (レベル {1})",
@@ -1713,7 +1714,6 @@
     "Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm.": "スマホの Wi-Fi をオフにして、モバイルデータで試してください。自宅の中からだと自分のインターネット アドレスが開けないことがよくあります - それはルーターのせいで、nocat.farm の問題ではありません。",
     "Not set. Your phone signs in with it.": "未設定です。スマホはこれでサインインします。",
     "Set, and long enough for away from home.": "設定済みで、外出先で使うのに十分な長さです。",
-    "Set. Away from home needs {0} or more characters.": "設定済み。外出先では {0} 文字以上が必要です。",
     "New password": "新しいパスワード",
     "Change": "変更",
     "Saved - restart the dashboard to use it.": "保存しました - 使うにはダッシュボードを再起動してください。",

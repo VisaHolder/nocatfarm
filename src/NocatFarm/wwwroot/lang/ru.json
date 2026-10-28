@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Set - fine at home, but too short for away from home (that needs {0} or more characters).": "Задан - дома подходит, но слишком короткий для доступа вне дома (нужно {0} или больше символов).",
     "couldn't note the levelling figures: {0}": "не удалось записать данные об уровнях: {0}",
     "+{0} XP (level {1} -> {2})": "+{0} XP (уровень {1} -> {2})",
     "+{0} XP (level {1})": "+{0} XP (уровень {1})",
@@ -1713,7 +1714,6 @@
     "Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm.": "Проверьте на телефоне с выключенным Wi-Fi, через мобильный интернет. Изнутри дома ваш собственный интернет-адрес часто не открывается - дело в роутере, а не в nocat.farm.",
     "Not set. Your phone signs in with it.": "Не задан. С ним входит ваш телефон.",
     "Set, and long enough for away from home.": "Задан и достаточно длинный для доступа вне дома.",
-    "Set. Away from home needs {0} or more characters.": "Задан. Для доступа вне дома нужно {0} символов или больше.",
     "New password": "Новый пароль",
     "Change": "Изменить",
     "Saved - restart the dashboard to use it.": "Сохранено - перезапустите панель, чтобы это заработало.",

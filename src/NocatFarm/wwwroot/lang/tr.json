@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Set - fine at home, but too short for away from home (that needs {0} or more characters).": "Ayarlı - evde yeterli, ama ev dışı için çok kısa (bunun için {0} veya daha fazla karakter gerekir).",
     "couldn't note the levelling figures: {0}": "seviye rakamları not edilemedi: {0}",
     "+{0} XP (level {1} -> {2})": "+{0} XP (seviye {1} -> {2})",
     "+{0} XP (level {1})": "+{0} XP (seviye {1})",
@@ -1713,7 +1714,6 @@
     "Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm.": "Telefonunda Wi-Fi kapalıyken, mobil veriyle dene. Evin içinden kendi internet adresin çoğu zaman açılmaz - bu yönlendiriciden kaynaklanır, nocat.farm'dan değil.",
     "Not set. Your phone signs in with it.": "Belirlenmedi. Telefonun bununla giriş yapar.",
     "Set, and long enough for away from home.": "Belirlendi ve evden uzakta için yeterince uzun.",
-    "Set. Away from home needs {0} or more characters.": "Belirlendi. Evden uzakta için {0} veya daha fazla karakter gerekir.",
     "New password": "Yeni parola",
     "Change": "Değiştir",
     "Saved - restart the dashboard to use it.": "Kaydedildi - kullanmak için panoyu yeniden başlat.",
