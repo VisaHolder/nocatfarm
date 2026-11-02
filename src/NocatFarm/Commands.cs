@@ -3506,7 +3506,10 @@ public static partial class Commands {
 
 		List<string> lines = [
 			$"{name}: add {M(add)} - with {M(wallet)} in the wallet{(p.Keep > 0 ? $" and {M(p.Keep)} always kept" : "")}, {M(spendable)} to spend.",
-			levels == 0
+			// No level priced at all yet (the set finder hasn't looked): it can't tell - "buys no badge level" said the money was no use.
+			(levels == 0) && (p.Costs.Count == 0) && (p.Usual <= 0)
+				? $"{name}: can't tell yet what that buys - no badge level is priced yet (the set finder reads the market a little at a time); try again in an hour."
+			: levels == 0
 				? $"{name}: that buys no badge level at today's prices (the cheapest is {(p.Costs.Count > 0 ? M(p.Costs.Min()) : "not known yet")})."
 				: $"{name}: about {levels} badge level(s) - {levels * 100:N0} XP - for about {M(spent)}: level {p.Level} -> about {reach}{(p.Held > 0 ? $" with the {p.Held} level(s) its own sets make" : "")}"
 					+ (more > 0 ? $" ({more} of them at today's usual {M(p.Usual)} a level - the set finder hasn't priced that many yet)." : ".")
