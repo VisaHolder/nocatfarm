@@ -867,7 +867,7 @@
     "couldn't save the achievement hunt on shutdown: {0}": "Erfolgsjagd konnte beim Beenden nicht gespeichert werden: {0}",
     "couldn't change the Windows startup entry: {0}": "konnte den Windows-Autostart-Eintrag nicht ändern: {0}",
     "couldn't check refund windows: {0}": "konnte die Rückerstattungsfristen nicht prüfen: {0}",
-    "couldn't check trade offers: {0}: {1}": "konnte Handelsangebote nicht prüfen: {0}: {1}",
+    "couldn't check trade offers: {0}: {1}": "konnte Tauschangebote nicht prüfen: {0}: {1}",
     "won't get {0} - {1}; not asking again": "{0} gibt es nicht - {1}; wird nicht wieder angefragt",
     "gave up on {0} after {1} tries - {2}": "{0} nach {1} Versuchen aufgegeben - {2}",
     "couldn't claim {0} - {1}; trying again after {2}": "konnte {0} nicht holen - {1}; neuer Versuch nach {2}",
@@ -886,7 +886,7 @@
     "Steam is rate-limiting free-licence requests": "Steam begrenzt Anfragen nach Gratislizenzen",
     "Steam won't let this account take licences right now": "Steam lässt dieses Konto gerade keine Lizenzen annehmen",
     "Steam refused it ({0})": "Steam hat abgelehnt ({0})",
-    "couldn't confirm trade offer #{0}: {1}": "konnte Handelsangebot #{0} nicht bestätigen: {1}",
+    "couldn't confirm trade offer #{0}: {1}": "konnte Tauschangebot #{0} nicht bestätigen: {1}",
     "couldn't handle the friend request from {0}: {1}": "konnte die Freundschaftsanfrage von {0} nicht bearbeiten: {1}",
     "couldn't turn down the request from {0}: {1}": "konnte die Anfrage von {0} nicht ablehnen: {1}",
     "couldn't message {0}: {1}": "konnte {0} keine Nachricht senden: {1}",
@@ -932,11 +932,11 @@
     "Steam rate-limit - backing off ~{0}m": "Steam-Drosselung - ~{0}m zurückhalten",
     "Steam reports another session on app {0} right after logon - probably our own, waiting before saying so": "Steam meldet direkt nach der Anmeldung eine weitere Sitzung bei App {0} - vermutlich unsere eigene, wir warten mit der Meldung",
     "Steam reports device flags {0}": "Steam meldet Geräte-Flags {0}",
-    "Steam says {0} trade offer(s) are waiting": "Steam meldet {0} wartende Handelsangebote",
+    "Steam says {0} trade offer(s) are waiting": "Steam meldet {0} wartende Tauschangebote",
     "Steam says: blocked - another session is playing app {0}": "Steam sagt: blockiert - eine andere Sitzung spielt App {0}",
     "Steam says: not blocked - this session is playing app {0}": "Steam sagt: nicht blockiert - diese Sitzung spielt App {0}",
     "Steam says: not blocked - nothing playing": "Steam sagt: nicht blockiert - nichts läuft",
-    "Steam's trade offer counter says {0} waiting": "Steams Zähler für Handelsangebote meldet {0} wartend",
+    "Steam's trade offer counter says {0} waiting": "Steams Zähler für Tauschangebote meldet {0} wartend",
     "[plugin] {0}": "[Plugin] {0}",
     "accepted a friend request from {0}": "Freundschaftsanfrage von {0} angenommen",
     "achievement boost switched off - leaving {0}": "Erfolgs-Boost ausgeschaltet - {0} wird verlassen",
@@ -960,7 +960,7 @@
     "from one of your accounts": "von einem deiner Konten",
     "a donation": "eine Spende",
     "unwanted": "unerwünscht",
-    "trade offer refused. Steam said: {0}": "Handelsangebot abgelehnt. Steam sagte: {0}",
+    "trade offer refused. Steam said: {0}": "Tauschangebot abgelehnt. Steam sagte: {0}",
     "using {0}'s own trade token - it is one of your accounts": "nutzt das eigene Handelstoken von {0} - es ist eines deiner Konten",
     "crafted {0} badge(s): {1} · +{2} XP": "{0} Abzeichen hergestellt: {1} · +{2} EP",
     "craft refused - backing off {0}h rather than retrying": "Fertigen abgelehnt - {0}h Pause statt erneutem Versuch",
@@ -1074,7 +1074,7 @@
     "Steam didn't say what every item is": "Steam hat nicht zu jedem Gegenstand gesagt, was er ist",
     "that's an offer this account sent": "das ist ein Angebot, das dieses Konto gesendet hat",
     "{0} to confirm on your phone": "{0} am Handy zu bestätigen",
-    "couldn't handle trade offer #{0}: {1}: {2}": "Handelsangebot #{0} konnte nicht bearbeitet werden: {1}: {2}",
+    "couldn't handle trade offer #{0}: {1}: {2}": "Tauschangebot #{0} konnte nicht bearbeitet werden: {1}: {2}",
     "waiting for the account's day": "wartet auf den Tag des Kontos",
     "Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.": "Menschen-Modus: Es lebt einen glaubwürdigen Tag - schläft, macht Pausen, spielt ein Spiel nach dem anderen und wartet so lange wie ein Mensch, bevor es handelt oder antwortet. Langsamer, aber nichts daran wirkt automatisch.",
     "You can skip this and come back from the Overview page.": "Du kannst das überspringen und später von der Übersicht aus zurückkommen.",
@@ -1301,7 +1301,7 @@
     "couldn't save the announced offers: {0}": "konnte die gemeldeten Angebote nicht speichern: {0}",
     "{0} isn't logged in": "{0} ist nicht angemeldet",
     "Steam didn't answer - try again in a minute": "Steam hat nicht geantwortet - versuch es in einer Minute noch mal",
-    "{0} has no trade offers waiting": "{0} hat keine wartenden Handelsangebote",
+    "{0} has no trade offers waiting": "{0} hat keine wartenden Tauschangebote",
     "{0} has no offer {1} - 'offers {0}' lists them with their numbers": "{0} hat kein Angebot {1} - 'offers {0}' listet sie mit ihren Nummern auf",
     "declined offer {0}": "Angebot {0} abgelehnt",
     "offer {0}: Steam didn't take the decline - try again": "Angebot {0}: Steam hat die Ablehnung nicht übernommen - versuch es noch mal",
@@ -1760,7 +1760,7 @@
     "Friends & comments": "Freunde & Kommentare",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: alle {1} Kartendrops da - zurück zum Normalen",
     "still going for {0}: {1} of {2} card drop(s)": "weiter an {0}: {1} von {2} Kartendrops",
-    "confirmed trade offer {0} with its authenticator": "Handelsangebot {0} mit dem eigenen Authenticator bestätigt",
+    "confirmed trade offer {0} with its authenticator": "Tauschangebot {0} mit dem eigenen Authenticator bestätigt",
     "{0} - trying again around {1}": "{0} - neuer Versuch gegen {1}",
     "{0} - not trying again": "{0} - kein weiterer Versuch",
     "couldn't reach Steam - trying again in {0}": "Steam nicht erreichbar - neuer Versuch in {0}",
@@ -2049,7 +2049,7 @@
     "couldn't read the inventory - crafting later": "Inventar konnte nicht gelesen werden - es wird später gefertigt",
     "{0}: its cards aren't in the inventory yet - crafted later": "{0}: seine Karten sind noch nicht im Inventar - wird später gefertigt",
     "{0}: its cards are being sent or sold right now - crafted later": "{0}: seine Karten werden gerade gesendet oder verkauft - wird später gefertigt",
-    "{0}: its cards are in a trade offer that's waiting - crafted later": "{0}: seine Karten stecken in einem wartenden Handelsangebot - wird später gefertigt",
+    "{0}: its cards are in a trade offer that's waiting - crafted later": "{0}: seine Karten stecken in einem wartenden Tauschangebot - wird später gefertigt",
     "Steam wouldn't say which cards are in a waiting trade - crafting later": "Steam hat nicht gesagt, welche Karten in einem wartenden Handel stecken - es wird später gefertigt",
     "{0} accounts linked": "{0} Konten verknüpft",
     "{0} of {1} accounts linked": "{0} von {1} Konten verknüpft",
@@ -2471,7 +2471,7 @@
     "privacy settings: the page's privacy block had no PrivacySettings": "Privatsphäre-Einstellungen: der Privatsphäre-Block der Seite hatte keine PrivacySettings",
     "stuck alarm: not starting it again - it was stopped, switched off or removed meanwhile": "Hänge-Alarm: das Konto wird nicht wieder gestartet - es wurde inzwischen gestoppt, ausgeschaltet oder entfernt",
     "telegram: ignored a message from a chat that isn't the connected one": "telegram: Nachricht aus einem Chat ignoriert, der nicht der verbundene ist",
-    "trade offers: Steam's answer had no response object": "Handelsangebote: Steams Antwort hatte kein response-Objekt",
+    "trade offers: Steam's answer had no response object": "Tauschangebote: Steams Antwort hatte kein response-Objekt",
     "web session not refreshed: no access token (account offline, or getting one failed)": "Web-Sitzung nicht erneuert: kein Zugriffstoken (Konto offline, oder das Holen ist fehlgeschlagen)",
     "something new arrived during the playtime batch - reading the badge pages again": "während der Spielzeit-Runde kam etwas Neues hinzu - die Abzeichenseiten werden erneut gelesen",
     "couldn't read when this account's games were bought - refund protection skipped this pass": "konnte nicht lesen, wann die Spiele dieses Kontos gekauft wurden - der Rückerstattungsschutz hat diesen Durchgang ausgelassen",
@@ -3954,12 +3954,12 @@
       "tip": "Die längste Wartezeit nach der Anmeldung, bevor Hintergrund-Aufgaben starten, in Minuten."
     },
     "OneTradeAtATime": {
-      "label": "Ein Handelsangebot nach dem anderen beantworten",
-      "tip": "Wenn mehrere Handelsangebote gleichzeitig anstehen, etwa morgens, beantwortet es sie mit ein paar Minuten Abstand statt alle zusammen."
+      "label": "Ein Tauschangebot nach dem anderen beantworten",
+      "tip": "Wenn mehrere Tauschangebote gleichzeitig anstehen, etwa morgens, beantwortet es sie mit ein paar Minuten Abstand statt alle zusammen."
     },
     "AcceptDonations": {
       "label": "Geschenke annehmen",
-      "tip": "Nimmt Handelsangebote an, bei denen dieses Konto nichts abgibt. Damit kann dich niemand betrügen, denn ein Angebot, das auch nur einen deiner Gegenstände will, wird hier nie angenommen."
+      "tip": "Nimmt Tauschangebote an, bei denen dieses Konto nichts abgibt. Damit kann dich niemand betrügen, denn ein Angebot, das auch nur einen deiner Gegenstände will, wird hier nie angenommen."
     },
     "DonationsWhileAsleep": {
       "label": "Spenden auch im Schlaf annehmen",
@@ -3984,15 +3984,15 @@
     },
     "DeclineOtherTrades": {
       "label": "Alles andere ablehnen",
-      "tip": "Lehnt jedes andere Handelsangebot ab, statt es liegen zu lassen. Aus lässt nicht angenommene Angebote liegen, damit du sie selbst prüfen kannst."
+      "tip": "Lehnt jedes andere Tauschangebot ab, statt es liegen zu lassen. Aus lässt nicht angenommene Angebote liegen, damit du sie selbst prüfen kannst."
     },
     "TradeDelayMinMinutes": {
       "label": "Auf ein Tauschangebot antworten nach mindestens",
-      "tip": "Die kürzeste Wartezeit, bevor ein Handelsangebot beantwortet wird, in Minuten. Sekunden nach dem Eingang anzunehmen, wirkt wie ein Bot."
+      "tip": "Die kürzeste Wartezeit, bevor ein Tauschangebot beantwortet wird, in Minuten. Sekunden nach dem Eingang anzunehmen, wirkt wie ein Bot."
     },
     "TradeDelayMaxMinutes": {
       "label": "Auf ein Tauschangebot antworten nach höchstens",
-      "tip": "Die längste Wartezeit, bevor ein Handelsangebot beantwortet wird, in Minuten. Jedes Angebot bekommt eine zufällige Wartezeit, meist näher am kurzen Ende."
+      "tip": "Die längste Wartezeit, bevor ein Tauschangebot beantwortet wird, in Minuten. Jedes Angebot bekommt eine zufällige Wartezeit, meist näher am kurzen Ende."
     },
     "GiftDelayMinMinutes": {
       "label": "Geschenk annehmen nach mindestens",
@@ -4473,7 +4473,7 @@
     },
     "NotifyTrades": {
       "label": "Bei Tauschangeboten melden",
-      "tip": "Zeigt einen Hinweis für jedes neue Handelsangebot - von wem es ist, was du geben und bekommen würdest und was nocat.farm tun wird - und wenn eines angenommen oder abgelehnt wird oder bestätigt werden muss."
+      "tip": "Zeigt einen Hinweis für jedes neue Tauschangebot - von wem es ist, was du geben und bekommen würdest und was nocat.farm tun wird - und wenn eines angenommen oder abgelehnt wird oder bestätigt werden muss."
     },
     "TelegramLogColour": {
       "label": "Farbe von Telegram im Log",

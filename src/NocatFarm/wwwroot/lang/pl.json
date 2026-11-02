@@ -1067,8 +1067,8 @@
     "reached {0}h in {1} - that hour target is done": "osiągnięto {0} godz. w {1} - ten cel godzinowy jest wykonany",
     "couldn't read the play history: {0}": "nie udało się odczytać historii gry: {0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "biblioteka: {0} grana(-e) gra(-y) pominięta(-e) na liście Steam, dodana(-e) z historii ({1})",
-    "the discovery queue wasn't available - Steam said {0}": "lista odkryć była niedostępna - Steam odpowiedział {0}",
-    "went through the discovery queue ({0} game(s))": "przejrzano listę odkryć ({0} gier)",
+    "the discovery queue wasn't available - Steam said {0}": "kolejka odkryć była niedostępna - Steam odpowiedział {0}",
+    "went through the discovery queue ({0} game(s))": "przejrzano kolejkę odkryć ({0} gier)",
     "it isn't an active offer any more": "to już nie jest aktywna oferta",
     "the cards would sit in a trade hold": "karty utknęłyby w blokadzie wymiany",
     "Steam didn't say what every item is": "Steam nie podał, czym jest każdy przedmiot",
@@ -1162,8 +1162,8 @@
     "{0}: a Steam sale is on": "{0}: trwa wyprzedaż Steam",
     "{0}: no Steam sale seen right now": "{0}: teraz nie widać żadnej wyprzedaży Steam",
     "daily sticker: {0}": "dzienna naklejka: {0}",
-    "discovery queue: done today": "lista odkryć: dziś zrobiona",
-    "discovery queue: not done today": "lista odkryć: dziś jeszcze nie zrobiona",
+    "discovery queue: done today": "kolejka odkryć: dziś zrobiona",
+    "discovery queue: not done today": "kolejka odkryć: dziś jeszcze nie zrobiona",
     "Steam Awards and Next Fest: off on this human-mode account (Sale events → Human-mode accounts too)": "Steam Awards i Next Fest: wyłączone na tym koncie w trybie ludzkim (Wydarzenia Steam → Także konta w trybie ludzkim)",
     "Steam Awards and Next Fest: not looked yet - it looks a few minutes after signing in": "Steam Awards i Next Fest: jeszcze nie sprawdzono - sprawdza kilka minut po zalogowaniu",
     "Steam Awards nominations: open - {0} of {1} categories done": "Nominacje do Steam Awards: otwarte - {0} z {1} kategorii gotowe",
@@ -1402,7 +1402,7 @@
     "cancelled #{0} to {1}": "anulowano #{0} do {1}",
     "#{0}: Steam didn't take the cancel - try again": "#{0}: Steam nie przyjął anulowania - spróbuj ponownie",
     "finished - sending the cards on, then logging out": "gotowe - wysyła karty, potem się wyloguje",
-    "going through the discovery queue around {0}": "przejrzy listę odkryć około {0}",
+    "going through the discovery queue around {0}": "przejrzy kolejkę odkryć około {0}",
     "Steam's daily limit on comments to non-friends is reached - nothing was posted, and this account rests ~24h": "Osiągnięto dzienny limit Steam na komentarze u osób spoza znajomych - nic nie opublikowano, to konto odpoczywa ~24h",
     "awake now - building playtime one game at a time from here": "już nie śpi - od teraz zbiera czas gry w jednej grze naraz",
     "which plugin, and which setting?": "Która wtyczka i które ustawienie?",
@@ -2475,7 +2475,7 @@
     "web session not refreshed: no access token (account offline, or getting one failed)": "sesja sieciowa nieodświeżona: brak tokenu dostępu (konto offline albo nie udało się go uzyskać)",
     "something new arrived during the playtime batch - reading the badge pages again": "w trakcie serii nabijania godzin pojawiło się coś nowego - ponownie czytam strony odznak",
     "couldn't read when this account's games were bought - refund protection skipped this pass": "nie udało się odczytać, kiedy kupiono gry tego konta - ochrona zwrotów pominęła ten przebieg",
-    "discovery queue: not connected to Steam": "lista odkryć: brak połączenia ze Steam",
+    "discovery queue: not connected to Steam": "kolejka odkryć: brak połączenia ze Steam",
     "Points Shop: not connected to Steam": "sklep z punktami: brak połączenia ze Steam",
     "couldn't redeem a guest pass: not connected to Steam - trying again next login": "nie udało się wykorzystać przepustki gościa: brak połączenia ze Steam - ponowna próba przy następnym logowaniu",
     "firewall: Windows didn't start netsh for the dashboard rule": "zapora: Windows nie uruchomił netsh dla reguły panelu",
@@ -4150,13 +4150,13 @@
       "tip": "Odbiera darmową dzienną naklejkę podczas wyprzedaży Steam i wszystko, co kosztuje 0 punktów w Sklepie z punktami. Na przykład 14-dniowa wyprzedaż daje do 14 naklejek. Wyłączone: nic nie jest odbierane."
     },
     "DiscoveryQueue": {
-      "label": "Przeglądaj listę odkryć",
-      "tip": "Raz dziennie przeklikuje listę odkryć w sklepie, gra po grze, jak zrobiłby to człowiek. Podczas wyprzedaży daje to przedmioty z wydarzeń i postęp odznak - na przykład jeden przedmiot dziennie w wyprzedaży, która go daje. Wył.: nigdy. Podczas wyprzedaży: tylko gdy trwa wyprzedaż. Codziennie: każdego dnia, z wyprzedażą czy bez.",
+      "label": "Przeglądaj kolejkę odkryć",
+      "tip": "Raz dziennie przeklikuje kolejkę odkryć w sklepie, gra po grze, jak zrobiłby to człowiek. Podczas wyprzedaży daje to przedmioty z wydarzeń i postęp odznak - na przykład jeden przedmiot dziennie w wyprzedaży, która go daje. Wył.: nigdy. Podczas wyprzedaży: tylko gdy trwa wyprzedaż. Codziennie: każdego dnia, z wyprzedażą czy bez.",
       "choices": "0 wył. | 1 podczas wyprzedaży | 2 codziennie"
     },
     "SaleEvents": {
       "label": "Bierz udział w wydarzeniach Steam",
-      "tip": "Przełącznik dla wszystkiego poniżej: podczas wyprzedaży Steam, Steam Awards i Next Fest odbiera to, co darmowe - dzienną naklejkę, darmowe przedmioty ze Sklepu z punktami, listę odkryć, nominacje i głosy w nagrodach. Na przykład w 14-dniowej zimowej wyprzedaży to naklejka dziennie plus jedna za każdy głos. Poza wydarzeniem tylko co jakiś czas sprawdza. Wyłączone nie robi nic z tego na tym koncie."
+      "tip": "Przełącznik dla wszystkiego poniżej: podczas wyprzedaży Steam, Steam Awards i Next Fest odbiera to, co darmowe - dzienną naklejkę, darmowe przedmioty ze Sklepu z punktami, kolejkę odkryć, nominacje i głosy w nagrodach. Na przykład w 14-dniowej zimowej wyprzedaży to naklejka dziennie plus jedna za każdy głos. Poza wydarzeniem tylko co jakiś czas sprawdza. Wyłączone nie robi nic z tego na tym koncie."
     },
     "SaleEventsHumanToo": {
       "label": "Także konta w trybie ludzkim",
@@ -4172,7 +4172,7 @@
     },
     "SaleQuests": {
       "label": "Odbieraj przedmiot z wyprzedaży za listę",
-      "tip": "Podczas wyprzedaży, gdy lista odkryć jest skończona, od razu odbiera przedmiot, który wyprzedaż za nią daje, zamiast przy następnym sprawdzeniu naklejki - na przykład kilka godzin wcześniej. Wyłączone: czeka na następne sprawdzenie naklejki."
+      "tip": "Podczas wyprzedaży, gdy kolejka odkryć jest skończona, od razu odbiera przedmiot, który wyprzedaż za nią daje, zamiast przy następnym sprawdzeniu naklejki - na przykład kilka godzin wcześniej. Wyłączone: czeka na następne sprawdzenie naklejki."
     },
     "SaleNextFest": {
       "label": "Przedmioty z Next Fest",

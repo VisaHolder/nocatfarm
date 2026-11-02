@@ -563,14 +563,14 @@
     "last 24 hours": "últimas 24 horas",
     "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "O nocat.farm publica isso por você conforme um cronograma. Não há nada a fazer aqui - isto é só o que está esperando.",
     "Steam's daily comment limit - resting ~24h ({0} posted here today)": "Limite diário de comentários da Steam - descansando ~24h ({0} publicados aqui hoje)",
-    "badge pages unavailable": "páginas de emblemas indisponíveis",
+    "badge pages unavailable": "páginas de insígnias indisponíveis",
     "between games": "entre jogos",
     "building playtime on {0} game(s), ~{1}h to go": "acumulando horas em {0} jogo(s), faltam ~{1}h",
-    "checking badges": "conferindo emblemas",
+    "checking badges": "conferindo insígnias",
     "checking for completed sets": "procurando conjuntos completos",
     "comment-blocked, 24h cooldown": "comentários bloqueados, 24 h de espera",
     "commenting on {0}": "comentando em {0}",
-    "couldn't read the badges page": "não deu para ler a página de emblemas",
+    "couldn't read the badges page": "não deu para ler a página de insígnias",
     "crafting ({0}/{1})": "fabricando ({0}/{1})",
     "farming {0} ({1} left · ~{2} in all)": "farmando {0} (faltam {1} · ~{2} no total)",
     "farming {0} game(s), {1} set aside": "farmando {0} jogo(s), {1} de lado",
@@ -785,7 +785,7 @@
     "not playing today": "não joga hoje",
     "cards": "cartas",
     "human": "humano",
-    "badges": "emblemas",
+    "badges": "insígnias",
     "free games": "jogos grátis",
     "achievements": "conquistas",
     "boost": "impulso",
@@ -911,7 +911,7 @@
     "human mode hiccup: {0}: {1}": "tropeço no modo humano: {0}: {1}",
     "rep4rep step failed: {0}: {1}": "a etapa do rep4rep falhou: {0}: {1}",
     "free-game check failed: {0}: {1}": "a verificação de jogos grátis falhou: {0}: {1}",
-    "badge sweep failed: {0}: {1}": "a varredura de emblemas falhou: {0}: {1}",
+    "badge sweep failed: {0}: {1}": "a varredura de insígnias falhou: {0}: {1}",
     "unlocking everything stopped: {0}: {1}": "o desbloqueio de tudo parou: {0}: {1}",
     "module '{0}' stopped: {1}: {2}": "o módulo '{0}' parou: {1}: {2}",
     "module {0} failed to start: {1}": "o módulo {0} não conseguiu iniciar: {1}",
@@ -2460,7 +2460,7 @@
     "no web token: there is no login token to get one with": "sem token web: não há token de login para obter um",
     "no web token: Steam sent none back - trying again in 10 minutes": "sem token web: a Steam não devolveu nenhum - tentando de novo em 10 minutos",
     "inventory value: the inventory page had no readable list of games - kept the last picture": "valor do inventário: a página do inventário não tinha uma lista de jogos legível - mantida a última imagem",
-    "badges: Steam's GetBadges answer had no player_xp": "emblemas: a resposta GetBadges da Steam não tinha player_xp",
+    "badges: Steam's GetBadges answer had no player_xp": "insígnias: a resposta GetBadges da Steam não tinha player_xp",
     "play history: Steam's answer had no games list": "histórico de jogo: a resposta da Steam não tinha lista de jogos",
     "family library: Steam's answer had no apps list": "biblioteca da família: a resposta da Steam não tinha lista de aplicativos",
     "library: Steam's owned-games answer had no games list": "biblioteca: a resposta da Steam sobre os jogos possuídos não tinha lista de jogos",
@@ -2473,7 +2473,7 @@
     "telegram: ignored a message from a chat that isn't the connected one": "telegram: mensagem ignorada de um chat que não é o conectado",
     "trade offers: Steam's answer had no response object": "ofertas de troca: a resposta da Steam não tinha o objeto response",
     "web session not refreshed: no access token (account offline, or getting one failed)": "sessão web não renovada: sem token de acesso (conta offline, ou falhou ao obter um)",
-    "something new arrived during the playtime batch - reading the badge pages again": "algo novo chegou durante a rodada de horas de jogo - lendo as páginas de emblemas de novo",
+    "something new arrived during the playtime batch - reading the badge pages again": "algo novo chegou durante a rodada de horas de jogo - lendo as páginas de insígnias de novo",
     "couldn't read when this account's games were bought - refund protection skipped this pass": "não foi possível ler quando os jogos desta conta foram comprados - a proteção de reembolso pulou esta rodada",
     "discovery queue: not connected to Steam": "lista de descobrimento: sem conexão com a Steam",
     "Points Shop: not connected to Steam": "loja de pontos: sem conexão com a Steam",
@@ -2804,7 +2804,7 @@
     "up {0}": "acorda {0}",
     "buy order for {0} · no clear answer · {1}": "ordem de compra de {0} · sem resposta clara · {1}",
     "buy order {0} · not settled yet · {1}": "ordem de compra {0} · ainda não resolvida · {1}",
-    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Comprar cartas está ligado para {0}: compra sozinho as cartas que faltam para os emblemas, dentro dos limites",
+    "Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits": "Comprar cartas está ligado para {0}: compra sozinho as cartas que faltam para as insígnias, dentro dos limites",
     "Buying cards is off for {0}: nothing is bought": "Comprar cartas está desligado para {0}: nada é comprado",
     "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do": "A Steam pede que cada compra desta conta no mercado seja confirmada por e-mail, o que o nocat.farm não consegue fazer",
     "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time": "O Steam não disse como as compras no mercado desta conta são confirmadas, então nada é comprado desta vez",
@@ -2823,11 +2823,11 @@
     "This is what it would buy next and for how much, and the limits it keeps to. It spends this account's Steam wallet. Nothing is bought until you press Turn on.": "Isto é o que ele compraria em seguida e por quanto, e os limites que respeita. Ele gasta da carteira Steam desta conta. Nada é comprado até você apertar Ligar.",
     "Not signed in, so it can't look at the market yet. These are the limits it will keep to.": "Não está conectado, então ainda não pode olhar o mercado. Estes são os limites que vai respeitar.",
     "Couldn't look at the market: {0}": "Não foi possível olhar o mercado: {0}",
-    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "\"Criar emblemas com as cartas\" está desligado - nada é comprado até ligar, senão as cartas só ficariam paradas.",
+    "\"Craft badges from card sets\" is off - nothing is bought until it is on, or the cards would only sit there.": "\"Criar insígnias com as cartas\" está desligado - nada é comprado até ligar, senão as cartas só ficariam paradas.",
     "card to buy": "carta para comprar",
     "cards to buy": "cartas para comprar",
-    "{0} for {1} badge level(s)": "{0} por {1} nível(is) de emblema",
-    "badge levels": "níveis de emblema",
+    "{0} for {1} badge level(s)": "{0} por {1} nível(is) de insígnia",
+    "badge levels": "níveis de insígnia",
     "wallet: {0}": "carteira: {0}",
     "A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00": "Um conjunto completo de {0} ({1} cartas) por {2} - nível {3} para {4}, cerca de {5} XP por 1,00",
     "{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00": "{0} de {1} cartas de {2} ({3}) por {4} - nível {5} para {6}, cerca de {7} XP por 1,00",
@@ -2835,9 +2835,9 @@
     "Spends at most {0} a week ({1} spent this week)": "Gasta no máximo {0} por semana ({1} gasto nesta semana)",
     "Never more than the wallet holds. Only whole sets are planned, and every price is checked first - if one moves partway, the rest of the set waits for the next look": "Nunca mais do que tem na carteira. Só conjuntos inteiros são planejados, e cada preço é conferido antes - se um mudar no meio, o resto do conjunto espera a próxima olhada",
     "Each card at the cheapest price on the market, checked again right before it buys": "Cada carta pelo preço mais barato do mercado, conferido de novo logo antes de comprar",
-    "Only badges it has started - not full sets": "Só emblemas já começados - não conjuntos completos",
+    "Only badges it has started - not full sets": "Só insígnias já começadas - não conjuntos completos",
     "Only during its day (human mode), one set at a time": "Só durante o dia dela (modo humano), um conjunto por vez",
-    "Badge crafting turns each finished set into a level": "Criar emblemas transforma cada conjunto completo em um nível",
+    "Badge crafting turns each finished set into a level": "Criar insígnias transforma cada conjunto completo em um nível",
     "Spending Steam Points is on for {0}: it buys badge levels by itself, within its limits": "Gastar Pontos Steam está ligado para {0}: compra níveis de insígnia sozinho, dentro dos limites",
     "Steam Points: spending is off - turn it on in Settings to see what it would buy": "Pontos Steam: gastar está desligado - ligue nas Configurações para ver o que compraria",
     "Steam Points: would spend {0} points on {1} level(s) of {2} (+{3} XP) - nothing is spent until spending is turned on in Settings": "Pontos Steam: gastaria {0} pontos em {1} nível(is) de {2} (+{3} XP) - nada é gasto até gastar ser ligado nas Configurações",
@@ -2869,7 +2869,7 @@
     "made a {0} booster pack - opening it soon": "pacote de {0} criado - será aberto em breve",
     "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "o pacote de {0} que ele criou não está mais no inventário - não vai procurar de novo",
     "couldn't open the {0} booster pack it made: {1}": "não deu para abrir o pacote de {0} que ele criou: {1}",
-    "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "os pacotes estão completando conjuntos de cartas, mas \"Criar emblemas com as cartas\" está desligado - conjuntos completos esperam até ligar",
+    "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "os pacotes estão completando conjuntos de cartas, mas \"Criar insígnias com as cartas\" está desligado - conjuntos completos esperam até ligar",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "você recusou o anúncio dele no celular - não é anunciado de novo por mais {0} dia(s)",
     "couldn't read which listings you declined: {0}": "não deu para ler quais anúncios você recusou: {0}",
     "{0}: the selling price setting wasn't one of its choices - it now lists a cent under the real price": "{0}: a configuração do preço de venda não era uma das opções - agora anuncia um centavo abaixo do preço real",
@@ -2970,7 +2970,7 @@
     "the {0} booster pack wasn't made after all - it can be made again": "o pacote de {0} afinal não foi criado - pode ser criado de novo",
     "the {0} booster pack it made has waited over 2 days to be opened - it follows \"Open booster packs\" now, like any other": "o pacote de {0} que ele criou está esperando há mais de 2 dias para ser aberto - agora segue \"Abrir pacotes de cartas\", como qualquer outro",
     "Steam didn't answer about the {0} booster pack - looking for it in the inventory before making another": "a Steam não respondeu sobre o pacote de {0} - ele procura no inventário antes de criar outro",
-    "foil badge craft refused - foil badges wait {0}h, normal badges carry on": "criação de emblema brilhante recusada - emblemas brilhantes esperam {0}h, os normais continuam",
+    "foil badge craft refused - foil badges wait {0}h, normal badges carry on": "criação de insígnia brilhante recusada - insígnias brilhantes esperam {0}h, as normais continuam",
     "{0} is on \"Never open packs from these games\" now - the booster pack it made for it stays shut": "{0} está agora em \"Nunca abrir pacotes destes jogos\" - o pacote que ele criou para o jogo fica fechado",
     "a listing of it is still waiting on your phone - no other copy is listed until that's settled": "um anúncio dele ainda está esperando no seu celular - nenhuma outra cópia é anunciada até isso ser resolvido",
     "worth {0} - over your price limit, never touched": "vale {0} - acima do seu limite de preço, nunca é tocado",
@@ -3208,8 +3208,8 @@
     "set worth {0} buys no badge level today": "um conjunto que vale {0} não compra nenhum nível de insígnia hoje",
     "set worth {0} buys only {1} level": "um conjunto que vale {0} compra só {1} nível",
     "It would sell instead of crafting": "Venderia em vez de criar",
-    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "O conjunto {0}: {1} depois da taxa da Steam compra cerca de {2} níveis de emblema, mais que o 1 que criar dá",
-    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "O nível de emblema mais barato primeiro - um emblema já começado ou um conjunto novo inteiro, o que custar menos",
+    "The {0} set: {1} after Steam's fee buys about {2} badge levels, more than the 1 crafting makes": "O conjunto {0}: {1} depois da taxa da Steam compra cerca de {2} níveis de insígnia, mais que o 1 que criar dá",
+    "The cheapest badge level first - a badge it has started or a whole new set, whichever costs less": "O nível de insígnia mais barato primeiro - uma insígnia já começada ou um conjunto novo inteiro, o que custar menos",
     "If Steam asks for purchases to be confirmed in the Steam app, you confirm them on your phone - one set at a time, let go after a day if not": "Se a Steam pedir para confirmar as compras no app da Steam, você confirma no celular - um conjunto por vez; se não, são deixadas de lado depois de um dia",
     "set finder · couldn't look · {0}": "buscador de conjuntos · não conseguiu olhar · {0}",
     "set finder · couldn't read its list, starting over · {0}": "buscador de conjuntos · não conseguiu ler a lista, recomeçando · {0}",
@@ -3596,8 +3596,8 @@
       "tip": "Preenchido sozinho quando você conecta pelo botão Conectar Telegram. Apague para conectar outro chat - o botão volta. Você também pode digitar aqui o ID de chat de um grupo."
     },
     "SendCardDrops": {
-      "label": "Enviar drops de cartas e emblemas",
-      "tip": "Cartas caindo, jogos que já soltaram todas as cartas, emblemas criados e pacotes de cartas feitos."
+      "label": "Enviar drops de cartas e insígnias",
+      "tip": "Cartas caindo, jogos que já soltaram todas as cartas, insígnias criadas e pacotes de cartas feitos."
     },
     "SendFreeStuff": {
       "label": "Enviar jogos grátis, itens e presentes",
@@ -3844,7 +3844,7 @@
     },
     "FarmingOrder": {
       "label": "Farmar nesta ordem",
-      "tip": "Qual jogo farmar primeiro. “Menos cartas restantes” termina emblemas mais cedo. “Mais jogados primeiro” adiciona menos horas novas à sua biblioteca.",
+      "tip": "Qual jogo farmar primeiro. “Menos cartas restantes” termina insígnias mais cedo. “Mais jogados primeiro” adiciona menos horas novas à sua biblioteca.",
       "choices": "0 mais jogados primeiro | 1 menos jogados primeiro | 2 menos cartas restantes | 3 mais cartas restantes | 4 aleatório | 5 alfabético"
     },
     "FarmOffline": {
@@ -3869,8 +3869,8 @@
       "tip": "Às vezes 2 ou 3 conquistas chegam com poucos minutos de diferença, como ao terminar uma fase. Só as conquistas que pelo menos essa porcentagem de jogadores tem podem chegar assim - as mais raras sempre chegam sozinhas, com a espera completa. 0 deixa qualquer conquista vir em sequência; 100 desliga as sequências."
     },
     "CraftBadges": {
-      "label": "Criar emblemas com as cartas",
-      "tip": "Transforma conjuntos de cartas completos em emblemas uma vez por dia, e é isso que sobe seu nível Steam. Cartas paradas no inventário não sobem nada."
+      "label": "Criar insígnias com as cartas",
+      "tip": "Transforma conjuntos de cartas completos em insígnias uma vez por dia, e é isso que sobe seu nível Steam. Cartas paradas no inventário não sobem nada."
     },
     "Rep4Rep": {
       "label": "Publicar comentários do rep4rep",
@@ -3935,7 +3935,7 @@
     },
     "QuietThingsWaitForDay": {
       "label": "Tarefas em segundo plano só nas horas acordado",
-      "tip": "Faz as tarefas em segundo plano, como criar emblemas, resgatar jogos grátis, pacotes de cartas e vender cartas, também esperarem o horário acordado da conta. Desligado, elas rodam a qualquer hora."
+      "tip": "Faz as tarefas em segundo plano, como criar insígnias, resgatar jogos grátis, pacotes de cartas e vender cartas, também esperarem o horário acordado da conta. Desligado, elas rodam a qualquer hora."
     },
     "WakeDelayMinMinutes": {
       "label": "Ao acordar, esperar pelo menos",
@@ -4151,7 +4151,7 @@
     },
     "DiscoveryQueue": {
       "label": "Ver a lista de descobrimento",
-      "tip": "Passa pela lista de descobrimento da loja uma vez por dia, um jogo de cada vez, como uma pessoa faria. Nas promoções, isso rende itens de evento e progresso de emblema - por exemplo, um item por dia numa promoção que dá um. Desligado: nunca. Durante promoções: só enquanto houver uma promoção. Todo dia: todo dia, com promoção ou não.",
+      "tip": "Passa pela lista de descobrimento da loja uma vez por dia, um jogo de cada vez, como uma pessoa faria. Nas promoções, isso rende itens de evento e progresso de insígnia - por exemplo, um item por dia numa promoção que dá um. Desligado: nunca. Durante promoções: só enquanto houver uma promoção. Todo dia: todo dia, com promoção ou não.",
       "choices": "0 desligado | 1 durante promoções | 2 todo dia"
     },
     "SaleEvents": {
@@ -4659,11 +4659,11 @@
     },
     "CountMeAsUser": {
       "label": "Contar como usuário",
-      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, emblemas, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
+      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, insígnias, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
     },
     "ShareFarmTotals": {
       "label": "Compartilhar meus totais de farm",
-      "tip": "Adiciona alguns números à mensagem de hora em hora do \"Contar como usuário\": as horas de jogo que suas contas acumularam, as cartas que ganharam, os itens que viraram gemas, os emblemas que criaram (laminados também), os pacotes de cartas que abriram e os itens que venderam no mercado desde a última - por exemplo 41.5 horas, 12 cartas, 30 itens em gemas, 2 emblemas, 4 pacotes e 9 itens vendidos. Na primeira vez que for ligado, também manda uma vez as horas e cartas que já estão no histórico desta cópia. O nocat.lol soma os de todo mundo e mostra os totais na página do nocat.farm. Nada sobre qual conta, jogo, carta ou item. Ligado: os números vão com a mensagem de hora em hora. Desligado: nenhum vai. Só enquanto \"Contar como usuário\" estiver ligado."
+      "tip": "Adiciona alguns números à mensagem de hora em hora do \"Contar como usuário\": as horas de jogo que suas contas acumularam, as cartas que ganharam, os itens que viraram gemas, as insígnias que criaram (laminadas também), os pacotes de cartas que abriram e os itens que venderam no mercado desde a última - por exemplo 41.5 horas, 12 cartas, 30 itens em gemas, 2 insígnias, 4 pacotes e 9 itens vendidos. Na primeira vez que for ligado, também manda uma vez as horas e cartas que já estão no histórico desta cópia. O nocat.lol soma os de todo mundo e mostra os totais na página do nocat.farm. Nada sobre qual conta, jogo, carta ou item. Ligado: os números vão com a mensagem de hora em hora. Desligado: nenhum vai. Só enquanto \"Contar como usuário\" estiver ligado."
     },
     "ReactionSpeed": {
       "label": "Velocidade de reação",
@@ -4788,11 +4788,11 @@
     },
     "BuyCards": {
       "label": "Comprar as cartas que faltam",
-      "tip": "Compra as cartas que faltam para o próximo nível de um emblema, pelo preço mais barato do mercado, para que possa ser criado - o nível mais barato primeiro, e só conjuntos inteiros. Por exemplo, com 4 de 5 cartas ele compra a 5ª, por cerca de 0,05 a 0,15. Gasta da carteira Steam desta conta. Desligado por padrão em todas as contas. Ao ligar, primeiro mostra o que compraria e por quanto, e pede confirmação; desligar para na hora. Precisa de \"Criar emblemas com as cartas\" ligado."
+      "tip": "Compra as cartas que faltam para o próximo nível de uma insígnia, pelo preço mais barato do mercado, para que possa ser criado - o nível mais barato primeiro, e só conjuntos inteiros. Por exemplo, com 4 de 5 cartas ele compra a 5ª, por cerca de 0,05 a 0,15. Gasta da carteira Steam desta conta. Desligado por padrão em todas as contas. Ao ligar, primeiro mostra o que compraria e por quanto, e pede confirmação; desligar para na hora. Precisa de \"Criar insígnias com as cartas\" ligado."
     },
     "BuyFullSets": {
       "label": "Comprar os conjuntos completos mais baratos",
-      "tip": "Também compra conjuntos completos de cartas de jogos dos quais não tem nenhuma carta, os mais baratos primeiro, um nível de emblema (100 XP) cada. Ficam de fora conjuntos em que uma carta tem menos de 2 no mercado, ou uma carta muito barata faz o conjunto parecer mais barato do que é. Desligado: só cartas para emblemas já começados."
+      "tip": "Também compra conjuntos completos de cartas de jogos dos quais não tem nenhuma carta, os mais baratos primeiro, um nível de insígnia (100 XP) cada. Ficam de fora conjuntos em que uma carta tem menos de 2 no mercado, ou uma carta muito barata faz o conjunto parecer mais barato do que é. Desligado: só cartas para insígnias já começadas."
     },
     "BuyDailyLimit": {
       "label": "Gastar no máximo por dia",
@@ -5009,7 +5009,7 @@
     },
     "BoosterMake": {
       "label": "Criar pacotes de cartas",
-      "tip": "Transforma gemas em pacotes de cartas, um por jogo por dia, como a Steam permite. Desligado: nenhum pacote é criado. Jogos que eu escolho: pacotes para os jogos da lista abaixo. Automático: o jogo cuja insígnia normal está mais perto do próximo nível - o menor número de cartas faltando, contando as que você tem - entre os jogos para os quais a Steam deixa criar pacotes; nunca um com a insígnia já no nível 5 e nunca cartas brilhantes. Por exemplo, um jogo que falta 1 carta do conjunto vem antes de um que faltam 4. O automático abre ele mesmo os pacotes que cria, não importa o que diga \"Abrir pacotes de cartas\", para as cartas irem para a insígnia; ligue \"Criar emblemas com as cartas\" para conjuntos completos virarem níveis. O automático mantém as gemas soltas (\"As gemas depois\"), porque pacotes não usam gemas em sacos. Uma conta no modo humano cria e abre pacotes só durante o seu dia. 'booster plan' mostra o que o automático escolheria a seguir.",
+      "tip": "Transforma gemas em pacotes de cartas, um por jogo por dia, como a Steam permite. Desligado: nenhum pacote é criado. Jogos que eu escolho: pacotes para os jogos da lista abaixo. Automático: o jogo cuja insígnia normal está mais perto do próximo nível - o menor número de cartas faltando, contando as que você tem - entre os jogos para os quais a Steam deixa criar pacotes; nunca um com a insígnia já no nível 5 e nunca cartas brilhantes. Por exemplo, um jogo que falta 1 carta do conjunto vem antes de um que faltam 4. O automático abre ele mesmo os pacotes que cria, não importa o que diga \"Abrir pacotes de cartas\", para as cartas irem para a insígnia; ligue \"Criar insígnias com as cartas\" para conjuntos completos virarem níveis. O automático mantém as gemas soltas (\"As gemas depois\"), porque pacotes não usam gemas em sacos. Uma conta no modo humano cria e abre pacotes só durante o seu dia. 'booster plan' mostra o que o automático escolheria a seguir.",
       "choices": "0 desligado | 1 jogos que eu escolho | 2 automático - insígnia mais perto"
     },
     "BoosterKeepGems": {
@@ -5041,12 +5041,12 @@
       "tip": "A espera mais longa entre dois itens numa conta em modo humano, em minutos. Por exemplo 20, com 3 como a mais curta: cada espera fica entre 3 e 20 minutos, então 3 itens levam até uns 40 minutos."
     },
     "CraftFoilBadges": {
-      "label": "Criar também emblemas brilhantes",
-      "tip": "Transforma também os conjuntos completos de cartas brilhantes em emblemas brilhantes. Desligado, cria só emblemas normais e deixa as cartas brilhantes em paz. Se a Steam recusar um emblema brilhante, só os brilhantes esperam - os normais continuam."
+      "label": "Criar também insígnias brilhantes",
+      "tip": "Transforma também os conjuntos completos de cartas brilhantes em insígnias brilhantes. Desligado, cria só insígnias normais e deixa as cartas brilhantes em paz. Se a Steam recusar uma insígnia brilhante, só as brilhantes esperam - as normais continuam."
     },
     "SellSetsForLevels": {
       "label": "Vender um conjunto em vez de criar quando o dinheiro compra mais níveis",
-      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar um emblema normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de emblema que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um emblema laminado é um nível. Também vende cartas guardadas para um emblema que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo. Essas vendas podem passar de “Não mexer em itens que valham mais de” - esse limite é para os itens sobrando. Jogos na sua lista de manter nunca são tocados."
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" está ligado. Antes de criar uma insígnia normal, vê por quanto o conjunto vende no mercado, depois da taxa da Steam. Quando esse dinheiro compra claramente mais níveis de insígnia que o 1 que criar dá, anuncia o conjunto para venda no lugar, e a compra de cartas gasta o dinheiro dentro dos seus limites. Por exemplo, um conjunto que rende 5,00 quando os níveis mais baratos custam cerca de 0,40 cada compra cerca de 12 níveis em vez de 1. Você confirma cada anúncio no app da Steam, como qualquer anúncio. Conjuntos e cartas laminados são avaliados do mesmo jeito: um insígnia laminado é um nível. Também vende cartas guardadas para um insígnia que valem mais vendidas do que os níveis que dariam: 7 cartas que rendem cerca de 5,70 compram cerca de 14 níveis a 0,40, em vez dos 1 ou 2 que dariam guardadas. Enquanto são vendidas, nada é comprado nem feito em pacotes para esse jogo. Essas vendas podem passar de “Não mexer em itens que valham mais de” - esse limite é para os itens sobrando. Jogos na sua lista de manter nunca são tocados."
     },
     "CardSwaps": {
       "label": "Trocar cartas sobrando com outros usuários do nocat.farm",
@@ -5070,7 +5070,7 @@
     },
     "GemsForLevels": {
       "label": "Usar as gemas para o máximo de níveis",
-      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de emblema 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o emblema mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o emblema mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o emblema mais próximo. 'booster plan' mostra os números. Cartas de pacotes que ele faz para vender são vendidas não importa o que o limite de preço dos itens sobrando diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
+      "tip": "Só faz algo enquanto \"Comprar as cartas que faltam\" estiver ligado. Antes de os pacotes automáticos criarem um pacote, calcula quantos níveis de insígnia 1.000 gemas valem aos preços de hoje do mercado, de quatro jeitos: vender um saco de gemas e deixar a compra de cartas gastar o dinheiro, criar um pacote e vendê-lo fechado, criar um pacote e vender as 3 cartas, ou abrir pacotes para o insígnia mais próximo como antes - e faz o que dá mais. Por exemplo, um saco que paga 0,45 compra cerca de 1,8 nível de conjuntos baratos, enquanto pacotes para o insígnia mais próximo dão cerca de 0,3. Um jeito que usa o mercado tem de ganhar com folga (por 15%) de um mais seguro; se os preços não forem conhecidos, as gemas ficam soltas. Nunca vende por menos do que as gemas valem, anuncia no máximo 10 coisas por dia, e você confirma cada anúncio no app da Steam como qualquer outro. Só gemas negociáveis são vendidas; as não negociáveis continuam indo para o insígnia mais próximo. 'booster plan' mostra os números. Cartas de pacotes que ele faz para vender são vendidas não importa o que o limite de preço dos itens sobrando diga - foram feitas por dinheiro. Jogos na sua lista de manter nunca são tocados."
     },
     "SendScamWarnings": {
       "label": "Enviar alertas de golpe",

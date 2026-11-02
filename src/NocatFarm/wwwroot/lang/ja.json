@@ -292,8 +292,8 @@
     "Games with at least one card still to drop, across every account.": "全アカウントで、まだ 1 枚以上カードが残っているゲーム。",
     "Trading cards that dropped in the last 24 hours.": "直近 24 時間にドロップしたカード。",
     "rep4rep comments posted in the last 24 hours.": "直近 24 時間に投稿した rep4rep のコメント。",
-    "What every account's inventory would fetch at the lowest price each item is listed for on the market. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "各アカウントのインベントリが市場の最安値でいくらになるか。中身は今売れるかどうかに関わらず、その価値で数えます。",
-    "What everything in this account's inventory would fetch at the lowest price each item is listed for on the market. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "このアカウントのインベントリ全体が市場の最安値でいくらになるか。市場に出品のないアイテムはゼロ扱い、いま売れないだけのもの（トレード制限や BAN）は価値どおりに数えます。",
+    "What every account's inventory would fetch at the lowest price each item is listed for on the market. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "各アカウントのインベントリがマーケットの最安値でいくらになるか。中身は今売れるかどうかに関わらず、その価値で数えます。",
+    "What everything in this account's inventory would fetch at the lowest price each item is listed for on the market. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "このアカウントのインベントリ全体がマーケットの最安値でいくらになるか。マーケットに出品のないアイテムはゼロ扱い、いま売れないだけのもの（トレード制限や BAN）は価値どおりに数えます。",
     "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "rep4rep で使えるポイント。保留分は rep4rep がまだ確認していないコメントです。",
     "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "使えるポイント。保留分は rep4rep がまだ確認していないコメントで、たいてい数時間のうちに自然と本物のポイントになります。失われるものはありません。",
     "How long nocat.farm has been running.": "nocat.farm が動き続けている時間。",
@@ -315,12 +315,12 @@
     "Stop playing, farming and commenting. The account stays logged in.": "プレイ・収集・コメントを止めます。サインインしたままです。",
     "What this account still has left to farm.": "このアカウントに残っている収集対象。",
     "This account's settings.": "このアカウントの設定。",
-    "Up {0} over the last 24 hours, at the lowest market prices.": "直近 24 時間で {0} の上昇（市場の最安値）。",
-    "Down {0} over the last 24 hours, at the lowest market prices.": "直近 24 時間で {0} の下落（市場の最安値）。",
+    "Up {0} over the last 24 hours, at the lowest market prices.": "直近 24 時間で {0} の上昇（マーケットの最安値）。",
+    "Down {0} over the last 24 hours, at the lowest market prices.": "直近 24 時間で {0} の下落（マーケットの最安値）。",
     "Reading this inventory...": "インベントリを読み込み中...",
     "Reading {0}’s inventory again…": "{0} のインベントリを読み直しています…",
-    "Nothing with a market price in this inventory.": "このインベントリには市場価格のつくものがありません。",
-    "{0} at the lowest market prices": "{0}（市場の最安値）",
+    "Nothing with a market price in this inventory.": "このインベントリにはマーケット価格のつくものがありません。",
+    "{0} at the lowest market prices": "{0}（マーケットの最安値）",
     "{0} - {1}  ({2})": "{0} - {1}（{2}）",
     "{0} - skipped, nothing in it can be sold ({1})": "{0} - スキップ、中のどれも売れません（{1}）",
     "...{0} more still being priced": "…さらに {0} 件を価格照会中",
@@ -1366,7 +1366,7 @@
     "Hours by game": "ゲーム別の時間",
     "since {0}": "{0} から",
     "Inventory value": "インベントリの価値",
-    "What the inventory was worth at the end of each day, at the lowest market prices. A day with no new reading carries the last one over.": "各日の終わりにインベントリがいくらだったか (市場の最安値)。新しい読み取りがない日は、前回の値を引き継ぎます。",
+    "What the inventory was worth at the end of each day, at the lowest market prices. A day with no new reading carries the last one over.": "各日の終わりにインベントリがいくらだったか (マーケットの最安値)。新しい読み取りがない日は、前回の値を引き継ぎます。",
     "No inventory readings yet.": "インベントリの読み取りはまだありません。",
     "no new reading that day - carried over": "この日は新しい読み取りなし - 前回の値を引き継ぎ",
     "This week is the last 7 days, today included. Last week is the 7 days before that.": "今週は今日を含む直近 7 日間、先週はその前の 7 日間です。",
@@ -2865,9 +2865,9 @@
     "{0} is closest to its next badge level: {1} of {2} cards, {3} missing": "{0}が次のバッジレベルに一番近い: カード{2}枚中{1}枚、残り{3}枚",
     "{0}: automatic booster packs need loose gems, so \"Gems afterwards\" is now \"keep them loose\"": "{0}: 自動ブースターパックにはバラのジェムが必要なため、「その後のジェム」を「バラのまま」にしました",
     "booster packs wait: {0}": "ブースターパックは待機中: {0}",
-    "booster packs: couldn't read the badges or the whole inventory - trying again later": "ブースターパック: バッジか在庫全体を読めませんでした - 後でもう一度試します",
+    "booster packs: couldn't read the badges or the whole inventory - trying again later": "ブースターパック: バッジかインベントリ全体を読めませんでした - 後でもう一度試します",
     "made a {0} booster pack - opening it soon": "{0}のブースターパックを作成 - まもなく開封します",
-    "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "作成した{0}のブースターパックが在庫にもうありません - これ以上探しません",
+    "the {0} booster pack it made isn't in the inventory any more - not looking for it again": "作成した{0}のブースターパックがインベントリにもうありません - これ以上探しません",
     "couldn't open the {0} booster pack it made: {1}": "作成した{0}のブースターパックを開けませんでした: {1}",
     "booster packs are filling card sets, but \"Craft badges from card sets\" is off - finished sets wait until it's on": "ブースターパックでカードセットを埋めていますが、「カードからバッジを作る」がオフです - 揃ったセットはオンになるまで待ちます",
     "you declined its listing on your phone - not listed again for {0} more day(s)": "スマホでこの出品を拒否しました - あと {0} 日は出品しません",
@@ -3331,7 +3331,7 @@
     "Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.": "外部からのサインインで Telegram のコードを求める設定はオフです - パスワードだけで入れます。",
     "Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades (\"Your other accounts\").": "自動で承認されるもの: {0} とのトレード。それ以外はすべてここで待ちます。「設定」の「トレード」にある「あなたの他のアカウント」で変更できます。",
     "Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades (\"Your other accounts\").": "自動で承認されるものはありません - すべてここであなたを待ちます。「設定」の「トレード」にある「あなたの他のアカウント」で変更できます。",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "評価していません。オンに戻すには、設定を開いて {0} を選び、「詳細を表示」にチェックを入れ、「トレード」の「在庫の価値を表示」にチェックを入れてください。",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced and, under Trades, tick \"Show inventory value\".": "評価していません。オンに戻すには、設定を開いて {0} を選び、「詳細を表示」にチェックを入れ、「トレード」の「インベントリの価値を表示」にチェックを入れてください。",
     "Tap a chip to switch it on or off. Each one says what it counts.": "チップをタップするとオン・オフが切り替わります。それぞれ何を数えるかが出ます。",
     "extra card copies": "余分なカード",
     "cards of finished badges": "完成したバッジのカード",
@@ -3664,7 +3664,7 @@
       "tip": "ダッシュボード、ステータス、ログの言語です。まだ翻訳されていない部分は英語で表示されます。コンソールに入力したコマンドへの返答は英語のままです。"
     },
     "MarketCurrency": {
-      "label": "在庫の価値を表示する通貨",
+      "label": "インベントリの価値を表示する通貨",
       "tip": "インベントリの価値を表示する通貨です。合計がマーケットと一致するよう、Steam ストアで使っている通貨を選んでください。変えるとすべての価格を再確認します。",
       "choices": "1 米ドル | 20 カナダドル | 21 豪ドル | 2 英ポンド | 3 ユーロ | 5 ロシアルーブル | 7 ブラジルレアル | 8 日本円 | 23 中国元 | 24 インドルピー"
     },
@@ -4021,7 +4021,7 @@
     },
     "ShowInventoryValue": {
       "tip": "このアカウントのインベントリが Steam マーケット価格でいくらになるかを計算し、ダッシュボードに表示します。カードを数枚しか持たないアカウントではオフにしてください。",
-      "label": "在庫の価値を表示"
+      "label": "インベントリの価値を表示"
     },
     "UpdateReminders": {
       "label": "1時間ごとに知らせる",
@@ -4118,7 +4118,7 @@
       "tip": "「シングルプレイ全部」が、このアカウントで起動したことのあるゲームだけを狙うようにします。アカウントの履歴に合うゲームに絞る、最も厳しい方法です。"
     },
     "InventoryIgnoreGames": {
-      "label": "在庫の価値とトレードから外すゲーム",
+      "label": "インベントリの価値とトレードから外すゲーム",
       "tip": "インベントリの価値とすべてのトレードから除くゲームの ID（ストアのリンクにある数字）を、カンマ区切りで入力します。アカウントが BAN されているゲームは決してトレードできません - BAN の監視が見つけられれば自動で追加しますが、ここに自分で入れることもできます。"
     },
     "YieldToFamily": {
