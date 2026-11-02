@@ -28950,6 +28950,10 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		money.Contains("12.00 CAD to spend", StringComparison.Ordinal) && money.Contains("about 21 badge level(s) - 2,100 XP - for about 12.00 CAD: level 10 -> about 20", StringComparison.Ordinal)
 		&& money.Contains("18 of them at today's usual 0.60 CAD a level", StringComparison.Ordinal) && money.Contains("about 11 day(s) to buy - the week's 8.00 CAD sets the pace", StringComparison.Ordinal)
 		&& zero.Contains("spends nothing now", StringComparison.Ordinal) && noLevel.Contains("buys no badge level", StringComparison.Ordinal), money + " | " + zero + " | " + noLevel);
+	// Live on old (1.8.9): nothing priced yet said "that buys no badge level" - it can't tell yet.
+	string unpriced = NocatFarm.Commands.AddMoneySaid("old", gp with { Costs = [], Usual = 0, Wallet = 0, Keep = 0 }, 1000, 150, 800, robotCfg);
+	Check("addmoney: with no badge level priced yet it says it can't tell, not that the money buys nothing",
+		unpriced.Contains("can't tell yet what that buys", StringComparison.Ordinal) && !unpriced.Contains("buys no badge level", StringComparison.Ordinal), unpriced);
 
 	// Listings waiting on the phone: once when one has waited 3 hours, not again while the same ones wait, again for a new one.
 	DateTime pn = new(2026, 10, 27, 12, 0, 0, DateTimeKind.Utc);
@@ -29214,6 +29218,54 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		(Cmd(progDir) == $"\"{exePath}\" --minimized") && (Cmd(dataDir) == $"\"{exePath}\" --minimized --path \"{Path.GetFullPath(dataDir)}\"")
 		&& ((string) winIntegration.GetMethod("ExeOf", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Cmd(dataDir)])! == exePath),
 		Cmd(dataDir));
+}
+
+// ── rep4rep's v1 API (the old pub-api answered 404 from November 2026, live on old and kylro) ─────────────────────────
+{
+	List<(string Method, string Url, string Auth, string Body)> asked = [];
+	string profiles = """{"data":[{"steamId":"76561198000000001","name":"you","commentsToday":3}]}""";
+	string tasks = """{"data":[{"requestId":"01HV8Z","target":{"steamId":"76561198000000002","name":"someone","commentsUrl":"x"},"comment":{"id":4455,"text":"+rep great teammate"},"points":16,"ticket":"tk1"},{"requestId":"bad","target":{},"comment":{"id":1,"text":"x"}}]}""";
+	System.Net.HttpStatusCode status = System.Net.HttpStatusCode.OK;
+	var fake = new FakePing(async (r, _) => {
+		asked.Add((r.Method.Method, r.RequestUri!.ToString(), r.Headers.Authorization?.ToString() ?? "", r.Content == null ? "" : await r.Content.ReadAsStringAsync()));
+		string path = r.RequestUri!.AbsolutePath;
+		string body = path.EndsWith("/tasks", StringComparison.Ordinal) && (r.Method == HttpMethod.Get) ? tasks
+			: path.EndsWith("/steam-profiles", StringComparison.Ordinal) ? profiles
+			: path.EndsWith("/user", StringComparison.Ordinal) ? """{"data":{"points":1250,"pendingPoints":44}}"""
+			: """{"data":{"id":1}}""";
+		return new HttpResponseMessage(status) { Content = new StringContent(body) };
+	});
+	using var api = new NocatFarm.Rep4Rep.Rep4RepApi { Token = "key-123" };
+	typeof(NocatFarm.Rep4Rep.Rep4RepApi).GetField("_http", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(api, new HttpClient(fake));
+
+	(int Points, int PendingPoints)? user = await api.GetUserAsync();
+	(string? id, bool unanswered) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	List<NocatFarm.Rep4Rep.Rep4RepTask> list = await api.GetTasksAsync(id ?? "");
+	bool done = await api.CompleteTaskAsync(list[0].TaskId, list[0].RequiredCommentId, id!, CancellationToken.None, list[0].Ticket);
+	var post = asked[^1];
+	Check("rep4rep v1: the account, the profile by its SteamID64, its tasks and a posted comment, at api.rep4rep.com/v1 with the key in the header, never the address",
+		(user == (1250, 44)) && (id == "76561198000000001") && !unanswered && (list.Count == 1) && (list[0].TaskId == "01HV8Z") && (list[0].TargetSteamId == 76561198000000002)
+		&& (list[0].TargetName == "someone") && (list[0].CommentText == "+rep great teammate") && (list[0].RequiredCommentId == "4455") && (list[0].Ticket == "tk1")
+		&& done && (post.Method == "POST") && post.Url.EndsWith("/v1/tasks", StringComparison.Ordinal)
+		&& post.Body.Contains("steamId=76561198000000001", StringComparison.Ordinal) && post.Body.Contains("requestId=01HV8Z", StringComparison.Ordinal)
+		&& post.Body.Contains("commentId=4455", StringComparison.Ordinal) && post.Body.Contains("ticket=tk1", StringComparison.Ordinal)
+		&& asked.All(static a => a.Url.StartsWith("https://api.rep4rep.com/v1/", StringComparison.Ordinal) && (a.Auth == "Bearer key-123") && !a.Url.Contains("key-123", StringComparison.Ordinal))
+		&& asked.Any(static a => a.Url.EndsWith("/v1/steam-profiles/76561198000000001/tasks?limit=25", StringComparison.Ordinal)),
+		string.Join(" | ", asked.Select(static a => $"{a.Method} {a.Url}")));
+
+	// A profile it doesn't have is added by POST /steam-profiles profile=<id>; a turned-down key is rep4rep answering (the token's
+	// fault), not rep4rep being down; a refused comment (409) isn't credited.
+	asked.Clear();
+	(string? added, _) = await api.ResolveAsync(76561198000000009, true, CancellationToken.None);
+	bool addPosted = asked.Any(static a => (a.Method == "POST") && a.Url.EndsWith("/v1/steam-profiles", StringComparison.Ordinal) && (a.Body == "profile=76561198000000009"));
+	status = System.Net.HttpStatusCode.Unauthorized;
+	(string? noKey, bool down) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	status = System.Net.HttpStatusCode.Conflict;
+	bool refused = await api.CompleteTaskAsync("01HV8Z", "4455", "76561198000000001");
+	status = System.Net.HttpStatusCode.ServiceUnavailable;
+	(_, bool downNow) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	Check("rep4rep v1: a new profile is added with POST /steam-profiles; a refused key isn't 'not answering'; a 409 isn't credited; a 503 is 'not answering'",
+		(added == null) && addPosted && (noKey == null) && !down && !refused && downNow, string.Join(" | ", asked.Select(static a => $"{a.Method} {a.Url} {a.Body}")));
 }
 
 // SETTINGSCOUNT
