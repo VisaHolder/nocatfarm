@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 
+using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm.Windows;
@@ -91,7 +92,19 @@ public static class WindowsIntegration {
 	}
 
 	// --minimized, because something launched at sign-in should not throw a console window in your face.
-	private static string? StartupCommand() => string.IsNullOrEmpty(Environment.ProcessPath) ? null : $"\"{Environment.ProcessPath}\" --minimized";
+	private static string? StartupCommand() =>
+		string.IsNullOrEmpty(Environment.ProcessPath) ? null : StartupCommandFor(Environment.ProcessPath, ConfigStore.Root, AppContext.BaseDirectory);
+
+	/// <summary>
+	/// The startup command for this exe and data folder: started with --path somewhere else, that folder goes in too. Without
+	/// it, the copy Windows started at sign-in opened the empty folder next to the program - no accounts, nothing farming.
+	/// </summary>
+	internal static string StartupCommandFor(string exe, string root, string baseDir) {
+		string folder = Path.GetFullPath(root);
+		bool own = string.Equals(folder.TrimEnd('\\', '/'), Path.GetFullPath(baseDir).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase);
+
+		return $"\"{exe}\" --minimized" + (own ? "" : " --path " + SelfUpdate.QuoteArg(folder));
+	}
 
 	/// <summary>
 	/// At start: bring the startup entry in line with the setting, without taking it from another copy.
