@@ -2194,11 +2194,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -2343,11 +2339,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Core.UpdateCheck.Skipped = null;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -4413,11 +4405,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 
 	static string StatusWith(NocatFarm.Core.Bot b, NocatFarm.Modules.Idler idler) {
@@ -6152,11 +6140,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -6934,11 +6918,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -10425,11 +10405,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 
 	// The dashboard: no question card any more - the games left alone, each with its undo, and one endpoint.
@@ -10523,11 +10499,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			await bot.DisposeAsync();
 		}
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -10768,11 +10740,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -12078,11 +12046,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -12219,11 +12183,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -12491,11 +12451,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			await b.DisposeAsync();
 		}
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -12570,11 +12526,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		currentWeb6.SetValue(null, realWeb6);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot6);
 
-		try {
-			Directory.Delete(tmp6, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmp6);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -15293,11 +15245,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -15478,11 +15426,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Core.UpdateCheck.Skipped = null;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -15544,11 +15488,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		}
 		Check("update file: the pretend nocat.farm for each kind of computer is taken there, its version read from nocatFarm.dll", refused.Count == 0, string.Join(" | ", refused));
 	} finally {
-		try {
-			Directory.Delete(zips, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(zips);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -15816,11 +15756,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		uc.GetField("_releases", AnyStatic)!.SetValue(null, null);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -15938,11 +15874,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16059,11 +15991,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		Log.Configure(folderBefore != null, debugBefore, folderBefore != null ? Path.GetDirectoryName(folderBefore)! : logRoot);
 
-		try {
-			Directory.Delete(logRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(logRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16162,11 +16090,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16374,11 +16298,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16413,11 +16333,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16517,11 +16433,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		TaskScheduler.UnobservedTaskException -= Lost;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16733,11 +16645,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		uc.GetField("_releases", AnyStatic)!.SetValue(null, null);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16807,11 +16715,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		confirmedF.SetValue(null, confirmedBefore);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16861,11 +16765,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		reload.Invoke(null, []);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -16927,11 +16827,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Core.UpdateCheck.Skipped = skippedBefore;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17004,11 +16900,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		await b.DisposeAsync();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17218,11 +17110,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		latestP.SetValue(null, null);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17274,11 +17162,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		await bot.DisposeAsync();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17411,11 +17295,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		stateField.SetValue(null, savedState);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17525,11 +17405,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17580,11 +17456,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		stateField.SetValue(null, savedState);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17640,11 +17512,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17717,11 +17585,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -17817,11 +17681,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Commands.ReplyWithin = replyWithin;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18167,11 +18027,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18283,11 +18139,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		NocatFarm.Config.Live.Global = realGlobal;
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18326,11 +18178,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Commands.Host = host;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18359,11 +18207,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18439,11 +18283,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Commands.ReplyWithin = replyWithin;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18553,11 +18393,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18734,11 +18570,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.Live.Global = realGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18847,11 +18679,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18911,11 +18739,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -18958,11 +18782,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		reload.Invoke(null, []);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -19106,11 +18926,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		}
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -19160,11 +18976,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			$"{Dragged(escaped, false)} | {Dragged("~/Downloads/a\\ b.zip", false)}");
 		Check("update file on Windows: a backslash is a folder, never taken out", Dragged(escaped, true) == escaped, Dragged(escaped, true) ?? "null");
 	} finally {
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -19723,11 +19535,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Live.Global = realGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -20165,11 +19973,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Live.Global = aRealGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(aRealRoot);
 
-		try {
-			Directory.Delete(aTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(aTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -21081,11 +20885,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Core.SpareLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -21522,11 +21322,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		eCurrentWeb.SetValue(null, eRealWeb);
 		NocatFarm.Config.ConfigStore.UseRoot(eRealRoot);
 
-		try {
-			Directory.Delete(eTmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(eTmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -21897,11 +21693,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(eRealRoot);
 
-		try {
-			Directory.Delete(eTmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(eTmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -22256,11 +22048,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -22687,11 +22475,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.ConfigStore.UseRoot(fcRealRoot);
 		NocatFarm.Core.SpareLedger.ForgetLoaded();
 
-		try {
-			Directory.Delete(fcRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(fcRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -22912,11 +22696,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		fdPast.SetValue(null, fdPastWas);
 		NocatFarm.Log.Suppressed = fdWasSuppressed;
 
-		try {
-			Directory.Delete(fdTmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(fdTmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -23067,11 +22847,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(ftRealRoot);
 
-		try {
-			Directory.Delete(ftTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(ftTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -23307,11 +23083,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Live.Global = faRealGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(faRealRoot);
 
-		try {
-			Directory.Delete(faTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(faTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -23508,11 +23280,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Core.SpareLedger.ForgetLoaded();
 		NocatFarm.Modules.PointsLedger.ForgetLoaded();
 
-		try {
-			Directory.Delete(feTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(feTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -23720,11 +23488,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Live.Global = ffRealGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(ffRealRoot);
 
-		try {
-			Directory.Delete(ffTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(ffTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -23928,11 +23692,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Live.Global = fiRealGlobal;
 		NocatFarm.Config.ConfigStore.UseRoot(fiRealRoot);
 
-		try {
-			Directory.Delete(fiTmp, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(fiTmp);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -24518,11 +24278,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		fkHistReload.Invoke(null, null);
 		NocatFarm.Log.Suppressed = fkWasSuppressed;
 
-		try {
-			Directory.Delete(fkRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(fkRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -24960,11 +24716,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Modules.PointsLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(mcRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(mcRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -25118,11 +24870,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(bmRealRoot);
 
-		try {
-			Directory.Delete(bmRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(bmRoot);   // tried again while a late write lets go (slow Macs)
 	}
 
 	// Badge crafting looks sooner once a pack it made is opened - but never cuts Steam's back-off short.
@@ -25204,11 +24952,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(relRealRoot);
 
-		try {
-			Directory.Delete(relRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(relRoot);   // tried again while a late write lets go (slow Macs)
 	}
 
 	// A pack recorded without its id gets it as soon as the inventory shows it - kept out of "Packs it doesn't open" from then.
@@ -25909,11 +25653,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Core.SpareLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(srRealRoot);
 
-		try {
-			Directory.Delete(srRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(srRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -26759,11 +26499,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Core.SpareLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(pmRealRoot);
 
-		try {
-			Directory.Delete(pmRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(pmRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -27137,11 +26873,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Config.ConfigStore.UseRoot(lxRealRoot);
 		lxReset.Invoke(null, null);
 
-		try {
-			Directory.Delete(lxRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(lxRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -27441,11 +27173,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Modules.PointsLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(hpRealRoot);
 
-		try {
-			Directory.Delete(hpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(hpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -27660,11 +27388,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Core.SteamOpenLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(soRealRoot);
 
-		try {
-			Directory.Delete(soTmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(soTmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -27997,11 +27721,7 @@ await CommandSweep.RunAsync(Check);
 		NocatFarm.Modules.BuyLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(bcRealRoot);
 
-		try {
-			Directory.Delete(bcRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(bcRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -28364,11 +28084,7 @@ await CardSwapCheatChecks.RunAsync(Check);
 		NocatFarm.Config.ConfigStore.UseRoot(sfRealRoot);
 		NocatFarm.Config.Live.Global = sfRealGlobal;
 
-		try {
-			Directory.Delete(sfTmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(sfTmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -28712,7 +28428,11 @@ if (OperatingSystem.IsWindows()) {
 		var late = NwMode("harness-wake-" + Guid.NewGuid().ToString("N")[..6], NwCfg(), 8);
 		AfterBed(late);
 		DateTime lateBed = DateTime.Now.AddMinutes(10);
-		int lateMin = (int) (lateBed - planDate).TotalMinutes;
+		// The plan day that bedtime belongs to: yesterday's plan can't have a bed two days on, which "10 minutes from now"
+		// was at 23:50 (GitHub's Macs run on UTC, and this failed there just before midnight).
+		DateTime latePlan = lateBed.AddHours(-12).Date;
+		NwSet(late, "_dayStamp", latePlan.DayOfYear);
+		int lateMin = (int) (lateBed - latePlan).TotalMinutes;
 		NwSet(late, "_bedIsTomorrow", lateMin >= 24 * 60);
 		NwSet(late, "_bedHour", lateMin / 60 % 24);
 		NwSet(late, "_bedMinute", lateMin % 60);
@@ -29454,11 +29174,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - it goes when Windows tidies up
-		}
+		TestTemp.Gone(tmpRoot);   // tried again while a late write lets go (slow Macs)
 	}
 }
 
@@ -31357,11 +31073,7 @@ static class SwitchesTogetherChecks {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -31863,11 +31575,7 @@ static class BuySafetyChecks {
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -32516,11 +32224,7 @@ static class BuySmartChecks {
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -32750,11 +32454,7 @@ static class CraftSellChecks {
 			NocatFarm.Modules.BuyLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -33632,11 +33332,7 @@ static class BuyFixChecks {
 			NocatFarm.Core.SpareLedger.ForgetLoaded();
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -33925,11 +33621,7 @@ static class CopySettingsChecks {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -34047,11 +33739,7 @@ static class SetShareChecks {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }
@@ -34327,11 +34015,7 @@ static class GemsChoiceChecks {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 
-			try {
-				Directory.Delete(root, true);
-			} catch (IOException) {
-				// temp - it goes when Windows tidies up
-			}
+			TestTemp.Gone(root);   // tried again while a late write lets go (slow Macs)
 		}
 	}
 }

@@ -4015,7 +4015,7 @@ function phoneChecklist(p) {
   // The password: never shown, only replaced. A box to set it, with the same strength hint as the walkthrough.
   const pwState = !p.HasPassword ? t('Not set. Your phone signs in with it.')
     : p.LongPassword ? t('Set, and long enough for away from home.')
-    : tf('Set. Away from home needs {0} or more characters.', p.MinPassword);
+    : tf('Set - fine at home, but too short for away from home (that needs {0} or more characters).', p.MinPassword);
   const pwBox = !p.HasPassword || phone.pwOpen ? `<div class="ph-pwrow">
       <input id="phPw" type="${phone.pwShow ? 'text' : 'password'}" autocomplete="new-password" spellcheck="false"
         placeholder="${esc(t('New password'))}" oninput="phonePwInput(this)" onkeydown="if(event.key==='Enter')phoneSavePw()">

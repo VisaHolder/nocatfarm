@@ -1,5 +1,6 @@
 {
   "ui": {
+    "Set - fine at home, but too short for away from home (that needs {0} or more characters).": "已设置 - 在家可用，但用于外出太短（需要 {0} 个或更多字符）。",
     "couldn't note the levelling figures: {0}": "无法记录升级数据：{0}",
     "+{0} XP (level {1} -> {2})": "+{0} XP（等级 {1} -> {2}）",
     "+{0} XP (level {1})": "+{0} XP（等级 {1}）",
@@ -1713,7 +1714,6 @@
     "Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm.": "在手机上关掉 Wi-Fi，用移动数据试试。在家里访问自己的公网地址常常打不开 - 那是路由器的问题，不是 nocat.farm。",
     "Not set. Your phone signs in with it.": "未设置。手机要用它登录。",
     "Set, and long enough for away from home.": "已设置，长度够在外面用。",
-    "Set. Away from home needs {0} or more characters.": "已设置。在外面用需要 {0} 位或更多。",
     "New password": "新密码",
     "Change": "更改",
     "Saved - restart the dashboard to use it.": "已保存 - 重启面板后生效。",
