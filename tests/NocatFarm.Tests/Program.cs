@@ -37721,6 +37721,11 @@ static class MoneyFixChecks {
 			Check("levelup estimate: says how many levels known prices cover, how many more need prices, about what at today's rate - and how to start it",
 				estSaid.Contains("1 more need prices the set finder hasn't checked yet - about", StringComparison.Ordinal) && estSaid.Contains("1 from known prices", StringComparison.Ordinal)
 				&& estSaid.Contains($"'levelup {goalBot.Name} 20 buy yes' starts it", StringComparison.Ordinal), estSaid);
+			// Live on kylro (1.8.9): nothing priced in its money - "23 more need prices ... about 0.00 CAD at today's rate" read as free.
+			string noRate = NocatFarm.Commands.LevelGoalSaid(goalBot.Name, est with { Costs = [30L], Known = 1, Usual = 0 }, askYes: true);
+			Check("levelup estimate: with no usual price known the levels still to price get no figure, never 'about 0.00'",
+				noRate.Contains("1 more need prices the set finder hasn't checked yet - what they cost isn't known yet.", StringComparison.Ordinal)
+				&& !noRate.Contains("about 0.00", StringComparison.Ordinal), noRate);
 			string? off = goalBuyer.StartGoal(est);
 			NocatFarm.Core.Switches.Set(goalBot, NocatFarm.Core.Switches.Buy, true);
 			string? started = goalBuyer.StartGoal(est);

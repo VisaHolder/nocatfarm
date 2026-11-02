@@ -3552,7 +3552,10 @@ public static partial class Commands {
 		];
 
 		if (p.Missing > 0) {
-			lines.Add($"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate.");
+			// No usual price known either (nothing priced in this money yet): no figure - "about 0.00" read as free.
+			lines.Add(p.Usual > 0
+				? $"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate."
+				: $"{name}: {p.Missing} more need prices the set finder hasn't checked yet - what they cost isn't known yet.");
 		}
 
 		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
