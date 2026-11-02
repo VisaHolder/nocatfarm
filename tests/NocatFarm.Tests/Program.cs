@@ -29178,6 +29178,44 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	}
 }
 
+// ── the robot farming clock window keeps at least half of itself, whatever the day's jitter ─────────────────────────
+{
+	// 09-10 with the opening moved 40 minutes later and the close 30 earlier: it used to be shut all day (09:40-09:30).
+	MethodInfo inClock = typeof(NocatFarm.Modules.CardFarmer).GetMethod("InClockWindow", BindingFlags.NonPublic | BindingFlags.Static)!;
+	bool InClock(int minute, int from, int until, int open, int close) => (bool) inClock.Invoke(null, [minute, from, until, open, close])!;
+	bool oneHourOpens = Enumerable.Range(0, 46).All(o => Enumerable.Range(-45, 46).All(c => Enumerable.Range(9 * 60, 60).Count(m => InClock(m, 9, 10, o, c)) >= 30));
+	Check("cards: a one-hour farming window still opens for at least half an hour on every day's jitter (it never opened on about one day in four)",
+		oneHourOpens && !InClock((9 * 60) + 10, 9, 10, 40, -30) && InClock((9 * 60) + 20, 9, 10, 40, -30) && !InClock((9 * 60) + 50, 9, 10, 40, -30),
+		$"{oneHourOpens}");
+
+	// A long window still moves each edge by up to 45 minutes, and one past midnight still wraps.
+	Check("cards: a long window keeps its 45-minute jitter, and a window past midnight still wraps",
+		!InClock((9 * 60) + 44, 9, 23, 45, -45) && InClock((9 * 60) + 45, 9, 23, 45, -45) && !InClock((22 * 60) + 15, 9, 23, 45, -45) && InClock((22 * 60) + 14, 9, 23, 45, -45)
+		&& InClock((23 * 60) + 30, 22, 6, 20, -20) && InClock(2 * 60, 22, 6, 20, -20) && !InClock((5 * 60) + 50, 22, 6, 20, -20) && !InClock(12 * 60, 22, 6, 20, -20)
+		&& !InClock((22 * 60) + 10, 22, 6, 20, -20));
+
+	// The window has no taskbar button: minimised (Win+Down) it was a stub at the bottom of the desktop; with "Minimise to the
+	// tray" on and a tray icon there, it goes to the tray, and the tray's Show restores it.
+	string mainWindow = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs")).Replace("\r\n", "\n");
+	int sized = mainWindow.IndexOf("case WmSize: {", StringComparison.Ordinal);
+	Check("window: minimised with \"Minimise to the tray\" on, it hides to the tray instead of sitting at the bottom of the desktop",
+		(sized > 0) && mainWindow.IndexOf("if ((wParam == new IntPtr(SizeMinimized)) && Live.Global.MinimizeToTray && Commands.TrayPresent) {\n\t\t\t\t\tHide();", sized, StringComparison.Ordinal) is > 0 and var at
+		&& (at - sized < 600) && mainWindow.Contains("private const int SizeMinimized = 1;", StringComparison.Ordinal)
+		&& mainWindow.Contains("ShowWindow(_hwnd, IsIconic(_hwnd) ? SwRestore : SwShow);", StringComparison.Ordinal));
+
+	// Started with --path somewhere else, the startup entry starts that folder too - it used to start the empty one by the program.
+	Type winIntegration = typeof(Rng).Assembly.GetType("NocatFarm.Windows.WindowsIntegration")!;
+	MethodInfo startup = winIntegration.GetMethod("StartupCommandFor", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string progDir = Path.Combine(Path.GetTempPath(), "nf app");
+	string dataDir = Path.Combine(Path.GetTempPath(), "nf data (2)");
+	string exePath = Path.Combine(progDir, "nocatFarm.exe");
+	string Cmd(string root) => (string) startup.Invoke(null, [exePath, root, progDir + Path.DirectorySeparatorChar])!;
+	Check("startup entry: a copy started with --path elsewhere starts that folder at sign-in; one using its own folder stays as it was",
+		(Cmd(progDir) == $"\"{exePath}\" --minimized") && (Cmd(dataDir) == $"\"{exePath}\" --minimized --path \"{Path.GetFullPath(dataDir)}\"")
+		&& ((string) winIntegration.GetMethod("ExeOf", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Cmd(dataDir)])! == exePath),
+		Cmd(dataDir));
+}
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
