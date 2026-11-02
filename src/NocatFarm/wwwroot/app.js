@@ -4330,7 +4330,7 @@ function renderRep4RepAccount() {
         <li>
           <b>${esc(t('Copy your API token'))}</b>
           <div class="muted">${tf("It's on {0}. Copy the whole string.",
-            '<a href="https://rep4rep.com/user/settings" target="_blank" rel="noopener">rep4rep.com → Settings ↗</a>')}</div>
+            '<a href="https://rep4rep.com/dashboard/settings" target="_blank" rel="noopener">rep4rep.com → Settings ↗</a>')}</div>
           <div class="toolbar" style="margin:10px 0 0">
             <input id="r4rToken" type="password" placeholder="${esc(t('paste the token here'))}" autocomplete="off" style="max-width:340px"
                    onkeydown="if(event.key==='Enter')connectRep4Rep()">

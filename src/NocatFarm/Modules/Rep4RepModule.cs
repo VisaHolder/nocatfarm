@@ -640,12 +640,12 @@ public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(b
 		await CountPostAsync(task).ConfigureAwait(false);
 
 		int done = _state.PostsInLast24h();
-		bool credited = await _api.CompleteTaskAsync(task.TaskId, task.RequiredCommentId, _profileId!, ct).ConfigureAwait(false);
+		bool credited = await _api.CompleteTaskAsync(task.TaskId, task.RequiredCommentId, _profileId!, ct, task.Ticket).ConfigureAwait(false);
 
 		if (!credited) {
 			// The comment is already live, so a transient API blip would waste the quota. One retry before giving up.
 			if (await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
-				credited = await _api.CompleteTaskAsync(task.TaskId, task.RequiredCommentId, _profileId!, ct).ConfigureAwait(false);
+				credited = await _api.CompleteTaskAsync(task.TaskId, task.RequiredCommentId, _profileId!, ct, task.Ticket).ConfigureAwait(false);
 			}
 		}
 

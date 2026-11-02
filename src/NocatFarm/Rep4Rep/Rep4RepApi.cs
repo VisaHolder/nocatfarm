@@ -10,20 +10,27 @@ public sealed class Rep4RepTask {
 	public string CommentText { get; init; } = "";
 
 	/// <summary>
-	/// rep4rep's OWN comment-template id. /tasks/complete wants this as `commentId`. Sending the Steam comment id
-	/// instead comes back as HTTP 200 with {"info":"Comment not found."} and silently never credits.
+	/// rep4rep's OWN comment-template id (the task's comment.id). POST /tasks wants this as `commentId` - never the Steam
+	/// comment's id.
 	/// </summary>
 	public string RequiredCommentId { get; init; } = "";
+
+	/// <summary>
+	/// 1.8.9 (rep4rep's v1 API): the task's ticket. Sent with the comment, rep4rep takes it for up to an hour at the points
+	/// shown, even if the request filled up meanwhile. Empty when there wasn't one.
+	/// </summary>
+	public string Ticket { get; init; } = "";
 }
 
 /// <summary>
-/// Thin client for https://rep4rep.com/pub-api.
+/// Thin client for rep4rep's API, https://api.rep4rep.com/v1 (rep4rep.com/api).
 ///
-/// One quirk drives the design: rep4rep answers 200 for logical errors too, so "the request went through" is not
-/// "rep4rep accepted it". Anything that matters is confirmed by re-reading state afterwards.
+/// The old https://rep4rep.com/pub-api was taken down in November 2026 - every call answered 404, and nocat.farm said
+/// "rep4rep.com isn't answering" on every account for good. The v1 API takes the key in an Authorization header (never in
+/// the address), wraps every answer in "data", addresses a profile by its SteamID64, and gives errors a real HTTP status.
 /// </summary>
 public sealed class Rep4RepApi : IDisposable {
-	private const string Base = "https://rep4rep.com/pub-api";
+	private const string Base = "https://api.rep4rep.com/v1";
 
 	private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
@@ -57,7 +64,22 @@ public sealed class Rep4RepApi : IDisposable {
 
 	public Rep4RepApi() => _http.DefaultRequestHeaders.Add("User-Agent", "nocatFarm");
 
-	private Uri Url(string path) => new($"{Base}{path}{(path.Contains('?', StringComparison.Ordinal) ? '&' : '?')}apiToken={Uri.EscapeDataString(Token)}");
+	private static Uri Url(string path) => new($"{Base}{path}");
+
+	/// <summary>The HTTP status of the last answer that wasn't a 2xx (0: none yet, or the last one was fine).</summary>
+	private volatile int _lastRefusal;
+
+	/// <summary>The last call was turned down for the key itself (401 or 403): rep4rep answered - the token is wrong.</summary>
+	private bool KeyRefused => _lastRefusal is 401 or 403;
+
+	/// <summary>A request with the key in the Authorization header - the v1 API's way; in the address it would reach logs.</summary>
+	private HttpRequestMessage Request(HttpMethod method, Uri url) {
+		HttpRequestMessage r = new(method, url);
+		r.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+		r.Headers.Accept.ParseAdd("application/json");
+
+		return r;
+	}
 
 	private async Task<string?> GetAsync(string path, CancellationToken ct) {
 		if (!HasToken) {
@@ -67,7 +89,8 @@ public sealed class Rep4RepApi : IDisposable {
 		Uri url = Url(path);
 
 		try {
-			using HttpResponseMessage r = await _http.GetAsync(url, ct).ConfigureAwait(false);
+			using HttpRequestMessage request = Request(HttpMethod.Get, url);
+			using HttpResponseMessage r = await _http.SendAsync(request, ct).ConfigureAwait(false);
 
 			return Answered("GET", url, r) ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -85,13 +108,15 @@ public sealed class Rep4RepApi : IDisposable {
 	// account in a loop, so the same failure is written once per change (or hour), keyed by the path.
 
 	/// <summary>True for a 2xx; otherwise writes the status down.</summary>
-	private static bool Answered(string method, Uri url, HttpResponseMessage r) {
+	private bool Answered(string method, Uri url, HttpResponseMessage r) {
 		if (r.IsSuccessStatusCode) {
+			_lastRefusal = 0;
 			Log.Recovered($"r4r:{url.AbsolutePath}");
 
 			return true;
 		}
 
+		_lastRefusal = (int) r.StatusCode;
 		Trouble(url, $"rep4rep {method} {Log.Where(url)} -> {(int) r.StatusCode} {r.ReasonPhrase}");
 
 		return false;
@@ -107,13 +132,12 @@ public sealed class Rep4RepApi : IDisposable {
 			return null;
 		}
 
-		form["apiToken"] = Token;   // the docs put it in the query, the reference clients put it in the body - send both
-
 		Uri url = Url(path);
 
 		try {
-			using FormUrlEncodedContent content = new(form);
-			using HttpResponseMessage r = await _http.PostAsync(url, content, ct).ConfigureAwait(false);
+			using HttpRequestMessage request = Request(HttpMethod.Post, url);
+			request.Content = new FormUrlEncodedContent(form);
+			using HttpResponseMessage r = await _http.SendAsync(request, ct).ConfigureAwait(false);
 
 			return Answered("POST", url, r) ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -149,6 +173,11 @@ public sealed class Rep4RepApi : IDisposable {
 			using JsonDocument doc = JsonDocument.Parse(body);
 			JsonElement root = doc.RootElement;
 
+			// v1: {"data": {...}}.
+			if ((root.ValueKind == JsonValueKind.Object) && root.TryGetProperty("data", out JsonElement data)) {
+				root = data;
+			}
+
 			if (root.ValueKind == JsonValueKind.Array) {
 				root = root.EnumerateArray().FirstOrDefault();
 			}
@@ -173,10 +202,13 @@ public sealed class Rep4RepApi : IDisposable {
 		}
 	}
 
-	/// <summary>Every Steam profile registered on the rep4rep account, as (rep4rep id, steamID64).</summary>
+	/// <summary>
+	/// Every Steam profile registered on the rep4rep account, as (the id rep4rep addresses it by, steamID64) - in the v1
+	/// API both are the SteamID64.
+	/// </summary>
 	public async Task<List<(string Id, string SteamId)>> GetProfilesAsync(CancellationToken ct = default) {
 		List<(string, string)> profiles = [];
-		string? body = await GetAsync("/user/steamprofiles", ct).ConfigureAwait(false);
+		string? body = await GetAsync("/steam-profiles", ct).ConfigureAwait(false);
 
 		if (body == null) {
 			return profiles;
@@ -186,16 +218,15 @@ public sealed class Rep4RepApi : IDisposable {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			foreach (JsonElement profile in Rows(doc.RootElement)) {
-				string? id = ReadString(profile, "id");
 				string? steam = ReadString(profile, "steamId");
 
-				if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(steam)) {
-					profiles.Add((id, steam));
+				if (!string.IsNullOrEmpty(steam)) {
+					profiles.Add((steam, steam));
 				}
 			}
 		} catch (Exception e) {
 			// unparsable - treated as none registered
-			Unreadable("/user/steamprofiles", e);
+			Unreadable("/steam-profiles", e);
 		}
 
 		return profiles;
@@ -222,13 +253,18 @@ public sealed class Rep4RepApi : IDisposable {
 			return (id, unanswered);
 		}
 
-		await PostAsync("/user/steamprofiles/add", new Dictionary<string, string> { ["steamProfile"] = steamId.ToString() }, ct).ConfigureAwait(false);
+		await PostAsync("/steam-profiles", new Dictionary<string, string> { ["profile"] = steamId.ToString() }, ct).ConfigureAwait(false);
 
 		return await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 	}
 
 	private async Task<(string? Id, bool Unanswered)> FindProfileIdAsync(ulong steamId, CancellationToken ct) {
-		string? body = await GetAsync("/user/steamprofiles", ct).ConfigureAwait(false);
+		string? body = await GetAsync("/steam-profiles", ct).ConfigureAwait(false);
+
+		// The key turned down is rep4rep answering: not "down", so the token is what gets blamed.
+		if ((body == null) && KeyRefused) {
+			return (null, false);
+		}
 
 		if (body == null) {
 			return (null, HasToken);
@@ -240,12 +276,12 @@ public sealed class Rep4RepApi : IDisposable {
 
 			foreach (JsonElement profile in Rows(doc.RootElement)) {
 				if (ReadString(profile, "steamId") == wanted) {
-					return (ReadString(profile, "id"), false);
+					return (wanted, false);
 				}
 			}
 		} catch (Exception e) {
 			// unparsable response - treated as "not found", the caller retries later
-			Unreadable("/user/steamprofiles", e);
+			Unreadable("/steam-profiles", e);
 		}
 
 		return (null, false);
@@ -254,7 +290,7 @@ public sealed class Rep4RepApi : IDisposable {
 	/// <summary>Every task currently assigned to a profile.</summary>
 	public async Task<List<Rep4RepTask>> GetTasksAsync(string profileId, CancellationToken ct = default) {
 		List<Rep4RepTask> tasks = [];
-		string? body = await GetAsync($"/tasks?steamProfile={Uri.EscapeDataString(profileId)}", ct).ConfigureAwait(false);
+		string? body = await GetAsync($"/steam-profiles/{Uri.EscapeDataString(profileId)}/tasks?limit=25", ct).ConfigureAwait(false);
 
 		if (body == null) {
 			return tasks;
@@ -264,21 +300,24 @@ public sealed class Rep4RepApi : IDisposable {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			foreach (JsonElement row in Rows(doc.RootElement)) {
-				string? taskId = ReadString(row, "taskId");
-				string? text = ReadString(row, "requiredCommentText");
-				string? commentId = ReadString(row, "requiredCommentId");
-				string? target = ReadString(row, "targetSteamProfileId");
+				// v1: {"requestId", "target": {"steamId", "name"}, "comment": {"id", "text"}, "points", "ticket"}
+				JsonElement target = Child(row, "target"), comment = Child(row, "comment");
+				string? taskId = ReadString(row, "requestId");
+				string? text = ReadString(comment, "text");
+				string? commentId = ReadString(comment, "id");
 
-				if (string.IsNullOrEmpty(taskId) || string.IsNullOrEmpty(text) || string.IsNullOrEmpty(commentId) || !ulong.TryParse(target, out ulong targetId) || (targetId == 0)) {
+				if (string.IsNullOrEmpty(taskId) || string.IsNullOrEmpty(text) || string.IsNullOrEmpty(commentId)
+					|| !ulong.TryParse(ReadString(target, "steamId"), out ulong targetId) || (targetId == 0)) {
 					continue;
 				}
 
 				tasks.Add(new Rep4RepTask {
 					TaskId = taskId,
 					TargetSteamId = targetId,
-					TargetName = ReadString(row, "targetSteamProfileName") ?? targetId.ToString(),
+					TargetName = ReadString(target, "name") ?? targetId.ToString(),
 					CommentText = text,
-					RequiredCommentId = commentId
+					RequiredCommentId = commentId,
+					Ticket = ReadString(row, "ticket") ?? ""
 				});
 			}
 		} catch (Exception e) {
@@ -290,63 +329,28 @@ public sealed class Rep4RepApi : IDisposable {
 	}
 
 	/// <summary>
-	/// Report a task done and CONFIRM it. rep4rep 200s regardless, so the real check is that the task has
-	/// disappeared from the queue.
+	/// Report a posted comment (POST /tasks): taken when rep4rep answers 2xx (201 with the task). It checks the comment on
+	/// Steam about 5 minutes later and pays once it's found. A 409 (gone with no valid ticket, or this profile commented on
+	/// that target in the last day) or any other refusal is said in the log by its status, and isn't credited.
 	/// </summary>
-	public async Task<bool> CompleteTaskAsync(string taskId, string requiredCommentId, string profileId, CancellationToken ct = default) {
-		string? sent = await PostAsync("/tasks/complete", new Dictionary<string, string> {
-			["taskId"] = taskId,
-			["commentId"] = requiredCommentId,
-			["authorSteamProfileId"] = profileId
-		}, ct).ConfigureAwait(false);
+	public async Task<bool> CompleteTaskAsync(string taskId, string requiredCommentId, string profileId, CancellationToken ct = default, string ticket = "") {
+		Dictionary<string, string> form = new() {
+			["steamId"] = profileId,
+			["requestId"] = taskId,
+			["commentId"] = requiredCommentId
+		};
 
-		if (sent == null) {
-			return false;
+		if (ticket.Length > 0) {
+			form["ticket"] = ticket;
 		}
 
-		// Trust what /tasks/complete itself said, and nothing else.
-		//
-		// This used to "confirm" the credit by re-fetching /tasks and checking the id had gone. That reads as
-		// careful and is in fact close to a coin toss: rep4rep re-samples the task list on every request, so the
-		// id is usually absent from the next batch whether or not anything was credited - and occasionally still
-		// present when it was. A check that is wrong in both directions is worse than no check.
-		if (sent.Contains("\"error\"", StringComparison.OrdinalIgnoreCase)) {
-			Log.Debug($"rep4rep didn't credit task {taskId}: {Reason(sent)}", "rep4rep");
+		if (await PostAsync("/tasks", form, ct).ConfigureAwait(false) == null) {
+			Log.Debug($"rep4rep didn't take task {taskId} (HTTP {_lastRefusal})", "rep4rep");
 
 			return false;
 		}
 
-		// rep4rep answers a successful completion with a success flag or a bare ok; anything else is a refusal
-		// worth surfacing rather than silently counting.
-		bool ok = sent.Contains("success", StringComparison.OrdinalIgnoreCase)
-			|| sent.Contains("\"status\":\"ok\"", StringComparison.OrdinalIgnoreCase)
-			|| sent.Trim() is "true" or "[]" or "{}";
-
-		if (!ok) {
-			Log.Debug($"rep4rep didn't credit task {taskId}: {Reason(sent)}", "rep4rep");
-		}
-
-		return ok;
-	}
-
-	/// <summary>
-	/// rep4rep's own words for a refusal - the "error" or "info" field only, never the body itself, which could carry
-	/// the key back. "no reason given" when there's neither.
-	/// </summary>
-	private static string Reason(string body) {
-		try {
-			using JsonDocument doc = JsonDocument.Parse(body);
-
-			foreach (string field in new[] { "error", "info", "message" }) {
-				if ((doc.RootElement.ValueKind == JsonValueKind.Object) && (ReadString(doc.RootElement, field) is { Length: > 0 } said)) {
-					return Log.Scrub(said.Length > 150 ? said[..150] : said);
-				}
-			}
-		} catch (JsonException) {
-			return "an answer that isn't JSON";   // what it said can't be shown safely - only that it wasn't the usual shape
-		}
-
-		return "no reason given";
+		return true;
 	}
 
 	// ── json helpers ────────────────────────────────────────────────────────
@@ -369,6 +373,10 @@ public sealed class Rep4RepApi : IDisposable {
 
 		return [root];
 	}
+
+	/// <summary>An object's child object, or an empty element when there isn't one.</summary>
+	private static JsonElement Child(JsonElement e, string name) =>
+		(e.ValueKind == JsonValueKind.Object) && e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.Object) ? v : default;
 
 	private static string? ReadString(JsonElement e, string name) {
 		if (e.ValueKind != JsonValueKind.Object || !e.TryGetProperty(name, out JsonElement v)) {
