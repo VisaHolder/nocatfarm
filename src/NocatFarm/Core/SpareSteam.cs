@@ -743,7 +743,9 @@ public static class SparePrices {
 		Row? pack = g.Items.Values.FirstOrDefault(static r => r.Kind == SpareKind.BoosterPack);
 
 		return new Spare.PackPrices(pack == null ? null : new MarketPrice(pack.Cents, g.When),
-			[.. g.Items.Values.Where(static r => r.Kind == SpareKind.Card).Select(static r => r.Cents)], g.When);
+			[.. g.Items.Values.Where(static r => r.Kind == SpareKind.Card).Select(static r => r.Cents)],
+			g.When,
+			[.. g.Items.Values.Where(static r => r.Kind == SpareKind.FoilCard).Select(static r => r.Cents)]);
 	}
 
 	/// <summary>

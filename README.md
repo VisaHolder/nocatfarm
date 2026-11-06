@@ -125,12 +125,15 @@ Steam sales, and free games if you turn that on.
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
   or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's
   own wallet currency. Turning it on shows what it would do first and asks you to confirm.
-- Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
-  choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
-  once you turn it on (it shows what it would buy first and asks you to confirm). Buying cards (off until you turn
-  it on) buys the cards your badges are missing at the cheapest price, whole sets only, within a day's and a week's
-  spending limit (1.50 and 8.00 in your wallet's currency) - and, if you like, the cheapest full sets. Nothing that
-  sells, opens or uses up your items is on by default.
+- Booster packs can open by themselves, always, when the cards are worth more than the pack, when even the three
+  cheapest cards of the pack are worth more, or when either - off until you choose. Steam Points can buy levels of the
+  seasonal badge, keeping at least 1,000 and spending at most 3,000 a week, once you turn it on (it shows what it would
+  buy first and asks you to confirm). Buying cards (off until you turn it on) buys the cards your badges are missing at
+  the cheapest price, whole sets only, within a day's and a week's spending limit (1.50 and 8.00 in your wallet's
+  currency) - and, if you like, the cheapest full sets. You can also set it to buy booster packs instead of those cards
+  when the worst or the average pull is worth more than the pack price (its 3 random cards each - so a set may still
+  need buying afterwards), with an option to count the market tax in that. Nothing that sells, opens or uses up your
+  items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.
 - Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and

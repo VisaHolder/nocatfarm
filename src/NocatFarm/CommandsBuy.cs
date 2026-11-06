@@ -265,13 +265,21 @@ public static partial class Commands {
 		}
 
 		if ((result.Bought.Count > 0) || (result.Waiting.Count > 0)) {
-			lines.AddRange(result.Bought.GroupBy(static x => x.Step.Game).Select(g => $"{name}: bought {g.Key} · {g.Count()} card(s) · {M(g.Sum(static x => x.Paid))}"));   // each card was its own line as it was bought
+			lines.AddRange(result.Bought.GroupBy(static x => x.Step.Game).Select(g => $"{name}: bought {g.Key} · {g.Count()} {(g.First().Step.IsPack ? "booster pack(s)" : "card(s)")} · {M(g.Sum(static x => x.Paid))}"));   // each card was its own line as it was bought
 			lines.AddRange(result.Finished.Select(s => $"{name}: {s.Game} set complete - badge crafting makes it level {s.Level + 1}"));
 			lines.AddRange(result.Waiting.Select(x => $"{name}: {x.Card.Name} ({x.Step.Game}) - confirm the purchase in the Steam app on your phone; it's bought at the next look"));
 		} else {
 			string verb = mode == CardBuyer.Mode.Preview ? "would buy" : "would have bought";
 
 			foreach (BuyStep s in plan.Steps) {
+				if (s.IsPack) {
+					string pack = new BuyCard(s.Cards[0].Hash, 0).Name;
+					lines.Add($"{name}: {verb} {s.Packs} {s.Game} booster pack(s) for {M(s.Cost)} - level {s.Level} to {s.Level + 1}, about {s.XpPerUnit:N0} XP per 1.00 (the packs' 3 random cards each)");
+					lines.Add($"{name}:   {s.Packs} × {pack} {M(s.PackCents)}");
+
+					continue;
+				}
+
 				string what = s.FullSet ? $"a full set of {s.Game} ({s.Cards.Count} cards)" : $"{s.Cards.Count} of {s.SetSize} cards for {s.Game}";
 				lines.Add($"{name}: {verb} {what} for {M(s.Cost)} - level {s.Level} to {s.Level + 1}, about {s.XpPerUnit:N0} XP per 1.00");
 				lines.Add($"{name}:   {string.Join(", ", s.Cards.Select(c => $"{c.Name} {M(c.Price)}"))}");
