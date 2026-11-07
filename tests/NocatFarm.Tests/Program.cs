@@ -20715,6 +20715,26 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("packs: the days rule at 0 is off", Packs(2, packPrices, came: _ => null, days: 0).Single().Open);
 		Check("packs: on the market or in a trade offer - never opened, never sold or sent", Packs(2, packPrices, busy: [80]).Single() is { Open: false, Disposable: false });
 		Check("packs: a game on the never-open list stays sealed", Packs(2, packPrices, never: [G]).Single() is { Open: false, Disposable: true });
+		// Choice 1: "only when the cards are worth more" opens on the AVERAGE pull (three random cards, each 1% a foil).
+		// Card cents 12/20/15 pay 10/17/13 after fees; a 30-cent pack pays 26 - the 3 cards' average is about 40, opened.
+		Check("packs: a foil in the pull does not stop the average from deciding", Packs(1, packPrices with { CardsFoil = [40] }).Single().Open);
+		// Choice 3: "even when only the cheapest three are worth more" opens on the WORST pull - 3 x the cheapest card.
+		Check("packs: choice 3 opens when even the three cheapest cards beat the pack (3x 10 > 26)",
+			Packs(3, packPrices).Single() is { Open: true, Why: { } w } && w.ToEnglish().Contains("cheapest", StringComparison.Ordinal));
+		Check("packs: choice 3 keeps a pack that beats even its cheapest three (3x 10 vs 0.79)", !Packs(3, dearPack).Single().Open);
+		Check("packs: choice 4 opens when either the worst or the average beats the pack", Packs(4, packPrices).Single().Open);
+		Check("packs: choice 4 keeps when the cheapest three and the average are both worth less than a dear pack", !Packs(4, dearPack).Single().Open);
+		Check("packs: always and never still win over the new choices", Packs(2, null).Single().Open && !Packs(0, packPrices).Single().Open);
+		Check("packs: a choice left out by a card nobody sells stays shut", Packs(3, packPrices with { Cards = [12, 0, 15] }).Single() is { Open: false, Disposable: false });
+
+		// ── the booster worth maths, on its own (buying and selling both use it) ──
+		Check("packs maths: the worst pull is three times the cheapest card", NocatFarm.Core.BoosterMath.Guarantee([5, 7, 9]) == 15);
+		Check("packs maths: no card priced - no worst pull", NocatFarm.Core.BoosterMath.Guarantee([]) == 0);
+		Check("packs maths: the average of three equal cards is just their sum", NocatFarm.Core.BoosterMath.Average([10, 10, 10], []) == 30);
+		Check("packs maths: when no foil price is known the average is the plain three cards", NocatFarm.Core.BoosterMath.Average([10, 20, 30], []) == NocatFarm.Core.BoosterMath.Average([10, 20, 30], [10, 20, 30]));
+		Check("packs maths: a 1% foil chance tilts the average toward the foils' worth",
+			NocatFarm.Core.BoosterMath.Average([100], [200]) == (long) Math.Round(3.0 * ((0.99 * 100) + (0.01 * 200)), MidpointRounding.ToZero));
+		Check("packs maths: a foil is 1% as the setting says", NocatFarm.Core.BoosterMath.FoilChance == 0.01);
 
 		var packFake = new FakeSpareSteam();
 		var toOpen = NocatFarm.Core.Spare.PlanPacks([Pack(80), Pack(81), Pack(82), Pack(83)], 2, 7, [], _ => old, new HashSet<ulong> { 83 }, _ => null, 24, now);
@@ -22440,6 +22460,18 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Settings.ApplyLegitMode(alwaysHuman, wasLegit: false);
 		Check("turning human mode on takes booster packs from 'only when worth more' to never - 'always', chosen, stays",
 			(turnedHuman.OpenBoosterPacks == 0) && (alwaysHuman.OpenBoosterPacks == 2));
+		var worstHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = 3 };
+		worstHuman.LegitMode = true;
+		NocatFarm.Config.Settings.ApplyLegitMode(worstHuman, wasLegit: false);
+		var eitherHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = 4 };
+		eitherHuman.LegitMode = true;
+		NocatFarm.Config.Settings.ApplyLegitMode(eitherHuman, wasLegit: false);
+		Check("turning human mode on also takes the cheapest-three and when-either pack choices to never",
+			(worstHuman.OpenBoosterPacks == 0) && (eitherHuman.OpenBoosterPacks == 0));
+		Check("buying boosters is off by default, and the choices name both ways",
+			(new NocatFarm.Config.BotConfig().BuyBooster == 0) && !new NocatFarm.Config.BotConfig().BuyBoosterTaxes
+				&& (NocatFarm.Config.Settings.FindBot("BuyBooster")!.Choices == "0 off | 1 guaranteed cheaper | 2 average cheaper | 3 either")
+				&& (NocatFarm.Config.Settings.FindBot("BuyBooster")!.Tooltip.Contains("Guaranteed cheaper", StringComparison.Ordinal)));
 		Check("the keep list explains full names", Def("SpareKeepItems").Tooltip.StartsWith("Full item names as the inventory shows them, separated by commas, e.g. Sans, Gordon Freeman (Foil). A name keeps that item in every game.", StringComparison.Ordinal));
 		Check("only Steam's own items", Def("SpareItems").Tooltip.Contains("Only Steam's own items (cards, backgrounds, emoticons) - never game items or CS2 skins.", StringComparison.Ordinal)
 			&& Def("SpareItems").Tooltip.Contains("Turning it on first shows what it would do, and asks you to confirm; off stops it at once.", StringComparison.Ordinal));
@@ -27487,6 +27519,27 @@ await CommandSweep.RunAsync(Check);
 		Check("plan: from which level, XP for the money, in the wallet's currency", (bcP.Steps[0].Level == 2) && (bcP.Steps[0].XpPerUnit == 1111) && (bcP.Currency == 20));
 		Check("plan: never a badge already at level 5", bcP.Steps.All(static s => s.App != 300));
 
+		// ── buying booster packs instead of cards ("Buy booster packs instead") ──
+		// app 100's one missing card ("100-Card 5") is priced at 9, which pays 7 after the fee - the worst pull is 3 x 7 = 21.
+		// A 3-cent booster pack: 21 > 3 and one pack (3) is cheaper than the card (9), so buying assumes the pack.
+		var bcPackHash = NocatFarm.Modules.GemsChoice.PackHash(100, "Hundred");
+		var bcPack = BcMarket();
+		bcPack.Books[bcPackHash] = FakeCardMarket.B(3);
+		var bcPackPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = 1 }, bcPack);
+		Check("plan buying packs: a set's booster that beats its worst pull and costs less replaces the cards (mode: guaranteed)",
+			(bcPackPlan.Steps.Count == 2) && bcPackPlan.Steps[0].IsPack && (bcPackPlan.Steps[0].Packs == 1) && (bcPackPlan.Steps[0].PackCents == 3)
+			&& (bcPackPlan.Steps[0].Cost == 3) && !bcPackPlan.Steps[1].IsPack,
+			string.Join(" | ", bcPackPlan.Steps.Select(static s => $"{s.App} pack={s.IsPack}@{s.Cost}")));
+		Check("plan buying packs: mode 2 (average) and mode 3 (either) see the same cheap pack", (await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = 2 }, bcPack)).Steps[0].IsPack
+			&& (await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = 3 }, bcPack)).Steps[0].IsPack);
+		Check("plan buying packs: off by default - no substitution", bcP.Steps.All(static s => !s.IsPack));
+		var bcNoPack = BcMarket();   // no booster priced for it
+		Check("plan buying packs: no booster price - the cards are bought as before", (await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = 1 }, bcNoPack)).Steps.All(static s => !s.IsPack));
+		var bcDearPack = BcMarket();
+		bcDearPack.Books[bcPackHash] = FakeCardMarket.B(25);   // 21 (worst pull) < 25 - the pack isn't worth its price
+		Check("plan buying packs: a booster whose worth is less than its price is not bought",
+			(await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = 1 }, bcDearPack)).Steps.All(static s => !s.IsPack));
+
 		var bcTight = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyDailyLimit = 0.10f }, BcMarket());
 		Check("plan: a set that costs more than a day's limit is passed over, and said",
 			(bcTight.Steps.Count == 1) && (bcTight.Steps[0].App == 100) && bcTight.Notes.Any(static n => n.Contains("Two Hundred", StringComparison.Ordinal) && n.Contains("a day's limit", StringComparison.Ordinal)),
@@ -32119,7 +32172,7 @@ static class BuySmartChecks {
 			Check("phone: the purchase is counted against the limits, kept with its confirmation, and said - one line for the set",
 				(first.Waiting.Count == 1) && (onPhone.Count == 1) && onPhone[0] is { Pending: true, Confirm: "c1", Cents: 9, Order: null }
 				&& (phoneBuyer.Ledger.SpentSince(DateTime.UtcNow.AddDays(-1)) == 9) && first.Problem.Contains("Steam app", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("Log.Attention(new Said(\"confirm the card purchase in the Steam app · {0} card(s) for {1}\", onPhone, step.Game), Bot.Name);", StringComparison.Ordinal),
+				&& Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("Log.Attention(new Said(\"confirm the {0} purchase in the Steam app · {1} {0}(s) for {2}\", what, onPhone, step.Game), Bot.Name);", StringComparison.Ordinal),
 				first.Problem + " " + string.Join(" | ", phoneBuyer.Ledger.All));
 			var second = await phoneBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("phone: not confirmed yet - sent again with its confirmation, and nothing new is bought meanwhile",

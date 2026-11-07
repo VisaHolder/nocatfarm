@@ -796,10 +796,12 @@ public static partial class Spare {
 	/// game, opening off) - not because it's new, busy or unpriced.</param>
 	public sealed record PackDecision(SpareItem Pack, bool Open, Said Why, int PackCents = 0, int CardsCents = 0, bool Disposable = false);
 
-	/// <summary>A game's prices for deciding about its packs: the pack's own, and every plain card of the set.</summary>
-	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At);
+	/// <summary>A game's prices for deciding about its packs: the pack's own, every plain card of the set, and (1.9.0) its
+	/// foil cards - each as its cheapest listing in US cents, after <see cref="Seller"/>'s fee when it's weighed.</summary>
+	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At, IReadOnlyList<int>? CardsFoil = null);
 
-	/// <param name="choice">0 never, 1 only when the cards are worth more than the pack, 2 always.</param>
+	/// <param name="choice">0 never, 1 only when the cards are worth more than the pack on average (foils included), 2 always,
+	/// 3 only when even the three cheapest cards are worth more than the pack, 4 when either does.</param>
 	/// <param name="madeHere">Packs nocat.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
 	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
 	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next
@@ -844,7 +846,8 @@ public static partial class Spare {
 				continue;
 			}
 
-			if (choice >= 2) {
+			// 2 alone is "always open": the choices that weigh the pull (1, 3, 4) fall through to the prices below.
+			if (choice == 2) {
 				found.Add(new PackDecision(pack, true, new Said("set to always open")));
 
 				continue;
@@ -858,14 +861,28 @@ public static partial class Spare {
 				continue;
 			}
 
-			// Three cards out of the set, each as likely as the next: three times the average card. Foils are rare enough to
-			// leave out, so this never opens a pack on the hope of one. Both sides after Steam's fees - what you'd get.
-			int cards = (int) Math.Round(3m * (decimal) p.Cards.Average(static c => Seller.ReceiveFor(c)), MidpointRounding.ToZero);
+			// Three cards out of the set. Both sides after Steam's fees - what you'd get. The pull's worth depends on the
+			// choice: the average of 3 random cards (each 99% a normal, 1% a foil) for 1 and 4, or the guaranteed 3 cheapest
+			// cards for 3 and 4. 1.9.0: the plain average leaves the rare foil out of nothing now - a foil's average worth
+			// joins at its 1% chance when the set's foils are priced.
 			int sealedValue = Seller.ReceiveFor(packPrice.Cents);
+			long[] normal = [.. p.Cards.Select(static c => (long) Seller.ReceiveFor(c))];
+			long[] foil = [.. (p.CardsFoil ?? []).Select(static c => (long) Seller.ReceiveFor(c)).Where(static r => r > 0)];
+			long average = BoosterMath.Average(normal, foil);
+			long guarantee = BoosterMath.Guarantee(normal);
+			bool worthMore = choice switch { 3 => guarantee > sealedValue, 4 => average > sealedValue || guarantee > sealedValue, _ => average > sealedValue };
 
-			found.Add(cards > sealedValue
-				? new PackDecision(pack, true, new Said("its cards are worth about {0}, the pack {1}", UsMoney(cards), UsMoney(sealedValue)), sealedValue, cards)
-				: new PackDecision(pack, false, new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney(cards)), sealedValue, cards, Disposable: true));
+			if (average <= 0) {
+				found.Add(new PackDecision(pack, false, new Said("no card of it is priced yet - kept until there is")));
+
+				continue;
+			}
+
+			found.Add(worthMore
+				? new PackDecision(pack, true, choice == 3
+					? new Said("even its 3 cheapest cards are worth about {0}, the pack {1}", UsMoney((int) guarantee), UsMoney(sealedValue))
+					: new Said("its cards are worth about {0}, the pack {1}", UsMoney((int) average), UsMoney(sealedValue)), sealedValue, (int) average)
+				: new PackDecision(pack, false, new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney((int) average)), sealedValue, (int) average, Disposable: true));
 		}
 
 		return found;

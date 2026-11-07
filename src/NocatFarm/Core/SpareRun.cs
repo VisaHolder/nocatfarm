@@ -927,7 +927,7 @@ public static class SpareRun {
 		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
 		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought, shown);
 		SparePlan plan = priceThem
-			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
+			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks is 1 or 3 or 4, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
 
 		return (new Look(plan, currency, items, busy, ledger, rules, StillToPrice(plan, currency, rules), spread, PricingMinutesLeft(plan, currency, rules)), null);
@@ -1621,11 +1621,13 @@ public static class SpareRun {
 		}
 
 		BotConfig cfg = bot.Cfg;
-		int choice = Math.Clamp(cfg.OpenBoosterPacks, 0, 2);
+		int choice = Math.Clamp(cfg.OpenBoosterPacks, 0, 4);
 		List<uint> games = [.. look.Items.Where(static i => i.Kind == SpareKind.BoosterPack).Select(static i => i.Game).Distinct()
 			.Where(g => Stale(SparePrices.Cached(g)?.When, look.Rules)).Take(GamesPerLook)];
 
-		if ((choice == 1) || (cfg.BoosterUnopened == 2)) {
+		// A pack worth more than its cards needs the set's prices - the average (1), the guaranteed cheapest three (3), or
+		// either (4) all price the game's cards (and its foils for 1 and 4).
+		if ((choice is 1 or 3 or 4) || (cfg.BoosterUnopened == 2)) {
 			foreach (uint game in games) {
 				if (!await SparePrices.PriceGameAsync(game, ct).ConfigureAwait(false)) {
 					break;

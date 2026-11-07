@@ -421,9 +421,10 @@ public static class GemsChoice {
 	/// <summary>
 	/// 1.8.2: one sealed pack weighed three ways, in the wallet's money: <paramref name="Sealed"/> - sold sealed, after the fee;
 	/// <paramref name="Cards"/> - opened and its 3 cards sold, after the fee; <paramref name="Badge"/> - opened for its badge,
-	/// the 3 cards at what buying them would cost (only for a badge it's levelling). 0: not known, or not a way for it.
+	/// the 3 cards at what buying them would cost (only for a badge it's levelling). 1.9.0: <paramref name="Guarantee"/> - the
+	/// worst it could do opened, the 3 cheapest cards sold, after the fee. 0: not known, or not a way for it.
 	/// </summary>
-	public sealed record PackWorth(uint App, string Game, long Sealed, long Cards, long Badge) {
+	public sealed record PackWorth(uint App, string Game, long Sealed, long Cards, long Badge, long Guarantee = 0) {
 		/// <summary>
 		/// The best: the most money - a way that relies on the market more (the badge none, a sealed pack, then 3 loose cards)
 		/// only when it beats every safer one by <see cref="MarginPct"/> percent, as for gems.
@@ -458,7 +459,16 @@ public static class GemsChoice {
 		}
 
 		long cards = OpenedWorth(set, cur, rate, market, now, dumpPct, live: false, maxCents);
+		long guarantee = 0;
 		long badge = 0;
+
+		if (cards > 0) {
+			// The worst it could do: the 3 cheapest cards' worth, each after the fee - the same worth the average prices.
+			List<long> worst = [.. set.Cards.Select(h => market.Known(h, cur) is { } q && (now - q.When <= ChooseFresh) && (q.Sales >= MinCardSales)
+				? (long) Receive(q, dumpPct)
+				: set.Usd.GetValueOrDefault(h) is int usd and > 0 ? (long) Seller.ReceiveFor(Seller.UndercutFor(WalletRate.ToWallet(usd, rate))) : 0).Where(static w => w > 0)];
+			guarantee = worst.Count > 0 ? BoosterMath.Guarantee(worst) : 0;
+		}
 
 		if (levelling) {
 			// What 3 of its cards cost to buy: each card's cheapest listing in the wallet's money, or its US price at the rate.
@@ -467,7 +477,7 @@ public static class GemsChoice {
 			badge = buy.Count > 0 ? (long) Math.Round(3 * buy.Average(), MidpointRounding.ToZero) : 0;
 		}
 
-		return new PackWorth(app, game, sealedPays, cards, badge);
+		return new PackWorth(app, game, sealedPays, cards, badge, guarantee);
 	}
 
 	/// <summary>A pack's best use in plain words: "open it for its badge", "sell it sealed", "open it and sell its cards".</summary>
@@ -485,8 +495,12 @@ public static class GemsChoice {
 	/// </summary>
 	public static string Fate(BotConfig cfg, PackWorth w, PackUse best) {
 		bool never = cfg.BoosterNeverOpen.Contains(w.App);
-		int open = never ? 0 : Math.Clamp(cfg.OpenBoosterPacks, 0, 2);
-		bool opens = (open == 2) || ((open == 1) && (w.Cards > 0) && (w.Cards > w.Sealed));
+		int open = never ? 0 : Math.Clamp(cfg.OpenBoosterPacks, 0, 4);
+		// 1.9.0: "only when the cards are worth more" and "when either" go by the average pull (foils included); "even when only
+		// the cheapest three are worth more" and "when either" go by the guaranteed pull too.
+		bool opens = (open == 2)
+			|| ((open is 1 or 4) && (w.Cards > 0) && (w.Cards > w.Sealed))
+			|| ((open is 3 or 4) && (w.Guarantee > 0) && (w.Guarantee > w.Sealed));
 		int unopened = Math.Clamp(cfg.BoosterUnopened, 0, 2);
 		string does = opens ? "open it"
 			: unopened == 2 ? (cfg.SpareItems ? "sell it sealed" : "sell it sealed once Spare items is on")
