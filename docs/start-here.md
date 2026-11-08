@@ -141,7 +141,7 @@ Steam sales, and free games if you turn that on.
 These stay **off** until you turn them on: human mode (unless you picked "My main account"), claiming free games, earning
 achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
 Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, card swaps with
-other nocat.farm users, the auto-reply, a custom game name, daily backups, Discord and Telegram, rep4rep, and plugins.
+other nocat.farm users, the auto-reply, a custom game name, daily backups, Discord and Telegram, and plugins and [add-ons](addons.md) like rep4rep.
 On the account's Settings page these are together at the end, under **Items and spending**. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
 added account - farm accounts too - until you turn it on.
 
@@ -153,7 +153,6 @@ The dashboard is where you do almost everything. Its tabs, in order:
 |---|---|
 | Overview | Every account at a glance, today's cards, and history charts. |
 | Accounts | One card per account with Start, Pause, Stop, Cards and Settings. **+ Add account** is here. |
-| rep4rep | Only there if you turn rep4rep on. Most people never see it. |
 | Authenticator | Steam Guard codes and trade confirmations. Only there once an account's authenticator is in nocat.farm. |
 | Phone | Opening the dashboard on your phone, at home or away, and Telegram and Discord. |
 | Log | What happened, in plain words. |

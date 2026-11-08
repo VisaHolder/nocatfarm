@@ -127,7 +127,6 @@ public static partial class Settings {
 	public const string SecUpdates = "Updates & plugins";
 	public const string SecBackups = "Backups";
 	public const string SecAllAccounts = "All accounts";
-	public const string SecRep4RepAccount = "rep4rep";
 	public const string SecDashboard = "Dashboard & phone";
 	public const string SecDiscordProfile = "Discord profile";
 	public const string SecConnection = "Steam connection & logs";
@@ -155,7 +154,6 @@ public static partial class Settings {
 	public const string SecSaleEvents = "Sale events";
 	public const string SecScamWatch = "Scam watch";
 	public const string SecHealth = "Account health";
-	public const string SecComments = "rep4rep commenting";
 	public const string SecSpare = "Spare items";
 	public const string SecPacks = "Booster packs";
 	public const string SecPoints = "Steam Points";
@@ -421,7 +419,7 @@ public static partial class Settings {
 
 		switch (def.Kind) {
 			case SettingKind.Bool:
-				// A word that is neither is refused, like a bad number - "set new Rep4Rep enabled" quietly switched it off.
+				// A word that is neither is refused, like a bad number - "set new FarmCards enabled" quietly switched it off.
 				if (!IsTrue(raw) && !IsFalse(raw)) {
 					return $"{def.Label} must be on or off";
 				}
@@ -655,8 +653,8 @@ public static partial class Settings {
 	///
 	/// A max under its min makes every gap calculation nonsense - and while the consumers all guard themselves
 	/// with Math.Max, the stored pair still reads as a contradiction and the dashboard shows it as one. The
-	/// dashboard used to fix exactly ONE of the eight pairs, and the console fixed none, so `set kylro
-	/// Rep4RepGapMinMinutes 500` next to a max of 5 was accepted and written to disk.
+	/// dashboard used to fix exactly ONE of the eight pairs, and the console fixed none, so a shortest
+	/// of 500 set next to a longest of 5 was accepted and written to disk.
 	/// </summary>
 	/// <param name="justSet">
 	/// The setting the user has this moment changed, if any. Whichever side that is WINS and its partner moves:
@@ -855,8 +853,8 @@ public static partial class Settings {
 			"Someone commented on one of your Steam profiles.", Advanced: true),
 		new("SendAchievements", "Send achievements", SecNotifications, SettingKind.Bool,
 			"Every achievement unlocked. Can be a lot.", Advanced: true),
-		new("SendRep4Rep", "Send rep4rep comments", SecNotifications, SettingKind.Bool,
-			"Every rep4rep comment posted. Can be a lot.", Advanced: true),
+		new("SendAddons", "Send add-on messages", SecNotifications, SettingKind.Bool,
+			"What add-ons send out - for example every comment the rep4rep add-on gets credited. Can be a lot.", Advanced: true),
 		new("TrayNotifications", "Show pop-ups", SecNotifications, SettingKind.Bool,
 			"Turns pop-up notifications on or off. The kinds below choose which pop-ups you get.", Group: "Pop-ups"),
 		new("NotifyEarnings", "Pop up when you earn", SecNotifications, SettingKind.Bool,
@@ -966,19 +964,6 @@ public static partial class Settings {
 		new("ScamWatchTrustedDevices", "Devices of yours to ignore", SecAllAccounts, SettingKind.Text,
 			"Your own devices, so their sign-ins are never reported as new. Type their names exactly as Steam lists them under Authorized devices, separated by commas - for example: My Phone, LAPTOP-7. Empty: every new device is reported. nocat.farm's own sign-ins are always recognised by themselves.",
 			Advanced: true, Placeholder: "My Phone, LAPTOP-7"),
-		// ── rep4rep ──
-		new("Rep4RepEnabled", "Use rep4rep", SecRep4RepAccount, SettingKind.Bool,
-			"Turns on rep4rep, an optional outside site where users trade Steam profile comments. With it off, all rep4rep features and settings are hidden on every account."),
-		new("Rep4RepApiToken", "API token", SecRep4RepAccount, SettingKind.Secret,
-			"Your rep4rep API token, found on rep4rep.com under Settings. One token covers all your Steam accounts. No account yet? rep4rep.com/?r=reap", ShowWhen: "Rep4RepEnabled=true"),
-		new("Rep4RepAutoAddProfiles", "Register accounts automatically", SecRep4RepAccount, SettingKind.Bool,
-			"Adds each Steam account to rep4rep the first time it logs in, so you don't have to add them on the website.", Advanced: true, ShowWhen: "Rep4RepEnabled=true"),
-		new("Rep4RepPauseHours", "Hold commenting for", SecRep4RepAccount, SettingKind.Int,
-			"Pauses rep4rep commenting on every account for this many hours, then it starts again by itself. The countdown keeps going through restarts. Set 0 for no pause.",
-			Advanced: true, Min: 0, Max: 720, Hidden: true),
-		new("Rep4RepPointsRefreshMinutes", "Check points every", SecRep4RepAccount, SettingKind.Int,
-			"How often to check your rep4rep points total, in minutes. Avoid very low values for long stretches, since rep4rep has no published limit.",
-			Advanced: true, Min: 1, Max: 1440, Hidden: true),
 		// ── Dashboard & phone ──
 		new("WebEnabled", "Web dashboard", SecDashboard, SettingKind.Bool,
 			"Turns on the web dashboard. With it off, everything still works and you control nocat.farm by typing commands in the console.",
@@ -1744,30 +1729,6 @@ public static partial class Settings {
 		new("CommandMasters", "Accept commands from", SecSocial, SettingKind.Text,
 			"SteamID64s allowed to control this account by messaging it, separated by commas - this account only, not the others or the app's settings. Commands start with a slash, so send /help to begin. Leave empty so nobody can.",
 			Advanced: true, Placeholder: "76561198000000000", Group: "Commands"),
-		// ── Friends & messages / rep4rep commenting ──
-		new("Rep4Rep", "Post rep4rep comments", SecSocial, SettingKind.Bool,
-			"Lets this account post the profile comments rep4rep hands out. All accounts earn into the same rep4rep points.", Part: SecComments),
-		new("Rep4RepDailyCap", "Comments a day, at most", SecSocial, SettingKind.Int,
-			"The most comments this account posts in any 24 hours. Steam allows about 10 on non-friends, and going over can get the account comment banned.",
-			Advanced: true, Min: 1, Max: 25, ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepGapMinMinutes", "Shortest gap between comments", SecSocial, SettingKind.Int,
-			"The shortest time between two comments from this account, in minutes.",
-			Min: 1, Max: 720, Advanced: true, Range: "Gap between comments", ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepGapMaxMinutes", "Longest gap between comments", SecSocial, SettingKind.Int,
-			"The longest time between comments, in minutes. Each gap is picked at random between the two.",
-			Min: 1, Max: 1440, Advanced: true, ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepStartHour", "Only post from", SecSocial, SettingKind.Hour,
-			"The earliest hour of the day this account comments. Comments in the middle of the night are an easy bot giveaway.",
-			Min: 0, Max: 23, Advanced: true, Range: "Only post between", ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepEndHour", "Only post until", SecSocial, SettingKind.Hour,
-			"The latest hour of the day this account comments. Set it the same as \"Only post from\" to comment around the clock.",
-			Min: 1, Max: 24, Advanced: true, ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepLearnCap", "Lower the daily cap when Steam says it's reached", SecSocial, SettingKind.Bool,
-			"When Steam says the account has hit its daily comment limit before the number set above, that becomes its limit (never below 5). A \"commenting too frequently\" refusal is about the gap between comments and never changes it.",
-			Advanced: true, ShowWhen: "Rep4Rep=true", Part: SecComments),
-		new("Rep4RepRetryRefused", "Retry a refused comment", SecSocial, SettingKind.Bool,
-			"Gives a refused comment one more try before skipping that profile for a day.",
-			Advanced: true, Hidden: true, ShowWhen: "Rep4Rep=true", Part: SecComments),
 		// ── Items and spending - off until you turn them on / Spare items ──
 		new("SpareItems", "Deal with spare items", SecItems, SettingKind.Bool,
 			"Turns spare cards, backgrounds and emoticons into gems or sells them, a few a day - whichever pays more. For example, a 4th copy of a card worth 0.03 becomes gems when its gems are worth more. Only Steam's own items (cards, backgrounds, emoticons) - never game items or CS2 skins. It never touches what your badges still need, anything new or anything over the price limit. Turning it on first shows what it would do, and asks you to confirm; off stops it at once.", Group: "What it does", Part: SecSpare),

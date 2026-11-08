@@ -113,7 +113,7 @@ Docker from get.docker.com has everything. Ubuntu's own `docker.io` package need
 git clone https://github.com/VisaHolder/nocatfarm.git
 cd nocatfarm
 cp docker-compose.example.yml docker-compose.yml
-mkdir -p config logs backups
+mkdir -p config logs backups plugins
 echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
 echo 'TZ=Europe/London' >> .env
 docker compose up -d --build
@@ -129,7 +129,7 @@ The example compose file is commented line by line. The parts worth knowing:
 
 | Line | What it's for |
 |---|---|
-| `./config`, `./logs` and `./backups` | Your data (`/data/config`, `/data/logs` and `/data/backups` inside the container). Rebuilding and re-creating keep them. |
+| `./config`, `./logs`, `./backups` and `./plugins` | Your data (`/data/config`, `/data/logs`, `/data/backups` and `/data/plugins` inside the container), plugins and [add-ons](addons.md) included. Rebuilding and re-creating keep them. |
 | `NOCATFARM_WEB_PASSWORD` | Required. Compose won't start without it. |
 | `"127.0.0.1:7242:7242"` | The port, on this machine only. Change it to `"7242:7242"` to reach it from other devices. |
 | `NOCATFARM_HOME_ADDRESS` | For your phone. Uncomment it and put in this computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if you publish a different port). |
@@ -137,7 +137,7 @@ The example compose file is commented line by line. The parts worth knowing:
 | `NOCATFARM_PUBLIC_ADDRESS` | Only when it's reached from the internet on purpose (a VPS, a published port, a proxy): the address people use, like `farm.example.com`. Without it every visitor from the internet is refused. See [On a VPS](#on-a-vps-a-rented-server). |
 | `NOCATFARM_TRUSTED_PROXIES` | Only behind Caddy or another proxy outside the container: `172.16.0.0/12` (Docker's own networks). See [On a VPS](#on-a-vps-a-rented-server). |
 | `hostname` | The device name Steam shows. Without it, it changes on every re-create. |
-| `user: "1000:1000"` | Must match the owner of `./config`, `./logs` and `./backups` (`id -u`, `id -g`). If the log says it can't write to `/data/config`, fix this, or remove the line and run `sudo chown -R 1654:1654 config logs backups`. |
+| `user: "1000:1000"` | Must match the owner of `./config`, `./logs`, `./backups` and `./plugins` (`id -u`, `id -g`). If the log says it can't write to `/data/config`, fix this, or remove the line and run `sudo chown -R 1654:1654 config logs backups plugins`. |
 | `stop_grace_period: 1m` | Gives `docker compose down` time to sign every account out cleanly. |
 
 About `NOCATFARM_HOME_ADDRESS`: from inside a container, nocat.farm only sees Docker's own network, and no phone can
@@ -146,7 +146,7 @@ you to open this computer's address with the published port instead. Set it, run
 link and code appear. The port also has to be published beyond `127.0.0.1` (the line above).
 
 Commands go in the dashboard's Console tab, or `docker attach nocatfarm` (Ctrl+P then Ctrl+Q to detach). The log is
-`docker compose logs -f`. For plugins, uncomment the `./plugins:/data/plugins` line.
+`docker compose logs -f`. Plugins and add-ons live in `./plugins`.
 
 **Coming from ArchiSteamFarm:** uncomment the `/import/asf` line and point it at your ASF folder (the one with
 `config/` in it), run `docker compose up -d`, then use **Import from another idler** on the Accounts page. It finds
@@ -181,7 +181,7 @@ curl -fsSL https://get.docker.com | sh
 git clone https://github.com/VisaHolder/nocatfarm.git
 cd nocatfarm
 cp docker-compose.example.yml docker-compose.yml
-mkdir -p config logs backups && chown -R 1000:1000 config logs backups
+mkdir -p config logs backups plugins && chown -R 1000:1000 config logs backups plugins
 echo 'NOCATFARM_WEB_PASSWORD=pick-a-long-password-you-use-nowhere-else' > .env
 echo 'TZ=Europe/London' >> .env
 docker compose up -d --build
@@ -252,4 +252,4 @@ and the server at once, or they keep signing each other out.
 
 ---
 
-[← Settings and commands](settings.md) · [Plugins →](plugins.md)
+[← Settings and commands](settings.md) · [Add-ons →](addons.md)

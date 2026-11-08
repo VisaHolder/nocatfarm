@@ -78,7 +78,7 @@ public sealed partial class MainWindow : IDisposable {
 	private readonly Action _exit;
 	/// <summary>
 	/// The log pane's rows: lines in a row of one kind from one account are one row that updates in place - items into
-	/// gems, the "still ..." heartbeat, rep4rep comments - and a click opens it to show each line (Core/LogStack.cs). The
+	/// gems, the "still ..." heartbeat - and a click opens it to show each line (Core/LogStack.cs). The
 	/// log file keeps every line.
 	/// </summary>
 	private readonly List<Core.LogStack.Row> _rows = [];
@@ -1714,7 +1714,7 @@ public sealed partial class MainWindow : IDisposable {
 			doing += "   " + s.Warning;
 		}
 
-		string said = s.Comments.Length > 0 ? $"rep4rep: {s.Comments} today" : "";
+		string said = s.Comments.Length > 0 ? $"comments: {s.Comments} today" : "";
 
 		return (doing, s.Sitting, s.SessionDone, s.SessionTotal, s.Today, s.DayDone, s.DayTotal, said);
 	}

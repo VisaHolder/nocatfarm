@@ -127,7 +127,7 @@ public static partial class Notifier {
 		Topic.Weekly => G.WeeklyReport,   // switching the weekly report on is asking for it - it has no separate "send" switch
 		Topic.Social => G.SendComments,
 		Topic.Achievements => G.SendAchievements,
-		Topic.Rep4Rep => G.SendRep4Rep,
+		Topic.Plugins => G.SendAddons,
 		Topic.Security => G.SendSignIns,
 		Topic.BreakIn => G.SendBreakIns,
 		// 1.8.2: scam watch and account health are a chip each, like the rest - one that was turned off on one channel only
@@ -253,7 +253,7 @@ public static partial class Notifier {
 		Topic.Weekly => (new Said("Weekly report"), 0xC8C8C8),
 		Topic.Social => (new Said("Friends & comments"), 0x1ABC9C),
 		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
-		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
+		Topic.Plugins => (new Said("Add-ons"), 0x95A5A6),
 		Topic.Security => (new Said("Dashboard sign-ins"), 0xE74C3C),
 		Topic.BreakIn => (new Said("Break-in attempts"), 0xE74C3C),
 		Topic.ScamWatch => (new Said("Scam watch"), 0xE74C3C),

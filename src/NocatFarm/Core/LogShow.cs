@@ -73,7 +73,7 @@ public static class LogShow {
 		("Steam's market is unavailable", Selling), ("Steam's market is open again", Selling), ("confirmed market listing ", Selling),
 		("{x} would pay you {x}, under your ", Selling), ("{x} \\({x}\\) x{x} · lowest ", Selling),
 
-		// ── comments, friends and rep4rep ──
+		// ── comments, friends and rep4rep (the add-on's lines, "[plugin] rep4rep · ...") ──
 		("commented on ", Comments), ("comment on ", Comments), ("new comment", Comments), ("rep4rep", Comments), ("retry posted on ", Comments),
 		("daily limit found", Comments), ("rate-limited at ", Comments), ("{x} doesn't take comments", Comments), ("the rep4rep hold", Comments),
 		("accepted a friend request", Comments), ("turned down a friend request", Comments), ("ignored a friend request", Comments),
@@ -130,7 +130,7 @@ public static class LogShow {
 		Topic.FreeStuff or Topic.Points => Free,
 		Topic.Trades => Trades,
 		Topic.Achievements => Achievements,
-		Topic.Rep4Rep or Topic.Social => Comments,
+		Topic.Plugins or Topic.Social => Comments,
 		Topic.Items => Selling,
 		Topic.Updates or Topic.Installs or Topic.Backups or Topic.Summary or Topic.Weekly => App,
 		_ => null
@@ -185,7 +185,6 @@ public static class LogShow {
 
 		return LogStack.KindOf(said) switch {
 			LogStack.Gems => Selling,
-			LogStack.Rep4Rep => Comments,
 			LogStack.Update => App,
 			_ => source is "nocat.farm" or "discord" or "telegram" or "report" or "plugins" ? App : null
 		};

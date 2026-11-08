@@ -16,7 +16,7 @@
 // it) and the layout at a phone's 375px and a desktop's 1280px.
 //
 // The browser can only reach the copy under test: every request anywhere else is refused, so nothing here can talk
-// to Steam, GitHub, rep4rep or anyone else. One PASS/FAIL line per check, then "all passed" or "N failed".
+// to Steam, GitHub or anyone else. One PASS/FAIL line per check, then "all passed" or "N failed".
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -74,10 +74,9 @@ const DENY_HANDLER = {
   createBot: 'adds an account, which starts signing in to Steam',
   createFirstBot: 'adds an account, which starts signing in to Steam',
   impApply: 'imports accounts into this copy',
-  connectRep4Rep: 'talks to rep4rep.com',
-  replaceToken: 'talks to rep4rep.com',
-  enableAllRep4Rep: 'switches rep4rep on for every account',
-  loadRep4Rep: 'talks to rep4rep.com',
+  installAddon: 'downloads an add-on from GitHub and puts it in the plugins folder',
+  removeAddon: 'removes an installed add-on',
+  ppPress: "runs a plugin's own command",
   window: 'opens an outside website',
   authAct: 'confirms or denies on Steam',
   startTutorial: 'walked through step by step on its own below',
@@ -87,8 +86,6 @@ const DENY_HANDLER = {
 const DENY_ACT = {
   start: 'signs in to Steam',
   resume: 'signs in to Steam',
-  postnow: 'posts a rep4rep comment',
-  register: 'registers the profile on rep4rep.com',
   inventory: 'asks Steam for the inventory',
 };
 // Words that mean "can't be taken back", for anything the lists above don't know by its function.
@@ -125,15 +122,14 @@ const SKIP_SETTING = {
   TelegramBotToken: 'connects to Telegram',
   DiscordBotToken: 'connects to Discord',
   DiscordWebhookUrl: 'posts to Discord',
-  Rep4RepApiToken: 'connects to rep4rep.com',
   Enabled: 'signs the account in to Steam',
   SharedSecret: 'an authenticator secret - the Authenticator page is tested with the one in the fixture',
   IdentitySecret: 'an authenticator secret - confirmations are fetched from Steam',
   ...(process.platform === 'win32' ? {} : { SteamOpenEveryAccount: 'Open in Steam is Windows only for now', SteamOpenButton: 'Open in Steam is Windows only for now' }),
 };
 // Switched last and put back first, each saved on its own: they change which other settings exist (human mode hides the
-// robot ones, rep4rep off hides its sections) and the server rewrites fields when they change.
-const MODE_SWITCHES = ['LegitMode', 'Rep4RepEnabled'];
+// robot ones) and the server rewrites fields when they change.
+const MODE_SWITCHES = ['LegitMode'];
 // A value the server accepts for each free-text setting (text isn't checked, but these are the shapes they take).
 const TEXT_VALUE = {
   WebPublicAddress: 'http://192.0.2.1:7377', WebTrustedProxies: '192.0.2.10', WebProxy: 'http://127.0.0.1:9', WebProxyUsername: 'e2e',
@@ -351,7 +347,6 @@ function denyReason(c) {
   if (DENY_HANDLER[c.handler]) return DENY_HANDLER[c.handler];
   if (c.act && DENY_ACT[c.act]) return DENY_ACT[c.act];
   if (c.handler === 'phone' && /pwOpen=true/.test(c.onclick)) return '';
-  if (/data-task/.test(c.key)) return 'posts a rep4rep comment';
   if (c.clickable && DENY_WORDS.test(c.text) && !c.handler && !c.act) return `reads like "${c.text}"`;
   return '';
 }
@@ -1371,7 +1366,7 @@ if (PING_STUB) {
   const after = (await api('/api/config')).Bots.robot;
   const human = (await api('/api/config')).Bots.human;
   check('copy settings: Copy settings copies them - the account keeps its own mode (robot stays robot), the rest comes across',
-    !(await modalOpen()) && after.LegitMode === before.LegitMode && after.Rep4Rep === human.Rep4Rep, JSON.stringify({ LegitMode: after.LegitMode, Rep4Rep: after.Rep4Rep }));
+    !(await modalOpen()) && after.LegitMode === before.LegitMode && after.AcceptFriendRequests === human.AcceptFriendRequests, JSON.stringify({ LegitMode: after.LegitMode, AcceptFriendRequests: after.AcceptFriendRequests }));
   check("copy settings: ...the account's own sign-in and notes are kept, and the switches with a go-ahead are off",
     after.SteamLogin === before.SteamLogin && after.Notes === before.Notes && after.Enabled === before.Enabled
     && ['SpareItems', 'SpendPoints', 'SteamOpenButton', 'BuyCards', 'CardSwaps'].every((n) => after[n] === false));
@@ -1381,7 +1376,7 @@ if (PING_STUB) {
   // Put the robot back as it was, through the same save the page makes.
   const back = await api('/api/bots/robot/config', 'POST', before);
   const restored = (await api('/api/config')).Bots.robot;
-  check('copy settings: the robot is put back as it was', back.ok && restored.LegitMode === false && same(restored.IdleGames, before.IdleGames) && restored.Rep4Rep === before.Rep4Rep,
+  check('copy settings: the robot is put back as it was', back.ok && restored.LegitMode === false && same(restored.IdleGames, before.IdleGames) && restored.AcceptFriendRequests === before.AcceptFriendRequests,
     JSON.stringify({ LegitMode: restored.LegitMode, IdleGames: restored.IdleGames }));
   await evalq(() => loadConfig().then(() => renderSettings()));
   await settle(300);

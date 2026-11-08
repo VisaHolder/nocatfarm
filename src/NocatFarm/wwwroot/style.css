@@ -1019,6 +1019,9 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .pname { display: flex; align-items: baseline; gap: var(--s2); flex: 1; min-width: 0; }
 .pname .wid { font-style: normal; font-size: 11px; color: var(--muted); opacity: .6; }
 .psettings { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
+/* 1.9.0: per-account plugin settings, one row per account. */
+.psettable input[type=number] { max-width: 90px; }
+.psettable td, .psettable th { padding-right: var(--s2); }
 
 /* The update button, beside the version chip that announces one. Accent-filled because it is the one thing in
    the top bar that does something irreversible-ish, and it only exists at all when there is an update. */
@@ -1588,12 +1591,9 @@ a.loglink:hover { color: #79b8ff; }
   .recent .who { min-width: 0; }
   .recent .line > span:nth-child(2) { order: 3; flex: 0 0 100%; }
 
-  /* rep4rep pacing: the headings wrap and the boxes fit two digits, so all three columns fit without scrolling. */
-  #r4rPacing th { white-space: normal; vertical-align: bottom; }
-  #r4rPacing input[type=number] { max-width: 64px !important; padding: 7px 6px; }
-  #r4rPacing td { padding-right: 6px; }
-  #view-rep4rep .toolbar label.inline { flex: 1 1 100%; }
-  #view-rep4rep .toolbar #r4rBot { flex: 1 1 0; min-width: 0; max-width: none; }
+  /* A plugin's per-account settings: the headings wrap and the number boxes stay small, so the columns fit. */
+  .psettable th { white-space: normal; vertical-align: bottom; }
+  .psettable input[type=number] { max-width: 64px !important; padding: 7px 6px; }
 
   /* Log: search the whole width, then the account picker, Follow and Copy on one row. */
   .logcard .toolbar { gap: 8px; }

@@ -5,7 +5,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// A once-a-day, plain-language summary of what every account got in the last 24 hours - hours played, trading
-/// cards dropped, rep4rep comments - plus anything that wants a look, sent to Discord/Telegram and written to the
+/// cards dropped, profile comments - plus anything that wants a look, sent to Discord/Telegram and written to the
 /// log at a time you choose (default 09:30). The heartbeat tells you what each account is doing this minute; this
 /// answers "what did I actually get overnight?" without reading the whole log. Laid out as a ReportCard.
 ///
@@ -276,7 +276,7 @@ public static class DailyReport {
 	private static Built Build(BotManager mgr, bool withTotal, DateTime nowUtc) {
 		List<Bot> bots = [.. mgr.All];   // in the dashboard's order, like everywhere else
 
-		bool r4r = mgr.Global.Rep4RepEnabled;
+		bool r4r = Plugins.Comments.InUse;
 
 		Dictionary<string, double> prev;
 		Dictionary<string, double>? prevGames;

@@ -2,7 +2,7 @@
 #
 #   1. Copy this file to docker-compose.yml.
 #   2. Make the data folders, and put the dashboard password and your time zone in a file called .env next to this one:
-#        mkdir -p config logs backups
+#        mkdir -p config logs backups plugins
 #        echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
 #        echo 'TZ=Europe/London' >> .env        (yours - see the list at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 #   3. docker compose up -d --build
@@ -62,8 +62,8 @@ services:
       - ./logs:/data/logs
       # The 'backup' command's zips, and the copy a restore keeps of what it replaced.
       - ./backups:/data/backups
-      # Optional: plugin DLLs (see PLUGINS.md).
-      # - ./plugins:/data/plugins
+      # Plugins and add-ons (1.9.0: installed from the dashboard's Plugins page) - kept here so an update keeps them.
+      - ./plugins:/data/plugins
       # Optional: your ArchiSteamFarm folder (the one with config/ in it), read-only, to bring its accounts over -
       # login tokens too, so no Steam Guard code. The dashboard's Accounts > Import from another idler finds it.
       # - /path/to/ArchiSteamFarm:/import/asf:ro

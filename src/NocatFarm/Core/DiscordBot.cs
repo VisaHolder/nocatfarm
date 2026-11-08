@@ -1007,10 +1007,6 @@ public static partial class Notifier {
 		string[] skip = ["mini", "theme", "tutorial", "help", "clear"];
 
 		foreach (IGrouping<string, CommandDef> group in Commands.All.Where(c => !skip.Contains(c.Name)).GroupBy(static c => c.Group)) {
-			if ((group.Key == Commands.GroupRep4Rep) && !G.Rep4RepEnabled) {
-				continue;
-			}
-
 			sb.AppendLine();
 			sb.AppendLine($"**{Md(GroupName(group.Key).ToString())}:**");
 

@@ -7,6 +7,8 @@
     nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
     nocat.farm-v<version>_linux-arm.zip     Linux on 32-bit ARM (older Pis, Android TV boxes running Debian in Termux)
+    nocatfarm.rep4rep.dll                   the official rep4rep add-on (one per addons/<id>), any platform - and
+                                            addons/addons.json + .sig rewritten and signed (see the add-ons step)
   The Mac zips (_osx-arm64, _osx-x64) are NOT made here: a Mac only runs a signed app, and it's only signed when
   built on a Mac. After creating the release: gh workflow run macos.yml -f tag=v<version>
 
@@ -29,7 +31,10 @@
 #>
 param(
     [ValidateSet('', 'linux-x64', 'linux-arm64', 'linux-arm')][string]$OnlyRid = '',
-    [string]$AsVersion = ''
+    [string]$AsVersion = '',
+    # The add-on signing key (private, PKCS#8 base64) - outside every repository. Back it up: without it no new add-on
+    # index can be signed that the copies already out there accept.
+    [string]$AddonKey = $(if ($env:NOCATFARM_ADDON_KEY) { $env:NOCATFARM_ADDON_KEY } else { 'C:\Users\pauld\Documents\devKit\keys\nocatfarm-addons.key' })
 )
 
 $ErrorActionPreference = 'Stop'
@@ -180,6 +185,40 @@ if ($iscc) {
     Write-Host "Done  ->  $setup  (${ssize} MB)" -ForegroundColor Green
 } else {
     Write-Host 'Inno Setup 7 not found - the installer was NOT built (the zips still are).' -ForegroundColor Yellow
+}
+
+# --- the official add-ons (1.9.0) ----------------------------------------------------------------------------
+# Each add-on in addons/<id>/ is built into one DLL, put in dist/ as a release file of its own, and its SHA-256 and
+# release address written into addons/addons.json - which is then SIGNED (addons.json.sig) with the add-on key. The app
+# installs nothing unless the signature verifies with the key built into it AND the file's SHA-256 matches. The private
+# key lives outside every repository (devKit\keys\nocatfarm-addons.key) and never goes near a build output.
+# Not for a test build as another version (-AsVersion): the index must only ever name real releases.
+if (-not $AsVersion) {
+    if (-not (Test-Path $AddonKey)) { throw "the add-on signing key isn't at $AddonKey - addons.json can't be signed" }
+
+    $addonOut = Join-Path $dist 'addons-build'
+    if (Test-Path $addonOut) { Remove-Item $addonOut -Recurse -Force }
+
+    foreach ($ap in Get-ChildItem (Join-Path $root 'addons') -Directory | ForEach-Object { Get-ChildItem $_.FullName -Filter *.csproj }) {
+        $out = Join-Path $addonOut $ap.Directory.Name
+        dotnet build $ap.FullName -c Release -o $out --nologo -v q -p:UseSharedCompilation=false
+        if ($LASTEXITCODE -ne 0) { throw "building the add-on $($ap.Directory.Name) failed" }
+        [xml]$apx = Get-Content $ap.FullName
+        $dll = ($apx.Project.PropertyGroup | ForEach-Object { $_.AssemblyName } | Where-Object { $_ } | Select-Object -First 1) + '.dll'
+        Copy-Item (Join-Path $out $dll) (Join-Path $dist $dll) -Force
+        Write-Host "Done  ->  $(Join-Path $dist $dll)" -ForegroundColor Green
+    }
+
+    python (Join-Path $PSScriptRoot 'addons-index.py') $version $dist
+    if ($LASTEXITCODE -ne 0) { throw 'addons-index.py failed' }
+
+    $signer = Join-Path $addonOut 'addon-sign'
+    dotnet build (Join-Path $PSScriptRoot 'addon-sign') -c Release -o $signer --nologo -v q
+    if ($LASTEXITCODE -ne 0) { throw 'building the add-on signer failed' }
+    dotnet (Join-Path $signer 'AddonSign.dll') sign $AddonKey (Join-Path $root 'addons/addons.json')
+    if ($LASTEXITCODE -ne 0) { throw 'signing addons.json failed' }
+    Remove-Item $addonOut -Recurse -Force
+    Write-Host 'Add-on index updated and signed: addons/addons.json(.sig) - commit both, then attach the add-on DLL(s) to the release.' -ForegroundColor Green
 }
 
 }   # end of Windows

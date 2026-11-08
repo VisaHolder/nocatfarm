@@ -9,7 +9,7 @@ using NocatFarm.Web;
 using NocatFarm.Windows;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  nocatFarm - Steam idler, trading-card farmer and rep4rep commenter.
+//  nocatFarm - Steam idler and trading-card farmer (rep4rep and more as add-ons).
 //
 //  The console is the product; the dashboard is the same product with a mouse. Both drive one command router
 //  and one settings registry, so anything you can click you can type, and the other way round.
@@ -652,7 +652,7 @@ void Banner() {
 		Console.WriteLine();
 
 		if (box) {
-			const string Tagline = "Steam idling · trading cards · rep4rep";
+			const string Tagline = "Steam idling · trading cards · add-ons";
 			string Title = $"nocatFarm  {Build.Version}";
 			int inner = Math.Max(Title.Length, Tagline.Length) + 4;   // 2 spaces of padding each side
 
@@ -681,7 +681,7 @@ void Banner() {
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine($"  nocatFarm {Build.Version}");
 			Console.ForegroundColor = ConsoleColor.DarkGray;
-			Console.WriteLine("  Steam idling, trading cards and rep4rep");
+			Console.WriteLine("  Steam idling, trading cards and add-ons");
 		}
 
 		Console.WriteLine();

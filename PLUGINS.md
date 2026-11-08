@@ -6,7 +6,8 @@ drop the DLL in the `plugins` folder, and it runs.
 You need to be able to write a little C#. If you just want to use nocat.farm, you can skip this page.
 
 **Contents** · [Your first plugin](#your-first-plugin) · [A bigger example](#a-bigger-example-card-tally) ·
-[What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Rules](#rules) ·
+[What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Profile comments](#posting-a-profile-comment) ·
+[A page of your own](#a-dashboard-tab-of-your-own) · [Rules](#rules) ·
 [Is it safe?](#is-it-safe) · [Sharing it](#sharing-your-plugin) · [ASF plugins](#not-supported-asf-plugins)
 
 ---
@@ -196,11 +197,13 @@ Both examples on this page build against the current nocat.farm.
 | **Watch** | Know when an account signs in or goes offline, when a card drops, and when trade offers are waiting. |
 | **Read** | Every account: online or not, what it's playing, cards left, its games and playtime, what its items are worth, and any of its settings. |
 | **Do** | Run any command, the same ones you type, like `pause farm1` or `grind farm1 730 2`. |
-| **Add** | New commands, and settings that get real controls on the dashboard's Plugins page. |
+| **Add** | New commands, settings that get real controls on the dashboard's Plugins page (one value, or one per account), and a dashboard tab of its own. |
+| **Comment** | Post a Steam profile comment as an account - with nocat.farm deciding when (see [below](#posting-a-profile-comment)). This is the only thing a plugin can make an account do on Steam by itself. |
 | **Remember** | Save its own data so it survives restarts and updates. |
 
 What it can't do through the API is reach the Steam connection, the login tokens or the config files. Anything
-that changes something goes through a command, so it's checked and logged exactly like a command you typed.
+that changes something goes through a command, so it's checked and logged exactly like a command you typed. The one
+exception is a profile comment, and nocat.farm keeps the say over that one.
 
 ---
 
@@ -214,10 +217,15 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `Log("text")` | Write a line to the log. It shows up tagged `[plugin]`. |
 | `RunCommandAsync("pause farm1")` | Run a command and get back the text it would have printed. |
 | `AddCommand(verb, usage, help, handler)` | Add a command. It works in the console, the dashboard and Steam chat, and is listed by `plugins` and on the dashboard's Plugins page (not by `help`). |
-| `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting and read its current value (always as text, so parse it yourself). Kinds: `Text`, `Int`, `Bool`, `Choice`. For `Choice`, pass `Choices` as one `"value label"` string per option. |
+| `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting and read its current value (always as text, so parse it yourself). Kinds: `Text`, `Int`, `Bool`, `Choice`, `Secret`. For `Choice`, pass `Choices` as one `"value label"` string per option. A `Secret` (an API key, say) is kept encrypted on disk like the app's own and never sent back to the dashboard; `Setting` gives it to you as plain text. `PerAccount: true` gives it one value per account, shown as a table. |
 | `GetSetting("farm1", "FarmCards")` | Read one of an account's own settings, by its setting name. `null` if the account or setting doesn't exist. To change one, run a `set` command. |
 | `SaveStateAsync(json)` · `LoadStateAsync()` | Keep your own data between restarts. `LoadStateAsync` returns `null` the first time. |
 | `AppVersion` | Which nocat.farm version is running. |
+| `Language` | The app's language code (`en`, `de`, `pt-BR`, ...), for a plugin that carries its own translations. |
+| `Setting("name", "farm1")` · `SetSetting(name, value, account)` | A per-account setting (declared with `PerAccount: true`): read one account's value, or change one of your own settings from a command or a page button. |
+| `CanComment("farm1")` · `PostProfileCommentAsync("farm1", steamId64, text)` | Whether the app would let that account post a profile comment now (and why not, and until when), and post one. See [Posting a profile comment](#posting-a-profile-comment). |
+| `AddPage(title, render)` | A dashboard tab of your own. See [A dashboard tab of your own](#a-dashboard-tab-of-your-own). |
+| `Notify("text", "farm1")` | Send a line out on Telegram, Discord and the tray, the way the app's own news goes, when *Send add-on messages* is on. It also goes in the log. |
 
 | Event | When it fires |
 |---|---|
@@ -236,6 +244,50 @@ The full, commented contract is one file: [`src/NocatFarm/Plugins/IPlugin.cs`](s
 Every built-in command is in [the command list](docs/COMMANDS.md).
 
 ---
+
+## Posting a profile comment
+
+`host.PostProfileCommentAsync(account, targetSteamId64, text)` posts one comment on somebody's Steam profile as one of
+your accounts. It exists for the [rep4rep add-on](docs/rep4rep.md). A plugin can only ask; nocat.farm decides, and
+these rules hold whatever the plugin does:
+
+- **Never on an account that's standing still**: offline, paused, switched off or signing off.
+- **Human mode**: only while the account is up and settled in, the same as everything else that shows on an account:
+  not asleep, not on a break it spends offline, not while you're playing on it, and not straight after it signs in or
+  wakes up. *Only react while awake* and the account's other human-mode settings apply.
+- **Spacing**: at least 35 minutes between two comments from a human-mode account, and at least 2 minutes otherwise.
+- **A daily ceiling**: at most 25 comments per account in any rolling 24 hours, counted together for every plugin and
+  saved to disk, so a restart doesn't reset it. If that count can't be read, no comments go out until it's fixed.
+- **One at a time per account**, and the profile is looked at first. If there's no comment box for that account
+  (private, or friends only), nothing is sent.
+- Only an individual's SteamID64 that isn't the account's own, and 1 to 1000 characters of text.
+
+When nocat.farm says no, nothing is sent or counted and you get `PluginCommentOutcome.NotNow`, with `Detail` saying why
+in the app's language and `RetryAt` saying when it expects to say yes, if it knows. `CanComment(account)` asks the same
+question without posting. The other outcomes are what Steam said: `Posted`, `CommentsClosed`, `NotSent` (it never left
+this PC), `Unknown` (sent, no answer - count it and never send the same comment again), `Refused`, `RateLimited`,
+`DailyLimit` and `AccountBlocked`.
+
+Keep your own limits on top: the rep4rep add-on also has its own per-account cap, gaps and hours.
+
+## A dashboard tab of your own
+
+`host.AddPage("My tab", view => ...)` gives your plugin a tab next to Plugins. The function returns a `PluginPage`: a
+list of blocks the dashboard draws itself. It's text only, so a plugin can't put script or markup on the page:
+
+```csharp
+host.AddPage("Tally", view => Task.FromResult(new PluginPage([
+    PluginBlock.Heading("Cards counted"),
+    PluginBlock.Tiles(("12", "today"), ("80", "this week")),
+    PluginBlock.Table(["Account", "Cards"], [new PluginRow(["farm1", "7"], new PluginButton("Reset", "tally reset farm1"))]),
+    PluginBlock.ButtonRow(new PluginButton("Details", View: "details")),
+    PluginBlock.Link("Read more", "https://example.com"),
+])));
+```
+
+A `PluginButton` runs one of your commands (its reply is shown on the tab), shows another view of the page (`View`,
+handed back to your function), or both. Links only open `https://` addresses. The tab is asked for again each time
+it's shown, refreshed or a button is pressed.
 
 ## Rules
 

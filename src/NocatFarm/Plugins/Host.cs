@@ -72,29 +72,59 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		}
 	}
 
-	public string Setting(string name) {
+	public string Setting(string name) => Value(name, null);
+
+	public string Setting(string name, string account) => Value(name, account);
+
+	/// <summary>The key a value is kept under: the name, or "account:name" for one account's (a name can't hold a colon).</summary>
+	internal static string Key(string name, string? account) => string.IsNullOrEmpty(account) ? name : $"{account}:{name}";
+
+	private PluginSetting? Declaration(string name) => _declared.FirstOrDefault(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
+
+	private string Value(string name, string? account) {
 		lock (_valuesGate) {
 			ReadValues();
+			PluginSetting? d = Declaration(name);
 
-			return _values.TryGetValue(name, out string? v)
-				? v
-				: _declared.FirstOrDefault(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))?.Default ?? "";
+			if (!_values.TryGetValue(Key(name, account), out string? v)) {
+				return d?.Default ?? "";
+			}
+
+			// 1.9.0: a secret is kept encrypted, like the app's own, and handed over as plain text.
+			return d?.Kind == PluginSettingKind.Secret ? Secrets.Unprotect(v) : v;
 		}
 	}
 
-	/// <summary>Everything the operator can edit for this plugin, with its current value - for the page.</summary>
-	internal IReadOnlyList<(PluginSetting Setting, string Value)> SettingsView() {
+	/// <summary>
+	/// Everything the operator can edit for this plugin, with its current value - for the page. A secret's value is never
+	/// handed out: "set" or empty. Per-account settings come once per account, with the account's name.
+	/// </summary>
+	internal IReadOnlyList<(PluginSetting Setting, string Value, string? Account)> SettingsView(IReadOnlyList<string> accounts) {
 		lock (_valuesGate) {
 			ReadValues();
+			List<(PluginSetting, string, string?)> view = [];
 
-			return [.. _declared.Select(d => (d, Setting(d.Name)))];
+			foreach (PluginSetting d in _declared) {
+				foreach (string? account in d.PerAccount ? accounts.Select(static a => (string?) a) : [null]) {
+					string value = Value(d.Name, account);
+					view.Add((d, d.Kind == PluginSettingKind.Secret ? (value.Length > 0 ? "set" : "") : value, account));
+				}
+			}
+
+			return view;
 		}
 	}
 
-	internal void SetValue(string name, string value) {
+	internal bool IsPerAccount(string name) {
+		lock (_valuesGate) {
+			return Declaration(name)?.PerAccount == true;
+		}
+	}
+
+	internal void SetValue(string name, string value, string? account = null) {
 		lock (_valuesGate) {
 			ReadValues();
-			_values[name] = value;
+			_values[Key(name, account)] = Declaration(name)?.Kind == PluginSettingKind.Secret ? Secrets.Protect(value, "plugin") : value;
 
 			try {
 				Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);
@@ -196,6 +226,68 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		_commands[verb] = (usage, help, handler);
 	}
 
+	// ── 1.9.0 ───────────────────────────────────────────────────────────────
+	public string Language => Live.Global.Language ?? "en";
+
+	public PluginCommentCheck CanComment(string account) => Comments.Check(mgr.Get(account));
+
+	public bool SetSetting(string name, string value, string? account = null) {
+		PluginSetting? declared;
+
+		lock (_valuesGate) {
+			declared = Declaration(name);
+		}
+
+		if ((declared == null) || (declared.PerAccount == string.IsNullOrEmpty(account))) {
+			return false;
+		}
+
+		string? whose = null;
+
+		if (declared.PerAccount) {
+			if (mgr.Get(account!) is not { } bot) {
+				return false;
+			}
+
+			whose = bot.Name;
+		}
+
+		SetValue(declared.Name, value ?? "", whose);
+		NocatFarm.Log.Info(whose == null
+			? new Said("plugin {0}: {1} = {2}", _owner, declared.Name, declared.Kind == PluginSettingKind.Secret ? "••••••" : value)
+			: new Said("plugin {0}: {1} = {2} for {3}", _owner, declared.Name, declared.Kind == PluginSettingKind.Secret ? "••••••" : value, whose));
+
+		return true;
+	}
+
+	public async Task<PluginCommentResult> PostProfileCommentAsync(string account, ulong targetSteamId, string text, CancellationToken ct = default) {
+		try {
+			return await Comments.PostAsync(mgr.Get(account), _owner, targetSteamId, text, ct).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			// Handed back, not thrown: a plugin's loop that didn't expect it would stop for good.
+			NocatFarm.Log.Failed($"plugin {_owner}: posting a comment", e, account);
+			NocatFarm.Log.StackToFile(e, account);
+
+			return new PluginCommentResult(PluginCommentOutcome.Unknown, NocatFarm.Log.Describe(e));
+		}
+	}
+
+	internal (string Title, Func<string?, Task<PluginPage>> Render)? Page { get; private set; }
+
+	public void AddPage(string title, Func<string?, Task<PluginPage>> render) {
+		if (!string.IsNullOrWhiteSpace(title) && (render != null)) {
+			Page = (title.Trim(), render);
+		}
+	}
+
+	public void Notify(string message, string? account = null) {
+		if (!string.IsNullOrWhiteSpace(message)) {
+			NocatFarm.Log.Reward(new Said("[plugin] {0}", message), string.IsNullOrEmpty(account) ? "plugins" : account, Topic.Plugins);
+		}
+	}
+
 	public event Action<IPluginAccount>? AccountOnline;
 	public event Action<IPluginAccount>? AccountOffline;
 	public event Action<IPluginAccount, uint, int>? CardDropped;
@@ -271,6 +363,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		public string Status => bot.StatusText ?? "";
 		public IReadOnlyList<uint> Playing => bot.PlayingApps;
 		public int CardsRemaining => bot.CardsRemaining;
+		public bool IsPaused => bot.Paused || !bot.Cfg.Enabled || bot.Stopping;
 
 		public IReadOnlyList<PluginGame> Library =>
 			[.. bot.Library.Games.Select(static g => new PluginGame(g.AppId, g.Name, g.MinutesPlayed, g.Shared))];

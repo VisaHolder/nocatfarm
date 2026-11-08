@@ -515,6 +515,68 @@ def english_values(files):
 
 # ── report ───────────────────────────────────────────────────────────────
 
+ADDONS = ROOT.parent.parent / "addons"
+
+
+def addon_keys(folder):
+    """An add-on's strings: every literal given to T("...") (translated) or R("...") (kept in English, translated when
+    shown) in its .cs files - the add-on's own Texts helper. Returns {key: "file:line"}."""
+    found = {}
+
+    for path in sorted(folder.rglob("*.cs")):
+        rel = path.relative_to(folder).as_posix()
+
+        if rel.startswith(("obj/", "bin/")):
+            continue
+
+        src = io.open(path, encoding="utf-8").read()
+
+        for m in re.finditer(r'(?<![\w.])[TR]\("', src):
+            value, _ = cs_literal(src, m.end() - 1)
+            found.setdefault(value, f"{folder.name}/{rel}:{src.count(chr(10), 0, m.start()) + 1}")
+
+    return found
+
+
+def check_addons(codes):
+    """1.9.0: each official add-on carries its own packs (addons/<name>/lang/<code>.json, English -> translated, inside
+    its DLL). Every language the app has must be there, with every string, the same placeholders, and nothing stale."""
+    problems = 0
+
+    for folder in sorted(p for p in ADDONS.glob("*") if (p / "lang").is_dir()):
+        keys = addon_keys(folder)
+        print(f"\nadd-on {folder.name}: {len(keys)} strings")
+
+        for code in codes:
+            pack = folder / "lang" / f"{code}.json"
+            data = json.load(io.open(pack, encoding="utf-8")) if pack.exists() else None
+
+            if data is None:
+                print(f"  --  {code:6}  no pack at {pack.relative_to(ADDONS.parent).as_posix()}")
+                problems += 1
+                continue
+
+            missing = [k for k in keys if not data.get(k)]
+            bad_slots = [k for k in keys if data.get(k) and (slots(data[k]) != slots(k))]
+            unused = sorted(k for k in data if k not in keys)
+            issues = len(missing) + len(bad_slots) + len(unused)
+            problems += issues
+            print(f"  {'OK ' if issues == 0 else '-- '} {code:6}  {len(keys) - len(missing)}/{len(keys)} strings"
+                  + (f", {len(missing)} missing" if missing else "") + (f", {len(bad_slots)} placeholder mismatch" if bad_slots else "")
+                  + (f", {len(unused)} unused" if unused else ""))
+
+            for k in missing[:40]:
+                print(f"         missing      {k!r}   ({keys[k]})")
+
+            for k in bad_slots:
+                print(f"         placeholders {k!r}  en={slots(k)}  {code}={slots(data[k])}")
+
+            for k in unused[:20]:
+                print(f"         unused       {k!r}")
+
+    return problems
+
+
 def main():
     files = source_files()
     keys = used_keys(files)
@@ -573,6 +635,7 @@ def main():
         print(f"  {route:9} {rel}:{line}  {what}")
 
     problems += len(values)
+    problems += check_addons([p.stem for p in packs])
 
     # Dead entries cost nothing at run time, but every one is a sentence the next translation pass pays for, and
     # a stale one ("You said leave it paused for:") reads as current to whoever edits the pack.

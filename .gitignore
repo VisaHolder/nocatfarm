@@ -14,3 +14,5 @@ __pycache__/
 /plugins/
 /.env
 /docker-compose.yml
+# Never a signing key in the repository (the add-on key lives in devKit\keys, outside every repo).
+*.key

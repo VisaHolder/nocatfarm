@@ -47,6 +47,9 @@ public static class PluginHost {
 	public static string Folder => Path.Combine(ConfigStore.Root, "plugins");
 
 	public static async Task LoadAllAsync(BotManager mgr, CancellationToken ct) {
+		_mgr = mgr;
+		SettlePending(Folder);
+
 		if (!Live.Global.PluginsEnabled) {
 			return;
 		}
@@ -204,23 +207,106 @@ public static class PluginHost {
 		}
 	}
 
-	/// <summary>A plugin's own settings, with current values, for the dashboard.</summary>
-	public static IReadOnlyList<(PluginSetting Setting, string Value)> SettingsOf(string plugin) =>
-		Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase))?.Host.SettingsView() ?? [];
+	/// <summary>A plugin's own settings, with current values, for the dashboard (per-account ones once per account).</summary>
+	public static IReadOnlyList<(PluginSetting Setting, string Value, string? Account)> SettingsOf(string plugin) =>
+		Find(plugin)?.Host.SettingsView([.. _mgr?.All.Select(static b => b.Name) ?? []]) ?? [];
 
-	/// <summary>Change one. Returns false when there is no such plugin or setting.</summary>
-	public static bool SetSetting(string plugin, string name, string value) {
-		Loaded? loaded = Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
+	private static Loaded? Find(string plugin) =>
+		Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
 
-		if ((loaded == null) || !loaded.Host.Declared.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))) {
+	/// <summary>Change one (for one account, when it is per account). Returns false when there is no such plugin, setting or account.</summary>
+	public static bool SetSetting(string plugin, string name, string value, string? account = null) {
+		Loaded? loaded = Find(plugin);
+		PluginSetting? declared = loaded?.Host.Declared.FirstOrDefault(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
+
+		if ((loaded == null) || (declared == null)) {
 			return false;
 		}
 
-		loaded.Host.SetValue(name, value);
-		NocatFarm.Log.Info(new Said("plugin {0}: {1} = {2}", plugin, name, value));
+		// A per-account one needs an account that exists - written under a made-up name it would sit in the file for nobody.
+		if (declared.PerAccount != !string.IsNullOrEmpty(account)) {
+			return false;
+		}
+
+		if (declared.PerAccount) {
+			if (_mgr?.Get(account!) is not { } bot) {
+				return false;
+			}
+
+			account = bot.Name;
+		}
+
+		loaded.Host.SetValue(declared.Name, value, account);
+
+		// A secret's value stays out of the log.
+		string shown = declared.Kind == PluginSettingKind.Secret ? (value.Length > 0 ? "••••••" : "") : value;
+		NocatFarm.Log.Info(account == null
+			? new Said("plugin {0}: {1} = {2}", plugin, name, shown)
+			: new Said("plugin {0}: {1} = {2} for {3}", plugin, name, shown, account));
 
 		return true;
 	}
+
+	/// <summary>1.9.0: every plugin that has a dashboard page, and its title.</summary>
+	public static IReadOnlyList<(string Plugin, string Title)> Pages =>
+		[.. Snapshot().Where(static p => p.Host.Page != null).Select(static p => (p.Plugin.Name, p.Host.Page!.Value.Title))];
+
+	/// <summary>A plugin's page as it is now. Null when there's no such page; a page that throws comes back as one line saying so.</summary>
+	public static async Task<PluginPage?> RenderAsync(string plugin, string? view) {
+		if (Find(plugin)?.Host.Page is not { } page) {
+			return null;
+		}
+
+		try {
+			return await page.Render(view).WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+		} catch (Exception e) {
+			NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", plugin, nameof(IPluginHost.AddPage), e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+			NocatFarm.Log.StackToFile(e);
+
+			return new PluginPage([PluginBlock.Line(new Said("this page couldn't be drawn: {0}", NocatFarm.Log.Describe(e)).ToString())]);
+		}
+	}
+
+	// ── 1.9.0: installs and removals that wait for a restart ─────────────────
+	// A loaded plugin's DLL is held open (on Windows it can't be replaced or deleted while the app runs), so an install over
+	// one goes in beside it as <file>.new and an uninstall leaves <file>.remove - both settled here, before anything loads.
+
+	internal const string NewSuffix = ".new", RemoveSuffix = ".remove";
+
+	/// <summary>Put waiting installs in place and carry out waiting removals. Safe to run with plugins off.</summary>
+	internal static void SettlePending(string folder) {
+		if (!Directory.Exists(folder)) {
+			return;
+		}
+
+		foreach (string marker in Directory.GetFiles(folder, "*.dll" + RemoveSuffix, SearchOption.TopDirectoryOnly)) {
+			string dll = marker[..^RemoveSuffix.Length];
+
+			try {
+				File.Delete(dll);
+				File.Delete(dll + NewSuffix);
+				File.Delete(marker);
+				NocatFarm.Log.Info(new Said("add-on removed: {0}", Path.GetFileName(dll)));
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				NocatFarm.Log.Warn(new Said("couldn't remove {0}: {1}", Path.GetFileName(dll), NocatFarm.Log.Scrub(e.Message)));
+			}
+		}
+
+		foreach (string waiting in Directory.GetFiles(folder, "*.dll" + NewSuffix, SearchOption.TopDirectoryOnly)) {
+			string dll = waiting[..^NewSuffix.Length];
+
+			try {
+				File.Move(waiting, dll, true);
+				NocatFarm.Log.Info(new Said("add-on installed: {0}", Path.GetFileName(dll)));
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				NocatFarm.Log.Warn(new Said("couldn't put {0} in place: {1}", Path.GetFileName(dll), NocatFarm.Log.Scrub(e.Message)));
+			}
+		}
+	}
+
+	/// <summary>Whether a file of this name is loaded right now (so it can't be replaced or deleted until a restart).</summary>
+	internal static bool IsLoaded(string file) =>
+		Snapshot().Any(p => string.Equals(Path.GetFileName(p.File), file, StringComparison.OrdinalIgnoreCase));
 
 	/// <summary>Every plugin found on disk, whether it is switched on or not - for the dashboard's list.</summary>
 	public static IReadOnlyList<(string Name, string Version, string File, bool Enabled)> Discovered {

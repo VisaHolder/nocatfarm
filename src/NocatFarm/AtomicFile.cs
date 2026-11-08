@@ -3,7 +3,7 @@ namespace NocatFarm;
 /// <summary>
 /// Write-then-rename, so a crash or power cut mid-write can never leave a half-written file behind.
 ///
-/// The state files (today's plan, rep4rep counts, achievement progress, login tokens, lifetime totals) were
+/// The state files (today's plan, comment counts, achievement progress, login tokens, lifetime totals) were
 /// overwritten in place - a kill during the write left a truncated file that failed to parse next start, which
 /// at best re-rolls the day and at worst throws away a login token and forces a password re-prompt. Writing to a
 /// sibling ".tmp" and moving it over the target is atomic on the same volume, so a reader only ever sees the old
@@ -57,11 +57,13 @@ public static class AtomicFile {
 		}
 	}
 
-	public static async Task WriteAsync(string path, string content) {
+	public static Task WriteAsync(string path, string content) => WriteAsync(path, new System.Text.UTF8Encoding(false).GetBytes(content));
+
+	/// <summary>1.9.0: the same for bytes - an add-on DLL, so a half-downloaded one is never left where it would load.</summary>
+	public static async Task WriteAsync(string path, byte[] bytes) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 		try {
 			await using (FileStream f = new(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true)) {
-				byte[] bytes = new System.Text.UTF8Encoding(false).GetBytes(content);
 				await f.WriteAsync(bytes).ConfigureAwait(false);
 				f.Flush(flushToDisk: true);
 			}

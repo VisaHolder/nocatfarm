@@ -94,10 +94,6 @@ public sealed class ReportCard {
 				wrong.Add(new Said("new ban on record"));
 			}
 
-			if (r4r && (BotManager.ModuleOf<Modules.Rep4RepModule>(b) is { CommentBlocked: true })) {
-				wrong.Add(new Said("Steam is blocking its comments"));
-			}
-
 			if (Join(wrong) is { } said) {
 				rows.Add(new Row(new Said("{0}", b.Name), said, Alert: true));
 			}

@@ -116,10 +116,11 @@ public static class SelfCheck {
 		}
 
 		// ── the profile ──────────────────────────────────────────────────────
-		if (bot.Cfg.Rep4Rep) {
+		// 1.9.0: comments posted through an add-on (rep4rep's) in the last day, as the app counted them.
+		if (Plugins.Comments.Window(bot.Name).Count is > 0 and int posted) {
 			bool openComments = privacy == null || privacy.Comments == 1;
-			Add(8, openComments ? 1 : 0.5, $"strangers leave ~{bot.Cfg.Rep4RepDailyCap} comments a day on its profile, and it comments back the same (rep4rep)",
-				"lower Rep4RepDailyCap, or turn rep4rep off for this account");
+			Add(8, openComments ? 1 : 0.5, $"strangers leave ~{posted} comments a day on its profile, and it comments back the same (an add-on - rep4rep)",
+				"lower the add-on's daily cap, or switch its commenting off for this account");
 		}
 
 		// The card-farm footprint: a long tail of games with an hour or three each and nothing since.

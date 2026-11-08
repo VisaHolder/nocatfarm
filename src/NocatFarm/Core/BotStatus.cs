@@ -125,7 +125,6 @@ public readonly record struct BotStatus(
 		}
 
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
-		Rep4RepModule? comments = BotManager.ModuleOf<Rep4RepModule>(bot);
 
 		Said doing;
 		Said sitting = default;
@@ -258,7 +257,9 @@ public readonly record struct BotStatus(
 		// Steam shows the real game to everybody who looks at the profile.
 		Said warning = bot.CustomNameNotShowing ? new Said("Steam shows {0}", bot.PlayingAsSeen) : default;
 
-		string said = (comments != null) && bot.Cfg.Rep4Rep ? $"{comments.PostsToday}/{comments.Cap}" : "";
+		// 1.9.0: comments posted through add-ons (rep4rep's) in the last 24 hours - nothing when there are none.
+		int posted = Plugins.Comments.Window(bot.Name).Count;
+		string said = posted > 0 ? posted.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
 
 		return new BotStatus(doing, persona, sitting, today, said, warning, done, total, dayDone, dayTotal) {
 			AtTheKeyboard = playing,
