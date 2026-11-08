@@ -11571,9 +11571,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	try {
 		available.SetValue(null, "v9.9.9");
 		SkipOnly("9.9.9");
-		bool quiet = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), false, null, DateTime.UtcNow])!).Count == 0;
+		bool quiet = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), null, DateTime.UtcNow])!).Count == 0;
 		SkipOnly(null);
-		bool said = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), false, null, DateTime.UtcNow])!).Count == 1;
+		bool said = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), null, DateTime.UtcNow])!).Count == 1;
 		Check("summary attention: a new version the owner skipped isn't flagged; one not skipped is", quiet && said);
 	} finally {
 		available.SetValue(null, wasAvailable);
@@ -15238,7 +15238,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		string web = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
 		Check("update file: the dashboard counts as this PC only from this PC - not a phone, the internet, or the internet through a proxy here",
 			At(From("127.0.0.1")) && At(From("::1")) && !At(From("192.168.1.20")) && !At(From("203.0.113.9")) && !At(From("127.0.0.1", "203.0.113.9"))
-			&& web.Contains("string output = AtThisPc(ctx)\n\t\t\t\t? await Commands.RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\").ConfigureAwait(false)\n\t\t\t\t: await Commands.RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false);", StringComparison.Ordinal));
+			&& web.Contains("string output = AtThisPc(ctx)\n\t\t\t\t? await Commands.RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\").ConfigureAwait(false)\n\t\t\t\t: MayInstallAddons(ctx)\n\t\t\t\t\t? await Commands.RunSignedInAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false)\n\t\t\t\t\t: await Commands.RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false);", StringComparison.Ordinal)
+			// 1.9.0: signed in with the password, the Console may install add-ons - but it's still not this PC ('update file')
+			&& File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Contains("await RunAsync(mgr, input, atThisPc: false, addons: true)", StringComparison.Ordinal));
 
 		if (NocatFarm.Core.SelfUpdate.Supported) {
 			string old = await Commands.RunAtThisPcAsync(mgr, $"update file {older}");
@@ -29751,6 +29753,302 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		NocatFarm.Modules.BuyLedger.ForgetLoaded();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		TestTemp.Gone(bpRoot);
+	}
+}
+
+// ── 1.9.0 add-on fixes: held files, removing without the list, the comment gate, restores, older lists, count writes, the
+// 1.8.x move, the 1.8.x constructor, the console, plugin page buttons ──
+{
+	string fxRealRoot = NocatFarm.Config.ConfigStore.Root;
+	string fxRoot = Path.Combine(Path.GetTempPath(), "nf-addonfix-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(fxRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(fxRoot);
+	NocatFarm.Config.GlobalConfig fxWasLive = NocatFarm.Config.Live.Global;
+	HttpClient fxWasHttp = NocatFarm.Plugins.Addons.Http;
+	string fxWasKey = NocatFarm.Plugins.Addons.Key;
+	var fxMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+
+	try {
+		NocatFarm.Plugins.Comments.Forget();
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = true };
+		// GitHub, as the checks have it: not there. Nothing here may need it.
+		NocatFarm.Plugins.Addons.Http = new HttpClient(new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound))));
+		using var fxKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+		NocatFarm.Plugins.Addons.Key = Convert.ToBase64String(fxKey.ExportSubjectPublicKeyInfo());
+		string FxSign(byte[] data) => Convert.ToBase64String(fxKey.SignData(data, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+		string FxSha(byte[] data) => Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(data));
+		byte[] FxIndex(string version, string sha, long serial = 0) => System.Text.Encoding.UTF8.GetBytes(
+			"{ " + (serial > 0 ? $"\"serial\": {serial}, " : "") + "\"addons\": [ { \"id\": \"demo\", \"name\": \"Demo\", \"plugin\": \"Demo\", \"description\": { \"en\": \"A demo.\" }, "
+			+ $"\"version\": \"{version}\", \"minAppVersion\": \"1.0.0\", \"file\": \"nocatfarm.demo.dll\", "
+			+ $"\"url\": \"https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll\", \"sha256\": \"{sha}\" }} ] }}");
+		IReadOnlyList<NocatFarm.Plugins.AddonEntry> FxList(string version, string sha) {
+			byte[] json = FxIndex(version, sha);
+			return NocatFarm.Plugins.Addons.Parse(json, FxSign(json), NocatFarm.Plugins.Addons.Key, out _)!;
+		}
+		string plugDir = NocatFarm.Plugins.PluginHost.Folder;
+		Directory.CreateDirectory(plugDir);
+		string demo = Path.Combine(plugDir, "nocatfarm.demo.dll");
+		string realAddon = typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.Location;   // a real add-on DLL, version 1.0.0
+		string repoRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+		string Src(params string[] parts) => File.ReadAllText(Path.Combine([repoRoot, .. parts])).Replace("\r\n", "\n");
+
+		// ── 1. a switched-off or failed plugin's file is held as much as a started one's ──
+		byte[] v1 = System.Text.Encoding.UTF8.GetBytes("demo add-on v1 " + Guid.NewGuid());
+		var l1 = FxList("1.2.0", FxSha(v1));
+		File.WriteAllBytes(demo, [9]);
+		NocatFarm.Plugins.PluginHost.MarkMapped("nocatfarm.demo.dll");   // loaded into a context, no plugin started (switched off, or OnLoadAsync threw)
+		bool noneStarted = NocatFarm.Plugins.PluginHost.Running.Count == 0;
+		var heldInstall = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+		Check("add-on held: a DLL loaded but not started counts as loaded - the update goes in beside it as .new, the held file untouched",
+			noneStarted && NocatFarm.Plugins.PluginHost.IsLoaded("nocatfarm.demo.dll") && heldInstall.Ok
+			&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 9 }) && File.ReadAllBytes(demo + ".new").SequenceEqual(v1), heldInstall.Message.ToEnglish());
+		var heldRemove = NocatFarm.Plugins.Addons.Uninstall(l1, "demo");
+		Check("add-on held: taking it out leaves a .remove for the next start instead of a refused delete",
+			File.Exists(demo) && File.Exists(demo + ".remove") && !File.Exists(demo + ".new") && heldRemove.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal), heldRemove.ToEnglish());
+		NocatFarm.Plugins.PluginHost.SettlePending(plugDir);
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		Check("add-on held: and at the next start it's gone", !File.Exists(demo) && !File.Exists(demo + ".remove"));
+		string hostSrc = Src("src", "NocatFarm", "Plugins", "PluginHost.cs");
+		int loadAt = hostSrc.IndexOf("context.LoadFromAssemblyPath(Path.GetFullPath(file));", StringComparison.Ordinal);
+		int markAt = hostSrc.IndexOf("MarkMapped(Path.GetFileName(file));", StringComparison.Ordinal);
+		int typesAt = hostSrc.IndexOf("foreach (Type type in assembly.GetTypes())", StringComparison.Ordinal);
+		Check("add-on held: every DLL is marked held straight after it's loaded - before its types are looked at, a plugin's switch or its OnLoadAsync",
+			(loadAt > 0) && (markAt > loadAt) && (typesAt > markAt));
+
+		if (OperatingSystem.IsWindows()) {
+			// Held by something else entirely (not marked): Windows refuses the delete and the replace - both wait for a restart.
+			File.WriteAllBytes(demo, [7]);
+			NocatFarm.Core.Said heldBy;
+			(bool Ok, NocatFarm.Core.Said Message) heldByInstall;
+			using (var hold = new FileStream(demo, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+				heldBy = NocatFarm.Plugins.Addons.Uninstall(l1, "demo");
+				File.Delete(demo + ".remove");
+				heldByInstall = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+			}
+			Check("add-on held (Windows): a file the app didn't know was held - a refused delete becomes a .remove, a refused replace a .new",
+				heldBy.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal) && heldByInstall.Ok && File.ReadAllBytes(demo + ".new").SequenceEqual(v1)
+				&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 7 }), heldBy.ToEnglish() + " / " + heldByInstall.Message.ToEnglish());
+			File.Delete(demo + ".new");
+			File.Delete(demo);
+		}
+
+		// ── 5. older lists and older versions are refused ──
+		byte[] s5 = FxIndex("1.2.0", FxSha(v1), serial: 5);
+		var took5 = NocatFarm.Plugins.Addons.Take(s5, FxSign(s5));
+		byte[] s4 = FxIndex("1.3.0", FxSha(v1), serial: 4);
+		var took4 = NocatFarm.Plugins.Addons.Take(s4, FxSign(s4));
+		byte[] s0 = FxIndex("1.3.0", FxSha(v1));
+		var took0 = NocatFarm.Plugins.Addons.Take(s0, FxSign(s0));
+		var took5Again = NocatFarm.Plugins.Addons.Take(s5, FxSign(s5));
+		Check("add-on list: the highest serial is remembered - an older list (4, or none at all) is refused, the same one again is fine",
+			(took5.List?.Count == 1) && (NocatFarm.Plugins.Addons.SeenSerial() == 5) && (took4.List == null) && took4.Why.ToEnglish().Contains("older than one", StringComparison.Ordinal)
+			&& (took0.List == null) && (took5Again.List?.Count == 1) && (NocatFarm.Plugins.Addons.SeenSerial() == 5), took4.Why.ToEnglish());
+		byte[] s6 = FxIndex("1.2.0", FxSha(v1), serial: 6);
+		NocatFarm.Plugins.Addons.Take(s6, FxSign(s6));
+		Check("add-on list: a newer list is taken and kept on disk, signature and all - and read back only if it still verifies",
+			(NocatFarm.Plugins.Addons.SeenSerial() == 6) && (NocatFarm.Plugins.Addons.Kept()?.Count == 1) && File.ReadAllBytes(NocatFarm.Plugins.Addons.KeptPath).SequenceEqual(s6));
+		Check("add-on versions: 1.0.0 is 1.0.0.0, 0.9.0 is older than 1.0.0, nothing installed is never older",
+			!NocatFarm.Plugins.Addons.Older("1.0.0", "1.0.0.0") && NocatFarm.Plugins.Addons.Older("0.9.0", "1.0.0") && !NocatFarm.Plugins.Addons.Older("1.2.0", null) && !NocatFarm.Plugins.Addons.Older("1.2.0", "1.0.0"));
+		File.Copy(realAddon, demo, true);
+		int fxDownloads = 0;
+		byte[] older = System.Text.Encoding.UTF8.GetBytes("demo add-on 0.9 " + Guid.NewGuid());
+		var downgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(FxList("0.9.0", FxSha(older)), "demo", (_, _) => { fxDownloads++; return Task.FromResult(older); }, CancellationToken.None);
+		Check("add-on install: never an older version over the one installed (its file says 1.0.0) - nothing downloaded, nothing changed",
+			(NocatFarm.Plugins.Addons.VersionOnDisk(demo) == "1.0.0") && !downgrade.Ok && (fxDownloads == 0)
+			&& downgrade.Message.ToEnglish().Contains("offers the older 0.9.0", StringComparison.Ordinal) && File.ReadAllBytes(demo).SequenceEqual(File.ReadAllBytes(realAddon)), downgrade.Message.ToEnglish());
+		var upgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+		Check("add-on install: a newer one goes in over it", upgrade.Ok && File.ReadAllBytes(demo).SequenceEqual(v1), upgrade.Message.ToEnglish());
+		byte[] shipped = File.ReadAllBytes(Path.Combine(repoRoot, "addons", "addons.json"));
+		string shippedSig = File.ReadAllText(Path.Combine(repoRoot, "addons", "addons.json.sig"));
+		var shippedList = NocatFarm.Plugins.Addons.Parse(shipped, shippedSig, NocatFarm.Plugins.Addons.PublicKey, out NocatFarm.Core.Said shippedWhy, out long shippedSerial);
+		Check("add-on list: the one in the repository verifies with the built-in key, and has a serial",
+			(shippedList?.Count >= 1) && (shippedSerial >= 1), shippedWhy.ToEnglish());
+		Check("add-on list: the release step raises the serial before it signs", Src("tools", "addons-index.py").Contains("serial = int(data.get(\"serial\", 0)) + 1", StringComparison.Ordinal)
+			&& (Src("tools", "package-release.ps1").IndexOf("addons-index.py", StringComparison.Ordinal) < Src("tools", "package-release.ps1").IndexOf("sign $AddonKey", StringComparison.Ordinal)));
+
+		// ── 1. an official add-on that is switched off isn't loaded at all ──
+		File.Copy(realAddon, demo, true);
+		NocatFarm.Config.Live.Global.DisabledPlugins = ["Demo"];
+		var offEntry = NocatFarm.Plugins.Addons.SwitchedOff("nocatfarm.demo.dll");
+		await NocatFarm.Plugins.PluginHost.LoadAllAsync(fxMgr, CancellationToken.None);
+		var seenOff = NocatFarm.Plugins.PluginHost.Discovered.FirstOrDefault(static p => p.File == "nocatfarm.demo.dll");
+		Check("add-on off: switched off, it's known by the kept signed list and never loaded - listed as off, its file free to update or remove",
+			(offEntry?.Plugin == "Demo") && (seenOff.Name == "Demo") && (seenOff.Version == "1.0.0") && !seenOff.Enabled
+			&& !NocatFarm.Plugins.PluginHost.IsLoaded("nocatfarm.demo.dll") && (NocatFarm.Plugins.PluginHost.Running.Count == 0), $"{seenOff}");
+		NocatFarm.Config.Live.Global.DisabledPlugins = [];
+		Check("add-on off: switched on, the list doesn't keep it from loading", NocatFarm.Plugins.Addons.SwitchedOff("nocatfarm.demo.dll") == null);
+
+		// ── 2. taking one out needs no fresh list ──
+		var byKept = NocatFarm.Plugins.Addons.Uninstall(null, "demo");
+		Check("add-on remove: no list from GitHub - the last list kept here names the file", !File.Exists(demo) && byKept.ToEnglish().Contains("Demo is removed", StringComparison.Ordinal), byKept.ToEnglish());
+		File.Delete(NocatFarm.Plugins.Addons.KeptPath);
+		File.WriteAllBytes(demo, [1]);
+		var byName = NocatFarm.Plugins.Addons.Uninstall(null, "demo");
+		File.WriteAllBytes(Path.Combine(plugDir, "mine.dll"), [1]);
+		var byFile = NocatFarm.Plugins.Addons.Uninstall(null, "mine.dll");
+		var notPath = NocatFarm.Plugins.Addons.Uninstall(null, "../nocatfarm.demo");
+		var noneThere = NocatFarm.Plugins.Addons.Uninstall(null, "nothing");
+		Check("add-on remove: no list at all - by its name (nocatfarm.<name>.dll) or its file name, never a path",
+			!File.Exists(demo) && !File.Exists(Path.Combine(plugDir, "mine.dll")) && byName.ToEnglish().Contains("is removed", StringComparison.Ordinal)
+			&& byFile.ToEnglish().Contains("is removed", StringComparison.Ordinal) && notPath.ToEnglish().Contains("no add-on called", StringComparison.Ordinal)
+			&& noneThere.ToEnglish().Contains("no add-on called 'nothing'", StringComparison.Ordinal), $"{byName.ToEnglish()} / {byFile.ToEnglish()} / {notPath.ToEnglish()}");
+		File.WriteAllBytes(demo, [1]);
+		string removedHere = await NocatFarm.Commands.RunAtThisPcAsync(fxMgr, "addons remove demo");
+		Check("add-on remove: 'addons remove' at this PC with GitHub not answering still takes it out", !File.Exists(demo) && removedHere.Contains("is removed", StringComparison.Ordinal), removedHere);
+
+		// ── 9. the console: the same rule as the Plugins page ──
+		string fromPhone = await NocatFarm.Commands.RunLoggedAsync(fxMgr, "addons remove nothing-here", "checks");
+		string signedIn = await NocatFarm.Commands.RunSignedInAsync(fxMgr, "addons remove nothing-here", "checks");
+		Check("add-on console: refused from elsewhere, but the Console of a dashboard signed in with its password may (as its Plugins page may)",
+			fromPhone.Contains("only at this PC", StringComparison.Ordinal) && !signedIn.Contains("only at this PC", StringComparison.Ordinal)
+			&& signedIn.Contains("no add-on called 'nothing-here'", StringComparison.Ordinal), signedIn);
+		string webSrc = Src("src", "NocatFarm", "Web", "WebHost.cs");
+		Check("add-on console: the dashboard's Console runs signed-in lines that way when a password is set",
+			webSrc.Contains(": MayInstallAddons(ctx)\n\t\t\t\t\t? await Commands.RunSignedInAsync(_mgr, body.Line, \"dashboard from another device\")", StringComparison.Ordinal));
+
+		// ── plugin page buttons: only the plugin's own commands ──
+		var bHost = new NocatFarm.Plugins.Host(fxMgr, "buttons");
+		bHost.AddCommand("tally", "<account>", "count", static _ => Task.FromResult("counted"));
+		Check("plugin buttons: only the plugin's own verbs - 'tally reset' yes; 'set', 'send', 'remove', another plugin's, nothing - no",
+			NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "tally reset farm1") && NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "/TALLY")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "set WebPassword x") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "send all")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "remove main") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "rep4rep on all")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, null));
+		Check("plugin buttons: the page presses through /api/plugins/press, which refuses any other line",
+			webSrc.Contains("if (!Plugins.PluginHost.OwnsCommand(body.Plugin, body.Line)) {", StringComparison.Ordinal)
+			&& Src("src", "NocatFarm", "wwwroot", "app.js").Contains("post('/api/plugins/press', { Plugin: ppPlugin, Line: cmd })", StringComparison.Ordinal)
+			&& !Src("src", "NocatFarm", "wwwroot", "app.js").Contains("post('/api/command', { Line: cmd })", StringComparison.Ordinal));
+
+		// ── Telegram's and Discord's /help list the add-ons' commands ──
+		var fxHosts = (List<NocatFarm.Plugins.Host>) typeof(NocatFarm.Plugins.PluginHost).GetField("Hosts", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		fxHosts.Add(bHost);
+		string tgHelp, dcHelp;
+		try {
+			tgHelp = (string) typeof(NocatFarm.Core.Notifier).GetMethod("HelpHtml", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+			dcHelp = (string) typeof(NocatFarm.Core.Notifier).GetMethod("HelpMarkdown", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+		} finally {
+			fxHosts.Remove(bHost);
+		}
+		Check("/help: Telegram and Discord list the commands add-ons added", tgHelp.Contains("/tally &lt;account&gt;", StringComparison.Ordinal)
+			&& dcHelp.Contains("`tally <account>`", StringComparison.Ordinal) && tgHelp.Contains("<b>Add-ons:</b>", StringComparison.Ordinal), tgHelp[^Math.Min(200, tgHelp.Length)..]);
+
+		// ── 3. the human-mode gate follows the account object ──
+		NocatFarm.Core.Bot FxBot(string name, bool human) {
+			var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { LegitMode = human });
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+			return b;
+		}
+		NocatFarm.Core.Bot g1 = FxBot("g-swap", human: true);
+		var gShut = NocatFarm.Plugins.Comments.Check(g1);
+		NocatFarm.Core.Bot g2 = FxBot("g-swap", human: false);   // the same name, a new object: a backup restored, or removed and added again
+		var gOpen = NocatFarm.Plugins.Comments.Check(g2);
+		NocatFarm.Core.Bot g3 = FxBot("g-swap", human: true);
+		var gShutAgain = NocatFarm.Plugins.Comments.Check(g3);
+		Check("plugin comment: a replaced account gets a gate of its own - not stuck on the old one's, and human mode's checks not skipped by it",
+			!gShut.Allowed && gOpen.Allowed && !gShutAgain.Allowed && ReferenceEquals(NocatFarm.Plugins.Comments.Of("g-swap").HumanFor, g3), $"{gShut.Reason} / {gOpen.Reason} / {gShutAgain.Reason}");
+		g3.Cfg.LegitMode = false;
+		var gOff = NocatFarm.Plugins.Comments.Check(g3);
+		g3.Cfg.LegitMode = true;
+		var gOn = NocatFarm.Plugins.Comments.Check(g3);
+		Check("plugin comment: and when its human mode is switched, the gate is made again", gOff.Allowed && !gOn.Allowed && NocatFarm.Plugins.Comments.Of("g-swap").HumanLegit);
+
+		// ── 6. a count that couldn't be written stops comments until it can be ──
+		NocatFarm.Core.Bot wBot = FxBot("w-fail", human: false);
+		Directory.CreateDirectory(NocatFarm.Plugins.Comments.PathFor("w-fail"));   // a folder where the file goes: every write fails
+		NocatFarm.Plugins.Comments.Count("w-fail", DateTime.UtcNow.AddMinutes(-10));
+		var unsaved = NocatFarm.Plugins.Comments.Check(wBot);
+		Directory.Delete(NocatFarm.Plugins.Comments.PathFor("w-fail"));
+		var savedAgain = NocatFarm.Plugins.Comments.Check(wBot);
+		NocatFarm.Plugins.Comments.Forget();
+		Check("plugin comment: a count that couldn't be saved stops the account's comments - and once it saves (at the next look), they go on, the count on disk",
+			!unsaved.Allowed && unsaved.Reason.Contains("can't save", StringComparison.Ordinal) && savedAgain.Allowed
+			&& (NocatFarm.Plugins.Comments.Window("w-fail").Count == 1), $"{unsaved.Reason} / {savedAgain.Reason}");
+
+		// ── 4. a restore: comment counts and plugin settings are read again ──
+		NocatFarm.Plugins.Comments.Count("r-acc", DateTime.UtcNow.AddMinutes(-5));
+		long[] restoredPosts = [.. Enumerable.Range(0, 25).Select(static i => DateTime.UtcNow.AddHours(-20).AddMinutes(i).Ticks)];
+		File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("r-acc"), System.Text.Json.JsonSerializer.Serialize(new { Posts = restoredPosts }));
+		int before = NocatFarm.Plugins.Comments.Window("r-acc").Count;
+		NocatFarm.Plugins.Comments.Forget();
+		Check("restore: the comment counts are read again - the restored file's 25, not the 1 in memory", (before == 1) && (NocatFarm.Plugins.Comments.Window("r-acc").Count == 25));
+		var rHost = new NocatFarm.Plugins.Host(fxMgr, "restore-test");
+		rHost.AddSetting(new NocatFarm.Plugins.PluginSetting("Every", "Every", "", NocatFarm.Plugins.PluginSettingKind.Int, "5"));
+		rHost.SetValue("Every", "10");
+		string rFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "restore-test.settings.json");
+		File.WriteAllText(rFile, """{ "Every": "30", "Other": "kept" }""");   // what the backup put back
+		string stale = rHost.Setting("Every");
+		rHost.ForgetValues();
+		string fresh = rHost.Setting("Every");
+		rHost.SetValue("Every", "40");
+		Check("restore: a plugin's settings are read again - the restored values win, and the next change doesn't save the old ones over them",
+			(stale == "10") && (fresh == "30") && File.ReadAllText(rFile).Contains("\"Other\":\"kept\"", StringComparison.Ordinal), File.ReadAllText(rFile));
+		NocatFarm.Plugins.PluginHost.ReloadSettings();   // nothing loaded here: a no-op that doesn't throw
+		string backupSrc = Src("src", "NocatFarm", "Core", "Backup.cs");
+		Check("restore: both ways out of a restore forget the comment counts and re-read every plugin's settings",
+			(backupSrc.Split("Plugins.Comments.Forget();").Length == 3) && (backupSrc.Split("Plugins.PluginHost.ReloadSettings();").Length == 3));
+
+		// ── 7. the 1.8.x move: an account moved while the global part failed isn't switched off for good ──
+		string r4rFile = NocatFarm.Config.ConfigStore.Rep4RepSettingsFile;
+		File.Delete(r4rFile);
+		Directory.CreateDirectory(r4rFile);   // the add-on's settings file can't be written this start
+		const string oldGlobal = """{ "Rep4RepEnabled": true, "Rep4RepAutoAddProfiles": false }""";
+		bool globalFirst = NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), oldGlobal);
+		Directory.Delete(r4rFile);
+		bool accountMoved = NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("late", """{ "Rep4Rep": true, "Rep4RepDailyCap": 4 }""");
+		Dictionary<string, string> R4r() => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(r4rFile))!;
+		var mid = R4r();
+		Check("1.8.x move: the global part failed, the account's moved - its on/off kept to settle, not written as off",
+			!globalFirst && accountMoved && !mid.ContainsKey("late:On") && (mid.GetValueOrDefault("late:" + NocatFarm.Config.ConfigStore.PendingOnKey) == "true") && (mid["late:DailyCap"] == "4"),
+			string.Join(", ", mid.Select(static kv => $"{kv.Key}={kv.Value}")));
+		bool globalLater = NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), oldGlobal);
+		var after = R4r();
+		Check("1.8.x move: the global part going through later settles it - on, as it was in 1.8.x",
+			globalLater && (after.GetValueOrDefault("late:On") == "true") && !after.ContainsKey("late:" + NocatFarm.Config.ConfigStore.PendingOnKey) && (after["AutoAddProfiles"] == "false"),
+			string.Join(", ", after.Select(static kv => $"{kv.Key}={kv.Value}")));
+		bool afterwards = NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("quietone", """{ "Rep4Rep": false }""");
+		Check("1.8.x move: an account after that is moved straight away", afterwards && (R4r().GetValueOrDefault("quietone:On") == "false"));
+
+		// ── 8. a plugin built for 1.8.x still finds the six-value PluginSetting constructor ──
+		var six = typeof(NocatFarm.Plugins.PluginSetting).GetConstructor([typeof(string), typeof(string), typeof(string), typeof(NocatFarm.Plugins.PluginSettingKind), typeof(string), typeof(IReadOnlyList<string>)]);
+		var madeSix = (NocatFarm.Plugins.PluginSetting?) six?.Invoke(["n", "l", "h", NocatFarm.Plugins.PluginSettingKind.Int, "3", null]);
+		var deconstructSix = typeof(NocatFarm.Plugins.PluginSetting).GetMethods().FirstOrDefault(static m => (m.Name == "Deconstruct") && (m.GetParameters().Length == 6));
+		Check("plugin API: PluginSetting's 1.8.x six-value constructor (and deconstruction) is still there - not per account",
+			madeSix is { Name: "n", Kind: NocatFarm.Plugins.PluginSettingKind.Int, Default: "3", PerAccount: false } && (deconstructSix != null));
+
+		// ── leftovers ──
+		Check("reports: the attention lines no longer take an unused rep4rep flag",
+			typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", BindingFlags.NonPublic | BindingFlags.Static)!.GetParameters().Select(static p => p.Name).SequenceEqual(["bots", "newBan", "nowUtc"]));
+		FieldInfo asked = typeof(NocatFarm.Plugins.Comments).GetField("_pluginComments", BindingFlags.NonPublic | BindingFlags.Static)!;
+		bool wasAsked = (bool) asked.GetValue(null)!;
+		asked.SetValue(null, false);
+		try {
+			foreach (string f in Directory.GetFiles(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"), "comments-*.json")) {
+				File.SetLastWriteTimeUtc(f, DateTime.UtcNow.AddDays(-8));
+			}
+			NocatFarm.Plugins.Comments.Forget();
+			bool oldOnly = NocatFarm.Plugins.Comments.InUse;
+			File.SetLastWriteTimeUtc(NocatFarm.Plugins.Comments.PathFor("r-acc"), DateTime.UtcNow.AddDays(-2));
+			NocatFarm.Plugins.Comments.Forget();
+			bool recent = NocatFarm.Plugins.Comments.InUse;
+			File.SetLastWriteTimeUtc(NocatFarm.Plugins.Comments.PathFor("r-acc"), DateTime.UtcNow.AddDays(-8));
+			NocatFarm.Plugins.Comments.Forget();
+			NocatFarm.Plugins.Comments.PluginComments();
+			bool asking = NocatFarm.Plugins.Comments.InUse;
+			Check("comments in use: a plugin that comments, or a comment in the last 7 days - not an old count file left behind",
+				!oldOnly && recent && asking);
+		} finally {
+			asked.SetValue(null, wasAsked);
+		}
+	} finally {
+		await fxMgr.DisposeAsync();
+		NocatFarm.Plugins.Addons.Http = fxWasHttp;
+		NocatFarm.Plugins.Addons.Key = fxWasKey;
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		NocatFarm.Config.Live.Global = fxWasLive;
+		NocatFarm.Plugins.Comments.Forget();
+		NocatFarm.Config.ConfigStore.UseRoot(fxRealRoot);
+		TestTemp.Gone(fxRoot);
 	}
 }
 

@@ -618,6 +618,16 @@ public static partial class Notifier {
 			}
 		}
 
+		// 1.9.0: the commands add-ons and plugins added (rep4rep's) - they work from here like any other.
+		if (Plugins.PluginHost.Commands is { Count: > 0 } added) {
+			sb.AppendLine();
+			sb.AppendLine($"<b>{Html(new Said("Add-ons").ToString())}:</b>");
+
+			foreach ((string verb, (string usage, _, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"/{Html(verb)}{(usage.Length > 0 ? " " + Html(usage) : "")}");
+			}
+		}
+
 		sb.AppendLine();
 		sb.Append(Html(new Said("Only this chat is listened to. exit and remove ask you to confirm first.").ToString()));
 

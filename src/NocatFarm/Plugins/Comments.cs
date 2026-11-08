@@ -47,7 +47,19 @@ public static partial class Comments {
 		public readonly Lock Gate = new();
 		public List<long>? Posts;
 		public bool Unreadable;
+
+		/// <summary>The last write of the count failed: no comments until one succeeds (it's tried again at each look).</summary>
+		public bool Unsaved;
+
+		/// <summary>
+		/// The human-mode gate, the account object it was made for, and whether that one was in human mode then. A gate reads
+		/// the Bot it was made with, so it's made again when the account is a new object (a backup restored, the account
+		/// removed and added again) or its human mode changed - kept, it read the old account: comments stuck, or human mode's
+		/// checks skipped on an account that had it on.
+		/// </summary>
 		public HumanGate? Human;
+		public Bot? HumanFor;
+		public bool HumanLegit;
 
 		/// <summary>
 		/// Profiles in a row that showed no box. An account Steam won't let comment at all may see no box anywhere, and
@@ -68,24 +80,40 @@ public static partial class Comments {
 		}
 	}
 
-	/// <summary>For the tests: forget what is in memory, so the next look reads the files again.</summary>
+	/// <summary>Forget what is in memory, so the next look reads the files again - after a backup is restored, and for the checks.</summary>
 	internal static void Forget() {
 		lock (Accounts) {
 			Accounts.Clear();
 		}
+
+		_inUse = default;
 	}
 
 	internal static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"comments-{bot}.json");
 
 	private static (DateTime At, string Dir, bool Used) _inUse;
 
+	/// <summary>A loaded plugin has asked about commenting or posted a comment this run (see <see cref="PluginComments"/>).</summary>
+	private static volatile bool _pluginComments;
+
+	/// <summary>How long after its last comment an install still counts as one that comments.</summary>
+	internal static readonly TimeSpan InUseFor = TimeSpan.FromDays(7);
+
+	/// <summary>Called by the plugin API whenever a plugin asks whether an account may comment, or posts one.</summary>
+	internal static void PluginComments() => _pluginComments = true;
+
 	/// <summary>
-	/// Whether this install posts comments at all (through an add-on - rep4rep's): a plugin is loaded that has, or any
-	/// account has a comment count on disk. What the reports and the dashboard show comment figures by - what 1.8.x's
-	/// "Use rep4rep" did. Looked at once a minute.
+	/// Whether this install posts comments at all (through an add-on - rep4rep's): a plugin that comments is loaded (the
+	/// rep4rep add-on, or any that has asked about commenting this run), or an account posted one in the last 7 days (its
+	/// count on disk was written then). What the reports and the dashboard show comment figures by - what 1.8.x's "Use
+	/// rep4rep" did. An add-on removed a week ago and an old count file no longer count. The files are looked at once a minute.
 	/// </summary>
 	public static bool InUse {
 		get {
+			if (_pluginComments || PluginHost.Running.Any(static p => string.Equals(p.Name, ConfigStore.Rep4RepPlugin, StringComparison.OrdinalIgnoreCase))) {
+				return true;
+			}
+
 			string dir = Path.Combine(ConfigStore.ConfigDir, "state");
 
 			if ((DateTime.UtcNow - _inUse.At < TimeSpan.FromMinutes(1)) && (_inUse.Dir == dir)) {
@@ -95,7 +123,8 @@ public static partial class Comments {
 			bool used;
 
 			try {
-				used = Directory.Exists(dir) && Directory.EnumerateFiles(dir, "comments-*.json").Any();
+				DateTime since = DateTime.UtcNow - InUseFor;
+				used = Directory.Exists(dir) && Directory.EnumerateFiles(dir, "comments-*.json").Any(f => File.GetLastWriteTimeUtc(f) >= since);
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				used = false;
 			}
@@ -149,13 +178,43 @@ public static partial class Comments {
 			posts.Add(at.Ticks);
 			long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
 			posts.RemoveAll(t => t < cutoff);
+			Save(bot, a, posts);
+		}
+	}
 
-			try {
-				Directory.CreateDirectory(Path.GetDirectoryName(PathFor(bot))!);
-				AtomicFile.Write(PathFor(bot), JsonSerializer.Serialize(new Ledger { Posts = [.. posts] }));
-			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-				Log.Warn(new Said("couldn't save commenting state: {0}", Log.Describe(e)), bot);
+	/// <summary>
+	/// Write the count down; called under the account's lock. A write that fails stops comments from the account until one
+	/// succeeds - a count only in memory is gone at the next restart, and the account starts again from zero over its limit.
+	/// </summary>
+	private static bool Save(string bot, Account a, List<long> posts) {
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(PathFor(bot))!);
+			AtomicFile.Write(PathFor(bot), JsonSerializer.Serialize(new Ledger { Posts = [.. posts] }));
+
+			if (a.Unsaved) {
+				Log.Info(new Said("commenting state saved again - comments can go on"), bot);
 			}
+
+			a.Unsaved = false;
+
+			return true;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			if (!a.Unsaved) {
+				Log.Warn(new Said("couldn't save commenting state: {0} - no comments until it can be saved", Log.Describe(e)), bot);
+			}
+
+			a.Unsaved = true;
+
+			return false;
+		}
+	}
+
+	/// <summary>Whether the account's count is on disk - written again here when the last write failed.</summary>
+	private static bool Saved(string bot) {
+		Account a = Of(bot);
+
+		lock (a.Gate) {
+			return !a.Unsaved || ((a.Posts is { } posts) && Save(bot, a, posts));
 		}
 	}
 
@@ -221,6 +280,10 @@ public static partial class Comments {
 			return No(new Said("can't read this account's comment count, so it won't post"), now.AddMinutes(10));
 		}
 
+		if (!Saved(bot.Name)) {
+			return No(new Said("can't save this account's comment count, so it won't post"), now.AddMinutes(10));
+		}
+
 		if (posted >= DailyLimit) {
 			DateTime? frees = LimitFrees(bot.Name);
 
@@ -243,7 +306,13 @@ public static partial class Comments {
 		HumanGate gate;
 
 		lock (a.Gate) {
-			gate = a.Human ??= new HumanGate(bot);
+			if ((a.Human == null) || !ReferenceEquals(a.HumanFor, bot) || (a.HumanLegit != bot.Cfg.LegitMode)) {
+				a.Human = new HumanGate(bot);
+				a.HumanFor = bot;
+				a.HumanLegit = bot.Cfg.LegitMode;
+			}
+
+			gate = a.Human;
 		}
 
 		if (!gate.Open) {

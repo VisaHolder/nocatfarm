@@ -135,6 +135,14 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		}
 	}
 
+	/// <summary>Read the settings file again at the next look - after a restore put another one there.</summary>
+	internal void ForgetValues() {
+		lock (_valuesGate) {
+			_values = new(StringComparer.OrdinalIgnoreCase);
+			_valuesRead = false;
+		}
+	}
+
 	private string SettingsFile => Path.Combine(ConfigStore.ConfigDir, "plugins", $"{Sanitise(_owner)}.settings.json");
 
 	/// <summary>Called under <see cref="_valuesGate"/>. Marked read only once the values are in: marked first, a second caller
@@ -229,7 +237,11 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	// ── 1.9.0 ───────────────────────────────────────────────────────────────
 	public string Language => Live.Global.Language ?? "en";
 
-	public PluginCommentCheck CanComment(string account) => Comments.Check(mgr.Get(account));
+	public PluginCommentCheck CanComment(string account) {
+		Comments.PluginComments();
+
+		return Comments.Check(mgr.Get(account));
+	}
 
 	public bool SetSetting(string name, string value, string? account = null) {
 		PluginSetting? declared;
@@ -261,6 +273,8 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	}
 
 	public async Task<PluginCommentResult> PostProfileCommentAsync(string account, ulong targetSteamId, string text, CancellationToken ct = default) {
+		Comments.PluginComments();
+
 		try {
 			return await Comments.PostAsync(mgr.Get(account), _owner, targetSteamId, text, ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {

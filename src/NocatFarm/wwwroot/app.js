@@ -2444,7 +2444,8 @@ async function ppPress(el) {
   if (cmd) {
     el.disabled = true;
     try {
-      const r = await post('/api/command', { Line: cmd });
+      // Only the plugin's own commands: the server refuses any other line a page's button carries.
+      const r = await post('/api/plugins/press', { Plugin: ppPlugin, Line: cmd });
       $('ppOut').textContent = (r && r.output) || '';
       $('ppOut').classList.toggle('hidden', !$('ppOut').textContent);
     } catch (e) {

@@ -732,7 +732,6 @@
     "couldn't read the card pace: {0}": "无法读取掉卡速度：{0}",
     "couldn't save the card pace: {0}": "无法保存掉卡速度：{0}",
     "couldn't resume the grind: {0}": "无法继续刷进度：{0}",
-    "couldn't save commenting state: {0}": "无法保存评论状态：{0}",
     "couldn't read {0}'s settings: {1}": "无法读取 {0} 的设置：{1}",
     "couldn't save {0}'s settings: {1}": "无法保存 {0} 的设置：{1}",
     "config: couldn't save global config: {0}": "配置：无法保存全局配置：{0}",
@@ -3402,7 +3401,14 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "已购买 {0} 个补充包和 {1} 张卡牌 · {2} · 可合成 {3} 套",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 的 {0} 个补充包（每个 {2}），共 {3}，代替缺少的 {4} 张卡牌（{5}）- 预计之后还要买约 {6} 张卡牌，总共约 {7} - {8} 级到 {9} 级",
     "bought to level the {0} badge": "为升级 {0} 徽章而购买",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm 还要打开的 {0} 个补充包不会发送 —— 先打开"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm 还要打开的 {0} 个补充包不会发送 —— 先打开",
+    "the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed": "GitHub 上的附加组件列表比这个 nocat.farm 已经收到过的旧——不会安装其中任何内容",
+    "{0} {1} is installed - the list offers the older {2}, so nothing is changed": "已安装 {0} {1}——列表提供的是更旧的 {2}，所以不做任何更改",
+    "there's no add-on called '{0}' in plugins/ - 'plugins' lists what is": "plugins/ 中没有名为 '{0}' 的附加组件——'plugins' 会列出里面有什么",
+    "commenting state saved again - comments can go on": "评论状态已再次保存——评论继续",
+    "couldn't save commenting state: {0} - no comments until it can be saved": "无法保存评论状态：{0}——在能保存之前不发评论",
+    "can't save this account's comment count, so it won't post": "无法保存这个账号的评论计数，所以不会发布",
+    "a plugin's button only runs that plugin's own commands": "插件的按钮只能运行该插件自己的命令"
   },
   "settings": {
     "BackupToTelegram": {

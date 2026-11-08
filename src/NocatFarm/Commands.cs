@@ -132,7 +132,7 @@ public static partial class Commands {
 		new("report", "[week]", GroupOther, "The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments).", "", "weekly"),
 		new("notify", "[test|link]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
-		new("addons", "[install|remove <name>]", GroupOther, "reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept). Installing and removing only work at this PC, like 'update file'.", "addon"),
+		new("addons", "[install|remove <name>]", GroupOther, "reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept), even with GitHub not answering. Installing and removing only work at this PC, or on the dashboard signed in with its password.", "addon"),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
@@ -738,6 +738,17 @@ public static partial class Commands {
 		return reply;
 	}
 
+	/// <summary>
+	/// 1.9.0: from the Console of a dashboard on another device that was signed in with the dashboard password: like
+	/// <see cref="RunLoggedAsync"/>, but 'addons install|remove' work - as they do on that dashboard's Plugins page.
+	/// </summary>
+	public static async Task<string> RunSignedInAsync(BotManager mgr, string input, string from) {
+		string reply = await RunAsync(mgr, input, atThisPc: false, addons: true).ConfigureAwait(false);
+		LogExchange(from, input, reply);
+
+		return reply;
+	}
+
 	/// <summary>The most reply lines the log file takes from one command - 'log 1000' or every account's status is plenty.</summary>
 	internal const int LoggedReplyLines = 200;
 
@@ -934,7 +945,8 @@ public static partial class Commands {
 
 	/// <param name="atThisPc">Typed at this PC (<see cref="RunAtThisPcAsync"/>): 'update file' and 'notify link' work only then.</param>
 	/// <param name="later">Where a slow command's answer goes once it's done, besides the log (see <see cref="LateReply"/>).</param>
-	private static async Task<string> RunAsync(BotManager mgr, string input, bool atThisPc, Action<string>? later = null) {
+	/// <param name="addons">From the Console of a dashboard signed in with its password: 'addons install|remove' work, as on its Plugins page.</param>
+	private static async Task<string> RunAsync(BotManager mgr, string input, bool atThisPc, Action<string>? later = null, bool addons = false) {
 		string line = input.Trim();
 
 		// Set by every command, the chat null for all but Steam chat - never left over from an earlier one: an account a Steam-chat
@@ -1054,7 +1066,7 @@ public static partial class Commands {
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
 				"plugins" => PluginList(),
-				"addons" or "addon" => await AddonsCommand(rest, atThisPc).ConfigureAwait(false),
+				"addons" or "addon" => await AddonsCommand(rest, atThisPc || addons).ConfigureAwait(false),
 				"owns" => Owns(mgr, rest),
 				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
 				// 'update file <path>': the path just as it was typed, not split into words and joined again - from the line's
@@ -1851,13 +1863,17 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
-	/// <summary>1.9.0: 'addons' - the official list; 'addons install|remove &lt;name&gt;', only at this PC (see <see cref="Plugins.Addons"/>).</summary>
-	private static async Task<string> AddonsCommand(string[] rest, bool atThisPc) {
+	/// <summary>
+	/// 1.9.0: 'addons' - the official list; 'addons install|remove &lt;name&gt;', only at this PC or from the dashboard signed in with
+	/// its password (see <see cref="Plugins.Addons"/>) - the same rule as the Plugins page's buttons.
+	/// </summary>
+	/// <param name="mayInstall">Typed at this PC, or in the Console of a dashboard signed in with its password.</param>
+	private static async Task<string> AddonsCommand(string[] rest, bool mayInstall) {
 		string sub = rest.Length > 0 ? rest[0].ToLowerInvariant() : "";
 		string? name = rest.Length > 1 ? rest[1] : null;
 
 		if (sub is "install" or "remove" or "uninstall") {
-			if (!atThisPc) {
+			if (!mayInstall) {
 				return new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString();
 			}
 
@@ -1869,9 +1885,10 @@ public static partial class Commands {
 				return (await Plugins.Addons.InstallAsync(name).ConfigureAwait(false)).Message.ToString();
 			}
 
-			(IReadOnlyList<Plugins.AddonEntry>? known, Said why) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
+			// The list only to put a name to the file - taking one out works without it (GitHub down, or the add-on gone from it).
+			(IReadOnlyList<Plugins.AddonEntry>? known, _) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
 
-			return known == null ? why.ToString() : Plugins.Addons.Uninstall(known, name).ToString();
+			return Plugins.Addons.Uninstall(known, name).ToString();
 		}
 
 		(IReadOnlyList<Plugins.AddonEntry>? list, Said problem) = await Plugins.Addons.ListAsync(fresh: sub == "refresh").ConfigureAwait(false);

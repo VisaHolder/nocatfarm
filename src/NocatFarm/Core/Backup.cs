@@ -743,6 +743,10 @@ public static partial class Backup {
 					WeeklyReport.Reload();
 					KeyQueue.Reload();
 					StuckWatch.Reset();
+					// 1.9.0: the comment counts and the plugins' settings too - kept in memory, the old ones were what the
+					// accounts went by, and a plugin's next setting change saved them back over the restored file.
+					Plugins.Comments.Forget();
+					Plugins.PluginHost.ReloadSettings();
 
 					// Swapped under the lock every change to the live settings takes, so a change made at the same moment
 					// isn't put onto the settings being thrown away.
@@ -788,6 +792,8 @@ public static partial class Backup {
 						// 1.8.6: the key and the settings as they are on disk now - a restore that stopped after secret.key went back
 						// left the old key in memory (logins unreadable) and the old settings to be saved over the restored ones.
 						Secrets.ForgetKey();
+						Plugins.Comments.Forget();
+						Plugins.PluginHost.ReloadSettings();
 
 						lock (ConfigStore.GlobalEditGate) {
 							GlobalConfig onDisk = ConfigStore.LoadGlobal();

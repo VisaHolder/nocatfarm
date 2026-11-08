@@ -189,7 +189,8 @@ if ($iscc) {
 
 # --- the official add-ons (1.9.0) ----------------------------------------------------------------------------
 # Each add-on in addons/<id>/ is built into one DLL, put in dist/ as a release file of its own, and its SHA-256 and
-# release address written into addons/addons.json - which is then SIGNED (addons.json.sig) with the add-on key. The app
+# release address written into addons/addons.json, its serial raised by one (the app refuses a list older than one it has
+# had) - which is then SIGNED (addons.json.sig) with the add-on key. The app
 # installs nothing unless the signature verifies with the key built into it AND the file's SHA-256 matches. The private
 # key lives outside every repository (devKit\keys\nocatfarm-addons.key) and never goes near a build output.
 # Not for a test build as another version (-AsVersion): the index must only ever name real releases.

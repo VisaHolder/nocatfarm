@@ -110,7 +110,7 @@ public static class WeeklyReport {
 		Build(mgr.All, Plugins.Comments.InUse, DateTime.Now.Date, Attention(mgr))?.Text() ?? "No accounts yet - nothing to report.";
 
 	/// <summary>What wants a look right now. No new-ban line: there's no "since last week" kept for bans - the daily summary has it.</summary>
-	private static List<ReportCard.Row> Attention(BotManager mgr) => ReportCard.Attention(mgr.All, Plugins.Comments.InUse, null, DateTime.UtcNow);
+	private static List<ReportCard.Row> Attention(BotManager mgr) => ReportCard.Attention(mgr.All, null, DateTime.UtcNow);
 
 	/// <summary>One account's week.</summary>
 	/// <param name="Before">The week before's game-minutes - null when nothing was recorded before this week at all (hours

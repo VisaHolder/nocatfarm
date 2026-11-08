@@ -1376,10 +1376,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 			}
 
 			// Typed on this PC itself, or from somewhere else (a phone, the internet): a few commands - 'update file' - only work
-			// at this PC.
+			// at this PC. 'addons install|remove' also work signed in with the dashboard password, as on the Plugins page.
 			string output = AtThisPc(ctx)
 				? await Commands.RunAtThisPcAsync(_mgr, body.Line, "dashboard on this PC").ConfigureAwait(false)
-				: await Commands.RunLoggedAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false);
+				: MayInstallAddons(ctx)
+					? await Commands.RunSignedInAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false)
+					: await Commands.RunLoggedAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false);
 
 			return Results.Json(CommandAnswer(body.Line, output));
 		});
@@ -1507,11 +1509,32 @@ public sealed partial class WebHost : IAsyncDisposable {
 				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
 			}
 
-			(IReadOnlyList<Plugins.AddonEntry>? list, Said why) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
+			// The list only to put a name to the file: taking an add-on out works without it (GitHub down, or it's gone from the list).
+			(IReadOnlyList<Plugins.AddonEntry>? list, _) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
 
-			return Results.Json(list == null
-				? new { Ok = false, Message = why.ToString() }
-				: new { Ok = true, Message = Plugins.Addons.Uninstall(list, body?.Id ?? "").ToString() });
+			return Results.Json(new { Ok = true, Message = Plugins.Addons.Uninstall(list, body?.Id ?? "").ToString() });
+		});
+
+		// 1.9.0: a button on a plugin's page. Only ever one of that plugin's own commands: the page is drawn from whatever the
+		// plugin has - text from a website, say - so a button that says 'set' or 'send' is refused here, not run.
+		app.MapPost("/api/plugins/press", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			PluginPress? body = await ReadJsonAsync<PluginPress>(ctx).ConfigureAwait(false);
+
+			if (string.IsNullOrWhiteSpace(body?.Plugin) || string.IsNullOrWhiteSpace(body.Line)) {
+				return Results.Json(new { output = "" });
+			}
+
+			if (!Plugins.PluginHost.OwnsCommand(body.Plugin, body.Line)) {
+				return Results.Json(new { output = new Said("a plugin's button only runs that plugin's own commands").ToString() });
+			}
+
+			string output = await Commands.RunLoggedAsync(_mgr, body.Line, $"plugin page {body.Plugin}").ConfigureAwait(false);
+
+			return Results.Json(CommandAnswer(body.Line, output));
 		});
 
 		app.MapPost("/api/plugins/setting", async (HttpContext ctx) => {
@@ -3258,6 +3281,11 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 	private sealed class AddonRequest {
 		public string Id { get; set; } = "";
+	}
+
+	private sealed class PluginPress {
+		public string Plugin { get; set; } = "";
+		public string Line { get; set; } = "";
 	}
 
 	/// <summary>

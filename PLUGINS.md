@@ -285,9 +285,12 @@ host.AddPage("Tally", view => Task.FromResult(new PluginPage([
 ])));
 ```
 
-A `PluginButton` runs one of your commands (its reply is shown on the tab), shows another view of the page (`View`,
-handed back to your function), or both. Links only open `https://` addresses. The tab is asked for again each time
-it's shown, refreshed or a button is pressed.
+A `PluginButton` runs one of your own commands (its reply is shown on the tab), shows another view of the page
+(`View`, handed back to your function), or both. Only your own: a button whose command starts with anything but a verb
+your plugin added with `AddCommand` (`set`, `send`, another plugin's) is refused by the app and runs nothing - so text
+you put on a page from somewhere else can't turn into a command. To run a built-in command from a button, add one of
+your own that does it with `RunCommandAsync`. Links only open `https://` addresses. The tab is asked for again each
+time it's shown, refreshed or a button is pressed.
 
 ## Rules
 
