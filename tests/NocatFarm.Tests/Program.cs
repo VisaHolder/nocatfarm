@@ -39563,6 +39563,9 @@ static class StressChecks190 {
 				await Task.Delay(300, ct);
 				return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("down") };
 			});
+			// What earlier checks fetched or failed is forgotten first: a list kept from them would answer without asking.
+			typeof(NocatFarm.Plugins.Addons).GetField("_cached", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
+			typeof(NocatFarm.Plugins.Addons).GetField("_failed", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
 			NocatFarm.Plugins.Addons.Http = new HttpClient(slowGitHub);
 			try {
 				var looks = await Task.WhenAll(Enumerable.Range(0, 20).Select(static _ => NocatFarm.Plugins.Addons.ListAsync(fresh: false)));
