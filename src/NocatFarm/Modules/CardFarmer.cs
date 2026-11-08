@@ -1869,9 +1869,22 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			_windowCloseShift = Rng.Next(-45, 1);
 		}
 
-		int minute = (now.Hour * 60) + now.Minute;
-		int open = (from * 60) + _windowOpenShift;
-		int close = (until * 60) + _windowCloseShift;
+		return InClockWindow((now.Hour * 60) + now.Minute, from, until, _windowOpenShift, _windowCloseShift);
+	}
+
+	/// <summary>
+	/// Whether <paramref name="minute"/> (of the day) is inside a from-until clock window whose opening moves later by
+	/// <paramref name="openShift"/> minutes and whose close moves earlier by <paramref name="closeShift"/> (0 or less).
+	/// </summary>
+	/// <remarks>
+	/// Each edge moves by at most a quarter of the window, so it always keeps at least half of it. Moving both by up to 45
+	/// minutes, a one-hour window (09-10) didn't open at all on about one day in four - opening at 09:40 and closing at
+	/// 09:25 - and the cards waited for a window that never came.
+	/// </remarks>
+	internal static bool InClockWindow(int minute, int from, int until, int openShift, int closeShift) {
+		int length = (from < until ? until - from : 24 - from + until) * 60;
+		int open = (from * 60) + Math.Clamp(openShift, 0, length / 4);
+		int close = (until * 60) + Math.Clamp(closeShift, -(length / 4), 0);
 
 		return from < until ? (minute >= open) && (minute < close) : (minute >= open) || (minute < close);
 	}

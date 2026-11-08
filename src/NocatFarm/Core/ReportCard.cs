@@ -76,11 +76,11 @@ public sealed class ReportCard {
 
 	/// <summary>
 	/// The "// ATTENTION" lines: an account that can't sign in or is waiting on a code, one the stuck alarm has gone off
-	/// for, one Steam is turning comments away from, a new ban - and a new version waiting. Only what is true right now,
+	/// for, a new ban - and a new version waiting. Only what is true right now,
 	/// so it never repeats yesterday's trouble once it's over. <paramref name="newBan"/> says which accounts gained a ban
 	/// since the last summary (the weekly one has no "since" to compare with, so it passes none).
 	/// </summary>
-	internal static List<Row> Attention(IEnumerable<Bot> bots, bool r4r, Func<Bot, bool>? newBan, DateTime nowUtc) {
+	internal static List<Row> Attention(IEnumerable<Bot> bots, Func<Bot, bool>? newBan, DateTime nowUtc) {
 		List<Row> rows = [];
 
 		foreach (Bot b in bots) {
@@ -92,10 +92,6 @@ public sealed class ReportCard {
 
 			if (newBan?.Invoke(b) == true) {
 				wrong.Add(new Said("new ban on record"));
-			}
-
-			if (r4r && (BotManager.ModuleOf<Modules.Rep4RepModule>(b) is { CommentBlocked: true })) {
-				wrong.Add(new Said("Steam is blocking its comments"));
 			}
 
 			if (Join(wrong) is { } said) {

@@ -5,7 +5,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// A once-a-day, plain-language summary of what every account got in the last 24 hours - hours played, trading
-/// cards dropped, rep4rep comments - plus anything that wants a look, sent to Discord/Telegram and written to the
+/// cards dropped, profile comments - plus anything that wants a look, sent to Discord/Telegram and written to the
 /// log at a time you choose (default 09:30). The heartbeat tells you what each account is doing this minute; this
 /// answers "what did I actually get overnight?" without reading the whole log. Laid out as a ReportCard.
 ///
@@ -276,7 +276,7 @@ public static class DailyReport {
 	private static Built Build(BotManager mgr, bool withTotal, DateTime nowUtc) {
 		List<Bot> bots = [.. mgr.All];   // in the dashboard's order, like everywhere else
 
-		bool r4r = mgr.Global.Rep4RepEnabled;
+		bool r4r = Plugins.Comments.InUse;
 
 		Dictionary<string, double> prev;
 		Dictionary<string, double>? prevGames;
@@ -329,7 +329,7 @@ public static class DailyReport {
 
 		// A ban is new when the count went above anything seen before (BanStep) - one that was already there isn't flagged
 		// every morning.
-		List<ReportCard.Row> attention = ReportCard.Attention(bots, r4r, prevBans == null ? null : b => newBan.Contains(b.Name), nowUtc);
+		List<ReportCard.Row> attention = ReportCard.Attention(bots, prevBans == null ? null : b => newBan.Contains(b.Name), nowUtc);
 		ReportCard card = Card(days, r4r, Note(first, nowUtc), withTotal, attention, nowUtc.ToLocalTime());
 
 		return new Built(card, days.Count == 0, snapshot, games, bans);

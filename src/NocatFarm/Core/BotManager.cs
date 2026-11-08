@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using NocatFarm.Config;
 using NocatFarm.Modules;
-using NocatFarm.Rep4Rep;
 
 namespace NocatFarm.Core;
 
@@ -24,8 +23,6 @@ public sealed class BotManager : IAsyncDisposable {
 
 	public GlobalConfig Global { get; private set; }
 
-	/// <summary>One rep4rep client for the whole process - one account, one token, many Steam profiles.</summary>
-	public Rep4RepApi Rep4Rep { get; } = new();
 
 	/// <summary>
 	/// The running manager, for the few jobs that belong to the FLEET rather than to one account - working the
@@ -73,11 +70,10 @@ public sealed class BotManager : IAsyncDisposable {
 	public void ApplyGlobal(GlobalConfig g) {
 		Global = g;
 		Live.Global = g;
-		Rep4Rep.Token = g.Rep4RepApiToken;
 		CardFarmer.ApplyConcurrencyLimit(g.MaxConcurrentFarming);
 	}
 
-	/// <summary>Find a module of a given type on a bot, e.g. its rep4rep module.</summary>
+	/// <summary>Find a module of a given type on a bot, e.g. its human mode.</summary>
 	public static T? ModuleOf<T>(Bot bot) where T : class, IBotModule => bot.Modules.OfType<T>().FirstOrDefault();
 
 	/// <summary>Load every bot config from disk, creating and removing bots to match.</summary>
@@ -132,7 +128,6 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Idler(bot));
 		bot.AddModule(new FreeGames(bot));
 		bot.AddModule(new BadgeCraft(bot));
-		bot.AddModule(new Rep4RepModule(bot, Rep4Rep));
 		bot.AddModule(new Social(bot));
 		bot.AddModule(new GroupJoin(bot));
 		bot.AddModule(new Trading(bot));
@@ -157,7 +152,7 @@ public sealed class BotManager : IAsyncDisposable {
 
 	/// <summary>
 	/// Every account thrown away and built again from the files on disk - for a restore. Reconfiguring the ones already
-	/// here would keep what each has in memory (today's plan, the hunt, the rep4rep counts), and the next save would put
+	/// here would keep what each has in memory (today's plan, the hunt), and the next save would put
 	/// that back over what was just restored. Nothing is deleted: this only lets go of the objects.
 	/// </summary>
 	public async Task ReplaceAllFromDiskAsync() {
@@ -304,6 +299,5 @@ public sealed class BotManager : IAsyncDisposable {
 
 	public async ValueTask DisposeAsync() {
 		await StopAllAsync().ConfigureAwait(false);
-		Rep4Rep.Dispose();
 	}
 }

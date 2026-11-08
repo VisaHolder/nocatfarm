@@ -16,14 +16,15 @@ idler** and **+ Add account** are here. Removing an account asks you to type its
 **Health** line (see [Account health](trades.md#account-health)). A scam-watch warning shows as a red banner at the
 top of the dashboard, with an *It was me* button (see [Scam watch](trades.md#scam-watch)).
 
-**rep4rep** only shows when rep4rep is switched on. **Authenticator** only shows once at least one account's
+An installed add-on can have a tab of its own, right after **Plugins** - the [rep4rep add-on](rep4rep.md) does.
+**Authenticator** only shows once at least one account's
 authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
 phone (see [below](#using-the-dashboard-from-another-device)).
 
 **Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. Lines in a
 row of the same kind from one account are one row that updates in place: items into gems ("turned 14 items into 1,080
-gems"), an account's status every few minutes ("×6 playing Counter-Strike 2 · 8m left · 2h10m today"), rep4rep
-comments and an update's countdown. Click the row (▸) to see each line; any other line in between starts a new row,
+gems"), an account's status every few minutes ("×6 playing Counter-Strike 2 · 8m left · 2h10m today") and an update's
+countdown. Click the row (▸) to see each line; any other line in between starts a new row,
 and an account's rows never mix with another's. Copy and the log file keep every line. `clear`
 (or `cls`) in the Console empties this tab and the Console on this screen only. The app window keeps its lines, and
 the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
@@ -57,7 +58,7 @@ one is picked, after a first start, the window it gets up in (`asleep · up 13:1
 in the middle of says `on a break · then off for the night`.
 
 You can open a tab by its address, like `http://127.0.0.1:7242/#settings`. The others are `#overview`,
-`#accounts`, `#rep4rep`, `#auth`, `#phone`, `#log`, `#console` and `#plugins`.
+`#accounts`, `#auth`, `#phone`, `#log`, `#console` and `#plugins`. An add-on's tab is `#pp-<name>`, like `#pp-rep4rep`.
 
 When you're not typing in a box, these keys switch tabs:
 
@@ -65,7 +66,6 @@ When you're not typing in a box, these keys switch tabs:
 |---|---|
 | `1` | Overview |
 | `2` | Accounts |
-| `3` | rep4rep (Overview when rep4rep is off) |
 | `4` | Log |
 | `5` | Console |
 | `6` | Settings |
@@ -82,7 +82,7 @@ At the bottom of *Settings → Global settings* is **Backup & restore**. `backup
 download into a `backups` folder next to `config` and says where.
 
 **Download a backup** gives one file, like `nocat.farm-backup-2026-09-30.zip`, with your settings, every account,
-saved logins, authenticator files, the history, lifetime totals, today's human-mode plans, hunt progress, rep4rep
+saved logins, authenticator files, the history, lifetime totals, today's human-mode plans, hunt progress, comment counts, add-on settings and rep4rep
 counts and the key queue. Logs and caches aren't in it. A `README.txt` inside says what's there.
 
 Saved logins stay encrypted in the zip, as they are on disk. A backup made on Windows opens them only on the same

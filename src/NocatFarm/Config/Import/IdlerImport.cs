@@ -466,10 +466,6 @@ public static class IdlerImport {
 			said.Add(new Said("appears invisible"));
 		}
 
-		if (c.Rep4Rep) {
-			said.Add(new Said("rep4rep on"));
-		}
-
 		if (c.AutoTradeWith.Length > 0) {
 			said.Add(new Said("who may take its items"));
 		}

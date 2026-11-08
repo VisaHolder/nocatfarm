@@ -9,7 +9,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// One zip with everything worth keeping - the settings, every account, login tokens, authenticator files and the
-/// state that took time to build (history, lifetime totals, today's plans, hunt progress, rep4rep counts, the key
+/// state that took time to build (history, lifetime totals, today's plans, hunt progress, comment counts, the key
 /// queue, what "Learn from how I play" learned, the idle rotation's place) - and the way back from one.
 /// </summary>
 /// <remarks>
@@ -113,7 +113,10 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation|points|spare|buy|listed|levels)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/(?:human|hunt|comments|owner|rotation|points|spare|buy|listed|levels)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		// 1.9.0: the plugins' and add-ons' own settings (rep4rep's key and each account's on/off). What a plugin saves for
+		// itself stays out, as before; the comment counts that matter are the app's own, state/comments-.
+		@"|plugins/[A-Za-z0-9 ._-]+\.settings\.json" +
 		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
@@ -329,7 +332,8 @@ public static partial class Backup {
 		sb.AppendLine("  state/lifetime*.json      hours banked in all");
 		sb.AppendLine("  state/human-, hunt-,      today's human-mode plans, achievement hunt progress,");
 		sb.AppendLine("  owner-, rotation-         what it learned from how you play, where the idle rotation is,");
-		sb.AppendLine("  rep4rep-, keys, report    rep4rep counts, the key queue, the daily/weekly report");
+		sb.AppendLine("  comments-, keys, report   comment counts, the key queue, the daily/weekly report");
+		sb.AppendLine("  plugins/*.settings.json   the plugins' and add-ons' settings (rep4rep's key and accounts)");
 		sb.AppendLine("  points-, spare-           Steam Points spent this week, spare items' daily counts (never an ok to spend:");
 		sb.AppendLine("                            whether Spare items and Steam Points are on stays as it is on the PC you restore on)");
 		sb.AppendLine("  buy-                      money spent buying cards this week (never an ok to buy, the same way)");
@@ -739,6 +743,10 @@ public static partial class Backup {
 					WeeklyReport.Reload();
 					KeyQueue.Reload();
 					StuckWatch.Reset();
+					// 1.9.0: the comment counts and the plugins' settings too - kept in memory, the old ones were what the
+					// accounts went by, and a plugin's next setting change saved them back over the restored file.
+					Plugins.Comments.Forget();
+					Plugins.PluginHost.ReloadSettings();
 
 					// Swapped under the lock every change to the live settings takes, so a change made at the same moment
 					// isn't put onto the settings being thrown away.
@@ -784,6 +792,8 @@ public static partial class Backup {
 						// 1.8.6: the key and the settings as they are on disk now - a restore that stopped after secret.key went back
 						// left the old key in memory (logins unreadable) and the old settings to be saved over the restored ones.
 						Secrets.ForgetKey();
+						Plugins.Comments.Forget();
+						Plugins.PluginHost.ReloadSettings();
 
 						lock (ConfigStore.GlobalEditGate) {
 							GlobalConfig onDisk = ConfigStore.LoadGlobal();

@@ -8,7 +8,6 @@ using System.Text.Json.Nodes;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
-using NocatFarm.Rep4Rep;
 
 namespace NocatFarm.Web;
 
@@ -18,7 +17,7 @@ namespace NocatFarm.Web;
 /// Closed to everyone but this machine by default: with no password set it refuses anything that isn't
 /// loopback, because "no password" plus "bound to 0.0.0.0" is how people hand their Steam accounts to the
 /// internet. Two hard rules on the wire - PascalCase names matching the config files exactly, and every
-/// SteamID64 and rep4rep id as a string, because JavaScript silently mangles 17-digit numbers.
+/// SteamID64 as a string, because JavaScript silently mangles 17-digit numbers.
 /// </summary>
 public sealed partial class WebHost : IAsyncDisposable {
 	private const int MaxFailedLogins = 5;
@@ -235,18 +234,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 	private WebApplication? _app;
 
-	// rep4rep's points are polled, not pushed, so the answer is cached rather than fetched per page view. One object,
-	// swapped whole: as a tuple, a page reading it while a poll wrote it could get the new points with the old time.
-	private sealed record PointsSnapshot(int Points, int Pending, DateTime At);
-
-	private volatile PointsSnapshot? _pointsCache;
-	private bool _warnedAboutBalance;
-	private readonly SemaphoreSlim _pointsGate = new(1, 1);
-
 	/// <summary>A checked backup waiting for the page to say yes - one at a time, for a few minutes.</summary>
 	private (string Token, byte[] Bytes, DateTime Until)? _staged;
 	private readonly Lock _restoreGate = new();
-	private DateTime _lastPointsAttempt = DateTime.MinValue;
 
 	public string Url { get; private set; } = "";
 
@@ -1386,10 +1376,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 			}
 
 			// Typed on this PC itself, or from somewhere else (a phone, the internet): a few commands - 'update file' - only work
-			// at this PC.
+			// at this PC. 'addons install|remove' also work signed in with the dashboard password, as on the Plugins page.
 			string output = AtThisPc(ctx)
 				? await Commands.RunAtThisPcAsync(_mgr, body.Line, "dashboard on this PC").ConfigureAwait(false)
-				: await Commands.RunLoggedAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false);
+				: MayInstallAddons(ctx)
+					? await Commands.RunSignedInAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false)
+					: await Commands.RunLoggedAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false);
 
 			return Results.Json(CommandAnswer(body.Line, output));
 		});
@@ -1420,11 +1412,130 @@ public sealed partial class WebHost : IAsyncDisposable {
 					x.Setting.Name, x.Setting.Label, x.Setting.Help,
 					Kind = x.Setting.Kind.ToString(),
 					x.Setting.Choices,
-					Value = x.Value
+					Value = x.Value,
+					x.Account
 				})
 			}),
-			Commands = Plugins.PluginHost.Commands.Select(static c => new { Verb = c.Key, c.Value.Usage, c.Value.Help })
+			Commands = Plugins.PluginHost.Commands.Select(static c => new { Verb = c.Key, c.Value.Usage, c.Value.Help }),
+			// 1.9.0: the tabs plugins added, for the nav.
+			Pages = Plugins.PluginHost.Pages.Select(static p => new { p.Plugin, p.Title })
 		})));
+
+		// 1.9.0: one plugin's page, as blocks of text the page draws itself (escaped) - never markup from the plugin.
+		app.MapGet("/api/plugins/page", async (HttpContext ctx, string? plugin, string? view) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			Plugins.PluginPage? page = string.IsNullOrWhiteSpace(plugin) ? null : await Plugins.PluginHost.RenderAsync(plugin, view).ConfigureAwait(false);
+
+			if (page == null) {
+				return Results.Json(new { Ok = false, Blocks = Array.Empty<object>() });
+			}
+
+			return Results.Json(new {
+				Ok = true,
+				Blocks = page.Blocks.Select(static b => new {
+					Kind = b.Kind.ToString(),
+					b.Text,
+					Columns = b.Columns ?? [],
+					Rows = (b.Rows ?? []).Select(static r => new { r.Cells, Button = r.Button == null ? null : new { r.Button.Label, r.Button.Command, r.Button.View } }),
+					Buttons = (b.Buttons ?? []).Select(static x => new { x.Label, x.Command, x.View }),
+					// Only an https address is a link; anything else is drawn as plain text.
+					Url = Uri.TryCreate(b.Url, UriKind.Absolute, out Uri? u) && (u.Scheme == Uri.UriSchemeHttps) ? u.ToString() : ""
+				})
+			});
+		});
+
+		// 1.9.0: reap's official add-ons, from the signed list on GitHub (Plugins/Addons.cs).
+		app.MapGet("/api/addons", async (HttpContext ctx, bool? fresh) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			(IReadOnlyList<Plugins.AddonEntry>? list, Said why) = await Plugins.Addons.ListAsync(fresh == true).ConfigureAwait(false);
+			string language = Live.Global.Language ?? "en";
+
+			return Results.Json(new {
+				Ok = list != null,
+				Error = list == null ? why.ToString() : "",
+				CanInstall = MayInstallAddons(ctx),
+				PluginsOn = Live.Global.PluginsEnabled,
+				List = (list ?? []).Select(e => {
+					(bool installed, string? loaded, bool waiting) = Plugins.Addons.StateOf(e);
+
+					return new {
+						e.Id, e.Name, e.Plugin, e.Version, e.MinAppVersion,
+						Description = e.DescriptionIn(language),
+						Fits = Plugins.Addons.Fits(e, Build.Version),
+						Installed = installed,
+						Loaded = loaded,
+						Waiting = waiting,
+						Newer = Plugins.Addons.Newer(e, loaded)
+					};
+				})
+			});
+		});
+
+		app.MapPost("/api/addons/install", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			AddonRequest? body = await ReadJsonAsync<AddonRequest>(ctx).ConfigureAwait(false);
+
+			if (!MayInstallAddons(ctx)) {
+				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
+			}
+
+			if (string.IsNullOrWhiteSpace(body?.Id)) {
+				return Results.Json(new { Ok = false, Message = new Said("which add-on?").ToString() });
+			}
+
+			// Only a name from the signed list - the address always comes from that list, never from the page.
+			(bool ok, Said said) = await Plugins.Addons.InstallAsync(body.Id).ConfigureAwait(false);
+
+			return Results.Json(new { Ok = ok, Message = said.ToString() });
+		});
+
+		app.MapPost("/api/addons/remove", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			AddonRequest? body = await ReadJsonAsync<AddonRequest>(ctx).ConfigureAwait(false);
+
+			if (!MayInstallAddons(ctx)) {
+				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
+			}
+
+			// The list only to put a name to the file: taking an add-on out works without it (GitHub down, or it's gone from the list).
+			(IReadOnlyList<Plugins.AddonEntry>? list, _) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
+
+			return Results.Json(new { Ok = true, Message = Plugins.Addons.Uninstall(list, body?.Id ?? "").ToString() });
+		});
+
+		// 1.9.0: a button on a plugin's page. Only ever one of that plugin's own commands: the page is drawn from whatever the
+		// plugin has - text from a website, say - so a button that says 'set' or 'send' is refused here, not run.
+		app.MapPost("/api/plugins/press", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			PluginPress? body = await ReadJsonAsync<PluginPress>(ctx).ConfigureAwait(false);
+
+			if (string.IsNullOrWhiteSpace(body?.Plugin) || string.IsNullOrWhiteSpace(body.Line)) {
+				return Results.Json(new { output = "" });
+			}
+
+			if (!Plugins.PluginHost.OwnsCommand(body.Plugin, body.Line)) {
+				return Results.Json(new { output = new Said("a plugin's button only runs that plugin's own commands").ToString() });
+			}
+
+			string output = await Commands.RunLoggedAsync(_mgr, body.Line, $"plugin page {body.Plugin}").ConfigureAwait(false);
+
+			return Results.Json(CommandAnswer(body.Line, output));
+		});
 
 		app.MapPost("/api/plugins/setting", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
@@ -1437,7 +1548,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				return Results.Json(new { Ok = false, Message = Loc.T("which plugin, and which setting?") });
 			}
 
-			bool ok = Plugins.PluginHost.SetSetting(body.Plugin, body.Name, body.Value ?? "");
+			bool ok = Plugins.PluginHost.SetSetting(body.Plugin, body.Name, body.Value ?? "", string.IsNullOrWhiteSpace(body.Account) ? null : body.Account);
 
 			// Ok says whether it took; the page used to toast "saved" whatever came back.
 			return Results.Json(new { Ok = ok, Message = ok ? Loc.T("saved") : Loc.T("no such plugin setting") });
@@ -2221,10 +2332,6 @@ public sealed partial class WebHost : IAsyncDisposable {
 					await bot.StartAsync().ConfigureAwait(false);
 
 					break;
-				case "rep4repnow":
-					BotManager.ModuleOf<Rep4RepModule>(bot)?.RunNow();
-
-					break;
 				case "stop":
 					await bot.StopAsync(graceful: true).ConfigureAwait(false);
 
@@ -2476,154 +2583,6 @@ public sealed partial class WebHost : IAsyncDisposable {
 				})
 			});
 		}));
-
-		// ── rep4rep ──
-		app.MapGet("/api/rep4rep", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			if (!_mgr.Rep4Rep.HasToken) {
-				return Results.Json(new { Connected = false });
-			}
-
-			return Results.Json(await Rep4RepViewAsync().ConfigureAwait(false));
-		});
-
-		app.MapPost("/api/rep4rep/token", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			TokenRequest? body = await ReadJsonAsync<TokenRequest>(ctx).ConfigureAwait(false);
-			string token = (body?.Token ?? "").Trim();
-
-			if (token.Length == 0) {
-				return Results.Json(new { ok = false, error = "Paste the token from rep4rep.com first." }, statusCode: 400);
-			}
-
-			// Validate BEFORE saving, so a typo can't quietly stop every account commenting - and on a client of its own. Put
-			// on the shared one to be tried, every account's comments went out under the untested token while it was, and
-			// putting the old one back afterwards undid a token saved from somewhere else in the meantime.
-			(int Points, int PendingPoints)? user;
-
-			using (Rep4RepApi trial = new() { Token = token }) {
-				user = await trial.GetUserAsync(ctx.RequestAborted).ConfigureAwait(false);
-			}
-
-			if (user == null) {
-				return Results.Json(new { ok = false, error = "That token isn't valid. Copy it again from rep4rep.com under Settings - it's the whole string, with no spaces." });
-			}
-
-			lock (GlobalSaveGate) {
-				_mgr.Global.Rep4RepApiToken = token;
-				_mgr.Rep4Rep.Token = token;
-				ConfigStore.SaveGlobal(_mgr.Global);
-			}
-			RememberPoints(user.Value.Points, user.Value.PendingPoints);
-			Log.Good(new Said("rep4rep connected - {0} points", Math.Max(0, user.Value.Points)));
-
-			return Results.Json(new { ok = true, Points = Math.Max(0, user.Value.Points), Pending = Math.Max(0, user.Value.PendingPoints) });
-		});
-
-		app.MapGet("/api/rep4rep/profiles", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			List<(string Id, string SteamId)> registered = _mgr.Rep4Rep.HasToken
-				? await _mgr.Rep4Rep.GetProfilesAsync().ConfigureAwait(false)
-				: [];
-
-			return Results.Json(_mgr.All.Select(bot => {
-				Rep4RepModule? mod = BotManager.ModuleOf<Rep4RepModule>(bot);
-				string steamId = bot.SteamId.ToString();
-				(string Id, string SteamId) match = registered.FirstOrDefault(p => p.SteamId == steamId);
-
-				return new {
-					Account = bot.Name,
-					SteamId = steamId,
-					Rep4RepId = match.Id ?? "",
-					Registered = match.Id != null,
-					Enabled = bot.Cfg.Rep4Rep,
-					Online = bot.IsOnline,
-					Today = mod?.PostsToday ?? 0,
-					Cap = mod?.Cap ?? bot.Cfg.Rep4RepDailyCap,
-					Status = mod?.Status ?? "",
-					LastPost = mod?.LastPost,
-					NextSlot = mod?.NextSlot,
-					CapIsSteamLimit = mod?.CapIsSteamLimit ?? false
-				};
-			}));
-		});
-
-		app.MapPost("/api/rep4rep/profiles/{name}/register", async (HttpContext ctx, string name) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			Bot? bot = _mgr.Get(name);
-
-			if (bot == null || bot.SteamId == 0) {
-				return Results.Json(new { ok = false, error = "That account has to be logged in before rep4rep can be told about it." });
-			}
-
-			string? id = await _mgr.Rep4Rep.ResolveProfileIdAsync(bot.SteamId, true).ConfigureAwait(false);
-
-			return Results.Json(new {
-				ok = id != null,
-				error = id != null ? "" : "rep4rep wouldn't register that profile. Check the token, and that the Steam profile is public."
-			});
-		});
-
-		app.MapPost("/api/rep4rep/tasks/{taskId}/post", async (HttpContext ctx, string taskId, string? bot) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			Bot? target = bot == null ? null : _mgr.Get(bot);
-			Rep4RepModule? mod = target == null ? null : BotManager.ModuleOf<Rep4RepModule>(target);
-
-			if (mod == null) {
-				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
-			}
-
-			string result = await mod.PostNowAsync(taskId).ConfigureAwait(false);
-
-			return Results.Json(new { ok = result.StartsWith("Posted", StringComparison.Ordinal), message = result });
-		});
-
-		app.MapGet("/api/rep4rep/tasks", async (HttpContext ctx, string? bot) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			Bot? target = bot == null ? _mgr.All.FirstOrDefault(static b => b.Cfg.Rep4Rep) : _mgr.Get(bot);
-
-			if (target == null || !_mgr.Rep4Rep.HasToken) {
-				return Results.Json(Array.Empty<object>());
-			}
-
-			string? profileId = await _mgr.Rep4Rep.ResolveProfileIdAsync(target.SteamId, false).ConfigureAwait(false);
-
-			if (profileId == null) {
-				return Results.Json(Array.Empty<object>());
-			}
-
-			List<Rep4RepTask> tasks = await _mgr.Rep4Rep.GetTasksAsync(profileId).ConfigureAwait(false);
-
-			// rep4rep re-samples its task list on every request, so the ids on this page mean nothing once the
-			// next request is made. Hand the batch to the module so its "Post now" can act on the row that was
-			// actually clicked instead of hunting for an id that has already rotated away.
-			BotManager.ModuleOf<Rep4RepModule>(target)?.Remember(tasks);
-
-			return Results.Json(tasks.Select(static t => new {
-				TaskId = t.TaskId,
-				TargetSteamId = t.TargetSteamId.ToString(),
-				TargetName = t.TargetName,
-				Comment = t.CommentText
-			}));
-		});
 	}
 
 	/// <summary>
@@ -2864,7 +2823,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			Settings.Follow(body, [.. Settings.Bot.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d))).Select(static d => d.Name)]);
 
 			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
-			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
+			// covered only one gap for years while seven other pairs went unchecked - it walks them all
 			// now, from the same helper the console uses, so the two paths cannot drift apart again.
 			// Whichever side was just changed keeps its number, as at the console.
 			adjusted.AddRange(Settings.FixRanges(body, [.. Settings.Bot
@@ -2896,7 +2855,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	/// </summary>
 	/// <remarks>
 	/// The page posts its whole copy of the config. The app writes some settings itself - the Telegram chat and the
-	/// Discord owner when you connect, the rep4rep hold when it runs out - and a copy taken before that, even
+	/// Discord owner when you connect, the language when it changes - and a copy taken before that, even
 	/// milliseconds before, put the old value back: the chat was connected and then quietly gone again. Two things
 	/// close that. The page sends the copy it loaded as "Base", and a field it sends back unchanged is left alone
 	/// (see <see cref="Merge{T}"/>). And the result is written into the live config one changed field at a time rather
@@ -3018,125 +2977,6 @@ public sealed partial class WebHost : IAsyncDisposable {
 		}
 	}
 
-	/// <summary>How often a "forced" refresh may actually reach rep4rep. See below for why this exists.</summary>
-	private static readonly TimeSpan ForcedRefreshFloor = TimeSpan.FromSeconds(45);
-
-	/// <summary>The cached points as the page wants them, from one read of the cache; null when there are none yet.</summary>
-	private (int Points, int PendingPoints)? CachedPoints() => _pointsCache is { } c ? (c.Points, c.Pending) : null;
-
-	private async Task<(int Points, int PendingPoints)?> CachedPointsAsync(bool force) {
-		int ttl = Math.Clamp(_mgr.Global.Rep4RepPointsRefreshMinutes, 1, 1440);
-
-		if (_pointsCache is { } cached) {
-			TimeSpan age = DateTime.UtcNow - cached.At;
-
-			// "Force" means "prefer fresh", not "ask again right now, every time you are asked".
-			//
-			// The rep4rep panel polls on a timer, so forcing unconditionally turned one open browser tab into a
-			// request to rep4rep every single second - which is both rude to somebody else's free API and how an
-			// API token gets rate-limited or pulled. Forced refreshes are still near-live, just not unbounded.
-			if (age < (force ? ForcedRefreshFloor : TimeSpan.FromMinutes(ttl))) {
-				return (cached.Points, cached.Pending);
-			}
-		}
-
-		// Only one request at a time, and a floor between attempts.
-		//
-		// The cache is only stamped on a BELIEVABLE answer, so while rep4rep is down or the token is wrong every
-		// single dashboard poll went straight through to their API - a request every three seconds, forever.
-		if (!await _pointsGate.WaitAsync(0).ConfigureAwait(false)) {
-			return CachedPoints();
-		}
-
-		(int Points, int PendingPoints)? user;
-
-		try {
-			if (DateTime.UtcNow - _lastPointsAttempt < ForcedRefreshFloor) {
-				return CachedPoints();
-			}
-
-			_lastPointsAttempt = DateTime.UtcNow;
-			user = await _mgr.Rep4Rep.GetUserAsync().ConfigureAwait(false);
-		} finally {
-			_pointsGate.Release();
-		}
-
-		// A negative "still being verified" is not a number rep4rep should ever produce, and caching one pins
-		// nonsense on screen for a quarter of an hour. Keep whatever was there and try again next time.
-		if (!Believable(user)) {
-			// Said once, not on every poll. rep4rep really does serve a negative pending balance sometimes, and a
-			// line per request buried everything else in the log.
-			if (!_warnedAboutBalance) {
-				_warnedAboutBalance = true;
-				Log.Debug(user?.Points == Rep4RepApi.NotANumber
-					? new Said("rep4rep is reporting points that aren't a number - keeping the last sensible figure")
-					: new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user?.Points, user?.PendingPoints));
-			}
-
-			return CachedPoints();
-		}
-
-		_warnedAboutBalance = false;
-
-		if (user == null) {
-			return CachedPoints();   // not reached: "connected" says so (Rep4RepView); the last sensible figure stays
-		}
-
-		RememberPoints(user.Value.Points, user.Value.PendingPoints);
-
-		return Sensible(user);
-	}
-
-	/// <summary>What the rep4rep tab shows. <c>Connected</c> is "a token is set and rep4rep took it the last time it was
-	/// asked" - never the points figure: a balance it couldn't believe used to turn a working token into the set-up screen.</summary>
-	internal sealed record Rep4RepView(bool Connected, string? Error, int Points, int Pending, bool PointsKnown, DateTime? SyncedAt);
-
-	internal async Task<Rep4RepView> Rep4RepViewAsync() {
-		if (!_mgr.Rep4Rep.HasToken) {
-			return new Rep4RepView(false, null, 0, 0, false, null);
-		}
-
-		// Forced: somebody is looking straight at this number, and points move the moment they spend any.
-		// The cheap cached value is fine for the overview tile; it is not fine here.
-		(int Points, int PendingPoints)? user = await CachedPointsAsync(true).ConfigureAwait(false);
-
-		// Not asked yet (another request is asking right now) counts as connected: only a real "no" is shown as one.
-		bool connected = _mgr.Rep4Rep.UserAnswered != false;
-
-		return new Rep4RepView(
-			connected,
-			connected ? null : "rep4rep didn't accept that token, or it can't be reached right now.",
-			user?.Points ?? 0,
-			user?.PendingPoints ?? 0,
-			user != null,
-			_pointsCache?.At);
-	}
-
-	/// <summary>
-	/// Whether a balance rep4rep just handed us can be true: spendable points that are a number and not below 0.
-	///
-	/// A NEGATIVE pending is not impossible - rep4rep serves -16, -49 and the like all the time - it's read as 0 waiting
-	/// (see <see cref="Sensible"/>). Calling it impossible left the dashboard with no points at all after a restart.
-	/// </summary>
-	/// <remarks>The 'rep4rep points' command asks the same, so the dashboard and the command agree on what's nonsense.</remarks>
-	internal static bool Believable((int Points, int PendingPoints)? user) =>
-		user is null or { Points: >= 0 };
-
-	/// <summary>The balance as it's shown: pending below 0 is 0 pending; null for one that can't be true (or none).</summary>
-	internal static (int Points, int PendingPoints)? Sensible((int Points, int PendingPoints)? user) =>
-		user is { Points: >= 0 } u ? (u.Points, Math.Max(0, u.PendingPoints)) : null;
-
-	/// <summary>The last sensible rep4rep balance the dashboard got, or null when it has none yet.</summary>
-	internal (int Points, int PendingPoints)? LastSensiblePoints => CachedPoints();
-
-	/// <summary>The only place the points cache is written, so nothing can slip past the check above.</summary>
-	internal void RememberPoints(int points, int pending) {
-		if (Believable((points, pending))) {
-			pending = Math.Max(0, pending);
-			_pointsCache = new PointsSnapshot(points, pending, DateTime.UtcNow);
-		}
-	}
-
 	private IResult Guard(HttpContext ctx, Func<IResult> action) => Authorised(ctx) ? action() : Unauthorised();
 
 	private int _resolvingNames;
@@ -3213,17 +3053,11 @@ public sealed partial class WebHost : IAsyncDisposable {
 		(int cards, int comments) = Stats.Totals(24);
 
 		// Per-account card drops in the last 24h, for the Overview's "Today" table. Comments per account are
-		// already carried as Rep4RepToday (PostsInLast24h). Computed once here, not once per bot.
+		// carried as Comments24h (the app's own count, Plugins/Comments.cs). Computed once here, not once per bot.
 		Dictionary<string, int> cardsByBot = Stats.Recent(24)
 			.Where(static e => e.Kind == Stats.KindCard)
 			.GroupBy(static e => e.Bot, StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(static g => g.Key, static g => g.Count(), StringComparer.OrdinalIgnoreCase);
-
-		// Keep the points figure warm in the background so the rail and the Overview aren't stuck on 0 until
-		// somebody happens to open the rep4rep tab. The TTL setting is what actually paces this.
-		if (_mgr.Rep4Rep.HasToken) {
-			_ = CachedPointsAsync(false);
-		}
 
 		// Everything still waiting on a price across every account being valued, each item once - two accounts holding the
 		// same card wait on one price, not two. The count and the requests from the same list: summed per account, the
@@ -3244,18 +3078,14 @@ public sealed partial class WebHost : IAsyncDisposable {
 			Users = UserCount.Users(),
 			Prompt = Prompt.Pending,
 			PromptSecret = Prompt.PendingSecret,
-			Rep4RepEnabled = _mgr.Global.Rep4RepEnabled,
-			Rep4RepToken = _mgr.Rep4Rep.HasToken,
-			Rep4RepWanted = _mgr.Global.Rep4RepEnabled ? bots.Count(static b => b.Cfg.Rep4Rep) : 0,
+			// 1.9.0: whether this install posts comments at all (through an add-on - rep4rep's): the comment figures show only then.
+			CommentsOn = Plugins.Comments.InUse,
 			QrWaiting = bots.Where(static b => b.QrChallenge != null).Select(static b => new { b.Name, b.QrVersion }).ToList(),
 			// Genuinely reachable from the network AND unprotected. With no password the server already refuses
 			// everything that isn't loopback, so warning about that case was crying wolf.
 			// Every way of writing this PC counts as this PC - "::1" was warned about as if it were the network.
 			Exposed = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
 			LockedToThisPc = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
-			Points = CachedPoints()?.Points ?? 0,
-			PendingPoints = CachedPoints()?.PendingPoints ?? 0,
-			PointsKnown = CachedPoints() != null,
 			CardsToday = cards,
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
@@ -3272,6 +3102,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			// on a Linux desktop and a Mac, which can).
 			Windows = OperatingSystem.IsWindows(),
 			PluginsOn = Live.Global.PluginsEnabled,
+			// 1.9.0: the tabs plugins added (the rep4rep add-on's, say), drawn in the nav.
+			PluginPages = Plugins.PluginHost.Pages.Select(static p => new { p.Plugin, p.Title }),
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,
 			TelegramConnectLink = Notifier.TelegramConnectLink,
@@ -3301,7 +3133,6 @@ public sealed partial class WebHost : IAsyncDisposable {
 			InventoryStale = PriceBook.Stale is { } stale ? new { stale.From, stale.RetryAt } : null,
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
-				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
 				(DateTime From, DateTime To)? upWindow = StateTime.Window(b);
 
 				return new {
@@ -3350,7 +3181,6 @@ public sealed partial class WebHost : IAsyncDisposable {
 					Guard = b.GuardPrompt,
 					Cards = b.CardsRemaining,
 					Games = b.GamesRemaining,
-					Rep4Rep = b.Cfg.Rep4Rep,
 					Legit = b.Cfg.LegitMode,
 					// 1.8.2: human mode outside its day right now (asleep, done for the day, a day off) - the set-up's last screen says so.
 					OffForNow = BotManager.ModuleOf<HumanMode>(b)?.Current is HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle or HumanMode.Phase.DoneForToday or HumanMode.Phase.DayOff,
@@ -3367,8 +3197,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 					// still-pricing ellipsis for ever.
 					InventoryOn = b.Cfg.ShowInventoryValue,
 					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),
-					Rep4RepToday = r4r?.PostsToday ?? 0,
-					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
+					Comments24h = Plugins.Comments.Window(b.Name).Count is > 0 and int posted ? posted : 0,
 					CardsToday = cardsByBot.GetValueOrDefault(b.Name),
 					// For the Discord card's preview, which can count hours instead of cards.
 					MinutesWeek = (int) History.MinutesOver(7, [b.Name]),
@@ -3445,7 +3274,25 @@ public sealed partial class WebHost : IAsyncDisposable {
 		public string Plugin { get; set; } = "";
 		public string Name { get; set; } = "";
 		public string? Value { get; set; }
+
+		/// <summary>1.9.0: for a per-account setting, whose.</summary>
+		public string? Account { get; set; }
 	}
+
+	private sealed class AddonRequest {
+		public string Id { get; set; } = "";
+	}
+
+	private sealed class PluginPress {
+		public string Plugin { get; set; } = "";
+		public string Line { get; set; } = "";
+	}
+
+	/// <summary>
+	/// 1.9.0: installing or removing an add-on puts code in this process, so the rule of 'update file' holds: the dashboard on
+	/// this PC - or one signed in with the dashboard password (without one, the dashboard can't be reached from elsewhere).
+	/// </summary>
+	internal bool MayInstallAddons(HttpContext ctx) => AtThisPc(ctx) || !string.IsNullOrEmpty(_cfg.WebPassword);
 
 	private sealed class PluginToggle {
 		public string Name { get; set; } = "";

@@ -46,8 +46,9 @@ ENV NOCATFARM_WEB_HOST=0.0.0.0 \
 
 EXPOSE 7242
 # backups/ too: the 'backup' command and every restore's "before" copy land there, and kept only inside the container
-# they were gone with the next rebuild or re-create.
-VOLUME ["/data/config", "/data/logs", "/data/backups"]
+# they were gone with the next rebuild or re-create. And plugins/ (1.9.0): an add-on installed from the dashboard goes
+# there, and has to outlive an image update the same way.
+VOLUME ["/data/config", "/data/logs", "/data/backups", "/data/plugins"]
 
 USER $APP_UID
 WORKDIR /data

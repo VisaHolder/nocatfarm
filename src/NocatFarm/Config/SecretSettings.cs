@@ -11,7 +11,7 @@ namespace NocatFarm.Config;
 internal static class SecretSettings {
 	private static readonly HashSet<string> OwnLines = new(StringComparer.Ordinal) {
 		nameof(GlobalConfig.DiscordWebhookUrl), nameof(GlobalConfig.TelegramBotToken), nameof(GlobalConfig.DiscordBotToken),
-		nameof(GlobalConfig.WebPassword), nameof(GlobalConfig.Rep4RepApiToken), nameof(GlobalConfig.WebProxyPassword)
+		nameof(GlobalConfig.WebPassword), nameof(GlobalConfig.WebProxyPassword)
 	};
 
 	private static IEnumerable<PropertyInfo> Others() =>

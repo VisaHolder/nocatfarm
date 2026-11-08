@@ -1070,8 +1070,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		}
 		Check("import asf: a maFile named by SteamID (from the token) is found", Acct(asfScan, "sda").MaFile == sdaMa);
 		Check("import asf: a .maFile.NEW is found", Acct(asfScan, "fresh").MaFile?.Contains("ZnJlc2gtc2hhcmVkLXNlY3JldDE=") == true);
-		Check("import asf: global blacklist, proxy and the rep4rep token offered as settings",
-			asfScan.Settings.Select(s => s.Name).Order().SequenceEqual(["GlobalBlacklistedGames", "Rep4RepApiToken", "WebProxy"]), string.Join(",", asfScan.Settings.Select(s => s.Name)));
+		Check("import asf: global blacklist, proxy and the rep4rep token (for the add-on) offered as settings",
+			asfScan.Settings.Select(s => s.Name).Order(StringComparer.Ordinal).SequenceEqual(["GlobalBlacklistedGames", "WebProxy", "rep4rep (add-on)"]), string.Join(",", asfScan.Settings.Select(s => s.Name)));
 		// The dashboard's "Import from another idler": the preview is the scan as /api/import/scan sends it - whether a token,
 		// a password and an authenticator are there, never the things themselves.
 		System.Text.Json.JsonElement Preview(NocatFarm.Config.ImportScan s) => System.Text.Json.JsonSerializer.SerializeToElement(
@@ -1119,7 +1119,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("import asf: the SteamID-named maFile kept, encrypted", File.Exists(NocatFarm.Core.MaFiles.PathFor("sda"))
 			&& Clear(NocatFarm.Core.MaFiles.PathFor("sda"), "c2RhLXNoYXJlZC1zZWNyZXQxMjM=") && (NocatFarm.Core.MobileAuth.ReadMaFile(NocatFarm.Core.MaFiles.PathFor("sda")).DeviceId == "android:sda"));
 		Check("import asf: global settings merged in", global.GlobalBlacklistedGames.Contains(440u) && global.GlobalBlacklistedGames.Contains(570u)
-			&& (global.WebProxy == "http://127.0.0.1:8080") && (global.WebProxyPassword == "pp") && (global.Rep4RepApiToken == "r4r-from-asf"));
+			&& (global.WebProxy == "http://127.0.0.1:8080") && (global.WebProxyPassword == "pp")
+			&& (NocatFarm.Core.Secrets.Unprotect(System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.settings.json")))
+				.RootElement.GetProperty("ApiKey").GetString()!) == "r4r-from-asf"));
 		var again = NocatFarm.Config.IdlerImport.Apply(asfScan, [new("main")], global);
 		Check("import asf: importing twice leaves the account alone", (again.Imported == 0) && (again.Skipped == 1) && NocatFarm.Config.ConfigStore.LoadBots()["main"].LegitMode);
 		Check("import asf: only the account ticked for human mode comes in human mode", !loaded["sda"].LegitMode && !loaded["aes"].LegitMode);
@@ -1751,22 +1753,22 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 // ── rep4rep: a hold that runs out doesn't wipe the last 24h's comments (a short hold would double the day) ────
 {
-	var state = new NocatFarm.Rep4Rep.Rep4RepState { Strikes = 2, BlockedUntil = DateTime.UtcNow.AddHours(1).Ticks };
-	state.RecordPost("task-1");
+	var state = new NocatFarm.Addons.Rep4Rep.AccountState { Strikes = 2, BlockedUntil = DateTime.UtcNow.AddHours(1).Ticks };
+	state.RecordPost("task-1", DateTime.UtcNow);
 	state.ResetForFreshStart();
-	Check("rep4rep hold: strikes and blocks go", (state.Strikes == 0) && !state.IsBlocked);
-	Check("rep4rep hold: the day's comments still count, and a posted task isn't posted again", (state.PostsInLast24h() == 1) && state.HasPostedTask("task-1"));
+	Check("rep4rep hold: strikes and blocks go", (state.Strikes == 0) && !state.IsBlocked(DateTime.UtcNow));
+	Check("rep4rep hold: the day's comments still count, and a posted task isn't posted again", (state.PostsInLast24h(DateTime.UtcNow) == 1) && state.HasPostedTask("task-1"));
 }
 
 // ── settings: on/off in any casing, and a word that's neither is refused rather than read as off ──────────────
 {
 	var cfg = new NocatFarm.Config.BotConfig();
-	NocatFarm.Config.SettingDef def = NocatFarm.Config.Settings.FindBot("Rep4Rep")!;
-	Check("set: ON is on", (NocatFarm.Config.Settings.Apply(cfg, def, "ON") == null) && cfg.Rep4Rep);
-	Check("set: No is off", (NocatFarm.Config.Settings.Apply(cfg, def, "No") == null) && !cfg.Rep4Rep);
-	Check("set: true/false still work", (NocatFarm.Config.Settings.Apply(cfg, def, "true") == null) && cfg.Rep4Rep && (NocatFarm.Config.Settings.Apply(cfg, def, "False") == null) && !cfg.Rep4Rep);
-	cfg.Rep4Rep = true;
-	Check("set: 'enabled' is refused and changes nothing", (NocatFarm.Config.Settings.Apply(cfg, def, "enabled") != null) && cfg.Rep4Rep);
+	NocatFarm.Config.SettingDef def = NocatFarm.Config.Settings.FindBot("AcceptFriendRequests")!;
+	Check("set: ON is on", (NocatFarm.Config.Settings.Apply(cfg, def, "ON") == null) && cfg.AcceptFriendRequests);
+	Check("set: No is off", (NocatFarm.Config.Settings.Apply(cfg, def, "No") == null) && !cfg.AcceptFriendRequests);
+	Check("set: true/false still work", (NocatFarm.Config.Settings.Apply(cfg, def, "true") == null) && cfg.AcceptFriendRequests && (NocatFarm.Config.Settings.Apply(cfg, def, "False") == null) && !cfg.AcceptFriendRequests);
+	cfg.AcceptFriendRequests = true;
+	Check("set: 'enabled' is refused and changes nothing", (NocatFarm.Config.Settings.Apply(cfg, def, "enabled") != null) && cfg.AcceptFriendRequests);
 }
 
 // ── updates: 'update skip' after 'update accept' stops the queued install ─────────────────────────────────────
@@ -1830,11 +1832,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 // ── dashboard: saving settings doesn't put back the app's own fields from the page's old copy ─────────────────
 {
-	var current = new NocatFarm.Config.GlobalConfig { Theme = "dark", TutorialDone = true, AccountOrder = ["b", "a"], Rep4RepHoldUntil = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc) };
-	var sent = new NocatFarm.Config.GlobalConfig { Theme = "light", TutorialDone = false, AccountOrder = ["a", "b"], Rep4RepHoldUntil = null, Language = "de" };
+	var current = new NocatFarm.Config.GlobalConfig { Theme = "dark", TutorialDone = true, AccountOrder = ["b", "a"] };
+	var sent = new NocatFarm.Config.GlobalConfig { Theme = "light", TutorialDone = false, AccountOrder = ["a", "b"], Language = "de" };
 	typeof(NocatFarm.Web.WebHost).GetMethod("KeepServerFields", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [sent, current]);
-	Check("dashboard save: theme, tutorial, account order and a hold stay as the app has them",
-		sent.Theme == "dark" && sent.TutorialDone && sent.AccountOrder.SequenceEqual(["b", "a"]) && sent.Rep4RepHoldUntil == current.Rep4RepHoldUntil);
+	Check("dashboard save: theme, tutorial and account order stay as the app has them",
+		sent.Theme == "dark" && sent.TutorialDone && sent.AccountOrder.SequenceEqual(["b", "a"]));
 	Check("dashboard save: a setting is still changed", sent.Language == "de");
 }
 
@@ -1870,8 +1872,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 // ── rep4rep: a daily-limit refusal below the cap is the account's real limit ──────────────────────────────────
 {
-	MethodInfo learns = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("LearnsDailyLimit", BindingFlags.NonPublic | BindingFlags.Static)!;
-	bool Learns(bool on, int posted, int cap) => (bool) learns.Invoke(null, [on, posted, cap])!;
+	bool Learns(bool on, int posted, int cap) => NocatFarm.Addons.Rep4Rep.Commenter.LearnsDailyLimit(on, posted, cap);
 	Check("rep4rep learn: cut off at 10 with the cap at 15 - 10 is the limit", Learns(true, 10, 15));
 	Check("rep4rep learn: not when off, not below 5, not at or over the cap", !Learns(false, 10, 15) && !Learns(true, 3, 15) && !Learns(true, 15, 15));
 }
@@ -1996,33 +1997,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	if (tookLatch) {
 		latch.Release();
 	}
-}
-
-// ── rep4rep: "Post now" and the loop never post at the same time, and a task already done isn't done again ────
-{
-	string name = "harness-r4r-" + Guid.NewGuid().ToString("N")[..6];
-	var bot = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig());
-	typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(bot, NocatFarm.Core.BotState.Online);
-	using var api = new NocatFarm.Rep4Rep.Rep4RepApi();
-	var r4r = new NocatFarm.Modules.Rep4RepModule(bot, api);
-	Type rt = typeof(NocatFarm.Modules.Rep4RepModule);
-	FieldInfo RF(string f) => rt.GetField(f, BindingFlags.NonPublic | BindingFlags.Instance)!;
-	var posting = (SemaphoreSlim) RF("_posting").GetValue(r4r)!;
-	var state = new NocatFarm.Rep4Rep.Rep4RepState();
-	RF("_state").SetValue(r4r, state);
-	RF("_profileId").SetValue(r4r, "harness-profile");
-	r4r.Remember([new NocatFarm.Rep4Rep.Rep4RepTask { TaskId = "task-1", TargetSteamId = 76561198000000001, TargetName = "someone" }]);
-
-	posting.Wait();   // the loop is part way through posting a comment
-	string busy = await r4r.PostNowAsync("task-1");
-	Check("rep4rep: 'post now' while the loop posts says so and posts nothing", busy.Contains("right now", StringComparison.Ordinal) && (state.PostsInLast24h() == 0), busy);
-	posting.Release();
-
-	state.RecordPost("task-1");   // the first click went through
-	string again = await r4r.PostNowAsync("task-1");
-	Check("rep4rep: a second click on the same task doesn't comment twice", again.Contains("already commented", StringComparison.Ordinal) && (state.PostsInLast24h() == 1), again);
-	Check("rep4rep: the button hands the posting turn back", posting.CurrentCount == 1);
-	await bot.DisposeAsync();
 }
 
 // ── sign-in token: a web token minted before a sign-in changed the tokens isn't written over the new ones ─────
@@ -2167,7 +2141,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		string human = await Commands.RunAsync(mgr, "human person");
 		Check("human: 730:70, 440:10 reads 70/30, as the day splits it (not 88/12)", human.Contains(" 70%", StringComparison.Ordinal) && human.Contains(" 30%", StringComparison.Ordinal), human.Split('\n').FirstOrDefault(static l => l.Contains("set to play", StringComparison.Ordinal)) ?? human);
 
-		string slashed = await Commands.RunAsync(mgr, "/set robo Rep4Rep");
+		string slashed = await Commands.RunAsync(mgr, "/set robo AcceptFriendRequests");
 		Check("commands: a leading slash works like the chats' habit, and a missing value says so", slashed.Contains("value is missing", StringComparison.Ordinal), slashed);
 
 		// The dispatcher takes slashes off now, so the chats' guards have to as well.
@@ -3722,7 +3696,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 // ── only what Steam confirms counts: listings, crafts, packs, declines, comments, busy sends, guest passes ─────────
 {
-	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
 	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
 	NocatFarm.Log.Suppressed = true;
 
@@ -3759,24 +3732,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("decline/cancel: another id, an error, an HTML page or nothing isn't",
 			!Answered("""{"tradeofferid":"999"}""", 7123) && !Answered("""{"strError":"There was an error (28)"}""", 7123) && !Answered("<html>Sign In</html>", 7123) && !Answered(null, 7123));
 
-		// Rep4rep: a comment that never left this PC isn't counted or credited, and the next try backs off.
-		var rbot = new NocatFarm.Core.Bot("harness-r4r-notsent-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
-		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(rbot, NocatFarm.Core.BotState.Online);   // "online", but with no web session to send with
-		using var rapi = new NocatFarm.Rep4Rep.Rep4RepApi();
-		var r4r = new NocatFarm.Modules.Rep4RepModule(rbot, rapi);
-		Type rt = typeof(NocatFarm.Modules.Rep4RepModule);
-		var rstate = new NocatFarm.Rep4Rep.Rep4RepState();
-		rt.GetField("_state", Inst)!.SetValue(r4r, rstate);
-		rt.GetField("_profileId", Inst)!.SetValue(r4r, "harness-profile");
-		r4r.Remember([new NocatFarm.Rep4Rep.Rep4RepTask { TaskId = "task-ns", TargetSteamId = 76561198000000001, TargetName = "someone", CommentText = "+rep" }]);
-		string notSent = await r4r.PostNowAsync("task-ns");
-		Check("rep4rep: a comment that couldn't be sent isn't counted as posted", notSent.Contains("couldn't reach Steam", StringComparison.Ordinal)
-			&& (rstate.PostsInLast24h() == 0) && !rstate.HasPostedTask("task-ns"), notSent);
-		MethodInfo notSentWait = rt.GetMethod("NotSentWaitSeconds", Stat)!;
-		int W(int run) => (int) notSentWait.Invoke(null, [run])!;
+		// Rep4rep: a comment that never left this PC isn't counted (Plugins/Comments.cs says NotSent), and the next try backs off.
+		Check("rep4rep: a comment that couldn't be sent is NotSent - nothing counted", NocatFarm.Plugins.Comments.Read(null, false).Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotSent);
+		int W(int run) => NocatFarm.Addons.Rep4Rep.Commenter.NotSentWaitSeconds(run);
 		Check("rep4rep: not sent backs off - 5, 10, 20, 40, then 60 minutes at most", (W(1) / 60 is >= 5 and < 7) && (W(2) / 60 is >= 10 and < 12) && (W(4) / 60 is >= 40 and < 42) && (W(9) / 60 is >= 60 and < 62),
 			$"{W(1) / 60} {W(2) / 60} {W(4) / 60} {W(9) / 60}");
-		await rbot.DisposeAsync();
 
 		// A timed send that found every item busy says so - and tries again in minutes, not at the next period.
 		var sbot = new NocatFarm.Core.Bot("harness-busysend", new NocatFarm.Config.BotConfig());
@@ -5415,7 +5375,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.SaveBot("alt", new NocatFarm.Config.BotConfig { Enabled = false, SteamLogin = "altlogin", SteamPassword = "pw-alt", IdleGames = [730] });
 		string[] ours = [
 			"tokens/alt.token", "tokens/alt.access", "authenticators/alt.maFile", "state/secret.key", "state/history/2026-09.json",
-			"state/lifetime.json", "state/lifetime-games.json", "state/human-alt.json", "state/hunt-alt.json", "state/rep4rep-alt.json",
+			"state/lifetime.json", "state/lifetime-games.json", "state/human-alt.json", "state/hunt-alt.json", "state/comments-alt.json", "plugins/rep4rep.settings.json",
 			"state/keys.json", "state/report.json", "state/weekly-report.json"];
 		foreach (string rel in ours) {
 			// Off Windows the key file is real (saving the settings above made it) and the saved secrets need it: a
@@ -5469,7 +5429,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Config.ConfigStore.UseRoot(rootC);
 		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
 		string said = await NocatFarm.Core.Backup.RestoreAsync(mgr, zip);
-		Check("restore: in the running app - says what it did", said.StartsWith("Restored 15 file(s)", StringComparison.Ordinal), said);
+		Check("restore: in the running app - says what it did", said.StartsWith("Restored 16 file(s)", StringComparison.Ordinal), said);   // 1.9.0: + a plugin's settings
 		Check("restore: the account is there, as a fresh object from the file", mgr.Get("alt") is { } restored && restored.Cfg.SteamLogin == "altlogin" && !restored.Cfg.Enabled);
 		Check("restore: the lifetime totals in memory are the restored ones", NocatFarm.Core.Lifetime.For("alt") == 1234 && NocatFarm.Core.Lifetime.GamesFor("alt") == 5678);
 		Check("restore: the settings in use are the restored ones", mgr.Global.StatusEveryMinutes == 7);
@@ -5935,17 +5895,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("session report: blocked is another session; nothing is nothing",
 		StateLine(true, 730).Contains("another session is playing app 730", StringComparison.Ordinal) && (StateLine(false, 0) == "Steam says: not blocked - nothing playing"));
 
-	// Rep4rep sleeps through the account's night instead of looking every few minutes.
-	MethodInfo dayWait = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("DayWaitSeconds", Any)!;
-	int DayWait(NocatFarm.Modules.HumanMode.Phase phase, DateTime? wakes, DateTime now) => (int) dayWait.Invoke(null, [phase, wakes, now, 300, 120])!;
+	// Rep4rep sleeps through the account's night (the app's RetryAt) instead of looking every few minutes.
+	int DayWait(DateTime? retry, DateTime now) => NocatFarm.Addons.Rep4Rep.Commenter.NotNowWaitSeconds(retry, now, 300, 120);
 	DateTime night = new(2026, 9, 30, 1, 0, 0, DateTimeKind.Utc);
-	Check("rep4rep: asleep - until it gets up, and a little more", DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddHours(8), night) == (8 * 3600) + 120);
-	Check("rep4rep: overnight idling is asleep too", DayWait(NocatFarm.Modules.HumanMode.Phase.NightIdle, night.AddHours(2), night) == (2 * 3600) + 120);
-	Check("rep4rep: never past twelve hours", DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddHours(20), night) == 12 * 3600);
-	Check("rep4rep: awake, or no wake time - the usual few minutes",
-		(DayWait(NocatFarm.Modules.HumanMode.Phase.WarmingUp, night.AddHours(8), night) == 300) && (DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, null, night) == 300)
-		&& (DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddMinutes(-1), night) == 300));
-	Check("rep4rep: 'wake' cuts the night's wait short", Src(Path.Combine("Modules", "HumanMode.cs")).Contains("BotManager.ModuleOf<Rep4RepModule>(Bot)?.DayMoved();", StringComparison.Ordinal));
+	Check("rep4rep: asleep - until it gets up, and a little more", DayWait(night.AddHours(8), night) == (8 * 3600) + 120);
+	Check("rep4rep: never past twelve hours", DayWait(night.AddHours(20), night) == 12 * 3600);
+	Check("rep4rep: no wake time, or one gone by - the usual few minutes", (DayWait(null, night) == 300) && (DayWait(night.AddMinutes(-1), night) == 300));
 
 	// The market: 90 seconds, 5, 15, 30, 60, 120, 240 minutes, then twice a day, said once.
 	MethodInfo cool = typeof(NocatFarm.PriceBook).GetMethod("NextCoolSeconds", Any)!;
@@ -6032,13 +5987,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("keyboard: Enter and Space press anything with role=button (walkthrough cards included)",
 		app.Contains("((e.key !== 'Enter') && (e.key !== ' ')) || e.isComposing || e.defaultPrevented", StringComparison.Ordinal)
 		&& app.Contains("(el.getAttribute('role') !== 'button') || (el.tagName === 'BUTTON')) return;", StringComparison.Ordinal));
-
-	// 8. rep4rep "Post now" says what the account can really do.
-	string postNow = Fn("async function postNow(");
-	Check("rep4rep: Post now reads the account's row and says off / signed out / at its cap",
-		postNow.Contains("/api/rep4rep/profiles", StringComparison.Ordinal) && postNow.Contains("!p.Enabled", StringComparison.Ordinal)
-		&& postNow.Contains("!p.Online", StringComparison.Ordinal) && postNow.Contains("p.Today >= p.Cap", StringComparison.Ordinal)
-		&& !postNow.Contains("will post as soon as the daily cap allows", StringComparison.Ordinal));
 
 	// 9. Clear, then Undo, leaves nothing to save.
 	Check("secrets: Undo after Clear takes the change away", Fn("function undoClearSecret(").Contains("delete pending[name];", StringComparison.Ordinal)
@@ -6693,14 +6641,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("key queue: a Flush for shutdown, and saves one at a time", typeof(NocatFarm.Core.KeyQueue).GetMethod("Flush", Any) != null
 			&& Src(Path.Combine("Core", "KeyQueue.cs")).Contains("lock (SaveGate) {", StringComparison.Ordinal));
 
-		// 4. Rep4rep's count: the last save written is the newest.
-		var r4r = new NocatFarm.Rep4Rep.Rep4RepState();
-		await Task.WhenAll(Enumerable.Range(0, 200).Select(i => Task.Run(async () => {
-			r4r.RecordPost($"task{i}");
-			await r4r.SaveAsync("race3");
-		})));
-		NocatFarm.Rep4Rep.Rep4RepState? back = await NocatFarm.Rep4Rep.Rep4RepState.LoadAsync("race3");
-		Check("rep4rep: 200 posts saved at once - all 200 are in the file", back?.PostsInLast24h() == 200, $"{back?.PostsInLast24h()}");
+		// 4. The app's comment count (Plugins/Comments.cs): 200 written at once, all 200 in the file.
+		await Task.WhenAll(Enumerable.Range(0, 200).Select(i => Task.Run(() => NocatFarm.Plugins.Comments.Count("race3", DateTime.UtcNow.AddSeconds(-i)))));
+		NocatFarm.Plugins.Comments.Forget();
+		int back = NocatFarm.Plugins.Comments.Window("race3").Count;
+		Check("comments: 200 counted at once - all 200 are in the file", back == 200, $"{back}");
 
 		// 5. One key worker at a time.
 		var working = (SemaphoreSlim) typeof(NocatFarm.Core.Redeeming).GetField("Working", Any)!.GetValue(null)!;
@@ -6841,10 +6786,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("idler: the grind game is read once and 0 is never played", idlerSrc3.Contains("uint grind = Bot.GrindGame;", StringComparison.Ordinal)
 			&& idlerSrc3.Contains("Bot.SetPlaying([grind]);", StringComparison.Ordinal) && !idlerSrc3.Contains("Bot.SetPlaying([Bot.GrindGame]);", StringComparison.Ordinal));
 
-		// 9. Rep4rep: a wake before the sleep isn't lost; nothing posts after "stop".
-		using (var api = new NocatFarm.Rep4Rep.Rep4RepApi()) {
-			var r4m = new NocatFarm.Modules.Rep4RepModule(giver, api);
-			Type rt = typeof(NocatFarm.Modules.Rep4RepModule);
+		// 9. Rep4rep: a wake before the sleep isn't lost.
+		{
+			var r4m = new NocatFarm.Addons.Rep4Rep.Commenter(new NocatFarm.Addons.Rep4Rep.Rep4RepAddon(), "giver");
+			Type rt = typeof(NocatFarm.Addons.Rep4Rep.Commenter);
 			rt.GetMethod("Wake", Any)!.Invoke(r4m, []);   // 'wake' lands between two sleeps
 			var sleep = (Task<bool>) rt.GetMethod("SleepOrWake", Any)!.Invoke(r4m, [TimeSpan.FromMinutes(10), CancellationToken.None])!;
 			bool wokeFirst = await Task.WhenAny(sleep, Task.Delay(3000)) == sleep;
@@ -6854,15 +6799,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			rt.GetMethod("Wake", Any)!.Invoke(r4m, []);
 			bool wokeAgain = await Task.WhenAny(sleep2, Task.Delay(3000)) == sleep2;
 			Check("rep4rep: a wake-up that arrives between sleeps cuts the next one short - once", wokeFirst && keptSleeping && wokeAgain);
-			r4m.Paused = true;
-			Check("rep4rep: paused means no post", (bool) rt.GetMethod("StoppedPosting", Any)!.Invoke(r4m, [])!);
 		}
 
-		string r4 = Src(Path.Combine("Modules", "Rep4RepModule.cs"));
-		int retry = r4.IndexOf("private async Task<int> RetryOnceAsync(", StringComparison.Ordinal);
+		string r4 = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "addons", "rep4rep", "Commenter.cs")).Replace("\r\n", "\n");
 		Check("rep4rep: the retry looks again after its wait, the post after taking its turn, the profile id is looked up once",
-			(retry > 0) && r4[retry..(retry + 1400)].Contains("if (StoppedPosting()) {", StringComparison.Ordinal)
-			&& r4.Contains("try {\n\t\t\t// Stopped while this step was fetching or waiting its turn", StringComparison.Ordinal)
+			r4.Contains("if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false) || Stopped(state)) {", StringComparison.Ordinal)
+			&& r4.Contains("// Stopped or spent while this step was fetching", StringComparison.Ordinal)
 			&& r4.Contains("lookup = _resolving ??= Task.Run(", StringComparison.Ordinal) && !r4.Contains("_profileId ??= await", StringComparison.Ordinal));
 
 		// 10. Social: what was waiting at sign-in is answered.
@@ -6896,9 +6838,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "race3.settings.json"), "{\"keep\":\"1\",\"also\":\"2\"}");
 		Type hostT = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Plugins.Host")!;
 		object host = Activator.CreateInstance(hostT, Any, null, [null, "race3"], null)!;
-		MethodInfo setValue = hostT.GetMethod("SetValue", Any)!, setting = hostT.GetMethod("Setting", Any)!;
+		MethodInfo setValue = hostT.GetMethod("SetValue", Any)!, setting = hostT.GetMethod("Setting", Any, [typeof(string)])!;
 		Parallel.For(0, 16, i => {
-			setValue.Invoke(host, [$"k{i}", i.ToString(System.Globalization.CultureInfo.InvariantCulture)]);
+			setValue.Invoke(host, [$"k{i}", i.ToString(System.Globalization.CultureInfo.InvariantCulture), null]);
 			_ = setting.Invoke(host, ["keep"]);
 		});
 		string saved = File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "race3.settings.json"));
@@ -7313,7 +7255,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── races: the live global settings - plugin switches, 'reload', 'set', rep4rep's token, the points, the catalogue ──
+// ── races: the live global settings - plugin switches, 'reload', 'set', the catalogue ──
 {
 	string host = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
 	string cmds = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Replace("\r\n", "\n");
@@ -7326,12 +7268,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& host.Contains("lock (GlobalSaveGate) {\n\t\t\t\t\tsave = SaveFromPage(_mgr.Global, sent, JsonOptionsOf(ctx));", StringComparison.Ordinal));
 	Check("set: a global setting is changed and saved under that lock too",
 		cmds.Contains("lock (ConfigStore.GlobalEditGate) {\n\t\t\tpasswordBefore = mgr.Global.WebPassword;\n\t\t\tstring? failure = Settings.Apply(mgr.Global,", StringComparison.Ordinal));
-	int trialAt = host.IndexOf("user = await trial.GetUserAsync(ctx.RequestAborted)", StringComparison.Ordinal);
-	Check("rep4rep token: tried on a client of its own, put on the shared one only once it's good",
-		(trialAt > 0) && (host.IndexOf("_mgr.Rep4Rep.Token = token;", StringComparison.Ordinal) > trialAt) && !host.Contains("_mgr.Rep4Rep.Token = previous;", StringComparison.Ordinal));
-	FieldInfo points = typeof(NocatFarm.Web.WebHost).GetField("_pointsCache", BindingFlags.NonPublic | BindingFlags.Instance)!;
-	Check("rep4rep points: the cache is one object swapped whole, never a tuple read half written",
-		points.FieldType.IsClass && !points.FieldType.IsGenericType && host.Contains("_pointsCache = new PointsSnapshot(points, pending, DateTime.UtcNow);", StringComparison.Ordinal));
 	Check("game catalogue: the way-out save and a lookup's save take turns, the copy taken inside",
 		catalog.Contains("await SaveGate.WaitAsync().ConfigureAwait(false);\n\n\t\ttry {\n\t\t\tDictionary<uint, Entry> snapshot;", StringComparison.Ordinal));
 }
@@ -8057,8 +7993,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		string repo = Path.Combine(srcDir, "..", "..");
 		string compose = File.ReadAllText(Path.Combine(repo, "docker-compose.example.yml"));
 		string dockerfile = File.ReadAllText(Path.Combine(repo, "Dockerfile"));
-		Check("docker: ./backups is mounted, and /data/backups is a volume of the image",
-			compose.Contains("- ./backups:/data/backups", StringComparison.Ordinal) && dockerfile.Contains("\"/data/backups\"]", StringComparison.Ordinal)
+		Check("docker: ./backups and ./plugins are mounted, and /data/backups and /data/plugins are volumes of the image",
+			compose.Contains("- ./backups:/data/backups", StringComparison.Ordinal) && dockerfile.Contains("\"/data/backups\", \"/data/plugins\"]", StringComparison.Ordinal)
+			&& compose.Contains("\n      - ./plugins:/data/plugins", StringComparison.Ordinal)
 			&& dockerfile.Contains("mkdir -p /data/config /data/logs /data/backups", StringComparison.Ordinal));
 		Check("docker: the time zone comes from .env, UTC without it", compose.Contains("TZ: ${TZ:-Etc/UTC}", StringComparison.Ordinal) && !compose.Contains("TZ: Europe/London", StringComparison.Ordinal));
 		Check("docker: the public address and trusted proxies are in the compose file", compose.Contains("# NOCATFARM_PUBLIC_ADDRESS:", StringComparison.Ordinal)
@@ -10158,7 +10095,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	// ── hours of the day: a list in the viewer's own clock, the same number underneath ─────────────────────────────────
 	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "WeeklyReportHour",
-		"FarmFromHour", "FarmUntilHour", "SendAroundHour", "Rep4RepStartHour", "Rep4RepEndHour"];
+		"FarmFromHour", "FarmUntilHour", "SendAroundHour"];
 	NocatFarm.Config.SettingDef? HourDef(string n) => NocatFarm.Config.Settings.FindBot(n) ?? NocatFarm.Config.Settings.Global.FirstOrDefault(d => d.Name == n);
 	Check("hour settings: every hour of the day is an Hour, not a bare number - and durations stay numbers",
 		hourNames.All(n => HourDef(n) is { Kind: NocatFarm.Config.SettingKind.Hour })
@@ -11172,7 +11109,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	typeof(NocatFarm.Modules.HumanMode).GetMethod("SettledIn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(shm, []);
 	DateTime ready = (DateTime) typeof(NocatFarm.Modules.HumanMode).GetField("_readyAt", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(shm)!;
 	Check("reaction speed: Quick never starts a game inside the three minutes after signing in", ready >= signedIn.AddSeconds(180), $"{(ready - signedIn).TotalSeconds:0}s");
-	string[] never = ["ResumeDelayMinutes", "Rep4RepGapMinMinutes", "Rep4RepGapMaxMinutes", "Rep4RepDailyCap", "SessionMinMinutes", "SessionMaxMinutes",
+	string[] never = ["ResumeDelayMinutes", "SessionMinMinutes", "SessionMaxMinutes",
 		"WeekdayHours", "WeekendHours", "HoursUntilCardDrops", "AchievementGrindGapMinMinutes", "BoostSessionHours", "PostFarmWindDownMinMinutes", "FarmingDelayMinutes"];
 	Check("reaction speed: what protects the owner, Steam's limits and how much it plays are never scaled",
 		never.All(n => !scaled.Any(p => (p.Min == n) || (p.Max == n))));
@@ -11634,9 +11571,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	try {
 		available.SetValue(null, "v9.9.9");
 		SkipOnly("9.9.9");
-		bool quiet = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), false, null, DateTime.UtcNow])!).Count == 0;
+		bool quiet = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), null, DateTime.UtcNow])!).Count == 0;
 		SkipOnly(null);
-		bool said = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), false, null, DateTime.UtcNow])!).Count == 1;
+		bool said = ((List<NocatFarm.Core.ReportCard.Row>) typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", US)!.Invoke(null, [new List<NocatFarm.Core.Bot>(), null, DateTime.UtcNow])!).Count == 1;
 		Check("summary attention: a new version the owner skipped isn't flagged; one not skipped is", quiet && said);
 	} finally {
 		available.SetValue(null, wasAvailable);
@@ -11646,7 +11583,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	// 9 and 10. Hours: no clock format in the explanations (the picker may be a 12-hour one), and full-width digits are no hour.
 	string[] hourNames = ["AutoUpdateFromHour", "AutoUpdateUntilHour", "WeeklyReportHour",
-		"FarmFromHour", "FarmUntilHour", "SendAroundHour", "Rep4RepStartHour", "Rep4RepEndHour"];
+		"FarmFromHour", "FarmUntilHour", "SendAroundHour"];
 	string TipOf(string n) => (NocatFarm.Config.Settings.FindBot(n) ?? NocatFarm.Config.Settings.Global.First(d => d.Name == n)).Tooltip;
 	List<string> withClock = [.. hourNames.Where(n => TipOf(n).Any(char.IsAsciiDigit) || TipOf(n).Contains("24-hour", StringComparison.Ordinal))];
 	foreach (string lang in new[] { "de", "es", "fr", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-CN" }) {
@@ -12050,25 +11987,14 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── the rep4rep preview says the window the account keeps ──────────────────────────────────────────────────
+// ── rep4rep's window: an end at or before the start is no window at all - it comments around the clock ─────────
 {
-	// An end at or before the start is no window at all - the account comments around the clock. The preview said
-	// "between 10 PM and 6 AM" for that, a window it never keeps.
-	var bot = new NocatFarm.Core.Bot("harness-r4rwin-" + Guid.NewGuid().ToString("N")[..6],
-		new NocatFarm.Config.BotConfig { Rep4RepStartHour = 22, Rep4RepEndHour = 6 });
-	using var api = new NocatFarm.Rep4Rep.Rep4RepApi();
-	var r4r = new NocatFarm.Modules.Rep4RepModule(bot, api);
-	MethodInfo wait = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("WindowWaitSeconds", BindingFlags.NonPublic | BindingFlags.Instance)!;
-	bool reversedIsOpen = (int) wait.Invoke(r4r, [])! == 0;
-	bot.Cfg.Rep4RepStartHour = 9;
-	bot.Cfg.Rep4RepEndHour = 9;
-	bool sameIsOpen = (int) wait.Invoke(r4r, [])! == 0;
-	string js = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
-	Check("rep4rep preview: an end at or before the start reads 'around the clock', as the account comments then",
-		reversedIsOpen && sameIsOpen
-		&& js.Contains("const hours = Number(from) >= Number(to)\n      ? t('around the clock')", StringComparison.Ordinal)
-		&& !js.Contains("const hours = from === to", StringComparison.Ordinal));
-	await bot.DisposeAsync();
+	DateTime at = new(2026, 9, 30, 3, 0, 0);
+	Check("rep4rep window: 22 to 6, or 9 to 9, is no window - open now",
+		(NocatFarm.Addons.Rep4Rep.Commenter.WindowWait(at, 22, 6, 30, 10) == 0) && (NocatFarm.Addons.Rep4Rep.Commenter.WindowWait(at, 9, 9, 30, 10) == 0));
+	Check("rep4rep window: 10 to 23 at 3 am opens at 10 and the stagger", NocatFarm.Addons.Rep4Rep.Commenter.WindowWait(at, 10, 23, 30, 10) == ((7 * 3600) + (30 * 60)));
+	Check("rep4rep window: a one-hour window always opens - neither end eats more than its share",
+		NocatFarm.Addons.Rep4Rep.Commenter.WindowWait(new DateTime(2026, 9, 30, 10, 31, 0), 10, 11, 55, 40) == 0);
 }
 
 // ── 'cheevo unlock' on one of two "for having the others" ones goes by the pacer's rule ──────────────────────
@@ -12886,7 +12812,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		// main's own, written under several spellings of its name.
 		string[] mains = ["state/human-Main.json", "state/cheevo-main.json", "state/overnight-MAIN.seen", "state/trades-announced-mAin.json",
-			"state/queue-main.txt", "state/rep4rep-Main.json", "tokens/main.token", "tokens/MAIN.access"];
+			"state/queue-main.txt", "state/comments-Main.json", "tokens/main.token", "tokens/MAIN.access"];
 		// Other accounts' whose names start (or end) the same, the app's own files, and main's authenticator.
 		string[] others = ["state/human-main2.json", "state/human-main-alt.json", "state/hunt-mainx.json", "state/cheevo-xmain.json",
 			"state/owner-ma.json", "tokens/main2.token", "tokens/main-alt.access", "state/lifetime.json", "state/lifetime-games.json",
@@ -13396,10 +13322,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("sleep: a range typed backwards still reads lowest to highest", NocatFarm.Modules.HumanMode.SleepMinutes(new NocatFarm.Config.BotConfig { SleepMinHours = 9, SleepMaxHours = 6 }) == (360, 540));
 }
 
-// ── rep4rep: the profile is looked at first - no comment box for this account, no post and no strike ─────────
+// ── plugin comments (rep4rep): the profile is looked at first - no comment box for this account, no post and no strike ─────────
 {
 	const BindingFlags lookAny = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
-	MethodInfo lookRead = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("ReadCommentBox", lookAny)!;
+	MethodInfo lookRead = typeof(NocatFarm.Plugins.Comments).GetMethod("ReadCommentBox", lookAny)!;
 	const ulong lookViewer = 76561190000000001, lookTarget = 76561190000000002;   // below Steam's first real account id
 	string LookBox(string? html, ulong onProfile = lookTarget, ulong asAccount = lookViewer) => lookRead.Invoke(null, [html, onProfile, asAccount])!.ToString()!;
 
@@ -13428,25 +13354,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(file), @"7656\d{13}").Any(id => ulong.Parse(id.Value) >= 76561197960265728));
 	Check("rep4rep look: the saved samples carry no real Steam ids", !lookRealIds);
 
-	string r4look = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "Rep4RepModule.cs")).Replace("\r\n", "\n");
-	int lookAt = r4look.IndexOf("private async Task<bool> CommentsClosedAsync(", StringComparison.Ordinal);
-	string lookBody = lookAt > 0 ? r4look[lookAt..r4look.IndexOf("// ── posting", lookAt, StringComparison.Ordinal)] : "";
-	int lookStep = r4look.IndexOf("private async Task<int> StepAsync(", StringComparison.Ordinal);
-	int lookCheck = r4look.IndexOf("if (await CommentsClosedAsync(task, ct)", lookStep, StringComparison.Ordinal);
-	int lookPost = r4look.IndexOf("await PostCommentAsync(task, ct)", lookStep, StringComparison.Ordinal);
-	Check("rep4rep look: the scheduled post looks first, inside its turn, and a skip posts nothing",
-		(lookCheck > lookStep) && (lookPost > lookCheck) && (r4look.IndexOf("await _posting.WaitAsync(ct)", lookStep, StringComparison.Ordinal) < lookCheck)
-		&& r4look[lookCheck..lookPost].Contains("return Rng.Next(60, 4 * 60);", StringComparison.Ordinal));
-	Check("rep4rep look: a skip is no strike - the profile is set aside like a refused one, one Info line, one GET",
-		(lookBody.Length > 0) && !lookBody.Contains("Strikes", StringComparison.Ordinal) && lookBody.Contains("MarkDeadTarget(task.TargetSteamId", StringComparison.Ordinal)
-		&& lookBody.Contains("Log.Info(new Said(\"{0} doesn't take comments · skipped\"", StringComparison.Ordinal)
-		&& (System.Text.RegularExpressions.Regex.Matches(lookBody, @"Bot\.Web\.\w+Async\(").Count == 1) && lookBody.Contains("Bot.Web.GetAsync(", StringComparison.Ordinal));
-	Check("rep4rep look: an unreadable page only asks the friends list in memory, and still posts",
-		lookBody.Contains("Bot.Friends?.GetFriendRelationship(", StringComparison.Ordinal) && lookBody.Contains("return false;", StringComparison.Ordinal));
-	Check("rep4rep look: a long run of closed profiles gets one real try, so a blocked account still reaches its rest",
-		lookBody.Contains("_closedRun >= ClosedRunToDoubt", StringComparison.Ordinal)
-		&& r4look.Contains("private async Task<int> OnTargetRefusedAsync(Rep4RepTask task) {\n\t\t_closedRun = 0;", StringComparison.Ordinal)
-		&& r4look.Contains("_state!.RecordPost(task.TaskId);\n\t\t_closedRun = 0;", StringComparison.Ordinal));
+	string cLook = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Plugins", "Comments.cs")).Replace("\r\n", "\n");
+	int cPost = cLook.IndexOf("internal static async Task<PluginCommentResult> PostAsync(", StringComparison.Ordinal);
+	string cBody = cPost > 0 ? cLook[cPost..cLook.IndexOf("// ── is the comment box there?", cPost, StringComparison.Ordinal)] : "";
+	Check("plugin comments: the post looks first, inside its turn, and a closed profile sends nothing",
+		(cBody.IndexOf("a.Posting.WaitAsync(0, ct)", StringComparison.Ordinal) is > 0 and int turn) && (cBody.IndexOf("await ClosedAsync(", StringComparison.Ordinal) is > 0 and int look)
+		&& (cBody.IndexOf("await SendAsync(", StringComparison.Ordinal) is > 0 and int send) && (turn < look) && (look < send)
+		&& cBody[look..send].Contains("return new PluginCommentResult(PluginCommentOutcome.CommentsClosed);", StringComparison.Ordinal));
 }
 
 // ── inventory value moves live: each price that lands is in the total and off the "still pricing" count at once ─────
@@ -15324,7 +15238,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		string web = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
 		Check("update file: the dashboard counts as this PC only from this PC - not a phone, the internet, or the internet through a proxy here",
 			At(From("127.0.0.1")) && At(From("::1")) && !At(From("192.168.1.20")) && !At(From("203.0.113.9")) && !At(From("127.0.0.1", "203.0.113.9"))
-			&& web.Contains("string output = AtThisPc(ctx)\n\t\t\t\t? await Commands.RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\").ConfigureAwait(false)\n\t\t\t\t: await Commands.RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false);", StringComparison.Ordinal));
+			&& web.Contains("string output = AtThisPc(ctx)\n\t\t\t\t? await Commands.RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\").ConfigureAwait(false)\n\t\t\t\t: MayInstallAddons(ctx)\n\t\t\t\t\t? await Commands.RunSignedInAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false)\n\t\t\t\t\t: await Commands.RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false);", StringComparison.Ordinal)
+			// 1.9.0: signed in with the password, the Console may install add-ons - but it's still not this PC ('update file')
+			&& File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Contains("await RunAsync(mgr, input, atThisPc: false, addons: true)", StringComparison.Ordinal));
 
 		if (NocatFarm.Core.SelfUpdate.Supported) {
 			string old = await Commands.RunAtThisPcAsync(mgr, $"update file {older}");
@@ -15952,7 +15868,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			("set WebPassword dashpw-91827", "saved", "dashpw-91827", "the dashboard password"),
 			("set TelegramBotToken 123456789:AAbbCCddEEffGGhhIIjjKKllMMnnOOpp", "saved", "AAbbCCddEEffGGhhIIjjKKllMMnnOOpp", "the Telegram bot token"),
 			("set DiscordBotToken MTA5ODc2.discordbot.token-value", "saved", "discordbot.token-value", "the Discord bot token"),
-			("set Rep4RepApiToken r4rtoken55667788", "saved", "r4rtoken55667788", "the rep4rep API token"),
 			("set new SharedSecret c2hhcmVkc2VjcmV0eA==", "saved", "c2hhcmVkc2VjcmV0eA==", "an authenticator secret"),
 			("answer K7B2X", "thanks", "K7B2X", "a Steam Guard code given as an answer"),
 			("/answer mypassw0rd!", "thanks", "mypassw0rd!", "a password given as an answer"),
@@ -17259,7 +17174,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		savedState.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-3));
 		savedState.GetType().GetProperty("Lifetime")!.SetValue(fresh, new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { ["hrs-a"] = 0 });
 		stateField.SetValue(null, fresh);
-		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false, Rep4RepEnabled = true });   // comments are shown with rep4rep on
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		// Comments are shown when the install posts any (1.9.0: a count on disk, from an add-on).
+		Directory.CreateDirectory(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"));
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "comments-hrs-a.json"), """{"Posts":[]}""");
 		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
 			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
 		bots["hrs-a"] = new NocatFarm.Core.Bot("hrs-a", new NocatFarm.Config.BotConfig());
@@ -17299,37 +17217,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── 'rep4rep points': an impossible balance is said to be one, not printed as if it were true ───────────────────────
+// ── rep4rep points: an impossible balance is said to be one, not shown as if it were true ───────────────────────
 {
-	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
-	string answer = """{"points":12,"pendingPoints":-107}""";
-	var fake = new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(answer) }));
-	mgr.Rep4Rep.Token = "test-token";
-	typeof(NocatFarm.Rep4Rep.Rep4RepApi).GetField("_http", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(mgr.Rep4Rep, new HttpClient(fake));
-
-	string odd = await Commands.RunAsync(mgr, "rep4rep points");
-	Check("rep4rep points: a negative pending balance is 0 pending, and the points are shown (rep4rep sends -16 and the like often)",
-		(odd == "rep4rep: 12 points you can spend, 0 still being verified.") && (fake.Calls == 1), odd);
-
-	answer = """{"points":-5,"pendingPoints":3}""";
-	string impossible = await Commands.RunAsync(mgr, "rep4rep points");
-	Check("rep4rep points: negative spendable points are still called impossible, not shown as the balance",
-		impossible.StartsWith("rep4rep gave an impossible balance (-5 points, 3 still being verified)", StringComparison.Ordinal), impossible);
-
-	answer = """{"points":"lots","pendingPoints":3}""";
-	string notNumber = await Commands.RunAsync(mgr, "rep4rep points");
-	Check("rep4rep points: points that aren't a number are called impossible too",
-		notNumber.StartsWith("rep4rep gave an impossible balance (points that aren't a number, 3 still being verified)", StringComparison.Ordinal), notNumber);
-
-	answer = """{"points":12,"pendingPoints":3}""";
-	string fine = await Commands.RunAsync(mgr, "rep4rep points");
-	Check("rep4rep points: a sensible one is shown as it is", fine == "rep4rep: 12 points you can spend, 3 still being verified.", fine);
-
-	MethodInfo believable = typeof(NocatFarm.Web.WebHost).GetMethod("Believable", BindingFlags.NonPublic | BindingFlags.Static)!;
-	Check("rep4rep points: the dashboard's check is the one used - negative points impossible, negative pending isn't",
-		!(bool) believable.Invoke(null, [((int, int)?) (-12, 3)])! && (bool) believable.Invoke(null, [((int, int)?) (12, -107)])!
-		&& (bool) believable.Invoke(null, [((int, int)?) (12, 3)])!);
-	mgr.Rep4Rep.Dispose();
+	Check("rep4rep points: v1's answer read - and a negative pending one is still a balance (rep4rep sends -16 and the like)",
+		(NocatFarm.Addons.Rep4Rep.Rep4RepApi.ReadUser("""{"data":{"points":12,"pendingPoints":-107}}""") == (12, -107)) && NocatFarm.Addons.Rep4Rep.Rep4RepAddon.Believable((12, -107)));
+	Check("rep4rep points: negative spendable points, or points that aren't a number, are impossible",
+		!NocatFarm.Addons.Rep4Rep.Rep4RepAddon.Believable(((int, int)?) (-5, 3)) && !NocatFarm.Addons.Rep4Rep.Rep4RepAddon.Believable(NocatFarm.Addons.Rep4Rep.Rep4RepApi.ReadUser("""{"data":{"points":"lots","pendingPoints":3}}""")));
+	Check("rep4rep points: a 200 with an error and no balance (a bad key) is no answer", NocatFarm.Addons.Rep4Rep.Rep4RepApi.ReadUser("""{"error":"Invalid api token"}""") == null);
 }
 
 // ── 'dlc <account>': a game with no achievements at all is never uncertain ───────────────────────────────────────────
@@ -17437,7 +17331,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		savedState.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(5));
 		savedState.GetType().GetProperty("Lifetime")!.SetValue(fresh, new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { ["fut-a"] = 0 });
 		stateField.SetValue(null, fresh);
-		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false, Rep4RepEnabled = true });
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		Directory.CreateDirectory(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"));
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "comments-fut-a.json"), """{"Posts":[]}""");
 		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
 			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
 		bots["fut-a"] = new NocatFarm.Core.Bot("fut-a", new NocatFarm.Config.BotConfig());
@@ -19113,7 +19009,6 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Hidden("set", $"set TelegramBotTokn {token}", "set (not a setting)");
 		Hidden("set", $"set TelegramBotToken {token}", "set TelegramBotToken ***");
 		Hidden("set", "set DiscordBotToken MTA5ODc2.discordbot.token-value", "set DiscordBotToken ***");
-		Hidden("set", "set Rep4RepApiToken r4rtoken55667788", "set Rep4RepApiToken ***");
 		Hidden("set", "set new SharedSecret c2hhcmVkc2VjcmV0eA==", "set new SharedSecret ***");
 		Hidden("set", "set new SteamPassword\thunter2", "set new SteamPassword ***");
 		Hidden("set", "set new SteamPassword\u00a0hunter2", "set new SteamPassword ***");
@@ -19159,11 +19054,8 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Row("one typo off", "!stauts", "!stauts", false, true);
 		Row("one typo off", "stat alt", "stat ***", false, true);
 		Row("one typo off", "wallt", "wallt", false, true);
-		Row("one typo off", "rep4ep status", "rep4ep ***", false, true);
 		Row("one typo off", "2af", "2af", false, true);
-		Row("one typo off", "r4t", "r4t", false, true);
 		Hidden("one typo off", "2fa9", "(not a command)");
-		Hidden("one typo off", "rep4rep9", "(not a command)");
 		Hidden("one typo off", "ans hunter2", "ans ***");
 		Hidden("one typo off", "sett WebPassword hunter2", "sett ***");
 		Hidden("one typo off", "redem AAAAABBBBBCCCCC", "redem ***");
@@ -19398,19 +19290,18 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("set: a word that is no setting isn't said back, and the account named isn't blamed",
 			notSettings.All(static s => !s.Contains("hunter2", StringComparison.Ordinal) && !s.Contains("'alt'", StringComparison.Ordinal) && s.StartsWith("That's not a", StringComparison.Ordinal)),
 			string.Join(" || ", notSettings));
-		string joinedOn = await Commands.RunAsync(mgr, "set alt Rep4Rep=on");
-		bool onAfterJoined = bots["alt"].Cfg.Rep4Rep;
-		string quotedOff = await Commands.RunAsync(mgr, "set alt \"Rep4Rep\" off");
+		string joinedOn = await Commands.RunAsync(mgr, "set alt AcceptFriendRequests=on");
+		bool onAfterJoined = bots["alt"].Cfg.AcceptFriendRequests;
+		string quotedOff = await Commands.RunAsync(mgr, "set alt \"AcceptFriendRequests\" off");
 		string globalJoined = await Commands.RunAsync(mgr, "set DailyReportHour=7");
 		Check("set: 'Key=value' and a quoted key are the setting they name, for an account and globally",
-			onAfterJoined && !bots["alt"].Cfg.Rep4Rep && joinedOn.StartsWith("alt.Rep4Rep = true", StringComparison.Ordinal) && quotedOff.StartsWith("alt.Rep4Rep = false", StringComparison.Ordinal)
+			onAfterJoined && !bots["alt"].Cfg.AcceptFriendRequests && joinedOn.StartsWith("alt.AcceptFriendRequests = true", StringComparison.Ordinal) && quotedOff.StartsWith("alt.AcceptFriendRequests = false", StringComparison.Ordinal)
 			&& (mgr.Global.DailyReportTime == 7 * 60), $"{joinedOn} / {quotedOff} / {globalJoined}");
 
 		// ── one typo off a command with a digit in its name, or a plugin's: shown, kept, and named in the reply ──
-		string[] digitTypos = [await Commands.RunAsync(mgr, "2af"), await Commands.RunAsync(mgr, "rep4ep status"), await Commands.RunAsync(mgr, "r4t")];
+		string[] digitTypos = [await Commands.RunAsync(mgr, "2af")];
 		Check("one typo off a command with a digit in it: 'did you mean' names it",
-			(digitTypos[0] == "That's not a command - did you mean '2fa'?") && (digitTypos[1] == "That's not a command - did you mean 'rep4rep'?")
-			&& (digitTypos[2] == "That's not a command - did you mean 'r4r'?"), string.Join(" || ", digitTypos));
+			digitTypos[0] == "That's not a command - did you mean '2fa'?", string.Join(" || ", digitTypos));
 		Type pluginHostType = typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!;
 		var pluginHosts = (System.Collections.IList) typeof(NocatFarm.Plugins.PluginHost).GetField("Hosts", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
 		object nightPlugin = Activator.CreateInstance(pluginHostType, [mgr, "harness-typos"])!;
@@ -20715,6 +20606,26 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("packs: the days rule at 0 is off", Packs(2, packPrices, came: _ => null, days: 0).Single().Open);
 		Check("packs: on the market or in a trade offer - never opened, never sold or sent", Packs(2, packPrices, busy: [80]).Single() is { Open: false, Disposable: false });
 		Check("packs: a game on the never-open list stays sealed", Packs(2, packPrices, never: [G]).Single() is { Open: false, Disposable: true });
+		// Choice 1: "only when the cards are worth more" opens on the AVERAGE pull (three random cards, each 1% a foil).
+		// Card cents 12/20/15 pay 10/17/13 after fees; a 30-cent pack pays 26 - the 3 cards' average is about 40, opened.
+		Check("packs: a foil in the pull does not stop the average from deciding", Packs(1, packPrices with { CardsFoil = [40] }).Single().Open);
+		// Choice 3: "even when only the cheapest three are worth more" opens on the WORST pull - 3 x the cheapest card.
+		Check("packs: choice 3 opens when even the three cheapest cards beat the pack (3x 10 > 26)",
+			Packs(3, packPrices).Single() is { Open: true, Why: { } w } && w.ToEnglish().Contains("cheapest", StringComparison.Ordinal));
+		Check("packs: choice 3 keeps a pack that beats even its cheapest three (3x 10 vs 0.79)", !Packs(3, dearPack).Single().Open);
+		Check("packs: choice 4 opens when either the worst or the average beats the pack", Packs(4, packPrices).Single().Open);
+		Check("packs: choice 4 keeps when the cheapest three and the average are both worth less than a dear pack", !Packs(4, dearPack).Single().Open);
+		Check("packs: always and never still win over the new choices", Packs(2, null).Single().Open && !Packs(0, packPrices).Single().Open);
+		Check("packs: a choice left out by a card nobody sells stays shut", Packs(3, packPrices with { Cards = [12, 0, 15] }).Single() is { Open: false, Disposable: false });
+
+		// ── the booster worth maths, on its own (buying and selling both use it) ──
+		Check("packs maths: the worst pull is three times the cheapest card", NocatFarm.Core.BoosterMath.Guarantee([5, 7, 9]) == 15);
+		Check("packs maths: no card priced - no worst pull", NocatFarm.Core.BoosterMath.Guarantee([]) == 0);
+		Check("packs maths: the average of three equal cards is just their sum", NocatFarm.Core.BoosterMath.Average([10, 10, 10], []) == 30);
+		Check("packs maths: when no foil price is known the average is the plain three cards", NocatFarm.Core.BoosterMath.Average([10, 20, 30], []) == NocatFarm.Core.BoosterMath.Average([10, 20, 30], [10, 20, 30]));
+		Check("packs maths: the foil is a 1% chance a PACK, not a card - three 1.00 cards with 2.00 foils average 3.01, never 3.03",
+			(NocatFarm.Core.BoosterMath.Average([100], [200]) == 301) && (NocatFarm.Core.BoosterMath.FoilChance == 0.01));
+		Check("packs maths: a foil cheaper than its card pulls the average down - never up", NocatFarm.Core.BoosterMath.Average([100], [50]) == 299);
 
 		var packFake = new FakeSpareSteam();
 		var toOpen = NocatFarm.Core.Spare.PlanPacks([Pack(80), Pack(81), Pack(82), Pack(83)], 2, 7, [], _ => old, new HashSet<ulong> { 83 }, _ => null, 24, now);
@@ -21237,93 +21148,6 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 
 	// The command.
 	Check("sale events: the 'events [account]' command exists and means this account from its own chat", NocatFarm.Commands.All.Any(c => c.Name == "events" && c.Args == "[account|all]") && NocatFarm.Commands.DefaultsToThisBot("events"));
-}
-
-// ── rep4rep "linked" never depends on the points figure; a negative pending is 0 pending, not "unlinked" ─────────
-{
-	string eRealRoot = NocatFarm.Config.ConfigStore.Root;
-	PropertyInfo eCurrentWeb = typeof(NocatFarm.Web.WebHost).GetProperty("Current")!;
-	object? eRealWeb = eCurrentWeb.GetValue(null);
-	string eTmpRoot = Path.Combine(Path.GetTempPath(), "nf-r4r-linked-" + Guid.NewGuid().ToString("N"));
-	Directory.CreateDirectory(Path.Combine(eTmpRoot, "config"));
-	NocatFarm.Config.ConfigStore.UseRoot(eTmpRoot);
-
-	try {
-		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
-		var eMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
-		string eAnswer = """{"points":5077,"pendingPoints":-16}""";
-		System.Net.HttpStatusCode eStatus = System.Net.HttpStatusCode.OK;
-		var eFake = new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(eStatus) { Content = new StringContent(eAnswer) }));
-		eMgr.Rep4Rep.Token = "test-token-e";
-		typeof(NocatFarm.Rep4Rep.Rep4RepApi).GetField("_http", Inst)!.SetValue(eMgr.Rep4Rep, new HttpClient(eFake));
-		var eWeb = new NocatFarm.Web.WebHost(eMgr, eMgr.Global);
-		MethodInfo eView = typeof(NocatFarm.Web.WebHost).GetMethod("Rep4RepViewAsync", Inst)!;
-		FieldInfo eLastAttempt = typeof(NocatFarm.Web.WebHost).GetField("_lastPointsAttempt", Inst)!;
-		FieldInfo eCache = typeof(NocatFarm.Web.WebHost).GetField("_pointsCache", Inst)!;
-		async Task<(bool Connected, string? Error, int Points, int Pending, bool Known)> eLook() {
-			eLastAttempt.SetValue(eWeb, DateTime.MinValue);   // past the 45-second floor, as a later visit would be
-			if (eCache.GetValue(eWeb) is { } eHeld) {   // and the cached figure an hour old, so it's asked again
-				Type eT = eHeld.GetType();
-				eCache.SetValue(eWeb, Activator.CreateInstance(eT, eT.GetProperty("Points")!.GetValue(eHeld), eT.GetProperty("Pending")!.GetValue(eHeld), DateTime.UtcNow.AddHours(-1)));
-			}
-			var eTask = (Task) eView.Invoke(eWeb, [])!;
-			await eTask;
-			object eR = eTask.GetType().GetProperty("Result")!.GetValue(eTask)!;
-			T P<T>(string n) => (T) eR.GetType().GetProperty(n)!.GetValue(eR)!;
-			return (P<bool>("Connected"), (string?) eR.GetType().GetProperty("Error")!.GetValue(eR), P<int>("Points"), P<int>("Pending"), P<bool>("PointsKnown"));
-		}
-
-		(int, int)? eSensible() => ((int, int)?) typeof(NocatFarm.Web.WebHost).GetProperty("LastSensiblePoints", Inst)!.GetValue(eWeb);
-
-		var eFirst = await eLook();
-		Check("rep4rep linked: empty cache (a restart) + 5077 points, -16 pending - connected, shows 5077 and 0 pending",
-			eFirst.Connected && (eFirst.Error == null) && (eFirst.Points == 5077) && (eFirst.Pending == 0) && eFirst.Known, $"{eFirst}");
-		Check("rep4rep linked: ...and the overview tile's figure (the cache) agrees", eSensible() == (5077, 0), $"{eSensible()}");
-
-		eCache.SetValue(eWeb, null);
-		eAnswer = """{"points":-3,"pendingPoints":10}""";
-		var eOdd = await eLook();
-		Check("rep4rep linked: negative spendable points (truly impossible) - still connected, no error, the points just aren't known",
-			eOdd.Connected && (eOdd.Error == null) && !eOdd.Known, $"{eOdd}");
-
-		eAnswer = """{"points":"many"}""";
-		var eNan = await eLook();
-		Check("rep4rep linked: points that aren't a number - connected, not shown", eNan.Connected && !eNan.Known && (eNan.Error == null), $"{eNan}");
-
-		eAnswer = """{"error":"Invalid api token"}""";
-		var eRefused = await eLook();
-		Check("rep4rep linked: a 200 with an error and no balance (a bad token) - not connected, the error is shown",
-			!eRefused.Connected && (eRefused.Error?.Contains("didn't accept that token", StringComparison.Ordinal) == true), $"{eRefused}");
-
-		eAnswer = """{"points":5077,"pendingPoints":-49}""";
-		var eBack = await eLook();
-		Check("rep4rep linked: it answers again - connected again", eBack.Connected && (eBack.Points == 5077) && (eBack.Pending == 0), $"{eBack}");
-
-		eStatus = System.Net.HttpStatusCode.ServiceUnavailable;
-		var eDown = await eLook();
-		Check("rep4rep linked: rep4rep unreachable - the real null says so, the last sensible points stay",
-			!eDown.Connected && (eDown.Error != null) && (eDown.Points == 5077), $"{eDown}");
-
-		eMgr.Rep4Rep.Token = "test-token-e-replaced";
-		Check("rep4rep linked: a new token forgets the old token's 'no'", eMgr.Rep4Rep.UserAnswered == null);
-		eStatus = System.Net.HttpStatusCode.OK;
-
-		eMgr.Rep4Rep.Token = "";
-		var eNone = await eLook();
-		Check("rep4rep linked: no token - not connected, and no error text (it's the set-up screen)", !eNone.Connected && (eNone.Error == null), $"{eNone}");
-
-		string eJs = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js"));
-		Check("rep4rep linked: the tab, the overview tile and the side rail all show '-' rather than a made-up 0 when the points aren't known",
-			eJs.Contains("r4r.PointsKnown === false ? '-' : r4r.Points", StringComparison.Ordinal)
-			&& eJs.Contains("tile(state.PointsKnown === false ? '-' : state.Points", StringComparison.Ordinal)
-			&& eJs.Contains("<dd>${state.PointsKnown === false ? '-' : state.Points}", StringComparison.Ordinal));
-		eMgr.Rep4Rep.Dispose();
-	} finally {
-		eCurrentWeb.SetValue(null, eRealWeb);
-		NocatFarm.Config.ConfigStore.UseRoot(eRealRoot);
-
-		TestTemp.Gone(eTmpRoot);   // tried again while a late write lets go (slow Macs)
-	}
 }
 
 // ── Steam Family - a stale "in use" from before a reconnect, the wait after they stop, and the reason shown ──────
@@ -22440,6 +22264,18 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Settings.ApplyLegitMode(alwaysHuman, wasLegit: false);
 		Check("turning human mode on takes booster packs from 'only when worth more' to never - 'always', chosen, stays",
 			(turnedHuman.OpenBoosterPacks == 0) && (alwaysHuman.OpenBoosterPacks == 2));
+		var worstHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = NocatFarm.Core.Spare.WorstPull };
+		worstHuman.LegitMode = true;
+		NocatFarm.Config.Settings.ApplyLegitMode(worstHuman, wasLegit: false);
+		var eitherHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = NocatFarm.Core.Spare.EitherPull };
+		eitherHuman.LegitMode = true;
+		NocatFarm.Config.Settings.ApplyLegitMode(eitherHuman, wasLegit: false);
+		Check("turning human mode on also takes the cheapest-three and when-either pack choices to never",
+			(worstHuman.OpenBoosterPacks == 0) && (eitherHuman.OpenBoosterPacks == 0));
+		Check("buying boosters is off by default, one switch under buying cards, explained with its tenth and an example",
+			!new NocatFarm.Config.BotConfig().BuyBooster && NocatFarm.Config.Settings.FindBot("BuyBooster") is { Kind: NocatFarm.Config.SettingKind.Bool, ShowWhen: "BuyCards=true", Part: "Buying cards" } bb
+				&& bb.Tooltip.Contains("at least a tenth less", StringComparison.Ordinal) && bb.Tooltip.Contains("3 packs at 0.10", StringComparison.Ordinal)
+				&& (NocatFarm.Config.Settings.FindBot("BuyBoosterTaxes") == null));
 		Check("the keep list explains full names", Def("SpareKeepItems").Tooltip.StartsWith("Full item names as the inventory shows them, separated by commas, e.g. Sans, Gordon Freeman (Foil). A name keeps that item in every game.", StringComparison.Ordinal));
 		Check("only Steam's own items", Def("SpareItems").Tooltip.Contains("Only Steam's own items (cards, backgrounds, emoticons) - never game items or CS2 skins.", StringComparison.Ordinal)
 			&& Def("SpareItems").Tooltip.Contains("Turning it on first shows what it would do, and asks you to confirm; off stops it at once.", StringComparison.Ordinal));
@@ -22715,12 +22551,6 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	string ftApp = FtRead("src", "NocatFarm", "wwwroot", "app.js");
 	NocatFarm.Config.SettingDef FtBot(string n) => NocatFarm.Config.Settings.FindBot(n)!;
 	NocatFarm.Config.SettingDef FtGlobal(string n) => NocatFarm.Config.Settings.FindGlobal(n)!;
-
-	// 1. the rail's rep4rep points say whose points they are, like the Overview tile
-	int ftRail = ftApp.IndexOf("Points you can spend on rep4rep.", StringComparison.Ordinal);
-	string ftRailLine = ftRail < 0 ? "" : ftApp[ftRail..ftApp.IndexOf('\n', ftRail)];
-	Check("readability: the rail labels rep4rep's points \"rep4rep points\", not just \"Points\"",
-		ftRailLine.Contains("t('rep4rep points')", StringComparison.Ordinal) && !ftApp.Contains("t('Points')", StringComparison.Ordinal), ftRailLine);
 
 	// 2. one name for non-human accounts: robot accounts
 	// 1.8.2: robot mode only, and hidden - nobody needs to tune it.
@@ -24778,6 +24608,11 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	Check("levelling: one pack a game a day - made 23 hours ago it waits, 25 hours ago it's picked again",
 		(day23.Ranked[0].App == 10) && (day25.Ranked[0].App == 90));
 
+	// 1.9.0: a game with booster packs bought instead of cards still to open is never packed for meanwhile - a pack made
+	// here and one bought are never taken for each other.
+	var dayBought = NocatFarm.Modules.BoosterPick.Rank(bpage, bbadges.Levels, bcards, [], new Dictionary<uint, DateTime>(), bnow, bought: [90]);
+	Check("levelling: a game whose bought booster packs are still to open is left out (and counted)",
+		(dayBought.Ranked[0].App == 10) && dayBought.Ranked.All(static c => c.App != 90) && (dayBought.Bought == 1));
 	// Gems: the closest only, its price plus the gems kept.
 	var gemsShort = NocatFarm.Modules.BoosterPick.Choose(branking, 1299, 100, dayOpen: true);
 	var gemsJust = NocatFarm.Modules.BoosterPick.Choose(branking, 1300, 100, dayOpen: true);
@@ -25671,7 +25506,6 @@ await CommandSweep.RunAsync(Check);
 	Check("Steam chat: 'pause 30m' and 'pause 2h' pause this account, not an account called '30m'",
 		(Commands.ThisBotFilledIn(chatMgr, "pause 30m", "robo") == "pause robo 30m") && (Commands.ThisBotFilledIn(chatMgr, "pause 2h", "robo") == "pause robo 2h"),
 		Commands.ThisBotFilledIn(chatMgr, "pause 30m", "robo"));
-	chatMgr.Rep4Rep.Dispose();
 }
 
 // ── 1.8.1: how the settings page reads ──
@@ -27487,6 +27321,34 @@ await CommandSweep.RunAsync(Check);
 		Check("plan: from which level, XP for the money, in the wallet's currency", (bcP.Steps[0].Level == 2) && (bcP.Steps[0].XpPerUnit == 1111) && (bcP.Currency == 20));
 		Check("plan: never a badge already at level 5", bcP.Steps.All(static s => s.App != 300));
 
+		// ── buying booster packs instead of cards ("Buy booster packs when they're cheaper", 1.9.0) ──
+		// app 100 (5 cards) misses one card at 9. A pack at 3 is 3 random cards of the 5: it brings the missing one with
+		// 1 - 0.8^3 = 48.8%, so one pack and the card bought afterwards 51.2% of the time is about 3 + 4.6 = 7.6 - a tenth
+		// and more under the card's 9. A pack at 4 is about 8.6: not a tenth cheaper, so the card.
+		var bcPackHash = NocatFarm.Modules.GemsChoice.PackHash(100, "Hundred");
+		var bcPack = BcMarket();
+		bcPack.Books[bcPackHash] = FakeCardMarket.B(3);
+		var bcPackPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true }, bcPack);
+		Check("plan buying packs: one pack that's expected to come out a tenth cheaper replaces the card - spending the pack now, ranked at the pack and the card it may leave",
+			(bcPackPlan.Steps.Count == 2) && bcPackPlan.Steps[0] is { IsPack: true, Packs: 1, PackCents: 3, Cost: 3, LevelCost: 8, Straight: 9 } && (bcPackPlan.Steps[0].Cards.Single().Hash == "100-Card 5")
+			&& !bcPackPlan.Steps[1].IsPack && bcPackPlan.Notes.Any(static n => n.Contains("booster packs instead", StringComparison.Ordinal)),
+			string.Join(" | ", bcPackPlan.Steps.Select(static s => $"{s.App} pack={s.IsPack}x{s.Packs}@{s.Cost}/{s.LevelCost}")) + " " + string.Join("; ", bcPackPlan.Notes));
+		Check("plan buying packs: off by default - no substitution", bcP.Steps.All(static s => !s.IsPack) && !new NocatFarm.Config.BotConfig().BuyBooster);
+		var bcNoPack = BcMarket();   // no booster priced for it
+		var bcNoPackPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true }, bcNoPack);
+		Check("plan buying packs: no booster on the market - the cards are bought as before, and the look isn't cut short",
+			bcNoPackPlan.Steps.All(static s => !s.IsPack) && (bcNoPackPlan.Steps.Count == 2) && !bcNoPackPlan.Short, string.Join("; ", bcNoPackPlan.Notes));
+		var bcCloseMarket = BcMarket();
+		bcCloseMarket.Books[bcPackHash] = FakeCardMarket.B(4);   // about 8.6 against 9 - cheaper, but not by a tenth
+		Check("plan buying packs: a pack only a little cheaper than the cards (under a tenth) is not bought",
+			(await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true }, bcCloseMarket)).Steps.All(static s => !s.IsPack));
+		var bcPackOtherMoney = BcMarket();
+		bcPackOtherMoney.Books[bcPackHash] = new NocatFarm.Modules.CardMarket.Book(3, 1, 10, [(3, 10)]);   // in US dollars, the wallet is CAD
+		var bcPackOtherPlan = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true }, bcPackOtherMoney);
+		Check("plan buying packs: a pack priced in another currency than the wallet's is never weighed - the cards, and the look carries on",
+			bcPackOtherPlan.Steps.All(static s => !s.IsPack) && (bcPackOtherPlan.Steps.Count == 2) && !bcPackOtherPlan.Short
+			&& bcPackOtherPlan.Skipped.Any(static s => s.Contains("not the wallet's", StringComparison.Ordinal)), string.Join("; ", bcPackOtherPlan.Skipped));
+
 		var bcTight = await BcPlan(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyDailyLimit = 0.10f }, BcMarket());
 		Check("plan: a set that costs more than a day's limit is passed over, and said",
 			(bcTight.Steps.Count == 1) && (bcTight.Steps[0].App == 100) && bcTight.Notes.Any(static n => n.Contains("Two Hundred", StringComparison.Ordinal) && n.Contains("a day's limit", StringComparison.Ordinal)),
@@ -28650,10 +28512,11 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 {
 	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
 	string Src(params string[] parts) => File.ReadAllText(Path.Combine([src, .. parts])).Replace("\r\n", "\n");
-	string r4r = Src("Rep4Rep", "Rep4RepApi.cs"), r4rMod = Src("Modules", "Rep4RepModule.cs");
+	string Addon(params string[] parts) => File.ReadAllText(Path.Combine([src, "..", "..", "addons", "rep4rep", .. parts])).Replace("\r\n", "\n");
+	string r4r = Addon("Rep4RepApi.cs"), r4rMod = Addon("Commenter.cs");
 	Check("rep4rep 1.8.5: no answer from rep4rep.com (a 503) isn't 'not registered' - the profile isn't added again, the token isn't blamed",
-		r4r.Contains("return (null, HasToken);", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || unanswered) {", StringComparison.Ordinal)
-		&& r4rMod.Contains("(string? id, _unanswered) = await lookup.WaitAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal)
+		r4r.Contains("return (null, HasToken);", StringComparison.Ordinal) && r4r.Contains("if (id != null || !autoAdd || unanswered || KeyRefused) {", StringComparison.Ordinal)
+		&& r4rMod.Contains("(string? id, _unanswered, bool linked) = await lookup.WaitAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal)
 		&& r4rMod.Contains("if (_unanswered) {", StringComparison.Ordinal) && !r4r.Contains("public bool Unanswered", StringComparison.Ordinal));
 	string buyer = Src("Modules", "CardBuyer.cs");
 	Check("buying 1.8.5: the week's or the day's limit spent is said once in those words, not 'waits for the set finder'",
@@ -28924,10 +28787,10 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 // fails part way reads the key and the settings from disk again ──
 {
 	string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
-	string r4r = File.ReadAllText(Path.Combine(src, "Modules", "Rep4RepModule.cs"));
+	string r4r = File.ReadAllText(Path.Combine(src, "..", "..", "addons", "rep4rep", "Commenter.cs"));
 	string backup = File.ReadAllText(Path.Combine(src, "Core", "Backup.cs"));
 	Check("rep4rep 1.8.6: 'rep4rep rest' keeps the last 24h of comments counted - 'rep4rep clear' early can't post a second full day",
-		!r4r.Contains("ClearWindow()", StringComparison.Ordinal) && !File.ReadAllText(Path.Combine(src, "Rep4Rep", "Rep4RepState.cs")).Contains("void ClearWindow", StringComparison.Ordinal));
+		!r4r.Contains("ClearWindow()", StringComparison.Ordinal) && !File.ReadAllText(Path.Combine(src, "..", "..", "addons", "rep4rep", "State.cs")).Contains("void ClearWindow", StringComparison.Ordinal));
 	int fin = backup.IndexOf("if (wrote && !replaced) {", StringComparison.Ordinal);
 	Check("restore 1.8.6: stopped part way, the key and the settings are read from disk again before the accounts start",
 		(fin > 0) && backup.IndexOf("Secrets.ForgetKey();", fin, StringComparison.Ordinal) is > 0 and var k && (k - fin < 600)
@@ -28950,6 +28813,10 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		money.Contains("12.00 CAD to spend", StringComparison.Ordinal) && money.Contains("about 21 badge level(s) - 2,100 XP - for about 12.00 CAD: level 10 -> about 20", StringComparison.Ordinal)
 		&& money.Contains("18 of them at today's usual 0.60 CAD a level", StringComparison.Ordinal) && money.Contains("about 11 day(s) to buy - the week's 8.00 CAD sets the pace", StringComparison.Ordinal)
 		&& zero.Contains("spends nothing now", StringComparison.Ordinal) && noLevel.Contains("buys no badge level", StringComparison.Ordinal), money + " | " + zero + " | " + noLevel);
+	// Live on old (1.8.9): nothing priced yet said "that buys no badge level" - it can't tell yet.
+	string unpriced = NocatFarm.Commands.AddMoneySaid("old", gp with { Costs = [], Usual = 0, Wallet = 0, Keep = 0 }, 1000, 150, 800, robotCfg);
+	Check("addmoney: with no badge level priced yet it says it can't tell, not that the money buys nothing",
+		unpriced.Contains("can't tell yet what that buys", StringComparison.Ordinal) && !unpriced.Contains("buys no badge level", StringComparison.Ordinal), unpriced);
 
 	// Listings waiting on the phone: once when one has waited 3 hours, not again while the same ones wait, again for a new one.
 	DateTime pn = new(2026, 10, 27, 12, 0, 0, DateTimeKind.Utc);
@@ -29178,13 +29045,1190 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	}
 }
 
+// ── the robot farming clock window keeps at least half of itself, whatever the day's jitter ─────────────────────────
+{
+	// 09-10 with the opening moved 40 minutes later and the close 30 earlier: it used to be shut all day (09:40-09:30).
+	MethodInfo inClock = typeof(NocatFarm.Modules.CardFarmer).GetMethod("InClockWindow", BindingFlags.NonPublic | BindingFlags.Static)!;
+	bool InClock(int minute, int from, int until, int open, int close) => (bool) inClock.Invoke(null, [minute, from, until, open, close])!;
+	bool oneHourOpens = Enumerable.Range(0, 46).All(o => Enumerable.Range(-45, 46).All(c => Enumerable.Range(9 * 60, 60).Count(m => InClock(m, 9, 10, o, c)) >= 30));
+	Check("cards: a one-hour farming window still opens for at least half an hour on every day's jitter (it never opened on about one day in four)",
+		oneHourOpens && !InClock((9 * 60) + 10, 9, 10, 40, -30) && InClock((9 * 60) + 20, 9, 10, 40, -30) && !InClock((9 * 60) + 50, 9, 10, 40, -30),
+		$"{oneHourOpens}");
+
+	// A long window still moves each edge by up to 45 minutes, and one past midnight still wraps.
+	Check("cards: a long window keeps its 45-minute jitter, and a window past midnight still wraps",
+		!InClock((9 * 60) + 44, 9, 23, 45, -45) && InClock((9 * 60) + 45, 9, 23, 45, -45) && !InClock((22 * 60) + 15, 9, 23, 45, -45) && InClock((22 * 60) + 14, 9, 23, 45, -45)
+		&& InClock((23 * 60) + 30, 22, 6, 20, -20) && InClock(2 * 60, 22, 6, 20, -20) && !InClock((5 * 60) + 50, 22, 6, 20, -20) && !InClock(12 * 60, 22, 6, 20, -20)
+		&& !InClock((22 * 60) + 10, 22, 6, 20, -20));
+
+	// The window has no taskbar button: minimised (Win+Down) it was a stub at the bottom of the desktop; with "Minimise to the
+	// tray" on and a tray icon there, it goes to the tray, and the tray's Show restores it.
+	string mainWindow = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs")).Replace("\r\n", "\n");
+	int sized = mainWindow.IndexOf("case WmSize: {", StringComparison.Ordinal);
+	Check("window: minimised with \"Minimise to the tray\" on, it hides to the tray instead of sitting at the bottom of the desktop",
+		(sized > 0) && mainWindow.IndexOf("if ((wParam == new IntPtr(SizeMinimized)) && Live.Global.MinimizeToTray && Commands.TrayPresent) {\n\t\t\t\t\tHide();", sized, StringComparison.Ordinal) is > 0 and var at
+		&& (at - sized < 600) && mainWindow.Contains("private const int SizeMinimized = 1;", StringComparison.Ordinal)
+		&& mainWindow.Contains("ShowWindow(_hwnd, IsIconic(_hwnd) ? SwRestore : SwShow);", StringComparison.Ordinal));
+
+	// Started with --path somewhere else, the startup entry starts that folder too - it used to start the empty one by the program.
+	Type winIntegration = typeof(Rng).Assembly.GetType("NocatFarm.Windows.WindowsIntegration")!;
+	MethodInfo startup = winIntegration.GetMethod("StartupCommandFor", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string progDir = Path.Combine(Path.GetTempPath(), "nf app");
+	string dataDir = Path.Combine(Path.GetTempPath(), "nf data (2)");
+	string exePath = Path.Combine(progDir, "nocatFarm.exe");
+	string Cmd(string root) => (string) startup.Invoke(null, [exePath, root, progDir + Path.DirectorySeparatorChar])!;
+	Check("startup entry: a copy started with --path elsewhere starts that folder at sign-in; one using its own folder stays as it was",
+		(Cmd(progDir) == $"\"{exePath}\" --minimized") && (Cmd(dataDir) == $"\"{exePath}\" --minimized --path \"{Path.GetFullPath(dataDir)}\"")
+		&& ((string) winIntegration.GetMethod("ExeOf", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [Cmd(dataDir)])! == exePath),
+		Cmd(dataDir));
+}
+
+// ── rep4rep's v1 API (the old pub-api answered 404 from November 2026, live on old and kylro) ─────────────────────────
+{
+	List<(string Method, string Url, string Auth, string Body)> asked = [];
+	string profiles = """{"data":[{"steamId":"76561198000000001","name":"you","commentsToday":3}]}""";
+	string tasks = """{"data":[{"requestId":"01HV8Z","target":{"steamId":"76561198000000002","name":"someone","commentsUrl":"x"},"comment":{"id":4455,"text":"+rep great teammate"},"points":16,"ticket":"tk1"},{"requestId":"bad","target":{},"comment":{"id":1,"text":"x"}}]}""";
+	System.Net.HttpStatusCode status = System.Net.HttpStatusCode.OK;
+	var fake = new FakePing(async (r, _) => {
+		asked.Add((r.Method.Method, r.RequestUri!.ToString(), r.Headers.Authorization?.ToString() ?? "", r.Content == null ? "" : await r.Content.ReadAsStringAsync()));
+		string path = r.RequestUri!.AbsolutePath;
+		string body = path.EndsWith("/tasks", StringComparison.Ordinal) && (r.Method == HttpMethod.Get) ? tasks
+			: path.EndsWith("/steam-profiles", StringComparison.Ordinal) ? profiles
+			: path.EndsWith("/user", StringComparison.Ordinal) ? """{"data":{"points":1250,"pendingPoints":44}}"""
+			: """{"data":{"id":1}}""";
+		return new HttpResponseMessage(status) { Content = new StringContent(body) };
+	});
+	using var api = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(fake) { Token = "key-123" };
+
+	(int Points, int PendingPoints)? user = await api.GetUserAsync();
+	(string? id, bool unanswered) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	List<NocatFarm.Addons.Rep4Rep.Rep4RepTask> list = await api.GetTasksAsync(id ?? "");
+	bool done = await api.CompleteTaskAsync(list[0], id!, CancellationToken.None);
+	var post = asked[^1];
+	Check("rep4rep v1: the account, the profile by its SteamID64, its tasks and a posted comment, at api.rep4rep.com/v1 with the key in the header, never the address",
+		(user == (1250, 44)) && (id == "76561198000000001") && !unanswered && (list.Count == 1) && (list[0].TaskId == "01HV8Z") && (list[0].TargetSteamId == 76561198000000002)
+		&& (list[0].TargetName == "someone") && (list[0].CommentText == "+rep great teammate") && (list[0].RequiredCommentId == "4455") && (list[0].Ticket == "tk1")
+		&& done && (post.Method == "POST") && post.Url.EndsWith("/v1/tasks", StringComparison.Ordinal)
+		&& post.Body.Contains("steamId=76561198000000001", StringComparison.Ordinal) && post.Body.Contains("requestId=01HV8Z", StringComparison.Ordinal)
+		&& post.Body.Contains("commentId=4455", StringComparison.Ordinal) && post.Body.Contains("ticket=tk1", StringComparison.Ordinal)
+		&& asked.All(static a => a.Url.StartsWith("https://api.rep4rep.com/v1/", StringComparison.Ordinal) && (a.Auth == "Bearer key-123") && !a.Url.Contains("key-123", StringComparison.Ordinal))
+		&& asked.Any(static a => a.Url.EndsWith("/v1/steam-profiles/76561198000000001/tasks?limit=25", StringComparison.Ordinal)),
+		string.Join(" | ", asked.Select(static a => $"{a.Method} {a.Url}")));
+
+	// A profile it doesn't have is added by POST /steam-profiles profile=<id>; a turned-down key is rep4rep answering (the token's
+	// fault), not rep4rep being down; a refused comment (409) isn't credited.
+	asked.Clear();
+	(string? added, _) = await api.ResolveAsync(76561198000000009, true, CancellationToken.None);
+	bool addPosted = asked.Any(static a => (a.Method == "POST") && a.Url.EndsWith("/v1/steam-profiles", StringComparison.Ordinal) && (a.Body == "profile=76561198000000009"));
+	status = System.Net.HttpStatusCode.Unauthorized;
+	(string? noKey, bool down) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	status = System.Net.HttpStatusCode.Conflict;
+	bool refused = await api.CompleteTaskAsync(new NocatFarm.Addons.Rep4Rep.Rep4RepTask { TaskId = "01HV8Z", RequiredCommentId = "4455" }, "76561198000000001");
+	status = System.Net.HttpStatusCode.ServiceUnavailable;
+	(_, bool downNow) = await api.ResolveAsync(76561198000000001, false, CancellationToken.None);
+	Check("rep4rep v1: a new profile is added with POST /steam-profiles; a refused key isn't 'not answering'; a 409 isn't credited; a 503 is 'not answering'",
+		(added == null) && addPosted && (noKey == null) && !down && !refused && downNow, string.Join(" | ", asked.Select(static a => $"{a.Method} {a.Url} {a.Body}")));
+}
+
+// ── 1.9.0: rep4rep is an add-on - the app's rules for a plugin's profile comment, the 1.8.x move, the signed add-on list ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-addons-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	NocatFarm.Config.GlobalConfig wasLive = NocatFarm.Config.Live.Global;
+
+	try {
+		NocatFarm.Plugins.Comments.Forget();
+		const ulong cTarget = 76561198000000002;
+		NocatFarm.Core.Bot CBot(string name, bool online = true, bool human = false) {
+			var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { LegitMode = human });
+			if (online) {
+				typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+			}
+			return b;
+		}
+
+		// ── the app's rules over a plugin's comment ──
+		NocatFarm.Core.Bot cOff = CBot("c-offline", online: false);
+		var offline = NocatFarm.Plugins.Comments.Check(cOff);
+		Check("plugin comment: an account that isn't signed in - no", !offline.Allowed && offline.Reason.Contains("isn't signed in", StringComparison.Ordinal), offline.Reason);
+
+		NocatFarm.Core.Bot cPaused = CBot("c-paused");
+		typeof(NocatFarm.Core.Bot).GetProperty("Paused")!.SetValue(cPaused, true);
+		var paused = NocatFarm.Plugins.Comments.Check(cPaused);
+		NocatFarm.Core.Bot cDisabled = CBot("c-disabled");
+		cDisabled.Cfg.Enabled = false;
+		var disabled = NocatFarm.Plugins.Comments.Check(cDisabled);
+		Check("plugin comment: a paused or switched-off account - no", !paused.Allowed && !disabled.Allowed && paused.Reason.Contains("paused or switched off", StringComparison.Ordinal), paused.Reason);
+
+		NocatFarm.Core.Bot cFree = CBot("c-free");
+		var free = NocatFarm.Plugins.Comments.Check(cFree);
+		Check("plugin comment: online, not paused, nothing posted yet, no human mode - yes", free.Allowed && (free.PostedToday == 0) && (free.DailyLimit == 25), free.Reason);
+
+		NocatFarm.Core.Bot cPlain = CBot("c-plaingap");
+		NocatFarm.Plugins.Comments.Count("c-plaingap", DateTime.UtcNow.AddSeconds(-50));
+		var plainGap = NocatFarm.Plugins.Comments.Check(cPlain);
+		Check("plugin comment: without human mode, never two within 2 minutes", !plainGap.Allowed && plainGap.Reason.Contains("every 2 minutes", StringComparison.Ordinal)
+			&& (plainGap.RetryAt is { } pr) && (pr > DateTime.UtcNow) && (pr < DateTime.UtcNow.AddMinutes(2)), plainGap.Reason);
+
+		NocatFarm.Core.Bot cHuman = CBot("c-humangap", human: true);
+		NocatFarm.Plugins.Comments.Count("c-humangap", DateTime.UtcNow.AddMinutes(-20));
+		var humanGap = NocatFarm.Plugins.Comments.Check(cHuman);
+		Check("plugin comment: in human mode, a person's gap - 35 minutes - after the last one", !humanGap.Allowed && humanGap.Reason.Contains("human mode spaces comments out", StringComparison.Ordinal), humanGap.Reason);
+
+		NocatFarm.Core.Bot cAsleep = CBot("c-humanday", human: true);
+		var humanDay = NocatFarm.Plugins.Comments.Check(cAsleep);
+		Check("plugin comment: in human mode, only while the account is up and settled in (no day running here - no)", !humanDay.Allowed && (humanDay.Reason.Length > 0), humanDay.Reason);
+
+		NocatFarm.Core.Bot cCap = CBot("c-cap");
+		for (int i = 0; i < 25; i++) {
+			NocatFarm.Plugins.Comments.Count("c-cap", DateTime.UtcNow.AddHours(-23).AddMinutes(i * 30));
+		}
+		var capped = NocatFarm.Plugins.Comments.Check(cCap);
+		Check("plugin comment: 25 in the last 24 hours - no more, until the oldest ages out", !capped.Allowed && capped.Reason.Contains("at most 25", StringComparison.Ordinal)
+			&& (capped.PostedToday == 25) && (capped.RetryAt is { } cr) && (Math.Abs((cr - DateTime.UtcNow.AddHours(1)).TotalMinutes) < 2), capped.Reason);
+		NocatFarm.Plugins.Comments.Forget();
+		var cappedAgain = NocatFarm.Plugins.Comments.Check(cCap);
+		Check("plugin comment: the count is on disk - a restart (memory forgotten) still says 25", !cappedAgain.Allowed && (cappedAgain.PostedToday == 25));
+
+		File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("c-broken"), "{ not json");
+		var broken = NocatFarm.Plugins.Comments.Check(CBot("c-broken"));
+		Check("plugin comment: a count that can't be read stops comments rather than guessing none", !broken.Allowed && broken.Reason.Contains("can't read", StringComparison.Ordinal), broken.Reason);
+
+		var unknown = NocatFarm.Plugins.Comments.Check(null);
+		Check("plugin comment: no such account - no", !unknown.Allowed);
+
+		var self = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", 0, "+rep", CancellationToken.None);
+		var group = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", 103582791429521408, "+rep", CancellationToken.None);
+		var blank = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", cTarget, "   ", CancellationToken.None);
+		var huge = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", cTarget, new string('x', 1001), CancellationToken.None);
+		var control = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", cTarget, "+rep\u0007", CancellationToken.None);
+		Check("plugin comment: only an individual's profile, and 1 to 1000 characters of text - nothing sent otherwise",
+			new[] { self, group, blank, huge, control }.All(static r => r.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow),
+			string.Join(" | ", new[] { self, group, blank, huge, control }.Select(static r => $"{r.Outcome} {r.Detail}")));
+		Check("plugin comment: its own profile isn't a target", !NocatFarm.Plugins.Comments.IsTarget(76561198000000005, 76561198000000005)
+			&& NocatFarm.Plugins.Comments.IsTarget(cTarget, 76561198000000005));
+
+		var postingNow = NocatFarm.Plugins.Comments.Of("c-free").Posting;
+		await postingNow.WaitAsync();
+		var busy = await NocatFarm.Plugins.Comments.PostAsync(cFree, "test", cTarget, "+rep", CancellationToken.None);
+		postingNow.Release();
+		Check("plugin comment: one at a time per account - a second while one goes out is told, not queued",
+			(busy.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow) && busy.Detail.Contains("going out right now", StringComparison.Ordinal) && (postingNow.CurrentCount == 1), busy.Detail);
+
+		var pausedPost = await NocatFarm.Plugins.Comments.PostAsync(cPaused, "test", cTarget, "+rep", CancellationToken.None);
+		var cappedPost = await NocatFarm.Plugins.Comments.PostAsync(cCap, "test", cTarget, "+rep", CancellationToken.None);
+		Check("plugin comment: a post asked for anyway goes through the same rules - paused and capped accounts send nothing",
+			(pausedPost.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow) && (cappedPost.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow)
+			&& (NocatFarm.Plugins.Comments.Window("c-cap").Count == 25));
+
+		// What Steam's answer means.
+		(NocatFarm.Plugins.PluginCommentOutcome o, string? e) R(string? body, bool sent = true) => NocatFarm.Plugins.Comments.Read(body, sent);
+		Check("plugin comment: Steam's answers - posted, never sent, sent without an answer, an odd answer",
+			(R("""{"success":true}""").o == NocatFarm.Plugins.PluginCommentOutcome.Posted) && (R(null, false).o == NocatFarm.Plugins.PluginCommentOutcome.NotSent)
+			&& (R(null).o == NocatFarm.Plugins.PluginCommentOutcome.Unknown) && (R("<html>").o == NocatFarm.Plugins.PluginCommentOutcome.Unknown));
+		Check("plugin comment: Steam's refusals - the daily limit, too fast, blocked, a closed profile",
+			(R("""{"success":false,"error":"You've exceeded the maximum number of comments you can post to non-friends"}""").o == NocatFarm.Plugins.PluginCommentOutcome.DailyLimit)
+			&& (R("""{"success":false,"error":"You've been posting too frequently"}""").o == NocatFarm.Plugins.PluginCommentOutcome.RateLimited)
+			&& (R("""{"success":false,"error":"Your account is restricted from posting comments"}""").o == NocatFarm.Plugins.PluginCommentOutcome.AccountBlocked)
+			&& (R("""{"success":false,"error":"This profile is private."}""") is { o: NocatFarm.Plugins.PluginCommentOutcome.Refused, e: "This profile is private." }));
+		Check("plugin comment: after 5 closed profiles in a row the next is tried, so an account Steam won't let comment still finds out",
+			!NocatFarm.Plugins.Comments.Doubts(4) && NocatFarm.Plugins.Comments.Doubts(5));
+
+		// Through the plugin API, the same rules.
+		var cMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var cBots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(cMgr)!;
+		cBots["c-cap"] = cCap;
+		cBots["c-paused"] = cPaused;
+		var cHost = (NocatFarm.Plugins.IPluginHost) Activator.CreateInstance(typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!, [cMgr, "comment-test"])!;
+		var viaApi = await cHost.PostProfileCommentAsync("c-cap", cTarget, "+rep");
+		Check("plugin comment: through IPluginHost - the ceiling holds, CanComment says why, a paused account shows as paused",
+			(viaApi.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow) && !cHost.CanComment("c-cap").Allowed && !cHost.CanComment("nobody").Allowed
+			&& (cHost.Account("c-paused")?.IsPaused == true) && (cHost.Account("c-cap")?.IsPaused == false), viaApi.Detail);
+
+		// Per-account and secret plugin settings.
+		cHost.AddSetting(new NocatFarm.Plugins.PluginSetting("Key", "Key", "", NocatFarm.Plugins.PluginSettingKind.Secret));
+		cHost.AddSetting(new NocatFarm.Plugins.PluginSetting("On", "On", "", NocatFarm.Plugins.PluginSettingKind.Bool, "false", PerAccount: true));
+		bool setKey = cHost.SetSetting("Key", "secret-key-1234567");
+		bool setOn = cHost.SetSetting("On", "true", "c-cap");
+		bool noAccount = cHost.SetSetting("On", "true", "nobody") || cHost.SetSetting("On", "true") || cHost.SetSetting("Key", "x", "c-cap");
+		string settingsFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "comment-test.settings.json");
+		Check("plugin settings: a secret is kept encrypted and read back plain; a per-account one is per account",
+			setKey && setOn && !noAccount && (cHost.Setting("Key") == "secret-key-1234567") && (cHost.Setting("On", "c-cap") == "true") && (cHost.Setting("On", "c-paused") == "false")
+			&& (!NocatFarm.Core.Secrets.Available || !File.ReadAllText(settingsFile).Contains("secret-key-1234567", StringComparison.Ordinal)));
+		await cMgr.DisposeAsync();
+
+		// ── the 1.8.x config moves into the add-on, and an old one never trips anything ──
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, $$"""
+			{ "Rep4RepEnabled": true, "Rep4RepApiToken": "old-r4r-key-998877", "Rep4RepAutoAddProfiles": false, "Rep4RepPointsRefreshMinutes": 30,
+			  "Rep4RepHoldUntil": "{{DateTime.UtcNow.AddHours(5):O}}", "Rep4RepHoldFrom": "{{DateTime.UtcNow.AddHours(-1):O}}", "Rep4RepPauseHours": 6, "SendRep4Rep": true, "Theme": "dark" }
+			""");
+		string altFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "alt.json");
+		File.WriteAllText(altFile, """{ "SteamLogin": "altlogin", "Rep4Rep": true, "Rep4RepDailyCap": 7, "Rep4RepStartHour": 9, "Rep4RepGapMinMinutes": "lots", "Rep4RepLearnCap": false }""");
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "quiet.json"), """{ "SteamLogin": "quietlogin", "Rep4Rep": false }""");
+		long recent = DateTime.UtcNow.AddHours(-2).Ticks, old = DateTime.UtcNow.AddHours(-30).Ticks;
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "rep4rep-alt.json"),
+			$$"""{ "Posts": [{{recent}}, {{old}}], "PostedTasks": { "t1": {{recent}} }, "Strikes": 1, "Cap": 6, "CapLearned": true }""");
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "rep4rep-quiet.json"), "{ broken");
+		NocatFarm.Plugins.Comments.Forget();
+
+		NocatFarm.Config.GlobalConfig mg = NocatFarm.Config.ConfigStore.LoadGlobal();
+		Dictionary<string, NocatFarm.Config.BotConfig> mBots = NocatFarm.Config.ConfigStore.LoadBots();
+		string gText = File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath), altText = File.ReadAllText(altFile);
+		var settings = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.settings.json")))!;
+		string pluginState = File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.json"));
+		Check("1.8.x move: an old config loads, its other settings kept, and the rep4rep keys are gone from it",
+			(mg.Theme == "dark") && mBots.ContainsKey("alt") && mBots.ContainsKey("quiet") && !gText.Contains("Rep4Rep", StringComparison.Ordinal) && !altText.Contains("Rep4Rep", StringComparison.Ordinal),
+			gText.Length + " / " + altText);
+		Check("1.8.x move: the API key is the add-on's, still encrypted", (NocatFarm.Core.Secrets.Unprotect(settings["ApiKey"]) == "old-r4r-key-998877")
+			&& (!NocatFarm.Core.Secrets.Available || !File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.settings.json")).Contains("old-r4r-key-998877", StringComparison.Ordinal)));
+		Check("1.8.x move: the add-on's global and per-account settings, as they were",
+			(settings["AutoAddProfiles"] == "false") && (settings["PointsRefreshMinutes"] == "30") && (settings["alt:On"] == "true") && (settings["alt:DailyCap"] == "7")
+			&& (settings["alt:StartHour"] == "9") && (settings["alt:LearnCap"] == "false") && (settings["quiet:On"] == "false") && (settings["alt:GapMinMinutes"] == "lots"),
+			string.Join(", ", settings.Where(static kv => kv.Key != "ApiKey").Select(static kv => $"{kv.Key}={kv.Value}")));
+		Check("1.8.x move: 'Send rep4rep comments' is 'Send add-on messages'", mg.SendAddons);
+		var moved = NocatFarm.Addons.Rep4Rep.AddonState.Read(pluginState);
+		Check("1.8.x move: the comment record moves to the add-on's state, the hold with it; an unreadable one rests that account a day",
+			(moved != null) && moved.Accounts.TryGetValue("alt", out var altState) && (altState.Cap == 6) && altState.CapLearned && altState.HasPostedTask("t1")
+			&& (altState.PostsInLast24h(DateTime.UtcNow) == 1) && (moved.HoldUntil is { } hu && hu > DateTime.UtcNow.AddHours(4))
+			&& moved.Accounts.TryGetValue("quiet", out var quietState) && quietState.IsBlocked(DateTime.UtcNow), pluginState);
+		Check("1.8.x move: the last 24h count for the app's own ceiling too, and the old file is kept aside",
+			(NocatFarm.Plugins.Comments.Window("alt").Count == 1) && File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "rep4rep-alt.json.migrated"))
+			&& !File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "rep4rep-alt.json")));
+		NocatFarm.Config.GlobalConfig mg2 = NocatFarm.Config.ConfigStore.LoadGlobal();
+		var settings2 = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.settings.json")))!;
+		Check("1.8.x move: a second start changes nothing", (mg2.Theme == "dark") && (settings2.Count == settings.Count) && (NocatFarm.Plugins.Comments.Window("alt").Count == 1));
+		Check("1.8.x move: a value the add-on already has is never overwritten",
+			!NocatFarm.Config.ConfigStore.ImportRep4Rep("another-key", ["alt"]) && (NocatFarm.Core.Secrets.Unprotect(settings2["ApiKey"]) == "old-r4r-key-998877"));
+
+		// What 1.8.9 really writes when rep4rep was never used: every key there, the hold as null. That broke 1.9.0's first
+		// start (--setup exit 4, "requires an element of type String") until the move learned that a null is no date.
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, """
+			{ "Theme": "light", "Rep4RepEnabled": false, "Rep4RepApiToken": "", "Rep4RepAutoAddProfiles": true, "Rep4RepPointsRefreshMinutes": 15,
+			  "Rep4RepPauseHours": 0, "Rep4RepHoldUntil": null, "Rep4RepHoldFrom": null, "SendRep4Rep": false, "WebPort": 7290 }
+			""");
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plain.json"), """
+			{ "SteamLogin": "plainlogin", "Rep4Rep": false, "Rep4RepDailyCap": 10, "Rep4RepGapMinMinutes": 10, "Rep4RepGapMaxMinutes": 25,
+			  "Rep4RepStartHour": 10, "Rep4RepEndHour": 23, "Rep4RepLearnCap": true, "Rep4RepRetryRefused": false }
+			""");
+		NocatFarm.Config.GlobalConfig fromOld = NocatFarm.Config.ConfigStore.LoadGlobal();
+		NocatFarm.Config.BotConfig? plainBot = NocatFarm.Config.ConfigStore.LoadBot("plain");
+		Check("1.8.x move: a 1.8.9 config as it really is - nulls and all - loads, and loses its rep4rep keys",
+			(fromOld.Theme == "light") && (fromOld.WebPort == 7290) && (NocatFarm.Config.ConfigStore.GlobalLoadProblem == null) && (plainBot?.SteamLogin == "plainlogin")
+			&& !File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains("Rep4Rep", StringComparison.Ordinal),
+			NocatFarm.Config.ConfigStore.GlobalLoadProblem ?? "");
+		Check("1.8.x move: odd values never stop a config loading - a hold that isn't a date, a key that isn't text, a record that isn't one",
+			NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), """{ "Rep4RepHoldUntil": 5, "Rep4RepApiToken": 7, "Rep4RepEnabled": "yes" }""")
+			&& NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("odd", """{ "Rep4Rep": "yes", "Rep4RepDailyCap": [1] }"""));
+
+		// ── the signed add-on list ──
+		using var sk = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+		string pub = Convert.ToBase64String(sk.ExportSubjectPublicKeyInfo());
+		string Sign(byte[] data) => Convert.ToBase64String(sk.SignData(data, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+		byte[] dll = System.Text.Encoding.UTF8.GetBytes("pretend add-on " + Guid.NewGuid());
+		string sha = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(dll));
+		string IndexJson(string url, string min = "1.0.0", string hash = "") => $$"""
+			{ "addons": [ { "id": "demo", "name": "Demo", "plugin": "Demo", "description": { "en": "A demo.", "de": "Eine Demo." }, "version": "1.2.0",
+			  "minAppVersion": "{{min}}", "file": "nocatfarm.demo.dll", "url": "{{url}}", "sha256": "{{(hash.Length > 0 ? hash : sha)}}" } ] }
+			""";
+		byte[] good = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll"));
+		var list = NocatFarm.Plugins.Addons.Parse(good, Sign(good), pub, out NocatFarm.Core.Said why);
+		Check("add-on list: signed with the key - read, one entry, its description per language",
+			(list?.Count == 1) && (list[0].DescriptionIn("de") == "Eine Demo.") && (list[0].DescriptionIn("ko") == "A demo."), why.ToEnglish());
+		byte[] tampered = (byte[]) good.Clone();
+		tampered[Array.IndexOf(tampered, (byte) 'D')] = (byte) 'E';
+		var bad = NocatFarm.Plugins.Addons.Parse(tampered, Sign(good), pub, out NocatFarm.Core.Said badWhy);
+		using var otherKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+		var wrongKey = NocatFarm.Plugins.Addons.Parse(good, Sign(good), Convert.ToBase64String(otherKey.ExportSubjectPublicKeyInfo()), out _);
+		var builtIn = NocatFarm.Plugins.Addons.Parse(good, Sign(good), NocatFarm.Plugins.Addons.PublicKey, out _);
+		var noSig = NocatFarm.Plugins.Addons.Parse(good, "", pub, out _);
+		Check("add-on list: a bad signature is refused - a changed byte, another key (the built-in one included), none at all",
+			(bad == null) && badWhy.ToEnglish().Contains("signature", StringComparison.Ordinal) && (wrongKey == null) && (builtIn == null) && (noSig == null));
+		byte[] elsewhere = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://example.com/nocatfarm.demo.dll"));
+		Check("add-on list: an entry whose file isn't a nocat.farm GitHub release is left out, even signed",
+			NocatFarm.Plugins.Addons.Parse(elsewhere, Sign(elsewhere), pub, out _)?.Count == 0);
+
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = false, DisabledPlugins = ["Demo"] };
+		string plugDir = NocatFarm.Plugins.PluginHost.Folder;
+		int downloads = 0;
+		Task<byte[]> Give(byte[] bytes) { downloads++; return Task.FromResult(bytes); }
+		var unknownAddon = await NocatFarm.Plugins.Addons.InstallFromAsync(list!, "evil", (_, _) => Give(dll), CancellationToken.None);
+		Check("add-on install: a name that isn't on the signed list is refused, nothing downloaded", !unknownAddon.Ok && (downloads == 0)
+			&& unknownAddon.Message.ToEnglish().Contains("no official add-on called 'evil'", StringComparison.Ordinal), unknownAddon.Message.ToEnglish());
+		byte[] wrongSha = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll", hash: new string('a', 64)));
+		var wrongList = NocatFarm.Plugins.Addons.Parse(wrongSha, Sign(wrongSha), pub, out _)!;
+		var wrongFile = await NocatFarm.Plugins.Addons.InstallFromAsync(wrongList, "demo", (_, _) => Give(dll), CancellationToken.None);
+		Check("add-on install: a good signature but a file whose SHA-256 isn't the list's - refused, nothing put in plugins/",
+			!wrongFile.Ok && !File.Exists(Path.Combine(plugDir, "nocatfarm.demo.dll")) && !NocatFarm.Config.Live.Global.PluginsEnabled, wrongFile.Message.ToEnglish());
+		byte[] tooNew = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll", min: "99.0.0"));
+		var tooNewAddon = await NocatFarm.Plugins.Addons.InstallFromAsync(NocatFarm.Plugins.Addons.Parse(tooNew, Sign(tooNew), pub, out _)!, "demo", (_, _) => Give(dll), CancellationToken.None);
+		Check("add-on install: one that needs a newer nocat.farm says so and isn't installed", !tooNewAddon.Ok && tooNewAddon.Message.ToEnglish().Contains("needs nocat.farm 99.0.0", StringComparison.Ordinal));
+		var installed = await NocatFarm.Plugins.Addons.InstallFromAsync(list!, "demo", (_, _) => Give(dll), CancellationToken.None);
+		Check("add-on install: the signed list's file - in plugins/, Load plugins on, its own switch on, a restart asked for",
+			installed.Ok && File.ReadAllBytes(Path.Combine(plugDir, "nocatfarm.demo.dll")).SequenceEqual(dll) && NocatFarm.Config.Live.Global.PluginsEnabled
+			&& !NocatFarm.Config.Live.Global.DisabledPlugins.Contains("Demo") && installed.Message.ToEnglish().Contains("Restart", StringComparison.Ordinal), installed.Message.ToEnglish());
+		var removed = NocatFarm.Plugins.Addons.Uninstall(list, "demo");
+		Check("add-on remove: the file goes (not loaded, so straight away)", !File.Exists(Path.Combine(plugDir, "nocatfarm.demo.dll")), removed.ToEnglish());
+		File.WriteAllBytes(Path.Combine(plugDir, "held.dll"), [1]);
+		File.WriteAllBytes(Path.Combine(plugDir, "held.dll.new"), [2]);
+		File.WriteAllBytes(Path.Combine(plugDir, "gone.dll"), [3]);
+		File.WriteAllText(Path.Combine(plugDir, "gone.dll.remove"), "");
+		NocatFarm.Plugins.PluginHost.SettlePending(plugDir);
+		Check("add-ons: what waited for a restart is settled before anything loads - the new file in place, the removed one gone",
+			File.ReadAllBytes(Path.Combine(plugDir, "held.dll")).SequenceEqual(new byte[] { 2 }) && !File.Exists(Path.Combine(plugDir, "held.dll.new"))
+			&& !File.Exists(Path.Combine(plugDir, "gone.dll")) && !File.Exists(Path.Combine(plugDir, "gone.dll.remove")));
+		var cmdMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		string remote = await NocatFarm.Commands.RunAsync(cmdMgr, "addons install rep4rep");
+		Check("add-on install: from anywhere but this PC (Steam chat, Telegram, Discord) - refused", remote.Contains("only at this PC", StringComparison.Ordinal), remote);
+		await cmdMgr.DisposeAsync();
+		string repoRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+		byte[] shipped = File.ReadAllBytes(Path.Combine(repoRoot, "addons", "addons.json"));
+		Check("add-on list: the one in the repository reads, with LF endings only (it's signed byte for byte)",
+			!shipped.Contains((byte) '\r') && System.Text.Json.JsonDocument.Parse(shipped).RootElement.GetProperty("addons").GetArrayLength() >= 1
+			&& File.ReadAllText(Path.Combine(repoRoot, ".gitattributes")).Contains("addons/addons.json -text", StringComparison.Ordinal));
+
+		// ── the add-on itself ──
+		var words = NocatFarm.Addons.Rep4Rep.BlockList.Parse(NocatFarm.Addons.Rep4Rep.BlockList.Default);
+		string? Blocks(string c) => NocatFarm.Addons.Rep4Rep.BlockList.Blocks(c, words, true);
+		Check("rep4rep block list: the defaults skip asking and advertising (GitHub issue #1)",
+			(Blocks("add me pls +rep") == "add me") && (Blocks("ADD ME") == "add me") && (Blocks("+rep add for trade") == "add") && (Blocks("free skins here") == "free")
+			&& (Blocks("trade?") == "trade") && (Blocks("gift me") == "gift") && (Blocks("Check my profile!!") == "check my profile"));
+		Check("rep4rep block list: links of every kind are skipped", (Blocks("+rep https://evil.example") == "link") && (Blocks("visit www.site.net") == "link")
+			&& (Blocks("go to cheap-skins.gg now") == "link") && (Blocks("steamcommunity.com/id/x") == "link"));
+		Check("rep4rep block list: whole words only - ordinary comments go out", (Blocks("+rep nice address, great teammate") == null) && (Blocks("+rep friendly player") == null)
+			&& (Blocks("+rep good aim, gifted player") == null) && (Blocks("+rep traders welcome") == null));
+		Check("rep4rep block list: the setting's own words, comma or line separated; links can be allowed",
+			(NocatFarm.Addons.Rep4Rep.BlockList.Blocks("+rep  Pro   Player", NocatFarm.Addons.Rep4Rep.BlockList.Parse(" pro player,\n noob ;"), false) == "pro player")
+			&& (NocatFarm.Addons.Rep4Rep.BlockList.Blocks("+rep www.x.com", [], false) == null));
+		Check("rep4rep: 401 is 'the key is invalid', and says where to make a new one",
+			NocatFarm.Addons.Rep4Rep.Rep4RepAddon.KeyInvalidText().Contains("make a new key at rep4rep.com Settings → API key", StringComparison.Ordinal));
+		Check("rep4rep: saved state that can't be read is held, not taken as none; nothing saved is a first run",
+			(NocatFarm.Addons.Rep4Rep.AddonState.Read("{ nope") == null) && (NocatFarm.Addons.Rep4Rep.AddonState.Read(null)?.Accounts.Count == 0));
+		var keyFake = new FakePing((r, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized) { Content = new StringContent("""{"error":"Unauthenticated."}""") }));
+		using (var keyApi = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(keyFake) { Token = "revoked" }) {
+			var noUser = await keyApi.GetUserAsync();
+			(string? noId, bool notAnswered) = await keyApi.ResolveAsync(76561198000000001, true, CancellationToken.None);
+			Check("rep4rep: a revoked key (401) - known as invalid, not 'rep4rep is down', and no profile is added with it",
+				(noUser == null) && keyApi.KeyInvalid && (noId == null) && !notAnswered && (keyFake.Calls == 2) && (keyApi.UserAnswered == false));
+			keyApi.Token = "a-new-one";
+			Check("rep4rep: a new key forgets the old one's 401", !keyApi.KeyInvalid && (keyApi.UserAnswered == null));
+		}
+
+		// A Steam profile already on another rep4rep account: POST /steam-profiles answers 409, and only the website can move it.
+		bool linkedListed = false;
+		int linkedPosts = 0;
+		var linkedFake = new FakePing((r, _) => {
+			if (r.Method == HttpMethod.Post) {
+				linkedPosts++;
+				return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.Conflict) { Content = new StringContent("""{"message":"A profile that's linked to another account can only be added on the website, by signing in through Steam."}""") });
+			}
+			return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) {
+				Content = new StringContent(linkedListed ? """{"data":[{"steamId":"76561198000000001"}]}""" : """{"data":[]}""") });
+		});
+		using (var linkedApi = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(linkedFake) { Token = "key" }) {
+			var first = await linkedApi.ResolveDetailedAsync(76561198000000001, true, CancellationToken.None);
+			var lookOnly = await linkedApi.ResolveDetailedAsync(76561198000000001, false, CancellationToken.None);
+			linkedListed = true;   // moved over on rep4rep.com
+			var moved409 = await linkedApi.ResolveDetailedAsync(76561198000000001, false, CancellationToken.None);
+			Check("rep4rep 409: a profile on another rep4rep account is said to be one - not 'rep4rep is down', not the key",
+				(first.Id == null) && first.LinkedElsewhere && !first.Unanswered && !linkedApi.KeyInvalid && (linkedPosts == 1), $"{first}");
+			Check("rep4rep 409: looked for after that, never added again - and picked up once rep4rep lists it",
+				(lookOnly.Id == null) && !lookOnly.LinkedElsewhere && (linkedPosts == 1) && (moved409.Id == "76561198000000001"));
+		}
+		var linkedSays = new NocatFarm.Addons.Rep4Rep.Commenter(new NocatFarm.Addons.Rep4Rep.Rep4RepAddon(), "main").LinkedText();
+		Check("rep4rep 409: what it says - whose profile, and how to fix it on rep4rep.com",
+			linkedSays.Contains("main's Steam profile is on another rep4rep account", StringComparison.Ordinal) && linkedSays.Contains("sign in through Steam", StringComparison.Ordinal), linkedSays);
+		string linkedSrc = File.ReadAllText(Path.Combine(repoRoot, "addons", "rep4rep", "Commenter.cs")).Replace("\r\n", "\n");
+		Check("rep4rep 409: said once per account (log and Telegram/Discord), then only looked for - and the tab shows it",
+			linkedSrc.Contains("bool autoAdd = addon.Bool(Rep4RepAddon.SetAutoAdd) && !LinkedElsewhere;", StringComparison.Ordinal)
+			&& linkedSrc.Contains("if (!_linkedSaid) {\n\t\t\t\t_linkedSaid = true;\n\t\t\t\taddon.Notify(Account, LinkedText());", StringComparison.Ordinal)
+			&& File.ReadAllText(Path.Combine(repoRoot, "addons", "rep4rep", "Rep4RepAddon.cs")).Contains("c.On && c.LinkedElsewhere", StringComparison.Ordinal));
+
+		// The add-on, loaded the way the app loads it: its settings, its commands, its tab - and with no key, the set-up page.
+		File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.settings.json"));   // the moved 1.8.x key above - a fresh install here
+		File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "rep4rep.json"));
+		var aMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var aHost = (NocatFarm.Plugins.IPluginHost) Activator.CreateInstance(typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!, [aMgr, "rep4rep"])!;
+		var addon = new NocatFarm.Addons.Rep4Rep.Rep4RepAddon();
+		await addon.OnLoadAsync(aHost, CancellationToken.None);
+		var aCommands = (System.Collections.IDictionary) aHost.GetType().GetProperty("Commands", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(aHost)!;
+		var aDeclared = (System.Collections.ICollection) aHost.GetType().GetProperty("Declared", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(aHost)!;
+		object? aPage = aHost.GetType().GetProperty("Page", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(aHost);
+		NocatFarm.Plugins.PluginPage setup = await addon.RenderAsync(null);
+		string aStatus = await addon.CommandAsync(["status"]);
+		Check("rep4rep add-on: loads against the plugin API - its settings, 'rep4rep' and 'r4r', its tab",
+			(addon.Name == "rep4rep") && (addon.Version == "1.0.0") && aCommands.Contains("rep4rep") && aCommands.Contains("r4r") && (aDeclared.Count == 13) && (aPage != null), $"{aDeclared.Count} settings");
+		Check("rep4rep add-on: no key yet - the tab shows how to set it up, 'rep4rep' says the key is missing",
+			setup.Blocks.Any(static b => b.Url == "https://rep4rep.com/?r=reap") && aStatus.Contains("MISSING", StringComparison.Ordinal), aStatus);
+		Check("rep4rep add-on: the block list's default is the one the setting shows", aHost.Setting("BlockList") == NocatFarm.Addons.Rep4Rep.BlockList.Default);
+		await addon.OnUnloadAsync();
+		await aMgr.DisposeAsync();
+
+		// Live, once, when a throwaway rep4rep key is handed in (NOCATFARM_R4R_KEY_FILE): read-only calls only - never a
+		// profile added, never a task claimed.
+		if (Environment.GetEnvironmentVariable("NOCATFARM_R4R_KEY_FILE") is { Length: > 0 } liveKeyFile && File.Exists(liveKeyFile)) {
+			using var live = new NocatFarm.Addons.Rep4Rep.Rep4RepApi { Token = File.ReadAllText(liveKeyFile).Trim() };
+			var liveUser = await live.GetUserAsync();
+			List<string> liveProfiles = await live.GetProfilesAsync();
+			(string? liveId, bool liveDown) = await live.ResolveAsync(76561190000000001, false, CancellationToken.None);
+			Check("rep4rep LIVE: the v1 API answers the key - a balance, the profile list, a lookup (read-only)",
+				(liveUser is { Points: >= 0 }) && (live.UserAnswered == true) && !live.KeyRefused && (liveId == null) && !liveDown, $"{liveUser} / {liveProfiles.Count} profiles");
+			using var liveBad = new NocatFarm.Addons.Rep4Rep.Rep4RepApi { Token = "nocatfarm-test-not-a-real-key" };
+			var badUser = await liveBad.GetUserAsync();
+			Check("rep4rep LIVE: a wrong key is a 401 - 'the key is invalid', not 'rep4rep is down'", (badUser == null) && liveBad.KeyInvalid);
+		}
+	} finally {
+		NocatFarm.Config.Live.Global = wasLive;
+		NocatFarm.Plugins.Comments.Forget();
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		TestTemp.Gone(tmpRoot);
+	}
+}
+
+// ── 1.9.0: booster packs bought instead of cards only when they're EXPECTED to come out cheaper (PR #2, reworked) ──
+// A pack is 3 random cards of the WHOLE set, so ceil(missing / 3) packs usually miss some of the missing cards - and those
+// are bought anyway. The packs win only when the packs and the cards they're expected to leave cost a tenth less.
+{
+	// The maths on its own: an 8-card set, 1 pack - each missing card comes out with 1 - (7/8)^3, about 33%.
+	Check("booster buy maths: a card of an 8-card set comes out of 1 pack about 33% of the time, of 2 about 55%",
+		(Math.Abs(NocatFarm.Core.BoosterMath.HitChance(8, 1) - 0.330078125) < 1e-9) && (Math.Abs(NocatFarm.Core.BoosterMath.HitChance(8, 2) - (1 - Math.Pow(7.0 / 8, 6))) < 1e-9)
+		&& (NocatFarm.Core.BoosterMath.HitChance(8, 0) == 0) && (NocatFarm.Core.BoosterMath.HitChance(0, 3) == 0));
+
+	// The reported case: 4 of 8 missing at 0.08, packs at 0.25 - the old rule bought ceil(4/3) = 2 packs (0.50) "because
+	// they're cheaper than 0.32 of cards"; expected, 1 pack and what it leaves is about 0.46, 2 packs about 0.64. Cards.
+	var typical = NocatFarm.Core.BoosterMath.CheapestPacks(8, [8, 8, 8, 8], 25);
+	Check("booster buy maths: 4 of 8 cards missing at 0.08 with packs at 0.25 - packs are expected to cost more (about 0.46), so the cards (0.32)",
+		typical is { Packs: 1, Straight: 32, Wins: false } && (Math.Abs(typical.Expected - (25 + (32 * Math.Pow(7.0 / 8, 3)))) < 1e-9) && (Math.Abs(typical.LeftCards - (4 * Math.Pow(7.0 / 8, 3))) < 1e-9),
+		$"{typical}");
+
+	// A small set, a cheap pack: 4 of 5 missing at 0.20, packs at 0.10 - 3 packs leave each card 0.8^9 = 13.4% of the time:
+	// 0.30 + 0.80 x 0.134 = about 0.41, against 0.80 straight.
+	var small = NocatFarm.Core.BoosterMath.CheapestPacks(5, [20, 20, 20, 20], 10);
+	Check("booster buy maths: 4 of 5 missing at 0.20 with packs at 0.10 - 3 packs and about half a card left, about 0.41 against 0.80: packs",
+		small is { Packs: 3, PacksCost: 30, Straight: 80, Wins: true } && (Math.Abs(small.LeftCards - (4 * Math.Pow(0.8, 9))) < 1e-9) && (Math.Abs(small.Expected - (30 + (80 * Math.Pow(0.8, 9)))) < 1e-9),
+		$"{small}");
+	Check("booster buy maths: the cheapest number of packs is tried from 1 to ceil(missing / 3) + 2 - never more",
+		(NocatFarm.Core.BoosterMath.CheapestPacks(2, [100], 1) is { Packs: 3 }) && (NocatFarm.Core.BoosterMath.CheapestPacks(100, [.. Enumerable.Repeat(1000L, 90)], 1) is { Packs: NocatFarm.Core.BoosterMath.MaxPacks }));
+	Check("booster buy maths: nothing to weigh - no card missing, no pack price, a missing card not priced, more missing than the set",
+		(NocatFarm.Core.BoosterMath.CheapestPacks(5, [], 10) == null) && (NocatFarm.Core.BoosterMath.CheapestPacks(5, [20], 0) == null)
+		&& (NocatFarm.Core.BoosterMath.CheapestPacks(5, [20, 0], 10) == null) && (NocatFarm.Core.BoosterMath.CheapestPacks(2, [20, 20, 20], 10) == null));
+	Check("booster buy maths: packs must beat the cards by a tenth - 9.00 expected against 10.00 straight is enough, 9.01 isn't",
+		new NocatFarm.Core.BoosterMath.PackBuy(1, 900, 0, 0, 1000).Wins && !new NocatFarm.Core.BoosterMath.PackBuy(1, 901, 0, 0, 1000).Wins
+		&& !new NocatFarm.Core.BoosterMath.PackBuy(0, 0, 0, 0, 1000).Wins);
+
+	// The plan, against a fake market (CAD, no tax): "Eight" misses 4 of 8 at 0.08 with packs at 0.25; "Five" misses 4 of 5
+	// at 0.20 with packs at 0.10.
+	FakeCardMarket BpMarket() {
+		var m = new FakeCardMarket();
+		var eight = Enumerable.Range(1, 8).Select(static i => $"500-Card {i}").ToList();
+		var five = Enumerable.Range(1, 5).Select(static i => $"600-Card {i}").ToList();
+		m.Sets[500] = new NocatFarm.Modules.CardSet(500, "Eight", eight, eight.ToDictionary(static c => c, static _ => 5));
+		m.Sets[600] = new NocatFarm.Modules.CardSet(600, "Five", five, five.ToDictionary(static c => c, static _ => 5));
+		m.Held[500] = eight.Take(4).ToDictionary(static c => c, static _ => 1);
+		m.Held[600] = new() { ["600-Card 1"] = 1 };
+		foreach (string c in eight) {
+			m.Books[c] = FakeCardMarket.B(8);
+		}
+
+		foreach (string c in five) {
+			m.Books[c] = FakeCardMarket.B(20);
+		}
+
+		m.Books[NocatFarm.Modules.GemsChoice.PackHash(500, "Eight")] = FakeCardMarket.B(25);
+		m.Books[NocatFarm.Modules.GemsChoice.PackHash(600, "Five")] = FakeCardMarket.B(10);
+		return m;
+	}
+
+	string bpRoot = Path.Combine(Path.GetTempPath(), "nf-bpbuy-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(bpRoot, "config", "state"));
+	NocatFarm.Modules.BuyLedger BpLedger() => new(Path.Combine(bpRoot, "config", "state", "buy-" + Guid.NewGuid().ToString("N") + ".json"));
+	async Task<NocatFarm.Modules.BuyPlan> BpPlan(bool packs, FakeCardMarket m, NocatFarm.Modules.BuyLedger? ledger = null) =>
+		await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = packs, BuyFullSets = false }, m, NocatFarm.Modules.SwapCost.None,
+			ledger ?? BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+
+	var bpPlan = await BpPlan(true, BpMarket());
+	var bpEight = bpPlan.Steps.FirstOrDefault(static s => s.App == 500);
+	var bpFive = bpPlan.Steps.FirstOrDefault(static s => s.App == 600);
+	Check("plan buying packs: 4 of 8 missing with packs at typical prices - NOT bought as packs, the 4 cards (0.32)",
+		bpEight is { IsPack: false, Cost: 32 } && (bpEight.Cards.Count == 4) && bpPlan.Skipped.Any(static s => s.StartsWith("Eight: its booster packs don't come out cheaper", StringComparison.Ordinal)),
+		string.Join(" | ", bpPlan.Steps.Select(static s => $"{s.Game} pack={s.IsPack}x{s.Packs}@{s.Cost}")) + " / " + string.Join("; ", bpPlan.Skipped));
+	Check("plan buying packs: a small set with a very cheap pack - bought as 3 packs (0.30 now), ranked at about 0.41 with what they leave, the 4 cards kept as what they stand in for",
+		bpFive is { IsPack: true, Packs: 3, PackCents: 10, Cost: 30, Straight: 80, LevelCost: 41 } && (bpFive.Cards.Count == 4) && (bpFive.PackHash == NocatFarm.Modules.GemsChoice.PackHash(600, "Five"))
+		&& (Math.Abs(bpFive.LeftCards - (4 * Math.Pow(0.8, 9))) < 1e-9) && (bpFive.XpPerUnit == 10_000 / 41) && (bpPlan.PackCount == 3) && (bpPlan.CardCount == 4)
+		&& bpPlan.Notes.Any(static n => n.StartsWith("Five: booster packs instead of its missing cards - 3 pack(s) at 0.10 CAD are expected to leave 0.5 of its 4 missing card(s), about 0.41 CAD in all - the cards straight 0.80 CAD", StringComparison.Ordinal)),
+		$"{bpFive} / " + string.Join("; ", bpPlan.Notes));
+	Check("plan buying packs: off - the same market buys both sets' cards", (await BpPlan(false, BpMarket())).Steps.All(static s => !s.IsPack));
+
+	// A pack it bought that isn't opened yet: nothing more is bought for that game until it is (or 2 days pass).
+	var bpWaitLedger = BpLedger();
+	bpWaitLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "p1", Pack: true));
+	var bpWaitPlan = await BpPlan(true, BpMarket(), bpWaitLedger);
+	var bpOldLedger = BpLedger();
+	bpOldLedger.Add(new(DateTime.UtcNow.AddDays(-3), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "p2", Pack: true));
+	Check("plan buying packs: a game whose bought pack isn't opened yet buys nothing meanwhile - past 2 days it buys again",
+		bpWaitPlan.Steps.All(static s => s.App != 600) && bpWaitPlan.Skipped.Any(static s => s.Contains("the booster packs it bought are opened first", StringComparison.Ordinal))
+		&& (await BpPlan(true, BpMarket(), bpOldLedger)).Steps.Any(static s => s.App == 600),
+		string.Join("; ", bpWaitPlan.Skipped));
+
+	// A missing card nobody sells: the set isn't planned at all, packs or not - never packs on half a price list.
+	var bpUnpriced = BpMarket();
+	bpUnpriced.Books["600-Card 5"] = FakeCardMarket.B(0, 0);
+	Check("plan buying packs: a missing card nobody sells - nothing for that set, never packs on a guess",
+		(await BpPlan(true, bpUnpriced)).Steps.All(static s => s.App != 600));
+
+	// ── a pack bought instead of cards is never sold, sent or traded away before buying opens it ──
+	// "Five" (600): a pack bought an hour ago, the pack held before the order (70) known. Held now: 70, the new 71, and a
+	// pack of another game (72). Settings that would otherwise sell it: "Packs it doesn't open" sell, new packs not held back.
+	var guardLedger = BpLedger();
+	guardLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g1", Before: ["70"], Pack: true));
+	var guardIds = guardLedger.BoughtPackIds([(70ul, 600u), (71ul, 600u), (72ul, 601u)], DateTime.UtcNow);
+	var guardOld = BpLedger();
+	guardOld.Add(new(DateTime.UtcNow.AddDays(-3), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g2", Before: ["70"], Pack: true));
+	var guardOpened = BpLedger();
+	guardOpened.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g3", Before: ["70"], Pack: true, Opened: true, Asset: "71"));
+	Check("bought packs guarded: only the new copy of the bought pack's game - not the one held before, not another game's; none once opened or 2 days on",
+		guardIds.SetEquals([71ul]) && (guardOld.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0) && (guardOpened.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0),
+		string.Join(",", guardIds));
+
+	var guardCfg = new NocatFarm.Config.BotConfig { SpareItems = true, BoosterUnopened = 2, BoosterOpenNewDays = 0, OpenBoosterPacks = 0 };
+	NocatFarm.Core.SpareItem GuardPack(ulong id, uint game) => new(id, game, NocatFarm.Core.SpareKind.BoosterPack, $"{game}-Five Booster Pack", "Five Booster Pack", true, true);
+	List<NocatFarm.Core.SpareItem> guardItems = [GuardPack(70, 600), GuardPack(71, 600)];
+	var guardPlan = NocatFarm.Core.Spare.PlanPacks(guardItems, guardCfg.OpenBoosterPacks, guardCfg.BoosterOpenNewDays, guardCfg.BoosterNeverOpen, _ => DateTime.UtcNow,
+		new HashSet<ulong>(), _ => null, 24, DateTime.UtcNow, bought: guardIds);
+	Check("bought packs guarded: with \"Packs it doesn't open\" on sell, spare items on and new packs not held back, the bought pack is planned OPEN (never sold) - the one held before stays the setting's",
+		guardPlan.Single(static d => d.Pack.AssetId == 71) is { Open: true, Disposable: false } bp && bp.Why.ToEnglish().Contains("bought to level", StringComparison.Ordinal)
+		&& guardPlan.Single(static d => d.Pack.AssetId == 70) is { Open: false, Disposable: true },
+		string.Join(" | ", guardPlan.Select(static d => $"{d.Pack.AssetId} open={d.Open} disposable={d.Disposable} {d.Why.ToEnglish()}")));
+	var guardBusy = NocatFarm.Core.Spare.PlanPacks(guardItems, 0, 0, [], _ => DateTime.UtcNow, new HashSet<ulong> { 71 }, _ => null, 24, DateTime.UtcNow, bought: guardIds);
+	Check("bought packs guarded: one on the market or in a trade offer is still left alone (never opened from under it)",
+		guardBusy.Single(static d => d.Pack.AssetId == 71) is { Open: false, Disposable: false });
+
+	List<NocatFarm.Core.Looting.Item> guardSend = [
+		new(70, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600), new(71, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600),
+		new(80, 2, 0, 1, "Five Trading Card", "Card A", 753, 6, 600)];
+	var guardSent = NocatFarm.Core.Looting.LeaveOwnPacks(guardSend, guardLedger.UnopenedPacks(DateTime.UtcNow), [], out int guardKept);
+	string guardSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Looting.cs")).Replace("\r\n", "\n");
+	string guardRun = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SpareRun.cs")).Replace("\r\n", "\n");
+	Check("bought packs guarded: sending skips it (whatever \"Which items to send\" says) - the pack held before and the card still go; spare items' pack look passes them to the plan and marks them opened",
+		(guardKept == 1) && guardSent.Select(static i => i.AssetId).SequenceEqual([70ul, 80ul])
+		&& guardSrc.Contains("List<Item> wanted = LeaveOwnPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow),\n\t\t\tAutoPacks(bot), out int keptPacks);", StringComparison.Ordinal)
+		&& guardRun.Contains("bought: bought);", StringComparison.Ordinal) && guardRun.Contains("buys.PackOpened(packGame.GetValueOrDefault(id), id, DateTime.UtcNow);", StringComparison.Ordinal),
+		string.Join(",", guardSent.Select(static i => i.AssetId)));
+	Check("bought packs guarded: opened by spare items, its purchase is marked opened with that copy - then nothing more is guarded",
+		guardLedger.PackOpened(600, 71, DateTime.UtcNow) && guardLedger.All.Single() is { Opened: true, Asset: "71" } && (guardLedger.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0));
+
+	var guardNever = BpMarket();
+	Check("plan buying packs: never packs for a game on \"Never open packs from these games\" - the cards",
+		(await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BoosterNeverOpen = [600] }, guardNever,
+			NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None)).Steps.All(static s => !s.IsPack));
+
+	// ── buying them for real (fakes): one pack, never "set complete", opened once it's in, the next look free to buy what's left ──
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.ConfigStore.UseRoot(bpRoot);
+	bool wasSuppressed = NocatFarm.Log.Suppressed;
+	NocatFarm.Log.Suppressed = true;
+	var bpBot = new NocatFarm.Core.Bot("bp-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+
+	try {
+		// The preview says the pack choice with its numbers, so it can be checked before anything is bought.
+		List<string> bpSaid = Commands.BuySaid(bpBot, NocatFarm.Modules.CardBuyer.Mode.Preview, new NocatFarm.Modules.CardBuyer.Result { Plan = bpPlan });
+		Check("buy preview: the packs, what they stand in for, the cards they're expected to leave and the cost against the cards straight",
+			bpSaid.Any(static l => l.EndsWith(": would buy 3 Five booster pack(s) for 0.30 CAD instead of its 4 missing card(s) (0.80 CAD) - level 0 to 1", StringComparison.Ordinal))
+			&& bpSaid.Any(static l => l.Contains("3 × Five Booster Pack 0.10 CAD - 3 random cards of its 5 each; expected to leave about 0.5 missing card(s), about 0.11 CAD to buy afterwards: about 0.41 CAD in all, 0.80 CAD straight", StringComparison.Ordinal))
+			&& bpSaid.Any(static l => l.Contains("would buy 4 of 8 cards for Eight for 0.32 CAD", StringComparison.Ordinal)),
+			string.Join(" | ", bpSaid));
+
+		// "Three": 3 cards, 2 held, the third at 0.30; a pack at 0.10 brings it 1 - (2/3)^3 = 70% of the time: about 0.19 in all.
+		string packHash = NocatFarm.Modules.GemsChoice.PackHash(700, "Three");
+		var inner = new FakeCardMarket();
+		var bpThree = new List<string> { "700-A", "700-B", "700-C" };
+		inner.Sets[700] = new NocatFarm.Modules.CardSet(700, "Three", bpThree, bpThree.ToDictionary(static c => c, static _ => 5));
+		inner.Held[700] = new() { ["700-A"] = 1, ["700-B"] = 1 };
+		inner.Books["700-A"] = inner.Books["700-B"] = inner.Books["700-C"] = FakeCardMarket.B(30);
+		inner.Books[packHash] = FakeCardMarket.B(10);
+		var market = new ProofMarket(inner) { Assets = new() { [packHash] = ["70"] } };   // a pack of it held before: never the one opened
+		inner.DuringBuy = () => market.Assets = new() { [packHash] = ["70", "71"] };
+		NocatFarm.Core.Switches.Set(bpBot, NocatFarm.Core.Switches.Buy, true);
+		var buyer = new NocatFarm.Modules.CardBuyer(bpBot, market, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock) { ProofWait = static () => TimeSpan.Zero };
+		List<ulong> unpacked = [];
+		bool openWorks = false;
+		buyer.Unpack = (pack, _) => {
+			unpacked.Add(pack.AssetId);
+			return Task.FromResult((openWorks, openWorks ? new List<string> { "700-C", "700-A", "700-A" } : [], openWorks ? null : (string?) "Steam said no"));
+		};
+
+		var first = await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		var entry = buyer.Ledger.All.SingleOrDefault();
+		Check("buying packs: one pack bought, written down as a pack, at its price - and the set NOT said to be complete",
+			(first.Bought.Count == 1) && first.Bought[0].Step.IsPack && (first.Bought[0].Card.Hash == packHash) && (first.Finished.Count == 0)
+			&& entry is { Pack: true, Pending: false, Cents: 10, Opened: false, Before: ["70"] } && (inner.Orders.Count == 1) && (inner.Orders[0].Hash == packHash)
+			&& !Commands.BuySaid(bpBot, NocatFarm.Modules.CardBuyer.Mode.Now, first).Any(static l => l.Contains("set complete", StringComparison.Ordinal))
+			&& Commands.BuySaid(bpBot, NocatFarm.Modules.CardBuyer.Mode.Now, first).Any(static l => l.Contains("bought Three · 1 booster pack(s) · 0.10 CAD - opened once they're in", StringComparison.Ordinal)),
+			first.Problem + " / " + string.Join(" | ", buyer.Ledger.All));
+		Check("buying packs: a pack that can't be opened yet stays to open - only the new copy is tried, never the one held before",
+			unpacked.SequenceEqual([71ul]) && buyer.Ledger.All.Single() is { Opened: false }, string.Join(",", unpacked));
+
+		openWorks = true;
+		var second = await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+		Check("buying packs: the next look opens it first, marks it opened with its copy - and buys nothing more for that game until the look after",
+			unpacked.SequenceEqual([71ul, 71ul]) && buyer.Ledger.All.Single() is { Pack: true, Opened: true, Asset: "71" } && (second.Bought.Count == 0),
+			string.Join(" | ", buyer.Ledger.All) + " / " + second.Problem);
+
+		// ── the sweep: every other path that moves or opens a pack, against packs made here and packs bought ──
+		// Opening bought packs never takes automatic "Make booster packs"' own copy (here one made to sell, 81) for a bought
+		// one; and while one of automatic's packs of that game isn't found yet, which copy is which isn't known - it waits.
+		string fiveHash = NocatFarm.Modules.GemsChoice.PackHash(600, "Five");
+		var mixBot = new NocatFarm.Core.Bot("bpmix-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var mixMem = new NocatFarm.Modules.BoosterPick.Memory();
+		mixMem.Add(new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 81, 70, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToSell));
+		mixMem.Save(mixBot.Name);
+		var mixMarket = new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["70", "81", "82"] } };
+		var mixBuyer = new NocatFarm.Modules.CardBuyer(mixBot, mixMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> mixOpened = [];
+		mixBuyer.Unpack = (pack, _) => {
+			mixOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string> { "600-Card 2" }, (string?) null));
+		};
+		mixBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "m1", Before: ["70"], Pack: true));
+		await mixBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("sweep: opening a bought pack never takes automatic's own (made to sell) for it - only the bought copy",
+			mixOpened.SequenceEqual([82ul]) && mixBuyer.Ledger.All.Single() is { Opened: true, Asset: "82" }, string.Join(",", mixOpened));
+
+		var unsureBot = new NocatFarm.Core.Bot("bpuns-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var unsureMem = new NocatFarm.Modules.BoosterPick.Memory();
+		unsureMem.Add(new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 0, 70, DateTime.UtcNow));
+		unsureMem.Save(unsureBot.Name);
+		var unsureBuyer = new NocatFarm.Modules.CardBuyer(unsureBot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["70", "82"] } },
+			NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> unsureOpened = [];
+		unsureBuyer.Unpack = (pack, _) => {
+			unsureOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string>(), (string?) null));
+		};
+		unsureBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "u1", Before: ["70"], Pack: true));
+		await unsureBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("sweep: while automatic's own pack of that game isn't found in the inventory yet, the bought one waits (never a guess)",
+			(unsureOpened.Count == 0) && unsureBuyer.Ledger.All.Single() is { Opened: false });
+
+		// Buying never buys packs for a game automatic has a pack of its own of (to open or to sell).
+		Check("sweep: never packs bought for a game automatic has a pack of its own waiting for - the cards",
+			(await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false }, BpMarket(), NocatFarm.Modules.SwapCost.None,
+				BpLedger(), mixBot, DateTime.UtcNow, CancellationToken.None)).Steps.All(static s => !s.IsPack));
+
+		// Sending: automatic's own packs too - by their id, and one not found yet as every pack of its game newer than it.
+		List<NocatFarm.Core.Looting.Item> autoSend = [
+			new(81, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600), new(83, 1, 0, 1, "Seven Booster Pack", "Seven Booster Pack", 753, 6, 700),
+			new(60, 1, 0, 1, "Seven Booster Pack", "Seven Booster Pack", 753, 6, 700), new(84, 1, 0, 1, "Nine Booster Pack", "Nine Booster Pack", 753, 6, 900)];
+		var autoKept = NocatFarm.Core.Looting.LeaveOwnPacks(autoSend, [],
+			[new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 81, 70, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToSell), new NocatFarm.Modules.BoosterPick.OwnPack(700, "Seven", 0, 70, DateTime.UtcNow)],
+			out int autoLeft);
+		Check("sweep: sending leaves out automatic's own packs (to open or to sell) - by id, or every newer pack of a game whose own isn't found yet; others go",
+			(autoLeft == 2) && autoKept.Select(static i => i.AssetId).SequenceEqual([60ul, 84ul]), string.Join(",", autoKept.Select(static i => i.AssetId)));
+
+		// The two new "Open booster packs" choices are stored as -1 and -2: a version from before 1.9.0 clamps to 0..2 and so
+		// reads them as never - stored as 3 and 4 they read as always, every pack opened after going back.
+		var openDef = NocatFarm.Config.Settings.FindBot("OpenBoosterPacks")!;
+		var setWorst = new NocatFarm.Config.BotConfig();
+		string? setError = NocatFarm.Config.Settings.Apply(setWorst, openDef, "even when only the cheapest three are worth more");
+		Check("sweep: the new pack choices are -1 (worst pull) and -2 (either) - an older version reads them as never, not always; they weigh, open, and can be typed by name",
+			(Math.Clamp(NocatFarm.Core.Spare.WorstPull, 0, 2) == 0) && (Math.Clamp(NocatFarm.Core.Spare.EitherPull, 0, 2) == 0)
+			&& (NocatFarm.Core.Spare.PackChoice(-1) == 3) && (NocatFarm.Core.Spare.PackChoice(-2) == 4) && (NocatFarm.Core.Spare.PackChoice(2) == 2) && (NocatFarm.Core.Spare.PackChoice(7) == 2)
+			&& NocatFarm.Core.Spare.WeighsPacks(-1) && NocatFarm.Core.Spare.WeighsPacks(-2) && NocatFarm.Core.Spare.WeighsPacks(1) && !NocatFarm.Core.Spare.WeighsPacks(2)
+			&& NocatFarm.Core.Spare.OpensPacks(-1) && !NocatFarm.Core.Spare.OpensPacks(0)
+			&& (setError == null) && (setWorst.OpenBoosterPacks == -1)
+			&& NocatFarm.Config.Settings.ParseChoices(openDef).Select(static o => o.Value).SequenceEqual([0, 1, 2, -1, -2]),
+			setError ?? "");
+		var fateWorth = new NocatFarm.Modules.GemsChoice.PackWorth(600, "Five", 20, 10, 0, 30);   // the average 0.10 loses to 0.20 sealed, the worst 0.30 wins
+		Check("sweep: what 'booster plan' says follows the stored choices - the worst pull for -1 and -2, the average for 1",
+			NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
+			&& NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -2 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
+			&& !NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = 1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal));
+		// ── review fixes: one copy a purchase, the Steam-level stop, the most per level, packs opened while buying is stopped, one pack set a look ──
+		// 1. A purchase guards ONE copy - the oldest new one: a second new pack of the game (a drop, a trade) stays the owner's.
+		var oneLedger = BpLedger();
+		oneLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "o1", Before: ["70"], Pack: true));
+		var oneIds = oneLedger.BoughtPackIds([(70ul, 600u), (73ul, 600u), (71ul, 600u)], DateTime.UtcNow);
+		var onePlan = NocatFarm.Core.Spare.PlanPacks([GuardPack(70, 600), GuardPack(71, 600), GuardPack(73, 600)], 0, 2, [], _ => DateTime.UtcNow,
+			new HashSet<ulong>(), _ => null, 24, DateTime.UtcNow, bought: oneIds);
+		Check("review: one pack bought and a second new pack of its game - only one (the oldest new) is forced open, the other is held back as new like any",
+			oneIds.SetEquals([71ul]) && onePlan.Single(static d => d.Pack.AssetId == 71) is { Open: true }
+			&& onePlan.Single(static d => d.Pack.AssetId == 73) is { Open: false } nd && nd.Why.ToEnglish().Contains("came in within", StringComparison.Ordinal)
+			&& onePlan.Single(static d => d.Pack.AssetId == 70) is { Open: false },
+			string.Join(",", oneIds) + " / " + string.Join(" | ", onePlan.Select(static d => $"{d.Pack.AssetId} open={d.Open} {d.Why.ToEnglish()}")));
+		var twoLedger = BpLedger();
+		twoLedger.Add(new(DateTime.UtcNow.AddHours(-2), 10, 20, 600, fiveHash, Key: "t1", Before: ["70"], Pack: true));
+		twoLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "t2", Before: ["70"], Pack: true, Asset: "75"));
+		var twoIds = twoLedger.BoughtPackIds([(70ul, 600u), (71ul, 600u), (75ul, 600u), (76ul, 600u)], DateTime.UtcNow);
+		var nullLedger = BpLedger();
+		nullLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n1", Pack: true));
+		var provenNull = BpLedger();
+		provenNull.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n2", Pack: true, Asset: "71"));
+		Check("review: two purchases guard two copies - the proven one, then the oldest new for the other; not known what was held before - only a proven copy, never the old packs",
+			twoIds.SetEquals([71ul, 75ul]) && (nullLedger.BoughtPackIds([(60ul, 600u), (71ul, 600u)], DateTime.UtcNow).Count == 0)
+			&& provenNull.BoughtPackIds([(60ul, 600u), (71ul, 600u)], DateTime.UtcNow).SetEquals([71ul])
+			&& !nullLedger.PackOpened(600, 60, DateTime.UtcNow) && nullLedger.All.Single() is { Opened: false },
+			string.Join(",", twoIds));
+		var nullBot = new NocatFarm.Core.Bot("bpnul-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var nullBuyer = new NocatFarm.Modules.CardBuyer(nullBot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["60", "61"] } },
+			NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> nullOpened = [];
+		nullBuyer.Unpack = (pack, _) => {
+			nullOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string>(), (string?) null));
+		};
+		nullBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n3", Pack: true));
+		await nullBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("review: a bought pack whose packs held before aren't known - the old packs of its game are never opened for it",
+			(nullOpened.Count == 0) && nullBuyer.Ledger.All.Single() is { Opened: false }, string.Join(",", nullOpened));
+
+		// 2. "Stop buying at Steam level", one badge level to go: a game with a bought pack still to open is that level.
+		NocatFarm.Config.BotConfig StopCfg() => new() { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyStopAtLevel = 20 };
+		var stopMarket = BpMarket();
+		stopMarket.SteamLevel = (19, 2900);
+		var stopFree = await NocatFarm.Modules.BuyPlan.MakeAsync(StopCfg(), stopMarket, NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var stopLedger = BpLedger();
+		stopLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 700, NocatFarm.Modules.GemsChoice.PackHash(700, "Seven"), Key: "s1", Before: [], Pack: true));
+		var stopMarket2 = BpMarket();
+		stopMarket2.SteamLevel = (19, 2900);
+		var stopHeld = await NocatFarm.Modules.BuyPlan.MakeAsync(StopCfg(), stopMarket2, NocatFarm.Modules.SwapCost.None, stopLedger, null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: stop at a Steam level one badge level away - a bought pack not opened yet is that level: nothing more bought (without it, one level)",
+			(stopFree.Steps.Count == 1) && (stopHeld.Steps.Count == 0) && (stopHeld.LevelsToBuy == 0)
+			&& stopHeld.Notes.Any(static n => n.StartsWith("the sets it holds reach Steam level 20 once crafted", StringComparison.Ordinal)),
+			$"{stopFree.Steps.Count} / {stopHeld.Steps.Count} · " + string.Join("; ", stopHeld.Notes));
+
+		// 3. "Most to pay for one badge level" 0.50: "Duo", 8 cards, 2 missing at 0.25, packs at 0.10 - 2 packs expected about
+		// 0.42 in all, but neither card about 1 time in 5, and then 0.70. The worst case must fit: the cards (0.50).
+		FakeCardMarket DuoMarket() {
+			var m = new FakeCardMarket();
+			var duo = Enumerable.Range(1, 8).Select(static i => $"620-Card {i}").ToList();
+			m.Sets[620] = new NocatFarm.Modules.CardSet(620, "Duo", duo, duo.ToDictionary(static c => c, static _ => 18));
+			m.Held[620] = duo.Take(6).ToDictionary(static c => c, static _ => 1);
+			foreach (string c in duo) {
+				m.Books[c] = FakeCardMarket.B(25);
+			}
+
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(620, "Duo")] = FakeCardMarket.B(10);
+			return m;
+		}
+
+		NocatFarm.Config.BotConfig CapCfg(float cap) => new() { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = cap };
+		var duoLoose = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var duoCapped = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: most per level 0.50 - packs only when packs and every missing card fit (0.20 + 0.50 = 0.70 doesn't): the 2 cards for 0.50; at 5.00, the 2 packs",
+			duoLoose.Steps.SingleOrDefault() is { IsPack: true, Packs: 2, Cost: 20 }
+			&& duoCapped.Steps.SingleOrDefault() is { IsPack: false, Cost: 50 } && (duoCapped.PackCount == 0)
+			&& duoCapped.Skipped.Any(static s => s.StartsWith("Duo: its booster packs and every missing card after them could come to 0.70 CAD", StringComparison.Ordinal))
+			&& !duoCapped.Notes.Any(static n => n.StartsWith("Duo: booster packs instead", StringComparison.Ordinal)),
+			string.Join(" | ", duoCapped.Steps.Select(static s => $"pack={s.IsPack}x{s.Packs}@{s.Cost}")) + " / " + string.Join("; ", duoCapped.Skipped));
+		// Packs bought for it before (0.20, opened): the cards they left (0.50) come on top - over 0.50, they wait. Crafted
+		// since (the level done), the spend is over and the next level's cards are bought.
+		var spentLedger = BpLedger();
+		spentLedger.Add(new(DateTime.UtcNow.AddHours(-1), 20, 20, 620, NocatFarm.Modules.GemsChoice.PackHash(620, "Duo"), Key: "d1", Before: [], Pack: true, Opened: true, Asset: "90"));
+		var duoSpent = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, spentLedger, null, DateTime.UtcNow, CancellationToken.None);
+		var craftedLedger = BpLedger();
+		craftedLedger.Add(new(DateTime.UtcNow.AddHours(-1), 20, 20, 620, NocatFarm.Modules.GemsChoice.PackHash(620, "Duo"), Key: "d2", Before: [], Pack: true, Opened: true, Asset: "90"));
+		craftedLedger.Crafted(620, DateTime.UtcNow);
+		var duoCrafted = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, craftedLedger, null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: most per level 0.50 with 0.20 spent on the game's packs - its last cards (0.50) wait (0.70 in all); its badge crafted since, they're bought",
+			(duoSpent.Steps.Count == 0) && duoSpent.Skipped.Any(static s => s.StartsWith("Duo: 0.50 CAD more, after 0.20 CAD on its booster packs - more than the most to pay for one level", StringComparison.Ordinal))
+			&& (spentLedger.PackSpend(DateTime.UtcNow).GetValueOrDefault(620u) == 20) && (craftedLedger.PackSpend(DateTime.UtcNow).Count == 0)
+			&& duoCrafted.Steps.SingleOrDefault() is { App: 620, IsPack: false, Cost: 50 },
+			string.Join("; ", duoSpent.Skipped) + " / " + string.Join(" | ", duoCrafted.Steps.Select(static s => $"{s.App} pack={s.IsPack}@{s.Cost}")));
+
+		// 5. "Alpha" (5 cards, 4 missing at 0.30, packs at 0.15) is priced first and wins as packs, but its 3 packs (0.45) are
+		// over the day's 0.25 - passed over. "Trio" (1 of 3 missing at 0.30, packs at 0.05) still gets the packs: 2 for 0.10.
+		FakeCardMarket SlotMarket() {
+			var m = new FakeCardMarket();
+			var alpha = Enumerable.Range(1, 5).Select(static i => $"610-Card {i}").ToList();
+			var trio = new List<string> { "630-A", "630-B", "630-C" };
+			m.Sets[610] = new NocatFarm.Modules.CardSet(610, "Alpha", alpha, alpha.ToDictionary(static c => c, static _ => 25));
+			m.Sets[630] = new NocatFarm.Modules.CardSet(630, "Trio", trio, trio.ToDictionary(static c => c, static _ => 120));
+			m.Held[610] = new() { ["610-Card 1"] = 1 };
+			m.Held[630] = new() { ["630-A"] = 1, ["630-B"] = 1 };
+			foreach (string c in alpha.Concat(trio)) {
+				m.Books[c] = FakeCardMarket.B(30);
+			}
+
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(610, "Alpha")] = FakeCardMarket.B(15);
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(630, "Trio")] = FakeCardMarket.B(5);
+			return m;
+		}
+
+		var slotTight = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = 5f, BuyDailyLimit = 0.25f },
+			SlotMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var slotBoth = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = 5f, BuyDailyLimit = 10f },
+			SlotMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: a set priced as packs but passed over leaves the one pack set a look to the next - and with room for both, the second is bought as its cards",
+			slotTight.Steps.SingleOrDefault() is { App: 630, IsPack: true, Packs: 2, Cost: 10 }
+			&& (slotBoth.Steps.Count == 2) && slotBoth.Steps.Single(static s => s.App == 630).IsPack && slotBoth.Steps.Single(static s => s.App == 610) is { IsPack: false, Cost: 120 }
+			&& slotBoth.Skipped.Any(static s => s == "Alpha: one set a look is bought as booster packs - its cards instead"),
+			string.Join(" | ", slotTight.Steps.Concat(slotBoth.Steps).Select(static s => $"{s.Game} pack={s.IsPack}x{s.Packs}@{s.Cost}")) + " / " + string.Join("; ", slotTight.Skipped));
+
+		// 4. Buying off (or crafting off, the market blocked): a pack it bought is opened all the same - never while paused,
+		// never for a game put on the never-open list (let go, shut), and past 2 days never a newer pack of its game.
+		async Task<(List<ulong> Opened, NocatFarm.Modules.CardBuyer Buyer, NocatFarm.Modules.CardBuyer.Result Look)> StoppedOpen(NocatFarm.Config.BotConfig cfg,
+			NocatFarm.Modules.BuyLedger.Entry entry, List<string> held, bool buyOn = false) {
+			var bot = new NocatFarm.Core.Bot("bpoff-" + Guid.NewGuid().ToString("N")[..8], cfg);
+
+			if (buyOn) {
+				NocatFarm.Core.Switches.Set(bot, NocatFarm.Core.Switches.Buy, true);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(bot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = held } }, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			List<ulong> opened = [];
+			buyer.Unpack = (pack, _) => {
+				opened.Add(pack.AssetId);
+				return Task.FromResult((true, new List<string> { "600-Card 2" }, (string?) null));
+			};
+			buyer.Ledger.Add(entry);
+			var look = await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			await bot.DisposeAsync();
+			return (opened, buyer, look);
+		}
+
+		var offOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f1", Before: ["70"], Pack: true), ["70", "82"]);
+		var craftOff = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = false, BuyBooster = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f2", Before: ["70"], Pack: true), ["70", "82"], buyOn: true);
+		var pausedOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, StartPaused = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f3", Before: ["70"], Pack: true), ["70", "82"]);
+		var neverOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BoosterNeverOpen = [600] },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f4", Before: ["70"], Pack: true), ["70", "82"]);
+		var lateOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true },
+			new(DateTime.UtcNow.AddDays(-3), 10, 20, 600, fiveHash, Key: "f5", Before: ["70"], Pack: true), ["70", "85"]);
+		Check("review: buying off - the pack it bought is still opened (its new copy, never the old one); crafting off too",
+			offOpen.Opened.SequenceEqual([82ul]) && offOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: "82" } && (offOpen.Look.Problem == "buying cards is off")
+			&& craftOff.Opened.SequenceEqual([82ul]) && craftOff.Buyer.Ledger.All.Single() is { Opened: true } && craftOff.Look.Problem.StartsWith("\"Craft badges from card sets\" is off", StringComparison.Ordinal),
+			$"{string.Join(",", offOpen.Opened)} / {offOpen.Look.Problem} / {string.Join(",", craftOff.Opened)} / {craftOff.Look.Problem}");
+		Check("review: paused - nothing opened; a game on the never-open list - let go, shut; 3 days on - a newer pack of its game is never taken for it (given up)",
+			(pausedOpen.Opened.Count == 0) && pausedOpen.Buyer.Ledger.All.Single() is { Opened: false }
+			&& (neverOpen.Opened.Count == 0) && neverOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: null }
+			&& (lateOpen.Opened.Count == 0) && lateOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: null },
+			$"{string.Join(",", pausedOpen.Opened)} / {string.Join(",", neverOpen.Opened)} / {string.Join(",", lateOpen.Opened)}");
+		string buyerSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "CardBuyer.cs")).Replace("\r\n", "\n");
+		Check("review: the buying loop opens bought packs while buying is off or outside its day's gate allows - beside the sweep, under the look's lock",
+			buyerSrc.Contains("\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
+			&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);\n\t\t\t\t\t\t\t\tawait OpenPacksStoppedAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal));
+		await nullBot.DisposeAsync();
+		await mixBot.DisposeAsync();
+		await unsureBot.DisposeAsync();
+	} finally {
+		await bpBot.DisposeAsync();
+		NocatFarm.Log.Suppressed = wasSuppressed;
+		NocatFarm.Modules.BuyLedger.ForgetLoaded();
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		TestTemp.Gone(bpRoot);
+	}
+}
+
+// ── 1.9.0 add-on fixes: held files, removing without the list, the comment gate, restores, older lists, count writes, the
+// 1.8.x move, the 1.8.x constructor, the console, plugin page buttons ──
+{
+	string fxRealRoot = NocatFarm.Config.ConfigStore.Root;
+	string fxRoot = Path.Combine(Path.GetTempPath(), "nf-addonfix-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(fxRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(fxRoot);
+	NocatFarm.Config.GlobalConfig fxWasLive = NocatFarm.Config.Live.Global;
+	HttpClient fxWasHttp = NocatFarm.Plugins.Addons.Http;
+	string fxWasKey = NocatFarm.Plugins.Addons.Key;
+	var fxMgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+
+	try {
+		NocatFarm.Plugins.Comments.Forget();
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = true };
+		// GitHub, as the checks have it: not there. Nothing here may need it.
+		NocatFarm.Plugins.Addons.Http = new HttpClient(new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound))));
+		using var fxKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+		NocatFarm.Plugins.Addons.Key = Convert.ToBase64String(fxKey.ExportSubjectPublicKeyInfo());
+		string FxSign(byte[] data) => Convert.ToBase64String(fxKey.SignData(data, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+		string FxSha(byte[] data) => Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(data));
+		byte[] FxIndex(string version, string sha, long serial = 0) => System.Text.Encoding.UTF8.GetBytes(
+			"{ " + (serial > 0 ? $"\"serial\": {serial}, " : "") + "\"addons\": [ { \"id\": \"demo\", \"name\": \"Demo\", \"plugin\": \"Demo\", \"description\": { \"en\": \"A demo.\" }, "
+			+ $"\"version\": \"{version}\", \"minAppVersion\": \"1.0.0\", \"file\": \"nocatfarm.demo.dll\", "
+			+ $"\"url\": \"https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll\", \"sha256\": \"{sha}\" }} ] }}");
+		IReadOnlyList<NocatFarm.Plugins.AddonEntry> FxList(string version, string sha) {
+			byte[] json = FxIndex(version, sha);
+			return NocatFarm.Plugins.Addons.Parse(json, FxSign(json), NocatFarm.Plugins.Addons.Key, out _)!;
+		}
+		string plugDir = NocatFarm.Plugins.PluginHost.Folder;
+		Directory.CreateDirectory(plugDir);
+		string demo = Path.Combine(plugDir, "nocatfarm.demo.dll");
+		string realAddon = typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.Location;   // a real add-on DLL, version 1.0.0
+		string repoRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+		string Src(params string[] parts) => File.ReadAllText(Path.Combine([repoRoot, .. parts])).Replace("\r\n", "\n");
+
+		// ── 1. a switched-off or failed plugin's file is held as much as a started one's ──
+		byte[] v1 = System.Text.Encoding.UTF8.GetBytes("demo add-on v1 " + Guid.NewGuid());
+		var l1 = FxList("1.2.0", FxSha(v1));
+		File.WriteAllBytes(demo, [9]);
+		NocatFarm.Plugins.PluginHost.MarkMapped("nocatfarm.demo.dll");   // loaded into a context, no plugin started (switched off, or OnLoadAsync threw)
+		bool noneStarted = NocatFarm.Plugins.PluginHost.Running.Count == 0;
+		var heldInstall = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+		Check("add-on held: a DLL loaded but not started counts as loaded - the update goes in beside it as .new, the held file untouched",
+			noneStarted && NocatFarm.Plugins.PluginHost.IsLoaded("nocatfarm.demo.dll") && heldInstall.Ok
+			&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 9 }) && File.ReadAllBytes(demo + ".new").SequenceEqual(v1), heldInstall.Message.ToEnglish());
+		var heldRemove = NocatFarm.Plugins.Addons.Uninstall(l1, "demo");
+		Check("add-on held: taking it out leaves a .remove for the next start instead of a refused delete",
+			File.Exists(demo) && File.Exists(demo + ".remove") && !File.Exists(demo + ".new") && heldRemove.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal), heldRemove.ToEnglish());
+		NocatFarm.Plugins.PluginHost.SettlePending(plugDir);
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		Check("add-on held: and at the next start it's gone", !File.Exists(demo) && !File.Exists(demo + ".remove"));
+		string hostSrc = Src("src", "NocatFarm", "Plugins", "PluginHost.cs");
+		int loadAt = hostSrc.IndexOf("context.LoadFromAssemblyPath(Path.GetFullPath(file));", StringComparison.Ordinal);
+		int markAt = hostSrc.IndexOf("MarkMapped(Path.GetFileName(file));", StringComparison.Ordinal);
+		int typesAt = hostSrc.IndexOf("foreach (Type type in assembly.GetTypes())", StringComparison.Ordinal);
+		Check("add-on held: every DLL is marked held straight after it's loaded - before its types are looked at, a plugin's switch or its OnLoadAsync",
+			(loadAt > 0) && (markAt > loadAt) && (typesAt > markAt));
+
+		if (OperatingSystem.IsWindows()) {
+			// Held by something else entirely (not marked): Windows refuses the delete and the replace - both wait for a restart.
+			File.WriteAllBytes(demo, [7]);
+			NocatFarm.Core.Said heldBy;
+			(bool Ok, NocatFarm.Core.Said Message) heldByInstall;
+			using (var hold = new FileStream(demo, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+				heldBy = NocatFarm.Plugins.Addons.Uninstall(l1, "demo");
+				File.Delete(demo + ".remove");
+				heldByInstall = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+			}
+			Check("add-on held (Windows): a file the app didn't know was held - a refused delete becomes a .remove, a refused replace a .new",
+				heldBy.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal) && heldByInstall.Ok && File.ReadAllBytes(demo + ".new").SequenceEqual(v1)
+				&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 7 }), heldBy.ToEnglish() + " / " + heldByInstall.Message.ToEnglish());
+			File.Delete(demo + ".new");
+			File.Delete(demo);
+		}
+
+		// ── 5. older lists and older versions are refused ──
+		byte[] s5 = FxIndex("1.2.0", FxSha(v1), serial: 5);
+		var took5 = NocatFarm.Plugins.Addons.Take(s5, FxSign(s5));
+		byte[] s4 = FxIndex("1.3.0", FxSha(v1), serial: 4);
+		var took4 = NocatFarm.Plugins.Addons.Take(s4, FxSign(s4));
+		byte[] s0 = FxIndex("1.3.0", FxSha(v1));
+		var took0 = NocatFarm.Plugins.Addons.Take(s0, FxSign(s0));
+		var took5Again = NocatFarm.Plugins.Addons.Take(s5, FxSign(s5));
+		Check("add-on list: the highest serial is remembered - an older list (4, or none at all) is refused, the same one again is fine",
+			(took5.List?.Count == 1) && (NocatFarm.Plugins.Addons.SeenSerial() == 5) && (took4.List == null) && took4.Why.ToEnglish().Contains("older than one", StringComparison.Ordinal)
+			&& (took0.List == null) && (took5Again.List?.Count == 1) && (NocatFarm.Plugins.Addons.SeenSerial() == 5), took4.Why.ToEnglish());
+		byte[] s6 = FxIndex("1.2.0", FxSha(v1), serial: 6);
+		NocatFarm.Plugins.Addons.Take(s6, FxSign(s6));
+		Check("add-on list: a newer list is taken and kept on disk, signature and all - and read back only if it still verifies",
+			(NocatFarm.Plugins.Addons.SeenSerial() == 6) && (NocatFarm.Plugins.Addons.Kept()?.Count == 1) && File.ReadAllBytes(NocatFarm.Plugins.Addons.KeptPath).SequenceEqual(s6));
+		Check("add-on versions: 1.0.0 is 1.0.0.0, 0.9.0 is older than 1.0.0, nothing installed is never older",
+			!NocatFarm.Plugins.Addons.Older("1.0.0", "1.0.0.0") && NocatFarm.Plugins.Addons.Older("0.9.0", "1.0.0") && !NocatFarm.Plugins.Addons.Older("1.2.0", null) && !NocatFarm.Plugins.Addons.Older("1.2.0", "1.0.0"));
+		File.Copy(realAddon, demo, true);
+		int fxDownloads = 0;
+		byte[] older = System.Text.Encoding.UTF8.GetBytes("demo add-on 0.9 " + Guid.NewGuid());
+		var downgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(FxList("0.9.0", FxSha(older)), "demo", (_, _) => { fxDownloads++; return Task.FromResult(older); }, CancellationToken.None);
+		Check("add-on install: never an older version over the one installed (its file says 1.0.0) - nothing downloaded, nothing changed",
+			(NocatFarm.Plugins.Addons.VersionOnDisk(demo) == "1.0.0") && !downgrade.Ok && (fxDownloads == 0)
+			&& downgrade.Message.ToEnglish().Contains("offers the older 0.9.0", StringComparison.Ordinal) && File.ReadAllBytes(demo).SequenceEqual(File.ReadAllBytes(realAddon)), downgrade.Message.ToEnglish());
+		var upgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
+		Check("add-on install: a newer one goes in over it", upgrade.Ok && File.ReadAllBytes(demo).SequenceEqual(v1), upgrade.Message.ToEnglish());
+		byte[] shipped = File.ReadAllBytes(Path.Combine(repoRoot, "addons", "addons.json"));
+		string shippedSig = File.ReadAllText(Path.Combine(repoRoot, "addons", "addons.json.sig"));
+		var shippedList = NocatFarm.Plugins.Addons.Parse(shipped, shippedSig, NocatFarm.Plugins.Addons.PublicKey, out NocatFarm.Core.Said shippedWhy, out long shippedSerial);
+		Check("add-on list: the one in the repository verifies with the built-in key, and has a serial",
+			(shippedList?.Count >= 1) && (shippedSerial >= 1), shippedWhy.ToEnglish());
+		Check("add-on list: the release step raises the serial before it signs", Src("tools", "addons-index.py").Contains("serial = int(data.get(\"serial\", 0)) + 1", StringComparison.Ordinal)
+			&& (Src("tools", "package-release.ps1").IndexOf("addons-index.py", StringComparison.Ordinal) < Src("tools", "package-release.ps1").IndexOf("sign $AddonKey", StringComparison.Ordinal)));
+
+		// ── 1. an official add-on that is switched off isn't loaded at all ──
+		File.Copy(realAddon, demo, true);
+		NocatFarm.Config.Live.Global.DisabledPlugins = ["Demo"];
+		var offEntry = NocatFarm.Plugins.Addons.SwitchedOff("nocatfarm.demo.dll");
+		await NocatFarm.Plugins.PluginHost.LoadAllAsync(fxMgr, CancellationToken.None);
+		var seenOff = NocatFarm.Plugins.PluginHost.Discovered.FirstOrDefault(static p => p.File == "nocatfarm.demo.dll");
+		Check("add-on off: switched off, it's known by the kept signed list and never loaded - listed as off, its file free to update or remove",
+			(offEntry?.Plugin == "Demo") && (seenOff.Name == "Demo") && (seenOff.Version == "1.0.0") && !seenOff.Enabled
+			&& !NocatFarm.Plugins.PluginHost.IsLoaded("nocatfarm.demo.dll") && (NocatFarm.Plugins.PluginHost.Running.Count == 0), $"{seenOff}");
+		NocatFarm.Config.Live.Global.DisabledPlugins = [];
+		Check("add-on off: switched on, the list doesn't keep it from loading", NocatFarm.Plugins.Addons.SwitchedOff("nocatfarm.demo.dll") == null);
+
+		// ── 2. taking one out needs no fresh list ──
+		var byKept = NocatFarm.Plugins.Addons.Uninstall(null, "demo");
+		Check("add-on remove: no list from GitHub - the last list kept here names the file", !File.Exists(demo) && byKept.ToEnglish().Contains("Demo is removed", StringComparison.Ordinal), byKept.ToEnglish());
+		File.Delete(NocatFarm.Plugins.Addons.KeptPath);
+		File.WriteAllBytes(demo, [1]);
+		var byName = NocatFarm.Plugins.Addons.Uninstall(null, "demo");
+		File.WriteAllBytes(Path.Combine(plugDir, "mine.dll"), [1]);
+		var byFile = NocatFarm.Plugins.Addons.Uninstall(null, "mine.dll");
+		var notPath = NocatFarm.Plugins.Addons.Uninstall(null, "../nocatfarm.demo");
+		var noneThere = NocatFarm.Plugins.Addons.Uninstall(null, "nothing");
+		Check("add-on remove: no list at all - by its name (nocatfarm.<name>.dll) or its file name, never a path",
+			!File.Exists(demo) && !File.Exists(Path.Combine(plugDir, "mine.dll")) && byName.ToEnglish().Contains("is removed", StringComparison.Ordinal)
+			&& byFile.ToEnglish().Contains("is removed", StringComparison.Ordinal) && notPath.ToEnglish().Contains("no add-on called", StringComparison.Ordinal)
+			&& noneThere.ToEnglish().Contains("no add-on called 'nothing'", StringComparison.Ordinal), $"{byName.ToEnglish()} / {byFile.ToEnglish()} / {notPath.ToEnglish()}");
+		File.WriteAllBytes(demo, [1]);
+		string removedHere = await NocatFarm.Commands.RunAtThisPcAsync(fxMgr, "addons remove demo");
+		Check("add-on remove: 'addons remove' at this PC with GitHub not answering still takes it out", !File.Exists(demo) && removedHere.Contains("is removed", StringComparison.Ordinal), removedHere);
+
+		// ── 9. the console: the same rule as the Plugins page ──
+		string fromPhone = await NocatFarm.Commands.RunLoggedAsync(fxMgr, "addons remove nothing-here", "checks");
+		string signedIn = await NocatFarm.Commands.RunSignedInAsync(fxMgr, "addons remove nothing-here", "checks");
+		Check("add-on console: refused from elsewhere, but the Console of a dashboard signed in with its password may (as its Plugins page may)",
+			fromPhone.Contains("only at this PC", StringComparison.Ordinal) && !signedIn.Contains("only at this PC", StringComparison.Ordinal)
+			&& signedIn.Contains("no add-on called 'nothing-here'", StringComparison.Ordinal), signedIn);
+		string webSrc = Src("src", "NocatFarm", "Web", "WebHost.cs");
+		Check("add-on console: the dashboard's Console runs signed-in lines that way when a password is set",
+			webSrc.Contains(": MayInstallAddons(ctx)\n\t\t\t\t\t? await Commands.RunSignedInAsync(_mgr, body.Line, \"dashboard from another device\")", StringComparison.Ordinal));
+
+		// ── plugin page buttons: only the plugin's own commands ──
+		var bHost = new NocatFarm.Plugins.Host(fxMgr, "buttons");
+		bHost.AddCommand("tally", "<account>", "count", static _ => Task.FromResult("counted"));
+		Check("plugin buttons: only the plugin's own verbs - 'tally reset' yes; 'set', 'send', 'remove', another plugin's, nothing - no",
+			NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "tally reset farm1") && NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "/TALLY")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "set WebPassword x") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "send all")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "remove main") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "rep4rep on all")
+			&& !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, "") && !NocatFarm.Plugins.PluginHost.IsOwnCommand(bHost, null));
+		Check("plugin buttons: the page presses through /api/plugins/press, which refuses any other line",
+			webSrc.Contains("if (!Plugins.PluginHost.OwnsCommand(body.Plugin, body.Line)) {", StringComparison.Ordinal)
+			&& Src("src", "NocatFarm", "wwwroot", "app.js").Contains("post('/api/plugins/press', { Plugin: ppPlugin, Line: cmd })", StringComparison.Ordinal)
+			&& !Src("src", "NocatFarm", "wwwroot", "app.js").Contains("post('/api/command', { Line: cmd })", StringComparison.Ordinal));
+
+		// ── Telegram's and Discord's /help list the add-ons' commands ──
+		var fxHosts = (List<NocatFarm.Plugins.Host>) typeof(NocatFarm.Plugins.PluginHost).GetField("Hosts", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		fxHosts.Add(bHost);
+		string tgHelp, dcHelp;
+		try {
+			tgHelp = (string) typeof(NocatFarm.Core.Notifier).GetMethod("HelpHtml", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+			dcHelp = (string) typeof(NocatFarm.Core.Notifier).GetMethod("HelpMarkdown", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
+		} finally {
+			fxHosts.Remove(bHost);
+		}
+		Check("/help: Telegram and Discord list the commands add-ons added", tgHelp.Contains("/tally &lt;account&gt;", StringComparison.Ordinal)
+			&& dcHelp.Contains("`tally <account>`", StringComparison.Ordinal) && tgHelp.Contains("<b>Add-ons:</b>", StringComparison.Ordinal), tgHelp[^Math.Min(200, tgHelp.Length)..]);
+
+		// ── 3. the human-mode gate follows the account object ──
+		NocatFarm.Core.Bot FxBot(string name, bool human) {
+			var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { LegitMode = human });
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+			return b;
+		}
+		NocatFarm.Core.Bot g1 = FxBot("g-swap", human: true);
+		var gShut = NocatFarm.Plugins.Comments.Check(g1);
+		NocatFarm.Core.Bot g2 = FxBot("g-swap", human: false);   // the same name, a new object: a backup restored, or removed and added again
+		var gOpen = NocatFarm.Plugins.Comments.Check(g2);
+		NocatFarm.Core.Bot g3 = FxBot("g-swap", human: true);
+		var gShutAgain = NocatFarm.Plugins.Comments.Check(g3);
+		Check("plugin comment: a replaced account gets a gate of its own - not stuck on the old one's, and human mode's checks not skipped by it",
+			!gShut.Allowed && gOpen.Allowed && !gShutAgain.Allowed && ReferenceEquals(NocatFarm.Plugins.Comments.Of("g-swap").HumanFor, g3), $"{gShut.Reason} / {gOpen.Reason} / {gShutAgain.Reason}");
+		g3.Cfg.LegitMode = false;
+		var gOff = NocatFarm.Plugins.Comments.Check(g3);
+		g3.Cfg.LegitMode = true;
+		var gOn = NocatFarm.Plugins.Comments.Check(g3);
+		Check("plugin comment: and when its human mode is switched, the gate is made again", gOff.Allowed && !gOn.Allowed && NocatFarm.Plugins.Comments.Of("g-swap").HumanLegit);
+
+		// ── 6. a count that couldn't be written stops comments until it can be ──
+		NocatFarm.Core.Bot wBot = FxBot("w-fail", human: false);
+		Directory.CreateDirectory(NocatFarm.Plugins.Comments.PathFor("w-fail"));   // a folder where the file goes: every write fails
+		NocatFarm.Plugins.Comments.Count("w-fail", DateTime.UtcNow.AddMinutes(-10));
+		var unsaved = NocatFarm.Plugins.Comments.Check(wBot);
+		Directory.Delete(NocatFarm.Plugins.Comments.PathFor("w-fail"));
+		var savedAgain = NocatFarm.Plugins.Comments.Check(wBot);
+		NocatFarm.Plugins.Comments.Forget();
+		Check("plugin comment: a count that couldn't be saved stops the account's comments - and once it saves (at the next look), they go on, the count on disk",
+			!unsaved.Allowed && unsaved.Reason.Contains("can't save", StringComparison.Ordinal) && savedAgain.Allowed
+			&& (NocatFarm.Plugins.Comments.Window("w-fail").Count == 1), $"{unsaved.Reason} / {savedAgain.Reason}");
+
+		// ── 4. a restore: comment counts and plugin settings are read again ──
+		NocatFarm.Plugins.Comments.Count("r-acc", DateTime.UtcNow.AddMinutes(-5));
+		long[] restoredPosts = [.. Enumerable.Range(0, 25).Select(static i => DateTime.UtcNow.AddHours(-20).AddMinutes(i).Ticks)];
+		File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("r-acc"), System.Text.Json.JsonSerializer.Serialize(new { Posts = restoredPosts }));
+		int before = NocatFarm.Plugins.Comments.Window("r-acc").Count;
+		NocatFarm.Plugins.Comments.Forget();
+		Check("restore: the comment counts are read again - the restored file's 25, not the 1 in memory", (before == 1) && (NocatFarm.Plugins.Comments.Window("r-acc").Count == 25));
+		var rHost = new NocatFarm.Plugins.Host(fxMgr, "restore-test");
+		rHost.AddSetting(new NocatFarm.Plugins.PluginSetting("Every", "Every", "", NocatFarm.Plugins.PluginSettingKind.Int, "5"));
+		rHost.SetValue("Every", "10");
+		string rFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "restore-test.settings.json");
+		File.WriteAllText(rFile, """{ "Every": "30", "Other": "kept" }""");   // what the backup put back
+		string stale = rHost.Setting("Every");
+		rHost.ForgetValues();
+		string fresh = rHost.Setting("Every");
+		rHost.SetValue("Every", "40");
+		Check("restore: a plugin's settings are read again - the restored values win, and the next change doesn't save the old ones over them",
+			(stale == "10") && (fresh == "30") && File.ReadAllText(rFile).Contains("\"Other\":\"kept\"", StringComparison.Ordinal), File.ReadAllText(rFile));
+		NocatFarm.Plugins.PluginHost.ReloadSettings();   // nothing loaded here: a no-op that doesn't throw
+		string backupSrc = Src("src", "NocatFarm", "Core", "Backup.cs");
+		Check("restore: both ways out of a restore forget the comment counts and re-read every plugin's settings",
+			(backupSrc.Split("Plugins.Comments.Forget();").Length == 3) && (backupSrc.Split("Plugins.PluginHost.ReloadSettings();").Length == 3));
+
+		// ── 7. the 1.8.x move: an account moved while the global part failed isn't switched off for good ──
+		string r4rFile = NocatFarm.Config.ConfigStore.Rep4RepSettingsFile;
+		File.Delete(r4rFile);
+		Directory.CreateDirectory(r4rFile);   // the add-on's settings file can't be written this start
+		const string oldGlobal = """{ "Rep4RepEnabled": true, "Rep4RepAutoAddProfiles": false }""";
+		bool globalFirst = NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), oldGlobal);
+		Directory.Delete(r4rFile);
+		bool accountMoved = NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("late", """{ "Rep4Rep": true, "Rep4RepDailyCap": 4 }""");
+		Dictionary<string, string> R4r() => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(r4rFile))!;
+		var mid = R4r();
+		Check("1.8.x move: the global part failed, the account's moved - its on/off kept to settle, not written as off",
+			!globalFirst && accountMoved && !mid.ContainsKey("late:On") && (mid.GetValueOrDefault("late:" + NocatFarm.Config.ConfigStore.PendingOnKey) == "true") && (mid["late:DailyCap"] == "4"),
+			string.Join(", ", mid.Select(static kv => $"{kv.Key}={kv.Value}")));
+		bool globalLater = NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), oldGlobal);
+		var after = R4r();
+		Check("1.8.x move: the global part going through later settles it - on, as it was in 1.8.x",
+			globalLater && (after.GetValueOrDefault("late:On") == "true") && !after.ContainsKey("late:" + NocatFarm.Config.ConfigStore.PendingOnKey) && (after["AutoAddProfiles"] == "false"),
+			string.Join(", ", after.Select(static kv => $"{kv.Key}={kv.Value}")));
+		bool afterwards = NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("quietone", """{ "Rep4Rep": false }""");
+		Check("1.8.x move: an account after that is moved straight away", afterwards && (R4r().GetValueOrDefault("quietone:On") == "false"));
+
+		// ── 8. a plugin built for 1.8.x still finds the six-value PluginSetting constructor ──
+		var six = typeof(NocatFarm.Plugins.PluginSetting).GetConstructor([typeof(string), typeof(string), typeof(string), typeof(NocatFarm.Plugins.PluginSettingKind), typeof(string), typeof(IReadOnlyList<string>)]);
+		var madeSix = (NocatFarm.Plugins.PluginSetting?) six?.Invoke(["n", "l", "h", NocatFarm.Plugins.PluginSettingKind.Int, "3", null]);
+		var deconstructSix = typeof(NocatFarm.Plugins.PluginSetting).GetMethods().FirstOrDefault(static m => (m.Name == "Deconstruct") && (m.GetParameters().Length == 6));
+		Check("plugin API: PluginSetting's 1.8.x six-value constructor (and deconstruction) is still there - not per account",
+			madeSix is { Name: "n", Kind: NocatFarm.Plugins.PluginSettingKind.Int, Default: "3", PerAccount: false } && (deconstructSix != null));
+
+		// ── leftovers ──
+		Check("reports: the attention lines no longer take an unused rep4rep flag",
+			typeof(NocatFarm.Core.ReportCard).GetMethod("Attention", BindingFlags.NonPublic | BindingFlags.Static)!.GetParameters().Select(static p => p.Name).SequenceEqual(["bots", "newBan", "nowUtc"]));
+		FieldInfo asked = typeof(NocatFarm.Plugins.Comments).GetField("_pluginComments", BindingFlags.NonPublic | BindingFlags.Static)!;
+		bool wasAsked = (bool) asked.GetValue(null)!;
+		asked.SetValue(null, false);
+		try {
+			foreach (string f in Directory.GetFiles(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"), "comments-*.json")) {
+				File.SetLastWriteTimeUtc(f, DateTime.UtcNow.AddDays(-8));
+			}
+			NocatFarm.Plugins.Comments.Forget();
+			bool oldOnly = NocatFarm.Plugins.Comments.InUse;
+			File.SetLastWriteTimeUtc(NocatFarm.Plugins.Comments.PathFor("r-acc"), DateTime.UtcNow.AddDays(-2));
+			NocatFarm.Plugins.Comments.Forget();
+			bool recent = NocatFarm.Plugins.Comments.InUse;
+			File.SetLastWriteTimeUtc(NocatFarm.Plugins.Comments.PathFor("r-acc"), DateTime.UtcNow.AddDays(-8));
+			NocatFarm.Plugins.Comments.Forget();
+			NocatFarm.Plugins.Comments.PluginComments();
+			bool asking = NocatFarm.Plugins.Comments.InUse;
+			Check("comments in use: a plugin that comments, or a comment in the last 7 days - not an old count file left behind",
+				!oldOnly && recent && asking);
+		} finally {
+			asked.SetValue(null, wasAsked);
+		}
+	} finally {
+		await fxMgr.DisposeAsync();
+		NocatFarm.Plugins.Addons.Http = fxWasHttp;
+		NocatFarm.Plugins.Addons.Key = fxWasKey;
+		NocatFarm.Plugins.PluginHost.ForgetMapped();
+		NocatFarm.Config.Live.Global = fxWasLive;
+		NocatFarm.Plugins.Comments.Forget();
+		NocatFarm.Config.ConfigStore.UseRoot(fxRealRoot);
+		TestTemp.Gone(fxRoot);
+	}
+}
+
+// ── 1.9.0 stress: hostile plugins (throwing, blocking, never finishing, flooding), files with nulls and times that are none, rep4rep answering garbage ──
+await StressChecks190.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
 Check("temp: every check deletes the temp folders and files it made", leftInTemp.Count == 0, string.Join(", ", leftInTemp));
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced && !d.Hidden)} basic, {NocatFarm.Config.Settings.Global.Count(d => d.Hidden)} hidden), "
 	+ $"{NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced && !d.Hidden)} basic, {NocatFarm.Config.Settings.Bot.Count(d => d.Hidden)} hidden); "
-	+ $"a new account shows {NocatFarm.Config.Settings.BasicView(false, new NocatFarm.Config.BotConfig(), false).Count}, the global page {NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig(), false).Count}");
+	+ $"a new account shows {NocatFarm.Config.Settings.BasicView(false, new NocatFarm.Config.BotConfig()).Count}, the global page {NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig()).Count}");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
 return fails;
 
@@ -29936,9 +30980,9 @@ static class CommandSweep {
 		["owns"] = ["440", "portal"],
 		["privacy"] = ["robo", "robo public", "robo inventory=public comments=friends", "robo bogus=x"],
 		["joingroup"] = ["robo", "robo nocatfarm"],
-		["rep4rep"] = ["status", "points", "profiles", "tasks", "now", "pause", "resume", "clear", "rest", "bogus"],
+		["addons"] = ["install", "remove", "install nosuch", "bogus"],
 		["config"] = ["robo", "robo all"],
-		["set"] = ["robo", "robo Rep4Rep", "robo IdleGames 440", "Theme dark", "nosuchkey 1", "robo nosuchkey 1"],
+		["set"] = ["robo", "robo AcceptFriendRequests", "robo IdleGames 440", "Theme dark", "nosuchkey 1", "robo nosuchkey 1"],
 		["backup"] = ["status", "now"],
 		["import"] = ["bogus", @"asf C:\nf-nowhere\ASF"],
 		["log"] = ["5"],
@@ -31428,7 +32472,7 @@ static class BuySafetyChecks {
 				string.Join(",", staleMarket.Checked) + " / " + string.Join(" | ", stale));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)\n\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal));
 
 			// ── re-priced before a set is started ──
@@ -32029,7 +33073,7 @@ static class BuySmartChecks {
 			Check("phone: the purchase is counted against the limits, kept with its confirmation, and said - one line for the set",
 				(first.Waiting.Count == 1) && (onPhone.Count == 1) && onPhone[0] is { Pending: true, Confirm: "c1", Cents: 9, Order: null }
 				&& (phoneBuyer.Ledger.SpentSince(DateTime.UtcNow.AddDays(-1)) == 9) && first.Problem.Contains("Steam app", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("Log.Attention(new Said(\"confirm the card purchase in the Steam app · {0} card(s) for {1}\", onPhone, step.Game), Bot.Name);", StringComparison.Ordinal),
+				&& Src("src/NocatFarm/Modules/CardBuyer.cs").Contains(": new Said(\"confirm the card purchase in the Steam app · {0} card(s) for {1}\", onPhone, step.Game), Bot.Name);", StringComparison.Ordinal),
 				first.Problem + " " + string.Join(" | ", phoneBuyer.Ledger.All));
 			var second = await phoneBuyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
 			Check("phone: not confirmed yet - sent again with its confirmation, and nothing new is bought meanwhile",
@@ -32076,7 +33120,7 @@ static class BuySmartChecks {
 				twoMarket.Bought.Select(static b => b.Hash).SequenceEqual(["200-B"]) && (two.Waiting.Count == 1), string.Join(",", twoMarket.Bought));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("phone: with buying off or outside its day, a purchase waiting too long is still let go; with the authenticator here it confirms exactly its own",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)\n\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
 
@@ -34090,19 +35134,19 @@ static class SettingsCleanupChecks {
 				"SpareGemMarginPct", "BoosterCheckHours", "AchievementGrindGapMinMinutes", "AchievementGrindGapMaxMinutes", "SaleQuests",
 				"SaleNextFest", "SaleGapMinSeconds", "SaleGapMaxSeconds", "SaleHumanGapMinMinutes", "SaleHumanGapMaxMinutes",
 				"SaleCheckHours", "PointsCheckEveryHours", "BuyCheckHours", "ScamWatchMinMinutes", "ScamWatchMaxMinutes",
-				"HealthMinHours", "HealthMaxHours", "Rep4RepRetryRefused"];
+				"HealthMinHours", "HealthMaxHours"];
 			string[] hiddenGlobal = ["WebRefreshSeconds", "OpenDashboardAfterAdd", "MarketGapSeconds", "PriceCacheHours",
-				"Rep4RepPointsRefreshMinutes", "Rep4RepPauseHours", "UpdateCheckHours", "BackupJitterMinutes", "BackupRetryMinutes",
+				"UpdateCheckHours", "BackupJitterMinutes", "BackupRetryMinutes",
 				"LoginStaggerSeconds", "ReconnectDelaySeconds", "ConnectionTimeoutSeconds", "LoginCooldownMinutes", "WebRequestGapMs",
 				"TelegramLogColour", "DiscordLogColour", "TelegramChatId", "DiscordOwnerId"];
 			List<string> notHidden = [.. hiddenBot.Where(n => B(n) is not { Hidden: true }), .. hiddenGlobal.Where(n => G(n) is not { Hidden: true })];
-			Check("settings: the internals nobody tunes are hidden - 39 per account, 18 global, \"Gems must beat selling by\" among them",
-				notHidden.Count == 0 && (bot.Count(d => d.Hidden) >= 39) && (global.Count(d => d.Hidden) >= 18), string.Join(", ", notHidden));
+			Check("settings: the internals nobody tunes are hidden - 38 per account, 16 global (1.9.0: rep4rep's went to the add-on), \"Gems must beat selling by\" among them",
+				notHidden.Count == 0 && (bot.Count(d => d.Hidden) >= 38) && (global.Count(d => d.Hidden) >= 16), string.Join(", ", notHidden));
 
 			// Hidden is only the dashboard: the console finds it, sets it and lists it under 'config all'.
 			var hcfg = new NocatFarm.Config.BotConfig();
 			bool setsHidden = (NocatFarm.Config.Settings.FindBot("spareruNhours") is { } runHours) && (NocatFarm.Config.Settings.Apply(hcfg, runHours, "30") == null) && (hcfg.SpareRunHours == 30)
-				&& (NocatFarm.Config.Settings.Find("Rep4RepPauseHours") != null);
+				&& (NocatFarm.Config.Settings.Find("UpdateCheckHours") != null);
 			Check("settings: a hidden one still works from the console - found, set and explained", setsHidden);
 			Check("settings: the dashboard never draws a hidden one, and doesn't count it with the advanced ones",
 				Src("src/NocatFarm/wwwroot/app.js").Contains("(settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden)", StringComparison.Ordinal));
@@ -34122,18 +35166,8 @@ static class SettingsCleanupChecks {
 			Check("settings: robot-only pacing settings are robot mode only",
 				new[] { "SparePerRun", "SpareGapSeconds", "SaleGapMinSeconds", "SaleGapMaxSeconds" }.All(n => B(n)?.Mode == "rage"));
 
-			// "Pause rep4rep for..." - an action, with a command and buttons, not a setting.
-			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false };
-			string held = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold 24");
-			bool holding = NocatFarm.Config.Live.Global.Rep4RepHoldUntil is { } hu && Math.Abs((hu - DateTime.UtcNow).TotalHours - 24) < 0.1;
-			string off = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold off");
-			string bad = await NocatFarm.Commands.RunAsync(mgr, "rep4rep hold soon");
-			Check("settings: 'rep4rep hold 24' holds every account's comments for a day, 'rep4rep hold off' ends it",
-				holding && held.Contains("24h", StringComparison.Ordinal) && (NocatFarm.Config.Live.Global.Rep4RepHoldUntil == null)
-				&& bad.StartsWith("rep4rep hold <hours>", StringComparison.Ordinal), $"{held} | {off} | {bad}");
-			Check("settings: the dashboard's rep4rep section has Pause buttons, and the chat panels a Disconnect",
-				Src("src/NocatFarm/wwwroot/app.js").Contains("function rep4repHoldPanel(values)", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('TelegramChatId')", StringComparison.Ordinal)
+			Check("settings: the chat panels have a Disconnect",
+				Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('TelegramChatId')", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/wwwroot/app.js").Contains("disconnectChat('DiscordOwnerId')", StringComparison.Ordinal));
 			// ── ranges on one row ──
 			List<string> pairProblems = [];
@@ -34158,7 +35192,7 @@ static class SettingsCleanupChecks {
 			}
 
 			Check("settings: every \"shortest / longest\" pair is one row - the row's label on the first, both halves alike",
-				(pairProblems.Count == 0) && (NocatFarm.Config.Settings.RowPairs.Count >= 23)
+				(pairProblems.Count == 0) && (NocatFarm.Config.Settings.RowPairs.Count >= 21)
 				&& NocatFarm.Config.Settings.RowPairs.Contains(("FarmFromHour", "FarmUntilHour")) && NocatFarm.Config.Settings.RowPairs.Contains(("BreakMinMinutes", "BreakMaxMinutes")),
 				string.Join("; ", pairProblems));
 			Check("settings: a range of hours (from/until) is never put in order - it may run past midnight",
@@ -34329,12 +35363,12 @@ static class SettingsCleanupChecks {
 				("AutoReply", "AutoReplyEnabled=true"), ("RotateEveryHours", "RotateIdleGames=true"), ("FarmHoursPerDay", "FarmInSittings=true"),
 				("OfflineIdleGames", "OfflineIdleAtNight=true"), ("ResumeDelayMinutes", "PauseWhenYouPlay=true"), ("DonationsWhileAsleep", "AcceptDonations=true"),
 				("IgnoreSuspiciousInvites", "AcceptFriendRequests=true"), ("FriendRequestDelayMinMinutes", "AcceptFriendRequests=true"),
-				("Rep4RepDailyCap", "Rep4Rep=true"), ("AchievementBoost", "UnlockAchievements=true"),
+				("AchievementBoost", "UnlockAchievements=true"),
 				("AchievementMaxCompletionPct", "UnlockAchievements=true"), ("AchievementNeverGames", "UnlockAchievements=true"),
 				("YieldToFamily", "IncludeFamilyLibrary=true"), ("BorrowFamilyCopy", "IncludeFamilyLibrary=true"), ("FamilyWaitMinutes", "IncludeFamilyLibrary=true"),
 				("SendAroundHour", "SendEveryHours!=0")];
 			(string Name, string When)[] needsGlobal = [("StuckAlarmHours", "StuckAlarm=true"), ("WeeklyReportDay", "WeeklyReport=true"), ("MiniOnTop", "Tray=true"),
-				("NotifyEarnings", "TrayNotifications=true"), ("NotifyScam", "TrayNotifications=true"), ("Rep4RepApiToken", "Rep4RepEnabled=true")];
+				("NotifyEarnings", "TrayNotifications=true"), ("NotifyScam", "TrayNotifications=true")];
 			string[] wrongWhen = [.. needs.Where(n => B(n.Name)?.ShowWhen != n.When).Select(n => n.Name)
 				.Concat(needsGlobal.Where(n => G(n.Name) is { } d && (d.ShowWhen != n.When)).Select(n => n.Name))];
 			Check("settings: what does nothing while its switch is off shows only once it's on", wrongWhen.Length == 0, string.Join(", ", wrongWhen));
@@ -34352,9 +35386,9 @@ static class SettingsCleanupChecks {
 			(string Name, string Label)[] relabels = [("Enabled", "Run this account"), ("LegitMode", "Play like a person (human mode)"),
 				("IUseThisAccount", "I also use this account in my own Steam app"), ("BlacklistedGames", "Never play these games"),
 				("AchievementBoost", "Achievement hunt"), ("ShowInventoryValue", "Show inventory value"), ("CardSwaps", "Swap spare cards with other nocat.farm users"),
-				("Rep4RepDailyCap", "Comments a day, at most"), ("SpareKeepGems", "Gems never packed, sent or sold"),
+				("SpareKeepGems", "Gems never packed, sent or sold"),
 				("BoosterKeepGems", "Gems packs never use"), ("LongerRhythms", "Quiet spells now and then"), ("ClearNotifications", "Clear Steam's notification counters")];
-			(string Name, string Label)[] relabelsGlobal = [("Rep4RepEnabled", "Use rep4rep"), ("MaxConcurrentFarming", "Accounts farming at once"), ("MarketCurrency", "Show inventory values in"),
+			(string Name, string Label)[] relabelsGlobal = [("MaxConcurrentFarming", "Accounts farming at once"), ("MarketCurrency", "Show inventory values in"),
 				("WebSignInCode", "Ask for a Telegram code when signing in from outside"), ("DailyReportTime", "Daily summary at")];
 			string[] notRelabelled = [.. relabels.Where(r => B(r.Name)?.Label != r.Label).Select(r => r.Name).Concat(relabelsGlobal.Where(r => G(r.Name)?.Label != r.Label).Select(r => r.Name))];
 			Check("settings: the labels say what they do", notRelabelled.Length == 0, string.Join(", ", notRelabelled));
@@ -34367,8 +35401,8 @@ static class SettingsCleanupChecks {
 			Check("settings: 12 sections per account, in order - everyday first, the money and items features together at the end, the log last",
 				botSections.SequenceEqual(["Account", "Human mode", "What it plays", "Trading cards", "Free stuff", "Badges", "Achievements", "Safety", "Trades",
 					"Friends & messages", "Items and spending", "Logging"]), string.Join(" | ", botSections));
-			Check("settings: 9 global sections, in order",
-				globalSections.SequenceEqual(["General", "Notifications", "Updates & plugins", "Backups", "All accounts", "rep4rep", "Dashboard & phone",
+			Check("settings: 8 global sections, in order (1.9.0: rep4rep's went with it to the add-on)",
+				globalSections.SequenceEqual(["General", "Notifications", "Updates & plugins", "Backups", "All accounts", "Dashboard & phone",
 					"Discord profile", "Steam connection & logs"]), string.Join(" | ", globalSections));
 			string[] items = [.. bot.Where(d => d.Section == "Items and spending").Select(d => d.Part ?? "").Distinct()];
 			Check("settings: spare items, booster packs, Steam Points and buying cards are parts of one section at the end",
@@ -34394,15 +35428,15 @@ static class SettingsCleanupChecks {
 			var newHuman = new NocatFarm.Config.BotConfig { LegitMode = true };
 			NocatFarm.Config.Settings.ApplyLegitMode(newHuman, false);
 			NocatFarm.Config.Settings.NewHumanAccount(newHuman);
-			List<NocatFarm.Config.Settings.ViewRow> robotRows = NocatFarm.Config.Settings.BasicView(false, newRobot, rep4rep: false);
-			List<NocatFarm.Config.Settings.ViewRow> humanRows = NocatFarm.Config.Settings.BasicView(false, newHuman, rep4rep: false);
-			List<NocatFarm.Config.Settings.ViewRow> globalRows = NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig(), rep4rep: false);
+			List<NocatFarm.Config.Settings.ViewRow> robotRows = NocatFarm.Config.Settings.BasicView(false, newRobot);
+			List<NocatFarm.Config.Settings.ViewRow> humanRows = NocatFarm.Config.Settings.BasicView(false, newHuman);
+			List<NocatFarm.Config.Settings.ViewRow> globalRows = NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig());
 			string Names(List<NocatFarm.Config.Settings.ViewRow> r) => string.Join(", ", r.Select(x => x.Name));
 			Check("settings: a new robot account shows 29 settings with Show advanced off (it was 46; 1.8.2: \"Level-up line shows\")", robotRows.Count == 29, $"{robotRows.Count}: {Names(robotRows)}");
 			Check("settings: a new human-mode account shows about 33 (it was 55)", humanRows.Count is >= 31 and <= 35, $"{humanRows.Count}: {Names(humanRows)}");
-			Check("settings: the global settings show 14 (it was 31)", globalRows.Count == (OperatingSystem.IsWindows() ? 14 : 12), $"{globalRows.Count}: {Names(globalRows)}");
-			Check("settings: ...in 11 sections on a new account (the log is all advanced), 6 global",
-				(robotRows.Select(r => r.Section).Distinct().Count() == 11) && (globalRows.Select(r => r.Section).Distinct().Count() == 6),
+			Check("settings: the global settings show 13 (it was 31; 1.9.0: Use rep4rep went to the add-on)", globalRows.Count == (OperatingSystem.IsWindows() ? 13 : 11), $"{globalRows.Count}: {Names(globalRows)}");
+			Check("settings: ...in 11 sections on a new account (the log is all advanced), 5 global",
+				(robotRows.Select(r => r.Section).Distinct().Count() == 11) && (globalRows.Select(r => r.Section).Distinct().Count() == 5),
 				$"{robotRows.Select(r => r.Section).Distinct().Count()} / {globalRows.Select(r => r.Section).Distinct().Count()}");
 			string[] mustShow = ["Enabled", "SteamLogin", "SteamPassword", "OnlineStatus", "IUseThisAccount", "LegitMode", "IdleGames", "IdleWholeLibrary", "RotateIdleGames",
 				"SkipRefundableGames", "BlacklistedGames", "CustomGameNameEnabled", "FarmCards", "ClaimFree", "SaleEvents", "CraftBadges", "UnlockAchievements", "WatchForScams",
@@ -34411,7 +35445,7 @@ static class SettingsCleanupChecks {
 			newRobot.SpendPoints = true;
 			newRobot.BuyCards = true;
 			Check("settings: once spending is on, its money limits show without Show advanced",
-				new[] { "PointsKeepAtLeast", "PointsWeeklyCap", "BuyDailyLimit", "BuyWeeklyLimit" }.All(n => NocatFarm.Config.Settings.BasicView(false, newRobot, false).Any(r => r.Name == n)));
+				new[] { "PointsKeepAtLeast", "PointsWeeklyCap", "BuyDailyLimit", "BuyWeeklyLimit" }.All(n => NocatFarm.Config.Settings.BasicView(false, newRobot).Any(r => r.Name == n)));
 
 			// ── the defaults that changed - for new accounts only ──
 			var fresh = new NocatFarm.Config.BotConfig();
@@ -35618,7 +36652,7 @@ static class DearCardsChecks {
 				NocatFarm.Modules.DearCards.Marked(live));
 			Check("dear packs: automatic would save gems for Arcane Raise (closest badge, 1 missing) - once it's dear, it's left out and the next game goes first",
 				(plain.Ranked[0].App == Arcane) && (marked.Ranked[0].App == 800) && marked.Ranked.All(static c => c.App != Arcane) && (marked.Dear == 1)
-				&& Src("src/NocatFarm/Modules/Boosters.Auto.cs").Contains("AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot));", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/Boosters.Auto.cs").Contains("AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot), BuyLedger.Of(Bot.Name).PacksToOpen(DateTime.UtcNow));", StringComparison.Ordinal)
 				&& NocatFarm.Modules.BoosterPick.Explain("x", NocatFarm.Modules.BoosterPick.Auto, page, marked, 0, true, true, 0).Contains("1 whose cards are worth more sold than kept", StringComparison.Ordinal),
 				string.Join(",", marked.Ranked.Select(static c => c.App)));
 			NocatFarm.Core.Switches.Set(live, NocatFarm.Core.Switches.Buy, false);
@@ -36020,6 +37054,13 @@ static class GemsFixChecks {
 				&& (notLevelling.Badge == 0) && (notLevelling.Best == NocatFarm.Modules.GemsChoice.PackUse.OpenSell)
 				&& (noSet.Best == NocatFarm.Modules.GemsChoice.PackUse.SellSealed) && (nothing.Best == NocatFarm.Modules.GemsChoice.PackUse.Unknown),
 				$"{forBadge} {notLevelling.Best} {noSet.Best}");
+			// 1.9.0: the worst pull is 3 x the cheapest card - only with EVERY card priced: one left out could be the cheapest.
+			var arcaneGap = new NocatFarm.Modules.CardSet(600, "Arcane Raise", ["600-A", "600-B", "600-C", "600-D", "600-E"],
+				new Dictionary<string, int> { ["600-A"] = 60, ["600-B"] = 60, ["600-C"] = 60, ["600-D"] = 60, ["600-E"] = 0 });
+			var gapWorth = NocatFarm.Modules.GemsChoice.WeighPack(600, "Arcane Raise", "600-Arcane Raise Booster Pack", arcaneGap, false, pm, Cad, now, 0, 0);
+			Check("gems fix: a sealed pack's worst pull is 3 x its cheapest card with every card priced - a card not priced leaves it unknown (0), never the cheapest of the rest",
+				(forBadge.Guarantee == 3 * NocatFarm.Core.Seller.ReceiveFor(NocatFarm.Core.Seller.UndercutFor(60))) && (gapWorth.Cards > 0) && (gapWorth.Guarantee == 0),
+				$"{forBadge} {gapWorth}");
 			var close = new NocatFarm.Modules.GemsChoice.PackWorth(1, "x", 100, 110, 0);
 			Check("gems fix: as for gems, a way that relies on the market more has to win clearly - 3 cards at 1.10 don't beat a sealed pack at 1.00",
 				close.Best == NocatFarm.Modules.GemsChoice.PackUse.SellSealed);
@@ -37410,7 +38451,7 @@ static class MoneyFixChecks {
 				&& (NocatFarm.Modules.GemsChoice.Memory.CopyOf(legacy, items, new HashSet<ulong>()) == null)
 				&& Src("src/NocatFarm/Modules/Boosters.Gems.cs").Contains("GemsChoice.Memory.CopyOf(noted, items, taken)", StringComparison.Ordinal));
 			Check("pack cards made to sell: buying cards leaves their game alone while they wait to be sold (never counted as cards held for a badge)",
-				Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("[.. BoosterPick.Busy(Bot), .. GemsChoice.Memory.Of(Bot.Name).CardsNow().Select(static c => c.App)]", StringComparison.Ordinal)
+				Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("[.. BoosterPick.Busy(Bot), .. GemsChoice.Memory.Of(Bot.Name).CardsNow().Select(static c => c.App), .. _justOpened]", StringComparison.Ordinal)
 				&& !Src("src/NocatFarm/Modules/CardBuyer.cs").Contains("boosting: BoosterPick.Busy(Bot)", StringComparison.Ordinal));
 
 			// ── 7. a set sold and a dear game each wait on their own ──
@@ -37631,6 +38672,11 @@ static class MoneyFixChecks {
 			Check("levelup estimate: says how many levels known prices cover, how many more need prices, about what at today's rate - and how to start it",
 				estSaid.Contains("1 more need prices the set finder hasn't checked yet - about", StringComparison.Ordinal) && estSaid.Contains("1 from known prices", StringComparison.Ordinal)
 				&& estSaid.Contains($"'levelup {goalBot.Name} 20 buy yes' starts it", StringComparison.Ordinal), estSaid);
+			// Live on kylro (1.8.9): nothing priced in its money - "23 more need prices ... about 0.00 CAD at today's rate" read as free.
+			string noRate = NocatFarm.Commands.LevelGoalSaid(goalBot.Name, est with { Costs = [30L], Known = 1, Usual = 0 }, askYes: true);
+			Check("levelup estimate: with no usual price known the levels still to price get no figure, never 'about 0.00'",
+				noRate.Contains("1 more need prices the set finder hasn't checked yet - what they cost isn't known yet.", StringComparison.Ordinal)
+				&& !noRate.Contains("about 0.00", StringComparison.Ordinal), noRate);
 			string? off = goalBuyer.StartGoal(est);
 			NocatFarm.Core.Switches.Set(goalBot, NocatFarm.Core.Switches.Buy, true);
 			string? started = goalBuyer.StartGoal(est);
@@ -38252,5 +39298,492 @@ static class Polish182Checks {
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}
+	}
+}
+
+/// <summary>
+/// 1.9.0 stress checks: hostile plugins, files that can't be read as they are, an API answering garbage. Each is something
+/// that crashed nocat.farm, held it still, or stopped a part of it until the file was fixed by hand - fixed, and kept fixed.
+/// </summary>
+static class StressChecks190 {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-stress190-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		NocatFarm.Config.GlobalConfig wasLive = NocatFarm.Config.Live.Global;
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		TimeSpan wasLoad = NocatFarm.Plugins.PluginHost.LoadLimit, wasCommand = NocatFarm.Plugins.PluginHost.CommandLimit, wasPage = NocatFarm.Plugins.PluginHost.PageLimit;
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = true, DisabledPlugins = [] };
+		var mgr = new NocatFarm.Core.BotManager(NocatFarm.Config.Live.Global);
+		var bot = new NocatFarm.Core.Bot("stress-plug", new NocatFarm.Config.BotConfig());
+
+		try {
+			// ── a plugins "folder" that's a file: the start goes on without plugins ──
+			File.WriteAllText(NocatFarm.Plugins.PluginHost.Folder, "not a folder");
+			Exception? loadThrew = null;
+			try {
+				await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);
+			} catch (Exception e) {
+				loadThrew = e;
+			}
+			Check("stress: a plugins folder that can't be made (a file of that name) - nocat.farm starts without plugins, no crash", loadThrew == null, loadThrew?.Message ?? "");
+			File.Delete(NocatFarm.Plugins.PluginHost.Folder);
+			await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);   // an empty folder now: _mgr is set for the starts below
+
+			// ── plugins that throw, block or never finish loading: each costs that plugin and a second, never the start ──
+			NocatFarm.Plugins.PluginHost.LoadLimit = TimeSpan.FromSeconds(1);
+			NocatFarm.Plugins.PluginHost.CommandLimit = TimeSpan.FromSeconds(1);
+			NocatFarm.Plugins.PluginHost.PageLimit = TimeSpan.FromSeconds(1);
+			int caughtBefore = NocatFarm.Plugins.Host.Caught;
+			System.Diagnostics.Stopwatch took = System.Diagnostics.Stopwatch.StartNew();
+			foreach (Type t in new[] { typeof(HThrowsOnLoad), typeof(HBlocksOnLoad), typeof(HNeverLoads), typeof(HCtorThrows), typeof(HNameThrows), typeof(HAsyncVoidOnLoad), typeof(HBlankName), typeof(HTwinA), typeof(HTwinB), typeof(HEverything) }) {
+				await NocatFarm.Plugins.PluginHost.StartAsync(t, t.Name + ".dll", CancellationToken.None);
+			}
+			took.Stop();
+			SpinWait.SpinUntil(() => NocatFarm.Plugins.Host.Caught > caughtBefore, 3000);
+			var running = NocatFarm.Plugins.PluginHost.Running;
+			Check("stress: plugins that throw on load, block in it (a Thread.Sleep before any await), never finish, throw making themselves or naming themselves - each left out, the start never held",
+				(took.Elapsed < TimeSpan.FromSeconds(8)) && !running.Any(static r => r.Name is "h-throws" or "h-blocks" or "h-never") && running.Any(static r => r.Name == "h-everything"),
+				$"{took.Elapsed.TotalSeconds:0.0}s, running: {string.Join(", ", running.Select(static r => r.Name))}");
+			Check("stress: an async void started from OnLoadAsync that throws after its await is that plugin's failure, logged - not the end of the process",
+				NocatFarm.Plugins.Host.Caught > caughtBefore, $"{NocatFarm.Plugins.Host.Caught - caughtBefore} caught");
+			Check("stress: a plugin with no name gets its type's; the same plugin twice (a second copy of its DLL) runs once",
+				running.Any(static r => r.Name == nameof(HBlankName)) && (running.Count(static r => r.Name == "h-twin") == 1), string.Join(", ", running.Select(static r => r.Name)));
+
+			// ── its commands ──
+			var commands = NocatFarm.Plugins.PluginHost.Commands;
+			Check("stress: commands - only one plain word each, never a built-in's, at most 50 from one plugin",
+				commands.ContainsKey("ok-verb") && !commands.Keys.Any(static k => k.Contains(' ') || k.Contains('\n') || (k.Length > 32))
+				&& (commands.Count(static c => c.Key.StartsWith("bulk", StringComparison.Ordinal)) < NocatFarm.Plugins.Host.MaxCommands) && (commands.Count <= NocatFarm.Plugins.Host.MaxCommands + 2),
+				$"{commands.Count} commands");
+			took.Restart();
+			string blocked = await NocatFarm.Commands.RunAsync(mgr, "h-block");
+			string never = await NocatFarm.Commands.RunAsync(mgr, "h-never");
+			took.Stop();
+			Check("stress: a plugin command that blocks, or never answers, hands the command line back after its time",
+				blocked.Contains("hasn't answered", StringComparison.Ordinal) && never.Contains("hasn't answered", StringComparison.Ordinal) && (took.Elapsed < TimeSpan.FromSeconds(6)),
+				$"{took.Elapsed.TotalSeconds:0.0}s: {blocked}");
+			int caughtBeforeCmd = NocatFarm.Plugins.Host.Caught;
+			string nothing = await NocatFarm.Commands.RunAsync(mgr, "h-null");
+			string huge = await NocatFarm.Commands.RunAsync(mgr, "h-huge");
+			string threw = await NocatFarm.Commands.RunAsync(mgr, "h-throw");
+			string avoid = await NocatFarm.Commands.RunAsync(mgr, "h-asyncvoid");
+			SpinWait.SpinUntil(() => NocatFarm.Plugins.Host.Caught > caughtBeforeCmd, 3000);
+			Check("stress: a plugin command answering null, 10 million characters, throwing, or starting an async void that throws - an answer each, cut to size, nothing loose",
+				(nothing != null) && (huge.Length <= 64 * 1024) && threw.Contains("failed", StringComparison.Ordinal) && (avoid == "ok") && (NocatFarm.Plugins.Host.Caught > caughtBeforeCmd),
+				$"{huge.Length} / {threw}");
+
+			// Commands added from the plugin's own thread while command lines read them: "collection was modified" for the typist.
+			Exception? raced = null;
+			var raceHost = new NocatFarm.Plugins.Host(mgr, "h-race");
+			using (CancellationTokenSource stop = new(TimeSpan.FromSeconds(2))) {
+				Task adding = Task.Run(() => {
+					for (int i = 0; (i < 45) && !stop.IsCancellationRequested; i++) {
+						raceHost.AddCommand($"race{i}", "", "", static _ => Task.FromResult(""));
+						Thread.Sleep(1);
+					}
+				});
+				try {
+					while (!stop.IsCancellationRequested) {
+						foreach (var c in raceHost.Commands) {
+							_ = c.Key.Length;
+						}
+					}
+				} catch (Exception e) {
+					raced = e;
+				}
+				await adding;
+			}
+			Check("stress: a plugin adding commands from its own thread while command lines are typed - nothing thrown", raced == null, raced?.Message ?? "");
+
+			// ── its settings ──
+			var settings = NocatFarm.Plugins.PluginHost.SettingsOf("h-everything");
+			Check("stress: 5000 settings from one plugin - 200 kept, a name with a colon refused",
+				(settings.Count == NocatFarm.Plugins.Host.MaxSettings) && !settings.Any(static s => s.Setting.Name.Contains(':')), $"{settings.Count}");
+			string plugSettings = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "h-everything.settings.json");
+			Exception? saveRace = null;
+			await Task.WhenAll(Enumerable.Range(0, 8).Select(w => Task.Run(() => {
+				try {
+					for (int i = 0; i < 50; i++) {
+						NocatFarm.Plugins.PluginHost.SetSetting("h-everything", $"s{w}", $"{w}-{i}");
+					}
+				} catch (Exception e) {
+					saveRace = e;
+				}
+			})));
+			var saved = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(plugSettings))!;
+			Check("stress: 8 settings saved 50 times each at once - every one's last value in the file, the file whole",
+				(saveRace == null) && Enumerable.Range(0, 8).All(w => saved.GetValueOrDefault($"s{w}") == $"{w}-49"), saveRace?.Message ?? string.Join(",", saved.Take(8)));
+
+			// ── its page ──
+			took.Restart();
+			var pageThrows = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "throw");
+			var pageNull = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "null");
+			var pageNullBlocks = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "nullblocks");
+			var pageHuge = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "huge");
+			var pageBlocks = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "block");
+			took.Stop();
+			Check("stress: a plugin page that throws, hands back null, a null list, 100000 rows, or blocks - a page each, to size, within its time",
+				(pageThrows?.Blocks.Count == 1) && (pageNull?.Blocks.Count == 1) && (pageNullBlocks?.Blocks.Count == 0)
+				&& (pageHuge?.Blocks.Count <= NocatFarm.Plugins.PluginHost.MaxBlocks) && (pageHuge.Blocks.Sum(static b => b.Rows?.Count ?? 0) <= NocatFarm.Plugins.PluginHost.MaxRows)
+				&& (pageHuge.Blocks.All(static b => b.Text.Length <= NocatFarm.Plugins.PluginHost.MaxText)) && (pageBlocks?.Blocks.Count == 1) && (took.Elapsed < TimeSpan.FromSeconds(8)),
+				$"{took.Elapsed.TotalSeconds:0.0}s");
+
+			for (int i = 0; i < 20; i++) {
+				_ = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "throw");
+			}
+			int pageWarned = NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: InvalidOperationException: a page that throws", StringComparison.Ordinal));
+			Check("stress: a page that fails, looked at 25 times (its tab left open) - written down 5 times in the hour, not a warning and a stack at every look",
+				pageWarned + NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: InvalidOperationException: the plugin handed back no task", StringComparison.Ordinal))
+				+ NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: TimeoutException", StringComparison.Ordinal)) == NocatFarm.Plugins.PluginHost.FailuresSaidAnHour, $"{pageWarned}");
+
+			// ── its events ──
+			took.Restart();
+			for (int i = 0; i < 3000; i++) {
+				NocatFarm.Plugins.PluginHost.RaiseOnline(bot);
+			}
+			took.Stop();
+			Check("stress: a plugin whose event handler blocks - the account raising 3000 events isn't held (they queue for the plugin, capped)",
+				took.Elapsed < TimeSpan.FromSeconds(2), $"{took.Elapsed.TotalMilliseconds:0}ms");
+
+			// ── its log ──
+			for (int i = 0; i < 5000; i++) {
+				HEverything.Host!.Log("flood " + i);
+			}
+			HEverything.Host!.Log(new string('L', 100_000));
+			int flooded = NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("[plugin] flood", StringComparison.Ordinal));
+			Check("stress: a plugin logging 5000 lines at once - 300 a minute reach the log, the rest dropped (said once)",
+				flooded <= NocatFarm.Plugins.Host.MaxLinesPerMinute, $"{flooded}");
+
+			// ── on the way out: one that blocks in OnUnloadAsync doesn't hold closing ──
+			took.Restart();
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			took.Stop();
+			Check("stress: a plugin that blocks in OnUnloadAsync - closing goes on after 5 seconds", took.Elapsed < TimeSpan.FromSeconds(8) && (NocatFarm.Plugins.PluginHost.Running.Count == 0), $"{took.Elapsed.TotalSeconds:0.0}s");
+			Hostile.Release.Set();
+
+			// ── a plugin's settings file with nulls in it ──
+			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "h-nulls.settings.json"), """{ "Word": null, "Other": "x" }""");
+			var nullsHost = new NocatFarm.Plugins.Host(mgr, "h-nulls");
+			nullsHost.AddSetting(new NocatFarm.Plugins.PluginSetting("Word", "w", "", Default: "fallback"));
+			Check("stress: a plugin setting saved as null (a hand edit) reads as its default, not null", nullsHost.Setting("Word") == "fallback", nullsHost.Setting("Word") ?? "null");
+
+			// ── the comment record with times that are none, or in the future ──
+			NocatFarm.Plugins.Comments.Forget();
+			File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("stress-c"),
+				$$"""{ "Posts": [ 9223372036854775807, -5, {{DateTime.UtcNow.AddYears(4).Ticks}}, {{DateTime.UtcNow.AddHours(-1).Ticks}} ] }""");
+			Exception? windowThrew = null;
+			(int count, DateTime? last) = (0, null);
+			NocatFarm.Plugins.PluginCommentCheck? cc = null;
+			var cBot = new NocatFarm.Core.Bot("stress-c", new NocatFarm.Config.BotConfig());
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(cBot, NocatFarm.Core.BotState.Online);
+			try {
+				(count, last) = NocatFarm.Plugins.Comments.Window("stress-c");
+				cc = NocatFarm.Plugins.Comments.Check(cBot);
+			} catch (Exception e) {
+				windowThrew = e;
+			}
+			Check("stress: comment times that are no time, or years ahead (a wrong clock) - read as now, nothing thrown, the account not held for years",
+				(windowThrew == null) && (count == 3) && (last <= DateTime.UtcNow) && (cc?.RetryAt is null or { Year: < 2028 }), windowThrew?.Message ?? $"{count} {last} {cc?.RetryAt}");
+
+			// ── a tight parallel loop of comment posts, on an account at its limit: every one told no, nothing sent ──
+			NocatFarm.Plugins.Comments.Forget();
+			long[] full = [.. Enumerable.Range(0, NocatFarm.Plugins.Comments.DailyLimit).Select(static i => DateTime.UtcNow.AddMinutes(-30 - i).Ticks)];
+			string fullJson = System.Text.Json.JsonSerializer.Serialize(new { Posts = full });
+			File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("stress-c"), fullJson);
+			int notNow = 0, other = 0;
+			Exception? postThrew = null;
+			await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Run(async () => {
+				for (int i = 0; i < 250; i++) {
+					try {
+						var r = await NocatFarm.Plugins.Comments.PostAsync(cBot, "stress", 76561198000000002, "hi", CancellationToken.None);
+						if (r.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow) {
+							Interlocked.Increment(ref notNow);
+						} else {
+							Interlocked.Increment(ref other);
+						}
+					} catch (Exception e) {
+						postThrew = e;
+					}
+				}
+			})));
+			Check("stress: 2000 comment posts at once from one account at its 24-hour limit - every one 'not now', nothing sent, the record unchanged",
+				(postThrew == null) && (notNow == 2000) && (other == 0) && (File.ReadAllText(NocatFarm.Plugins.Comments.PathFor("stress-c")) == fullJson), postThrew?.Message ?? $"{notNow}/{other}");
+			await cBot.DisposeAsync();
+			NocatFarm.Plugins.Comments.Forget();
+
+			// ── rep4rep's saved state with nulls and times that are none ──
+			var r4r = NocatFarm.Addons.Rep4Rep.AddonState.Read("""
+				{ "Accounts": { "gone": null,
+				  "b": { "Posts": null, "BlockedUntil": 9223372036854775807, "PostedTasks": null, "DeadTargets": null, "BlockReason": null },
+				  "c": { "Posts": [ 9223372036854775807, -1, 5 ] } } }
+				""");
+			Exception? r4rThrew = null;
+			try {
+				var b = r4r!.For("b");
+				_ = new DateTime(b.BlockedUntil, DateTimeKind.Utc) - DateTime.UtcNow;
+				_ = b.LastPost();
+				_ = b.HasPostedTask("x") || b.IsDeadTarget(1, DateTime.UtcNow);
+				_ = r4r.For("c").LastPost();
+				_ = r4r.For("c").NextSlotAt(1, DateTime.UtcNow);
+				_ = r4r.Write(DateTime.UtcNow);
+			} catch (Exception e) {
+				r4rThrew = e;
+			}
+			Check("stress: rep4rep's state with nulls, a rest 'until forever' and times that are none - read, used and saved without throwing; a rest at most a month",
+				(r4rThrew == null) && !r4r!.Accounts.ContainsKey("gone") && (r4r.For("b").BlockedUntil <= DateTime.UtcNow.AddDays(31).Ticks), r4rThrew?.ToString() ?? "");
+
+			// ── the card buying list with nulls in it (a hand edit): read, not thrown at every look ──
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "buy-stress-b.json"), $$"""
+				{ "Ok": true, "Entries": [ null, { "At": "{{DateTime.UtcNow:O}}", "Cents": 5, "Currency": 1, "App": 10, "Card": null, "Pack": true } ],
+				  "Sold": [ null ], "Waits": [ null ], "Crafts": [ null ], "Lows": [ null ] }
+				""");
+			Exception? ledgerThrew = null;
+			HashSet<uint>? packs = null;
+			try {
+				var ledger = NocatFarm.Modules.BuyLedger.Of("stress-b");
+				packs = ledger.PacksToOpen(DateTime.UtcNow);
+				_ = ledger.UnopenedPacks(DateTime.UtcNow);
+				_ = ledger.WeekLow(1, DateTime.UtcNow);
+				_ = ledger.All.Count;
+			} catch (Exception e) {
+				ledgerThrew = e;
+			}
+			Check("stress: the buying list with nulls in it - read (the purchase still counted), nothing thrown", (ledgerThrew == null) && (packs?.Contains(10) == true), ledgerThrew?.Message ?? "");
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+
+			// ── GitHub not answering the add-on list: one fetch for everything looking at once, the failure kept a minute ──
+			HttpClient wasAddonsHttp = NocatFarm.Plugins.Addons.Http;
+			var slowGitHub = new FakePing(async (_, ct) => {
+				await Task.Delay(300, ct);
+				return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("down") };
+			});
+			// What earlier checks fetched or failed is forgotten first: a list kept from them would answer without asking.
+			typeof(NocatFarm.Plugins.Addons).GetField("_cached", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
+			typeof(NocatFarm.Plugins.Addons).GetField("_failed", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
+			NocatFarm.Plugins.Addons.Http = new HttpClient(slowGitHub);
+			try {
+				var looks = await Task.WhenAll(Enumerable.Range(0, 20).Select(static _ => NocatFarm.Plugins.Addons.ListAsync(fresh: false)));
+				int callsAtOnce = slowGitHub.Calls;
+				took.Restart();
+				var again = await NocatFarm.Plugins.Addons.ListAsync(fresh: false);
+				took.Stop();
+				int callsAfter = slowGitHub.Calls;
+				_ = await NocatFarm.Plugins.Addons.ListAsync(fresh: true);
+				Check("stress: GitHub not answering the add-on list - 20 looks at once share one fetch, the next look within a minute answers at once without asking again; 'refresh' asks again",
+					looks.All(static l => l.List == null) && (callsAtOnce == 1) && (again.List == null) && (callsAfter == 1) && (took.Elapsed < TimeSpan.FromMilliseconds(200)) && (slowGitHub.Calls == 2),
+					$"{callsAtOnce} then {callsAfter} then {slowGitHub.Calls}");
+			} finally {
+				NocatFarm.Plugins.Addons.Http.Dispose();
+				NocatFarm.Plugins.Addons.Http = wasAddonsHttp;
+				typeof(NocatFarm.Plugins.Addons).GetField("_failed", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
+			}
+
+			// ── a stop mid-save leaves a half-written copy: cleared at the next start, nothing else touched ──
+			string sweep = Path.Combine(root, "sweep", "state");
+			Directory.CreateDirectory(sweep);
+			string half = Path.Combine(sweep, $"buy-a.json.{Guid.NewGuid():N}.tmp");
+			File.WriteAllText(half, "{ \"Ok\": tr");
+			File.WriteAllText(Path.Combine(sweep, "someone-elses.tmp"), "x");
+			File.WriteAllText(Path.Combine(sweep, "buy-a.json"), "{}");
+			int swept = NocatFarm.AtomicFile.SweepLeftovers(Path.Combine(root, "sweep"));
+			Check("stress: the half-written copy a power cut left mid-save is cleared at start - only that, the file itself and other .tmp files kept",
+				(swept == 1) && !File.Exists(half) && File.Exists(Path.Combine(sweep, "someone-elses.tmp")) && File.Exists(Path.Combine(sweep, "buy-a.json")), $"{swept}");
+			Check("stress: cleared at every start, before anything is read", File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Program.cs"))
+				.Replace("\r\n", "\n").Contains("AtomicFile.SweepLeftovers(ConfigStore.ConfigDir);\n\n// Back on a version", StringComparison.Ordinal));
+
+			// ── rep4rep's API answering garbage: 500, 429, HTML, 10 MB, resets, time-outs, JSON 10000 deep ──
+			string deep = new string('[', 10_000) + new string(']', 10_000);
+			string bigBody = "{\"data\":[" + string.Join(",", Enumerable.Repeat("{\"requestId\":\"1\"}", 400_000)) + "]}";
+			Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>[] chaos = [
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError) { Content = new StringContent("oops") }),
+				(_, _) => Task.FromResult(new HttpResponseMessage((System.Net.HttpStatusCode) 429) { Content = new StringContent("slow down"), Headers = { RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(3600)) } }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("<html><body>Cloudflare says no</body></html>") }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(bigBody) }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(deep) }),
+				(_, _) => throw new HttpRequestException("the connection was reset"),
+				(_, _) => throw new TaskCanceledException("timed out"),
+				(_, _) => throw new HttpRequestException("No such host is known. (api.rep4rep.com:443)")
+			];
+			Exception? apiThrew = null;
+			int emptyAnswers = 0;
+			foreach (var answer in chaos) {
+				using var api = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(new FakePing(answer)) { Token = "key" };
+				try {
+					if (((await api.GetTasksAsync("1")).Count == 0) && (await api.GetUserAsync() == null) && ((await api.GetProfilesAsync()).Count == 0)) {
+						emptyAnswers++;
+					}
+				} catch (Exception e) {
+					apiThrew = e;
+				}
+			}
+			Check("stress: rep4rep answering 500, 429, an HTML page, 10 MB, JSON 10000 deep, a reset, a time-out, no such host - nothing thrown, nothing taken as tasks",
+				(apiThrew == null) && (emptyAnswers == chaos.Length), apiThrew?.Message ?? $"{emptyAnswers}/{chaos.Length}");
+		} finally {
+			Hostile.Release.Set();
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			NocatFarm.Plugins.PluginHost.LoadLimit = wasLoad;
+			NocatFarm.Plugins.PluginHost.CommandLimit = wasCommand;
+			NocatFarm.Plugins.PluginHost.PageLimit = wasPage;
+			await bot.DisposeAsync();
+			await mgr.DisposeAsync();
+			NocatFarm.Config.Live.Global = wasLive;
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Plugins.Comments.Forget();
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			await Task.Delay(200);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>What the hostile plugins below wait on - let go at the end, so no thread is left blocked.</summary>
+static class Hostile {
+	public static readonly ManualResetEventSlim Release = new(false);
+}
+
+sealed class HThrowsOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-throws";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => throw new InvalidOperationException("thrown on load, before any task");
+}
+
+sealed class HBlocksOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-blocks";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));   // a Thread.Sleep before any await
+		return Task.CompletedTask;
+	}
+}
+
+sealed class HNeverLoads : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-never";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => new TaskCompletionSource().Task;
+}
+
+sealed class HCtorThrows : NocatFarm.Plugins.INocatPlugin {
+	public HCtorThrows() => throw new InvalidOperationException("thrown making itself");
+	public string Name => "h-ctor";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HNameThrows : NocatFarm.Plugins.INocatPlugin {
+	public string Name => throw new InvalidOperationException("no name for you");
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HAsyncVoidOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-asyncvoid";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Fire();
+		return Task.CompletedTask;
+	}
+
+	private static async void Fire() {
+		await Task.Delay(20);
+		throw new InvalidOperationException("an async void from OnLoadAsync, after its await");
+	}
+}
+
+sealed class HBlankName : NocatFarm.Plugins.INocatPlugin {
+	public string Name => " \n\t ";
+	public string Version => null!;
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HTwinA : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-twin";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HTwinB : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-twin";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+/// <summary>Loads fine, then does everything a plugin shouldn't through the API it's given.</summary>
+sealed class HEverything : NocatFarm.Plugins.INocatPlugin {
+	public static NocatFarm.Plugins.IPluginHost? Host;
+	public string Name => "h-everything";
+	public string Version => "6.6.6";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Host = host;
+
+		foreach (string weird in new[] { "", "   ", "stop", "status", "a b", "x\ny", new string('v', 5000), "<b>", "ok-verb" }) {
+			host.AddCommand(weird, "", "", static _ => Task.FromResult("weird"));
+		}
+
+		host.AddCommand("h-block", "", "", static _ => {
+			Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+			return Task.FromResult("late");
+		});
+		host.AddCommand("h-never", "", "", static _ => new TaskCompletionSource<string>().Task);
+		host.AddCommand("h-null", "", "", static _ => Task.FromResult<string>(null!));
+		host.AddCommand("h-huge", "", "", static _ => Task.FromResult(new string('x', 10_000_000)));
+		host.AddCommand("h-throw", "", "", static _ => throw new InvalidOperationException("a command that throws"));
+		host.AddCommand("h-asyncvoid", "", "", static _ => {
+			Fire();
+			return Task.FromResult("ok");
+		});
+
+		for (int i = 0; i < 5000; i++) {
+			host.AddCommand($"bulk{i}", "", "", static _ => Task.FromResult(""));
+		}
+
+		host.AddSetting(new NocatFarm.Plugins.PluginSetting("has:colon", "", ""));
+
+		for (int i = 0; i < 5000; i++) {
+			host.AddSetting(new NocatFarm.Plugins.PluginSetting($"s{i}", new string('l', 10_000), ""));
+		}
+
+		host.AddPage("hostile", static view => view switch {
+			"throw" => throw new InvalidOperationException("a page that throws"),
+			"null" => null!,
+			"nullblocks" => Task.FromResult(new NocatFarm.Plugins.PluginPage(null!)),
+			"huge" => Task.FromResult(new NocatFarm.Plugins.PluginPage([.. Enumerable.Range(0, 300).Select(static i => i == 0
+				? NocatFarm.Plugins.PluginBlock.Table([.. Enumerable.Range(0, 100).Select(static c => "c" + c)], [.. Enumerable.Range(0, 100_000).Select(static r => new NocatFarm.Plugins.PluginRow([r.ToString()]))])
+				: NocatFarm.Plugins.PluginBlock.Line(new string('t', 10_000)))])),
+			"block" => Block(),
+			_ => Task.FromResult(new NocatFarm.Plugins.PluginPage([NocatFarm.Plugins.PluginBlock.Line("fine")]))
+		});
+
+		host.AccountOnline += static _ => Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+		host.AccountOnline += static async _ => {
+			await Task.Yield();
+			throw new InvalidOperationException("an async handler, after its await");
+		};
+
+		return Task.CompletedTask;
+	}
+
+	private static Task<NocatFarm.Plugins.PluginPage> Block() {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+		return Task.FromResult(new NocatFarm.Plugins.PluginPage([]));
+	}
+
+	public Task OnUnloadAsync() {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));   // blocks before handing back a task
+		return Task.CompletedTask;
+	}
+
+	private static async void Fire() {
+		await Task.Delay(10);
+		throw new InvalidOperationException("an async void from a command, after its await");
 	}
 }

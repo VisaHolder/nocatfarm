@@ -796,17 +796,38 @@ public static partial class Spare {
 	/// game, opening off) - not because it's new, busy or unpriced.</param>
 	public sealed record PackDecision(SpareItem Pack, bool Open, Said Why, int PackCents = 0, int CardsCents = 0, bool Disposable = false);
 
-	/// <summary>A game's prices for deciding about its packs: the pack's own, and every plain card of the set.</summary>
-	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At);
+	/// <summary>A game's prices for deciding about its packs: the pack's own, every plain card of the set, and (1.9.0) its
+	/// foil cards - each as its cheapest listing in US cents, after <see cref="Seller"/>'s fee when it's weighed.</summary>
+	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At, IReadOnlyList<int>? CardsFoil = null);
 
-	/// <param name="choice">0 never, 1 only when the cards are worth more than the pack, 2 always.</param>
+	/// <summary>
+	/// 1.9.0: "Open booster packs" as the setting holds it, in the numbers <see cref="PlanPacks"/> and the gems maths go by:
+	/// 0 never, 1 on the average pull, 2 always - and the two new ones, stored as -1 (the worst pull) and -2 (either) so
+	/// a version from before 1.9.0, which only knows 0 to 2, reads them as never (it clamps) instead of always - 3 and 4
+	/// here. Anything else counts as the nearest of 0 to 2, as before.
+	/// </summary>
+	public static int PackChoice(int setting) => setting switch { WorstPull => 3, EitherPull => 4, _ => Math.Clamp(setting, 0, 2) };
+
+	/// <summary>1.9.0: "Open booster packs" choices as stored - see <see cref="PackChoice"/>.</summary>
+	public const int WorstPull = -1, EitherPull = -2;
+
+	/// <summary>1.9.0: whether a setting of "Open booster packs" opens anything at all (never is the only one that doesn't).</summary>
+	public static bool OpensPacks(int setting) => PackChoice(setting) != 0;
+
+	/// <summary>1.9.0: whether a setting of "Open booster packs" weighs the pack against its cards (needs the set's prices).</summary>
+	public static bool WeighsPacks(int setting) => PackChoice(setting) is 1 or 3 or 4;
+
+	/// <param name="choice">As <see cref="PackChoice"/> gives it: 0 never, 1 only when the cards are worth more than the pack on
+	/// average (foils included), 2 always, 3 only when even the three cheapest cards are worth more than the pack, 4 when either does.</param>
 	/// <param name="madeHere">Packs nocat.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
 	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
 	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next
 	/// chance, whatever "Open booster packs" says - only one on the market or in a trade offer is left.</param>
+	/// <param name="bought">1.9.0: packs buying cards bought instead of cards (BuyLedger.BoughtPackIds) and hasn't opened yet:
+	/// opened like automatic's own - never held back as new, sold or sent, whatever the settings say.</param>
 	public static List<PackDecision> PlanPacks(IReadOnlyList<SpareItem> items, int choice, int newDays, IReadOnlyCollection<uint> neverGames,
 		Func<ulong, DateTime?> received, IReadOnlySet<ulong> busy, Func<uint, PackPrices?> prices, int maxAgeHours, DateTime now,
-		IReadOnlySet<ulong>? madeHere = null, IReadOnlySet<ulong>? own = null) {
+		IReadOnlySet<ulong>? madeHere = null, IReadOnlySet<ulong>? own = null, IReadOnlySet<ulong>? bought = null) {
 		List<PackDecision> found = [];
 
 		foreach (SpareItem pack in items.Where(static i => i.Kind == SpareKind.BoosterPack).OrderBy(static i => i.AssetId)) {
@@ -818,6 +839,12 @@ public static partial class Spare {
 
 			if (own?.Contains(pack.AssetId) == true) {
 				found.Add(new PackDecision(pack, true, new Said("made to level the {0} badge", GameNames.Of(pack.Game))));
+
+				continue;
+			}
+
+			if (bought?.Contains(pack.AssetId) == true) {
+				found.Add(new PackDecision(pack, true, new Said("bought to level the {0} badge", GameNames.Of(pack.Game))));
 
 				continue;
 			}
@@ -844,7 +871,8 @@ public static partial class Spare {
 				continue;
 			}
 
-			if (choice >= 2) {
+			// 2 alone is "always open": the choices that weigh the pull (1, 3, 4) fall through to the prices below.
+			if (choice == 2) {
 				found.Add(new PackDecision(pack, true, new Said("set to always open")));
 
 				continue;
@@ -858,14 +886,34 @@ public static partial class Spare {
 				continue;
 			}
 
-			// Three cards out of the set, each as likely as the next: three times the average card. Foils are rare enough to
-			// leave out, so this never opens a pack on the hope of one. Both sides after Steam's fees - what you'd get.
-			int cards = (int) Math.Round(3m * (decimal) p.Cards.Average(static c => Seller.ReceiveFor(c)), MidpointRounding.ToZero);
+			// Three cards out of the set (every card priced, above). Both sides after Steam's fees - what you'd get. The pull's
+			// worth depends on the choice: the average of 3 random cards for 1 and 4 (1.9.0: with a 1% chance a pack holds a
+			// foil, once a pack, when the set's foils are priced), or the guaranteed - 3 times the cheapest card - for 3 and 4.
 			int sealedValue = Seller.ReceiveFor(packPrice.Cents);
+			long[] normal = [.. p.Cards.Select(static c => (long) Seller.ReceiveFor(c))];
+			long[] foil = [.. (p.CardsFoil ?? []).Select(static c => (long) Seller.ReceiveFor(c)).Where(static r => r > 0)];
+			long average = BoosterMath.Average(normal, foil);
+			long guarantee = BoosterMath.Guarantee(normal);
+			bool averageWins = (choice is 1 or 4) && (average > sealedValue);
+			bool worstWins = (choice is 3 or 4) && (guarantee > sealedValue);
 
-			found.Add(cards > sealedValue
-				? new PackDecision(pack, true, new Said("its cards are worth about {0}, the pack {1}", UsMoney(cards), UsMoney(sealedValue)), sealedValue, cards)
-				: new PackDecision(pack, false, new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney(cards)), sealedValue, cards, Disposable: true));
+			if (average <= 0) {
+				found.Add(new PackDecision(pack, false, new Said("no card of it is priced yet - kept until there is")));
+
+				continue;
+			}
+
+			// What it's said by: the worst pull when that's what decided (choice 3, or 4 with the average not enough).
+			bool byWorst = worstWins ? !averageWins : choice == 3;
+			int shown = (int) (byWorst ? guarantee : average);
+
+			found.Add(averageWins || worstWins
+				? new PackDecision(pack, true, byWorst
+					? new Said("even its 3 cheapest cards are worth about {0}, the pack {1}", UsMoney(shown), UsMoney(sealedValue))
+					: new Said("its cards are worth about {0}, the pack {1}", UsMoney(shown), UsMoney(sealedValue)), sealedValue, shown)
+				: new PackDecision(pack, false, byWorst
+					? new Said("worth more sealed: the pack {0}, its 3 cheapest cards about {1}", UsMoney(sealedValue), UsMoney(shown))
+					: new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney(shown)), sealedValue, shown, Disposable: true));
 		}
 
 		return found;

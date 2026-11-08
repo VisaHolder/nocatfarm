@@ -331,7 +331,7 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 			memory.NoteMade(app, DateTime.UtcNow);
 			memory.Add(pack);
 			module?.OpenSoon();
-		} else if (bot.Cfg.OpenBoosterPacks > 0) {
+		} else if (Spare.OpensPacks(bot.Cfg.OpenBoosterPacks)) {
 			BotManager.ModuleOf<PackOpener>(bot)?.Timer.LookAt(DateTime.UtcNow + Rng.Minutes(2, 5));
 		}
 

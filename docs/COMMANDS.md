@@ -22,9 +22,8 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
 | **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `events` `redeem` `keys` |
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `scamwatch` `health` `owns` `privacy` `joingroup` |
-| **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `backup` `import` |
-| **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `addons` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
 88 commands in all.
@@ -131,12 +130,6 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `privacy <account> [public\|friends\|private\|part=level ...]` | See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments. |
 | `joingroup <account\|all> <group link or name>` | Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the "Groups every account joins" setting instead. |
 
-## rep4rep
-
-| Command | What it does |
-|---|---|
-| `rep4rep [status\|points\|profiles] \| tasks <account> \| now\|pause\|resume\|clear\|rest <account\|all> \| hold <hours>\|off` <br>also `r4r` | Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on\|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it. |
-
 ## Settings
 
 | Command | What it does |
@@ -155,6 +148,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `report [week]` | The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments). |
 | `notify [test\|link]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner. |
 | `plugins` | Which plugins are loaded, and where they came from. |
+| `addons [install\|remove <name>]` <br>also `addon` | reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept), even with GitHub not answering. Installing and removing only work at this PC, or on the dashboard signed in with its password. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with "rot". |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |

@@ -147,7 +147,7 @@ public sealed class PackOpener(Bot bot) : BotModule(bot) {
 	private Said _status = new("");
 
 	public override string Name => "packs";
-	public override string Status => Bot.Cfg.OpenBoosterPacks > 0 ? _status : "";
+	public override string Status => Spare.OpensPacks(Bot.Cfg.OpenBoosterPacks) ? _status : "";
 
 	private HumanGate? _gate;
 
@@ -168,7 +168,7 @@ public sealed class PackOpener(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			bool wanted = (Bot.Cfg.OpenBoosterPacks > 0) || (Bot.Cfg.BoosterUnopened > 0);
+			bool wanted = Spare.OpensPacks(Bot.Cfg.OpenBoosterPacks) || (Bot.Cfg.BoosterUnopened > 0);
 
 			if (wanted && Timer.Due(DateTime.UtcNow) && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && DayAllows
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {

@@ -1007,15 +1007,21 @@ public static partial class Notifier {
 		string[] skip = ["mini", "theme", "tutorial", "help", "clear"];
 
 		foreach (IGrouping<string, CommandDef> group in Commands.All.Where(c => !skip.Contains(c.Name)).GroupBy(static c => c.Group)) {
-			if ((group.Key == Commands.GroupRep4Rep) && !G.Rep4RepEnabled) {
-				continue;
-			}
-
 			sb.AppendLine();
 			sb.AppendLine($"**{Md(GroupName(group.Key).ToString())}:**");
 
 			foreach (CommandDef c in group) {
 				sb.AppendLine($"`{c.Name}{(c.Args.Length > 0 ? " " + c.Args : "")}`");
+			}
+		}
+
+		// 1.9.0: the commands add-ons and plugins added (rep4rep's) - run with /nocat like any other.
+		if (Plugins.PluginHost.Commands is { Count: > 0 } added) {
+			sb.AppendLine();
+			sb.AppendLine($"**{Md(new Said("Add-ons").ToString())}:**");
+
+			foreach ((string verb, (string usage, _, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"`{(verb + " " + usage).TrimEnd().Replace("`", "'", StringComparison.Ordinal)}`");
 			}
 		}
 

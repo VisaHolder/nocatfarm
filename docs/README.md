@@ -24,7 +24,8 @@ Nothing past Start here is required reading. Open whichever page you need.
 - [Achievements and the hunter](achievements.md)
 - [Phone and notifications](phone-and-notifications.md): the phone app, Discord and Telegram, pop-ups, the Discord profile card,
   the daily summary, the weekly report, stuck accounts and Steam groups
-- [rep4rep](rep4rep.md), only if you use rep4rep.com
+- [Add-ons](addons.md): reap's official add-ons, installed from the dashboard - and the [rep4rep](rep4rep.md) add-on,
+  only if you use rep4rep.com
 - [Settings and commands](settings.md): how settings work, what's in each group, command line options, and
   commands by Steam chat
 - [Every command](COMMANDS.md), generated from the app's own command list so it always matches your version

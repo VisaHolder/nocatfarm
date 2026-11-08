@@ -98,7 +98,6 @@
     <nav>
       <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
-      <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="auth"><span data-t="Authenticator">Authenticator</span><b id="navAuth"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="phone"><span data-t="Phone">Phone</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="log"><span data-t="Log">Log</span></a>
@@ -162,33 +161,13 @@
       <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>
     </section>
 
-    <!-- rep4rep -->
-    <section id="view-rep4rep" class="view hidden">
-      <div id="r4rAccount" class="card"></div>
+    <!-- 1.9.0: a plugin's own tab (an add-on's, like rep4rep) - drawn from what the plugin returns, see app.js ppBlock -->
+    <section id="view-pluginpage" class="view hidden">
       <div class="card">
-        <h2 data-t="Your Steam profiles">Your Steam profiles</h2>
-        <div id="r4rProfiles"></div>
-      </div>
-      <div class="card">
-        <h2 data-t="Queued tasks">Queued tasks</h2>
-        <p class="banner" data-t="nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.">nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.</p>
-        <div class="toolbar">
-          <label class="inline muted" for="r4rBot" data-t="Show tasks for">Show tasks for</label>
-          <select id="r4rBot" onchange="loadTasks()"></select>
-          <button class="ghost" onclick="loadTasks()" data-t="Refresh">Refresh</button>
-        </div>
-        <div id="r4rTasks"></div>
-      </div>
-      <div class="card">
-        <h2 data-t="Pacing">Pacing</h2>
-        <p class="explain"><b data-t="Steam lets an account leave about 10 comments a day on people who aren't its friends.">Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
-          <span data-t="Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps every account under the line, spaces the comments out at random, and only posts during the hours you allow.">Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps every account under the line, spaces the comments out at random, and only posts during the hours you allow.</span></p>
-        <div id="r4rPacing"></div>
-      </div>
-      <div class="card muted small">
-        <b data-t="These live on rep4rep.com, because their API can't do them:">These live on rep4rep.com, because their API can't do them:</b>
-        <span data-t="removing a Steam profile · editing your custom comment list · task history · buying points · referrals.">removing a Steam profile · editing your custom comment list · task history · buying points · referrals.</span>
-        <a href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" data-t="Open rep4rep.com ↗">Open rep4rep.com ↗</a>
+        <div class="toolbar"><h2 id="ppTitle" style="margin:0"></h2><span class="spacer"></span>
+          <button class="ghost" onclick="loadPluginPage(ppPlugin, null)" data-t="Refresh">Refresh</button></div>
+        <pre id="ppOut" class="out hidden" style="white-space:pre-wrap"></pre>
+        <div id="ppBody"></div>
       </div>
     </section>
 

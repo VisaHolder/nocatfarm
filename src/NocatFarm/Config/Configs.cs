@@ -87,42 +87,7 @@ public sealed class GlobalConfig {
 	/// <summary>A pop-up when something about an account gets worse.</summary>
 	public bool NotifyHealth { get; set; } = true;
 
-	// ── rep4rep ──
-	// Master switch for the whole rep4rep feature. Off = nothing rep4rep-related runs on any account, and the
-	// dashboard hides its tab, points, per-account options and settings entirely.
-	//
-	// Defaults OFF: rep4rep is a third-party site most users won't touch, so a fresh install starts with it gone
-	// and it's opt-in from Settings -> rep4rep account -> "Use rep4rep at all". Existing setups that DO use it
-	// keep it by writing an explicit "Rep4RepEnabled": true into their config (a missing field takes this default).
-	public bool Rep4RepEnabled { get; set; } = false;
-	public string Rep4RepApiToken { get; set; } = "";
-	public bool Rep4RepAutoAddProfiles { get; set; } = true;
-	public int Rep4RepPointsRefreshMinutes { get; set; } = 15;
-
-	/// <summary>How many HOURS to hold all commenting for. 0 is "not holding"; it clears itself when it expires.</summary>
-	/// <remarks>
-	/// Hours rather than days because "a day or two" is not the only shape a pause comes in - "27 hours" is a
-	/// perfectly ordinary thing to want and a whole-days field simply cannot say it.
-	/// </remarks>
-	public int Rep4RepPauseHours { get; set; }
-
-	/// <summary>
-	/// When the hold ends, worked out once from Rep4RepPauseDays rather than counted down.
-	/// </summary>
-	/// <remarks>
-	/// Stored rather than recomputed because "pause for two days" has to survive a restart, and a plain day
-	/// counter would restart its two days every time the app came up - which is the one thing a hold must not
-	/// do. Null means nothing is being held.
-	/// </remarks>
-	public DateTime? Rep4RepHoldUntil { get; set; }
-
-	/// <summary>When the hold began, so its end can be recomputed without moving it.</summary>
-	/// <remarks>
-	/// Without this the deadline was worked out as "now + days" every time ANY global setting was saved, so
-	/// changing the theme an hour into a two-day hold quietly restarted the two days. Anchored to a start,
-	/// saving the same number over and over lands on the same end, and changing the number moves only the end.
-	/// </remarks>
-	public DateTime? Rep4RepHoldFrom { get; set; }
+	// rep4rep's settings left with it in 1.9.0: the rep4rep add-on keeps them (Config/MigrateRep4Rep.cs moves old ones over).
 
 	// ── steam connection ──
 	public int LoginStaggerSeconds { get; set; } = 12;
@@ -217,7 +182,8 @@ public sealed class GlobalConfig {
 	public bool SendDailySummary { get; set; } = true;
 	public bool SendComments { get; set; }
 	public bool SendAchievements { get; set; }
-	public bool SendRep4Rep { get; set; }
+	/// <summary>1.9.0: what add-ons send out (host.Notify) - rep4rep's credited comments, say. Was SendRep4Rep.</summary>
+	public bool SendAddons { get; set; }
 
 	// ── scam watch and account health - one chip each among the notifications (1.8.2), and devices that are yours ──
 	/// <summary>Scam-watch warnings to Telegram and Discord, like every other kind: whichever is set up gets them.</summary>
@@ -945,6 +911,13 @@ public sealed class BotConfig {
 	/// </summary>
 	public bool BuyFullSets { get; set; } = true;
 
+	/// <summary>
+	/// 1.9.0: buy a set's booster packs instead of its missing cards when that's expected to come out cheaper - the packs,
+	/// and the missing cards they're expected not to bring (bought afterwards), at least a tenth under buying the missing
+	/// cards straight (<see cref="Core.BoosterMath.CheapestPacks"/>). A pack is 3 random cards of the whole set. Off by default.
+	/// </summary>
+	public bool BuyBooster { get; set; }
+
 	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;
 
@@ -1108,16 +1081,6 @@ public sealed class BotConfig {
 	public string AccountProxy { get; set; } = "";
 	public string AccountProxyUsername { get; set; } = "";
 	public string AccountProxyPassword { get; set; } = "";
-
-	// ── rep4rep ──
-	public bool Rep4Rep { get; set; }
-	public int Rep4RepDailyCap { get; set; } = 10;
-	public int Rep4RepGapMinMinutes { get; set; } = 10;
-	public int Rep4RepGapMaxMinutes { get; set; } = 25;
-	public int Rep4RepStartHour { get; set; } = 10;
-	public int Rep4RepEndHour { get; set; } = 23;
-	public bool Rep4RepLearnCap { get; set; } = true;
-	public bool Rep4RepRetryRefused { get; set; } = false;
 
 	// ── human mode ──
 	public bool LegitMode { get; set; }
@@ -1503,7 +1466,7 @@ public static partial class ConfigStore {
 			// Anything still in plain text - typed into the file by hand, or left by an older version - is written back
 			// encrypted as soon as it has been read, not whenever a setting next happens to be saved.
 			bool plain = new[] { loaded.DiscordWebhookUrl, loaded.TelegramBotToken, loaded.DiscordBotToken, loaded.WebPassword,
-				loaded.Rep4RepApiToken, loaded.WebProxyPassword }.Any(Secrets.IsPlain);
+				loaded.WebProxyPassword }.Any(Secrets.IsPlain);
 
 			loaded.DiscordWebhookUrl = Secrets.Unprotect(loaded.DiscordWebhookUrl);
 			loaded.TelegramBotToken = Secrets.Unprotect(loaded.TelegramBotToken);
@@ -1512,7 +1475,6 @@ public static partial class ConfigStore {
 			// Unprotect hands plain text straight back, so a file from before these were encrypted - or one typed
 			// in by hand - reads exactly as it always did, and is encrypted on the next save.
 			loaded.WebPassword = Secrets.Unprotect(loaded.WebPassword);
-			loaded.Rep4RepApiToken = Secrets.Unprotect(loaded.Rep4RepApiToken);
 			loaded.WebProxyPassword = Secrets.Unprotect(loaded.WebProxyPassword);
 			plain |= SecretSettings.Open(loaded);   // every other secret setting (the backup password), by its kind
 
@@ -1530,6 +1492,8 @@ public static partial class ConfigStore {
 			migrated |= MigrateBackupMessages(loaded);
 			migrated |= MigrateDailyReportTime(loaded);
 			migrated |= MigrateCheckForUpdates(loaded);
+			// 1.9.0: rep4rep is an add-on - its settings and records move to the add-on's files, and the old keys go.
+			migrated |= MigrateRep4RepGlobal(loaded, text);
 
 			// 1.8.2: "Open in Steam buttons on every account" on in the file without its go-ahead (a file copied from another
 			// PC, typed in by hand) goes back off - it's turned on only through its preview.
@@ -1541,8 +1505,8 @@ public static partial class ConfigStore {
 
 			return loaded;
 		} catch (Exception e) {
-			// Keep the broken file. Falling back to defaults and then saving over it would destroy the rep4rep
-			// token and the dashboard password because of one stray comma.
+			// Keep the broken file. Falling back to defaults and then saving over it would destroy the
+			// notification tokens and the dashboard password because of one stray comma.
 			string kept = GlobalPath + ".broken";
 
 			// Not always bad JSON: a file it isn't allowed to read, or one another program holds, lands here too - the
@@ -1688,10 +1652,9 @@ public static partial class ConfigStore {
 				onDisk.TelegramBotToken = Secrets.Protect(cfg.TelegramBotToken, "global");
 				onDisk.DiscordBotToken = Secrets.Protect(cfg.DiscordBotToken, "global");
 
-				// The same for the dashboard password, the rep4rep token and the proxy password - all three are
+				// The same for the dashboard password and the proxy password - both are
 				// secrets settings, and they were the only ones still written out in the clear.
 				onDisk.WebPassword = Secrets.Protect(cfg.WebPassword, "global");
-				onDisk.Rep4RepApiToken = Secrets.Protect(cfg.Rep4RepApiToken, "global");
 				onDisk.WebProxyPassword = Secrets.Protect(cfg.WebProxyPassword, "global");
 				SecretSettings.Seal(onDisk, cfg);   // every other secret setting (the backup password), by its kind
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
@@ -2169,6 +2132,8 @@ public static partial class ConfigStore {
 			migrated |= MigrateSpareKeep(cfg);
 			migrated |= FixSpendLimits(cfg, name);
 			migrated |= MigrateNewDefaults(cfg, text);
+			// 1.9.0: this account's rep4rep settings move to the rep4rep add-on's (see MigrateRep4Rep.cs).
+			migrated |= MigrateRep4RepAccount(name, text);
 			migrated |= SettleSwitches(cfg, name);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and
 			// saving the account drops OfflineIdleTopGames from the file, and the next update read that as a file from
@@ -2350,7 +2315,7 @@ public static partial class ConfigStore {
 		("state", "bans-", ".json"), ("state", "cardcheck-", ".json"), ("state", "cardpace-", ".json"), ("state", "cheevo-", ".json"),
 		("state", "dropsfirst-", ".json"), ("state", "freegames-", ".json"), ("state", "freeitems-", ".json"), ("state", "grind-", ".json"),
 		("state", "human-", ".json"), ("state", "hunt-", ".json"), ("state", "invvalue-", ".json"), ("state", "owner-", ".json"),
-		("state", "ownersitting-", ".json"), ("state", "queue-", ".txt"), ("state", "rep4rep-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
+		("state", "ownersitting-", ".json"), ("state", "queue-", ".txt"), ("state", "comments-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
 		("state", "trades-announced-", ".json"), ("state", "overnight-", ".seen"),
 		("state", "scamwatch-", ".json"), ("state", "health-", ".json"),   // scam watch, account health
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)

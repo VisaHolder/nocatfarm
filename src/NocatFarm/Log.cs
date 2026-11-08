@@ -12,7 +12,9 @@ public enum NotifyKind { Earning, Social, Problem, Trade,
 /// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
 /// pick exactly which of these they want sent.
 /// </summary>
-public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs, Weekly, Security, BreakIn,
+public enum Topic { Cards, FreeStuff, Trades, Achievements,
+	/// <summary>1.9.0: what an add-on sends out (host.Notify) - the rep4rep add-on's credited comments, say. Was Rep4Rep.</summary>
+	Plugins, Social, Problems, Updates, Summary, Installs, Weekly, Security, BreakIn,
 	// scam watch and account health alerts
 	ScamWatch, Health,
 
@@ -431,7 +433,7 @@ public static class Log {
 
 	/// <summary>
 	/// A web address safe to write down: host and path only, never the query (that is where the Web API's
-	/// access_token and the rep4rep key ride), and the secret path segments of a Telegram bot URL or a Discord
+	/// access_token rides), and the secret path segments of a Telegram bot URL or a Discord
 	/// webhook masked - both carry the token in the path itself.
 	/// </summary>
 	public static string Where(Uri? url) {

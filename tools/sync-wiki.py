@@ -32,6 +32,7 @@ PAGES = [
     ("trades.md", "Trades"),
     ("achievements.md", "Achievements"),
     ("phone-and-notifications.md", "Phone-and-Notifications"),
+    ("addons.md", "Add-ons"),
     ("rep4rep.md", "rep4rep"),
     ("settings.md", "Settings"),
     ("COMMANDS.md", "Commands"),

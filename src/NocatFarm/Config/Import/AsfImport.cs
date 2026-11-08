@@ -18,7 +18,7 @@ namespace NocatFarm.Config;
 /// file holds the mobile authenticator ASF imported (it deletes the maFile once it has read it), so that comes too.
 ///
 /// Settings from ASF itself and from the HumanIdler plugin are both understood, because on a real install the
-/// interesting bits (which games to idle, the custom game name, whether rep4rep is on) live in the plugin keys.
+/// interesting bits (which games to idle, the custom game name, whether rep4rep is on - the rep4rep add-on's now) live in the plugin keys.
 /// </summary>
 public static class AsfImport {
 	/// <summary>The importer as the dashboard's list sees it.</summary>
@@ -97,6 +97,7 @@ public static class AsfImport {
 		ReadGlobal(asf, scan);
 
 		string? rep4repToken = null;
+		List<string> rep4repOn = [];
 
 		foreach (string file in SafeFiles(dir)) {
 			string name = Path.GetFileNameWithoutExtension(file);
@@ -162,21 +163,20 @@ public static class AsfImport {
 				rep4repToken = r4r;
 			}
 
+			if (Bool(cfg, "HumanIdlerRep4Rep") == true) {
+				rep4repOn.Add(name);
+			}
+
 			scan.Accounts.Add(account);
 		}
 
-		// One rep4rep token covers the whole account, so it belongs in the global config.
-		if (rep4repToken != null) {
-			string kept = rep4repToken;
-			scan.Settings.Add(new ImportSetting("Rep4RepApiToken", "••••••", ToGlobal: g => {
-				// With rep4rep's own switch: the token and every account's tick came across and it stayed off, so the preview
-				// said "rep4rep on" and nothing was ever posted. Only when this brings the token - one set here already is
-				// under a switch somebody set here.
-				if (string.IsNullOrEmpty(g.Rep4RepApiToken)) {
-					g.Rep4RepApiToken = kept;
-					g.Rep4RepEnabled = true;
-				}
-			}));
+		// 1.9.0: rep4rep is an add-on - its key and which accounts comment go into the add-on's settings (ready for when it's
+		// installed), never over a key already set here.
+		if ((rep4repToken != null) || (rep4repOn.Count > 0)) {
+			string? kept = rep4repToken;
+			string[] on = [.. rep4repOn];
+			scan.Settings.Add(new ImportSetting("rep4rep (add-on)", kept != null ? "••••••" : string.Join(", ", on),
+				ToGlobal: _ => ConfigStore.ImportRep4Rep(kept, on)));
 		}
 
 		return scan;
@@ -367,10 +367,6 @@ public static class AsfImport {
 
 		if (bot.CustomGameName.Length > 0) {
 			bot.PlayWhileFarming = plainFarmingName;
-		}
-
-		if (Bool(cfg, "HumanIdlerRep4Rep") == true) {
-			bot.Rep4Rep = true;
 		}
 
 		// The farming priority queue and blacklist aren't in the config at all - ASF keeps them in the bot's

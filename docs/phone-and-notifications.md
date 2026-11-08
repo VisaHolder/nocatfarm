@@ -101,7 +101,7 @@ switch for each kind, under Show advanced:
 | Send the daily summary | on |
 | Send profile comments | off |
 | Send achievements | off |
-| Send rep4rep comments | off |
+| Send add-on messages (the rep4rep add-on's credited comments and rests, say) | off |
 | Send Steam Points spending (badge levels bought) | on |
 | Send spare items and booster packs (one message a look: gems made, items listed, packs opened; and the first preview) | on |
 | Scam warnings (see [Scam watch](trades.md#scam-watch)) | on |

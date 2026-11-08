@@ -265,13 +265,24 @@ public static partial class Commands {
 		}
 
 		if ((result.Bought.Count > 0) || (result.Waiting.Count > 0)) {
-			lines.AddRange(result.Bought.GroupBy(static x => x.Step.Game).Select(g => $"{name}: bought {g.Key} · {g.Count()} card(s) · {M(g.Sum(static x => x.Paid))}"));   // each card was its own line as it was bought
+			lines.AddRange(result.Bought.GroupBy(static x => (x.Step.Game, x.Step.IsPack)).Select(g => g.Key.IsPack
+				? $"{name}: bought {g.Key.Game} · {g.Count()} booster pack(s) · {M(g.Sum(static x => x.Paid))} - opened once they're in; what's still missing is bought at a later look"
+				: $"{name}: bought {g.Key.Game} · {g.Count()} card(s) · {M(g.Sum(static x => x.Paid))}"));   // each card was its own line as it was bought
 			lines.AddRange(result.Finished.Select(s => $"{name}: {s.Game} set complete - badge crafting makes it level {s.Level + 1}"));
 			lines.AddRange(result.Waiting.Select(x => $"{name}: {x.Card.Name} ({x.Step.Game}) - confirm the purchase in the Steam app on your phone; it's bought at the next look"));
 		} else {
 			string verb = mode == CardBuyer.Mode.Preview ? "would buy" : "would have bought";
 
 			foreach (BuyStep s in plan.Steps) {
+				// 1.9.0: booster packs instead of the missing cards - with what they're expected to leave, against the cards straight.
+				if (s.IsPack) {
+					lines.Add($"{name}: {verb} {s.Packs} {s.Game} booster pack(s) for {M(s.Cost)} instead of its {s.Cards.Count} missing card(s) ({M(s.Straight)}) - level {s.Level} to {s.Level + 1}");
+					lines.Add($"{name}:   {s.Packs} × {new BuyCard(s.PackHash!, 0).Name} {M(s.PackCents + s.PackTax)} - 3 random cards of its {s.SetSize} each; expected to leave about {s.LeftCards:0.0} missing card(s), about {M(s.LeftCost)} to buy afterwards: about {M(s.LevelCost)} in all, {M(s.Straight)} straight (about {s.XpPerUnit:N0} XP per 1.00)");
+					lines.Add($"{name}:   instead of {string.Join(", ", s.Cards.Select(c => $"{c.Name} {M(c.Price)}"))}");
+
+					continue;
+				}
+
 				string what = s.FullSet ? $"a full set of {s.Game} ({s.Cards.Count} cards)" : $"{s.Cards.Count} of {s.SetSize} cards for {s.Game}";
 				lines.Add($"{name}: {verb} {what} for {M(s.Cost)} - level {s.Level} to {s.Level + 1}, about {s.XpPerUnit:N0} XP per 1.00");
 				lines.Add($"{name}:   {string.Join(", ", s.Cards.Select(c => $"{c.Name} {M(c.Price)}"))}");

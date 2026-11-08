@@ -3,7 +3,6 @@ using System.Text;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
-using NocatFarm.Rep4Rep;
 
 namespace NocatFarm;
 
@@ -41,7 +40,6 @@ public static partial class Commands {
 	public const string GroupAchievements = "Achievements";
 	public const string GroupFree = "Free stuff & keys";
 	public const string GroupInfo = "Profile & info";
-	public const string GroupRep4Rep = "rep4rep";
 	public const string GroupSettings = "Settings";
 	public const string GroupOther = "The app";
 
@@ -124,8 +122,6 @@ public static partial class Commands {
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
-		new("rep4rep", "[status|points|profiles] | tasks <account> | now|pause|resume|clear|rest <account|all> | hold <hours>|off", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off. 'rep4rep hold 24' pauses commenting on every account for 24 hours, through restarts; 'rep4rep hold off' ends it.", "r4r"),
-
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("backup", "[now|status]", GroupSettings, "'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup."),
@@ -136,6 +132,7 @@ public static partial class Commands {
 		new("report", "[week]", GroupOther, "The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments).", "", "weekly"),
 		new("notify", "[test|link]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
+		new("addons", "[install|remove <name>]", GroupOther, "reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept), even with GitHub not answering. Installing and removing only work at this PC, or on the dashboard signed in with its password.", "addon"),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
@@ -688,9 +685,9 @@ public static partial class Commands {
 			// (Steam Guard codes from /2fa among them), and the Telegram connect link before a chat is connected - which made
 			// whoever opened it the owner. 'log folder' opens a folder on this PC.
 			or "log" or "stats"
-			// 'owns' looks a game up on every account, and rep4rep is one queue for them all: its summary lists every account,
-			// and 'rep4rep pause' or 'clear' stops or wipes it for every one of them.
-			or "owns" or "rep4rep";
+			// 'owns' looks a game up on every account. And the rep4rep add-on's command (1.9.0): one queue for them all - its
+			// summary lists every account, and 'rep4rep pause all' or 'clear all' stops or wipes it for every one of them.
+			or "owns" or "rep4rep" or "r4r";
 
 	/// <summary>
 	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
@@ -736,6 +733,17 @@ public static partial class Commands {
 	/// <summary>Run a command from somewhere else - Telegram, Discord, a dashboard on a phone, a plugin - and write it and its reply to the log file.</summary>
 	public static async Task<string> RunLoggedAsync(BotManager mgr, string input, string from) {
 		string reply = await RunAsync(mgr, input).ConfigureAwait(false);
+		LogExchange(from, input, reply);
+
+		return reply;
+	}
+
+	/// <summary>
+	/// 1.9.0: from the Console of a dashboard on another device that was signed in with the dashboard password: like
+	/// <see cref="RunLoggedAsync"/>, but 'addons install|remove' work - as they do on that dashboard's Plugins page.
+	/// </summary>
+	public static async Task<string> RunSignedInAsync(BotManager mgr, string input, string from) {
+		string reply = await RunAsync(mgr, input, atThisPc: false, addons: true).ConfigureAwait(false);
 		LogExchange(from, input, reply);
 
 		return reply;
@@ -937,7 +945,8 @@ public static partial class Commands {
 
 	/// <param name="atThisPc">Typed at this PC (<see cref="RunAtThisPcAsync"/>): 'update file' and 'notify link' work only then.</param>
 	/// <param name="later">Where a slow command's answer goes once it's done, besides the log (see <see cref="LateReply"/>).</param>
-	private static async Task<string> RunAsync(BotManager mgr, string input, bool atThisPc, Action<string>? later = null) {
+	/// <param name="addons">From the Console of a dashboard signed in with its password: 'addons install|remove' work, as on its Plugins page.</param>
+	private static async Task<string> RunAsync(BotManager mgr, string input, bool atThisPc, Action<string>? later = null, bool addons = false) {
 		string line = input.Trim();
 
 		// Set by every command, the chat null for all but Steam chat - never left over from an earlier one: an account a Steam-chat
@@ -1024,7 +1033,6 @@ public static partial class Commands {
 				"joingroup" => await JoinGroupAsync(mgr, rest, line).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest, atThisPc).ConfigureAwait(false),
 				"cards" => Cards(mgr, AllIsEvery(rest)),
-				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
 				"copy" => CopySettings(mgr, rest),
 				"steam" => await SteamAsync(mgr, rest).ConfigureAwait(false),
@@ -1058,6 +1066,7 @@ public static partial class Commands {
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
 				"plugins" => PluginList(),
+				"addons" or "addon" => await AddonsCommand(rest, atThisPc || addons).ConfigureAwait(false),
 				"owns" => Owns(mgr, rest),
 				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
 				// 'update file <path>': the path just as it was typed, not split into words and joined again - from the line's
@@ -1854,6 +1863,62 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
+	/// <summary>
+	/// 1.9.0: 'addons' - the official list; 'addons install|remove &lt;name&gt;', only at this PC or from the dashboard signed in with
+	/// its password (see <see cref="Plugins.Addons"/>) - the same rule as the Plugins page's buttons.
+	/// </summary>
+	/// <param name="mayInstall">Typed at this PC, or in the Console of a dashboard signed in with its password.</param>
+	private static async Task<string> AddonsCommand(string[] rest, bool mayInstall) {
+		string sub = rest.Length > 0 ? rest[0].ToLowerInvariant() : "";
+		string? name = rest.Length > 1 ? rest[1] : null;
+
+		if (sub is "install" or "remove" or "uninstall") {
+			if (!mayInstall) {
+				return new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString();
+			}
+
+			if (string.IsNullOrWhiteSpace(name)) {
+				return $"addons {sub} <name>";
+			}
+
+			if (sub == "install") {
+				return (await Plugins.Addons.InstallAsync(name).ConfigureAwait(false)).Message.ToString();
+			}
+
+			// The list only to put a name to the file - taking one out works without it (GitHub down, or the add-on gone from it).
+			(IReadOnlyList<Plugins.AddonEntry>? known, _) = await Plugins.Addons.ListAsync(fresh: false).ConfigureAwait(false);
+
+			return Plugins.Addons.Uninstall(known, name).ToString();
+		}
+
+		(IReadOnlyList<Plugins.AddonEntry>? list, Said problem) = await Plugins.Addons.ListAsync(fresh: sub == "refresh").ConfigureAwait(false);
+
+		if (list == null) {
+			return problem.ToString();
+		}
+
+		if (list.Count == 0) {
+			return new Said("there are no official add-ons yet").ToString();
+		}
+
+		StringBuilder sb = new();
+		sb.AppendLine(new Said("official add-ons (signed list on GitHub):").ToString());
+
+		foreach (Plugins.AddonEntry e in list) {
+			(bool installed, string? loaded, bool waiting) = Plugins.Addons.StateOf(e);
+			Said state = waiting ? new Said("waiting for a restart")
+				: Plugins.Addons.Newer(e, loaded) ? new Said("{0} installed - {1} is out", loaded!, e.Version)
+				: installed ? new Said("installed") : new Said("not installed");
+
+			sb.AppendLine($"  {Columns.PadRight(e.Id, 14)} {Columns.PadRight(e.Version, 8)} {state}");
+			sb.AppendLine($"      {e.DescriptionIn(Live.Global.Language ?? "en")}");
+		}
+
+		sb.Append(new Said("'addons install <name>' to install one").ToString());
+
+		return sb.ToString();
+	}
+
 	private static string Exit() {
 		RequestExit();
 
@@ -1889,17 +1954,15 @@ public static partial class Commands {
 	// 1.8.2: says it counts itself only while "Count me as a user" is on.
 	public static string About() => Live.Global.CountMeAsUser
 		? $"""
-		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
-		Everything runs on this PC. Your accounts never leave it; the only thing that talks
-		to rep4rep is the task queue. Once an hour it tells nocat.lol it's running, to count
+		nocat.farm {Build.Version} - Steam idler and trading-card farmer.
+		Everything runs on this PC. Your accounts never leave it. Once an hour it tells nocat.lol it's running, to count
 		Steam accounts: a random install ID, the version, the platform and how many accounts
 		are signed in (just the number), nothing else. Count me as a user turns it off.
 		"""
 		: $"""
-		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
-		Everything runs on this PC. Your accounts never leave it; the only thing that talks
-		to rep4rep is the task queue. Count me as a user is off, so it doesn't count itself
-		on nocat.lol.
+		nocat.farm {Build.Version} - Steam idler and trading-card farmer.
+		Everything runs on this PC. Your accounts never leave it. Count me as a user is off,
+		so it doesn't count itself on nocat.lol.
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
@@ -2097,15 +2160,16 @@ public static partial class Commands {
 		StringBuilder sb = new();
 		string bar = Log.Bar;
 
-		sb.AppendLine($"  {"ACCOUNT",-13}{"STATE",-13}{"UPTIME",-8}{"PLAYING",-24}{"CARDS",-7}REP4REP");
+		sb.AppendLine($"  {"ACCOUNT",-13}{"STATE",-13}{"UPTIME",-8}{"PLAYING",-24}{"CARDS",-7}COMMENTS");
 		sb.AppendLine("  " + new string('─', 70));
 
 		foreach (Bot b in bots) {
 			string uptime = b.OnlineSince == null ? "—" : Fmt.Hm((int) (DateTime.UtcNow - b.OnlineSince.Value).TotalMinutes);
 			string playing = string.IsNullOrEmpty(b.Playing) ? "—" : b.Playing;
 			string cards = b.CardsRemaining > 0 ? b.CardsRemaining.ToString() : "—";
-			Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
-			string comments = b.Cfg.Rep4Rep && r4r != null ? $"{r4r.PostsToday}/{r4r.Cap}" : "—";
+			// 1.9.0: comments posted through add-ons (rep4rep's) in the last 24 hours, against the app's own ceiling.
+			int posted = Plugins.Comments.Window(b.Name).Count;
+			string comments = posted > 0 ? $"{posted}/{Plugins.Comments.DailyLimit}" : "—";
 
 			// One space always left between columns: a value cut to the full width ran straight into the next one
 			// ("waiting for …—"). A state that doesn't fit is given whole on its own line below.
@@ -3506,7 +3570,10 @@ public static partial class Commands {
 
 		List<string> lines = [
 			$"{name}: add {M(add)} - with {M(wallet)} in the wallet{(p.Keep > 0 ? $" and {M(p.Keep)} always kept" : "")}, {M(spendable)} to spend.",
-			levels == 0
+			// No level priced at all yet (the set finder hasn't looked): it can't tell - "buys no badge level" said the money was no use.
+			(levels == 0) && (p.Costs.Count == 0) && (p.Usual <= 0)
+				? $"{name}: can't tell yet what that buys - no badge level is priced yet (the set finder reads the market a little at a time); try again in an hour."
+			: levels == 0
 				? $"{name}: that buys no badge level at today's prices (the cheapest is {(p.Costs.Count > 0 ? M(p.Costs.Min()) : "not known yet")})."
 				: $"{name}: about {levels} badge level(s) - {levels * 100:N0} XP - for about {M(spent)}: level {p.Level} -> about {reach}{(p.Held > 0 ? $" with the {p.Held} level(s) its own sets make" : "")}"
 					+ (more > 0 ? $" ({more} of them at today's usual {M(p.Usual)} a level - the set finder hasn't priced that many yet)." : ".")
@@ -3549,7 +3616,10 @@ public static partial class Commands {
 		];
 
 		if (p.Missing > 0) {
-			lines.Add($"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate.");
+			// No usual price known either (nothing priced in this money yet): no figure - "about 0.00" read as free.
+			lines.Add(p.Usual > 0
+				? $"{name}: {p.Missing} more need prices the set finder hasn't checked yet - about {M(p.Missing * p.Usual)} at today's rate."
+				: $"{name}: {p.Missing} more need prices the set finder hasn't checked yet - what they cost isn't known yet.");
 		}
 
 		// 1.8.2: a goal the wallet can't pay for yet - how far the money goes until more comes in.
@@ -5559,224 +5629,6 @@ public static partial class Commands {
 		return on ? "Mini mode on - 'mini off' or its full-window button brings the full window back." : "Back to the full window.";
 	}
 
-	// ── rep4rep ─────────────────────────────────────────────────────────────
-	private static async Task<string> Rep4RepAsync(BotManager mgr, string[] args) {
-		string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
-		string? who = args.Length > 1 ? args[1] : null;
-
-		switch (sub) {
-			// "Pause rep4rep for..." - every account, a number of hours, kept through restarts. It used to be a setting
-			// (Rep4RepPauseHours), which is an action rather than a preference; the setting still works underneath.
-			case "hold": {
-				int hours = who == null ? -1
-					: who.Equals("off", StringComparison.OrdinalIgnoreCase) ? 0
-					: int.TryParse(who, NumberStyles.None, CultureInfo.InvariantCulture, out int h) ? h : -1;
-
-				if (hours is < 0 or > 720) {
-					return "rep4rep hold <hours> - 1 to 720, or 'rep4rep hold off' to end it";
-				}
-
-				lock (ConfigStore.GlobalEditGate) {
-					Live.Global.Rep4RepPauseHours = hours;
-					Live.Global.Rep4RepHoldFrom = null;   // a new hold starts now, not when an old one did
-					ConfigStore.SaveGlobal(Live.Global);
-				}
-
-				ApplyGlobalSideEffects(mgr, Settings.FindGlobal("Rep4RepPauseHours")!);
-
-				return hours == 0 ? "rep4rep: no hold - commenting carries on" : $"rep4rep: commenting held on every account for {hours}h";
-			}
-
-			case "points": {
-				if (!mgr.Rep4Rep.HasToken) {
-					return "No rep4rep API token set. Get one from rep4rep.com under Settings, then:  set Rep4RepApiToken <token>";
-				}
-
-				(int Points, int PendingPoints)? user = await mgr.Rep4Rep.GetUserAsync().ConfigureAwait(false);
-
-				if (user is not { } got) {
-					return "rep4rep didn't answer. Check the token is right and that you can reach rep4rep.com.";
-				}
-
-				// The dashboard's own check, and its last sensible figure when there is one, rather than nonsense as if it
-				// were true. A negative "still being verified" (rep4rep sends -16 and the like often) is 0 waiting, not nonsense.
-				if (!Web.WebHost.Believable(got)) {
-					return $"rep4rep gave an impossible balance ({(got.Points == Rep4Rep.Rep4RepApi.NotANumber ? "points that aren't a number" : $"{got.Points} points")}, {got.PendingPoints} still being verified)"
-						+ (Web.WebHost.Current?.LastSensiblePoints is { } kept
-							? $" - the last sensible one was {kept.Points} points you can spend, {kept.PendingPoints} still being verified."
-							: " - nothing sensible from it yet; try again in a while.");
-				}
-
-				Web.WebHost.Current?.RememberPoints(got.Points, got.PendingPoints);
-				(int shownPoints, int shownPending) = Web.WebHost.Sensible(got) ?? got;
-
-				return $"rep4rep: {shownPoints} points you can spend, {shownPending} still being verified.";
-			}
-
-			case "profiles": {
-				if (!mgr.Rep4Rep.HasToken) {
-					return "No rep4rep API token set.";
-				}
-
-				List<(string Id, string SteamId)> profiles = await mgr.Rep4Rep.GetProfilesAsync().ConfigureAwait(false);
-
-				if (profiles.Count == 0) {
-					return "rep4rep has no Steam profiles registered yet. They get added automatically the first time each account logs in.";
-				}
-
-				StringBuilder sb = new();
-
-				foreach ((string id, string steamId) in profiles) {
-					Bot? owner = mgr.All.FirstOrDefault(b => b.SteamId.ToString() == steamId);
-					sb.AppendLine($"  {steamId}  rep4rep id {id}  {(owner != null ? owner.Name : "(not one of yours)")}");
-				}
-
-				return sb.ToString().TrimEnd();
-			}
-
-			case "tasks": {
-				if (who == null) {
-					return "rep4rep tasks <account>";
-				}
-
-				Bot? bot = mgr.Get(who);
-
-				if (bot == null) {
-					return NoSuchAccount(mgr, who);
-				}
-
-				string? profileId = await mgr.Rep4Rep.ResolveProfileIdAsync(bot.SteamId, false).ConfigureAwait(false);
-
-				if (profileId == null) {
-					return $"{bot.Name} isn't registered with rep4rep yet.";
-				}
-
-				List<Rep4RepTask> tasks = await mgr.Rep4Rep.GetTasksAsync(profileId).ConfigureAwait(false);
-
-				if (tasks.Count == 0) {
-					return $"No tasks waiting for {bot.Name} right now. rep4rep hands them out in batches - check back later.";
-				}
-
-				StringBuilder sb = new();
-				sb.AppendLine($"{tasks.Count} task(s) waiting for {bot.Name}:");
-
-				foreach (Rep4RepTask t in tasks.Take(15)) {
-					sb.AppendLine($"  {Columns.PadRight(t.TargetName, 24)} \"{t.CommentText}\"");
-				}
-
-				return sb.ToString().TrimEnd();
-			}
-
-			case "status": {
-				StringBuilder sb = new();
-				sb.AppendLine(mgr.Rep4Rep.HasToken ? "token: set" : "token: MISSING - set Rep4RepApiToken <token>");
-
-				foreach (Bot bot in mgr.All) {
-					Rep4RepModule? m = BotManager.ModuleOf<Rep4RepModule>(bot);
-
-					if (m == null) {
-						continue;
-					}
-
-					string last = m.LastPost == null ? "never" : Fmt.Ago(m.LastPost) + " ago";
-					string steam = m.CapIsSteamLimit ? " (Steam's)" : "";
-					string frees = (m.PostsToday >= m.Cap) && m.NextSlot is { } ns ? $"   frees {ns.ToLocalTime():HH:mm}" : "";
-					sb.AppendLine($"{bot.Name,-14}{(bot.Cfg.Rep4Rep ? "on " : "off")}  {m.PostsToday}/{m.Cap}{steam} in 24h   last {last,-10} {m.Status}{frees}");
-				}
-
-				return sb.ToString().TrimEnd();
-			}
-		}
-
-		// Fan a per-account action out over every account with one word.
-		if ((who != null) && who.Equals("all", StringComparison.OrdinalIgnoreCase)
-			&& sub is "rest" or "clear" or "pause" or "resume" or "now") {
-			int n = 0;
-
-			foreach (Bot b in mgr.All) {
-				Rep4RepModule? mm = BotManager.ModuleOf<Rep4RepModule>(b);
-
-				// Only accounts that comment at all - resting one with rep4rep off would block it for a day the
-				// moment it was switched on.
-				if ((mm == null) || !b.Cfg.Rep4Rep) {
-					continue;
-				}
-
-				// Counted only where it actually happened - clear and rest do nothing on an account whose rep4rep
-				// state never loaded, and counting those anyway was a lie.
-				bool did = true;
-
-				switch (sub) {
-					case "rest": did = await mm.RestFullDayAsync("manual reset").ConfigureAwait(false); break;
-					case "clear": did = await mm.ClearHoldAsync().ConfigureAwait(false); break;
-					case "pause": mm.Paused = true; break;
-					case "resume": mm.Paused = false; break;
-					case "now": mm.RunNow(); break;
-				}
-
-				if (did) {
-					n++;
-				}
-			}
-
-			return $"rep4rep {sub}: {n} account(s)";
-		}
-
-		// A word that isn't one of these is a typo, not a subcommand waiting for an account - answering
-		// "rep4rep typo <account>" presented the typo as if it were real.
-		const string Usage = "rep4rep status | points | profiles | tasks <account> | now/pause/resume/clear/rest <account|all>\n"
-			+ "  to switch it on or off for an account:  set <account> Rep4Rep on|off";
-
-		if (sub is not ("now" or "pause" or "resume" or "clear" or "rest")) {
-			return Usage;
-		}
-
-		if (who == null) {
-			return $"rep4rep {sub} <account|all>";
-		}
-
-		Bot? target = mgr.Get(who);
-
-		if (target == null) {
-			return NoSuchAccount(mgr, who);
-		}
-
-		Rep4RepModule? mod = BotManager.ModuleOf<Rep4RepModule>(target);
-
-		switch (sub) {
-			case "now":
-				mod?.RunNow();
-
-				if (mod is { } m2 && (m2.PostsToday >= m2.Cap) && m2.NextSlot is { } slot) {
-					return $"{target.Name}: at its cap ({m2.PostsToday}/{m2.Cap}) - the next slot frees at {slot.ToLocalTime():HH:mm}, it'll post then.";
-				}
-
-				return $"{target.Name}: queued - it'll post at the next gap.";
-			case "pause":
-				if (mod != null) {
-					mod.Paused = true;
-				}
-
-				return $"{target.Name}: rep4rep paused";
-			case "resume":
-				if (mod != null) {
-					mod.Paused = false;
-				}
-
-				return $"{target.Name}: rep4rep resumed";
-			case "clear":
-				return (mod != null) && await mod.ClearHoldAsync().ConfigureAwait(false)
-					? $"{target.Name}: hold cleared, refused profiles forgotten"
-					: $"{target.Name}: nothing to clear - rep4rep isn't running on this account";
-			case "rest":
-				return (mod != null) && await mod.RestFullDayAsync("manual reset").ConfigureAwait(false)
-					? $"{target.Name}: rep4rep resting a full day, back at baseline after"
-					: $"{target.Name}: rep4rep isn't running on this account, so there's nothing to rest";
-			default:
-				return Usage;
-		}
-	}
-
 	// ── settings ────────────────────────────────────────────────────────────
 	private static string ShowConfig(BotManager mgr, string[] args) {
 		bool showAdvanced = args.Contains("all", StringComparer.OrdinalIgnoreCase);
@@ -5879,8 +5731,8 @@ public static partial class Commands {
 		}
 
 		// The key read as the log's masking reads it - quotes off, cut at '=' or ':' (KeyOf) - and its value after a space or
-		// stuck on with '=' (SetValue): 'set alt Rep4Rep=on' answered "there's no setting called 'alt'", and 'set alt "Rep4Rep" on'
-		// that there was no Rep4Rep. A quoted key with a value stuck on inside the quotes is asked for again, with a space.
+		// stuck on with '=' (SetValue): 'set alt FarmCards=on' answered "there's no setting called 'alt'", and 'set alt "FarmCards" on'
+		// that there was no FarmCards. A quoted key with a value stuck on inside the quotes is asked for again, with a space.
 		string[] parts = Words(line);
 		Bot? bot = mgr.Get(args[0]);
 
@@ -5902,7 +5754,7 @@ public static partial class Commands {
 
 			string value = SetValue(line, parts, 2);
 
-			// 'set kylro Rep4Rep' with the value left off answered "there's no setting called 'kylro'".
+			// 'set kylro FarmCards' with the value left off answered "there's no setting called 'kylro'".
 			if (value.Length == 0) {
 				return new Said("set {0} {1} <value> - the value is missing. It's {2} now.", bot.Name, def.Name, Settings.Shown(bot.Cfg, def)).ToString();
 			}
@@ -6028,14 +5880,6 @@ public static partial class Commands {
 				bot.ApplyPersona();
 
 				break;
-			// Only ever START. The module's loop stays alive while it is off and reads the flag itself, so stopping
-			// it here would kill the very loop that has to notice the flag being turned back on later.
-			case "Rep4Rep":
-				if (bot.Cfg.Rep4Rep && bot.IsOnline) {
-					_ = BotManager.ModuleOf<Rep4RepModule>(bot)?.StartAsync();
-				}
-
-				break;
 			// A gift left for the owner while its switch was off is taken once the switch is on - now, not at the
 			// gifts module's next slow pass hours later.
 			case "AcceptGifts":
@@ -6078,52 +5922,6 @@ public static partial class Commands {
 				break;
 			// The status text this program writes about itself is translated too, so a language change has to
 			// reach the pack the modules read from - not only the one the browser fetches.
-			// "Hold for N days" is turned into a deadline exactly once, here, when the number changes.
-			//
-			// Counting days down at runtime would restart the count on every launch, so a two-day hold on a
-			// machine that reboots nightly would never end. A stored deadline cannot drift: it either has
-			// passed or it has not.
-			case "Rep4RepPauseHours": {
-				int hours = Live.Global.Rep4RepPauseHours;
-
-				if (hours <= 0) {
-					bool lifted = false;
-
-					lock (ConfigStore.GlobalEditGate) {
-						if (Live.Global.Rep4RepHoldUntil != null) {
-							Live.Global.Rep4RepHoldUntil = null;
-							Live.Global.Rep4RepHoldFrom = null;
-							ConfigStore.SaveGlobal(Live.Global);
-							lifted = true;
-						}
-					}
-
-					if (lifted) {
-						Log.Info("rep4rep hold lifted - commenting resumes");
-					}
-
-					break;
-				}
-
-				// Anchored to when the hold STARTED, not to now.
-				//
-				// This runs on every global save, so "now + days" moved the finish line every time any unrelated
-				// setting was touched - a two-day hold plus a theme change an hour later became two days from
-				// then. From a fixed start, saving the same number is a no-op and changing it moves only the end.
-				DateTime from = Live.Global.Rep4RepHoldFrom ?? DateTime.UtcNow;
-				DateTime until = from.AddHours(hours);
-
-				if ((Live.Global.Rep4RepHoldFrom != from) || (Live.Global.Rep4RepHoldUntil != until)) {
-					Live.Global.Rep4RepHoldFrom = from;
-					Live.Global.Rep4RepHoldUntil = until;
-					ConfigStore.SaveGlobal(Live.Global);
-					Log.Info(new Said("rep4rep commenting held for {0}h - back on {1}",
-						hours, (Func<string>) (() => Fmt.Clock(until))));
-				}
-
-				break;
-			}
-
 			case "Language":
 				Core.Loc.Refresh();
 
@@ -6245,7 +6043,7 @@ public static partial class Commands {
 		}
 
 		// A file that doesn't load comes back as defaults. Put in force, one stray comma blanked the dashboard password,
-		// the rep4rep token and the Telegram bot - so the settings in use stay until the file is fixed.
+		// the dashboard password and the Telegram bot - so the settings in use stay until the file is fixed.
 		if (broken) {
 			await mgr.SyncFromDiskAsync().ConfigureAwait(false);
 
@@ -6257,7 +6055,7 @@ public static partial class Commands {
 			Web.WebHost.Current?.SignOutAll();
 		}
 
-		// What a change made anywhere else sets off - logging, a rep4rep hold, start with Windows. All of them are safe
+		// What a change made anywhere else sets off - logging, the language, start with Windows. All of them are safe
 		// to run again, which is how the dashboard's own save does it.
 		foreach (SettingDef def in Settings.Global) {
 			ApplyGlobalSideEffects(mgr, def);

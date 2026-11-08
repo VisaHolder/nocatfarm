@@ -4,7 +4,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// Lines in a row from one account that say the same kind of thing, shown as ONE row that updates in place: items turned
-/// into gems, the "still ..." heartbeat, rep4rep comments. A look that turned 14 items into gems was 14 rows - in a small
+/// into gems, the "still ..." heartbeat. A look that turned 14 items into gems was 14 rows - in a small
 /// window that's the whole log. Clicked, the row opens to show each line.
 /// </summary>
 /// <remarks>
@@ -15,7 +15,7 @@ namespace NocatFarm.Core;
 /// </remarks>
 public static class LogStack {
 	/// <summary>The kinds that stack.</summary>
-	public const string Gems = "gems", Heartbeat = "status", Rep4Rep = "rep4rep", Update = "update";
+	public const string Gems = "gems", Heartbeat = "status", Update = "update";
 
 	/// <summary>An item turned into gems - its line, as Log.Earned writes it (Core/SpareRun.cs).</summary>
 	public const string GemsLine = "{0} ({1}) → {2} gems";
@@ -31,9 +31,6 @@ public static class LogStack {
 		["update in {0}s"] = Update,
 		["update · signing out {0} {1}/{2}"] = Update,
 		["update · restarting into {0}"] = Update,
-		["commented on {0} and credited ({1}/{2} today)"] = Rep4Rep,
-		["commented on {0}, not credited ({1}/{2} today)"] = Rep4Rep,
-		["rep4rep {0}/{0} · next ~{1}"] = Rep4Rep,
 	};
 
 	/// <summary>The kind a line stacks as, or null for a line that never stacks.</summary>

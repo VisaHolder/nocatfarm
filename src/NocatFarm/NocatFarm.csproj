@@ -18,7 +18,7 @@
     <RootNamespace>NocatFarm</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <Version>1.8.9</Version>
+    <Version>1.9.0</Version>
     <!-- A background app, not a server: the web SDK turns on the server collector, which keeps a heap per CPU core.
          The workstation collector is the right fit and holds far less memory for the same work. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
@@ -40,6 +40,11 @@
     <PackageReference Include="SteamKit2" Version="3.3.0" />
     <!-- DPAPI. Windows-only by nature; elsewhere Secrets uses AES-GCM with a key file in config/state instead. -->
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 1.9.0: the checks reach the add-on machinery's internals (Plugins/Comments.cs, Addons.cs) directly. -->
+    <InternalsVisibleTo Include="NocatFarm.Tests" />
   </ItemGroup>
 
   <ItemGroup>

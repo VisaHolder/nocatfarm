@@ -43,9 +43,6 @@ let pollSeconds = 0;
 let bootId = null;
 let pending = {};                // settings edited but not saved
 let logLevels = { INFO: true, GOOD: true, WARN: true, ERROR: true, DEBUG: false };
-let r4r = null;
-let r4rProfiles = [];
-let r4rTasks = [];
 
 const STATUS_META = {
   farming:    { label: 'Farming',   tip: 'Playing a game that still has trading cards to drop.' },
@@ -426,16 +423,18 @@ function until(iso) {
   return '~' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
 
-// rep4rep is optional and can be switched off entirely (a third-party site many users won't touch). When it's
-// off the whole feature vanishes from the UI. Default to ON if we haven't heard from the server yet.
-const r4rOn = () => !state || state.Rep4RepEnabled !== false;
+// 1.9.0: comment figures show only on an install that posts comments (through an add-on - rep4rep is one now).
+const r4rOn = () => !!(state && state.CommentsOn);
 
 // ── navigation ───────────────────────────────────────────────────────
 function go(name) {
-  // rep4rep is switched off - there is no tab to land on, so send them to the overview instead.
-  if (name === 'rep4rep' && !r4rOn()) name = 'overview';
-  // An old bookmark or a typo in the address bar (#setings) hid every view and left a blank page.
-  if (!$('view-' + name)) name = 'overview';
+  // 1.9.0: rep4rep is an add-on now - an old #rep4rep bookmark lands on its tab when it's installed.
+  if (name === 'rep4rep') name = 'pp-rep4rep';
+  // A plugin's own tab ("pp-<plugin>") is the one shared section, filled from what the plugin draws.
+  const section = name.startsWith('pp-') ? 'pluginpage' : name;
+  // An old bookmark or a typo in the address bar (#setings) hid every view and left a blank page - and so did a tab of a
+  // plugin that isn't loaded any more.
+  if (!$('view-' + section) || (section === 'pluginpage' && !pluginPageOf(name.slice(3)))) return go('overview');
 
   view = name;
   location.hash = name;
@@ -443,12 +442,12 @@ function go(name) {
   // On a phone the tab bar scrolls sideways - bring the tab you're on into view, not left off the edge.
   const tab = document.querySelector('.navitem.active');
   if (tab && tab.parentElement.scrollWidth > tab.parentElement.clientWidth) tab.scrollIntoView({ block: 'nearest', inline: 'center' });
-  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('hidden', v.id !== 'view-' + name));
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('hidden', v.id !== 'view-' + section));
 
   // Returned so a caller can wait for the settings form to be drawn before reaching into it.
   let ready = Promise.resolve();
   if (name === 'settings') { ready = loadConfig().then(renderSettings); }
-  if (name === 'rep4rep') { loadRep4Rep(); }
+  if (section === 'pluginpage') loadPluginPage(name.slice(3), null);
   if (name === 'console') { $('cmd').focus(); renderCommandList(); }
   if (name === 'log') renderLog();
   if (name === 'plugins') loadPlugins();
@@ -489,15 +488,11 @@ function render() {
 
   $('navAccounts').textContent = bots.length || '';
 
-  // rep4rep off -> drop its nav tab entirely; on -> show the points beside it once a token's set.
-  const r4rTab = document.querySelector('.navitem[data-view="rep4rep"]');
-  if (r4rTab) r4rTab.classList.toggle('hidden', !r4rOn());
-
   // No account's authenticator is in nocat.farm: the Authenticator tab would only ever say so - it goes, and comes back
   // by itself the moment one is added.
   const authTab = document.querySelector('.navitem[data-view="auth"]');
   if (authTab) authTab.classList.toggle('hidden', !bots.some((b) => b.HasAuthenticator));
-  $('navPoints').textContent = r4rOn() && state.Rep4RepToken ? state.Points : '';
+  renderPluginTabs();
 
   // The Plugins tab stays put whether plugins are on or off, and says which inside.
   //
@@ -525,7 +520,6 @@ function render() {
 
   paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
-    ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('rep4rep points'))}</dt><dd>${state.PointsKnown === false ? '-' : state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
     <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
   // Kept with the rail rather than in renderOverview, for the same reason as the Plugins tag above: that only
@@ -576,7 +570,6 @@ function render() {
 
   if (view === 'overview') renderOverview();
   if (view === 'accounts') renderAccounts();
-  if (view === 'rep4rep') renderRep4RepPacing();
 }
 
 /// A status chip in the rail: show those accounts. It clears the filter only where you can see it's on - on the Accounts
@@ -629,14 +622,6 @@ function renderAlerts() {
   if (state.LockedToThisPc) {
     out.push(`<div class="alert warn"><span>${esc(t("This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here."))}</span>
       <span class="spacer"></span><button onclick="goSetting('WebPassword')">${esc(t('Set a password to open it up'))}</button></div>`);
-  }
-
-  if (state.Rep4RepWanted > 0 && !state.Rep4RepToken) {
-    const many = state.Rep4RepWanted > 1;
-    out.push(`<div class="alert warn"><span>${esc(many
-      ? tf("rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.", state.Rep4RepWanted)
-      : t("rep4rep is switched on for one account but there's no API token, so nothing is being posted."))}</span>
-      <span class="spacer"></span><button onclick="go('rep4rep')">${esc(t('Add token'))}</button></div>`);
   }
 
   // 1.8.0 scam watch: a warning on an account stays up here until it's cleared - 'It was me' runs 'scamwatch ok'.
@@ -749,12 +734,7 @@ function renderOverview() {
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
     tile(usd(state.InventoryValue), 'Inventory', "What every account's inventory would fetch at the lowest price each item is listed for on the market. Everything in there is counted at what it's worth, whether or not it can be sold right now.",
       state.InventoryPending > 0 ? pricingLine(state.InventoryPending, state.InventoryRequests, state.InventoryEtaSeconds, state.InventoryPausedUntil, state.InventoryStale) : '') +
-    (!r4rOn()
-      ? ''
-      : state.Rep4RepToken
-        ? tile(state.PointsKnown === false ? '-' : state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
-            state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
-        : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
+    (!r4rOn() ? '' : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
   paint('glance', bots.length ? `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the lowest price each item is listed for on the market. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th class="r4r">${esc(t('rep4rep'))}</th>` : ''}<th class="up">${esc(t('Up'))}</th></tr>
@@ -764,7 +744,7 @@ function renderOverview() {
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
       <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryOn === false || b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
-      ${r4rOn() ? `<td class="r4r">${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
+      ${r4rOn() ? `<td class="r4r">${b.Comments24h || '—'}</td>` : ''}
       <td class="up">${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
     : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`);
@@ -793,7 +773,7 @@ function renderToday() {
 
   const rows = bots.map((b) => {
     const c = b.CardsToday || 0;
-    const cm = b.Rep4RepToday || 0;
+    const cm = b.Comments24h || 0;
     totCards += c; totComments += cm;
     return `<tr>
       <td><b>${esc(b.Name)}</b></td>
@@ -1247,10 +1227,6 @@ function renderAccounts() {
   }
 
   const cards = bots.map((b) => {
-    // rep4rep is the only figure here with a real denominator, so it is the only one that gets a bar. The
-    // card count has no known total, and inventing one (this used to be 100 - cards*5) is worse than a number.
-    const capPct = b.Rep4Rep && b.Rep4RepCap ? Math.min(100, Math.round((b.Rep4RepToday / b.Rep4RepCap) * 100)) : 0;
-
     return `<div class="card bot ${b.Group}" draggable="true" data-name="${esc(b.Name)}"
       ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragend="dragEnd()" ondrop="event.preventDefault();dragEnd()">
       <div class="bot-head">
@@ -1271,12 +1247,10 @@ function renderAccounts() {
         : ''}
       <div class="statline">
         <span>${b.Cards === 1 ? tf('<b>{0}</b> card', b.Cards) : tf('<b>{0}</b> cards', b.Cards)}${b.Games ? ' ' + esc(tf('in {0}', b.Games)) : ''}</span>
-        ${r4rOn() && b.Rep4Rep ? `<span>${tf('<b>{0}</b>/{1} comments', b.Rep4RepToday, b.Rep4RepCap)}</span>` : ''}
         <span>${tf('<b>{0}</b> up', b.UptimeMinutes ? hm(b.UptimeMinutes) : '—')}</span>
         ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}">${tf('<b>{0}</b> inventory', usd(b.InventoryValue))} ${valueDelta(b)}</span>` : ''}
         ${b.InventoryOn !== false && b.InventoryPending > 0 ? `<span class="muted">${esc(pricingLine(b.InventoryPending, b.InventoryRequests, b.InventoryEtaSeconds, state.InventoryPausedUntil, state.InventoryStale))}</span>` : ''}
       </div>
-      ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="${esc(t("Comments posted in the last 24 hours against this account's daily cap."))}"><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
         ${b.Modules.filter((m) => !m.Quiet).map((m) =>
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
@@ -2204,13 +2178,16 @@ async function authAct(accept, ids) {
 }
 
 // ── plugins ───────────────────────────────────────────────────────────────
-// The tab only exists when plugins are switched on, because a page telling you about a feature you have not
-// enabled is just another thing to scroll past.
+// The tab is always there: reap's official add-ons can be installed from it even with plugins off.
 let pluginData = null;
+let addonData = null;
 
-async function loadPlugins() {
+async function loadPlugins(fresh) {
   const body = $('pluginsBody');
   if (!body) return;
+
+  // The official list comes from GitHub, so it's asked for beside the local one and never holds it up.
+  const addons = api('/api/addons' + (fresh ? '?fresh=true' : '')).catch((e) => ({ Ok: false, Error: e.message || String(e), List: [] }));
 
   try {
     pluginData = await api('/api/plugins');
@@ -2220,6 +2197,60 @@ async function loadPlugins() {
   }
 
   renderPlugins();
+  addonData = await addons;
+  renderPlugins();
+}
+
+// 1.9.0: reap's official add-ons - from the signed list on GitHub, installed only after its signature and the file's
+// SHA-256 check out (Plugins/Addons.cs). Install/Remove only at this PC or with the dashboard password, like 'update file'.
+function renderAddons() {
+  const a = addonData;
+  if (!a) return `<p class="muted small">${esc(t('Looking up the official add-ons on GitHub...'))}</p>`;
+  if (!a.Ok) return `<p class="muted small">${esc(a.Error || t('couldn\'t get the list of add-ons from GitHub - try again in a while'))}</p>`;
+  if (!a.List.length) return `<p class="muted small">${esc(t('there are no official add-ons yet'))}</p>`;
+
+  const rows = a.List.map((x) => {
+    const id = esc(JSON.stringify(x.Id));
+    const state = x.Waiting ? t('waiting for a restart')
+      : x.Newer ? tf('{0} installed - {1} is out', x.Loaded, x.Version)
+      : x.Installed ? t('installed') : t('not installed');
+    const install = !x.Fits
+      ? `<span class="muted small">${esc(tf('needs nocat.farm {0} or newer', x.MinAppVersion))}</span>`
+      : (!x.Installed || x.Newer) && !x.Waiting
+        ? `<button onclick="installAddon(${id})" ${a.CanInstall ? '' : 'disabled'}>${esc(x.Newer ? t('Update') : t('Install'))}</button>` : '';
+    const remove = x.Installed ? `<button class="ghost" onclick="removeAddon(${id})" ${a.CanInstall ? '' : 'disabled'}>${esc(t('Remove'))}</button>` : '';
+    return `<div class="pcard"><div class="prow">
+        <span class="pname"><b>${esc(x.Name)}</b> <span class="muted small">${esc(x.Version)}</span><i class="wid">${esc(state)}</i></span>
+        <span>${install} ${remove}</span></div>
+      <p class="muted small" style="margin:6px 0 0">${esc(x.Description)}</p></div>`;
+  }).join('');
+
+  return `${rows}
+    <p class="muted small">${esc(t('Installing one turns on Load plugins and needs a restart. Only add-ons on the signed list can be installed here, each checked against it first.'))}
+      ${a.CanInstall ? '' : esc(t('Installing and removing work only on the dashboard on this PC, or one signed in with the dashboard password.'))}
+      <a href="https://github.com/VisaHolder/nocatfarm/blob/main/docs/addons.md" target="_blank" rel="noopener noreferrer">${esc(t('About add-ons'))}</a></p>`;
+}
+
+async function installAddon(id) {
+  toast(t('Downloading and checking it...'));
+  try {
+    const r = await post('/api/addons/install', { Id: id });
+    toast(r.Message || '', !r.Ok);
+  } catch (e) {
+    toast(tf('Could not change that: {0}', e.message || e), true);
+  }
+  loadPlugins(false);
+}
+
+async function removeAddon(id) {
+  if (!confirm(t('Remove this add-on? Its settings are kept, in case you put it back.'))) return;
+  try {
+    const r = await post('/api/addons/remove', { Id: id });
+    toast(r.Message || '', !r.Ok);
+  } catch (e) {
+    toast(tf('Could not change that: {0}', e.message || e), true);
+  }
+  loadPlugins(false);
 }
 
 function renderPlugins() {
@@ -2227,8 +2258,12 @@ function renderPlugins() {
   const d = pluginData;
   if (!body || !d) return;
 
+  const official = `<h2 data-t="Official add-ons">${esc(t('Official add-ons'))}</h2>${renderAddons()}`;
+
   if (!d.Enabled) {
-    body.innerHTML = `<p class="explain">${esc(t("Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust."))}</p>
+    body.innerHTML = `${official}
+      <h2 style="margin-top:18px" data-t="Installed">${esc(t('Installed'))}</h2>
+      <p class="explain">${esc(t("Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust."))}</p>
       <button onclick="goSetting('PluginsEnabled')">${esc(t('Go to the setting'))}</button>`;
     return;
   }
@@ -2247,7 +2282,8 @@ function renderPlugins() {
   const cmds = (d.Commands || []).map((c) =>
     `<li><code>${esc(c.Verb)} ${esc(c.Usage || '')}</code> <span class="muted">${esc(c.Help || '')}</span></li>`).join('');
 
-  body.innerHTML = `
+  body.innerHTML = `${official}
+    <h2 style="margin-top:18px" data-t="Installed">${esc(t('Installed'))}</h2>
     ${rows || `<p class="muted empty">${esc(t('Nothing installed yet.'))}</p>`}
     <p class="muted small">${esc(t('Drop a .dll in this folder and restart:'))} <code>${esc(d.Folder)}</code></p>
     ${cmds ? `<h2 style="margin-top:18px" data-t="Commands they added">${esc(t('Commands they added'))}</h2><ul class="unlocks">${cmds}</ul>` : ''}
@@ -2260,13 +2296,39 @@ function pluginSettings(p) {
   const list = p.Settings || [];
   if (!list.length) return '';
 
-  const rows = list.map((sett) => {
+  const rows = list.filter((sett) => !sett.Account).map((sett) => {
     const id = `ps-${p.Name}-${sett.Name}`.replace(/[^A-Za-z0-9_-]/g, '_');
     const tip = sett.Help ? ` data-tip="${esc(sett.Help)}"` : '';
-    const set = `setPluginSetting(${esc(JSON.stringify(p.Name))},${esc(JSON.stringify(sett.Name))},this)`;
+    return `<div class="field"><label for="${id}"${tip}>${esc(sett.Label || sett.Name)}</label><div class="ctl">${pluginControl(p, sett, id)}</div></div>`;
+  }).join('');
+
+  // 1.9.0: per-account settings - one row per account, one column per setting.
+  const per = list.filter((sett) => sett.Account);
+  const names = [...new Set(per.map((sett) => sett.Name))];
+  const accounts = [...new Set(per.map((sett) => sett.Account))];
+  const table = names.length ? `<div class="tablewrap"><table class="psettable">
+      <tr><th>${esc(t('Account'))}</th>${names.map((n) => {
+        const first = per.find((sett) => sett.Name === n);
+        return `<th${first.Help ? ` data-tip="${esc(first.Help)}"` : ''}>${esc(first.Label || n)}</th>`;
+      }).join('')}</tr>
+      ${accounts.map((acc) => `<tr><td>${esc(acc)}</td>${names.map((n) => {
+        const sett = per.find((x) => x.Name === n && x.Account === acc);
+        const id = `ps-${p.Name}-${n}-${acc}`.replace(/[^A-Za-z0-9_-]/g, '_');
+        return `<td>${sett ? pluginControl(p, sett, id) : ''}</td>`;
+      }).join('')}</tr>`).join('')}
+    </table></div>` : '';
+
+  return `<div class="psettings">${rows}${table}</div>`;
+}
+
+// One plugin setting's control. Per-account ones say whose; a secret is never sent back - only whether one is set.
+function pluginControl(p, sett, id) {
+    const set = `setPluginSetting(${esc(JSON.stringify(p.Name))},${esc(JSON.stringify(sett.Name))},this,${esc(JSON.stringify(sett.Account || ''))})`;
     let ctl;
 
-    if (sett.Kind === 'Bool') {
+    if (sett.Kind === 'Secret') {
+      ctl = `<input type="password" id="${id}" value="" autocomplete="off" placeholder="${esc(sett.Value ? t('set - type a new one to replace it') : t('not set'))}" onchange="${set}">`;
+    } else if (sett.Kind === 'Bool') {
       ctl = `<label class="switch"><input type="checkbox" id="${id}" ${String(sett.Value).toLowerCase() === 'true' ? 'checked' : ''} onchange="${set}"><span></span></label>`;
     } else if (sett.Kind === 'Int') {
       ctl = `<input type="number" id="${id}" value="${esc(sett.Value)}" onchange="${set}">`;
@@ -2282,18 +2344,16 @@ function pluginSettings(p) {
       ctl = `<input type="text" id="${id}" value="${esc(sett.Value)}" onchange="${set}">`;
     }
 
-    return `<div class="field"><label for="${id}"${tip}>${esc(sett.Label || sett.Name)}</label><div class="ctl">${ctl}</div></div>`;
-  }).join('');
-
-  return `<div class="psettings">${rows}</div>`;
+    return ctl;
 }
 
-async function setPluginSetting(plugin, name, el) {
+async function setPluginSetting(plugin, name, el, account) {
   const value = el.type === 'checkbox' ? String(el.checked) : String(el.value);
 
   try {
     // What the server said, not a "saved" regardless - a setting the plugin no longer has used to report success.
-    const r = await api('/api/plugins/setting', { method: 'POST', body: JSON.stringify({ Plugin: plugin, Name: name, Value: value }) });
+    const r = await api('/api/plugins/setting', { method: 'POST', body: JSON.stringify({ Plugin: plugin, Name: name, Value: value, Account: account || null }) });
+    if (r && r.Ok && el.type === 'password') { el.value = ''; el.placeholder = value ? t('set - type a new one to replace it') : t('not set'); }
     if (r && r.Ok) toast(tf('{0} saved', name));
     else toast(tf('Could not save that: {0}', (r && r.Message) || '?'), true);
   } catch (e) {
@@ -2309,6 +2369,91 @@ async function togglePlugin(name, enabled) {
   } catch (e) {
     toast(tf('Could not change that: {0}', e.message || e), true);
   }
+}
+
+// ── a plugin's own tab ─────────────────────────────────────────────────────
+// 1.9.0: a plugin draws its page as blocks of text (IPlugin.cs, PluginBlock); every bit is escaped here, links are https
+// only, and a button runs one of the plugin's commands through the same door as the Console - never script of its own.
+let ppPlugin = null;
+let ppView = null;
+
+const pluginPageOf = (plugin) => !state || (state.PluginPages || []).some((p) => p.Plugin === plugin);
+
+// The plugins' tabs, after the Plugins one - added and taken away as plugins come and go.
+function renderPluginTabs() {
+  const anchor = $('navPlugins');
+  if (!anchor) return;
+  const pages = state.PluginPages || [];
+  const key = pages.map((p) => p.Plugin + '\u0001' + p.Title).join('\u0002');
+  if (anchor.dataset.pages === key) return;
+  anchor.dataset.pages = key;
+  document.querySelectorAll('.navitem.pp').forEach((n) => n.remove());
+  let after = anchor;
+  pages.forEach((p) => {
+    const a = document.createElement('a');
+    a.className = 'navitem pp' + (view === 'pp-' + p.Plugin ? ' active' : '');
+    a.tabIndex = 0;
+    a.setAttribute('role', 'button');
+    a.dataset.view = 'pp-' + p.Plugin;
+    a.innerHTML = `<span>${esc(p.Title)}</span>`;
+    a.addEventListener('click', () => go(a.dataset.view));
+    a.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(a.dataset.view); } });
+    after.after(a);
+    after = a;
+  });
+}
+
+async function loadPluginPage(plugin, nextView) {
+  if (plugin !== ppPlugin) { ppView = null; $('ppOut').textContent = ''; $('ppOut').classList.add('hidden'); }
+  ppPlugin = plugin;
+  if (nextView !== undefined && nextView !== null) ppView = nextView;
+  const page = (state && (state.PluginPages || []).find((p) => p.Plugin === plugin)) || { Title: plugin };
+  $('ppTitle').textContent = page.Title;
+  let r;
+  try {
+    r = await api('/api/plugins/page?plugin=' + encodeURIComponent(plugin) + (ppView ? '&view=' + encodeURIComponent(ppView) : ''));
+  } catch (e) {
+    $('ppBody').innerHTML = `<p class="muted">${esc(tf('Could not read the plugin list: {0}', e.message || e))}</p>`;
+    return;
+  }
+  if (ppPlugin !== plugin) return;   // another tab was picked while this one loaded
+  $('ppBody').innerHTML = r.Ok ? r.Blocks.map(ppBlock).join('') : `<p class="muted">${esc(t('Nothing installed yet.'))}</p>`;
+}
+
+function ppButtonHtml(b, cls) {
+  return `<button class="${cls || ''}" data-cmd="${esc(b.Command || '')}" data-view="${esc(b.View == null ? '' : b.View)}" data-hasview="${b.View == null ? '' : '1'}" onclick="ppPress(this)">${esc(b.Label)}</button>`;
+}
+
+function ppBlock(b) {
+  switch (b.Kind) {
+    case 'Heading': return `<h2 style="margin-top:14px">${esc(b.Text)}</h2>`;
+    case 'Note': return `<p class="muted small">${esc(b.Text)}</p>`;
+    case 'Tiles': return `<div class="tiles">${(b.Columns || []).map((label, i) =>
+      `<div class="tile"><div class="n">${esc(((b.Rows || [])[0] || { Cells: [] }).Cells[i] || '')}</div><div class="k">${esc(label)}</div></div>`).join('')}</div>`;
+    case 'Table': return `<div class="tablewrap"><table><tr>${(b.Columns || []).map((c) => `<th>${esc(c)}</th>`).join('')}${(b.Rows || []).some((r) => r.Button) ? '<th></th>' : ''}</tr>
+      ${(b.Rows || []).map((r) => `<tr>${r.Cells.map((c) => `<td>${esc(c)}</td>`).join('')}${r.Button ? `<td>${ppButtonHtml(r.Button, 'ghost')}</td>` : ''}</tr>`).join('')}</table></div>`;
+    case 'Buttons': return `<div class="toolbar">${(b.Buttons || []).map((x) => ppButtonHtml(x, 'ghost')).join(' ')}</div>`;
+    case 'Link': return b.Url ? `<p><a href="${esc(b.Url)}" target="_blank" rel="noopener noreferrer">${esc(b.Text)} ↗</a></p>` : `<p>${esc(b.Text)}</p>`;
+    default: return `<p>${esc(b.Text)}</p>`;
+  }
+}
+
+async function ppPress(el) {
+  const cmd = el.dataset.cmd;
+  const next = el.dataset.hasview ? el.dataset.view : null;
+  if (cmd) {
+    el.disabled = true;
+    try {
+      // Only the plugin's own commands: the server refuses any other line a page's button carries.
+      const r = await post('/api/plugins/press', { Plugin: ppPlugin, Line: cmd });
+      $('ppOut').textContent = (r && r.output) || '';
+      $('ppOut').classList.toggle('hidden', !$('ppOut').textContent);
+    } catch (e) {
+      toast(tf('Could not change that: {0}', e.message || e), true);
+    }
+    el.disabled = false;
+  }
+  await loadPluginPage(ppPlugin, next);
 }
 
 // ── updating ──────────────────────────────────────────────────────────────
@@ -4279,265 +4424,6 @@ document.addEventListener('click', (e) => {
   if (jump) jumpTo(jump.dataset.jump);
 });
 
-document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-task]');
-  if (!el) return;
-  el.disabled = true;
-  el.textContent = t('posting…');
-  post('/api/rep4rep/tasks/' + encodeURIComponent(el.dataset.task) + '/post?bot=' + encodeURIComponent($('r4rBot').value))
-    .then((res) => { toast(res.message || res.error, !res.ok); loadTasks(); refresh(); })
-    // No answer at all: the button stood on "posting…", greyed out, until the page was reloaded.
-    .catch(() => { toast(t("That didn't work"), true); loadTasks(); });
-});
-
-document.addEventListener('change', (e) => {
-  const el = e.target.closest('[data-qs]');
-  if (el) quickSet(el.dataset.bot, el.dataset.qs, el.value);
-});
-
-// ── render: rep4rep ──────────────────────────────────────────────────
-async function loadRep4Rep() {
-  r4r = await api('/api/rep4rep').catch(() => null);
-  renderRep4RepAccount();
-  if (r4r && r4r.Connected) {
-    r4rProfiles = await api('/api/rep4rep/profiles').catch(() => []);
-    renderRep4RepProfiles();
-    renderBotPicker();
-    loadTasks();
-  } else {
-    $('r4rProfiles').innerHTML = `<p class="muted">${esc(t('Connect your rep4rep account first.'))}</p>`;
-    $('r4rTasks').innerHTML = '';
-  }
-  renderRep4RepPacing();
-}
-
-function renderRep4RepAccount() {
-  if (!r4r || !r4r.Connected) {
-    $('r4rAccount').innerHTML = `
-      <h2>${esc(t('Set up rep4rep'))}</h2>
-      <p class="explain" style="margin-bottom:18px">
-        ${tf("{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.",
-          `<b>${esc(t('How it works:'))}</b>`, `<i>${esc(t('your'))}</i>`)}</p>
-
-      <ol class="steps">
-        <li>
-          <b>${esc(t('Make a rep4rep account'))}</b>
-          <div class="muted">${esc(t("Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do."))}</div>
-          <div class="toolbar" style="margin:10px 0 0">
-            <button onclick="window.open('https://rep4rep.com/?r=reap', '_blank', 'noopener')">${esc(t('Sign up for rep4rep ↗'))}</button>
-          </div>
-        </li>
-        <li>
-          <b>${esc(t('Copy your API token'))}</b>
-          <div class="muted">${tf("It's on {0}. Copy the whole string.",
-            '<a href="https://rep4rep.com/user/settings" target="_blank" rel="noopener">rep4rep.com → Settings ↗</a>')}</div>
-          <div class="toolbar" style="margin:10px 0 0">
-            <input id="r4rToken" type="password" placeholder="${esc(t('paste the token here'))}" autocomplete="off" style="max-width:340px"
-                   onkeydown="if(event.key==='Enter')connectRep4Rep()">
-            <button onclick="connectRep4Rep()">${esc(t('Connect'))}</button>
-          </div>
-          <p id="r4rError" class="error">${r4r && r4r.Error ? esc(r4r.Error) : ''}</p>
-        </li>
-        <li class="muted">
-          <b>${esc(t("That's it"))}</b>
-          <div>${esc(t("nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website."))}</div>
-        </li>
-      </ol>`;
-    return;
-  }
-
-  const on = state ? state.Bots.filter((b) => b.Rep4Rep).length : 0;
-  const total = state ? state.Bots.length : 0;
-
-  $('r4rAccount').innerHTML = `
-    <h2>${esc(t('Your rep4rep account'))}</h2>
-    <div class="tiles">
-      <div class="tile"><div class="n">${r4r.PointsKnown === false ? '-' : r4r.Points}</div><div class="k">${esc(t('Points you can spend'))}${tipIcon(t('Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.'))}</div>
-        ${r4r.SyncedAt ? `<div class="muted small">${esc(tf('as of {0}', new Date(r4r.SyncedAt).toLocaleTimeString()))}</div>` : ''}</div>
-      <div class="tile"><div class="n">${r4r.PointsKnown === false ? '-' : r4r.Pending}</div><div class="k">${esc(t('Waiting to be verified'))}${tipIcon(t("Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck."))}</div>
-        <div class="sub">${esc(t('turns into points on its own'))}</div></div>
-    </div>
-    ${on === 0 && total > 0
-      ? `<div class="alert warn" style="margin:4px 0 12px"><span>${esc(t("Connected, but commenting isn't switched on for any account yet."))}</span>
-         <span class="spacer"></span><button onclick="enableAllRep4Rep()">${esc(tf('Turn it on for all {0}', total))}</button></div>`
-      : `<p class="muted small">${tf('Posting from {0} of {1}.', `<b>${on}</b>`,
-          total === 1 ? t('one account') : tf('{0} accounts', total))}</p>`}
-    <div class="toolbar">
-      <span class="muted small">${esc(tf('Token set · synced {0}', ago(r4r.SyncedAt)))}</span>
-      <button class="ghost" onclick="loadRep4Rep()">${esc(t('Refresh'))}</button>
-      <button class="ghost" onclick="replaceToken()">${esc(t('Replace token'))}</button>
-      <a class="muted small" href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" style="margin-left:auto">${esc(t('Spend your points ↗'))}</a>
-    </div>`;
-}
-
-async function enableAllRep4Rep() {
-  await loadConfig();   // same reason as quickSet: a partial body resets the whole account
-  const failed = [];
-  for (const b of state.Bots) {
-    if (b.Rep4Rep) continue;
-    const base = config.Bots[b.Name];
-    if (!base) continue;
-    const res = await postBot(b.Name, { ...base, Rep4Rep: true }).catch(() => null);
-    if (!res || !res.ok) failed.push(b.Name);
-  }
-  // "Every account" only when it's true - a save that was turned down was reported as switched on with the rest.
-  if (failed.length) toast(tf("Couldn't switch it on for {0}", failed.join(', ')), true);
-  else toast(t('rep4rep commenting switched on for every account'));
-  await loadConfig();
-  loadRep4Rep();
-  refresh();
-}
-
-function replaceToken() { r4r = { Connected: false }; renderRep4RepAccount(); }
-
-async function connectRep4Rep() {
-  const res = await post('/api/rep4rep/token', { Token: $('r4rToken').value.trim() });
-  if (!res.ok) { $('r4rError').textContent = res.error; return; }
-  toast(t('rep4rep connected'));
-  loadRep4Rep();
-  refresh();
-}
-
-// The "Today" cell: count / cap, plus WHY it's stuck and WHEN it frees up - the two things the rolling window
-// never made obvious.
-function capCell(p) {
-  let s = `${p.Today} / ${p.Cap}`;
-  if (p.CapIsSteamLimit) {
-    s += ` <span class="muted small" data-tip="${esc(t("This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it."))}">${esc(t("(Steam's limit)"))}</span>`;
-  }
-  if (p.Today >= p.Cap && p.NextSlot) {
-    s += ` <span class="muted small" data-tip="${esc(t('Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.'))}">${esc(tf('· frees {0}', until(p.NextSlot)))}</span>`;
-  }
-  return s;
-}
-
-function renderRep4RepProfiles() {
-  if (!r4rProfiles.length) { $('r4rProfiles').innerHTML = `<p class="muted">${esc(t('No accounts configured yet.'))}</p>`; return; }
-
-  $('r4rProfiles').innerHTML = `<div class="tablewrap"><table>
-    <tr><th>${esc(t('Account'))}</th><th>SteamID64</th><th data-tip="${esc(t("rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for."))}">${esc(t('rep4rep ID'))}</th><th>${esc(t('Status'))}</th><th data-tip="${esc(t('Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.'))}">${esc(t('Today'))}</th><th></th></tr>
-    ${r4rProfiles.map((p) => `<tr>
-      <td><b>${esc(p.Account)}</b></td>
-      <td class="muted small">${esc(p.SteamId === '0' ? '—' : p.SteamId)}</td>
-      <td class="muted small">${esc(p.Rep4RepId || '—')}</td>
-      <td>${p.Registered
-        ? (p.Enabled ? `<span class="pill good">${esc(t('Ready'))}</span>` : `<span class="pill">${esc(t('Commenting off'))}</span>`)
-        : (p.Online ? `<span class="pill warn">${esc(t('Not on rep4rep'))}</span>` : `<span class="pill">${esc(t('Log in first'))}</span>`)}</td>
-      <td>${p.Enabled ? capCell(p) : '—'}</td>
-      <td>${p.Registered
-        ? `<button class="ghost" data-tip="${esc(t('Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.'))}" data-act="postnow" data-bot="${esc(p.Account)}">${esc(t('Post now'))}</button>`
-        : (p.Online ? `<button class="ghost" data-act="register" data-bot="${esc(p.Account)}">${esc(t('Register'))}</button>` : '')}</td>
-      </tr>`).join('')}
-    </table></div>
-    <p class="muted small" style="margin-top:10px">${esc(t("This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here."))}</p>`;
-}
-
-async function registerProfile(name) {
-  const res = await post(`/api/rep4rep/profiles/${encodeURIComponent(name)}/register`);
-  toast(res.ok ? tf('{0} registered with rep4rep', name) : res.error, !res.ok);
-  loadRep4Rep();
-}
-
-async function postNow(name) {
-  const res = await post('/api/bots/' + encodeURIComponent(name) + '/rep4repnow');
-  if (!res.ok) { toast(res.error || t("That didn't work"), true); return; }
-
-  // The request only says it arrived - it promised a post even to an account with commenting off, signed out, or at
-  // its cap. What the account can really do is in its row, so read that fresh and say it.
-  const list = await api('/api/rep4rep/profiles').catch(() => null);
-  if (Array.isArray(list)) { r4rProfiles = list; renderRep4RepProfiles(); }
-  const p = r4rProfiles.find((x) => x.Account === name);
-
-  if (!p) toast(tf("{0}: asked to post next. Its status: {1}", name, t('waiting')));
-  else if (!p.Enabled) toast(tf('{0} has rep4rep commenting switched off, so nothing will be posted.', name), true);
-  else if (!p.Online) toast(tf("{0} isn't signed in, so it can't post until it is.", name), true);
-  else if (p.Today >= p.Cap && p.NextSlot) toast(tf('{0} is at its cap ({1}/{2}) - it posts when a slot frees {3}.', name, p.Today, p.Cap, until(p.NextSlot)));
-  else toast(tf("{0}: asked to post next. Its status: {1}", name, p.Status || t('waiting')));
-}
-
-function renderBotPicker() {
-  const sel = $('r4rBot');
-  const current = sel.value;
-  sel.innerHTML = r4rProfiles.filter((p) => p.Registered).map((p) => `<option value="${esc(p.Account)}">${esc(p.Account)}</option>`).join('');
-  if (current) sel.value = current;
-}
-
-async function loadTasks() {
-  const bot = $('r4rBot').value;
-  if (!bot) { $('r4rTasks').innerHTML = `<p class="muted">${esc(t('No registered accounts yet.'))}</p>`; return; }
-  r4rTasks = await api('/api/rep4rep/tasks?bot=' + encodeURIComponent(bot)).catch(() => []);
-
-  $('r4rTasks').innerHTML = r4rTasks.length
-    ? `<p class="muted small">${esc(tf("{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.",
-         r4rTasks.length === 1 ? t('One task') : tf('{0} tasks', r4rTasks.length)))}</p>
-       <div class="tablewrap"><table>
-       <tr><th>${esc(t('Target'))}</th><th>${esc(t('Comment to post'))}</th><th></th></tr>
-       ${r4rTasks.map((task) => `<tr>
-         <td><a href="https://steamcommunity.com/profiles/${esc(task.TargetSteamId)}" target="_blank" rel="noopener">${esc(task.TargetName)} ↗</a></td>
-         <td><code>${esc(task.Comment)}</code></td>
-         <td><button class="ghost small" data-tip="${esc(t('Post this one right now instead of waiting for the schedule. It still counts against the daily cap.'))}" data-task="${esc(task.TaskId)}">${esc(t('Post now'))}</button></td>
-         </tr>`).join('')}
-       </table></div>
-       <p class="muted small" style="margin-top:10px">${esc(t('rep4rep checks the text matches exactly, so these are posted character for character.'))}</p>`
-    : `<p class="muted">${esc(t('No tasks for this account right now. rep4rep hands them out in batches — check back later.'))}</p>`;
-}
-
-// The markup the pacing table was last built from. Compared against rather than the element's innerHTML, which the
-// browser re-serialises and so never matches what was generated.
-let r4rPacingHtml = '';
-
-function renderRep4RepPacing() {
-  if (!state) return;
-  const box = $('r4rPacing');
-  // This runs on every poll, and rebuilding the table threw away a number half-typed into it - the box reset under
-  // your fingers every few seconds. Leave it alone while one of its boxes has the focus; the next poll catches up.
-  if (box.contains(document.activeElement) && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
-
-  const keys = ['Rep4RepDailyCap', 'Rep4RepGapMinMinutes', 'Rep4RepGapMaxMinutes', 'Rep4RepStartHour', 'Rep4RepEndHour'];
-  const defs = keys.map((k) => (schema ? schema.Bot.find((d) => d.Name === k) : null));
-
-  const html = `<div class="tablewrap"><table>
-    <tr><th>${esc(t('Account'))}</th>${defs.map((d, i) => `<th${d ? ` data-tip="${esc(tSetting(d, 'tip'))}"` : ''}>${esc(d ? tSetting(d, 'label') : keys[i])}</th>`).join('')}</tr>
-    ${state.Bots.map((b) => `<tr>
-      <td><b>${esc(b.Name)}</b></td>
-      ${keys.map((k, i) => {
-        const v = config && config.Bots[b.Name] ? config.Bots[b.Name][k] : '';
-        return defs[i] && defs[i].Kind === 'Hour'
-          ? `<td>${hourSelect(`data-qs="${k}" data-bot="${esc(b.Name)}"`, v, defs[i].Min, defs[i].Max)}</td>`
-          : `<td><input type="number" style="max-width:80px" value="${v}" data-qs="${k}" data-bot="${esc(b.Name)}"></td>`;
-      }).join('')}
-      </tr>`).join('')}
-    </table></div>`;
-
-  if (html === r4rPacingHtml && box.innerHTML) return;
-  r4rPacingHtml = html;
-  box.innerHTML = html;
-}
-
-// Goes through the typed endpoint rather than the command line, so an account name with a space in it can't
-// turn into a different command.
-async function quickSet(bot, key, value) {
-  // Reload first. Spreading an undefined config (an account added since the page last loaded) produced a
-  // body with ONE key, and the server materialised every other field as its default - wiping the Steam login.
-  // And always, not only when the account is missing: the copy from when the page opened put back anything changed
-  // since - '/set kylro Rep4Rep off' from Telegram, then a new gap here, and rep4rep was on again.
-  await loadConfig().catch(() => {});
-  const base = config && config.Bots[bot];
-  if (!base) { toast(t('That account is not loaded yet - try again in a second'), true); return; }
-
-  const cfg = { ...base };
-  cfg[key] = Number(value) || 0;
-  const res = await postBot(bot, cfg);
-  // Refused: put the saved number back in the box rather than leave the rejected one looking accepted.
-  if (!res.ok) { toast(res.error || t('Could not save that'), true); r4rPacingHtml = ''; renderRep4RepPacing(); return; }
-  toast((res.Adjusted && res.Adjusted.length) ? res.Adjusted[0] : tf('{0}: saved', bot), !!(res.Adjusted && res.Adjusted.length));
-  await loadConfig();
-  // Forced: a number the server pulled back into range can leave the saved config - and so the markup - unchanged,
-  // and the box would keep showing what was typed.
-  r4rPacingHtml = '';
-  renderRep4RepPacing();
-}
-
 // ── render: log ──────────────────────────────────────────────────────
 function renderLog() {
   const q = ($('logSearch').value || '').toLowerCase();
@@ -4916,13 +4802,7 @@ function jumpTo(section) {
 function settingsDefs() {
   // An internal knob (Hidden) is never drawn - not even with Show advanced on - and isn't counted among the hidden
   // advanced ones. It still works from the console, the JSON files and plugins.
-  const all = (settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden);
-  if (r4rOn()) return all;
-
-  // rep4rep is switched off: drop its section ("rep4rep") and each account's "rep4rep commenting" part from the
-  // settings entirely - jump links and all - but keep the master toggle itself so it can be turned back on.
-  return all.filter((d) =>
-    (d.Section !== REP4REP_GLOBAL && d.Part !== 'rep4rep commenting') || d.Name === 'Rep4RepEnabled');
+  return (settingsTarget === GLOBAL ? schema.Global : schema.Bot).filter((d) => !d.Hidden);
 }
 function settingsValues() { return settingsTarget === GLOBAL ? config.Global : config.Bots[settingsTarget]; }
 function settingsDefaults() { return settingsTarget === GLOBAL ? schema.GlobalDefaults : schema.BotDefaults; }
@@ -5280,7 +5160,7 @@ function sectionIntro(section, values) {
   if (section === 'Notifications' && settingsTarget === GLOBAL) {
     const kinds = [['SendCardDrops', 'Card drops'], ['SendFreeStuff', 'Free stuff'], ['SendTrades', 'Trades'],
       ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
-      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts'],
+      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendAddons', 'Add-ons'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts'],
       ['SendPoints', 'Steam Points']];
     kinds.push(['SendItems', 'Spare items & packs']);   // 1.8.0: gems, sales and booster packs
     // 1.8.2: scam watch and account health, where they were two sections of three switches each. Backups have their own
@@ -5303,9 +5183,6 @@ function sectionIntro(section, values) {
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
   }
-
-  // "Pause rep4rep for..." is an action, not a setting: a few buttons, and while a hold is on, until when and a way out.
-  if (section === REP4REP_GLOBAL && settingsTarget === GLOBAL && val('Rep4RepEnabled')) return rep4repHoldPanel(values);
 
   // Going back to an older version, and a zip from this PC - beside the settings for updating.
   if (section === 'Updates & plugins' && settingsTarget === GLOBAL) {
@@ -5479,24 +5356,6 @@ function sectionIntro(section, values) {
       ${extras.length ? tf('It also {0}.', esc(extras.join(', '))) : ''}
       ${learned ? `<span class="k then">${esc(t('Learned from you'))}</span>${esc(learned)}` : ''}
       </div>`;
-  }
-
-  if (section === 'rep4rep commenting') {
-    const cap = val('Rep4RepDailyCap') || 0;
-    const lo = val('Rep4RepGapMinMinutes') || 0;
-    const hi = Math.max(lo, val('Rep4RepGapMaxMinutes') || 0);
-    const from = val('Rep4RepStartHour');
-    const to = val('Rep4RepEndHour');
-    // The account's own rule (Rep4RepModule.WindowWaitSeconds): an end at or before the start is no window at all, so it
-    // comments around the clock - "between 22:00 and 06:00" said an overnight window it never keeps.
-    const hours = Number(from) >= Number(to)
-      ? t('around the clock')
-      : tf('between {0} and {1}', hourLabel(Number(from)), hourLabel(Number(to)));
-    const span = Math.round((cap * (lo + hi) / 2) / 60 * 10) / 10;
-
-    return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>
-      ${tf('Up to {0} comments a day, {1} apart, {2}.', `<b>${cap}</b>`, `<b>${lo}–${hi} ${esc(t('minutes'))}</b>`, esc(hours))}
-      ${tf("That's roughly {0} of posting spread across the day.", `<b>${span}h</b>`)}</div>`;
   }
 
   return '';
@@ -6669,12 +6528,14 @@ function buyPreviewHtml(d) {
   if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
 
   const big = d.SignedIn && !d.Problem ? `<div class="big">
-    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards)}
+    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards || d.Sets.length ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards && !d.Sets.length)}
     ${bigNumber(d.Sets.length, t('badge levels'), d.Wallet ? tf('wallet: {0}', d.Wallet) : '', true)}
   </div>` : '';
 
   const sets = d.Sets.length
-    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.FullSet
+    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.Packs > 0
+      ? tf('{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}', s.Packs, s.Game, s.PackCost, s.Cost, s.Cards, s.Straight, s.LeftCards, s.Expected, s.Level, s.Level + 1)
+      : s.FullSet
       ? tf('A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00', s.Game, s.Cards, s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit))
       : tf('{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00', s.Cards, s.SetSize, s.Game, s.Names.join(', '), s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit)))}</li>`).join('')}</ul>`
     : '';
@@ -7345,27 +7206,6 @@ const PANEL_SECTIONS = new Set(['Discord profile']);
 // Settings drawn by a section's own panel (chips and switches) instead of as rows - Settings.PanelRows, from the schema, so
 // the server's count of what a page shows uses the same list.
 const PANEL_ROWS = { has: (name) => ((schema && schema.PanelRows) || []).includes(name) };
-
-// The rep4rep hold: every account's commenting paused for some hours, kept through restarts ('rep4rep hold').
-const REP4REP_GLOBAL = 'rep4rep';
-function rep4repHoldPanel(values) {
-  const until = values.Rep4RepHoldUntil ? new Date(values.Rep4RepHoldUntil) : null;
-  if (until && until > new Date()) {
-    return `<div class="explain"><b>${esc(tf('Commenting is on hold on every account until {0}.', until.toLocaleString()))}</b>
-      <div style="margin-top:8px"><button class="ghost" onclick="rep4repHold(0)">${esc(t('Resume now'))}</button></div></div>`;
-  }
-  return `<div class="explain"><b>${esc(t('Pause rep4rep for...'))}</b>
-    <p style="margin:6px 0 8px">${esc(t('Holds commenting on every account, then it starts again by itself - restarts included.'))}</p>
-    ${[6, 12, 24, 48].map((h) => `<button class="ghost" onclick="rep4repHold(${h})">${esc(tf('{0} hours', h))}</button>`).join(' ')}</div>`;
-}
-
-async function rep4repHold(hours) {
-  const r = await post('/api/command', { Line: hours ? `rep4rep hold ${hours}` : 'rep4rep hold off' }).catch(() => null);
-  if (!r || typeof r.output !== 'string') toast(t("Couldn't reach nocat.farm"), true);
-  else toast(hours ? tf('rep4rep held for {0} hours', hours) : t('rep4rep commenting carries on'));
-  await loadConfig().catch(() => {});
-  if (view === 'settings') renderSettings();
-}
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');

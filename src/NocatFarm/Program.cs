@@ -9,7 +9,7 @@ using NocatFarm.Web;
 using NocatFarm.Windows;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  nocatFarm - Steam idler, trading-card farmer and rep4rep commenter.
+//  nocatFarm - Steam idler and trading-card farmer (rep4rep and more as add-ons).
 //
 //  The console is the product; the dashboard is the same product with a mouse. Both drive one command router
 //  and one settings registry, so anything you can click you can type, and the other way round.
@@ -231,6 +231,10 @@ if (singleInstance == null) {
 
 	return 1;
 }
+
+// 1.9.0: what a stop in the middle of a save left behind (a power cut, a kill) - half-written copies nothing reads - goes,
+// now that this is the only copy running for the folder and nothing has started writing.
+AtomicFile.SweepLeftovers(ConfigStore.ConfigDir);
 
 // Back on a version after going back to an older one: the settings the older one didn't know, and so left out when it
 // saved, are put back before anything reads them - only those (see Rollback). Said once the log is open.
@@ -652,7 +656,7 @@ void Banner() {
 		Console.WriteLine();
 
 		if (box) {
-			const string Tagline = "Steam idling · trading cards · rep4rep";
+			const string Tagline = "Steam idling · trading cards · add-ons";
 			string Title = $"nocatFarm  {Build.Version}";
 			int inner = Math.Max(Title.Length, Tagline.Length) + 4;   // 2 spaces of padding each side
 
@@ -681,7 +685,7 @@ void Banner() {
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine($"  nocatFarm {Build.Version}");
 			Console.ForegroundColor = ConsoleColor.DarkGray;
-			Console.WriteLine("  Steam idling, trading cards and rep4rep");
+			Console.WriteLine("  Steam idling, trading cards and add-ons");
 		}
 
 		Console.WriteLine();

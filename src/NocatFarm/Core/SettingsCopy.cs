@@ -46,6 +46,7 @@ public static class SettingsCopy {
 	public static readonly IReadOnlyList<string> KeptAsTheyAre = [
 		// spends money, gems or points, or sells
 		nameof(BotConfig.BoosterMake), nameof(BotConfig.BoosterGems), nameof(BotConfig.GemsForLevels), nameof(BotConfig.SellSetsForLevels), nameof(BotConfig.BuyFullSets),
+		nameof(BotConfig.BuyBooster),
 		nameof(BotConfig.PointsBuySeasonalBadge), nameof(BotConfig.PointsBuyOlderBadges), nameof(BotConfig.PointsBadgeMaxLevel), nameof(BotConfig.PointsKeepAtLeast),
 		nameof(BotConfig.PointsWeeklyCap), nameof(BotConfig.BuyStopAtLevel), nameof(BotConfig.BuyKeepInWallet),
 		// money limits, in the wallet's own currency
@@ -140,9 +141,6 @@ public static class SettingsCopy {
 		nameof(BotConfig.AcceptGifts), nameof(BotConfig.AcceptGiftedGames), nameof(BotConfig.GiftDelayMinMinutes), nameof(BotConfig.GiftDelayMaxMinutes),
 		nameof(BotConfig.CardSwapSkipHeld), nameof(BotConfig.OneTradeAtATime), nameof(BotConfig.TradeDelayMinMinutes),
 		nameof(BotConfig.TradeDelayMaxMinutes),
-		// Comments
-		nameof(BotConfig.Rep4Rep), nameof(BotConfig.Rep4RepDailyCap), nameof(BotConfig.Rep4RepGapMinMinutes), nameof(BotConfig.Rep4RepGapMaxMinutes),
-		nameof(BotConfig.Rep4RepStartHour), nameof(BotConfig.Rep4RepEndHour), nameof(BotConfig.Rep4RepLearnCap), nameof(BotConfig.Rep4RepRetryRefused),
 		// Social
 		nameof(BotConfig.AcceptFriendRequests), nameof(BotConfig.FriendRequestDelayMinMinutes), nameof(BotConfig.FriendRequestDelayMaxMinutes),
 		nameof(BotConfig.AcceptGroupInvites), nameof(BotConfig.JoinGroup), nameof(BotConfig.ExtraGroupsToJoin), nameof(BotConfig.IgnoreSuspiciousInvites),

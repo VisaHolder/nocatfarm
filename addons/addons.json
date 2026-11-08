@@ -1,0 +1,29 @@
+{
+  "serial": 3,
+  "addons": [
+    {
+      "id": "rep4rep",
+      "name": "rep4rep",
+      "plugin": "rep4rep",
+      "description": {
+        "en": "Earns rep4rep points: posts the profile comments rep4rep hands out, at a human pace, from the accounts you switch on. Its own dashboard tab, a comment block list, and nocat.farm keeps every account under Steam's comment limit.",
+        "de": "Sammelt rep4rep-Punkte: postet die Profilkommentare, die rep4rep verteilt, in menschlichem Tempo von den Konten, die du einschaltest. Eigener Dashboard-Tab, eine Sperrliste für Kommentare, und nocat.farm hält jedes Konto unter Steams Kommentarlimit.",
+        "es": "Gana puntos de rep4rep: publica los comentarios de perfil que reparte rep4rep, a ritmo humano, desde las cuentas que actives. Su propia pestaña en el panel, una lista de bloqueo de comentarios, y nocat.farm mantiene cada cuenta por debajo del límite de comentarios de Steam.",
+        "fr": "Gagne des points rep4rep : publie les commentaires de profil que rep4rep distribue, à un rythme humain, depuis les comptes que vous activez. Son propre onglet dans le tableau de bord, une liste de blocage des commentaires, et nocat.farm garde chaque compte sous la limite de commentaires de Steam.",
+        "ja": "rep4rep ポイントを稼ぎます: rep4rep が配るプロフィールコメントを、オンにしたアカウントから人間らしいペースで投稿。ダッシュボードの専用タブ、コメントのブロックリスト付きで、nocat.farm が各アカウントを Steam のコメント上限未満に保ちます。",
+        "ko": "rep4rep 포인트를 모읍니다: rep4rep가 나눠 주는 프로필 댓글을 켜 둔 계정에서 사람 같은 속도로 게시합니다. 전용 대시보드 탭, 댓글 차단 목록이 있으며, nocat.farm이 모든 계정을 Steam 댓글 한도 아래로 유지합니다.",
+        "pl": "Zbiera punkty rep4rep: publikuje komentarze na profilach, które rozdaje rep4rep, w ludzkim tempie, z kont, które włączysz. Własna karta w panelu, lista blokowanych komentarzy, a nocat.farm trzyma każde konto poniżej limitu komentarzy Steam.",
+        "pt-BR": "Ganha pontos do rep4rep: publica os comentários de perfil que o rep4rep distribui, em ritmo humano, das contas que você ligar. Aba própria no painel, uma lista de bloqueio de comentários, e o nocat.farm mantém cada conta abaixo do limite de comentários do Steam.",
+        "ru": "Зарабатывает очки rep4rep: публикует комментарии в профилях, которые раздаёт rep4rep, в человеческом темпе с включённых аккаунтов. Своя вкладка в панели, список блокировки комментариев, а nocat.farm держит каждый аккаунт ниже лимита комментариев Steam.",
+        "tr": "rep4rep puanı kazandırır: rep4rep'in dağıttığı profil yorumlarını, açtığın hesaplardan insan hızında gönderir. Kendi panel sekmesi, yorum engel listesi var ve nocat.farm her hesabı Steam'in yorum sınırının altında tutar.",
+        "zh-CN": "赚取 rep4rep 积分：以真人般的节奏，从你打开的账号发布 rep4rep 分发的个人资料评论。有自己的面板标签页和评论屏蔽列表，nocat.farm 会让每个账号都低于 Steam 的评论上限。"
+      },
+      "version": "1.0.0",
+      "minAppVersion": "1.9.0",
+      "file": "nocatfarm.rep4rep.dll",
+      "url": "https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.rep4rep.dll",
+      "sha256": "ab8294cfaf71a55d45823018ece939c73893c6ba480a91f68e18d048480a8a92",
+      "source": "https://github.com/VisaHolder/nocatfarm/tree/main/addons/rep4rep"
+    }
+  ]
+}

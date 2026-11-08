@@ -18,7 +18,6 @@ public static partial class Settings {
 		.. RangePairs,
 		("FarmFromHour", "FarmUntilHour"),
 		("AutoUpdateFromHour", "AutoUpdateUntilHour"),
-		("Rep4RepStartHour", "Rep4RepEndHour"),
 		("BoostSwitchFromPct", "BoostSwitchToPct")
 	];
 
@@ -41,7 +40,7 @@ public static partial class Settings {
 	/// </summary>
 	public static readonly string[] PanelRows = ["DiscordPresence", "DiscordSecondLine", "DiscordShowCounter", "DiscordShowAvatar", "DiscordShowTimer",
 		"SendCardDrops", "SendFreeStuff", "SendTrades", "SendProblems", "SendUpdates", "SendInstalls", "SendDailySummary", "SendComments",
-		"SendAchievements", "SendRep4Rep", "SendSignIns", "SendBreakIns", "SendPoints", "SendItems", "SendScamWarnings", "SendHealthAlerts"];
+		"SendAchievements", "SendAddons", "SendSignIns", "SendBreakIns", "SendPoints", "SendItems", "SendScamWarnings", "SendHealthAlerts"];
 
 	/// <summary>The words a unit can be - each one translated by the page.</summary>
 	public static readonly string[] UnitWords = ["minutes", "hours", "seconds", "days", "%", "ms", "wallet currency", "points", "backups", "reviews", "times a day", "sets"];
@@ -90,12 +89,10 @@ public static partial class Settings {
 	/// <summary>
 	/// What the settings page shows with "Show advanced" off, in order: the rules the page uses (app.js renderSettings), so a
 	/// count here is what someone sees. Hidden and advanced settings left out, each mode's own, only what its switches show
-	/// (ShowWhen), a pair of shortest / longest or a row of chips as one row, the panels' chips not as rows, rep4rep's only
-	/// while it's on.
+	/// (ShowWhen), a pair of shortest / longest or a row of chips as one row, the panels' chips not as rows.
 	/// </summary>
 	/// <param name="config">The account's settings, or the global ones for <paramref name="global"/>.</param>
-	/// <param name="rep4rep">Whether rep4rep is on (the global "Use rep4rep").</param>
-	public static List<ViewRow> BasicView(bool global, object config, bool rep4rep) {
+	public static List<ViewRow> BasicView(bool global, object config) {
 		IReadOnlyList<SettingDef> defs = global ? Global : Bot;
 		bool legit = !global && (config is BotConfig { LegitMode: true });
 		HashSet<string> longest = [.. RowPairs.Select(static p => p.Max)];
@@ -104,10 +101,6 @@ public static partial class Settings {
 
 		foreach (SettingDef d in defs) {
 			if (d.Hidden || d.Advanced || longest.Contains(d.Name) || chipRest.Contains(d.Name)) {
-				continue;
-			}
-
-			if (!rep4rep && ((d.Section == SecRep4RepAccount) || (d.Part == SecComments)) && (d.Name != "Rep4RepEnabled")) {
 				continue;
 			}
 

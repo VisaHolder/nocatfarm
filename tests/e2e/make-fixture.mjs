@@ -37,13 +37,12 @@ write(path.join(config, 'nocatFarm.json'), {
   OpenDashboardAfterAdd: false,
   DiscordPresence: false,
   CountMeAsUser: pingStub,
-  Rep4RepEnabled: true,
   TutorialDone: true,
 });
 
 const account = (extra) => ({ Enabled: false, JoinGroup: false, ...extra });
 write(path.join(config, 'human.json'), account({ SteamLogin: 'not_a_real_account', LegitMode: true, GameWeights: '730:70, 440:30', Notes: 'e2e human' }));
-write(path.join(config, 'robot.json'), account({ SteamLogin: 'not_a_real_account_2', IdleGames: [440], Rep4Rep: true }));
+write(path.join(config, 'robot.json'), account({ SteamLogin: 'not_a_real_account_2', IdleGames: [440], AcceptFriendRequests: true }));
 // A made-up 20-byte secret: codes are worked out locally from the clock, nothing is asked of Steam.
 write(path.join(config, 'authbot.json'), account({ SteamLogin: 'not_a_real_account_3', SharedSecret: crypto.randomBytes(20).toString('base64') }));
 

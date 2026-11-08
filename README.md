@@ -125,16 +125,21 @@ Steam sales, and free games if you turn that on.
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
   or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's
   own wallet currency. Turning it on shows what it would do first and asks you to confirm.
-- Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
-  choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
-  once you turn it on (it shows what it would buy first and asks you to confirm). Buying cards (off until you turn
-  it on) buys the cards your badges are missing at the cheapest price, whole sets only, within a day's and a week's
-  spending limit (1.50 and 8.00 in your wallet's currency) - and, if you like, the cheapest full sets. Nothing that
+- Booster packs can open by themselves, always, when the cards are worth more than the pack, when even the three
+  cheapest cards of the pack are worth more, or when either - off until you choose. Steam Points can buy levels of the
+  seasonal badge, keeping at least 1,000 and spending at most 3,000 a week, once you turn it on (it shows what it would
+  buy first and asks you to confirm). Buying cards (off until you turn it on) buys the cards your badges are missing at
+  the cheapest price, whole sets only, within a day's and a week's spending limit (1.50 and 8.00 in your wallet's
+  currency) - and, if you like, the cheapest full sets. It can also buy a game's booster packs instead (off until you
+  turn it on), only when the packs and the cards they're expected to leave missing come out at least a tenth cheaper
+  than the cards - a pack is 3 random cards of the whole set, so that's mostly small sets with cheap packs. Nothing that
   sells, opens or uses up your items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.
-- Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and
-  rep4rep.
+- Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges and product keys.
+- **Add-ons**: reap's official extras, installed from the dashboard's Plugins page in one click, each one checked
+  against a signed list first. [rep4rep](docs/rep4rep.md) is one (earn rep4rep points from your accounts' comments).
+  [The list](docs/addons.md).
 - It imports accounts and settings from ArchiSteamFarm, Idle Master Extended, Idle Master, HourBoostr,
   SingleBoostr, Steam Game Idler and steam-idler, and asks for each one whether you play on it or it's a spare.
 - It updates itself when you click Update, or at night while your accounts sleep. A new version that won't start
@@ -252,8 +257,8 @@ the first sign-in a Steam login token does the work, stored encrypted and tied t
 encrypted with a key only your user can read).
 
 It talks to Steam, and to GitHub every 2 hours to see if there's a new version (you can change that or turn it
-off). Discord, Telegram, rep4rep and SteamSpy (game lengths for achievements) only come into it if you turn them
-on, and *Open from anywhere* only talks to your router if you turn it on.
+off). Discord, Telegram, add-ons like rep4rep and SteamSpy (game lengths for achievements) only come into it if you
+turn them on, and *Open from anywhere* only talks to your router if you turn it on.
 
 Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
@@ -322,6 +327,8 @@ open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the lo
 - [The guide](https://nocat.lol/nocatfarm/docs) starts with a beginner's walkthrough, then covers every feature and
   setting. The same pages are in [docs/](docs/README.md) here.
 - [Every command](https://nocat.lol/nocatfarm/commands), in one list.
+- [Add-ons](docs/addons.md): reap's official add-ons ([the signed list](addons/addons.json)), also on
+  [nocat.lol](https://nocat.lol/nocatfarm/addons).
 - [Write a plugin](https://nocat.lol/nocatfarm/plugins) to add your own commands and features in a few lines of C#.
 - To build it yourself you need the [.NET 10 SDK](https://dotnet.microsoft.com/download):
 

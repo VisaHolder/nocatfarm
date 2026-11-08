@@ -7,7 +7,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// Once a week, each account's week next to the week before - hours played, cards dropped, cards listed for sale,
-/// what the inventory gained or lost, rep4rep comments - plus a line for all of them. Off unless switched on. Laid
+/// what the inventory gained or lost, profile comments - plus a line for all of them. Off unless switched on. Laid
 /// out like the daily summary (a ReportCard): a part that is nothing is left out, and an account that did nothing
 /// all week says "off".
 /// </summary>
@@ -89,7 +89,7 @@ public static class WeeklyReport {
 				return;
 			}
 
-			ReportCard? card = Build(mgr.All, mgr.Global.Rep4RepEnabled, day, Attention(mgr));
+			ReportCard? card = Build(mgr.All, Plugins.Comments.InUse, day, Attention(mgr));
 			Mark(day);
 
 			if (card == null) {
@@ -107,10 +107,10 @@ public static class WeeklyReport {
 
 	/// <summary>The report for the seven days before today, for 'report week'. Sends nothing and moves nothing.</summary>
 	public static string Text(BotManager mgr) =>
-		Build(mgr.All, mgr.Global.Rep4RepEnabled, DateTime.Now.Date, Attention(mgr))?.Text() ?? "No accounts yet - nothing to report.";
+		Build(mgr.All, Plugins.Comments.InUse, DateTime.Now.Date, Attention(mgr))?.Text() ?? "No accounts yet - nothing to report.";
 
 	/// <summary>What wants a look right now. No new-ban line: there's no "since last week" kept for bans - the daily summary has it.</summary>
-	private static List<ReportCard.Row> Attention(BotManager mgr) => ReportCard.Attention(mgr.All, mgr.Global.Rep4RepEnabled, null, DateTime.UtcNow);
+	private static List<ReportCard.Row> Attention(BotManager mgr) => ReportCard.Attention(mgr.All, null, DateTime.UtcNow);
 
 	/// <summary>One account's week.</summary>
 	/// <param name="Before">The week before's game-minutes - null when nothing was recorded before this week at all (hours

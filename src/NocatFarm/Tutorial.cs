@@ -13,7 +13,7 @@ namespace NocatFarm;
 /// that is not ticked.
 /// </summary>
 public static class Tutorial {
-	private const string Topics = "cards, human, free, trades, rep4rep, achievements, tray";
+	private const string Topics = "cards, human, free, trades, addons, achievements, tray";
 
 	public static string Render(BotManager mgr, string? topic) {
 		if (!string.IsNullOrWhiteSpace(topic)) {
@@ -27,9 +27,8 @@ public static class Tutorial {
 		bool playsSomething = bots.Any(static b => (b.Cfg.IdleGames.Count > 0) || (b.Cfg.GameWeights.Length > 0) || b.Cfg.FarmCards);
 		bool humanOn = bots.Any(static b => b.Cfg.LegitMode);
 
-		// Commenting needs all three: the feature switched on, the token, and at least one account opted in.
-		// Ticking this on the token alone said "done" for a setup that would never post a thing.
-		bool rep4rep = mgr.Global.Rep4RepEnabled && mgr.Rep4Rep.HasToken && bots.Any(static b => b.Cfg.Rep4Rep);
+		// 1.9.0: an add-on (rep4rep is one) loaded and running.
+		bool addons = Plugins.PluginHost.Running.Count > 0;
 
 		// Every other step asks "has ANY account done this". This one asked only the FIRST, so a fleet where
 		// the custom name is set on the second and third accounts - which is the normal shape, since the one
@@ -73,12 +72,12 @@ public static class Tutorial {
 			"and it hides the settings that would give it away. 'human <name> week' shows the week it rolled.",
 			"This is the difference between an account that survives being looked at and one that doesn't.");
 
-		Step(sb, 6, rep4rep, "Optional - earn rep4rep points",
-			"set Rep4RepEnabled true",
-			"rep4rep is off until you switch it on. Then paste your token from rep4rep.com (Settings there):",
-			"  set Rep4RepApiToken <token>",
-			"and opt accounts in one at a time with 'set <name> Rep4Rep true'. One token covers every account and",
-			"they all feed one points pool. It paces itself well under Steam's comment ceiling on its own.");
+		Step(sb, 6, addons, "Optional - add-ons, like rep4rep",
+			"addons",
+			"reap's official add-ons, from a signed list on GitHub. 'addons install rep4rep' adds the rep4rep",
+			"add-on (it posts the comments rep4rep hands out and earns you its points) - or press Install on the",
+			"dashboard's Plugins page. Restart, paste your rep4rep API key on the Plugins page, and switch",
+			"commenting on per account there. 'tutorial addons' has more.");
 
 		sb.AppendLine("Some things happen by themselves: free event items (sale stickers, 0-point Points Shop items) and");
 		sb.AppendLine("gifts sent to the account are collected. 'tutorial free' covers those and the ones you switch on.");
@@ -160,7 +159,7 @@ public static class Tutorial {
 			"  set <name> ClaimFree games            paid games given away free-to-keep, never free-to-play filler",
 			"  set <name> BoosterPackGames 730,440   turn gems into booster packs for these games, one a day each",
 			"  set <name> BoosterMake 2              or automatic: packs for the badge closest to its next level ('booster plan <name>' shows which)",
-			"  set <name> OpenBoosterPacks always    open every booster pack (never by default; 1 opens one only when its cards are worth more)",
+			"  set <name> OpenBoosterPacks always    open every booster pack (never by default; 1 opens one only when its cards are worth more on average, -1 when even its 3 cheapest are, -2 either)",
 			"  set <name> SpareItems on              spare cards into gems or sold - shows what it would do first; 'spare on <name>' then turns it on",
 			"",
 			"  booster <name>                        gems, and which games can be made into packs",
@@ -198,21 +197,20 @@ public static class Tutorial {
 			"them - a game Steam refuses while the others go through is added to that list by itself."
 		]),
 
-		"rep4rep" => string.Join(Environment.NewLine, [
-			"rep4rep",
+		"addons" or "addon" or "rep4rep" => string.Join(Environment.NewLine, [
+			"Add-ons",
 			"",
-			"Posts the comments rep4rep assigns and claims the points. Off until you switch it on, and one API",
-			"token covers every account.",
+			"reap's official add-ons, each one DLL. The list is signed, and every file is checked against it",
+			"before it's installed. rep4rep is one: it posts the comments rep4rep hands out and claims the points.",
 			"",
-			"  set Rep4RepEnabled true          the whole feature, including its dashboard tab",
-			"  set Rep4RepApiToken <token>      from rep4rep.com, under Settings",
-			"  set <name> Rep4Rep true          per account",
-			"  rep4rep                          summary",
-			"  rep4rep tasks <name>             what's queued for one account",
+			"  addons                           the official list, and what's installed",
+			"  addons install rep4rep           download, check and install it (at this PC) - then restart",
+			"  addons remove rep4rep            take it out again (its settings are kept)",
+			"  rep4rep                          with it installed: a summary; its own tab is on the dashboard",
 			"",
-			"Steam only lets an account comment on about 10 non-friends a day, and going past that gets it",
-			"comment-banned for a day. The pacing here stays under that on its own: a hard daily cap counted",
-			"across restarts, randomised gaps, and a commenting window so nothing posts at 4am."
+			"The rep4rep API key and each account's on/off, cap, gaps and hours are on the dashboard's Plugins",
+			"page. Whatever an add-on asks, nocat.farm decides when a comment goes out: only while the account",
+			"is up (in human mode), spaced out, at most 25 a day per account, never on a paused one."
 		]),
 
 		"achievements" or "cheevo" => string.Join(Environment.NewLine, [

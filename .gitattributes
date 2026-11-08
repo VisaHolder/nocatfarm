@@ -7,3 +7,6 @@ docker-compose*.yml text eol=lf
 " into every line.
 *.command text eol=lf
 *.sh text eol=lf
+# The add-on index is signed byte for byte: no line-ending conversion, or the copy GitHub serves would not match its signature.
+addons/addons.json -text
+addons/addons.json.sig -text

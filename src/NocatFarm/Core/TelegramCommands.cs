@@ -555,7 +555,7 @@ public static partial class Notifier {
 
 		(int cards, int comments) = Stats.Totals(24);
 
-		return new StatusView(DateTime.Now, accounts, cards, comments, G.Rep4RepEnabled, ReportCard.Uptime(), UpdateCheck.Available);
+		return new StatusView(DateTime.Now, accounts, cards, comments, Plugins.Comments.InUse, ReportCard.Uptime(), UpdateCheck.Available);
 	}
 
 	/// <summary>/status: every account in a line, the last 24 hours, and the app itself - no emoji, the site bot's look.</summary>
@@ -610,15 +610,21 @@ public static partial class Notifier {
 		string[] skip = ["mini", "theme", "tutorial", "help", "clear"];
 
 		foreach (IGrouping<string, CommandDef> group in Commands.All.Where(c => !skip.Contains(c.Name)).GroupBy(static c => c.Group)) {
-			if ((group.Key == Commands.GroupRep4Rep) && !G.Rep4RepEnabled) {
-				continue;
-			}
-
 			sb.AppendLine();
 			sb.AppendLine($"<b>{Html(GroupName(group.Key).ToString())}:</b>");
 
 			foreach (CommandDef c in group) {
 				sb.AppendLine($"/{c.Name}{(c.Args.Length > 0 ? " " + Html(c.Args) : "")}");
+			}
+		}
+
+		// 1.9.0: the commands add-ons and plugins added (rep4rep's) - they work from here like any other.
+		if (Plugins.PluginHost.Commands is { Count: > 0 } added) {
+			sb.AppendLine();
+			sb.AppendLine($"<b>{Html(new Said("Add-ons").ToString())}:</b>");
+
+			foreach ((string verb, (string usage, _, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"/{Html(verb)}{(usage.Length > 0 ? " " + Html(usage) : "")}");
 			}
 		}
 
@@ -637,7 +643,6 @@ public static partial class Notifier {
 		Commands.GroupAchievements => new Said("Achievements"),
 		Commands.GroupFree => new Said("Free stuff & keys"),
 		Commands.GroupInfo => new Said("Profile & info"),
-		Commands.GroupRep4Rep => new Said("rep4rep"),
 		Commands.GroupSettings => new Said("Settings"),
 		Commands.GroupAdvanced => new Said("Advanced"),
 		_ => new Said("The app")

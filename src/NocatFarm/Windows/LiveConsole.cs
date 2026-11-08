@@ -206,7 +206,7 @@ public sealed class LiveConsole : IDisposable {
 
 				// Column headings, so every figure below has a name against it. Without them the board was a row
 				// of bare numbers you had to already know the meaning of.
-				Line(Dim($"  {Log.Pad("ACCOUNT", nameWidth)}  {Log.Pad("DOING", 30)}  {Log.Pad("THIS SITTING", 24)}  {Log.Pad("TODAY", 16)}  REP4REP"));
+				Line(Dim($"  {Log.Pad("ACCOUNT", nameWidth)}  {Log.Pad("DOING", 30)}  {Log.Pad("THIS SITTING", 24)}  {Log.Pad("TODAY", 16)}  COMMENTS"));
 
 				foreach (Bot bot in bots) {
 					Line(Row(bot, nameWidth));
