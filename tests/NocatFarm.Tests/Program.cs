@@ -22460,10 +22460,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Config.Settings.ApplyLegitMode(alwaysHuman, wasLegit: false);
 		Check("turning human mode on takes booster packs from 'only when worth more' to never - 'always', chosen, stays",
 			(turnedHuman.OpenBoosterPacks == 0) && (alwaysHuman.OpenBoosterPacks == 2));
-		var worstHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = 3 };
+		var worstHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = NocatFarm.Core.Spare.WorstPull };
 		worstHuman.LegitMode = true;
 		NocatFarm.Config.Settings.ApplyLegitMode(worstHuman, wasLegit: false);
-		var eitherHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = 4 };
+		var eitherHuman = new NocatFarm.Config.BotConfig { OpenBoosterPacks = NocatFarm.Core.Spare.EitherPull };
 		eitherHuman.LegitMode = true;
 		NocatFarm.Config.Settings.ApplyLegitMode(eitherHuman, wasLegit: false);
 		Check("turning human mode on also takes the cheapest-three and when-either pack choices to never",
@@ -24810,6 +24810,11 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	Check("levelling: one pack a game a day - made 23 hours ago it waits, 25 hours ago it's picked again",
 		(day23.Ranked[0].App == 10) && (day25.Ranked[0].App == 90));
 
+	// 1.9.0: a game with booster packs bought instead of cards still to open is never packed for meanwhile - a pack made
+	// here and one bought are never taken for each other.
+	var dayBought = NocatFarm.Modules.BoosterPick.Rank(bpage, bbadges.Levels, bcards, [], new Dictionary<uint, DateTime>(), bnow, bought: [90]);
+	Check("levelling: a game whose bought booster packs are still to open is left out (and counted)",
+		(dayBought.Ranked[0].App == 10) && dayBought.Ranked.All(static c => c.App != 90) && (dayBought.Bought == 1));
 	// Gems: the closest only, its price plus the gems kept.
 	var gemsShort = NocatFarm.Modules.BoosterPick.Choose(branking, 1299, 100, dayOpen: true);
 	var gemsJust = NocatFarm.Modules.BoosterPick.Choose(branking, 1300, 100, dayOpen: true);
@@ -29449,12 +29454,12 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	List<NocatFarm.Core.Looting.Item> guardSend = [
 		new(70, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600), new(71, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600),
 		new(80, 2, 0, 1, "Five Trading Card", "Card A", 753, 6, 600)];
-	var guardSent = NocatFarm.Core.Looting.LeaveBoughtPacks(guardSend, guardLedger.UnopenedPacks(DateTime.UtcNow), out int guardKept);
+	var guardSent = NocatFarm.Core.Looting.LeaveOwnPacks(guardSend, guardLedger.UnopenedPacks(DateTime.UtcNow), [], out int guardKept);
 	string guardSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Looting.cs")).Replace("\r\n", "\n");
 	string guardRun = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SpareRun.cs")).Replace("\r\n", "\n");
 	Check("bought packs guarded: sending skips it (whatever \"Which items to send\" says) - the pack held before and the card still go; spare items' pack look passes them to the plan and marks them opened",
 		(guardKept == 1) && guardSent.Select(static i => i.AssetId).SequenceEqual([70ul, 80ul])
-		&& guardSrc.Contains("List<Item> wanted = LeaveBoughtPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow), out int keptPacks);", StringComparison.Ordinal)
+		&& guardSrc.Contains("List<Item> wanted = LeaveOwnPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow),\n\t\t\tAutoPacks(bot), out int keptPacks);", StringComparison.Ordinal)
 		&& guardRun.Contains("bought: bought);", StringComparison.Ordinal) && guardRun.Contains("buys.PackOpened(packGame.GetValueOrDefault(id), id, DateTime.UtcNow);", StringComparison.Ordinal),
 		string.Join(",", guardSent.Select(static i => i.AssetId)));
 	Check("bought packs guarded: opened by spare items, its purchase is marked opened with that copy - then nothing more is guarded",
@@ -29516,6 +29521,78 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		Check("buying packs: the next look opens it first, marks it opened with its copy - and buys nothing more for that game until the look after",
 			unpacked.SequenceEqual([71ul, 71ul]) && buyer.Ledger.All.Single() is { Pack: true, Opened: true, Asset: "71" } && (second.Bought.Count == 0),
 			string.Join(" | ", buyer.Ledger.All) + " / " + second.Problem);
+
+		// ── the sweep: every other path that moves or opens a pack, against packs made here and packs bought ──
+		// Opening bought packs never takes automatic "Make booster packs"' own copy (here one made to sell, 81) for a bought
+		// one; and while one of automatic's packs of that game isn't found yet, which copy is which isn't known - it waits.
+		string fiveHash = NocatFarm.Modules.GemsChoice.PackHash(600, "Five");
+		var mixBot = new NocatFarm.Core.Bot("bpmix-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var mixMem = new NocatFarm.Modules.BoosterPick.Memory();
+		mixMem.Add(new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 81, 70, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToSell));
+		mixMem.Save(mixBot.Name);
+		var mixMarket = new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["70", "81", "82"] } };
+		var mixBuyer = new NocatFarm.Modules.CardBuyer(mixBot, mixMarket, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> mixOpened = [];
+		mixBuyer.Unpack = (pack, _) => {
+			mixOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string> { "600-Card 2" }, (string?) null));
+		};
+		mixBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "m1", Before: ["70"], Pack: true));
+		await mixBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("sweep: opening a bought pack never takes automatic's own (made to sell) for it - only the bought copy",
+			mixOpened.SequenceEqual([82ul]) && mixBuyer.Ledger.All.Single() is { Opened: true, Asset: "82" }, string.Join(",", mixOpened));
+
+		var unsureBot = new NocatFarm.Core.Bot("bpuns-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var unsureMem = new NocatFarm.Modules.BoosterPick.Memory();
+		unsureMem.Add(new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 0, 70, DateTime.UtcNow));
+		unsureMem.Save(unsureBot.Name);
+		var unsureBuyer = new NocatFarm.Modules.CardBuyer(unsureBot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["70", "82"] } },
+			NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> unsureOpened = [];
+		unsureBuyer.Unpack = (pack, _) => {
+			unsureOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string>(), (string?) null));
+		};
+		unsureBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "u1", Before: ["70"], Pack: true));
+		await unsureBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("sweep: while automatic's own pack of that game isn't found in the inventory yet, the bought one waits (never a guess)",
+			(unsureOpened.Count == 0) && unsureBuyer.Ledger.All.Single() is { Opened: false });
+
+		// Buying never buys packs for a game automatic has a pack of its own of (to open or to sell).
+		Check("sweep: never packs bought for a game automatic has a pack of its own waiting for - the cards",
+			(await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false }, BpMarket(), NocatFarm.Modules.SwapCost.None,
+				BpLedger(), mixBot, DateTime.UtcNow, CancellationToken.None)).Steps.All(static s => !s.IsPack));
+
+		// Sending: automatic's own packs too - by their id, and one not found yet as every pack of its game newer than it.
+		List<NocatFarm.Core.Looting.Item> autoSend = [
+			new(81, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600), new(83, 1, 0, 1, "Seven Booster Pack", "Seven Booster Pack", 753, 6, 700),
+			new(60, 1, 0, 1, "Seven Booster Pack", "Seven Booster Pack", 753, 6, 700), new(84, 1, 0, 1, "Nine Booster Pack", "Nine Booster Pack", 753, 6, 900)];
+		var autoKept = NocatFarm.Core.Looting.LeaveOwnPacks(autoSend, [],
+			[new NocatFarm.Modules.BoosterPick.OwnPack(600, "Five", 81, 70, DateTime.UtcNow, For: NocatFarm.Modules.BoosterPick.ToSell), new NocatFarm.Modules.BoosterPick.OwnPack(700, "Seven", 0, 70, DateTime.UtcNow)],
+			out int autoLeft);
+		Check("sweep: sending leaves out automatic's own packs (to open or to sell) - by id, or every newer pack of a game whose own isn't found yet; others go",
+			(autoLeft == 2) && autoKept.Select(static i => i.AssetId).SequenceEqual([60ul, 84ul]), string.Join(",", autoKept.Select(static i => i.AssetId)));
+
+		// The two new "Open booster packs" choices are stored as -1 and -2: a version from before 1.9.0 clamps to 0..2 and so
+		// reads them as never - stored as 3 and 4 they read as always, every pack opened after going back.
+		var openDef = NocatFarm.Config.Settings.FindBot("OpenBoosterPacks")!;
+		var setWorst = new NocatFarm.Config.BotConfig();
+		string? setError = NocatFarm.Config.Settings.Apply(setWorst, openDef, "even when only the cheapest three are worth more");
+		Check("sweep: the new pack choices are -1 (worst pull) and -2 (either) - an older version reads them as never, not always; they weigh, open, and can be typed by name",
+			(Math.Clamp(NocatFarm.Core.Spare.WorstPull, 0, 2) == 0) && (Math.Clamp(NocatFarm.Core.Spare.EitherPull, 0, 2) == 0)
+			&& (NocatFarm.Core.Spare.PackChoice(-1) == 3) && (NocatFarm.Core.Spare.PackChoice(-2) == 4) && (NocatFarm.Core.Spare.PackChoice(2) == 2) && (NocatFarm.Core.Spare.PackChoice(7) == 2)
+			&& NocatFarm.Core.Spare.WeighsPacks(-1) && NocatFarm.Core.Spare.WeighsPacks(-2) && NocatFarm.Core.Spare.WeighsPacks(1) && !NocatFarm.Core.Spare.WeighsPacks(2)
+			&& NocatFarm.Core.Spare.OpensPacks(-1) && !NocatFarm.Core.Spare.OpensPacks(0)
+			&& (setError == null) && (setWorst.OpenBoosterPacks == -1)
+			&& NocatFarm.Config.Settings.ParseChoices(openDef).Select(static o => o.Value).SequenceEqual([0, 1, 2, -1, -2]),
+			setError ?? "");
+		var fateWorth = new NocatFarm.Modules.GemsChoice.PackWorth(600, "Five", 20, 10, 0, 30);   // the average 0.10 loses to 0.20 sealed, the worst 0.30 wins
+		Check("sweep: what 'booster plan' says follows the stored choices - the worst pull for -1 and -2, the average for 1",
+			NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
+			&& NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -2 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
+			&& !NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = 1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal));
+		await mixBot.DisposeAsync();
+		await unsureBot.DisposeAsync();
 	} finally {
 		await bpBot.DisposeAsync();
 		NocatFarm.Log.Suppressed = wasSuppressed;
@@ -35965,7 +36042,7 @@ static class DearCardsChecks {
 				NocatFarm.Modules.DearCards.Marked(live));
 			Check("dear packs: automatic would save gems for Arcane Raise (closest badge, 1 missing) - once it's dear, it's left out and the next game goes first",
 				(plain.Ranked[0].App == Arcane) && (marked.Ranked[0].App == 800) && marked.Ranked.All(static c => c.App != Arcane) && (marked.Dear == 1)
-				&& Src("src/NocatFarm/Modules/Boosters.Auto.cs").Contains("AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot));", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/Boosters.Auto.cs").Contains("AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot), BuyLedger.Of(Bot.Name).PacksToOpen(DateTime.UtcNow));", StringComparison.Ordinal)
 				&& NocatFarm.Modules.BoosterPick.Explain("x", NocatFarm.Modules.BoosterPick.Auto, page, marked, 0, true, true, 0).Contains("1 whose cards are worth more sold than kept", StringComparison.Ordinal),
 				string.Join(",", marked.Ranked.Select(static c => c.App)));
 			NocatFarm.Core.Switches.Set(live, NocatFarm.Core.Switches.Buy, false);

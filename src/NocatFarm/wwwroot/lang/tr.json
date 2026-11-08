@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} kart paketi ve {1} kart alındı · {2} · üretilecek {3} set",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}",
     "bought to level the {0} badge": "{0} rozetini yükseltmek için satın alındı",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "rozet yükseltmek için alınan {0} kart paketi gönderilmez - önce açılır"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm'ın daha açacağı {0} kart paketi gönderilmez - önce açılır"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Kart paketlerini aç",
       "tip": "Envanterdeki kart paketlerini açar, böylece kartları rozetlere sayılır (ya da fazla eşya olur). Seviye atlamak için her zaman'ı seç. Varsayılan olarak asla - sen seçene kadar hiçbir şey açılmaz. \"Yalnızca kartlar daha değerliyse\", 3 kartı pazarda ortalama olarak kapalı paketten daha değerliyse paketi açar - örneğin 0.08 + 0.05 + 0.05'lik kartlar 0.15'lik bir paketi geçer; parlak kart paket başına 100'de 1 şansla sayılır, fazlası asla; fiyat bilinmiyorsa kapalı kalır. \"En ucuz üçü bile daha değerliyse\", en kötü çıkışı - setin en ucuz kartının üç katı, setin bütün kartlarının fiyatı biliniyorken - paketten daha değerliyse paketi açar; paketleri kartları için satmanın en güvenli yolu budur. \"Herhangi biri\", ortalama ya da en kötü çıkış paketi geçerse açar. Her zaman: her paket. \"Kart paketi yap\"taki otomatiğin yaptığı paketleri, burada ne yazarsa yazsın otomatik kendisi açar. İnsan modundaki bir hesap paketleri yalnızca kendi gününde açar.",
-      "choices": "0 asla | 1 yalnızca kartlar daha değerliyse | 2 her zaman | 3 en ucuz üçü bile daha değerliyse | 4 herhangi biri"
+      "choices": "0 asla | 1 yalnızca kartlar daha değerliyse | 2 her zaman | -1 en ucuz üçü bile daha değerliyse | -2 herhangi biri"
     },
     "SpareAction": {
       "label": "Fazla eşyalarla ne yapılsın",

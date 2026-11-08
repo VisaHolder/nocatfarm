@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} booster(s) et {1} carte(s) achetés · {2} · {3} série(s) à fabriquer",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} booster(s) de {1} à {2} chacun pour {3}, au lieu de ses {4} carte(s) manquante(s) ({5}) - ils devraient laisser environ {6} carte(s) à acheter ensuite, environ {7} en tout - niveau {8} à {9}",
     "bought to level the {0} badge": "acheté pour monter le badge de {0}",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} booster(s) acheté(s) pour monter des badges ne sont pas envoyés - ils sont d'abord ouverts"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} booster(s) que nocat.farm doit encore ouvrir ne sont pas envoyés - ils sont d'abord ouverts"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Ouvrir les boosters",
       "tip": "Ouvre les boosters de l'inventaire, pour que leurs cartes comptent pour les badges (ou deviennent des objets en trop). Pour monter de niveau, choisissez toujours. Jamais par défaut - rien n'est ouvert tant que vous ne le choisissez pas. « Seulement quand les cartes valent plus » ouvre un booster si ses 3 cartes valent en moyenne plus sur le marché que le booster scellé - par exemple des cartes à 0.08 + 0.05 + 0.05 battent un booster à 0.15 ; une carte brillante compte pour une chance sur 100 par booster, jamais plus ; un prix inconnu le laisse fermé. « Même quand seules les trois moins chères valent plus » ouvre un booster dès que son pire tirage - trois fois la carte la moins chère de la série, toutes les cartes de la série ayant un prix - vaut plus que le booster ; c'est la façon la plus sûre de vendre des boosters pour leurs cartes. « Quand l'un des deux » l'ouvre si la moyenne ou le pire tirage bat le booster. « Toujours » : chaque booster. Les boosters créés par automatique dans « Créer des boosters » sont ouverts par lui, quoi que dise ce réglage. Un compte en mode humain n'ouvre les boosters que pendant sa journée.",
-      "choices": "0 jamais | 1 seulement quand les cartes valent plus | 2 toujours | 3 même quand seules les trois moins chères valent plus | 4 quand l'un des deux"
+      "choices": "0 jamais | 1 seulement quand les cartes valent plus | 2 toujours | -1 même quand seules les trois moins chères valent plus | -2 quand l'un des deux"
     },
     "SpareAction": {
       "label": "Que faire des objets en trop",

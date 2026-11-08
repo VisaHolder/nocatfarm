@@ -208,17 +208,34 @@ public static partial class Looting {
 		(await SendItemsCheckedAsync(bot, to, token, types, ct).ConfigureAwait(false)).Text;
 
 	/// <summary>
-	/// 1.9.0: what a send may take, less the booster packs buying cards bought instead of cards and hasn't opened yet
-	/// (<paramref name="unopened"/>, BuyLedger.BoughtPackIds) - they're opened for their badge, whatever "Which items to send"
-	/// says. <paramref name="kept"/>: how many were left out.
+	/// 1.9.0: what a send may take, less the booster packs that are nocat.farm's own to open: the ones buying cards bought
+	/// instead of cards and hasn't opened yet (<paramref name="unopened"/>, BuyLedger.BoughtPackIds), and the ones automatic
+	/// "Make booster packs" made to open or to sell (<paramref name="auto"/>) - by their id, or, one it hasn't found in the
+	/// inventory yet, every pack of its game newer than it (one of them is it). Whatever "Which items to send" says.
+	/// <paramref name="kept"/>: how many were left out.
 	/// </summary>
-	public static List<Item> LeaveBoughtPacks(IEnumerable<Item> wanted, IReadOnlyList<Modules.BuyLedger.Entry> unopened, out int kept) {
+	public static List<Item> LeaveOwnPacks(IEnumerable<Item> wanted, IReadOnlyList<Modules.BuyLedger.Entry> unopened, IReadOnlyList<Modules.BoosterPick.OwnPack> auto, out int kept) {
 		List<Item> all = [.. wanted];
-		HashSet<ulong> bought = Modules.BuyLedger.BoughtPackIds(unopened,
-			all.Where(static i => i.Type.Contains("Booster Pack", StringComparison.OrdinalIgnoreCase)).Select(static i => (i.AssetId, i.Game)));
-		kept = all.RemoveAll(i => bought.Contains(i.AssetId));
+		List<Item> packs = [.. all.Where(static i => i.Type.Contains("Booster Pack", StringComparison.OrdinalIgnoreCase))];
+		HashSet<ulong> own = Modules.BuyLedger.BoughtPackIds(unopened, packs.Select(static i => (i.AssetId, i.Game)));
+
+		foreach (Item pack in packs) {
+			if (auto.Any(o => (o.Asset == pack.AssetId) || ((o.Asset == 0) && (o.App == pack.Game) && (pack.AssetId > o.After)))) {
+				own.Add(pack.AssetId);
+			}
+		}
+
+		kept = all.RemoveAll(i => own.Contains(i.AssetId));
 
 		return all;
+	}
+
+	/// <summary>1.9.0: automatic "Make booster packs"' own packs, still to open or sell - none once it isn't automatic (let go of then).</summary>
+	private static List<Modules.BoosterPick.OwnPack> AutoPacks(Bot bot) {
+		Modules.BoosterPick.Memory memory = BotManager.ModuleOf<Modules.Boosters>(bot)?.AutoMemory ?? Modules.BoosterPick.Memory.Load(bot.Name);
+		memory.ReleaseAndSay(bot.Cfg.BoosterMake, bot.Cfg.BoosterNeverOpen, DateTime.UtcNow, bot.Name);
+
+		return memory.Snapshot();
 	}
 
 	private static async Task<(string Text, bool Busy)> SendItemsCheckedAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct) {
@@ -261,10 +278,13 @@ public static partial class Looting {
 
 		// Claimed before the waiting trades are read, not after: another send or a sale that already made its offer
 		// or listing has released its claim by then, so its trade shows up below - see Bot.ClaimItems.
-		List<Item> wanted = LeaveBoughtPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow), out int keptPacks);
+		// 1.9.0: never a booster pack that's nocat.farm's own to open - bought instead of cards, or made by automatic "Make
+		// booster packs" (to open or to sell; let go of first when it isn't automatic any more, as spare items does).
+		List<Item> wanted = LeaveOwnPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow),
+			AutoPacks(bot), out int keptPacks);
 
 		if (keptPacks > 0) {
-			Log.Debug(new Said("{0} booster pack(s) it bought to level badges aren't sent - they're opened first", keptPacks), bot.Name);
+			Log.Debug(new Said("{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first", keptPacks), bot.Name);
 		}
 
 		HashSet<ulong> claimed = bot.ClaimItems(wanted.Select(static i => i.AssetId));

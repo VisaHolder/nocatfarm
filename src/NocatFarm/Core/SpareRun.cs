@@ -927,7 +927,7 @@ public static class SpareRun {
 		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
 		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought, shown);
 		SparePlan plan = priceThem
-			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks is 1 or 3 or 4, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
+			? await PriceAsync(Plan, items, rules, currency, quotes, Spare.WeighsPacks(bot.Cfg.OpenBoosterPacks), (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
 
 		return (new Look(plan, currency, items, busy, ledger, rules, StillToPrice(plan, currency, rules), spread, PricingMinutesLeft(plan, currency, rules)), null);
@@ -1621,7 +1621,7 @@ public static class SpareRun {
 		}
 
 		BotConfig cfg = bot.Cfg;
-		int choice = Math.Clamp(cfg.OpenBoosterPacks, 0, 4);
+		int choice = Spare.PackChoice(cfg.OpenBoosterPacks);
 		List<uint> games = [.. look.Items.Where(static i => i.Kind == SpareKind.BoosterPack).Select(static i => i.Game).Distinct()
 			.Where(g => Stale(SparePrices.Cached(g)?.When, look.Rules)).Take(GamesPerLook)];
 

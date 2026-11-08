@@ -41,10 +41,10 @@ public static partial class Commands {
 			}
 
 			Dictionary<uint, DateTime> made = BotManager.ModuleOf<Boosters>(b)?.AutoMemory.Made ?? BoosterPick.Memory.Load(b.Name).Made;
-			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow, DearCards.Marked(b));
+			BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, LevelPlanner.NormalCards(inventory), b.Cfg.BoosterNeverOpen, made, DateTime.UtcNow, DearCards.Marked(b), BuyLedger.Of(b.Name).PacksToOpen(DateTime.UtcNow));
 			bool dayOpen = HumanWaits(b, BotManager.ModuleOf<Boosters>(b)?.DayGate) == null;
 
-			string plan = BoosterPick.Explain(b.Name, b.Cfg.BoosterMake, page, ranking, b.Cfg.BoosterKeepGems, dayOpen, b.Cfg.CraftBadges, b.Cfg.OpenBoosterPacks);
+			string plan = BoosterPick.Explain(b.Name, b.Cfg.BoosterMake, page, ranking, b.Cfg.BoosterKeepGems, dayOpen, b.Cfg.CraftBadges, Spare.PackChoice(b.Cfg.OpenBoosterPacks));
 
 			// 1.8.2: what 1,000 gems are worth in levels each way, and what it would do with them - and the sealed packs that
 			// came in, each weighed (by default nothing opens or sells them).

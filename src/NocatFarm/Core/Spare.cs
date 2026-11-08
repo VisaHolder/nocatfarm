@@ -800,8 +800,25 @@ public static partial class Spare {
 	/// foil cards - each as its cheapest listing in US cents, after <see cref="Seller"/>'s fee when it's weighed.</summary>
 	public sealed record PackPrices(MarketPrice? Pack, IReadOnlyList<int> Cards, DateTime At, IReadOnlyList<int>? CardsFoil = null);
 
-	/// <param name="choice">0 never, 1 only when the cards are worth more than the pack on average (foils included), 2 always,
-	/// 3 only when even the three cheapest cards are worth more than the pack, 4 when either does.</param>
+	/// <summary>
+	/// 1.9.0: "Open booster packs" as the setting holds it, in the numbers <see cref="PlanPacks"/> and the gems maths go by:
+	/// 0 never, 1 on the average pull, 2 always - and the two new ones, stored as -1 (the worst pull) and -2 (either) so
+	/// a version from before 1.9.0, which only knows 0 to 2, reads them as never (it clamps) instead of always - 3 and 4
+	/// here. Anything else counts as the nearest of 0 to 2, as before.
+	/// </summary>
+	public static int PackChoice(int setting) => setting switch { WorstPull => 3, EitherPull => 4, _ => Math.Clamp(setting, 0, 2) };
+
+	/// <summary>1.9.0: "Open booster packs" choices as stored - see <see cref="PackChoice"/>.</summary>
+	public const int WorstPull = -1, EitherPull = -2;
+
+	/// <summary>1.9.0: whether a setting of "Open booster packs" opens anything at all (never is the only one that doesn't).</summary>
+	public static bool OpensPacks(int setting) => PackChoice(setting) != 0;
+
+	/// <summary>1.9.0: whether a setting of "Open booster packs" weighs the pack against its cards (needs the set's prices).</summary>
+	public static bool WeighsPacks(int setting) => PackChoice(setting) is 1 or 3 or 4;
+
+	/// <param name="choice">As <see cref="PackChoice"/> gives it: 0 never, 1 only when the cards are worth more than the pack on
+	/// average (foils included), 2 always, 3 only when even the three cheapest cards are worth more than the pack, 4 when either does.</param>
 	/// <param name="madeHere">Packs nocat.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
 	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
 	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next

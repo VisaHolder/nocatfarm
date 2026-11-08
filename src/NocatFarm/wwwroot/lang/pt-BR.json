@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprou {0} pacote(s) de cartas e {1} carta(s) · {2} · {3} conjunto(s) para criar",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} pacote(s) de cartas de {1} a {2} cada por {3}, no lugar das {4} carta(s) que faltam ({5}) - devem deixar cerca de {6} carta(s) para comprar depois, cerca de {7} no total - nível {8} para {9}",
     "bought to level the {0} badge": "comprado para subir a insígnia de {0}",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} pacote(s) de cartas comprado(s) para subir insígnias não são enviados - são abertos primeiro"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} pacote(s) de cartas que o nocat.farm ainda vai abrir não são enviados - são abertos primeiro"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Abrir pacotes de cartas",
       "tip": "Abre os pacotes de cartas do inventário, para as cartas contarem para insígnias (ou virarem itens sobrando). Para subir de nível, escolha sempre. Nunca por padrão - nada é aberto até você escolher. \"Só quando as cartas valem mais\" abre um pacote se as 3 cartas dele valerem, em média, mais no mercado que o pacote fechado - por exemplo, cartas a 0.08 + 0.05 + 0.05 ganham de um pacote a 0.15; uma carta brilhante conta como uma chance de 1 em 100 por pacote, nunca mais; um preço desconhecido o mantém fechado. \"Mesmo quando só as três mais baratas valem mais\" abre um pacote sempre que o pior resultado - três vezes a carta mais barata do conjunto, com todas as cartas do conjunto com preço - valer mais que o pacote; é o jeito mais seguro de vender pacotes pelas cartas. \"Quando qualquer um\" abre se a média ou o pior resultado ganhar do pacote. Sempre: todo pacote. Os pacotes que o automático de \"Criar pacotes de cartas\" criou são abertos por ele, não importa o que diga aqui. Uma conta em modo humano só abre pacotes durante o dia dela.",
-      "choices": "0 nunca | 1 só quando as cartas valem mais | 2 sempre | 3 mesmo quando só as três mais baratas valem mais | 4 quando qualquer um"
+      "choices": "0 nunca | 1 só quando as cartas valem mais | 2 sempre | -1 mesmo quando só as três mais baratas valem mais | -2 quando qualquer um"
     },
     "SpareAction": {
       "label": "O que fazer com itens sobrando",

@@ -1070,6 +1070,11 @@ public sealed class BuyPlan {
 		// bought for it until they are - what's still missing is only known once their cards are in.
 		HashSet<uint> packsBought = ledger.PacksToOpen(nowUtc);
 
+		// 1.9.0: games automatic "Make booster packs" has a pack of its own still to open or sell: never bought as packs, so
+		// a pack bought and one made are never taken for each other (its packs are found by their game).
+		HashSet<uint> autoPackGames = !cfg.BuyBooster || (bot == null) ? []
+			: [.. (BotManager.ModuleOf<Boosters>(bot)?.AutoMemory ?? BoosterPick.Memory.Load(bot.Name)).Snapshot().Select(static o => o.App)];
+
 		// A game automatic booster packs has a pack waiting to open for: its cards come from the pack. A set it just sold
 		// instead of crafting isn't bought back either, nor a game whose cards are worth more sold (1.8.2).
 		(string Skip, string Note)? Busy(uint app, string game) =>
@@ -1454,7 +1459,8 @@ public sealed class BuyPlan {
 			// 1.9.0, "Buy booster packs when they're cheaper": the game's packs instead of its missing cards, when the packs and
 			// the missing cards they're expected to leave (bought at a later look) come to at least a tenth less than the cards.
 			// A pack is 3 random cards of the WHOLE set, so a few packs seldom bring every missing card. One set a look.
-			if (!packBought && cfg.BuyBooster && (step.Cards.Count > 0) && !cfg.BoosterNeverOpen.Contains(set.App)) {   // never packs it would have to keep shut
+			// Never packs it would have to keep shut, nor for a game automatic has packs of its own waiting for.
+			if (!packBought && cfg.BuyBooster && (step.Cards.Count > 0) && !cfg.BoosterNeverOpen.Contains(set.App) && !autoPackGames.Contains(set.App)) {
 				string packHash = GemsChoice.PackHash(step.App, step.Game);
 
 				if (await PackBookAsync(packHash).ConfigureAwait(false) is { } packBook) {
@@ -1951,7 +1957,9 @@ public sealed class BuyLedger(string path) {
 		string id = asset.ToString(CultureInfo.InvariantCulture);
 		List<Entry> mine = [.. UnopenedPacks(utc).Where(e => (e.App == game) && ((e.Asset == id) || (e.Before == null) || !e.Before.Contains(id, StringComparer.Ordinal)))];
 
-		if ((mine.FirstOrDefault(e => e.Asset == id) ?? mine.Where(static e => !e.Pending).OrderBy(static e => e.At).FirstOrDefault()) is not { } entry) {
+		// One Steam hasn't said was bought yet counts too: the pack arrived and was opened, so it was. The money side is the
+		// look's own business (asked about, or let go of) - only the opening is noted here.
+		if ((mine.FirstOrDefault(e => e.Asset == id) ?? mine.OrderBy(static e => e.Pending).ThenBy(static e => e.At).FirstOrDefault()) is not { } entry) {
 			return false;
 		}
 
@@ -4123,7 +4131,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// claimed). Claimed while it's opened, so nothing else sends or sells it. One that can't be opened now is tried at the
 	/// next look; one not found in <see cref="BuyLedger.PackOpenFor"/> is left to "Open booster packs". How many were opened.
 	/// </summary>
-	internal async Task<int> OpenBoughtPacksAsync(CancellationToken ct) {
+	public async Task<int> OpenBoughtPacksAsync(CancellationToken ct) {
 		DateTime now = DateTime.UtcNow;
 		List<BuyLedger.Entry> toOpen = [.. Ledger.All.Where(static e => e is { Pack: true, Pending: false, Opened: false }).OrderBy(static e => e.At)];
 
@@ -4136,10 +4144,20 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		}
 
 		HashSet<string> taken = new(Ledger.All.Where(static e => e.Opened || !e.Pack).Select(static e => e.Asset).OfType<string>(), StringComparer.Ordinal);
+
+		// Never one of automatic "Make booster packs"' own (to open or to sell): its copies aren't taken for a bought one; and
+		// while one of its packs of that game isn't found yet, which copy is which isn't known - that game waits.
+		BoosterPick.Memory auto = BotManager.ModuleOf<Boosters>(Bot)?.AutoMemory ?? BoosterPick.Memory.Load(Bot.Name);
+		taken.UnionWith(auto.Ids().Concat(auto.ForSaleIds()).Select(static id => id.ToString(CultureInfo.InvariantCulture)));
+		HashSet<uint> unsure = [.. auto.Snapshot().Where(static o => o.Asset == 0).Select(static o => o.App)];
 		int opened = 0;
 
 		foreach (BuyLedger.Entry entry in toOpen) {
 			string name = new BuyCard(entry.Card, 0).Name;
+
+			if (unsure.Contains(entry.App) && (now - entry.At <= BuyLedger.PackOpenFor)) {
+				continue;
+			}
 			IReadOnlyList<string> copies = held.GetValueOrDefault(entry.Card) ?? [];
 			HashSet<string> before = new(entry.Before ?? [], StringComparer.Ordinal);
 			string? copy = (entry.Asset != null) && copies.Contains(entry.Asset, StringComparer.Ordinal) ? entry.Asset

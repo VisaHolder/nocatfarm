@@ -727,7 +727,7 @@ public static partial class Settings {
 		// Booster packs are never opened on a human-mode account unless you turn it on: turning human mode on takes the
 		// price-aware choices - "only when the cards are worth more", "even when only the cheapest three are worth more",
 		// "when either" - to never. "Always", chosen, stays.
-		if (cfg.LegitMode && (cfg.OpenBoosterPacks is 1 or 3 or 4)) {
+		if (cfg.LegitMode && Core.Spare.WeighsPacks(cfg.OpenBoosterPacks)) {
 			cfg.OpenBoosterPacks = 0;
 		}
 
@@ -1880,7 +1880,7 @@ public static partial class Settings {
 			ShowWhen: "BoosterMake=2", Group: "Making packs", Part: SecPacks),
 		new("OpenBoosterPacks", "Open booster packs", SecItems, SettingKind.Choice,
 			"Opens booster packs in the inventory, so their cards count toward badges (or become spare items). For levelling up, pick always. Never by default - nothing opens until you choose. \"Only when the cards are worth more\" opens a pack when its 3 cards are worth more on the market than the sealed pack on average - for example cards at 0.08 + 0.05 + 0.05 beat a pack at 0.15; a foil counts at a 1 in 100 chance a pack, never more; an unknown price keeps it shut. \"Even when only the cheapest three are worth more\" opens a pack whenever its worst pull - three of the set's cheapest card, with every card of the set priced - is worth more than the pack; that's the safest way to sell packs for their cards. \"When either\" opens it if the average or the worst pull beats the pack. \"Always\": every pack. Packs that automatic \"Make booster packs\" made are opened by it whatever this says. A human-mode account opens packs only during its day.",
-			Choices: "0 never | 1 only when the cards are worth more | 2 always | 3 even when only the cheapest three are worth more | 4 when either", Group: "Opening packs", Part: SecPacks),
+			Choices: "0 never | 1 only when the cards are worth more | 2 always | -1 even when only the cheapest three are worth more | -2 when either", Group: "Opening packs", Part: SecPacks),
 		new("BoosterOpenNewDays", "Leave new packs alone for", SecItems, SettingKind.Int,
 			"Days a pack stays shut after it arrives. For example 7: a pack from a Monday opens from the next Monday. 0 opens them straight away. Packs nocat.farm made itself aren't held back - they're opened at the next chance.",
 			Advanced: true, Min: 0, Max: 30, Group: "Opening packs", Part: SecPacks),

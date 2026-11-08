@@ -496,7 +496,7 @@ public static class GemsChoice {
 	/// </summary>
 	public static string Fate(BotConfig cfg, PackWorth w, PackUse best) {
 		bool never = cfg.BoosterNeverOpen.Contains(w.App);
-		int open = never ? 0 : Math.Clamp(cfg.OpenBoosterPacks, 0, 4);
+		int open = never ? 0 : Spare.PackChoice(cfg.OpenBoosterPacks);
 		// 1.9.0: "only when the cards are worth more" and "when either" go by the average pull (foils included); "even when only
 		// the cheapest three are worth more" and "when either" go by the guaranteed pull too.
 		bool opens = (open == 2)

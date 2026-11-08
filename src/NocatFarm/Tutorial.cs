@@ -160,7 +160,7 @@ public static class Tutorial {
 			"  set <name> ClaimFree games            paid games given away free-to-keep, never free-to-play filler",
 			"  set <name> BoosterPackGames 730,440   turn gems into booster packs for these games, one a day each",
 			"  set <name> BoosterMake 2              or automatic: packs for the badge closest to its next level ('booster plan <name>' shows which)",
-			"  set <name> OpenBoosterPacks always    open every booster pack (never by default; 1 opens one only when its cards are worth more on average, 3 when even its 3 cheapest are, 4 either)",
+			"  set <name> OpenBoosterPacks always    open every booster pack (never by default; 1 opens one only when its cards are worth more on average, -1 when even its 3 cheapest are, -2 either)",
 			"  set <name> SpareItems on              spare cards into gems or sold - shows what it would do first; 'spare on <name>' then turns it on",
 			"",
 			"  booster <name>                        gems, and which games can be made into packs",

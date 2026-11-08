@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} Booster-Pack(s) und {1} Karte(n) gekauft · {2} · {3} Satz/Sätze zum Herstellen",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} Booster-Pack(s) von {1} zu je {2} für {3}, statt seiner {4} fehlenden Karte(n) ({5}) - lässt voraussichtlich etwa {6} Karte(n) zum späteren Kauf übrig, insgesamt etwa {7} - Stufe {8} auf {9}",
     "bought to level the {0} badge": "gekauft, um das Abzeichen von {0} aufzuwerten",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} Booster-Pack(s), gekauft, um Abzeichen aufzuwerten, werden nicht gesendet - sie werden zuerst geöffnet"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} Booster-Pack(s), die nocat.farm noch öffnen muss, werden nicht gesendet - sie werden zuerst geöffnet"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Booster-Packs öffnen",
       "tip": "Öffnet Booster-Packs im Inventar, damit ihre Karten für Abzeichen zählen (oder zu übrigen Gegenständen werden). Zum Leveln wähle immer. Standardmäßig nie - nichts wird geöffnet, bis du es auswählst. „Nur wenn die Karten mehr wert sind“ öffnet ein Pack, wenn seine 3 Karten auf dem Markt im Schnitt mehr wert sind als das versiegelte Pack - zum Beispiel schlagen Karten zu 0.08 + 0.05 + 0.05 ein Pack zu 0.15; eine Folienkarte zählt mit einer Chance von 1 zu 100 pro Pack, nie mehr; ein unbekannter Preis lässt es zu. „Auch wenn nur die günstigsten drei mehr wert sind“ öffnet ein Pack immer dann, wenn sein schlechtester Inhalt - dreimal die günstigste Karte des Satzes, mit jeder Karte des Satzes bepreist - mehr wert ist als das Pack; das ist der sicherste Weg, Packs für ihre Karten zu verkaufen. „Wenn eins von beiden“ öffnet es, wenn der Schnitt oder der schlechteste Inhalt das Pack schlägt. „Immer“: jedes Pack. Packs, die automatisch bei „Booster-Packs erstellen“ gemacht hat, öffnet es selbst, egal was hier steht. Ein Konto im Menschen-Modus öffnet Packs nur während seines Tages.",
-      "choices": "0 nie öffnen | 1 nur wenn die Karten mehr wert sind | 2 immer | 3 auch wenn nur die günstigsten drei mehr wert sind | 4 wenn eins von beiden"
+      "choices": "0 nie öffnen | 1 nur wenn die Karten mehr wert sind | 2 immer | -1 auch wenn nur die günstigsten drei mehr wert sind | -2 wenn eins von beiden"
     },
     "SpareAction": {
       "label": "Was mit übrigen Gegenständen passiert",

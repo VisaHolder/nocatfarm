@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprados {0} sobre(s) y {1} cromo(s) · {2} · {3} colección(es) para crear",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}",
     "bought to level the {0} badge": "comprado para subir la insignia de {0}",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} sobre(s) comprado(s) para subir insignias no se envían - primero se abren"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Abrir sobres",
       "tip": "Abre los sobres del inventario, para que sus cromos cuenten para las insignias (o se vuelvan objetos sobrantes). Para subir de nivel, elige siempre. Nunca por defecto - no se abre nada hasta que lo elijas. «Solo cuando los cromos valen más» abre un sobre si sus 3 cromos valen de media más en el mercado que el sobre cerrado - por ejemplo cromos a 0.08 + 0.05 + 0.05 ganan a un sobre a 0.15; un cromo brillante cuenta con una probabilidad de 1 entre 100 por sobre, nunca más; un precio desconocido lo deja cerrado. «Incluso cuando solo los tres más baratos valen más» abre un sobre siempre que su peor resultado - tres veces el cromo más barato de la colección, con todos los cromos de la colección con precio - valga más que el sobre; es la forma más segura de vender sobres por sus cromos. «Cuando cualquiera de los dos» lo abre si la media o el peor resultado gana al sobre. «Siempre»: todos los sobres. Los sobres que creó automático en «Crear sobres» los abre él, diga lo que diga esto. Una cuenta en modo humano abre sobres solo durante su día.",
-      "choices": "0 nunca | 1 solo cuando los cromos valen más | 2 siempre | 3 incluso cuando solo los tres más baratos valen más | 4 cuando cualquiera de los dos"
+      "choices": "0 nunca | 1 solo cuando los cromos valen más | 2 siempre | -1 incluso cuando solo los tres más baratos valen más | -2 cuando cualquiera de los dos"
     },
     "SpareAction": {
       "label": "Qué hacer con los objetos sobrantes",

@@ -3503,7 +3503,7 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "kupiono paczek kart: {0} i kart: {1} · {2} · zestawy do stworzenia: {3}",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} paczk(i) kart {1} po {2} za {3}, zamiast {4} brakujących kart(y) ({5}) - powinny zostawić około {6} kart(y) do kupienia potem, razem około {7} - poziom {8} do {9}",
     "bought to level the {0} badge": "kupiony, by podnieść odznakę {0}",
-    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "paczki kart kupione, by podnieść odznaki ({0}), nie są wysyłane - najpierw się je otwiera"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "paczki kart, które nocat.farm musi jeszcze otworzyć ({0}), nie są wysyłane - najpierw się je otwiera"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4968,7 +4968,7 @@
     "OpenBoosterPacks": {
       "label": "Otwieraj paczki kart",
       "tip": "Otwiera paczki kart z ekwipunku, żeby ich karty liczyły się do odznak (albo stały się zbędnymi przedmiotami). Do zdobywania poziomów wybierz zawsze. Domyślnie nigdy - nic się nie otwiera, dopóki tego nie wybierzesz. „Tylko gdy karty są warte więcej” otwiera paczkę, gdy jej 3 karty są na rynku średnio warte więcej niż zamknięta paczka - na przykład karty po 0.08 + 0.05 + 0.05 wygrywają z paczką za 0.15; karta foliowa liczy się jako szansa 1 na 100 na paczkę, nigdy więcej; nieznana cena zostawia ją zamkniętą. „Nawet gdy tylko 3 najtańsze są warte więcej” otwiera paczkę, gdy jej najgorsze losowanie - trzy razy najtańsza karta zestawu, przy znanych cenach wszystkich kart zestawu - jest warte więcej niż paczka; to najbezpieczniejszy sposób sprzedawania paczek dla ich kart. „Gdy którekolwiek” otwiera ją, gdy średnia albo najgorsze losowanie wygrywa z paczką. „Zawsze”: każdą paczkę. Paczki zrobione przez „automatycznie” w „Rób boostery” otwiera ono samo, cokolwiek tu ustawisz. Konto w trybie ludzkim otwiera paczki tylko w swoim dniu.",
-      "choices": "0 nigdy | 1 tylko gdy karty są warte więcej | 2 zawsze | 3 nawet gdy tylko 3 najtańsze są warte więcej | 4 gdy którekolwiek"
+      "choices": "0 nigdy | 1 tylko gdy karty są warte więcej | 2 zawsze | -1 nawet gdy tylko 3 najtańsze są warte więcej | -2 gdy którekolwiek"
     },
     "SpareAction": {
       "label": "Co robić ze zbędnymi przedmiotami",
