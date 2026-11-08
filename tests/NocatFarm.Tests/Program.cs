@@ -29236,6 +29236,26 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		Check("1.8.x move: a value the add-on already has is never overwritten",
 			!NocatFarm.Config.ConfigStore.ImportRep4Rep("another-key", ["alt"]) && (NocatFarm.Core.Secrets.Unprotect(settings2["ApiKey"]) == "old-r4r-key-998877"));
 
+		// What 1.8.9 really writes when rep4rep was never used: every key there, the hold as null. That broke 1.9.0's first
+		// start (--setup exit 4, "requires an element of type String") until the move learned that a null is no date.
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, """
+			{ "Theme": "light", "Rep4RepEnabled": false, "Rep4RepApiToken": "", "Rep4RepAutoAddProfiles": true, "Rep4RepPointsRefreshMinutes": 15,
+			  "Rep4RepPauseHours": 0, "Rep4RepHoldUntil": null, "Rep4RepHoldFrom": null, "SendRep4Rep": false, "WebPort": 7290 }
+			""");
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plain.json"), """
+			{ "SteamLogin": "plainlogin", "Rep4Rep": false, "Rep4RepDailyCap": 10, "Rep4RepGapMinMinutes": 10, "Rep4RepGapMaxMinutes": 25,
+			  "Rep4RepStartHour": 10, "Rep4RepEndHour": 23, "Rep4RepLearnCap": true, "Rep4RepRetryRefused": false }
+			""");
+		NocatFarm.Config.GlobalConfig fromOld = NocatFarm.Config.ConfigStore.LoadGlobal();
+		NocatFarm.Config.BotConfig? plainBot = NocatFarm.Config.ConfigStore.LoadBot("plain");
+		Check("1.8.x move: a 1.8.9 config as it really is - nulls and all - loads, and loses its rep4rep keys",
+			(fromOld.Theme == "light") && (fromOld.WebPort == 7290) && (NocatFarm.Config.ConfigStore.GlobalLoadProblem == null) && (plainBot?.SteamLogin == "plainlogin")
+			&& !File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains("Rep4Rep", StringComparison.Ordinal),
+			NocatFarm.Config.ConfigStore.GlobalLoadProblem ?? "");
+		Check("1.8.x move: odd values never stop a config loading - a hold that isn't a date, a key that isn't text, a record that isn't one",
+			NocatFarm.Config.ConfigStore.MigrateRep4RepGlobal(new NocatFarm.Config.GlobalConfig(), """{ "Rep4RepHoldUntil": 5, "Rep4RepApiToken": 7, "Rep4RepEnabled": "yes" }""")
+			&& NocatFarm.Config.ConfigStore.MigrateRep4RepAccount("odd", """{ "Rep4Rep": "yes", "Rep4RepDailyCap": [1] }"""));
+
 		// ── the signed add-on list ──
 		using var sk = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
 		string pub = Convert.ToBase64String(sk.ExportSubjectPublicKeyInfo());

@@ -85,8 +85,27 @@ public static partial class ConfigStore {
 		AtomicFile.Write(Rep4RepSettingsFile, JsonSerializer.Serialize(values));
 	}
 
+	/// <summary>A string value, or null for anything else - a null, a number, a list. Every 1.8.x file has "Rep4RepHoldUntil": null.</summary>
+	private static string? Text(Dictionary<string, JsonElement> props, string key) =>
+		props.TryGetValue(key, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? v.GetString() : null;
+
+	/// <summary>A date the file holds as text, in UTC - or null when it's null, missing or not a date.</summary>
+	private static DateTime? Date(Dictionary<string, JsonElement> props, string key) =>
+		props.TryGetValue(key, out JsonElement v) && (v.ValueKind == JsonValueKind.String) && v.TryGetDateTime(out DateTime d) ? d.ToUniversalTime() : null;
+
 	/// <summary>The global part. True when the file had any of the old keys - the save that follows drops them.</summary>
+	/// <remarks>Never throws: whatever is odd in an old file, the config still loads (the move is tried again next start).</remarks>
 	public static bool MigrateRep4RepGlobal(GlobalConfig g, string json) {
+		try {
+			return MigrateRep4RepGlobalOnce(g, json);
+		} catch (Exception e) {
+			Log.Warn(new Said("couldn't move rep4rep's settings to the add-on: {0}", Log.Describe(e)));
+
+			return false;
+		}
+	}
+
+	private static bool MigrateRep4RepGlobalOnce(GlobalConfig g, string json) {
 		Dictionary<string, JsonElement> props;
 
 		try {
@@ -121,7 +140,7 @@ public static partial class ConfigStore {
 					}
 				}
 
-				if (props.TryGetValue("Rep4RepApiToken", out JsonElement token) && (token.GetString() is { Length: > 0 } stored)) {
+				if (Text(props, "Rep4RepApiToken") is { Length: > 0 } stored) {
 					// Still encrypted, the way the host keeps a secret setting: read, then sealed again for the plugin's file.
 					string plain = Secrets.Unprotect(stored);
 
@@ -141,9 +160,7 @@ public static partial class ConfigStore {
 				WritePluginSettings(values);
 			}
 
-			DateTime? holdUntil = props.TryGetValue("Rep4RepHoldUntil", out JsonElement until) && until.TryGetDateTime(out DateTime u) ? u.ToUniversalTime() : null;
-			DateTime? holdFrom = props.TryGetValue("Rep4RepHoldFrom", out JsonElement from2) && from2.TryGetDateTime(out DateTime f) ? f.ToUniversalTime() : null;
-			MigrateRep4RepState(holdUntil, holdFrom);
+			MigrateRep4RepState(Date(props, "Rep4RepHoldUntil"), Date(props, "Rep4RepHoldFrom"));
 			Log.Debug($"1.9.0: {Rep4RepPlugin}'s settings moved to the add-on's files (config/plugins)");
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// Not dropped from the config when they couldn't be kept: the next start tries again.
@@ -187,8 +204,18 @@ public static partial class ConfigStore {
 		}
 	}
 
-	/// <summary>One account's part. True when its file had any of the old keys.</summary>
+	/// <summary>One account's part. True when its file had any of the old keys. Never throws (see the global part).</summary>
 	public static bool MigrateRep4RepAccount(string name, string json) {
+		try {
+			return MigrateRep4RepAccountOnce(name, json);
+		} catch (Exception e) {
+			Log.Warn(new Said("couldn't move rep4rep's settings to the add-on: {0}", Log.Describe(e)), name);
+
+			return false;
+		}
+	}
+
+	private static bool MigrateRep4RepAccountOnce(string name, string json) {
 		Dictionary<string, JsonElement> props;
 
 		try {
@@ -290,7 +317,7 @@ public static partial class ConfigStore {
 				if (record?["Posts"] is JsonArray posts) {
 					long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
 
-					foreach (long at in posts.Select(static p => p?.GetValue<long>() ?? 0).Where(t => t >= cutoff).Order()) {
+					foreach (long at in posts.Select(static p => (p is JsonValue jv) && jv.TryGetValue(out long t) ? t : 0).Where(t => t >= cutoff).Order()) {
 						Plugins.Comments.Count(bot, new DateTime(at, DateTimeKind.Utc));
 					}
 				}
