@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "état des commentaires de nouveau enregistré - les commentaires reprennent",
     "couldn't save commenting state: {0} - no comments until it can be saved": "impossible d'enregistrer l'état des commentaires : {0} - aucun commentaire tant qu'il ne peut pas être enregistré",
     "can't save this account's comment count, so it won't post": "impossible d'enregistrer le compte de commentaires de ce compte, donc il ne publie pas",
-    "a plugin's button only runs that plugin's own commands": "le bouton d'une extension n'exécute que les commandes propres à cette extension"
+    "a plugin's button only runs that plugin's own commands": "le bouton d'une extension n'exécute que les commandes propres à cette extension",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "le plugin {0} écrit trop - ses lignes sont ignorées pour le reste de la minute",
+    "plugin {0} added more than {1} settings - the rest are left out": "le plugin {0} a ajouté plus de {1} réglages - les autres sont laissés de côté",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "commande de plugin '{0}' ignorée - une commande est un seul mot de lettres, chiffres et tirets",
+    "plugin {0} added more than {1} commands - the rest are left out": "le plugin {0} a ajouté plus de {1} commandes - les autres sont laissées de côté",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "le plugin {0} n'a pas fini ses événements depuis longtemps - les nouveaux sont ignorés jusqu'à ce qu'il ait fini",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "impossible de charger les plugins depuis {0} : {1} - démarrage sans eux",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "le plugin {0} est déjà chargé (depuis {1}) - la copie dans {2} est laissée de côté",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) n'a pas répondu en {2} secondes - il y travaille peut-être encore"
   },
   "settings": {
     "BackupToTelegram": {

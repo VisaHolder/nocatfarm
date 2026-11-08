@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "stan komentarzy znów zapisany - komentarze idą dalej",
     "couldn't save commenting state: {0} - no comments until it can be saved": "nie udało się zapisać stanu komentarzy: {0} - żadnych komentarzy, dopóki nie da się go zapisać",
     "can't save this account's comment count, so it won't post": "nie da się zapisać licznika komentarzy tego konta, więc nie publikuje",
-    "a plugin's button only runs that plugin's own commands": "przycisk wtyczki uruchamia tylko jej własne polecenia"
+    "a plugin's button only runs that plugin's own commands": "przycisk wtyczki uruchamia tylko jej własne polecenia",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "wtyczka {0} pisze za dużo - jej wiersze są pomijane do końca minuty",
+    "plugin {0} added more than {1} settings - the rest are left out": "wtyczka {0} dodała ponad {1} ustawień - reszta jest pominięta",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "komenda wtyczki '{0}' pominięta - komenda to jedno słowo z liter, cyfr i myślników",
+    "plugin {0} added more than {1} commands - the rest are left out": "wtyczka {0} dodała ponad {1} komend - reszta jest pominięta",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "wtyczka {0} od dawna nie skończyła ze swoimi zdarzeniami - nowe są pomijane, dopóki nie skończy",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "nie udało się wczytać wtyczek z {0}: {1} - start bez nich",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "wtyczka {0} jest już wczytana (z {1}) - kopia w {2} jest pominięta",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (wtyczka {1}) nie odpowiedziała w {2} sekund - może nadal nad tym pracuje"
   },
   "settings": {
     "BackupToTelegram": {

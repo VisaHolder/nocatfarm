@@ -14,13 +14,20 @@ namespace NocatFarm.Plugins;
 /// Handlers are wrapped so a throwing plugin cannot bring down the caller. These fire from Steam callback
 /// threads and from module loops; an unhandled exception there would take out whatever was in flight.
 /// </remarks>
-internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
+internal sealed partial class Host(BotManager mgr, string owner) : IPluginHost {
 	private readonly string _owner = owner;
 
 	private readonly Dictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> _commands =
 		new(StringComparer.OrdinalIgnoreCase);
 
-	internal IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> Commands => _commands;
+	/// <summary>A copy, taken under the lock <see cref="AddCommand"/> writes under.</summary>
+	internal IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> Commands {
+		get {
+			lock (_commandsGate) {
+				return new Dictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)>(_commands, StringComparer.OrdinalIgnoreCase);
+			}
+		}
+	}
 
 	public string AppVersion => Build.Version;
 
@@ -28,7 +35,66 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 
 	public IPluginAccount? Account(string name) => mgr.Get(name) is { } bot ? new AccountView(bot) : null;
 
-	public void Log(string message) => NocatFarm.Log.Info(new Said("[plugin] {0}", message));
+	public void Log(string message) {
+		if (MayWrite()) {
+			NocatFarm.Log.Info(new Said("[plugin] {0}", Clip(message)));
+		}
+	}
+
+	// ── 1.9.0 stress fixes: what one plugin may add, and write ──────────────────
+	/// <summary>The most commands one plugin adds. rep4rep has two; thousands made every help page and command line slow.</summary>
+	internal const int MaxCommands = 50;
+
+	/// <summary>The most settings one plugin adds. rep4rep has 13; thousands made its page (and every save) crawl.</summary>
+	internal const int MaxSettings = 200;
+
+	/// <summary>The most lines (log and notifications together) one plugin writes in a minute - the rest are dropped.</summary>
+	internal const int MaxLinesPerMinute = 300;
+
+	/// <summary>The longest line a plugin writes; past it, cut off.</summary>
+	internal const int MaxLineLength = 2000;
+
+	/// <summary>Events waiting for one plugin's handlers; past it, new ones are dropped (its handler is stuck).</summary>
+	internal const int MaxQueuedEvents = 1000;
+
+	private readonly Lock _writeGate = new();
+	private DateTime _minuteFrom;
+	private int _linesThisMinute;
+	private bool _tooManyCommandsSaid, _tooManySettingsSaid, _queueFullSaid;
+
+	/// <summary>
+	/// Whether this plugin may write another line this minute. A plugin logging in a tight loop filled the disk with the day's
+	/// log (and the window and the dashboard with nothing else): past the limit its lines are dropped, said once a minute.
+	/// </summary>
+	private bool MayWrite() {
+		bool first;
+
+		lock (_writeGate) {
+			DateTime now = DateTime.UtcNow;
+
+			if (now - _minuteFrom >= TimeSpan.FromMinutes(1)) {
+				_minuteFrom = now;
+				_linesThisMinute = 0;
+			}
+
+			_linesThisMinute++;
+
+			if (_linesThisMinute <= MaxLinesPerMinute) {
+				return true;
+			}
+
+			first = _linesThisMinute == MaxLinesPerMinute + 1;
+		}
+
+		if (first) {
+			NocatFarm.Log.Warn(new Said("plugin {0} is writing too much - its lines are dropped for the rest of the minute", _owner));
+		}
+
+		return false;
+	}
+
+	internal static string Clip(string? text) =>
+		string.IsNullOrEmpty(text) ? "" : text.Length <= MaxLineLength ? text : string.Concat(text.AsSpan(0, MaxLineLength), "…");
 
 	public Task<string> RunCommandAsync(string line) => Commands_RunAsync(line);
 
@@ -63,12 +129,25 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	}
 
 	public void AddSetting(PluginSetting setting) {
+		bool tooMany = false;
+
 		lock (_valuesGate) {
-			if (string.IsNullOrWhiteSpace(setting.Name) || _declared.Any(d => string.Equals(d.Name, setting.Name, StringComparison.OrdinalIgnoreCase))) {
+			// A name that can't be one: none, a colon (the per-account key's own), a line break - or one that would fill the page.
+			if ((setting == null) || string.IsNullOrWhiteSpace(setting.Name) || (setting.Name.Length > 64) || setting.Name.Any(static c => (c == ':') || char.IsControl(c))
+				|| _declared.Any(d => string.Equals(d.Name, setting.Name, StringComparison.OrdinalIgnoreCase))) {
 				return;
 			}
 
-			_declared.Add(setting);
+			if (_declared.Count >= MaxSettings) {
+				tooMany = !_tooManySettingsSaid;
+				_tooManySettingsSaid = true;
+			} else {
+				_declared.Add(setting with { Label = Clip(setting.Label), Help = Clip(setting.Help), Default = setting.Default ?? "" });
+			}
+		}
+
+		if (tooMany) {
+			NocatFarm.Log.Warn(new Said("plugin {0} added more than {1} settings - the rest are left out", _owner, MaxSettings));
 		}
 	}
 
@@ -158,8 +237,11 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 				// asked for as "every" found "Every" until the first restart and never after.
 				Dictionary<string, string> read = new(StringComparer.OrdinalIgnoreCase);
 
-				foreach ((string key, string value) in System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(SettingsFile)) ?? []) {
-					read[key] = value;
+				foreach ((string key, string? value) in System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string?>>(File.ReadAllText(SettingsFile)) ?? []) {
+					// A null (a hand edit) is no value: the default, not a null handed to the plugin as its text.
+					if (value != null) {
+						read[key] = value;
+					}
 				}
 
 				_values = read;
@@ -217,22 +299,51 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	}
 
 	public void AddCommand(string verb, string usage, string help, Func<string[], Task<string>> handler) {
-		if (string.IsNullOrWhiteSpace(verb)) {
+		if (string.IsNullOrWhiteSpace(verb) || (handler == null)) {
 			return;
 		}
 
 		verb = verb.Trim().ToLowerInvariant();
 
-		// A plugin must not be able to shadow a built-in. Quietly winning the name would mean `stop` doing
-		// something other than stopping, which is the worst possible surprise.
-		if (NocatFarm.Commands.All.Any(c => c.Matches(verb)) || _commands.ContainsKey(verb)) {
-			NocatFarm.Log.Warn(new Said("plugin command '{0}' ignored - that name is taken", verb));
+		// One word that can be typed: a space, a line break or a thousand characters in it could never be, and went on every
+		// help page as it was.
+		if (!VerbRx().IsMatch(verb)) {
+			NocatFarm.Log.Warn(new Said("plugin command '{0}' ignored - a command is one word of letters, digits and dashes", Clip(verb.Length > 40 ? verb[..40] : verb)));
 
 			return;
 		}
 
-		_commands[verb] = (usage, help, handler);
+		bool tooMany = false;
+
+		// Under the lock the reads take: a plugin adding commands from its own thread while a command line looked them up
+		// threw "collection was modified" at whoever was typing - or broke the dictionary for good.
+		lock (_commandsGate) {
+			// A plugin must not be able to shadow a built-in. Quietly winning the name would mean `stop` doing
+			// something other than stopping, which is the worst possible surprise.
+			if (NocatFarm.Commands.All.Any(c => c.Matches(verb)) || _commands.ContainsKey(verb)) {
+				NocatFarm.Log.Warn(new Said("plugin command '{0}' ignored - that name is taken", verb));
+
+				return;
+			}
+
+			if (_commands.Count >= MaxCommands) {
+				tooMany = !_tooManyCommandsSaid;
+				_tooManyCommandsSaid = true;
+			} else {
+				string owner = _owner, name = verb;
+				_commands[verb] = (Clip(usage), Clip(help), words => PluginHost.RunCommandAsync(owner, name, handler, words));
+			}
+		}
+
+		if (tooMany) {
+			NocatFarm.Log.Warn(new Said("plugin {0} added more than {1} commands - the rest are left out", _owner, MaxCommands));
+		}
 	}
+
+	private readonly Lock _commandsGate = new();
+
+	[System.Text.RegularExpressions.GeneratedRegex(@"^[\p{L}\p{N}][\p{L}\p{N}_-]{0,31}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex VerbRx();
 
 	// ── 1.9.0 ───────────────────────────────────────────────────────────────
 	public string Language => Live.Global.Language ?? "en";
@@ -297,8 +408,8 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	}
 
 	public void Notify(string message, string? account = null) {
-		if (!string.IsNullOrWhiteSpace(message)) {
-			NocatFarm.Log.Reward(new Said("[plugin] {0}", message), string.IsNullOrEmpty(account) ? "plugins" : account, Topic.Plugins);
+		if (!string.IsNullOrWhiteSpace(message) && MayWrite()) {
+			NocatFarm.Log.Reward(new Said("[plugin] {0}", Clip(message)), string.IsNullOrEmpty(account) ? "plugins" : Clip(account), Topic.Plugins);
 		}
 	}
 
@@ -330,16 +441,60 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	/// saw the part before the await. An async void hands its failure to the SynchronizationContext it started under,
 	/// so it starts under one that catches, and says whose plugin it was. Nothing changes for the plugin.
 	/// </remarks>
+	/// <remarks>
+	/// 1.9.0: and not on the caller's thread. These are raised from an account's Steam callbacks and its module loops, and a
+	/// handler that blocked - a Thread.Sleep, a .Result on a slow website - held that account still: no more callbacks, no
+	/// more drops, an account that looked signed in and did nothing. Each plugin's events now go one after another, in the
+	/// order they happened, on a thread of their own; a plugin stuck in one stops hearing new ones (dropped past
+	/// <see cref="MaxQueuedEvents"/>, said once) and nothing else waits for it.
+	/// </remarks>
 	private void Safely<T>(T? handlers, Action<T> raise, string which) where T : Delegate {
 		if (handlers == null) {
 			return;
 		}
 
-		PluginSync sync = new(_owner, which);
+		if (Interlocked.Increment(ref _queuedEvents) > MaxQueuedEvents) {
+			Interlocked.Decrement(ref _queuedEvents);
 
-		foreach (T handler in handlers.GetInvocationList().Cast<T>()) {
-			sync.Run(_ => raise(handler), null);
+			if (!_queueFullSaid) {
+				_queueFullSaid = true;
+				NocatFarm.Log.Warn(new Said("plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does", _owner));
+			}
+
+			return;
 		}
+
+		PluginSync sync = new(_owner, which);
+		T[] each = [.. handlers.GetInvocationList().Cast<T>()];
+
+		lock (_eventsGate) {
+			_events = _events.ContinueWith(_ => {
+				try {
+					foreach (T handler in each) {
+						sync.Run(_ => raise(handler), null);
+					}
+				} finally {
+					if (Interlocked.Decrement(ref _queuedEvents) == 0) {
+						_queueFullSaid = false;
+					}
+				}
+			}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+		}
+	}
+
+	private readonly Lock _eventsGate = new();
+	private Task _events = Task.CompletedTask;
+	private int _queuedEvents;
+
+	/// <summary>For the tests: until every event raised so far has been handled (or the time is up).</summary>
+	internal bool EventsSettled(TimeSpan within) {
+		Task last;
+
+		lock (_eventsGate) {
+			last = _events;
+		}
+
+		return last.Wait(within);
 	}
 
 	/// <summary>Where a plugin's handlers - and whatever an async one does after its awaits - run: failures logged, never thrown.</summary>
@@ -358,10 +513,15 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 				d(state);
 			} catch (Exception e) {
 				Interlocked.Increment(ref Caught);
-				NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", owner, which, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
 
-				// Where in the plugin, for whoever wrote it.
-				NocatFarm.Log.StackToFile(e);
+				// A few times an hour at most: a handler that throws at every event (every card, every sign-in) wrote its
+				// warning and whole stack each time.
+				if (PluginHost.MaySay($"{owner}:{which}")) {
+					NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", owner, which, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+
+					// Where in the plugin, for whoever wrote it.
+					NocatFarm.Log.StackToFile(e);
+				}
 			} finally {
 				SetSynchronizationContext(was);
 			}

@@ -51,6 +51,39 @@ public static class AtomicFile {
 		}
 	}
 
+	/// <summary>
+	/// 1.9.0: the half-written copies a stop mid-write left behind (a power cut, a kill) - "&lt;file&gt;.&lt;32 hex&gt;.tmp" - deleted at
+	/// start, before anything writes, everywhere under <paramref name="folder"/>. Never read and never finished, they only piled
+	/// up: one more for every power cut that landed in a save. Returns how many went.
+	/// </summary>
+	public static int SweepLeftovers(string folder) {
+		int gone = 0;
+
+		try {
+			if (!Directory.Exists(folder)) {
+				return 0;
+			}
+
+			foreach (string tmp in Directory.EnumerateFiles(folder, "*.tmp", SearchOption.AllDirectories)) {
+				string name = Path.GetFileName(tmp);
+
+				// Only this class's own: the name of a file, a dot, 32 hex digits, ".tmp".
+				if ((name.Length > 37) && (name[^37] == '.') && name[^36..^4].All(Uri.IsHexDigit)) {
+					try {
+						File.Delete(tmp);
+						gone++;
+					} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+						// held or not ours to delete - next start
+					}
+				}
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// a folder that can't be looked through is said by whatever reads it
+		}
+
+		return gone;
+	}
+
 	private static void TryDelete(string path) {
 		try {
 			File.Delete(path);

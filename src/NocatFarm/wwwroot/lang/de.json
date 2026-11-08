@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "Kommentarstand wieder gespeichert - Kommentare gehen weiter",
     "couldn't save commenting state: {0} - no comments until it can be saved": "konnte den Kommentarstand nicht speichern: {0} - keine Kommentare, bis er sich speichern lässt",
     "can't save this account's comment count, so it won't post": "kann den Kommentarzähler dieses Kontos nicht speichern, also postet es nicht",
-    "a plugin's button only runs that plugin's own commands": "ein Button eines Plugins führt nur die eigenen Befehle dieses Plugins aus"
+    "a plugin's button only runs that plugin's own commands": "ein Button eines Plugins führt nur die eigenen Befehle dieses Plugins aus",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "Plugin {0} schreibt zu viel - seine Zeilen werden für den Rest der Minute verworfen",
+    "plugin {0} added more than {1} settings - the rest are left out": "Plugin {0} hat mehr als {1} Einstellungen angelegt - der Rest wird weggelassen",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "Plugin-Befehl '{0}' ignoriert - ein Befehl ist ein Wort aus Buchstaben, Ziffern und Bindestrichen",
+    "plugin {0} added more than {1} commands - the rest are left out": "Plugin {0} hat mehr als {1} Befehle angelegt - der Rest wird weggelassen",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "Plugin {0} ist seit Langem nicht mit seinen Ereignissen fertig - neue werden verworfen, bis es so weit ist",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "Plugins ließen sich nicht aus {0} laden: {1} - Start ohne sie",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "Plugin {0} ist schon geladen (aus {1}) - die Kopie in {2} wird weggelassen",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (Plugin {1}) hat in {2} Sekunden nicht geantwortet - vielleicht arbeitet es noch daran"
   },
   "settings": {
     "BackupToTelegram": {

@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "댓글 상태를 다시 저장했습니다 - 댓글을 계속합니다",
     "couldn't save commenting state: {0} - no comments until it can be saved": "댓글 상태를 저장하지 못했습니다: {0} - 저장될 때까지 댓글을 달지 않습니다",
     "can't save this account's comment count, so it won't post": "이 계정의 댓글 수를 저장할 수 없어 게시하지 않습니다",
-    "a plugin's button only runs that plugin's own commands": "플러그인의 버튼은 그 플러그인 자신의 명령만 실행합니다"
+    "a plugin's button only runs that plugin's own commands": "플러그인의 버튼은 그 플러그인 자신의 명령만 실행합니다",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "플러그인 {0}이(가) 너무 많이 기록합니다 - 남은 1분 동안의 줄은 버려집니다",
+    "plugin {0} added more than {1} settings - the rest are left out": "플러그인 {0}이(가) 설정을 {1}개보다 많이 추가했습니다 - 나머지는 빠집니다",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "플러그인 명령 '{0}' 무시 - 명령은 글자, 숫자, 대시로 된 한 단어입니다",
+    "plugin {0} added more than {1} commands - the rest are left out": "플러그인 {0}이(가) 명령을 {1}개보다 많이 추가했습니다 - 나머지는 빠집니다",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "플러그인 {0}이(가) 오랫동안 이벤트 처리를 끝내지 못했습니다 - 끝낼 때까지 새 이벤트는 버려집니다",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "{0}에서 플러그인을 불러오지 못했습니다: {1} - 플러그인 없이 시작합니다",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "플러그인 {0}은(는) 이미 불러왔습니다 ({1}에서) - {2}에 있는 사본은 빠집니다",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (플러그인 {1})이(가) {2}초 동안 응답하지 않았습니다 - 아직 처리 중일 수 있습니다"
   },
   "settings": {
     "BackupToTelegram": {

@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "estado de comentarios guardado de nuevo: los comentarios siguen",
     "couldn't save commenting state: {0} - no comments until it can be saved": "no se pudo guardar el estado de comentarios: {0}; no hay comentarios hasta que se pueda guardar",
     "can't save this account's comment count, so it won't post": "no se puede guardar el recuento de comentarios de esta cuenta, así que no publica",
-    "a plugin's button only runs that plugin's own commands": "el botón de un plugin solo ejecuta los comandos propios de ese plugin"
+    "a plugin's button only runs that plugin's own commands": "el botón de un plugin solo ejecuta los comandos propios de ese plugin",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "el plugin {0} escribe demasiado - sus líneas se descartan durante el resto del minuto",
+    "plugin {0} added more than {1} settings - the rest are left out": "el plugin {0} añadió más de {1} ajustes - el resto se deja fuera",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "comando de plugin '{0}' ignorado - un comando es una palabra de letras, dígitos y guiones",
+    "plugin {0} added more than {1} commands - the rest are left out": "el plugin {0} añadió más de {1} comandos - el resto se deja fuera",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "el plugin {0} lleva mucho sin terminar con sus eventos - los nuevos se descartan hasta que lo haga",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "no se pudieron cargar los plugins de {0}: {1} - se inicia sin ellos",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "el plugin {0} ya está cargado (de {1}) - la copia de {2} se deja fuera",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) no ha respondido en {2} segundos - puede que siga trabajando en ello"
   },
   "settings": {
     "BackupToTelegram": {

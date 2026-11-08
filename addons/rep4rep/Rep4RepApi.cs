@@ -60,8 +60,15 @@ public sealed class Rep4RepApi : IDisposable {
 	public Rep4RepApi(HttpMessageHandler? handler = null) {
 		_http = handler == null ? new HttpClient() : new HttpClient(handler);
 		_http.Timeout = TimeSpan.FromSeconds(30);
+
+		// An answer is a few kilobytes. Unbounded, a broken or hostile answer of gigabytes was read into memory whole - on a
+		// TV box, the end of the app. Past this the call fails like any other.
+		_http.MaxResponseContentBufferSize = MaxAnswerBytes;
 		_http.DefaultRequestHeaders.Add("User-Agent", "nocatFarm-rep4rep");
 	}
+
+	/// <summary>The biggest answer read from rep4rep.</summary>
+	internal const int MaxAnswerBytes = 4 * 1024 * 1024;
 
 	private static Uri Url(string path) => new($"{Base}{path}");
 

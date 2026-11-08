@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "состояние комментариев снова сохранено - комментарии продолжаются",
     "couldn't save commenting state: {0} - no comments until it can be saved": "не удалось сохранить состояние комментариев: {0} - никаких комментариев, пока его не удастся сохранить",
     "can't save this account's comment count, so it won't post": "счётчик комментариев этого аккаунта не сохраняется, поэтому он не публикует",
-    "a plugin's button only runs that plugin's own commands": "кнопка плагина выполняет только собственные команды этого плагина"
+    "a plugin's button only runs that plugin's own commands": "кнопка плагина выполняет только собственные команды этого плагина",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "плагин {0} пишет слишком много - его строки отбрасываются до конца минуты",
+    "plugin {0} added more than {1} settings - the rest are left out": "плагин {0} добавил больше {1} настроек - остальные не учитываются",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "команда плагина '{0}' пропущена - команда - это одно слово из букв, цифр и дефисов",
+    "plugin {0} added more than {1} commands - the rest are left out": "плагин {0} добавил больше {1} команд - остальные не учитываются",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "плагин {0} давно не может закончить со своими событиями - новые отбрасываются, пока он не закончит",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "не удалось загрузить плагины из {0}: {1} - запуск без них",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "плагин {0} уже загружен (из {1}) - копия в {2} не учитывается",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (плагин {1}) не ответил за {2} секунд - возможно, он всё ещё работает над этим"
   },
   "settings": {
     "BackupToTelegram": {

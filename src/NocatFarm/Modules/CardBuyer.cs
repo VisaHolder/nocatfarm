@@ -2266,11 +2266,14 @@ public sealed class BuyLedger(string path) {
 		try {
 			Stored? read = File.Exists(path) ? JsonSerializer.Deserialize<Stored>(File.ReadAllText(path)) ?? throw new JsonException("empty") : null;
 			_onDisk = read != null;
-			_entries = read?.Entries ?? [];
-			_sold = read?.Sold ?? [];
-			_waits = [.. (read?.Waits ?? []).Where(static w => w.Source != null)];   // 1.8.2: a wait from before it said whose starts again
-			_crafts = read?.Crafts ?? [];
-			_lows = read?.Lows ?? [];
+			// 1.9.0: a null in a list ("Entries": [null], from a hand edit) is nothing written down - left out. Kept, it threw at
+			// every look that went through the list, and buying (booster packs too) stopped until the file was fixed.
+			// A purchase with no card name is still money spent: kept, with an empty name.
+			_entries = [.. (read?.Entries ?? []).Where(static e => e != null).Select(static e => e.Card == null ? e with { Card = "" } : e)];
+			_sold = [.. (read?.Sold ?? []).Where(static e => e != null)];
+			_waits = [.. (read?.Waits ?? []).Where(static w => w?.Source != null)];   // 1.8.2: a wait from before it said whose starts again
+			_crafts = [.. (read?.Crafts ?? []).Where(static e => e != null)];
+			_lows = [.. (read?.Lows ?? []).Where(static e => e != null)];
 			_okDayNoLimit = read?.OkDayNoLimit;
 			_okWeekNoLimit = read?.OkWeekNoLimit;
 			_goal = read?.Goal;

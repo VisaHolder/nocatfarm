@@ -3409,7 +3409,15 @@
     "commenting state saved again - comments can go on": "评论状态已再次保存——评论继续",
     "couldn't save commenting state: {0} - no comments until it can be saved": "无法保存评论状态：{0}——在能保存之前不发评论",
     "can't save this account's comment count, so it won't post": "无法保存这个账号的评论计数，所以不会发布",
-    "a plugin's button only runs that plugin's own commands": "插件的按钮只能运行该插件自己的命令"
+    "a plugin's button only runs that plugin's own commands": "插件的按钮只能运行该插件自己的命令",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "插件 {0} 写入过多 - 这一分钟剩下的行将被丢弃",
+    "plugin {0} added more than {1} settings - the rest are left out": "插件 {0} 添加了超过 {1} 个设置 - 其余的不予采用",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "插件命令 '{0}' 被忽略 - 命令是由字母、数字和连字符组成的一个词",
+    "plugin {0} added more than {1} commands - the rest are left out": "插件 {0} 添加了超过 {1} 个命令 - 其余的不予采用",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "插件 {0} 很久都没处理完它的事件 - 在它处理完之前,新事件将被丢弃",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "无法从 {0} 加载插件:{1} - 不带插件启动",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "插件 {0} 已经加载(来自 {1})- {2} 中的副本不予采用",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}'(插件 {1}){2} 秒内没有回应 - 它可能仍在处理"
   },
   "settings": {
     "BackupToTelegram": {
