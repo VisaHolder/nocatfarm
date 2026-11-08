@@ -125,11 +125,14 @@ Steam sales, and free games if you turn that on.
 - Spare items (off until you turn it on): spare cards and duplicate backgrounds and emoticons are turned into gems
   or sold, whichever pays more, a few a day, never anything worth more than a price limit, priced in each account's
   own wallet currency. Turning it on shows what it would do first and asks you to confirm.
-- Booster packs can open by themselves, always or only when the cards are worth more than the pack - off until you
-  choose. Steam Points can buy levels of the seasonal badge, keeping at least 1,000 and spending at most 3,000 a week,
-  once you turn it on (it shows what it would buy first and asks you to confirm). Buying cards (off until you turn
-  it on) buys the cards your badges are missing at the cheapest price, whole sets only, within a day's and a week's
-  spending limit (1.50 and 8.00 in your wallet's currency) - and, if you like, the cheapest full sets. Nothing that
+- Booster packs can open by themselves, always, when the cards are worth more than the pack, when even the three
+  cheapest cards of the pack are worth more, or when either - off until you choose. Steam Points can buy levels of the
+  seasonal badge, keeping at least 1,000 and spending at most 3,000 a week, once you turn it on (it shows what it would
+  buy first and asks you to confirm). Buying cards (off until you turn it on) buys the cards your badges are missing at
+  the cheapest price, whole sets only, within a day's and a week's spending limit (1.50 and 8.00 in your wallet's
+  currency) - and, if you like, the cheapest full sets. It can also buy a game's booster packs instead (off until you
+  turn it on), only when the packs and the cards they're expected to leave missing come out at least a tenth cheaper
+  than the cards - a pack is 3 random cards of the whole set, so that's mostly small sets with cheap packs. Nothing that
   sells, opens or uses up your items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.

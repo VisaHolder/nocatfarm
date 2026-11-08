@@ -47,7 +47,9 @@ public static class BoosterPick {
 
 	/// <summary>The games in order, closest first, and how many were left out and why.</summary>
 	/// <param name="Dear">1.8.2: games whose cards are worth more sold than the levels they'd make (<see cref="DearCards"/>) - never packed for.</param>
-	public sealed record Ranking(IReadOnlyList<Candidate> Ranked, int Maxed, int Finished, int NeverOpen, int MadeToday, int Dear = 0);
+	/// <param name="Bought">1.9.0: games with booster packs buying cards bought and hasn't opened yet (BuyLedger.PacksToOpen) - never
+	/// packed for meanwhile, so a pack made here and one bought are never taken for each other.</param>
+	public sealed record Ranking(IReadOnlyList<Candidate> Ranked, int Maxed, int Finished, int NeverOpen, int MadeToday, int Dear = 0, int Bought = 0);
 
 	/// <summary>What automatic does next: make a pack for <see cref="Next"/>, or nothing for now, and why.</summary>
 	public sealed record Choice(Candidate? Next, Said Why, bool WaitingForGems = false);
@@ -62,9 +64,10 @@ public static class BoosterPick {
 	/// worth more sold than kept (<paramref name="dear"/>) - its cards are being sold, so a pack for it would be wasted.
 	/// </summary>
 	public static Ranking Rank(Boosters.Page page, IReadOnlyDictionary<uint, int> normalLevels, IReadOnlyDictionary<uint, Dictionary<string, int>> normalCards,
-		IReadOnlyCollection<uint> neverOpen, IReadOnlyDictionary<uint, DateTime> madeAt, DateTime now, IReadOnlyCollection<uint>? dear = null) {
+		IReadOnlyCollection<uint> neverOpen, IReadOnlyDictionary<uint, DateTime> madeAt, DateTime now, IReadOnlyCollection<uint>? dear = null,
+		IReadOnlyCollection<uint>? bought = null) {
 		List<Candidate> ranked = [];
-		int maxed = 0, finished = 0, never = 0, today = 0, sold = 0;
+		int maxed = 0, finished = 0, never = 0, today = 0, sold = 0, packsBought = 0;
 
 		foreach (Boosters.Offer offer in page.Offers.Values) {
 			int size = SetSize(offer.Price);
@@ -93,6 +96,12 @@ public static class BoosterPick {
 				continue;
 			}
 
+			if (bought?.Contains(offer.AppId) == true) {
+				packsBought++;
+
+				continue;
+			}
+
 			if (offer.Unavailable || (madeAt.TryGetValue(offer.AppId, out DateTime made) && (now - made < TimeSpan.FromDays(1)))) {
 				today++;
 
@@ -114,7 +123,7 @@ public static class BoosterPick {
 			ranked.Add(new Candidate(offer.AppId, offer.Name, offer.Price, size, level, have, size - have, complete));
 		}
 
-		return new Ranking([.. ranked.OrderBy(static c => c.Missing).ThenBy(static c => c.Price).ThenBy(static c => c.App)], maxed, finished, never, today, sold);
+		return new Ranking([.. ranked.OrderBy(static c => c.Missing).ThenBy(static c => c.Price).ThenBy(static c => c.App)], maxed, finished, never, today, sold, packsBought);
 	}
 
 	/// <summary>
@@ -533,15 +542,18 @@ public static class BoosterPick {
 		}
 
 		sb.AppendLine().Append(CultureInfo.InvariantCulture,
-			$"  Left out: {ranking.Maxed} at badge level 5, {ranking.Finished} the cards held already finish, {ranking.NeverOpen} never opened, {ranking.MadeToday} made in the last day{(ranking.Dear > 0 ? $", {ranking.Dear} whose cards are worth more sold than kept" : "")}.");
+			$"  Left out: {ranking.Maxed} at badge level 5, {ranking.Finished} the cards held already finish, {ranking.NeverOpen} never opened, {ranking.MadeToday} made in the last day{(ranking.Dear > 0 ? $", {ranking.Dear} whose cards are worth more sold than kept" : "")}{(ranking.Bought > 0 ? $", {ranking.Bought} whose bought packs are still to open" : "")}.");
 		sb.AppendLine().Append("  The best case is about 2,000 gems a level (a set's worth of packs with no repeats); each card already missing makes it more.");
 
 		if (!crafting) {
 			sb.AppendLine().Append("  'Craft badges from card sets' is off - finished sets wait until it's on.");
 		}
 
+		// 1.9.0: "Open booster packs" is 0 never, 1 on the average pull, 2 always, 3 on the worst pull, 4 on either.
 		if ((make != Auto) && (openChoice != 2)) {
-			sb.AppendLine().Append("  Packs made by 'games I pick' follow 'Open booster packs'; automatic opens its own.");
+			sb.AppendLine().Append(openChoice is 1 or 3 or 4
+				? "  Packs made by 'games I pick' open only when 'Open booster packs' finds their cards worth more than the sealed pack; automatic opens its own."
+				: "  Packs made by 'games I pick' stay sealed - 'Open booster packs' is never; automatic opens its own.");
 		}
 
 		return sb.ToString();

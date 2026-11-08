@@ -3390,7 +3390,19 @@
     "Remove this add-on? Its settings are kept, in case you put it back.": "Retirer ce module complémentaire ? Ses paramètres sont conservés, au cas où vous le remettriez.",
     "Official add-ons": "Modules complémentaires officiels",
     "Installed": "Installés",
-    "set - type a new one to replace it": "défini - tapez-en un nouveau pour le remplacer"
+    "set - type a new one to replace it": "défini - tapez-en un nouveau pour le remplacer",
+    "no card of it is priced yet - kept until there is": "aucune de ses cartes n'a encore de prix - gardé en attendant",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "même ses 3 cartes les moins chères valent environ {0}, le booster {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "vaut plus fermé : le booster {0}, ses 3 cartes les moins chères environ {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "d'autres boosters attendent · confirme d'abord ceux dans l'app Steam",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "le {0} acheté n'est pas dans l'inventaire - laissé à « Ouvrir les boosters »",
+    "the {0} it bought is on the move - opening it another time": "le {0} acheté est en déplacement - il sera ouvert une autre fois",
+    "couldn't open the {0} it bought: {1}": "impossible d'ouvrir le {0} acheté : {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "confirme l'achat de boosters dans l'app Steam · {0} booster(s) pour {1}",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} booster(s) et {1} carte(s) achetés · {2} · {3} série(s) à fabriquer",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} booster(s) de {1} à {2} chacun pour {3}, au lieu de ses {4} carte(s) manquante(s) ({5}) - ils devraient laisser environ {6} carte(s) à acheter ensuite, environ {7} en tout - niveau {8} à {9}",
+    "bought to level the {0} badge": "acheté pour monter le badge de {0}",
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} booster(s) que nocat.farm doit encore ouvrir ne sont pas envoyés - ils sont d'abord ouverts"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4798,8 +4810,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Ouvrir les boosters",
-      "tip": "Ouvre les boosters de l'inventaire, pour que leurs cartes comptent pour les badges (ou deviennent des objets en trop). Pour monter de niveau, choisissez toujours. Jamais par défaut - rien n'est ouvert tant que vous ne le choisissez pas. « Seulement quand les cartes valent plus » n'ouvre un booster que si ses 3 cartes valent plus sur le marché que le booster scellé - par exemple des cartes à 0.08 + 0.05 + 0.05 battent un booster à 0.15 ; un prix inconnu le laisse fermé. Toujours : chaque booster. Les boosters créés par automatique dans « Créer des boosters » sont ouverts par lui, quoi que dise ce réglage. Un compte en mode humain n'ouvre les boosters que pendant sa journée.",
-      "choices": "0 jamais | 1 seulement quand les cartes valent plus | 2 toujours"
+      "tip": "Ouvre les boosters de l'inventaire, pour que leurs cartes comptent pour les badges (ou deviennent des objets en trop). Pour monter de niveau, choisissez toujours. Jamais par défaut - rien n'est ouvert tant que vous ne le choisissez pas. « Seulement quand les cartes valent plus » ouvre un booster si ses 3 cartes valent en moyenne plus sur le marché que le booster scellé - par exemple des cartes à 0.08 + 0.05 + 0.05 battent un booster à 0.15 ; une carte brillante compte pour une chance sur 100 par booster, jamais plus ; un prix inconnu le laisse fermé. « Même quand seules les trois moins chères valent plus » ouvre un booster dès que son pire tirage - trois fois la carte la moins chère de la série, toutes les cartes de la série ayant un prix - vaut plus que le booster ; c'est la façon la plus sûre de vendre des boosters pour leurs cartes. « Quand l'un des deux » l'ouvre si la moyenne ou le pire tirage bat le booster. « Toujours » : chaque booster. Les boosters créés par automatique dans « Créer des boosters » sont ouverts par lui, quoi que dise ce réglage. Un compte en mode humain n'ouvre les boosters que pendant sa journée.",
+      "choices": "0 jamais | 1 seulement quand les cartes valent plus | 2 toujours | -1 même quand seules les trois moins chères valent plus | -2 quand l'un des deux"
     },
     "SpareAction": {
       "label": "Que faire des objets en trop",
@@ -4972,6 +4984,10 @@
     "SendAddons": {
       "label": "Envoyer les messages des modules complémentaires",
       "tip": "Ce qu'envoient les modules complémentaires - par exemple chaque commentaire crédité par le module rep4rep. Ça peut faire beaucoup."
+    },
+    "BuyBooster": {
+      "label": "Acheter des boosters quand ils reviennent moins cher",
+      "tip": "Avant d'acheter les cartes qui manquent à un badge, il calcule si les boosters du jeu reviendraient moins cher. Un booster, c'est 3 cartes au hasard de toute la série - les doublons et les cartes que vous avez déjà ne comptent pas -, donc des boosters laissent le plus souvent quelques cartes manquantes, achetées ensuite. Il n'achète des boosters que si les boosters et les cartes qu'ils devraient laisser coûtent au moins un dixième de moins que les cartes manquantes. Par exemple, une série de 5 cartes à qui il en manque 4 à 0.20 chacune (0.80) : 3 boosters à 0.10 devraient laisser environ une demi-carte, environ 0.41 en tout - des boosters. Une série de 8 cartes à qui il en manque 4 à 0.08, avec des boosters à 0.25 : les cartes. Les boosters achetés s'ouvrent tout seuls ; le passage suivant achète ce qui manque encore. Une série par passage. 'buy preview' montre les chiffres. Désactivé par défaut."
     }
   }
 }

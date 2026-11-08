@@ -722,9 +722,10 @@ public static partial class Settings {
 			cfg.AchievementSkipMultiplayer = cfg.LegitMode;
 		}
 
-		// Booster packs are never opened on a human-mode account unless you turn it on: turning human mode on takes "only
-		// when the cards are worth more" to never. "Always", chosen, stays.
-		if (cfg.LegitMode && (cfg.OpenBoosterPacks == 1)) {
+		// Booster packs are never opened on a human-mode account unless you turn it on: turning human mode on takes the
+		// price-aware choices - "only when the cards are worth more", "even when only the cheapest three are worth more",
+		// "when either" - to never. "Always", chosen, stays.
+		if (cfg.LegitMode && Core.Spare.WeighsPacks(cfg.OpenBoosterPacks)) {
 			cfg.OpenBoosterPacks = 0;
 		}
 
@@ -1839,8 +1840,8 @@ public static partial class Settings {
 			"Only does anything while \"Buy missing cards\" is on. Before automatic makes a pack, it works out what 1,000 gems are worth in badge levels at today's market prices, four ways: sell a sack of gems and let buying cards spend the money, make a pack and sell it sealed, make a pack and sell its 3 cards, or open packs for the closest badge as before - and does the one that gives the most. For example, a sack that pays 0.45 buys about 1.8 levels of cheap sets, while packs for the closest badge give about 0.3. A way that uses the market has to win clearly (by 15%) over a safer one; if prices aren't known, the gems stay loose. It never sells for less than the gems are worth, lists at most 10 things a day, and you confirm each listing in the Steam app like any listing. Only tradable gems are sold; untradable ones still go to the closest badge. Cards from packs it makes to sell are sold whatever the spare-items price limit says - they were made for money. Games on your keep list are never touched. 'booster plan' shows the numbers.",
 			ShowWhen: "BoosterMake=2", Group: "Making packs", Part: SecPacks),
 		new("OpenBoosterPacks", "Open booster packs", SecItems, SettingKind.Choice,
-			"Opens booster packs in the inventory, so their cards count toward badges (or become spare items). For levelling up, pick always. Never by default - nothing opens until you choose. \"Only when the cards are worth more\" opens a pack only when its 3 cards are worth more on the market than the sealed pack - for example cards at 0.08 + 0.05 + 0.05 beat a pack at 0.15; an unknown price keeps it shut. Always: every pack. Packs that automatic \"Make booster packs\" made are opened by it whatever this says. A human-mode account opens packs only during its day.",
-			Choices: "0 never | 1 only when the cards are worth more | 2 always", Group: "Opening packs", Part: SecPacks),
+			"Opens booster packs in the inventory, so their cards count toward badges (or become spare items). For levelling up, pick always. Never by default - nothing opens until you choose. \"Only when the cards are worth more\" opens a pack when its 3 cards are worth more on the market than the sealed pack on average - for example cards at 0.08 + 0.05 + 0.05 beat a pack at 0.15; a foil counts at a 1 in 100 chance a pack, never more; an unknown price keeps it shut. \"Even when only the cheapest three are worth more\" opens a pack whenever its worst pull - three of the set's cheapest card, with every card of the set priced - is worth more than the pack; that's the safest way to sell packs for their cards. \"When either\" opens it if the average or the worst pull beats the pack. \"Always\": every pack. Packs that automatic \"Make booster packs\" made are opened by it whatever this says. A human-mode account opens packs only during its day.",
+			Choices: "0 never | 1 only when the cards are worth more | 2 always | -1 even when only the cheapest three are worth more | -2 when either", Group: "Opening packs", Part: SecPacks),
 		new("BoosterOpenNewDays", "Leave new packs alone for", SecItems, SettingKind.Int,
 			"Days a pack stays shut after it arrives. For example 7: a pack from a Monday opens from the next Monday. 0 opens them straight away. Packs nocat.farm made itself aren't held back - they're opened at the next chance.",
 			Advanced: true, Min: 0, Max: 30, Group: "Opening packs", Part: SecPacks),
@@ -1880,6 +1881,9 @@ public static partial class Settings {
 			"Buys the cards a badge is missing for its next level, at the cheapest price on the market, so it can be crafted - the cheapest level first, and only whole sets. For example, with 4 of 5 cards held it buys the 5th, about 0.05 to 0.15. It spends this account's Steam wallet. Off by default on every account. Turning it on first shows what it would buy and for how much, and asks you to confirm; off stops it at once. Needs \"Craft badges from card sets\" on.", Group: "What it does", Part: SecBuy),
 		new("BuyFullSets", "Buy the cheapest full sets", SecItems, SettingKind.Bool,
 			"Also buys whole card sets for games it has no cards of, cheapest first, one badge level (100 XP) each. Sets where a card has fewer than 2 on the market, or one very cheap card that makes the set look cheaper than it is, are left out. Off: only cards for badges it has started.",
+			ShowWhen: "BuyCards=true", Group: "What it does", Part: SecBuy),
+		new("BuyBooster", "Buy booster packs when they're cheaper", SecItems, SettingKind.Bool,
+			"Before it buys the cards a badge is missing, works out whether the game's booster packs would come out cheaper. A pack is 3 random cards of the whole set - repeats and cards you have count for nothing - so packs usually leave some missing cards, bought afterwards. It buys packs only when the packs and the cards they're expected to leave cost at least a tenth less than the missing cards. For example, a 5-card set missing 4 cards at 0.20 each (0.80): 3 packs at 0.10 are expected to leave about half a card, about 0.41 in all - packs. An 8-card set missing 4 cards at 0.08 with packs at 0.25: the cards. Bought packs are opened by themselves; the next look buys what's still missing. One set a look. 'buy preview' shows the numbers. Off by default.",
 			ShowWhen: "BuyCards=true", Group: "What it does", Part: SecBuy),
 		new("BuyDailyLimit", "Spend at most a day", SecItems, SettingKind.Float,
 			"The most it spends in any 24 hours, in this account's own Steam wallet currency. For example 1.50: a set costing 0.60 and another at 0.70 fill the day; the next set waits for tomorrow. It never spends more than the wallet holds. The 1.50 it starts with suits dollars or euros; for yen use about 225.", Min: 0, Max: 1_000_000, ShowWhen: "BuyCards=true", Group: "Limits", Unit: "wallet currency", Zero: "spend nothing", Part: SecBuy, NoLimit: true),

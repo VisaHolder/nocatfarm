@@ -927,7 +927,7 @@ public static class SpareRun {
 		HashSet<uint> bought = CardExchange.BoughtGames(bot.Name, DateTime.UtcNow);
 		SparePlan Plan() => Decide(items, badges, rules, ledger, busy, currency, memory, waiting, bought, shown);
 		SparePlan plan = priceThem
-			? await PriceAsync(Plan, items, rules, currency, quotes, bot.Cfg.OpenBoosterPacks == 1, (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
+			? await PriceAsync(Plan, items, rules, currency, quotes, Spare.WeighsPacks(bot.Cfg.OpenBoosterPacks), (rules.Action is 0 or 1) || (GemsChoice(bot.Cfg) == 4), steam, ct).ConfigureAwait(false)
 			: Plan();
 
 		return (new Look(plan, currency, items, busy, ledger, rules, StillToPrice(plan, currency, rules), spread, PricingMinutesLeft(plan, currency, rules)), null);
@@ -1621,11 +1621,13 @@ public static class SpareRun {
 		}
 
 		BotConfig cfg = bot.Cfg;
-		int choice = Math.Clamp(cfg.OpenBoosterPacks, 0, 2);
+		int choice = Spare.PackChoice(cfg.OpenBoosterPacks);
 		List<uint> games = [.. look.Items.Where(static i => i.Kind == SpareKind.BoosterPack).Select(static i => i.Game).Distinct()
 			.Where(g => Stale(SparePrices.Cached(g)?.When, look.Rules)).Take(GamesPerLook)];
 
-		if ((choice == 1) || (cfg.BoosterUnopened == 2)) {
+		// A pack worth more than its cards needs the set's prices - the average (1), the guaranteed cheapest three (3), or
+		// either (4) all price the game's cards (and its foils for 1 and 4).
+		if ((choice is 1 or 3 or 4) || (cfg.BoosterUnopened == 2)) {
 			foreach (uint game in games) {
 				if (!await SparePrices.PriceGameAsync(game, ct).ConfigureAwait(false)) {
 					break;
@@ -1648,8 +1650,13 @@ public static class SpareRun {
 		HashSet<ulong> own = memory.Ids();
 		// 1.8.2: packs automatic made to sell (Modules/Boosters.Gems.cs) are left to it, like ones on the market.
 		HashSet<ulong> forSale = memory.ForSaleIds();
+		// 1.9.0: packs buying cards bought instead of cards and hasn't opened yet - opened here too, never sold or sent.
+		Modules.BuyLedger buys = Modules.BuyLedger.Of(bot.Name);
+		Dictionary<ulong, uint> packGame = look.Items.Where(static i => i.Kind == SpareKind.BoosterPack).GroupBy(static i => i.AssetId).ToDictionary(static g => g.Key, static g => g.First().Game);
+		HashSet<ulong> bought = buys.BoughtPackIds(packGame.Select(static p => (p.Key, p.Value)), DateTime.UtcNow);
 		List<Spare.PackDecision> packs = Spare.PlanPacks(look.Items, choice, Math.Clamp(cfg.BoosterOpenNewDays, 0, 30), cfg.BoosterNeverOpen,
-			look.Ledger.Received, forSale.Count == 0 ? look.Busy : new HashSet<ulong>(look.Busy.Concat(forSale)), SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own);
+			look.Ledger.Received, forSale.Count == 0 ? look.Busy : new HashSet<ulong>(look.Busy.Concat(forSale)), SparePrices.Pack, look.Rules.PriceMaxAgeHours, DateTime.UtcNow, madeHere: memory.MadeIds(), own: own,
+			bought: bought);
 
 		if (act && (cfg.BoosterUnopened == 2)) {
 			int quoted = 0;
@@ -1690,6 +1697,10 @@ public static class SpareRun {
 			onOpened: id => {
 				if (own.Contains(id) && memory.RemoveAsset(id)) {
 					memory.Save(bot.Name);
+				}
+
+				if (bought.Contains(id)) {
+					buys.PackOpened(packGame.GetValueOrDefault(id), id, DateTime.UtcNow);
 				}
 			}).ConfigureAwait(false);
 		sb.AppendLine().Append(CultureInfo.InvariantCulture, $"{bot.Name}: opened {opened}");

@@ -3390,7 +3390,19 @@
     "Remove this add-on? Its settings are kept, in case you put it back.": "¿Quitar este complemento? Sus ajustes se guardan, por si lo vuelves a poner.",
     "Official add-ons": "Complementos oficiales",
     "Installed": "Instalados",
-    "set - type a new one to replace it": "definida: escribe una nueva para sustituirla"
+    "set - type a new one to replace it": "definida: escribe una nueva para sustituirla",
+    "no card of it is priced yet - kept until there is": "aún no tiene ningún cromo con precio - se conserva hasta que lo haya",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "incluso sus 3 cromos más baratos valen unos {0}, el sobre {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "vale más cerrado: el sobre {0}, sus 3 cromos más baratos unos {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "más sobres esperan · confirma primero los de la app de Steam",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "el {0} que compró no está en el inventario - se deja a «Abrir sobres»",
+    "the {0} it bought is on the move - opening it another time": "el {0} que compró está en movimiento - se abrirá en otro momento",
+    "couldn't open the {0} it bought: {1}": "no se pudo abrir el {0} que compró: {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "confirma la compra de sobres en la app de Steam · {0} sobre(s) para {1}",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprados {0} sobre(s) y {1} cromo(s) · {2} · {3} colección(es) para crear",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}",
+    "bought to level the {0} badge": "comprado para subir la insignia de {0}",
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4798,8 +4810,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Abrir sobres",
-      "tip": "Abre los sobres del inventario, para que sus cromos cuenten para las insignias (o se vuelvan objetos sobrantes). Para subir de nivel, elige siempre. Nunca por defecto - no se abre nada hasta que lo elijas. «Solo cuando los cromos valen más» abre un sobre solo si sus 3 cromos valen más en el mercado que el sobre cerrado - por ejemplo cromos a 0.08 + 0.05 + 0.05 ganan a un sobre a 0.15; un precio desconocido lo deja cerrado. Siempre: todos los sobres. Los sobres que creó automático en «Crear sobres» los abre él, diga lo que diga esto. Una cuenta en modo humano abre sobres solo durante su día.",
-      "choices": "0 nunca | 1 solo cuando los cromos valen más | 2 siempre"
+      "tip": "Abre los sobres del inventario, para que sus cromos cuenten para las insignias (o se vuelvan objetos sobrantes). Para subir de nivel, elige siempre. Nunca por defecto - no se abre nada hasta que lo elijas. «Solo cuando los cromos valen más» abre un sobre si sus 3 cromos valen de media más en el mercado que el sobre cerrado - por ejemplo cromos a 0.08 + 0.05 + 0.05 ganan a un sobre a 0.15; un cromo brillante cuenta con una probabilidad de 1 entre 100 por sobre, nunca más; un precio desconocido lo deja cerrado. «Incluso cuando solo los tres más baratos valen más» abre un sobre siempre que su peor resultado - tres veces el cromo más barato de la colección, con todos los cromos de la colección con precio - valga más que el sobre; es la forma más segura de vender sobres por sus cromos. «Cuando cualquiera de los dos» lo abre si la media o el peor resultado gana al sobre. «Siempre»: todos los sobres. Los sobres que creó automático en «Crear sobres» los abre él, diga lo que diga esto. Una cuenta en modo humano abre sobres solo durante su día.",
+      "choices": "0 nunca | 1 solo cuando los cromos valen más | 2 siempre | -1 incluso cuando solo los tres más baratos valen más | -2 cuando cualquiera de los dos"
     },
     "SpareAction": {
       "label": "Qué hacer con los objetos sobrantes",
@@ -4972,6 +4984,10 @@
     "SendAddons": {
       "label": "Enviar mensajes de complementos",
       "tip": "Lo que envían los complementos; por ejemplo, cada comentario que el complemento de rep4rep consigue que le acrediten. Pueden ser muchos."
+    },
+    "BuyBooster": {
+      "label": "Comprar sobres cuando salgan más baratos",
+      "tip": "Antes de comprar los cromos que le faltan a una insignia, calcula si los sobres del juego saldrían más baratos. Un sobre son 3 cromos al azar de toda la colección - los repetidos y los cromos que ya tienes no cuentan -, así que los sobres suelen dejar algunos cromos sin conseguir, que se compran después. Solo compra sobres cuando los sobres y los cromos que se espera que dejen cuestan al menos una décima parte menos que los cromos que faltan. Por ejemplo, una colección de 5 cromos a la que le faltan 4 a 0.20 cada uno (0.80): se espera que 3 sobres a 0.10 dejen medio cromo, unos 0.41 en total - sobres. Una colección de 8 cromos a la que le faltan 4 a 0.08, con sobres a 0.25: los cromos. Los sobres comprados se abren solos; la siguiente revisión compra lo que aún falta. Una colección por revisión. 'buy preview' muestra las cifras. Desactivado por defecto."
     }
   }
 }

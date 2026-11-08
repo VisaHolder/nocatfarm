@@ -107,7 +107,7 @@ public sealed partial class Boosters {
 			CraftSoon(setComplete: true);
 		}
 
-		BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, normal, Bot.Cfg.BoosterNeverOpen, AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot));
+		BoosterPick.Ranking ranking = BoosterPick.Rank(page, badges.Levels, normal, Bot.Cfg.BoosterNeverOpen, AutoMemory.Made, DateTime.UtcNow, DearCards.Marked(Bot), BuyLedger.Of(Bot.Name).PacksToOpen(DateTime.UtcNow));
 
 		// 1.8.2 "Use gems for the most levels": with buying cards on, the gems maths first (Boosters.Gems.cs) - a sack or a
 		// pack to sell, or the closest badge as always. Untradable gems only ever go to the badge.

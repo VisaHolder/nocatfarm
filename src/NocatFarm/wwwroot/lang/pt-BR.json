@@ -3390,7 +3390,19 @@
     "Remove this add-on? Its settings are kept, in case you put it back.": "Remover este complemento? As configurações dele ficam guardadas, caso você o coloque de volta.",
     "Official add-ons": "Complementos oficiais",
     "Installed": "Instalados",
-    "set - type a new one to replace it": "definido - digite um novo para substituí-lo"
+    "set - type a new one to replace it": "definido - digite um novo para substituí-lo",
+    "no card of it is priced yet - kept until there is": "nenhuma carta dele tem preço ainda - guardado até ter",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "até as 3 cartas mais baratas valem cerca de {0}, o pacote {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "vale mais fechado: o pacote {0}, as 3 cartas mais baratas cerca de {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "mais pacotes de cartas esperam · confirme primeiro os do app da Steam",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "o {0} comprado não está no inventário - fica para \"Abrir pacotes de cartas\"",
+    "the {0} it bought is on the move - opening it another time": "o {0} comprado está em movimento - será aberto outra hora",
+    "couldn't open the {0} it bought: {1}": "não foi possível abrir o {0} comprado: {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "confirme a compra de pacotes de cartas no app da Steam · {0} pacote(s) de cartas para {1}",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprou {0} pacote(s) de cartas e {1} carta(s) · {2} · {3} conjunto(s) para criar",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} pacote(s) de cartas de {1} a {2} cada por {3}, no lugar das {4} carta(s) que faltam ({5}) - devem deixar cerca de {6} carta(s) para comprar depois, cerca de {7} no total - nível {8} para {9}",
+    "bought to level the {0} badge": "comprado para subir a insígnia de {0}",
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} pacote(s) de cartas que o nocat.farm ainda vai abrir não são enviados - são abertos primeiro"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4798,8 +4810,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Abrir pacotes de cartas",
-      "tip": "Abre os pacotes de cartas do inventário, para as cartas contarem para insígnias (ou virarem itens sobrando). Para subir de nível, escolha sempre. Nunca por padrão - nada é aberto até você escolher. \"Só quando as cartas valem mais\" abre um pacote só se as 3 cartas dele valerem mais no mercado que o pacote fechado - por exemplo, cartas a 0.08 + 0.05 + 0.05 ganham de um pacote a 0.15; um preço desconhecido o mantém fechado. Sempre: todo pacote. Os pacotes que o automático de \"Criar pacotes de cartas\" criou são abertos por ele, não importa o que diga aqui. Uma conta em modo humano só abre pacotes durante o dia dela.",
-      "choices": "0 nunca | 1 só quando as cartas valem mais | 2 sempre"
+      "tip": "Abre os pacotes de cartas do inventário, para as cartas contarem para insígnias (ou virarem itens sobrando). Para subir de nível, escolha sempre. Nunca por padrão - nada é aberto até você escolher. \"Só quando as cartas valem mais\" abre um pacote se as 3 cartas dele valerem, em média, mais no mercado que o pacote fechado - por exemplo, cartas a 0.08 + 0.05 + 0.05 ganham de um pacote a 0.15; uma carta brilhante conta como uma chance de 1 em 100 por pacote, nunca mais; um preço desconhecido o mantém fechado. \"Mesmo quando só as três mais baratas valem mais\" abre um pacote sempre que o pior resultado - três vezes a carta mais barata do conjunto, com todas as cartas do conjunto com preço - valer mais que o pacote; é o jeito mais seguro de vender pacotes pelas cartas. \"Quando qualquer um\" abre se a média ou o pior resultado ganhar do pacote. Sempre: todo pacote. Os pacotes que o automático de \"Criar pacotes de cartas\" criou são abertos por ele, não importa o que diga aqui. Uma conta em modo humano só abre pacotes durante o dia dela.",
+      "choices": "0 nunca | 1 só quando as cartas valem mais | 2 sempre | -1 mesmo quando só as três mais baratas valem mais | -2 quando qualquer um"
     },
     "SpareAction": {
       "label": "O que fazer com itens sobrando",
@@ -4972,6 +4984,10 @@
     "SendAddons": {
       "label": "Enviar mensagens de complementos",
       "tip": "O que os complementos enviam - por exemplo, cada comentário que o complemento do rep4rep tem creditado. Pode ser bastante."
+    },
+    "BuyBooster": {
+      "label": "Comprar pacotes de cartas quando saem mais baratos",
+      "tip": "Antes de comprar as cartas que faltam para uma insígnia, calcula se os pacotes de cartas do jogo sairiam mais baratos. Um pacote são 3 cartas aleatórias do conjunto inteiro - repetidas e cartas que você já tem não contam -, então os pacotes costumam deixar algumas cartas faltando, compradas depois. Só compra pacotes quando os pacotes e as cartas que devem deixar custam pelo menos um décimo menos que as cartas que faltam. Por exemplo, um conjunto de 5 cartas faltando 4 a 0.20 cada (0.80): 3 pacotes a 0.10 devem deixar cerca de meia carta, cerca de 0.41 no total - pacotes. Um conjunto de 8 cartas faltando 4 a 0.08, com pacotes a 0.25: as cartas. Os pacotes comprados são abertos sozinhos; a próxima verificação compra o que ainda falta. Um conjunto por verificação. 'buy preview' mostra os números. Desligado por padrão."
     }
   }
 }

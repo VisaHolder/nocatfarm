@@ -911,6 +911,13 @@ public sealed class BotConfig {
 	/// </summary>
 	public bool BuyFullSets { get; set; } = true;
 
+	/// <summary>
+	/// 1.9.0: buy a set's booster packs instead of its missing cards when that's expected to come out cheaper - the packs,
+	/// and the missing cards they're expected not to bring (bought afterwards), at least a tenth under buying the missing
+	/// cards straight (<see cref="Core.BoosterMath.CheapestPacks"/>). A pack is 3 random cards of the whole set. Off by default.
+	/// </summary>
+	public bool BuyBooster { get; set; }
+
 	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;
 

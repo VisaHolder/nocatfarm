@@ -3390,7 +3390,19 @@
     "Remove this add-on? Its settings are kept, in case you put it back.": "Dieses Add-on entfernen? Seine Einstellungen bleiben, falls du es zurückholst.",
     "Official add-ons": "Offizielle Add-ons",
     "Installed": "Installiert",
-    "set - type a new one to replace it": "gesetzt - tippe einen neuen ein, um ihn zu ersetzen"
+    "set - type a new one to replace it": "gesetzt - tippe einen neuen ein, um ihn zu ersetzen",
+    "no card of it is priced yet - kept until there is": "noch keine Karte davon hat einen Preis - bleibt zu, bis es einen gibt",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "selbst seine 3 günstigsten Karten sind etwa {0} wert, das Pack {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "verschlossen mehr wert: das Pack {0}, seine 3 günstigsten Karten etwa {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "weitere Booster-Packs warten · bestätige zuerst die in der Steam-App",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "das gekaufte {0} ist nicht im Inventar - bleibt „Booster-Packs öffnen“ überlassen",
+    "the {0} it bought is on the move - opening it another time": "das gekaufte {0} ist gerade unterwegs - wird ein andermal geöffnet",
+    "couldn't open the {0} it bought: {1}": "konnte das gekaufte {0} nicht öffnen: {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "bestätige den Booster-Pack-Kauf in der Steam-App · {0} Booster-Pack(s) für {1}",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} Booster-Pack(s) und {1} Karte(n) gekauft · {2} · {3} Satz/Sätze zum Herstellen",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} Booster-Pack(s) von {1} zu je {2} für {3}, statt seiner {4} fehlenden Karte(n) ({5}) - lässt voraussichtlich etwa {6} Karte(n) zum späteren Kauf übrig, insgesamt etwa {7} - Stufe {8} auf {9}",
+    "bought to level the {0} badge": "gekauft, um das Abzeichen von {0} aufzuwerten",
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} Booster-Pack(s), die nocat.farm noch öffnen muss, werden nicht gesendet - sie werden zuerst geöffnet"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4798,8 +4810,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Booster-Packs öffnen",
-      "tip": "Öffnet Booster-Packs im Inventar, damit ihre Karten für Abzeichen zählen (oder zu übrigen Gegenständen werden). Zum Leveln wähle immer. Standardmäßig nie - nichts wird geöffnet, bis du es auswählst. „Nur wenn die Karten mehr wert sind“ öffnet ein Pack nur, wenn seine 3 Karten auf dem Markt mehr wert sind als das versiegelte Pack - zum Beispiel schlagen Karten zu 0.08 + 0.05 + 0.05 ein Pack zu 0.15; ein unbekannter Preis lässt es zu. Immer: jedes Pack. Packs, die automatisch bei „Booster-Packs erstellen“ gemacht hat, öffnet es selbst, egal was hier steht. Ein Konto im Menschen-Modus öffnet Packs nur während seines Tages.",
-      "choices": "0 nie öffnen | 1 nur wenn die Karten mehr wert sind | 2 immer"
+      "tip": "Öffnet Booster-Packs im Inventar, damit ihre Karten für Abzeichen zählen (oder zu übrigen Gegenständen werden). Zum Leveln wähle immer. Standardmäßig nie - nichts wird geöffnet, bis du es auswählst. „Nur wenn die Karten mehr wert sind“ öffnet ein Pack, wenn seine 3 Karten auf dem Markt im Schnitt mehr wert sind als das versiegelte Pack - zum Beispiel schlagen Karten zu 0.08 + 0.05 + 0.05 ein Pack zu 0.15; eine Folienkarte zählt mit einer Chance von 1 zu 100 pro Pack, nie mehr; ein unbekannter Preis lässt es zu. „Auch wenn nur die günstigsten drei mehr wert sind“ öffnet ein Pack immer dann, wenn sein schlechtester Inhalt - dreimal die günstigste Karte des Satzes, mit jeder Karte des Satzes bepreist - mehr wert ist als das Pack; das ist der sicherste Weg, Packs für ihre Karten zu verkaufen. „Wenn eins von beiden“ öffnet es, wenn der Schnitt oder der schlechteste Inhalt das Pack schlägt. „Immer“: jedes Pack. Packs, die automatisch bei „Booster-Packs erstellen“ gemacht hat, öffnet es selbst, egal was hier steht. Ein Konto im Menschen-Modus öffnet Packs nur während seines Tages.",
+      "choices": "0 nie öffnen | 1 nur wenn die Karten mehr wert sind | 2 immer | -1 auch wenn nur die günstigsten drei mehr wert sind | -2 wenn eins von beiden"
     },
     "SpareAction": {
       "label": "Was mit übrigen Gegenständen passiert",
@@ -4972,6 +4984,10 @@
     "SendAddons": {
       "label": "Add-on-Nachrichten senden",
       "tip": "Was Add-ons verschicken - zum Beispiel jeden Kommentar, den das rep4rep-Add-on gutgeschrieben bekommt. Das können viele sein."
+    },
+    "BuyBooster": {
+      "label": "Booster-Packs kaufen, wenn sie günstiger sind",
+      "tip": "Bevor es die Karten kauft, die einem Abzeichen fehlen, rechnet es aus, ob die Booster-Packs des Spiels günstiger wären. Ein Pack sind 3 zufällige Karten des ganzen Satzes - Doppelte und Karten, die du schon hast, zählen nichts -, darum lassen Packs meist einige fehlende Karten übrig, die danach gekauft werden. Es kauft Packs nur, wenn die Packs und die Karten, die sie voraussichtlich übrig lassen, mindestens ein Zehntel weniger kosten als die fehlenden Karten. Zum Beispiel ein Satz aus 5 Karten, dem 4 Karten zu je 0.20 fehlen (0.80): 3 Packs zu 0.10 lassen voraussichtlich etwa eine halbe Karte übrig, insgesamt etwa 0.41 - Packs. Ein Satz aus 8 Karten, dem 4 Karten zu 0.08 fehlen, mit Packs zu 0.25: die Karten. Gekaufte Packs werden von selbst geöffnet; der nächste Durchgang kauft, was noch fehlt. Ein Satz pro Durchgang. 'buy preview' zeigt die Zahlen. Standardmäßig aus."
     }
   }
 }

@@ -3390,7 +3390,19 @@
     "Remove this add-on? Its settings are kept, in case you put it back.": "移除这个附加组件？它的设置会保留，以便你日后装回。",
     "Official add-ons": "官方附加组件",
     "Installed": "已安装",
-    "set - type a new one to replace it": "已设置——输入新的即可替换"
+    "set - type a new one to replace it": "已设置——输入新的即可替换",
+    "no card of it is priced yet - kept until there is": "它的卡牌还没有一张有价格 —— 有之前先保留",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "即使最便宜的 3 张卡也约值 {0}，补充包值 {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "不拆更值钱：补充包 {0}，最便宜的 3 张卡约 {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "其余补充包在等待 · 请先在 Steam 应用中确认这些",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "买到的 {0} 不在库存里 —— 交给“打开补充包”处理",
+    "the {0} it bought is on the move - opening it another time": "买到的 {0} 正在转移中 —— 下次再打开",
+    "couldn't open the {0} it bought: {1}": "无法打开买到的 {0}：{1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "请在 Steam 应用中确认补充包购买 · {1} 的 {0} 个补充包",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "已购买 {0} 个补充包和 {1} 张卡牌 · {2} · 可合成 {3} 套",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 的 {0} 个补充包（每个 {2}），共 {3}，代替缺少的 {4} 张卡牌（{5}）- 预计之后还要买约 {6} 张卡牌，总共约 {7} - {8} 级到 {9} 级",
+    "bought to level the {0} badge": "为升级 {0} 徽章而购买",
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm 还要打开的 {0} 个补充包不会发送 —— 先打开"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4798,8 +4810,8 @@
     },
     "OpenBoosterPacks": {
       "label": "打开补充包",
-      "tip": "打开库存里的补充包，让卡牌计入徽章（或成为多余物品）。想升级就选“总是”。默认从不打开——在你选择之前什么都不会打开。“只在卡牌更值钱时”只在 3 张卡的市场价值高于未开封补充包时才打开 - 例如卡牌 0.08 + 0.05 + 0.05 胜过 0.15 的补充包；价格未知则保持不开。总是：每个补充包都打开。“制作补充包”的自动模式做的补充包，不管这里怎么设都由它自己打开。拟人模式账户只在它的一天内打开补充包。",
-      "choices": "0 从不 | 1 只在卡牌更值钱时 | 2 总是"
+      "tip": "打开库存里的补充包，让卡牌计入徽章（或成为多余物品）。想升级就选“总是”。默认从不打开——在你选择之前什么都不会打开。“只在卡牌更值钱时”在 3 张卡的平均市场价值高于未开封补充包时打开 - 例如卡牌 0.08 + 0.05 + 0.05 胜过 0.15 的补充包；闪亮卡按每个补充包 1/100 的机会计算，绝不更多；价格未知则保持不开。“即使只有最便宜的三张也更值钱时”在最差的结果——整套中最便宜卡牌的三倍，且整套每张卡都有价格——高于补充包时打开；这是为了卖卡而开补充包最稳妥的方式。“任一满足时”在平均或最差结果胜过补充包时打开。总是：每个补充包都打开。“制作补充包”的自动模式做的补充包，不管这里怎么设都由它自己打开。拟人模式账户只在它的一天内打开补充包。",
+      "choices": "0 从不 | 1 只在卡牌更值钱时 | 2 总是 | -1 即使只有最便宜的三张也更值钱时 | -2 任一满足时"
     },
     "SpareAction": {
       "label": "多余物品怎么处理",
@@ -4972,6 +4984,10 @@
     "SendAddons": {
       "label": "发送附加组件消息",
       "tip": "附加组件发出的消息——例如 rep4rep 附加组件每一条获得积分的评论。可能会很多。"
+    },
+    "BuyBooster": {
+      "label": "补充包更便宜时就买补充包",
+      "tip": "在购买徽章缺少的卡牌之前，先算一算这个游戏的补充包会不会更便宜。一个补充包是整套中随机的 3 张卡——重复的和你已有的卡不算数——所以补充包通常会留下一些缺少的卡，之后再买。只有当补充包加上它们预计留下的卡牌，比缺少的卡牌至少便宜十分之一时才买补充包。例如：5 张一套，缺 4 张，每张 0.20（0.80）：3 个 0.10 的补充包预计只留下约半张，总共约 0.41 —— 买补充包。8 张一套，缺 4 张，每张 0.08，补充包 0.25：买卡牌。买到的补充包会自动打开；下一次查看再买仍然缺的。每次查看一套。'buy preview' 会显示这些数字。默认关闭。"
     }
   }
 }
