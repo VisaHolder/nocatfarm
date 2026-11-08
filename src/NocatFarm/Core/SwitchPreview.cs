@@ -102,8 +102,11 @@ public static class SwitchPreview {
 	/// </summary>
 	public sealed record FinderNumbers(int Walked, int Total, int Known, string LastLook, int Checked = 0, int Candidates = 0);
 
-	/// <summary>One set it would buy: the game, the cards, its cost and XP for each whole unit of money.</summary>
-	public sealed record BuySet(string Game, bool FullSet, int Level, int Cards, int SetSize, string Cost, long XpPerUnit, IReadOnlyList<string> Names);
+	/// <summary>One set it would buy: the game, the cards, its cost and XP for each whole unit of money. 1.9.0: or
+	/// <paramref name="Packs"/> booster packs instead (each <paramref name="PackCost"/>), against the missing cards straight
+	/// (<paramref name="Straight"/>) - expected to leave <paramref name="LeftCards"/> cards, <paramref name="Expected"/> in all.</summary>
+	public sealed record BuySet(string Game, bool FullSet, int Level, int Cards, int SetSize, string Cost, long XpPerUnit, IReadOnlyList<string> Names,
+		int Packs = 0, string PackCost = "", string Straight = "", string Expected = "", string LeftCards = "");
 
 	/// <summary>1.8.2 smart levelling: a whole set it would sell instead of crafting - what it brings in after Steam's fee, and about how many levels that buys.</summary>
 	public sealed record SellSet(string Game, string Money, int Levels);
@@ -113,7 +116,10 @@ public static class SwitchPreview {
 	public static BuyNumbers Buy(BuyPlan? plan, BotConfig cfg, bool signedIn, string problem, bool blocker = false) {
 		int cur = plan?.Currency ?? 0;
 		string M(long cents) => BuyPlan.Money(cents, cur);
-		List<BuySet> sets = plan == null ? [] : [.. plan.Steps.Select(s => new BuySet(s.Game, s.FullSet, s.Level, s.Cards.Count, s.SetSize, M(s.Cost), s.XpPerUnit, [.. s.Cards.Select(static c => c.Name)]))];
+		List<BuySet> sets = plan == null ? [] : [.. plan.Steps.Select(s => s.IsPack
+			? new BuySet(s.Game, s.FullSet, s.Level, s.Cards.Count, s.SetSize, M(s.Cost), s.XpPerUnit, [.. s.Cards.Select(static c => c.Name)],
+				s.Packs, M(s.PackCents + s.PackTax), M(s.Straight), M(s.LevelCost), s.LeftCards.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))
+			: new BuySet(s.Game, s.FullSet, s.Level, s.Cards.Count, s.SetSize, M(s.Cost), s.XpPerUnit, [.. s.Cards.Select(static c => c.Name)]))];
 
 		return new BuyNumbers(signedIn, problem, (int) (plan?.Block ?? BuyBlock.None), cur > 0 ? MarketQuotes.Code(cur) : "", plan == null ? "" : M(plan.Wallet),
 			BuyPlan.LimitSaid(BuyPlan.Limit(cfg.BuyDailyLimit), cur), M(plan?.DaySpent ?? 0), BuyPlan.LimitSaid(BuyPlan.Limit(cfg.BuyWeeklyLimit), cur), M(plan?.WeekSpent ?? 0),

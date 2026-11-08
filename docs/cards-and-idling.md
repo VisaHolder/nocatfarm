@@ -418,6 +418,22 @@ spends the account's Steam wallet, so it's careful:
 - **Booster packs first where they're working.** A game automatic booster packs has made a pack for that's still to
   open isn't bought - its cards come from the pack. A game it's only saving gems for (a pack still far off) can be
   finished by buying when that's the cheapest level.
+- **Buying booster packs instead** (*Buy booster packs when they're cheaper*, off by default). A pack is 3 random
+  cards of the game's whole set - repeats and cards you already have are worth nothing to the badge - so a few packs
+  seldom bring every missing card, and the ones they miss are bought anyway. So it works out what's *expected*: with
+  k cards missing of an N-card set, each pack gives each missing card a 1 in N chance three times, so after n packs a
+  missing card is still missing with (1 - 1/N)^(3n). The expected cost is the n packs plus every missing card's price
+  times that chance. It tries 1 pack up to (k ÷ 3, rounded up) + 2, takes the cheapest, and buys packs only when that's
+  at least a tenth under buying the missing cards straight (taxes in, both ways). For example, 4 of 8 cards missing at
+  0.08 (0.32) with packs at 0.25: 1 pack is expected to leave 2.7 cards, about 0.46 in all - it buys the cards. 4 of 5
+  missing at 0.20 (0.80) with packs at 0.10: 3 packs leave about half a card, about 0.41 - it buys the 3 packs. One set
+  a look, at most 5 pack prices read. The packs go through every rule a card does (the limits, the wallet, phone
+  confirmation, written down before it's sent, never dearer than planned) and are opened once they're in the inventory
+  - only the new copies, never a pack you had before. The set is never said to be complete after packs: nothing more is
+  bought for that game until they're opened (2 days at most - after that a pack not found is left to *Open booster
+  packs*), and then the next look buys whatever is still missing. `buy preview` shows the packs, the cards they're
+  expected to leave and the cost against the cards straight. A pack priced in another currency than the wallet's, or
+  not on the market, means the cards, as before.
 - **Billing details.** Steam may want billing details with every market purchase (some countries always do). Each order
   carries the ones saved on the account, exactly as Steam's own market page sends them, plus any tax your country adds
   on Steam's fee. Only when none are saved does it stop and tell you: buy one card by hand on the market once, and the
@@ -559,6 +575,7 @@ Settings, the account, **Buying cards**:
 |---|---|---|
 | *Buy missing cards* | off | Buys the cards its badges are missing, cheapest first. Turning it on shows what it would buy first and asks you to confirm. |
 | *Buy the cheapest full sets* | on | Also whole sets for games it has no cards of, cheapest first. |
+| *Buy booster packs when they're cheaper* | off | A game's booster packs instead of its missing cards, only when the packs and the cards they're expected to leave cost at least a tenth less. Bought packs are opened by themselves. |
 | *Spend at most a day* | 1.50 | The most it spends in any 24 hours, in the wallet's currency. |
 | *Spend at most a week* | 8.00 | The most it spends in any 7 days. 0 buys nothing. |
 | *Most to pay for one badge level* | automatic | The most for one level (100 XP), in the wallet's currency. Automatic: twice the cheapest level it can buy at the time. A dearer level waits. |
@@ -821,12 +838,20 @@ the log says once: turn it on in Settings to see what it would do.
 
 *Open booster packs* (per account) opens packs in the inventory - from drops, from gems or from gifts - so their
 cards count toward badges, or become spare items. It's **never** by default on every account, robots too: opening a
-pack gets rid of it, so nothing is opened until you choose. Three choices:
+pack gets rid of it, so nothing is opened until you choose. Five choices:
 
 - **only when the cards are worth more**: opens a pack only when its three cards are worth more on
-  the market than the sealed pack, after Steam's fees. A pack with no fresh price, or a card nobody sells, stays shut;
+  the market than the sealed pack on average, after Steam's fees: three times the average card, and - when the set's
+  foils are priced - a 1 in 100 chance a pack holds a foil, counted once a pack, never once a card, so it never opens on
+  hope. A pack with no fresh price, or a card nobody sells, stays shut;
+- **even when only the cheapest three are worth more**: opens a pack when its worst pull - three times the set's
+  cheapest card, after the fees - is worth more than the sealed pack. Every card of the set has to be priced: a card
+  left out could be the cheapest. The safest way to sell packs for their cards;
+- **when either**: the average or the worst pull beats the pack;
 - **always**;
 - **never** (the default).
+
+Turning human mode on takes the three price choices back to never; **always**, chosen, stays.
 
 Packs that automatic *Make booster packs* made are its own: it opens them itself at the next chance, whatever this
 says, and they're never sent or sold. `booster open new do` opens them too. While automatic is on, a pack you make
@@ -856,7 +881,7 @@ every account.
 | Booster packs use | Tradable gems first, or untradable first | tradable first |
 | Keep at least this many gems | A pack is made only while the gems cover it plus this | 0 |
 | Use gems for the most levels | With buying cards on: each time, a sack sold, a pack sold, a pack's cards sold or packs for the closest badge - whichever gives the most levels for 1,000 gems (see [Use gems for the most levels](#use-gems-for-the-most-levels)) | on |
-| Open booster packs | Never, only when the cards are worth more, or always. For levelling, always. Packs automatic made are opened by it either way | never |
+| Open booster packs | Never, only when the cards are worth more (on average), even when only the cheapest three are worth more, when either, or always. For levelling, always. Packs automatic made are opened by it either way | never |
 | Leave new packs alone for (days) | 0 to 30. Always shown: it holds back new packs from selling or sending too. Packs nocat.farm made itself are never held back | 7 |
 | Never open packs from these games | Games whose packs stay sealed. Always shown, even with opening off | empty |
 | Packs it doesn't open | Keep them, send them to another of your accounts, or sell them. Sending or selling happens only while Spare items is on; selling keeps to its caps and its selling price | keep |

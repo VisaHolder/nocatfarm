@@ -3491,7 +3491,17 @@
     "answers to commands": "komutlara yanıtlar",
     "updates and app messages": "güncellemeler ve uygulama mesajları",
     "{0}: listing taken down · it can be listed again": "{0}: ilan kaldırıldı · yeniden listelenebilir",
-    "took down {0} - unsold {1} days, its gems are worth more now": "{0} kaldırıldı - {1} gündür satılmadı, mücevherleri artık daha değerli"
+    "took down {0} - unsold {1} days, its gems are worth more now": "{0} kaldırıldı - {1} gündür satılmadı, mücevherleri artık daha değerli",
+    "no card of it is priced yet - kept until there is": "henüz hiçbir kartının fiyatı yok - olana kadar tutulur",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "en ucuz 3 kartı bile yaklaşık {0}, paket {1} değerinde",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "kapalıyken daha değerli: paket {0}, en ucuz 3 kartı yaklaşık {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "diğer kart paketleri bekliyor · önce Steam uygulamasındakileri onayla",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "satın alınan {0} envanterde yok - \"Kart paketlerini aç\"a bırakıldı",
+    "the {0} it bought is on the move - opening it another time": "satın alınan {0} şu an yolda - başka zaman açılacak",
+    "couldn't open the {0} it bought: {1}": "satın alınan {0} açılamadı: {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "kart paketi alımını Steam uygulamasında onayla · {1} için {0} kart paketi",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} kart paketi ve {1} kart alındı · {2} · üretilecek {3} set",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4955,8 +4965,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Kart paketlerini aç",
-      "tip": "Envanterdeki kart paketlerini açar, böylece kartları rozetlere sayılır (ya da fazla eşya olur). Seviye atlamak için her zaman'ı seç. Varsayılan olarak asla - sen seçene kadar hiçbir şey açılmaz. \"Yalnızca kartlar daha değerliyse\", 3 kartı pazarda kapalı paketten daha değerliyse paketi açar - örneğin 0.08 + 0.05 + 0.05'lik kartlar 0.15'lik bir paketi geçer; fiyat bilinmiyorsa kapalı kalır. Her zaman: her paket. \"Kart paketi yap\"taki otomatiğin yaptığı paketleri, burada ne yazarsa yazsın otomatik kendisi açar. İnsan modundaki bir hesap paketleri yalnızca kendi gününde açar.",
-      "choices": "0 asla | 1 yalnızca kartlar daha değerliyse | 2 her zaman"
+      "tip": "Envanterdeki kart paketlerini açar, böylece kartları rozetlere sayılır (ya da fazla eşya olur). Seviye atlamak için her zaman'ı seç. Varsayılan olarak asla - sen seçene kadar hiçbir şey açılmaz. \"Yalnızca kartlar daha değerliyse\", 3 kartı pazarda ortalama olarak kapalı paketten daha değerliyse paketi açar - örneğin 0.08 + 0.05 + 0.05'lik kartlar 0.15'lik bir paketi geçer; parlak kart paket başına 100'de 1 şansla sayılır, fazlası asla; fiyat bilinmiyorsa kapalı kalır. \"En ucuz üçü bile daha değerliyse\", en kötü çıkışı - setin en ucuz kartının üç katı, setin bütün kartlarının fiyatı biliniyorken - paketten daha değerliyse paketi açar; paketleri kartları için satmanın en güvenli yolu budur. \"Herhangi biri\", ortalama ya da en kötü çıkış paketi geçerse açar. Her zaman: her paket. \"Kart paketi yap\"taki otomatiğin yaptığı paketleri, burada ne yazarsa yazsın otomatik kendisi açar. İnsan modundaki bir hesap paketleri yalnızca kendi gününde açar.",
+      "choices": "0 asla | 1 yalnızca kartlar daha değerliyse | 2 her zaman | 3 en ucuz üçü bile daha değerliyse | 4 herhangi biri"
     },
     "SpareAction": {
       "label": "Fazla eşyalarla ne yapılsın",
@@ -5125,6 +5135,10 @@
       "label": "Seviye atlama satırı gösterir",
       "tip": "Bu hesabın Steam seviyesi yükseldiğinde günlükte bir satır - örneğin “Steam seviyesi 58 (+1) · bu seviye 0,46 CAD tuttu” ya da “Steam seviyesi 60 (+3) · 3 seviye için 1,42 CAD”. Maliyet yalnızca gerçekten harcanan paradır: üretilen rozetler için alınan kartlar. Farm edilen kartlar bir şey tutmaz. Telegram ya da Discord’da kart haberleri açıksa oraya da gider. Kapalı: satır yok.",
       "choices": "3 seviye ve tuttuğu para | 1 yalnızca seviye | 0 kapalı"
+    },
+    "BuyBooster": {
+      "label": "Daha ucuza geliyorsa kart paketi al",
+      "tip": "Bir rozetin eksik kartlarını almadan önce, oyunun kart paketlerinin daha ucuza gelip gelmeyeceğini hesaplar. Bir paket, setin tamamından rastgele 3 karttır - tekrarlar ve zaten sahip olduğun kartlar sayılmaz - bu yüzden paketler genelde bazı eksik kartları bırakır, onlar sonra alınır. Yalnızca paketler ve bırakmaları beklenen kartlar, eksik kartlardan en az onda bir daha ucuzsa paket alır. Örneğin 5 kartlık bir sette tanesi 0.20 olan 4 kart eksikse (0.80): 0.10'luk 3 paketin yaklaşık yarım kart bırakması beklenir, toplam yaklaşık 0.41 - paketler. 8 kartlık bir sette tanesi 0.08 olan 4 kart eksik, paketler 0.25: kartlar. Alınan paketler kendiliğinden açılır; sonraki bakış hâlâ eksik olanı alır. Bakış başına bir set. 'buy preview' sayıları gösterir. Varsayılan olarak kapalı."
     }
   }
 }

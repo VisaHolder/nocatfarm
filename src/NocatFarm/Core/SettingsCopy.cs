@@ -46,7 +46,7 @@ public static class SettingsCopy {
 	public static readonly IReadOnlyList<string> KeptAsTheyAre = [
 		// spends money, gems or points, or sells
 		nameof(BotConfig.BoosterMake), nameof(BotConfig.BoosterGems), nameof(BotConfig.GemsForLevels), nameof(BotConfig.SellSetsForLevels), nameof(BotConfig.BuyFullSets),
-		nameof(BotConfig.BuyBooster), nameof(BotConfig.BuyBoosterTaxes),
+		nameof(BotConfig.BuyBooster),
 		nameof(BotConfig.PointsBuySeasonalBadge), nameof(BotConfig.PointsBuyOlderBadges), nameof(BotConfig.PointsBadgeMaxLevel), nameof(BotConfig.PointsKeepAtLeast),
 		nameof(BotConfig.PointsWeeklyCap), nameof(BotConfig.BuyStopAtLevel), nameof(BotConfig.BuyKeepInWallet),
 		// money limits, in the wallet's own currency

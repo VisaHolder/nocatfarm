@@ -464,20 +464,28 @@ public sealed record BuyCard(string Hash, long Price, long Tax = 0) {
 }
 
 /// <summary>
-/// One set to buy: the missing cards of a badge's next level (<paramref name="FullSet"/> false), a whole set for a game
-/// with none of it yet - or, 1.9.0, that set's booster packs instead (<paramref name="Packs"/>). Either way, one badge
-/// level: 100 XP once crafted (the packs' cards, possibly after more buying).
+/// One set to buy: the missing cards of a badge's next level (<paramref name="FullSet"/> false), or a whole set for a game
+/// with none of it yet. One badge level: 100 XP once crafted. 1.9.0: or that set's booster packs instead
+/// (<paramref name="Packs"/> of <paramref name="PackHash"/>), when they're expected to come out cheaper (BoosterMath.CheapestPacks)
+/// - <paramref name="Cards"/> stays the missing cards they stand in for; the packs alone seldom finish the level: the cards
+/// they're expected to leave (<paramref name="LeftCards"/>, about <paramref name="LeftCost"/>) are bought at a later look.
 /// </summary>
 public sealed record BuyStep(uint App, string Game, bool FullSet, int Level, int SetSize, IReadOnlyList<BuyCard> Cards,
-	int Packs = 0, long PackCents = 0, long PackTax = 0, IReadOnlyList<string>? PackCards = null) {
+	int Packs = 0, string? PackHash = null, long PackCents = 0, long PackTax = 0, double LeftCards = 0, long LeftCost = 0) {
 	/// <summary>1.9.0: whether this step buys booster packs instead of the cards.</summary>
-	public bool IsPack => Packs > 0;
+	public bool IsPack => (Packs > 0) && (PackHash != null);
 
-	/// <summary>What the level really costs: every pack (price and the tax on its fee) or every card's price and the tax on its fee - what the limits and the wallet are checked against.</summary>
-	public long Cost => IsPack ? Packs * (PackCents + PackTax) : Cards.Sum(static c => c.Price + c.Tax);
+	/// <summary>The missing cards bought straight: every card's price and the tax on its fee.</summary>
+	public long Straight => Cards.Sum(static c => c.Price + c.Tax);
 
-	/// <summary>XP for every whole unit of money (100 cents): a level is 100 XP.</summary>
-	public long XpPerUnit => Cost > 0 ? 100L * 100 / Cost : 0;
+	/// <summary>What this step spends now - every card (or 1.9.0, every pack) with the tax on its fee: what the limits and the wallet are checked against.</summary>
+	public long Cost => IsPack ? Packs * (PackCents + PackTax) : Straight;
+
+	/// <summary>1.9.0: what the level is expected to cost in all - the packs and the cards they're expected to leave; the cards' cost otherwise. What levels are ranked and capped by.</summary>
+	public long LevelCost => IsPack ? Cost + LeftCost : Cost;
+
+	/// <summary>XP for every whole unit of money (100 cents): a level is 100 XP - at what the level is expected to cost.</summary>
+	public long XpPerUnit => LevelCost > 0 ? 100L * 100 / LevelCost : 0;
 }
 
 /// <summary>What buying cards would buy now, within its settings - and, when nothing, why.</summary>
@@ -546,7 +554,7 @@ public sealed class BuyPlan {
 	public bool LevelsKnown { get; set; }
 
 	/// <summary>What each next level costs, cheapest first: <see cref="Levels"/> when a look worked them out, else <see cref="Ranked"/>.</summary>
-	public IReadOnlyList<(uint App, long Cost)> LevelCosts => LevelsKnown ? Levels : [.. Ranked.Select(static s => (s.App, s.Cost))];
+	public IReadOnlyList<(uint App, long Cost)> LevelCosts => LevelsKnown ? Levels : [.. Ranked.Select(static s => (s.App, s.LevelCost))];
 
 	/// <summary>1.8.2: the most it pays for one badge level this look (the setting, or a little over what a level usually costs) - 0 when there's no level to go by.</summary>
 	public long MaxLevelPrice { get; set; }
@@ -590,7 +598,7 @@ public sealed class BuyPlan {
 	}
 
 	/// <summary>1.8.2: the cheapest badge level priced this look, in the wallet's money (0: none priced) - "0.33 CAD a level".</summary>
-	public long LevelPrice => Ranked.Count > 0 ? Ranked.Min(static s => s.Cost) : 0;
+	public long LevelPrice => Ranked.Count > 0 ? Ranked.Min(static s => s.LevelCost) : 0;
 
 	/// <summary>1.8.2: with "Stop buying at Steam level", the badge levels still to buy once the sets held are crafted (-1: not stopping).</summary>
 	public int LevelsToBuy { get; set; } = -1;
@@ -639,7 +647,10 @@ public sealed class BuyPlan {
 	};
 
 	public long Cost => Steps.Sum(static s => s.Cost);
-	public int CardCount => Steps.Sum(static s => s.Cards.Count);
+	public int CardCount => Steps.Sum(static s => s.IsPack ? 0 : s.Cards.Count);
+
+	/// <summary>1.9.0: the booster packs the steps buy instead of cards.</summary>
+	public int PackCount => Steps.Sum(static s => s.IsPack ? s.Packs : 0);
 
 	/// <summary>
 	/// Why Steam won't let it buy by itself, from the wallet page: billing details wanted and none saved to send (Steam's own
@@ -688,6 +699,9 @@ public sealed class BuyPlan {
 	/// shared by every account (360 an hour).
 	/// </summary>
 	public const int MinBookReads = 30, MaxBookReads = 60;
+
+	/// <summary>1.9.0: booster pack prices one look reads at most, for "Buy booster packs when they're cheaper" - on top of the cards'.</summary>
+	public const int PackReads = 5;
 
 	/// <summary>Levels priced at least before the money left stops the pricing - so what more money buys is known too.</summary>
 	public const int MinPriced = 5;
@@ -985,32 +999,42 @@ public sealed class BuyPlan {
 			return got;
 		}
 
-		// 1.9.0: the foil values (after the fee) of a set's cards, for the average-pull check - a few at most, so the rest
-		// of the look's card prices aren't crowded out; one a price couldn't be read for counts as its normal card instead.
-		async Task<long[]> FoilsAsync(IReadOnlyList<string> cards) {
-			List<long> foils = [];
+		// 1.9.0: a game's booster pack price, for "Buy booster packs when they're cheaper" - a price read lately, else read
+		// now, a few a look at most (PackReads). Never stops the plan: no answer, nobody selling or another currency than the
+		// wallet's is simply no pack (null), and its cards are bought as before.
+		int packReads = 0;
 
-			foreach (string card in cards.Take(8)) {
-				string hash = SetSale.FoilHash(card);
+		async Task<CardMarket.Book?> PackBookAsync(string hash) {
+			if (!read.TryGetValue(hash, out CardMarket.Book? book)) {
+				book = prices?.Recent(hash, plan.Currency, DateTime.UtcNow);
 
-				if (!read.TryGetValue(hash, out CardMarket.Book? foilBook)) {
-					if (prices?.Recent(hash, plan.Currency, DateTime.UtcNow) is { } kept) {
-						read[hash] = foilBook = kept;
-					} else if (books < budget) {
-						books++;
-						foilBook = await market.BookAsync(hash, ct).ConfigureAwait(false);
-						read[hash] = foilBook!;
-					} else {
-						break;
+				if ((book == null) && (MarketQuotes.Of(hash, plan.Currency) is { Lowest: int saved and > 0 } q) && (DateTime.UtcNow - q.When < TimeSpan.FromHours(2))) {
+					book = new CardMarket.Book(saved, plan.Currency, Math.Max(1, q.Sales), [(saved, Math.Max(1, q.Sales))]);
+				}
+
+				if (book == null) {
+					if ((packReads >= PackReads) || (books >= budget) || plan.Short) {
+						return null;
 					}
+
+					packReads++;
+					books++;
+
+					if (await market.BookAsync(hash, ct).ConfigureAwait(false) is not { } fresh) {
+						return null;
+					}
+
+					if (fresh.Currency == plan.Currency) {
+						prices?.Remember(hash, fresh, DateTime.UtcNow);
+					}
+
+					book = fresh;
 				}
 
-				if (foilBook is { Lowest: > 0 }) {
-					foils.Add(Seller.ReceiveFor((int) Math.Min(foilBook.Lowest, int.MaxValue)));
-				}
+				read[hash] = book;
 			}
 
-			return [.. foils];
+			return (book.Lowest > 0) && (book.Currency == plan.Currency) ? book : null;
 		}
 
 		// Whether a set of this price can go in now: true to take it, false to pass it over, null to stop the plan here.
@@ -1042,12 +1066,17 @@ public sealed class BuyPlan {
 		// set waits for the answer (an unsure purchase may well have gone through).
 		HashSet<string> pendingCards = ledger.PendingCards(nowUtc.AddDays(-1));
 
+		// 1.9.0: a game it bought booster packs for that aren't opened yet (or whose purchase isn't settled): nothing more is
+		// bought for it until they are - what's still missing is only known once their cards are in.
+		HashSet<uint> packsBought = ledger.PacksToOpen(nowUtc);
+
 		// A game automatic booster packs has a pack waiting to open for: its cards come from the pack. A set it just sold
 		// instead of crafting isn't bought back either, nor a game whose cards are worth more sold (1.8.2).
 		(string Skip, string Note)? Busy(uint app, string game) =>
 			dear.Contains(app) ? ($"{game}: its cards are worth more sold than the levels they'd make", $"{game}: its cards are worth more sold than the levels they'd make - not bought")
 			: sold.Contains(app) ? ($"{game}: its set was just sold instead of crafted", $"{game}: its set was just sold instead of crafted - not bought back")
 			: packs.Contains(app) ? ($"{game}: booster packs are working on it", $"{game}: booster packs are working on it - its cards come from the packs")
+			: packsBought.Contains(app) ? ($"{game}: the booster packs it bought are opened first", $"{game}: the booster packs it bought are opened first - then what's still missing is bought")
 			: null;
 
 		(string Skip, string Note)? Pending(string game, IEnumerable<string> cards) =>
@@ -1062,7 +1091,7 @@ public sealed class BuyPlan {
 		Dictionary<uint, Dictionary<string, int>> pendingBy = [];
 
 		if (levelsToGo != null) {
-			foreach (BuyLedger.Entry e in ledger.All.Where(e => e.Pending && (e.At >= nowUtc.AddDays(-1)) && (e.App != 0))) {
+			foreach (BuyLedger.Entry e in ledger.All.Where(e => e.Pending && !e.Pack && (e.At >= nowUtc.AddDays(-1)) && (e.App != 0))) {
 				Dictionary<string, int> cards = pendingBy.TryGetValue(e.App, out Dictionary<string, int>? had) ? had : pendingBy[e.App] = new(StringComparer.Ordinal);
 				cards[e.Card] = cards.GetValueOrDefault(e.Card) + 1;
 			}
@@ -1268,13 +1297,14 @@ public sealed class BuyPlan {
 			wanted += c.Missing.Count;
 		}
 
-		budget = Math.Clamp(wanted + 5, MinBookReads, MaxBookReads);
+		// 1.9.0: room for a few booster pack prices on top, so they never crowd out the cards' own.
+		budget = Math.Clamp(wanted + 5, MinBookReads, MaxBookReads) + (cfg.BuyBooster ? PackReads : 0);
 
 		List<BuyStep> priced = [];
 		List<Candidate> unpriced = [];
 		long fitting = 0, anchorLow = long.MaxValue;
 		bool saidDear = false, pricing = true;
-		bool packBought = false;   // 1.9.0: one set a look buys booster packs instead - a few foil prices at most
+		bool packBought = false;   // 1.9.0: one set a look buys booster packs instead of its cards
 
 		// 1.8.2, the automatic most to pay for one level: tight - a quarter over what a level usually costs (the middle of the
 		// set finder's 5 cheapest whole sets; half over with fewer known, or the cheapest level priced over the last week) - a
@@ -1400,71 +1430,6 @@ public sealed class BuyPlan {
 			// Each card with the tax on its fee, as the purchase will pay it - so the ranking and what fits today are what it costs.
 			BuyStep step = new(set.App, set.Game, c.Full, c.Level, set.Cards.Count, [.. got.Select(p => new BuyCard(p.Hash, p.Book.Lowest, wallet.FeeTax(p.Book.Lowest)))]);
 
-			// 1.9.0: a set's booster packs instead of its missing cards, when a pack's pull is worth more than it costs and
-			// the packs come to less than the cards. A pack is 3 random cards, so it may not finish the set - the cards it
-			// doesn't hit are still bought later. One set a look ("Buy booster packs instead"), so a few foil prices at most.
-			long cardCost = step.Cost;
-
-			if (!packBought && (cfg.BuyBooster > 0) && (step.Cards.Count > 0)) {
-				string packHash = GemsChoice.PackHash(step.App, step.Game);
-
-				if ((await PricesAsync([packHash]).ConfigureAwait(false) != null) && read.TryGetValue(packHash, out CardMarket.Book? packBook)
-					&& (packBook.Lowest > 0) && (packBook.Currency == plan.Currency)) {
-					// What one of the set's cards is worth after the fee: the wallet price this look already read (the missing
-					// cards were priced above), else read now (a pack pulls from the whole set, and this happens for at most
-					// one set a look - a few extra reads), else the set finder's US price at the learned rate. A card who
-					// nobody sells - or no price at all - is left out entirely, never counted at zero.
-					List<long> normal = [];
-
-					foreach (string h in set.Cards) {
-						CardMarket.Book? wb = read.TryGetValue(h, out CardMarket.Book? rb) ? rb : prices?.Recent(h, plan.Currency, DateTime.UtcNow);
-
-						if (wb is not { Lowest: > 0 } && (books < budget) && !plan.Short) {
-							books++;
-
-							if (await market.BookAsync(h, ct).ConfigureAwait(false) is { } fresh) {
-								prices?.Remember(h, fresh, DateTime.UtcNow);
-								read[h] = wb = fresh;
-							}
-						}
-
-						long cash = wb is { Lowest: > 0 } ? wb.Lowest
-							: (set.Usd.GetValueOrDefault(h) is int usd and > 0) && (rate is double rateNow) ? WalletRate.ToWallet(usd, rateNow) : 0;
-
-						if (cash > 0) {
-							normal.Add((long) Seller.ReceiveFor((int) Math.Min(cash, int.MaxValue)));
-						}
-					}
-
-					// A pack pulls from the whole set, so the worst and average pulls are only known when every card of the
-					// set is priced - a card nobody sells (or no rate to read its set price by) keeps the cards being bought.
-					if (normal.Count == set.Cards.Count) {
-						long guarantee = BoosterMath.Guarantee(normal);
-						long average = cfg.BuyBooster == 1 ? guarantee : BoosterMath.Average(normal, await FoilsAsync(set.Cards).ConfigureAwait(false));
-						long pull = cfg.BuyBooster switch {
-							1 => guarantee,
-							2 => average,
-							_ => Math.Max(guarantee, average)
-						};
-						long packCompare = packBook.Lowest + (cfg.BuyBoosterTaxes ? wallet.FeeTax(packBook.Lowest) : 0);
-						int nPacks = (step.Cards.Count + 2) / 3;
-						long packTax = wallet.FeeTax(packBook.Lowest);
-						long packTotal = nPacks * (packBook.Lowest + packTax);
-
-						if ((pull > packCompare) && (packTotal < cardCost)) {
-							step = step with {
-								Packs = nPacks, PackCents = packBook.Lowest, PackTax = packTax,
-								Cards = [new BuyCard(packHash, packBook.Lowest, packTax)],
-								PackCards = [.. step.Cards.Select(static x => x.Hash)]
-							};
-							plan.Notes.Add($"{set.Game}: buying {nPacks} booster pack(s) instead of its missing cards - the pull is worth about {Money(pull, plan.Currency)}, more than the pack, and the packs cost less than the cards");
-							plan.Skipped.Add($"{set.Game}: its booster packs are worth more than they cost ({Money(pull, plan.Currency)} of cards vs {Money(packCompare, plan.Currency)} a pack) - buying packs instead");
-							packBought = true;
-						}
-					}
-				}
-			}
-
 			long before = Wallet(c.Usd) ?? 0;
 
 			// 1.8.2: half as dear again as the set finder said - not planned on this look's one price (it waits for the next look).
@@ -1483,14 +1448,45 @@ public sealed class BuyPlan {
 				continue;
 			}
 
+			// What buying the missing cards straight costs - what a level costs, for the automatic most per level.
+			long cardCost = step.Cost;
+
+			// 1.9.0, "Buy booster packs when they're cheaper": the game's packs instead of its missing cards, when the packs and
+			// the missing cards they're expected to leave (bought at a later look) come to at least a tenth less than the cards.
+			// A pack is 3 random cards of the WHOLE set, so a few packs seldom bring every missing card. One set a look.
+			if (!packBought && cfg.BuyBooster && (step.Cards.Count > 0)) {
+				string packHash = GemsChoice.PackHash(step.App, step.Game);
+
+				if (await PackBookAsync(packHash).ConfigureAwait(false) is { } packBook) {
+					long packTax = wallet.FeeTax(packBook.Lowest);
+
+					if (BoosterMath.CheapestPacks(set.Cards.Count, [.. step.Cards.Select(static x => x.Price + x.Tax)], packBook.Lowest + packTax) is { } buy) {
+						string said = $"{buy.Packs} pack(s) at {Money(packBook.Lowest + packTax, plan.Currency)} are expected to leave {buy.LeftCards:0.0} of its {step.Cards.Count} missing card(s), about {Money((long) Math.Ceiling(buy.Expected), plan.Currency)} in all - the cards straight {Money(cardCost, plan.Currency)}";
+
+						if (buy.Wins) {
+							step = step with {
+								Packs = buy.Packs, PackHash = packHash, PackCents = packBook.Lowest, PackTax = packTax,
+								LeftCards = buy.LeftCards, LeftCost = (long) Math.Ceiling(buy.LeftCost)
+							};
+							plan.Notes.Add($"{set.Game}: booster packs instead of its missing cards - {said}");
+							packBought = true;
+						} else {
+							plan.Skipped.Add($"{set.Game}: its booster packs don't come out cheaper - {said}");
+						}
+					}
+				} else if (read.TryGetValue(packHash, out CardMarket.Book? other) && (other.Lowest > 0) && (other.Currency != plan.Currency)) {
+					plan.Skipped.Add($"{set.Game}: its booster pack is priced in {MarketQuotes.Code(other.Currency)}, not the wallet's {MarketQuotes.Code(plan.Currency)} - the cards are bought");
+				}
+			}
+
 			priced.Add(step);
 
 			// A whole set, or a started badge missing 2 cards or more - never one cheap card short - is what a level costs.
 			if (step.FullSet || (step.Cards.Count >= 2)) {
-				anchorLow = Math.Min(anchorLow, step.Cost);
+				anchorLow = Math.Min(anchorLow, cardCost);
 			}
 
-			if ((step.Cost <= most) && (step.Cost <= CapNow())) {
+			if ((step.Cost <= most) && (step.LevelCost <= CapNow())) {
 				fitting += step.Cost;
 			}
 		}
@@ -1507,7 +1503,8 @@ public sealed class BuyPlan {
 
 		// ── smart levelling: whatever makes the next badge level cheapest goes first - the most XP for the money ──
 		// A started badge one card short goes after a whole new set that costs less; at the same price, the started badge.
-		plan.Ranked.AddRange(priced.OrderBy(static s => s.Cost).ThenBy(static s => s.FullSet).ThenBy(static s => s.App));
+		// 1.9.0: a level bought as booster packs at what it's expected to cost in all (the packs and the cards they leave).
+		plan.Ranked.AddRange(priced.OrderBy(static s => s.LevelCost).ThenBy(static s => s.FullSet).ThenBy(static s => s.App));
 
 		// The most to pay for one level: the setting, or twice what a level usually costs (1.8.2 - see above).
 		plan.MaxLevelAuto = fixedCap <= 0;
@@ -1525,7 +1522,7 @@ public sealed class BuyPlan {
 		long warmCap = 0;
 
 		if (finder.WarmUp(DateTime.UtcNow) is { } warm && (warm.Checked < warm.Needed)) {
-			long cheapestKnown = Math.Min(plan.Ranked.Where(static r => r.FullSet && (r.Cost > 0)).Select(static r => r.Cost).DefaultIfEmpty(long.MaxValue).Min(),
+			long cheapestKnown = Math.Min(plan.Ranked.Where(static r => r.FullSet && (r.LevelCost > 0)).Select(static r => r.LevelCost).DefaultIfEmpty(long.MaxValue).Min(),
 				plan.Market.Select(static r => r.Wallet ?? long.MaxValue).Where(static w => w > 0).DefaultIfEmpty(long.MaxValue).Min());   // whole sets only: a started badge two cards short isn't what a set costs
 			warmCap = cheapestKnown < long.MaxValue ? cheapestKnown * WarmUpPct / 100 : 1;
 			plan.WarmUpChecked = warm.Checked;
@@ -1544,14 +1541,14 @@ public sealed class BuyPlan {
 				break;
 			}
 
-			if (step.FullSet && (warmCap > 0) && (step.Cost > warmCap)) {
-				plan.Skipped.Add($"{step.Game}: {Money(step.Cost, plan.Currency)} - the set finder is still checking the cheapest sets");
+			if (step.FullSet && (warmCap > 0) && (step.LevelCost > warmCap)) {
+				plan.Skipped.Add($"{step.Game}: {Money(step.LevelCost, plan.Currency)} - the set finder is still checking the cheapest sets");
 
 				continue;
 			}
 
-			if ((plan.MaxLevelPrice > 0) && (step.Cost > plan.MaxLevelPrice)) {
-				plan.Skipped.Add($"{step.Game}: {Money(step.Cost, plan.Currency)} a level - more than the most to pay for one ({capSaid})");
+			if ((plan.MaxLevelPrice > 0) && (step.LevelCost > plan.MaxLevelPrice)) {
+				plan.Skipped.Add($"{step.Game}: {Money(step.LevelCost, plan.Currency)} a level - more than the most to pay for one ({capSaid})");
 
 				if (!saidCap) {
 					saidCap = true;
@@ -1575,8 +1572,8 @@ public sealed class BuyPlan {
 		// cheapest known past them at the learned rate. 1.8.2: whatever the most to pay for one level says - that only holds
 		// buying back a while, and leaving the dear ones out made money look like it buys cheap levels without end. Never
 		// one dearer than a day's or a week's limit (it could never be bought), nor past the Steam level buying stops at.
-		foreach (BuyStep s in plan.Ranked.Where(s => s.Cost <= most)) {
-			plan.Levels.Add((s.App, s.Cost));
+		foreach (BuyStep s in plan.Ranked.Where(s => s.LevelCost <= most)) {
+			plan.Levels.Add((s.App, s.LevelCost));
 		}
 
 		foreach (Candidate c in unpriced) {
@@ -1624,9 +1621,12 @@ public sealed class BuyLedger(string path) {
 	/// <param name="Tax">The tax on the market fee in <paramref name="Cents"/> - the order's price is the rest.</param>
 	/// <param name="Before">1.8.2: the ids of the copies of this card held before it was ordered (null: not known) - a new one
 	/// arriving after the order proves it was bought, when Steam won't say.</param>
-	/// <param name="Asset">1.8.2: the copy that proved it was bought - never proof for another purchase.</param>
+	/// <param name="Asset">1.8.2: the copy that proved it was bought - never proof for another purchase. 1.9.0, a booster pack:
+	/// the copy that was opened.</param>
+	/// <param name="Pack">1.9.0: a booster pack bought instead of cards ("Buy booster packs when they're cheaper") - opened once it's in.</param>
+	/// <param name="Opened">1.9.0: that pack was opened (or given up on - see <see cref="PacksToOpen"/>).</param>
 	public sealed record Entry(DateTime At, long Cents, int Currency, uint App, string Card, bool Pending = false, string? Order = null, string? Key = null,
-		string? Confirm = null, long Tax = 0, string[]? Before = null, string? Asset = null, bool Pack = false) {
+		string? Confirm = null, long Tax = 0, string[]? Before = null, string? Asset = null, bool Pack = false, bool Opened = false) {
 		/// <summary>Waiting for the owner to confirm it in the Steam app: no order yet, a confirmation to send it with.</summary>
 		public bool OnPhone => Pending && string.IsNullOrEmpty(Order) && !string.IsNullOrEmpty(Confirm);
 	}
@@ -1893,6 +1893,19 @@ public sealed class BuyLedger(string path) {
 	public HashSet<string> PendingCards(DateTime utc) {
 		lock (_gate) {
 			return new(Load().Where(e => e.Pending && (e.At >= utc)).Select(static e => e.Card), StringComparer.Ordinal);
+		}
+	}
+
+	/// <summary>1.9.0: how long a booster pack it bought is looked for to open - past this it's left to "Open booster packs".</summary>
+	public static readonly TimeSpan PackOpenFor = TimeSpan.FromDays(2);
+
+	/// <summary>
+	/// 1.9.0: the games with a booster pack it bought instead of cards that isn't opened yet - or whose purchase isn't settled
+	/// (unsure, or waiting on the phone) - in the last <see cref="PackOpenFor"/>. Nothing more is bought for them meanwhile.
+	/// </summary>
+	public HashSet<uint> PacksToOpen(DateTime utc) {
+		lock (_gate) {
+			return [.. Load().Where(e => e.Pack && !e.Opened && (e.At >= utc - PackOpenFor)).Select(static e => e.App)];
 		}
 	}
 
@@ -2455,7 +2468,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	/// whose cards from a pack made to sell are still to be sold: those copies are for the market, never counted as cards held
 	/// for a badge (buying the rest of the set would leave them stranded or crafted).
 	/// </summary>
-	private IReadOnlyCollection<uint> Boosting() => [.. BoosterPick.Busy(Bot), .. GemsChoice.Memory.Of(Bot.Name).CardsNow().Select(static c => c.App)];
+	private IReadOnlyCollection<uint> Boosting() => [.. BoosterPick.Busy(Bot), .. GemsChoice.Memory.Of(Bot.Name).CardsNow().Select(static c => c.App), .. _justOpened];
+
+	/// <summary>1.9.0: games whose bought booster packs this look opened - the inventory read may not show their cards yet, so
+	/// nothing more is bought for them until the next look.</summary>
+	private HashSet<uint> _justOpened = [];
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		if (!await Sleep(Rng.Minutes(10, 25), ct).ConfigureAwait(false)) {
@@ -2970,6 +2987,11 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			// Purchases the owner was asked to confirm in the Steam app: sent again with the confirmation.
 			await SweepLockedAsync(ct, resume: true, result).ConfigureAwait(false);
 
+			// 1.9.0: booster packs it bought instead of cards, opened once they're in. Their games wait for the next look (an
+			// inventory read from before the opening could buy a card the pack just brought).
+			_justOpened = [];
+			await OpenBoughtPacksAsync(ct).ConfigureAwait(false);
+
 			// One set waiting on the phone at a time: nothing new until it's confirmed, turned down or a day old.
 			if (Ledger.OnPhone.Count is int waiting and > 0) {
 				result.Problem = $"{waiting} card purchase(s) waiting to be confirmed in the Steam app - nothing new is bought until then";
@@ -3084,6 +3106,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		if (unsure && (await ProveAsync(justBought: true, ct).ConfigureAwait(false) > 0) && result.Problem.StartsWith(UnsureText, StringComparison.Ordinal)
 			&& Ledger.All.All(static e => !e.Pending || e.OnPhone)) {
 			result.Problem = "";
+		}
+
+		// 1.9.0: booster packs bought this look - opened once they show in the inventory (else at the next look).
+		if (result.Bought.Any(static b => b.Step.IsPack) && !ct.IsCancellationRequested) {
+			await Task.Delay(ProofWait(), ct).ConfigureAwait(false);
+			await OpenBoughtPacksAsync(ct).ConfigureAwait(false);
 		}
 
 		Said(result, plan.Currency);
@@ -3732,14 +3760,14 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	}
 
 	/// <summary>
-	/// Buy booster packs instead of the cards of a set (see BuyPlan: the plan turned the step into packs when a pack's worst or
-	/// average pull was worth more than the pack, and packs were cheaper than the cards). A pack is one buy order at the pack's
+	/// 1.9.0: buy booster packs instead of a set's missing cards (the plan chose them when the packs and the cards they're
+	/// expected to leave come out at least a tenth cheaper - BoosterMath.CheapestPacks). Each pack is one buy order at its
 	/// cheapest listing, written down as spent before it's sent, exactly like a card - same limits, same wallet, same phone
-	/// confirmation. What's bought is opened by <see cref="ProveAsync"/> once it's in the inventory (or right away when Steam
-	/// says it was bought), so its three cards go toward the badge.
+	/// confirmation, never dearer than planned. The set is never Finished here: the packs are opened once they're in
+	/// (<see cref="OpenBoughtPacksAsync"/>), and a later look buys whatever is still missing.
 	/// </summary>
 	private async Task<bool> BuyPacksAsync(BuyStep step, int currency, Result result, CancellationToken ct) {
-		string packHash = step.Cards[0].Hash;
+		string packHash = step.PackHash!;
 		string name = new BuyCard(packHash, 0).Name;   // "Shattered Web Booster Pack"
 		int got = 0, onPhone = 0;
 		bool leftover = false;
@@ -3765,9 +3793,16 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				return Asked(step, onPhone, result, false);
 			}
 
+			// The packs' own switch, turned off since the plan: no more packs (the cards come at the next look).
+			if (!Bot.Cfg.BuyBooster) {
+				result.Problem = "\"Buy booster packs when they're cheaper\" was turned off - no more packs bought";
+
+				return Asked(step, onPhone, result, false);
+			}
+
 			CardMarket.Book? last = await _market.BookAsync(packHash, ct).ConfigureAwait(false);
 
-			if (last != null) {
+			if (last is { Currency: var lastCurrency } && (lastCurrency == currency)) {
 				_prices.Remember(packHash, last, DateTime.UtcNow);
 			}
 
@@ -3848,7 +3883,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					result.Bought.Add((step, new BuyCard(packHash, book.Lowest, tax), paid));
 					got++;
 					spentHere += paid;
-					Log.Good(new Said("bought a {0} booster pack ({1}) · {2}", step.Game, name, BuyPlan.Money(paid, currency)), Bot.Name);
+					Log.Good(new Said("bought {0} ({1}) · {2}", name, step.Game, BuyPlan.Money(paid, currency)), Bot.Name);
 
 					break;
 				case BuyResult.Waiting:
@@ -3859,7 +3894,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 					break;
 				case BuyResult.Unsure:
-					Log.Warn(new Said("unsure if a {0} booster pack was bought · counted as spent", step.Game), Bot.Name);
+					Log.Warn(new Said("unsure if {0} was bought · counted as spent", name), Bot.Name);
 					result.Problem = $"{UnsureText} the {step.Game} booster pack was bought ({answer.Message}) - counted as spent, and asked about again at the next look";
 
 					break;
@@ -3896,7 +3931,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 					if (MarketHold.Classify(answer.Message) == MarketHold.Refusal.NotAllowed) {
 						MarketHold.Refused(Bot, MarketHold.Refusal.NotAllowed, DateTime.UtcNow, selling: false);
 					} else if (MarketHold.Once(Bot.Name, "buy:" + answer.Message, TimeSpan.FromDays(7))) {
-						Log.Warn(answer.Message.Length > 0 ? new Said("buying a {0} booster pack turned down · {1}", step.Game, answer.Message) : new Said("buying a {0} booster pack turned down", step.Game), Bot.Name);
+						Log.Warn(answer.Message.Length > 0 ? new Said("buying {0} turned down · {1}", name, answer.Message) : new Said("buying {0} turned down", name), Bot.Name);
 					} else {
 						Log.Debug($"buying a {step.Game} booster pack turned down again: {answer.Message}", Bot.Name);
 					}
@@ -3925,14 +3960,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			}
 		}
 
-		if (got == step.Packs) {
-			result.Finished.Add(step);
-
-			// The packs are all being opened: badge crafting looks soon rather than at its daily round.
-			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true, bought: true);
-		}
-
-		// A pack waiting on the phone is the only one: the next set waits until it's confirmed.
+		// Never Finished: a pack is 3 random cards of the whole set - the cards still missing once they're opened are bought
+		// at a later look. A pack waiting on the phone is the only one: the next set waits until it's confirmed.
 		return Asked(step, onPhone, result, onPhone == 0);
 	}
 
@@ -4018,12 +4047,8 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				}
 
 				proven++;
-				if (entry.Pack && ulong.TryParse(proof, out ulong asset)) {
-					await OpenBoughtPackAsync(entry, asset, ct).ConfigureAwait(false);
-				} else {
-					Log.Good(new Said("bought {0} ({1}) · {2}", new BuyCard(entry.Card, 0).Name, GameNames.Of(entry.App), BuyPlan.Money(entry.Cents, entry.Currency)), Bot.Name);
-					Log.Debug(new Said("{0} · found in the inventory after its order", new BuyCard(entry.Card, 0).Name), Bot.Name);
-				}
+				Log.Good(new Said("bought {0} ({1}) · {2}", new BuyCard(entry.Card, 0).Name, GameNames.Of(entry.App), BuyPlan.Money(entry.Cents, entry.Currency)), Bot.Name);
+				Log.Debug(new Said("{0} · found in the inventory after its order", new BuyCard(entry.Card, 0).Name), Bot.Name);
 			}
 		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
 			Log.Debug(new Said("couldn't read the inventory: {0}", Log.Describe(e)), Bot.Name);
@@ -4039,45 +4064,93 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 		return proven;
 	}
 
-	/// <summary>
-	/// A booster pack bought instead of cards, now known to be in the inventory: opened, so its three cards count toward the
-	/// badge (or become spare items) - the point of buying it. Claimed so nothing else sends or sells it meanwhile; left
-	/// alone and tried again if it can't be opened right now. The pack is out of the ledger either way (it was bought).
-	/// </summary>
-	private async Task OpenBoughtPackAsync(BuyLedger.Entry entry, ulong asset, CancellationToken ct) {
-		string name = new BuyCard(entry.Card, 0).Name;
+	/// <summary>1.9.0: opens one booster pack (tests swap it) - the spare items' own opening, by default.</summary>
+	public Func<SpareItem, CancellationToken, Task<(bool Ok, List<string> Cards, string? Why)>>? Unpack { get; set; }
 
-		try {
+	/// <summary>
+	/// 1.9.0: the booster packs it bought instead of cards, opened once they're in the inventory - the point of buying them:
+	/// their 3 cards go toward the badge, and the next look buys what's still missing. A pack's copy is the one that proved
+	/// its purchase, else one that arrived after its order (never a copy that was held before, nor one another purchase
+	/// claimed). Claimed while it's opened, so nothing else sends or sells it. One that can't be opened now is tried at the
+	/// next look; one not found in <see cref="BuyLedger.PackOpenFor"/> is left to "Open booster packs". How many were opened.
+	/// </summary>
+	internal async Task<int> OpenBoughtPacksAsync(CancellationToken ct) {
+		DateTime now = DateTime.UtcNow;
+		List<BuyLedger.Entry> toOpen = [.. Ledger.All.Where(static e => e is { Pack: true, Pending: false, Opened: false }).OrderBy(static e => e.At)];
+
+		if ((toOpen.Count == 0) || ct.IsCancellationRequested) {
+			return 0;
+		}
+
+		if (await HeldAsync(fresh: true, ct).ConfigureAwait(false) is not { } held) {
+			return 0;
+		}
+
+		HashSet<string> taken = new(Ledger.All.Where(static e => e.Opened || !e.Pack).Select(static e => e.Asset).OfType<string>(), StringComparer.Ordinal);
+		int opened = 0;
+
+		foreach (BuyLedger.Entry entry in toOpen) {
+			string name = new BuyCard(entry.Card, 0).Name;
+			IReadOnlyList<string> copies = held.GetValueOrDefault(entry.Card) ?? [];
+			HashSet<string> before = new(entry.Before ?? [], StringComparer.Ordinal);
+			string? copy = (entry.Asset != null) && copies.Contains(entry.Asset, StringComparer.Ordinal) ? entry.Asset
+				: copies.Where(id => !before.Contains(id) && !taken.Contains(id) && !toOpen.Any(o => (o != entry) && (o.Asset == id))).OrderBy(static id => id.Length).ThenBy(static id => id, StringComparer.Ordinal).FirstOrDefault();
+
+			if ((copy == null) || !ulong.TryParse(copy, out ulong asset)) {
+				// Not in yet (Steam can take a while), or opened by hand meanwhile: looked for again, then left alone.
+				if (now - entry.At > BuyLedger.PackOpenFor) {
+					Ledger.Replace(entry, entry with { Opened = true });
+					Log.Debug(new Said("the {0} it bought isn't in the inventory - left to \"Open booster packs\"", name), Bot.Name);
+				}
+
+				continue;
+			}
+
+			taken.Add(copy);
 			HashSet<ulong> claimed = Bot.ClaimItems([asset]);
 
 			if (claimed.Count == 0) {
-				Log.Debug(new Said("the {0} booster pack it bought is on the move - opening it another time", name), Bot.Name);
+				Log.Debug(new Said("the {0} it bought is on the move - opening it another time", name), Bot.Name);
 
-				return;
+				continue;
 			}
 
+			(bool Ok, List<string> Cards, string? Why) result;
+
 			try {
-				LiveSpareSteam steam = new(Bot);
-				(bool ok, List<string> cards, string? why) result = await steam.UnpackAsync(
-					new SpareItem(asset, entry.App, SpareKind.BoosterPack, entry.Card, name, false, false), ct).ConfigureAwait(false);
-
-				if (result.ok) {
-					Log.Good(new Said("opened the {0} booster pack it bought · {1}", name, result.cards.Count), Bot.Name);
-					Log.Earned(SpareRun.OpenedSaid(name, result.cards, null), Bot.Name);
-
-					// New cards toward the badge - badge crafting looks soon.
-					BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true, bought: true);
-				} else {
-					Log.Debug(new Said("couldn't open the {0} booster pack it bought: {1}", name, result.why ?? "-"), Bot.Name);
-				}
+				SpareItem pack = new(asset, entry.App, SpareKind.BoosterPack, entry.Card, name, false, false);
+				result = Unpack != null ? await Unpack(pack, ct).ConfigureAwait(false) : await new LiveSpareSteam(Bot).UnpackAsync(pack, ct).ConfigureAwait(false);
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+				throw;
+			} catch (Exception e) {
+				result = (false, [], Log.Describe(e));
 			} finally {
 				Bot.ReleaseItems(claimed);
 			}
-		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-			throw;
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't open the {0} booster pack it bought: {1}", name, Log.Describe(e)), Bot.Name);
+
+			if (!result.Ok) {
+				Log.Debug(new Said("couldn't open the {0} it bought: {1}", name, result.Why ?? "-"), Bot.Name);
+
+				continue;
+			}
+
+			if (!Ledger.Replace(entry, entry with { Asset = copy, Opened = true })) {
+				CantSave();
+
+				break;
+			}
+
+			opened++;
+			_justOpened.Add(entry.App);
+			Log.Earned(SpareRun.OpenedSaid(name, result.Cards, null), Bot.Name);
 		}
+
+		if (opened > 0) {
+			// New cards toward the badge: a set may be whole now - badge crafting looks soon.
+			BotManager.ModuleOf<BadgeCraft>(Bot)?.LookSoon(setComplete: true, bought: true);
+		}
+
+		return opened;
 	}
 
 	/// <summary>
@@ -4089,11 +4162,12 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			return carryOn;
 		}
 
-		string what = step.IsPack ? "booster pack" : "card";
-		Log.Attention(new Said("confirm the {0} purchase in the Steam app · {1} {0}(s) for {2}", what, onPhone, step.Game), Bot.Name);
+		Log.Attention(step.IsPack
+			? new Said("confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}", onPhone, step.Game)
+			: new Said("confirm the card purchase in the Steam app · {0} card(s) for {1}", onPhone, step.Game), Bot.Name);
 
 		if (result.Problem.Length == 0) {
-			result.Problem = $"{onPhone} {what} purchase(s) for {step.Game} to confirm in the Steam app on your phone - bought once confirmed, at the next look; let go after a day";
+			result.Problem = $"{onPhone} {(step.IsPack ? "booster pack" : "card")} purchase(s) for {step.Game} to confirm in the Steam app on your phone - bought once confirmed, at the next look; let go after a day";
 		}
 
 		return false;

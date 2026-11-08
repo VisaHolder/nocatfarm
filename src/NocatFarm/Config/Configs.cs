@@ -946,19 +946,11 @@ public sealed class BotConfig {
 	public bool BuyFullSets { get; set; } = true;
 
 	/// <summary>
-	/// Buy a set's cheapest booster packs instead of its missing cards when a pack's pull is worth more than it costs (1.9.0).
-	/// 0 off; 1 when even the worst pull (the set's 3 cheapest cards) is worth more than the pack; 2 when the average pull
-	/// (each of 3 cards 99% normal, 1% foil) is worth more; 3 when either does. The pack must also cost less than the cards
-	/// it replaces. A pack is 3 random cards, so it may not finish the set - the cards it doesn't hit are bought later.
+	/// 1.9.0: buy a set's booster packs instead of its missing cards when that's expected to come out cheaper - the packs,
+	/// and the missing cards they're expected not to bring (bought afterwards), at least a tenth under buying the missing
+	/// cards straight (<see cref="Core.BoosterMath.CheapestPacks"/>). A pack is 3 random cards of the whole set. Off by default.
 	/// </summary>
-	public int BuyBooster { get; set; }
-
-	/// <summary>
-	/// Whether the "worth more than the pack" check (1.9.0) adds the tax on the market fee to the pack's price to compare
-	/// against. Off compares to the listing price; on to that price plus the purchase tax. Buying a pack still pays the tax
-	/// either way, as buying cards does - this only decides when a pack is judged worth it.
-	/// </summary>
-	public bool BuyBoosterTaxes { get; set; }
+	public bool BuyBooster { get; set; }
 
 	/// <summary>The most it spends in any 24 hours, in the wallet's own currency. Below 0 (-1): no limit - whatever the wallet holds.</summary>
 	public float BuyDailyLimit { get; set; } = 1.50f;

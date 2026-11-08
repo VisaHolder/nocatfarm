@@ -6669,12 +6669,14 @@ function buyPreviewHtml(d) {
   if (d.CraftOff) top.push(`<p class="problem">${esc(t('"Craft badges from card sets" is off - nothing is bought until it is on, or the cards would only sit there.'))}</p>`);
 
   const big = d.SignedIn && !d.Problem ? `<div class="big">
-    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards)}
+    ${bigNumber(d.Cards, d.Cards === 1 ? t('card to buy') : t('cards to buy'), d.Cards || d.Sets.length ? tf('{0} for {1} badge level(s)', d.Cost, d.Sets.length) : t('nothing right now'), !d.Cards && !d.Sets.length)}
     ${bigNumber(d.Sets.length, t('badge levels'), d.Wallet ? tf('wallet: {0}', d.Wallet) : '', true)}
   </div>` : '';
 
   const sets = d.Sets.length
-    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.FullSet
+    ? `<h4>${esc(t('It would buy'))}</h4><ul class="limits">${d.Sets.map((s) => `<li>${esc(s.Packs > 0
+      ? tf('{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}', s.Packs, s.Game, s.PackCost, s.Cost, s.Cards, s.Straight, s.LeftCards, s.Expected, s.Level, s.Level + 1)
+      : s.FullSet
       ? tf('A full set of {0} ({1} cards) for {2} - level {3} to {4}, about {5} XP per 1.00', s.Game, s.Cards, s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit))
       : tf('{0} of {1} cards for {2} ({3}) for {4} - level {5} to {6}, about {7} XP per 1.00', s.Cards, s.SetSize, s.Game, s.Names.join(', '), s.Cost, s.Level, s.Level + 1, grouped(s.XpPerUnit)))}</li>`).join('')}</ul>`
     : '';

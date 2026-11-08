@@ -861,16 +861,16 @@ public static partial class Spare {
 				continue;
 			}
 
-			// Three cards out of the set. Both sides after Steam's fees - what you'd get. The pull's worth depends on the
-			// choice: the average of 3 random cards (each 99% a normal, 1% a foil) for 1 and 4, or the guaranteed 3 cheapest
-			// cards for 3 and 4. 1.9.0: the plain average leaves the rare foil out of nothing now - a foil's average worth
-			// joins at its 1% chance when the set's foils are priced.
+			// Three cards out of the set (every card priced, above). Both sides after Steam's fees - what you'd get. The pull's
+			// worth depends on the choice: the average of 3 random cards for 1 and 4 (1.9.0: with a 1% chance a pack holds a
+			// foil, once a pack, when the set's foils are priced), or the guaranteed - 3 times the cheapest card - for 3 and 4.
 			int sealedValue = Seller.ReceiveFor(packPrice.Cents);
 			long[] normal = [.. p.Cards.Select(static c => (long) Seller.ReceiveFor(c))];
 			long[] foil = [.. (p.CardsFoil ?? []).Select(static c => (long) Seller.ReceiveFor(c)).Where(static r => r > 0)];
 			long average = BoosterMath.Average(normal, foil);
 			long guarantee = BoosterMath.Guarantee(normal);
-			bool worthMore = choice switch { 3 => guarantee > sealedValue, 4 => average > sealedValue || guarantee > sealedValue, _ => average > sealedValue };
+			bool averageWins = (choice is 1 or 4) && (average > sealedValue);
+			bool worstWins = (choice is 3 or 4) && (guarantee > sealedValue);
 
 			if (average <= 0) {
 				found.Add(new PackDecision(pack, false, new Said("no card of it is priced yet - kept until there is")));
@@ -878,11 +878,17 @@ public static partial class Spare {
 				continue;
 			}
 
-			found.Add(worthMore
-				? new PackDecision(pack, true, choice == 3
-					? new Said("even its 3 cheapest cards are worth about {0}, the pack {1}", UsMoney((int) guarantee), UsMoney(sealedValue))
-					: new Said("its cards are worth about {0}, the pack {1}", UsMoney((int) average), UsMoney(sealedValue)), sealedValue, (int) average)
-				: new PackDecision(pack, false, new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney((int) average)), sealedValue, (int) average, Disposable: true));
+			// What it's said by: the worst pull when that's what decided (choice 3, or 4 with the average not enough).
+			bool byWorst = worstWins ? !averageWins : choice == 3;
+			int shown = (int) (byWorst ? guarantee : average);
+
+			found.Add(averageWins || worstWins
+				? new PackDecision(pack, true, byWorst
+					? new Said("even its 3 cheapest cards are worth about {0}, the pack {1}", UsMoney(shown), UsMoney(sealedValue))
+					: new Said("its cards are worth about {0}, the pack {1}", UsMoney(shown), UsMoney(sealedValue)), sealedValue, shown)
+				: new PackDecision(pack, false, byWorst
+					? new Said("worth more sealed: the pack {0}, its 3 cheapest cards about {1}", UsMoney(sealedValue), UsMoney(shown))
+					: new Said("worth more sealed: the pack {0}, its cards about {1}", UsMoney(sealedValue), UsMoney(shown)), sealedValue, shown, Disposable: true));
 		}
 
 		return found;

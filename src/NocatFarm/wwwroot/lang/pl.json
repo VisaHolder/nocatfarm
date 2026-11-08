@@ -3491,7 +3491,17 @@
     "answers to commands": "odpowiedzi na polecenia",
     "updates and app messages": "aktualizacje i komunikaty aplikacji",
     "{0}: listing taken down · it can be listed again": "{0}: oferta wycofana · można ją wystawić ponownie",
-    "took down {0} - unsold {1} days, its gems are worth more now": "wycofano {0} - nie sprzedane od {1} dni, klejnoty są teraz warte więcej"
+    "took down {0} - unsold {1} days, its gems are worth more now": "wycofano {0} - nie sprzedane od {1} dni, klejnoty są teraz warte więcej",
+    "no card of it is priced yet - kept until there is": "żadna jej karta nie ma jeszcze ceny - zostaje, dopóki jej nie będzie",
+    "even its 3 cheapest cards are worth about {0}, the pack {1}": "nawet jej 3 najtańsze karty są warte około {0}, paczka {1}",
+    "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "więcej warta zamknięta: paczka {0}, jej 3 najtańsze karty około {1}",
+    "more booster packs wait · confirm the ones in the Steam app first": "kolejne paczki kart czekają · najpierw potwierdź te w aplikacji Steam",
+    "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "kupionej paczki {0} nie ma w ekwipunku - zostaje dla „Otwieraj paczki kart”",
+    "the {0} it bought is on the move - opening it another time": "kupiona paczka {0} jest w drodze - zostanie otwarta innym razem",
+    "couldn't open the {0} it bought: {1}": "nie udało się otworzyć kupionej paczki {0}: {1}",
+    "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "potwierdź zakup paczek kart w aplikacji Steam · {0} paczk(i) kart do {1}",
+    "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "kupiono paczek kart: {0} i kart: {1} · {2} · zestawy do stworzenia: {3}",
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} paczk(i) kart {1} po {2} za {3}, zamiast {4} brakujących kart(y) ({5}) - powinny zostawić około {6} kart(y) do kupienia potem, razem około {7} - poziom {8} do {9}"
   },
   "settings": {
     "BackupToTelegram": {
@@ -4955,8 +4965,8 @@
     },
     "OpenBoosterPacks": {
       "label": "Otwieraj paczki kart",
-      "tip": "Otwiera paczki kart z ekwipunku, żeby ich karty liczyły się do odznak (albo stały się zbędnymi przedmiotami). Do zdobywania poziomów wybierz zawsze. Domyślnie nigdy - nic się nie otwiera, dopóki tego nie wybierzesz. „Tylko gdy karty są warte więcej” otwiera paczkę tylko wtedy, gdy jej 3 karty są na rynku warte więcej niż zamknięta paczka - na przykład karty po 0.08 + 0.05 + 0.05 wygrywają z paczką za 0.15; nieznana cena zostawia ją zamkniętą. „Zawsze”: każdą paczkę. Paczki zrobione przez „automatycznie” w „Rób boostery” otwiera ono samo, cokolwiek tu ustawisz. Konto w trybie ludzkim otwiera paczki tylko w swoim dniu.",
-      "choices": "0 nigdy | 1 tylko gdy karty są warte więcej | 2 zawsze"
+      "tip": "Otwiera paczki kart z ekwipunku, żeby ich karty liczyły się do odznak (albo stały się zbędnymi przedmiotami). Do zdobywania poziomów wybierz zawsze. Domyślnie nigdy - nic się nie otwiera, dopóki tego nie wybierzesz. „Tylko gdy karty są warte więcej” otwiera paczkę, gdy jej 3 karty są na rynku średnio warte więcej niż zamknięta paczka - na przykład karty po 0.08 + 0.05 + 0.05 wygrywają z paczką za 0.15; karta foliowa liczy się jako szansa 1 na 100 na paczkę, nigdy więcej; nieznana cena zostawia ją zamkniętą. „Nawet gdy tylko 3 najtańsze są warte więcej” otwiera paczkę, gdy jej najgorsze losowanie - trzy razy najtańsza karta zestawu, przy znanych cenach wszystkich kart zestawu - jest warte więcej niż paczka; to najbezpieczniejszy sposób sprzedawania paczek dla ich kart. „Gdy którekolwiek” otwiera ją, gdy średnia albo najgorsze losowanie wygrywa z paczką. „Zawsze”: każdą paczkę. Paczki zrobione przez „automatycznie” w „Rób boostery” otwiera ono samo, cokolwiek tu ustawisz. Konto w trybie ludzkim otwiera paczki tylko w swoim dniu.",
+      "choices": "0 nigdy | 1 tylko gdy karty są warte więcej | 2 zawsze | 3 nawet gdy tylko 3 najtańsze są warte więcej | 4 gdy którekolwiek"
     },
     "SpareAction": {
       "label": "Co robić ze zbędnymi przedmiotami",
@@ -5125,6 +5135,10 @@
       "label": "Wiersz awansu pokazuje",
       "tip": "Jeden wiersz w logu, gdy poziom Steam tego konta rośnie - na przykład „Poziom Steam 58 (+1) · ten poziom kosztował 0,46 CAD” albo „Poziom Steam 60 (+3) · 1,42 CAD za 3 poziomy”. Koszt to tylko naprawdę wydane pieniądze: karty kupione do stworzonych odznak. Wyfarmione karty nic nie kosztują. Wysyłany też na Telegram lub Discord, gdy wiadomości o kartach są tam włączone. Wyłączone: brak wiersza.",
       "choices": "3 poziom i ile kosztował | 1 tylko poziom | 0 wyłączone"
+    },
+    "BuyBooster": {
+      "label": "Kupuj paczki kart, gdy wychodzą taniej",
+      "tip": "Zanim kupi karty, których brakuje odznace, sprawdza, czy paczki kart tej gry wyszłyby taniej. Paczka to 3 losowe karty z całego zestawu - powtórki i karty, które już masz, się nie liczą - więc paczki zwykle zostawiają kilka brakujących kart, kupowanych potem. Kupuje paczki tylko wtedy, gdy paczki i karty, które prawdopodobnie zostawią, kosztują co najmniej o jedną dziesiątą mniej niż brakujące karty. Na przykład zestaw 5 kart, w którym brakuje 4 po 0.20 (0.80): 3 paczki po 0.10 powinny zostawić około pół karty, razem około 0.41 - paczki. Zestaw 8 kart, w którym brakuje 4 po 0.08, przy paczkach po 0.25: karty. Kupione paczki otwierają się same; kolejne sprawdzenie kupuje to, czego wciąż brakuje. Jeden zestaw na sprawdzenie. 'buy preview' pokazuje liczby. Domyślnie wyłączone."
     }
   }
 }

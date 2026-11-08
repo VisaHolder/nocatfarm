@@ -540,8 +540,11 @@ public static class BoosterPick {
 			sb.AppendLine().Append("  'Craft badges from card sets' is off - finished sets wait until it's on.");
 		}
 
+		// 1.9.0: "Open booster packs" is 0 never, 1 on the average pull, 2 always, 3 on the worst pull, 4 on either.
 		if ((make != Auto) && (openChoice != 2)) {
-			sb.AppendLine().Append("  Packs made by 'games I pick' follow 'Open booster packs'; automatic opens its own.");
+			sb.AppendLine().Append(openChoice is 1 or 3 or 4
+				? "  Packs made by 'games I pick' open only when 'Open booster packs' finds their cards worth more than the sealed pack; automatic opens its own."
+				: "  Packs made by 'games I pick' stay sealed - 'Open booster packs' is never; automatic opens its own.");
 		}
 
 		return sb.ToString();

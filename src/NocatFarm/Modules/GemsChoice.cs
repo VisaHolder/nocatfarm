@@ -463,11 +463,12 @@ public static class GemsChoice {
 		long badge = 0;
 
 		if (cards > 0) {
-			// The worst it could do: the 3 cheapest cards' worth, each after the fee - the same worth the average prices.
+			// The worst it could do: 3 times the cheapest card's worth, after the fee. Only known with EVERY card of the set
+			// priced - a card left out could be the cheapest, and the worst pull would be overstated (as Spare.PlanPacks).
 			List<long> worst = [.. set.Cards.Select(h => market.Known(h, cur) is { } q && (now - q.When <= ChooseFresh) && (q.Sales >= MinCardSales)
 				? (long) Receive(q, dumpPct)
-				: set.Usd.GetValueOrDefault(h) is int usd and > 0 ? (long) Seller.ReceiveFor(Seller.UndercutFor(WalletRate.ToWallet(usd, rate))) : 0).Where(static w => w > 0)];
-			guarantee = worst.Count > 0 ? BoosterMath.Guarantee(worst) : 0;
+				: set.Usd.GetValueOrDefault(h) is int usd and > 0 ? (long) Seller.ReceiveFor(Seller.UndercutFor(WalletRate.ToWallet(usd, rate))) : 0)];
+			guarantee = worst.All(static w => w > 0) ? BoosterMath.Guarantee(worst) : 0;
 		}
 
 		if (levelling) {

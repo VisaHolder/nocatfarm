@@ -130,10 +130,10 @@ Steam sales, and free games if you turn that on.
   seasonal badge, keeping at least 1,000 and spending at most 3,000 a week, once you turn it on (it shows what it would
   buy first and asks you to confirm). Buying cards (off until you turn it on) buys the cards your badges are missing at
   the cheapest price, whole sets only, within a day's and a week's spending limit (1.50 and 8.00 in your wallet's
-  currency) - and, if you like, the cheapest full sets. You can also set it to buy booster packs instead of those cards
-  when the worst or the average pull is worth more than the pack price (its 3 random cards each - so a set may still
-  need buying afterwards), with an option to count the market tax in that. Nothing that sells, opens or uses up your
-  items is on by default.
+  currency) - and, if you like, the cheapest full sets. It can also buy a game's booster packs instead (off until you
+  turn it on), only when the packs and the cards they're expected to leave missing come out at least a tenth cheaper
+  than the cards - a pack is 3 random cards of the whole set, so that's mostly small sets with cheap packs. Nothing that
+  sells, opens or uses up your items is on by default.
 - Software (OBS, ShareX, Blender...) can be idled anywhere a game can. With Steam Family games, when the copy in use
   is busy, another member's free copy is borrowed.
 - Smaller extras: pricing your next Steam level, making booster packs from gems, crafting badges, product keys and
