@@ -29482,6 +29482,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		NocatFarm.Plugins.Comments.Forget();
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 		TestTemp.Gone(tmpRoot);
+	}
+}
+
 // ── 1.9.0: booster packs bought instead of cards only when they're EXPECTED to come out cheaper (PR #2, reworked) ──
 // A pack is 3 random cards of the WHOLE set, so ceil(missing / 3) packs usually miss some of the missing cards - and those
 // are bought anyway. The packs win only when the packs and the cards they're expected to leave cost a tenth less.
