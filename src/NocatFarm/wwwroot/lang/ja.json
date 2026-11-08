@@ -3396,6 +3396,7 @@
     "worth more sealed: the pack {0}, its 3 cheapest cards about {1}": "未開封の方が価値があります：パック {0}、最も安い 3 枚約 {1}",
     "more booster packs wait · confirm the ones in the Steam app first": "ほかのブースターパックは待機中 · 先に Steam アプリで確認してください",
     "the {0} it bought isn't in the inventory - left to \"Open booster packs\"": "購入した {0} がインベントリにありません - 「ブースターパックを開封する」に任せます",
+    "{0} is on \"Never open packs from these games\" now - the booster pack it bought for it stays shut": "{0} が「これらのゲームのパックは開封しない」に入りました - そのゲーム用に購入したブースターパックは開封しません",
     "the {0} it bought is on the move - opening it another time": "購入した {0} は移動中です - 別の機会に開封します",
     "couldn't open the {0} it bought: {1}": "購入した {0} を開封できませんでした: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "Steam アプリでブースターパックの購入を確認してください · {1} のブースターパック {0} 個",

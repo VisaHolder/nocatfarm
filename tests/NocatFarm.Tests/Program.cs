@@ -29743,6 +29743,173 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 			NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
 			&& NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = -2 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal)
 			&& !NocatFarm.Modules.GemsChoice.Fate(new NocatFarm.Config.BotConfig { OpenBoosterPacks = 1 }, fateWorth, NocatFarm.Modules.GemsChoice.PackUse.OpenSell).StartsWith("your settings open it", StringComparison.Ordinal));
+		// ── review fixes: one copy a purchase, the Steam-level stop, the most per level, packs opened while buying is stopped, one pack set a look ──
+		// 1. A purchase guards ONE copy - the oldest new one: a second new pack of the game (a drop, a trade) stays the owner's.
+		var oneLedger = BpLedger();
+		oneLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "o1", Before: ["70"], Pack: true));
+		var oneIds = oneLedger.BoughtPackIds([(70ul, 600u), (73ul, 600u), (71ul, 600u)], DateTime.UtcNow);
+		var onePlan = NocatFarm.Core.Spare.PlanPacks([GuardPack(70, 600), GuardPack(71, 600), GuardPack(73, 600)], 0, 2, [], _ => DateTime.UtcNow,
+			new HashSet<ulong>(), _ => null, 24, DateTime.UtcNow, bought: oneIds);
+		Check("review: one pack bought and a second new pack of its game - only one (the oldest new) is forced open, the other is held back as new like any",
+			oneIds.SetEquals([71ul]) && onePlan.Single(static d => d.Pack.AssetId == 71) is { Open: true }
+			&& onePlan.Single(static d => d.Pack.AssetId == 73) is { Open: false } nd && nd.Why.ToEnglish().Contains("came in within", StringComparison.Ordinal)
+			&& onePlan.Single(static d => d.Pack.AssetId == 70) is { Open: false },
+			string.Join(",", oneIds) + " / " + string.Join(" | ", onePlan.Select(static d => $"{d.Pack.AssetId} open={d.Open} {d.Why.ToEnglish()}")));
+		var twoLedger = BpLedger();
+		twoLedger.Add(new(DateTime.UtcNow.AddHours(-2), 10, 20, 600, fiveHash, Key: "t1", Before: ["70"], Pack: true));
+		twoLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "t2", Before: ["70"], Pack: true, Asset: "75"));
+		var twoIds = twoLedger.BoughtPackIds([(70ul, 600u), (71ul, 600u), (75ul, 600u), (76ul, 600u)], DateTime.UtcNow);
+		var nullLedger = BpLedger();
+		nullLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n1", Pack: true));
+		var provenNull = BpLedger();
+		provenNull.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n2", Pack: true, Asset: "71"));
+		Check("review: two purchases guard two copies - the proven one, then the oldest new for the other; not known what was held before - only a proven copy, never the old packs",
+			twoIds.SetEquals([71ul, 75ul]) && (nullLedger.BoughtPackIds([(60ul, 600u), (71ul, 600u)], DateTime.UtcNow).Count == 0)
+			&& provenNull.BoughtPackIds([(60ul, 600u), (71ul, 600u)], DateTime.UtcNow).SetEquals([71ul])
+			&& !nullLedger.PackOpened(600, 60, DateTime.UtcNow) && nullLedger.All.Single() is { Opened: false },
+			string.Join(",", twoIds));
+		var nullBot = new NocatFarm.Core.Bot("bpnul-" + Guid.NewGuid().ToString("N")[..8], new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false });
+		var nullBuyer = new NocatFarm.Modules.CardBuyer(nullBot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = ["60", "61"] } },
+			NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+		List<ulong> nullOpened = [];
+		nullBuyer.Unpack = (pack, _) => {
+			nullOpened.Add(pack.AssetId);
+			return Task.FromResult((true, new List<string>(), (string?) null));
+		};
+		nullBuyer.Ledger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "n3", Pack: true));
+		await nullBuyer.OpenBoughtPacksAsync(CancellationToken.None);
+		Check("review: a bought pack whose packs held before aren't known - the old packs of its game are never opened for it",
+			(nullOpened.Count == 0) && nullBuyer.Ledger.All.Single() is { Opened: false }, string.Join(",", nullOpened));
+
+		// 2. "Stop buying at Steam level", one badge level to go: a game with a bought pack still to open is that level.
+		NocatFarm.Config.BotConfig StopCfg() => new() { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyStopAtLevel = 20 };
+		var stopMarket = BpMarket();
+		stopMarket.SteamLevel = (19, 2900);
+		var stopFree = await NocatFarm.Modules.BuyPlan.MakeAsync(StopCfg(), stopMarket, NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var stopLedger = BpLedger();
+		stopLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 700, NocatFarm.Modules.GemsChoice.PackHash(700, "Seven"), Key: "s1", Before: [], Pack: true));
+		var stopMarket2 = BpMarket();
+		stopMarket2.SteamLevel = (19, 2900);
+		var stopHeld = await NocatFarm.Modules.BuyPlan.MakeAsync(StopCfg(), stopMarket2, NocatFarm.Modules.SwapCost.None, stopLedger, null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: stop at a Steam level one badge level away - a bought pack not opened yet is that level: nothing more bought (without it, one level)",
+			(stopFree.Steps.Count == 1) && (stopHeld.Steps.Count == 0) && (stopHeld.LevelsToBuy == 0)
+			&& stopHeld.Notes.Any(static n => n.StartsWith("the sets it holds reach Steam level 20 once crafted", StringComparison.Ordinal)),
+			$"{stopFree.Steps.Count} / {stopHeld.Steps.Count} · " + string.Join("; ", stopHeld.Notes));
+
+		// 3. "Most to pay for one badge level" 0.50: "Duo", 8 cards, 2 missing at 0.25, packs at 0.10 - 2 packs expected about
+		// 0.42 in all, but neither card about 1 time in 5, and then 0.70. The worst case must fit: the cards (0.50).
+		FakeCardMarket DuoMarket() {
+			var m = new FakeCardMarket();
+			var duo = Enumerable.Range(1, 8).Select(static i => $"620-Card {i}").ToList();
+			m.Sets[620] = new NocatFarm.Modules.CardSet(620, "Duo", duo, duo.ToDictionary(static c => c, static _ => 18));
+			m.Held[620] = duo.Take(6).ToDictionary(static c => c, static _ => 1);
+			foreach (string c in duo) {
+				m.Books[c] = FakeCardMarket.B(25);
+			}
+
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(620, "Duo")] = FakeCardMarket.B(10);
+			return m;
+		}
+
+		NocatFarm.Config.BotConfig CapCfg(float cap) => new() { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = cap };
+		var duoLoose = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var duoCapped = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: most per level 0.50 - packs only when packs and every missing card fit (0.20 + 0.50 = 0.70 doesn't): the 2 cards for 0.50; at 5.00, the 2 packs",
+			duoLoose.Steps.SingleOrDefault() is { IsPack: true, Packs: 2, Cost: 20 }
+			&& duoCapped.Steps.SingleOrDefault() is { IsPack: false, Cost: 50 } && (duoCapped.PackCount == 0)
+			&& duoCapped.Skipped.Any(static s => s.StartsWith("Duo: its booster packs and every missing card after them could come to 0.70 CAD", StringComparison.Ordinal))
+			&& !duoCapped.Notes.Any(static n => n.StartsWith("Duo: booster packs instead", StringComparison.Ordinal)),
+			string.Join(" | ", duoCapped.Steps.Select(static s => $"pack={s.IsPack}x{s.Packs}@{s.Cost}")) + " / " + string.Join("; ", duoCapped.Skipped));
+		// Packs bought for it before (0.20, opened): the cards they left (0.50) come on top - over 0.50, they wait. Crafted
+		// since (the level done), the spend is over and the next level's cards are bought.
+		var spentLedger = BpLedger();
+		spentLedger.Add(new(DateTime.UtcNow.AddHours(-1), 20, 20, 620, NocatFarm.Modules.GemsChoice.PackHash(620, "Duo"), Key: "d1", Before: [], Pack: true, Opened: true, Asset: "90"));
+		var duoSpent = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, spentLedger, null, DateTime.UtcNow, CancellationToken.None);
+		var craftedLedger = BpLedger();
+		craftedLedger.Add(new(DateTime.UtcNow.AddHours(-1), 20, 20, 620, NocatFarm.Modules.GemsChoice.PackHash(620, "Duo"), Key: "d2", Before: [], Pack: true, Opened: true, Asset: "90"));
+		craftedLedger.Crafted(620, DateTime.UtcNow);
+		var duoCrafted = await NocatFarm.Modules.BuyPlan.MakeAsync(CapCfg(0.5f), DuoMarket(), NocatFarm.Modules.SwapCost.None, craftedLedger, null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: most per level 0.50 with 0.20 spent on the game's packs - its last cards (0.50) wait (0.70 in all); its badge crafted since, they're bought",
+			(duoSpent.Steps.Count == 0) && duoSpent.Skipped.Any(static s => s.StartsWith("Duo: 0.50 CAD more, after 0.20 CAD on its booster packs - more than the most to pay for one level", StringComparison.Ordinal))
+			&& (spentLedger.PackSpend(DateTime.UtcNow).GetValueOrDefault(620u) == 20) && (craftedLedger.PackSpend(DateTime.UtcNow).Count == 0)
+			&& duoCrafted.Steps.SingleOrDefault() is { App: 620, IsPack: false, Cost: 50 },
+			string.Join("; ", duoSpent.Skipped) + " / " + string.Join(" | ", duoCrafted.Steps.Select(static s => $"{s.App} pack={s.IsPack}@{s.Cost}")));
+
+		// 5. "Alpha" (5 cards, 4 missing at 0.30, packs at 0.15) is priced first and wins as packs, but its 3 packs (0.45) are
+		// over the day's 0.25 - passed over. "Trio" (1 of 3 missing at 0.30, packs at 0.05) still gets the packs: 2 for 0.10.
+		FakeCardMarket SlotMarket() {
+			var m = new FakeCardMarket();
+			var alpha = Enumerable.Range(1, 5).Select(static i => $"610-Card {i}").ToList();
+			var trio = new List<string> { "630-A", "630-B", "630-C" };
+			m.Sets[610] = new NocatFarm.Modules.CardSet(610, "Alpha", alpha, alpha.ToDictionary(static c => c, static _ => 25));
+			m.Sets[630] = new NocatFarm.Modules.CardSet(630, "Trio", trio, trio.ToDictionary(static c => c, static _ => 120));
+			m.Held[610] = new() { ["610-Card 1"] = 1 };
+			m.Held[630] = new() { ["630-A"] = 1, ["630-B"] = 1 };
+			foreach (string c in alpha.Concat(trio)) {
+				m.Books[c] = FakeCardMarket.B(30);
+			}
+
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(610, "Alpha")] = FakeCardMarket.B(15);
+			m.Books[NocatFarm.Modules.GemsChoice.PackHash(630, "Trio")] = FakeCardMarket.B(5);
+			return m;
+		}
+
+		var slotTight = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = 5f, BuyDailyLimit = 0.25f },
+			SlotMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		var slotBoth = await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BuyMaxLevelPrice = 5f, BuyDailyLimit = 10f },
+			SlotMarket(), NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None);
+		Check("review: a set priced as packs but passed over leaves the one pack set a look to the next - and with room for both, the second is bought as its cards",
+			slotTight.Steps.SingleOrDefault() is { App: 630, IsPack: true, Packs: 2, Cost: 10 }
+			&& (slotBoth.Steps.Count == 2) && slotBoth.Steps.Single(static s => s.App == 630).IsPack && slotBoth.Steps.Single(static s => s.App == 610) is { IsPack: false, Cost: 120 }
+			&& slotBoth.Skipped.Any(static s => s == "Alpha: one set a look is bought as booster packs - its cards instead"),
+			string.Join(" | ", slotTight.Steps.Concat(slotBoth.Steps).Select(static s => $"{s.Game} pack={s.IsPack}x{s.Packs}@{s.Cost}")) + " / " + string.Join("; ", slotTight.Skipped));
+
+		// 4. Buying off (or crafting off, the market blocked): a pack it bought is opened all the same - never while paused,
+		// never for a game put on the never-open list (let go, shut), and past 2 days never a newer pack of its game.
+		async Task<(List<ulong> Opened, NocatFarm.Modules.CardBuyer Buyer, NocatFarm.Modules.CardBuyer.Result Look)> StoppedOpen(NocatFarm.Config.BotConfig cfg,
+			NocatFarm.Modules.BuyLedger.Entry entry, List<string> held, bool buyOn = false) {
+			var bot = new NocatFarm.Core.Bot("bpoff-" + Guid.NewGuid().ToString("N")[..8], cfg);
+
+			if (buyOn) {
+				NocatFarm.Core.Switches.Set(bot, NocatFarm.Core.Switches.Buy, true);
+			}
+
+			var buyer = new NocatFarm.Modules.CardBuyer(bot, new ProofMarket(new FakeCardMarket()) { Assets = new() { [fiveHash] = held } }, NocatFarm.Modules.SwapCost.None, FakeCardMarket.Clock);
+			List<ulong> opened = [];
+			buyer.Unpack = (pack, _) => {
+				opened.Add(pack.AssetId);
+				return Task.FromResult((true, new List<string> { "600-Card 2" }, (string?) null));
+			};
+			buyer.Ledger.Add(entry);
+			var look = await buyer.LookAsync(NocatFarm.Modules.CardBuyer.Mode.Now, CancellationToken.None);
+			await bot.DisposeAsync();
+			return (opened, buyer, look);
+		}
+
+		var offOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f1", Before: ["70"], Pack: true), ["70", "82"]);
+		var craftOff = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = false, BuyBooster = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f2", Before: ["70"], Pack: true), ["70", "82"], buyOn: true);
+		var pausedOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, StartPaused = true },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f3", Before: ["70"], Pack: true), ["70", "82"]);
+		var neverOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BoosterNeverOpen = [600] },
+			new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, fiveHash, Key: "f4", Before: ["70"], Pack: true), ["70", "82"]);
+		var lateOpen = await StoppedOpen(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true },
+			new(DateTime.UtcNow.AddDays(-3), 10, 20, 600, fiveHash, Key: "f5", Before: ["70"], Pack: true), ["70", "85"]);
+		Check("review: buying off - the pack it bought is still opened (its new copy, never the old one); crafting off too",
+			offOpen.Opened.SequenceEqual([82ul]) && offOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: "82" } && (offOpen.Look.Problem == "buying cards is off")
+			&& craftOff.Opened.SequenceEqual([82ul]) && craftOff.Buyer.Ledger.All.Single() is { Opened: true } && craftOff.Look.Problem.StartsWith("\"Craft badges from card sets\" is off", StringComparison.Ordinal),
+			$"{string.Join(",", offOpen.Opened)} / {offOpen.Look.Problem} / {string.Join(",", craftOff.Opened)} / {craftOff.Look.Problem}");
+		Check("review: paused - nothing opened; a game on the never-open list - let go, shut; 3 days on - a newer pack of its game is never taken for it (given up)",
+			(pausedOpen.Opened.Count == 0) && pausedOpen.Buyer.Ledger.All.Single() is { Opened: false }
+			&& (neverOpen.Opened.Count == 0) && neverOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: null }
+			&& (lateOpen.Opened.Count == 0) && lateOpen.Buyer.Ledger.All.Single() is { Opened: true, Asset: null },
+			$"{string.Join(",", pausedOpen.Opened)} / {string.Join(",", neverOpen.Opened)} / {string.Join(",", lateOpen.Opened)}");
+		string buyerSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "CardBuyer.cs")).Replace("\r\n", "\n");
+		Check("review: the buying loop opens bought packs while buying is off or outside its day's gate allows - beside the sweep, under the look's lock",
+			buyerSrc.Contains("\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
+			&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);\n\t\t\t\t\t\t\t\tawait OpenPacksStoppedAsync(ct).ConfigureAwait(false);", StringComparison.Ordinal));
+		await nullBot.DisposeAsync();
 		await mixBot.DisposeAsync();
 		await unsureBot.DisposeAsync();
 	} finally {
@@ -32004,7 +32171,7 @@ static class BuySafetyChecks {
 				string.Join(",", staleMarket.Checked) + " / " + string.Join(" | ", stale));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("sweep: with buying off, or outside its day, open orders are still asked about and taken back",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)\n\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal));
 
 			// ── re-priced before a set is started ──
@@ -32652,7 +32819,7 @@ static class BuySmartChecks {
 				twoMarket.Bought.Select(static b => b.Hash).SequenceEqual(["200-B"]) && (two.Waiting.Count == 1), string.Join(",", twoMarket.Bought));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("phone: with buying off or outside its day, a purchase waiting too long is still let go; with the authenticator here it confirms exactly its own",
-				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)) {", StringComparison.Ordinal)
+				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)\n\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
 
