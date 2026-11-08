@@ -3402,7 +3402,15 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} kart paketi ve {1} kart alındı · {2} · üretilecek {3} set",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}",
     "bought to level the {0} badge": "{0} rozetini yükseltmek için satın alındı",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm'ın daha açacağı {0} kart paketi gönderilmez - önce açılır"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm'ın daha açacağı {0} kart paketi gönderilmez - önce açılır",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "{0} eklentisi çok fazla yazıyor - dakikanın geri kalanında satırları atılıyor",
+    "plugin {0} added more than {1} settings - the rest are left out": "{0} eklentisi {1} ayardan fazlasını ekledi - geri kalanı dışarıda bırakıldı",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "eklenti komutu '{0}' yok sayıldı - komut harf, rakam ve tirelerden oluşan tek bir sözcüktür",
+    "plugin {0} added more than {1} commands - the rest are left out": "{0} eklentisi {1} komuttan fazlasını ekledi - geri kalanı dışarıda bırakıldı",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "{0} eklentisi uzun süredir olaylarını bitirmedi - bitirene kadar yeni olaylar atılıyor",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "eklentiler {0} konumundan yüklenemedi: {1} - onlar olmadan başlatılıyor",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "{0} eklentisi zaten yüklü ({1} dosyasından) - {2} içindeki kopya dışarıda bırakıldı",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' ({1} eklentisi) {2} saniyede yanıt vermedi - hâlâ üzerinde çalışıyor olabilir"
   },
   "settings": {
     "BackupToTelegram": {

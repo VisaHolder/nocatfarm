@@ -29754,6 +29754,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	}
 }
 
+// ── 1.9.0 stress: hostile plugins (throwing, blocking, never finishing, flooding), files with nulls and times that are none, rep4rep answering garbage ──
+await StressChecks190.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -38830,5 +38833,489 @@ static class Polish182Checks {
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 			TestTemp.Gone(root);
 		}
+	}
+}
+
+/// <summary>
+/// 1.9.0 stress checks: hostile plugins, files that can't be read as they are, an API answering garbage. Each is something
+/// that crashed nocat.farm, held it still, or stopped a part of it until the file was fixed by hand - fixed, and kept fixed.
+/// </summary>
+static class StressChecks190 {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-stress190-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		NocatFarm.Config.GlobalConfig wasLive = NocatFarm.Config.Live.Global;
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		TimeSpan wasLoad = NocatFarm.Plugins.PluginHost.LoadLimit, wasCommand = NocatFarm.Plugins.PluginHost.CommandLimit, wasPage = NocatFarm.Plugins.PluginHost.PageLimit;
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = true, DisabledPlugins = [] };
+		var mgr = new NocatFarm.Core.BotManager(NocatFarm.Config.Live.Global);
+		var bot = new NocatFarm.Core.Bot("stress-plug", new NocatFarm.Config.BotConfig());
+
+		try {
+			// ── a plugins "folder" that's a file: the start goes on without plugins ──
+			File.WriteAllText(NocatFarm.Plugins.PluginHost.Folder, "not a folder");
+			Exception? loadThrew = null;
+			try {
+				await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);
+			} catch (Exception e) {
+				loadThrew = e;
+			}
+			Check("stress: a plugins folder that can't be made (a file of that name) - nocat.farm starts without plugins, no crash", loadThrew == null, loadThrew?.Message ?? "");
+			File.Delete(NocatFarm.Plugins.PluginHost.Folder);
+			await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);   // an empty folder now: _mgr is set for the starts below
+
+			// ── plugins that throw, block or never finish loading: each costs that plugin and a second, never the start ──
+			NocatFarm.Plugins.PluginHost.LoadLimit = TimeSpan.FromSeconds(1);
+			NocatFarm.Plugins.PluginHost.CommandLimit = TimeSpan.FromSeconds(1);
+			NocatFarm.Plugins.PluginHost.PageLimit = TimeSpan.FromSeconds(1);
+			int caughtBefore = NocatFarm.Plugins.Host.Caught;
+			System.Diagnostics.Stopwatch took = System.Diagnostics.Stopwatch.StartNew();
+			foreach (Type t in new[] { typeof(HThrowsOnLoad), typeof(HBlocksOnLoad), typeof(HNeverLoads), typeof(HCtorThrows), typeof(HNameThrows), typeof(HAsyncVoidOnLoad), typeof(HBlankName), typeof(HTwinA), typeof(HTwinB), typeof(HEverything) }) {
+				await NocatFarm.Plugins.PluginHost.StartAsync(t, t.Name + ".dll", CancellationToken.None);
+			}
+			took.Stop();
+			SpinWait.SpinUntil(() => NocatFarm.Plugins.Host.Caught > caughtBefore, 3000);
+			var running = NocatFarm.Plugins.PluginHost.Running;
+			Check("stress: plugins that throw on load, block in it (a Thread.Sleep before any await), never finish, throw making themselves or naming themselves - each left out, the start never held",
+				(took.Elapsed < TimeSpan.FromSeconds(8)) && !running.Any(static r => r.Name is "h-throws" or "h-blocks" or "h-never") && running.Any(static r => r.Name == "h-everything"),
+				$"{took.Elapsed.TotalSeconds:0.0}s, running: {string.Join(", ", running.Select(static r => r.Name))}");
+			Check("stress: an async void started from OnLoadAsync that throws after its await is that plugin's failure, logged - not the end of the process",
+				NocatFarm.Plugins.Host.Caught > caughtBefore, $"{NocatFarm.Plugins.Host.Caught - caughtBefore} caught");
+			Check("stress: a plugin with no name gets its type's; the same plugin twice (a second copy of its DLL) runs once",
+				running.Any(static r => r.Name == nameof(HBlankName)) && (running.Count(static r => r.Name == "h-twin") == 1), string.Join(", ", running.Select(static r => r.Name)));
+
+			// ── its commands ──
+			var commands = NocatFarm.Plugins.PluginHost.Commands;
+			Check("stress: commands - only one plain word each, never a built-in's, at most 50 from one plugin",
+				commands.ContainsKey("ok-verb") && !commands.Keys.Any(static k => k.Contains(' ') || k.Contains('\n') || (k.Length > 32))
+				&& (commands.Count(static c => c.Key.StartsWith("bulk", StringComparison.Ordinal)) < NocatFarm.Plugins.Host.MaxCommands) && (commands.Count <= NocatFarm.Plugins.Host.MaxCommands + 2),
+				$"{commands.Count} commands");
+			took.Restart();
+			string blocked = await NocatFarm.Commands.RunAsync(mgr, "h-block");
+			string never = await NocatFarm.Commands.RunAsync(mgr, "h-never");
+			took.Stop();
+			Check("stress: a plugin command that blocks, or never answers, hands the command line back after its time",
+				blocked.Contains("hasn't answered", StringComparison.Ordinal) && never.Contains("hasn't answered", StringComparison.Ordinal) && (took.Elapsed < TimeSpan.FromSeconds(6)),
+				$"{took.Elapsed.TotalSeconds:0.0}s: {blocked}");
+			int caughtBeforeCmd = NocatFarm.Plugins.Host.Caught;
+			string nothing = await NocatFarm.Commands.RunAsync(mgr, "h-null");
+			string huge = await NocatFarm.Commands.RunAsync(mgr, "h-huge");
+			string threw = await NocatFarm.Commands.RunAsync(mgr, "h-throw");
+			string avoid = await NocatFarm.Commands.RunAsync(mgr, "h-asyncvoid");
+			SpinWait.SpinUntil(() => NocatFarm.Plugins.Host.Caught > caughtBeforeCmd, 3000);
+			Check("stress: a plugin command answering null, 10 million characters, throwing, or starting an async void that throws - an answer each, cut to size, nothing loose",
+				(nothing != null) && (huge.Length <= 64 * 1024) && threw.Contains("failed", StringComparison.Ordinal) && (avoid == "ok") && (NocatFarm.Plugins.Host.Caught > caughtBeforeCmd),
+				$"{huge.Length} / {threw}");
+
+			// Commands added from the plugin's own thread while command lines read them: "collection was modified" for the typist.
+			Exception? raced = null;
+			var raceHost = new NocatFarm.Plugins.Host(mgr, "h-race");
+			using (CancellationTokenSource stop = new(TimeSpan.FromSeconds(2))) {
+				Task adding = Task.Run(() => {
+					for (int i = 0; (i < 45) && !stop.IsCancellationRequested; i++) {
+						raceHost.AddCommand($"race{i}", "", "", static _ => Task.FromResult(""));
+						Thread.Sleep(1);
+					}
+				});
+				try {
+					while (!stop.IsCancellationRequested) {
+						foreach (var c in raceHost.Commands) {
+							_ = c.Key.Length;
+						}
+					}
+				} catch (Exception e) {
+					raced = e;
+				}
+				await adding;
+			}
+			Check("stress: a plugin adding commands from its own thread while command lines are typed - nothing thrown", raced == null, raced?.Message ?? "");
+
+			// ── its settings ──
+			var settings = NocatFarm.Plugins.PluginHost.SettingsOf("h-everything");
+			Check("stress: 5000 settings from one plugin - 200 kept, a name with a colon refused",
+				(settings.Count == NocatFarm.Plugins.Host.MaxSettings) && !settings.Any(static s => s.Setting.Name.Contains(':')), $"{settings.Count}");
+			string plugSettings = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "h-everything.settings.json");
+			Exception? saveRace = null;
+			await Task.WhenAll(Enumerable.Range(0, 8).Select(w => Task.Run(() => {
+				try {
+					for (int i = 0; i < 50; i++) {
+						NocatFarm.Plugins.PluginHost.SetSetting("h-everything", $"s{w}", $"{w}-{i}");
+					}
+				} catch (Exception e) {
+					saveRace = e;
+				}
+			})));
+			var saved = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(plugSettings))!;
+			Check("stress: 8 settings saved 50 times each at once - every one's last value in the file, the file whole",
+				(saveRace == null) && Enumerable.Range(0, 8).All(w => saved.GetValueOrDefault($"s{w}") == $"{w}-49"), saveRace?.Message ?? string.Join(",", saved.Take(8)));
+
+			// ── its page ──
+			took.Restart();
+			var pageThrows = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "throw");
+			var pageNull = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "null");
+			var pageNullBlocks = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "nullblocks");
+			var pageHuge = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "huge");
+			var pageBlocks = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "block");
+			took.Stop();
+			Check("stress: a plugin page that throws, hands back null, a null list, 100000 rows, or blocks - a page each, to size, within its time",
+				(pageThrows?.Blocks.Count == 1) && (pageNull?.Blocks.Count == 1) && (pageNullBlocks?.Blocks.Count == 0)
+				&& (pageHuge?.Blocks.Count <= NocatFarm.Plugins.PluginHost.MaxBlocks) && (pageHuge.Blocks.Sum(static b => b.Rows?.Count ?? 0) <= NocatFarm.Plugins.PluginHost.MaxRows)
+				&& (pageHuge.Blocks.All(static b => b.Text.Length <= NocatFarm.Plugins.PluginHost.MaxText)) && (pageBlocks?.Blocks.Count == 1) && (took.Elapsed < TimeSpan.FromSeconds(8)),
+				$"{took.Elapsed.TotalSeconds:0.0}s");
+
+			for (int i = 0; i < 20; i++) {
+				_ = await NocatFarm.Plugins.PluginHost.RenderAsync("h-everything", "throw");
+			}
+			int pageWarned = NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: InvalidOperationException: a page that throws", StringComparison.Ordinal));
+			Check("stress: a page that fails, looked at 25 times (its tab left open) - written down 5 times in the hour, not a warning and a stack at every look",
+				pageWarned + NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: InvalidOperationException: the plugin handed back no task", StringComparison.Ordinal))
+				+ NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("failed on AddPage: TimeoutException", StringComparison.Ordinal)) == NocatFarm.Plugins.PluginHost.FailuresSaidAnHour, $"{pageWarned}");
+
+			// ── its events ──
+			took.Restart();
+			for (int i = 0; i < 3000; i++) {
+				NocatFarm.Plugins.PluginHost.RaiseOnline(bot);
+			}
+			took.Stop();
+			Check("stress: a plugin whose event handler blocks - the account raising 3000 events isn't held (they queue for the plugin, capped)",
+				took.Elapsed < TimeSpan.FromSeconds(2), $"{took.Elapsed.TotalMilliseconds:0}ms");
+
+			// ── its log ──
+			for (int i = 0; i < 5000; i++) {
+				HEverything.Host!.Log("flood " + i);
+			}
+			HEverything.Host!.Log(new string('L', 100_000));
+			int flooded = NocatFarm.Log.Recent(1000).Count(static e => e.Text.Contains("[plugin] flood", StringComparison.Ordinal));
+			Check("stress: a plugin logging 5000 lines at once - 300 a minute reach the log, the rest dropped (said once)",
+				flooded <= NocatFarm.Plugins.Host.MaxLinesPerMinute, $"{flooded}");
+
+			// ── on the way out: one that blocks in OnUnloadAsync doesn't hold closing ──
+			took.Restart();
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			took.Stop();
+			Check("stress: a plugin that blocks in OnUnloadAsync - closing goes on after 5 seconds", took.Elapsed < TimeSpan.FromSeconds(8) && (NocatFarm.Plugins.PluginHost.Running.Count == 0), $"{took.Elapsed.TotalSeconds:0.0}s");
+			Hostile.Release.Set();
+
+			// ── a plugin's settings file with nulls in it ──
+			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "plugins", "h-nulls.settings.json"), """{ "Word": null, "Other": "x" }""");
+			var nullsHost = new NocatFarm.Plugins.Host(mgr, "h-nulls");
+			nullsHost.AddSetting(new NocatFarm.Plugins.PluginSetting("Word", "w", "", Default: "fallback"));
+			Check("stress: a plugin setting saved as null (a hand edit) reads as its default, not null", nullsHost.Setting("Word") == "fallback", nullsHost.Setting("Word") ?? "null");
+
+			// ── the comment record with times that are none, or in the future ──
+			NocatFarm.Plugins.Comments.Forget();
+			File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("stress-c"),
+				$$"""{ "Posts": [ 9223372036854775807, -5, {{DateTime.UtcNow.AddYears(4).Ticks}}, {{DateTime.UtcNow.AddHours(-1).Ticks}} ] }""");
+			Exception? windowThrew = null;
+			(int count, DateTime? last) = (0, null);
+			NocatFarm.Plugins.PluginCommentCheck? cc = null;
+			var cBot = new NocatFarm.Core.Bot("stress-c", new NocatFarm.Config.BotConfig());
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(cBot, NocatFarm.Core.BotState.Online);
+			try {
+				(count, last) = NocatFarm.Plugins.Comments.Window("stress-c");
+				cc = NocatFarm.Plugins.Comments.Check(cBot);
+			} catch (Exception e) {
+				windowThrew = e;
+			}
+			Check("stress: comment times that are no time, or years ahead (a wrong clock) - read as now, nothing thrown, the account not held for years",
+				(windowThrew == null) && (count == 3) && (last <= DateTime.UtcNow) && (cc?.RetryAt is null or { Year: < 2028 }), windowThrew?.Message ?? $"{count} {last} {cc?.RetryAt}");
+
+			// ── a tight parallel loop of comment posts, on an account at its limit: every one told no, nothing sent ──
+			NocatFarm.Plugins.Comments.Forget();
+			long[] full = [.. Enumerable.Range(0, NocatFarm.Plugins.Comments.DailyLimit).Select(static i => DateTime.UtcNow.AddMinutes(-30 - i).Ticks)];
+			string fullJson = System.Text.Json.JsonSerializer.Serialize(new { Posts = full });
+			File.WriteAllText(NocatFarm.Plugins.Comments.PathFor("stress-c"), fullJson);
+			int notNow = 0, other = 0;
+			Exception? postThrew = null;
+			await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Run(async () => {
+				for (int i = 0; i < 250; i++) {
+					try {
+						var r = await NocatFarm.Plugins.Comments.PostAsync(cBot, "stress", 76561198000000002, "hi", CancellationToken.None);
+						if (r.Outcome == NocatFarm.Plugins.PluginCommentOutcome.NotNow) {
+							Interlocked.Increment(ref notNow);
+						} else {
+							Interlocked.Increment(ref other);
+						}
+					} catch (Exception e) {
+						postThrew = e;
+					}
+				}
+			})));
+			Check("stress: 2000 comment posts at once from one account at its 24-hour limit - every one 'not now', nothing sent, the record unchanged",
+				(postThrew == null) && (notNow == 2000) && (other == 0) && (File.ReadAllText(NocatFarm.Plugins.Comments.PathFor("stress-c")) == fullJson), postThrew?.Message ?? $"{notNow}/{other}");
+			await cBot.DisposeAsync();
+			NocatFarm.Plugins.Comments.Forget();
+
+			// ── rep4rep's saved state with nulls and times that are none ──
+			var r4r = NocatFarm.Addons.Rep4Rep.AddonState.Read("""
+				{ "Accounts": { "gone": null,
+				  "b": { "Posts": null, "BlockedUntil": 9223372036854775807, "PostedTasks": null, "DeadTargets": null, "BlockReason": null },
+				  "c": { "Posts": [ 9223372036854775807, -1, 5 ] } } }
+				""");
+			Exception? r4rThrew = null;
+			try {
+				var b = r4r!.For("b");
+				_ = new DateTime(b.BlockedUntil, DateTimeKind.Utc) - DateTime.UtcNow;
+				_ = b.LastPost();
+				_ = b.HasPostedTask("x") || b.IsDeadTarget(1, DateTime.UtcNow);
+				_ = r4r.For("c").LastPost();
+				_ = r4r.For("c").NextSlotAt(1, DateTime.UtcNow);
+				_ = r4r.Write(DateTime.UtcNow);
+			} catch (Exception e) {
+				r4rThrew = e;
+			}
+			Check("stress: rep4rep's state with nulls, a rest 'until forever' and times that are none - read, used and saved without throwing; a rest at most a month",
+				(r4rThrew == null) && !r4r!.Accounts.ContainsKey("gone") && (r4r.For("b").BlockedUntil <= DateTime.UtcNow.AddDays(31).Ticks), r4rThrew?.ToString() ?? "");
+
+			// ── the card buying list with nulls in it (a hand edit): read, not thrown at every look ──
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "buy-stress-b.json"), $$"""
+				{ "Ok": true, "Entries": [ null, { "At": "{{DateTime.UtcNow:O}}", "Cents": 5, "Currency": 1, "App": 10, "Card": null, "Pack": true } ],
+				  "Sold": [ null ], "Waits": [ null ], "Crafts": [ null ], "Lows": [ null ] }
+				""");
+			Exception? ledgerThrew = null;
+			HashSet<uint>? packs = null;
+			try {
+				var ledger = NocatFarm.Modules.BuyLedger.Of("stress-b");
+				packs = ledger.PacksToOpen(DateTime.UtcNow);
+				_ = ledger.UnopenedPacks(DateTime.UtcNow);
+				_ = ledger.WeekLow(1, DateTime.UtcNow);
+				_ = ledger.All.Count;
+			} catch (Exception e) {
+				ledgerThrew = e;
+			}
+			Check("stress: the buying list with nulls in it - read (the purchase still counted), nothing thrown", (ledgerThrew == null) && (packs?.Contains(10) == true), ledgerThrew?.Message ?? "");
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+
+			// ── GitHub not answering the add-on list: one fetch for everything looking at once, the failure kept a minute ──
+			HttpClient wasAddonsHttp = NocatFarm.Plugins.Addons.Http;
+			var slowGitHub = new FakePing(async (_, ct) => {
+				await Task.Delay(300, ct);
+				return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("down") };
+			});
+			NocatFarm.Plugins.Addons.Http = new HttpClient(slowGitHub);
+			try {
+				var looks = await Task.WhenAll(Enumerable.Range(0, 20).Select(static _ => NocatFarm.Plugins.Addons.ListAsync(fresh: false)));
+				int callsAtOnce = slowGitHub.Calls;
+				took.Restart();
+				var again = await NocatFarm.Plugins.Addons.ListAsync(fresh: false);
+				took.Stop();
+				int callsAfter = slowGitHub.Calls;
+				_ = await NocatFarm.Plugins.Addons.ListAsync(fresh: true);
+				Check("stress: GitHub not answering the add-on list - 20 looks at once share one fetch, the next look within a minute answers at once without asking again; 'refresh' asks again",
+					looks.All(static l => l.List == null) && (callsAtOnce == 1) && (again.List == null) && (callsAfter == 1) && (took.Elapsed < TimeSpan.FromMilliseconds(200)) && (slowGitHub.Calls == 2),
+					$"{callsAtOnce} then {callsAfter} then {slowGitHub.Calls}");
+			} finally {
+				NocatFarm.Plugins.Addons.Http.Dispose();
+				NocatFarm.Plugins.Addons.Http = wasAddonsHttp;
+				typeof(NocatFarm.Plugins.Addons).GetField("_failed", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, null);
+			}
+
+			// ── a stop mid-save leaves a half-written copy: cleared at the next start, nothing else touched ──
+			string sweep = Path.Combine(root, "sweep", "state");
+			Directory.CreateDirectory(sweep);
+			string half = Path.Combine(sweep, $"buy-a.json.{Guid.NewGuid():N}.tmp");
+			File.WriteAllText(half, "{ \"Ok\": tr");
+			File.WriteAllText(Path.Combine(sweep, "someone-elses.tmp"), "x");
+			File.WriteAllText(Path.Combine(sweep, "buy-a.json"), "{}");
+			int swept = NocatFarm.AtomicFile.SweepLeftovers(Path.Combine(root, "sweep"));
+			Check("stress: the half-written copy a power cut left mid-save is cleared at start - only that, the file itself and other .tmp files kept",
+				(swept == 1) && !File.Exists(half) && File.Exists(Path.Combine(sweep, "someone-elses.tmp")) && File.Exists(Path.Combine(sweep, "buy-a.json")), $"{swept}");
+			Check("stress: cleared at every start, before anything is read", File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Program.cs"))
+				.Replace("\r\n", "\n").Contains("AtomicFile.SweepLeftovers(ConfigStore.ConfigDir);\n\n// Back on a version", StringComparison.Ordinal));
+
+			// ── rep4rep's API answering garbage: 500, 429, HTML, 10 MB, resets, time-outs, JSON 10000 deep ──
+			string deep = new string('[', 10_000) + new string(']', 10_000);
+			string bigBody = "{\"data\":[" + string.Join(",", Enumerable.Repeat("{\"requestId\":\"1\"}", 400_000)) + "]}";
+			Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>[] chaos = [
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError) { Content = new StringContent("oops") }),
+				(_, _) => Task.FromResult(new HttpResponseMessage((System.Net.HttpStatusCode) 429) { Content = new StringContent("slow down"), Headers = { RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(3600)) } }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("<html><body>Cloudflare says no</body></html>") }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(bigBody) }),
+				(_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(deep) }),
+				(_, _) => throw new HttpRequestException("the connection was reset"),
+				(_, _) => throw new TaskCanceledException("timed out"),
+				(_, _) => throw new HttpRequestException("No such host is known. (api.rep4rep.com:443)")
+			];
+			Exception? apiThrew = null;
+			int emptyAnswers = 0;
+			foreach (var answer in chaos) {
+				using var api = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(new FakePing(answer)) { Token = "key" };
+				try {
+					if (((await api.GetTasksAsync("1")).Count == 0) && (await api.GetUserAsync() == null) && ((await api.GetProfilesAsync()).Count == 0)) {
+						emptyAnswers++;
+					}
+				} catch (Exception e) {
+					apiThrew = e;
+				}
+			}
+			Check("stress: rep4rep answering 500, 429, an HTML page, 10 MB, JSON 10000 deep, a reset, a time-out, no such host - nothing thrown, nothing taken as tasks",
+				(apiThrew == null) && (emptyAnswers == chaos.Length), apiThrew?.Message ?? $"{emptyAnswers}/{chaos.Length}");
+		} finally {
+			Hostile.Release.Set();
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			NocatFarm.Plugins.PluginHost.LoadLimit = wasLoad;
+			NocatFarm.Plugins.PluginHost.CommandLimit = wasCommand;
+			NocatFarm.Plugins.PluginHost.PageLimit = wasPage;
+			await bot.DisposeAsync();
+			await mgr.DisposeAsync();
+			NocatFarm.Config.Live.Global = wasLive;
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Plugins.Comments.Forget();
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			await Task.Delay(200);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>What the hostile plugins below wait on - let go at the end, so no thread is left blocked.</summary>
+static class Hostile {
+	public static readonly ManualResetEventSlim Release = new(false);
+}
+
+sealed class HThrowsOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-throws";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => throw new InvalidOperationException("thrown on load, before any task");
+}
+
+sealed class HBlocksOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-blocks";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));   // a Thread.Sleep before any await
+		return Task.CompletedTask;
+	}
+}
+
+sealed class HNeverLoads : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-never";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => new TaskCompletionSource().Task;
+}
+
+sealed class HCtorThrows : NocatFarm.Plugins.INocatPlugin {
+	public HCtorThrows() => throw new InvalidOperationException("thrown making itself");
+	public string Name => "h-ctor";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HNameThrows : NocatFarm.Plugins.INocatPlugin {
+	public string Name => throw new InvalidOperationException("no name for you");
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HAsyncVoidOnLoad : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-asyncvoid";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Fire();
+		return Task.CompletedTask;
+	}
+
+	private static async void Fire() {
+		await Task.Delay(20);
+		throw new InvalidOperationException("an async void from OnLoadAsync, after its await");
+	}
+}
+
+sealed class HBlankName : NocatFarm.Plugins.INocatPlugin {
+	public string Name => " \n\t ";
+	public string Version => null!;
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HTwinA : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-twin";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+sealed class HTwinB : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "h-twin";
+	public string Version => "1.0";
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) => Task.CompletedTask;
+}
+
+/// <summary>Loads fine, then does everything a plugin shouldn't through the API it's given.</summary>
+sealed class HEverything : NocatFarm.Plugins.INocatPlugin {
+	public static NocatFarm.Plugins.IPluginHost? Host;
+	public string Name => "h-everything";
+	public string Version => "6.6.6";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		Host = host;
+
+		foreach (string weird in new[] { "", "   ", "stop", "status", "a b", "x\ny", new string('v', 5000), "<b>", "ok-verb" }) {
+			host.AddCommand(weird, "", "", static _ => Task.FromResult("weird"));
+		}
+
+		host.AddCommand("h-block", "", "", static _ => {
+			Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+			return Task.FromResult("late");
+		});
+		host.AddCommand("h-never", "", "", static _ => new TaskCompletionSource<string>().Task);
+		host.AddCommand("h-null", "", "", static _ => Task.FromResult<string>(null!));
+		host.AddCommand("h-huge", "", "", static _ => Task.FromResult(new string('x', 10_000_000)));
+		host.AddCommand("h-throw", "", "", static _ => throw new InvalidOperationException("a command that throws"));
+		host.AddCommand("h-asyncvoid", "", "", static _ => {
+			Fire();
+			return Task.FromResult("ok");
+		});
+
+		for (int i = 0; i < 5000; i++) {
+			host.AddCommand($"bulk{i}", "", "", static _ => Task.FromResult(""));
+		}
+
+		host.AddSetting(new NocatFarm.Plugins.PluginSetting("has:colon", "", ""));
+
+		for (int i = 0; i < 5000; i++) {
+			host.AddSetting(new NocatFarm.Plugins.PluginSetting($"s{i}", new string('l', 10_000), ""));
+		}
+
+		host.AddPage("hostile", static view => view switch {
+			"throw" => throw new InvalidOperationException("a page that throws"),
+			"null" => null!,
+			"nullblocks" => Task.FromResult(new NocatFarm.Plugins.PluginPage(null!)),
+			"huge" => Task.FromResult(new NocatFarm.Plugins.PluginPage([.. Enumerable.Range(0, 300).Select(static i => i == 0
+				? NocatFarm.Plugins.PluginBlock.Table([.. Enumerable.Range(0, 100).Select(static c => "c" + c)], [.. Enumerable.Range(0, 100_000).Select(static r => new NocatFarm.Plugins.PluginRow([r.ToString()]))])
+				: NocatFarm.Plugins.PluginBlock.Line(new string('t', 10_000)))])),
+			"block" => Block(),
+			_ => Task.FromResult(new NocatFarm.Plugins.PluginPage([NocatFarm.Plugins.PluginBlock.Line("fine")]))
+		});
+
+		host.AccountOnline += static _ => Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+		host.AccountOnline += static async _ => {
+			await Task.Yield();
+			throw new InvalidOperationException("an async handler, after its await");
+		};
+
+		return Task.CompletedTask;
+	}
+
+	private static Task<NocatFarm.Plugins.PluginPage> Block() {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));
+		return Task.FromResult(new NocatFarm.Plugins.PluginPage([]));
+	}
+
+	public Task OnUnloadAsync() {
+		Hostile.Release.Wait(TimeSpan.FromSeconds(20));   // blocks before handing back a task
+		return Task.CompletedTask;
+	}
+
+	private static async void Fire() {
+		await Task.Delay(10);
+		throw new InvalidOperationException("an async void from a command, after its await");
 	}
 }

@@ -50,7 +50,10 @@ public static partial class Addons {
 	internal const int MaxBytes = 20 * 1024 * 1024;
 
 	/// <summary>Not readonly: the checks answer for GitHub.</summary>
-	internal static HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
+	internal static HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60), MaxResponseContentBufferSize = MaxListBytes };
+
+	/// <summary>The biggest add-on list (or signature) read - the list is a few kilobytes; the add-on files are read apart, to <see cref="MaxBytes"/>.</summary>
+	internal const int MaxListBytes = 1024 * 1024;
 
 	static Addons() => Http.DefaultRequestHeaders.UserAgent.ParseAdd("nocatFarm");
 
@@ -159,35 +162,78 @@ public static partial class Addons {
 	// ── the list on GitHub ───────────────────────────────────────────────────
 	private static (DateTime At, IReadOnlyList<AddonEntry> List)? _cached;
 
+	/// <summary>1.9.0: the last time the list couldn't be had, and why - asked again only a minute later, unless asked fresh.</summary>
+	private static (DateTime At, Said Why)? _failed;
+
+	/// <summary>1.9.0: the one fetch under way, which every look waits on.</summary>
+	private static Task<(IReadOnlyList<AddonEntry>? List, Said Why)>? _fetching;
+
+	private static readonly Lock FetchGate = new();
+
 	/// <summary>The list, fetched and verified (kept 10 minutes). Null and why when it can't be had or doesn't verify.</summary>
+	/// <remarks>
+	/// 1.9.0: one fetch at a time, and a failure remembered for a minute. With GitHub slow or not answering, every look at the
+	/// Add-ons tab (and every 'addons') started a fetch of its own and waited out its whole minute - the tab hung, and GitHub
+	/// was asked over and over by everything that looked.
+	/// </remarks>
 	public static async Task<(IReadOnlyList<AddonEntry>? List, Said Why)> ListAsync(bool fresh, CancellationToken ct = default) {
 		if (!fresh && (_cached is { } c) && (DateTime.UtcNow - c.At < TimeSpan.FromMinutes(10))) {
 			return (c.List, default);
 		}
 
+		if (!fresh && (_failed is { } f) && (DateTime.UtcNow - f.At < TimeSpan.FromMinutes(1))) {
+			return (null, f.Why);
+		}
+
+		Task<(IReadOnlyList<AddonEntry>? List, Said Why)> fetch;
+
+		lock (FetchGate) {
+			fetch = _fetching ?? Task.Run(FetchAsync);
+
+			if (_fetching == null) {
+				_fetching = fetch;
+
+				// Let go of by the fetch itself when it's done - not by whoever waits on it, who may have given up first.
+				_ = fetch.ContinueWith(static done => {
+					lock (FetchGate) {
+						if (_fetching == done) {
+							_fetching = null;
+						}
+					}
+				}, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+			}
+		}
+
+		return await fetch.WaitAsync(ct).ConfigureAwait(false);
+	}
+
+	/// <summary>The fetch itself, shared by everything asking at the time - so cut off only by its own time limit, never by one of them.</summary>
+	private static async Task<(IReadOnlyList<AddonEntry>? List, Said Why)> FetchAsync() {
 		byte[] json;
 		string signature;
 
 		try {
-			json = await Http.GetByteArrayAsync(IndexUrl, ct).ConfigureAwait(false);
-			signature = await Http.GetStringAsync(SignatureUrl, ct).ConfigureAwait(false);
-		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-			throw;
+			json = await Http.GetByteArrayAsync(IndexUrl).ConfigureAwait(false);
+			signature = await Http.GetStringAsync(SignatureUrl).ConfigureAwait(false);
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException) {
 			Log.Debug($"add-ons: couldn't get the list from GitHub: {Log.Describe(e)}");
+			Said down = new("couldn't get the list of add-ons from GitHub - try again in a while");
+			_failed = (DateTime.UtcNow, down);
 
-			return (null, new Said("couldn't get the list of add-ons from GitHub - try again in a while"));
+			return (null, down);
 		}
 
 		IReadOnlyList<AddonEntry>? list = Parse(json, signature, PublicKey, out Said why);
 
 		if (list == null) {
 			Log.Warn(why);
+			_failed = (DateTime.UtcNow, why);
 
 			return (null, why);
 		}
 
 		_cached = (DateTime.UtcNow, list);
+		_failed = null;
 
 		return (list, default);
 	}

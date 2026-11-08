@@ -3402,7 +3402,15 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "куплено наборов карточек: {0}, карточек: {1} · {2} · наборов к сборке: {3}",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} набор(ов) карточек {1} по {2} за {3} вместо {4} недостающих карточек ({5}) - ожидается, что останется около {6} карточек на потом, всего около {7} - уровень с {8} до {9}",
     "bought to level the {0} badge": "куплен для прокачки значка {0}",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "наборы карточек, которые nocat.farm ещё должен открыть ({0}), не отправляются - сначала их открывают"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "наборы карточек, которые nocat.farm ещё должен открыть ({0}), не отправляются - сначала их открывают",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "плагин {0} пишет слишком много - его строки отбрасываются до конца минуты",
+    "plugin {0} added more than {1} settings - the rest are left out": "плагин {0} добавил больше {1} настроек - остальные не учитываются",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "команда плагина '{0}' пропущена - команда - это одно слово из букв, цифр и дефисов",
+    "plugin {0} added more than {1} commands - the rest are left out": "плагин {0} добавил больше {1} команд - остальные не учитываются",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "плагин {0} давно не может закончить со своими событиями - новые отбрасываются, пока он не закончит",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "не удалось загрузить плагины из {0}: {1} - запуск без них",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "плагин {0} уже загружен (из {1}) - копия в {2} не учитывается",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (плагин {1}) не ответил за {2} секунд - возможно, он всё ещё работает над этим"
   },
   "settings": {
     "BackupToTelegram": {

@@ -3402,7 +3402,15 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "ブースターパック {0} 個とカード {1} 枚を購入 · {2} · 作れるセット {3} 個",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} のブースターパック {0} 個（各 {2}）を {3} で、足りないカード {4} 枚（{5}）の代わりに - 後で買うカードが約 {6} 枚残る見込み、合計約 {7} - レベル {8} → {9}",
     "bought to level the {0} badge": "{0} のバッジのレベル上げ用に購入",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm がまだ開封するブースターパック {0} 個は送りません - 先に開封します"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm がまだ開封するブースターパック {0} 個は送りません - 先に開封します",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "プラグイン {0} の書き込みが多すぎます - この1分の残りの行は捨てられます",
+    "plugin {0} added more than {1} settings - the rest are left out": "プラグイン {0} が {1} 個を超える設定を追加しました - 残りは使われません",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "プラグインのコマンド '{0}' を無視 - コマンドは文字・数字・ハイフンからなる1語です",
+    "plugin {0} added more than {1} commands - the rest are left out": "プラグイン {0} が {1} 個を超えるコマンドを追加しました - 残りは使われません",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "プラグイン {0} が長い間イベントを処理し終えていません - 終わるまで新しいイベントは捨てられます",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "{0} からプラグインを読み込めませんでした: {1} - プラグインなしで起動します",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "プラグイン {0} はすでに読み込まれています ({1} から) - {2} にあるコピーは使われません",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (プラグイン {1}) が {2} 秒たっても応答しません - まだ処理中かもしれません"
   },
   "settings": {
     "BackupToTelegram": {

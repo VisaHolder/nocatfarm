@@ -120,7 +120,7 @@ public static partial class Comments {
 			string path = PathFor(bot);
 
 			try {
-				a.Posts = File.Exists(path) ? JsonSerializer.Deserialize<Ledger>(File.ReadAllText(path))?.Posts ?? [] : [];
+				a.Posts = Sane(File.Exists(path) ? JsonSerializer.Deserialize<Ledger>(File.ReadAllText(path))?.Posts ?? [] : []);
 				a.Unreadable = false;
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 				if (!a.Unreadable) {
@@ -134,6 +134,18 @@ public static partial class Comments {
 
 			return a.Posts;
 		}
+	}
+
+	/// <summary>
+	/// 1.9.0: the times as they can be used. A number that's no time at all (hand-edited, a bad disk) threw at every look -
+	/// no comments, and the dashboard's count with them - and one from the future (a box whose clock was years ahead when it
+	/// was written) kept the account "at its limit" until that day came. Those count as now: a comment that was posted still
+	/// counts, for the next 24 hours.
+	/// </summary>
+	internal static List<long> Sane(List<long> posts) {
+		long now = DateTime.UtcNow.Ticks;
+
+		return [.. posts.Where(static t => t > 0).Select(t => Math.Min(t, now))];
 	}
 
 	/// <summary>Count one comment, and write the 24 hours down straight away - the count is what a restart must not lose.</summary>

@@ -3402,7 +3402,15 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprados {0} sobre(s) y {1} cromo(s) · {2} · {3} colección(es) para crear",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}",
     "bought to level the {0} badge": "comprado para subir la insignia de {0}",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "el plugin {0} escribe demasiado - sus líneas se descartan durante el resto del minuto",
+    "plugin {0} added more than {1} settings - the rest are left out": "el plugin {0} añadió más de {1} ajustes - el resto se deja fuera",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "comando de plugin '{0}' ignorado - un comando es una palabra de letras, dígitos y guiones",
+    "plugin {0} added more than {1} commands - the rest are left out": "el plugin {0} añadió más de {1} comandos - el resto se deja fuera",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "el plugin {0} lleva mucho sin terminar con sus eventos - los nuevos se descartan hasta que lo haga",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "no se pudieron cargar los plugins de {0}: {1} - se inicia sin ellos",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "el plugin {0} ya está cargado (de {1}) - la copia de {2} se deja fuera",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) no ha respondido en {2} segundos - puede que siga trabajando en ello"
   },
   "settings": {
     "BackupToTelegram": {

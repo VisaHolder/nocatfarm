@@ -299,8 +299,19 @@ Plugins load once, when the app starts, before any account signs in. Subscribe t
 won't miss the first ones. If you add or change a plugin, restart.
 
 `OnLoadAsync` gets 15 seconds. Start-up waits for it, so a plugin that takes longer is left out and logged. Don't
-wait on slow network calls there; start a task instead. The same goes for event handlers, which run on
-nocat.farm's own threads: keep them quick.
+wait on slow network calls there; start a task instead. Event handlers run one after another, in the order things
+happened, on a thread of your plugin's own: a slow one only holds up your plugin's next event, and one stuck for good
+stops your plugin hearing new ones (after 1000 waiting, they're dropped). Keep them quick anyway.
+
+Every call into your plugin is bounded: a command gets 3 minutes to answer (then the command line is handed back,
+and your command may carry on), a page 30 seconds to draw, `OnUnloadAsync` 5 seconds. Code that blocks before its
+first `await` counts too - none of it runs on the caller's thread.
+
+There are limits on what one plugin adds and writes: 50 commands (one word each, letters, digits and dashes, up to 32
+long), 200 settings, 300 log lines and notifications a minute (the rest of that minute's are dropped, said once), and
+lines up to 2000 characters. A page shows up to 200 blocks, 2000 rows a table and 20 cells a row, each text up to 4000
+characters. A command's answer is cut at 64 KB. A page or an event handler that keeps failing is written to the log 5
+times an hour.
 
 A few more things worth knowing:
 
@@ -310,6 +321,10 @@ A few more things worth knowing:
   handler that throws is logged under your plugin's name and skipped while the plugin stays loaded. That holds for an
   `async` handler too (`host.CardDropped += async (a, app, left) => { await ...; }`): what it throws after an
   `await` is caught and logged the same way instead of taking the app down.
+- Two copies of the same plugin (the same `Name`, say a second copy of its DLL) run once: the first found stays.
+- Some failures end any .NET program, and nocat.farm can't catch them for you: an exception thrown on a `Thread` or
+  in a `Timer` callback you started yourself, an `async void` you started from your own background task that throws,
+  a real stack overflow, or `Environment.Exit`. Catch everything in your own threads and timers.
 - Each plugin has its own on/off switch on the dashboard's Plugins page.
 - If the app can't read your DLL, the log says it was probably built against a different version. Rebuild against
   the current `nocatFarm.dll`.

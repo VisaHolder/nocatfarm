@@ -33,6 +33,22 @@ public sealed class AccountState {
 
 	internal readonly Lock Sync = new();
 
+	/// <summary>
+	/// What was read, made safe to use: a list written as null is an empty one, and a time that's no time (hand-edited, a bad
+	/// disk) - or one from the future, a clock that was years ahead - counts as now. Each of those threw at every step, or
+	/// held the account "resting" for good: the account stopped commenting until the file was fixed by hand.
+	/// </summary>
+	internal AccountState Tidy(DateTime now) {
+		long n = now.Ticks;
+		Posts = [.. (Posts ?? []).Where(static t => t > 0).Select(t => Math.Min(t, n))];
+		PostedTasks = new((PostedTasks ?? []).Where(static kv => kv.Key != null).ToDictionary(static kv => kv.Key, kv => Math.Clamp(kv.Value, 0, n)));
+		DeadTargets = new((DeadTargets ?? []).Where(static kv => kv.Key != null).ToDictionary(static kv => kv.Key, static kv => Math.Clamp(kv.Value, 0, DateTime.MaxValue.Ticks)));
+		BlockedUntil = Math.Clamp(BlockedUntil, 0, now.AddDays(30).Ticks);   // a rest is a day or so - never past a month
+		BlockReason ??= "";
+
+		return this;
+	}
+
 	public void RecordPost(string taskId, DateTime at) {
 		lock (Sync) {
 			Posts.Add(at.Ticks);
@@ -143,8 +159,16 @@ public sealed class AddonState {
 				return null;
 			}
 
-			// Case-insensitive names, as the app has them.
-			read.Accounts = new Dictionary<string, AccountState>(read.Accounts ?? [], StringComparer.OrdinalIgnoreCase);
+			// Case-insensitive names, as the app has them - and every account's record one that can be used (see Tidy).
+			Dictionary<string, AccountState> accounts = new(StringComparer.OrdinalIgnoreCase);
+
+			foreach ((string name, AccountState? s) in read.Accounts ?? []) {
+				if (s != null) {
+					accounts[name] = s.Tidy(DateTime.UtcNow);
+				}
+			}
+
+			read.Accounts = accounts;
 
 			return read;
 		} catch (JsonException) {

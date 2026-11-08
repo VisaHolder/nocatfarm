@@ -27,11 +27,13 @@ public static class PluginHost {
 	private static readonly Lock HostsGate = new();
 	private static BotManager? _mgr;
 
-	private sealed record Loaded(INocatPlugin Plugin, string File, Host Host);
+	/// <summary>A loaded plugin. Its name and version as read once, at load: a plugin's own Name that threw or hung later took the
+	/// Plugins page and every command line with it.</summary>
+	private sealed record Loaded(INocatPlugin Plugin, string File, Host Host, string Name, string Version);
 
 	/// <summary>What is loaded, for the `plugins` command.</summary>
 	public static IReadOnlyList<(string Name, string Version, string File)> Running =>
-		[.. Snapshot().Select(static p => (p.Plugin.Name, p.Plugin.Version, Path.GetFileName(p.File)))];
+		[.. Snapshot().Select(static p => (p.Name, p.Version, Path.GetFileName(p.File)))];
 
 	/// <summary>
 	/// The loaded plugins as they are this moment. Every read goes through this (and every write through the lock): the
@@ -47,6 +49,17 @@ public static class PluginHost {
 	public static string Folder => Path.Combine(ConfigStore.Root, "plugins");
 
 	public static async Task LoadAllAsync(BotManager mgr, CancellationToken ct) {
+		// 1.9.0: never the end of the start. A plugins folder that couldn't be read or made - a file of that name, a folder
+		// this user may not open - threw out of here, and nocat.farm crashed at every start until somebody found out why.
+		try {
+			await LoadEveryAsync(mgr, ct).ConfigureAwait(false);
+		} catch (Exception e) when (e is not OperationCanceledException) {
+			NocatFarm.Log.Warn(new Said("plugins couldn't be loaded from {0}: {1} - starting without them", Folder, NocatFarm.Log.Describe(e)));
+			NocatFarm.Log.StackToFile(e);
+		}
+	}
+
+	private static async Task LoadEveryAsync(BotManager mgr, CancellationToken ct) {
 		_mgr = mgr;
 		SettlePending(Folder);
 
@@ -91,42 +104,7 @@ public static class PluginHost {
 					continue;
 				}
 
-				if (Activator.CreateInstance(type) is not INocatPlugin plugin) {
-					continue;
-				}
-
-				// Off individually, not just all-or-nothing: one plugin misbehaving should not mean turning the
-				// whole feature off to be rid of it.
-				bool off = Live.Global.DisabledPlugins.Contains(plugin.Name, StringComparer.OrdinalIgnoreCase);
-
-				lock (HostsGate) {
-					Seen.Add((plugin.Name, plugin.Version, Path.GetFileName(file), !off));
-				}
-
-				if (off) {
-					NocatFarm.Log.Info(new Said("plugin {0} is switched off - skipping it", plugin.Name));
-
-					continue;
-				}
-
-				try {
-					Host host = new(_mgr!, plugin.Name);
-
-					// A time limit, because start-up waits on this: a plugin whose load hangs on a network call held
-					// every account back from signing in, behind a window that looked perfectly fine.
-					using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-					limit.CancelAfter(TimeSpan.FromSeconds(15));
-					await plugin.OnLoadAsync(host, limit.Token).WaitAsync(TimeSpan.FromSeconds(15), ct).ConfigureAwait(false);
-					lock (HostsGate) {
-						Hosts.Add(host);
-						Plugins.Add(new Loaded(plugin, file, host));
-					}
-
-					NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", plugin.Name, plugin.Version));
-				} catch (Exception e) {
-					NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", plugin.Name, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
-					NocatFarm.Log.StackToFile(e);   // where in the plugin, for whoever wrote it
-				}
+				await StartAsync(type, file, ct).ConfigureAwait(false);
 			}
 		} catch (ReflectionTypeLoadException e) {
 			// The usual cause is a plugin built against a different nocat.farm. Say so rather than printing a
@@ -136,6 +114,139 @@ public static class PluginHost {
 		} catch (Exception e) {
 			NocatFarm.Log.Warn(new Said("plugins: couldn't load {0}: {1}: {2}", Path.GetFileName(file), e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
 			NocatFarm.Log.StackToFile(e);
+		}
+	}
+
+	/// <summary>How long a plugin has to construct itself and load - start-up waits on it.</summary>
+	internal static TimeSpan LoadLimit = TimeSpan.FromSeconds(15);
+
+	/// <summary>How long a plugin's own command has to answer before the command line is handed back.</summary>
+	internal static TimeSpan CommandLimit = TimeSpan.FromMinutes(3);
+
+	/// <summary>How long a plugin's page has to draw itself.</summary>
+	internal static TimeSpan PageLimit = TimeSpan.FromSeconds(30);
+
+	/// <summary>
+	/// One plugin type: made, named, loaded. Every part of it is plugin code, and every part is bounded: made and loaded off
+	/// this thread (<see cref="OffThread"/>), within <see cref="LoadLimit"/>, its name read once.
+	/// </summary>
+	/// <remarks>
+	/// Awaited on this thread, a plugin whose constructor or OnLoadAsync blocked before its first await - a Thread.Sleep, a
+	/// .Result on a website - held nocat.farm's start there for good: the 15 seconds only counted once a Task came back, which
+	/// it never did. And an async void it started from OnLoadAsync that threw ended the process.
+	/// </remarks>
+	internal static async Task StartAsync(Type type, string file, CancellationToken ct) {
+		string shown = type.Name;
+		INocatPlugin? plugin;
+		string name, version;
+
+		try {
+			(plugin, name, version) = await OffThread(shown, "start", () => {
+				INocatPlugin? made = Activator.CreateInstance(type) as INocatPlugin;
+
+				return Task.FromResult((made, made == null ? "" : NameOf(made.Name, type.Name), made == null ? "" : Clip(made.Version, 32)));
+			}).WaitAsync(LoadLimit, ct).ConfigureAwait(false);
+		} catch (Exception e) when ((e is not OperationCanceledException) || !ct.IsCancellationRequested) {
+			NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", shown, Unwrapped(e).GetType().Name, NocatFarm.Log.Scrub(Unwrapped(e).Message)));
+			NocatFarm.Log.StackToFile(e);
+
+			return;
+		}
+
+		if (plugin == null) {
+			return;
+		}
+
+		// Off individually, not just all-or-nothing: one plugin misbehaving should not mean turning the
+		// whole feature off to be rid of it.
+		bool off = Live.Global.DisabledPlugins.Contains(name, StringComparer.OrdinalIgnoreCase);
+		Loaded? twin = Snapshot().FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+
+		lock (HostsGate) {
+			Seen.Add((name, version, Path.GetFileName(file), !off));
+		}
+
+		if (off) {
+			NocatFarm.Log.Info(new Said("plugin {0} is switched off - skipping it", name));
+
+			return;
+		}
+
+		// The same plugin twice - a second copy of its DLL ("rep4rep (1).dll" from a browser): both ran, every account's loop
+		// twice, both saving over one settings file. The first one found stays.
+		if (twin != null) {
+			NocatFarm.Log.Warn(new Said("plugin {0} is loaded already (from {1}) - the copy in {2} is left out", name, Path.GetFileName(twin.File), Path.GetFileName(file)));
+
+			return;
+		}
+
+		try {
+			Host host = new(_mgr!, name);
+
+			// A time limit, because start-up waits on this: a plugin whose load hangs on a network call held
+			// every account back from signing in, behind a window that looked perfectly fine.
+			using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+			limit.CancelAfter(LoadLimit);
+			await OffThread(name, nameof(INocatPlugin.OnLoadAsync), async () => {
+				await plugin.OnLoadAsync(host, limit.Token).ConfigureAwait(false);
+
+				return true;
+			}).WaitAsync(LoadLimit, ct).ConfigureAwait(false);
+
+			lock (HostsGate) {
+				Hosts.Add(host);
+				Plugins.Add(new Loaded(plugin, file, host, name, version));
+			}
+
+			NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", name, version));
+		} catch (Exception e) {
+			NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", name, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+			NocatFarm.Log.StackToFile(e);   // where in the plugin, for whoever wrote it
+		}
+	}
+
+	/// <summary>A plugin's name, fit to be one: its type's name when it gave none, no control characters, at most 64 long.</summary>
+	internal static string NameOf(string? name, string fallback) {
+		string n = new string([.. (name ?? "").Where(static c => !char.IsControl(c))]).Trim();
+
+		return Clip(n.Length > 0 ? n : fallback, 64);
+	}
+
+	private static string Clip(string? text, int most) => string.IsNullOrEmpty(text) ? "" : text.Length <= most ? text : text[..most];
+
+	private static Exception Unwrapped(Exception e) => e is TargetInvocationException { InnerException: { } inner } ? inner : e;
+
+	/// <summary>
+	/// Plugin code, run on the thread pool under a <see cref="Host.PluginSync"/>: never on the caller's thread, so a plugin that
+	/// blocks holds only itself up; and an async void it starts that throws is logged as its failure, not the end of the
+	/// process. What it returns (or throws) comes back in the task - bound it with WaitAsync.
+	/// </summary>
+	internal static Task<T> OffThread<T>(string owner, string which, Func<Task<T>> run) =>
+		Task.Run(() => {
+			SynchronizationContext? was = SynchronizationContext.Current;
+			SynchronizationContext.SetSynchronizationContext(new Host.PluginSync(owner, which));
+
+			try {
+				return run() ?? throw new InvalidOperationException("the plugin handed back no task");
+			} finally {
+				SynchronizationContext.SetSynchronizationContext(was);
+			}
+		});
+
+	/// <summary>
+	/// A plugin's own command, run as <see cref="OffThread"/> and given <see cref="CommandLimit"/> to answer. Past that the
+	/// command line is handed back (the command may well carry on): one that never answered held the console, or a dashboard
+	/// request, for good. What it answers is cut to a size a chat can take.
+	/// </summary>
+	internal static async Task<string> RunCommandAsync(string owner, string verb, Func<string[], Task<string>> handler, string[] words) {
+		Task<string> running = OffThread(owner, verb, () => handler(words));
+
+		try {
+			string? said = await running.WaitAsync(CommandLimit).ConfigureAwait(false);
+
+			return Clip(said, 64 * 1024);
+		} catch (TimeoutException) {
+			return new Said("'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it", verb, owner, (int) CommandLimit.TotalSeconds).ToString();
 		}
 	}
 
@@ -152,11 +263,16 @@ public static class PluginHost {
 		foreach (Loaded loaded in unloading) {
 			try {
 				// Bounded: a plugin that hangs on the way out must not keep the whole app from closing.
-				await loaded.Plugin.OnUnloadAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+				// Off this thread too: one that blocked before handing back a task held closing up for good.
+				await OffThread(loaded.Name, nameof(INocatPlugin.OnUnloadAsync), async () => {
+					await loaded.Plugin.OnUnloadAsync().ConfigureAwait(false);
+
+					return true;
+				}).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 			} catch (TimeoutException) {
-				NocatFarm.Log.Debug(new Said("plugin {0} took too long to unload - closing without it", loaded.Plugin.Name));
+				NocatFarm.Log.Debug(new Said("plugin {0} took too long to unload - closing without it", loaded.Name));
 			} catch (Exception e) {
-				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Plugin.Name, NocatFarm.Log.Describe(e)));
+				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Name, NocatFarm.Log.Describe(e)));
 			}
 		}
 
@@ -212,7 +328,7 @@ public static class PluginHost {
 		Find(plugin)?.Host.SettingsView([.. _mgr?.All.Select(static b => b.Name) ?? []]) ?? [];
 
 	private static Loaded? Find(string plugin) =>
-		Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
+		Snapshot().FirstOrDefault(p => string.Equals(p.Name, plugin, StringComparison.OrdinalIgnoreCase));
 
 	/// <summary>Change one (for one account, when it is per account). Returns false when there is no such plugin, setting or account.</summary>
 	public static bool SetSetting(string plugin, string name, string value, string? account = null) {
@@ -249,7 +365,7 @@ public static class PluginHost {
 
 	/// <summary>1.9.0: every plugin that has a dashboard page, and its title.</summary>
 	public static IReadOnlyList<(string Plugin, string Title)> Pages =>
-		[.. Snapshot().Where(static p => p.Host.Page != null).Select(static p => (p.Plugin.Name, p.Host.Page!.Value.Title))];
+		[.. Snapshot().Where(static p => p.Host.Page != null).Select(static p => (p.Name, p.Host.Page!.Value.Title))];
 
 	/// <summary>A plugin's page as it is now. Null when there's no such page; a page that throws comes back as one line saying so.</summary>
 	public static async Task<PluginPage?> RenderAsync(string plugin, string? view) {
@@ -258,13 +374,65 @@ public static class PluginHost {
 		}
 
 		try {
-			return await page.Render(view).WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+			// Off the dashboard's thread, as every other call into a plugin: a page that blocked held a request thread at each
+			// look, and the dashboard's polling soon had none left.
+			return Tidy(await OffThread(plugin, nameof(IPluginHost.AddPage), () => page.Render(view)).WaitAsync(PageLimit).ConfigureAwait(false));
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", plugin, nameof(IPluginHost.AddPage), e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
-			NocatFarm.Log.StackToFile(e);
+			// A few times an hour at most: the page is looked at again every few seconds while its tab is open, and each look
+			// wrote the warning and its whole stack again - the page itself says it each time.
+			if (MaySay($"{plugin}:{nameof(IPluginHost.AddPage)}")) {
+				NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", plugin, nameof(IPluginHost.AddPage), e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+				NocatFarm.Log.StackToFile(e);
+			}
 
 			return new PluginPage([PluginBlock.Line(new Said("this page couldn't be drawn: {0}", NocatFarm.Log.Describe(e)).ToString())]);
 		}
+	}
+
+	/// <summary>How many of one plugin's failures of one kind (a page, an event) are written down in an hour; the rest only counted.</summary>
+	internal const int FailuresSaidAnHour = 5;
+
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime From, int Said)> FailuresSaid = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Whether this failure of a plugin's is written to the log: <see cref="FailuresSaidAnHour"/> an hour for each plugin and kind
+	/// of call. One that failed at every look or every event wrote a warning and its whole stack each time - the log was nothing
+	/// else. Kept by plugin and kind only, so it stays as small as the list of plugins.
+	/// </summary>
+	internal static bool MaySay(string key) {
+		DateTime now = DateTime.UtcNow;
+		(DateTime From, int Said) next = FailuresSaid.AddOrUpdate(key, (now, 1),
+			(_, was) => now - was.From >= TimeSpan.FromHours(1) ? (now, 1) : (was.From, was.Said + 1));
+
+		return next.Said <= FailuresSaidAnHour;
+	}
+
+	/// <summary>The most blocks, rows and cells a plugin's page shows, and the longest text in one.</summary>
+	internal const int MaxBlocks = 200, MaxRows = 2000, MaxCells = 20, MaxText = 4000;
+
+	/// <summary>
+	/// A plugin's page as the dashboard can draw it: nothing null where something was promised, and no bigger than the caps
+	/// above. A page of a million rows - or a null list - was a dashboard tab that never came back, or a failure at every look.
+	/// </summary>
+	internal static PluginPage Tidy(PluginPage? page) {
+		static string T(string? s) => Clip(s, MaxText);
+		static PluginButton? B(PluginButton? b) => b == null ? null : new PluginButton(T(b.Label), T(b.Command), b.View == null ? null : T(b.View));
+
+		List<PluginBlock> blocks = [];
+
+		foreach (PluginBlock? b in (page?.Blocks ?? []).Take(MaxBlocks)) {
+			if (b == null) {
+				continue;
+			}
+
+			blocks.Add(new PluginBlock(b.Kind, T(b.Text),
+				b.Columns == null ? null : [.. b.Columns.Take(MaxCells).Select(T)],
+				b.Rows == null ? null : [.. b.Rows.Where(static r => r != null).Take(MaxRows).Select(r => new PluginRow([.. (r.Cells ?? []).Take(MaxCells).Select(T)], B(r.Button)))],
+				b.Buttons == null ? null : [.. b.Buttons.Where(static x => x != null).Take(MaxCells).Select(x => B(x)!)],
+				T(b.Url)));
+		}
+
+		return new PluginPage(blocks);
 	}
 
 	// ── 1.9.0: installs and removals that wait for a restart ─────────────────
@@ -289,6 +457,16 @@ public static class PluginHost {
 				NocatFarm.Log.Info(new Said("add-on removed: {0}", Path.GetFileName(dll)));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				NocatFarm.Log.Warn(new Said("couldn't remove {0}: {1}", Path.GetFileName(dll), NocatFarm.Log.Scrub(e.Message)));
+			}
+		}
+
+		// Half-written copies left by an install that was cut off (closed, killed, the power gone mid-download): never loaded,
+		// never finished - only taking up room. The install that wrote one never said it was done, so it's simply asked for again.
+		foreach (string half in Directory.GetFiles(folder, "*.dll*.tmp", SearchOption.TopDirectoryOnly)) {
+			try {
+				File.Delete(half);
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				// next start
 			}
 		}
 

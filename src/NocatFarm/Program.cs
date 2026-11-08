@@ -232,6 +232,10 @@ if (singleInstance == null) {
 	return 1;
 }
 
+// 1.9.0: what a stop in the middle of a save left behind (a power cut, a kill) - half-written copies nothing reads - goes,
+// now that this is the only copy running for the folder and nothing has started writing.
+AtomicFile.SweepLeftovers(ConfigStore.ConfigDir);
+
 // Back on a version after going back to an older one: the settings the older one didn't know, and so left out when it
 // saved, are put back before anything reads them - only those (see Rollback). Said once the log is open.
 // Nothing in it may stop nocat.farm starting: whatever it didn't expect is said, and the settings load as they are.

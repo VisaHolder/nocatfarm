@@ -3402,7 +3402,15 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "已购买 {0} 个补充包和 {1} 张卡牌 · {2} · 可合成 {3} 套",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 的 {0} 个补充包（每个 {2}），共 {3}，代替缺少的 {4} 张卡牌（{5}）- 预计之后还要买约 {6} 张卡牌，总共约 {7} - {8} 级到 {9} 级",
     "bought to level the {0} badge": "为升级 {0} 徽章而购买",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm 还要打开的 {0} 个补充包不会发送 —— 先打开"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm 还要打开的 {0} 个补充包不会发送 —— 先打开",
+    "plugin {0} is writing too much - its lines are dropped for the rest of the minute": "插件 {0} 写入过多 - 这一分钟剩下的行将被丢弃",
+    "plugin {0} added more than {1} settings - the rest are left out": "插件 {0} 添加了超过 {1} 个设置 - 其余的不予采用",
+    "plugin command '{0}' ignored - a command is one word of letters, digits and dashes": "插件命令 '{0}' 被忽略 - 命令是由字母、数字和连字符组成的一个词",
+    "plugin {0} added more than {1} commands - the rest are left out": "插件 {0} 添加了超过 {1} 个命令 - 其余的不予采用",
+    "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "插件 {0} 很久都没处理完它的事件 - 在它处理完之前,新事件将被丢弃",
+    "plugins couldn't be loaded from {0}: {1} - starting without them": "无法从 {0} 加载插件:{1} - 不带插件启动",
+    "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "插件 {0} 已经加载(来自 {1})- {2} 中的副本不予采用",
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}'(插件 {1}){2} 秒内没有回应 - 它可能仍在处理"
   },
   "settings": {
     "BackupToTelegram": {
