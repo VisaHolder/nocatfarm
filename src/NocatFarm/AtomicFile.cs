@@ -14,12 +14,14 @@ namespace NocatFarm;
 /// started over: "couldn't read the achievement state: '0x00'".
 /// </summary>
 public static class AtomicFile {
-	public static void Write(string path, string content) {
+	public static void Write(string path, string content) => Write(path, new System.Text.UTF8Encoding(false).GetBytes(content));
+
+	/// <summary>1.9.0: the same for bytes kept exactly as they came - a signed add-on list.</summary>
+	public static void Write(string path, byte[] bytes) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 
 		try {
 			using (FileStream f = new(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
-				byte[] bytes = new System.Text.UTF8Encoding(false).GetBytes(content);
 				f.Write(bytes);
 				f.Flush(flushToDisk: true);
 			}

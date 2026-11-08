@@ -329,7 +329,7 @@ public static class DailyReport {
 
 		// A ban is new when the count went above anything seen before (BanStep) - one that was already there isn't flagged
 		// every morning.
-		List<ReportCard.Row> attention = ReportCard.Attention(bots, r4r, prevBans == null ? null : b => newBan.Contains(b.Name), nowUtc);
+		List<ReportCard.Row> attention = ReportCard.Attention(bots, prevBans == null ? null : b => newBan.Contains(b.Name), nowUtc);
 		ReportCard card = Card(days, r4r, Note(first, nowUtc), withTotal, attention, nowUtc.ToLocalTime());
 
 		return new Built(card, days.Count == 0, snapshot, games, bans);

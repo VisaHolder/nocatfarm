@@ -46,6 +46,9 @@ public static partial class Addons {
 	/// <summary>The public key the list must be signed with (SubjectPublicKeyInfo, base64). The private key is on reap's PC only.</summary>
 	public const string PublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExyV0DW47QH+b8G2LwGwUCLOIYdIMzkhFu/Xrz9CDQPra7qfjFs3dV3W6TZ7943zXfd84FuOsekmMsHW8qSOfgg==";
 
+	/// <summary>The key lists are checked with: <see cref="PublicKey"/>. Not readonly: the checks sign their own lists.</summary>
+	internal static string Key = PublicKey;
+
 	/// <summary>The biggest add-on file taken. A real one is tens of kilobytes.</summary>
 	internal const int MaxBytes = 20 * 1024 * 1024;
 
@@ -67,8 +70,13 @@ public static partial class Addons {
 	/// The list, if its signature verifies with <paramref name="publicKey"/> - checked before a byte of it is read - and every
 	/// entry is well formed. Otherwise null, and why.
 	/// </summary>
-	public static IReadOnlyList<AddonEntry>? Parse(byte[] json, string signature, string publicKey, out Said why) {
+	public static IReadOnlyList<AddonEntry>? Parse(byte[] json, string signature, string publicKey, out Said why) =>
+		Parse(json, signature, publicKey, out why, out _);
+
+	/// <summary>The same, and the list's <c>serial</c>: a number every new signed list has higher than the one before (0 when it has none).</summary>
+	public static IReadOnlyList<AddonEntry>? Parse(byte[] json, string signature, string publicKey, out Said why, out long serial) {
 		why = default;
+		serial = 0;
 
 		if (!Verify(json, signature, publicKey)) {
 			why = new Said("the add-on list's signature doesn't match - nothing from it is installed");
@@ -85,6 +93,10 @@ public static partial class Addons {
 				why = new Said("the add-on list can't be read");
 
 				return null;
+			}
+
+			if (doc.RootElement.TryGetProperty("serial", out JsonElement n) && (n.ValueKind == JsonValueKind.Number) && n.TryGetInt64(out long number) && (number > 0)) {
+				serial = number;
 			}
 
 			foreach (JsonElement e in list.EnumerateArray()) {
@@ -159,6 +171,105 @@ public static partial class Addons {
 	// ── the list on GitHub ───────────────────────────────────────────────────
 	private static (DateTime At, IReadOnlyList<AddonEntry> List)? _cached;
 
+	/// <summary>The last list that verified, as it came (and its signature) - so an add-on can be taken out without GitHub.</summary>
+	internal static string KeptPath => Path.Combine(ConfigStore.ConfigDir, "state", "addons.json");
+
+	/// <summary>The highest list serial seen here. Never goes down; not in a backup, so a restore can't take it back either.</summary>
+	internal static string SerialPath => Path.Combine(ConfigStore.ConfigDir, "state", "addons-serial.txt");
+
+	private static readonly Lock KeptGate = new();
+
+	/// <summary>The highest serial of a list taken here, 0 for none.</summary>
+	internal static long SeenSerial() {
+		try {
+			return File.Exists(SerialPath) && long.TryParse(File.ReadAllText(SerialPath).Trim(), System.Globalization.NumberStyles.None,
+				System.Globalization.CultureInfo.InvariantCulture, out long n) ? n : 0;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return 0;
+		}
+	}
+
+	/// <summary>
+	/// A fetched list: verified, then checked against the newest one seen here - an older one (a copy of the list from before
+	/// an add-on was fixed, served again) is refused, as an update that would go backwards. One that's taken is kept on disk.
+	/// </summary>
+	internal static (IReadOnlyList<AddonEntry>? List, Said Why) Take(byte[] json, string signature) {
+		IReadOnlyList<AddonEntry>? list = Parse(json, signature, Key, out Said why, out long serial);
+
+		if (list == null) {
+			return (null, why);
+		}
+
+		lock (KeptGate) {
+			long seen = SeenSerial();
+
+			if (serial < seen) {
+				return (null, new Said("the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed"));
+			}
+
+			try {
+				Directory.CreateDirectory(Path.GetDirectoryName(KeptPath)!);
+
+				if (serial > seen) {
+					AtomicFile.Write(SerialPath, serial.ToString(System.Globalization.CultureInfo.InvariantCulture));
+				}
+
+				AtomicFile.Write(KeptPath + ".sig", signature.Trim());
+				AtomicFile.Write(KeptPath, json);
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				Log.Debug($"add-ons: couldn't keep the list: {Log.Describe(e)}");
+			}
+		}
+
+		return (list, default);
+	}
+
+	/// <summary>The last list that verified here, read from disk and checked again - null when there's none or it doesn't verify.</summary>
+	internal static IReadOnlyList<AddonEntry>? Kept() {
+		try {
+			lock (KeptGate) {
+				return File.Exists(KeptPath) && File.Exists(KeptPath + ".sig")
+					? Parse(File.ReadAllBytes(KeptPath), File.ReadAllText(KeptPath + ".sig"), Key, out _)
+					: null;
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return null;
+		}
+	}
+
+	/// <summary>The official add-on this file is, by the last list kept here - when its plugin is switched off. Null otherwise.</summary>
+	internal static AddonEntry? SwitchedOff(string file) =>
+		(Live.Global.DisabledPlugins.Count > 0) && (Kept()?.FirstOrDefault(e => string.Equals(e.File, file, StringComparison.OrdinalIgnoreCase)) is { } entry)
+		&& Live.Global.DisabledPlugins.Contains(entry.Plugin, StringComparer.OrdinalIgnoreCase)
+			? entry
+			: null;
+
+	/// <summary>A DLL's own version, read from its file without loading it ("1.0.0"), or null when it can't be read.</summary>
+	internal static string? VersionOnDisk(string path) {
+		try {
+			return File.Exists(path) && System.Reflection.AssemblyName.GetAssemblyName(path).Version is { } v ? Norm(v).ToString(3) : null;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or BadImageFormatException or ArgumentException) {
+			return null;
+		}
+	}
+
+	/// <summary>A version with the parts it leaves out as 0, so 1.0.0 and 1.0.0.0 are the same.</summary>
+	private static Version Norm(Version v) => new(v.Major, v.Minor, Math.Max(0, v.Build), Math.Max(0, v.Revision));
+
+	/// <summary>Whether <paramref name="offered"/> is older than <paramref name="installed"/> (false when either isn't a version).</summary>
+	internal static bool Older(string offered, string? installed) =>
+		Version.TryParse(offered, out Version? o) && Version.TryParse(installed, out Version? i) && (Norm(o) < Norm(i));
+
+	/// <summary>The version of an add-on installed now: the one loaded, else its file's own (one waiting for a restart first) - null when there's none.</summary>
+	internal static string? InstalledVersion(AddonEntry entry) {
+		string? loaded = PluginHost.Discovered.FirstOrDefault(p => string.Equals(p.File, entry.File, StringComparison.OrdinalIgnoreCase)).Version;
+		string target = Path.Combine(PluginHost.Folder, entry.File);
+
+		return File.Exists(target + PluginHost.NewSuffix) ? VersionOnDisk(target + PluginHost.NewSuffix)
+			: !string.IsNullOrEmpty(loaded) ? loaded
+			: VersionOnDisk(target);
+	}
+
 	/// <summary>The list, fetched and verified (kept 10 minutes). Null and why when it can't be had or doesn't verify.</summary>
 	public static async Task<(IReadOnlyList<AddonEntry>? List, Said Why)> ListAsync(bool fresh, CancellationToken ct = default) {
 		if (!fresh && (_cached is { } c) && (DateTime.UtcNow - c.At < TimeSpan.FromMinutes(10))) {
@@ -179,7 +290,7 @@ public static partial class Addons {
 			return (null, new Said("couldn't get the list of add-ons from GitHub - try again in a while"));
 		}
 
-		IReadOnlyList<AddonEntry>? list = Parse(json, signature, PublicKey, out Said why);
+		(IReadOnlyList<AddonEntry>? list, Said why) = Take(json, signature);
 
 		if (list == null) {
 			Log.Warn(why);
@@ -202,6 +313,11 @@ public static partial class Addons {
 
 		if (!Fits(entry, Build.Version)) {
 			return (false, new Said("{0} needs nocat.farm {1} or newer - this is {2}; update first", entry.Name, entry.MinAppVersion, Build.Version));
+		}
+
+		// Never backwards: a list offering an older one than is installed is an old list, or a mistake. Removing it is the way back.
+		if (InstalledVersion(entry) is { } have && Older(entry.Version, have)) {
+			return (false, new Said("{0} {1} is installed - the list offers the older {2}, so nothing is changed", entry.Name, have, entry.Version));
 		}
 
 		byte[] file;
@@ -229,9 +345,19 @@ public static partial class Addons {
 			Directory.CreateDirectory(folder);
 			File.Delete(target + PluginHost.RemoveSuffix);   // an uninstall waiting for a restart is called off
 
-			// Loaded right now, it's held open: in beside it, put in place at the next start.
-			string write = PluginHost.IsLoaded(entry.File) ? target + PluginHost.NewSuffix : target;
-			await AtomicFile.WriteAsync(write, file).ConfigureAwait(false);
+			// Loaded right now, it's held open: in beside it, put in place at the next start. The same when the file turns out
+			// to be held all the same (Windows refuses to replace a DLL anything has open).
+			if (PluginHost.IsLoaded(entry.File)) {
+				await AtomicFile.WriteAsync(target + PluginHost.NewSuffix, file).ConfigureAwait(false);
+			} else {
+				try {
+					await AtomicFile.WriteAsync(target, file).ConfigureAwait(false);
+					File.Delete(target + PluginHost.NewSuffix);   // an older install still waiting would be put over this one
+				} catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && File.Exists(target)) {
+					Log.Debug($"add-ons: {entry.File} is held ({Log.Describe(e)}) - it goes in at the next start");
+					await AtomicFile.WriteAsync(target + PluginHost.NewSuffix, file).ConfigureAwait(false);
+				}
+			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			return (false, new Said("couldn't save {0} in {1}: {2}", entry.File, folder, Log.Scrub(e.Message)));
 		}
@@ -290,40 +416,76 @@ public static partial class Addons {
 	}
 
 	/// <summary>
-	/// Take an official add-on out: its file goes (at the next start, when it's loaded and held open now). Its settings and
-	/// what it saved stay in config/plugins, so installing it again picks up where it was.
+	/// Which installed file 'addons remove &lt;name&gt;' means, and what to call it: by the list in hand, else the last list kept
+	/// here, else the file in plugins/ itself - "rep4rep" finds nocatfarm.rep4rep.dll or rep4rep.dll, a file name is taken as
+	/// it is. Taking one out needs no fresh list: GitHub down, or the add-on gone from the list, mustn't leave it stuck in.
 	/// </summary>
-	public static Said Uninstall(IReadOnlyList<AddonEntry>? list, string id) {
-		AddonEntry? entry = list?.FirstOrDefault(e => string.Equals(e.Id, id?.Trim(), StringComparison.OrdinalIgnoreCase));
+	internal static (string File, string Name)? Installed(IReadOnlyList<AddonEntry>? list, string? id) {
+		string want = id?.Trim() ?? "";
 
-		if (entry == null) {
-			return new Said("there's no official add-on called '{0}' - 'addons' lists them", id ?? "");
+		foreach (IReadOnlyList<AddonEntry>? from in new[] { list, Kept() }) {
+			if (from?.FirstOrDefault(e => string.Equals(e.Id, want, StringComparison.OrdinalIgnoreCase)) is { } entry) {
+				return (entry.File, entry.Name);
+			}
 		}
 
-		string target = Path.Combine(PluginHost.Folder, entry.File);
+		// Only a plain name or file name - never a path - and only a file that is there.
+		string[] files = FileRx().IsMatch(want) ? [want] : IdRx().IsMatch(want.ToLowerInvariant()) ? [$"nocatfarm.{want}.dll", $"{want}.dll"] : [];
+
+		foreach (string file in files) {
+			string target = Path.Combine(PluginHost.Folder, file);
+
+			if (File.Exists(target) || File.Exists(target + PluginHost.NewSuffix)) {
+				return (file, want);
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Take an add-on out: its file goes (at the next start, when it's held open now). Its settings and what it saved stay in
+	/// config/plugins, so installing it again picks up where it was. <paramref name="list"/> may be null (see <see cref="Installed"/>).
+	/// </summary>
+	public static Said Uninstall(IReadOnlyList<AddonEntry>? list, string id) {
+		if (Installed(list, id) is not { } found) {
+			return new Said("there's no add-on called '{0}' in plugins/ - 'plugins' lists what is", id ?? "");
+		}
+
+		string target = Path.Combine(PluginHost.Folder, found.File);
 
 		if (!File.Exists(target) && !File.Exists(target + PluginHost.NewSuffix)) {
-			return new Said("{0} isn't installed", entry.Name);
+			return new Said("{0} isn't installed", found.Name);
 		}
 
 		try {
-			if (PluginHost.IsLoaded(entry.File)) {
-				File.Delete(target + PluginHost.NewSuffix);
-				File.WriteAllText(target + PluginHost.RemoveSuffix, "");
-				Log.Info(new Said("add-on {0} is removed at the next restart", entry.Name));
+			bool held = PluginHost.IsLoaded(found.File);
 
-				return new Said("{0} is removed when nocat.farm restarts. Its settings are kept, in case you put it back.", entry.Name);
+			if (!held) {
+				try {
+					File.Delete(target);
+				} catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && File.Exists(target)) {
+					// Held all the same - Windows refuses to delete a DLL anything has open: it goes at the next start.
+					Log.Debug($"add-ons: {found.File} is held ({Log.Describe(e)}) - it goes at the next start");
+					held = true;
+				}
 			}
 
-			File.Delete(target);
 			File.Delete(target + PluginHost.NewSuffix);
+
+			if (held) {
+				File.WriteAllText(target + PluginHost.RemoveSuffix, "");
+				Log.Info(new Said("add-on {0} is removed at the next restart", found.Name));
+
+				return new Said("{0} is removed when nocat.farm restarts. Its settings are kept, in case you put it back.", found.Name);
+			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-			return new Said("couldn't remove {0}: {1}", entry.File, Log.Scrub(e.Message));
+			return new Said("couldn't remove {0}: {1}", found.File, Log.Scrub(e.Message));
 		}
 
-		Log.Info(new Said("add-on removed: {0}", entry.File));
+		Log.Info(new Said("add-on removed: {0}", found.File));
 
-		return new Said("{0} is removed. Its settings are kept, in case you put it back.", entry.Name);
+		return new Said("{0} is removed. Its settings are kept, in case you put it back.", found.Name);
 	}
 
 	/// <summary>What is installed of an add-on: the version loaded, a file waiting for a restart, or nothing.</summary>

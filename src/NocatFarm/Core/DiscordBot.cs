@@ -1015,6 +1015,16 @@ public static partial class Notifier {
 			}
 		}
 
+		// 1.9.0: the commands add-ons and plugins added (rep4rep's) - run with /nocat like any other.
+		if (Plugins.PluginHost.Commands is { Count: > 0 } added) {
+			sb.AppendLine();
+			sb.AppendLine($"**{Md(new Said("Add-ons").ToString())}:**");
+
+			foreach ((string verb, (string usage, _, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"`{(verb + " " + usage).TrimEnd().Replace("`", "'", StringComparison.Ordinal)}`");
+			}
+		}
+
 		sb.AppendLine();
 		sb.Append(Md(new Said("Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.").ToString()));
 

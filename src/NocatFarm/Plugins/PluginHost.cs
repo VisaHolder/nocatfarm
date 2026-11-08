@@ -71,6 +71,18 @@ public static class PluginHost {
 		_mgr = mgr;
 
 		foreach (string file in files) {
+			// An official add-on that is switched off isn't loaded at all: its name is known from the signed list, so its file
+			// needn't be opened to find out - and a file never loaded can be updated or removed while the app runs.
+			if (Addons.SwitchedOff(Path.GetFileName(file)) is { } off) {
+				lock (HostsGate) {
+					Seen.Add((off.Plugin, Addons.VersionOnDisk(file) ?? "", Path.GetFileName(file), false));
+				}
+
+				NocatFarm.Log.Info(new Said("plugin {0} is switched off - skipping it", off.Plugin));
+
+				continue;
+			}
+
 			await LoadOneAsync(file, ct).ConfigureAwait(false);
 		}
 
@@ -85,6 +97,10 @@ public static class PluginHost {
 			// so the whole thing is at least structurally unloadable later.
 			PluginContext context = new(file);
 			Assembly assembly = context.LoadFromAssemblyPath(Path.GetFullPath(file));
+
+			// From here the file is mapped into the process (on Windows it can't be replaced or deleted until the app closes),
+			// whatever comes of it - a plugin switched off, one that fails to load, a DLL with no plugin in it at all.
+			MarkMapped(Path.GetFileName(file));
 
 			foreach (Type type in assembly.GetTypes()) {
 				if (!typeof(INocatPlugin).IsAssignableFrom(type) || type.IsAbstract || type.IsInterface) {
@@ -207,6 +223,20 @@ public static class PluginHost {
 		}
 	}
 
+	/// <summary>
+	/// Whether a command line is one of this plugin's own commands - what a button on its page may run. A page is drawn from
+	/// whatever the plugin has (text from a website, say), so its buttons are kept to the plugin's own verbs: never 'set',
+	/// 'send' or 'remove', whatever the page says.
+	/// </summary>
+	internal static bool OwnsCommand(string plugin, string line) => Find(plugin) is { } loaded && IsOwnCommand(loaded.Host, line);
+
+	/// <summary>Whether the line's first word is a verb this plugin added (<see cref="OwnsCommand"/>).</summary>
+	internal static bool IsOwnCommand(Host host, string? line) {
+		string verb = NocatFarm.Commands.Unprefixed(NocatFarm.Commands.Words(line ?? "").FirstOrDefault() ?? "");
+
+		return (verb.Length > 0) && host.Commands.ContainsKey(verb);
+	}
+
 	/// <summary>A plugin's own settings, with current values, for the dashboard (per-account ones once per account).</summary>
 	public static IReadOnlyList<(PluginSetting Setting, string Value, string? Account)> SettingsOf(string plugin) =>
 		Find(plugin)?.Host.SettingsView([.. _mgr?.All.Select(static b => b.Name) ?? []]) ?? [];
@@ -304,9 +334,47 @@ public static class PluginHost {
 		}
 	}
 
-	/// <summary>Whether a file of this name is loaded right now (so it can't be replaced or deleted until a restart).</summary>
-	internal static bool IsLoaded(string file) =>
-		Snapshot().Any(p => string.Equals(Path.GetFileName(p.File), file, StringComparison.OrdinalIgnoreCase));
+	/// <summary>
+	/// Whether a file of this name is held by the app right now (so it can't be replaced or deleted until a restart): every
+	/// DLL loaded into a context, not only the plugins that started. A switched-off plugin's or a failed one's file is just as
+	/// held - asked of the started ones alone, an update over it or its removal went straight at the file and was refused.
+	/// </summary>
+	internal static bool IsLoaded(string file) {
+		lock (HostsGate) {
+			if (Mapped.Contains(file)) {
+				return true;
+			}
+		}
+
+		return Snapshot().Any(p => string.Equals(Path.GetFileName(p.File), file, StringComparison.OrdinalIgnoreCase));
+	}
+
+	/// <summary>Every DLL file name loaded into a context this run. Never cleared: a collectible context isn't unloaded, so the file stays held.</summary>
+	private static readonly HashSet<string> Mapped = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Note a file as loaded into the process (and the checks' way to say one is).</summary>
+	internal static void MarkMapped(string file) {
+		lock (HostsGate) {
+			Mapped.Add(file);
+		}
+	}
+
+	/// <summary>For the checks: forget which files were loaded.</summary>
+	internal static void ForgetMapped() {
+		lock (HostsGate) {
+			Mapped.Clear();
+		}
+	}
+
+	/// <summary>
+	/// After a backup is restored: every loaded plugin reads its settings file again, so the restored values are what it sees -
+	/// and the next change is made to them, not saved over them from what was in memory.
+	/// </summary>
+	internal static void ReloadSettings() {
+		foreach (Loaded loaded in Snapshot()) {
+			loaded.Host.ForgetValues();
+		}
+	}
 
 	/// <summary>Every plugin found on disk, whether it is switched on or not - for the dashboard's list.</summary>
 	public static IReadOnlyList<(string Name, string Version, string File, bool Enabled)> Discovered {

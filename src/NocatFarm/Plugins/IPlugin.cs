@@ -116,9 +116,9 @@ public sealed record PluginCommentCheck(bool Allowed, string Reason, DateTime? R
 /// <summary>1.9.0: what kind of block a <see cref="PluginBlock"/> is.</summary>
 public enum PluginBlockKind { Heading, Text, Note, Tiles, Table, Buttons, Link }
 
-/// <summary>A button on a plugin's page. It runs one of the plugin's own commands, and/or shows another view of the page.</summary>
+/// <summary>A button on a plugin's page. It runs one of the plugin's own commands (nothing else: another verb is refused), and/or shows another view of the page.</summary>
 /// <param name="Label">What it says.</param>
-/// <param name="Command">A command line to run when it's pressed (through the same door as a typed one), or empty.</param>
+/// <param name="Command">One of this plugin's own commands (a verb it added with AddCommand) to run when it's pressed, or empty.</param>
 /// <param name="View">The view to show afterwards (handed to the page's render), or null to stay on the one showing.</param>
 public sealed record PluginButton(string Label, string Command = "", string? View = null);
 
@@ -197,7 +197,25 @@ public sealed record PluginSetting(
 	string Default = "",
 	IReadOnlyList<string>? Choices = null,
 	bool PerAccount = false
-);
+) {
+	/// <summary>
+	/// The 1.8.x constructor, six values, kept so a plugin built against 1.8.x still loads: it calls this one by its exact
+	/// signature, and with only the seven-value one it failed with MissingMethodException. Not per account.
+	/// </summary>
+	public PluginSetting(string Name, string Label, string Help, PluginSettingKind Kind, string Default, IReadOnlyList<string>? Choices)
+		: this(Name, Label, Help, Kind, Default, Choices, false) {
+	}
+
+	/// <summary>The 1.8.x deconstruction, six values, for the same reason.</summary>
+	public void Deconstruct(out string Name, out string Label, out string Help, out PluginSettingKind Kind, out string Default, out IReadOnlyList<string>? Choices) {
+		Name = this.Name;
+		Label = this.Label;
+		Help = this.Help;
+		Kind = this.Kind;
+		Default = this.Default;
+		Choices = this.Choices;
+	}
+}
 
 /// <summary>Everything a plugin can ask the app to do.</summary>
 public interface IPluginHost {

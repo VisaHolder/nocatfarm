@@ -732,7 +732,6 @@
     "couldn't read the card pace: {0}": "no se pudo leer el ritmo de cromos: {0}",
     "couldn't save the card pace: {0}": "no se pudo guardar el ritmo de cromos: {0}",
     "couldn't resume the grind: {0}": "no se pudo reanudar el grindeo: {0}",
-    "couldn't save commenting state: {0}": "no se pudo guardar el estado de comentarios: {0}",
     "couldn't read {0}'s settings: {1}": "no se pudo leer la configuración de {0}: {1}",
     "couldn't save {0}'s settings: {1}": "no se pudo guardar la configuración de {0}: {1}",
     "config: couldn't save global config: {0}": "configuración: no se pudo guardar la configuración global: {0}",
@@ -3403,7 +3402,14 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprados {0} sobre(s) y {1} cromo(s) · {2} · {3} colección(es) para crear",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}",
     "bought to level the {0} badge": "comprado para subir la insignia de {0}",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "{0} sobre(s) que nocat.farm aún tiene que abrir no se envían - primero se abren",
+    "the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed": "la lista de complementos de GitHub es más antigua que una que este nocat.farm ya tuvo: no se instala nada de ella",
+    "{0} {1} is installed - the list offers the older {2}, so nothing is changed": "{0} {1} está instalado; la lista ofrece la {2}, más antigua, así que no se cambia nada",
+    "there's no add-on called '{0}' in plugins/ - 'plugins' lists what is": "no hay ningún complemento llamado '{0}' en plugins/: 'plugins' muestra lo que hay",
+    "commenting state saved again - comments can go on": "estado de comentarios guardado de nuevo: los comentarios siguen",
+    "couldn't save commenting state: {0} - no comments until it can be saved": "no se pudo guardar el estado de comentarios: {0}; no hay comentarios hasta que se pueda guardar",
+    "can't save this account's comment count, so it won't post": "no se puede guardar el recuento de comentarios de esta cuenta, así que no publica",
+    "a plugin's button only runs that plugin's own commands": "el botón de un plugin solo ejecuta los comandos propios de ese plugin"
   },
   "settings": {
     "BackupToTelegram": {

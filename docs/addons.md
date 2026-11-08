@@ -18,10 +18,12 @@ The list nocat.farm reads is [`addons/addons.json`](../addons/addons.json) in th
 **Install**, then restart nocat.farm. Installing also turns on *Load plugins* for you.
 
 **From the console:** `addons` lists them, `addons install rep4rep` installs one, and `addons remove rep4rep` takes it
-out again. Restart after either one.
+out again. Restart after either one. Removing doesn't need GitHub: it works with the list nocat.farm last checked, or
+just the add-on's file name in `plugins`.
 
 Installing and removing only work at this PC: in the nocat.farm window or its console, or on the dashboard opened on
-this PC. A dashboard you signed into with its password works too. They don't work from Steam chat, Telegram or Discord.
+this PC. A dashboard you signed into with its password works too, its Console included. They don't work from Steam
+chat, Telegram or Discord.
 
 Once it's loaded, an add-on's settings are under its name on the **Plugins** tab. If it has a tab of its own (rep4rep
 does), that shows up next to Plugins. Each add-on has its own on/off switch there as well. Removing one keeps its
@@ -38,6 +40,8 @@ these checks pass:
 - **The file is the one the list names.** The file is downloaded from nocat.farm's own GitHub releases, never from
   anywhere else. Its SHA-256 has to match the one in the signed list, or it isn't installed.
 - **It fits your version.** An add-on that needs a newer nocat.farm says so instead of installing.
+- **Never backwards.** Every list has a number that goes up with each new one. nocat.farm remembers the highest it has
+  seen and refuses an older list, and it won't install an older version of an add-on over a newer one.
 - **Only names from the list.** The dashboard and the command take an add-on's name, never a web address.
 
 ## Your own plugins

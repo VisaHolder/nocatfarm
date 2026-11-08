@@ -732,7 +732,6 @@
     "couldn't read the card pace: {0}": "kart hızı okunamadı: {0}",
     "couldn't save the card pace: {0}": "kart hızı kaydedilemedi: {0}",
     "couldn't resume the grind: {0}": "grind sürdürülemedi: {0}",
-    "couldn't save commenting state: {0}": "yorum durumu kaydedilemedi: {0}",
     "couldn't read {0}'s settings: {1}": "{0} ayarları okunamadı: {1}",
     "couldn't save {0}'s settings: {1}": "{0} ayarları kaydedilemedi: {1}",
     "config: couldn't save global config: {0}": "yapılandırma: genel yapılandırma kaydedilemedi: {0}",
@@ -3403,7 +3402,14 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} kart paketi ve {1} kart alındı · {2} · üretilecek {3} set",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}",
     "bought to level the {0} badge": "{0} rozetini yükseltmek için satın alındı",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm'ın daha açacağı {0} kart paketi gönderilmez - önce açılır"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm'ın daha açacağı {0} kart paketi gönderilmez - önce açılır",
+    "the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed": "GitHub'daki eklenti listesi, bu nocat.farm'ın daha önce aldığı bir listeden eski - listeden hiçbir şey kurulmaz",
+    "{0} {1} is installed - the list offers the older {2}, so nothing is changed": "{0} {1} kurulu - liste daha eski olan {2} sürümünü sunuyor, bu yüzden hiçbir şey değişmiyor",
+    "there's no add-on called '{0}' in plugins/ - 'plugins' lists what is": "plugins/ içinde '{0}' adında bir eklenti yok - 'plugins' orada olanları listeler",
+    "commenting state saved again - comments can go on": "yorum durumu yeniden kaydedildi - yorumlar devam ediyor",
+    "couldn't save commenting state: {0} - no comments until it can be saved": "yorum durumu kaydedilemedi: {0} - kaydedilene kadar yorum yok",
+    "can't save this account's comment count, so it won't post": "bu hesabın yorum sayısı kaydedilemiyor, bu yüzden yorum yapmıyor",
+    "a plugin's button only runs that plugin's own commands": "bir eklentinin düğmesi yalnızca o eklentinin kendi komutlarını çalıştırır"
   },
   "settings": {
     "BackupToTelegram": {

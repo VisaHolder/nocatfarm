@@ -29,6 +29,16 @@ public static partial class ConfigStore {
 	/// <summary>Whether rep4rep was switched on at all in 1.8.x - kept in the add-on's settings so an account's flag means what it did.</summary>
 	internal const string LegacyEnabledKey = "_MigratedRep4RepEnabled";
 
+	/// <summary>
+	/// An account's own 1.8.x flag, kept as "&lt;account&gt;:_MigratedRep4RepOn" while the global part hasn't moved (it failed this
+	/// start): whether the account stays on needs both, and written as off then, it stayed off for good once the global part
+	/// went through - Put never overwrites. Settled into "&lt;account&gt;:On" by the global part when it does.
+	/// </summary>
+	internal const string PendingOnKey = "_MigratedRep4RepOn";
+
+	/// <summary>The global part had old keys this run and couldn't move them - the accounts' on/off waits for it (see <see cref="PendingOnKey"/>).</summary>
+	private static volatile bool _globalMoveFailed;
+
 	private static readonly Lock Rep4RepGate = new();
 
 	private static readonly (string Old, string New)[] GlobalKeys = [
@@ -99,10 +109,28 @@ public static partial class ConfigStore {
 		try {
 			return MigrateRep4RepGlobalOnce(g, json);
 		} catch (Exception e) {
+			_globalMoveFailed = true;
 			Log.Warn(new Said("couldn't move rep4rep's settings to the add-on: {0}", Log.Describe(e)));
 
 			return false;
 		}
+	}
+
+	/// <summary>
+	/// The accounts whose on/off waited for the global part (<see cref="PendingOnKey"/>): on only if they were on and rep4rep
+	/// was too. Called under <see cref="Rep4RepGate"/>. Returns whether anything changed.
+	/// </summary>
+	private static bool SettlePendingOn(Dictionary<string, string> values) {
+		bool masterOn = values.TryGetValue(LegacyEnabledKey, out string? m) && (m == "true");
+		string[] pending = [.. values.Keys.Where(static k => k.EndsWith(":" + PendingOnKey, StringComparison.OrdinalIgnoreCase))];
+
+		foreach (string key in pending) {
+			string account = key[..^(PendingOnKey.Length + 1)];
+			values.TryAdd($"{account}:On", (values[key] == "true") && masterOn ? "true" : "false");
+			values.Remove(key);
+		}
+
+		return pending.Length > 0;
 	}
 
 	private static bool MigrateRep4RepGlobalOnce(GlobalConfig g, string json) {
@@ -124,6 +152,25 @@ public static partial class ConfigStore {
 		}
 
 		if (!old) {
+			_globalMoveFailed = false;
+
+			// Accounts that waited for a global part that failed, and whose keys are gone from the config since (another save
+			// dropped them): rep4rep's own switch is unknown now, and it was off by default.
+			try {
+				if (File.Exists(Rep4RepSettingsFile)) {
+					lock (Rep4RepGate) {
+						Dictionary<string, string> values = ReadPluginSettings();
+
+						if (SettlePendingOn(values)) {
+							WritePluginSettings(values);
+						}
+					}
+				}
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
+				// The add-on reads (and warns about) its own file; nothing was waiting on this, or it waits for the next start.
+				Log.Debug($"1.9.0: rep4rep's waiting account switches: {Log.Describe(e)}");
+			}
+
 			// Nothing in the config - but 1.8.x commenting records may still be lying in config/state.
 			MigrateRep4RepState(null, null);
 
@@ -157,13 +204,17 @@ public static partial class ConfigStore {
 
 				// Off (or missing - it was off by default) means no account was commenting, whatever its own flag said.
 				Put(LegacyEnabledKey, props.TryGetValue("Rep4RepEnabled", out JsonElement on) && (on.ValueKind == JsonValueKind.True) ? "true" : "false");
+				SettlePendingOn(values);
 				WritePluginSettings(values);
 			}
+
+			_globalMoveFailed = false;
 
 			MigrateRep4RepState(Date(props, "Rep4RepHoldUntil"), Date(props, "Rep4RepHoldFrom"));
 			Log.Debug($"1.9.0: {Rep4RepPlugin}'s settings moved to the add-on's files (config/plugins)");
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// Not dropped from the config when they couldn't be kept: the next start tries again.
+			_globalMoveFailed = true;
 			Log.Warn(new Said("couldn't move rep4rep's settings to the add-on: {0}", Log.Describe(e)));
 
 			return false;
@@ -240,8 +291,15 @@ public static partial class ConfigStore {
 				}
 
 				bool wasOn = props.TryGetValue("Rep4Rep", out JsonElement r) && (r.ValueKind == JsonValueKind.True);
-				bool masterOn = values.TryGetValue(LegacyEnabledKey, out string? m) && (m == "true");
-				Put("On", wasOn && masterOn ? "true" : "false");
+
+				if (!values.ContainsKey(LegacyEnabledKey) && _globalMoveFailed) {
+					// The global part didn't go through: whether rep4rep itself was on isn't known yet. The account's own flag is
+					// kept for it to settle, rather than "off" written for good.
+					Put(PendingOnKey, wasOn ? "true" : "false");
+				} else {
+					bool masterOn = values.TryGetValue(LegacyEnabledKey, out string? m) && (m == "true");
+					Put("On", wasOn && masterOn ? "true" : "false");
+				}
 
 				foreach ((string from, string to) in AccountKeys) {
 					if (props.TryGetValue(from, out JsonElement v)) {

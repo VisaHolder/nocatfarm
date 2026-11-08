@@ -732,7 +732,6 @@
     "couldn't read the card pace: {0}": "카드 드롭 속도를 읽지 못했습니다: {0}",
     "couldn't save the card pace: {0}": "카드 드롭 속도를 저장하지 못했습니다: {0}",
     "couldn't resume the grind: {0}": "집중 플레이를 재개하지 못했습니다: {0}",
-    "couldn't save commenting state: {0}": "댓글 상태를 저장하지 못했습니다: {0}",
     "couldn't read {0}'s settings: {1}": "{0}의 설정을 읽지 못했습니다: {1}",
     "couldn't save {0}'s settings: {1}": "{0}의 설정을 저장하지 못했습니다: {1}",
     "config: couldn't save global config: {0}": "설정: 전역 설정을 저장하지 못했습니다: {0}",
@@ -3403,7 +3402,14 @@
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "부스터 팩 {0}개와 카드 {1}장 구매 · {2} · 제작할 세트 {3}개",
     "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 부스터 팩 {0}개(개당 {2})를 {3}에, 모자란 카드 {4}장({5}) 대신 - 나중에 살 카드가 약 {6}장 남을 것으로 예상, 합계 약 {7} - 레벨 {8} → {9}",
     "bought to level the {0} badge": "{0} 배지 레벨업용으로 구매함",
-    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm이 아직 열어야 할 부스터 팩 {0}개는 보내지 않습니다 - 먼저 엽니다"
+    "{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first": "nocat.farm이 아직 열어야 할 부스터 팩 {0}개는 보내지 않습니다 - 먼저 엽니다",
+    "the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed": "GitHub의 애드온 목록이 이 nocat.farm이 이미 받은 목록보다 오래되었습니다 - 아무것도 설치하지 않습니다",
+    "{0} {1} is installed - the list offers the older {2}, so nothing is changed": "{0} {1}이(가) 설치되어 있습니다 - 목록에는 더 오래된 {2}이(가) 있어 아무것도 바꾸지 않습니다",
+    "there's no add-on called '{0}' in plugins/ - 'plugins' lists what is": "plugins/에 '{0}'(이)라는 애드온이 없습니다 - 'plugins'로 있는 것을 볼 수 있습니다",
+    "commenting state saved again - comments can go on": "댓글 상태를 다시 저장했습니다 - 댓글을 계속합니다",
+    "couldn't save commenting state: {0} - no comments until it can be saved": "댓글 상태를 저장하지 못했습니다: {0} - 저장될 때까지 댓글을 달지 않습니다",
+    "can't save this account's comment count, so it won't post": "이 계정의 댓글 수를 저장할 수 없어 게시하지 않습니다",
+    "a plugin's button only runs that plugin's own commands": "플러그인의 버튼은 그 플러그인 자신의 명령만 실행합니다"
   },
   "settings": {
     "BackupToTelegram": {
