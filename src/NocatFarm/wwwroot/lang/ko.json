@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "구매한 {0}을(를) 열지 못했습니다: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "Steam 앱에서 부스터 팩 구매를 확인하세요 · {1}의 부스터 팩 {0}개",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "부스터 팩 {0}개와 카드 {1}장 구매 · {2} · 제작할 세트 {3}개",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 부스터 팩 {0}개(개당 {2})를 {3}에, 모자란 카드 {4}장({5}) 대신 - 나중에 살 카드가 약 {6}장 남을 것으로 예상, 합계 약 {7} - 레벨 {8} → {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 부스터 팩 {0}개(개당 {2})를 {3}에, 모자란 카드 {4}장({5}) 대신 - 나중에 살 카드가 약 {6}장 남을 것으로 예상, 합계 약 {7} - 레벨 {8} → {9}",
+    "bought to level the {0} badge": "{0} 배지 레벨업용으로 구매함",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "배지 레벨업용으로 산 부스터 팩 {0}개는 보내지 않습니다 - 먼저 엽니다"
   },
   "settings": {
     "BackupToTelegram": {

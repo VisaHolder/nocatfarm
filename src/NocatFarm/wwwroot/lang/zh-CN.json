@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "无法打开买到的 {0}：{1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "请在 Steam 应用中确认补充包购买 · {1} 的 {0} 个补充包",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "已购买 {0} 个补充包和 {1} 张卡牌 · {2} · 可合成 {3} 套",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 的 {0} 个补充包（每个 {2}），共 {3}，代替缺少的 {4} 张卡牌（{5}）- 预计之后还要买约 {6} 张卡牌，总共约 {7} - {8} 级到 {9} 级"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} 的 {0} 个补充包（每个 {2}），共 {3}，代替缺少的 {4} 张卡牌（{5}）- 预计之后还要买约 {6} 张卡牌，总共约 {7} - {8} 级到 {9} 级",
+    "bought to level the {0} badge": "为升级 {0} 徽章而购买",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "为升级徽章买的 {0} 个补充包不会发送 —— 先打开"
   },
   "settings": {
     "BackupToTelegram": {

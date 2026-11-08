@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "impossible d'ouvrir le {0} acheté : {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "confirme l'achat de boosters dans l'app Steam · {0} booster(s) pour {1}",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} booster(s) et {1} carte(s) achetés · {2} · {3} série(s) à fabriquer",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} booster(s) de {1} à {2} chacun pour {3}, au lieu de ses {4} carte(s) manquante(s) ({5}) - ils devraient laisser environ {6} carte(s) à acheter ensuite, environ {7} en tout - niveau {8} à {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} booster(s) de {1} à {2} chacun pour {3}, au lieu de ses {4} carte(s) manquante(s) ({5}) - ils devraient laisser environ {6} carte(s) à acheter ensuite, environ {7} en tout - niveau {8} à {9}",
+    "bought to level the {0} badge": "acheté pour monter le badge de {0}",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} booster(s) acheté(s) pour monter des badges ne sont pas envoyés - ils sont d'abord ouverts"
   },
   "settings": {
     "BackupToTelegram": {

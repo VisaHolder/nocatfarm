@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "satın alınan {0} açılamadı: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "kart paketi alımını Steam uygulamasında onayla · {1} için {0} kart paketi",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "{0} kart paketi ve {1} kart alındı · {2} · üretilecek {3} set",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{1} için tanesi {2} olan {0} kart paketi, {3} - eksik {4} kartın ({5}) yerine; sonra alınacak yaklaşık {6} kart bırakması bekleniyor, toplam yaklaşık {7} - seviye {8} → {9}",
+    "bought to level the {0} badge": "{0} rozetini yükseltmek için satın alındı",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "rozet yükseltmek için alınan {0} kart paketi gönderilmez - önce açılır"
   },
   "settings": {
     "BackupToTelegram": {

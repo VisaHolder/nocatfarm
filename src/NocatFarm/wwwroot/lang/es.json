@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "no se pudo abrir el {0} que compró: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "confirma la compra de sobres en la app de Steam · {0} sobre(s) para {1}",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "comprados {0} sobre(s) y {1} cromo(s) · {2} · {3} colección(es) para crear",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} sobre(s) de {1} a {2} cada uno por {3}, en vez de sus {4} cromo(s) que faltan ({5}) - se espera que dejen unos {6} cromo(s) por comprar después, unos {7} en total - del nivel {8} al {9}",
+    "bought to level the {0} badge": "comprado para subir la insignia de {0}",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "{0} sobre(s) comprado(s) para subir insignias no se envían - primero se abren"
   },
   "settings": {
     "BackupToTelegram": {

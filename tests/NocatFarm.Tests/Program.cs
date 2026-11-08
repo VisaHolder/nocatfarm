@@ -29419,6 +29419,52 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	Check("plan buying packs: a missing card nobody sells - nothing for that set, never packs on a guess",
 		(await BpPlan(true, bpUnpriced)).Steps.All(static s => s.App != 600));
 
+	// ── a pack bought instead of cards is never sold, sent or traded away before buying opens it ──
+	// "Five" (600): a pack bought an hour ago, the pack held before the order (70) known. Held now: 70, the new 71, and a
+	// pack of another game (72). Settings that would otherwise sell it: "Packs it doesn't open" sell, new packs not held back.
+	var guardLedger = BpLedger();
+	guardLedger.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g1", Before: ["70"], Pack: true));
+	var guardIds = guardLedger.BoughtPackIds([(70ul, 600u), (71ul, 600u), (72ul, 601u)], DateTime.UtcNow);
+	var guardOld = BpLedger();
+	guardOld.Add(new(DateTime.UtcNow.AddDays(-3), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g2", Before: ["70"], Pack: true));
+	var guardOpened = BpLedger();
+	guardOpened.Add(new(DateTime.UtcNow.AddHours(-1), 10, 20, 600, NocatFarm.Modules.GemsChoice.PackHash(600, "Five"), Key: "g3", Before: ["70"], Pack: true, Opened: true, Asset: "71"));
+	Check("bought packs guarded: only the new copy of the bought pack's game - not the one held before, not another game's; none once opened or 2 days on",
+		guardIds.SetEquals([71ul]) && (guardOld.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0) && (guardOpened.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0),
+		string.Join(",", guardIds));
+
+	var guardCfg = new NocatFarm.Config.BotConfig { SpareItems = true, BoosterUnopened = 2, BoosterOpenNewDays = 0, OpenBoosterPacks = 0 };
+	NocatFarm.Core.SpareItem GuardPack(ulong id, uint game) => new(id, game, NocatFarm.Core.SpareKind.BoosterPack, $"{game}-Five Booster Pack", "Five Booster Pack", true, true);
+	List<NocatFarm.Core.SpareItem> guardItems = [GuardPack(70, 600), GuardPack(71, 600)];
+	var guardPlan = NocatFarm.Core.Spare.PlanPacks(guardItems, guardCfg.OpenBoosterPacks, guardCfg.BoosterOpenNewDays, guardCfg.BoosterNeverOpen, _ => DateTime.UtcNow,
+		new HashSet<ulong>(), _ => null, 24, DateTime.UtcNow, bought: guardIds);
+	Check("bought packs guarded: with \"Packs it doesn't open\" on sell, spare items on and new packs not held back, the bought pack is planned OPEN (never sold) - the one held before stays the setting's",
+		guardPlan.Single(static d => d.Pack.AssetId == 71) is { Open: true, Disposable: false } bp && bp.Why.ToEnglish().Contains("bought to level", StringComparison.Ordinal)
+		&& guardPlan.Single(static d => d.Pack.AssetId == 70) is { Open: false, Disposable: true },
+		string.Join(" | ", guardPlan.Select(static d => $"{d.Pack.AssetId} open={d.Open} disposable={d.Disposable} {d.Why.ToEnglish()}")));
+	var guardBusy = NocatFarm.Core.Spare.PlanPacks(guardItems, 0, 0, [], _ => DateTime.UtcNow, new HashSet<ulong> { 71 }, _ => null, 24, DateTime.UtcNow, bought: guardIds);
+	Check("bought packs guarded: one on the market or in a trade offer is still left alone (never opened from under it)",
+		guardBusy.Single(static d => d.Pack.AssetId == 71) is { Open: false, Disposable: false });
+
+	List<NocatFarm.Core.Looting.Item> guardSend = [
+		new(70, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600), new(71, 1, 0, 1, "Five Booster Pack", "Five Booster Pack", 753, 6, 600),
+		new(80, 2, 0, 1, "Five Trading Card", "Card A", 753, 6, 600)];
+	var guardSent = NocatFarm.Core.Looting.LeaveBoughtPacks(guardSend, guardLedger.UnopenedPacks(DateTime.UtcNow), out int guardKept);
+	string guardSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Looting.cs")).Replace("\r\n", "\n");
+	string guardRun = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SpareRun.cs")).Replace("\r\n", "\n");
+	Check("bought packs guarded: sending skips it (whatever \"Which items to send\" says) - the pack held before and the card still go; spare items' pack look passes them to the plan and marks them opened",
+		(guardKept == 1) && guardSent.Select(static i => i.AssetId).SequenceEqual([70ul, 80ul])
+		&& guardSrc.Contains("List<Item> wanted = LeaveBoughtPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow), out int keptPacks);", StringComparison.Ordinal)
+		&& guardRun.Contains("bought: bought);", StringComparison.Ordinal) && guardRun.Contains("buys.PackOpened(packGame.GetValueOrDefault(id), id, DateTime.UtcNow);", StringComparison.Ordinal),
+		string.Join(",", guardSent.Select(static i => i.AssetId)));
+	Check("bought packs guarded: opened by spare items, its purchase is marked opened with that copy - then nothing more is guarded",
+		guardLedger.PackOpened(600, 71, DateTime.UtcNow) && guardLedger.All.Single() is { Opened: true, Asset: "71" } && (guardLedger.BoughtPackIds([(71ul, 600u)], DateTime.UtcNow).Count == 0));
+
+	var guardNever = BpMarket();
+	Check("plan buying packs: never packs for a game on \"Never open packs from these games\" - the cards",
+		(await NocatFarm.Modules.BuyPlan.MakeAsync(new NocatFarm.Config.BotConfig { CraftBadges = true, BuyBooster = true, BuyFullSets = false, BoosterNeverOpen = [600] }, guardNever,
+			NocatFarm.Modules.SwapCost.None, BpLedger(), null, DateTime.UtcNow, CancellationToken.None)).Steps.All(static s => !s.IsPack));
+
 	// ── buying them for real (fakes): one pack, never "set complete", opened once it's in, the next look free to buy what's left ──
 	string realRoot = NocatFarm.Config.ConfigStore.Root;
 	NocatFarm.Config.ConfigStore.UseRoot(bpRoot);

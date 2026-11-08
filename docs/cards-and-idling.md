@@ -429,7 +429,10 @@ spends the account's Steam wallet, so it's careful:
   missing at 0.20 (0.80) with packs at 0.10: 3 packs leave about half a card, about 0.41 - it buys the 3 packs. One set
   a look, at most 5 pack prices read. The packs go through every rule a card does (the limits, the wallet, phone
   confirmation, written down before it's sent, never dearer than planned) and are opened once they're in the inventory
-  - only the new copies, never a pack you had before. The set is never said to be complete after packs: nothing more is
+  - only the new copies, never a pack you had before. From the moment its order is sent until it's opened (2 days at
+  most), a bought pack is never sold, sent or traded away, whatever *Leave new packs alone*, *Packs it doesn't open* or
+  *Which items to send* say: *Open booster packs* opens it like the packs automatic made. A game on *Never open packs
+  from these games* is never bought as packs. The set is never said to be complete after packs: nothing more is
   bought for that game until they're opened (2 days at most - after that a pack not found is left to *Open booster
   packs*), and then the next look buys whatever is still missing. `buy preview` shows the packs, the cards they're
   expected to leave and the cost against the cards straight. A pack priced in another currency than the wallet's, or

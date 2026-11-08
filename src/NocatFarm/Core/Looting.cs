@@ -207,6 +207,20 @@ public static partial class Looting {
 	public static async Task<string> SendItemsAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct = default) =>
 		(await SendItemsCheckedAsync(bot, to, token, types, ct).ConfigureAwait(false)).Text;
 
+	/// <summary>
+	/// 1.9.0: what a send may take, less the booster packs buying cards bought instead of cards and hasn't opened yet
+	/// (<paramref name="unopened"/>, BuyLedger.BoughtPackIds) - they're opened for their badge, whatever "Which items to send"
+	/// says. <paramref name="kept"/>: how many were left out.
+	/// </summary>
+	public static List<Item> LeaveBoughtPacks(IEnumerable<Item> wanted, IReadOnlyList<Modules.BuyLedger.Entry> unopened, out int kept) {
+		List<Item> all = [.. wanted];
+		HashSet<ulong> bought = Modules.BuyLedger.BoughtPackIds(unopened,
+			all.Where(static i => i.Type.Contains("Booster Pack", StringComparison.OrdinalIgnoreCase)).Select(static i => (i.AssetId, i.Game)));
+		kept = all.RemoveAll(i => bought.Contains(i.AssetId));
+
+		return all;
+	}
+
 	private static async Task<(string Text, bool Busy)> SendItemsCheckedAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct) {
 		BotConfig cfg = bot.Cfg;
 		ulong master = to;
@@ -247,7 +261,12 @@ public static partial class Looting {
 
 		// Claimed before the waiting trades are read, not after: another send or a sale that already made its offer
 		// or listing has released its claim by then, so its trade shows up below - see Bot.ClaimItems.
-		List<Item> wanted = allowed.Where(i => WantedType(i.Type, types)).ToList();
+		List<Item> wanted = LeaveBoughtPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow), out int keptPacks);
+
+		if (keptPacks > 0) {
+			Log.Debug(new Said("{0} booster pack(s) it bought to level badges aren't sent - they're opened first", keptPacks), bot.Name);
+		}
+
 		HashSet<ulong> claimed = bot.ClaimItems(wanted.Select(static i => i.AssetId));
 
 		try {

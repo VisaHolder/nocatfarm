@@ -1454,7 +1454,7 @@ public sealed class BuyPlan {
 			// 1.9.0, "Buy booster packs when they're cheaper": the game's packs instead of its missing cards, when the packs and
 			// the missing cards they're expected to leave (bought at a later look) come to at least a tenth less than the cards.
 			// A pack is 3 random cards of the WHOLE set, so a few packs seldom bring every missing card. One set a look.
-			if (!packBought && cfg.BuyBooster && (step.Cards.Count > 0)) {
+			if (!packBought && cfg.BuyBooster && (step.Cards.Count > 0) && !cfg.BoosterNeverOpen.Contains(set.App)) {   // never packs it would have to keep shut
 				string packHash = GemsChoice.PackHash(step.App, step.Game);
 
 				if (await PackBookAsync(packHash).ConfigureAwait(false) is { } packBook) {
@@ -1907,6 +1907,55 @@ public sealed class BuyLedger(string path) {
 		lock (_gate) {
 			return [.. Load().Where(e => e.Pack && !e.Opened && (e.At >= utc - PackOpenFor)).Select(static e => e.App)];
 		}
+	}
+
+	/// <summary>1.9.0: the booster packs bought instead of cards and not opened yet, from the moment the order is sent - <see cref="PackOpenFor"/> at most.</summary>
+	public List<Entry> UnopenedPacks(DateTime utc) {
+		lock (_gate) {
+			return [.. Load().Where(e => e.Pack && !e.Opened && (e.At >= utc - PackOpenFor))];
+		}
+	}
+
+	/// <summary>
+	/// 1.9.0: of the booster packs held (<paramref name="packs"/>: each copy's id and its game), the ones that may be a pack
+	/// it bought instead of cards and hasn't opened yet: a copy of that game that wasn't held before the order (or the copy
+	/// that proved it, or any copy when what was held before isn't known). Never sold, sent or traded away meanwhile - spare
+	/// items opens them instead, whatever "Leave new packs alone", "Packs it doesn't open" or "Which items to send" say.
+	/// </summary>
+	public static HashSet<ulong> BoughtPackIds(IReadOnlyList<Entry> unopened, IEnumerable<(ulong Asset, uint Game)> packs) {
+		HashSet<ulong> ids = [];
+
+		if (unopened.Count == 0) {
+			return ids;
+		}
+
+		foreach ((ulong asset, uint game) in packs) {
+			string id = asset.ToString(CultureInfo.InvariantCulture);
+
+			if (unopened.Any(e => (e.App == game) && ((e.Asset == id) || (e.Before == null) || !e.Before.Contains(id, StringComparer.Ordinal)))) {
+				ids.Add(asset);
+			}
+		}
+
+		return ids;
+	}
+
+	/// <inheritdoc cref="BoughtPackIds(IReadOnlyList{Entry}, IEnumerable{ValueTuple{ulong, uint}})"/>
+	public HashSet<ulong> BoughtPackIds(IEnumerable<(ulong Asset, uint Game)> packs, DateTime utc) => BoughtPackIds(UnopenedPacks(utc), packs);
+
+	/// <summary>
+	/// 1.9.0: a bought booster pack opened by something else (spare items' "Open booster packs" look): its purchase marked
+	/// opened, with that copy - the one whose copy it was first, else the oldest of its game it could be. False when none.
+	/// </summary>
+	public bool PackOpened(uint game, ulong asset, DateTime utc) {
+		string id = asset.ToString(CultureInfo.InvariantCulture);
+		List<Entry> mine = [.. UnopenedPacks(utc).Where(e => (e.App == game) && ((e.Asset == id) || (e.Before == null) || !e.Before.Contains(id, StringComparer.Ordinal)))];
+
+		if ((mine.FirstOrDefault(e => e.Asset == id) ?? mine.Where(static e => !e.Pending).OrderBy(static e => e.At).FirstOrDefault()) is not { } entry) {
+			return false;
+		}
+
+		return Replace(entry, entry with { Asset = id, Opened = true });
 	}
 
 	/// <summary>1.8.2: the cheapest level a look priced, written down (kept a week) - what the automatic most per level goes by when nothing else is known.</summary>

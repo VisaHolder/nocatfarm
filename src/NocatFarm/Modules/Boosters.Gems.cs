@@ -610,8 +610,10 @@ public sealed partial class Boosters {
 	/// </summary>
 	public static async Task<string?> PacksPreviewAsync(Bot bot, InventoryContents inventory, IReadOnlyDictionary<uint, int> levels, CancellationToken ct) {
 		BoosterPick.Memory memory = BotManager.ModuleOf<Boosters>(bot)?.AutoMemory ?? BoosterPick.Memory.Load(bot.Name);
-		HashSet<ulong> own = [.. memory.Ids(), .. memory.ForSaleIds()];
-		List<IGrouping<uint, SpareItem>> games = [.. Spare.Read(inventory).Where(i => (i.Kind == SpareKind.BoosterPack) && !own.Contains(i.AssetId))
+		List<SpareItem> sealedPacks = [.. Spare.Read(inventory).Where(static i => i.Kind == SpareKind.BoosterPack)];
+		// 1.9.0: packs buying cards bought instead of cards are its to open, like automatic's own - never weighed for selling.
+		HashSet<ulong> own = [.. memory.Ids(), .. memory.ForSaleIds(), .. BuyLedger.Of(bot.Name).BoughtPackIds(sealedPacks.Select(static i => (i.AssetId, i.Game)), DateTime.UtcNow)];
+		List<IGrouping<uint, SpareItem>> games = [.. sealedPacks.Where(i => !own.Contains(i.AssetId))
 			.GroupBy(static i => i.Game).OrderByDescending(static g => g.Count()).ThenBy(static g => g.Key)];
 
 		if (games.Count == 0) {

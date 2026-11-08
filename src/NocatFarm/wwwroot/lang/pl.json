@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "nie udało się otworzyć kupionej paczki {0}: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "potwierdź zakup paczek kart w aplikacji Steam · {0} paczk(i) kart do {1}",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "kupiono paczek kart: {0} i kart: {1} · {2} · zestawy do stworzenia: {3}",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} paczk(i) kart {1} po {2} za {3}, zamiast {4} brakujących kart(y) ({5}) - powinny zostawić około {6} kart(y) do kupienia potem, razem około {7} - poziom {8} do {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} paczk(i) kart {1} po {2} za {3}, zamiast {4} brakujących kart(y) ({5}) - powinny zostawić około {6} kart(y) do kupienia potem, razem około {7} - poziom {8} do {9}",
+    "bought to level the {0} badge": "kupiony, by podnieść odznakę {0}",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "paczki kart kupione, by podnieść odznaki ({0}), nie są wysyłane - najpierw się je otwiera"
   },
   "settings": {
     "BackupToTelegram": {

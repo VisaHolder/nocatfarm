@@ -806,9 +806,11 @@ public static partial class Spare {
 	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
 	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next
 	/// chance, whatever "Open booster packs" says - only one on the market or in a trade offer is left.</param>
+	/// <param name="bought">1.9.0: packs buying cards bought instead of cards (BuyLedger.BoughtPackIds) and hasn't opened yet:
+	/// opened like automatic's own - never held back as new, sold or sent, whatever the settings say.</param>
 	public static List<PackDecision> PlanPacks(IReadOnlyList<SpareItem> items, int choice, int newDays, IReadOnlyCollection<uint> neverGames,
 		Func<ulong, DateTime?> received, IReadOnlySet<ulong> busy, Func<uint, PackPrices?> prices, int maxAgeHours, DateTime now,
-		IReadOnlySet<ulong>? madeHere = null, IReadOnlySet<ulong>? own = null) {
+		IReadOnlySet<ulong>? madeHere = null, IReadOnlySet<ulong>? own = null, IReadOnlySet<ulong>? bought = null) {
 		List<PackDecision> found = [];
 
 		foreach (SpareItem pack in items.Where(static i => i.Kind == SpareKind.BoosterPack).OrderBy(static i => i.AssetId)) {
@@ -820,6 +822,12 @@ public static partial class Spare {
 
 			if (own?.Contains(pack.AssetId) == true) {
 				found.Add(new PackDecision(pack, true, new Said("made to level the {0} badge", GameNames.Of(pack.Game))));
+
+				continue;
+			}
+
+			if (bought?.Contains(pack.AssetId) == true) {
+				found.Add(new PackDecision(pack, true, new Said("bought to level the {0} badge", GameNames.Of(pack.Game))));
 
 				continue;
 			}

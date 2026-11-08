@@ -3501,7 +3501,9 @@
     "couldn't open the {0} it bought: {1}": "не удалось открыть купленный {0}: {1}",
     "confirm the booster pack purchase in the Steam app · {0} booster pack(s) for {1}": "подтвердите покупку наборов карточек в приложении Steam · {0} набор(ов) карточек для {1}",
     "bought {0} booster pack(s) and {1} card(s) · {2} · {3} set(s) to craft": "куплено наборов карточек: {0}, карточек: {1} · {2} · наборов к сборке: {3}",
-    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} набор(ов) карточек {1} по {2} за {3} вместо {4} недостающих карточек ({5}) - ожидается, что останется около {6} карточек на потом, всего около {7} - уровень с {8} до {9}"
+    "{0} booster pack(s) of {1} at {2} each for {3}, instead of its {4} missing card(s) ({5}) - expected to leave about {6} card(s) to buy afterwards, about {7} in all - level {8} to {9}": "{0} набор(ов) карточек {1} по {2} за {3} вместо {4} недостающих карточек ({5}) - ожидается, что останется около {6} карточек на потом, всего около {7} - уровень с {8} до {9}",
+    "bought to level the {0} badge": "куплен для прокачки значка {0}",
+    "{0} booster pack(s) it bought to level badges aren't sent - they're opened first": "наборы карточек, купленные для прокачки значков ({0}), не отправляются - сначала их открывают"
   },
   "settings": {
     "BackupToTelegram": {
