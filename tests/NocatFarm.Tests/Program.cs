@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 using NocatFarm;
 
@@ -20627,6 +20627,154 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			(NocatFarm.Core.BoosterMath.Average([100], [200]) == 301) && (NocatFarm.Core.BoosterMath.FoilChance == 0.01));
 		Check("packs maths: a foil cheaper than its card pulls the average down - never up", NocatFarm.Core.BoosterMath.Average([100], [50]) == 299);
 
+		// ── custom trade rules: the codec, the values, the policy, the gates ──
+		NocatFarm.Core.TradeRuleSet trEmpty = NocatFarm.Core.TradeRuleCodec.Parse("");
+		Check("trade rules: an empty set has no rules and no problems", trEmpty.Rules.Count == 0 && trEmpty.Problems.Count == 0 && !trEmpty.Any);
+		Check("trade rules: null reads as empty, never a crash", NocatFarm.Core.TradeRuleCodec.Parse(null).Rules.Count == 0);
+
+		NocatFarm.Core.TradeRuleSet trOne = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"cards","kind":"card-gems","worth":"gems","match":{"kinds":["Card"]}}]}
+			""");
+		Check("trade rules: a valid rule reads back with its id, kind and accept default",
+			trOne.Problems.Count == 0 && trOne.Rules.Count == 1 && trOne.Rules[0].Id == "cards"
+			&& trOne.Rules[0].Kind == NocatFarm.Core.TradeRuleKind.CardGems && trOne.Rules[0].Action == "accept");
+
+		NocatFarm.Core.TradeRuleSet trUnknown = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"x","kind":"nonsense"}]}""");
+		Check("trade rules: an unknown kind is refused with a problem, and no rule", trUnknown.Rules.Count == 0 && trUnknown.Problems.Count == 1);
+
+		NocatFarm.Core.TradeRuleSet trBad = NocatFarm.Core.TradeRuleCodec.Parse("{not json");
+		Check("trade rules: broken JSON is a problem, never an exception", trBad.Rules.Count == 0 && trBad.Problems.Count > 0);
+
+		NocatFarm.Core.TradeRuleSet trDup = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"same","kind":"card-gems"},{"id":"same","kind":"card-gems"}]}
+			""");
+		Check("trade rules: a duplicate id is skipped and said", trDup.Rules.Count == 1 && trDup.Problems.Count == 1);
+
+		NocatFarm.Core.TradeRuleSet trVersion = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":2,"rules":[]}""");
+		Check("trade rules: a version it doesn't know reads as no rules", trVersion.Rules.Count == 0 && trVersion.Problems.Count == 1);
+
+		NocatFarm.Core.TradeRuleSet trNoId = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"kind":"market-profit"}]}""");
+		Check("trade rules: a rule without an id is named by its place", trNoId.Rules.Count == 1 && trNoId.Rules[0].Id == "rule-1");
+
+		NocatFarm.Core.TradeRuleSet trCase = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"c","kind":"card-gems","match":{"kinds":["card","foilcard"]}}]}
+			""");
+		Check("trade rules: kinds and enums read whatever their case", trCase.Rules.Count == 1
+			&& trCase.Rules[0].Match.Kinds.SequenceEqual([NocatFarm.Core.SpareKind.Card, NocatFarm.Core.SpareKind.FoilCard]));
+
+		Check("trade rules: a full rule set writes back as JSON the codec reads again",
+			NocatFarm.Core.TradeRuleCodec.Parse(NocatFarm.Core.TradeRuleCodec.Write(trOne.Rules)).Rules.Count == 1);
+
+		Check("trade rules: there are presets for every kind", NocatFarm.Core.TradePresets.All().Count >= 7
+			&& new[] { "card-gems", "set-size-gems", "item-threshold", "booster-value", "foil-swap", "market-profit", "value-ratio" }
+				.All(k => NocatFarm.Core.TradePresets.All().Any(p => p.Rule.Kind == k)));
+		Check("trade rules: exchange and level-up bot presets are there",
+			NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "exchange-gems" && p.Rule.Basis == "gems" && p.Rule.Factor > 1)
+			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "levelup-sets" && p.Rule.Per == "completeSet" && p.Rule.Table.Count > 0));
+
+		// The values and the policy, on a fake source: no network.
+		var trNow = new DateTime(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);
+		NocatFarm.Core.TradeOffers.Item TrItem(string hash, string name, NocatFarm.Core.SpareKind kind, uint game = 730, uint amount = 1,
+			bool tradable = true, bool marketable = true) =>
+			new(753, "6", (ulong) hash.GetHashCode(), 0, 0, amount, "Trading Card", name, game, true, "", hash, kind, 0, 0, tradable, marketable);
+
+		NocatFarm.Core.TradeOffers.Item trCard = TrItem("730-A", "A", NocatFarm.Core.SpareKind.Card);
+		NocatFarm.Core.TradeOffers.Item trSack = TrItem("753-Sack of Gems", "Sack of Gems", NocatFarm.Core.SpareKind.GemSack, 753);
+		NocatFarm.Core.TradeOffers.Item trOther = TrItem("730-B", "B", NocatFarm.Core.SpareKind.Card);
+
+		var trSource = new FakeTradeSource { Now = trNow };
+		trSource.GemValues["730-A"] = 100;
+		trSource.Quotes["730-A"] = new NocatFarm.Core.MarketQuote("730-A", 20, 50, 50, 10, trNow.Ticks);
+		trSource.Quotes["730-B"] = new NocatFarm.Core.MarketQuote("730-B", 20, 60, 60, 10, trNow.Ticks);
+
+		NocatFarm.Core.TradeValues trValues = NocatFarm.Core.TradeValues.From(trSource, [trCard], [trSack]);
+		NocatFarm.Core.TradeValues trProfit = NocatFarm.Core.TradeValues.From(trSource, [trCard], [trOther]);
+
+		NocatFarm.Core.TradeRuleSet trGems = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"gems","kind":"card-gems","worth":"gems","match":{"kinds":["Card"]},"payIn":{"kinds":["GemSack","Gems"],"only":true}}]}
+			""");
+		NocatFarm.Core.TradeDecision trGemsAnswer = NocatFarm.Core.TradePolicy.Decide(trGems, trValues, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: a card worth 100 gems is accepted for a sack of 1,000",
+			trGemsAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept && trGemsAnswer.RuleId == "gems", trGemsAnswer.Why);
+
+		NocatFarm.Core.TradeRuleSet trDear = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"dear","kind":"card-gems","worth":"gems","marginPct":500,"match":{"kinds":["Card"]},"payIn":{"kinds":["GemSack","Gems"],"only":true}}]}
+			""");
+		Check("trade rules: a margin over what a sack pays leaves the offer alone",
+			NocatFarm.Core.TradePolicy.Decide(trDear, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Decline);
+
+		NocatFarm.Core.TradeRuleSet trProfitRule = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"profit","kind":"market-profit","minProfitCents":1,"minSales":3,"maxAgeHours":24}]}
+			""");
+		NocatFarm.Core.TradeDecision trProfitAnswer = NocatFarm.Core.TradePolicy.Decide(trProfitRule, trProfit, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: market profit is net after Steam's fee, and 60 pays more than 50",
+			trProfitAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept, trProfitAnswer.Why);
+		Check("trade rules: the same offer at no profit is declined",
+			NocatFarm.Core.TradePolicy.Decide(trProfitRule, NocatFarm.Core.TradeValues.From(trSource, [trCard], [trCard]), NocatFarm.Core.GateResult.Allowed).Verdict
+				== NocatFarm.Core.TradeVerdict.Decline);
+
+		var trNoPrice = new FakeTradeSource { Now = trNow };
+		trNoPrice.GemValues["730-A"] = 100;
+		NocatFarm.Core.TradeDecision trMissing = NocatFarm.Core.TradePolicy.Decide(trProfitRule,
+			NocatFarm.Core.TradeValues.From(trNoPrice, [trCard], [trOther]), NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: a missing price is Unknown - it leaves the offer, never guesses",
+			trMissing.Verdict == NocatFarm.Core.TradeVerdict.Unknown && trMissing.Leaves, trMissing.Why);
+
+		NocatFarm.Core.GateResult trBlocked = NocatFarm.Core.TradeGates.Check(
+			new NocatFarm.Core.Bot("tr-gate", new NocatFarm.Config.BotConfig { SpareKeepItems = "A" }),
+			new NocatFarm.Core.TradeOffers.Offer(1, 2, NocatFarm.Core.TradeOffers.Active, false, null, [trCard], [trSack]), trValues, []);
+		Check("trade rules: the keep list blocks a custom rule before it runs", trBlocked.Block == NocatFarm.Core.GateBlock.Blocked);
+
+		NocatFarm.Core.TradeOffers.Item trHeld = trCard with { Tradable = false };
+		NocatFarm.Core.GateResult trUntradable = NocatFarm.Core.TradeGates.Check(
+			new NocatFarm.Core.Bot("tr-gate2", new NocatFarm.Config.BotConfig()),
+			new NocatFarm.Core.TradeOffers.Offer(1, 2, NocatFarm.Core.TradeOffers.Active, false, null, [trHeld], [trSack]), trValues, []);
+		Check("trade rules: an item Steam says can't be traded is never given away", trUntradable.Block == NocatFarm.Core.GateBlock.Blocked);
+
+		NocatFarm.Core.GateResult trCommitted = NocatFarm.Core.TradeGates.Check(
+			new NocatFarm.Core.Bot("tr-gate3", new NocatFarm.Config.BotConfig()),
+			new NocatFarm.Core.TradeOffers.Offer(1, 2, NocatFarm.Core.TradeOffers.Active, false, null, [trCard], [trSack]), trValues, [trCard.AssetId]);
+		Check("trade rules: an item promised in another offer is blocked", trCommitted.Block == NocatFarm.Core.GateBlock.Blocked);
+
+		NocatFarm.Core.GateResult trReceivingHeld = NocatFarm.Core.TradeGates.Check(
+			new NocatFarm.Core.Bot("tr-gate4", new NocatFarm.Config.BotConfig()),
+			new NocatFarm.Core.TradeOffers.Offer(1, 2, NocatFarm.Core.TradeOffers.Active, false, null, [trCard], [trSack with { Tradable = false }]), trValues, []);
+		Check("trade rules: what it receives being untradable is Unknown, not a decline", trReceivingHeld.Block == NocatFarm.Core.GateBlock.Unknown);
+
+		Check("trade rules: off by default, with an empty rule set, and never confirmed without asking",
+			new NocatFarm.Config.BotConfig().TradeRulesEnabled == false && new NocatFarm.Config.BotConfig().TradeRulesJson.Length == 0
+			&& new NocatFarm.Config.BotConfig().TradeRulesConfirm == false);
+		Check("trade rules: all settings are on the settings page, the JSON hidden",
+			NocatFarm.Config.Settings.FindBot("TradeRulesEnabled") is { Kind: NocatFarm.Config.SettingKind.Bool, Hidden: false }
+			&& NocatFarm.Config.Settings.FindBot("TradeRulesJson") is { Kind: NocatFarm.Config.SettingKind.Text, Hidden: true }
+			&& NocatFarm.Config.Settings.FindBot("TradeRulesConfirm") is { Kind: NocatFarm.Config.SettingKind.Bool, Advanced: true });
+		Check("trade rules: the auto-confirm setting warns that a wrong rule becomes a wrong trade",
+			NocatFarm.Config.Settings.FindBot("TradeRulesConfirm")!.Tooltip.Contains("DANGEROUS", StringComparison.Ordinal)
+			&& NocatFarm.Config.Settings.FindBot("TradeRulesConfirm")!.Tooltip.Contains("exchange or level-up bot", StringComparison.Ordinal));
+
+		string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", rel)).Replace("\r\n", "\n");
+
+		Check("trade rules: a copied account keeps its own switches but takes the rules",
+			Src("src/NocatFarm/Core/SettingsCopy.cs").Contains("nameof(BotConfig.TradeRulesEnabled)", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Core/SettingsCopy.cs").Contains("nameof(BotConfig.TradeRulesConfirm)", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Core/SettingsCopy.cs").Contains("nameof(BotConfig.TradeRulesJson)", StringComparison.Ordinal));
+
+		Check("trade rules: the dashboard has its endpoints, its page and the auto-confirm switch",
+			Src("src/NocatFarm/Web/WebHost.TradeRules.cs").Contains("/api/trade-rules", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Web/WebHost.TradeRules.cs").Contains("/api/trade-rules/preview", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Web/WebHost.TradeRules.cs").Contains("confirm = bot.Cfg.TradeRulesConfirm", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Web/WebHost.cs").Contains("MapTradeRules(app);", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/wwwroot/index.html").Contains("data-view=\"traderules\"", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/wwwroot/app.js").Contains("function loadTradeRules()", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/wwwroot/app.js").Contains("function trSetConfirm(on)", StringComparison.Ordinal));
+
+		Check("trade rules: the offer loop evaluates them, keeps every promised asset out of reach, and confirms only when asked",
+			Src("src/NocatFarm/Modules/Trading.cs").Contains("_promisedAssets", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Modules/Trading.cs").Contains("CustomRulesAsync(offer, ct)", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Modules/Trading.cs").Contains("mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/Modules/Trading.cs").Contains("customAccept && Bot.Cfg.TradeRulesConfirm", StringComparison.Ordinal));
+
+
 		var packFake = new FakeSpareSteam();
 		var toOpen = NocatFarm.Core.Spare.PlanPacks([Pack(80), Pack(81), Pack(82), Pack(83)], 2, 7, [], _ => old, new HashSet<ulong> { 83 }, _ => null, 24, now);
 		heard.Clear();
@@ -31419,6 +31567,37 @@ sealed class FakeCardMarket : NocatFarm.Modules.ICardMarket {
 
 		return Task.FromResult(Checks.GetValueOrDefault(orderId) ?? new NocatFarm.Modules.BuyAnswer(NocatFarm.Modules.BuyResult.Unsure, price, "", orderId));
 	}
+}
+
+/// <summary>A trade value source with no network: the values a test names, and nothing else.</summary>
+sealed class FakeTradeSource : NocatFarm.Core.ITradeValueSource {
+	public int Currency { get; init; } = 20;
+	public DateTime Now { get; init; } = new(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);
+	public Dictionary<string, int?> GemValues { get; } = new(StringComparer.Ordinal);
+	public Dictionary<string, NocatFarm.Core.MarketQuote?> Quotes { get; } = new(StringComparer.Ordinal);
+	public Dictionary<uint, NocatFarm.Modules.CardSet?> Sets { get; } = [];
+	public int? SackNet { get; init; } = 80;
+	public double? RateValue { get; init; }
+
+	public NocatFarm.Core.SpareKind KindOf(NocatFarm.Core.TradeOffers.Item item) => item.Kind;
+
+	public int? Gems(NocatFarm.Core.TradeOffers.Item item) => GemValues.TryGetValue(item.Hash, out int? gems) ? gems : null;
+
+	public Task<int?> GemsAsync(NocatFarm.Core.TradeOffers.Item item, CancellationToken ct) => Task.FromResult(Gems(item));
+
+	public NocatFarm.Core.MarketQuote? Quote(string hash) => Quotes.TryGetValue(hash, out NocatFarm.Core.MarketQuote? quote) ? quote : null;
+
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, CancellationToken ct) => Task.FromResult(Quote(hash));
+
+	public NocatFarm.Modules.CardSet? Set(uint app) => Sets.TryGetValue(app, out NocatFarm.Modules.CardSet? set) ? set : null;
+
+	public Task<NocatFarm.Modules.CardSet?> SetAsync(uint app, CancellationToken ct) => Task.FromResult(Set(app));
+
+	public double? Rate(int currency) => RateValue;
+
+	public int? SackNetCents() => SackNet;
+
+	public int? LooseGemWalletCents(int gems, string looseGemsMode) => (looseGemsMode == "sack") && (SackNet is int sack) ? gems * sack / 1000 : null;
 }
 
 /// <summary>A pretend card swapping: every card can come by a swap for this much.</summary>

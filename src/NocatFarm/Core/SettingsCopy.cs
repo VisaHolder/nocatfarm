@@ -56,6 +56,7 @@ public static class SettingsCopy {
 		// trades
 		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.CardSwapsPerDay), nameof(BotConfig.TradeMasters),
 		nameof(BotConfig.AutoTradeWith), nameof(BotConfig.DeclineOtherTrades), nameof(BotConfig.AcceptDonations), nameof(BotConfig.DonationsWhileAsleep),
+		nameof(BotConfig.TradeRulesEnabled), nameof(BotConfig.TradeRulesConfirm),
 		// sends items away
 		nameof(BotConfig.SendItemTypes), nameof(BotConfig.SendOnFarmingFinished), nameof(BotConfig.SendEveryHours), nameof(BotConfig.SendAroundHour),
 		nameof(BotConfig.SpareGems), nameof(BotConfig.SpareGemsSendTo), nameof(BotConfig.BoosterUnopened), nameof(BotConfig.BoosterSendTo),
@@ -67,6 +68,7 @@ public static class SettingsCopy {
 
 	/// <summary>1.8.2: every setting that does come across - named one by one, so a new setting is never copied by accident.</summary>
 	public static readonly IReadOnlyList<string> CopiedAcross = [
+		nameof(BotConfig.TradeRulesJson),
 		// Account
 		nameof(BotConfig.OnlineStatus), nameof(BotConfig.LevelUpLine), nameof(BotConfig.UIMode), nameof(BotConfig.ClearInventoryNotifications), nameof(BotConfig.ClearNotifications),
 		// Human

@@ -451,6 +451,7 @@ function go(name) {
   if (name === 'console') { $('cmd').focus(); renderCommandList(); }
   if (name === 'log') renderLog();
   if (name === 'plugins') loadPlugins();
+  if (name === 'traderules') loadTradeRules();
   if (name === 'auth') openAuth();
   if (name !== 'auth') closeAuth();
   if (name === 'phone') { renderPhone(); loadConfig().catch(() => {}).then(() => loadPhone(true)); }
@@ -7887,6 +7888,297 @@ async function boot() {
     post('/api/import/pending/clear', {}).catch(() => {});
     openImport(pending.Pending.Tool, pending.Pending.Path);
   }
+}
+
+// ── custom trade rules ────────────────────────────────────────────────────
+// A rule set per account, edited here and saved through the strict codec - what the server would refuse is never
+// written. Rules are off unless the switch is on, and a custom accept from a stranger still waits for you.
+let trData = null;      // the account's rules as last read
+let trRules = [];       // the draft being edited
+let trBot = '';
+let trPreview = null;
+
+async function loadTradeRules() {
+  const body = $('tradeRulesBody');
+  if (!body) return;
+
+  const list = (state && state.Bots) || [];
+  if (!list.length) {
+    body.innerHTML = `<p class="muted empty">${esc(t('Add an account first.'))}</p>`;
+    return;
+  }
+
+  if (!trBot || !list.some((b) => b.Name === trBot)) trBot = list[0].Name;
+
+  try {
+    trData = await api('/api/trade-rules?name=' + encodeURIComponent(trBot));
+  } catch (e) {
+    body.innerHTML = `<p class="muted">${esc(tf('Could not read the trade rules: {0}', e.message || e))}</p>`;
+    return;
+  }
+
+  if (!trData || !trData.ok) {
+    body.innerHTML = `<p class="muted">${esc((trData && (trData.error || (trData.problems || []).join('; '))) || t('Could not read the trade rules.'))}</p>`;
+    return;
+  }
+
+  trRules = (trData.rules && trData.rules.rules) || [];
+  trPreview = null;
+  renderTradeRules();
+}
+
+function trDraftJson() {
+  return JSON.stringify({ version: 1, rules: trRules }, null, 2);
+}
+
+function renderTradeRules() {
+  const body = $('tradeRulesBody');
+  if (!body || !trData) return;
+
+  const list = (state && state.Bots) || [];
+  const accounts = list.map((b) => `<option value="${esc(b.Name)}" ${b.Name === trBot ? 'selected' : ''}>${esc(b.Name)}</option>`).join('');
+  const problems = (trData.problems || []).map((p) => `<li>${esc(p)}</li>`).join('');
+
+  const cards = trRules.map((r, i) => `
+    <div class="trcard${r.enabled === false ? ' off' : ''}">
+      <div class="trhead">
+        <b>${esc(r.id || `rule-${i + 1}`)}</b>
+        <span class="badge ${r.action === 'decline' ? 'bad' : 'good'}">${esc(r.action || 'accept')}</span>
+        <code class="muted small">${esc(r.kind || '?')}</code>
+        <span class="muted small">${esc(tf('priority {0}', r.priority == null ? 100 : r.priority))}</span>
+        <span class="spacer"></span>
+        <label class="switch"><input type="checkbox" ${r.enabled === false ? '' : 'checked'} onchange="trToggle(${i}, this.checked)"><span></span></label>
+        <button class="ghost small" onclick="trMove(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="${esc(t('Move up'))}">↑</button>
+        <button class="ghost small" onclick="trMove(${i}, 1)" ${i === trRules.length - 1 ? 'disabled' : ''} title="${esc(t('Move down'))}">↓</button>
+        <button class="ghost small bad" onclick="trDelete(${i})">${esc(t('Delete'))}</button>
+      </div>
+      ${r.note ? `<p class="muted small">${esc(r.note)}</p>` : ''}
+      <pre class="trjson">${esc(JSON.stringify(r, null, 2))}</pre>
+    </div>`).join('');
+
+  const presets = ((trData.presets) || []).map((p) => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  const others = list.filter((b) => b.Name !== trBot).map((b) => `<option value="${esc(b.Name)}">${esc(b.Name)}</option>`).join('');
+
+  body.innerHTML = `
+    <div class="toolbar">
+      <label class="inline">${esc(t('Account'))} <select onchange="trBot = this.value; loadTradeRules()">${accounts}</select></label>
+      <label class="switch" data-tip="${esc(t('Off by default. Rules never override your own accounts, donations or nocat.lol swaps, and a custom accept from a stranger waits for your confirmation unless auto-confirm is on.'))}">
+        <input type="checkbox" ${trData.enabled ? 'checked' : ''} onchange="trSetEnabled(this.checked)"><span></span>
+      </label>
+      <span class="muted small">${esc(t('Use custom trade rules'))}</span>
+      <label class="switch" data-tip="${esc(t('DANGEROUS: an offer a rule accepts is confirmed in the Steam app without asking you. That is what lets this account run as a key/gem exchange or level-up bot - and what turns one wrong rule into one wrong trade. Keep the rules narrow and the authenticator here.'))}">
+        <input type="checkbox" ${trData.confirm ? 'checked' : ''} onchange="trSetConfirm(this.checked)"><span></span>
+      </label>
+      <span class="muted small">${esc(t('Confirm accepts in the Steam app'))}</span>
+      <span class="spacer"></span>
+      <button class="ghost" onclick="trPreviewNow()">${esc(t('Preview offers'))}</button>
+    </div>
+
+    <p class="explain">${esc(t('Rules are off by default. Your own accounts, donations and nocat.lol paired swaps are never judged by them. A custom accept from a stranger waits for your confirmation unless "Confirm accepts in the Steam app" is on - turn that on only for an exchange or level-up bot, and only once the preview looks right. If a price is missing or stale, the offer is left for the next look - never accepted or declined on a guess.'))}
+      <a href="https://github.com/VisaHolder/nocatfarm/blob/main/docs/trade-rules.md" target="_blank" rel="noopener noreferrer">${esc(t('How the rules work'))}</a></p>
+
+    ${trData.confirm ? `<div class="alert bad">${esc(t('Auto-confirm is on: an offer a rule accepts is finalised without asking you. Turn it off if you are not running an exchange or level-up bot.'))}</div>` : ''}
+    ${problems ? `<div class="alert bad"><ul>${problems}</ul></div>` : ''}
+
+    <h3>${esc(t('Rules'))}</h3>
+    ${cards || `<p class="muted empty">${esc(t('No rules yet. Add a preset below, or write one in the editor.'))}</p>`}
+
+    <div class="toolbar" style="margin-top:12px">
+      <select id="trPreset">${presets}</select>
+      <button onclick="trAddPreset()">${esc(t('Add preset'))}</button>
+    </div>
+
+    <h3>${esc(t('Editor'))}</h3>
+    <p class="muted small">${esc(t('The whole set as JSON. Every field the rules understand is in the documentation; a rule the server cannot read is refused, never saved.'))}</p>
+    <textarea id="trJson" class="trjsonedit" spellcheck="false">${esc(trDraftJson())}</textarea>
+    <div class="toolbar">
+      <button onclick="trSave()">${esc(t('Save'))}</button>
+      <button class="ghost" onclick="trFormat()">${esc(t('Tidy the JSON'))}</button>
+      <span class="spacer"></span>
+      <button class="ghost" onclick="trExport()">${esc(t('Export'))}</button>
+      <label class="ghost filebtn">${esc(t('Import'))}<input type="file" accept=".json,application/json" onchange="trImport(this)"></label>
+      ${others ? `<select id="trCopyTo">${others}</select><button class="ghost" onclick="trCopy()">${esc(t('Copy to account'))}</button>` : ''}
+    </div>
+
+    <div id="trPreview"></div>`;
+
+  renderTradePreview();
+}
+
+function trSetEnabled(on) {
+  if (!trData) return;
+  trData.enabled = on;
+  trSave();
+}
+
+function trSetConfirm(on) {
+  if (!trData) return;
+  trData.confirm = on;
+  trSave();
+}
+
+function trToggle(i, on) {
+  trRules[i].enabled = on;
+  trSave();
+}
+
+function trMove(i, by) {
+  const j = i + by;
+  if (j < 0 || j >= trRules.length) return;
+  const [r] = trRules.splice(i, 1);
+  trRules.splice(j, 0, r);
+  trSave();
+}
+
+function trDelete(i) {
+  trRules.splice(i, 1);
+  trSave();
+}
+
+function trAddPreset() {
+  const id = $('trPreset') && $('trPreset').value;
+  const p = ((trData && trData.presets) || []).find((x) => x.id === id);
+  if (!p) return;
+  const rule = JSON.parse(JSON.stringify(p.rule));
+  // A preset is a starting point, not a duplicate: give it a fresh, readable id.
+  const base = rule.id || p.id;
+  let n = 1, name = base;
+  while (trRules.some((r) => r.id === name)) name = `${base}-${++n}`;
+  rule.id = name;
+  trRules.push(rule);
+  trSave();
+}
+
+function trFormat() {
+  const el = $('trJson');
+  if (!el) return;
+  try {
+    el.value = JSON.stringify(JSON.parse(el.value), null, 2);
+  } catch (e) {
+    toast(tf('Not valid JSON: {0}', e.message || e), true);
+  }
+}
+
+function trImport(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const rules = Array.isArray(parsed) ? parsed : parsed.rules;
+      if (!Array.isArray(rules)) throw new Error(t('no rules in it'));
+      trRules = rules;
+      trSave();
+    } catch (e) {
+      toast(tf('Could not read that file: {0}', e.message || e), true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function trExport() {
+  const blob = new Blob([trDraftJson()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `trade-rules-${trBot}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+async function trCopy() {
+  const to = $('trCopyTo') && $('trCopyTo').value;
+  if (!to) return;
+  const r = await trPut(to, trData ? trData.enabled : false, trData ? trData.confirm : false, trDraftJson());
+  if (r && r.ok) toast(tf('Copied to {0}.', to));
+  else toast(tf('Could not copy to {0}: {1}', to, ((r && r.problems) || []).join('; ') || '?'), true);
+}
+
+async function trPut(account, enabled, confirm, json) {
+  let rules;
+  try {
+    rules = JSON.parse(json).rules;
+  } catch (e) {
+    toast(tf('Not valid JSON: {0}', e.message || e), true);
+    return null;
+  }
+
+  try {
+    return await api('/api/trade-rules?name=' + encodeURIComponent(account), {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: enabled, confirm: confirm, rules: rules })
+    });
+  } catch (e) {
+    return { ok: false, problems: [e.message || String(e)] };
+  }
+}
+
+async function trSave() {
+  const el = $('trJson');
+  const json = el ? el.value : trDraftJson();
+  const r = await trPut(trBot, trData ? trData.enabled : false, trData ? trData.confirm : false, json);
+  if (!r) return;
+
+  if (!r.ok) {
+    toast((r.problems || []).join('; ') || t('Could not save the rules.'), true);
+    return;
+  }
+
+  toast(t('Trade rules saved.'));
+  await loadTradeRules();
+}
+
+async function trPreviewNow() {
+  const host = $('trPreview');
+  if (host) host.innerHTML = `<p class="muted">${esc(t('Reading the offers Steam has now…'))}</p>`;
+
+  try {
+    trPreview = await api('/api/trade-rules/preview?name=' + encodeURIComponent(trBot), {
+      method: 'POST',
+      body: JSON.stringify({ fetch: false })
+    });
+  } catch (e) {
+    trPreview = { ok: false, error: e.message || String(e) };
+  }
+
+  renderTradePreview();
+}
+
+function renderTradePreview() {
+  const host = $('trPreview');
+  if (!host) return;
+
+  if (!trPreview) {
+    host.innerHTML = '';
+    return;
+  }
+
+  if (!trPreview.ok) {
+    host.innerHTML = `<p class="muted">${esc(trPreview.error || (trPreview.problems || []).join('; ') || t('Could not preview the offers.'))}</p>`;
+    return;
+  }
+
+  const side = (items) => (items || []).map((i) =>
+    `${esc(i.name)} <span class="muted small">(${esc(i.kind)}${i.amount > 1 ? ` ×${i.amount}` : ''}${i.gems != null ? `, ${i.gems} gems` : ''}${i.wallet != null ? `, ${cur()}${(i.wallet / 100).toFixed(2)}` : ''}${i.problem ? `, ${esc(i.problem)}` : ''})</span>`).join('<br>') || '<span class="muted">—</span>';
+
+  const rows = (trPreview.offers || []).map((o) => `
+    <tr>
+      <td class="mono small">${esc(o.id)}</td>
+      <td>${side(o.given)}</td>
+      <td>${side(o.received)}</td>
+      <td><span class="badge ${o.verdict === 'Accept' ? 'good' : o.verdict === 'Decline' ? 'bad' : ''}">${esc(o.verdict)}</span></td>
+      <td>${esc(o.rule || '')}${o.why ? `<br><span class="muted small">${esc(o.why)}</span>` : ''}</td>
+      <td class="muted small">${esc(o.gates || '')}</td>
+    </tr>`).join('');
+
+  host.innerHTML = `
+    <h3>${esc(t('Preview'))}</h3>
+    <p class="muted small">${esc(t('Nothing is accepted or declined here. A price shown as missing is why a rule left the offer alone.'))}</p>
+    ${rows ? `<div class="tablewrap"><table class="trtable"><thead><tr>
+      <th>${esc(t('Offer'))}</th><th>${esc(t('You give'))}</th><th>${esc(t('You get'))}</th>
+      <th>${esc(t('Verdict'))}</th><th>${esc(t('Rule'))}</th><th>${esc(t('Gates'))}</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<p class="muted empty">${esc(t('No offers waiting right now.'))}</p>`}`;
 }
 
 boot();
