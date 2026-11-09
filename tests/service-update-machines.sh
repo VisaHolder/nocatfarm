@@ -50,9 +50,10 @@ EOF
 		qemu-system-x86_64 $ACCEL -m 3072 -smp 2 -nographic -drive "file=$T/disk.qcow2,if=virtio,cache=none" -drive "file=$T/seed.iso,if=virtio,format=raw" \
 			-netdev "user,id=n0,hostfwd=tcp:127.0.0.1:$PORT-:22" -device virtio-net-pci,netdev=n0 > "$T/console.log" 2>&1 &
 	}
-	on() { ssh -i "$T/key" -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o LogLevel=ERROR -o ServerAliveInterval=5 -o ServerAliveCountMax=3 nf@127.0.0.1 "$@"; }
+	# With a limit on everything: a connection across a reboot can sit there for good, waiting on a guest that has gone.
+	on() { timeout -k 5 "${LIMIT:-1200}" ssh -i "$T/key" -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o LogLevel=ERROR -o ServerAliveInterval=5 -o ServerAliveCountMax=3 nf@127.0.0.1 "$@"; }
 	wait_up() {
-		for _ in $(seq 1 120); do on true 2> /dev/null && return 0; sleep 5; done
+		for _ in $(seq 1 120); do LIMIT=20 on true < /dev/null 2> /dev/null && return 0; sleep 5; done
 		tail -n 30 "$T/console.log"
 		return 1
 	}
@@ -63,15 +64,22 @@ EOF
 	tar -C "$ZIPS" -cf - . | on 'mkdir -p zips && tar -xf - -C zips'
 	for s in $REBOOTS; do
 		echo "=========== $s"
-		on "sudo bash src/tests/service-update.sh one ${s}_a zips"
+		on "sudo bash src/tests/service-update.sh one ${s}_a zips" < /dev/null
 		code=$?
-		# 0 from a plain reboot's first half: this one restarts it. 255: the connection went with the power.
-		if [ "$code" = 0 ]; then on 'sudo reboot' 2> /dev/null; elif [ "$code" != 255 ]; then record FAIL "$s (first half)"; continue; fi
+		# 0 from a plain reboot's first half: this one restarts it. 255 or 124: the connection went with the power.
+		if [ "$code" = 0 ]; then
+			echo "first half done: rebooting"
+			LIMIT=60 on 'sudo reboot' < /dev/null 2> /dev/null
+		elif [ "$code" != 255 ] && [ "$code" != 124 ]; then
+			record FAIL "$s (first half, exit $code)"
+			continue
+		fi
 		sleep 15
 		wait_up || { record FAIL "$s: the machine never came back"; break; }
-		if on "sudo bash src/tests/service-update.sh one ${s}_b zips"; then record PASS "$s"; else record FAIL "$s"; fi
+		echo "back up: the second half"
+		if on "sudo bash src/tests/service-update.sh one ${s}_b zips" < /dev/null; then record PASS "$s"; else record FAIL "$s"; fi
 	done
-	on 'sudo poweroff' 2> /dev/null
+	LIMIT=30 on 'sudo poweroff' < /dev/null 2> /dev/null
 elif [ "$KIND" = lxc ]; then
 	NAME=nftest
 	sudo apt-get update -qq

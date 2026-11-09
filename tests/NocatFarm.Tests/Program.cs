@@ -39844,6 +39844,29 @@ static class ServiceUpdateChecks {
 			Directory.Delete(box, true);
 		}
 
+		// The power went while the new version was on trial: it has already read and deleted the update note, and the old one
+		// started again must still say what happened, and not skip that version.
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string noteRoot = Path.Combine(Path.GetTempPath(), "nf-service-note-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(noteRoot, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(noteRoot);
+		string? skippedWas = NocatFarm.Core.UpdateCheck.Skipped;
+
+		try {
+			NocatFarm.Core.UpdateCheck.Skipped = null;
+			string failed = Path.Combine(noteRoot, "config", "state", "update-failed.txt");
+			File.WriteAllText(failed, "interrupted file:9.9.9\n");
+			NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+			string said = NocatFarm.Core.SelfUpdate.LastFailure ?? "";
+			Check("service: stopped on trial, with no update note left - it still says so, the version alone, and doesn't skip it",
+				said.Contains("9.9.9 was stopped half way", StringComparison.Ordinal) && !said.Contains("file:", StringComparison.Ordinal)
+				&& !File.Exists(failed) && (NocatFarm.Core.UpdateCheck.Skipped == null), said);
+		} finally {
+			NocatFarm.Core.UpdateCheck.Skipped = skippedWas;
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			Directory.Delete(noteRoot, true);
+		}
+
 		await HelperChecks(check, helper);
 		await SteamIdZero(check);
 	}

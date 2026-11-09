@@ -639,6 +639,20 @@ public static class SelfUpdate {
 				return;
 			}
 
+			// Stopped half way - the files, or the new version's trial, when it has already read and deleted the note, so this
+			// can't wait for it. Not skipped: nothing says that version is to blame.
+			if (swapCode?.StartsWith("interrupted", StringComparison.Ordinal) == true) {
+				string stopped = WithoutMark(swapCode[11..].Trim());
+				PutSkipBack(stopped);
+				Gone(stopped);
+				TryDelete(NotePath);
+				TryDelete(NotesPath);
+				UpdateCheck.NoteFailedInstall();
+				Fail(SwapFailure(swapCode, false));
+
+				return;
+			}
+
 			// Stopped with an update waiting, and another version put in by hand before starting again: that one stays.
 			if (swapCode == "changed") {
 				string? noted = NotedTarget();

@@ -183,7 +183,7 @@ jobs:
       matrix:
         where: [runner, vm, lxc]
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 75
     env:
       GH_TOKEN: ${{ github.token }}
     steps:

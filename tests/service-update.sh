@@ -301,7 +301,9 @@ scn_update_now() {
 	pid=$(main_pid)
 	cmd 'update now' | sed 's/^/    /'
 	went_in 9.9.9 "$pid"
-	journalctl -u "$UNIT" --no-pager | grep -q 'status=75' || die "the journal doesn't show exit code 75"
+	# The helper did it, inside the service. (The exit code itself: see stop_while_staged, which catches it between the two.)
+	journalctl -u "$UNIT" --no-pager | grep -q 'nocat.farm update: putting in 9.9.9' || die "the journal doesn't show the helper putting it in"
+	journalctl -u "$UNIT" --no-pager | grep -q 'nocat.farm update: 9.9.9 is in' || die "the journal doesn't show the helper finishing"
 	grep -q 'nocat-aes1:' "$DATA/config/nocatFarm.json" || die "the settings' secret isn't encrypted any more"
 	ownership_ok
 	sleep 40
@@ -452,6 +454,9 @@ stop_while_staged() {
 	for _ in $(seq 1 1500); do [ "$(systemctl show -p SubState --value "$UNIT")" = auto-restart ] && break; sleep 0.1; done
 	[ "$(systemctl show -p SubState --value "$UNIT")" = auto-restart ] || die "never saw it waiting to restart"
 	[ -f "$JOB/ready" ] || die "exited without an update staged"
+	code=$(systemctl show -p ExecMainStatus --value "$UNIT")
+	say "exit code $code, systemd waiting to restart it"
+	[ "$code" = 75 ] || die "it exited with $code, not 75"
 	systemctl stop "$UNIT"
 	sleep 10
 	no_copy
@@ -549,7 +554,8 @@ scn_never_gives_up_restarting() {
 RestartSec=200ms
 EOF
 	systemctl daemon-reload
-	systemctl start "$UNIT"
+	# Not waited for: with the program broken on purpose, the start itself fails.
+	systemctl start --no-block "$UNIT"
 	sleep 25
 	n=$(restarts)
 	say "$n restarts in 25 seconds"
@@ -625,14 +631,12 @@ scn_power_cut_on_trial_b() {
 	[ ! -d "$JOB" ] || die "the job is still there"
 	manifest > "$WORK/after"
 	diff "$WORK/before" "$WORK/after" > /dev/null || die "the files aren't the old ones"
-	if [ "${NF_TEST_POWER:-}" = host ]; then
-		# A container's kernel is the host's, so its boot id doesn't change: read as a crash. A real power cut changes it.
-		wait_log 'update undone: 9.9.9' 60 || die "it never said it was undone"
-	else
-		wait_log 'was stopped half way' 60 || die "it never said it was stopped half way"
-		cmd 'update' | tee "$WORK/out" | sed 's/^/    /'
-		in_log 'Skipping' && die "that version was skipped" || true
-	fi
+	# A machine going down isn't that version's fault. LXC gives each start of a container a boot id of its own, so a container
+	# killed from outside reads the same as a real power cut.
+	wait_log 'was stopped half way' 60 || die "it never said it was stopped half way"
+	cmd 'update' | tee "$WORK/out" | sed 's/^/    /'
+	grep -q '9.9.9' "$WORK/out" || die "that version isn't offered any more"
+	cat "$DATA"/config/state/*skip* 2>/dev/null | grep -q '9.9.9' && die "that version was skipped" || true
 }
 
 scn_power_cut_while_staged_a() {
