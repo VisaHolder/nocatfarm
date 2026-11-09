@@ -7953,6 +7953,7 @@ function renderTradeRules() {
         <button class="ghost small bad" onclick="trDelete(${i})">${esc(t('Delete'))}</button>
       </div>
       ${r.note ? `<p class="muted small">${esc(r.note)}</p>` : ''}
+      ${r.kind === 'expression' && r.expr ? `<p class="mono small">${esc(r.expr)}</p>` : ''}
       <pre class="trjson">${esc(JSON.stringify(r, null, 2))}</pre>
     </div>`).join('');
 

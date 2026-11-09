@@ -273,6 +273,69 @@ Buy:
 - Computes `leftValue OP rightValue * factor + offset`.
 - Count bases fetch no prices. Gem/wallet bases use the same pricing rules as above.
 
+### `expression` — anything else
+
+The seven kinds above cover the common cases; an `expression` rule covers the rest. `expr` is a small formula that must be true for the offer to match. There is no scripting language and no access to files or Steam: only the numbers below, arithmetic, comparisons and `&&` / `||`.
+
+```json
+{
+  "id": "gems-margin",
+  "kind": "expression",
+  "action": "accept",
+  "expr": "receiving.gems >= giving.gems * 1.15",
+  "looseGems": "sack",
+  "minSales": 3,
+  "maxAgeHours": 24,
+  "undercutPct": 0
+}
+```
+
+- `expr` (also accepted as `expression`) is required. An empty or invalid formula is a problem and the rule is not loaded.
+- `action` may be `decline`: then a true `expr` declines, and a false one abstains.
+- The wallet options (`minSales`, `maxAgeHours`, `priceMode`, `undercutPct`, `looseGems`) are the same as for `market-profit`. Loose gems default to their share of a sack's net.
+
+**Values.** Each side's total, after Steam's fee where it is a wallet value:
+
+| Name | Meaning |
+|---|---|
+| `giving.gems` / `receiving.gems` | total gem value (loose gems at the sack share) |
+| `giving.wallet` / `receiving.wallet` | total market net, after Steam's fee |
+| `giving.count` / `receiving.count` | items, longer `amount` counted |
+| `giving.cards` / `receiving.cards` | normal cards |
+| `giving.foils` / `receiving.foils` | foil cards |
+| `giving.boosters` / `receiving.boosters` | booster packs |
+| `giving.loosegems` / `receiving.loosegems` | loose gems |
+| `giving.sacks` / `receiving.sacks` | sacks of gems |
+| `giving.games` / `receiving.games` | different games |
+| `giving.sets` / `receiving.sets` | complete card sets held |
+| `giving.priced` / `receiving.priced` | 1 when every value on that side is known |
+| `profit.gems` / `profit.wallet` | receiving minus giving |
+
+**Functions.**
+
+| Call | Result |
+|---|---|
+| `count(side)` / `count(side, "Card")` / `count(side, "Card", 730)` | items, optionally of one kind and game |
+| `has(...)` | 1 when that count is above zero |
+| `sum(side, "gems")` / `sum(side, "wallet", "Card", 730)` | the total of one value |
+| `min` / `max` / `avg` (same arguments) | across the matching items |
+| `sameGame()` | 1 when every item comes from one game |
+
+Kinds are the inventory's own names: `Card`, `FoilCard`, `Background`, `Emoticon`, `BoosterPack`, `Gems`, `GemSack`, `Other`.
+
+**Unknown is not zero.** If the formula uses a value that isn't known (no price, too few sales, too old), the whole condition is Unknown: the offer is left for the next look, never accepted or declined. A count, by contrast, needs no price and always works.
+
+Examples:
+
+```json
+{ "kind": "expression", "expr": "receiving.gems >= giving.gems * 1.15" }
+{ "kind": "expression", "expr": "count(\"giving\", \"Card\") == 3 && count(\"receiving\", \"FoilCard\") == 1 && receiving.wallet >= giving.wallet" }
+{ "kind": "expression", "expr": "sameGame() && receiving.wallet >= giving.wallet + 5" }
+{ "kind": "expression", "action": "decline", "expr": "count(\"giving\", \"FoilCard\") > 0" }
+```
+
+The presets `expression-gems` and `expression-foil-swap` are these first two, ready to edit.
+
 ## Ordering and verdicts
 
 1. Hard gates run first. Blocked or Unknown leaves the offer for you (a rule never declines it).

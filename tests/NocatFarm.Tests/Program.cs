@@ -20698,10 +20698,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			trGemsAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept && trGemsAnswer.RuleId == "gems", trGemsAnswer.Why);
 
 		NocatFarm.Core.TradeRuleSet trDear = NocatFarm.Core.TradeRuleCodec.Parse("""
-			{"version":1,"rules":[{"id":"dear","kind":"card-gems","worth":"gems","marginPct":500,"match":{"kinds":["Card"]},"payIn":{"kinds":["GemSack","Gems"],"only":true}}]}
+			{"version":1,"rules":[{"id":"dear","kind":"card-gems","worth":"gems","marginPct":1000,"match":{"kinds":["Card"]},"payIn":{"kinds":["GemSack","Gems"],"only":true}}]}
 			""");
 		Check("trade rules: a margin over what a sack pays leaves the offer alone",
-			NocatFarm.Core.TradePolicy.Decide(trDear, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Decline);
+			NocatFarm.Core.TradePolicy.Decide(trDear, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Abstain);
 
 		NocatFarm.Core.TradeRuleSet trProfitRule = NocatFarm.Core.TradeRuleCodec.Parse("""
 			{"version":1,"rules":[{"id":"profit","kind":"market-profit","minProfitCents":1,"minSales":3,"maxAgeHours":24}]}
@@ -20709,9 +20709,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		NocatFarm.Core.TradeDecision trProfitAnswer = NocatFarm.Core.TradePolicy.Decide(trProfitRule, trProfit, NocatFarm.Core.GateResult.Allowed);
 		Check("trade rules: market profit is net after Steam's fee, and 60 pays more than 50",
 			trProfitAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept, trProfitAnswer.Why);
-		Check("trade rules: the same offer at no profit is declined",
+		Check("trade rules: the same offer at no profit is left alone",
 			NocatFarm.Core.TradePolicy.Decide(trProfitRule, NocatFarm.Core.TradeValues.From(trSource, [trCard], [trCard]), NocatFarm.Core.GateResult.Allowed).Verdict
-				== NocatFarm.Core.TradeVerdict.Decline);
+				== NocatFarm.Core.TradeVerdict.Abstain);
 
 		var trNoPrice = new FakeTradeSource { Now = trNow };
 		trNoPrice.GemValues["730-A"] = 100;
@@ -20719,6 +20719,52 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			NocatFarm.Core.TradeValues.From(trNoPrice, [trCard], [trOther]), NocatFarm.Core.GateResult.Allowed);
 		Check("trade rules: a missing price is Unknown - it leaves the offer, never guesses",
 			trMissing.Verdict == NocatFarm.Core.TradeVerdict.Unknown && trMissing.Leaves, trMissing.Why);
+
+		Check("trade rules: an expression reads a valid condition",
+			NocatFarm.Core.TradeExpression.Validate("receiving.gems >= giving.gems * 1.15") == null);
+		Check("trade rules: an empty expression is refused", NocatFarm.Core.TradeExpression.Validate("") != null);
+		Check("trade rules: an unknown name in an expression is refused", NocatFarm.Core.TradeExpression.Validate("receiving.nonsense > 1") != null);
+		Check("trade rules: a function's arguments are checked", NocatFarm.Core.TradeExpression.Validate("samegame(1) > 0") != null);
+		Check("trade rules: a missing bracket in an expression is refused", NocatFarm.Core.TradeExpression.Validate("(1 + 2") != null);
+		Check("trade rules: a half-written expression is refused", NocatFarm.Core.TradeExpression.Validate("1 +") != null);
+		Check("trade rules: a side must be giving or receiving", NocatFarm.Core.TradeExpression.Validate("count(\"side\", \"Card\") > 0") != null);
+		Check("trade rules: a game in an expression must be a number", NocatFarm.Core.TradeExpression.Validate("count(\"giving\", \"Card\", \"x\") > 0") != null);
+
+		NocatFarm.Core.TradeRuleSet trExprSet = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"e","kind":"expression","expr":"receiving.gems >= giving.gems"}]}""");
+		Check("trade rules: an expression rule reads and writes back",
+			trExprSet.Rules.Count == 1 && trExprSet.Rules[0].Expr == "receiving.gems >= giving.gems"
+			&& NocatFarm.Core.TradeRuleCodec.Parse(NocatFarm.Core.TradeRuleCodec.Write(trExprSet.Rules)).Rules.Count == 1);
+		Check("trade rules: an expression rule without an expression is refused",
+			NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"e","kind":"expression"}]}""").Problems.Count == 1);
+		Check("trade rules: a broken expression is refused",
+			NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"e","kind":"expression","expr":"1 +"}]}""").Problems.Count == 1);
+		Check("trade rules: the expression presets are valid",
+			NocatFarm.Core.TradePresets.All().Where(static p => p.Rule.Kind == NocatFarm.Core.TradeRuleKind.Expression)
+				.All(static p => NocatFarm.Core.TradeExpression.Validate(p.Rule.Expr) == null)
+			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-gems")
+			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-foil-swap"));
+
+		NocatFarm.Core.TradeRuleSet trExprYes = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"yes","kind":"expression","expr":"receiving.gems >= giving.gems * 1.15"}]}""");
+		NocatFarm.Core.TradeDecision trExprYesAnswer = NocatFarm.Core.TradePolicy.Decide(trExprYes, trValues, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: an expression accepts a trade that meets it",
+			trExprYesAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept && trExprYesAnswer.RuleId == "yes", trExprYesAnswer.Why);
+
+		NocatFarm.Core.TradeRuleSet trExprNo = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"no","kind":"expression","expr":"receiving.gems >= giving.gems * 5000"}]}""");
+		Check("trade rules: an expression that isn't met leaves the offer alone",
+			NocatFarm.Core.TradePolicy.Decide(trExprNo, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Abstain);
+
+		NocatFarm.Core.TradeRuleSet trExprCount = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"shape","kind":"expression","expr":"count(\"giving\", \"Card\") == 1 && count(\"receiving\", \"GemSack\") == 1"}]}""");
+		Check("trade rules: an expression can count items without pricing anything",
+			NocatFarm.Core.TradePolicy.Decide(trExprCount, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Accept);
+
+		NocatFarm.Core.TradeRuleSet trExprDecline = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"never","kind":"expression","action":"decline","expr":"giving.gems < receiving.gems"}]}""");
+		Check("trade rules: a decline expression declines when it is true",
+			NocatFarm.Core.TradePolicy.Decide(trExprDecline, trValues, NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Decline);
+
+		NocatFarm.Core.TradeRuleSet trExprWallet = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"wallet","kind":"expression","expr":"receiving.wallet >= 1"}]}""");
+		Check("trade rules: an expression that needs a missing price is Unknown",
+			NocatFarm.Core.TradePolicy.Decide(trExprWallet, NocatFarm.Core.TradeValues.From(trNoPrice, [trCard], [trOther]),
+				NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Unknown);
 
 		NocatFarm.Core.GateResult trBlocked = NocatFarm.Core.TradeGates.Check(
 			new NocatFarm.Core.Bot("tr-gate", new NocatFarm.Config.BotConfig { SpareKeepItems = "A" }),
@@ -35611,8 +35657,8 @@ static class SettingsCleanupChecks {
 			List<NocatFarm.Config.Settings.ViewRow> humanRows = NocatFarm.Config.Settings.BasicView(false, newHuman);
 			List<NocatFarm.Config.Settings.ViewRow> globalRows = NocatFarm.Config.Settings.BasicView(true, new NocatFarm.Config.GlobalConfig());
 			string Names(List<NocatFarm.Config.Settings.ViewRow> r) => string.Join(", ", r.Select(x => x.Name));
-			Check("settings: a new robot account shows 29 settings with Show advanced off (it was 46; 1.8.2: \"Level-up line shows\")", robotRows.Count == 29, $"{robotRows.Count}: {Names(robotRows)}");
-			Check("settings: a new human-mode account shows about 33 (it was 55)", humanRows.Count is >= 31 and <= 35, $"{humanRows.Count}: {Names(humanRows)}");
+			Check("settings: a new robot account shows 30 settings with Show advanced off (it was 46; 1.8.2: \"Level-up line shows\")", robotRows.Count == 30, $"{robotRows.Count}: {Names(robotRows)}");
+			Check("settings: a new human-mode account shows about 34 (it was 55)", humanRows.Count is >= 31 and <= 36, $"{humanRows.Count}: {Names(humanRows)}");
 			Check("settings: the global settings show 13 (it was 31; 1.9.0: Use rep4rep went to the add-on)", globalRows.Count == (OperatingSystem.IsWindows() ? 13 : 11), $"{globalRows.Count}: {Names(globalRows)}");
 			Check("settings: ...in 11 sections on a new account (the log is all advanced), 5 global",
 				(robotRows.Select(r => r.Section).Distinct().Count() == 11) && (globalRows.Select(r => r.Section).Distinct().Count() == 5),
