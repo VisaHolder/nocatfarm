@@ -71,7 +71,9 @@ prepare_machine() {
 	fi
 	VER=$(cat "$WORK/cur.ver")
 	if ! curl -sf "http://127.0.0.1:$FEED/good.zip" -o /dev/null -r 0-1; then
-		(cd "$WORK/feed" && setsid nohup python3 -m http.server "$FEED" --bind 127.0.0.1 < /dev/null > "$WORK/feed.log" 2>&1 &)
+		# A unit of its own: started from here it kept the ssh and sudo around this script open until it ended.
+		systemctl reset-failed nf-feed 2>/dev/null || true
+		systemd-run --quiet --unit=nf-feed --property=WorkingDirectory="$WORK/feed" python3 -m http.server "$FEED" --bind 127.0.0.1
 		for _ in $(seq 1 30); do curl -sf "http://127.0.0.1:$FEED/good.zip" -o /dev/null -r 0-1 && break; sleep 1; done
 	fi
 	offer good 9.9.9
@@ -583,9 +585,14 @@ offer_and_enable() {
 	fresh "$ZIPS/cur.zip" new
 	systemctl enable "$UNIT"
 	manifest > "$WORK/before"
+	cat /proc/sys/kernel/random/boot_id > "$WORK/boot-before"
+	sync
 }
 
 check_booted() {   # expected version
+	# Proof it really went down: a second half that ran on the same boot has tested nothing.
+	[ "$(cat /proc/sys/kernel/random/boot_id)" != "$(cat "$WORK/boot-before")" ] || die "the machine never restarted - same boot as the first half"
+	say "a new boot: $(cat "$WORK/boot-before") then $(cat /proc/sys/kernel/random/boot_id)"
 	systemctl is-enabled -q "$UNIT" || die "not enabled"
 	ready 240 || die "didn't come back on boot"
 	[ "$(ver)" = "$1" ] || { wait_ver "$1" 120 || die "on $(ver), not $1"; }
@@ -683,6 +690,6 @@ FAIL  $s ($(($(date +%s) - started))s)"
 	fi
 done
 systemctl stop "$UNIT" 2>/dev/null
-pkill -f "http.server $FEED" 2>/dev/null
+systemctl stop nf-feed 2>/dev/null
 echo "== results:$results"
 [ "$failed" = 0 ]

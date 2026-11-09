@@ -66,11 +66,12 @@ EOF
 		echo "=========== $s"
 		on "sudo bash src/tests/service-update.sh one ${s}_a zips" < /dev/null
 		code=$?
-		# 0 from a plain reboot's first half: this one restarts it. 255 or 124: the connection went with the power.
+		# 0 from a plain reboot's first half: this one restarts it. 255: the connection went with the power. Anything else,
+		# running out of time included, is a failure: carried on from there, the second half ran with nothing restarted.
 		if [ "$code" = 0 ]; then
 			echo "first half done: rebooting"
 			LIMIT=60 on 'sudo reboot' < /dev/null 2> /dev/null
-		elif [ "$code" != 255 ] && [ "$code" != 124 ]; then
+		elif [ "$code" != 255 ]; then
 			record FAIL "$s (first half, exit $code)"
 			continue
 		fi
