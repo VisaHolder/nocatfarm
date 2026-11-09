@@ -1317,6 +1317,29 @@ public sealed class BotConfig {
 	/// </summary>
 	public string AutoTradeWith { get; set; } = "";
 	public bool DeclineOtherTrades { get; set; }
+
+	/// <summary>
+	/// Whether the custom trade rules are used on this account. Off by default: they spend items. They never run for a master,
+	/// a donation or a card swap nocat.lol paired, and never override the keep lists or a promised item. An offer accepted
+	/// by a rule from a stranger waits for your confirmation unless <see cref="TradeRulesConfirm"/> is on. The rules
+	/// themselves are JSON - see docs/trade-rules.md and the dashboard's Trade rules page.
+	/// </summary>
+	public bool TradeRulesEnabled { get; set; }
+
+	/// <summary>
+	/// The custom trade rules, as JSON (version 1). Empty means none. A bad rule set is ignored as a whole with the problems
+	/// said in the log - it never changes what the account does. Edited on the dashboard's Trade rules page.
+	/// </summary>
+	public string TradeRulesJson { get; set; } = "";
+
+	/// <summary>
+	/// Whether an offer the custom trade rules accept is also confirmed in the Steam app by this account, without asking
+	/// you - the way an exchange or level-up bot has to work. Off by default, and loudly warned about: a bad rule that is
+	/// confirmed automatically gives your items away, with no second look. Only ever applies to an offer a custom rule
+	/// accepted (never a fair swap, a donation, a master or a nocat.lol swap), and only while
+	/// <see cref="TradeRulesEnabled"/> is on. Needs the account's authenticator in nocat.farm.
+	/// </summary>
+	public bool TradeRulesConfirm { get; set; }
 	public int TradeDelayMinMinutes { get; set; } = 2;
 	public int TradeDelayMaxMinutes { get; set; } = 15;
 	public string SendItemTypes { get; set; } = "cards";

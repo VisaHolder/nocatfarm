@@ -65,6 +65,13 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private readonly Dictionary<ulong, List<FairSwap.Card>> _promised = [];
 
+	/// <summary>
+	/// 1.9: the asset ids of everything on the giving side of offers already accepted (or sent by this account) and still
+	/// waiting on a confirmation - cards, backgrounds, boosters, gems. Custom trade rules never give one of these away.
+	/// Rebuilt from Steam's own list on every look, like <see cref="_promised"/>.
+	/// </summary>
+	private HashSet<ulong> _promisedAssets = [];
+
 	/// <summary>Offers accepted here (of any kind) still waiting on a confirmation, for the status line.</summary>
 	private int _awaitingConfirmation;
 
@@ -293,6 +300,11 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		lock (_promised) {
 			_promised.Clear();
 
+			// Every item on its way out, whatever kind: custom trade rules never give one away. Rebuilt each look, from
+			// the live offers, so it has the same life as the cards promised above.
+			_promisedAssets = [.. awaiting.Concat(live.Where(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation)))
+				.SelectMany(static o => o.Giving).Select(static i => i.AssetId)];
+
 			foreach (TradeOffers.Offer o in awaiting.Concat(live.Where(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation)))) {
 				if (FairSwap.CardsLeaving(o) is { Count: > 0 } leaving) {
 					_promised[o.Id] = leaving;
@@ -411,19 +423,45 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		bool fair = swap == true;
 		bool accept = fromMaster || donation || fair;
 
+		// Custom trade rules (Core/TradePolicy.cs). Never for your own accounts, a donation, a nocat.lol swap, or one of the
+		// offers held for you - and a custom accept is never confirmed for you when its sender is a stranger.
+		TradeDecision? custom = null;
+		bool customAccept = false, customDecline = false;
+
+		if (!fromMaster && !donation && !exchange && !offer.IsPureDonation && Bot.Cfg.TradeRulesEnabled) {
+			custom = await CustomRulesAsync(offer, ct).ConfigureAwait(false);
+
+			if (custom.Verdict is TradeVerdict.Blocked or TradeVerdict.Unknown) {
+				LogCustomOnce(offer, custom);
+
+				return (false, false);   // never accepted or declined on a guess
+			}
+
+			if (custom.Verdict == TradeVerdict.Decline) {
+				customDecline = true;
+				swap = false;
+				fair = false;
+				accept = false;
+			} else if (custom.Verdict == TradeVerdict.Accept) {
+				customAccept = true;
+				accept = true;
+			}
+		}
+
 		// The swap test couldn't finish: never declined on a guess. Left alone, and judged again at the next look.
-		if (!accept && (swap == null)) {
+		if (!accept && (swap == null) && !customDecline) {
 			return (false, false);
 		}
 
-		if (!accept && !exchange && !Bot.Cfg.DeclineOtherTrades) {
+		if (!accept && !exchange && !Bot.Cfg.DeclineOtherTrades && !customDecline) {
 			return (false, false);   // leave it sitting there for the user to look at
 		}
 
 		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
 		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait() + (Bot.Cfg.LegitMode && _wasHeld ? AfterWaking() : TimeSpan.Zero))
 			&& (_waiting.DueOf(offer.Id) is { } due)) {
-			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
+			Said what = customAccept ? new Said("a custom rule accepts it") : customDecline ? new Said("a custom rule declines it")
+				: !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
 				: fair ? new Said("a fair card swap") : new Said("a donation");
 			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
@@ -438,8 +476,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			return (true, false);
 		}
 
-		if (fair && !fromMaster && !donation) {
-			// One swap per look: the next is judged against the cards as they are after this one.
+		// One swap, or one custom answer, per look: the next is judged against the cards as they are after this one.
+		if (((fair || customAccept || customDecline) && !fromMaster && !donation)) {
 			if (swappedThisLook) {
 				return (true, false);
 			}
@@ -459,30 +497,47 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				return (true, false);
 			}
 
-			// Judged again NOW, against the cards held now. The first verdict is minutes old - hours, if it waited
-			// out the night - and other swaps may have moved cards since.
-			(bool? still, Said why) = exchange ? await ExchangeJudgeNowAsync(offer, ct).ConfigureAwait(false)
-				: await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
+			if (fair) {
+				// Judged again NOW, against the cards held now. The first verdict is minutes old - hours, if it waited
+				// out the night - and other swaps may have moved cards since.
+				(bool? still, Said why) = exchange ? await ExchangeJudgeNowAsync(offer, ct).ConfigureAwait(false)
+					: await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
 
-			if (still != true) {
-				// A "no" is kept like any other, so the next look doesn't say "isn't a fair swap" all over again; a
-				// "couldn't tell" is forgotten, and judged afresh.
-				lock (_fair) {
-					if (still == false) {
-						_fair[offer.Id] = (false, DateTime.UtcNow);
-					} else {
-						_fair.Remove(offer.Id);
+				if (still != true) {
+					// A "no" is kept like any other, so the next look doesn't say "isn't a fair swap" all over again; a
+					// "couldn't tell" is forgotten, and judged afresh.
+					lock (_fair) {
+						if (still == false) {
+							_fair[offer.Id] = (false, DateTime.UtcNow);
+						} else {
+							_fair.Remove(offer.Id);
+						}
 					}
+
+					_waiting.Remove(offer.Id);
+
+					// A card swap nocat.lol paired said why already, and is declined at the next look.
+					if ((still == false) && !exchange) {
+						Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
+					}
+
+					return (true, false);
+				}
+			}
+
+			// A custom answer is judged again now too: a price moved, or an item it counted on went to another trade.
+			if (customAccept || customDecline) {
+				TradeDecision again = await CustomRulesAsync(offer, ct).ConfigureAwait(false);
+				bool still = customAccept ? again.Verdict == TradeVerdict.Accept : again.Verdict == TradeVerdict.Decline;
+
+				if (!still) {
+					_waiting.Remove(offer.Id);
+					Log.Info(new Said("offer {0}: a custom rule no longer applies ({1}) - left for you", NumberOf(offer.Id), again.Why), Bot.Name);
+
+					return (true, false);
 				}
 
-				_waiting.Remove(offer.Id);
-
-				// A card swap nocat.lol paired said why already, and is declined at the next look.
-				if ((still == false) && !exchange) {
-					Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
-				}
-
-				return (true, false);
+				custom = again;
 			}
 		}
 
@@ -499,7 +554,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
 				// your own) are confirmed without asking.
 				// A card swap nocat.lol paired: you turned swaps on for this account, after its preview - that is the go-ahead.
-				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange).ConfigureAwait(false);
+				// 1.8.2: a custom accept is confirmed only when the owner turned that on ("Confirm custom accepts in the Steam
+				// app") - the setting is what lets this account run as an exchange or level-up bot.
+				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange
+					|| (customAccept && Bot.Cfg.TradeRulesConfirm)).ConfigureAwait(false);
 
 				if (result == Accepted.Failed) {
 					return (true, false);
@@ -509,7 +567,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				// lines below then said "from 76561198..." about somebody the announcement had just called by name.
 				string who = Who(offer);
 				Finish(offer.Id);
-				swapped = fair && !fromMaster && !donation;
+				swapped = (fair || customAccept) && !fromMaster && !donation && (offer.Giving.Count > 0);
 
 				if (exchange) {
 					ExchangeAccepted(offer, result == Accepted.Done);
@@ -524,12 +582,23 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				if (result == Accepted.Done) {
 					Interlocked.Increment(ref _accepted);   // the loop and a command both count
 					Log.Trade(new Said("accepted offer {0} from {1} · {2} in, {3} out", NumberOf(offer.Id), who, offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+
+					if (customAccept) {
+						LogCustomAccepted(offer, custom);
+					}
 				} else {
 					// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
 					// so another swap can't be judged as if they were still here.
 					if (swapped && (FairSwap.CardsOf(offer) is { } cards)) {
 						lock (_promised) {
 							_promised[offer.Id] = cards.Giving;
+						}
+					}
+
+					// A custom accept waits for the owner too: everything it gives stays out of reach meanwhile.
+					if (customAccept && (offer.Giving.Count > 0)) {
+						lock (_promised) {
+							_promisedAssets.UnionWith(offer.Giving.Select(static i => i.AssetId));
 						}
 					}
 
@@ -917,6 +986,13 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	private List<FairSwap.Card> Promised() {
 		lock (_promised) {
 			return [.. _promised.Values.SelectMany(static c => c)];
+		}
+	}
+
+	/// <summary>Every asset on its way out - whatever its kind - so a custom rule never gives away what is already promised.</summary>
+	private IReadOnlyCollection<ulong> PromisedAssets() {
+		lock (_promised) {
+			return [.. _promisedAssets];
 		}
 	}
 

@@ -1096,6 +1096,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	private void MapApi(WebApplication app) {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
 		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
+		MapTradeRules(app);   // custom trade rules - Web/WebHost.TradeRules.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,

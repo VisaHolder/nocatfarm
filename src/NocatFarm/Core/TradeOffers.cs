@@ -26,7 +26,8 @@ public static class TradeOffers {
 	/// <param name="Game">The game a community item belongs to (market_fee_app); 0 when Steam didn't say.</param>
 	/// <param name="Icon">Steam's picture for it - https://community.cloudflare.steamstatic.com/economy/image/&lt;Icon&gt;/96fx96f.</param>
 	/// <param name="Hash">Its market name ("440-Scout") - what a price is kept under (1.8.2 card swaps). Empty when Steam didn't say.</param>
-	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "");
+	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "",
+		SpareKind Kind = SpareKind.Other, int GooType = 0, int GooBorder = 0, bool Tradable = false, bool Marketable = false);
 
 	/// <param name="Giving">What this account would hand over.</param>
 	/// <param name="Receiving">What this account would get.</param>
@@ -273,7 +274,9 @@ public static class TradeOffers {
 
 			items.Add(new Item(app, Text(i, "contextid"), asset, classId, instanceId, Math.Max(1, amount),
 				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : "",
-				described ? Text(d, "market_hash_name") : ""));
+				described ? Text(d, "market_hash_name") : "", described ? Spare.KindOf(d) : SpareKind.Other,
+				described ? Spare.GooOf(d).Type : 0, described ? Spare.GooOf(d).Border : 0,
+				described && (Text(d, "tradable") == "1"), described && (Text(d, "marketable") == "1")));
 		}
 
 		return items;

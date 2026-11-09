@@ -1729,3 +1729,35 @@ a.loglink:hover { color: #79b8ff; }
 .field.chips .langpick { margin: 0; }
 .field .proxysignin { margin-top: 6px; font-size: 12.5px; }
 @media (max-width: 900px) { .jump .j.sub { display: none; } }
+
+/* ── custom trade rules (view-traderules) ───────────────────────────────── */
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; line-height: 1.6;
+  border: 1px solid var(--line); color: var(--muted); background: var(--panel2); white-space: nowrap;
+}
+.badge.good { color: var(--good, #4ade80); border-color: currentColor; }
+.badge.bad  { color: var(--bad); border-color: currentColor; }
+.mono { font-family: var(--mono, ui-monospace, SFMono-Regular, Consolas, monospace); }
+
+.trcard { border: 1px solid var(--line); border-radius: var(--radius, 8px); padding: 10px 12px; margin: 10px 0; background: var(--panel); }
+.trcard.off { opacity: .55; }
+.trhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.trhead .switch { margin: 0; }
+.trjson {
+  margin: 8px 0 0; padding: 10px; max-height: 220px; overflow: auto; font-size: 11.5px; line-height: 1.45;
+  background: var(--code-bg, var(--panel2)); border: 1px solid var(--line); border-radius: 6px;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Consolas, monospace); white-space: pre;
+}
+.trjsonedit {
+  width: 100%; min-height: 280px; resize: vertical; font-size: 12px; line-height: 1.45;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Consolas, monospace); white-space: pre;
+}
+.trtable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.trtable th, .trtable td { text-align: left; vertical-align: top; padding: 7px 9px; border-bottom: 1px solid var(--line); }
+.trtable th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.filebtn { position: relative; display: inline-flex; align-items: center; padding: var(--s1) var(--s2); border-radius: 6px; cursor: pointer; }
+.filebtn input[type=file] { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+@media (max-width: 640px) {
+  .trhead { gap: 6px; }
+  .trjsonedit { min-height: 200px; }
+}

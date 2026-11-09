@@ -94,6 +94,15 @@ Beyond that:
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
+- Custom trade rules (off until you turn them on, per account): seven typed rules and an expression rule decide offers on
+  their own - spares (backgrounds and emoticons) for their gem worth, cards too if you list them, a price table by set
+  size or one flat price per whole set, boosters by expected or worst pull, foils for normals, net market profit. Your own
+  accounts, donations and nocat.lol swaps are never judged by them, a custom accept from a stranger waits for your
+  confirmation unless you turn on "Confirm custom accepts in the Steam app" (off by default - that is what lets an account
+  run as a key/gem exchange or level-up bot), and a missing or stale price is read once more before the offer is left for
+  the next look. The Trade rules page has presets for those bots, an editor, import/export, copy to another account and a
+  preview.
+  See [docs/trade-rules.md](docs/trade-rules.md).
 - Card swaps with other nocat.farm users (off until you turn them on, per account): spare normal cards swapped one
   for one with other people's accounts, paired by nocat.lol, checked by both sides, never a card your sets need.
 - For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
