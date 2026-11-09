@@ -30222,6 +30222,9 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 // ── 1.9.0 stress: hostile plugins (throwing, blocking, never finishing, flooding), files with nulls and times that are none, rep4rep answering garbage ──
 await StressChecks190.RunAsync(Check);
 
+// Updating as a systemd service: the helper script for real, and the handshake that says the unit has it.
+await ServiceUpdateChecks.RunAsync(Check);
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -39785,5 +39788,268 @@ sealed class HEverything : NocatFarm.Plugins.INocatPlugin {
 	private static async void Fire() {
 		await Task.Delay(10);
 		throw new InvalidOperationException("an async void from a command, after its await");
+	}
+}
+
+/// <summary>
+/// Updating as a systemd service: the helper script run for real through sh (Git's on Windows) on a pretend install folder,
+/// the handshake that says the unit has it, and rep4rep never asking about a SteamID of 0. systemd itself is
+/// tests/service-update.sh.
+/// </summary>
+static class ServiceUpdateChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		string repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+		string helperPath = Path.Combine(repo, "tools", "linux", "nocatfarm-service.sh");
+		string unitPath = Path.Combine(repo, "tools", "linux", "nocatfarm.service");
+		string helper = File.ReadAllText(helperPath), unit = File.ReadAllText(unitPath);
+
+		Check("service: the helper and the unit have no Windows line endings - one and every start fails", !helper.Contains('\r') && !unit.Contains('\r'));
+		Check("service: the unit restarts on the update's exit code, keeps trying for ever, and runs the helper before and after each start, never as root",
+			unit.Contains($"RestartForceExitStatus={NocatFarm.Core.SelfUpdate.UpdateExitCode}\n", StringComparison.Ordinal)
+			&& unit.Contains($"SuccessExitStatus={NocatFarm.Core.SelfUpdate.UpdateExitCode}\n", StringComparison.Ordinal)
+			&& unit.Contains("StartLimitIntervalSec=0\n", StringComparison.Ordinal)
+			&& unit.Contains("ExecStartPre=/bin/sh /opt/nocatfarm/nocatfarm-service.sh prepare\n", StringComparison.Ordinal)
+			&& unit.Contains("ExecStartPost=/bin/sh /opt/nocatfarm/nocatfarm-service.sh watch\n", StringComparison.Ordinal)
+			&& unit.Contains("Restart=on-failure\n", StringComparison.Ordinal)
+			// long enough for the three minutes on trial; no sandboxing, which an unprivileged LXC container can refuse outright
+			&& unit.Contains("TimeoutStartSec=300\n", StringComparison.Ordinal)
+			&& !unit.Contains("ProtectSystem", StringComparison.Ordinal) && !unit.Contains("PrivateTmp", StringComparison.Ordinal));
+		Check("service: the program exits with the code the update set",
+			File.ReadAllText(Path.Combine(repo, "src", "NocatFarm", "Program.cs")).Contains("return NocatFarm.Core.SelfUpdate.ExitCode;", StringComparison.Ordinal));
+		string package = File.ReadAllText(Path.Combine(repo, "tools", "package-release.ps1"));
+		Check("service: the Linux zips carry the unit and the helper", package.Contains("'nocatfarm-service.sh', 'nocatfarm.service'", StringComparison.Ordinal));
+
+		string byHand = NocatFarm.Core.SelfUpdate.ByHand("v1.2.3").ToEnglish();
+		Check("service: without the new unit it says how to get it and how to update by hand", NocatFarm.Core.Platform.InContainer
+			|| (byHand.Contains("nocatfarm.service", StringComparison.Ordinal) && byHand.Contains("nocat.farm-v1.2.3_", StringComparison.Ordinal)), byHand);
+
+		string why = NocatFarm.Core.SelfUpdate.SwapFailure("interrupted file:9.9.9", false).ToEnglish();
+		Check("service: stopped half way says so, with the version alone", why.Contains("9.9.9 was stopped half way", StringComparison.Ordinal) && !why.Contains("file:", StringComparison.Ordinal), why);
+
+		string box = Path.Combine(Path.GetTempPath(), "nf-service-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(box);
+
+		try {
+			File.WriteAllText(Path.Combine(box, NocatFarm.Core.SelfUpdate.ServiceStamp), "abc123\n");
+			Check("service: only the helper's mark for this very start counts: another start's, none, or none written isn't the unit having it",
+				NocatFarm.Core.SelfUpdate.ServiceUnitReady(box, "abc123") && !NocatFarm.Core.SelfUpdate.ServiceUnitReady(box, "other")
+				&& !NocatFarm.Core.SelfUpdate.ServiceUnitReady(box, null) && !NocatFarm.Core.SelfUpdate.ServiceUnitReady(box, "")
+				&& !NocatFarm.Core.SelfUpdate.ServiceUnitReady(Path.Combine(box, "nothing"), "abc123"));
+		} finally {
+			Directory.Delete(box, true);
+		}
+
+		await HelperChecks(check, helper);
+		await SteamIdZero(check);
+	}
+
+	private static string? Sh() {
+		foreach (string candidate in new[] { "sh", @"C:\Program Files\Git\bin\sh.exe", @"C:\Program Files\Git\usr\bin\sh.exe" }) {
+			try {
+				using System.Diagnostics.Process? p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(candidate, "-c \"exit 0\"") { UseShellExecute = false, CreateNoWindow = true });
+
+				if (p != null) {
+					p.WaitForExit();
+
+					if (p.ExitCode == 0) {
+						return candidate;
+					}
+				}
+			} catch (System.ComponentModel.Win32Exception) {
+				// not this one
+			}
+		}
+
+		return null;
+	}
+
+	private static async Task HelperChecks(Action<string, bool, string> check, string helper) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		if (Sh() is not { } sh) {
+			Console.WriteLine("  (no sh on this machine: the service helper's checks are left to Linux)");
+
+			return;
+		}
+
+		string top = Path.Combine(Path.GetTempPath(), "nf-helper-" + Guid.NewGuid().ToString("N"));
+		// A space and "(1)", as people end up with.
+		string here = Path.Combine(top, "nocat.farm (1)").Replace('\\', '/');
+		string state = Path.Combine(top, "data", "state").Replace('\\', '/');
+		string job = here + "/.nocatfarm-update/job";
+		string script = here + "/nocatfarm-service.sh";
+
+		void Put(string path, string text) {
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			File.WriteAllText(path, text);
+		}
+
+		string Read(string path) => File.Exists(path) ? File.ReadAllText(path).Trim() : "";
+
+		// What an update looks like when the app has handed it over.
+		void Fresh(bool ready = true) {
+			if (Directory.Exists(top)) {
+				Directory.Delete(top, true);
+			}
+
+			Put(here + "/nocatFarm", "old program");
+			Put(here + "/nocatFarm.dll", "old dll");
+			Put(here + "/wwwroot/app.js", "old page");
+			Put(here + "/kept.txt", "not in the release");
+			Put(script, helper);
+			Directory.CreateDirectory(state);
+			Put(job + "/new/nocatFarm", "new program");
+			Put(job + "/new/nocatFarm.dll", "new dll");
+			Put(job + "/new/wwwroot/app.js", "new page");
+			Put(job + "/new/added.so", "only in the new one");
+			Put(job + "/new/nocatfarm-service.sh", helper + "\n# the new helper\n");
+			Put(job + "/backup/nocatFarm", "old program");
+			Put(job + "/backup/nocatFarm.dll", "old dll");
+			Put(job + "/backup/wwwroot/app.js", "old page");
+			Put(job + "/backup/nocatfarm-service.sh", helper);
+			Put(job + "/added.txt", "added.so\n");
+			Put(job + "/fail-path", state + "/update-failed.txt");
+			Put(job + "/verify-path", state + "/update-verify.txt");
+			Put(job + "/tag", "9.9.9");
+			Put(state + "/update-verify.txt", job + "/started.txt");
+
+			if (ready) {
+				Put(job + "/ready", "9.9.9");
+			}
+		}
+
+		async Task<int> Run(string mode, string? invocation = null, string? mainPid = null) {
+			System.Diagnostics.ProcessStartInfo start = new(sh) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+			start.ArgumentList.Add(script);
+			start.ArgumentList.Add(mode);
+			start.Environment.Remove("INVOCATION_ID");
+			start.Environment.Remove("MAINPID");
+
+			if (invocation != null) {
+				start.Environment["INVOCATION_ID"] = invocation;
+			}
+
+			if (mainPid != null) {
+				start.Environment["MAINPID"] = mainPid;
+			}
+
+			using System.Diagnostics.Process p = System.Diagnostics.Process.Start(start)!;
+			Task<string> o = p.StandardOutput.ReadToEndAsync(), e = p.StandardError.ReadToEndAsync();
+			await p.WaitForExitAsync().ConfigureAwait(false);
+			await Task.WhenAll(o, e).ConfigureAwait(false);
+
+			return p.ExitCode;
+		}
+
+		bool IsOld() => (Read(here + "/nocatFarm") == "old program") && (Read(here + "/nocatFarm.dll") == "old dll") && (Read(here + "/wwwroot/app.js") == "old page")
+			&& !File.Exists(here + "/added.so") && (Read(here + "/kept.txt") == "not in the release") && (Read(script).EndsWith("esac", StringComparison.Ordinal));
+		bool IsNew() => (Read(here + "/nocatFarm") == "new program") && (Read(here + "/nocatFarm.dll") == "new dll") && (Read(here + "/wwwroot/app.js") == "new page")
+			&& (Read(here + "/added.so") == "only in the new one") && (Read(here + "/kept.txt") == "not in the release");
+		string Note() => Read(state + "/update-failed.txt");
+		bool JobGone() => !Directory.Exists(job) && !Directory.Exists(here + "/.nocatfarm-update/old-job");
+
+		try {
+			Fresh();
+			Directory.Delete(job, true);
+			int code = await Run("prepare", "start-1");
+			Check("helper: nothing waiting - it says it ran for this start, and changes nothing", (code == 0) && (Read(here + "/.nocatfarm-update/unit-ok") == "start-1") && IsOld(), $"exit {code}");
+			code = await Run("watch");
+			Check("helper: nothing on trial - the watch ends at once", code == 0, $"exit {code}");
+
+			Fresh(ready: false);
+			code = await Run("prepare", "start-2");
+			Check("helper: an update that never got as far as asking (no ready) goes, nothing touched", (code == 0) && JobGone() && IsOld() && (Note().Length == 0));
+
+			Fresh();
+			code = await Run("prepare", "start-3");
+			Check("helper: a waiting update goes in, on trial, with the old files kept - and this script not replaced yet",
+				(code == 0) && IsNew() && (Read(job + "/phase") == "trial") && (Read(job + "/backup/nocatFarm") == "old program") && !Read(script).Contains("the new helper", StringComparison.Ordinal)
+				&& (Read(here + "/.nocatfarm-update/unit-ok") == "start-3"), $"exit {code} phase {Read(job + "/phase")}");
+
+			// Restarted on trial with no word from it: the crash, kill -9 and crash-loop case.
+			code = await Run("prepare", "start-4");
+			Check("helper: restarted on trial with no answer - old files back, its added files gone, said as a crash, nothing left",
+				(code == 0) && IsOld() && JobGone() && (Note() == "crashed 9.9.9") && !File.Exists(state + "/update-verify.txt"), $"exit {code} note {Note()}");
+
+			Fresh();
+			await Run("prepare", "s");
+			Put(job + "/started.txt", "crashed");
+			code = await Run("prepare", "s");
+			Check("helper: 'crashed' from the new version - the same", (code == 0) && IsOld() && JobGone() && (Note() == "crashed 9.9.9"));
+
+			Fresh();
+			await Run("prepare", "s");
+			Put(job + "/started.txt", "ok");
+			code = await Run("watch");
+			Check("helper: the watch hears 'ok' - it stays, the job goes, this script is replaced by the new one",
+				(code == 0) && IsNew() && JobGone() && Read(script).Contains("the new helper", StringComparison.Ordinal) && (Note().Length == 0), $"exit {code}");
+
+			Fresh();
+			await Run("prepare", "s");
+			Put(job + "/started.txt", "ok");
+			code = await Run("prepare", "s2");
+			Check("helper: closed on trial (it says 'ok' as it goes), the next start keeps it", (code == 0) && IsNew() && JobGone() && (Note().Length == 0));
+
+			Fresh();
+			await Run("prepare", "s");
+			Put(job + "/new/nocatfarm-service.sh", "if then\n");
+			Put(job + "/started.txt", "ok");
+			code = await Run("watch");
+			Check("helper: a new helper that wouldn't run is never put in - every later start would fail", (code == 0) && IsNew() && JobGone() && Read(script).EndsWith("esac", StringComparison.Ordinal));
+
+			Fresh();
+			await Run("prepare", "s");
+			Put(job + "/started.txt", "crashed");
+			code = await Run("watch");
+			Check("helper: the watch hears 'crashed' - marked failed, and it fails the start", (code == 1) && File.Exists(job + "/failed"), $"exit {code}");
+
+			Fresh();
+			await Run("prepare", "s");
+			code = await Run("watch", mainPid: "999999");
+			Check("helper: the new version gone without a word - marked failed, and it fails the start", (code == 1) && File.Exists(job + "/failed"), $"exit {code}");
+			Put(job + "/started.txt", "ok");
+			code = await Run("prepare", "s");
+			Check("helper: failed, then 'ok' as it was stopped for that - that doesn't save it: old files back",
+				(code == 0) && IsOld() && JobGone() && (Note() == "crashed 9.9.9"));
+
+			Fresh();
+			Put(job + "/phase", "swapping");
+			File.Move(job + "/new/nocatFarm.dll", here + "/nocatFarm.dll", true);
+			File.Move(job + "/new/added.so", here + "/added.so", true);
+			code = await Run("prepare", "s");
+			Check("helper: stopped half way through the files - the old ones go back, and it isn't said as a crash",
+				(code == 0) && IsOld() && JobGone() && (Note() == "interrupted 9.9.9"), $"exit {code} note {Note()}");
+
+			Fresh();
+			Put(here + "/nocatFarm.dll", "put in by hand");
+			code = await Run("prepare", "s");
+			Check("helper: the program changed while the update waited - that one stays, the update goes",
+				(code == 0) && (Read(here + "/nocatFarm.dll") == "put in by hand") && (Read(here + "/nocatFarm") == "old program") && JobGone() && (Note() == "changed"));
+
+			if (File.Exists("/proc/sys/kernel/random/boot_id")) {
+				Fresh();
+				await Run("prepare", "s");
+				Put(job + "/boot", "another-boot");
+				code = await Run("prepare", "s");
+				Check("helper: the machine went down on trial - old files back, not called a crash, so that version isn't skipped",
+					(code == 0) && IsOld() && JobGone() && (Note() == "interrupted 9.9.9"), $"exit {code} note {Note()}");
+			}
+		} finally {
+			if (Directory.Exists(top)) {
+				Directory.Delete(top, true);
+			}
+		}
+	}
+
+	private static async Task SteamIdZero(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		var fake = new FakePing(static (_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.UnprocessableEntity) { Content = new StringContent("{}") }));
+		using var api = new NocatFarm.Addons.Rep4Rep.Rep4RepApi(fake) { Token = "key" };
+		var found = await api.ResolveDetailedAsync(0, true, CancellationToken.None);
+		Check("rep4rep: an account with no SteamID yet is never looked up or added - no POST of 0",
+			(found.Id == null) && !found.Unanswered && !found.LinkedElsewhere && (fake.Calls == 0), $"{fake.Calls} calls");
 	}
 }

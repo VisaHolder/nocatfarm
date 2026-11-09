@@ -8,11 +8,19 @@
 # Steam (--steam-selftest: anonymous, no account). Then Docker, natively on each CPU, through the real
 # docker-compose.example.yml: password required, healthy, backups surviving a re-create, signing in from outside
 # through a trusted proxy, a clean stop.
-# Run it from the Actions tab (or `gh workflow run linux.yml`).
+#
+# Then updating itself as a real systemd service (tests/service-update.sh): the runner's own systemd, a throwaway VM for real
+# reboots and power cuts, and an unprivileged LXC container like Proxmox's.
+# Run it from the Actions tab (or `gh workflow run linux.yml`). -f only=service runs just the service job.
 name: linux
 
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: "all, or service for only the systemd service job"
+        required: false
+        default: all
 
 permissions:
   contents: read
@@ -27,6 +35,7 @@ env:
 jobs:
   zip:
     name: zip - ${{ matrix.rid }}
+    if: ${{ inputs.only != 'service' }}
     strategy:
       fail-fast: false
       matrix:
@@ -167,8 +176,56 @@ jobs:
           tail -n 60 run.log || true
           for f in signals-test/*.log upd-test/*.log from-release/run.log; do [ -f "$f" ] && { echo "== $f"; tail -n 30 "$f"; }; done || true
 
+  service:
+    name: systemd service - ${{ matrix.where }}
+    strategy:
+      fail-fast: false
+      matrix:
+        where: [runner, vm, lxc]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: the zips, the way the release is made
+        run: |
+          command -v pwsh > /dev/null || { dotnet tool install --global PowerShell && echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH" && export PATH="$PATH:$HOME/.dotnet/tools"; }
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
+          mkdir -p zips
+          pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64
+          mv "dist/nocat.farm-v${version}_linux-x64.zip" zips/cur.zip
+          pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64 -AsVersion 9.9.9
+          mv dist/nocat.farm-v9.9.9_linux-x64.zip zips/good.zip
+          pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64 -AsVersion 9.9.8
+          mv dist/nocat.farm-v9.9.8_linux-x64.zip zips/hand.zip
+          gh release download --repo VisaHolder/nocatfarm --pattern "*_linux-x64.zip" --output zips/prev.zip
+          unzip -l zips/cur.zip | grep -E ' (nocatfarm-service\.sh|nocatfarm\.service)$'
+          unzip -p zips/cur.zip nocatFarm.runtimeconfig.json | grep -c DOTNET_RUNNING_IN_CONTAINER || true
+          systemctl --version | head -n 1
+          ps -p 1 -o comm=
+
+      - name: every scenario under the runner's own systemd
+        if: matrix.where == 'runner'
+        run: |
+          sudo apt-get install -y -qq unzip zip curl > /dev/null
+          sudo env "PATH=$PATH" bash tests/service-update.sh all "$PWD/zips"
+
+      - name: real reboots and power cuts, in a VM
+        if: matrix.where == 'vm'
+        run: bash tests/service-update-machines.sh vm "$PWD/zips"
+
+      - name: every scenario, a reboot and being killed from outside, in an unprivileged LXC container
+        if: matrix.where == 'lxc'
+        run: bash tests/service-update-machines.sh lxc "$PWD/zips"
+
   docker:
     name: docker - ${{ matrix.arch }}
+    if: ${{ inputs.only != 'service' }}
     strategy:
       fail-fast: false
       matrix:

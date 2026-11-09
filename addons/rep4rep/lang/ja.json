@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0} はコメントを受け付けていません · スキップ",
   "{0} hours": "{0} 時間",
   "{0} isn't registered with rep4rep yet.": "{0} はまだ rep4rep に登録されていません。",
+  "{0} isn't signed in yet - try again once it is.": "{0} はまだサインインしていません。サインインしたらもう一度試してください。",
   "{0} refused - trying another profile ({1}/{2})": "{0}が拒否されました - 別のプロフィールを試します ({1}/{2})",
   "{0} task(s) waiting for {1}:": "{1} の待機中タスク {0} 件:",
   "{0} tomorrow": "明日 {0}",

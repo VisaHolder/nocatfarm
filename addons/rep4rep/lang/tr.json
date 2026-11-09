@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0} yorum kabul etmiyor · atlandı",
   "{0} hours": "{0} saat",
   "{0} isn't registered with rep4rep yet.": "{0} henüz rep4rep'e kayıtlı değil.",
+  "{0} isn't signed in yet - try again once it is.": "{0} henüz oturum açmadı - açınca yeniden dene.",
   "{0} refused - trying another profile ({1}/{2})": "{0} reddedildi - başka bir profil deneniyor ({1}/{2})",
   "{0} task(s) waiting for {1}:": "{1} için bekleyen {0} görev:",
   "{0} tomorrow": "yarın {0}",

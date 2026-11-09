@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0} не принимает комментарии · пропущено",
   "{0} hours": "{0} ч",
   "{0} isn't registered with rep4rep yet.": "{0} ещё не зарегистрирован на rep4rep.",
+  "{0} isn't signed in yet - try again once it is.": "{0} ещё не вошёл в систему - попробуйте снова, когда войдёт.",
   "{0} refused - trying another profile ({1}/{2})": "{0} отклонено - пробуем другой профиль ({1}/{2})",
   "{0} task(s) waiting for {1}:": "Заданий для {1} в ожидании: {0}:",
   "{0} tomorrow": "завтра в {0}",

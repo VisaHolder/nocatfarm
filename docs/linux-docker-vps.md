@@ -30,25 +30,36 @@ device, set a password and open it up (see
 It runs on the machine's own time zone, which human mode's day and the daily summary follow. A VPS is usually on UTC:
 `timedatectl` shows it, and `sudo timedatectl set-timezone Europe/London` (yours) changes it.
 
-To run it as a systemd service, with the folder at `/opt/nocatfarm`: give the folder to the user it runs as, then put
-this in `/etc/systemd/system/nocatfarm.service` (with your user name for `youruser`):
+To run it as a systemd service, with the folder at `/opt/nocatfarm`: give the folder to the user it runs as, and put the
+unit from the zip in place, with your user name instead of `youruser`:
 
 ```
 sudo chown -R youruser: /opt/nocatfarm
-sudo nano /etc/systemd/system/nocatfarm.service
+sudo cp /opt/nocatfarm/nocatfarm.service /etc/systemd/system/nocatfarm.service
+sudo sed -i "s/^User=youruser/User=$USER/" /etc/systemd/system/nocatfarm.service
 ```
+
+In another folder, change `/opt/nocatfarm` in the file too. To keep your accounts and settings somewhere else, add `--path` to the end of the `ExecStart=` line, for example
+`ExecStart=/opt/nocatfarm/nocatFarm --path /var/lib/nocatfarm`, with that folder owned by the same user. The unit is:
 
 ```ini
 [Unit]
 Description=nocat.farm
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 User=youruser
 WorkingDirectory=/opt/nocatfarm
+ExecStartPre=/bin/sh /opt/nocatfarm/nocatfarm-service.sh prepare
 ExecStart=/opt/nocatfarm/nocatFarm
+ExecStartPost=/bin/sh /opt/nocatfarm/nocatfarm-service.sh watch
 Restart=on-failure
+RestartSec=5
+SuccessExitStatus=75
+RestartForceExitStatus=75
+TimeoutStartSec=300
 TimeoutStopSec=60
 
 [Install]
@@ -61,16 +72,31 @@ Then start it, and have it start with the machine:
 sudo systemctl daemon-reload && sudo systemctl enable --now nocatfarm
 ```
 
+It comes back by itself after a crash or a power cut, however many times, and `quit` on the dashboard still closes it
+until you start it again. It also runs in a Linux container (LXC, on Proxmox for example) the same way, as long as the
+container runs systemd: a small template may need `apt install unzip libssl3` first.
+
 `sudo systemctl stop nocatfarm` signs every account out cleanly first. The log goes to the journal
 (`journalctl -u nocatfarm -f`). Type commands in the dashboard's Console tab, which is also where Steam Guard prompts
 appear.
 
-**Updating.** Started from a terminal or a desktop, it updates itself like on Windows: **Update** on the dashboard,
-`update accept`, or by itself at night (*Updates*: *install by itself at night*). It makes a safety copy first, and a new version that won't start is
-put back. The new version starts in the background; the dashboard is where you see it. **Run as a service** (the systemd
-unit above) it doesn't, because systemd would stop the update half way: it tells you when a new version is out, and
-you stop it, unzip the new zip over the folder (`unzip -o`), and start it again. `config/` and `logs/` aren't in the
-zip, so they're kept.
+**Updating.** It updates itself like on Windows: **Update** on the dashboard, `update accept`, `update file <zip>`, or by
+itself at night (*Updates*: *install by itself at night*). It makes a safety copy first, and a new version that won't
+start is put back. Started from a terminal or a desktop, the new version starts in the background; the dashboard is
+where you see it.
+
+Run as a service with the unit above, the same happens inside the service: nocat.farm gets the update ready and closes,
+and systemd starts it again with `nocatfarm-service.sh` putting the new files in first. The new version then has up to
+three minutes to say it's fine. If it crashes, hangs, or the machine stops half way, the old files go back at the next
+start, and the log says what happened. There's only ever one copy running, and `sudo systemctl stop nocatfarm` while an
+update is waiting just stops it: the update goes in when you start it again. The service's user has to own the folder,
+and `update file` needs a zip that user can read. Typed from another device, `update file` is refused, so run it on the
+machine itself: `curl -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"update file /path/to.zip"}'`.
+
+**An older unit** (one without the `nocatfarm-service.sh` lines, like the one these docs used to give) doesn't update
+itself: it tells you when a new version is out and how. Stop it, unzip the new zip over the folder (`unzip -o`), and start
+it again. `config/` and `logs/` aren't in the zip, so they're kept. To update by itself from then on, put the new unit in
+as above and run `sudo systemctl daemon-reload && sudo systemctl restart nocatfarm`.
 
 Closing the terminal it runs in (or the SSH session ending) closes it cleanly, accounts signed out first. To keep it
 running after you log out without a service, start it with `nohup ./nocatFarm &`, or inside `tmux` or `screen`. One copy

@@ -1,0 +1,28 @@
+# nocat.farm as a systemd service: starts with the machine, comes back after a crash, and can update itself.
+# Copy to /etc/systemd/system/nocatfarm.service and change "youruser" and, if it isn't in /opt/nocatfarm, the folder. The
+# user must own the folder (sudo chown -R youruser: /opt/nocatfarm). See docs/linux-docker-vps.md.
+[Unit]
+Description=nocat.farm
+After=network-online.target
+Wants=network-online.target
+# However often it stops, systemd keeps bringing it back: the limit would leave it stopped for good.
+StartLimitIntervalSec=0
+
+[Service]
+User=youruser
+WorkingDirectory=/opt/nocatfarm
+# Puts a waiting update in (or the old version back) before each start, and watches a new version while it's on trial.
+ExecStartPre=/bin/sh /opt/nocatfarm/nocatfarm-service.sh prepare
+ExecStart=/opt/nocatfarm/nocatFarm
+ExecStartPost=/bin/sh /opt/nocatfarm/nocatfarm-service.sh watch
+Restart=on-failure
+RestartSec=5
+# 75: it closed so an update can go in. Not a failure, and it always comes back.
+SuccessExitStatus=75
+RestartForceExitStatus=75
+# Long enough for a new version's three minutes on trial.
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

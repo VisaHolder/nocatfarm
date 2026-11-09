@@ -27,12 +27,17 @@ namespace NocatFarm.Core;
 /// leaves the installation exactly as it was. config/, logs/ and backups/ are never in the archive and never copied over.
 ///
 /// On Linux and a Mac the same happens with a shell script (see UnixSwapScript): run from a terminal, a desktop or
-/// start.command it updates itself exactly like Windows does, safety copy and putting back included. Not in two
-/// places, on purpose: Docker, where the app is the container and a swap script dies with it (and the next build
-/// replaces the files anyway), and a systemd service, where systemd kills everything the service started the moment
-/// it exits. A script that outlived us there would either be killed half way through a copy or start a second copy
-/// nobody supervises. Updating by hand (a new image, or the new zip over the folder) is one step and can't
-/// half-happen, so there it says how and changes nothing.
+/// start.command it updates itself exactly like Windows does, safety copy and putting back included. Not in Docker, on
+/// purpose: the app is the container and a swap script dies with it (and the next build replaces the files anyway), and
+/// updating by hand (a new image) is one step and can't half-happen, so there it says how and changes nothing.
+///
+/// A systemd service kills everything it started the moment it exits, so a script that outlived us would be killed half
+/// way through a copy, or start a second copy nobody supervises. So there the swap happens inside the service: the unit
+/// we ship (tools/linux/nocatfarm.service) runs nocatfarm-service.sh before and after every start. This app stages and
+/// checks the update exactly as anywhere else, in a folder next to the program, then exits with <see cref="UpdateExitCode"/>;
+/// systemd restarts it, and the helper puts the files in before the new version starts and puts them back if it doesn't
+/// answer - see that script for every way it can stop half way. A unit without those pieces (an older one) updates by
+/// hand, as it always has: the helper is what says it's there, see <see cref="ServiceUnitReady"/>.
 /// </remarks>
 public static class SelfUpdate {
 	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
@@ -184,9 +189,61 @@ public static class SelfUpdate {
 		return why.ToString();
 	}
 
-	/// <summary>Whether this copy can replace itself: everywhere but Docker and a systemd service - see the remarks above.</summary>
+	/// <summary>Whether this copy can replace itself: everywhere but Docker and a systemd service whose unit has no helper - see the remarks above.</summary>
 	public static bool Supported => OperatingSystem.IsWindows()
-		|| ((OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) && !Platform.InContainer && !RunAsService());
+		|| ((OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) && !Platform.InContainer && (!RunAsService() || ServiceUnitHasHelper.Value));
+
+	/// <summary>The exit code that means "an update is staged": the unit restarts on it whatever else it says, and the helper puts the update in first.</summary>
+	internal const int UpdateExitCode = 75;
+
+	/// <summary>What the program exits with: <see cref="UpdateExitCode"/> once an update has been handed to the service, otherwise 0.</summary>
+	public static int ExitCode { get; private set; }
+
+	/// <summary>The helper's folder next to the program - beside the files it replaces, so moving them can't half happen.</summary>
+	internal const string ServiceBox = ".nocatfarm-update";
+
+	/// <summary>The helper's file there saying it ran before this very start.</summary>
+	internal const string ServiceStamp = "unit-ok";
+
+	private static readonly Lazy<bool> ServiceUnitHasHelper = new(static () => ServiceUnitReady(
+		Path.Combine(AppContext.BaseDirectory, ServiceBox), Environment.GetEnvironmentVariable("INVOCATION_ID")));
+
+	/// <summary>
+	/// Whether the helper ran before this very start of the service: it writes systemd's id for the start in its file, and an
+	/// older unit, which never runs it, has none - or one from another start, if the unit was put back. The one proof that
+	/// doesn't depend on what a unit file says: asked by name, a unit could say it has a helper that isn't there, and an exit
+	/// with nobody to put the update in would just restart the same version.
+	/// </summary>
+	/// <param name="box">The helper's folder.</param>
+	/// <param name="invocation">systemd's id for this start (INVOCATION_ID).</param>
+	internal static bool ServiceUnitReady(string box, string? invocation) {
+		if (string.IsNullOrEmpty(invocation)) {
+			return false;
+		}
+
+		try {
+			return string.Equals(File.ReadAllText(Path.Combine(box, ServiceStamp)).Trim(), invocation, StringComparison.Ordinal);
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return false;   // no helper, or none that left anything readable: update by hand
+		}
+	}
+
+	/// <summary>
+	/// Ready for the helper to take over: everything it reads, and the disk caught up, so a power cut can't leave it acting on
+	/// files that were never really written. The word that hands it over goes separately (see <see cref="ApplyAsync"/>).
+	/// </summary>
+	private static void WriteServiceJob(string job, string marked) {
+		AtomicFile.Write(Path.Combine(job, "fail-path"), SwapFailedPath);
+		AtomicFile.Write(Path.Combine(job, "verify-path"), VerifyPath);
+		AtomicFile.Write(Path.Combine(job, "tag"), marked);
+
+		try {
+			using Process? sync = Process.Start(new ProcessStartInfo("sync") { UseShellExecute = false });
+			sync?.WaitForExit(TimeSpan.FromSeconds(60));
+		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
+			Log.Debug($"update: couldn't run sync: {Log.Describe(e)}");   // the helper syncs too, before it touches anything
+		}
+	}
 
 	/// <summary>
 	/// Started by systemd as a service. systemd gives the service INVOCATION_ID and, with the log going to the journal,
@@ -225,7 +282,7 @@ public static class SelfUpdate {
 			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept");
 		}
 
-		return new Said("running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
+		return new Said("this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
 	}
 
 	/// <summary>
@@ -240,7 +297,7 @@ public static class SelfUpdate {
 			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build", v);
 		}
 
-		return new Said("running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(v), ReleasePage(v));
+		return new Said("this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(v), ReleasePage(v));
 	}
 
 	/// <summary>The release file for this machine off Windows: nocat.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
@@ -582,6 +639,18 @@ public static class SelfUpdate {
 				return;
 			}
 
+			// Stopped with an update waiting, and another version put in by hand before starting again: that one stays.
+			if (swapCode == "changed") {
+				string? noted = NotedTarget();
+				PutSkipBack(noted);
+				Gone(noted);
+				TryDelete(NotePath);
+				TryDelete(NotesPath);
+				Fail(new Said("update dropped - the program in this folder changed while it waited (put in by hand?), so that one stays"));
+
+				return;
+			}
+
 			if (swapCode?.StartsWith("crashed", StringComparison.Ordinal) == true) {
 				string bad = swapCode[7..].Trim();
 				TryDelete(NotePath);
@@ -650,8 +719,9 @@ public static class SelfUpdate {
 			string[] p = File.ReadAllText(NotePath).Split('|');
 			File.Delete(NotePath);
 
-			// A note from long ago is some other start's business (an update that was interrupted, say).
-			if ((p.Length < 5) || !long.TryParse(p[4], out long ticks) || (DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) > TimeSpan.FromHours(1))) {
+			// A note from long ago is some other start's business (an update that was interrupted, say). Not when this start is
+			// the end of that very update: a service stopped with an update waiting can start again days later.
+			if ((p.Length < 5) || !long.TryParse(p[4], out long ticks) || ((swapCode == null) && !OnTrial && (DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) > TimeSpan.FromHours(1)))) {
 				return;
 			}
 
@@ -777,11 +847,16 @@ public static class SelfUpdate {
 	/// Read as robocopy's 8 it blamed "a 2nd copy? antivirus?", neither of which it can be there.
 	/// </remarks>
 	internal static Said SwapFailure(string code, bool windows) =>
-		code.StartsWith("backup", StringComparison.Ordinal)
+		code.StartsWith("interrupted", StringComparison.Ordinal)
+			? new Said("update undone: {0} was stopped half way (a kill or a power cut?), back on {1} - try again", WithoutMark(code[11..].Trim()), Build.Version)
+			: code.StartsWith("backup", StringComparison.Ordinal)
 			? new Said("update failed: backup copy error {0} - disk full? Nothing changed", code[6..].Trim())
 			: windows && int.TryParse(code, out int rc) && (rc is >= 8 and < 16)
 				? new Said("update failed: files in use (a 2nd copy? antivirus?) - try again")
 				: new Said("update failed: copy error {0} (read-only? disk full?) - nothing changed", code);
+
+	/// <summary>The version alone, from the swap's tag: without the "file:", "back:" or "to:" that says how it was asked for.</summary>
+	private static string WithoutMark(string tag) => tag[(tag.IndexOf(':') + 1)..];
 
 	/// <summary>The first lines of the new version's release notes, left by the old version for the new one to say.</summary>
 	private static string NotesPath => Path.Combine(ConfigStore.ConfigDir, "state", "update-notes.txt");
@@ -1069,6 +1144,10 @@ public static class SelfUpdate {
 		bool handedOver = false;
 		LastFailure = null;
 
+		// Under a systemd unit with the helper (Supported said so): the helper does the swap, from a folder next to the program.
+		bool asService = OperatingSystem.IsLinux() && RunAsService();
+		string serviceJob = Path.Combine(AppContext.BaseDirectory, ServiceBox, "job");
+
 		// Who the update signed out, so a failure after that can sign them back in.
 		List<Bot> signedOut = [];
 
@@ -1165,6 +1244,11 @@ public static class SelfUpdate {
 				return Fail(tooOld);
 			}
 
+			// Just updated, and the helper is still waiting to hear it's fine: it owns the folder until then.
+			if (asService && (OnTrial || File.Exists(Path.Combine(serviceJob, "phase")))) {
+				return Fail(new Said("update stopped - the last update is still being checked; try again in a minute"));
+			}
+
 			// Another copy running from this folder (on a config folder of its own): replacing the files under it, and
 			// stopping "the new version" if it didn't come up, would take that one down too. Said now, before a download.
 			if (OthersRunningHere() is [int other, ..]) {
@@ -1177,7 +1261,22 @@ public static class SelfUpdate {
 			// What an earlier update left behind - a swap that failed before it could tidy up, a machine switched off half way:
 			// with a random name no later update can find its own again, so each would stay in temp for good.
 			SweepOldWork(Path.GetTempPath(), TimeSpan.FromDays(1));
-			work = Directory.CreateTempSubdirectory("nocatfarm-update-").FullName;
+
+			if (asService) {
+				// Next to the program, not in temp: the helper reads it after this process has gone (and maybe after a reboot), and
+				// moves the files instead of copying them. What an update that stopped half way left there goes first.
+				if (Directory.Exists(serviceJob)) {
+					Directory.Delete(serviceJob, true);
+				}
+
+				Directory.CreateDirectory(serviceJob);
+				if (!OperatingSystem.IsWindows()) {
+					File.SetUnixFileMode(serviceJob, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+				}
+				work = serviceJob;
+			} else {
+				work = Directory.CreateTempSubdirectory("nocatfarm-update-").FullName;
+			}
 
 			string zip = Path.Combine(work, "release.zip");
 
@@ -1291,7 +1390,7 @@ public static class SelfUpdate {
 					string top = Path.GetFileName(dir);
 
 					if (top.Equals("config", StringComparison.OrdinalIgnoreCase) || top.Equals("logs", StringComparison.OrdinalIgnoreCase)
-						|| top.Equals("backups", StringComparison.OrdinalIgnoreCase)) {
+						|| top.Equals("backups", StringComparison.OrdinalIgnoreCase) || top.Equals(ServiceBox, StringComparison.Ordinal)) {
 						Directory.Delete(dir, true);
 						Log.Info(new Said("update: left out the {0} folder in the zip - yours stays as it is", top + "/"));
 					}
@@ -1331,7 +1430,13 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: couldn't back up the current version ({0})", Log.Scrub(e.Message)));
 			}
 
-			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? WindowsScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
+			if (asService) {
+				// Always job/new for the helper, whichever of the two layouts the zip had.
+				Directory.Move(payload, Path.Combine(work, "new"));
+				payload = Path.Combine(work, "new");
+			} else {
+				await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? WindowsScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
+			}
 
 			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing. Not a file: that's
 			// chosen by hand, skipped or not - and a skip of the release with its number stays as it is, whatever happens to it.
@@ -1379,7 +1484,9 @@ public static class SelfUpdate {
 			// the copy and the restart both missed; a "%" in a path was worse. A variable arrives exactly as it is.
 			ProcessStartInfo swap;
 
-			if (OperatingSystem.IsWindows()) {
+			if (asService) {
+				swap = new();   // never started: the helper is what swaps, once this process has exited
+			} else if (OperatingSystem.IsWindows()) {
 				swap = new() {
 					FileName = "cmd.exe",
 					// /s with a second pair of quotes round the path: without it cmd keeps the quotes only when nothing in the path
@@ -1429,7 +1536,12 @@ public static class SelfUpdate {
 			// skipped afterwards, or a test build that crashed would hide the real release with the same number. An older
 			// version gone back to isn't skipped either, and is said as what it was - nor a newer one asked for by name, whose
 			// skip goes back to what it was.
-			swap.Environment["NF_TAG"] = (fromFile != null ? FromFileMark : goingBack ? BackMark : (toVersion != null) ? ToMark : "") + tag.TrimStart('v', 'V');
+			string marked = (fromFile != null ? FromFileMark : goingBack ? BackMark : (toVersion != null) ? ToMark : "") + tag.TrimStart('v', 'V');
+			swap.Environment["NF_TAG"] = marked;
+
+			if (asService) {
+				WriteServiceJob(work, marked);
+			}
 
 			// The last moment a skip can still win: the notes and the swap go under the same lock 'update skip' takes, so it
 			// lands either before them and nothing is started, or after and is told it's too late - never in between.
@@ -1456,7 +1568,13 @@ public static class SelfUpdate {
 				Progress = "restarting into " + tag;
 				Log.Good(new Said("update · restarting into {0}", tag));
 
-				StartSwap(swap);
+				if (asService) {
+					// The word that hands it over, last and in one step. From here it goes in, whatever stops this process.
+					AtomicFile.Write(Path.Combine(work, "ready"), marked);
+				} else {
+					StartSwap(swap);
+				}
+
 				swapStarted = true;
 
 				// Going back: the version it came from is skipped, so the older one doesn't offer it - or put it straight back
@@ -1487,6 +1605,10 @@ public static class SelfUpdate {
 			}
 
 			handedOver = true;   // stays busy from here: the swap script owns the folder until this copy has gone
+
+			if (asService) {
+				ExitCode = UpdateExitCode;
+			}
 
 			ExitForSwap();
 

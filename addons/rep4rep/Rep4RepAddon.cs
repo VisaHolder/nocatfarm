@@ -396,7 +396,8 @@ public sealed class Rep4RepAddon : INocatPlugin {
 				List<Rep4RepTask>? tasks = await TasksAsync(acc).ConfigureAwait(false);
 
 				if (tasks == null) {
-					return Commenter(acc.Name).LinkedElsewhere ? Commenter(acc.Name).LinkedText()
+					return acc.SteamId == 0 ? T("{0} isn't signed in yet - try again once it is.", acc.Name)
+						: Commenter(acc.Name).LinkedElsewhere ? Commenter(acc.Name).LinkedText()
 						: Api.KeyInvalid ? KeyInvalidText() : T("{0} isn't registered with rep4rep yet.", acc.Name);
 				}
 
@@ -627,7 +628,8 @@ public sealed class Rep4RepAddon : INocatPlugin {
 		List<Rep4RepTask>? tasks = await TasksAsync(acc).ConfigureAwait(false);
 
 		if (tasks == null) {
-			blocks.Add(PluginBlock.Line(Api.KeyInvalid ? KeyInvalidText() : T("{0} isn't registered with rep4rep yet.", acc.Name)));
+			blocks.Add(PluginBlock.Line(acc.SteamId == 0 ? T("{0} isn't signed in yet - try again once it is.", acc.Name)
+				: Api.KeyInvalid ? KeyInvalidText() : T("{0} isn't registered with rep4rep yet.", acc.Name)));
 
 			return;
 		}

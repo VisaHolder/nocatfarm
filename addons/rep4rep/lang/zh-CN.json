@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0} 不接受留言 · 已跳过",
   "{0} hours": "{0} 小时",
   "{0} isn't registered with rep4rep yet.": "{0} 还没有在 rep4rep 注册。",
+  "{0} isn't signed in yet - try again once it is.": "{0} 还没有登录 - 等它登录后再试。",
   "{0} refused - trying another profile ({1}/{2})": "{0} 被拒 —— 换一个资料再试（{1}/{2}）",
   "{0} task(s) waiting for {1}:": "{1} 有 {0} 个待办任务：",
   "{0} tomorrow": "明天 {0}",

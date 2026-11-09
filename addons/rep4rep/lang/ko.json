@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0}은(는) 댓글을 받지 않음 · 건너뜀",
   "{0} hours": "{0}시간",
   "{0} isn't registered with rep4rep yet.": "{0}은(는) 아직 rep4rep에 등록되지 않았습니다.",
+  "{0} isn't signed in yet - try again once it is.": "{0} 계정은 아직 로그인되지 않았습니다. 로그인한 뒤 다시 시도하세요.",
   "{0} refused - trying another profile ({1}/{2})": "{0}이(가) 거부되었습니다 - 다른 프로필을 시도합니다 ({1}/{2})",
   "{0} task(s) waiting for {1}:": "{1}의 대기 중인 작업 {0}개:",
   "{0} tomorrow": "내일 {0}",

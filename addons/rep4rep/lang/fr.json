@@ -153,6 +153,7 @@
   "{0} doesn't take comments · skipped": "{0} n’accepte pas les commentaires · ignoré",
   "{0} hours": "{0} heures",
   "{0} isn't registered with rep4rep yet.": "{0} n'est pas encore inscrit sur rep4rep.",
+  "{0} isn't signed in yet - try again once it is.": "{0} n'est pas encore connecté - réessayez une fois qu'il le sera.",
   "{0} refused - trying another profile ({1}/{2})": "{0} refusé - essai d'un autre profil ({1}/{2})",
   "{0} task(s) waiting for {1}:": "{0} tâche(s) en attente pour {1} :",
   "{0} tomorrow": "demain à {0}",

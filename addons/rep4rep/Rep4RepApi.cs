@@ -255,6 +255,11 @@ public sealed class Rep4RepApi : IDisposable {
 	/// Steam"). That one only the owner can fix, on rep4rep.com - asking again changes nothing.
 	/// </summary>
 	public async Task<(string? Id, bool Unanswered, bool LinkedElsewhere)> ResolveDetailedAsync(ulong steamId, bool autoAdd, CancellationToken ct = default) {
+		// Not signed in yet, the account has no SteamID to ask about: adding 0 only gets a 422 for nobody.
+		if (steamId == 0) {
+			return (null, false, false);
+		}
+
 		(string? id, bool unanswered) = await FindProfileIdAsync(steamId, ct).ConfigureAwait(false);
 
 		// rep4rep.com down isn't "not registered" - nothing is added, nothing is blamed on the key.
