@@ -71,7 +71,7 @@ prepare_machine() {
 	fi
 	VER=$(cat "$WORK/cur.ver")
 	if ! curl -sf "http://127.0.0.1:$FEED/good.zip" -o /dev/null -r 0-1; then
-		(cd "$WORK/feed" && setsid nohup python3 -m http.server "$FEED" --bind 127.0.0.1 > "$WORK/feed.log" 2>&1 &)
+		(cd "$WORK/feed" && setsid nohup python3 -m http.server "$FEED" --bind 127.0.0.1 < /dev/null > "$WORK/feed.log" 2>&1 &)
 		for _ in $(seq 1 30); do curl -sf "http://127.0.0.1:$FEED/good.zip" -o /dev/null -r 0-1 && break; sleep 1; done
 	fi
 	offer good 9.9.9
@@ -118,8 +118,8 @@ config_with() {   # extra json fields
 }
 
 wipe() {
-	systemctl stop "$UNIT" 2>/dev/null
-	systemctl reset-failed "$UNIT" 2>/dev/null
+	systemctl stop "$UNIT" 2>/dev/null || true
+	systemctl reset-failed "$UNIT" 2>/dev/null || true
 	rm -rf "${HERE:?}" "${DATA:?}" "${DROPIN:?}/slow.conf"
 	mkdir -p "$HERE" "$DATA"
 }
@@ -563,7 +563,8 @@ EOF
 
 scn_second_copy_refused() {
 	fresh "$ZIPS/cur.zip" new
-	out=$(timeout 60 su -s /bin/sh "$USR" -c "$HERE/nocatFarm --no-gui --path $DATA" < /dev/null 2>&1); code=$?
+	code=0
+	out=$(timeout 60 su -s /bin/sh "$USR" -c "$HERE/nocatFarm --no-gui --path $DATA" < /dev/null 2>&1) || code=$?
 	say "second copy: exit $code"
 	[ "$code" -ne 0 ] && [ "$code" -ne 124 ] || die "second copy: exit $code"
 	echo "$out" | grep -q 'already running for this folder' || die "it didn't say another copy has the folder"
@@ -654,7 +655,9 @@ for z in cur good; do [ -f "$ZIPS/$z.zip" ] || { echo "no $z.zip in $ZIPS"; exit
 prepare_machine
 
 if [ "$MODE" = one ]; then
-	set -e
+	# A check that stops the scenario says which one, never silently.
+	set -eE
+	trap 'echo "    FAIL: line $LINENO: $BASH_COMMAND"' ERR
 	echo "== $SCN"
 	"scn_$SCN"
 	echo "PASS: $SCN"

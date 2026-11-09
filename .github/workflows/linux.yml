@@ -212,6 +212,7 @@ jobs:
       - name: every scenario under the runner's own systemd
         if: matrix.where == 'runner'
         run: |
+          sudo apt-get update -qq
           sudo apt-get install -y -qq unzip zip curl > /dev/null
           sudo env "PATH=$PATH" bash tests/service-update.sh all "$PWD/zips"
 

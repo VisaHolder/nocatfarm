@@ -26,7 +26,8 @@ $1  $2"
 if [ "$KIND" = vm ]; then
 	IMG=noble-server-cloudimg-amd64.img
 	PORT=2223
-	sudo apt-get install -y -qq qemu-system-x86 qemu-utils cloud-image-utils > /dev/null
+	sudo apt-get update -qq
+	sudo apt-get install -y -qq qemu-system-x86 qemu-utils cloud-image-utils > /dev/null || { echo "couldn't install QEMU"; exit 1; }
 	if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ACCEL="-enable-kvm -cpu host"; else ACCEL=""; echo "no KVM here: this will be slow"; fi
 	curl -sfL -o "$T/$IMG" "https://cloud-images.ubuntu.com/noble/current/$IMG" || { echo "couldn't download the image"; exit 1; }
 	cp "$T/$IMG" "$T/disk.qcow2"
@@ -73,7 +74,8 @@ EOF
 	on 'sudo poweroff' 2> /dev/null
 elif [ "$KIND" = lxc ]; then
 	NAME=nftest
-	sudo apt-get install -y -qq lxc lxc-templates uidmap dnsmasq-base > /dev/null
+	sudo apt-get update -qq
+	sudo apt-get install -y -qq lxc lxc-templates uidmap dnsmasq-base > /dev/null || { echo "couldn't install LXC"; exit 1; }
 	sudo iptables -P FORWARD ACCEPT
 	sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || true
 	sudo systemctl restart lxc-net || true
