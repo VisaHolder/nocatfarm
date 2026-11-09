@@ -491,7 +491,11 @@ public static class TradePolicy {
 	private static async Task<int?> SizeAsync(TradeOffers.Item item, TradeValues v, CancellationToken ct) =>
 		(await v.SetAsync(item, ct).ConfigureAwait(false)).SetSize;
 
-	private static long? Table(TradeRule r, int? size) => size is int s ? r.Table.TryGetValue(s, out long per) ? per : r.DefaultPerCard : r.DefaultPerCard;
+	private static long? Table(TradeRule r, int? size) {
+		long? fallback = r.Per == "completeSet" ? r.DefaultPerSet : r.DefaultPerCard;
+
+		return (size is int s) && r.Table.TryGetValue(s, out long per) ? per : fallback;
+	}
 
 	private static long Required(long worth, double marginPct, long minMargin) =>
 		(long) Math.Ceiling(worth * (1 + (Math.Max(0, marginPct) / 100.0))) + Math.Max(0, minMargin);
@@ -529,7 +533,7 @@ public static class TradePolicy {
 			List<long> nets = [];
 
 			foreach (string hash in set.Cards) {
-				MarketQuote? quote = await v.QuoteAsync(hash, ct).ConfigureAwait(false);
+				MarketQuote? quote = await v.QuoteAsync(hash, ct, TimeSpan.FromHours(Math.Clamp(r.MaxAgeHours, 1, 24 * 30))).ConfigureAwait(false);
 
 				if ((quote == null) || (quote.Lowest is not > 0) || (quote.Sales < Math.Max(1, r.MinSales))
 					|| (DateTime.UtcNow - quote.When > TimeSpan.FromHours(Math.Clamp(r.MaxAgeHours, 1, 24 * 30)))) {

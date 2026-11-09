@@ -7972,6 +7972,9 @@ function renderTradeRules() {
       </label>
       <span class="muted small">${esc(t('Confirm accepts in the Steam app'))}</span>
       <span class="spacer"></span>
+      <label class="inline" data-tip="${esc(t('Off: only prices already held are used, so the preview never asks the market. On: a missing or too-old price is read once for this preview.'))}">
+        <input type="checkbox" id="trFetch" checked> ${esc(t('Read missing or stale prices'))}
+      </label>
       <button class="ghost" onclick="trPreviewNow()">${esc(t('Preview offers'))}</button>
     </div>
 
@@ -8131,12 +8134,13 @@ async function trSave() {
 
 async function trPreviewNow() {
   const host = $('trPreview');
+  const read = $('trFetch');
   if (host) host.innerHTML = `<p class="muted">${esc(t('Reading the offers Steam has now…'))}</p>`;
 
   try {
     trPreview = await api('/api/trade-rules/preview?name=' + encodeURIComponent(trBot), {
       method: 'POST',
-      body: JSON.stringify({ fetch: false })
+      body: JSON.stringify({ fetch: !read || read.checked })
     });
   } catch (e) {
     trPreview = { ok: false, error: e.message || String(e) };
@@ -8168,7 +8172,7 @@ function renderTradePreview() {
       <td>${side(o.given)}</td>
       <td>${side(o.received)}</td>
       <td><span class="badge ${o.verdict === 'Accept' ? 'good' : o.verdict === 'Decline' ? 'bad' : ''}">${esc(o.verdict)}</span></td>
-      <td>${esc(o.rule || '')}${o.why ? `<br><span class="muted small">${esc(o.why)}</span>` : ''}</td>
+      <td>${esc(o.rule || '')}${o.why ? `<br><span class="muted small">${esc(o.why)}</span>` : ''}${o.prices === 'missing' ? `<br><span class="badge">${esc(t('a price is missing'))}</span>` : ''}</td>
       <td class="muted small">${esc(o.gates || '')}</td>
     </tr>`).join('');
 

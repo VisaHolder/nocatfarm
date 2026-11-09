@@ -31,8 +31,59 @@ public sealed partial class Trading {
 		IReadOnlyCollection<ulong> promised = PromisedAssets();
 		TradeValues values = await TradeValues.ReadAsync(Bot, offer, promised, ct).ConfigureAwait(false);
 		GateResult gates = TradeGates.Check(Bot, offer, values, promised);
+		TradeDecision decision = await TradePolicy.DecideAsync(set, values, gates, ct).ConfigureAwait(false);
 
-		return await TradePolicy.DecideAsync(set, values, gates, ct).ConfigureAwait(false);
+		// A rule that stopped at a missing or too-old price: ask the market once, then decide again with what it says. Still
+		// unknown after that, the offer is left for the next look - never accepted or declined on a guess.
+		if ((decision.Verdict == TradeVerdict.Unknown) && values.RefreshWanted && MayRefreshPrices(offer.Id, DateTime.UtcNow)) {
+			TradeValues fresh = await TradeValues.ReadAsync(Bot, offer, promised, ct, TradeValueLookups.Stale).ConfigureAwait(false);
+			GateResult gatesAgain = TradeGates.Check(Bot, offer, fresh, promised);
+			TradeDecision again = await TradePolicy.DecideAsync(set, fresh, gatesAgain, ct).ConfigureAwait(false);
+
+			Log.Debug(new Said("offer {0}: a custom rule needed a price - asked the market again, and it says {1}", NumberOf(offer.Id), again.Verdict), Bot.Name);
+
+			return again;
+		}
+
+		return decision;
+	}
+
+	/// <summary>When each offer last had its prices read again, so one offer can't ask every look.</summary>
+	private readonly Dictionary<ulong, DateTime> _refreshedAt = [];
+	private readonly Lock _refreshGate = new();
+	private DateTime _refreshWindow = DateTime.MinValue;
+	private int _refreshesInWindow;
+
+	/// <summary>
+	/// Whether asking the market again is worth it for this offer: once every ten minutes for one offer, and at most three
+	/// offers a minute - a burst of trades must not become a burst of market requests.
+	/// </summary>
+	private bool MayRefreshPrices(ulong id, DateTime now) {
+		lock (_refreshGate) {
+			if (_refreshedAt.TryGetValue(id, out DateTime at) && (now - at < TimeSpan.FromMinutes(10))) {
+				return false;
+			}
+
+			if ((now - _refreshWindow) >= TimeSpan.FromMinutes(1)) {
+				_refreshWindow = now;
+				_refreshesInWindow = 0;
+			}
+
+			if (_refreshesInWindow >= 3) {
+				return false;
+			}
+
+			_refreshesInWindow++;
+			_refreshedAt[id] = now;
+
+			DateTime cut = now - TimeSpan.FromHours(1);
+
+			foreach (ulong old in _refreshedAt.Where(p => p.Value < cut).Select(static p => p.Key).ToList()) {
+				_refreshedAt.Remove(old);
+			}
+
+			return true;
+		}
 	}
 
 	/// <summary>Says once why a custom rule couldn't decide, so an offer left for you isn't silent.</summary>

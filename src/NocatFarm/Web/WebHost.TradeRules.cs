@@ -88,6 +88,8 @@ public sealed partial class WebHost {
 
 			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
 			ulong? only = (sent?["offerId"] as JsonValue) is { } id && id.TryGetValue(out ulong offerId) ? offerId : null;
+			bool fetch = (sent?["fetch"] as JsonValue) is { } f && f.TryGetValue(out bool wanted) && wanted;
+			TradeValueLookups lookups = fetch ? TradeValueLookups.Stale : TradeValueLookups.Cached;
 
 			if (await TradeOffers.ActiveAsync(bot, received: true, sent: false, ct).ConfigureAwait(false) is not { } live) {
 				return Results.Json(new { ok = false, error = Loc.T("Steam didn't say what it has for this account.") }, statusCode: 502);
@@ -99,7 +101,7 @@ public sealed partial class WebHost {
 			List<object> offers = [];
 
 			foreach (TradeOffers.Offer offer in live.Where(o => !o.Ours && (o.State == TradeOffers.Active)).Where(o => only == null || (o.Id == only)).Take(only == null ? 10 : 1)) {
-				TradeValues values = await TradeValues.ReadAsync(bot, offer, promised, ct).ConfigureAwait(false);
+				TradeValues values = await TradeValues.ReadAsync(bot, offer, promised, ct, lookups).ConfigureAwait(false);
 				GateResult gates = TradeGates.Check(bot, offer, values, promised);
 				TradeDecision decision = await TradePolicy.DecideAsync(set, values, gates, ct).ConfigureAwait(false);
 
@@ -111,11 +113,12 @@ public sealed partial class WebHost {
 					verdict = decision.Verdict.ToString(),
 					rule = decision.RuleId,
 					why = decision.Why,
-					gates = gates.Why
+					gates = gates.Why,
+					prices = values.RefreshWanted ? "missing" : "held"
 				});
 			}
 
-			return Results.Json(new { ok = true, enabled = bot.Cfg.TradeRulesEnabled, problems = set.Problems, offers });
+			return Results.Json(new { ok = true, enabled = bot.Cfg.TradeRulesEnabled, problems = set.Problems, fetch, offers });
 		});
 	}
 

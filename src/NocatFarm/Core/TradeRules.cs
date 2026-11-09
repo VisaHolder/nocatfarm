@@ -103,6 +103,10 @@ public sealed record TradeRule {
 	public string Per { get; init; } = "card";
 	public IReadOnlyDictionary<int, long> Table { get; init; } = new Dictionary<int, long>();
 	public long? DefaultPerCard { get; init; }
+
+	/// <summary>set-size-gems: the gem price of a whole set whose size isn't in the table (null: none).</summary>
+	public long? DefaultPerSet { get; init; }
+
 	public string OnUnknownSet { get; init; } = "unknown";
 
 	// item-threshold
@@ -323,10 +327,12 @@ public static class TradeRuleCodec {
 		string per = (Str(e, "per") ?? "card").Trim().ToLowerInvariant();
 		string unknown = (Str(e, "onUnknownSet") ?? "unknown").Trim().ToLowerInvariant();
 
-		if (per is not ("card" or "completeSet")) {
+		if (per is not ("card" or "completeset")) {
 			problems.Add($"rule {index}: per must be card or completeSet");
 			return null;
 		}
+
+		per = per == "completeset" ? "completeSet" : "card";
 
 		if (unknown is not ("unknown" or "abstain")) {
 			problems.Add($"rule {index}: onUnknownSet must be unknown or abstain");
@@ -347,20 +353,22 @@ public static class TradeRuleCodec {
 			}
 		}
 
-		if (table.Count == 0) {
-			problems.Add($"rule {index}: the set-size table is empty");
-			return null;
-		}
-
 		if (table.Count > MaxTable) {
 			problems.Add($"rule {index}: the table has more than {MaxTable} entries");
 			return null;
 		}
 
 		long? def = Int(e, "defaultPerCard") is int d ? Math.Max(0, d) : null;
+		long? defSet = Int(e, "defaultPerSet") is int s && (s > 0) ? s : null;
+
+		// An empty table is fine only when every size has the same price: a default per card, or a flat price per set.
+		if ((table.Count == 0) && ((per == "completeSet") ? defSet is null : def is null)) {
+			problems.Add($"rule {index}: the table is empty, and there's no default for a set size it doesn't list");
+			return null;
+		}
 
 		return r with {
-			Per = per, Table = table, DefaultPerCard = def, OnUnknownSet = unknown,
+			Per = per, Table = table, DefaultPerCard = def, DefaultPerSet = defSet, OnUnknownSet = unknown,
 			MarginPct = Number(e, "marginPct"), MinMarginGems = Math.Max(0, Int(e, "minMarginGems") ?? 0)
 		};
 	}
@@ -729,6 +737,10 @@ public static class TradeRuleCodec {
 					w.WriteNumber("defaultPerCard", def);
 				}
 
+				if (r.DefaultPerSet is long defSet) {
+					w.WriteNumber("defaultPerSet", defSet);
+				}
+
 				w.WriteString("onUnknownSet", r.OnUnknownSet);
 				w.WriteNumber("marginPct", r.MarginPct);
 				w.WriteNumber("minMarginGems", r.MinMarginGems);
@@ -851,24 +863,15 @@ public sealed record TradePreset(string Id, string Label, TradeRule Rule);
 /// <summary>The starting points the dashboard's preset gallery lists - one for each kind, plus the examples people ask for.</summary>
 public static class TradePresets {
 	public static IReadOnlyList<TradePreset> All() => [
-		new("cards-worth", "Cards for their gem worth", new TradeRule {
-			Id = "cards-worth", Kind = TradeRuleKind.CardGems, Note = "Give cards, take at least their GooValue in gems.",
-			Match = new([SpareKind.Card], [], [], [], false, null, null), Worth = "gems", Fallback = "wallet", SameGame = true,
+		new("spares-worth", "Spares for their gem worth", new TradeRule {
+			Id = "spares-worth", Kind = TradeRuleKind.CardGems, Note = "Give backgrounds or emoticons - the things spare items would turn into gems anyway - and take at least their GooValue in gems. Add Card to the match when you want cards included too.",
+			Match = new([SpareKind.Background, SpareKind.Emoticon], [], [], [], null, null, null), Worth = "gems", Fallback = "wallet", SameGame = false,
 			PayIn = new([SpareKind.Gems, SpareKind.GemSack], true)
 		}),
 		new("set-size-table", "Gems by card-set size", new TradeRule {
 			Id = "set-size-table", Kind = TradeRuleKind.SetSizeGems, Note = "A price table for each card of a set size.",
 			Match = new([SpareKind.Card], [], [], [], false, null, null), Per = "card",
 			Table = new Dictionary<int, long> { [5] = 15, [8] = 20, [10] = 25, [15] = 35 }
-		}),
-		new("sell-backgrounds", "Sell backgrounds for gems", new TradeRule {
-			Id = "sell-backgrounds", Kind = TradeRuleKind.ItemThreshold, Note = "Give backgrounds, take gems.",
-			Match = new([SpareKind.Background], [], [], [], null, null, null), Target = "giving", Mode = "sell", Basis = "gems", MinEach = 100,
-			PayIn = new([SpareKind.Gems, SpareKind.GemSack], true)
-		}),
-		new("buy-backgrounds", "Buy backgrounds for gems", new TradeRule {
-			Id = "buy-backgrounds", Kind = TradeRuleKind.ItemThreshold, Note = "Take backgrounds, give no more than this in gems.",
-			Match = new([SpareKind.Background], [], [], [], null, null, null), Target = "receiving", Mode = "buy", Basis = "gems", MaxEach = 100
 		}),
 		new("sell-boosters-expected", "Sell boosters at their expected pull", new TradeRule {
 			Id = "sell-boosters-expected", Kind = TradeRuleKind.BoosterValue, Note = "Give boosters, take at least the average of their 3 cards.",
@@ -879,20 +882,15 @@ public static class TradePresets {
 			Match = new([SpareKind.BoosterPack], [], [], [], null, null, null), Target = "receiving", Mode = "buy", Value = "floor", ValueIn = "gems",
 			FloorMode = "threeCheapestDistinct"
 		}),
-		new("normals-for-foils", "Normals for foils", new TradeRule {
-			Id = "normals-for-foils", Kind = TradeRuleKind.FoilSwap, Note = "Three normal cards for one foil, never at a loss.",
-			Give = new(3, false, new([SpareKind.Card], [], [], [], false, null, null)),
-			Get = new(1, true, new([SpareKind.FoilCard], [], [], [], true, null, null)),
+		new("foils-for-normals", "Foils for normals", new TradeRule {
+			Id = "foils-for-normals", Kind = TradeRuleKind.FoilSwap, Note = "One foil for three normal cards of the same game, never at a loss - raise maxLossPct when you want to accept a loss on the foil.",
+			Give = new(1, true, new([SpareKind.FoilCard], [], [], [], true, null, null)),
+			Get = new(3, false, new([SpareKind.Card], [], [], [], false, null, null)),
 			SameGame = true, SwapMode = "exact", MaxLossPct = 0
 		}),
 		new("expression-gems", "Any trade: a tenth more in gems", new TradeRule {
 			Id = "expression-gems", Kind = TradeRuleKind.Expression, Note = "Take at least a tenth more in gems than you give.",
 			Expr = "receiving.gems >= giving.gems * 1.15", LooseGems = "sack"
-		}),
-		new("expression-foil-swap", "Any trade: 3 normal cards for a foil", new TradeRule {
-			Id = "expression-foil-swap", Kind = TradeRuleKind.Expression, Note = "Three normal cards for a foil, never at a loss.",
-			Expr = "count(\"giving\", \"Card\") == 3 && count(\"receiving\", \"FoilCard\") == 1 && receiving.wallet >= giving.wallet",
-			LooseGems = "sack"
 		}),
 		new("market-profit", "Any trade with market profit", new TradeRule {
 			Id = "market-profit", Kind = TradeRuleKind.MarketProfit, Note = "Take trades whose net market value is above what is given.",
@@ -902,10 +900,10 @@ public static class TradePresets {
 			Id = "exchange-gems", Kind = TradeRuleKind.ValueRatio, Note = "Take any trade that brings at least 10% more gems than it gives - the rule a key/gem exchange bot runs on. Edit the factor to your spread.",
 			Basis = "gems", Left = "receiving", Op = ">=", Right = "giving", Factor = 1.1, LooseGems = "sack"
 		}),
-		new("levelup-sets", "Level-up: sell a complete set for gems", new TradeRule {
-			Id = "levelup-sets", Kind = TradeRuleKind.SetSizeGems, Note = "Give a complete card set, take the table's gems for its size. Edit the table to your price list.",
+		new("levelup-sets", "Level-up: any whole set for gems", new TradeRule {
+			Id = "levelup-sets", Kind = TradeRuleKind.SetSizeGems, Note = "Give a complete card set of any size, take the same gem price for every set. Edit the price to your list.",
 			Match = new([SpareKind.Card], [], [], [], false, null, null), Per = "completeSet",
-			Table = new Dictionary<int, long> { [5] = 1000, [6] = 1000, [8] = 1200, [10] = 1500, [15] = 2000 },
+			Table = new Dictionary<int, long>(), DefaultPerSet = 1000,
 			PayIn = new([SpareKind.Gems, SpareKind.GemSack], true)
 		}),
 		new("ratio", "Compare the two sides", new TradeRule {

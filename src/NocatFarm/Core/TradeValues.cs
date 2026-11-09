@@ -45,6 +45,18 @@ public interface ITradeValueSource {
 	int? LooseGemWalletCents(int gems, string looseGemsMode);
 }
 
+/// <summary>How far one look may go for a price.</summary>
+public enum TradeValueLookups {
+	/// <summary>Only prices already held. A missing one stays unknown; no request is made.</summary>
+	Cached,
+
+	/// <summary>A price already held is used as it is, however old; one that isn't held is asked for. The default.</summary>
+	Missing,
+
+	/// <summary>Like <see cref="Missing"/>, and a held price too old to value the item is asked for again - the second pass.</summary>
+	Stale
+}
+
 /// <summary>
 /// The two sides of one offer, valued lazily: a rule about counts reads nothing, a gem rule asks for gems, a wallet rule
 /// asks Steam for prices - at most eight uncached lookups and ten seconds for the whole offer.
@@ -56,15 +68,18 @@ public sealed class TradeValues {
 	private readonly Dictionary<string, MarketQuote?> _quotes = new(StringComparer.Ordinal);
 	private readonly Dictionary<uint, CardSet?> _sets = [];
 	private readonly Dictionary<ulong, int?> _gems = [];
-	private int _lookups;
+	private readonly TradeValueLookups _lookups;
+	private int _lookupsUsed;
 	private DateTime _until;
 
-	private TradeValues(ITradeValueSource source, ulong partner, IReadOnlyList<TradeOffers.Item> giving, IReadOnlyList<TradeOffers.Item> receiving) {
+	private TradeValues(ITradeValueSource source, ulong partner, IReadOnlyList<TradeOffers.Item> giving, IReadOnlyList<TradeOffers.Item> receiving,
+		TradeValueLookups lookups = TradeValueLookups.Missing) {
 		Source = source;
 		Partner = partner;
 		Giving = giving;
 		Receiving = receiving;
-		_until = source.Now + Budget;
+		_lookups = lookups;
+		_until = DateTime.UtcNow + Budget;
 	}
 
 	public ITradeValueSource Source { get; }
@@ -74,22 +89,44 @@ public sealed class TradeValues {
 	public int Currency => Source.Currency;
 	public DateTime Now => Source.Now;
 
+	/// <summary>A rule needed a price that was held but too old for it - worth asking the market once.</summary>
+	public bool PriceStale { get; private set; }
+
+	/// <summary>A rule needed a price that wasn't held (or the market didn't answer), and the look could ask.</summary>
+	public bool PriceMissing { get; private set; }
+
+	/// <summary>The look ran out of its eight uncached lookups (or its ten seconds) before answering.</summary>
+	public bool OutOfLookups { get; private set; }
+
+	/// <summary>Whether asking the market again could turn an Unknown into an answer.</summary>
+	public bool RefreshWanted => PriceStale || PriceMissing;
+
 	/// <summary>Values one offer from the real source.</summary>
-	public static Task<TradeValues> ReadAsync(Bot bot, TradeOffers.Offer offer, IReadOnlyCollection<ulong> committed, CancellationToken ct) =>
-		Task.FromResult(new TradeValues(new BotTradeValues(bot, committed), offer.Partner, offer.Giving, offer.Receiving));
+	public static Task<TradeValues> ReadAsync(Bot bot, TradeOffers.Offer offer, IReadOnlyCollection<ulong> committed, CancellationToken ct,
+		TradeValueLookups lookups = TradeValueLookups.Missing) =>
+		Task.FromResult(new TradeValues(new BotTradeValues(bot, committed), offer.Partner, offer.Giving, offer.Receiving, lookups));
 
 	/// <summary>For the tests: a source with explicit values and no network.</summary>
-	public static TradeValues From(ITradeValueSource source, IReadOnlyList<TradeOffers.Item> giving, IReadOnlyList<TradeOffers.Item> receiving, ulong partner = 0) =>
-		new(source, partner, giving, receiving);
+	public static TradeValues From(ITradeValueSource source, IReadOnlyList<TradeOffers.Item> giving, IReadOnlyList<TradeOffers.Item> receiving,
+		ulong partner = 0, TradeValueLookups lookups = TradeValueLookups.Missing) =>
+		new(source, partner, giving, receiving, lookups);
 
 	private static int Copies(TradeOffers.Item item) => (int) Math.Min(int.MaxValue, Math.Max(1u, item.Amount));
 
 	private bool Spend() {
 		if (DateTime.UtcNow > _until) {
+			OutOfLookups = true;
+
 			return false;
 		}
 
-		return ++_lookups <= MaxLookups;
+		if (++_lookupsUsed > MaxLookups) {
+			OutOfLookups = true;
+
+			return false;
+		}
+
+		return true;
 	}
 
 	/// <summary>The item's gem value, in gems (not wallet cents).</summary>
@@ -106,6 +143,12 @@ public sealed class TradeValues {
 
 		if (Source.Gems(item) is int held) {
 			return new ValuedItem(item, kind, held, null, null, false, null);
+		}
+
+		if (_lookups == TradeValueLookups.Cached) {
+			PriceMissing = true;
+
+			return new ValuedItem(item, kind, null, null, null, false, "its gem value isn't held, and this look doesn't ask Steam");
 		}
 
 		if (!Spend()) {
@@ -148,28 +191,51 @@ public sealed class TradeValues {
 			return new ValuedItem(item, kind, null, null, null, false, "Steam hasn't said this account's wallet currency");
 		}
 
-		MarketQuote? quote;
+		TimeSpan age = TimeSpan.FromHours(Math.Clamp(maxAgeHours, 1, 24 * 30));
+		bool TooOld(MarketQuote? q) => q != null && (q.When > Now.AddHours(1) || (Now - q.When > age));
+		MarketQuote? quote = Source.Quote(item.Hash) ?? _quotes.GetValueOrDefault(item.Hash);
 
-		if (Source.Quote(item.Hash) is { } known) {
-			quote = known;
-		} else {
+		if (quote == null) {
+			if (_lookups == TradeValueLookups.Cached) {
+				PriceMissing = true;
+
+				return new ValuedItem(item, kind, null, null, null, false, "no price is held for it, and this look doesn't ask the market");
+			}
+
 			if (!Spend()) {
 				return new ValuedItem(item, kind, null, null, null, false, "the offer is out of price lookups for this look");
 			}
 
 			quote = await Source.QuoteAsync(item.Hash, ct).ConfigureAwait(false);
 			_quotes[item.Hash] = quote;
+		} else if ((_lookups == TradeValueLookups.Stale) && TooOld(quote)) {
+			// The price held is too old for this rule: ask once more. A market that doesn't answer leaves the old one, and
+			// the rule still says Unknown rather than deciding on a stale number.
+			if (!Spend()) {
+				PriceStale = true;
+
+				return new ValuedItem(item, kind, null, null, null, false, "the offer is out of price lookups for this look");
+			}
+
+			quote = await Source.QuoteAsync(item.Hash, ct).ConfigureAwait(false) ?? quote;
+			_quotes[item.Hash] = quote;
 		}
 
 		if (quote == null) {
+			PriceMissing = true;
+
 			return new ValuedItem(item, kind, null, null, null, false, "the market didn't answer for it");
 		}
 
-		if (quote.When > Now.AddHours(1) || Now - quote.When > TimeSpan.FromHours(Math.Clamp(maxAgeHours, 1, 24 * 30))) {
+		if (TooOld(quote)) {
+			PriceStale = true;
+
 			return new ValuedItem(item, kind, null, null, null, false, "its price is older than the rule allows");
 		}
 
 		if ((quote.Lowest is not > 0) || (quote.Sales < Math.Max(1, minSales))) {
+			PriceMissing = true;
+
 			return new ValuedItem(item, kind, null, null, null, false, "there aren't enough fresh sales to go by");
 		}
 
@@ -198,6 +264,12 @@ public sealed class TradeValues {
 			return new ValuedItem(item, Source.KindOf(item), null, null, known.Cards.Count, true, null);
 		}
 
+		if (_lookups == TradeValueLookups.Cached) {
+			PriceMissing = true;
+
+			return new ValuedItem(item, Source.KindOf(item), null, null, null, false, "its set isn't known, and this look doesn't ask Steam");
+		}
+
 		if (!Spend()) {
 			return new ValuedItem(item, Source.KindOf(item), null, null, null, false, "the offer is out of price lookups for this look");
 		}
@@ -220,6 +292,12 @@ public sealed class TradeValues {
 			return cached;
 		}
 
+		if (_lookups == TradeValueLookups.Cached) {
+			PriceMissing = true;
+
+			return null;
+		}
+
 		if (!Spend()) {
 			return null;
 		}
@@ -230,22 +308,58 @@ public sealed class TradeValues {
 		return set;
 	}
 
-	/// <summary>The market price held for this hash in this wallet's currency, or a fresh one (budgeted).</summary>
-	public async Task<MarketQuote?> QuoteAsync(string hash, CancellationToken ct) {
-		if (Source.Quote(hash) is { } known) {
-			return known;
+	/// <summary>
+	/// The market price held for this hash in this wallet's currency, or a fresh one (budgeted). <paramref name="maxAge"/>:
+	/// when the held price is older than this, a <see cref="TradeValueLookups.Stale"/> look asks again; null never counts it stale.
+	/// </summary>
+	public async Task<MarketQuote?> QuoteAsync(string hash, CancellationToken ct, TimeSpan? maxAge = null) {
+		MarketQuote? quote = Source.Quote(hash);
+
+		if (quote == null) {
+			_quotes.TryGetValue(hash, out quote);
 		}
 
-		if (_quotes.TryGetValue(hash, out MarketQuote? cached)) {
-			return cached;
+		bool TooOld(MarketQuote? q) => (q != null) && (maxAge is TimeSpan age) && (q.When > Now.AddHours(1) || (Now - q.When > age));
+
+		if (quote == null) {
+			if (_lookups == TradeValueLookups.Cached) {
+				PriceMissing = true;
+
+				return null;
+			}
+
+			if (!Spend()) {
+				return null;
+			}
+
+			quote = await Source.QuoteAsync(hash, ct).ConfigureAwait(false);
+			_quotes[hash] = quote;
+
+			if (quote == null) {
+				PriceMissing = true;
+			}
+
+			return quote;
 		}
 
-		if (!Spend()) {
-			return null;
+		if ((_lookups == TradeValueLookups.Stale) && TooOld(quote)) {
+			if (!Spend()) {
+				PriceStale = true;
+
+				return quote;
+			}
+
+			MarketQuote? fresh = await Source.QuoteAsync(hash, ct).ConfigureAwait(false);
+
+			if (fresh != null) {
+				quote = fresh;
+				_quotes[hash] = quote;
+			}
 		}
 
-		MarketQuote? quote = await Source.QuoteAsync(hash, ct).ConfigureAwait(false);
-		_quotes[hash] = quote;
+		if (TooOld(quote)) {
+			PriceStale = true;
+		}
 
 		return quote;
 	}

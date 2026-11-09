@@ -20665,12 +20665,30 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("trade rules: a full rule set writes back as JSON the codec reads again",
 			NocatFarm.Core.TradeRuleCodec.Parse(NocatFarm.Core.TradeRuleCodec.Write(trOne.Rules)).Rules.Count == 1);
 
-		Check("trade rules: there are presets for every kind", NocatFarm.Core.TradePresets.All().Count >= 7
-			&& new[] { "card-gems", "set-size-gems", "item-threshold", "booster-value", "foil-swap", "market-profit", "value-ratio" }
+		NocatFarm.Core.TradeRuleSet trFlat = NocatFarm.Core.TradeRuleCodec.Parse("""
+			{"version":1,"rules":[{"id":"flat","kind":"set-size-gems","per":"completeSet","defaultPerSet":1000,"match":{"kinds":["Card"]}}]}
+			""");
+		Check("trade rules: one flat price for any whole set reads back and writes back",
+			trFlat.Problems.Count == 0 && trFlat.Rules.Count == 1 && trFlat.Rules[0].DefaultPerSet == 1000 && trFlat.Rules[0].Table.Count == 0
+			&& NocatFarm.Core.TradeRuleCodec.Parse(NocatFarm.Core.TradeRuleCodec.Write(trFlat.Rules)).Rules[0].DefaultPerSet == 1000);
+
+		Check("trade rules: there are presets for the kinds that use one", NocatFarm.Core.TradePresets.All().Count >= 6
+			&& new[] { "card-gems", "set-size-gems", "booster-value", "foil-swap", "market-profit", "value-ratio" }
 				.All(k => NocatFarm.Core.TradePresets.All().Any(p => p.Rule.Kind == k)));
 		Check("trade rules: exchange and level-up bot presets are there",
 			NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "exchange-gems" && p.Rule.Basis == "gems" && p.Rule.Factor > 1)
-			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "levelup-sets" && p.Rule.Per == "completeSet" && p.Rule.Table.Count > 0));
+			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "levelup-sets" && p.Rule.Per == "completeSet"
+				&& p.Rule.DefaultPerSet == 1000 && p.Rule.Table.Count == 0));
+		Check("trade rules: the gem-worth preset is spares only, and the background presets are gone",
+			NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "spares-worth"
+				&& p.Rule.Match.Kinds.Contains(NocatFarm.Core.SpareKind.Background)
+				&& p.Rule.Match.Kinds.Contains(NocatFarm.Core.SpareKind.Emoticon)
+				&& !p.Rule.Match.Kinds.Contains(NocatFarm.Core.SpareKind.Card)
+				&& !p.Rule.Match.Kinds.Contains(NocatFarm.Core.SpareKind.FoilCard))
+			&& !NocatFarm.Core.TradePresets.All().Any(static p => p.Id is "sell-backgrounds" or "buy-backgrounds"));
+		Check("trade rules: the foil preset gives foils and takes normals, and the expression duplicate is gone",
+			NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "foils-for-normals" && p.Rule.Give!.Foil && !p.Rule.Get!.Foil)
+			&& !NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-foil-swap"));
 
 		// The values and the policy, on a fake source: no network.
 		var trNow = new DateTime(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);
@@ -20742,7 +20760,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			NocatFarm.Core.TradePresets.All().Where(static p => p.Rule.Kind == NocatFarm.Core.TradeRuleKind.Expression)
 				.All(static p => NocatFarm.Core.TradeExpression.Validate(p.Rule.Expr) == null)
 			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-gems")
-			&& NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-foil-swap"));
+			&& !NocatFarm.Core.TradePresets.All().Any(static p => p.Id == "expression-foil-swap"));
 
 		NocatFarm.Core.TradeRuleSet trExprYes = NocatFarm.Core.TradeRuleCodec.Parse("""{"version":1,"rules":[{"id":"yes","kind":"expression","expr":"receiving.gems >= giving.gems * 1.15"}]}""");
 		NocatFarm.Core.TradeDecision trExprYesAnswer = NocatFarm.Core.TradePolicy.Decide(trExprYes, trValues, NocatFarm.Core.GateResult.Allowed);
@@ -20765,6 +20783,53 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("trade rules: an expression that needs a missing price is Unknown",
 			NocatFarm.Core.TradePolicy.Decide(trExprWallet, NocatFarm.Core.TradeValues.From(trNoPrice, [trCard], [trOther]),
 				NocatFarm.Core.GateResult.Allowed).Verdict == NocatFarm.Core.TradeVerdict.Unknown);
+
+		// Prices: what one look may ask for, and the second pass when a rule stopped at an old one.
+		var trStaleSource = new FakeTradeSource { Now = trNow };
+		trStaleSource.GemValues["730-A"] = 100;
+		trStaleSource.Quotes["730-A"] = new NocatFarm.Core.MarketQuote("730-A", 20, 50, 50, 10, trNow.AddDays(-3).Ticks);
+		trStaleSource.Quotes["730-B"] = new NocatFarm.Core.MarketQuote("730-B", 20, 60, 60, 10, trNow.AddDays(-3).Ticks);
+		trStaleSource.NextQuotes["730-A"] = new NocatFarm.Core.MarketQuote("730-A", 20, 50, 50, 10, trNow.Ticks);
+		trStaleSource.NextQuotes["730-B"] = new NocatFarm.Core.MarketQuote("730-B", 20, 60, 60, 10, trNow.Ticks);
+
+		NocatFarm.Core.TradeValues trStaleFirst = NocatFarm.Core.TradeValues.From(trStaleSource, [trCard], [trOther]);
+		NocatFarm.Core.TradeDecision trStaleAnswer = NocatFarm.Core.TradePolicy.Decide(trProfitRule, trStaleFirst, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: an old price is Unknown, and the look asks for a new one",
+			trStaleAnswer.Verdict == NocatFarm.Core.TradeVerdict.Unknown && trStaleFirst.PriceStale && trStaleFirst.RefreshWanted,
+			trStaleAnswer.Why);
+
+		NocatFarm.Core.TradeValues trStaleAgain = NocatFarm.Core.TradeValues.From(trStaleSource, [trCard], [trOther], 0, NocatFarm.Core.TradeValueLookups.Stale);
+		NocatFarm.Core.TradeDecision trStaleSecond = NocatFarm.Core.TradePolicy.Decide(trProfitRule, trStaleAgain, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: the second pass reads the price again and decides",
+			trStaleSecond.Verdict == NocatFarm.Core.TradeVerdict.Accept && (trStaleSource.QuoteReads == 2) && !trStaleAgain.RefreshWanted,
+			$"{trStaleSecond.Verdict} {trStaleSource.QuoteReads}");
+
+		var trCachedSource = new FakeTradeSource { Now = trNow };
+		trCachedSource.GemValues["730-A"] = 100;
+		NocatFarm.Core.TradeValues trCached = NocatFarm.Core.TradeValues.From(trCachedSource, [trCard], [trOther], 0, NocatFarm.Core.TradeValueLookups.Cached);
+		NocatFarm.Core.TradeDecision trCachedAnswer = NocatFarm.Core.TradePolicy.Decide(trProfitRule, trCached, NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: a cached-only look never asks the market",
+			trCachedAnswer.Verdict == NocatFarm.Core.TradeVerdict.Unknown && trCached.PriceMissing && (trCachedSource.QuoteReads == 0),
+			$"{trCachedAnswer.Verdict} {trCachedSource.QuoteReads}");
+
+		trSource.Sets[730] = new NocatFarm.Modules.CardSet(730, "Game 730", ["730-A", "730-B", "730-C", "730-D", "730-E"], new Dictionary<string, int>());
+		NocatFarm.Core.TradeOffers.Item[] trWholeSet = [
+			trCard,
+			TrItem("730-B", "B", NocatFarm.Core.SpareKind.Card),
+			TrItem("730-C", "C", NocatFarm.Core.SpareKind.Card),
+			TrItem("730-D", "D", NocatFarm.Core.SpareKind.Card),
+			TrItem("730-E", "E", NocatFarm.Core.SpareKind.Card)
+		];
+		NocatFarm.Core.TradeDecision trFlatAnswer = NocatFarm.Core.TradePolicy.Decide(trFlat,
+			NocatFarm.Core.TradeValues.From(trSource, trWholeSet, [trSack]), NocatFarm.Core.GateResult.Allowed);
+		Check("trade rules: a whole set of any size takes the same flat price",
+			trFlatAnswer.Verdict == NocatFarm.Core.TradeVerdict.Accept, trFlatAnswer.Why);
+
+		string trWeb = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.TradeRules.cs"));
+		string trJs = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js"));
+		Check("trade rules: the preview reads a missing price only when asked",
+			trWeb.Contains("fetch ? TradeValueLookups.Stale : TradeValueLookups.Cached", StringComparison.Ordinal)
+			&& trJs.Contains("id=\"trFetch\"", StringComparison.Ordinal));
 
 		NocatFarm.Core.GateResult trBlocked = NocatFarm.Core.TradeGates.Check(
 			new NocatFarm.Core.Bot("tr-gate", new NocatFarm.Config.BotConfig { SpareKeepItems = "A" }),
@@ -31621,6 +31686,9 @@ sealed class FakeTradeSource : NocatFarm.Core.ITradeValueSource {
 	public DateTime Now { get; init; } = new(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);
 	public Dictionary<string, int?> GemValues { get; } = new(StringComparer.Ordinal);
 	public Dictionary<string, NocatFarm.Core.MarketQuote?> Quotes { get; } = new(StringComparer.Ordinal);
+	/// <summary>The price the next ask for a hash answers with (and keeps) - for a look that reads a stale one again.</summary>
+	public Dictionary<string, NocatFarm.Core.MarketQuote?> NextQuotes { get; } = new(StringComparer.Ordinal);
+	public int QuoteReads { get; private set; }
 	public Dictionary<uint, NocatFarm.Modules.CardSet?> Sets { get; } = [];
 	public int? SackNet { get; init; } = 80;
 	public double? RateValue { get; init; }
@@ -31633,7 +31701,18 @@ sealed class FakeTradeSource : NocatFarm.Core.ITradeValueSource {
 
 	public NocatFarm.Core.MarketQuote? Quote(string hash) => Quotes.TryGetValue(hash, out NocatFarm.Core.MarketQuote? quote) ? quote : null;
 
-	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, CancellationToken ct) => Task.FromResult(Quote(hash));
+	public Task<NocatFarm.Core.MarketQuote?> QuoteAsync(string hash, CancellationToken ct) {
+		QuoteReads++;
+
+		if (NextQuotes.TryGetValue(hash, out NocatFarm.Core.MarketQuote? next)) {
+			Quotes[hash] = next;
+			NextQuotes.Remove(hash);
+
+			return Task.FromResult(next);
+		}
+
+		return Task.FromResult(Quote(hash));
+	}
 
 	public NocatFarm.Modules.CardSet? Set(uint app) => Sets.TryGetValue(app, out NocatFarm.Modules.CardSet? set) ? set : null;
 

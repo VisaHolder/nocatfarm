@@ -7,7 +7,7 @@ Rules that decide incoming trade offers for one account, beyond the built-in fai
 - **They never run** for your own accounts (`Trade masters`), pure donations, or a card swap nocat.lol paired. Those keep their existing behaviour.
 - **A custom accept from a stranger waits for your confirmation by default.** The offer is accepted and waits in your Steam app like any other confirmation. Only your own accounts, the accounts you allowed to trade with, and nocat.lol swaps are confirmed automatically. The opt-in **Confirm custom accepts in the Steam app** (`TradeRulesConfirm`) changes that for an account that runs as an exchange or level-up bot - see below.
 - **A hard gate always wins.** If the offer would give away an item that is kept, reserved for a badge, already promised in another live offer, or not tradable, the rules are not asked at all.
-- **Missing or stale data never accepts or declines.** The offer is left for the next look and tried again.
+- **Missing or stale data never accepts or declines.** A missing or too-old price is read once more first; if it is still unknown, the offer is left for the next look and tried again.
 - **A trade hold is checked after the waiting period**, like a fair swap. A held offer is left for you.
 - Human mode still answers one offer at a time, and the offer still waits its usual delay.
 
@@ -95,27 +95,28 @@ With `only: true`, every item on the payment side must match. The default accept
 
 ## The seven kinds
 
-### `card-gems` — cards for their gem worth
+### `card-gems` — spares for their gem worth
 
 ```json
 {
-  "id": "cards-worth",
+  "id": "spares-worth",
   "kind": "card-gems",
   "worth": "gems",
-  "fallback": "none",
-  "sameGame": true,
+  "fallback": "wallet",
+  "sameGame": false,
   "marginPct": 0,
   "minMarginGems": 0,
-  "match": { "kinds": ["Card"], "foil": false },
+  "match": { "kinds": ["Background", "Emoticon"] },
   "payIn": { "kinds": ["GemSack", "Gems"], "only": true }
 }
 ```
 
+- The preset matches backgrounds and emoticons only — the things spare items would turn into gems anyway. Add `"Card"` (and `"FoilCard"`) to `match.kinds` when you want cards accepted as well.
 - `worth`: `gems` (Steam's GooValue) or `wallet` (market value after Steam's fee, converted through a sack).
 - `fallback`: `none`, `gems` or `wallet`; must differ from `worth`. Used only when the primary value is missing.
-- Required payment = `ceil(sum(card worth) * (1 + marginPct / 100) + minMarginGems)`.
-- `sameGame: true` requires every given card to share a game.
-- The giving side must be entirely matching cards, or the rule abstains (leaves the offer alone).
+- Required payment = `ceil(sum(item worth) * (1 + marginPct / 100) + minMarginGems)`.
+- `sameGame: true` requires every given item to share a game.
+- The giving side must be entirely matching items, or the rule abstains (leaves the offer alone).
 - A missing value means Unknown, not zero.
 
 ### `set-size-gems` — a price table by card-set size
@@ -127,6 +128,7 @@ With `only: true`, every item on the payment side must match. The default accept
   "per": "card",
   "table": { "5": 15, "8": 20, "10": 25, "15": 35 },
   "defaultPerCard": null,
+  "defaultPerSet": null,
   "onUnknownSet": "unknown",
   "match": { "kinds": ["Card"], "foil": false }
 }
@@ -135,6 +137,8 @@ With `only: true`, every item on the payment side must match. The default accept
 - `per: "card"` (default): required = the table's value for each given card, summed.
 - `per: "completeSet"`: the offer must contain a complete set (`count == set size`) for each represented set; required += the table's value for that size. An incomplete set abstains.
 - `defaultPerCard` is used when the set size isn't in the table; `null` means no default.
+- `defaultPerSet` is the flat price of any whole set whose size isn't in the table. With an empty table it prices every set the same: `{ "per": "completeSet", "defaultPerSet": 1000 }` is the level-up preset.
+- A table may be empty only when the matching default (`defaultPerCard` for `card`, `defaultPerSet` for `completeSet`) is set.
 - `onUnknownSet`: `unknown` (leave the offer) or `abstain` (ignore this rule). Default `unknown`.
 
 ### `item-threshold` — backgrounds, emoticons, boosters
@@ -203,14 +207,14 @@ Buy:
 - `minSales`, `maxAgeHours` and `undercutPct` apply to expected/floor.
 - An unknown set is Unknown unless the value is `fixed`. An `expected` of 0 because quotes are missing is Unknown, not a free booster.
 
-### `foil-swap` — normals for foils
+### `foil-swap` — foils for normals
 
 ```json
 {
-  "id": "normals-for-foils",
+  "id": "foils-for-normals",
   "kind": "foil-swap",
-  "give": { "count": 3, "foil": false, "match": { "apps": [730] } },
-  "get": { "count": 1, "foil": true, "match": { "apps": [730] } },
+  "give": { "count": 1, "foil": true, "match": { "apps": [730] } },
+  "get": { "count": 3, "foil": false, "match": { "apps": [730] } },
   "sameGame": true,
   "mode": "exact",
   "maxLossPct": 0
@@ -221,7 +225,7 @@ Buy:
 - `count` is a number of items, not a sum of amounts.
 - `mode: "exact"` (default) requires exactly those counts and no other items. `mode: "atLeast"` allows extras, but every item on each side must still match that side's filter.
 - `sameGame: true` requires every given and received card to share a game.
-- `maxLossPct`: 0–100; default `0` means the received foils must be worth at least the given normals at market net. `null` skips the value check.
+- `maxLossPct`: 0–100; default `0` means the received normals must be worth at least the given foil at market net. `null` skips the value check, which a foil-for-normals rule usually needs since a foil is often worth more than three normals.
 - If a value is missing or stale and `maxLossPct` is set, the rule is Unknown.
 - A `decline` version of this rule is a shape veto: it matches and declines without a value check.
 
@@ -334,7 +338,7 @@ Examples:
 { "kind": "expression", "action": "decline", "expr": "count(\"giving\", \"FoilCard\") > 0" }
 ```
 
-The presets `expression-gems` and `expression-foil-swap` are these first two, ready to edit.
+The preset `expression-gems` is the first of these, ready to edit.
 
 ## Ordering and verdicts
 
@@ -346,11 +350,13 @@ The presets `expression-gems` and `expression-foil-swap` are these first two, re
 
 ## The preview
 
-On the Trade rules page, **Preview offers** reads the offers waiting now and shows, for each: what you give and get, each item's gems and wallet value, the final verdict and rule, why, and any gate reason. It performs no accept, decline or claim. Prices are read from what is already known; missing prices are shown as such.
+On the Trade rules page, **Preview offers** reads the offers waiting now and shows, for each: what you give and get, each item's gems and wallet value, the final verdict and rule, why, and any gate reason. It performs no accept, decline or claim. By default it uses only prices already held, so a preview never asks the market; tick **Read missing or stale prices** to let it ask once for that preview (the same 8-lookup, 10-second budget as a real look). A price it could not get is shown as such.
 
 ## Steam requests
 
 Valuation is lazy: a rule about counts reads nothing. At most 8 uncached Steam lookups and 10 seconds are spent on one offer. Cached values are free. When the budget runs out the remaining values are Unknown and the offer is left.
+
+When a rule stops at a **missing or too-old** price, the offer loop makes one second pass before leaving the offer: the prices that rule needed are read again (as background requests, inside the same 8-lookup budget) and the rules are decided once more. A missing price is asked for; a stale one is refreshed, then rejected again if the market still returns nothing fresh. To keep a burst of trades from becoming a burst of requests, one offer is refreshed at most every ten minutes and at most three offers a minute are refreshed. If the second pass is still Unknown, the offer waits for the next look exactly as before - it is never accepted or declined on a guess.
 
 ## A note on value bases
 
