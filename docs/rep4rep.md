@@ -53,6 +53,13 @@ another task is picked instead. The default list is `add me, add, free, trade, g
 words in any case, so "add" skips "add me +rep" but not "address". *Don't post comments with links* (on) also skips any
 comment with a web address in it. The **Tasks** view on the rep4rep tab shows which ones would be skipped and why.
 
+*Skip comments worth less than* (per account, 0 by default, which is off) does the same by what a task pays. A task under
+that many points is never posted, isn't counted against the daily cap, and can't be posted by hand either. With a minimum
+set, a task whose points can't be read counts as too low. If every task is too low, the account says it's *waiting for
+better-paying tasks* in the `rep4rep` summary and on the tab, and looks again like it does when there are no tasks. The
+**Tasks** view and `rep4rep tasks <account>` show what each task pays, and mark the ones skipped. Accounts moved over
+from 1.8.x start at 0.
+
 ## Commands
 
 ```

@@ -27,7 +27,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 		SetBlockList = "BlockList", SetBlockLinks = "BlockLinks";
 
 	internal const string SetOn = "On", SetDailyCap = "DailyCap", SetGapMin = "GapMinMinutes", SetGapMax = "GapMaxMinutes",
-		SetStartHour = "StartHour", SetEndHour = "EndHour", SetLearnCap = "LearnCap", SetRetryRefused = "RetryRefused";
+		SetStartHour = "StartHour", SetEndHour = "EndHour", SetLearnCap = "LearnCap", SetRetryRefused = "RetryRefused", SetMinPoints = "MinPoints";
 
 	internal IPluginHost Host { get; private set; } = null!;
 	internal Rep4RepApi Api { get; private set; } = new();
@@ -138,6 +138,8 @@ public sealed class Rep4RepAddon : INocatPlugin {
 			T("When Steam says the account has hit its daily comment limit before the number set above, that becomes its limit (never below 5). A \"commenting too frequently\" refusal is about the gap between comments and never changes it."), PluginSettingKind.Bool, "true", PerAccount: true));
 		host.AddSetting(new PluginSetting(SetRetryRefused, T("Retry a refused comment"),
 			T("Gives a refused comment one more try before skipping that profile for a day."), PluginSettingKind.Bool, "false", PerAccount: true));
+		host.AddSetting(new PluginSetting(SetMinPoints, T("Skip comments worth less than"),
+			T("Tasks paying fewer points than this are skipped like a comment on the block list: never posted, and not counted against the cap. 0 posts everything, whatever it pays."), PluginSettingKind.Int, "0", PerAccount: true));
 	}
 
 	internal bool Bool(string name, string? account = null) =>
@@ -408,9 +410,12 @@ public sealed class Rep4RepAddon : INocatPlugin {
 				StringBuilder sb = new();
 				sb.AppendLine(T("{0} task(s) waiting for {1}:", tasks.Count, acc.Name));
 
+				int minimum = Commenter(acc.Name).MinPoints;
+
 				foreach (Rep4RepTask t in tasks.Take(15)) {
-					string skip = Blocked(t.CommentText) is { } why ? "  " + T("(skipped: \"{0}\")", why) : "";
-					sb.AppendLine($"  {t.TaskId,-10} {t.TargetName,-24} \"{t.CommentText}\"{skip}");
+					string skip = Blocked(t.CommentText) is { } why ? "  " + T("(skipped: \"{0}\")", why)
+						: t.BelowMinimum(minimum) ? "  " + T("(skipped: worth less than {0})", minimum) : "";
+					sb.AppendLine($"  {t.TaskId,-10} {T("{0} points", t.PointsText),-12} {t.TargetName,-24} \"{t.CommentText}\"{skip}");
 				}
 
 				return sb.ToString().TrimEnd();
@@ -641,10 +646,14 @@ public sealed class Rep4RepAddon : INocatPlugin {
 		}
 
 		blocks.Add(PluginBlock.Note(T("nocat.farm posts these for you on a schedule. There's nothing to do here - this is just what's waiting. rep4rep checks the text matches exactly, so these are posted character for character.")));
-		blocks.Add(PluginBlock.Table([T("Profile"), T("Comment"), ""],
+		int minimum = Commenter(acc.Name).MinPoints;
+
+		blocks.Add(PluginBlock.Table([T("Profile"), T("Points"), T("Comment"), ""],
 			[.. tasks.Select(t => Blocked(t.CommentText) is { } why
-				? new PluginRow([t.TargetName, t.CommentText, T("skipped: \"{0}\"", why)])
-				: new PluginRow([t.TargetName, t.CommentText, ""], new PluginButton(T("Post now"), $"rep4rep post {acc.Name} {t.TaskId}", "tasks:" + acc.Name)))]));
+				? new PluginRow([t.TargetName, t.PointsText, t.CommentText, T("skipped: \"{0}\"", why)])
+				: t.BelowMinimum(minimum)
+				? new PluginRow([t.TargetName, t.PointsText, t.CommentText, T("skipped: worth less than {0}", minimum)])
+				: new PluginRow([t.TargetName, t.PointsText, t.CommentText, ""], new PluginButton(T("Post now"), $"rep4rep post {acc.Name} {t.TaskId}", "tasks:" + acc.Name)))]));
 	}
 
 	// ── words for times ─────────────────────────────────────────────────────

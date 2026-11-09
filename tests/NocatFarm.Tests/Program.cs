@@ -29459,7 +29459,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		NocatFarm.Plugins.PluginPage setup = await addon.RenderAsync(null);
 		string aStatus = await addon.CommandAsync(["status"]);
 		Check("rep4rep add-on: loads against the plugin API - its settings, 'rep4rep' and 'r4r', its tab",
-			(addon.Name == "rep4rep") && (addon.Version == "1.0.0") && aCommands.Contains("rep4rep") && aCommands.Contains("r4r") && (aDeclared.Count == 13) && (aPage != null), $"{aDeclared.Count} settings");
+			(addon.Name == "rep4rep") && (addon.Version == "1.0.0") && aCommands.Contains("rep4rep") && aCommands.Contains("r4r") && (aDeclared.Count == 14) && (aPage != null), $"{aDeclared.Count} settings");
 		Check("rep4rep add-on: no key yet - the tab shows how to set it up, 'rep4rep' says the key is missing",
 			setup.Blocks.Any(static b => b.Url == "https://rep4rep.com/?r=reap") && aStatus.Contains("MISSING", StringComparison.Ordinal), aStatus);
 		Check("rep4rep add-on: the block list's default is the one the setting shows", aHost.Setting("BlockList") == NocatFarm.Addons.Rep4Rep.BlockList.Default);
@@ -30224,6 +30224,9 @@ await StressChecks190.RunAsync(Check);
 
 // Updating as a systemd service: the helper script for real, and the handshake that says the unit has it.
 await ServiceUpdateChecks.RunAsync(Check);
+
+// rep4rep's "Skip comments worth less than": run through the add-on's real loop step against a pretend rep4rep.
+await Rep4RepMinimumChecks.RunAsync(Check);
 
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
@@ -40051,5 +40054,191 @@ static class ServiceUpdateChecks {
 		var found = await api.ResolveDetailedAsync(0, true, CancellationToken.None);
 		Check("rep4rep: an account with no SteamID yet is never looked up or added - no POST of 0",
 			(found.Id == null) && !found.Unanswered && !found.LinkedElsewhere && (fake.Calls == 0), $"{fake.Calls} calls");
+	}
+}
+
+/// <summary>
+/// "Skip comments worth less than", through the add-on's real step: its own settings, its loop's one step, a pretend rep4rep over
+/// HTTP and a pretend app that counts what it's asked to post.
+/// </summary>
+static class Rep4RepMinimumChecks {
+	public static async Task RunAsync(Action<string, bool, string> check) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+
+		List<NocatFarm.Addons.Rep4Rep.Rep4RepTask> Read(string body) => NocatFarm.Addons.Rep4Rep.Rep4RepApi.ReadTasks(body);
+		string Task1(string id, string points) => $$"""{"requestId":"{{id}}","target":{"steamId":"7656119800000{{id.PadLeft(4, '0')}}","name":"t{{id}}"},"comment":{"id":"c{{id}}","text":"+rep {{id}}"}{{points}},"ticket":"k"}""";
+		string Batch(params string[] rows) => "{\"data\":[" + string.Join(',', rows) + "]}";
+
+		var read = Read(Batch(Task1("1", ",\"points\":12"), Task1("2", ",\"points\":\"7\""), Task1("3", ",\"points\":2.5"), Task1("4", ""), Task1("5", ",\"points\":\"lots\"")));
+		Check("rep4rep minimum: a task's points are read, as a number or text; none or nonsense is no number",
+			(read.Count == 5) && (read[0].Points == 12m) && (read[1].Points == 7m) && (read[2].Points == 2.5m) && (read[3].Points == null) && (read[4].Points == null)
+			&& (read[2].PointsText == "2.5") && (read[3].PointsText == "?"));
+		Check("rep4rep minimum: under it is skipped, at it isn't; no minimum skips nothing, not even unreadable points; with one, unreadable counts as below",
+			read[1].BelowMinimum(8) && !read[1].BelowMinimum(7) && !read[0].BelowMinimum(7) && read[2].BelowMinimum(3)
+			&& !read[3].BelowMinimum(0) && !read[1].BelowMinimum(0) && read[3].BelowMinimum(1) && read[4].BelowMinimum(1));
+
+		// One step of the add-on's own loop, for an account set to this minimum, on a batch rep4rep hands out.
+		List<NocatFarm.Addons.Rep4Rep.Rep4RepAddon> loaded = [];
+
+		async Task<(int Wait, List<string> Posted, string Status, int TaskLooks, NocatFarm.Addons.Rep4Rep.Commenter C, NocatFarm.Addons.Rep4Rep.Rep4RepAddon Addon, Host H)> Step(string? minimum, string batch, ulong steamId = 76561198000000001) {
+			Host h = new() { Min = minimum, SteamId = steamId };
+			var addon = new NocatFarm.Addons.Rep4Rep.Rep4RepAddon();
+			loaded.Add(addon);
+			NocatFarm.Plugins.IPluginHost proxy = Host.Make(h);
+			await addon.OnLoadAsync(proxy, CancellationToken.None);
+			int looks = 0;
+			var fake = new FakePing((r, _) => {
+				string url = r.RequestUri!.ToString();
+				looks += url.Contains("/tasks?", StringComparison.Ordinal) ? 1 : 0;
+				h.Sent.Add($"{r.Method} {url}");
+
+				return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(
+					url.Contains("/tasks?", StringComparison.Ordinal) ? batch : """{"data":[{"steamId":"76561198000000001"}]}""") });
+			});
+			typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).GetProperty("Api", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(addon, new NocatFarm.Addons.Rep4Rep.Rep4RepApi(fake) { Token = "key" });
+			// The add-on's own, whose loop is in its long first wait by now - it won't step while this does.
+			var c = addon.Of("main")!;
+
+			for (int i = 0; (i < 500) && (c.Status.Length == 0); i++) {
+				await Task.Delay(10);
+			}
+
+			Type t = typeof(NocatFarm.Addons.Rep4Rep.Commenter);
+			t.GetField("_forceNext", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(c, true);
+			int wait = await (Task<int>) t.GetMethod("StepAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(c, [CancellationToken.None])!;
+
+			return (wait, h.Posted, c.Status, looks, c, addon, h);
+		}
+
+		string mixed = Batch(Task1("1", ",\"points\":5"), Task1("2", ",\"points\":7"), Task1("3", ",\"points\":9"));
+		string sorted = Batch(Task1("3", ",\"points\":9"), Task1("2", ",\"points\":7"), Task1("1", ",\"points\":5"));
+
+		var below = await Step("8", mixed);
+		Check("rep4rep minimum: tasks below it are skipped, and the first worth enough is posted", below.Posted.SequenceEqual(["+rep 3"]), string.Join('|', below.Posted));
+		var atMin = await Step("7", Batch(Task1("1", ",\"points\":5"), Task1("2", ",\"points\":7")));
+		Check("rep4rep minimum: a task at exactly the minimum is posted", atMin.Posted.SequenceEqual(["+rep 2"]), string.Join('|', atMin.Posted));
+		var off = await Step("0", Batch(Task1("1", ",\"points\":1"), Task1("2", "")));
+		Check("rep4rep minimum: the default, 0, posts everything - the lowest paid, and one with no points", off.Posted.SequenceEqual(["+rep 1"]), string.Join('|', off.Posted));
+		var noSetting = await Step(null, Batch(Task1("2", "")));
+		Check("rep4rep minimum: moved from 1.8.x with no such setting - the default, nothing skipped", noSetting.Posted.SequenceEqual(["+rep 2"]), string.Join('|', noSetting.Posted));
+		var unreadable = await Step("1", Batch(Task1("2", "")));
+		Check("rep4rep minimum: with a minimum set, unreadable points aren't posted", unreadable.Posted.Count == 0, string.Join('|', unreadable.Posted));
+
+		var allLow = await Step("100", sorted);
+		Check("rep4rep minimum: every task below it - nothing posted or counted, says it's waiting for better-paying tasks",
+			(allLow.Posted.Count == 0) && (allLow.C.PostsToday == 0) && allLow.Status.Contains("waiting for better-paying tasks (at least 100 points)", StringComparison.Ordinal), allLow.Status);
+		Check("rep4rep minimum: and waits as long as with no tasks at all, one look - no tight loop", (allLow.Wait >= 30 * 60) && (allLow.TaskLooks == 1), $"{allLow.Wait}s, {allLow.TaskLooks} looks");
+		Check("rep4rep minimum: said once per look at debug level, however many tasks", allLow.H.Debugs.Count(static d => d.Contains("worth less than", StringComparison.Ordinal)) == 1, string.Join('|', allLow.H.Debugs));
+		string summary = await allLow.Addon.CommandAsync(["status"]);
+		Check("rep4rep minimum: the status says it too", summary.Contains("waiting for better-paying tasks", StringComparison.Ordinal), summary);
+		NocatFarm.Plugins.PluginPage tab = await allLow.Addon.RenderAsync(null);
+		Check("rep4rep minimum: and the tab", tab.Blocks.Any(static b => b.Rows?.Any(static r => r.Cells.Any(static c => c.Contains("waiting for better-paying tasks", StringComparison.Ordinal))) == true));
+		var empty = await Step("100", Batch());
+		Check("rep4rep minimum: no tasks at all still says just that, not 'waiting for better-paying ones'", empty.Status.Contains("no task available", StringComparison.Ordinal), empty.Status);
+		var blockedOnly = await Step("1", Batch("""{"requestId":"9","target":{"steamId":"76561198000000009","name":"t9"},"comment":{"id":"c9","text":"add me please"},"points":50,"ticket":"k"}"""));
+		Check("rep4rep minimum: only blocked comments isn't waiting for better pay", (blockedOnly.Posted.Count == 0) && blockedOnly.Status.Contains("no task available", StringComparison.Ordinal), blockedOnly.Status);
+
+		var list = await Step("8", mixed);
+		string tasks = await list.Addon.CommandAsync(["tasks", "main"]);
+		string[] rows = tasks.Split('\n');
+		Check("rep4rep tasks: each task's points, and the ones skipped marked",
+			rows.Any(static r => r.Contains("5 points", StringComparison.Ordinal) && r.Contains("(skipped: worth less than 8)", StringComparison.Ordinal))
+			&& rows.Any(static r => r.Contains("9 points", StringComparison.Ordinal) && !r.Contains("skipped", StringComparison.Ordinal)), tasks);
+		NocatFarm.Plugins.PluginPage page = await list.Addon.RenderAsync("tasks:main");
+		var table = page.Blocks.First(static b => b.Rows != null).Rows!;
+		Check("rep4rep tab: the points shown, a skipped one marked with no Post button, the others with one",
+			table.Any(static r => (r.Cells[1] == "5") && (r.Cells[3] == "skipped: worth less than 8") && (r.Button == null))
+			&& table.Any(static r => (r.Cells[1] == "9") && (r.Cells[3].Length == 0) && (r.Button != null)));
+		string byHand = await list.C.PostNowAsync("1", CancellationToken.None);
+		Check("rep4rep post: a task below the minimum can't be posted by hand, like a blocked one",
+			byHand.Contains("less than this account's minimum of 8", StringComparison.Ordinal) && !list.H.Posted.Contains("+rep 1"), byHand);
+
+		// 'rep4rep tasks' on an account that isn't signed in yet: no SteamID, so nothing is asked, and it says why.
+		var notIn = await Step("0", mixed, 0);
+		string notSigned = await notIn.Addon.CommandAsync(["tasks", "main"]);
+		Check("rep4rep tasks: an account not signed in yet says so, not 'isn't registered', and rep4rep is never sent a SteamID of 0",
+			notSigned.Contains("main isn't signed in yet", StringComparison.Ordinal) && !notSigned.Contains("registered", StringComparison.Ordinal)
+			&& !notIn.H.Sent.Any(static c => c.StartsWith("POST", StringComparison.Ordinal) || c.Contains("/steam-profiles", StringComparison.Ordinal)), notSigned + " | " + string.Join(", ", notIn.H.Sent));
+
+		foreach (var addon in loaded) {
+			await addon.OnUnloadAsync();
+		}
+	}
+
+	/// <summary>The app, as far as these checks go: one account signed in, its settings, and every comment it's asked to post.</summary>
+	sealed class Host {
+		public string? Min;
+		public ulong SteamId = 76561198000000001;
+		public readonly List<string> Posted = [], Debugs = [], Sent = [];
+
+		public static NocatFarm.Plugins.IPluginHost Make(Host h) {
+			NocatFarm.Plugins.IPluginHost p = DispatchProxy.Create<NocatFarm.Plugins.IPluginHost, HostProxy>();
+			((HostProxy) (object) p).Me = h;
+
+			return p;
+		}
+
+		public NocatFarm.Plugins.IPluginAccount Account() {
+			NocatFarm.Plugins.IPluginAccount p = DispatchProxy.Create<NocatFarm.Plugins.IPluginAccount, AccountProxy>();
+			((AccountProxy) (object) p).Me = this;
+
+			return p;
+		}
+	}
+
+	class HostProxy : DispatchProxy {
+		public Host Me = null!;
+
+		protected override object? Invoke(MethodInfo? m, object?[]? a) {
+			switch (m!.Name) {
+				case "get_AppVersion": return "9.9.9";
+				case "get_Language": return "en";
+				case "get_Accounts": return new[] { Me.Account() };
+				case "Account": return (string) a![0]! == "main" ? Me.Account() : null;
+				case "CanComment": return new NocatFarm.Plugins.PluginCommentCheck(true, "", null, 0, 25);
+				case "Setting":
+					return (string) a![0]! switch {
+						NocatFarm.Addons.Rep4Rep.Rep4RepAddon.SetMinPoints when a.Length == 2 => Me.Min ?? "",
+						NocatFarm.Addons.Rep4Rep.Rep4RepAddon.SetOn => "true",
+						NocatFarm.Addons.Rep4Rep.Rep4RepAddon.SetKey => "key",
+						NocatFarm.Addons.Rep4Rep.Rep4RepAddon.SetBlockList => NocatFarm.Addons.Rep4Rep.BlockList.Default,
+						_ => ""
+					};
+				case "PostProfileCommentAsync":
+					Me.Posted.Add((string) a![2]!);
+
+					return Task.FromResult(new NocatFarm.Plugins.PluginCommentResult(NocatFarm.Plugins.PluginCommentOutcome.Posted));
+				case "Log" or "Debug" or "Info" or "Notify":
+					Me.Debugs.Add(a?.OfType<string>().LastOrDefault() ?? "");
+
+					return null;
+			}
+
+			Type r = m.ReturnType;
+
+			if (r == typeof(Task)) {
+				return Task.CompletedTask;
+			}
+
+			if (r.IsGenericType && (r.GetGenericTypeDefinition() == typeof(Task<>))) {
+				Type v = r.GetGenericArguments()[0];
+
+				return typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(v).Invoke(null, [v.IsValueType ? Activator.CreateInstance(v) : null]);
+			}
+
+			return r.IsValueType && (r != typeof(void)) ? Activator.CreateInstance(r) : null;
+		}
+	}
+
+	class AccountProxy : DispatchProxy {
+		public Host Me = null!;
+
+		protected override object? Invoke(MethodInfo? m, object?[]? a) => m!.Name switch {
+			"get_Name" => "main",
+			"get_SteamId" => Me.SteamId,
+			"get_IsOnline" => Me.SteamId != 0,
+			"get_IsPaused" => false,
+			_ => m.ReturnType.IsValueType && (m.ReturnType != typeof(void)) ? Activator.CreateInstance(m.ReturnType) : null
+		};
 	}
 }

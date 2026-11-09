@@ -14,6 +14,15 @@ public sealed class Rep4RepTask {
 
 	/// <summary>The task's ticket: sent with the comment, rep4rep takes it for up to an hour at the points shown. Can be empty.</summary>
 	public string Ticket { get; init; } = "";
+
+	/// <summary>What rep4rep pays for it. Null when its answer had no number that could be read.</summary>
+	public decimal? Points { get; init; }
+
+	/// <summary>The points as they're shown: "?" when there's no telling.</summary>
+	public string PointsText => Points is { } p ? p.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : "?";
+
+	/// <summary>Worth less than this minimum, so never posted. No minimum (0): nothing is. With one, points that can't be read count as too few.</summary>
+	public bool BelowMinimum(int minimum) => (minimum > 0) && !((Points is { } p) && (p >= minimum));
 }
 
 /// <summary>
@@ -325,7 +334,8 @@ public sealed class Rep4RepApi : IDisposable {
 					TargetName = ReadString(target, "name") ?? targetId.ToString(),
 					CommentText = text,
 					RequiredCommentId = commentId,
-					Ticket = ReadString(row, "ticket") ?? ""
+					Ticket = ReadString(row, "ticket") ?? "",
+					Points = decimal.TryParse(ReadString(row, "points"), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out decimal points) ? points : null
 				});
 			}
 		} catch (JsonException e) {
