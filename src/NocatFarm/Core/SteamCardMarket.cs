@@ -24,7 +24,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 
 	private static DateTime _lastRead = DateTime.MinValue;
 
-	/// <summary>Steam's confirmation type for a market purchase (SteamKit's EMobileConfirmationType.MarketPurchase).</summary>
+	/// <summary>Steam's confirmation type for a market purchase, as /mobileconf/getlist writes it.</summary>
 	internal const int MarketPurchase = 12;
 
 	/// <summary>
@@ -505,6 +505,15 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		return ReadStatus(json);
 	}
 
+	/// <summary>
+	/// The confirmation Steam named for this purchase, out of the account's confirmation list. Steam's createbuyorder answer
+	/// gives the buy order's id as <c>confirmation_id</c> - not the confirmation list's own <c>id</c>: in the list the order
+	/// sits as the item's <c>creator_id</c>, with the type of a market purchase. Matching the list's <c>id</c> against it
+	/// never found anything (October 2026), so every purchase stayed unsure and nothing was ever bought.
+	/// </summary>
+	public static Confirmations.Item? MatchPurchase(IEnumerable<Confirmations.Item> items, ulong orderId) =>
+		items.FirstOrDefault(i => (i.Type == MarketPurchase) && (i.CreatorId == orderId));
+
 	/// <summary>Accept (or deny) exactly the confirmation Steam named for this purchase, with the account's authenticator. False when it can't.</summary>
 	private async Task<bool> ConfirmAsync(string confirmationId, bool accept, CancellationToken t) {
 		if (!_web.CanConfirm || !ulong.TryParse(confirmationId, NumberStyles.None, CultureInfo.InvariantCulture, out ulong id) || (id == 0)) {
@@ -515,7 +524,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 			await _web.DelayAsync(Rng.Seconds(2, 4), t).ConfigureAwait(false);
 			(bool ok, IReadOnlyList<Confirmations.Item> items) = await _web.ConfirmationsAsync(t).ConfigureAwait(false);
 
-			if (ok && (items.FirstOrDefault(i => (i.Id == id) && (i.Type == MarketPurchase)) is { } match)) {
+			if (ok && (MatchPurchase(items, id) is { } match)) {
 				return await _web.ActAsync(match, accept, t).ConfigureAwait(false);
 			}
 		}
