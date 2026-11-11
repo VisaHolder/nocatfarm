@@ -32379,8 +32379,8 @@ static class BuySafetyChecks {
 				(checkAnswer.Result == NocatFarm.Modules.BuyResult.Gone) && checkWeb.Calls.Contains("cancel:6001") && (checkFilled is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }),
 				$"{checkAnswer} {checkFilled} {string.Join(",", checkWeb.Calls)}");
 			string marketSrc = Src("src/NocatFarm/Core/SteamCardMarket.cs");
-			Check("an earlier order: only ids it placed - never the owner's own orders found on the listings page",
-				!marketSrc.Contains("mylistings", StringComparison.Ordinal) && !marketSrc.Contains("CreatorId", StringComparison.Ordinal));
+			Check("an earlier order: only ids it placed - no listings page, and a purchase confirmation matched by its creator",
+				!marketSrc.Contains("mylistings", StringComparison.Ordinal) && marketSrc.Contains("i.CreatorId == orderId", StringComparison.Ordinal));
 
 			// ── the module: written down before, set straight after ──
 			FakeCardMarket Market() {
