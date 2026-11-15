@@ -100,6 +100,12 @@ public static class TradePolicy {
 			hits.Add(veto);
 		}
 
+		// An unresolved decline veto must never be bypassed by a later accept rule.
+		// It may become decidable on the next look (for example, when Steam supplies a price).
+		if (unknown is { } vetoUnknown) {
+			return new TradeDecision(TradeVerdict.Unknown, vetoUnknown.RuleId, vetoUnknown.Why, hits);
+		}
+
 		foreach (TradeRule rule in set.Rules.Where(static r => !r.Declines)) {
 			if (!rule.Enabled) {
 				continue;
