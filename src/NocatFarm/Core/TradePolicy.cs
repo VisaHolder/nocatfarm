@@ -83,6 +83,10 @@ public static class TradePolicy {
 
 		// Shape and partner vetoes first: a matching decline always wins.
 		foreach (TradeRule rule in set.Rules.Where(static r => r.Declines)) {
+			if (!rule.Enabled) {
+				continue;
+			}
+
 			RuleHit veto = await VetoAsync(rule, values, ct).ConfigureAwait(false);
 
 			if (veto.Verdict == TradeVerdict.Decline) {
