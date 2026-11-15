@@ -29,7 +29,7 @@ public sealed record GateResult(GateBlock Block, string Why) {
 public static class TradeGates {
 	public static GateResult Check(Bot bot, TradeOffers.Offer offer, TradeValues values, IReadOnlyCollection<ulong> committed) {
 		SpareRules spare = SpareRules.From(bot.Cfg);
-		CardExchange.Rules exchange = CardExchange.Rules.From(bot.Cfg);
+		CardExchange.Rules exchange = CardExchange.RulesOf(bot, DateTime.UtcNow);
 
 		foreach (TradeOffers.Item item in offer.Giving) {
 			if (!item.Tradable) {
