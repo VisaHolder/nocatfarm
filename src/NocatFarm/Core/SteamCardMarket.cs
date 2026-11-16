@@ -24,7 +24,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 
 	private static DateTime _lastRead = DateTime.MinValue;
 
-	/// <summary>Steam's confirmation type for a market purchase (SteamKit's EMobileConfirmationType.MarketPurchase).</summary>
+	/// <summary>Steam's confirmation type for a market purchase, as /mobileconf/getlist writes it.</summary>
 	internal const int MarketPurchase = 12;
 
 	/// <summary>
@@ -505,9 +505,23 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 		return ReadStatus(json);
 	}
 
+	/// <summary>
+	/// The confirmation Steam named for this purchase, out of the account's confirmation list: the market purchase whose
+	/// <c>creator_id</c> is the number createbuyorder handed back as <c>confirmation_id</c>.
+	/// </summary>
+	/// <remarks>
+	/// Despite its name, that number is neither the confirmation list's own <c>id</c> nor the buy order's id: it's the purchase
+	/// confirmation's creator. The owner's log (November 2026) had confirmation_id 5794846816057392917 where buy order ids look
+	/// like 8715308020. Matched against the list's <c>id</c>, it never found anything, so every purchase that wanted
+	/// confirming stayed unsure and nothing was bought.
+	/// </remarks>
+	public static Confirmations.Item? MatchPurchase(IEnumerable<Confirmations.Item> items, ulong creatorId) =>
+		items.FirstOrDefault(i => (i.Type == MarketPurchase) && (i.CreatorId == creatorId));
+
 	/// <summary>Accept (or deny) exactly the confirmation Steam named for this purchase, with the account's authenticator. False when it can't.</summary>
-	private async Task<bool> ConfirmAsync(string confirmationId, bool accept, CancellationToken t) {
-		if (!_web.CanConfirm || !ulong.TryParse(confirmationId, NumberStyles.None, CultureInfo.InvariantCulture, out ulong id) || (id == 0)) {
+	/// <param name="creatorId">createbuyorder's <c>confirmation_id</c>: the purchase confirmation's creator id (<see cref="MatchPurchase"/>).</param>
+	private async Task<bool> ConfirmAsync(string creatorId, bool accept, CancellationToken t) {
+		if (!_web.CanConfirm || !ulong.TryParse(creatorId, NumberStyles.None, CultureInfo.InvariantCulture, out ulong creator) || (creator == 0)) {
 			return false;
 		}
 
@@ -515,7 +529,7 @@ public sealed class SteamCardMarket(Bot bot, IMarketWeb? web = null) : ICardMark
 			await _web.DelayAsync(Rng.Seconds(2, 4), t).ConfigureAwait(false);
 			(bool ok, IReadOnlyList<Confirmations.Item> items) = await _web.ConfirmationsAsync(t).ConfigureAwait(false);
 
-			if (ok && (items.FirstOrDefault(i => (i.Id == id) && (i.Type == MarketPurchase)) is { } match)) {
+			if (ok && (MatchPurchase(items, creator) is { } match)) {
 				return await _web.ActAsync(match, accept, t).ConfigureAwait(false);
 			}
 		}

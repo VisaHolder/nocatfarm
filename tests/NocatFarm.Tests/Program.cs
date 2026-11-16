@@ -27283,7 +27283,7 @@ await CommandSweep.RunAsync(Check);
 		string bcMarketSrc = BcSrc("src/NocatFarm/Core/SteamCardMarket.cs");
 		Check("buy order: one card at a time, never left waiting on the market, and a confirmation is only ever this purchase's",
 			bcMarketSrc.Contains("/market/cancelbuyorder/", StringComparison.Ordinal) && bcMarketSrc.Contains("[\"quantity\"] = \"1\"", StringComparison.Ordinal)
-			&& bcMarketSrc.Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
+			&& bcMarketSrc.Contains("(i.Type == MarketPurchase) && (i.CreatorId == creatorId)", StringComparison.Ordinal));
 
 		// ── the plan, against a fake market ──
 		var bcNow = DateTime.UtcNow;
@@ -32319,31 +32319,39 @@ static class BuySafetyChecks {
 				$"{odd.Answer} {oddStatus.Answer}");
 
 			// ── Steam wanting the purchase confirmed ──
+			// createbuyorder's "confirmation_id" (900 here) is the purchase confirmation's creator_id in the confirmation list -
+			// not the list's own id, and not the buy order's id (live: 5794846816057392917 against order ids like 8715308020).
+			// A trade with that number, a purchase whose own id is 900, or a purchase created by something else is never touched.
+			Check("confirmation: only a market purchase whose creator id is the confirmation_id Steam named is it",
+				NocatFarm.Core.SteamCardMarket.MatchPurchase(
+					[FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade, creator: 900), FakeMarketWeb.Conf(900, 12, creator: 0), FakeMarketWeb.Conf(902, 12, creator: 999)], 900) == null
+				&& NocatFarm.Core.SteamCardMarket.MatchPurchase([FakeMarketWeb.Conf(901, 12, creator: 900)], 900) is { Id: 901, CreatorId: 900 });
 			var confirmed = await Buy(w => {
 				w.CanConfirm = true;
-				w.Waiting.Add(FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade));       // a trade with the same id: never touched
-				w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900));                           // the id only as its creator: not it
-				w.Waiting.Add(FakeMarketWeb.Conf(900, 12));
+				w.Waiting.Add(FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade));       // a trade with the same number: never touched
+				w.Waiting.Add(FakeMarketWeb.Conf(900, 12, creator: 0));                             // the number only as its own id: not it
+				w.Waiting.Add(FakeMarketWeb.Conf(902, 12, creator: 999));                           // a market purchase of something else
+				w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900));                           // the purchase: the number as its creator id
 				w.Orders.Enqueue((Confirm, true));
 				w.Orders.Enqueue((Placed, true));
 				w.Statuses.Enqueue(Filled);
 			});
-			Check("confirmation: only the market purchase with exactly that id is accepted, then the order goes in with it",
-				(confirmed.Answer.Result == NocatFarm.Modules.BuyResult.Bought) && confirmed.Web.Calls.Take(3).SequenceEqual(["order:0", "allow:900", "order:900"])
-				&& (confirmed.Web.Waiting.Count == 2) && confirmed.Web.Waiting.All(static i => (i.Type == NocatFarm.Core.Confirmations.Trade) || (i.Id == 901)),
+			Check("confirmation: the market purchase created by that confirmation_id is accepted (by its own id), then the order goes in with the confirmation_id",
+				(confirmed.Answer.Result == NocatFarm.Modules.BuyResult.Bought) && confirmed.Web.Calls.Take(3).SequenceEqual(["order:0", "allow:901", "order:900"])
+				&& (confirmed.Web.Waiting.Count == 3) && confirmed.Web.Waiting.All(static i => (i.Type == NocatFarm.Core.Confirmations.Trade) || (i.Id != 901)),
 				string.Join(",", confirmed.Web.Calls));
 			var onlyTrade = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, NocatFarm.Core.Confirmations.Trade)); w.Orders.Enqueue((Confirm, true)); });
 			Check("confirmation: not found as a market purchase - nothing accepted or denied, and unsure (it may still be waiting in the Steam app)",
 				(onlyTrade.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }) && !onlyTrade.Web.Calls.Any(static c => c.StartsWith("allow", StringComparison.Ordinal) || c.StartsWith("deny", StringComparison.Ordinal)),
 				$"{onlyTrade.Answer} {string.Join(",", onlyTrade.Web.Calls)}");
-			var denied = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); });
+			var denied = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900)); w.Orders.Enqueue((Confirm, true)); });
 			Check("confirmation: it couldn't be confirmed - exactly that one is denied, so nothing is left waiting, and nothing was bought",
-				(denied.Answer is { Result: NocatFarm.Modules.BuyResult.Refused, Paid: 0 }) && denied.Web.Calls.SequenceEqual(["order:0", "allow:900", "deny:900"]),
+				(denied.Answer is { Result: NocatFarm.Modules.BuyResult.Refused, Paid: 0 }) && denied.Web.Calls.SequenceEqual(["order:0", "allow:901", "deny:901"]),
 				$"{denied.Answer} {string.Join(",", denied.Web.Calls)}");
-			var stuck = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.DenyWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); });
+			var stuck = await Buy(w => { w.CanConfirm = true; w.AllowWorks = false; w.DenyWorks = false; w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900)); w.Orders.Enqueue((Confirm, true)); });
 			Check("confirmation: couldn't confirm or deny - unsure, counted at its price", stuck.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }, $"{stuck.Answer}");
-			var confirmedUnclear = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue(("{\"success\":29,\"message\":\"x\"}", true)); });
-			var confirmedSilent = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(900, 12)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue((null, true)); });
+			var confirmedUnclear = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue(("{\"success\":29,\"message\":\"x\"}", true)); });
+			var confirmedSilent = await Buy(w => { w.CanConfirm = true; w.Waiting.Add(FakeMarketWeb.Conf(901, 12, creator: 900)); w.Orders.Enqueue((Confirm, true)); w.Orders.Enqueue((null, true)); });
 			Check("confirmation: accepted, then anything without an order id is unsure - never 0 spent",
 				(confirmedUnclear.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }) && (confirmedSilent.Answer is { Result: NocatFarm.Modules.BuyResult.Unsure, Paid: 9 }),
 				$"{confirmedUnclear.Answer} {confirmedSilent.Answer}");
@@ -32378,8 +32386,8 @@ static class BuySafetyChecks {
 				(checkAnswer.Result == NocatFarm.Modules.BuyResult.Gone) && checkWeb.Calls.Contains("cancel:6001") && (checkFilled is { Result: NocatFarm.Modules.BuyResult.Bought, Paid: 7 }),
 				$"{checkAnswer} {checkFilled} {string.Join(",", checkWeb.Calls)}");
 			string marketSrc = Src("src/NocatFarm/Core/SteamCardMarket.cs");
-			Check("an earlier order: only ids it placed - never the owner's own orders found on the listings page",
-				!marketSrc.Contains("mylistings", StringComparison.Ordinal) && !marketSrc.Contains("CreatorId", StringComparison.Ordinal));
+			Check("an earlier order: only ids it placed - no listings page; a purchase confirmation is matched by its creator id",
+				!marketSrc.Contains("mylistings", StringComparison.Ordinal) && marketSrc.Contains("(i.Type == MarketPurchase) && (i.CreatorId == creatorId)", StringComparison.Ordinal));
 
 			// ── the module: written down before, set straight after ──
 			FakeCardMarket Market() {
@@ -33128,7 +33136,7 @@ static class BuySmartChecks {
 			Check("phone: with buying off or outside its day, a purchase waiting too long is still let go; with the authenticator here it confirms exactly its own",
 				buyerSrc.Contains("if (buying || (Ledger.OpenOrders.Count > 0) || (Ledger.OnPhone.Count > 0) || (Ledger.Unplaced.Count > 0)\n\t\t\t\t\t|| Ledger.All.Any(static e => e is { Pack: true, Pending: false, Opened: false })) {", StringComparison.Ordinal)
 				&& buyerSrc.Contains("await SweepLockedAsync(ct, resume: false).ConfigureAwait(false);", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Id == id) && (i.Type == MarketPurchase)", StringComparison.Ordinal));
+				&& Src("src/NocatFarm/Core/SteamCardMarket.cs").Contains("(i.Type == MarketPurchase) && (i.CreatorId == creatorId)", StringComparison.Ordinal));
 
 			var taxBot = NewBot();
 			var taxMarket = Market();
