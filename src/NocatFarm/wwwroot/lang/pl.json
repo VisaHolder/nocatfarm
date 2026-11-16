@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "wtyczka {0} od dawna nie skończyła ze swoimi zdarzeniami - nowe są pomijane, dopóki nie skończy",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "nie udało się wczytać wtyczek z {0}: {1} - start bez nich",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "wtyczka {0} jest już wczytana (z {1}) - kopia w {2} jest pominięta",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (wtyczka {1}) nie odpowiedziała w {2} sekund - może nadal nad tym pracuje"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (wtyczka {1}) nie odpowiedziała w {2} sekund - może nadal nad tym pracuje",
+    "offer {0} · left alone · the add-on's answer changed": "oferta {0} · zostawiona bez zmian · odpowiedź dodatku się zmieniła",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "oferta {0} · zostawiona dla ciebie · dodatek chciał ją przyjąć, ale {1}",
+    "{0} can't be traded": "{0} nie może być wymieniony",
+    "{0} is promised to another offer": "{0} jest już obiecany w innej ofercie",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} jest na liście „nigdy nie ruszaj” albo karty z jego gry kupiono na odznakę",
+    "Steam won't say whether the trade would be held": "Steam nie mówi, czy wymiana zostałaby wstrzymana",
+    "an add-on accepts it": "dodatek ją przyjmuje",
+    "an add-on declines it": "dodatek ją odrzuca",
+    "offer {0} accepted for add-on {1} · {2}": "oferta {0} przyjęta dla dodatku {1} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "oferta {0} odrzucona dla dodatku {1} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "dodatek może na nią odpowiedzieć, a jak nie, trade accept lub decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "wtyczka {0} dodała ponad {1} sędziów wymian - reszta jest pominięta"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Odrzucaj całą resztę",
       "tip": "Odrzuca każdą inną ofertę wymiany zamiast ją zostawiać. Wyłączone zostawia niezaakceptowane oferty, żebyś sam je sprawdził."
+    },
+    "AddonTrades": {
+      "label": "Pozwól dodatkom odpowiadać na oferty wymiany",
+      "tip": "Pozwala zainstalowanym dodatkom przyjmować lub odrzucać oferty wymiany, które to konto w przeciwnym razie zostawiłoby dla ciebie (albo odrzuciło przez „Odrzucaj całą resztę”). Nigdy oferty od twoich własnych kont, darowizny ani wymiany kart sparowane przez nocat.lol. Dodatek nie może oddać niczego z twoich list „nigdy nie ruszaj”, niczego obiecanego w innej ofercie ani niczego, czego nie da się wymienić, ani wymieniać, gdy Steam wstrzymałby wymianę, a jego oferty czekają jak każde inne. Tylko dla dodatków, którym ufasz. Domyślnie wyłączone."
+    },
+    "AddonTradesConfirm": {
+      "label": "Potwierdzaj to, co dodatek przyjął od obcych",
+      "tip": "NIEBEZPIECZNE: potwierdza też, uwierzytelniaczem stąd, wymianę, którą dodatek przyjął od kogoś, kto nie jest twoim kontem - bez pytania cię. Błędny dodatek odda wtedy twoje przedmioty, zanim to zobaczysz. Wyłączone: takie wymiany są przyjmowane, ale czekają, aż potwierdzisz je w aplikacji Steam. Domyślnie wyłączone."
     },
     "TradeDelayMinMinutes": {
       "label": "Odpowiedz na ofertę wymiany po co najmniej",

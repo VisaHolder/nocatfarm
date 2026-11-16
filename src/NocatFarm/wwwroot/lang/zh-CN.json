@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "插件 {0} 很久都没处理完它的事件 - 在它处理完之前,新事件将被丢弃",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "无法从 {0} 加载插件:{1} - 不带插件启动",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "插件 {0} 已经加载(来自 {1})- {2} 中的副本不予采用",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}'(插件 {1}){2} 秒内没有回应 - 它可能仍在处理"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}'(插件 {1}){2} 秒内没有回应 - 它可能仍在处理",
+    "offer {0} · left alone · the add-on's answer changed": "报价 {0} · 保持不动 · 附加组件的答复变了",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "报价 {0} · 留给你处理 · 有附加组件想接受它，但{1}",
+    "{0} can't be traded": "{0} 不能交易",
+    "{0} is promised to another offer": "{0} 已经许给了另一个报价",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} 在“永不动”列表里，或者它所属游戏的卡牌是为徽章买的",
+    "Steam won't say whether the trade would be held": "Steam 不说交易会不会被暂挂",
+    "an add-on accepts it": "附加组件接受它",
+    "an add-on declines it": "附加组件拒绝它",
+    "offer {0} accepted for add-on {1} · {2}": "已按附加组件 {1} 接受报价 {0} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "已按附加组件 {1} 拒绝报价 {0} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "附加组件可能会答复它，否则 trade accept 或 decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "插件 {0} 添加了超过 {1} 个交易判定 - 其余的不予采用"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "其余一律拒绝",
       "tip": "主动拒绝其他所有交易报价，而不是放着不管。关掉的话，没被接受的报价会留着等你自己查看。"
+    },
+    "AddonTrades": {
+      "label": "让附加组件答复交易报价",
+      "tip": "让你安装的附加组件接受或拒绝这个账号本来会留给你处理（或按“其余一律拒绝”拒绝）的交易报价。来自你自己账号的报价、捐赠和 nocat.lol 配对的卡牌交换一概不交给它。附加组件不能送出“永不动”列表里的东西、已许给另一个报价的东西或不能交易的东西，Steam 会暂挂的交易也不做，它的报价也和其他报价一样要等一会儿。只给你信任的附加组件用。默认关闭。"
+    },
+    "AddonTradesConfirm": {
+      "label": "确认附加组件从陌生人那里接受的交易",
+      "tip": "危险：附加组件从不是你自己账号的人那里接受的交易，也会用这里的令牌直接确认 - 不问你。附加组件出了错，你还没看到物品就已经送出去了。关闭时，这些交易会被接受，但要等你在 Steam 应用里自己确认。默认关闭。"
     },
     "TradeDelayMinMinutes": {
       "label": "回复交易报价前至少等待",

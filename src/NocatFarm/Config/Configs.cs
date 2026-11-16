@@ -1317,6 +1317,20 @@ public sealed class BotConfig {
 	/// </summary>
 	public string AutoTradeWith { get; set; } = "";
 	public bool DeclineOtherTrades { get; set; }
+
+	/// <summary>
+	/// 1.9.1: let add-ons with a trade judge (<see cref="NocatFarm.Plugins.IPluginHost.AddTradeJudge"/>) accept or decline the offers
+	/// this account leaves undecided. Off by default: no judge is even asked until it's on. The keep lists, promised and
+	/// untradable items and trade holds still win (Modules/Trading.Addons.cs).
+	/// </summary>
+	public bool AddonTrades { get; set; }
+
+	/// <summary>
+	/// 1.9.1: an offer an add-on accepted from a stranger is confirmed with the authenticator here, without asking. Off by
+	/// default and warned about: a wrong add-on rule then gives items away before anybody sees it. Off, those wait for the
+	/// owner's phone.
+	/// </summary>
+	public bool AddonTradesConfirm { get; set; }
 	public int TradeDelayMinMinutes { get; set; } = 2;
 	public int TradeDelayMaxMinutes { get; set; } = 15;
 	public string SendItemTypes { get; set; } = "cards";

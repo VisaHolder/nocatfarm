@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "o plugin {0} não termina os eventos dele há muito tempo - os novos são descartados até ele terminar",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "não foi possível carregar os plugins de {0}: {1} - iniciando sem eles",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "o plugin {0} já está carregado (de {1}) - a cópia em {2} fica de fora",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) não respondeu em {2} segundos - talvez ainda esteja trabalhando nisso"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) não respondeu em {2} segundos - talvez ainda esteja trabalhando nisso",
+    "offer {0} · left alone · the add-on's answer changed": "oferta {0} · fica como está · a resposta do complemento mudou",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "oferta {0} · fica com você · um complemento queria aceitá-la, mas {1}",
+    "{0} can't be traded": "{0} não pode ser trocado",
+    "{0} is promised to another offer": "{0} já está prometido em outra oferta",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} está numa lista de \"nunca mexer\", ou as cartas do jogo dele foram compradas para uma insígnia",
+    "Steam won't say whether the trade would be held": "o Steam não diz se a troca ficaria retida",
+    "an add-on accepts it": "um complemento a aceita",
+    "an add-on declines it": "um complemento a recusa",
+    "offer {0} accepted for add-on {1} · {2}": "oferta {0} aceita pelo complemento {1} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "oferta {0} recusada pelo complemento {1} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "um complemento pode respondê-la; se não, trade accept ou decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "o plugin {0} adicionou mais de {1} juízes de trocas - o resto fica de fora"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Recusar todo o resto",
       "tip": "Recusa todas as outras ofertas de troca em vez de deixá-las paradas. Desligado, as ofertas não aceitas ficam para você conferir."
+    },
+    "AddonTrades": {
+      "label": "Deixar complementos responderem ofertas de troca",
+      "tip": "Deixa os complementos que você instalou aceitarem ou recusarem as ofertas de troca que esta conta, senão, deixaria com você (ou recusaria com \"Recusar todo o resto\"). Nunca ofertas das suas próprias contas, doações nem trocas de cartas pareadas pelo nocat.lol. Um complemento não pode dar nada das suas listas de \"nunca mexer\", nada prometido em outra oferta nem nada que não possa ser trocado, nem trocar quando o Steam reteria a troca, e as ofertas dele esperam como qualquer outra. Só para complementos em que você confia. Desligado por padrão."
+    },
+    "AddonTradesConfirm": {
+      "label": "Confirmar o que um complemento aceitar de desconhecidos",
+      "tip": "PERIGOSO: também confirma, com o autenticador daqui, uma troca que um complemento aceitou de alguém que não é uma das suas contas - sem perguntar a você. Um complemento errado então entrega seus itens antes de você ver. Desligado: essas trocas são aceitas, mas esperam você confirmá-las no app do Steam. Desligado por padrão."
     },
     "TradeDelayMinMinutes": {
       "label": "Responder a uma oferta de troca após pelo menos",

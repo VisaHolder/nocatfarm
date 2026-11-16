@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using NocatFarm.Config;
 using NocatFarm.Core;
+using NocatFarm.Plugins;
 
 namespace NocatFarm.Modules;
 
@@ -131,7 +132,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
 	private bool Wanted => Bot.Cfg.AcceptDonations || (Bot.Cfg.AutoTradeWith.Trim().Length > 0) || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
-		|| ((BotManager.Instance?.All.Count ?? 0) > 1) || Bot.Cfg.CardSwaps;
+		|| ((BotManager.Instance?.All.Count ?? 0) > 1) || Bot.Cfg.CardSwaps || (Bot.Cfg.AddonTrades && PluginHost.HasTradeJudges);
 
 	/// <summary>
 	/// What the fair-swap test said about each offer. A "no" is kept only for a while: cards move, and an offer
@@ -268,6 +269,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>Test seam: the live offers, instead of asking Steam.</summary>
 	internal Func<CancellationToken, Task<List<TradeOffers.Offer>?>>? ReadOffers { get; set; }
 
+	/// <summary>Test seam: Steam's answer to accepting or declining an offer (the address and the form), instead of sending it.</summary>
+	internal Func<Uri, Dictionary<string, string>, CancellationToken, Task<string?>>? Post { get; set; }
+
+	/// <summary>Test seam: confirming an accepted offer with the authenticator, instead of asking Steam.</summary>
+	internal Func<ulong, CancellationToken, Task<bool>>? Confirm { get; set; }
+
+	/// <summary>Test seam: the pause after answering an offer, instead of 3 to 12 seconds.</summary>
+	internal Func<TimeSpan>? AnswerPause { get; set; }
+
 	private async Task CheckAsync(bool awake, CancellationToken ct) {
 		// Steam's own list of this account's live incoming offers. Null is "Steam didn't answer" - try again later,
 		// never read as "nothing waiting".
@@ -298,6 +308,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 					_promised[o.Id] = leaving;
 				}
 			}
+
+			// 1.9.1: and every item on its way out, whatever its kind - an add-on's accept never gives one of these away.
+			_promisedAssets = [.. awaiting.Concat(live.Where(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation)))
+				.SelectMany(static o => o.Giving).Select(static i => i.AssetId)];
 		}
 
 		_awaitingConfirmation = awaiting.Count;
@@ -316,6 +330,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			}
 
 			_heldSwaps.IntersectWith(ids);
+			ForgetAddonAnswers(ids);
 		}
 
 		lock (_nightDue) {
@@ -394,9 +409,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
 
 		// A swap that would be held was left for you, and stays left - neither taken nor declined behind your back.
+		// 1.9.1: and one an add-on wanted accepted that the app refused is left for you the same way.
 		if (!fromMaster && !donation) {
 			lock (_fair) {
-				if (_heldSwaps.Contains(offer.Id)) {
+				if (_heldSwaps.Contains(offer.Id) || _addonLeft.Contains(offer.Id)) {
 					return (false, false);
 				}
 			}
@@ -411,19 +427,38 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		bool fair = swap == true;
 		bool accept = fromMaster || donation || fair;
 
+		// 1.9.1: what the app leaves undecided, add-ons may answer (Trading.Addons.cs) - only where you let them, and never your
+		// own accounts, a donation, a card swap nocat.lol paired or a fair swap (nor one whose test couldn't finish yet). A
+		// failure, a disagreement or an accept the app refuses leaves it alone: never declined on an answer nobody gave.
+		PluginHost.Judged? addon = null;
+
+		if (!accept && (swap != null) && !exchange && AddonsMayJudge(offer, allowed, fleet)) {
+			addon = await AddonJudgeAsync(offer, ct).ConfigureAwait(false);
+
+			if (addon.Kind == PluginHost.JudgedKind.Unsure) {
+				return (false, false);
+			}
+
+			accept = addon.Kind == PluginHost.JudgedKind.Accept;
+		}
+
+		bool addonAccept = addon?.Kind == PluginHost.JudgedKind.Accept;
+		bool addonDecline = addon?.Kind == PluginHost.JudgedKind.Decline;
+
 		// The swap test couldn't finish: never declined on a guess. Left alone, and judged again at the next look.
 		if (!accept && (swap == null)) {
 			return (false, false);
 		}
 
-		if (!accept && !exchange && !Bot.Cfg.DeclineOtherTrades) {
+		if (!accept && !exchange && !Bot.Cfg.DeclineOtherTrades && !addonDecline) {
 			return (false, false);   // leave it sitting there for the user to look at
 		}
 
 		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
 		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait() + (Bot.Cfg.LegitMode && _wasHeld ? AfterWaking() : TimeSpan.Zero))
 			&& (_waiting.DueOf(offer.Id) is { } due)) {
-			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
+			Said what = addonAccept ? new Said("an add-on accepts it") : addonDecline ? new Said("an add-on declines it")
+				: !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
 				: fair ? new Said("a fair card swap") : new Said("a donation");
 			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
@@ -486,6 +521,30 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			}
 		}
 
+		// 1.9.1: an add-on's answer. An accept gives items away, so it's one a look like a swap, and Steam's hold is asked first;
+		// then the add-ons are asked again right now - a different answer, or an accept the app now refuses, leaves it.
+		if (addon is { Kind: PluginHost.JudgedKind.Accept or PluginHost.JudgedKind.Decline } queued) {
+			if (addonAccept) {
+				if (swappedThisLook) {
+					return (true, false);
+				}
+
+				bool? clear = await AddonHoldAsync(offer, ct).ConfigureAwait(false);
+
+				if (clear != true) {
+					return (true, false);   // null: Steam didn't say - asked again at the next look; false: left for you
+				}
+			}
+
+			if (!await AddonStillAsync(offer, queued, ct).ConfigureAwait(false)) {
+				return (true, false);
+			}
+
+			lock (_fair) {
+				addon = _addonSaid.GetValueOrDefault(offer.Id) ?? queued;
+			}
+		}
+
 		// Taken by 'trade accept|decline' this moment, or just answered by it.
 		if (!TryClaim(offer.Id)) {
 			return (true, false);
@@ -499,7 +558,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
 				// your own) are confirmed without asking.
 				// A card swap nocat.lol paired: you turned swaps on for this account, after its preview - that is the go-ahead.
-				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange).ConfigureAwait(false);
+				// 1.9.1: an add-on's accept is never from your own accounts - confirmed only when you switched "Confirm add-on accepts
+				// from strangers" on.
+				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange
+					|| (addonAccept && Bot.Cfg.AddonTradesConfirm)).ConfigureAwait(false);
 
 				if (result == Accepted.Failed) {
 					return (true, false);
@@ -509,7 +571,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				// lines below then said "from 76561198..." about somebody the announcement had just called by name.
 				string who = Who(offer);
 				Finish(offer.Id);
-				swapped = fair && !fromMaster && !donation;
+				swapped = (fair && !fromMaster && !donation) || (addonAccept && (offer.Giving.Count > 0));
+
+				if (addonAccept) {
+					Log.Trade(new Said("offer {0} accepted for add-on {1} · {2}", NumberOf(offer.Id), addon!.Plugins, addon.Reason), Bot.Name);
+
+					lock (_fair) {
+						_addonSaid.Remove(offer.Id);
+					}
+				}
 
 				if (exchange) {
 					ExchangeAccepted(offer, result == Accepted.Done);
@@ -533,15 +603,31 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 						}
 					}
 
+					// Whatever an add-on's accept gives stays out of reach until it's confirmed (rebuilt from Steam at the next look).
+					if (addonAccept) {
+						lock (_promised) {
+							_promisedAssets.UnionWith(offer.Giving.Select(static i => i.AssetId));
+						}
+					}
+
 					Log.Trade(NeedsConfirming(offer, result, who), Bot.Name);
 				}
 			} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
 				Interlocked.Increment(ref _declined);
+
+				if (addonDecline) {
+					Log.Trade(new Said("offer {0} declined for add-on {1} · {2}", NumberOf(offer.Id), addon!.Plugins, addon.Reason), Bot.Name);
+
+					lock (_fair) {
+						_addonSaid.Remove(offer.Id);
+					}
+				}
+
 				Log.Trade(new Said("declined offer {0} from {1}", NumberOf(offer.Id), Who(offer)), Bot.Name);
 				Finish(offer.Id);
 			}
 
-			await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
+			await Task.Delay(AnswerPause?.Invoke() ?? Rng.Seconds(3, 12), ct).ConfigureAwait(false);
 
 			return (true, swapped);
 		} finally {
@@ -746,6 +832,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {
 			return new Said("accepted if it's a fair card swap, else trade accept {0} {1}", Bot.Name, n);
+		}
+
+		if (AddonsMayJudge(offer, allowed, fleet)) {
+			return new Said("an add-on may answer it, else trade accept or decline {0} {1}", Bot.Name, n);
 		}
 
 		return Bot.Cfg.DeclineOtherTrades
@@ -973,7 +1063,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		};
 
 		Uri referer = new(WebSession.Community, $"/tradeoffer/{offer.Id}/");
-		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/accept"), form, referer, ct).ConfigureAwait(false);
+		Uri accept = new(WebSession.Community, $"/tradeoffer/{offer.Id}/accept");
+		string? body = await (Post?.Invoke(accept, form, ct) ?? Bot.Web.PostAsync(accept, form, referer, ct)).ConfigureAwait(false);
 
 		if (body == null) {
 			return Accepted.Failed;
@@ -982,7 +1073,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		// Steam says what the accept still needs as true/false flags - reading the key alone called an email
 		// confirmation a phone one.
 		if (Flag(body, "needs_mobile_confirmation")) {
-			return mayConfirm && await Bot.ConfirmMobileAsync(offer.Id, true, ct).ConfigureAwait(false) ? Accepted.Done : Accepted.NeedsPhone;
+			return mayConfirm && await (Confirm?.Invoke(offer.Id, ct) ?? Bot.ConfirmMobileAsync(offer.Id, true, ct)).ConfigureAwait(false) ? Accepted.Done : Accepted.NeedsPhone;
 		}
 
 		if (Flag(body, "needs_email_confirmation")) {
@@ -1062,7 +1153,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 	private async Task<bool> DeclineAsync(TradeOffers.Offer offer, CancellationToken ct) {
 		Dictionary<string, string> form = new() { ["sessionid"] = Bot.Web.SessionId };
-		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/decline"), form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct).ConfigureAwait(false);
+		Uri decline = new(WebSession.Community, $"/tradeoffer/{offer.Id}/decline");
+		string? body = await (Post?.Invoke(decline, form, ct) ?? Bot.Web.PostAsync(decline, form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct)).ConfigureAwait(false);
 
 		if (OfferAnswered(body, offer.Id)) {
 			return true;

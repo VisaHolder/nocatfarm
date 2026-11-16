@@ -56,6 +56,7 @@ public static class SettingsCopy {
 		// trades
 		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.CardSwapsPerDay), nameof(BotConfig.TradeMasters),
 		nameof(BotConfig.AutoTradeWith), nameof(BotConfig.DeclineOtherTrades), nameof(BotConfig.AcceptDonations), nameof(BotConfig.DonationsWhileAsleep),
+		nameof(BotConfig.AddonTrades), nameof(BotConfig.AddonTradesConfirm),
 		// sends items away
 		nameof(BotConfig.SendItemTypes), nameof(BotConfig.SendOnFarmingFinished), nameof(BotConfig.SendEveryHours), nameof(BotConfig.SendAroundHour),
 		nameof(BotConfig.SpareGems), nameof(BotConfig.SpareGemsSendTo), nameof(BotConfig.BoosterUnopened), nameof(BotConfig.BoosterSendTo),

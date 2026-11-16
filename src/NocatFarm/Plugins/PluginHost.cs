@@ -305,6 +305,110 @@ public static class PluginHost {
 	public static void RaiseCardDropped(Bot bot, uint app, int left) => Each(h => h.RaiseCardDropped(bot, app, left));
 	public static void RaiseTradeOffers(Bot bot, int waiting) => Each(h => h.RaiseTradeOffers(bot, waiting));
 
+	// ── 1.9.1: trade judges ───────────────────────────────────────────────────
+
+	/// <summary>How long a trade judge has to answer. Past it, it said Leave.</summary>
+	internal static TimeSpan TradeJudgeLimit = TimeSpan.FromSeconds(30);
+
+	/// <summary>The longest reason a judge's answer carries into the log.</summary>
+	internal const int MaxReason = 300;
+
+	/// <summary>Whether any loaded plugin judges trade offers - the trade loop asks nothing otherwise.</summary>
+	public static bool HasTradeJudges => Snapshot().Any(static p => p.Host.TradeJudges.Count > 0);
+
+	/// <summary>What the trade judges said about an offer, together.</summary>
+	internal enum JudgedKind {
+		/// <summary>No judge, or every judge said Leave: the app does as it would anyway.</summary>
+		None,
+		Accept,
+		Decline,
+
+		/// <summary>A judge failed, timed out or gave nothing, or they disagree: the offer is left alone this time - never declined.</summary>
+		Unsure
+	}
+
+	/// <param name="Plugins">The plugins whose answer it is, for the log.</param>
+	/// <param name="Reason">Their reasons, as they gave them (clipped), for the log.</param>
+	/// <param name="Why">For <see cref="JudgedKind.Unsure"/>: why, in English, for the debug log.</param>
+	internal sealed record Judged(JudgedKind Kind, string Plugins = "", string Reason = "", string Why = "");
+
+	/// <summary>
+	/// Every trade judge's answer on one offer, each run off this thread (<see cref="OffThread"/>) and given
+	/// <see cref="TradeJudgeLimit"/>. A judge that throws, runs out of time or hands back nothing has said Leave - and
+	/// makes the whole answer <see cref="JudgedKind.Unsure"/>, so the offer is left alone rather than declined by "Decline
+	/// everything else" on the strength of an answer nobody gave. Judges that disagree are Unsure too.
+	/// </summary>
+	/// <param name="offer">Made afresh for each judge: one judge can't change what the next is handed.</param>
+	internal static async Task<Judged> JudgeTradeAsync(Func<PluginTradeOffer> offer, CancellationToken ct) {
+		List<(string Owner, Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>> Judge)> judges = [];
+
+		foreach (Loaded loaded in Snapshot()) {
+			judges.AddRange(loaded.Host.TradeJudges.Select(j => (loaded.Name, j)));
+		}
+
+		if (judges.Count == 0) {
+			return new Judged(JudgedKind.None);
+		}
+
+		(string Owner, PluginTradeAnswer? Answer, string Failed)[] answers = await Task.WhenAll(judges.Select(j => AskAsync(j.Owner, j.Judge, offer(), ct))).ConfigureAwait(false);
+
+		int failed = Array.FindIndex(answers, static a => a.Answer == null);
+
+		if (failed >= 0) {
+			return new Judged(JudgedKind.Unsure, answers[failed].Owner, Why: $"add-on {answers[failed].Owner}: {answers[failed].Failed}");
+		}
+
+		var accepts = answers.Where(static a => a.Answer!.Decision == PluginTradeDecision.Accept).ToList();
+		var declines = answers.Where(static a => a.Answer!.Decision == PluginTradeDecision.Decline).ToList();
+
+		if ((accepts.Count > 0) && (declines.Count > 0)) {
+			return new Judged(JudgedKind.Unsure, string.Join(", ", accepts.Concat(declines).Select(static a => a.Owner).Distinct()),
+				Why: $"the add-ons disagree: {string.Join(", ", accepts.Select(static a => a.Owner).Distinct())} accept, {string.Join(", ", declines.Select(static a => a.Owner).Distinct())} decline");
+		}
+
+		var deciding = accepts.Count > 0 ? accepts : declines;
+
+		return deciding.Count == 0 ? new Judged(JudgedKind.None)
+			: new Judged(accepts.Count > 0 ? JudgedKind.Accept : JudgedKind.Decline, string.Join(", ", deciding.Select(static a => a.Owner).Distinct()),
+				string.Join("; ", deciding.Select(static a => a.Answer!.Reason).Where(static r => r.Length > 0).Distinct()));
+	}
+
+	/// <summary>One judge's answer: the answer, or why there's none (then it said Leave).</summary>
+	private static async Task<(string Owner, PluginTradeAnswer? Answer, string Failed)> AskAsync(string owner, Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>> judge,
+		PluginTradeOffer offer, CancellationToken ct) {
+		using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		limit.CancelAfter(TradeJudgeLimit);
+
+		try {
+			PluginTradeAnswer? answer = await OffThread(owner, nameof(IPluginHost.AddTradeJudge), () => judge(offer, limit.Token)).WaitAsync(TradeJudgeLimit, ct).ConfigureAwait(false);
+
+			if ((answer == null) || !Enum.IsDefined(answer.Decision)) {
+				return (owner, null, "it gave no answer");
+			}
+
+			return (owner, answer with { Reason = Reason(answer.Reason) }, "");
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			Exception shown = Unwrapped(e);
+			bool late = shown is TimeoutException or OperationCanceledException;
+
+			if (MaySay($"{owner}:{nameof(IPluginHost.AddTradeJudge)}")) {
+				NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", owner, nameof(IPluginHost.AddTradeJudge), shown.GetType().Name, NocatFarm.Log.Scrub(shown.Message)));
+
+				if (!late) {
+					NocatFarm.Log.StackToFile(shown);
+				}
+			}
+
+			return (owner, null, late ? $"it didn't answer within {(int) TradeJudgeLimit.TotalSeconds} seconds" : $"it failed: {shown.GetType().Name}");
+		}
+	}
+
+	/// <summary>A judge's reason, fit for one line of the log: no line breaks or control characters, at most <see cref="MaxReason"/> long.</summary>
+	internal static string Reason(string? reason) =>
+		Clip(new string([.. (reason ?? "").Select(static c => char.IsControl(c) ? ' ' : c)]).Trim(), MaxReason);
+
 	private static void Each(Action<Host> raise) {
 		// Snapshot: a handler is free to do anything, including something that ends up unloading a plugin.
 		Host[] hosts;

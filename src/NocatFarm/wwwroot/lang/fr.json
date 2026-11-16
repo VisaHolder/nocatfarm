@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "le plugin {0} n'a pas fini ses événements depuis longtemps - les nouveaux sont ignorés jusqu'à ce qu'il ait fini",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "impossible de charger les plugins depuis {0} : {1} - démarrage sans eux",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "le plugin {0} est déjà chargé (depuis {1}) - la copie dans {2} est laissée de côté",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) n'a pas répondu en {2} secondes - il y travaille peut-être encore"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) n'a pas répondu en {2} secondes - il y travaille peut-être encore",
+    "offer {0} · left alone · the add-on's answer changed": "offre {0} · laissée telle quelle · la réponse du module a changé",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "offre {0} · laissée pour vous · un module voulait l'accepter, mais {1}",
+    "{0} can't be traded": "{0} ne peut pas être échangé",
+    "{0} is promised to another offer": "{0} est déjà promis à une autre offre",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} est sur une liste « ne jamais toucher », ou les cartes de son jeu ont été achetées pour un badge",
+    "Steam won't say whether the trade would be held": "Steam ne dit pas si l'échange serait suspendu",
+    "an add-on accepts it": "un module l'accepte",
+    "an add-on declines it": "un module la refuse",
+    "offer {0} accepted for add-on {1} · {2}": "offre {0} acceptée pour le module {1} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "offre {0} refusée pour le module {1} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "un module peut y répondre, sinon trade accept ou decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "le plugin {0} a ajouté plus de {1} juges d'échanges - les autres sont laissés de côté"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Refuser tout le reste",
       "tip": "Refuse toutes les autres offres d'échange au lieu de les laisser. Désactivé, les offres non acceptées restent là pour que vous les vérifiiez vous-même."
+    },
+    "AddonTrades": {
+      "label": "Laisser les modules répondre aux offres d'échange",
+      "tip": "Laisse les modules que vous avez installés accepter ou refuser les offres d'échange que ce compte vous laisserait sinon (ou refuserait avec « Refuser tout le reste »). Jamais les offres de vos propres comptes, les dons ni les échanges de cartes appariés par nocat.lol. Un module ne peut rien donner de vos listes « ne jamais toucher », rien de promis à une autre offre ni rien qui ne puisse être échangé, ni échanger quand Steam suspendrait l'échange, et ses offres attendent comme les autres. Seulement pour des modules de confiance. Désactivé par défaut."
+    },
+    "AddonTradesConfirm": {
+      "label": "Confirmer les acceptations des modules venant d'inconnus",
+      "tip": "DANGEREUX : confirme aussi, avec l'authentificateur d'ici, un échange qu'un module a accepté de quelqu'un qui n'est pas un de vos comptes - sans vous demander. Un module qui se trompe donne alors vos objets avant que vous le voyiez. Désactivé : ces échanges sont acceptés mais attendent que vous les confirmiez dans l'application Steam. Désactivé par défaut."
     },
     "TradeDelayMinMinutes": {
       "label": "Répondre à une offre d'échange après au moins",

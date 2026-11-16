@@ -30228,6 +30228,9 @@ await ServiceUpdateChecks.RunAsync(Check);
 // rep4rep's "Skip comments worth less than": run through the add-on's real loop step against a pretend rep4rep.
 await Rep4RepMinimumChecks.RunAsync(Check);
 
+// 1.9.1: add-ons answering trade offers - the app's own rules around them, with pretend add-ons and a pretend Steam.
+await AddonTradeChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 List<string> leftInTemp = await TestTemp.EndAsync();
@@ -40271,5 +40274,385 @@ static class Rep4RepMinimumChecks {
 			"get_IsPaused" => false,
 			_ => m.ReturnType.IsValueType && (m.ReturnType != typeof(void)) ? Activator.CreateInstance(m.ReturnType) : null
 		};
+	}
+}
+
+/// <summary>
+/// 1.9.1: add-ons answering trade offers (IPluginHost.AddTradeJudge, Modules/Trading.Addons.cs). Pretend add-ons, a pretend
+/// Steam - nothing reaches Steam. What's checked is what the app enforces whatever an add-on says.
+/// </summary>
+static class AddonTradeChecks {
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+		const ulong Me = 76561198000000500UL, Stranger = 76561198000000501UL, Mine = 76561198000000502UL;
+
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string root = Path.Combine(Path.GetTempPath(), "nf-addontrades-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		NocatFarm.Config.ConfigStore.UseRoot(root);
+		NocatFarm.Config.GlobalConfig wasLive = NocatFarm.Config.Live.Global;
+		bool wasSuppressed = NocatFarm.Log.Suppressed;
+		NocatFarm.Log.Suppressed = true;
+		TimeSpan wasJudgeLimit = NocatFarm.Plugins.PluginHost.TradeJudgeLimit;
+		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = true, DisabledPlugins = [] };
+		var mgr = new NocatFarm.Core.BotManager(NocatFarm.Config.Live.Global);
+		List<NocatFarm.Core.Bot> bots = [];
+		var known = (System.Collections.IDictionary) typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.SteamNames")!
+			.GetField("Known", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		known[Stranger] = ("A Stranger", DateTime.UtcNow);
+		known[Mine] = ("My Other", DateTime.UtcNow);
+		MethodInfo checkAsync = typeof(NocatFarm.Modules.Trading).GetMethod("CheckAsync", Inst)!;
+
+		NocatFarm.Core.TradeOffers.Item Card(ulong asset, uint game = 440, string name = "Scout", bool tradable = true, bool described = true) =>
+			new(753, "6", asset, 1000 + asset, 0, 1, described ? "Team Fortress 2 Trading Card" : "", described ? name : "", described ? game : 0, described, "", described ? $"{game}-{name}" : "",
+				described ? NocatFarm.Core.SpareKind.Card : NocatFarm.Core.SpareKind.Other, tradable && described, tradable && described);
+		NocatFarm.Core.TradeOffers.Item Gems(ulong asset, uint amount) =>
+			new(753, "6", asset, 667924416, 0, amount, "Steam Gems", "Gems", 0, true, "", "753-Gems", NocatFarm.Core.SpareKind.Gems, true, false);
+		NocatFarm.Core.TradeOffers.Offer Offer(ulong id, List<NocatFarm.Core.TradeOffers.Item> give, List<NocatFarm.Core.TradeOffers.Item> get, ulong from = Stranger, int confirmation = 0) =>
+			new(id, from, NocatFarm.Core.TradeOffers.Active, false, null, give, get, confirmation, "hi", DateTime.UtcNow.AddMinutes(-3));
+
+		// One account's trade loop, against a pretend Steam: what it would send, and confirm.
+		AddonRig Make(Action<NocatFarm.Config.BotConfig>? setup = null, TimeSpan? hold = null, bool holdUnknown = false, bool phone = true) {
+			var cfg = new NocatFarm.Config.BotConfig { AddonTrades = true, LegitMode = false, TradeDelayMinMinutes = 0, TradeDelayMaxMinutes = 0, AcceptDonations = true };
+			setup?.Invoke(cfg);
+			var bot = new NocatFarm.Core.Bot("addon-trades-" + bots.Count, cfg);
+			bots.Add(bot);
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(bot, Me);
+			var trading = new NocatFarm.Modules.Trading(bot);
+			List<string> posts = [];
+			List<ulong> confirms = [];
+			List<NocatFarm.Core.TradeOffers.Offer> live = [];
+			void Seam(string name, object value) => typeof(NocatFarm.Modules.Trading).GetProperty(name, Inst)!.SetValue(trading, value);
+			Seam("ReadOffers", (Func<CancellationToken, Task<List<NocatFarm.Core.TradeOffers.Offer>?>>) (_ => Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([.. live])));
+			Seam("ReadHold", (Func<ulong, string, CancellationToken, Task<TimeSpan?>>) ((_, _, _) => Task.FromResult<TimeSpan?>(holdUnknown ? null : hold ?? TimeSpan.Zero)));
+			Seam("Post", (Func<Uri, Dictionary<string, string>, CancellationToken, Task<string?>>) ((u, form, _) => {
+				string path = u.AbsolutePath;
+				lock (posts) {
+					posts.Add(path);
+				}
+
+				return Task.FromResult<string?>(path.EndsWith("/accept", StringComparison.Ordinal)
+					? (phone ? "{\"needs_mobile_confirmation\":true}" : "{\"tradeid\":\"999\"}")
+					: $"{{\"tradeofferid\":\"{path.Split('/')[2]}\"}}");
+			}));
+			Seam("Confirm", (Func<ulong, CancellationToken, Task<bool>>) ((id, _) => {
+				confirms.Add(id);
+				return Task.FromResult(true);
+			}));
+			Seam("AnswerPause", (Func<TimeSpan>) (() => TimeSpan.Zero));
+			return new AddonRig(trading, bot, posts, confirms, live);
+		}
+
+		async Task Look(AddonRig r) => await (Task) checkAsync.Invoke(r.Trading, [true, CancellationToken.None])!;
+		long Mark() => NocatFarm.Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+		List<string> Lines(long mark, string bot) => [.. NocatFarm.Log.Since(mark).Where(e => e.Source == bot).Select(static e => e.Said.ToEnglish())];
+
+		try {
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);   // an empty folder: nothing loaded, _mgr set
+
+			// ── no add-on installed: everything as before ──
+			Check("add-on trades: with no add-on loaded, nothing judges trade offers", !NocatFarm.Plugins.PluginHost.HasTradeJudges);
+			AddonRig plain = Make();
+			plain.Live.AddRange([Offer(101, [Card(1)], [Gems(2, 500)]), Offer(102, [], [Card(3)])]);
+			await Look(plain);
+			Check("add-on trades: no add-on - an offer nobody decided is left for you; a donation is still accepted, as before",
+				plain.Posts.SequenceEqual(["/tradeoffer/102/accept"]), string.Join(",", plain.Posts));
+			AddonRig plainDecline = Make(c => c.DeclineOtherTrades = true);
+			plainDecline.Live.Add(Offer(103, [Card(1)], [Gems(2, 500)]));
+			await Look(plainDecline);
+			Check("add-on trades: no add-on - \"Decline everything else\" still declines it, as before", plainDecline.Posts.SequenceEqual(["/tradeoffer/103/decline"]), string.Join(",", plainDecline.Posts));
+
+			// ── two pretend add-ons, each with a judge ──
+			foreach (Type t in new[] { typeof(TJudgeA), typeof(TJudgeB) }) {
+				await NocatFarm.Plugins.PluginHost.StartAsync(t, t.Name + ".dll", CancellationToken.None);
+			}
+
+			Check("add-on trades: two add-ons with a judge each are loaded", NocatFarm.Plugins.PluginHost.HasTradeJudges && (NocatFarm.Plugins.PluginHost.Running.Count == 2),
+				string.Join(",", NocatFarm.Plugins.PluginHost.Running.Select(static r => r.Name)));
+			TJ.Reset();
+			NocatFarm.Plugins.PluginTradeOffer handed = NocatFarm.Modules.Trading.ForAddons("main",
+				Offer(150, [Card(1)], [Gems(2, 500)]) with { HoldUntil = DateTime.UtcNow.AddDays(2).AddMinutes(-1) }, DateTime.UtcNow);
+			Check("add-on trades: the offer handed over - the account, partner, note, items with their kind, tradable and market name; lists it can't change",
+				handed is { Account: "main", OfferId: 150, PartnerSteamId: Stranger, Message: "hi", TradeHoldDays: 2, Created: not null }
+				&& handed.Giving is System.Collections.ObjectModel.ReadOnlyCollection<NocatFarm.Plugins.PluginTradeItem>
+				&& handed.Giving[0] is { AssetId: 1, Kind: NocatFarm.Plugins.PluginTradeItemKind.Card, Tradable: true, MarketHashName: "440-Scout", GameAppId: 440, AppId: 753, ContextId: "6" }
+				&& handed.Receiving[0] is { Kind: NocatFarm.Plugins.PluginTradeItemKind.Gems, Amount: 500 });
+
+			// ── the judges together (PluginHost) ──
+			async Task<NocatFarm.Plugins.PluginHost.Judged> Judge() => await NocatFarm.Plugins.PluginHost.JudgeTradeAsync(() => handed, CancellationToken.None);
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("12 gems a card"));
+			var oneAccepts = await Judge();
+			TJ.B = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("fine by me"));
+			var bothAccept = await Judge();
+			TJ.B = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Decline("too cheap"));
+			var disagree = await Judge();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Leave());
+			var oneDeclines = await Judge();
+			TJ.B = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Leave("not mine"));
+			var bothLeave = await Judge();
+			Check("add-on trades: one accepts, the other leaves - Accept, with that add-on's name and reason",
+				oneAccepts is { Kind: NocatFarm.Plugins.PluginHost.JudgedKind.Accept, Plugins: "tj-a", Reason: "12 gems a card" }, $"{oneAccepts}");
+			Check("add-on trades: both accept - Accept, both named", bothAccept is { Kind: NocatFarm.Plugins.PluginHost.JudgedKind.Accept, Plugins: "tj-a, tj-b" }, $"{bothAccept}");
+			Check("add-on trades: one accepts, one declines - they disagree: neither", disagree.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.Unsure, $"{disagree}");
+			Check("add-on trades: one declines, the other leaves - Decline", oneDeclines is { Kind: NocatFarm.Plugins.PluginHost.JudgedKind.Decline, Plugins: "tj-b", Reason: "too cheap" }, $"{oneDeclines}");
+			Check("add-on trades: both leave - no opinion: the app does as it would anyway", bothLeave.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.None, $"{bothLeave}");
+			TJ.A = (_, _) => throw new InvalidOperationException("judge blew up");
+			var threw = await Judge();
+			TJ.A = (_, _) => Task.FromResult<NocatFarm.Plugins.PluginTradeAnswer>(null!);
+			var gaveNull = await Judge();
+			TJ.A = async (_, _) => { await Task.Yield(); throw new InvalidOperationException("thrown after an await"); };
+			var threwLater = await Judge();
+			NocatFarm.Plugins.PluginHost.TradeJudgeLimit = TimeSpan.FromSeconds(1);
+			TJ.A = (_, _) => { TJ.Gate.Wait(TimeSpan.FromSeconds(20)); return Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("late")); };
+			var timer = System.Diagnostics.Stopwatch.StartNew();
+			var hung = await Judge();
+			timer.Stop();
+			Check("add-on trades: a judge that throws (before or after an await) or hands back nothing - Leave for it, and the offer left alone (Unsure), nothing crashes",
+				(threw.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.Unsure) && (gaveNull.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.Unsure)
+				&& (threwLater.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.Unsure) && threw.Why.Contains("tj-a", StringComparison.Ordinal), $"{threw} {gaveNull} {threwLater}");
+			Check("add-on trades: a judge that blocks past its time - Leave for it (Unsure) once the time is up, the caller isn't held",
+				(hung.Kind == NocatFarm.Plugins.PluginHost.JudgedKind.Unsure) && (timer.Elapsed < TimeSpan.FromSeconds(5)), $"{hung} {timer.Elapsed.TotalSeconds:0.0}s");
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("line one\nline two\t" + new string('x', 1000)));
+			var tidy = await Judge();
+			Check("add-on trades: a judge's reason is one line, at most 300 characters", (tidy.Reason.Length <= NocatFarm.Plugins.PluginHost.MaxReason)
+				&& !tidy.Reason.Any(char.IsControl) && tidy.Reason.StartsWith("line one line two", StringComparison.Ordinal), tidy.Reason[..Math.Min(40, tidy.Reason.Length)]);
+
+			// ── the trade loop ──
+			NocatFarm.Plugins.PluginHost.TradeJudgeLimit = TimeSpan.FromSeconds(10);
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("12 gems a card"));
+
+			// Switched off on the account: nobody is asked.
+			AddonRig off = Make(c => c.AddonTrades = false);
+			off.Live.Add(Offer(201, [Card(1)], [Gems(2, 500)]));
+			await Look(off);
+			Check("add-on trades: \"Let add-ons answer trade offers\" off (the default) - no add-on is even asked, the offer is left for you",
+				(TJ.AskedA == 0) && (TJ.AskedB == 0) && (off.Posts.Count == 0) && !new NocatFarm.Config.BotConfig().AddonTrades, $"{TJ.AskedA} {string.Join(",", off.Posts)}");
+
+			// Accepted - but a stranger's trade that wants confirming waits for the owner.
+			long mark = Mark();
+			AddonRig yes = Make();
+			yes.Live.Add(Offer(202, [Card(1)], [Gems(2, 500)]));
+			await Look(yes);
+			List<string> yesSaid = Lines(mark, yes.Bot.Name);
+			Check("add-on trades: an add-on's accept - asked, asked again right before, then accepted", (TJ.AskedA == 2) && yes.Posts.SequenceEqual(["/tradeoffer/202/accept"]),
+				$"{TJ.AskedA} {string.Join(",", yes.Posts)}");
+			Check("add-on trades: ...from a stranger, Steam wanting it confirmed: not confirmed - it waits for your phone", yes.Confirms.Count == 0);
+			Check("add-on trades: ...and the log says which add-on, and why", yesSaid.Any(static l => l.StartsWith("offer ", StringComparison.Ordinal) && l.EndsWith(" accepted for add-on tj-a · 12 gems a card", StringComparison.Ordinal)),
+				string.Join(" | ", yesSaid));
+			Check("add-on trades: ...and the wait said it's an add-on's", yesSaid.Any(static l => l.Contains("(an add-on accepts it:", StringComparison.Ordinal)), string.Join(" | ", yesSaid));
+
+			AddonRig yesConfirm = Make(c => c.AddonTradesConfirm = true);
+			yesConfirm.Live.Add(Offer(203, [Card(1)], [Gems(2, 500)]));
+			await Look(yesConfirm);
+			Check("add-on trades: \"Confirm add-on accepts from strangers\" on - then it is confirmed here", yesConfirm.Posts.SequenceEqual(["/tradeoffer/203/accept"]) && yesConfirm.Confirms.SequenceEqual([203UL]),
+				string.Join(",", yesConfirm.Posts));
+			Check("add-on trades: \"Confirm add-on accepts from strangers\" is off by default, advanced, shown only under the switch, and warned about",
+				!new NocatFarm.Config.BotConfig().AddonTradesConfirm && NocatFarm.Config.Settings.FindBot("AddonTradesConfirm") is { Advanced: true, ShowWhen: "AddonTrades=true" } confirmDef
+				&& confirmDef.Tooltip.StartsWith("DANGEROUS", StringComparison.Ordinal) && NocatFarm.Config.Settings.FindBot("AddonTrades") is { Kind: NocatFarm.Config.SettingKind.Bool });
+			Check("add-on trades: both settings stay as they are when another account's settings are copied over",
+				NocatFarm.Core.SettingsCopy.KeptAsTheyAre.Contains("AddonTrades") && NocatFarm.Core.SettingsCopy.KeptAsTheyAre.Contains("AddonTradesConfirm"));
+
+			// The wait: nothing at once, and the answer it queued on stands until it's due.
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("ok"));
+			AddonRig waits = Make(c => { c.TradeDelayMinMinutes = 30; c.TradeDelayMaxMinutes = 40; });
+			waits.Live.Add(Offer(204, [Card(1)], [Gems(2, 500)]));
+			await Look(waits);
+			await Look(waits);
+			Check("add-on trades: an add-on's offer waits like any other - nothing sent at once, and not asked again at every look while it waits",
+				(waits.Posts.Count == 0) && (waits.Trading.WaitingCount == 1) && (TJ.AskedA == 1), $"{waits.Posts.Count} {waits.Trading.WaitingCount} {TJ.AskedA}");
+
+			// The answer changed by the time it's due: left alone.
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(TJ.AskedA == 1 ? NocatFarm.Plugins.PluginTradeAnswer.Accept("now") : NocatFarm.Plugins.PluginTradeAnswer.Leave("changed my mind"));
+			mark = Mark();
+			AddonRig changed = Make(c => c.DeclineOtherTrades = true);
+			changed.Live.Add(Offer(205, [Card(1)], [Gems(2, 500)]));
+			await Look(changed);
+			Check("add-on trades: judged again right before acting - a different answer leaves it (not accepted, not declined), and says so",
+				(changed.Posts.Count == 0) && (changed.Trading.WaitingCount == 0) && Lines(mark, changed.Bot.Name).Any(static l => l.EndsWith("· left alone · the add-on's answer changed", StringComparison.Ordinal)),
+				string.Join(",", changed.Posts) + " | " + string.Join(" | ", Lines(mark, changed.Bot.Name)));
+
+			// Decline.
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Decline("lowball"));
+			mark = Mark();
+			AddonRig no = Make();
+			no.Live.Add(Offer(206, [Card(1)], [Gems(2, 5)]));
+			await Look(no);
+			Check("add-on trades: an add-on's decline - declined (even with \"Decline everything else\" off), logged with its name and reason",
+				no.Posts.SequenceEqual(["/tradeoffer/206/decline"]) && Lines(mark, no.Bot.Name).Any(static l => l.EndsWith(" declined for add-on tj-a · lowball", StringComparison.Ordinal)),
+				string.Join(",", no.Posts) + " | " + string.Join(" | ", Lines(mark, no.Bot.Name)));
+
+			// Failures and disagreement never decline - not even under "Decline everything else".
+			TJ.Reset();
+			TJ.A = (_, _) => throw new InvalidOperationException("boom");
+			AddonRig crashed = Make(c => c.DeclineOtherTrades = true);
+			crashed.Live.Add(Offer(207, [Card(1)], [Gems(2, 500)]));
+			await Look(crashed);
+			NocatFarm.Plugins.PluginHost.TradeJudgeLimit = TimeSpan.FromSeconds(1);
+			TJ.A = (_, _) => { TJ.Gate.Wait(TimeSpan.FromSeconds(20)); return Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("late")); };
+			AddonRig slow = Make(c => c.DeclineOtherTrades = true);
+			slow.Live.Add(Offer(208, [Card(1)], [Gems(2, 500)]));
+			await Look(slow);
+			NocatFarm.Plugins.PluginHost.TradeJudgeLimit = TimeSpan.FromSeconds(10);
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("yes"));
+			TJ.B = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Decline("no"));
+			AddonRig split = Make(c => c.DeclineOtherTrades = true);
+			split.Live.Add(Offer(209, [Card(1)], [Gems(2, 500)]));
+			await Look(split);
+			Check("add-on trades: an add-on that throws, or doesn't answer in time - Leave: the offer is left alone, not declined under \"Decline everything else\"",
+				(crashed.Posts.Count == 0) && (slow.Posts.Count == 0), string.Join(",", crashed.Posts.Concat(slow.Posts)));
+			Check("add-on trades: add-ons that disagree - left alone, not accepted or declined", split.Posts.Count == 0, string.Join(",", split.Posts));
+
+			// ── what the app refuses, whatever the add-on says ──
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Accept("take it"));
+			mark = Mark();
+			AddonRig keep = Make(c => c.SpareKeepGames = [440]);
+			keep.Live.Add(Offer(210, [Card(1, game: 440)], [Gems(2, 500)]));
+			await Look(keep);
+			int askedAfterKeep = TJ.AskedA;
+			await Look(keep);
+			Check("add-on trades: an accept that gives away something from a \"never touch\" game - refused, left for you, said once, not asked about again",
+				(keep.Posts.Count == 0) && (askedAfterKeep == 1) && (TJ.AskedA == 1)
+				&& (Lines(mark, keep.Bot.Name).Count(static l => l.Contains("· left for you · an add-on wanted it accepted, but Scout is on a \"never touch\" list", StringComparison.Ordinal)) == 1),
+				string.Join(" | ", Lines(mark, keep.Bot.Name)));
+			AddonRig keepName = Make(c => c.SpareKeepItems = "Scout");
+			keepName.Live.Add(Offer(211, [Card(1, game: 570)], [Gems(2, 500)]));
+			await Look(keepName);
+			AddonRig untradable = Make();
+			untradable.Live.Add(Offer(212, [Card(1, tradable: false)], [Gems(2, 500)]));
+			await Look(untradable);
+			AddonRig unknown = Make();
+			unknown.Live.Add(Offer(213, [Card(1, described: false)], [Gems(2, 500)]));
+			await Look(unknown);
+			AddonRig theirsOdd = Make();
+			theirsOdd.Live.Add(Offer(214, [Card(1)], [Card(9, tradable: false)]));
+			await Look(theirsOdd);
+			Check("add-on trades: an accept giving away an item on a \"never touch\" list by name, one Steam calls untradable, or one Steam didn't describe - refused",
+				(keepName.Posts.Count == 0) && (untradable.Posts.Count == 0) && (unknown.Posts.Count == 0));
+			Check("add-on trades: ...and one whose other side Steam says can't be traded - refused (Steam's answer is off)", theirsOdd.Posts.Count == 0);
+			AddonRig promised = Make();
+			promised.Live.AddRange([Offer(215, [Card(7)], [Card(8)], confirmation: 2), Offer(216, [Card(7, name: "Heavy")], [Gems(2, 500)])]);
+			await Look(promised);
+			AddonRig promisedOther = Make();
+			promisedOther.Live.AddRange([Offer(217, [Gems(7, 100)], [Card(8)], confirmation: 1), Offer(218, [Gems(7, 100)], [Card(9)])]);
+			await Look(promisedOther);
+			Check("add-on trades: an accept giving away an item already promised to another offer waiting on its confirmation - refused, cards and anything else alike",
+				(promised.Posts.Count == 0) && (promisedOther.Posts.Count == 0), string.Join(",", promised.Posts.Concat(promisedOther.Posts)));
+			AddonRig held = Make(hold: TimeSpan.FromDays(3));
+			held.Live.Add(Offer(219, [Card(1)], [Gems(2, 500)]));
+			await Look(held);
+			AddonRig holdNotSaid = Make(holdUnknown: true);
+			holdNotSaid.Live.Add(Offer(220, [Card(1)], [Gems(2, 500)]));
+			await Look(holdNotSaid);
+			Check("add-on trades: a trade Steam would hold - refused and left for you; Steam not saying - not accepted, asked again at the next look",
+				(held.Posts.Count == 0) && (held.Trading.WaitingCount == 0) && (holdNotSaid.Posts.Count == 0) && (holdNotSaid.Trading.WaitingCount == 1),
+				$"{held.Posts.Count} {held.Trading.WaitingCount} {holdNotSaid.Posts.Count} {holdNotSaid.Trading.WaitingCount}");
+			var keepRules = new NocatFarm.Core.CardExchange.Rules(1, [440], NocatFarm.Core.Spare.Names("Medic"));
+			Check("add-on trades: the rules on their own - fine passes; held, kept by game or name (any case), promised, untradable or undescribed doesn't",
+				(NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 570)], [Gems(2, 1)]), keepRules, new HashSet<ulong>()) == null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 570)], [Gems(2, 1)]) with { HoldUntil = DateTime.UtcNow.AddDays(1) }, keepRules, new HashSet<ulong>()) != null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 440)], []), keepRules, new HashSet<ulong>()) != null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 570, name: "MEDIC")], []), keepRules, new HashSet<ulong>()) != null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 570)], []), keepRules, new HashSet<ulong> { 1 }) != null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, game: 570, tradable: false)], []), keepRules, new HashSet<ulong>()) != null)
+				&& (NocatFarm.Modules.Trading.AcceptBlocked(Offer(1, [Card(1, described: false)], []), keepRules, new HashSet<ulong>()) != null));
+
+			// ── never asked about what the app decides itself ──
+			TJ.Reset();
+			TJ.A = (_, _) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Decline("decline everything"));
+			AddonRig own = Make(c => c.AutoTradeWith = Mine.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			own.Live.AddRange([Offer(230, [Card(1)], [], from: Mine), Offer(231, [], [Card(3)])]);
+			await Look(own);
+			Check("add-on trades: never asked about one of your own accounts' offers or a donation - both accepted by the app's own rules",
+				(TJ.AskedA == 0) && own.Posts.Order().SequenceEqual(["/tradeoffer/230/accept", "/tradeoffer/231/accept"]), $"{TJ.AskedA} {string.Join(",", own.Posts)}");
+			AddonRig noDonations = Make(c => c.AcceptDonations = false);
+			noDonations.Live.Add(Offer(232, [], [Card(3)]));
+			await Look(noDonations);
+			Check("add-on trades: ...nor a donation with \"Accept donations\" off", (TJ.AskedA == 0) && (noDonations.Posts.Count == 0));
+			string loop = Src("src/NocatFarm/Modules/Trading.cs");
+			Check("add-on trades: asked only when the app leaves it undecided - not a nocat.lol card swap, a fair swap, or one whose swap test couldn't finish",
+				loop.Contains("if (!accept && (swap != null) && !exchange && AddonsMayJudge(offer, allowed, fleet)) {", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Modules/Trading.Addons.cs").Contains("!offer.IsPureDonation && !fleet.Contains(offer.Partner) && !allowed.ContainsKey(offer.Partner);", StringComparison.Ordinal));
+
+			// ── market prices for add-ons ──
+			NocatFarm.Plugins.IPluginHost host = new NocatFarm.Plugins.Host(mgr, "tj-price");
+			bool nothingYet = host.KnownMarketPrice(753, "753-Nothing Here") == null;
+			typeof(NocatFarm.PriceBook).GetMethod("Remember", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [753u, "440-Scout", 0.12m]);
+			var price = host.KnownMarketPrice(753, "440-Scout");
+			var fresh = await host.MarketPriceAsync(753, "440-Scout");
+			Check("add-on trades: market prices - the app's held price and when, never asked when it's fresh; none held is null; a nonsense name is null",
+				nothingYet && (price is { Price: 0.12m }) && (DateTime.UtcNow - price.At < TimeSpan.FromMinutes(5)) && (fresh?.Price == 0.12m)
+				&& (host.KnownMarketPrice(753, "") == null) && (await host.MarketPriceAsync(753, "a\nb") == null), $"{price} {fresh}");
+		} finally {
+			TJ.Gate.Set();
+			await NocatFarm.Plugins.PluginHost.UnloadAllAsync();
+			NocatFarm.Plugins.PluginHost.TradeJudgeLimit = wasJudgeLimit;
+			foreach (NocatFarm.Core.Bot b in bots) {
+				await b.DisposeAsync();
+			}
+			await mgr.DisposeAsync();
+			known.Remove(Stranger);
+			known.Remove(Mine);
+			NocatFarm.Config.Live.Global = wasLive;
+			NocatFarm.Log.Suppressed = wasSuppressed;
+			NocatFarm.Modules.BuyLedger.ForgetLoaded();
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+			await Task.Delay(200);
+			TestTemp.Gone(root);
+		}
+	}
+}
+
+/// <summary>One account's trade loop in the add-on checks, against a pretend Steam: what it sent, what it confirmed, what Steam lists.</summary>
+sealed record AddonRig(NocatFarm.Modules.Trading Trading, NocatFarm.Core.Bot Bot, List<string> Posts, List<ulong> Confirms, List<NocatFarm.Core.TradeOffers.Offer> Live);
+
+/// <summary>What the pretend trade judges below answer, and how often they were asked.</summary>
+static class TJ {
+	public static Func<NocatFarm.Plugins.PluginTradeOffer, CancellationToken, Task<NocatFarm.Plugins.PluginTradeAnswer>> A = Leave, B = Leave;
+	public static int AskedA, AskedB;
+
+	/// <summary>What a blocking judge waits on - let go at the end, so no thread is left blocked.</summary>
+	public static readonly ManualResetEventSlim Gate = new(false);
+
+	public static Task<NocatFarm.Plugins.PluginTradeAnswer> Leave(NocatFarm.Plugins.PluginTradeOffer o, CancellationToken ct) => Task.FromResult(NocatFarm.Plugins.PluginTradeAnswer.Leave());
+
+	public static void Reset() {
+		A = Leave;
+		B = Leave;
+		AskedA = 0;
+		AskedB = 0;
+	}
+}
+
+sealed class TJudgeA : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "tj-a";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		host.AddTradeJudge((o, t) => {
+			Interlocked.Increment(ref TJ.AskedA);
+			return TJ.A(o, t);
+		});
+		return Task.CompletedTask;
+	}
+}
+
+sealed class TJudgeB : NocatFarm.Plugins.INocatPlugin {
+	public string Name => "tj-b";
+	public string Version => "1.0";
+
+	public Task OnLoadAsync(NocatFarm.Plugins.IPluginHost host, CancellationToken ct) {
+		host.AddTradeJudge((o, t) => {
+			Interlocked.Increment(ref TJ.AskedB);
+			return TJ.B(o, t);
+		});
+		return Task.CompletedTask;
 	}
 }

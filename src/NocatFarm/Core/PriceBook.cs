@@ -407,6 +407,15 @@ public static partial class PriceBook {
 		}
 	}
 
+	/// <summary>1.9.1: a price we already hold and when it was read, or null - for add-ons. Never touches the network.</summary>
+	public static (decimal Price, DateTime At)? KnownAt(uint app, string marketHashName) {
+		Load();
+
+		lock (Cache) {
+			return Cache.TryGetValue(Key(app, marketHashName), out Price? p) ? (p.Usd, p.When) : null;
+		}
+	}
+
 	/// <summary>True when the cached price is old enough to be worth asking about again.</summary>
 	public static bool NeedsRefresh(uint app, string marketHashName) {
 		Load();

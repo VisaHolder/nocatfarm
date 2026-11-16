@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "Plugin {0} ist seit Langem nicht mit seinen Ereignissen fertig - neue werden verworfen, bis es so weit ist",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "Plugins ließen sich nicht aus {0} laden: {1} - Start ohne sie",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "Plugin {0} ist schon geladen (aus {1}) - die Kopie in {2} wird weggelassen",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (Plugin {1}) hat in {2} Sekunden nicht geantwortet - vielleicht arbeitet es noch daran"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (Plugin {1}) hat in {2} Sekunden nicht geantwortet - vielleicht arbeitet es noch daran",
+    "offer {0} · left alone · the add-on's answer changed": "Angebot {0} · bleibt liegen · die Antwort des Add-ons hat sich geändert",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "Angebot {0} · bleibt für dich · ein Add-on wollte es annehmen, aber {1}",
+    "{0} can't be traded": "{0} kann nicht gehandelt werden",
+    "{0} is promised to another offer": "{0} ist schon einem anderen Angebot versprochen",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} steht auf einer „nie anrühren“-Liste, oder die Karten seines Spiels wurden für ein Abzeichen gekauft",
+    "Steam won't say whether the trade would be held": "Steam sagt nicht, ob der Handel zurückgehalten würde",
+    "an add-on accepts it": "ein Add-on nimmt es an",
+    "an add-on declines it": "ein Add-on lehnt es ab",
+    "offer {0} accepted for add-on {1} · {2}": "Angebot {0} für Add-on {1} angenommen · {2}",
+    "offer {0} declined for add-on {1} · {2}": "Angebot {0} für Add-on {1} abgelehnt · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "ein Add-on darf darauf antworten, sonst trade accept oder decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "Plugin {0} hat mehr als {1} Tauschprüfer angelegt - der Rest wird weggelassen"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Alles andere ablehnen",
       "tip": "Lehnt jedes andere Tauschangebot ab, statt es liegen zu lassen. Aus lässt nicht angenommene Angebote liegen, damit du sie selbst prüfen kannst."
+    },
+    "AddonTrades": {
+      "label": "Add-ons auf Tauschangebote antworten lassen",
+      "tip": "Lässt installierte Add-ons die Tauschangebote annehmen oder ablehnen, die dieses Konto sonst für dich liegen ließe (oder mit „Alles andere ablehnen“ ablehnen würde). Nie Angebote deiner eigenen Konten, Spenden oder Kartentausche, die nocat.lol vermittelt hat. Ein Add-on kann nichts von deinen „nie anrühren“-Listen weggeben, nichts, das einem anderen Angebot versprochen ist, und nichts, das sich nicht handeln lässt, und nicht handeln, wenn Steam den Handel zurückhalten würde; seine Angebote warten wie alle anderen. Nur für Add-ons, denen du vertraust. Standardmäßig aus."
+    },
+    "AddonTradesConfirm": {
+      "label": "Add-on-Annahmen von Fremden bestätigen",
+      "tip": "GEFÄHRLICH: bestätigt mit dem Authenticator hier auch einen Handel, den ein Add-on von jemandem angenommen hat, der keins deiner Konten ist - ohne dich zu fragen. Ein fehlerhaftes Add-on gibt deine Gegenstände dann weg, bevor du es siehst. Aus: solche Handel werden angenommen, warten aber darauf, dass du sie in der Steam-App bestätigst. Standardmäßig aus."
     },
     "TradeDelayMinMinutes": {
       "label": "Auf ein Tauschangebot antworten nach mindestens",

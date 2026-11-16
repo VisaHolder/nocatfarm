@@ -413,6 +413,105 @@ internal sealed partial class Host(BotManager mgr, string owner) : IPluginHost {
 		}
 	}
 
+	// ── 1.9.1: trade judges, and market prices ────────────────────────────────
+
+	/// <summary>The most trade judges one plugin adds. One is all anybody needs; a plugin adding them in a loop got the rest ignored.</summary>
+	internal const int MaxTradeJudges = 5;
+
+	/// <summary>The most market prices one plugin has asked the market for in any hour (<see cref="MarketPriceAsync"/>); past it, only held ones.</summary>
+	internal const int MarketAsksAnHour = 60;
+
+	private readonly List<Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>>> _judges = [];
+	private readonly Queue<DateTime> _marketAsks = new();
+
+	/// <summary>This plugin's trade judges, as they are now.</summary>
+	internal IReadOnlyList<Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>>> TradeJudges {
+		get {
+			lock (_judges) {
+				return [.. _judges];
+			}
+		}
+	}
+
+	internal string Owner => _owner;
+
+	public void AddTradeJudge(Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>> judge) {
+		if (judge == null) {
+			return;
+		}
+
+		bool tooMany = false;
+
+		lock (_judges) {
+			if (_judges.Count >= MaxTradeJudges) {
+				tooMany = true;
+			} else {
+				_judges.Add(judge);
+			}
+		}
+
+		if (tooMany) {
+			NocatFarm.Log.Warn(new Said("plugin {0} added more than {1} trade judges - the rest are left out", _owner, MaxTradeJudges));
+		}
+	}
+
+	public PluginMarketPrice? KnownMarketPrice(uint appId, string marketHashName) {
+		if (!PriceName(marketHashName)) {
+			return null;
+		}
+
+		return PriceBook.KnownAt(appId, marketHashName) is { } known
+			? new PluginMarketPrice(known.Price, MarketQuotes.Code(PriceBook.CurrencyId), known.At)
+			: null;
+	}
+
+	public async Task<PluginMarketPrice?> MarketPriceAsync(uint appId, string marketHashName, CancellationToken ct = default) {
+		if (!PriceName(marketHashName)) {
+			return null;
+		}
+
+		if (!PriceBook.NeedsRefresh(appId, marketHashName) || !MayAskMarket()) {
+			return KnownMarketPrice(appId, marketHashName);
+		}
+
+		// The background's share of the market's hour, and its queue: an add-on's prices wait behind a sale about to be listed,
+		// and can never use up the hour the app's own pricing needs.
+		PriceBook.Background.Value = true;
+
+		try {
+			await PriceBook.FetchAsync(appId, marketHashName, ct).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			NocatFarm.Log.Failed($"plugin {_owner}: a market price", e);
+		}
+
+		// What the market said - or, when it didn't, the last price held (its time says how old).
+		return KnownMarketPrice(appId, marketHashName);
+	}
+
+	/// <summary>A market name worth asking about: something, not a page of text.</summary>
+	private static bool PriceName(string? name) => !string.IsNullOrWhiteSpace(name) && (name.Length <= 256) && !name.Any(char.IsControl);
+
+	/// <summary>Whether this plugin may ask the market once more this hour (<see cref="MarketAsksAnHour"/>), counting it if so.</summary>
+	private bool MayAskMarket() {
+		lock (_marketAsks) {
+			DateTime now = DateTime.UtcNow;
+
+			while ((_marketAsks.Count > 0) && (now - _marketAsks.Peek() >= TimeSpan.FromHours(1))) {
+				_marketAsks.Dequeue();
+			}
+
+			if (_marketAsks.Count >= MarketAsksAnHour) {
+				return false;
+			}
+
+			_marketAsks.Enqueue(now);
+
+			return true;
+		}
+	}
+
 	public event Action<IPluginAccount>? AccountOnline;
 	public event Action<IPluginAccount>? AccountOffline;
 	public event Action<IPluginAccount, uint, int>? CardDropped;

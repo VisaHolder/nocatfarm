@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "{0} eklentisi uzun süredir olaylarını bitirmedi - bitirene kadar yeni olaylar atılıyor",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "eklentiler {0} konumundan yüklenemedi: {1} - onlar olmadan başlatılıyor",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "{0} eklentisi zaten yüklü ({1} dosyasından) - {2} içindeki kopya dışarıda bırakıldı",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' ({1} eklentisi) {2} saniyede yanıt vermedi - hâlâ üzerinde çalışıyor olabilir"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' ({1} eklentisi) {2} saniyede yanıt vermedi - hâlâ üzerinde çalışıyor olabilir",
+    "offer {0} · left alone · the add-on's answer changed": "teklif {0} · olduğu gibi bırakıldı · eklentinin cevabı değişti",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "teklif {0} · sana bırakıldı · bir eklenti kabul etmek istedi ama {1}",
+    "{0} can't be traded": "{0} takas edilemez",
+    "{0} is promised to another offer": "{0} zaten başka bir teklife söz verildi",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} bir \"asla dokunma\" listesinde ya da oyununun kartları bir rozet için satın alındı",
+    "Steam won't say whether the trade would be held": "Steam takasın bekletilip bekletilmeyeceğini söylemiyor",
+    "an add-on accepts it": "bir eklenti kabul ediyor",
+    "an add-on declines it": "bir eklenti reddediyor",
+    "offer {0} accepted for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için kabul edildi · {2}",
+    "offer {0} declined for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için reddedildi · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "bir eklenti cevap verebilir, yoksa trade accept ya da decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "{0} eklentisi {1} takas yargıcından fazlasını ekledi - geri kalanı dışarıda bırakıldı"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Diğer her şeyi reddet",
       "tip": "Diğer tüm takas tekliflerini bırakmak yerine reddeder. Kapalıyken kabul edilmeyen teklifler sen kontrol edesin diye bekler."
+    },
+    "AddonTrades": {
+      "label": "Eklentilerin takas tekliflerine cevap vermesine izin ver",
+      "tip": "Bu hesabın aksi halde sana bırakacağı (ya da \"Diğer her şeyi reddet\" ile reddedeceği) takas tekliflerini, kurduğun eklentilerin kabul etmesine ya da reddetmesine izin verir. Kendi hesaplarından gelen teklifler, bağışlar ve nocat.lol'un eşleştirdiği kart takasları asla dahil değildir. Bir eklenti \"asla dokunma\" listelerindeki hiçbir şeyi, başka bir teklife söz verilmiş hiçbir şeyi ya da takas edilemeyen hiçbir şeyi veremez, Steam takası bekletecekse takas da yapamaz; teklifleri de diğerleri gibi bekler. Yalnızca güvendiğin eklentiler için. Varsayılan olarak kapalı."
+    },
+    "AddonTradesConfirm": {
+      "label": "Eklentilerin yabancılardan kabul ettiklerini onayla",
+      "tip": "TEHLİKELİ: bir eklentinin, senin hesaplarından biri olmayan birinden kabul ettiği takası da buradaki doğrulayıcıyla onaylar - sana sormadan. Hatalı bir eklenti o zaman eşyalarını sen görmeden verir. Kapalıyken bu takaslar kabul edilir ama Steam uygulamasında senin onaylaman için bekler. Varsayılan olarak kapalı."
     },
     "TradeDelayMinMinutes": {
       "label": "Takas teklifine en erken şu kadar sonra yanıt ver",

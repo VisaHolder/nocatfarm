@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "플러그인 {0}이(가) 오랫동안 이벤트 처리를 끝내지 못했습니다 - 끝낼 때까지 새 이벤트는 버려집니다",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "{0}에서 플러그인을 불러오지 못했습니다: {1} - 플러그인 없이 시작합니다",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "플러그인 {0}은(는) 이미 불러왔습니다 ({1}에서) - {2}에 있는 사본은 빠집니다",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (플러그인 {1})이(가) {2}초 동안 응답하지 않았습니다 - 아직 처리 중일 수 있습니다"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (플러그인 {1})이(가) {2}초 동안 응답하지 않았습니다 - 아직 처리 중일 수 있습니다",
+    "offer {0} · left alone · the add-on's answer changed": "제안 {0} · 그대로 둡니다 · 애드온의 답이 바뀌었습니다",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "제안 {0} · 직접 결정하세요 · 애드온이 수락하려 했지만 {1}",
+    "{0} can't be traded": "{0}은(는) 거래할 수 없습니다",
+    "{0} is promised to another offer": "{0}은(는) 이미 다른 제안에 걸려 있습니다",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0}은(는) '건드리지 않기' 목록에 있거나, 그 게임의 카드를 배지용으로 샀습니다",
+    "Steam won't say whether the trade would be held": "Steam이 거래가 보류될지 알려주지 않습니다",
+    "an add-on accepts it": "애드온이 수락합니다",
+    "an add-on declines it": "애드온이 거절합니다",
+    "offer {0} accepted for add-on {1} · {2}": "애드온 {1}에 따라 제안 {0}을(를) 수락했습니다 · {2}",
+    "offer {0} declined for add-on {1} · {2}": "애드온 {1}에 따라 제안 {0}을(를) 거절했습니다 · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "애드온이 답할 수 있습니다. 아니면 trade accept 또는 decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "플러그인 {0}이(가) 거래 판정을 {1}개보다 많이 추가했습니다 - 나머지는 빠집니다"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "나머지는 전부 거절",
       "tip": "그 밖의 모든 거래 제안을 그냥 두지 않고 거절합니다. 끄면 수락하지 않은 제안을 직접 확인하도록 남겨 둡니다."
+    },
+    "AddonTrades": {
+      "label": "애드온이 거래 제안에 답하게 하기",
+      "tip": "이 계정이 원래는 직접 결정하도록 남겨 둘(또는 '나머지는 전부 거절'로 거절할) 거래 제안을 설치한 애드온이 수락하거나 거절하게 합니다. 내 계정의 제안, 기부, nocat.lol이 짝지어 준 카드 교환은 제외입니다. 애드온은 '건드리지 않기' 목록의 아이템, 다른 제안에 걸린 아이템, 거래할 수 없는 아이템을 내줄 수 없고, Steam이 보류할 거래도 할 수 없으며, 그 제안도 다른 제안처럼 기다립니다. 믿을 수 있는 애드온에만 쓰세요. 기본값은 꺼짐입니다."
+    },
+    "AddonTradesConfirm": {
+      "label": "낯선 사람에게서 애드온이 수락한 거래 확인",
+      "tip": "위험: 내 계정이 아닌 사람에게서 애드온이 수락한 거래도 여기 있는 인증기로 확인합니다 - 묻지 않고. 애드온이 잘못되면 보기도 전에 아이템을 내줍니다. 끄면 그런 거래는 수락되지만 Steam 앱에서 직접 확인할 때까지 기다립니다. 기본값은 꺼짐입니다."
     },
     "TradeDelayMinMinutes": {
       "label": "거래 제안에 답하기까지 최소",

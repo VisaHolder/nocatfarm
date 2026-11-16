@@ -3420,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "プラグイン {0} が長い間イベントを処理し終えていません - 終わるまで新しいイベントは捨てられます",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "{0} からプラグインを読み込めませんでした: {1} - プラグインなしで起動します",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "プラグイン {0} はすでに読み込まれています ({1} から) - {2} にあるコピーは使われません",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (プラグイン {1}) が {2} 秒たっても応答しません - まだ処理中かもしれません"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (プラグイン {1}) が {2} 秒たっても応答しません - まだ処理中かもしれません",
+    "offer {0} · left alone · the add-on's answer changed": "オファー {0} · そのままにします · アドオンの答えが変わりました",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "オファー {0} · あなたに任せます · アドオンは承認しようとしましたが、{1}",
+    "{0} can't be traded": "{0} はトレードできません",
+    "{0} is promised to another offer": "{0} は別のオファーで渡す予定です",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} は「触れない」リストにあるか、そのゲームのカードがバッジ用に購入されています",
+    "Steam won't say whether the trade would be held": "取引が保留になるか Steam が答えません",
+    "an add-on accepts it": "アドオンが承認します",
+    "an add-on declines it": "アドオンが拒否します",
+    "offer {0} accepted for add-on {1} · {2}": "アドオン {1} によりオファー {0} を承認しました · {2}",
+    "offer {0} declined for add-on {1} · {2}": "アドオン {1} によりオファー {0} を拒否しました · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "アドオンが答えることがあります。それ以外は trade accept か decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "プラグイン {0} が {1} 個を超えるトレード判定を追加しました - 残りは使われません"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3874,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "それ以外はすべて断る",
       "tip": "それ以外のトレードオファーを放置せずにすべて断ります。オフなら承認しなかったオファーを、あなたが自分で確認できるよう残します。"
+    },
+    "AddonTrades": {
+      "label": "アドオンにトレードオファーへの返答を任せる",
+      "tip": "このアカウントが本来あなたに任せる（または「それ以外はすべて断る」で断る）トレードオファーを、インストールしたアドオンが承認・拒否できるようにします。自分のアカウントからのオファー、寄付、nocat.lol が組んだカード交換は対象外です。アドオンは「触れない」リストにあるもの、別のオファーで渡す予定のもの、トレードできないものを渡せず、Steam が保留にする取引もできません。オファーは他と同じように待ってから処理されます。信頼できるアドオンだけに使ってください。既定はオフです。"
+    },
+    "AddonTradesConfirm": {
+      "label": "アドオンが他人から承認した取引を確認する",
+      "tip": "危険：自分のアカウント以外の相手からアドオンが承認した取引も、ここにある認証で確認します - あなたに聞かずに。アドオンが間違えると、あなたが見る前にアイテムを渡してしまいます。オフなら、その取引は承認されますが、Steam アプリであなたが確認するまで待ちます。既定はオフです。"
     },
     "TradeDelayMinMinutes": {
       "label": "トレードオファーに答えるまで最短",
