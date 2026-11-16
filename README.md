@@ -68,8 +68,8 @@ It starts farming cards straight away. Both Windows versions are the same app, a
 **Updating:** click **Update** on the dashboard or type `update accept`. Accounts, settings and logs are kept. Set
 *Updates* to *install when I click, once everyone's asleep* and it holds the install until nobody's playing, or to *install by itself at night* for
 no click at all. `update now` always installs straight
-away. The Linux and Mac zips update themselves the same way. In Docker, or run as a Linux service, you update by
-hand; see [Linux, Mac and Docker](https://nocat.lol/nocatfarm/docs#linux-mac-and-docker).
+away. The Linux and Mac zips update themselves the same way, also as a Linux service with the unit in the zip. In
+Docker you update by hand; see [Linux, Mac and Docker](https://nocat.lol/nocatfarm/docs#linux-mac-and-docker).
 
 **A Mac, Linux or a server?** There are Mac zips (Apple Silicon and Intel: unzip, double-click `start.command`), a
 Linux zip for x64 and arm64 (Raspberry Pi), and a Dockerfile with an example compose file. You get the console and

@@ -1869,9 +1869,12 @@
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} está no modo humano - joga os jogos de \"Jogos e com que frequência\" (GameWeights), não esta lista",
     "update stopped - nocat.farm was closed first; nothing changed": "atualização interrompida - o nocat.farm foi fechado antes; nada foi alterado",
     "update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed": "atualização interrompida - outro nocat.farm está rodando desta pasta (processo {0}); feche-o primeiro, nada foi alterado",
-    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "rodando como serviço, o nocat.farm não se atualiza sozinho - pare, extraia {0} de {1} sobre esta pasta (config/ e logs/ ficam) e inicie de novo",
+    "this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "este serviço não consegue atualizar o nocat.farm sozinho (uma unit antiga, ou o usuário dele não pode escrever nesta pasta) - para resolver, instale o nocatfarm.service que vem no zip, a documentação do Linux explica como. À mão: pare, extraia {0} de {1} sobre esta pasta (config/ e logs/ ficam) e inicie de novo",
+    "update stopped - the last update is still being checked; try again in a minute": "atualização interrompida - a última atualização ainda está sendo verificada; tente de novo em um minuto",
+    "update dropped - the program in this folder changed while it waited (put in by hand?), so that one stays": "atualização descartada - o programa desta pasta mudou enquanto ela esperava (instalado à mão?), então esse fica",
+    "update undone: {0} was stopped half way (a kill or a power cut?), back on {1} - try again": "atualização desfeita: {0} parou no meio (processo morto ou queda de energia?), de volta ao {1} - tente de novo",
     "update failed: the download has no {0}": "falha na atualização: o download não tem {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Ele avisa quando sai uma versão nova. Aqui ele não consegue instalar sozinho - no Docker, pegue a versão nova e rode docker compose up -d --build; como serviço do Linux, pare, descompacte o zip novo sobre a pasta e inicie de novo. Suas contas e configurações ficam onde estão.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; under an older Linux service unit, stop it, unzip the new zip over the folder, start it again, and put in the nocatfarm.service from the zip so it can from then on. Your accounts and settings stay where they are.": "Ele avisa quando sai uma versão nova. Aqui ele não consegue instalar sozinho - no Docker, pegue a versão nova e rode docker compose up -d --build; com uma unit antiga de serviço do Linux, pare, descompacte o zip novo sobre a pasta, inicie de novo e instale o nocatfarm.service do zip para ele conseguir sozinho daí em diante. Suas contas e configurações ficam onde estão.",
     "finishing up": "terminando",
     "screen off turns the screens off - moving the mouse turns them back on": "screen off desliga as telas - mexer o mouse liga de novo",
     "there's no screen here to turn off": "aqui não há tela para desligar",
@@ -3417,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "o plugin {0} não termina os eventos dele há muito tempo - os novos são descartados até ele terminar",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "não foi possível carregar os plugins de {0}: {1} - iniciando sem eles",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "o plugin {0} já está carregado (de {1}) - a cópia em {2} fica de fora",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) não respondeu em {2} segundos - talvez ainda esteja trabalhando nisso"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (plugin {1}) não respondeu em {2} segundos - talvez ainda esteja trabalhando nisso",
+    "offer {0} · left alone · the add-on's answer changed": "oferta {0} · fica como está · a resposta do complemento mudou",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "oferta {0} · fica com você · um complemento queria aceitá-la, mas {1}",
+    "{0} can't be traded": "{0} não pode ser trocado",
+    "{0} is promised to another offer": "{0} já está prometido em outra oferta",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} está numa lista de \"nunca mexer\", ou as cartas do jogo dele foram compradas para uma insígnia",
+    "Steam won't say whether the trade would be held": "o Steam não diz se a troca ficaria retida",
+    "an add-on accepts it": "um complemento a aceita",
+    "an add-on declines it": "um complemento a recusa",
+    "offer {0} accepted for add-on {1} · {2}": "oferta {0} aceita pelo complemento {1} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "oferta {0} recusada pelo complemento {1} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "um complemento pode respondê-la; se não, trade accept ou decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "o plugin {0} adicionou mais de {1} juízes de trocas - o resto fica de fora"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3871,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Recusar todo o resto",
       "tip": "Recusa todas as outras ofertas de troca em vez de deixá-las paradas. Desligado, as ofertas não aceitas ficam para você conferir."
+    },
+    "AddonTrades": {
+      "label": "Deixar complementos responderem ofertas de troca",
+      "tip": "Deixa os complementos que você instalou aceitarem ou recusarem as ofertas de troca que esta conta, senão, deixaria com você (ou recusaria com \"Recusar todo o resto\"). Nunca ofertas das suas próprias contas, doações nem trocas de cartas pareadas pelo nocat.lol. Um complemento não pode dar nada das suas listas de \"nunca mexer\", nada prometido em outra oferta nem nada que não possa ser trocado, nem trocar quando o Steam reteria a troca, e as ofertas dele esperam como qualquer outra. Só para complementos em que você confia. Desligado por padrão."
+    },
+    "AddonTradesConfirm": {
+      "label": "Confirmar o que um complemento aceitar de desconhecidos",
+      "tip": "PERIGOSO: também confirma, com o autenticador daqui, uma troca que um complemento aceitou de alguém que não é uma das suas contas - sem perguntar a você. Um complemento errado então entrega seus itens antes de você ver. Desligado: essas trocas são aceitas, mas esperam você confirmá-las no app do Steam. Desligado por padrão."
     },
     "TradeDelayMinMinutes": {
       "label": "Responder a uma oferta de troca após pelo menos",

@@ -129,7 +129,7 @@ function Set-UnixModes([string]$zip) {
         $commentLen = [BitConverter]::ToUInt16($bytes, $p + 32)
         $name = [System.Text.Encoding]::UTF8.GetString($bytes, $p + 46, $nameLen)
 
-        $exec = ($name -ceq 'nocatFarm') -or ($name -ceq 'createdump') -or ($name -like '*.so') -or ($name -like '*.so.*')
+        $exec = ($name -ceq 'nocatFarm') -or ($name -ceq 'createdump') -or ($name -ceq 'nocatfarm-service.sh') -or ($name -like '*.so') -or ($name -like '*.so.*')
         $mode = if ($exec) { 0x81ED } else { 0x81A4 }    # regular file, 0755 / 0644
 
         $bytes[$p + 5] = 3                                  # "version made by" host: 3 = Unix
@@ -238,6 +238,13 @@ foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-ar
 
     Assert-Clean $lstage
     Copy-Item (Join-Path $root 'README.md') $lstage -Force
+    # Running it as a systemd service: the unit and its helper, for the service to update itself (docs/linux-docker-vps.md). Read by
+    # sh and systemd: one stray carriage return and every start fails, so a checkout that has them stops the build.
+    foreach ($f in 'nocatfarm-service.sh', 'nocatfarm.service') {
+        $from = Join-Path $PSScriptRoot "linux/$f"
+        if ([System.IO.File]::ReadAllText($from).Contains("`r")) { throw "$f has Windows line endings" }
+        Copy-Item $from $lstage -Force
+    }
 
     $lzip = Join-Path $dist "nocat.farm-v${version}_$rid.zip"
     New-FlatZip $lstage $lzip

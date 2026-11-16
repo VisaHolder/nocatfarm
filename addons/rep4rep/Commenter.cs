@@ -62,6 +62,9 @@ internal sealed class Commenter(Rep4RepAddon addon, string account) {
 	private int GapMin => Math.Clamp(addon.Int(Rep4RepAddon.SetGapMin, Account, 10), 1, 720);
 	private int GapMax => Math.Clamp(addon.Int(Rep4RepAddon.SetGapMax, Account, 25), 1, 1440);
 
+	/// <summary>"Skip comments worth less than": a task paying fewer points isn't posted. 0 (or anything that isn't a number) is off.</summary>
+	internal int MinPoints => Math.Max(0, addon.Int(Rep4RepAddon.SetMinPoints, Account, 0));
+
 	/// <summary>The cap in force: the configured one, pulled down - never up - by a limit Steam taught us.</summary>
 	public int Cap {
 		get {
@@ -268,7 +271,10 @@ internal sealed class Commenter(Rep4RepAddon addon, string account) {
 		Rep4RepTask? task = await NextTaskAsync(profileId, state, ct).ConfigureAwait(false);
 
 		if (task == null) {
-			_status = T("{0}/{1} today - no task available", posted, Cap);
+			// Every task there is pays too little: the same wait as no tasks at all, so nothing is asked again any sooner.
+			_status = _onlyTooLow
+				? T("{0}/{1} today - waiting for better-paying tasks (at least {2} points)", posted, Cap, MinPoints)
+				: T("{0}/{1} today - no task available", posted, Cap);
 
 			return NoTaskRetryMinutes * 60;
 		}
@@ -376,6 +382,10 @@ internal sealed class Commenter(Rep4RepAddon addon, string account) {
 		List<Rep4RepTask> tasks = await Api.GetTasksAsync(profileId, ct).ConfigureAwait(false);
 		Remember(tasks);
 
+		int minimum = MinPoints, tooLow = 0;
+		Rep4RepTask? next = null;
+		_onlyTooLow = false;
+
 		foreach (Rep4RepTask task in tasks) {
 			if (state.HasPostedTask(task.TaskId) || state.IsDeadTarget(task.TargetSteamId, DateTime.UtcNow)) {
 				continue;
@@ -387,11 +397,28 @@ internal sealed class Commenter(Rep4RepAddon addon, string account) {
 				continue;
 			}
 
-			return task;
+			if (task.BelowMinimum(minimum)) {
+				tooLow++;
+
+				continue;
+			}
+
+			next = task;
+
+			break;
 		}
 
-		return null;
+		// Once a look, however many there were: a batch of 25 at 2 points is one thing to say, not 25.
+		if (tooLow > 0) {
+			addon.Debug(Account, $"skipped {tooLow} task(s) worth less than {minimum} points");
+			_onlyTooLow = next == null;
+		}
+
+		return next;
 	}
+
+	/// <summary>The last look found tasks, and all of them pay too little: what the account is doing is waiting for better ones.</summary>
+	private volatile bool _onlyTooLow;
 
 	/// <summary>Post one, deal with what came of it. Called holding <see cref="_posting"/>.</summary>
 	private async Task<int> PostAsync(Rep4RepTask task, string profileId, AccountState state, bool retried, CancellationToken ct) {
@@ -724,6 +751,10 @@ internal sealed class Commenter(Rep4RepAddon addon, string account) {
 
 			if (addon.Blocked(task.CommentText) is { } why) {
 				return T("that comment has \"{0}\", which is on the block list - pick another", why);
+			}
+
+			if (task.BelowMinimum(MinPoints)) {
+				return T("that one is worth {0} points, less than this account's minimum of {1} - pick another", task.PointsText, MinPoints);
 			}
 
 			PluginCommentResult result = await Host.PostProfileCommentAsync(Account, task.TargetSteamId, task.CommentText, ct).ConfigureAwait(false);

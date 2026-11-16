@@ -1869,9 +1869,12 @@
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} insan modunda - bu listedeki değil \"Oyunlar ve ne sıklıkta\" (GameWeights) içindeki oyunları oynar",
     "update stopped - nocat.farm was closed first; nothing changed": "güncelleme durduruldu - nocat.farm önce kapatıldı; hiçbir şey değişmedi",
     "update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed": "güncelleme durduruldu - bu klasörden başka bir nocat.farm çalışıyor (işlem {0}); önce onu kapat, hiçbir şey değişmedi",
-    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "hizmet olarak çalışırken nocat.farm kendini güncellemez - durdur, {1} adresinden {0} dosyasını bu klasörün üstüne aç (config/ ve logs/ kalır) ve yeniden başlat",
+    "this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "bu hizmet nocat.farm'ı kendi güncelleyemiyor (eski bir birim dosyası ya da kullanıcısı bu klasöre yazamıyor) - düzeltmek için zip'teki nocatfarm.service dosyasını kur, nasıl yapılacağı Linux belgelerinde yazıyor. Elle: durdur, {1} adresinden {0} dosyasını bu klasörün üstüne aç (config/ ve logs/ kalır) ve yeniden başlat",
+    "update stopped - the last update is still being checked; try again in a minute": "güncelleme durduruldu - son güncelleme hâlâ kontrol ediliyor; bir dakika sonra yeniden dene",
+    "update dropped - the program in this folder changed while it waited (put in by hand?), so that one stays": "güncelleme bırakıldı - beklerken bu klasördeki program değişti (elle mi kuruldu?), o yüzden o kalıyor",
+    "update undone: {0} was stopped half way (a kill or a power cut?), back on {1} - try again": "güncelleme geri alındı: {0} yarıda kesildi (işlem mi öldürüldü, elektrik mi kesildi?), yine {1} - yeniden dene",
     "update failed: the download has no {0}": "güncelleme başarısız: indirilen dosyada {0} yok",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux hizmeti olarak çalışıyorsa durdur, yeni zip'i klasörün üstüne aç ve yeniden başlat. Hesapların ve ayarların yerinde kalır.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; under an older Linux service unit, stop it, unzip the new zip over the folder, start it again, and put in the nocatfarm.service from the zip so it can from then on. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; eski bir Linux hizmet birimiyle çalışıyorsa durdur, yeni zip'i klasörün üstüne aç, yeniden başlat ve zip'teki nocatfarm.service dosyasını kur, böylece bundan sonra kendisi yapabilir. Hesapların ve ayarların yerinde kalır.",
     "finishing up": "bitiriyor",
     "screen off turns the screens off - moving the mouse turns them back on": "screen off ekranları kapatır - fareyi oynatınca geri açılır",
     "there's no screen here to turn off": "burada kapatılacak ekran yok",
@@ -3417,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "{0} eklentisi uzun süredir olaylarını bitirmedi - bitirene kadar yeni olaylar atılıyor",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "eklentiler {0} konumundan yüklenemedi: {1} - onlar olmadan başlatılıyor",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "{0} eklentisi zaten yüklü ({1} dosyasından) - {2} içindeki kopya dışarıda bırakıldı",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' ({1} eklentisi) {2} saniyede yanıt vermedi - hâlâ üzerinde çalışıyor olabilir"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' ({1} eklentisi) {2} saniyede yanıt vermedi - hâlâ üzerinde çalışıyor olabilir",
+    "offer {0} · left alone · the add-on's answer changed": "teklif {0} · olduğu gibi bırakıldı · eklentinin cevabı değişti",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "teklif {0} · sana bırakıldı · bir eklenti kabul etmek istedi ama {1}",
+    "{0} can't be traded": "{0} takas edilemez",
+    "{0} is promised to another offer": "{0} zaten başka bir teklife söz verildi",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} bir \"asla dokunma\" listesinde ya da oyununun kartları bir rozet için satın alındı",
+    "Steam won't say whether the trade would be held": "Steam takasın bekletilip bekletilmeyeceğini söylemiyor",
+    "an add-on accepts it": "bir eklenti kabul ediyor",
+    "an add-on declines it": "bir eklenti reddediyor",
+    "offer {0} accepted for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için kabul edildi · {2}",
+    "offer {0} declined for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için reddedildi · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "bir eklenti cevap verebilir, yoksa trade accept ya da decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "{0} eklentisi {1} takas yargıcından fazlasını ekledi - geri kalanı dışarıda bırakıldı"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3871,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Diğer her şeyi reddet",
       "tip": "Diğer tüm takas tekliflerini bırakmak yerine reddeder. Kapalıyken kabul edilmeyen teklifler sen kontrol edesin diye bekler."
+    },
+    "AddonTrades": {
+      "label": "Eklentilerin takas tekliflerine cevap vermesine izin ver",
+      "tip": "Bu hesabın aksi halde sana bırakacağı (ya da \"Diğer her şeyi reddet\" ile reddedeceği) takas tekliflerini, kurduğun eklentilerin kabul etmesine ya da reddetmesine izin verir. Kendi hesaplarından gelen teklifler, bağışlar ve nocat.lol'un eşleştirdiği kart takasları asla dahil değildir. Bir eklenti \"asla dokunma\" listelerindeki hiçbir şeyi, başka bir teklife söz verilmiş hiçbir şeyi ya da takas edilemeyen hiçbir şeyi veremez, Steam takası bekletecekse takas da yapamaz; teklifleri de diğerleri gibi bekler. Yalnızca güvendiğin eklentiler için. Varsayılan olarak kapalı."
+    },
+    "AddonTradesConfirm": {
+      "label": "Eklentilerin yabancılardan kabul ettiklerini onayla",
+      "tip": "TEHLİKELİ: bir eklentinin, senin hesaplarından biri olmayan birinden kabul ettiği takası da buradaki doğrulayıcıyla onaylar - sana sormadan. Hatalı bir eklenti o zaman eşyalarını sen görmeden verir. Kapalıyken bu takaslar kabul edilir ama Steam uygulamasında senin onaylaman için bekler. Varsayılan olarak kapalı."
     },
     "TradeDelayMinMinutes": {
       "label": "Takas teklifine en erken şu kadar sonra yanıt ver",

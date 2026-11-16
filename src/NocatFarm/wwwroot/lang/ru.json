@@ -1869,9 +1869,12 @@
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} в режиме «человек» - он играет в игры из «Игры и как часто» (GameWeights), а не из этого списка",
     "update stopped - nocat.farm was closed first; nothing changed": "обновление остановлено - nocat.farm закрыли раньше; ничего не изменено",
     "update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed": "обновление остановлено - из этой папки уже запущен другой nocat.farm (процесс {0}); сначала закройте его, ничего не изменено",
-    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "как служба nocat.farm не обновляется сам - остановите его, распакуйте {0} с {1} поверх этой папки (config/ и logs/ сохранятся) и запустите снова",
+    "this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "эта служба не может сама обновить nocat.farm (старый файл службы, или у её пользователя нет прав на запись в эту папку) - чтобы это исправить, установите nocatfarm.service из zip, как именно - в документации для Linux. Вручную: остановите его, распакуйте {0} с {1} поверх этой папки (config/ и logs/ сохранятся) и запустите снова",
+    "update stopped - the last update is still being checked; try again in a minute": "обновление остановлено - последнее обновление ещё проверяется; попробуйте снова через минуту",
+    "update dropped - the program in this folder changed while it waited (put in by hand?), so that one stays": "обновление отброшено - пока оно ждало, программа в этой папке изменилась (установлена вручную?), поэтому остаётся она",
+    "update undone: {0} was stopped half way (a kill or a power cut?), back on {1} - try again": "обновление отменено: {0} прервано на полпути (процесс убит или отключилось питание?), снова {1} - попробуйте ещё раз",
     "update failed: the download has no {0}": "обновление не удалось: в загрузке нет {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; как службу Linux остановите его, распакуйте новый zip поверх папки и запустите снова. Аккаунты и настройки остаются на месте.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; under an older Linux service unit, stop it, unzip the new zip over the folder, start it again, and put in the nocatfarm.service from the zip so it can from then on. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; со старым файлом службы Linux остановите его, распакуйте новый zip поверх папки, запустите снова и установите nocatfarm.service из zip, тогда дальше он сможет сам. Аккаунты и настройки остаются на месте.",
     "finishing up": "заканчивает",
     "screen off turns the screens off - moving the mouse turns them back on": "screen off выключает экраны - движение мыши включает их обратно",
     "there's no screen here to turn off": "здесь нет экрана, который можно выключить",
@@ -3417,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "плагин {0} давно не может закончить со своими событиями - новые отбрасываются, пока он не закончит",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "не удалось загрузить плагины из {0}: {1} - запуск без них",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "плагин {0} уже загружен (из {1}) - копия в {2} не учитывается",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (плагин {1}) не ответил за {2} секунд - возможно, он всё ещё работает над этим"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (плагин {1}) не ответил за {2} секунд - возможно, он всё ещё работает над этим",
+    "offer {0} · left alone · the add-on's answer changed": "предложение {0} · оставлено как есть · ответ дополнения изменился",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "предложение {0} · оставлено вам · дополнение хотело его принять, но {1}",
+    "{0} can't be traded": "{0} нельзя обменять",
+    "{0} is promised to another offer": "{0} уже обещан в другом предложении",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} в списке «никогда не трогать», или карточки его игры куплены для значка",
+    "Steam won't say whether the trade would be held": "Steam не говорит, будет ли обмен задержан",
+    "an add-on accepts it": "дополнение его принимает",
+    "an add-on declines it": "дополнение его отклоняет",
+    "offer {0} accepted for add-on {1} · {2}": "предложение {0} принято по дополнению {1} · {2}",
+    "offer {0} declined for add-on {1} · {2}": "предложение {0} отклонено по дополнению {1} · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "может ответить дополнение, иначе trade accept или decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "плагин {0} добавил больше {1} судей обменов - остальные не учитываются"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3871,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Отклонять всё остальное",
       "tip": "Отклоняет все остальные предложения обмена, а не оставляет их. Если выключено, непринятые предложения остаются, чтобы вы проверили их сами."
+    },
+    "AddonTrades": {
+      "label": "Разрешить дополнениям отвечать на предложения обмена",
+      "tip": "Позволяет установленным дополнениям принимать или отклонять предложения обмена, которые этот аккаунт иначе оставил бы вам (или отклонил бы по «Отклонять всё остальное»). Никогда — предложения от ваших собственных аккаунтов, пожертвования и обмены карточками, которые подобрал nocat.lol. Дополнение не может отдать ничего из ваших списков «никогда не трогать», ничего обещанного в другом предложении и ничего, что нельзя обменять, и не может меняться, когда Steam задержал бы обмен; его предложения ждут, как и любые другие. Только для дополнений, которым вы доверяете. По умолчанию выключено."
+    },
+    "AddonTradesConfirm": {
+      "label": "Подтверждать принятое дополнением от незнакомцев",
+      "tip": "ОПАСНО: подтверждает здешним аутентификатором и обмен, который дополнение приняло от того, кто не является вашим аккаунтом, — не спрашивая вас. Ошибочное дополнение тогда отдаст ваши предметы раньше, чем вы это увидите. Если выключено, такие обмены принимаются, но ждут, пока вы подтвердите их в приложении Steam. По умолчанию выключено."
     },
     "TradeDelayMinMinutes": {
       "label": "Отвечать на предложение обмена не раньше чем через",

@@ -8,7 +8,7 @@
     <AssemblyName>nocatfarm.rep4rep</AssemblyName>
     <RootNamespace>NocatFarm.Addons.Rep4Rep</RootNamespace>
     <!-- The add-on's own version: addons/addons.json lists it, and the dashboard says when a newer one is out. -->
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>

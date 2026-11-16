@@ -260,9 +260,10 @@ The message that a new version is out lists what changed. After updating, the lo
 *Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.5.4 - installing it now",
 then "Install complete - now on 1.5.4" with what's new, or that it failed or was undone and why.
 
-**The Linux and Mac zips** update themselves just like Windows, putting back included. **In Docker, or run as a
-Linux service** (systemd), it tells you when a new version is out and you update it yourself: see
-[Updating as a service](linux-docker-vps.md#from-the-zip) and [in Docker](linux-docker-vps.md#docker).
+**The Linux and Mac zips** update themselves just like Windows, putting back included, and so does a **Linux service**
+(systemd) with the unit in the zip: see [Updating as a service](linux-docker-vps.md#from-the-zip). **In Docker**, or
+under an older service unit, it tells you when a new version is out and you update it yourself: see
+[in Docker](linux-docker-vps.md#docker).
 
 ## 8. If something looks wrong
 

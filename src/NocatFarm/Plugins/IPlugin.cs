@@ -19,6 +19,11 @@ namespace NocatFarm.Plugins;
 /// comment as an account (<see cref="IPluginHost.PostProfileCommentAsync"/>). The app decides whether and when - awake,
 /// spaced out, under a daily ceiling, never on a paused account - so a plugin can ask, but can't make an account spam.
 ///
+/// 1.9.1 adds a second, for custom trade rules: a plugin may judge incoming trade offers the app leaves undecided
+/// (<see cref="IPluginHost.AddTradeJudge"/>). Again the app decides: only where the owner switched it on, never past the
+/// keep lists, promised items, untradable items or a trade hold, after the usual wait, and never confirmed for a stranger
+/// unless the owner allowed that too.
+///
 /// Plugins are off by default and stay off until somebody turns them on, having been told plainly what running
 /// one means.
 /// </remarks>
@@ -162,6 +167,87 @@ public readonly record struct PluginGame(uint AppId, string Name, int MinutesPla
 
 /// <summary>What one game's items are worth.</summary>
 public readonly record struct PluginGameValue(uint AppId, string Game, int Items, decimal Value);
+
+/// <summary>1.9.1: what kind of Steam item a <see cref="PluginTradeItem"/> is - for Steam's own community items (appID 753); Other for everything else.</summary>
+public enum PluginTradeItemKind { Other, Card, FoilCard, Background, Emoticon, BoosterPack, Gems, GemSack }
+
+/// <summary>
+/// 1.9.1: one item in a trade offer, as Steam described it in the offer the app read. Nothing here was asked of Steam just
+/// for an add-on: when Steam left something out, it's empty, 0 or false - never a guess.
+/// </summary>
+/// <param name="AppId">The game the item lives in: 753 for Steam's own (cards, backgrounds, gems), 730 for CS2, and so on.</param>
+/// <param name="ContextId">Steam's inventory context ("6" for Steam community items, "2" for most games).</param>
+/// <param name="Amount">How many: 1 for most items, more for gems.</param>
+/// <param name="Name">The name people see ("Scout").</param>
+/// <param name="MarketHashName">Its market name ("440-Scout") - what a market price is kept under. Empty when Steam didn't say.</param>
+/// <param name="Type">Steam's type line ("Team Fortress 2 Trading Card").</param>
+/// <param name="Kind">A simple kind, for Steam community items; Other for everything else, or when Steam didn't say.</param>
+/// <param name="Tradable">Whether Steam says it can be traded. False when Steam didn't say.</param>
+/// <param name="Marketable">Whether Steam says it can be sold on the market. False when Steam didn't say.</param>
+/// <param name="GameAppId">For a Steam community item, the game it belongs to (a card's game); 0 when Steam didn't say.</param>
+/// <param name="Described">Whether Steam described the item at all. When it didn't, every field past the ids is empty.</param>
+public sealed record PluginTradeItem(
+	uint AppId,
+	string ContextId,
+	ulong AssetId,
+	ulong ClassId,
+	ulong InstanceId,
+	uint Amount,
+	string Name,
+	string MarketHashName,
+	string Type,
+	PluginTradeItemKind Kind,
+	bool Tradable,
+	bool Marketable,
+	uint GameAppId,
+	bool Described
+);
+
+/// <summary>1.9.1: an incoming trade offer the app hasn't decided itself, handed to a trade judge (<see cref="IPluginHost.AddTradeJudge"/>).</summary>
+/// <param name="Account">The account it was sent to - its config name.</param>
+/// <param name="OfferId">Steam's id for the offer.</param>
+/// <param name="PartnerSteamId">Who sent it (SteamID64).</param>
+/// <param name="Message">The note they wrote on it, or empty.</param>
+/// <param name="Created">When it was sent (UTC), when Steam said.</param>
+/// <param name="TradeHoldDays">Days the trade is already held for, when Steam said; null when it didn't (most offers). The app
+/// checks the hold itself before acting on an Accept - see the rules.</param>
+/// <param name="Giving">What the account would hand over.</param>
+/// <param name="Receiving">What the account would get.</param>
+public sealed record PluginTradeOffer(
+	string Account,
+	ulong OfferId,
+	ulong PartnerSteamId,
+	string Message,
+	DateTime? Created,
+	int? TradeHoldDays,
+	IReadOnlyList<PluginTradeItem> Giving,
+	IReadOnlyList<PluginTradeItem> Receiving
+);
+
+/// <summary>1.9.1: what a trade judge says about an offer.</summary>
+public enum PluginTradeDecision {
+	/// <summary>No opinion: the app does what it would have done without the add-on.</summary>
+	Leave,
+
+	/// <summary>Accept it - if the app's own safety rules allow it.</summary>
+	Accept,
+
+	/// <summary>Decline it.</summary>
+	Decline
+}
+
+/// <summary>1.9.1: a trade judge's answer, and a short reason for the log ("12 gems for a card worth 10").</summary>
+public sealed record PluginTradeAnswer(PluginTradeDecision Decision, string Reason = "") {
+	public static PluginTradeAnswer Leave(string reason = "") => new(PluginTradeDecision.Leave, reason);
+	public static PluginTradeAnswer Accept(string reason) => new(PluginTradeDecision.Accept, reason);
+	public static PluginTradeAnswer Decline(string reason) => new(PluginTradeDecision.Decline, reason);
+}
+
+/// <summary>1.9.1: a market price the app holds: the lowest listing, in the currency the app prices in, and when it was read.</summary>
+/// <param name="Price">The cheapest listing (0 when nobody sells it), in <paramref name="Currency"/>.</param>
+/// <param name="Currency">The currency's code ("USD", "EUR") - the app's "Market currency" setting.</param>
+/// <param name="At">When the market said so (UTC).</param>
+public sealed record PluginMarketPrice(decimal Price, string Currency, DateTime At);
 
 /// <summary>What kind of control a plugin setting gets on the page.</summary>
 public enum PluginSettingKind {
@@ -335,6 +421,45 @@ public interface IPluginHost {
 	/// and write it in the log. For things worth telling somebody about - not every step.
 	/// </summary>
 	void Notify(string message, string? account = null);
+
+	// ── 1.9.1 ───────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Be asked about incoming trade offers the app leaves undecided, and answer Accept, Decline or Leave. Call it during
+	/// OnLoadAsync. The app keeps the say:
+	///
+	///   • only on an account whose owner switched on "Let add-ons answer trade offers" (off by default)
+	///   • never for the account's own accounts, a donation, a card swap nocat.lol paired, or a fair card swap the app takes
+	///     itself - only what it would otherwise leave for the owner (or decline under "Decline everything else")
+	///   • an Accept is refused when the offer gives away anything on the keep lists or from a kept game, anything promised
+	///     to another offer, anything Steam doesn't call tradable, or when the trade would be held - and when the app can't
+	///     tell, it leaves the offer alone
+	///   • nothing is done at once: the offer waits like every other, and the judges are asked again right before; an answer
+	///     that changed leaves the offer alone
+	///   • an Accept from a stranger that Steam wants confirmed waits for the owner's phone, unless the owner switched on
+	///     "Confirm add-on accepts"
+	///   • a judge that throws, takes longer than 30 seconds, or hands back nothing has said Leave - and the offer is left
+	///     alone this time round, never declined; judges that disagree (one Accept, one Decline) leave it alone too
+	///
+	/// Every Accept and Decline is logged with the add-on's name and its reason.
+	/// </summary>
+	void AddTradeJudge(Func<PluginTradeOffer, CancellationToken, Task<PluginTradeAnswer>> judge);
+
+	/// <summary>
+	/// A market price the app already holds for an item, or null. Never asks Steam. Prices are shared by every account and kept
+	/// about a day.
+	/// </summary>
+	/// <param name="appId">The item's game: 753 for cards, backgrounds, emoticons, boosters and gems.</param>
+	/// <param name="marketHashName">Its market name, as <see cref="PluginTradeItem.MarketHashName"/> has it.</param>
+	PluginMarketPrice? KnownMarketPrice(uint appId, string marketHashName);
+
+	/// <summary>
+	/// A market price: the one held when it's fresh, otherwise asked through the app's own market queue - spaced out with
+	/// everything else the app prices, from the share it keeps for background pricing, and at most 60 asks an hour for each
+	/// add-on. When the market doesn't answer, or this add-on's hour is used up, the last price held (its <c>At</c> says how
+	/// old); null when there's none at all. Can take a while when the queue is busy.
+	/// </summary>
+	Task<PluginMarketPrice?> MarketPriceAsync(uint appId, string marketHashName, CancellationToken ct = default);
 
 	/// <summary>An account finished signing in.</summary>
 	event Action<IPluginAccount>? AccountOnline;

@@ -26,7 +26,11 @@ public static class TradeOffers {
 	/// <param name="Game">The game a community item belongs to (market_fee_app); 0 when Steam didn't say.</param>
 	/// <param name="Icon">Steam's picture for it - https://community.cloudflare.steamstatic.com/economy/image/&lt;Icon&gt;/96fx96f.</param>
 	/// <param name="Hash">Its market name ("440-Scout") - what a price is kept under (1.8.2 card swaps). Empty when Steam didn't say.</param>
-	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "");
+	/// <param name="Kind">1.9.1: what kind of Steam item it is, from the same description (add-on trade judges). Other when Steam didn't say.</param>
+	/// <param name="Tradable">1.9.1: Steam's description says it can be traded. False when Steam didn't say - never assumed.</param>
+	/// <param name="Marketable">1.9.1: Steam's description says it can be sold on the market. False when Steam didn't say.</param>
+	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "",
+		SpareKind Kind = SpareKind.Other, bool Tradable = false, bool Marketable = false);
 
 	/// <param name="Giving">What this account would hand over.</param>
 	/// <param name="Receiving">What this account would get.</param>
@@ -35,8 +39,9 @@ public static class TradeOffers {
 	/// <param name="ConfirmationMethod">0 none; otherwise it's accepted (or sent) and waiting on an email (1) or the
 	/// phone (2) - so it isn't to be accepted again, and the cards on its giving side are already spoken for.</param>
 	/// <param name="Message">The note the sender wrote on it - a 1.8.2 card swap says which match it is.</param>
+	/// <param name="Created">1.9.1: when it was sent (UTC), from the same answer; null when Steam didn't say.</param>
 	public sealed record Offer(ulong Id, ulong Partner, int State, bool Ours, DateTime? HoldUntil, List<Item> Giving, List<Item> Receiving, int ConfirmationMethod = 0,
-		string Message = "") {
+		string Message = "", DateTime? Created = null) {
 		public bool IsPureDonation => (Giving.Count == 0) && (Receiving.Count > 0);
 
 		/// <summary>Accepted by this account, waiting on the phone or an email before anything moves.</summary>
@@ -238,6 +243,7 @@ public static class TradeOffers {
 
 		int.TryParse(Text(o, "trade_offer_state"), out int state);
 		long.TryParse(Text(o, "escrow_end_date"), out long escrow);
+		long.TryParse(Text(o, "time_created"), out long created);
 		int.TryParse(Text(o, "confirmation_method"), out int confirmation);
 		bool ours = o.TryGetProperty("is_our_offer", out JsonElement mine) && (mine.ValueKind == JsonValueKind.True);
 
@@ -248,7 +254,7 @@ public static class TradeOffers {
 		}
 
 		return new Offer(id, AccountBase + account, state, ours, escrow > 0 ? DateTimeOffset.FromUnixTimeSeconds(escrow).UtcDateTime : null,
-			giving, receiving, confirmation, Text(o, "message"));
+			giving, receiving, confirmation, Text(o, "message"), created > 0 ? DateTimeOffset.FromUnixTimeSeconds(created).UtcDateTime : null);
 	}
 
 	private static List<Item>? Items(JsonElement o, string side, Dictionary<string, JsonElement> descriptions) {
@@ -273,11 +279,15 @@ public static class TradeOffers {
 
 			items.Add(new Item(app, Text(i, "contextid"), asset, classId, instanceId, Math.Max(1, amount),
 				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : "",
-				described ? Text(d, "market_hash_name") : ""));
+				described ? Text(d, "market_hash_name") : "", described ? Spare.KindOf(d) : SpareKind.Other, described && Yes(Text(d, "tradable")),
+				described && Yes(Text(d, "marketable"))));
 		}
 
 		return items;
 	}
 
 	private static string Text(JsonElement e, string name) => InventoryContents.Text(e, name);
+
+	/// <summary>A yes in a description: true, or 1 - Steam writes it both ways.</summary>
+	private static bool Yes(string flag) => (flag == "1") || flag.Equals("true", StringComparison.OrdinalIgnoreCase);
 }

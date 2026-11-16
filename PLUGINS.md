@@ -7,7 +7,7 @@ You need to be able to write a little C#. If you just want to use nocat.farm, yo
 
 **Contents** · [Your first plugin](#your-first-plugin) · [A bigger example](#a-bigger-example-card-tally) ·
 [What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Profile comments](#posting-a-profile-comment) ·
-[A page of your own](#a-dashboard-tab-of-your-own) · [Rules](#rules) ·
+[Trade offers](#answering-trade-offers) · [A page of your own](#a-dashboard-tab-of-your-own) · [Rules](#rules) ·
 [Is it safe?](#is-it-safe) · [Sharing it](#sharing-your-plugin) · [ASF plugins](#not-supported-asf-plugins)
 
 ---
@@ -198,12 +198,13 @@ Both examples on this page build against the current nocat.farm.
 | **Read** | Every account: online or not, what it's playing, cards left, its games and playtime, what its items are worth, and any of its settings. |
 | **Do** | Run any command, the same ones you type, like `pause farm1` or `grind farm1 730 2`. |
 | **Add** | New commands, settings that get real controls on the dashboard's Plugins page (one value, or one per account), and a dashboard tab of its own. |
-| **Comment** | Post a Steam profile comment as an account - with nocat.farm deciding when (see [below](#posting-a-profile-comment)). This is the only thing a plugin can make an account do on Steam by itself. |
+| **Comment** | Post a Steam profile comment as an account - with nocat.farm deciding when (see [below](#posting-a-profile-comment)). |
+| **Trade** | Accept or decline incoming trade offers nocat.farm leaves undecided - with nocat.farm's safety rules on top, and only where the owner allows it (see [below](#answering-trade-offers)). |
 | **Remember** | Save its own data so it survives restarts and updates. |
 
 What it can't do through the API is reach the Steam connection, the login tokens or the config files. Anything
-that changes something goes through a command, so it's checked and logged exactly like a command you typed. The one
-exception is a profile comment, and nocat.farm keeps the say over that one.
+that changes something goes through a command, so it's checked and logged exactly like a command you typed. The two
+exceptions are a profile comment and an answer to a trade offer, and nocat.farm keeps the say over both.
 
 ---
 
@@ -226,12 +227,14 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `CanComment("farm1")` · `PostProfileCommentAsync("farm1", steamId64, text)` | Whether the app would let that account post a profile comment now (and why not, and until when), and post one. See [Posting a profile comment](#posting-a-profile-comment). |
 | `AddPage(title, render)` | A dashboard tab of your own. See [A dashboard tab of your own](#a-dashboard-tab-of-your-own). |
 | `Notify("text", "farm1")` | Send a line out on Telegram, Discord and the tray, the way the app's own news goes, when *Send add-on messages* is on. It also goes in the log. |
+| `AddTradeJudge((offer, ct) => ...)` | Be asked about incoming trade offers nocat.farm leaves undecided, and answer Accept, Decline or Leave. See [Answering trade offers](#answering-trade-offers). |
+| `KnownMarketPrice(appId, name)` · `MarketPriceAsync(appId, name)` | A Steam market price: the lowest listing, in the app's market currency, and when it was read. `KnownMarketPrice` only gives what nocat.farm already holds. `MarketPriceAsync` asks the market when the held one is old, through nocat.farm's own spaced-out queue, at most 60 times an hour per plugin. |
 
 | Event | When it fires |
 |---|---|
 | `AccountOnline` · `AccountOffline` | An account finished signing in, or went offline. |
 | `CardDropped` | A card dropped: the account, the game's appID, and how many cards that game has left. |
-| `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count; use a command such as `offers` if you want the details. |
+| `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count; to look at the offers themselves, use `AddTradeJudge`. |
 
 `INocatPlugin` has one optional extra: `OnUnloadAsync()`, called when nocat.farm closes. It gets 5 seconds.
 
@@ -269,6 +272,76 @@ this PC), `Unknown` (sent, no answer - count it and never send the same comment 
 `DailyLimit` and `AccountBlocked`.
 
 Keep your own limits on top: the rep4rep add-on also has its own per-account cap, gaps and hours.
+
+## Answering trade offers
+
+`host.AddTradeJudge(...)` lets your plugin answer incoming trade offers: custom trade rules, a gem exchange, a level-up
+bot. nocat.farm asks your judge about each offer it would otherwise leave for the owner, and your judge answers
+`Accept`, `Decline` or `Leave` (no opinion), with a short reason that goes in the log.
+
+This one accepts offers that only take normal trading cards and only pay gems, at a price per card set on the Plugins
+page, and declines the ones that pay too little:
+
+```csharp
+using NocatFarm.Plugins;
+
+public sealed class GemsForCards : INocatPlugin {
+    public string Name => "GemsForCards";
+    public string Version => "1.0.0";
+
+    public Task OnLoadAsync(IPluginHost host, CancellationToken ct) {
+        host.AddSetting(new PluginSetting(
+            "Gems", "Gems per card", "Accept offers that only take normal cards and only pay gems, at least this many a card.",
+            PluginSettingKind.Int, Default: "15"));
+
+        host.AddTradeJudge((offer, token) => {
+            // Not the kind of offer this plugin knows about: no opinion, nocat.farm does what it would anyway.
+            if (offer.Giving.Count == 0 || offer.Giving.Any(i => i.Kind != PluginTradeItemKind.Card)
+                || offer.Receiving.Count == 0 || offer.Receiving.Any(i => i.Kind != PluginTradeItemKind.Gems)) {
+                return Task.FromResult(PluginTradeAnswer.Leave());
+            }
+
+            long cards = offer.Giving.Sum(i => (long) i.Amount);
+            long gems = offer.Receiving.Sum(i => (long) i.Amount);
+            int each = int.TryParse(host.Setting("Gems"), out int n) && n > 0 ? n : 15;
+
+            return Task.FromResult(gems >= cards * each
+                ? PluginTradeAnswer.Accept($"{gems} gems for {cards} card(s)")
+                : PluginTradeAnswer.Decline($"{gems} gems for {cards} card(s) is under {each} a card"));
+        });
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+The `offer` your judge gets has the account's name, the offer's id, who sent it (`PartnerSteamId`), their note, when it
+was sent, the trade hold if Steam already said, and the items on both sides: `Giving` is what the account would hand
+over, `Receiving` what it would get. Each item has its ids, amount, name, market name, Steam's type line, a simple
+`Kind` (`Card`, `FoilCard`, `Background`, `Emoticon`, `BoosterPack`, `Gems`, `GemSack` or `Other`), whether Steam says it's
+`Tradable` and `Marketable`, and for Steam community items the game it belongs to (`GameAppId`). It's what nocat.farm
+already read from Steam; nothing extra is asked for your plugin. For prices, use
+`host.MarketPriceAsync(753, item.MarketHashName, token)` instead of asking the market yourself.
+
+### What nocat.farm does whatever your judge says
+
+- **Off until the owner turns it on**, per account: *Let add-ons answer trade offers* (Settings, Trades, Show advanced).
+  While it's off, your judge isn't even asked.
+- **Only offers nocat.farm leaves undecided.** Never offers from the owner's own accounts, donations, card swaps
+  nocat.lol paired, or fair card swaps nocat.farm accepts by itself.
+- **An Accept is refused** when the offer would give away anything on the owner's "never touch" lists or from a game
+  whose cards were bought for a badge, anything promised to another offer that's still waiting, or anything Steam
+  doesn't call tradable, or when Steam would hold the trade. When nocat.farm can't tell, it doesn't accept. A refused
+  offer is left for the owner, with the reason in the log, and your judge isn't asked about it again.
+- **Nothing happens at once.** The offer waits like every other one (2 to 15 minutes by default), and your judge is
+  asked again right before nocat.farm answers it. If the answer changed, the offer is left alone.
+- **No confirming for strangers.** When Steam wants an accepted trade confirmed and the offer is from somebody who
+  isn't one of the owner's accounts, it waits for the owner's phone, unless the owner also turned on *Confirm add-on
+  accepts from strangers*.
+- **A judge that throws, takes longer than 30 seconds or hands back nothing has said Leave**, and the offer is left
+  alone that time round, never declined. The same goes when two plugins disagree (one says Accept, another Decline).
+- Every accept and decline is logged with your plugin's name and your reason, like
+  `offer 4 accepted for add-on GemsForCards · 60 gems for 4 card(s)`.
 
 ## A dashboard tab of your own
 

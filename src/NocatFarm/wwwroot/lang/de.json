@@ -1869,9 +1869,12 @@
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} ist im Menschmodus - es spielt die Spiele aus \"Spiele und wie oft\" (GameWeights), nicht diese Liste",
     "update stopped - nocat.farm was closed first; nothing changed": "Update abgebrochen - nocat.farm wurde vorher geschlossen; nichts wurde geändert",
     "update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed": "Update abgebrochen - ein anderes nocat.farm läuft aus diesem Ordner (Prozess {0}); schließ es zuerst, nichts wurde geändert",
-    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "als Dienst aktualisiert sich nocat.farm nicht selbst - halte es an, entpacke {0} von {1} über diesen Ordner (config/ und logs/ bleiben) und starte es wieder",
+    "this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "dieser Dienst kann nocat.farm nicht selbst aktualisieren (eine ältere Unit, oder sein Benutzer darf in diesen Ordner nicht schreiben) - richte dafür nocatfarm.service aus dem Zip ein, wie das geht, steht in der Linux-Anleitung. Von Hand: halte es an, entpacke {0} von {1} über diesen Ordner (config/ und logs/ bleiben) und starte es wieder",
+    "update stopped - the last update is still being checked; try again in a minute": "Update abgebrochen - das letzte Update wird noch geprüft; versuch es in einer Minute noch einmal",
+    "update dropped - the program in this folder changed while it waited (put in by hand?), so that one stays": "Update verworfen - das Programm in diesem Ordner hat sich geändert, während es wartete (von Hand eingespielt?), also bleibt dieses",
+    "update undone: {0} was stopped half way (a kill or a power cut?), back on {1} - try again": "Update rückgängig: {0} wurde mittendrin gestoppt (abgeschossen oder Stromausfall?), wieder auf {1} - versuch es noch einmal",
     "update failed: the download has no {0}": "Update fehlgeschlagen: im Download fehlt {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Es sagt Bescheid, wenn eine neue Version da ist. Selbst installieren kann es sie hier nicht - in Docker holst du die neue Version und führst docker compose up -d --build aus; als Linux-Dienst hältst du es an, entpackst das neue Zip über den Ordner und startest es wieder. Deine Konten und Einstellungen bleiben, wo sie sind.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; under an older Linux service unit, stop it, unzip the new zip over the folder, start it again, and put in the nocatfarm.service from the zip so it can from then on. Your accounts and settings stay where they are.": "Es sagt Bescheid, wenn eine neue Version da ist. Selbst installieren kann es sie hier nicht - in Docker holst du die neue Version und führst docker compose up -d --build aus; unter einer älteren Linux-Dienst-Unit hältst du es an, entpackst das neue Zip über den Ordner, startest es wieder und richtest nocatfarm.service aus dem Zip ein, dann kann es das ab jetzt selbst. Deine Konten und Einstellungen bleiben, wo sie sind.",
     "finishing up": "macht noch fertig",
     "screen off turns the screens off - moving the mouse turns them back on": "screen off schaltet die Bildschirme aus - Maus bewegen schaltet sie wieder ein",
     "there's no screen here to turn off": "hier gibt es keinen Bildschirm zum Ausschalten",
@@ -3417,7 +3420,19 @@
     "plugin {0} hasn't finished with its events for a long time - new ones are dropped until it does": "Plugin {0} ist seit Langem nicht mit seinen Ereignissen fertig - neue werden verworfen, bis es so weit ist",
     "plugins couldn't be loaded from {0}: {1} - starting without them": "Plugins ließen sich nicht aus {0} laden: {1} - Start ohne sie",
     "plugin {0} is loaded already (from {1}) - the copy in {2} is left out": "Plugin {0} ist schon geladen (aus {1}) - die Kopie in {2} wird weggelassen",
-    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (Plugin {1}) hat in {2} Sekunden nicht geantwortet - vielleicht arbeitet es noch daran"
+    "'{0}' (plugin {1}) hasn't answered in {2} seconds - it may still be working on it": "'{0}' (Plugin {1}) hat in {2} Sekunden nicht geantwortet - vielleicht arbeitet es noch daran",
+    "offer {0} · left alone · the add-on's answer changed": "Angebot {0} · bleibt liegen · die Antwort des Add-ons hat sich geändert",
+    "offer {0} · left for you · an add-on wanted it accepted, but {1}": "Angebot {0} · bleibt für dich · ein Add-on wollte es annehmen, aber {1}",
+    "{0} can't be traded": "{0} kann nicht gehandelt werden",
+    "{0} is promised to another offer": "{0} ist schon einem anderen Angebot versprochen",
+    "{0} is on a \"never touch\" list, or its game's cards were bought for a badge": "{0} steht auf einer „nie anrühren“-Liste, oder die Karten seines Spiels wurden für ein Abzeichen gekauft",
+    "Steam won't say whether the trade would be held": "Steam sagt nicht, ob der Handel zurückgehalten würde",
+    "an add-on accepts it": "ein Add-on nimmt es an",
+    "an add-on declines it": "ein Add-on lehnt es ab",
+    "offer {0} accepted for add-on {1} · {2}": "Angebot {0} für Add-on {1} angenommen · {2}",
+    "offer {0} declined for add-on {1} · {2}": "Angebot {0} für Add-on {1} abgelehnt · {2}",
+    "an add-on may answer it, else trade accept or decline {0} {1}": "ein Add-on darf darauf antworten, sonst trade accept oder decline {0} {1}",
+    "plugin {0} added more than {1} trade judges - the rest are left out": "Plugin {0} hat mehr als {1} Tauschprüfer angelegt - der Rest wird weggelassen"
   },
   "settings": {
     "BackupToTelegram": {
@@ -3871,6 +3886,14 @@
     "DeclineOtherTrades": {
       "label": "Alles andere ablehnen",
       "tip": "Lehnt jedes andere Tauschangebot ab, statt es liegen zu lassen. Aus lässt nicht angenommene Angebote liegen, damit du sie selbst prüfen kannst."
+    },
+    "AddonTrades": {
+      "label": "Add-ons auf Tauschangebote antworten lassen",
+      "tip": "Lässt installierte Add-ons die Tauschangebote annehmen oder ablehnen, die dieses Konto sonst für dich liegen ließe (oder mit „Alles andere ablehnen“ ablehnen würde). Nie Angebote deiner eigenen Konten, Spenden oder Kartentausche, die nocat.lol vermittelt hat. Ein Add-on kann nichts von deinen „nie anrühren“-Listen weggeben, nichts, das einem anderen Angebot versprochen ist, und nichts, das sich nicht handeln lässt, und nicht handeln, wenn Steam den Handel zurückhalten würde; seine Angebote warten wie alle anderen. Nur für Add-ons, denen du vertraust. Standardmäßig aus."
+    },
+    "AddonTradesConfirm": {
+      "label": "Add-on-Annahmen von Fremden bestätigen",
+      "tip": "GEFÄHRLICH: bestätigt mit dem Authenticator hier auch einen Handel, den ein Add-on von jemandem angenommen hat, der keins deiner Konten ist - ohne dich zu fragen. Ein fehlerhaftes Add-on gibt deine Gegenstände dann weg, bevor du es siehst. Aus: solche Handel werden angenommen, warten aber darauf, dass du sie in der Steam-App bestätigst. Standardmäßig aus."
     },
     "TradeDelayMinMinutes": {
       "label": "Auf ein Tauschangebot antworten nach mindestens",

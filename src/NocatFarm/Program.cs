@@ -645,7 +645,8 @@ await manager.DisposeAsync().ConfigureAwait(false);
 BotManager.Flush();   // persist the last few minutes of lifetime totals a clean exit would otherwise drop
 await Task.WhenAny(console, Task.Delay(1000)).ConfigureAwait(false);
 
-return 0;
+// An update handed to the systemd unit's helper says so here; otherwise 0.
+return NocatFarm.Core.SelfUpdate.ExitCode;
 
 // ─────────────────────────────────────────────────────────────────────────────
 void Banner() {
