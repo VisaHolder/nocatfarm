@@ -49,6 +49,14 @@ default), `farm1:from` only accepts what farm1 sends, and `farm1:to` lets farm1 
 own switch). A config from before 1.8.2 with *Accept anything from your own accounts* on had its *Your own accounts*
 put in here, both ways - exactly what it did before.
 
+**Add-ons can answer offers too**, if you let them: *Let add-ons answer trade offers* (`AddonTrades`, Show advanced,
+off). An add-on with custom trade rules is then asked about the offers nocat.farm would otherwise leave for you, and can
+accept or decline them. It's never asked about your own accounts, donations or card swaps nocat.lol paired, and it can't
+give away anything on your "never touch" lists, anything promised to another offer or anything that can't be traded, nor
+trade when Steam would hold it. Its offers wait like any other. A trade it accepts from a stranger waits for you to
+confirm it in the Steam app, unless you also turn on *Confirm add-on accepts from strangers* - which is dangerous: a
+wrong add-on then gives your items away before you see it. How an add-on does this: [PLUGINS.md](../PLUGINS.md#answering-trade-offers).
+
 *Send items to* (`TradeMasters`, Show advanced) is only where `send` and the timed sends go - a name or a SteamID64, the
 first one used. Nobody on it can take anything; that's *Your other accounts*.
 
