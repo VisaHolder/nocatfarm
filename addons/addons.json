@@ -1,5 +1,5 @@
 {
-  "serial": 1,
+  "serial": 3,
   "addons": [
     {
       "id": "rep4rep",
@@ -22,7 +22,7 @@
       "minAppVersion": "1.9.0",
       "file": "nocatfarm.rep4rep.dll",
       "url": "https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.rep4rep.dll",
-      "sha256": "7e7078901da6014920243eca15688f7f811482aeee4017ced713e0ddf7148116",
+      "sha256": "ab8294cfaf71a55d45823018ece939c73893c6ba480a91f68e18d048480a8a92",
       "source": "https://github.com/VisaHolder/nocatfarm/tree/main/addons/rep4rep"
     }
   ]

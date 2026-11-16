@@ -29459,7 +29459,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		NocatFarm.Plugins.PluginPage setup = await addon.RenderAsync(null);
 		string aStatus = await addon.CommandAsync(["status"]);
 		Check("rep4rep add-on: loads against the plugin API - its settings, 'rep4rep' and 'r4r', its tab",
-			(addon.Name == "rep4rep") && (addon.Version == "1.0.0") && aCommands.Contains("rep4rep") && aCommands.Contains("r4r") && (aDeclared.Count == 14) && (aPage != null), $"{aDeclared.Count} settings");
+			(addon.Name == "rep4rep") && (addon.Version == typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.GetName().Version!.ToString(3)) && aCommands.Contains("rep4rep") && aCommands.Contains("r4r") && (aDeclared.Count == 14) && (aPage != null), $"{aDeclared.Count} settings");
 		Check("rep4rep add-on: no key yet - the tab shows how to set it up, 'rep4rep' says the key is missing",
 			setup.Blocks.Any(static b => b.Url == "https://rep4rep.com/?r=reap") && aStatus.Contains("MISSING", StringComparison.Ordinal), aStatus);
 		Check("rep4rep add-on: the block list's default is the one the setting shows", aHost.Setting("BlockList") == NocatFarm.Addons.Rep4Rep.BlockList.Default);
@@ -29956,7 +29956,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		string plugDir = NocatFarm.Plugins.PluginHost.Folder;
 		Directory.CreateDirectory(plugDir);
 		string demo = Path.Combine(plugDir, "nocatfarm.demo.dll");
-		string realAddon = typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.Location;   // a real add-on DLL, version 1.0.0
+		string realAddon = typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.Location;   // a real add-on DLL, its own version
 		string repoRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
 		string Src(params string[] parts) => File.ReadAllText(Path.Combine([repoRoot, .. parts])).Replace("\r\n", "\n");
 
@@ -30021,8 +30021,8 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		int fxDownloads = 0;
 		byte[] older = System.Text.Encoding.UTF8.GetBytes("demo add-on 0.9 " + Guid.NewGuid());
 		var downgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(FxList("0.9.0", FxSha(older)), "demo", (_, _) => { fxDownloads++; return Task.FromResult(older); }, CancellationToken.None);
-		Check("add-on install: never an older version over the one installed (its file says 1.0.0) - nothing downloaded, nothing changed",
-			(NocatFarm.Plugins.Addons.VersionOnDisk(demo) == "1.0.0") && !downgrade.Ok && (fxDownloads == 0)
+		Check("add-on install: never an older version over the one installed (its file says the add-on's own version) - nothing downloaded, nothing changed",
+			(NocatFarm.Plugins.Addons.VersionOnDisk(demo) == typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.GetName().Version!.ToString(3)) && !downgrade.Ok && (fxDownloads == 0)
 			&& downgrade.Message.ToEnglish().Contains("offers the older 0.9.0", StringComparison.Ordinal) && File.ReadAllBytes(demo).SequenceEqual(File.ReadAllBytes(realAddon)), downgrade.Message.ToEnglish());
 		var upgrade = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
 		Check("add-on install: a newer one goes in over it", upgrade.Ok && File.ReadAllBytes(demo).SequenceEqual(v1), upgrade.Message.ToEnglish());
@@ -30041,7 +30041,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		await NocatFarm.Plugins.PluginHost.LoadAllAsync(fxMgr, CancellationToken.None);
 		var seenOff = NocatFarm.Plugins.PluginHost.Discovered.FirstOrDefault(static p => p.File == "nocatfarm.demo.dll");
 		Check("add-on off: switched off, it's known by the kept signed list and never loaded - listed as off, its file free to update or remove",
-			(offEntry?.Plugin == "Demo") && (seenOff.Name == "Demo") && (seenOff.Version == "1.0.0") && !seenOff.Enabled
+			(offEntry?.Plugin == "Demo") && (seenOff.Name == "Demo") && (seenOff.Version == typeof(NocatFarm.Addons.Rep4Rep.Rep4RepAddon).Assembly.GetName().Version!.ToString(3)) && !seenOff.Enabled
 			&& !NocatFarm.Plugins.PluginHost.IsLoaded("nocatfarm.demo.dll") && (NocatFarm.Plugins.PluginHost.Running.Count == 0), $"{seenOff}");
 		NocatFarm.Config.Live.Global.DisabledPlugins = [];
 		Check("add-on off: switched on, the list doesn't keep it from loading", NocatFarm.Plugins.Addons.SwitchedOff("nocatfarm.demo.dll") == null);
