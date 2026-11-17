@@ -1729,3 +1729,11 @@ a.loglink:hover { color: #79b8ff; }
 .field.chips .langpick { margin: 0; }
 .field .proxysignin { margin-top: 6px; font-size: 12.5px; }
 @media (max-width: 900px) { .jump .j.sub { display: none; } }
+/* 1.9.2: farm.nocat.lol - the pairing screen, the code to match, the approve banner here, and what the hosted page leaves out. */
+.farmgate { max-width: 460px; text-align: left; }
+.farmgate p { margin: 0 0 12px; }
+.farmgate a { overflow-wrap: anywhere; }
+.farmcode { font-size: 34px; font-weight: 700; letter-spacing: 6px; text-align: center; margin: 8px 0 16px; font-family: inherit; }
+.alert.farmnote { font-size: 12.5px; }
+.farmonly { white-space: nowrap; }
+.hosted .farm-hide, .hosted [data-act="remove"], .hosted [data-act="steamopen"], .hosted [data-act="steamcode"], .hosted [data-act="dlcundo"] { display: none !important; }

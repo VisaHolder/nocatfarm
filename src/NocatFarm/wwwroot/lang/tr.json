@@ -3432,7 +3432,56 @@
     "offer {0} accepted for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için kabul edildi · {2}",
     "offer {0} declined for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için reddedildi · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "bir eklenti cevap verebilir, yoksa trade accept ya da decline {0} {1}",
-    "plugin {0} added more than {1} trade judges - the rest are left out": "{0} eklentisi {1} takas yargıcından fazlasını ekledi - geri kalanı dışarıda bırakıldı"
+    "plugin {0} added more than {1} trade judges - the rest are left out": "{0} eklentisi {1} takas yargıcından fazlasını ekledi - geri kalanı dışarıda bırakıldı",
+    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "Bunu bilgisayarındaki uygulamanın kendi panosunda yap - farm.nocat.lol bunu yapamaz.",
+    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol, nocat.farm'ı yalnızca aynı bilgisayarda, http://127.0.0.1 adresinde açar.",
+    "This browser isn't paired with nocat.farm yet.": "Bu tarayıcı henüz nocat.farm ile eşleştirilmedi.",
+    "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm'da bekleyen çok fazla istek var. Onları uygulamada yanıtla ya da 5 dakika bekle.",
+    "Asked too often - wait a minute and try again.": "Çok sık istendi - bir dakika bekleyip tekrar dene.",
+    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "pano: farm.nocat.lol ({0}) bu panoyu açmak istiyor - kod {1}. Bu bilgisayardaki panoda izin ver ya da reddet.",
+    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol nocat.farm panonu açmak istiyor (kod {0}, {1}). Sensen, bilgisayarındaki uygulamanın kendi panosunda izin ver. Değilsen hiçbir şey yapma - 5 dakika içinde süresi dolar.",
+    "That request has run out - ask again on farm.nocat.lol.": "Bu isteğin süresi doldu - farm.nocat.lol'da tekrar iste.",
+    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "pano: farm.nocat.lol ({0}) içeri alındı - kod {1}",
+    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "pano: farm.nocat.lol ({0}) reddedildi - kod {1}",
+    "dashboard: a farm.nocat.lol pairing was taken back": "pano: bir farm.nocat.lol eşleşmesi geri alındı",
+    "In the app on your PC": "Bilgisayarındaki uygulamada",
+    "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0}, giriş QR kodunun taranmasını bekliyor - kod, bilgisayarındaki uygulamanın kendi panosunda görünür.",
+    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol bu panoyu açmak istiyor",
+    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "kod {0}, {1}. Yalnızca o sayfa aynı kodu gösteriyorsa ve onu sen açtıysan izin ver.",
+    "Approve": "İzin ver",
+    "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "farm.nocat.lol'dasın. Onaylar, takaslar, satın alma, satma, üretme, kodlar ve parolalar bilgisayarındaki uygulamanın kendi panosunda kalır:",
+    "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard kodu yalnızca bilgisayarındaki uygulamanın kendi panosunda görünür.",
+    "This browser is paired with nocat.farm on this PC.": "Bu tarayıcı bu bilgisayardaki nocat.farm ile eşleştirildi.",
+    "Disconnect this browser": "Bu tarayıcının bağlantısını kes",
+    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "Kapalı: farm.nocat.lol bu panoyu açamaz. Bu bilgisayardaki bir tarayıcıda o adresten kullanmak için \"farm.nocat.lol bu panoyu açabilsin\" ayarını aç.",
+    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.": "Açık: burada izin verdiğinde https://farm.nocat.lol bu bilgisayardaki bir tarayıcıda bu panoyu açabilir. Asla onaylayamaz, takas edemez, satın alamaz, satamaz, üretemez, kodları ve parolaları göremez.",
+    "until {0}": "{0} tarihine kadar",
+    "Revoke": "Geri al",
+    "No browser is paired yet.": "Henüz eşleştirilmiş tarayıcı yok.",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "Bu bilgisayardaki nocat.farm'ın kendi panosunu aç, sonra Ayarlar, Pano ve telefon, Gelişmişleri göster'i işaretle ve \"farm.nocat.lol bu panoyu açabilsin\" ayarını aç. Kaydet ve buraya dön.",
+    "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari ve bazı tarayıcılar ya da eklentiler, bir web sitesinin kendi bilgisayarınla konuşmasını engeller. O zaman panoyu doğrudan nocat.farm'dan aç:",
+    "port {0}": "port {0}",
+    "Can't find nocat.farm on this PC.": "Bu bilgisayarda nocat.farm bulunamadı.",
+    "Safari doesn't let a website talk to your own PC.": "Safari, bir web sitesinin kendi bilgisayarınla konuşmasına izin vermez.",
+    "Start nocat.farm on this PC, then reload this page.": "Bu bilgisayarda nocat.farm'ı başlat, sonra bu sayfayı yenile.",
+    "Don't have it yet?": "Henüz yok mu?",
+    "Download nocat.farm": "nocat.farm'ı indir",
+    "Already running? It may not be letting this page in yet:": "Zaten çalışıyor mu? Belki bu sayfayı henüz içeri almıyordur:",
+    "nocat.farm is running, but it doesn't let farm.nocat.lol in.": "nocat.farm çalışıyor ama farm.nocat.lol'u içeri almıyor.",
+    "Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.": "Ya anahtar kapalı ya da bu nocat.farm 1.9.2'den eski - öyleyse önce onu güncelle.",
+    "Update your nocat.farm": "nocat.farm'ını güncelle",
+    "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "Bu sayfa {0} sürümünden yeni bir nocat.farm istiyor. Onu bu bilgisayardaki kendi panosunda güncelle, sonra bu sayfayı yenile.",
+    "Connect to your nocat.farm": "nocat.farm'ına bağlan",
+    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Bu sayfa doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. nocat.farm önce sana sorar: Bağlan'a bas, sonra aynı koda uygulamada izin ver.",
+    "Connect": "Bağlan",
+    "Approve this in nocat.farm": "Buna nocat.farm'da izin ver",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "Bu bilgisayardaki nocat.farm'ın kendi panosunda, farm.nocat.lol'un onu açıp açamayacağını soran bir kutu çıkar. Aynı kodu gösterdiğini kontrol et, sonra İzin ver'e bas.",
+    "Waiting for you to approve it…": "İzin vermeni bekliyor…",
+    "It was turned down in nocat.farm.": "nocat.farm'da reddedildi.",
+    "That code ran out. Press Connect for a new one.": "Bu kodun süresi doldu. Yeni bir kod için Bağlan'a bas.",
+    "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol artık bu panoyu açabilir.",
+    "Turned down.": "Reddedildi.",
+    "Taken back - that browser has to pair again.": "Geri alındı - o tarayıcının yeniden eşleşmesi gerekiyor."
   },
   "settings": {
     "BackupToTelegram": {
@@ -5026,6 +5075,10 @@
     "BuyBooster": {
       "label": "Daha ucuza geliyorsa kart paketi al",
       "tip": "Bir rozetin eksik kartlarını almadan önce, oyunun kart paketlerinin daha ucuza gelip gelmeyeceğini hesaplar. Bir paket, setin tamamından rastgele 3 karttır - tekrarlar ve zaten sahip olduğun kartlar sayılmaz - bu yüzden paketler genelde bazı eksik kartları bırakır, onlar sonra alınır. Yalnızca paketler ve bırakmaları beklenen kartlar, eksik kartlardan en az onda bir daha ucuzsa paket alır. Örneğin 5 kartlık bir sette tanesi 0.20 olan 4 kart eksikse (0.80): 0.10'luk 3 paketin yaklaşık yarım kart bırakması beklenir, toplam yaklaşık 0.41 - paketler. 8 kartlık bir sette tanesi 0.08 olan 4 kart eksik, paketler 0.25: kartlar. Alınan paketler kendiliğinden açılır; sonraki bakış hâlâ eksik olanı alır. Bakış başına bir set. 'buy preview' sayıları gösterir. Varsayılan olarak kapalı."
+    },
+    "FarmWebAllowed": {
+      "label": "farm.nocat.lol bu panoyu açabilsin",
+      "tip": "farm.nocat.lol web sitesinin bu panoyu bu bilgisayardaki bir tarayıcıda göstermesine izin verir; böylece yer imlerine tek bir adres eklersin. Doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. Her tarayıcı önce sorar: sayfada ve burada 6 karakterlik bir kod görünür ve sen bu panoda izin verirsin. Oradan her şeyi görebilir ve gündelik işleri yapabilir - başlatma, durdurma, duraklatma, önizlemeler, para harcamayan ayarlar - ama asla onaylar, takaslar, satın alma, satma, üretme, kodlar ya da parolalar değil: bunlar burada kalır. Varsayılan olarak kapalı. Kapalı: farm.nocat.lol nocat.farm'a hiç ulaşamaz."
     }
   }
 }

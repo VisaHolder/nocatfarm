@@ -3432,7 +3432,56 @@
     "offer {0} accepted for add-on {1} · {2}": "已按附加组件 {1} 接受报价 {0} · {2}",
     "offer {0} declined for add-on {1} · {2}": "已按附加组件 {1} 拒绝报价 {0} · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "附加组件可能会答复它，否则 trade accept 或 decline {0} {1}",
-    "plugin {0} added more than {1} trade judges - the rest are left out": "插件 {0} 添加了超过 {1} 个交易判定 - 其余的不予采用"
+    "plugin {0} added more than {1} trade judges - the rest are left out": "插件 {0} 添加了超过 {1} 个交易判定 - 其余的不予采用",
+    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "请在你电脑上应用自己的面板里操作 - farm.nocat.lol 做不了。",
+    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol 只能在同一台电脑上通过 http://127.0.0.1 打开 nocat.farm。",
+    "This browser isn't paired with nocat.farm yet.": "这个浏览器还没有和 nocat.farm 配对。",
+    "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm 里等待处理的请求太多了。在应用里处理它们，或等 5 分钟。",
+    "Asked too often - wait a minute and try again.": "请求太频繁 - 等一分钟再试。",
+    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "面板：farm.nocat.lol（{0}）请求打开这个面板 - 代码 {1}。请在这台电脑上的面板里允许或拒绝。",
+    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol 请求打开你的 nocat.farm 面板（代码 {0}，{1}）。如果是你本人，请在你电脑上应用自己的面板里允许。如果不是，什么都不用做 - 5 分钟后失效。",
+    "That request has run out - ask again on farm.nocat.lol.": "这个请求已失效 - 请在 farm.nocat.lol 上重新请求。",
+    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "面板：已允许 farm.nocat.lol（{0}）- 代码 {1}",
+    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "面板：已拒绝 farm.nocat.lol（{0}）- 代码 {1}",
+    "dashboard: a farm.nocat.lol pairing was taken back": "面板：已撤销一个 farm.nocat.lol 配对",
+    "In the app on your PC": "在你电脑上的应用里",
+    "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} 正在等待扫描登录二维码 - 二维码显示在你电脑上应用自己的面板里。",
+    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol 想打开这个面板",
+    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "代码 {0}，{1}。只有当那个页面显示同样的代码、而且是你自己打开的时候才允许。",
+    "Approve": "允许",
+    "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "你正在 farm.nocat.lol 上。确认、交易、购买、出售、合成、验证码和密码都只在你电脑上应用自己的面板里：",
+    "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard 验证码只显示在你电脑上应用自己的面板里。",
+    "This browser is paired with nocat.farm on this PC.": "这个浏览器已和这台电脑上的 nocat.farm 配对。",
+    "Disconnect this browser": "断开这个浏览器",
+    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "关：farm.nocat.lol 无法打开这个面板。打开“允许 farm.nocat.lol 打开这个面板”，就能在这台电脑的浏览器里通过那个地址使用它。",
+    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.": "开：在这里允许后，https://farm.nocat.lol 就能在这台电脑的浏览器里打开这个面板。它永远不能确认、交易、购买、出售、合成，也看不到验证码和密码。",
+    "until {0}": "到 {0}",
+    "Revoke": "撤销",
+    "No browser is paired yet.": "还没有配对的浏览器。",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "在这台电脑上的 nocat.farm 里打开它自己的面板，然后进入设置、面板与手机，勾选显示高级，并打开“允许 farm.nocat.lol 打开这个面板”。保存后回到这里。",
+    "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari 以及一些浏览器或扩展会阻止网站和你自己的电脑通信。这时请直接从 nocat.farm 打开面板：",
+    "port {0}": "端口 {0}",
+    "Can't find nocat.farm on this PC.": "在这台电脑上找不到 nocat.farm。",
+    "Safari doesn't let a website talk to your own PC.": "Safari 不允许网站和你自己的电脑通信。",
+    "Start nocat.farm on this PC, then reload this page.": "在这台电脑上启动 nocat.farm，然后重新加载这个页面。",
+    "Don't have it yet?": "还没有安装？",
+    "Download nocat.farm": "下载 nocat.farm",
+    "Already running? It may not be letting this page in yet:": "已经在运行了？它可能还没有允许这个页面进入：",
+    "nocat.farm is running, but it doesn't let farm.nocat.lol in.": "nocat.farm 正在运行，但没有允许 farm.nocat.lol 进入。",
+    "Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.": "要么开关是关着的，要么这个 nocat.farm 比 1.9.2 旧 - 那就先更新它。",
+    "Update your nocat.farm": "更新你的 nocat.farm",
+    "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "这个页面需要比 {0} 更新的 nocat.farm。请在这台电脑上它自己的面板里更新，然后重新加载这个页面。",
+    "Connect to your nocat.farm": "连接到你的 nocat.farm",
+    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "这个页面直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。nocat.farm 会先问你：点“连接”，然后在应用里允许同样的代码。",
+    "Connect": "连接",
+    "Approve this in nocat.farm": "请在 nocat.farm 里允许",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "在这台电脑上 nocat.farm 自己的面板里，会有一个框询问是否允许 farm.nocat.lol 打开它。确认显示的是同样的代码，然后点“允许”。",
+    "Waiting for you to approve it…": "正在等你允许…",
+    "It was turned down in nocat.farm.": "在 nocat.farm 里被拒绝了。",
+    "That code ran out. Press Connect for a new one.": "这个代码已失效。点“连接”获取新的。",
+    "farm.nocat.lol can open this dashboard now.": "现在 farm.nocat.lol 可以打开这个面板了。",
+    "Turned down.": "已拒绝。",
+    "Taken back - that browser has to pair again.": "已撤销 - 那个浏览器需要重新配对。"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5026,6 +5075,10 @@
     "BuyBooster": {
       "label": "补充包更便宜时就买补充包",
       "tip": "在购买徽章缺少的卡牌之前，先算一算这个游戏的补充包会不会更便宜。一个补充包是整套中随机的 3 张卡——重复的和你已有的卡不算数——所以补充包通常会留下一些缺少的卡，之后再买。只有当补充包加上它们预计留下的卡牌，比缺少的卡牌至少便宜十分之一时才买补充包。例如：5 张一套，缺 4 张，每张 0.20（0.80）：3 个 0.10 的补充包预计只留下约半张，总共约 0.41 —— 买补充包。8 张一套，缺 4 张，每张 0.08，补充包 0.25：买卡牌。买到的补充包会自动打开；下一次查看再买仍然缺的。每次查看一套。'buy preview' 会显示这些数字。默认关闭。"
+    },
+    "FarmWebAllowed": {
+      "label": "允许 farm.nocat.lol 打开这个面板",
+      "tip": "让 farm.nocat.lol 网站能在这台电脑的浏览器里显示这个面板，这样只需收藏一个地址。它直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。每个浏览器都会先询问：页面上和这里会显示一个 6 位代码，你在这个面板里允许。之后它能看到一切，也能做日常操作（启动、停止、暂停、预览、不花钱的设置），但永远不能处理确认、交易、购买、出售、合成、验证码或密码：这些都留在这里。默认关闭。关闭时：farm.nocat.lol 完全连不上 nocat.farm。"
     }
   }
 }

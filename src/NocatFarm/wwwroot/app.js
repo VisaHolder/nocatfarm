@@ -13,7 +13,27 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-let token = localStorage.getItem('nocatfarm-token') || '';
+// 1.9.2: the same page, hosted at https://farm.nocat.lol - it talks to nocat.farm on this PC at http://127.0.0.1:<port>, with a
+// token this browser was given when the pairing was approved in the app. Served by the app itself (every other address)
+// HOSTED is false, API_BASE is '' and everything is exactly as it always was.
+const HOSTED = location.hostname === 'farm.nocat.lol' || document.documentElement.hasAttribute('data-farm-hosted');
+/// The API the app must answer for this page (FarmWeb.ApiVersion): an older app is asked to update.
+const FARM_API_NEEDED = 1;
+const farmStore = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* private window */ } }
+};
+/// The port nocat.farm listens on: ?port= once (remembered), or the one remembered, or 7242.
+const farmPort = (() => {
+  if (!HOSTED) return 0;
+  const asked = Number(new URLSearchParams(location.search).get('port'));
+  if (Number.isInteger(asked) && asked >= 1 && asked <= 65535) { farmStore.set('nocatfarm-farm-port', String(asked)); return asked; }
+  const kept = Number(farmStore.get('nocatfarm-farm-port'));
+  return Number.isInteger(kept) && kept >= 1 && kept <= 65535 ? kept : 7242;
+})();
+const API_BASE = HOSTED ? `http://127.0.0.1:${farmPort}` : '';
+const farmLocalUrl = () => `http://localhost:${farmPort || location.port || 7242}`;
+let token = HOSTED ? (farmStore.get('nocatfarm-farm-token') || '') : (localStorage.getItem('nocatfarm-token') || '');
 let refreshSeconds = 3;
 let state = null;          // /api/status
 let schema = null;         // /api/settings/schema
@@ -64,10 +84,15 @@ const STATUS_META = {
 async function api(path, options = {}) {
   const opts = { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(path, opts);
-  if (res.status === 401) { forgetHistory(); showLogin(); throw new Error('unauthorised'); }
+  // 1.9.2: from farm.nocat.lol, never a cookie - only the token.
+  if (HOSTED) { opts.credentials = 'omit'; opts.mode = 'cors'; }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { forgetHistory(); if (HOSTED) farmForget(); else showLogin(); throw new Error('unauthorised'); }
   return res.json();
 }
+
+/// 1.9.2: where a button would be on farm.nocat.lol for something only the app's own dashboard does.
+const inAppNote = () => `<span class="muted small farmonly">${esc(t('In the app on your PC'))}</span>`;
 
 const post = (p, b) => api(p, { method: 'POST', body: JSON.stringify(b || {}) });
 const del = (p) => api(p, { method: 'DELETE' });
@@ -592,12 +617,16 @@ function renderAlerts() {
 
   // An account signing in by QR: the code to scan, big enough for a phone camera.
   (state.QrWaiting || []).forEach((q) => {
+    // 1.9.2: on farm.nocat.lol the picture can't come along (an image can't carry the page's token) - it's in the app.
+    if (HOSTED) { out.push(`<div class="alert warn"><span>${esc(tf('{0} is waiting for its sign-in QR code to be scanned - it shows in the app\'s own dashboard on your PC.', q.Name))}</span></div>`); return; }
     out.push(`<div class="alert warn qr"><img src="/api/bots/${encodeURIComponent(q.Name)}/qr.svg?v=${q.QrVersion}" alt="QR code" width="168" height="168">
       <span>${esc(tf('Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.', q.Name))}</span></div>`);
   });
 
   // Not while the first-run setup is asking it itself - two boxes for one code, and this one would take the focus.
-  if (state.Prompt && !tutorialSignin) {
+  if (state.Prompt && !tutorialSignin && HOSTED) {
+    out.push(`<div class="alert warn"><span>${esc(state.Prompt)}</span><span class="spacer"></span>${inAppNote()}</div>`);
+  } else if (state.Prompt && !tutorialSignin) {
     out.push(`<div class="alert warn">
       <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
       <input id="promptInput" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off">
@@ -608,20 +637,20 @@ function renderAlerts() {
   // is so it can't be missed after a restart that brought the old version back.
   if (state.UpdateFailed) {
     out.push(`<div class="alert bad"><span><b>${esc(t('Update failed'))}</b> - ${esc(state.UpdateFailed)}</span>
-      <span class="spacer"></span><button onclick="doUpdate(true)">${esc(t('Try again'))}</button></div>`);
+      <span class="spacer"></span>${HOSTED ? inAppNote() : `<button onclick="doUpdate(true)">${esc(t('Try again'))}</button>`}</div>`);
   }
 
   // Exposed only fires when a password IS set and is short — so "anyone can open this" was simply untrue, and
   // "set a password" pointed at a box that already had one in it. Say the thing that's actually wrong.
   if (state.Exposed) {
     out.push(`<div class="alert bad"><span>${esc(t('This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.'))}</span>
-      <span class="spacer"></span><button onclick="goSetting('WebPassword')">${esc(t('Use a longer one'))}</button></div>`);
+      <span class="spacer"></span>${HOSTED ? inAppNote() : `<button onclick="goSetting('WebPassword')">${esc(t('Use a longer one'))}</button>`}</div>`);
   }
 
   // The case that genuinely means "nobody else can get in" was computed and then never shown.
   if (state.LockedToThisPc) {
     out.push(`<div class="alert warn"><span>${esc(t("This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here."))}</span>
-      <span class="spacer"></span><button onclick="goSetting('WebPassword')">${esc(t('Set a password to open it up'))}</button></div>`);
+      <span class="spacer"></span>${HOSTED ? inAppNote() : `<button onclick="goSetting('WebPassword')">${esc(t('Set a password to open it up'))}</button>`}</div>`);
   }
 
   // 1.8.0 scam watch: a warning on an account stays up here until it's cleared - 'It was me' runs 'scamwatch ok'.
@@ -629,12 +658,25 @@ function renderAlerts() {
     out.push(`<div class="alert bad"><span><b>${esc(tf('Scam watch - {0}', b.Name))}</b>: ${esc(b.Scam.join('; '))}. ${esc(b.ScamHolding
       ? t("Its trades are on hold. If that wasn't you, change the Steam password now.")
       : t("If that wasn't you, change the Steam password now."))}</span>
-      <span class="spacer"></span><button onclick="scamOk(${esc(JSON.stringify(b.Name))})">${esc(t('It was me'))}</button></div>`);
+      <span class="spacer"></span>${HOSTED ? inAppNote() : `<button onclick="scamOk(${esc(JSON.stringify(b.Name))})">${esc(t('It was me'))}</button>`}</div>`);
   });
 
   state.Bots.filter((b) => b.Group === 'problem').forEach((b) => {
     out.push(`<div class="alert bad"><span><b>${esc(b.Name)}</b> — ${esc(b.Detail)}</span></div>`);
   });
+
+  // 1.9.2: a page at farm.nocat.lol asking to be let in - the same code shows there. Only here, never on that page itself.
+  (state.FarmPairs || []).forEach((p) => {
+    out.push(`<div class="alert warn farmask"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b> - ${esc(tf('code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.', p.Code, p.Device))}</span>
+      <span class="spacer"></span><button onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, true)">${esc(t('Approve'))}</button>
+      <button class="ghost" onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, false)">${esc(t('Deny'))}</button></div>`);
+  });
+
+  // 1.9.2: on farm.nocat.lol, once: what stays in the app.
+  if (HOSTED) {
+    out.push(`<div class="alert farmnote"><span>${esc(t('You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app\'s own dashboard on your PC:'))}
+      <a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></span></div>`);
+  }
 
   // Only rewrite when the content actually changed. This ran on every poll, and the Steam Guard box lives
   // inside it - so typing a 5-digit code meant racing a 3-second timer that wiped the field.
@@ -2048,6 +2090,12 @@ function renderAuthCode() {
     return;
   }
 
+  // 1.9.2: farm.nocat.lol never gets the code itself.
+  if (HOSTED) {
+    box.innerHTML = `<p class="muted auth-none">${esc(t('The Steam Guard code shows only in the app\'s own dashboard on your PC.'))}</p>`;
+    return;
+  }
+
   const left = Math.max(0, a.SecondsLeft - Math.floor((Date.now() - a.At) / 1000));
   const r = 26, c = 2 * Math.PI * r;
   const dash = (c * left / 30).toFixed(2);
@@ -2111,7 +2159,9 @@ function renderAuthList() {
   if (d.Ok === false) { box.innerHTML = `<p class="muted">${esc(tf('Steam didn\'t give the list: {0}', d.Error || '?'))}</p>`; return; }
 
   const items = d.Items || [];
-  if (tools) {
+  if (tools && HOSTED) {
+    tools.innerHTML = `${inAppNote()} <button class="ghost" onclick="loadConfirmations(true)">${esc(t('Refresh'))}</button>`;
+  } else if (tools) {
     const some = authSelected.size > 0;
     tools.innerHTML = items.length ? `
       <button class="ghost" onclick="authSelectAll()">${esc(authSelected.size === items.length ? t('Select none') : t('Select all'))}</button>
@@ -2131,17 +2181,17 @@ function renderAuthList() {
           <div><span class="muted small">${esc(t('you get'))}</span>${authItems(c.Offer.Get) || `<span class="muted small">${esc(t('no items'))}</span>`}</div>
         </div>` : '';
       return `<div class="auth-conf ${authSelected.has(id) ? 'sel' : ''}">
-        <label class="auth-check"><input type="checkbox" ${authSelected.has(id) ? 'checked' : ''} onchange="authToggle('${id}', this.checked)"></label>
+        ${HOSTED ? '' : `<label class="auth-check"><input type="checkbox" ${authSelected.has(id) ? 'checked' : ''} onchange="authToggle('${id}', this.checked)"></label>`}
         ${c.Icon ? `<img class="auth-icon" src="${esc(c.Icon)}" alt="" loading="lazy">` : '<span class="auth-icon"></span>'}
         <div class="auth-main">
           <div class="auth-line"><span class="chip">${esc(c.TypeName || t('Confirmation'))}</span> <b>${esc(c.Headline || '')}</b> <span class="muted small">${esc(authAgo(c.Created))}</span></div>
           ${(c.Summary || []).map((s) => `<div class="small">${esc(s)}</div>`).join('')}
           ${trade}
         </div>
-        <div class="auth-buttons">
+        ${HOSTED ? '' : `<div class="auth-buttons">
           <button onclick="authAct(true, ['${id}'])">${esc(t('Confirm'))}</button>
           <button class="danger" onclick="authAct(false, ['${id}'])">${esc(t('Deny'))}</button>
-        </div>
+        </div>`}
       </div>`;
     }).join('');
 
@@ -4074,7 +4124,29 @@ function phoneVisitorsCard(v) {
     <p class="ph-text">${esc(t('Every sign-in and every wrong password, newest first. A sign-in from outside your home is also sent to Telegram and Discord.'))}</p>
     ${paused}${rows}
     <button class="ghost" onclick="phoneSignOutAll(this)">${esc(t('Sign every device out'))}</button>
-    <span class="muted small">${esc(t('This browser too - sign in again with the password.'))}</span>`;
+    <span class="muted small">${esc(t('This browser too - sign in again with the password.'))}</span>
+    ${farmPagesBlock(v)}`;
+}
+
+/// 1.9.2: farm.nocat.lol on the Phone page - whether it may open this dashboard, and the browsers paired there, each with Revoke.
+function farmPagesBlock(v) {
+  // Off with nothing paired, the server doesn't mention it at all, and the page looks exactly as it always did.
+  if (!v || (!HOSTED && v.FarmOn === undefined)) return '';
+  const when = (iso) => new Date(iso).toLocaleDateString();
+  if (HOSTED) {
+    return `<h3>farm.nocat.lol</h3><p class="ph-text">${esc(t('This browser is paired with nocat.farm on this PC.'))}</p>
+      <button class="ghost" onclick="farmRevoke('')">${esc(t('Disconnect this browser'))}</button>`;
+  }
+  if (!v.FarmOn) {
+    return `<h3>farm.nocat.lol</h3><p class="ph-text">${esc(t('Off: farm.nocat.lol can\'t open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.'))}</p>
+      <button class="ghost" onclick="goSetting('FarmWebAllowed')">${esc(t('Settings'))}</button>`;
+  }
+  const pages = v.FarmPages || [];
+  return `<h3>farm.nocat.lol</h3>
+    <p class="ph-text">${esc(t('On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.'))}</p>
+    ${pages.length ? `<div class="ph-visits">${pages.map((x) => `<div class="ph-visit ok"><span class="muted">${esc(when(x.Created))}</span><b>${esc(x.Device)}</b>
+        <span class="muted">${esc(tf('until {0}', when(x.Expires)))}</span><button class="ghost" onclick="farmRevoke(${esc(JSON.stringify(x.Id))})">${esc(t('Revoke'))}</button></div>`).join('')}</div>`
+      : `<p class="muted small">${esc(t('No browser is paired yet.'))}</p>`}`;
 }
 
 async function phoneSignOutAll(btn) {
@@ -7841,13 +7913,159 @@ async function refresh() {
     // showLogin already fired, or the server is restarting - the next tick retries. There has to BE a next tick:
     // coming back to a hidden tab stops the timer and only a refresh that worked started it again, so one that failed
     // (the phone's network still waking up) left the page frozen until it was reloaded.
-    if (!pollTimer && $('login').classList.contains('hidden')) armPolling(refreshSeconds);
+    if (!pollTimer && $('login').classList.contains('hidden') && $('farmGate').classList.contains('hidden')) armPolling(refreshSeconds);
   }
 }
 
+// ── 1.9.2: farm.nocat.lol ────────────────────────────────────────────
+// The page there finds nocat.farm on this PC, checks it can talk to it, and pairs: a code shows here and in the app, and
+// the person at the app approves it. Then it's this same dashboard, without what only the app's own dashboard does.
+
+/// The screen in front of the dashboard while it can't be used yet: what's wrong, and what to do.
+function farmGate(html) {
+  $('login').classList.add('hidden');
+  $('app').classList.add('hidden');
+  $('welcome').classList.add('hidden');
+  $('farmGate').classList.remove('hidden');
+  $('farmGateBody').innerHTML = html;
+}
+
+function farmSwitchHow() {
+  return `<p>${esc(t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.'))}</p>
+    <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`;
+}
+
+function farmOtherBrowser() {
+  return `<p class="muted small">${esc(t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:'))}
+    <a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`;
+}
+
+const farmIsSafari = () => /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+
+/// What's wrong, said plainly: not running, not letting this page in, too old, or a browser that won't let a website reach this PC.
+function farmScreen(why, version) {
+  const port = farmPort === 7242 ? '' : ` <span class="muted small">(${esc(tf('port {0}', farmPort))})</span>`;
+  if (why === 'missing') {
+    farmGate(`<p class="lead">${esc(t("Can't find nocat.farm on this PC."))}${port}</p>
+      ${farmIsSafari() ? `<p>${esc(t("Safari doesn't let a website talk to your own PC."))}</p>` : ''}
+      <p>${esc(t('Start nocat.farm on this PC, then reload this page.'))} ${esc(t("Don't have it yet?"))}
+        <a href="https://nocat.lol/nocatfarm" target="_blank" rel="noopener noreferrer">${esc(t('Download nocat.farm'))}</a></p>
+      <p class="muted small">${esc(t('Already running? It may not be letting this page in yet:'))}</p>${farmSwitchHow()}${farmOtherBrowser()}
+      <button onclick="location.reload()">${esc(t('Try again'))}</button>`);
+  } else if (why === 'off') {
+    farmGate(`<p class="lead">${esc(t("nocat.farm is running, but it doesn't let farm.nocat.lol in."))}</p>
+      <p class="muted small">${esc(t('Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.'))}</p>${farmSwitchHow()}
+      <button onclick="location.reload()">${esc(t('Try again'))}</button>`);
+  } else if (why === 'old') {
+    farmGate(`<p class="lead">${esc(t('Update your nocat.farm'))}</p>
+      <p>${esc(tf('This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.', version || '?'))}</p>
+      <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`);
+  }
+}
+
+/// Is nocat.farm there, does it let this page in, and is it new enough. False when a screen is up instead.
+async function farmConnect() {
+  let hello = null;
+  try {
+    const r = await fetch(API_BASE + '/api/farm/hello', { credentials: 'omit', cache: 'no-store' });
+    hello = r.ok ? await r.json() : null;
+  } catch { hello = null; }
+
+  if (!hello || hello.app !== 'nocat.farm') {
+    // Running but not letting this page in (the switch is off, or an older nocat.farm) still answers a look that reads
+    // nothing back - and a nocat.farm that isn't running doesn't.
+    let there = false;
+    if (!farmIsSafari()) {
+      try { await fetch(API_BASE + '/api/ping', { mode: 'no-cors', credentials: 'omit', cache: 'no-store' }); there = true; } catch { there = false; }
+    }
+    farmScreen(there ? 'off' : 'missing');
+    return false;
+  }
+  if ((Number(hello.api) || 0) < FARM_API_NEEDED) { farmScreen('old', hello.version); return false; }
+  if (!token) { farmPairScreen(); return false; }
+  return true;
+}
+
+/// This browser's token didn't work (taken back, or 'visitors signout'): forgotten, and the pairing screen instead.
+function farmForget() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = null;
+  token = '';
+  farmStore.set('nocatfarm-farm-token', '');
+  farmPairScreen();
+}
+
+let farmPolling = null;
+
+function farmPairScreen(message) {
+  clearTimeout(farmPolling);
+  farmGate(`<p class="lead">${esc(t('Connect to your nocat.farm'))}</p>
+    <p>${esc(t('This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.'))}</p>
+    ${message ? `<p class="error">${esc(message)}</p>` : ''}
+    <button onclick="farmPair()">${esc(t('Connect'))}</button>${farmOtherBrowser()}`);
+}
+
+async function farmPair() {
+  let r = null;
+  try {
+    const res = await fetch(API_BASE + '/api/farm/pair', { method: 'POST', credentials: 'omit', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    r = await res.json();
+  } catch { r = null; }
+  if (!r) { farmScreen('missing'); return; }
+  if (!r.ok) { farmPairScreen(r.Message || t("That didn't work")); return; }
+
+  farmGate(`<p class="lead">${esc(t('Approve this in nocat.farm'))}</p>
+    <p class="farmcode">${esc(r.Code)}</p>
+    <p>${esc(t("In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve."))}</p>
+    <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>
+    <p class="muted small" id="farmWait">${esc(t('Waiting for you to approve it…'))}</p>`);
+
+  const poll = async () => {
+    let p = null;
+    try {
+      const res = await fetch(API_BASE + `/api/farm/pair/${encodeURIComponent(r.Id)}`, { credentials: 'omit', mode: 'cors', cache: 'no-store' });
+      p = await res.json();
+    } catch { p = null; }
+    if (p && p.State === 'approved' && p.Token) {
+      token = p.Token;
+      farmStore.set('nocatfarm-farm-token', token);
+      $('farmGate').classList.add('hidden');
+      boot();
+      return;
+    }
+    if (p && p.State === 'denied') { farmPairScreen(t('It was turned down in nocat.farm.')); return; }
+    if (p && p.State === 'expired') { farmPairScreen(t('That code ran out. Press Connect for a new one.')); return; }
+    farmPolling = setTimeout(poll, 2000);
+  };
+  farmPolling = setTimeout(poll, 2000);
+}
+
+/// The banner's Approve and Deny, in the app's own dashboard.
+async function farmAnswer(id, approve) {
+  const r = await post('/api/farm/answer', { Id: id, Approve: approve }).catch(() => null);
+  if (!r || !r.ok) toast((r && r.error) || t("That didn't work"), true);
+  else toast(approve ? t('farm.nocat.lol can open this dashboard now.') : t('Turned down.'));
+  refresh();
+}
+
+/// The Phone page's Revoke beside a paired farm.nocat.lol page.
+async function farmRevoke(id) {
+  const r = await post('/api/farm/revoke', { Id: id }).catch(() => null);
+  toast(r && r.ok ? t('Taken back - that browser has to pair again.') : t("That didn't work"), !(r && r.ok));
+  if (HOSTED && r && r.ok) { farmForget(); return; }
+  loadPhone();
+}
+
 async function boot() {
-  registerShell();   // the phone app's service worker, where the browser allows one - never in the way if it can't
-  const ping = await fetch('/api/ping').then((r) => r.json()).catch(() => null);
+  if (HOSTED) {
+    document.body.classList.add('hosted');
+    if (!await farmConnect()) return;
+  } else {
+    registerShell();   // the phone app's service worker, where the browser allows one - never in the way if it can't
+  }
+  const ping = HOSTED ? await api('/api/ping').catch(() => null) : await fetch('/api/ping').then((r) => r.json()).catch(() => null);
+  // The pairing screen is up (a 401), or the app went away in between.
+  if (HOSTED && !ping) { if ($('farmGate').classList.contains('hidden')) farmScreen('missing'); return; }
   if (!ping) { showLogin(t("Can't reach nocat.farm.")); return; }
   if (ping.needsPassword && !ping.authorised && !token) { showLogin(); return; }
 

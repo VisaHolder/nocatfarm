@@ -35,6 +35,14 @@
   </form>
 </div>
 
+<!-- ── 1.9.2: farm.nocat.lol - finding nocat.farm on this PC and pairing with it (app.js farmGate). Never shown when nocat.farm serves this page. ── -->
+<div id="farmGate" class="gate hidden">
+  <div class="card gate-card farmgate">
+    <h1 class="wordmark">nocat.<span>farm</span></h1>
+    <div id="farmGateBody"></div>
+  </div>
+</div>
+
 <!-- ── first run ─────────────────────────────────────────────────────── -->
 <div id="welcome" class="gate hidden">
   <div class="welcome-hero">
@@ -115,7 +123,7 @@
     <div class="railfoot-meta">
       <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
               data-tip="Switch between the dark and light themes." data-t-tip="Switch between the dark and light themes.">theme</button>
-      <button class="updatebtn hidden" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
+      <button class="updatebtn hidden farm-hide" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
       <a class="muted small ghlink" id="version" href="https://github.com/VisaHolder/nocatfarm"
          target="_blank" rel="noopener noreferrer"
          data-tip="nocat.farm on GitHub - source, releases and issues." data-t-tip="nocat.farm on GitHub - source, releases and issues."></a>
@@ -155,8 +163,8 @@
         <input id="acctSearch" type="text" placeholder="Search accounts…" data-t-ph="Search accounts…" oninput="render()">
         <div id="acctFilters" class="chips"></div>
         <span class="spacer"></span>
-        <button class="ghost" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
-        <button onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
+        <button class="ghost farm-hide" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
+        <button class="farm-hide" onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
       </div>
       <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>
     </section>

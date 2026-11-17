@@ -3432,7 +3432,56 @@
     "offer {0} accepted for add-on {1} · {2}": "アドオン {1} によりオファー {0} を承認しました · {2}",
     "offer {0} declined for add-on {1} · {2}": "アドオン {1} によりオファー {0} を拒否しました · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "アドオンが答えることがあります。それ以外は trade accept か decline {0} {1}",
-    "plugin {0} added more than {1} trade judges - the rest are left out": "プラグイン {0} が {1} 個を超えるトレード判定を追加しました - 残りは使われません"
+    "plugin {0} added more than {1} trade judges - the rest are left out": "プラグイン {0} が {1} 個を超えるトレード判定を追加しました - 残りは使われません",
+    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "これは PC 上のアプリ自身のダッシュボードで行ってください - farm.nocat.lol からはできません。",
+    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol が nocat.farm を開けるのは、同じ PC 上の http://127.0.0.1 だけです。",
+    "This browser isn't paired with nocat.farm yet.": "このブラウザーはまだ nocat.farm とペアリングされていません。",
+    "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm で待っているリクエストが多すぎます。アプリで答えるか、5 分待ってください。",
+    "Asked too often - wait a minute and try again.": "リクエストが多すぎます - 1 分待ってからもう一度どうぞ。",
+    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "ダッシュボード: farm.nocat.lol ({0}) がこのダッシュボードを開こうとしています - コード {1}。この PC のダッシュボードで許可か拒否をしてください。",
+    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol が nocat.farm のダッシュボードを開こうとしています (コード {0}、{1})。あなたなら、PC 上のアプリ自身のダッシュボードで許可してください。違うなら何もしないでください - 5 分で期限切れになります。",
+    "That request has run out - ask again on farm.nocat.lol.": "そのリクエストは期限切れです - farm.nocat.lol でもう一度リクエストしてください。",
+    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "ダッシュボード: farm.nocat.lol ({0}) を許可 - コード {1}",
+    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "ダッシュボード: farm.nocat.lol ({0}) を拒否 - コード {1}",
+    "dashboard: a farm.nocat.lol pairing was taken back": "ダッシュボード: farm.nocat.lol のペアリングを取り消しました",
+    "In the app on your PC": "PC 上のアプリで",
+    "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} はサインイン用 QR コードのスキャン待ちです - PC 上のアプリ自身のダッシュボードに表示されます。",
+    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol がこのダッシュボードを開こうとしています",
+    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "コード {0}、{1}。そのページに同じコードが表示されていて、自分で開いた場合だけ許可してください。",
+    "Approve": "許可",
+    "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "ここは farm.nocat.lol です。確認、トレード、購入、出品、作成、コード、パスワードは PC 上のアプリ自身のダッシュボードにあります:",
+    "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guardコードは PC 上のアプリ自身のダッシュボードにだけ表示されます。",
+    "This browser is paired with nocat.farm on this PC.": "このブラウザーはこの PC の nocat.farm とペアリング済みです。",
+    "Disconnect this browser": "このブラウザーの接続を解除",
+    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "オフ: farm.nocat.lol はこのダッシュボードを開けません。この PC のブラウザーでそのアドレスから使うには、「farm.nocat.lol からこのダッシュボードを開けるようにする」をオンにしてください。",
+    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.": "オン: ここで許可すると、https://farm.nocat.lol がこの PC のブラウザーでこのダッシュボードを開けます。確認、トレード、購入、出品、作成は決してできず、コードやパスワードも見られません。",
+    "until {0}": "{0} まで",
+    "Revoke": "取り消す",
+    "No browser is paired yet.": "ペアリングされたブラウザーはまだありません。",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "この PC の nocat.farm で自身のダッシュボードを開き、設定、ダッシュボードとスマホ で「詳細を表示」にチェックを入れて、「farm.nocat.lol からこのダッシュボードを開けるようにする」をオンにしてください。保存したら、ここに戻ってください。",
+    "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari や一部のブラウザー、拡張機能は、Web サイトが自分の PC と通信するのを止めます。その場合は nocat.farm から直接ダッシュボードを開いてください:",
+    "port {0}": "ポート {0}",
+    "Can't find nocat.farm on this PC.": "この PC に nocat.farm が見つかりません。",
+    "Safari doesn't let a website talk to your own PC.": "Safari では Web サイトが自分の PC と通信できません。",
+    "Start nocat.farm on this PC, then reload this page.": "この PC で nocat.farm を起動してから、このページを再読み込みしてください。",
+    "Don't have it yet?": "まだ持っていませんか？",
+    "Download nocat.farm": "nocat.farm をダウンロード",
+    "Already running? It may not be letting this page in yet:": "もう起動していますか？ まだこのページを入れていないのかもしれません:",
+    "nocat.farm is running, but it doesn't let farm.nocat.lol in.": "nocat.farm は起動していますが、farm.nocat.lol を入れていません。",
+    "Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.": "スイッチがオフか、この nocat.farm が 1.9.2 より古いかのどちらかです - 古い場合は先に更新してください。",
+    "Update your nocat.farm": "nocat.farm を更新してください",
+    "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "このページには {0} より新しい nocat.farm が必要です。この PC の自身のダッシュボードで更新してから、このページを再読み込みしてください。",
+    "Connect to your nocat.farm": "nocat.farm に接続",
+    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "このページはこの PC の nocat.farm と直接通信します - nocat.lol を経由するものはありません。nocat.farm はまずあなたに確認します: 「接続」を押して、アプリで同じコードを許可してください。",
+    "Connect": "接続",
+    "Approve this in nocat.farm": "nocat.farm で許可してください",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "この PC の nocat.farm 自身のダッシュボードに、farm.nocat.lol が開いてよいかを尋ねる表示が出ます。同じコードであることを確かめてから「許可」を押してください。",
+    "Waiting for you to approve it…": "許可を待っています…",
+    "It was turned down in nocat.farm.": "nocat.farm で拒否されました。",
+    "That code ran out. Press Connect for a new one.": "そのコードは期限切れです。「接続」を押すと新しいコードが出ます。",
+    "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol がこのダッシュボードを開けるようになりました。",
+    "Turned down.": "拒否しました。",
+    "Taken back - that browser has to pair again.": "取り消しました - そのブラウザーはもう一度ペアリングが必要です。"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5026,6 +5075,10 @@
     "BuyBooster": {
       "label": "安くなるときはブースターパックを買う",
       "tip": "バッジに足りないカードを買う前に、そのゲームのブースターパックの方が安くなるかを計算します。パックはセット全体からランダムな 3 枚で、重複や持っているカードは数に入りません。そのため、パックだけでは足りないカードが残ることが多く、残りは後で買います。パックと、パックが残す見込みのカードの合計が、足りないカードより 1 割以上安いときだけパックを買います。例: 5 枚セットで 4 枚足りず各 0.20（0.80）なら、0.10 のパック 3 個で残るのは約半枚、合計約 0.41 - パックを買います。8 枚セットで 4 枚足りず各 0.08、パック 0.25 なら: カードを買います。買ったパックは自動で開封し、次の確認でまだ足りないものを買います。1 回の確認で 1 セットまで。'buy preview' で数字を確認できます。初期設定はオフ。"
+    },
+    "FarmWebAllowed": {
+      "label": "farm.nocat.lol からこのダッシュボードを開けるようにする",
+      "tip": "farm.nocat.lol の Web サイトが、この PC のブラウザーでこのダッシュボードを表示できるようにします。ブックマークするアドレスが 1 つで済みます。この PC の nocat.farm と直接通信し、nocat.lol を経由するものはありません。ブラウザーごとに最初に確認します: 6 文字のコードがページとここに表示され、このダッシュボードで許可します。そこからはすべてを見られ、日常の操作 (開始、停止、一時停止、プレビュー、お金を使わない設定) ができますが、確認、トレード、購入、出品、作成、コード、パスワードは決してできません。それらはここだけです。既定ではオフ。オフ: farm.nocat.lol は nocat.farm にまったく届きません。"
     }
   }
 }

@@ -3432,7 +3432,56 @@
     "offer {0} accepted for add-on {1} · {2}": "oferta {0} aceita pelo complemento {1} · {2}",
     "offer {0} declined for add-on {1} · {2}": "oferta {0} recusada pelo complemento {1} · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "um complemento pode respondê-la; se não, trade accept ou decline {0} {1}",
-    "plugin {0} added more than {1} trade judges - the rest are left out": "o plugin {0} adicionou mais de {1} juízes de trocas - o resto fica de fora"
+    "plugin {0} added more than {1} trade judges - the rest are left out": "o plugin {0} adicionou mais de {1} juízes de trocas - o resto fica de fora",
+    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "Faça isso no painel do próprio app no seu PC - o farm.nocat.lol não pode.",
+    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "O farm.nocat.lol só abre o nocat.farm no mesmo PC, em http://127.0.0.1.",
+    "This browser isn't paired with nocat.farm yet.": "Este navegador ainda não está pareado com o nocat.farm.",
+    "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "Há pedidos demais esperando no nocat.farm. Responda-os no app ou espere 5 minutos.",
+    "Asked too often - wait a minute and try again.": "Pedidos demais - espere um minuto e tente de novo.",
+    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "painel: farm.nocat.lol ({0}) pede para abrir este painel - código {1}. Aprove ou recuse no painel deste PC.",
+    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "O farm.nocat.lol pede para abrir o seu painel do nocat.farm (código {0}, {1}). Se for você, aprove no painel do próprio app no seu PC. Se não for, não faça nada - expira em 5 minutos.",
+    "That request has run out - ask again on farm.nocat.lol.": "Esse pedido expirou - peça de novo no farm.nocat.lol.",
+    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "painel: farm.nocat.lol ({0}) liberado - código {1}",
+    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "painel: farm.nocat.lol ({0}) recusado - código {1}",
+    "dashboard: a farm.nocat.lol pairing was taken back": "painel: um pareamento do farm.nocat.lol foi revogado",
+    "In the app on your PC": "No app do seu PC",
+    "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} está esperando o código QR de login ser escaneado - ele aparece no painel do próprio app no seu PC.",
+    "farm.nocat.lol wants to open this dashboard": "O farm.nocat.lol quer abrir este painel",
+    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "código {0}, {1}. Aprove só se aquela página mostrar o mesmo código e você mesmo a tiver aberto.",
+    "Approve": "Aprovar",
+    "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "Você está no farm.nocat.lol. Confirmações, trocas, comprar, vender, criar, códigos e senhas ficam no painel do próprio app no seu PC:",
+    "The Steam Guard code shows only in the app's own dashboard on your PC.": "O código do Steam Guard só aparece no painel do próprio app no seu PC.",
+    "This browser is paired with nocat.farm on this PC.": "Este navegador está pareado com o nocat.farm deste PC.",
+    "Disconnect this browser": "Desconectar este navegador",
+    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "Desligado: o farm.nocat.lol não pode abrir este painel. Ligue \"Deixar o farm.nocat.lol abrir este painel\" para usá-lo por esse endereço num navegador deste PC.",
+    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.": "Ligado: https://farm.nocat.lol pode abrir este painel num navegador deste PC, depois que você aprovar aqui. Ele nunca pode confirmar, trocar, comprar, vender, criar nem ver códigos e senhas.",
+    "until {0}": "até {0}",
+    "Revoke": "Revogar",
+    "No browser is paired yet.": "Nenhum navegador pareado ainda.",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "No nocat.farm deste PC, abra o painel dele, depois Configurações, Painel e celular, marque Mostrar avançadas e ligue \"Deixar o farm.nocat.lol abrir este painel\". Salve e volte aqui.",
+    "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "O Safari, e alguns navegadores ou extensões, impedem um site de falar com o seu próprio PC. Então abra o painel direto pelo nocat.farm:",
+    "port {0}": "porta {0}",
+    "Can't find nocat.farm on this PC.": "O nocat.farm não foi encontrado neste PC.",
+    "Safari doesn't let a website talk to your own PC.": "O Safari não deixa um site falar com o seu próprio PC.",
+    "Start nocat.farm on this PC, then reload this page.": "Abra o nocat.farm neste PC e depois recarregue esta página.",
+    "Don't have it yet?": "Ainda não tem?",
+    "Download nocat.farm": "Baixar o nocat.farm",
+    "Already running? It may not be letting this page in yet:": "Já está rodando? Talvez ele ainda não deixe esta página entrar:",
+    "nocat.farm is running, but it doesn't let farm.nocat.lol in.": "O nocat.farm está rodando, mas não deixa o farm.nocat.lol entrar.",
+    "Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.": "Ou a chave está desligada, ou este nocat.farm é anterior à 1.9.2 - nesse caso, atualize-o primeiro.",
+    "Update your nocat.farm": "Atualize o seu nocat.farm",
+    "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "Esta página precisa de um nocat.farm mais novo que {0}. Atualize-o no painel dele neste PC e depois recarregue esta página.",
+    "Connect to your nocat.farm": "Conectar ao seu nocat.farm",
+    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Esta página fala direto com o nocat.farm deste PC - nada passa pelo nocat.lol. O nocat.farm pergunta antes: aperte Conectar e depois aprove o mesmo código no app.",
+    "Connect": "Conectar",
+    "Approve this in nocat.farm": "Aprove isto no nocat.farm",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "No painel do próprio nocat.farm neste PC, uma caixa pergunta se o farm.nocat.lol pode abri-lo. Confira se mostra este mesmo código e aperte Aprovar.",
+    "Waiting for you to approve it…": "Esperando você aprovar…",
+    "It was turned down in nocat.farm.": "Foi recusado no nocat.farm.",
+    "That code ran out. Press Connect for a new one.": "Esse código expirou. Aperte Conectar para receber um novo.",
+    "farm.nocat.lol can open this dashboard now.": "Agora o farm.nocat.lol pode abrir este painel.",
+    "Turned down.": "Recusado.",
+    "Taken back - that browser has to pair again.": "Revogado - esse navegador precisa parear de novo."
   },
   "settings": {
     "BackupToTelegram": {
@@ -5026,6 +5075,10 @@
     "BuyBooster": {
       "label": "Comprar pacotes de cartas quando saem mais baratos",
       "tip": "Antes de comprar as cartas que faltam para uma insígnia, calcula se os pacotes de cartas do jogo sairiam mais baratos. Um pacote são 3 cartas aleatórias do conjunto inteiro - repetidas e cartas que você já tem não contam -, então os pacotes costumam deixar algumas cartas faltando, compradas depois. Só compra pacotes quando os pacotes e as cartas que devem deixar custam pelo menos um décimo menos que as cartas que faltam. Por exemplo, um conjunto de 5 cartas faltando 4 a 0.20 cada (0.80): 3 pacotes a 0.10 devem deixar cerca de meia carta, cerca de 0.41 no total - pacotes. Um conjunto de 8 cartas faltando 4 a 0.08, com pacotes a 0.25: as cartas. Os pacotes comprados são abertos sozinhos; a próxima verificação compra o que ainda falta. Um conjunto por verificação. 'buy preview' mostra os números. Desligado por padrão."
+    },
+    "FarmWebAllowed": {
+      "label": "Deixar o farm.nocat.lol abrir este painel",
+      "tip": "Deixa o site farm.nocat.lol mostrar este painel num navegador deste PC, para você guardar um único endereço nos favoritos. Ele fala direto com o nocat.farm deste PC - nada passa pelo nocat.lol. Cada navegador pergunta antes: um código de 6 caracteres aparece na página e aqui, e você aprova neste painel. De lá ele vê tudo e faz o dia a dia - iniciar, parar, pausar, prévias, configurações que não gastam dinheiro - mas nunca confirmações, trocas, compras, vendas, criação, códigos ou senhas: isso fica aqui. Desligado por padrão. Desligado: o farm.nocat.lol não alcança o nocat.farm de jeito nenhum."
     }
   }
 }
