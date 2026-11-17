@@ -42,6 +42,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
 		bool loopback = IPAddress.IsLoopback(from);
 
+		// 1.9.2: a page at farm.nocat.lol is in a browser on this PC, but it is never "at this PC": nothing that's only for the
+		// person sitting here ('update file', add-ons, the firewall, approving a pairing) counts it as them.
+		if (ctx.Items.ContainsKey(FarmKey)) {
+			return (from.ToString(), false);
+		}
+
 		if (!loopback && !TrustedProxies.Trusted(from)) {
 			return (from.ToString(), false);
 		}
@@ -258,6 +264,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 	public void SignOutAll() {
 		_sessions.Clear();
 		SaveSessions();
+
+		// 1.9.2: the pages paired at farm.nocat.lol too.
+		ForgetFarm();
 	}
 
 	// ── sessions that outlive a restart ──
@@ -504,6 +513,16 @@ public sealed partial class WebHost : IAsyncDisposable {
 				h.XContentTypeOptions = "nosniff";
 				h["Referrer-Policy"] = "no-referrer";
 
+				// 1.9.2: the page at farm.nocat.lol, with "Let farm.nocat.lol open this dashboard" on - its own front door, in
+				// place of Refusal (Web/WebHostFarm.cs). With the setting off this is never true, and nothing below changes.
+				if (FromFarm(ctx.Request)) {
+					if (!await FarmFrontAsync(ctx).ConfigureAwait(false)) {
+						await next(ctx).ConfigureAwait(false);
+					}
+
+					return;
+				}
+
 				if (Refusal(ctx) is { } why) {
 					ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
 					ctx.Response.ContentType = "text/plain; charset=utf-8";
@@ -690,6 +709,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 	}
 
 	private bool Authorised(HttpContext ctx) {
+		// 1.9.2: from farm.nocat.lol, its own token - already checked at the front door - and nothing else: not this PC's
+		// loopback trust, not a dashboard cookie.
+		if (ctx.Items.TryGetValue(FarmKey, out object? farm)) {
+			return farm is FarmSession;
+		}
+
 		IPAddress ip = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
 
 		if (string.IsNullOrEmpty(_cfg.WebPassword)) {
@@ -1096,6 +1121,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	private void MapApi(WebApplication app) {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
 		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
+		MapFarm(app);   // 1.9.2: farm.nocat.lol - Web/WebHostFarm.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,
@@ -1109,10 +1135,15 @@ public sealed partial class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			return Results.Json(new {
-				Visits = Visitors.Recent(15).Select(static v => new { v.When, v.Ip, v.Where, What = Visitors.Words(v.What), Kind = v.What.ToString(), v.Device }),
-				InternetPausedFor = PausedUntil is { } paused && (paused > DateTime.UtcNow) ? (int) Math.Ceiling((paused - DateTime.UtcNow).TotalSeconds) : 0
-			});
+			var visits = Visitors.Recent(15).Select(static v => new { v.When, v.Ip, v.Where, What = Visitors.Words(v.What), Kind = v.What.ToString(), v.Device });
+			int pausedFor = PausedUntil is { } paused && (paused > DateTime.UtcNow) ? (int) Math.Ceiling((paused - DateTime.UtcNow).TotalSeconds) : 0;
+			object[] pages = FarmTokenList();
+
+			// 1.9.2: the pages paired at farm.nocat.lol, each with a Revoke - only while it's on or one is still paired. Otherwise
+			// the answer is exactly what it always was.
+			return !_cfg.FarmWebAllowed && (pages.Length == 0)
+				? (IResult) Results.Json(new { Visits = visits, InternetPausedFor = pausedFor })
+				: Results.Json(new { Visits = visits, InternetPausedFor = pausedFor, FarmOn = _cfg.FarmWebAllowed, FarmPages = pages });
 		});
 
 		app.MapPost("/api/visitors/signout", (HttpContext ctx) => {
@@ -1222,7 +1253,21 @@ public sealed partial class WebHost : IAsyncDisposable {
 		});
 
 		// ── live state ──
-		app.MapGet("/api/status", (HttpContext ctx) => Guard(ctx, () => Results.Json(BuildStatus())));
+		app.MapGet("/api/status", (HttpContext ctx) => Guard(ctx, () => {
+			bool farm = IsFarm(ctx);
+			object[] asking = farm ? [] : FarmPairsForPage(false);
+
+			// 1.9.2: pages at farm.nocat.lol waiting for an answer here - the banner's Approve and Deny - added only while there
+			// are any. Otherwise the answer is exactly what it always was.
+			if (asking.Length == 0) {
+				return Results.Json(BuildStatus(farm));
+			}
+
+			JsonObject status = JsonSerializer.SerializeToNode(BuildStatus(farm), JsonOptionsOf(ctx))!.AsObject();
+			status["FarmPairs"] = JsonSerializer.SerializeToNode(asking, JsonOptionsOf(ctx));
+
+			return Results.Json(status);
+		}));
 
 		// Opens only on the PC nocat.farm runs on, and only for someone sitting at it: from a phone it would pop up a
 		// window on a screen nobody is looking at. Everyone gets the path.
@@ -2424,8 +2469,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 		});
 
 		app.MapGet("/api/auth", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
-			Accounts = _mgr.All.Select(static b => {
-				(string? code, int left) = Confirmations.Code(b);
+			Accounts = _mgr.All.Select(b => {
+				// 1.9.2: never the code itself to farm.nocat.lol - only whether there is one.
+				(string? code, int left) = IsFarm(ctx) ? (null, 0) : Confirmations.Code(b);
 
 				return new { b.Name, HasCode = b.HasAuthenticator, CanConfirm = b.CanConfirmTrades, Code = code, SecondsLeft = left };
 			})
@@ -3048,7 +3094,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 	/// <summary>Round-trip clone, so a redacted copy can be handed out without touching the live config.</summary>
 	private static T Clone<T>(T source) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(source))!;
 
-	private object BuildStatus() {
+	/// <param name="farm">1.9.2: for the page at farm.nocat.lol - no Steam Guard code, no Telegram connect link.</param>
+	private object BuildStatus(bool farm = false) {
 		Bot[] bots = [.. _mgr.All];
 		(int cards, int comments) = Stats.Totals(24);
 
@@ -3106,7 +3153,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			PluginPages = Plugins.PluginHost.Pages.Select(static p => new { p.Plugin, p.Title }),
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,
-			TelegramConnectLink = Notifier.TelegramConnectLink,
+			// Whoever opens the connect link first becomes the owner: never to farm.nocat.lol.
+			TelegramConnectLink = farm ? null : Notifier.TelegramConnectLink,
 			TelegramConnected = Notifier.TelegramConnected,
 			DiscordBotSet = Notifier.HasDiscordBot,
 			DiscordBotOn = _mgr.Global.DiscordCommands,
@@ -3171,8 +3219,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 					SteamOpenSupported = Core.SteamOpen.Supported,
 					// 1.8.2: the button left Steam on this account's sign-in: its Steam Guard code (5 characters, never a secret)
 					// and the seconds it has left, when nocat.farm has its authenticator. Empty otherwise.
-					SteamOpenCode = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } guard) ? guard.Code : "",
-					SteamOpenCodeLeft = Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } left) ? left.SecondsLeft : 0,
+					SteamOpenCode = !farm && Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } guard) ? guard.Code : "",
+					SteamOpenCodeLeft = !farm && Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } left) ? left.SecondsLeft : 0,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,
@@ -3292,7 +3340,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	/// 1.9.0: installing or removing an add-on puts code in this process, so the rule of 'update file' holds: the dashboard on
 	/// this PC - or one signed in with the dashboard password (without one, the dashboard can't be reached from elsewhere).
 	/// </summary>
-	internal bool MayInstallAddons(HttpContext ctx) => AtThisPc(ctx) || !string.IsNullOrEmpty(_cfg.WebPassword);
+	internal bool MayInstallAddons(HttpContext ctx) => !IsFarm(ctx) && (AtThisPc(ctx) || !string.IsNullOrEmpty(_cfg.WebPassword));
 
 	private sealed class PluginToggle {
 		public string Name { get; set; } = "";

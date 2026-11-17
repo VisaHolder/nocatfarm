@@ -1002,6 +1002,8 @@ public static partial class Settings {
 		new("WebTrustedProxies", "Trust forwarded addresses from", SecDashboard, SettingKind.Text,
 			"Only for a reverse proxy that isn't on this PC, like Caddy in front of Docker: its address or range, like 172.16.0.0/12. The visitor's address it passes on is then believed, so people on the internet are treated as the internet and not as home. A proxy on this PC needs nothing here. Leave it empty otherwise.",
 			Advanced: true, Placeholder: "172.16.0.0/12", Group: "Open from outside"),
+		new("FarmWebAllowed", "Let farm.nocat.lol open this dashboard", SecDashboard, SettingKind.Bool,
+			"Lets the website farm.nocat.lol show this dashboard in a browser on this PC, so you can bookmark one address. It talks straight to nocat.farm on this PC - nothing goes through nocat.lol. Each browser asks first: a 6-character code shows on the page and here, and you approve it in this dashboard. From there it can see everything and do the everyday things - start, stop, pause, previews, settings that don't spend money - but never confirmations, trades, buying, selling, crafting, codes or passwords: those stay here. Off by default. Off: farm.nocat.lol can't reach nocat.farm at all.", Advanced: true),
 		new("PhoneInstallHint", "Show how to install it on a phone", SecDashboard, SettingKind.Bool,
 			"Shows a short how-to on the Phone page for putting the dashboard on your phone's home screen, so it opens like an app - for example in Chrome: the menu, then Add to Home screen. On: the how-to shows. Off: it's hidden, for when it's already on your phone.", Advanced: true, Group: "Phone app"),
 		// ── Discord profile ──

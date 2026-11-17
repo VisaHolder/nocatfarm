@@ -392,7 +392,7 @@ public static partial class Commands {
 	/// The value of 'set' after the key at word <paramref name="key"/>: stuck on it by '=' or ':' ('WebPassword=x'), and whatever
 	/// comes after it as typed - two spaces in a password kept. Empty when there's none.
 	/// </summary>
-	private static string SetValue(string line, string[] parts, int key) {
+	internal static string SetValue(string line, string[] parts, int key) {
 		int cut = parts[key].IndexOfAny(['=', ':']);
 
 		return cut >= 0 ? Tail(line, key)[(cut + 1)..].Trim() : parts.Length > key + 1 ? Tail(line, key + 1) : "";
@@ -425,7 +425,7 @@ public static partial class Commands {
 	/// A word as the setting it may name: quotes off, and cut at '=' or ':' - 'WebPassword=x' and '"WebPassword"' went
 	/// straight past a lookup of the word as typed. Joined: a value came with it.
 	/// </summary>
-	private static (string Key, bool Joined) KeyOf(string word) {
+	internal static (string Key, bool Joined) KeyOf(string word) {
 		int cut = word.IndexOfAny(['=', ':']);
 		string key = (cut < 0 ? word : word[..cut]).Trim('"', '\'', '`', '“', '”', '‘', '’');
 
@@ -5709,7 +5709,7 @@ public static partial class Commands {
 	/// middle ones came through fine. A four-game spread silently became a two-game one with a different main
 	/// game, and nothing reported an error.
 	/// </summary>
-	private static string Unquote(string value) {
+	internal static string Unquote(string value) {
 		string trimmed = value.Trim();
 
 		return (trimmed.Length >= 2) && (trimmed[0] == trimmed[^1]) && (trimmed[0] is '"' or '\'')
