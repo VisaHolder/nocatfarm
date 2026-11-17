@@ -22,6 +22,10 @@
 </head>
 <body>
 
+<!-- 1.9.2: a page at farm.nocat.lol asking to open this dashboard - above every screen, a pop-up and the first-run welcome
+     included (app.js renderFarmAsk). Never shown on that page itself. -->
+<div id="farmAsk" class="farmask-bar hidden"></div>
+
 <!-- ── password gate ─────────────────────────────────────────────────── -->
 <div id="login" class="gate hidden">
   <form class="card gate-card" onsubmit="return doLogin(event)">
@@ -36,11 +40,8 @@
 </div>
 
 <!-- ── 1.9.2: farm.nocat.lol - finding nocat.farm on this PC and pairing with it (app.js farmGate). Never shown when nocat.farm serves this page. ── -->
-<div id="farmGate" class="gate hidden">
-  <div class="card gate-card farmgate">
-    <h1 class="wordmark">nocat.<span>farm</span></h1>
-    <div id="farmGateBody"></div>
-  </div>
+<div id="farmGate" class="hidden">
+  <main class="fg" id="farmGateBody"></main>
 </div>
 
 <!-- ── first run ─────────────────────────────────────────────────────── -->
@@ -163,7 +164,7 @@
         <input id="acctSearch" type="text" placeholder="Search accounts…" data-t-ph="Search accounts…" oninput="render()">
         <div id="acctFilters" class="chips"></div>
         <span class="spacer"></span>
-        <button class="ghost farm-hide" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
+        <button class="ghost" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
         <button class="farm-hide" onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
       </div>
       <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>

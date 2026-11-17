@@ -665,18 +665,9 @@ function renderAlerts() {
     out.push(`<div class="alert bad"><span><b>${esc(b.Name)}</b> — ${esc(b.Detail)}</span></div>`);
   });
 
-  // 1.9.2: a page at farm.nocat.lol asking to be let in - the same code shows there. Only here, never on that page itself.
-  (state.FarmPairs || []).forEach((p) => {
-    out.push(`<div class="alert warn farmask"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b><br>
-      ${esc(t('Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:'))} <b class="farmask-code">${esc(p.Code)}</b>
-      <span class="muted small">${esc(p.Device)}</span></span>
-      <span class="spacer"></span><button onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, true)">${esc(t('Approve'))}</button>
-      <button class="ghost" onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, false)">${esc(t('Deny'))}</button></div>`);
-  });
-
   // 1.9.2: on farm.nocat.lol, once: what stays in the app.
   if (HOSTED) {
-    out.push(`<div class="alert farmnote"><span>${esc(t('You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app\'s own dashboard on your PC:'))}
+    out.push(`<div class="alert farmnote"><span>${esc(t('Even if this website were hacked, it couldn\'t take your items or your account: those stay in the app on your PC.'))}
       <a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></span></div>`);
   }
 
@@ -4145,7 +4136,7 @@ function farmPagesBlock(v) {
   }
   const pages = v.FarmPages || [];
   return `<h3>farm.nocat.lol</h3>
-    <p class="ph-text">${esc(t('On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never confirm, trade, buy, sell, craft, or see codes and passwords.'))}</p>
+    <p class="ph-text">${esc(t('On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.'))}</p>
     ${pages.length ? `<div class="ph-visits">${pages.map((x) => `<div class="ph-visit ok"><span class="muted">${esc(when(x.Created))}</span><b>${esc(x.Device)}</b>
         <span class="muted">${esc(tf('until {0}', when(x.Expires)))}</span><button class="ghost" onclick="farmRevoke(${esc(JSON.stringify(x.Id))})">${esc(t('Revoke'))}</button></div>`).join('')}</div>`
       : `<p class="muted small">${esc(t('No browser is paired yet.'))}</p>`}`;
@@ -7806,6 +7797,14 @@ async function saveSettingsOnce() {
   if (!base) { toast(t('That account is gone'), true); settingsTarget = GLOBAL; renderSettings(); return; }
 
   const body = { ...base, ...edits };
+
+  // 1.9.2: on farm.nocat.lol, changing a password that's already set takes the current one too (checked like a sign-in).
+  if (HOSTED && target === GLOBAL && edits.WebPassword && (edits.WebPassword !== CLEAR_SECRET)
+      && ((config.GlobalSecretsSet || []).includes('WebPassword'))) {
+    const current = window.prompt(t('Type the current dashboard password to change it.'));
+    if (!current) return;
+    body.CurrentPassword = current;
+  }
   const res = target === GLOBAL
     ? await postGlobal(body)
     : await postBot(target, body);
@@ -7883,9 +7882,27 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+/// 1.9.2: a page at farm.nocat.lol asking to be let in - the same code shows there. Above everything, on every screen of
+/// this dashboard (the first-run welcome, the walkthrough, an open pop-up): somebody opening farm.nocat.lol before they've
+/// added an account still has to be able to answer it. Never on that page itself (the server sends none there).
+let lastFarmAsk = null;
+function renderFarmAsk() {
+  const asks = (state && state.FarmPairs) || [];
+  const html = asks.map((p) => `<div class="alert warn farmask" role="alert"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b><br>
+      ${esc(t('Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:'))} <b class="farmask-code">${esc(p.Code)}</b>
+      <span class="muted small">${esc(p.Device)}</span></span>
+      <span class="spacer"></span><button onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, true)">${esc(t('Approve'))}</button>
+      <button class="ghost" onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, false)">${esc(t('Deny'))}</button></div>`).join('');
+  if (html === lastFarmAsk) return;
+  lastFarmAsk = html;
+  $('farmAsk').innerHTML = html;
+  $('farmAsk').classList.toggle('hidden', !html);
+}
+
 async function refresh() {
   try {
     state = await api('/api/status');
+    renderFarmAsk();
     refreshSeconds = state.RefreshSeconds || refreshSeconds;
     armPolling(refreshSeconds);
     syncWelcome();
@@ -7923,53 +7940,86 @@ async function refresh() {
 // The page there finds nocat.farm on this PC, checks it can talk to it, and pairs: a code shows here and in the app, and
 // the person at the app approves it. Then it's this same dashboard, without what only the app's own dashboard does.
 
-/// The screen in front of the dashboard while it can't be used yet: what's wrong, and what to do.
-function farmGate(html) {
+/// The screen in front of the dashboard while it can't be used yet, drawn like the page farm.nocat.lol shows before the app
+/// is found: the wordmark, a status line with its dot, one short line, one big button, small ones under it, and the long
+/// how-to folded away behind "how?". o: { dot: 'wait'|'ok'|'no', title, line, note, code, primary, ghosts, links, how }.
+function farmGate(o) {
   $('login').classList.add('hidden');
   $('app').classList.add('hidden');
   $('welcome').classList.add('hidden');
   $('farmGate').classList.remove('hidden');
-  $('farmGateBody').innerHTML = html;
-}
-
-function farmSwitchHow() {
-  return `<p>${esc(t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.'))}</p>
-    <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`;
-}
-
-function farmOtherBrowser() {
-  return `<p class="muted small">${esc(t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:'))}
-    <a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`;
+  const btn = (b, cls) => b.href
+    ? `<a class="fg-b ${cls}" href="${esc(b.href)}"${b.newTab ? ' target="_blank" rel="noopener noreferrer"' : ''}>${esc(b.label)}</a>`
+    : `<button type="button" class="fg-b ${cls}" onclick="${b.on}">${esc(b.label)}</button>`;
+  const lnk = (b) => b.href
+    ? `<a class="fg-lnk" href="${esc(b.href)}"${b.newTab ? ' target="_blank" rel="noopener noreferrer"' : ''}>${esc(b.label)}</a>`
+    : `<button type="button" class="fg-lnk" onclick="${b.on}">${esc(b.label)}</button>`;
+  const ghosts = o.ghosts || [];
+  $('farmGateBody').innerHTML = `
+    <div class="fg-brand">nocat.<b>farm</b></div>
+    ${o.code ? `<div class="fg-code">${esc(o.code)}</div>` : ''}
+    <div class="fg-head">
+      <div class="fg-st"><span class="fg-dot ${o.dot || 'no'}"></span><h1>${esc(o.title)}</h1></div>
+      ${o.line ? `<p>${esc(o.line)}</p>` : ''}
+      ${o.note ? `<p class="fg-note">${esc(o.note)}</p>` : ''}
+    </div>
+    ${o.primary || ghosts.length || (o.links || []).length ? `<div class="fg-acts">
+      ${o.primary ? btn(o.primary, 'fg-p') : ''}
+      ${ghosts.length ? `<div class="${ghosts.length > 1 ? 'fg-two' : 'fg-one'}">${ghosts.map((g) => btn(g, '')).join('')}</div>` : ''}
+      ${(o.links || []).length ? `<div class="fg-meta">${o.links.map(lnk).join('')}</div>` : ''}
+    </div>` : ''}
+    ${o.how ? `<details class="fg-how"><summary>${esc(t('how?'))}</summary>${o.how.map((x) => `<p>${esc(x)}</p>`).join('')}</details>` : ''}
+    <div class="fg-foot">${esc(t('Even if this website were hacked, it couldn\'t take your items or your account: those stay in the app on your PC.'))}
+      <div class="fg-meta fg-portrow"><span>${esc(t('app port'))}</span><input class="fg-port" id="farmPortBox" inputmode="numeric" maxlength="5" value="${farmPort}" aria-label="${esc(t('app port'))}"></div>
+    </div>`;
+  const box = $('farmPortBox');
+  if (box) box.onchange = () => {
+    const v = Number(box.value);
+    if (!Number.isInteger(v) || v < 1 || v > 65535) { box.value = farmPort; return; }
+    location.href = location.pathname + '?port=' + v;
+  };
 }
 
 const farmIsSafari = () => /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+const farmHere = () => ({ label: t('open it here'), href: farmLocalUrl() });
+const farmAgain = () => ({ label: t('try again'), on: 'location.reload()' });
+const farmSwitchSteps = () => t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.');
+const farmOtherBrowser = () => t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:') + ' ' + farmLocalUrl();
 
 /// What's wrong, said plainly: not running, not letting this page in, too old, or a browser that won't let a website reach this PC.
 function farmScreen(why, version) {
-  const port = farmPort === 7242 ? '' : ` <span class="muted small">(${esc(tf('port {0}', farmPort))})</span>`;
-  if (why === 'missing') {
-    farmGate(`<p class="lead">${esc(t("Can't find nocat.farm on this PC."))}${port}</p>
-      ${farmIsSafari() ? `<p>${esc(t("Safari doesn't let a website talk to your own PC."))}</p>` : ''}
-      <p>${esc(t('Start nocat.farm on this PC, then reload this page.'))} ${esc(t("Don't have it yet?"))}
-        <a href="https://nocat.lol/nocatfarm" target="_blank" rel="noopener noreferrer">${esc(t('Download nocat.farm'))}</a></p>
-      <p class="muted small">${esc(t('Already running? It may not be letting this page in yet:'))}</p>${farmSwitchHow()}${farmOtherBrowser()}
-      <button onclick="location.reload()">${esc(t('Try again'))}</button>`);
+  if (why === 'looking') {
+    farmGate({ dot: 'wait', title: t('looking for your app…'), line: t('checking this PC') });
+  } else if (why === 'missing' && farmIsSafari()) {
+    farmGate({ dot: 'no', title: t("Safari can't reach your PC"), line: t('open nocat.farm here instead - it works the same.'),
+      primary: farmHere(), ghosts: [farmAgain()], how: [farmOtherBrowser()] });
+  } else if (why === 'missing') {
+    farmGate({ dot: 'no', title: t('no app on this PC'), line: t('nocat.farm is a free Steam card farmer that runs on your own PC.'),
+      primary: { label: t('get nocat.farm'), href: 'https://nocat.lol/nocatfarm' }, ghosts: [farmAgain(), farmHere()],
+      how: [t('Start nocat.farm on this PC, then reload this page.'), farmSwitchSteps(), farmOtherBrowser()] });
   } else if (why === 'off') {
-    farmGate(`<p class="lead">${esc(t("nocat.farm is running, but it doesn't let farm.nocat.lol in."))}</p>
-      <p class="muted small">${esc(t('Either the switch is off, or this nocat.farm is older than 1.9.2 - then update it first.'))}</p>${farmSwitchHow()}
-      <button onclick="location.reload()">${esc(t('Try again'))}</button>`);
+    farmGate({ dot: 'no', title: t("nocat.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),
+      primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()], how: [farmSwitchSteps()] });
   } else if (why === 'old') {
-    farmGate(`<p class="lead">${esc(t('Update your nocat.farm'))}</p>
-      <p>${esc(tf('This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.', version || '?'))}</p>
-      <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>`);
+    farmGate({ dot: 'no', title: t('update nocat.farm'), line: tf('this page needs a newer nocat.farm than {0}.', version || '?'),
+      primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()],
+      how: [tf('This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.', version || '?')] });
   }
+}
+
+/// A look at this PC that gives up after a few seconds: a connection nobody answers (a firewall) would otherwise hang the page.
+function farmFetch(url, opts) {
+  const o = { credentials: 'omit', cache: 'no-store', ...opts };
+  try { if (window.AbortSignal && AbortSignal.timeout) o.signal = AbortSignal.timeout(4000); } catch { /* an older browser: no limit */ }
+  return fetch(url, o);
 }
 
 /// Is nocat.farm there, does it let this page in, and is it new enough. False when a screen is up instead.
 async function farmConnect() {
+  farmScreen('looking');
   let hello = null;
   try {
-    const r = await fetch(API_BASE + '/api/farm/hello', { credentials: 'omit', cache: 'no-store' });
+    const r = await farmFetch(API_BASE + '/api/farm/hello');
     hello = r.ok ? await r.json() : null;
   } catch { hello = null; }
 
@@ -7978,13 +8028,15 @@ async function farmConnect() {
     // nothing back - and a nocat.farm that isn't running doesn't.
     let there = false;
     if (!farmIsSafari()) {
-      try { await fetch(API_BASE + '/api/ping', { mode: 'no-cors', credentials: 'omit', cache: 'no-store' }); there = true; } catch { there = false; }
+      try { await farmFetch(API_BASE + '/api/ping', { mode: 'no-cors' }); there = true; } catch { there = false; }
     }
     farmScreen(there ? 'off' : 'missing');
     return false;
   }
   if ((Number(hello.api) || 0) < FARM_API_NEEDED) { farmScreen('old', hello.version); return false; }
   if (!token) { farmPairScreen(); return false; }
+  // Found, new enough and paired: the "looking" screen goes, and the dashboard comes.
+  $('farmGate').classList.add('hidden');
   return true;
 }
 
@@ -8001,31 +8053,29 @@ let farmPolling = null;
 
 function farmPairScreen(message) {
   clearTimeout(farmPolling);
-  farmGate(`<p class="lead">${esc(t('Connect to your nocat.farm'))}</p>
-    <p>${esc(t('This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.'))}</p>
-    ${message ? `<p class="error">${esc(message)}</p>` : ''}
-    <button onclick="farmPair()">${esc(t('Connect'))}</button>${farmOtherBrowser()}`);
+  farmGate({ dot: 'ok', title: t('nocat.farm is running'), line: t('connect this browser - you approve it in the app.'), note: message || '',
+    primary: { label: t('connect'), on: 'farmPair()' }, links: [farmHere()],
+    how: [t('This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.'), farmOtherBrowser()] });
 }
 
 async function farmPair() {
   let r = null;
   try {
-    const res = await fetch(API_BASE + '/api/farm/pair', { method: 'POST', credentials: 'omit', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const res = await farmFetch(API_BASE + '/api/farm/pair', { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     r = await res.json();
   } catch { r = null; }
   if (!r) { farmScreen('missing'); return; }
   if (!r.ok) { farmPairScreen(r.Message || t("That didn't work")); return; }
 
-  farmGate(`<p class="lead">${esc(t('Approve this in nocat.farm'))}</p>
-    <p class="farmcode">${esc(r.Code)}</p>
-    <p>${esc(t("In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve."))}</p>
-    <p><a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></p>
-    <p class="muted small" id="farmWait">${esc(t('Waiting for you to approve it…'))}</p>`);
+  // A new tab for the app's own dashboard, so this one keeps watching for the answer.
+  farmGate({ dot: 'wait', code: r.Code, title: t('approve this code in nocat.farm on this PC.'), line: t('Waiting for you to approve it…'),
+    primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true },
+    how: [t("In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.")] });
 
   const poll = async () => {
     let p = null;
     try {
-      const res = await fetch(API_BASE + `/api/farm/pair/${encodeURIComponent(r.Id)}`, { credentials: 'omit', mode: 'cors', cache: 'no-store' });
+      const res = await farmFetch(API_BASE + `/api/farm/pair/${encodeURIComponent(r.Id)}`, { mode: 'cors' });
       p = await res.json();
     } catch { p = null; }
     if (p && p.State === 'approved' && p.Token) {

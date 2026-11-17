@@ -12,8 +12,13 @@ namespace NocatFarm.Web;
 /// in a list below - allowed, allowed in part, or refused - and anything that isn't in a list is refused. The checks
 /// walk <see cref="Commands.All"/> and every mapped route, so a new one can't slip through unclassified.
 ///
-/// Nothing that can lose items or money, or weaken security, is allowed from there: that stays in the app's own
-/// dashboard on the PC. Pages there get Bearer tokens only - never a cookie - each one approved at the app.
+/// The one risk it guards against is the page's own code being swapped (nocat.lol, its Cloudflare account or GitHub taken
+/// over). So only what would let that code steal or take over is refused: items leaving or being sent somewhere else, the
+/// Steam sign-in and its secrets (Steam Guard codes are never even shown), running code (updates, add-ons, plugins, a
+/// restore), lifting a scam-watch hold, and the back doors (the bots' tokens and owners, who may command the accounts, how
+/// the dashboard is reached, removing its password). Everything else - settings, switches, buying within the app's own
+/// money limits, importing - works from there too. Pages there get Bearer tokens only - never a cookie - each one approved
+/// at the app.
 /// </summary>
 public static class FarmWeb {
 	/// <summary>The one website allowed, exactly: https, no port, no subdomain, no other nocat.lol host.</summary>
@@ -96,7 +101,7 @@ public static class FarmWeb {
 		["POST /api/farm/pair"] = Access.Open,
 		["GET /api/farm/pair/{id}"] = Access.Open,
 		["POST /api/farm/answer"] = Access.Refused,   // approving is for the app's own dashboard only
-		["POST /api/farm/revoke"] = Access.Allowed,   // a page can only give its access back
+		["POST /api/farm/revoke"] = Access.Allowed,   // a page can only give its own access back
 
 		// reading
 		["GET /api/ping"] = Access.Allowed,
@@ -124,8 +129,11 @@ public static class FarmWeb {
 		["GET /api/bots/{name}/switch/{feature}/preview"] = Access.Allowed,
 		["GET /api/steam-open/everyone/preview"] = Access.Allowed,
 		["GET /api/bots/{name}/copy-settings/preview"] = Access.Allowed,
+		["GET /api/import/tools"] = Access.Allowed,
+		["GET /api/import/scan"] = Access.Allowed,   // never a network share; never a secret in the answer
+		["GET /api/import/pending"] = Access.Allowed,
 
-		// everyday controls
+		// doing
 		["POST /api/bots/{name}/{action}"] = Access.Allowed,   // start, stop, pause, resume - nothing else is answered there
 		["POST /api/bots/{name}/inventory/refresh"] = Access.Allowed,
 		["POST /api/visitors/signout"] = Access.Allowed,
@@ -135,41 +143,38 @@ public static class FarmWeb {
 		["POST /api/theme"] = Access.Allowed,
 		["POST /api/tutorial/done"] = Access.Allowed,
 		["POST /api/accounts/order"] = Access.Allowed,
+		["POST /api/backups/now"] = Access.Allowed,   // a locked zip in the backups folder here
+		["POST /api/import/apply"] = Access.Allowed,   // logins go app to app, here - nothing goes back to the page
+		["POST /api/import/pending/clear"] = Access.Allowed,
+		["POST /api/bots/{name}/achievements/dlc"] = Access.Allowed,
+		["POST /api/bots/{name}/achievements/unlock-all"] = Access.Allowed,
+		["POST /api/bots/{name}/copy-settings"] = Access.Allowed,   // never the sign-in, the send target or the trade rules (SettingsCopy)
+		["POST /api/steam-open/everyone"] = Access.Allowed,   // the buttons only; pressing one is refused
 		["POST /api/command"] = Access.Checked,   // by command word: see Commands below
 		["POST /api/config"] = Access.Checked,   // by setting: see SettingRule
 		["POST /api/bots/{name}/config"] = Access.Checked,
-		["POST /api/bots/{name}/switch"] = Access.Checked,   // off only
-		["POST /api/steam-open/everyone"] = Access.Checked,   // off only
+		["POST /api/bots/{name}/switch"] = Access.Checked,   // every switch but card swaps on
 
-		// only in the app
+		// only in the app: items leaving, the sign-in and its secrets, running code, the scam hold, the back doors
 		["POST /api/login"] = Access.Refused,
 		["POST /api/login/code"] = Access.Refused,
-		["GET /api/import/tools"] = Access.Refused,
-		["GET /api/import/scan"] = Access.Refused,   // takes a path on this PC
-		["POST /api/import/apply"] = Access.Refused,
-		["GET /api/import/pending"] = Access.Refused,
-		["POST /api/import/pending/clear"] = Access.Refused,
 		["POST /api/addons/install"] = Access.Refused,
 		["POST /api/addons/remove"] = Access.Refused,
 		["POST /api/plugins/press"] = Access.Refused,
 		["POST /api/plugins/setting"] = Access.Refused,
 		["POST /api/plugins/toggle"] = Access.Refused,
 		["POST /api/update"] = Access.Refused,
-		["POST /api/backup"] = Access.Refused,
-		["POST /api/backups/now"] = Access.Refused,
+		["POST /api/backup"] = Access.Refused,   // the zip itself, every saved login in it, handed to the page
 		["POST /api/restore/check"] = Access.Refused,
 		["POST /api/restore/unlock"] = Access.Refused,
 		["POST /api/restore/apply"] = Access.Refused,
 		["POST /api/discord/connect"] = Access.Refused,
-		["POST /api/prompt"] = Access.Refused,
+		["POST /api/prompt"] = Access.Refused,   // a Steam Guard code or a password
 		["POST /api/bots/{name}/steam-open"] = Access.Refused,
 		["GET /api/bots/{name}/steam-open"] = Access.Refused,   // holds the account's Steam Guard code
 		["GET /api/bots/{name}/qr.svg"] = Access.Refused,
-		["POST /api/bots/{name}/achievements/dlc"] = Access.Refused,
-		["POST /api/bots/{name}/achievements/unlock-all"] = Access.Refused,
 		["POST /api/bots"] = Access.Refused,
 		["DELETE /api/bots/{name}"] = Access.Refused,
-		["POST /api/bots/{name}/copy-settings"] = Access.Refused,
 		["POST /api/phone/restart"] = Access.Refused,
 		["POST /api/phone/firewall"] = Access.Refused,
 		["POST /api/auth/{name}/confirmations"] = Access.Refused
@@ -189,25 +194,21 @@ public static class FarmWeb {
 		new Dictionary<string, Func<BotManager?, string[], bool>?>(StringComparer.OrdinalIgnoreCase) {
 			// Accounts
 			["status"] = Always, ["start"] = Always, ["stop"] = Always, ["restart"] = Always, ["pause"] = Always, ["resume"] = Always,
-			["enable"] = Always, ["stuck"] = Always,
-			["add"] = null, ["remove"] = null, ["disable"] = null,
-			["copy"] = static (_, w) => !Has(w, "yes"),   // the preview only
-			["steam"] = static (_, w) => !Has(w, "open") && !Has(w, "on"),   // looking, and 'steam off'
+			["enable"] = Always, ["disable"] = Always, ["stuck"] = Always,
+			["copy"] = Always,   // never the sign-in, the send target or the trade rules (SettingsCopy)
+			["add"] = null, ["remove"] = null,
+			["steam"] = static (_, w) => !Has(w, "open"),   // the buttons on or off; signing this PC's Steam in, never
 
 			// Playing
 			["play"] = Always, ["gamename"] = Always, ["persona"] = Always, ["nickname"] = Always, ["grind"] = Always, ["human"] = Always,
 			["habits"] = Always, ["wake"] = Always, ["hours"] = Always, ["rotation"] = Always, ["selfcheck"] = Always,
 
-			// Trading cards
-			["cards"] = Always, ["drops"] = Always, ["sets"] = Always, ["addmoney"] = Always,
-			["match"] = static (_, w) => !Has(w, "do"),
-			["sell"] = static (_, w) => !Has(w, "do") && !Has(w, "relist"),
-			["booster"] = static (m, w) => (w.Length == 0) || (w[0] == "plan") || ((w[0] == "open") && !Has(w, "do"))
-				|| ((w.Length == 1) && ((w[0] == "all") || (m?.Get(w[0]) != null))),   // making packs spends gems
-			["spare"] = static (_, w) => !Has(w, "on") && !Has(w, "do"),
-			["craft"] = static (_, w) => !Has(w, "now"),
-			["buy"] = static (_, w) => !Has(w, "on") && !Has(w, "do"),
-			["levelup"] = static (_, w) => !Has(w, "buy"),
+			// Trading cards: buying, crafting and packs within the app's own limits (which only change here)
+			["cards"] = Always, ["drops"] = Always, ["sets"] = Always, ["addmoney"] = Always, ["booster"] = Always, ["craft"] = Always,
+			["buy"] = Always, ["levelup"] = Always,
+			["match"] = static (_, w) => !Has(w, "do"),   // sending trade offers
+			["sell"] = static (_, w) => !Has(w, "do") && !Has(w, "relist"),   // listing items on the market
+			["spare"] = static (_, w) => !Has(w, "do"),   // selling or packing them now; the switch itself may change
 
 			// Trades & items
 			["offers"] = Always,
@@ -219,40 +220,35 @@ public static class FarmWeb {
 			["2fa"] = null, ["confirm"] = null, ["deny"] = null,
 
 			// Achievements
-			["achievements"] = static (_, w) => !Has(w, "unlock") && !Has(w, "lock"),
-			["hunt"] = Always,
-			["dlc"] = static (_, w) => !Has(w, "leave") && !Has(w, "undo"),
+			["achievements"] = Always, ["hunt"] = Always, ["dlc"] = Always,
 
 			// Free stuff & keys
-			["freegames"] = Always, ["freeitems"] = Always, ["queue"] = Always, ["events"] = Always,
-			["redeem"] = null, ["keys"] = null,
+			["freegames"] = Always, ["freeitems"] = Always, ["queue"] = Always, ["events"] = Always, ["redeem"] = Always,
+			["keys"] = null,   // the product keys waiting, in full
 
 			// Profile & info
 			["value"] = Always, ["level"] = Always, ["balance"] = Always, ["bans"] = Always, ["health"] = Always, ["owns"] = Always,
-			["joingroup"] = Always,
-			["points"] = static (_, w) => !Has(w, "on") && !(Has(w, "spend") && !Has(w, "preview")),
-			["scamwatch"] = static (_, w) => !Has(w, "ok"),
-			["privacy"] = null,
+			["joingroup"] = Always, ["points"] = Always, ["privacy"] = Always,
+			["scamwatch"] = static (_, w) => !Has(w, "ok"),   // lifting a scam-watch hold
 
 			// Settings
 			["config"] = Always,
 			["set"] = null,   // by setting - see CommandAllowed
-			["backup"] = static (_, w) => w is ["status"],
-			["import"] = null,
+			["backup"] = Always,   // a locked zip in the backups folder here
+			["import"] = Always,   // logins go app to app, here; never from a network share
 
 			// The app
 			["log"] = Always, ["stats"] = Always, ["report"] = Always, ["plugins"] = Always, ["tutorial"] = Always, ["help"] = Always,
-			["theme"] = Always, ["mini"] = Always, ["clear"] = Always, ["visitors"] = Always, ["version"] = Always,
+			["theme"] = Always, ["mini"] = Always, ["clear"] = Always, ["visitors"] = Always, ["version"] = Always, ["exit"] = Always,
 			["notify"] = static (_, w) => !Has(w, "link"),   // the link makes whoever opens it the owner
 			["addons"] = static (_, w) => !Has(w, "install") && !Has(w, "remove"),
-			["dashboard"] = static (_, w) => w.Length == 0,   // the addresses; never unlock, cert or anywhere
+			["dashboard"] = static (_, w) => !Has(w, "unlock") && !Has(w, "anywhere") && !Has(w, "remote"),
 			["anywhere"] = static (_, w) => !Has(w, "on"),
 			["update"] = static (_, w) => (w.Length == 0) || (w[0] is "versions" or "skip"),
-			["answer"] = null, ["exit"] = null,
+			["answer"] = null,   // a Steam Guard code or a password
 
 			// Advanced
-			["fairswap"] = Always, ["reload"] = Always, ["screen"] = Always,
-			["addlicense"] = null
+			["fairswap"] = Always, ["reload"] = Always, ["screen"] = Always, ["addlicense"] = Always
 		};
 
 	private static bool Always(BotManager? mgr, string[] words) => true;
@@ -303,6 +299,12 @@ public static class FarmWeb {
 
 		string value = NocatFarm.Commands.Unquote(NocatFarm.Commands.SetValue(line, words, at)).Trim();
 
+		// The dashboard password from 'set': only setting a first one. Changing it needs the current one (the settings page
+		// asks for it); removing it, only here.
+		if (def.Name == nameof(GlobalConfig.WebPassword)) {
+			return (mgr != null) && string.IsNullOrEmpty(mgr.Global.WebPassword) && (value.Length > 0);
+		}
+
 		return SettingAllowed(def, Settings.IsTrue(value) ? true : Settings.IsFalse(value) ? false : null);
 	}
 
@@ -315,72 +317,62 @@ public static class FarmWeb {
 		/// <summary>Never changed from there.</summary>
 		Closed,
 
-		/// <summary>Only switched off - what spends money or gives items away.</summary>
-		OffOnly,
-
-		/// <summary>Only switched on - what keeps the accounts safe.</summary>
-		OnOnly
+		/// <summary>Only switched off - card swaps, which send cards to other people.</summary>
+		OffOnly
 	}
 
-	/// <summary>Sections never changed from farm.nocat.lol: the way in, the alerts, updates and plugins, backups.</summary>
-	private static readonly HashSet<string> ClosedSections = [Settings.SecDashboard, Settings.SecNotifications, Settings.SecUpdates, Settings.SecBackups];
-
-	/// <summary>Sections that spend money, gems or points, or give items away: only switched off from there.</summary>
-	private static readonly HashSet<string> OffOnlySections = [Settings.SecItems, Settings.SecTrading, Settings.SecBadges, Settings.SecSpare, Settings.SecPacks,
-		Settings.SecPoints, Settings.SecBuy];
-
-	/// <summary>Sections that keep the accounts safe: only switched on from there.</summary>
-	private static readonly HashSet<string> OnOnlySections = [Settings.SecSafety, Settings.SecScamWatch, Settings.SecHealth];
-
-	/// <summary>Sections changed freely, apart from the settings named below.</summary>
-	private static readonly HashSet<string> OpenSections = [Settings.SecGeneral, Settings.SecAllAccounts, Settings.SecDiscordProfile, Settings.SecConnection,
-		Settings.SecSteamConnection, Settings.SecLogging, Settings.SecAccount, Settings.SecHuman, Settings.SecPlaying, Settings.SecCards, Settings.SecExtras,
-		Settings.SecAchievements, Settings.SecSocial, Settings.SecFamily, Settings.SecSaleEvents];
-
-	/// <summary>Settings never changed from there, wherever they are: who can command the accounts, where their traffic goes, how they sign in.</summary>
+	/// <summary>
+	/// Settings never changed from there: where items go and who may trade or take them, the money limits (so buying and
+	/// selling from there stay inside what was set here), the Steam sign-in and where its traffic goes, the bots' owners and
+	/// who may command the accounts, how the dashboard is reached, and loading code. Every secret too, by its kind - the
+	/// dashboard password has its own rule (WebHostFarm).
+	/// </summary>
 	private static readonly HashSet<string> ClosedKeys = new(StringComparer.Ordinal) {
-		nameof(BotConfig.CommandMasters), nameof(GlobalConfig.ScamWatchTrustedDevices), nameof(GlobalConfig.WebProxy), nameof(GlobalConfig.WebProxyUsername),
-		nameof(BotConfig.AccountProxy), nameof(BotConfig.AccountProxyUsername), nameof(BotConfig.SteamLogin), nameof(BotConfig.SignInWithQr),
-		nameof(BotConfig.UIMode), nameof(BotConfig.MachineName), nameof(BotConfig.IUseThisAccount), nameof(BotConfig.RefundProtectMinPrice),
-		nameof(BotConfig.AchievementBoost)
+		// items leaving, or going somewhere else
+		nameof(BotConfig.TradeMasters), nameof(BotConfig.TradeMasterToken), nameof(BotConfig.AutoTradeWith), nameof(BotConfig.SendItemTypes),
+		nameof(BotConfig.SendOnFarmingFinished), nameof(BotConfig.BoosterSendTo), nameof(BotConfig.SpareGemsSendTo),
+		nameof(BotConfig.AcceptFairCardSwaps), nameof(BotConfig.AddonTrades), nameof(BotConfig.AddonTradesConfirm),
+		// the money limits
+		nameof(BotConfig.BuyDailyLimit), nameof(BotConfig.BuyWeeklyLimit), nameof(BotConfig.BuyMaxLevelPrice), nameof(BotConfig.BuyKeepInWallet),
+		nameof(BotConfig.PointsWeeklyCap), nameof(BotConfig.PointsKeepAtLeast), nameof(BotConfig.SpareDailyValue), nameof(BotConfig.SpareDailyItems),
+		nameof(BotConfig.SpareMaxPrice), nameof(BotConfig.SpareMinSale), nameof(BotConfig.SpareRelistFloorPct), nameof(BotConfig.SpareDumpPct),
+		nameof(BotConfig.SpareKeepGems), nameof(BotConfig.BoosterKeepGems), nameof(BotConfig.CardSwapMaxLoss), nameof(BotConfig.CardSwapsPerDay),
+		nameof(BotConfig.RefundProtectMinPrice),
+		// the sign-in, and where Steam traffic goes
+		nameof(BotConfig.SteamLogin), nameof(BotConfig.SignInWithQr), nameof(BotConfig.AccountProxy), nameof(BotConfig.AccountProxyUsername),
+		nameof(GlobalConfig.WebProxy), nameof(GlobalConfig.WebProxyUsername),
+		// back doors: the bots' owners, who may command the accounts, how the dashboard is reached
+		nameof(GlobalConfig.DiscordOwnerId), nameof(GlobalConfig.TelegramChatId), nameof(BotConfig.CommandMasters),
+		nameof(GlobalConfig.WebEnabled), nameof(GlobalConfig.WebHost), nameof(GlobalConfig.WebPort), nameof(GlobalConfig.WebRemoteAccess),
+		nameof(GlobalConfig.WebPublicAddress), nameof(GlobalConfig.WebTrustedProxies), nameof(GlobalConfig.WebSignInCode),
+		nameof(GlobalConfig.WebRemoteOffAfter), nameof(GlobalConfig.FarmWebAllowed),
+		// running code; and a backup written to a folder of the page's choosing (a network share) with every login in it
+		nameof(GlobalConfig.PluginsEnabled), nameof(GlobalConfig.BackupFolder)
 	};
 
-	/// <summary>Only switched off from there.</summary>
-	private static readonly HashSet<string> OffOnlyKeys = new(StringComparer.Ordinal) {
-		nameof(GlobalConfig.SteamOpenEveryAccount), nameof(BotConfig.SteamOpenButton), nameof(BotConfig.UnlockAchievements)
-	};
+	/// <summary>Only switched off from there: card swaps send cards to other people.</summary>
+	private static readonly HashSet<string> OffOnlyKeys = new(StringComparer.Ordinal) { nameof(BotConfig.CardSwaps) };
 
-	/// <summary>Only switched on from there.</summary>
-	private static readonly HashSet<string> OnOnlyKeys = new(StringComparer.Ordinal) {
-		nameof(BotConfig.Enabled), nameof(BotConfig.SkipRefundableGames)
-	};
+	/// <summary>Every section a setting is in today. One added later starts closed from there until it's looked at and put here.</summary>
+	private static readonly HashSet<string> KnownSections = [Settings.SecGeneral, Settings.SecNotifications, Settings.SecUpdates, Settings.SecBackups,
+		Settings.SecAllAccounts, Settings.SecDashboard, Settings.SecDiscordProfile, Settings.SecConnection, Settings.SecSteamConnection, Settings.SecLogging,
+		Settings.SecAccount, Settings.SecHuman, Settings.SecPlaying, Settings.SecCards, Settings.SecExtras, Settings.SecBadges, Settings.SecAchievements,
+		Settings.SecSafety, Settings.SecTrading, Settings.SecSocial, Settings.SecItems, Settings.SecFamily, Settings.SecSaleEvents, Settings.SecScamWatch,
+		Settings.SecHealth, Settings.SecSpare, Settings.SecPacks, Settings.SecPoints, Settings.SecBuy];
 
-	/// <summary>How a setting may be changed from farm.nocat.lol. A section nobody has sorted is closed.</summary>
-	public static SettingWay WayOf(SettingDef def) {
-		if ((def.Kind == SettingKind.Secret) || ClosedKeys.Contains(def.Name) || ClosedSections.Contains(def.Section)) {
-			return SettingWay.Closed;
-		}
-
-		if (OffOnlyKeys.Contains(def.Name) || OffOnlySections.Contains(def.Section)) {
-			return def.Kind == SettingKind.Bool ? SettingWay.OffOnly : SettingWay.Closed;
-		}
-
-		if (OnOnlyKeys.Contains(def.Name) || OnOnlySections.Contains(def.Section)) {
-			return def.Kind == SettingKind.Bool ? SettingWay.OnOnly : SettingWay.Closed;
-		}
-
-		return OpenSections.Contains(def.Section) ? SettingWay.Open : SettingWay.Closed;
-	}
+	/// <summary>How a setting may be changed from farm.nocat.lol.</summary>
+	public static SettingWay WayOf(SettingDef def) =>
+		(def.Kind == SettingKind.Secret) || ClosedKeys.Contains(def.Name) || !KnownSections.Contains(def.Section) ? SettingWay.Closed
+		: OffOnlyKeys.Contains(def.Name) ? SettingWay.OffOnly
+		: SettingWay.Open;
 
 	/// <summary>Whether changing <paramref name="def"/> to <paramref name="on"/> (a switch's new value; null for anything else) is allowed from there.</summary>
 	public static bool SettingAllowed(SettingDef def, bool? on) => WayOf(def) switch {
 		SettingWay.Open => true,
 		SettingWay.OffOnly => on == false,
-		SettingWay.OnOnly => on == true,
 		_ => false
 	};
 
 	/// <summary>Whether every section the settings are in is sorted into one of the lists above - for the checks.</summary>
-	internal static bool Sorted(string section) =>
-		ClosedSections.Contains(section) || OffOnlySections.Contains(section) || OnOnlySections.Contains(section) || OpenSections.Contains(section);
+	internal static bool Sorted(string section) => KnownSections.Contains(section);
 }

@@ -308,18 +308,24 @@ A request runs out after 5 minutes. At most 5 wait at once, and only a few can b
 stays connected for 90 days. The Phone page lists every connected browser with a **Revoke** button, and **Sign
 every device out** (or `visitors signout`) disconnects them all. So does changing the dashboard password.
 
-What it can do: see everything the dashboard shows, start, stop, pause and resume accounts, every preview, the log,
-the history, and settings and switches that don't spend money.
+What it can do: nearly everything the dashboard here does. That covers starting and stopping accounts, every
+preview and setting, human mode, buying cards, crafting, booster packs, Steam Points and spare-item switches (all
+inside the money limits you set here), importing from another idler, backups to the backups folder, and setting a
+dashboard password.
 
-What it can't do, ever (the page says "in the app on your PC" instead):
+What it can't do, ever (the page says "in the app on your PC" instead). Even if the website itself were hacked, it
+couldn't take your items or your account:
 
-- Steam Guard codes, confirmations, and confirming or denying anything
-- trades and sending items, card swaps, buying, selling, crafting, booster packs, Steam Points, spare items, levelling up
-  with money, product keys and free licences
-- adding, removing or disabling an account, privacy, scam watch's "It was me", unlocking achievements
-- updates, add-ons and plugins, backups and restores, importing, closing nocat.farm, answering a sign-in question
-- the dashboard password, *Open from anywhere*, notifications, and any setting that spends money or weakens
-  safety. A money switch can be turned off from there, never on.
+- **Items leaving:** trades (accept, decline, cancel), sending items, confirmations, card swaps on, selling or relisting
+  now, matching cards between your accounts, and where items are sent or who may trade with you
+- **The money limits:** how much may be spent a day or a week, price ceilings, what's always kept
+- **The sign-in:** adding or removing an account, the Steam login and password, Steam Guard codes (never even shown),
+  QR sign-in, authenticator secrets, answering a sign-in question, Open in Steam, product keys waiting
+- **Running code:** installing updates, add-ons and plugins, restoring a backup, downloading the backup zip
+- **Scam watch:** "It was me"
+- **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
+  address, port, *Open from anywhere*, trusted proxies, the firewall, and removing the dashboard password. Changing an
+  existing password takes the current one, and then every browser has to sign in or pair again.
 
 If it doesn't connect:
 

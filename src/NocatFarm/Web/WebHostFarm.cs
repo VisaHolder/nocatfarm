@@ -211,11 +211,11 @@ public sealed partial class WebHost {
 			case "POST /api/command":
 				return FarmWeb.CommandAllowed(_mgr, Field(sent, "Line"));
 			case "POST /api/bots/{name}/switch":
-			case "POST /api/steam-open/everyone":
-				// Only off. On is the confirm pop-up's, in the app.
-				return Field(sent, "On") is { } on && on.Equals("false", StringComparison.OrdinalIgnoreCase);
+				// Every switch, on or off - but card swaps only off: they send cards to other people.
+				return !(Switches.FeatureOf(Field(sent, "Feature")) is { } feature && (feature == nameof(BotConfig.CardSwaps))
+					&& Field(sent, "On").Equals("true", StringComparison.OrdinalIgnoreCase));
 			case "POST /api/config":
-				return FarmSettingsAllowed(_mgr.Global, Settings.Global, sent, JsonOptionsOf(ctx), global: true);
+				return FarmPasswordAllowed(ctx, sent) is { } rest && FarmSettingsAllowed(_mgr.Global, Settings.Global, rest, JsonOptionsOf(ctx), global: true);
 			case "POST /api/bots/{name}/config":
 				return (ctx.GetRouteValue("name") is string name) && (_mgr.Get(name) is { } bot) && FarmSettingsAllowed(bot.Cfg, Settings.Bot, sent, JsonOptionsOf(ctx), global: false);
 			default:
@@ -225,6 +225,57 @@ public sealed partial class WebHost {
 		// As the endpoint reads it: names in any case.
 		static string Field(JsonObject o, string name) =>
 			o.FirstOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value?.ToString() ?? "";
+	}
+
+	/// <summary>
+	/// The dashboard password in a global save from farm.nocat.lol: a first one may be set from there, an existing one changed
+	/// only with the current one beside it ("CurrentPassword", checked like a sign-in and counted towards the same lockout),
+	/// and never removed from there. Null when that's refused; otherwise what was sent without the password, for the rest of
+	/// the checks. The change signs every browser out, the pages at farm.nocat.lol too - they pair again.
+	/// </summary>
+	private JsonObject? FarmPasswordAllowed(HttpContext ctx, JsonObject sent) {
+		string? key = sent.Select(static kv => kv.Key).FirstOrDefault(static k => k.Equals(nameof(GlobalConfig.WebPassword), StringComparison.OrdinalIgnoreCase));
+		string typed = key == null ? "" : sent[key]?.ToString() ?? "";
+		JsonObject rest = sent.DeepClone().AsObject();
+
+		if (key != null) {
+			rest.Remove(key);
+		}
+
+		if (typed.Length == 0) {
+			return rest;   // an empty box is "leave it as it is"
+		}
+
+		if (typed is ClearSecret or OldClearSecret) {
+			return null;   // removing it: only here
+		}
+
+		if (string.IsNullOrEmpty(_cfg.WebPassword)) {
+			return rest;   // a first one
+		}
+
+		string current = sent.FirstOrDefault(static kv => kv.Key.Equals("CurrentPassword", StringComparison.OrdinalIgnoreCase)).Value?.ToString() ?? "";
+
+		return FarmPasswordRight(ctx, current) ? rest : null;
+	}
+
+	/// <summary>The current dashboard password, checked as a sign-in is: constant time, and a wrong one counted towards the lockout.</summary>
+	private bool FarmPasswordRight(HttpContext ctx, string typed) {
+		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+
+		if (Reserve(ip, thisPc, IsInternet(ip) && !thisPc, ctx.Request.Headers.UserAgent.FirstOrDefault()) is not { } attempt) {
+			return false;
+		}
+
+		bool ok = CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(typed)), SHA256.HashData(Encoding.UTF8.GetBytes(_cfg.WebPassword)));
+
+		if (ok) {
+			GiveBack(attempt);
+		} else {
+			CountFailure(attempt, Visitors.What.WrongPassword);
+		}
+
+		return ok;
 	}
 
 	/// <summary>

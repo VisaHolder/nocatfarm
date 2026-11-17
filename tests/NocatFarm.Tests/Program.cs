@@ -40694,68 +40694,69 @@ static class FarmWebChecks {
 			&& !NocatFarm.Web.FarmWeb.CommandAllowed(null, "frobnicate") && !NocatFarm.Web.FarmWeb.CommandAllowed(null, "unlock"));
 
 		string[] refused = [
-			"confirm main 1", "confirm main all", "deny main 1", "/confirm main 1", "!deny main all", "confirmations", "2fa", "2fa main", "guard main",
+			"confirm main 1", "confirm main all", "deny main 1", "/confirm main 1", "!deny main all", "2fa", "2fa main", "guard main",
 			"trade accept main 1", "trade decline main all", "trade cancel main all", "send main", "send main to alt", "loot main",
-			"swaps on main", "spare do main", "spare on main", "gems on main", "buy on main", "buy do main", "sell main do", "sell main relist 5",
-			"craft now main", "levelup main 50 buy", "levelup main 50 buy yes", "lvlup main 50 buy yes", "points spend main", "points on main",
-			"booster main 730", "booster main 730,440", "booster open main do", "redeem AAAAA-BBBBB-CCCCC", "keys", "keys clear", "addlicense main 123",
-			"remove main", "delete main", "disable main", "add x y", "add x qr human", "copy settings a b yes", "privacy main public",
-			"scamwatch ok main", "scam ok main", "achievements main 730 unlock all", "ach main 730 lock all", "dlc leave main 730", "dlc undo main 730",
+			"swaps on main", "spare do main", "gems do main", "sell main do", "sell main relist 5", "match do", "keys", "keys clear",
+			"remove main", "delete main", "add x y", "add x qr human", "scamwatch ok main", "scam ok main",
 			"update accept", "update now", "update to 1.9.0", "update file C:\\x.zip", "addons install rep4rep", "addon remove rep4rep",
-			"exit", "quit", "q", "answer 12345", "import asf", "dashboard unlock", "dashboard cert", "dashboard anywhere on", "web unlock", "anywhere on",
-			"remote on", "notify link", "match do", "steam open main", "steam on main", "steam on all", "backup", "backup now",
-			"set WebPassword hunter2hunter2", "set FarmWebAllowed off", "set WebRemoteAccess on", "set WebHost 0.0.0.0", "set TelegramBotToken x",
-			"set DiscordOwnerId 1", "set PluginsEnabled on", "set UpdateMode 2", "set BackupPassword x", "set WebProxy http://x:1", "set SteamOpenEveryAccount on",
-			"set ScamWatchTrustedDevices x", "set NoSuchSetting 1", "set main", "set main BuyCards on"];
-		// "confirmations" lists only - it's allowed; take it back out of the refused ones, and '2fa' must stay refused.
-		refused = [.. refused.Where(static l => l != "confirmations")];
-		Check("farm.nocat.lol: every money, item, code and security command is refused, by any name or prefix",
+			"answer 12345", "dashboard unlock", "dashboard anywhere on", "web unlock", "anywhere on", "remote on", "notify link", "steam open main",
+			"set WebPassword hunter2hunter2", "set FarmWebAllowed off", "set WebRemoteAccess on", "set WebHost 0.0.0.0", "set WebPort 8000", "set TelegramBotToken x",
+			"set DiscordOwnerId 1", "set TelegramChatId 1", "set PluginsEnabled on", "set BackupPassword x", "set BackupFolder \\\\evil\\share", "set WebProxy http://x:1",
+			"set WebTrustedProxies 0.0.0.0/0", "set NoSuchSetting 1", "set main", "set main BuyCards on"];
+		Check("farm.nocat.lol: everything that sends items away, signs in, runs code, lifts a scam hold or opens a back door is refused, by any name or prefix",
 			refused.All(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", refused.Where(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 		string[] allowed = [
-			"status", "s", "start main", "stop all", "pause main 30", "resume all", "restart main", "enable main", "stuck", "play main 730", "gamename main x",
+			"status", "s", "start main", "stop all", "pause main 30", "resume all", "restart main", "enable main", "disable main", "stuck", "play main 730", "gamename main x",
 			"persona main online", "grind main 730 2", "human main week", "wake main", "hours main", "rotation main next", "selfcheck", "cards", "drops main next",
 			"sets", "addmoney main 100", "match", "sell main", "sell main preview", "booster", "booster all", "booster plan all", "booster open all",
-			"spare preview all", "spare off main", "craft preview main", "buy", "buy preview all", "buy off main", "levelup main 50", "levelup main stop",
-			"offers", "swaps", "swaps preview main", "swaps off main", "swaps sync", "confirmations main", "achievements main 730", "achievements main 730 list",
-			"hunt main", "dlc main", "freegames", "freeitems all", "queue", "events", "value refresh", "level", "balance", "bans", "health", "owns 730",
-			"points", "points spend preview all", "points off main", "scamwatch", "config", "config main all", "backup status", "log", "log 50", "stats 48",
-			"report week", "plugins", "tutorial", "help trade", "theme dark", "mini on", "clear", "visitors", "visitors signout", "version", "notify", "notify test",
-			"addons", "dashboard", "anywhere", "anywhere off", "update", "update versions", "update skip", "fairswap main 1", "reload", "screen off",
-			"copy settings a b", "steam", "steam all", "steam off main", "/status", "!pause main",
-			"set SteamOpenEveryAccount off", "set KeepAwake on", "set Language de", "set GlobalBlacklistedGames 730"];
-		Check("farm.nocat.lol: every everyday control and preview is allowed",
+			"booster main 730", "booster open main do", "spare preview all", "spare on main", "spare off main", "gems on main", "craft preview main", "craft now main",
+			"buy", "buy preview all", "buy on main", "buy do main", "buy off main", "levelup main 50", "levelup main 50 buy yes", "lvlup main stop",
+			"offers", "swaps", "swaps preview main", "swaps off main", "swaps sync", "confirmations", "confirmations main", "achievements main 730",
+			"achievements main 730 unlock all", "ach main 730 lock all", "hunt main", "dlc main", "dlc leave main 730", "dlc undo main 730",
+			"freegames", "freeitems all", "queue", "events", "redeem AAAAA-BBBBB-CCCCC", "addlicense main 123", "value refresh", "level", "balance", "bans", "health",
+			"owns 730", "points", "points spend preview all", "points on main", "points spend main", "points off main", "privacy main public", "scamwatch",
+			"config", "config main all", "backup", "backup now", "backup status", "import asf", "log", "log 50", "stats 48", "report week", "plugins", "tutorial",
+			"help trade", "theme dark", "mini on", "clear", "visitors", "visitors signout", "version", "notify", "notify test", "addons", "dashboard", "dashboard cert",
+			"anywhere", "anywhere off", "update", "update versions", "update skip", "fairswap main 1", "reload", "screen off", "exit",
+			"copy settings a b", "copy settings a b yes", "steam", "steam all", "steam on main", "steam off main", "/status", "!pause main",
+			"set SteamOpenEveryAccount on", "set KeepAwake on", "set Language de", "set GlobalBlacklistedGames 730", "set UpdateMode 2", "set ScamWatchTrustedDevices x",
+			"set NotifyTrades off", "set BackupAuto on"];
+		Check("farm.nocat.lol: everything else is allowed - controls, previews, buying and crafting within the limits, importing, backups here",
 			allowed.All(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", allowed.Where(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 
 		NocatFarm.Config.SettingDef Bot(string n) => NocatFarm.Config.Settings.FindBot(n)!;
 		NocatFarm.Config.SettingDef Global(string n) => NocatFarm.Config.Settings.FindGlobal(n)!;
-		string[] money = ["BuyCards", "BuyBooster", "SpareItems", "CardSwaps", "SpendPoints", "SellSetsForLevels", "CraftBadges", "CraftFoilBadges", "AddonTrades",
-			"AcceptFairCardSwaps", "AddonTradesConfirm", "SendOnFarmingFinished", "GemsForLevels", "UnlockAchievements", "SteamOpenButton"];
-		Check("farm.nocat.lol: the money and item switches can be turned off from there, never on",
-			money.All(n => Bot(n) is { } d && !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && NocatFarm.Web.FarmWeb.SettingAllowed(d, false)),
-			string.Join(", ", money.Where(n => Bot(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || !NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
-		string[] moneyLimits = ["BuyDailyLimit", "BuyWeeklyLimit", "BuyMaxLevelPrice", "PointsWeeklyCap", "SpareMaxPrice", "BoosterMake", "SpareAction", "TradeMasters",
-			"AutoTradeWith", "TradeMasterToken", "SendItemTypes", "CardSwapMaxLoss", "CommandMasters", "SteamLogin", "AccountProxy", "IUseThisAccount", "AchievementBoost"];
-		Check("farm.nocat.lol: money limits, where items go, who may command the accounts and how they sign in are never changed from there",
-			moneyLimits.All(n => Bot(n) is { } d && !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
-			string.Join(", ", moneyLimits.Where(n => Bot(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null) || NocatFarm.Web.FarmWeb.SettingAllowed(d, true))));
-		Check("farm.nocat.lol: safety switches only go on from there (scam watch, account health, refund protection, running the account)",
-			new[] { "WatchForScams", "WatchHealth", "ScamWatchStopTrades", "SkipRefundableGames", "Enabled" }.All(n => Bot(n) is { } d
-				&& NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false)));
-		Check("farm.nocat.lol: every secret, and every Dashboard, Notifications, Updates and Backups setting, is closed",
-			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot)
-				.Where(static d => d.Kind == NocatFarm.Config.SettingKind.Secret || d.Section is "Dashboard & phone" or "Notifications" or "Updates & plugins" or "Backups")
-				.All(static d => NocatFarm.Web.FarmWeb.WayOf(d) == NocatFarm.Web.FarmWeb.SettingWay.Closed)
-			&& NocatFarm.Web.FarmWeb.WayOf(Global("FarmWebAllowed")) == NocatFarm.Web.FarmWeb.SettingWay.Closed);
-		Check("farm.nocat.lol: everyday settings stay open (human mode, what it plays, cards, the language)",
-			new[] { "LegitMode", "IdleGames", "FarmCards", "BedTime", "Notes", "OnlineStatus" }.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), true))
-			&& NocatFarm.Web.FarmWeb.SettingAllowed(Global("Language"), null) && NocatFarm.Web.FarmWeb.SettingAllowed(Global("KeepAwake"), true));
+		NocatFarm.Config.SettingDef Any(string n) => NocatFarm.Config.Settings.Find(n)!;
+		string[] money = ["BuyCards", "BuyBooster", "SpareItems", "SpendPoints", "SellSetsForLevels", "CraftBadges", "CraftFoilBadges", "GemsForLevels", "UnlockAchievements",
+			"SteamOpenButton", "WatchForScams", "WatchHealth", "SkipRefundableGames", "Enabled"];
+		Check("farm.nocat.lol: the money and item switches go on and off from there (buying stays inside the limits set here)",
+			money.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && NocatFarm.Web.FarmWeb.SettingAllowed(d, false)),
+			string.Join(", ", money.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || !NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
+		Check("farm.nocat.lol: card swaps only go off from there - they send cards to other people",
+			!NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), true) && NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), false));
+		string[] closed = ["BuyDailyLimit", "BuyWeeklyLimit", "BuyMaxLevelPrice", "BuyKeepInWallet", "PointsWeeklyCap", "PointsKeepAtLeast", "SpareMaxPrice", "SpareDailyValue",
+			"CardSwapMaxLoss", "TradeMasters", "AutoTradeWith", "TradeMasterToken", "SendItemTypes", "SendOnFarmingFinished", "BoosterSendTo", "SpareGemsSendTo",
+			"AcceptFairCardSwaps", "AddonTrades", "AddonTradesConfirm", "CommandMasters", "SteamLogin", "SignInWithQr", "AccountProxy", "WebProxy", "DiscordOwnerId",
+			"TelegramChatId", "WebEnabled", "WebHost", "WebPort", "WebRemoteAccess", "WebPublicAddress", "WebTrustedProxies", "WebSignInCode", "WebRemoteOffAfter",
+			"FarmWebAllowed", "PluginsEnabled", "BackupFolder"];
+		Check("farm.nocat.lol: the money limits, where items go and who may trade or take them, the sign-in, the bots' owners and the way in are never changed from there",
+			closed.All(n => Any(n) is { } d && !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
+			string.Join(", ", closed.Where(n => Any(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null) || NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
+		Check("farm.nocat.lol: every secret is closed, by its kind",
+			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Where(static d => d.Kind == NocatFarm.Config.SettingKind.Secret)
+				.All(static d => NocatFarm.Web.FarmWeb.WayOf(d) == NocatFarm.Web.FarmWeb.SettingWay.Closed));
+		Check("farm.nocat.lol: everyday settings are open - human mode, what it plays, cards, notifications on or off, the update mode, backups, the language",
+			new[] { "LegitMode", "IdleGames", "FarmCards", "BedTime", "Notes", "OnlineStatus", "BoosterMake", "SpareAction", "AchievementBoost", "IUseThisAccount" }
+				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), true))
+			&& new[] { "Language", "KeepAwake", "NotifyTrades", "SendTrades", "TelegramCommands", "UpdateMode", "BackupAuto", "OpenBrowserOnStart", "ScamWatchTrustedDevices" }
+				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), true)));
 		var sorted = typeof(NocatFarm.Web.FarmWeb).GetMethod("Sorted", BindingFlags.NonPublic | BindingFlags.Static)!;
 		Check("farm.nocat.lol: every settings section is sorted into a list - a new section starts closed",
 			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Select(static d => d.Section).Distinct().All(s => (bool) sorted.Invoke(null, [s])!),
 			string.Join(", ", NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Select(static d => d.Section).Distinct().Where(s => !(bool) sorted.Invoke(null, [s])!)));
 		Check("farm.nocat.lol: the setting is off by default, in Dashboard & phone, with a plain explanation",
 			!new NocatFarm.Config.GlobalConfig().FarmWebAllowed && Global("FarmWebAllowed") is { Section: "Dashboard & phone", Kind: NocatFarm.Config.SettingKind.Bool } fw
-			&& fw.Tooltip.Contains("never confirmations, trades, buying, selling, crafting, codes or passwords", StringComparison.Ordinal));
+			&& fw.Tooltip.Contains("never send items away or touch how the accounts sign in", StringComparison.Ordinal));
 		Check("farm.nocat.lol: the one origin, as one constant - https, no port, no subdomain", Farm == "https://farm.nocat.lol"
 			&& Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("string.Equals(request.Headers.Origin.ToString(), FarmWeb.Origin, StringComparison.Ordinal)", StringComparison.Ordinal));
 		Check("farm.nocat.lol: never Allow-Credentials, never a cookie, never '*'", !Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("AllowCredentials", StringComparison.Ordinal)
@@ -40783,12 +40784,25 @@ static class FarmWebChecks {
 			"let token = HOSTED ? (farmStore.get('nocatfarm-farm-token') || '') : (localStorage.getItem('nocatfarm-token') || '');"];
 		Check("farm.nocat.lol: served by the app, the page has no API base and asks the same addresses as 1.9.1, with the same sign-in token",
 			sameCalls.All(c => appJs.Contains(c, StringComparison.Ordinal)) && !Src("src/NocatFarm/wwwroot/index.html").Contains("data-farm-hosted", StringComparison.Ordinal)
-			&& System.Text.RegularExpressions.Regex.Matches(appJs, @"\bfetch\(").Count == sameCalls.Length - 1 + 4,
+			&& System.Text.RegularExpressions.Regex.Matches(appJs, @"\bfetch\(").Count == sameCalls.Length - 1 + 1,
 			string.Join(" | ", sameCalls.Where(c => !appJs.Contains(c, StringComparison.Ordinal))) + $" fetches={System.Text.RegularExpressions.Regex.Matches(appJs, @"\bfetch\(").Count}");
 		Check("farm.nocat.lol: the hosted screens and the hidden buttons only ever come up in hosted mode",
 			appJs.Contains("if (HOSTED) {\n    document.body.classList.add('hosted');", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/style.css").Contains(".hosted .farm-hide", StringComparison.Ordinal)
 			&& appJs.Contains("if (!v || (!HOSTED && v.FarmOn === undefined)) return '';", StringComparison.Ordinal));
+
+		string indexHtml = Src("src/NocatFarm/wwwroot/index.html");
+		string css = Src("src/NocatFarm/wwwroot/style.css");
+		Check("farm.nocat.lol: the approve banner sits above every screen - outside the app, the welcome and the login, over any pop-up - and is drawn on every status poll",
+			indexHtml.IndexOf("<div id=\"farmAsk\"", StringComparison.Ordinal) is > 0 and int askAt && askAt < indexHtml.IndexOf("<div id=\"login\"", StringComparison.Ordinal)
+			&& askAt < indexHtml.IndexOf("<div id=\"welcome\"", StringComparison.Ordinal) && askAt < indexHtml.IndexOf("<div id=\"app\"", StringComparison.Ordinal)
+			&& appJs.Contains("    state = await api('/api/status');\n    renderFarmAsk();", StringComparison.Ordinal)
+			&& css.Contains(".farmask-bar { position: fixed;", StringComparison.Ordinal) && css.Contains("z-index: 1000;", StringComparison.Ordinal)
+			&& !appJs.Contains("out.push(`<div class=\"alert warn farmask", StringComparison.Ordinal));
+		Check("farm.nocat.lol: the hosted screens are drawn like the page there - a status dot, one line, one big button, the how-to folded away - and say a hacked site couldn't take anything",
+			appJs.Contains("<div class=\"fg-brand\">nocat.<b>farm</b></div>", StringComparison.Ordinal) && appJs.Contains("<details class=\"fg-how\">", StringComparison.Ordinal)
+			&& appJs.Contains("Even if this website were hacked, it couldn\\'t take your items or your account: those stay in the app on your PC.", StringComparison.Ordinal)
+			&& css.Contains(".fg { width: min(400px, 100%);", StringComparison.Ordinal));
 
 		// ── a real dashboard ──
 		string realRoot = NocatFarm.Config.ConfigStore.Root;
@@ -41021,10 +41035,15 @@ static class FarmWebChecks {
 			string Fill(string pattern) => pattern.Replace("{name}", "main", StringComparison.Ordinal).Replace("{feature}", "spare", StringComparison.Ordinal)
 				.Replace("{action}", "start", StringComparison.Ordinal).Replace("{id}", "x", StringComparison.Ordinal);
 			List<string> through = [];
-			string[] mustRefuse = ["POST /api/auth/{name}/confirmations", "POST /api/bots/{name}/achievements/unlock-all", "POST /api/bots/{name}/achievements/dlc",
-				"POST /api/update", "POST /api/addons/install", "POST /api/addons/remove", "POST /api/plugins/toggle", "POST /api/restore/apply", "POST /api/import/apply",
-				"POST /api/prompt", "POST /api/bots", "DELETE /api/bots/{name}", "GET /api/bots/{name}/steam-open", "POST /api/farm/answer", "POST /api/backup"];
-			Check("farm.nocat.lol: confirmations, unlock-all, dlc, updates, add-ons, plugins, restore, import, prompt, add, remove, Steam Guard codes, approving and backups are in the refused list",
+			string[] mustRefuse = ["POST /api/auth/{name}/confirmations", "POST /api/update", "POST /api/addons/install", "POST /api/addons/remove", "POST /api/plugins/toggle",
+				"POST /api/plugins/press", "POST /api/plugins/setting", "POST /api/restore/apply", "POST /api/prompt", "POST /api/bots", "DELETE /api/bots/{name}",
+				"GET /api/bots/{name}/steam-open", "POST /api/bots/{name}/steam-open", "GET /api/bots/{name}/qr.svg", "POST /api/farm/answer", "POST /api/backup",
+				"POST /api/discord/connect", "POST /api/phone/firewall", "POST /api/phone/restart", "POST /api/login"];
+			string[] mustAllow = ["POST /api/import/apply", "GET /api/import/scan", "POST /api/backups/now", "POST /api/bots/{name}/achievements/unlock-all",
+				"POST /api/bots/{name}/copy-settings", "POST /api/steam-open/everyone"];
+			Check("farm.nocat.lol: importing, backups here, unlocking achievements, copying settings and the Open in Steam buttons work from there",
+				mustAllow.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Allowed));
+			Check("farm.nocat.lol: confirmations, updates, add-ons, plugins, restore, a sign-in answer, adding and removing accounts, Steam Guard codes, QR, approving, the backup zip and the back doors are in the refused list",
 				mustRefuse.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Refused));
 
 			foreach ((string key, NocatFarm.Web.FarmWeb.Access access) in NocatFarm.Web.FarmWeb.Routes.Where(static kv => kv.Value == NocatFarm.Web.FarmWeb.Access.Refused)) {
@@ -41057,33 +41076,37 @@ static class FarmWebChecks {
 			async Task<Answer> Cmd(string line) => await Send("POST", "/api/command", token: token, json: System.Text.Json.JsonSerializer.Serialize(new { Line = line }));
 			Answer cmdOk = await Cmd("status");
 			Answer cmdNo = await Cmd("confirm main all");
-			Answer cmdSet = await Cmd("set WebPassword hunter2hunter2");
+			Answer cmdSet = await Cmd("set main SteamPassword hunter2hunter2");
 			Answer cmdPlugin = await Cmd("rep4rep pause all");
 			Check("farm.nocat.lol: its Console runs everyday commands", cmdOk.Code == System.Net.HttpStatusCode.OK && ((string?) cmdOk.Json?["output"] ?? "").Length > 0, cmdOk.Body);
-			Check("farm.nocat.lol: ...and refuses confirm, a password and a plugin's command, saying where to do it",
+			Check("farm.nocat.lol: ...and refuses confirm, an account's Steam password and a plugin's command, saying where to do it",
 				cmdNo.Code == System.Net.HttpStatusCode.Forbidden && cmdSet.Code == System.Net.HttpStatusCode.Forbidden && cmdPlugin.Code == System.Net.HttpStatusCode.Forbidden
 				&& ((string?) cmdNo.Json?["output"] ?? "").Contains("in the app's own dashboard", StringComparison.Ordinal) && mgr.Global.WebPassword.Length == 0);
 
-			Answer swOn = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":true}");
-			Answer swOff = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":false}");
-			Answer allOn = await Send("POST", "/api/steam-open/everyone", token: token, json: "{\"On\":true}");
-			Check("farm.nocat.lol: a money switch goes off from there, never on (Spare items, Open in Steam on every account)",
-				swOn.Code == System.Net.HttpStatusCode.Forbidden && swOff.Code == System.Net.HttpStatusCode.OK && allOn.Code == System.Net.HttpStatusCode.Forbidden && !main.Cfg.SpareItems,
-				$"{swOn.Code} {swOff.Code} {allOn.Code}");
+			Answer swapsOn = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"CardSwaps\",\"On\":true}");
+			Answer spareOn = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":true}");
+			bool spareWasOn = main.Cfg.SpareItems;
+			Answer spareOff = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":false}");
+			Check("farm.nocat.lol: a money switch goes on and off from there (Spare items); card swaps never on",
+				swapsOn.Code == System.Net.HttpStatusCode.Forbidden && !main.Cfg.CardSwaps && spareOn.Code == System.Net.HttpStatusCode.OK && spareWasOn
+				&& spareOff.Code == System.Net.HttpStatusCode.OK && !main.Cfg.SpareItems, $"{swapsOn.Code} {spareOn.Code} {spareOff.Code}");
 
 			async Task<bool> BotSave(string json) => (await Send("POST", "/api/bots/main/config", token: token, json: json)).Code == System.Net.HttpStatusCode.OK;
 			bool notes = await BotSave("{\"Notes\":\"from farm\"}");
 			bool buy = await BotSave("{\"BuyCards\":true}");
+			bool limit = await BotSave("{\"BuyDailyLimit\":999}");
+			bool target = await BotSave("{\"TradeMasters\":\"76561198000000002\"}");
 			bool masters = await BotSave("{\"CommandMasters\":\"76561198000000001\"}");
 			bool secret = await BotSave("{\"SteamPassword\":\"x\"}");
 			bool login = await BotSave("{\"SteamLogin\":\"someone-else\"}");
-			Check("farm.nocat.lol: an account's everyday settings save from there; money, who commands it, its password and login don't",
-				notes && main.Cfg.Notes == "from farm" && !buy && !main.Cfg.BuyCards && !masters && !secret && !login && main.Cfg.SteamLogin == "main",
-				$"{notes} {buy} {masters} {secret} {login}");
-			Answer globalNo = await Send("POST", "/api/config", token: token, json: "{\"WebPassword\":\"hunter2hunter2\",\"KeepAwake\":true}");
+			Check("farm.nocat.lol: an account's settings save from there, the buying switch included (it still needs its go-ahead, as here); its money limits, where items go, who commands it, its password and login don't",
+				notes && main.Cfg.Notes == "from farm" && buy && !limit && !target && !masters && !secret && !login && main.Cfg.SteamLogin == "main",
+				$"{notes} {buy} {limit} {target} {masters} {secret} {login}");
+			main.Cfg.BuyCards = false;
+			Answer globalNo = await Send("POST", "/api/config", token: token, json: "{\"DiscordOwnerId\":\"1\",\"KeepAwake\":true}");
 			Answer globalFarm = await Send("POST", "/api/config", token: token, json: "{\"FarmWebAllowed\":false}");
 			Answer globalHook = await Send("POST", "/api/config", token: token, json: "{\"DiscordWebhookUrl\":\"https://evil.example/x\"}");
-			Check("farm.nocat.lol: global saves with the password, the switch itself or a notification address are refused whole",
+			Check("farm.nocat.lol: global saves with a bot's owner, the switch itself or a notification address are refused whole",
 				globalNo.Code == System.Net.HttpStatusCode.Forbidden && globalFarm.Code == System.Net.HttpStatusCode.Forbidden && globalHook.Code == System.Net.HttpStatusCode.Forbidden
 				&& mgr.Global.WebPassword.Length == 0 && !mgr.Global.KeepAwake && mgr.Global.FarmWebAllowed && mgr.Global.DiscordWebhookUrl.Length == 0);
 			var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, PropertyNameCaseInsensitive = true };
@@ -41096,9 +41119,31 @@ static class FarmWebChecks {
 			var spending = new NocatFarm.Config.BotConfig { BuyCards = true, SpendPoints = true };
 			Check("farm.nocat.lol: a settings save is judged by what it changes - the page's Base, the empty secret boxes and the rest left as they are",
 				GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"\",\"Base\":{\"KeepAwake\":false}}") && !GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"x\"}")
-				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && !GlobalOk("{\"SteamOpenEveryAccount\":true}") && GlobalOk("{\"SteamOpenEveryAccount\":false}")
-				&& BotOk(spending, "{\"BuyCards\":false,\"SpendPoints\":false}") && !BotOk(new NocatFarm.Config.BotConfig(), "{\"BuyCards\":true}")
+				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && GlobalOk("{\"SteamOpenEveryAccount\":true}") && GlobalOk("{\"UpdateMode\":2}")
+				&& BotOk(spending, "{\"BuyCards\":false,\"SpendPoints\":false}") && BotOk(new NocatFarm.Config.BotConfig(), "{\"BuyCards\":true}")
+				&& !BotOk(spending, "{\"BuyWeeklyLimit\":1000}")
 				&& !BotOk(new NocatFarm.Config.BotConfig(), "{\"PointsOk\":true}"));
+
+			// ── the dashboard password from there: a first one yes; changing it only with the current one; removing it never ──
+			MethodInfo passwordAllowed = typeof(NocatFarm.Web.WebHost).GetMethod("FarmPasswordAllowed", Inst)!;
+			var farmCtx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+			farmCtx.Connection.RemoteIpAddress = System.Net.IPAddress.Loopback;
+			farmCtx.Items[NocatFarm.Web.WebHost.FarmKey] = new NocatFarm.Web.WebHost.FarmSession("x");
+			bool Pw(string json) => passwordAllowed.Invoke(web, [farmCtx, System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject()]) != null;
+			bool firstOne = Pw("{\"WebPassword\":\"a-first-password\"}");
+			mgr.Global.WebPassword = "the-current-password";
+			bool noCurrent = Pw("{\"WebPassword\":\"a-new-password\"}");
+			bool wrongCurrent = Pw("{\"WebPassword\":\"a-new-password\",\"CurrentPassword\":\"guess\"}");
+			bool rightCurrent = Pw("{\"WebPassword\":\"a-new-password\",\"CurrentPassword\":\"the-current-password\"}");
+			bool removing = Pw("{\"WebPassword\":\"\\u0000clear\",\"CurrentPassword\":\"the-current-password\"}");
+			bool untouched = Pw("{\"WebPassword\":\"\",\"KeepAwake\":true}");
+			mgr.Global.WebPassword = "";
+			web.ClearLockouts();
+			Check("farm.nocat.lol: a first dashboard password can be set from there; an existing one changes only with the current one; it's never removed from there",
+				firstOne && !noCurrent && !wrongCurrent && rightCurrent && !removing && untouched, $"{firstOne} {noCurrent} {wrongCurrent} {rightCurrent} {removing} {untouched}");
+			Check("farm.nocat.lol: a password changed from there signs every browser out, its own pairing too, and hands it no dashboard session",
+				Src("src/NocatFarm/Web/WebHost.cs").Contains("fresh = string.IsNullOrEmpty(savedPassword) || IsFarm(ctx) ? null : NewSession(ctx, KeyOf(savedPassword));", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("SaveSessions();\n\n\t\t// 1.9.2: the pages paired at farm.nocat.lol too.\n\t\tForgetFarm();", StringComparison.Ordinal));
 
 			// ── the wrong origin with a token, and a password set ──
 			Answer evilToken = await Send("GET", "/api/status", origin: "https://evil.example", token: token);

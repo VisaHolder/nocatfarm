@@ -1946,7 +1946,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			if (passwordChanged) {
 				SignOutAll();
-				fresh = string.IsNullOrEmpty(savedPassword) ? null : NewSession(ctx, KeyOf(savedPassword));
+				// 1.9.2: never a dashboard session for farm.nocat.lol - its own pairing went with the rest, and it pairs again.
+				fresh = string.IsNullOrEmpty(savedPassword) || IsFarm(ctx) ? null : NewSession(ctx, KeyOf(savedPassword));
 				Log.Info(new Said("dashboard password changed - other browsers sign in again"));
 			}
 
