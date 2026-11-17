@@ -877,6 +877,14 @@ public static partial class Commands {
 		System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
 	private static partial System.Text.RegularExpressions.Regex MixedGuardCode();
 
+	/// <summary>
+	/// 1.9.2: 'dashboard' with farm.nocat.lol on - its address too, where the browser opens it once an account is set up.
+	/// Nothing while it's off: the answer is as it always was.
+	/// </summary>
+	internal static string FarmDashboardLine(GlobalConfig g) => g.FarmWebAllowed
+		? $"{Environment.NewLine}  farm.nocat.lol  {Web.FarmWeb.PageUrl(g.WebPort)}   (in a browser on this PC, once an account is set up - setting one up stays on this PC's own address)"
+		: "";
+
 	/// <summary>Set by the host so 'exit' works from the dashboard too, not just from the console.</summary>
 	public static Action? ExitHandler { get; set; }
 
@@ -1058,7 +1066,7 @@ public static partial class Commands {
 						? await DashboardCertAsync().ConfigureAwait(false)   // 1.8.6: the certificate for the phone, again
 					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "anywhere" or "remote"
 						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
-						: DashboardLinks.Text(mgr.Global),
+						: DashboardLinks.Text(mgr.Global) + FarmDashboardLine(mgr.Global),
 				"unlock" => Unlock(),
 				"visitors" or "who" => VisitorsCommand(rest),
 				"clear" or "cls" => new Said("clear works in the nocat.farm window and the dashboard - it clears that screen").ToString(),

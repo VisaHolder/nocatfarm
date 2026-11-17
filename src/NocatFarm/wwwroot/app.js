@@ -667,7 +667,9 @@ function renderAlerts() {
 
   // 1.9.2: a page at farm.nocat.lol asking to be let in - the same code shows there. Only here, never on that page itself.
   (state.FarmPairs || []).forEach((p) => {
-    out.push(`<div class="alert warn farmask"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b> - ${esc(tf('code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.', p.Code, p.Device))}</span>
+    out.push(`<div class="alert warn farmask"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b><br>
+      ${esc(t('Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:'))} <b class="farmask-code">${esc(p.Code)}</b>
+      <span class="muted small">${esc(p.Device)}</span></span>
       <span class="spacer"></span><button onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, true)">${esc(t('Approve'))}</button>
       <button class="ghost" onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, false)">${esc(t('Deny'))}</button></div>`);
   });

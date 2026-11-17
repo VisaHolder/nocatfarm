@@ -282,8 +282,19 @@ To turn the dashboard off completely, `set WebEnabled false` and restart. Everyt
 browser on the PC where nocat.farm runs, and talks straight to nocat.farm at `http://127.0.0.1:7242` (or the port
 you use: `https://farm.nocat.lol/?port=8000` once, and the page remembers it). Nothing goes through nocat.lol.
 
-It's off until you turn on *Let farm.nocat.lol open this dashboard* (Settings → Dashboard & phone, with Show
-advanced). While it's off, the website can't reach nocat.farm at all.
+The switch is *Let farm.nocat.lol open this dashboard* (Settings → Dashboard & phone, with Show advanced). A **new
+install** on a PC with a screen starts with it on. An install that was already there before 1.9.2 keeps it off, and so
+do Docker and a server with no screen, since the page only works from a browser on the same machine. While it's off,
+the website can't reach nocat.farm at all.
+
+While it's on, the tray's **Open dashboard**, the window's Dashboard button, *Open the browser on start*, and opening
+nocat.farm a second time all go to `https://farm.nocat.lol/?port=<your port>`, but only once an account is set up.
+**Setting up always stays on this PC's own dashboard**: with no account yet, none signed in here yet, or one waiting on
+a Steam Guard code, a QR code or a password, they open `http://localhost:<port>` instead. Your Steam password, Steam
+Guard codes and QR sign-in never go near farm.nocat.lol. If the page was opened a few minutes ago and nothing has
+paired since (no internet, or the browser blocked it), the next open goes to this PC's own dashboard again. On start,
+the log shows both addresses, and `dashboard` lists the farm.nocat.lol one too. nocat.farm itself never needs
+nocat.lol to work: `http://localhost:<port>` always opens the dashboard.
 
 To connect a browser:
 

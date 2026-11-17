@@ -3447,7 +3447,6 @@
     "In the app on your PC": "在你电脑上的应用里",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} 正在等待扫描登录二维码 - 二维码显示在你电脑上应用自己的面板里。",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol 想打开这个面板",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "代码 {0}，{1}。只有当那个页面显示同样的代码、而且是你自己打开的时候才允许。",
     "Approve": "允许",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "你正在 farm.nocat.lol 上。确认、交易、购买、出售、合成、验证码和密码都只在你电脑上应用自己的面板里：",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard 验证码只显示在你电脑上应用自己的面板里。",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "这个代码已失效。点“连接”获取新的。",
     "farm.nocat.lol can open this dashboard now.": "现在 farm.nocat.lol 可以打开这个面板了。",
     "Turned down.": "已拒绝。",
-    "Taken back - that browser has to pair again.": "已撤销 - 那个浏览器需要重新配对。"
+    "Taken back - that browser has to pair again.": "已撤销 - 那个浏览器需要重新配对。",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "浏览器里的面板：{0} - 设置好账号后会在那里打开；在这台电脑上 {1} 始终可用",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol 想打开你的面板",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "你刚刚打开了 farm.nocat.lol 吗？它会显示一个代码。只有和这个代码一样时才允许："
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "允许 farm.nocat.lol 打开这个面板",
-      "tip": "让 farm.nocat.lol 网站能在这台电脑的浏览器里显示这个面板，这样只需收藏一个地址。它直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。每个浏览器都会先询问：页面上和这里会显示一个 6 位代码，你在这个面板里允许。之后它能看到一切，也能做日常操作（启动、停止、暂停、预览、不花钱的设置），但永远不能处理确认、交易、购买、出售、合成、验证码或密码：这些都留在这里。默认关闭。关闭时：farm.nocat.lol 完全连不上 nocat.farm。"
+      "tip": "让 farm.nocat.lol 网站能在这台电脑的浏览器里显示这个面板，这样只需收藏一个地址。它直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。每个浏览器都会先询问：页面上和这里会显示一个 6 位代码，你在这个面板里允许。之后它能看到一切，也能做日常操作（启动、停止、暂停、预览、不花钱的设置），但永远不能处理确认、交易、购买、出售、合成、验证码或密码：这些都留在这里。开启时，设置好账号后，托盘图标和“启动时打开浏览器”会在那里打开它；添加账号和登录始终在这里进行。在有屏幕的电脑上新安装时默认开启，已有的安装、Docker 和服务器上默认关闭。关闭时：farm.nocat.lol 完全连不上 nocat.farm。"
     }
   }
 }

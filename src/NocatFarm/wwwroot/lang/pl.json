@@ -3447,7 +3447,6 @@
     "In the app on your PC": "W aplikacji na twoim komputerze",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} czeka na zeskanowanie kodu QR do logowania - pokazuje się on we własnym panelu aplikacji na twoim komputerze.",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol chce otworzyć ten panel",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "kod {0}, {1}. Zatwierdź tylko wtedy, gdy tamta strona pokazuje ten sam kod i to ty ją otworzyłeś.",
     "Approve": "Zatwierdź",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "Jesteś na farm.nocat.lol. Potwierdzenia, wymiany, kupowanie, sprzedawanie, tworzenie, kody i hasła zostają we własnym panelu aplikacji na twoim komputerze:",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Kod Steam Guard pokazuje się tylko we własnym panelu aplikacji na twoim komputerze.",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "Ten kod wygasł. Naciśnij Połącz, aby dostać nowy.",
     "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol może teraz otworzyć ten panel.",
     "Turned down.": "Odrzucono.",
-    "Taken back - that browser has to pair again.": "Cofnięto - ta przeglądarka musi sparować się ponownie."
+    "Taken back - that browser has to pair again.": "Cofnięto - ta przeglądarka musi sparować się ponownie.",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "panel w przeglądarce: {0} - gdy konto jest skonfigurowane, otwiera się tam; {1} zawsze działa na tym komputerze",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol chce otworzyć twój panel",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Czy właśnie otworzyłeś farm.nocat.lol? Pokazuje kod. Zatwierdź tylko, jeśli to dokładnie ten:"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "Pozwól farm.nocat.lol otwierać ten panel",
-      "tip": "Pozwala stronie farm.nocat.lol pokazywać ten panel w przeglądarce na tym komputerze, żeby wystarczył jeden adres w zakładkach. Rozmawia bezpośrednio z nocat.farm na tym komputerze - nic nie przechodzi przez nocat.lol. Każda przeglądarka najpierw pyta: na stronie i tutaj pojawia się 6-znakowy kod, a ty zatwierdzasz go w tym panelu. Stamtąd widać wszystko i można robić codzienne rzeczy - uruchamiać, zatrzymywać, wstrzymywać, podglądy, ustawienia, które nie wydają pieniędzy - ale nigdy potwierdzeń, wymian, kupowania, sprzedawania, tworzenia, kodów ani haseł: to zostaje tutaj. Domyślnie wyłączone. Wyłączone: farm.nocat.lol w ogóle nie dociera do nocat.farm."
+      "tip": "Pozwala stronie farm.nocat.lol pokazywać ten panel w przeglądarce na tym komputerze, żeby wystarczył jeden adres w zakładkach. Rozmawia bezpośrednio z nocat.farm na tym komputerze - nic nie przechodzi przez nocat.lol. Każda przeglądarka najpierw pyta: na stronie i tutaj pojawia się 6-znakowy kod, a ty zatwierdzasz go w tym panelu. Stamtąd widać wszystko i można robić codzienne rzeczy - uruchamiać, zatrzymywać, wstrzymywać, podglądy, ustawienia, które nie wydają pieniędzy - ale nigdy potwierdzeń, wymian, kupowania, sprzedawania, tworzenia, kodów ani haseł: to zostaje tutaj. Gdy jest włączone, ikona w zasobniku i „Otwórz przeglądarkę przy starcie” otwierają go tam, gdy konto jest już skonfigurowane; dodawanie konta i logowanie zawsze odbywają się tutaj. Włączone przy nowej instalacji na komputerze z ekranem, wyłączone przy istniejącej, w Dockerze i na serwerze. Wyłączone: farm.nocat.lol w ogóle nie dociera do nocat.farm."
     }
   }
 }

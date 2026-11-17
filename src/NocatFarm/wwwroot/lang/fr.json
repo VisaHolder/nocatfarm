@@ -3447,7 +3447,6 @@
     "In the app on your PC": "Dans l'app sur votre PC",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} attend que son code QR de connexion soit scanné - il s'affiche dans le tableau de bord de l'app sur votre PC.",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol veut ouvrir ce tableau de bord",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "code {0}, {1}. N'acceptez que si cette page affiche le même code et que vous l'avez ouverte vous-même.",
     "Approve": "Accepter",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "Vous êtes sur farm.nocat.lol. Les confirmations, les échanges, l'achat, la vente, la fabrication, les codes et les mots de passe restent dans le tableau de bord de l'app sur votre PC :",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Le code Steam Guard ne s'affiche que dans le tableau de bord de l'app sur votre PC.",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "Ce code a expiré. Appuyez sur Connecter pour en avoir un nouveau.",
     "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol peut maintenant ouvrir ce tableau de bord.",
     "Turned down.": "Refusé.",
-    "Taken back - that browser has to pair again.": "Retiré - ce navigateur doit être associé à nouveau."
+    "Taken back - that browser has to pair again.": "Retiré - ce navigateur doit être associé à nouveau.",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "tableau de bord dans le navigateur : {0} - une fois un compte configuré, il s'ouvre là-bas ; {1} marche toujours sur ce PC",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol veut ouvrir votre tableau de bord",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Vous venez d'ouvrir farm.nocat.lol ? Il affiche un code. N'acceptez que si c'est exactement celui-ci :"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "Laisser farm.nocat.lol ouvrir ce tableau de bord",
-      "tip": "Permet au site farm.nocat.lol d'afficher ce tableau de bord dans un navigateur sur ce PC, pour n'avoir qu'une seule adresse en favori. Il parle directement à nocat.farm sur ce PC - rien ne passe par nocat.lol. Chaque navigateur demande d'abord : un code de 6 caractères s'affiche sur la page et ici, et vous l'acceptez dans ce tableau de bord. De là, il voit tout et fait le quotidien - démarrer, arrêter, mettre en pause, aperçus, paramètres qui ne dépensent pas d'argent - mais jamais les confirmations, échanges, achats, ventes, fabrications, codes ou mots de passe : cela reste ici. Désactivé par défaut. Désactivé : farm.nocat.lol ne peut pas du tout joindre nocat.farm."
+      "tip": "Permet au site farm.nocat.lol d'afficher ce tableau de bord dans un navigateur sur ce PC, pour n'avoir qu'une seule adresse en favori. Il parle directement à nocat.farm sur ce PC - rien ne passe par nocat.lol. Chaque navigateur demande d'abord : un code de 6 caractères s'affiche sur la page et ici, et vous l'acceptez dans ce tableau de bord. De là, il voit tout et fait le quotidien - démarrer, arrêter, mettre en pause, aperçus, paramètres qui ne dépensent pas d'argent - mais jamais les confirmations, échanges, achats, ventes, fabrications, codes ou mots de passe : cela reste ici. Tant qu'il est activé, l'icône dans la zone de notification et « Ouvrir le navigateur au démarrage » l'ouvrent là-bas une fois un compte configuré ; ajouter un compte et se connecter se font toujours ici. Activé pour une nouvelle installation sur un PC avec écran, désactivé pour une installation existante, dans Docker et sur un serveur. Désactivé : farm.nocat.lol ne peut pas du tout joindre nocat.farm."
     }
   }
 }

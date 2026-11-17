@@ -3447,7 +3447,6 @@
     "In the app on your PC": "PC 上のアプリで",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} はサインイン用 QR コードのスキャン待ちです - PC 上のアプリ自身のダッシュボードに表示されます。",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol がこのダッシュボードを開こうとしています",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "コード {0}、{1}。そのページに同じコードが表示されていて、自分で開いた場合だけ許可してください。",
     "Approve": "許可",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "ここは farm.nocat.lol です。確認、トレード、購入、出品、作成、コード、パスワードは PC 上のアプリ自身のダッシュボードにあります:",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guardコードは PC 上のアプリ自身のダッシュボードにだけ表示されます。",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "そのコードは期限切れです。「接続」を押すと新しいコードが出ます。",
     "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol がこのダッシュボードを開けるようになりました。",
     "Turned down.": "拒否しました。",
-    "Taken back - that browser has to pair again.": "取り消しました - そのブラウザーはもう一度ペアリングが必要です。"
+    "Taken back - that browser has to pair again.": "取り消しました - そのブラウザーはもう一度ペアリングが必要です。",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "ブラウザーのダッシュボード: {0} - アカウントの設定が済むとそこで開きます。この PC では {1} がいつでも使えます",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol があなたのダッシュボードを開こうとしています",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "今 farm.nocat.lol を開きましたか？ そこにコードが表示されます。これと同じコードの場合だけ許可してください:"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "farm.nocat.lol からこのダッシュボードを開けるようにする",
-      "tip": "farm.nocat.lol の Web サイトが、この PC のブラウザーでこのダッシュボードを表示できるようにします。ブックマークするアドレスが 1 つで済みます。この PC の nocat.farm と直接通信し、nocat.lol を経由するものはありません。ブラウザーごとに最初に確認します: 6 文字のコードがページとここに表示され、このダッシュボードで許可します。そこからはすべてを見られ、日常の操作 (開始、停止、一時停止、プレビュー、お金を使わない設定) ができますが、確認、トレード、購入、出品、作成、コード、パスワードは決してできません。それらはここだけです。既定ではオフ。オフ: farm.nocat.lol は nocat.farm にまったく届きません。"
+      "tip": "farm.nocat.lol の Web サイトが、この PC のブラウザーでこのダッシュボードを表示できるようにします。ブックマークするアドレスが 1 つで済みます。この PC の nocat.farm と直接通信し、nocat.lol を経由するものはありません。ブラウザーごとに最初に確認します: 6 文字のコードがページとここに表示され、このダッシュボードで許可します。そこからはすべてを見られ、日常の操作 (開始、停止、一時停止、プレビュー、お金を使わない設定) ができますが、確認、トレード、購入、出品、作成、コード、パスワードは決してできません。それらはここだけです。オンの間は、アカウントの設定が済むと、トレイアイコンと「起動時にブラウザを開く」がそこで開きます。アカウントの追加とサインインは常にここで行います。画面のある PC への新規インストールではオン、既存のもの、Docker、サーバーではオフです。オフ: farm.nocat.lol は nocat.farm にまったく届きません。"
     }
   }
 }

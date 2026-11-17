@@ -4294,6 +4294,9 @@ public static class TokenStore {
 	// clear.
 	public static string? Load(string bot) => Read(PathFor(bot));
 
+	/// <summary>1.9.2: whether this account has signed in here before (a refresh token is kept) - only the file is looked for.</summary>
+	public static bool Has(string bot) => File.Exists(PathFor(bot));
+
 	public static string? LoadAccess(string bot) => Read(AccessPathFor(bot));
 
 	private static string? Read(string path) {

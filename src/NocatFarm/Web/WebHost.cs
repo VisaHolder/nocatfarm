@@ -575,6 +575,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 			// password set)" - which is the whole class of bug this pass exists to remove.
 			// The address only - it's a link in the window. Who can open it is the dashboard's own to say, and the debug log's.
 			Log.Good(new Said("dashboard: {0}", Url));
+			_port = listenPort;
+
+			// 1.9.2: where the browser opens it once an account is set up - with this PC's own, above, always there to fall back on.
+			if (_cfg.FarmWebAllowed) {
+				Log.Good(new Said("dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC", FarmWeb.PageUrl(listenPort), Url));
+			}
 
 			if (string.IsNullOrEmpty(_cfg.WebPassword)) {
 				Log.Debug(new Said("dashboard: this PC only, no password"));

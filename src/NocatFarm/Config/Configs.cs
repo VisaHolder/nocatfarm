@@ -1464,6 +1464,10 @@ public static partial class ConfigStore {
 				fresh.Language = LanguageFromComputer;
 			}
 
+			// 1.9.2: a new install opens its dashboard at farm.nocat.lol once it's set up - written in, so a config that already
+			// exists (1.9.1's, missing the key) keeps it off. Not in Docker or on a server: no browser there (Web/FarmWeb.cs).
+			fresh.FarmWebAllowed = Web.FarmWeb.DefaultForNewInstall;
+
 			SaveGlobal(fresh);
 
 			return fresh;

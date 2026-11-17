@@ -3447,7 +3447,6 @@
     "In the app on your PC": "In der App auf deinem PC",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} wartet darauf, dass sein Anmelde-QR-Code gescannt wird - er erscheint im eigenen Dashboard der App auf deinem PC.",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol möchte dieses Dashboard öffnen",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "Code {0}, {1}. Erlaube es nur, wenn diese Seite denselben Code zeigt und du sie selbst geöffnet hast.",
     "Approve": "Erlauben",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "Du bist auf farm.nocat.lol. Bestätigungen, Tauschangebote, Kaufen, Verkaufen, Herstellen, Codes und Passwörter bleiben im eigenen Dashboard der App auf deinem PC:",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Der Steam-Guard-Code erscheint nur im eigenen Dashboard der App auf deinem PC.",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "Dieser Code ist abgelaufen. Drück auf Verbinden für einen neuen.",
     "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol kann dieses Dashboard jetzt öffnen.",
     "Turned down.": "Abgelehnt.",
-    "Taken back - that browser has to pair again.": "Zurückgenommen - dieser Browser muss sich neu verbinden."
+    "Taken back - that browser has to pair again.": "Zurückgenommen - dieser Browser muss sich neu verbinden.",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "Dashboard im Browser: {0} - sobald ein Konto eingerichtet ist, öffnet es sich dort; {1} funktioniert auf diesem PC immer",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol möchte dein Dashboard öffnen",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Hast du gerade farm.nocat.lol geöffnet? Es zeigt einen Code. Erlaube es nur, wenn es genau dieser ist:"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "farm.nocat.lol dieses Dashboard öffnen lassen",
-      "tip": "Lässt die Website farm.nocat.lol dieses Dashboard in einem Browser auf diesem PC zeigen, damit du dir nur eine Adresse merken musst. Sie spricht direkt mit nocat.farm auf diesem PC - nichts geht über nocat.lol. Jeder Browser fragt zuerst: Ein 6-stelliger Code erscheint auf der Seite und hier, und du erlaubst es in diesem Dashboard. Von dort aus sieht es alles und kann das Alltägliche - starten, stoppen, pausieren, Vorschauen, Einstellungen, die kein Geld ausgeben - aber nie Bestätigungen, Tauschangebote, Kaufen, Verkaufen, Herstellen, Codes oder Passwörter: Das bleibt hier. Standardmäßig aus. Aus: farm.nocat.lol erreicht nocat.farm überhaupt nicht."
+      "tip": "Lässt die Website farm.nocat.lol dieses Dashboard in einem Browser auf diesem PC zeigen, damit du dir nur eine Adresse merken musst. Sie spricht direkt mit nocat.farm auf diesem PC - nichts geht über nocat.lol. Jeder Browser fragt zuerst: Ein 6-stelliger Code erscheint auf der Seite und hier, und du erlaubst es in diesem Dashboard. Von dort aus sieht es alles und kann das Alltägliche - starten, stoppen, pausieren, Vorschauen, Einstellungen, die kein Geld ausgeben - aber nie Bestätigungen, Tauschangebote, Kaufen, Verkaufen, Herstellen, Codes oder Passwörter: Das bleibt hier. Solange es an ist, öffnen das Symbol im Infobereich und „Browser beim Start öffnen“ es dort, sobald ein Konto eingerichtet ist; ein Konto hinzufügen und anmelden passiert immer hier. An bei einer neuen Installation auf einem PC mit Bildschirm, aus bei einer bestehenden, in Docker und auf einem Server. Aus: farm.nocat.lol erreicht nocat.farm überhaupt nicht."
     }
   }
 }

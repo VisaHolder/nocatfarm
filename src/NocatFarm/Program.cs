@@ -347,7 +347,8 @@ if (OperatingSystem.IsWindows()) {
 // Told once, so anything that wants the dashboard asks Commands rather than carrying its own copy of the URL and
 // its own Process.Start. Outside the tray block: it used to be set only when there was a tray icon, so with the
 // tray off, 'add' never opened the dashboard however OpenDashboardAfterAdd was set.
-Commands.DashboardUrl = () => web?.Url ?? "";
+// 1.9.2: farm.nocat.lol once it's on and an account is set up, this PC's own address otherwise (WebHost.OpenUrl).
+Commands.DashboardUrl = () => web?.OpenUrl ?? "";
 
 TrayIcon? tray = null;
 
@@ -355,7 +356,7 @@ TrayIcon? tray = null;
 // Set here to "there is one" as soon as the object existed, it overwrote the icon's own "couldn't add it" - and a
 // window started hidden stayed hidden, with no icon to bring it back.
 if (global.Tray && !forceNoTray && OperatingSystem.IsWindows()) {
-	tray = StartTray(manager, () => web?.Url ?? "");
+	tray = StartTray(manager, () => web?.OpenUrl ?? "");
 }
 
 if (OperatingSystem.IsWindows() && global.KeepAwake) {
@@ -453,7 +454,7 @@ AppInstance.Listen(ConfigStore.Root,
 		if (OperatingSystem.IsWindows() && (window != null) && !windowFailed) {
 			window.Show();
 		} else if ((web != null) && Platform.HasDesktop) {
-			OpenBrowser(web.Url);
+			OpenBrowser(web.OpenUrl);
 		}
 	},
 	quit: Commands.RequestExit);
@@ -548,7 +549,7 @@ try {
 // And not when it starts hidden (with Windows) or has just restarted itself into an update - a browser tab popping
 // up then is something nobody asked for.
 if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop && !startMinimized && !NocatFarm.Core.SelfUpdate.OnTrial && !shutdown.IsCancellationRequested) {
-	OpenBrowser(web.Url);
+	OpenBrowser(web.OpenUrl);
 }
 
 // The console is the only thing reading the keyboard, so a Steam Guard prompt and a typed command can never

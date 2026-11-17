@@ -34,7 +34,56 @@ public sealed partial class WebHost {
 	private bool FromFarm(HttpRequest request) =>
 		_cfg.FarmWebAllowed && string.Equals(request.Headers.Origin.ToString(), FarmWeb.Origin, StringComparison.Ordinal);
 
-	// â”€â”€ the front door â”€â”€
+	// ── where "open the dashboard" goes ──
+
+	/// <summary>The port the dashboard really listens on - set when it starts listening.</summary>
+	private int _port;
+
+	/// <summary>When the browser was first sent to farm.nocat.lol with nothing paired yet; null before. Under <see cref="_farmGate"/>.</summary>
+	private DateTime? _farmSentAt;
+
+	/// <summary>
+	/// What the tray, the window's Dashboard button, "Open the browser on start", a second launch and 'add' open: farm.nocat.lol
+	/// once it's on and an account is set up, otherwise this PC's own address - as it always was.
+	/// </summary>
+	public string OpenUrl => FarmOpens() ? FarmWeb.PageUrl(_port) : Url;
+
+	/// <summary>
+	/// Whether "open the dashboard" goes to farm.nocat.lol now. Never while it's off, and never for setting up: with no account,
+	/// none signed in here yet, or one waiting on a Steam Guard code, a QR code or an answer, it's this PC's own dashboard -
+	/// a Steam password, a code or a QR sign-in never goes near that page. And when the page was opened a few minutes ago
+	/// and nothing has paired since (no internet, or the browser wouldn't let it in), this PC's own again. No timer: it's
+	/// worked out when it's asked.
+	/// </summary>
+	internal bool FarmOpens() {
+		if (!_cfg.FarmWebAllowed || (Url.Length == 0) || (_port == 0)) {
+			return false;
+		}
+
+		Bot[] bots = [.. _mgr.All];
+
+		if ((bots.Length == 0) || !bots.Any(static b => (b.SteamId != 0) || TokenStore.Has(b.Name)) || (Prompt.Pending != null)
+			|| bots.Any(static b => (b.QrChallenge != null) || (b.GuardPrompt != null))) {
+			return false;
+		}
+
+		lock (_farmGate) {
+			bool paired = FarmTokensLocked().Count > 0;
+			DateTime now = DateTime.UtcNow;
+
+			if (!paired && (_farmSentAt is { } sent) && (now - sent > FarmWeb.GiveUpAfter) && (_farmPairs.Count == 0)) {
+				return false;
+			}
+
+			if (!paired) {
+				_farmSentAt ??= now;
+			}
+
+			return true;
+		}
+	}
+
+	// ── the front door ──
 
 	/// <summary>
 	/// A request from farm.nocat.lol, before anything else: answered here (a preflight, a refusal) - true - or let on to the
@@ -221,7 +270,7 @@ public sealed partial class WebHost {
 		return true;
 	}
 
-	// â”€â”€ paired pages â”€â”€
+	// ── paired pages ──
 
 	/// <summary>One paired page: when it was approved, when it runs out, and what it was opened in.</summary>
 	internal sealed record FarmToken(DateTime Created, DateTime Expires, string Device);
@@ -324,7 +373,7 @@ public sealed partial class WebHost {
 		}
 	}
 
-	// â”€â”€ pair requests â”€â”€
+	// ── pair requests ──
 
 	/// <summary>One page asking to be let in. State: 0 waiting, 1 approved, 2 turned down.</summary>
 	private sealed class FarmPair(string id, string code, string device, DateTime expires) {
@@ -403,8 +452,11 @@ public sealed partial class WebHost {
 				_farmPairs.Add(pair);
 			}
 
-			Log.Warn(new Said("dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.", device, pair.Code));
-			Log.Publish(Topic.Security, "dashboard", new Said("farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device));
+			// Loud, for somebody doing it the first time: the log line, a pop-up from the tray, and Telegram/Discord when they're set
+			// up - each saying where to approve it. Never an approve button anywhere but the dashboard on this PC.
+			Log.Attention(new Said("dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.", device, pair.Code),
+				new Said("farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device),
+				new Said("farm.nocat.lol wants to open your dashboard"), Topic.Security);
 
 			return Results.Json(new { ok = true, pair.Id, pair.Code, Seconds = (int) FarmWeb.PairLifetime.TotalSeconds });
 		});

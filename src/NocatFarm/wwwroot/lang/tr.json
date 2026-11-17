@@ -3447,7 +3447,6 @@
     "In the app on your PC": "Bilgisayarındaki uygulamada",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0}, giriş QR kodunun taranmasını bekliyor - kod, bilgisayarındaki uygulamanın kendi panosunda görünür.",
     "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol bu panoyu açmak istiyor",
-    "code {0}, {1}. Approve only if that page shows the same code and you opened it yourself.": "kod {0}, {1}. Yalnızca o sayfa aynı kodu gösteriyorsa ve onu sen açtıysan izin ver.",
     "Approve": "İzin ver",
     "You are on farm.nocat.lol. Confirmations, trades, buying, selling, crafting, codes and passwords stay in the app's own dashboard on your PC:": "farm.nocat.lol'dasın. Onaylar, takaslar, satın alma, satma, üretme, kodlar ve parolalar bilgisayarındaki uygulamanın kendi panosunda kalır:",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard kodu yalnızca bilgisayarındaki uygulamanın kendi panosunda görünür.",
@@ -3481,7 +3480,10 @@
     "That code ran out. Press Connect for a new one.": "Bu kodun süresi doldu. Yeni bir kod için Bağlan'a bas.",
     "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol artık bu panoyu açabilir.",
     "Turned down.": "Reddedildi.",
-    "Taken back - that browser has to pair again.": "Geri alındı - o tarayıcının yeniden eşleşmesi gerekiyor."
+    "Taken back - that browser has to pair again.": "Geri alındı - o tarayıcının yeniden eşleşmesi gerekiyor.",
+    "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "tarayıcıdaki pano: {0} - bir hesap kurulduktan sonra orada açılır; {1} bu bilgisayarda her zaman çalışır",
+    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol panonu açmak istiyor",
+    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Az önce farm.nocat.lol'u mu açtın? Orada bir kod görünür. Yalnızca bu kodla aynıysa izin ver:"
   },
   "settings": {
     "BackupToTelegram": {
@@ -5078,7 +5080,7 @@
     },
     "FarmWebAllowed": {
       "label": "farm.nocat.lol bu panoyu açabilsin",
-      "tip": "farm.nocat.lol web sitesinin bu panoyu bu bilgisayardaki bir tarayıcıda göstermesine izin verir; böylece yer imlerine tek bir adres eklersin. Doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. Her tarayıcı önce sorar: sayfada ve burada 6 karakterlik bir kod görünür ve sen bu panoda izin verirsin. Oradan her şeyi görebilir ve gündelik işleri yapabilir - başlatma, durdurma, duraklatma, önizlemeler, para harcamayan ayarlar - ama asla onaylar, takaslar, satın alma, satma, üretme, kodlar ya da parolalar değil: bunlar burada kalır. Varsayılan olarak kapalı. Kapalı: farm.nocat.lol nocat.farm'a hiç ulaşamaz."
+      "tip": "farm.nocat.lol web sitesinin bu panoyu bu bilgisayardaki bir tarayıcıda göstermesine izin verir; böylece yer imlerine tek bir adres eklersin. Doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. Her tarayıcı önce sorar: sayfada ve burada 6 karakterlik bir kod görünür ve sen bu panoda izin verirsin. Oradan her şeyi görebilir ve gündelik işleri yapabilir - başlatma, durdurma, duraklatma, önizlemeler, para harcamayan ayarlar - ama asla onaylar, takaslar, satın alma, satma, üretme, kodlar ya da parolalar değil: bunlar burada kalır. Açıkken, bir hesap kurulduktan sonra tepsi simgesi ve \"Başlangıçta tarayıcıyı aç\" onu orada açar; hesap eklemek ve giriş yapmak her zaman burada olur. Ekranı olan bir bilgisayardaki yeni kurulumda açık, mevcut kurulumda, Docker'da ve sunucuda kapalı. Kapalı: farm.nocat.lol nocat.farm'a hiç ulaşamaz."
     }
   }
 }

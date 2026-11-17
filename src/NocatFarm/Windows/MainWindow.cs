@@ -1249,7 +1249,9 @@ public sealed partial class MainWindow : IDisposable {
 				break;
 
 			case IdDashboard: {
-				string url = _url();
+				// 1.9.2: what every other opener opens - farm.nocat.lol once it's set up (WebHost.OpenUrl). The window itself keeps
+				// showing this PC's own address.
+				string url = Commands.DashboardUrl?.Invoke() is { Length: > 0 } open ? open : _url();
 
 				if (!string.IsNullOrEmpty(url)) {
 					try {

@@ -1735,5 +1735,7 @@ a.loglink:hover { color: #79b8ff; }
 .farmgate a { overflow-wrap: anywhere; }
 .farmcode { font-size: 34px; font-weight: 700; letter-spacing: 6px; text-align: center; margin: 8px 0 16px; font-family: inherit; }
 .alert.farmnote { font-size: 12.5px; }
+.alert.farmask { border-width: 2px; font-size: 14px; }
+.alert.farmask .farmask-code { font-size: 22px; letter-spacing: 4px; margin: 0 6px; }
 .farmonly { white-space: nowrap; }
 .hosted .farm-hide, .hosted [data-act="remove"], .hosted [data-act="steamopen"], .hosted [data-act="steamcode"], .hosted [data-act="dlcundo"] { display: none !important; }
