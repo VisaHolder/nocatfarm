@@ -40727,6 +40727,10 @@ static class FarmWebChecks {
 			"copy settings a b", "gamename main", "gamename main off", "name main clear", "nickname main", "set DiscordButton1 \"\"", "set SendScamWarnings on", "steam", "steam all", "steam on main", "steam off main", "/status", "!pause main",
 			"set SteamOpenEveryAccount on", "set KeepAwake on", "set Language de", "set GlobalBlacklistedGames 730", "set UpdateReminders off",
 			"set NotifyTrades off", "set BackupAuto on"];
+		// KeepAwake and the pop-ups are Windows settings: on Linux and Mac they don't exist at all, so 'set' has nothing to allow.
+		if (!OperatingSystem.IsWindows()) {
+			allowed = [.. allowed.Where(static l => l is not ("set KeepAwake on" or "set NotifyTrades off"))];
+		}
 		Check("farm.nocat.lol: everything else is allowed - controls, previews, buying and crafting within the limits, backups here",
 			allowed.All(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", allowed.Where(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 
@@ -40743,6 +40747,10 @@ static class FarmWebChecks {
 		// 1.9.2 review: scam watch only goes up from there - switched off, a standing hold ends at once (ScamWatch.HoldingTrades).
 		string[] guards = ["WatchForScams", "ScamWatchStopTrades", "ScamWatchCancelOffers", "ScamWatchRevokeKey", "ScamWatchApiKey", "ScamWatchDevices",
 			"ScamWatchDetails", "ScamWatchSessions", "SendScamWarnings", "NotifyScam", "SendBreakIns"];
+		// NotifyScam is the Windows pop-up: on Linux and Mac there's no such setting to switch at all.
+		if (!OperatingSystem.IsWindows()) {
+			guards = [.. guards.Where(static n => n != "NotifyScam")];
+		}
 		Check("farm.nocat.lol: scam watch and its warnings only go on from there, never off",
 			guards.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
 			string.Join(", ", guards.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
