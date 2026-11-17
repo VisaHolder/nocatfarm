@@ -348,10 +348,10 @@ public static class FarmWeb {
 
 		string value = NocatFarm.Commands.Unquote(NocatFarm.Commands.SetValue(line, words, at)).Trim();
 
-		// The dashboard password from 'set': only setting a first one. Changing it needs the current one (the settings page
-		// asks for it); removing it, only here.
+		// The dashboard password from 'set': never. A first one only here (a swapped page setting one would lock the owner out of
+		// their own dashboard); changing it needs the current one, which only the settings page sends; removing it, only here.
 		if (def.Name == nameof(GlobalConfig.WebPassword)) {
-			return (mgr != null) && string.IsNullOrEmpty(mgr.Global.WebPassword) && (value.Length > 0);
+			return false;
 		}
 
 		return SettingAllowed(def, Settings.IsTrue(value) ? true : Settings.IsFalse(value) ? false : null, value);

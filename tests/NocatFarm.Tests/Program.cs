@@ -41187,7 +41187,7 @@ static class FarmWebChecks {
 				&& !BotOk(spending, "{\"BuyWeeklyLimit\":1000}")
 				&& !BotOk(new NocatFarm.Config.BotConfig(), "{\"PointsOk\":true}"));
 
-			// ── the dashboard password from there: a first one yes; changing it only with the current one; removing it never ──
+			// ── the dashboard password from there: a first one no (it would lock the owner out); changing it only with the current one; removing it never ──
 			MethodInfo passwordAllowed = typeof(NocatFarm.Web.WebHost).GetMethod("FarmPasswordAllowed", Inst)!;
 			var farmCtx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
 			farmCtx.Connection.RemoteIpAddress = System.Net.IPAddress.Loopback;
@@ -41202,8 +41202,8 @@ static class FarmWebChecks {
 			bool untouched = Pw("{\"WebPassword\":\"\",\"KeepAwake\":true}");
 			mgr.Global.WebPassword = "";
 			web.ClearLockouts();
-			Check("farm.nocat.lol: a first dashboard password can be set from there; an existing one changes only with the current one; it's never removed from there",
-				firstOne && !noCurrent && !wrongCurrent && rightCurrent && !removing && untouched, $"{firstOne} {noCurrent} {wrongCurrent} {rightCurrent} {removing} {untouched}");
+			Check("farm.nocat.lol: a first dashboard password is never set from there; an existing one changes only with the current one; it's never removed from there",
+				!firstOne && !noCurrent && !wrongCurrent && rightCurrent && !removing && untouched, $"{firstOne} {noCurrent} {wrongCurrent} {rightCurrent} {removing} {untouched}");
 			Check("farm.nocat.lol: a password changed from there signs every browser out, its own pairing too, and hands it no dashboard session",
 				Src("src/NocatFarm/Web/WebHost.cs").Contains("fresh = string.IsNullOrEmpty(savedPassword) || IsFarm(ctx) ? null : NewSession(ctx, KeyOf(savedPassword));", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("SaveSessions();\n\n\t\t// 1.9.2: the pages paired at farm.nocat.lol too.\n\t\tForgetFarm();", StringComparison.Ordinal));

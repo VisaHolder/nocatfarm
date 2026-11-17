@@ -301,7 +301,7 @@ public sealed partial class WebHost {
 	}
 
 	/// <summary>
-	/// The dashboard password in a global save from farm.nocat.lol: a first one may be set from there, an existing one changed
+	/// The dashboard password in a global save from farm.nocat.lol: a first one only here (a swapped page setting one would lock the owner out), an existing one changed
 	/// only with the current one beside it ("CurrentPassword", checked like a sign-in and counted towards the same lockout),
 	/// and never removed from there. Null when that's refused; otherwise what was sent without the password, for the rest of
 	/// the checks. The change signs every browser out, the pages at farm.nocat.lol too - they pair again.
@@ -324,7 +324,7 @@ public sealed partial class WebHost {
 		}
 
 		if (string.IsNullOrEmpty(_cfg.WebPassword)) {
-			return rest;   // a first one
+			return null;   // a first one: only here - set from a page that was swapped, it would lock the owner out of their own dashboard
 		}
 
 		string current = sent.FirstOrDefault(static kv => kv.Key.Equals("CurrentPassword", StringComparison.OrdinalIgnoreCase)).Value?.ToString() ?? "";

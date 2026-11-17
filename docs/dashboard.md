@@ -310,7 +310,8 @@ every device out** (or `visitors signout`) disconnects them all. So does changin
 
 What it can do: nearly everything the dashboard here does. That covers starting and stopping accounts, every
 preview and setting, human mode, buying cards, crafting, booster packs, Steam Points and spare-item switches (all
-inside the money limits you set here), backups to the backups folder, and setting a dashboard password.
+inside the money limits you set here), backups to the backups folder, and changing the dashboard password (with the
+current one).
 
 What it can't do, ever (the page says "in the app on your PC" instead). Even if the website itself were hacked, it
 couldn't take your items or your account:
@@ -329,7 +330,8 @@ couldn't take your items or your account:
   and buttons. Emptying them, and their on/off switches, work
 - **Shutting nocat.farm down** (`exit`), and redeeming keys from a file (typed keys work)
 - **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
-  address, port, *Open from anywhere*, trusted proxies, the firewall, and removing the dashboard password. Changing an
+  address, port, *Open from anywhere*, trusted proxies, the firewall, and setting a first dashboard password or removing it (set from a hacked page, a first
+password would lock you out of your own dashboard). Changing an
   existing password takes the current one, and then every browser has to sign in or pair again.
 
 If it doesn't connect:
