@@ -1729,3 +1729,53 @@ a.loglink:hover { color: #79b8ff; }
 .field.chips .langpick { margin: 0; }
 .field .proxysignin { margin-top: 6px; font-size: 12.5px; }
 @media (max-width: 900px) { .jump .j.sub { display: none; } }
+/* 1.9.2: farm.nocat.lol - the pairing screen, the code to match, the approve banner here, and what the hosted page leaves out. */
+.alert.farmnote { font-size: 12.5px; }
+.alert.farmask { border-width: 2px; font-size: 14px; }
+.alert.farmask .farmask-code { font-size: 22px; letter-spacing: 4px; margin: 0 6px; }
+.farmonly { white-space: nowrap; }
+.hosted .farm-hide, .hosted [data-act="remove"], .hosted [data-act="steamopen"], .hosted [data-act="steamcode"] { display: none !important; }
+/* 1.9.2: the pairing banner, above every screen of this dashboard (the welcome, the walkthrough, a pop-up). */
+.farmask-bar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000; width: min(720px, calc(100% - 24px)); display: grid; gap: 8px; }
+.farmask-bar .alert { margin: 0; box-shadow: 0 10px 40px rgba(0,0,0,.55); background: var(--panel); flex-wrap: wrap; }
+/* 1.9.2: farm.nocat.lol's screens before it's connected - drawn like the page there: wordmark, a status dot, one line,
+   one big light button, small ones under it, the how-to folded away. Dark whatever the theme, like that page. */
+#farmGate { position: fixed; inset: 0; z-index: 900; overflow-y: auto; display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(90% 55% at 50% -10%, rgba(139,92,246,.09), transparent 70%), #0a0a0a; color: #d4d4d4; font: 14px/1.6 var(--mono); color-scheme: dark; }
+.fg { width: min(400px, 100%); min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.fg-brand { font-size: 13px; letter-spacing: 4px; color: #d4d4d4; }
+.fg-brand b { color: #8b5cf6; font-weight: 400; }
+.fg-head { display: flex; flex-direction: column; gap: 10px; }
+.fg-st { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fg-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #7a7a7a; }
+.fg-dot.wait { background: #8b5cf6; animation: fgpulse 1s ease-in-out infinite alternate; }
+.fg-dot.ok { background: #8b5cf6; box-shadow: 0 0 0 4px rgba(139,92,246,.18); }
+.fg-dot.no { background: transparent; border: 1px solid #7a7a7a; }
+@keyframes fgpulse { to { opacity: .25; } }
+.fg h1 { margin: 0; font-size: 18px; font-weight: 400; color: #f2f2f2; letter-spacing: .2px; line-height: 1.4; overflow-wrap: anywhere; }
+.fg p { margin: 0; color: #7a7a7a; overflow-wrap: anywhere; }
+.fg .fg-note { color: #d4d4d4; }
+.fg-code { font-size: 40px; letter-spacing: 10px; text-indent: 10px; text-align: center; color: #f2f2f2; padding: 18px 0; border: 1px solid #262626; background: #111; }
+.fg-acts { display: flex; flex-direction: column; gap: 10px; }
+.fg-b { font: inherit; font-size: 13px; letter-spacing: .5px; min-height: 46px; padding: 8px 18px; display: flex; align-items: center; justify-content: center; text-align: center;
+  text-decoration: none; cursor: pointer; border-radius: 0; border: 1px solid #262626; background: #111; color: #d4d4d4; transition: border-color .15s, background .15s; min-width: 0; overflow-wrap: anywhere; }
+.fg-b:hover { border-color: #444; color: #d4d4d4; }
+.fg-b.fg-p { background: #ececec; color: #0a0a0a; border-color: #ececec; }
+.fg-b.fg-p:hover { background: #fff; border-color: #fff; color: #0a0a0a; }
+.fg-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fg-one { display: grid; }
+.fg-meta { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-size: 12px; color: #7a7a7a; flex-wrap: wrap; }
+.fg-lnk { font: inherit; font-size: 12px; color: #7a7a7a; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+.fg-lnk:hover { color: #d4d4d4; }
+.fg-how { font-size: 12px; color: #7a7a7a; margin-top: -14px; }
+.fg-how summary { cursor: pointer; list-style: none; width: max-content; }
+.fg-how summary::-webkit-details-marker { display: none; }
+.fg-how summary:hover, .fg-how[open] summary { color: #d4d4d4; }
+.fg-how p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; }
+.fg-foot { font-size: 11.5px; color: #5c5c5c; line-height: 1.7; border-top: 1px solid #262626; padding-top: 16px; }
+.fg-portrow { margin-top: 10px; }
+.fg-port { font: inherit; font-size: 12px; width: 62px; height: 26px; padding: 0 6px; background: transparent; color: #d4d4d4; border: 1px solid #262626; border-radius: 0; }
+.fg-port:focus { outline: none; border-color: #8b5cf6; }
+#farmGate input.fg-port { width: 62px; max-width: 62px; min-width: 0; flex: none; margin: 0; }
+#farmGate .fg-b { font-weight: 400; box-shadow: none; }
+@media (max-width: 360px) { .fg-two { grid-template-columns: 1fr; } .fg-code { font-size: 32px; letter-spacing: 6px; text-indent: 6px; } }

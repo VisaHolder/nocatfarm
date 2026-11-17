@@ -4,7 +4,7 @@
 
 Add-ons are extras that aren't part of nocat.farm itself. Each one is a single file you can install, switch off or
 remove at any time. The official ones are made by reap and listed here and on
-[nocat.lol/nocatfarm/addons](https://nocat.lol/nocatfarm/addons).
+[nocat.lol/farm/addons](https://nocat.lol/farm/addons).
 
 | Add-on | What it does |
 |---|---|

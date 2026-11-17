@@ -36,6 +36,9 @@ public sealed class GlobalConfig {
 
 	/// <summary>Wrong passwords and codes from the internet in a day before Open from anywhere switches itself off. 0 = never.</summary>
 	public int WebRemoteOffAfter { get; set; } = 5;
+
+	/// <summary>1.9.2: https://farm.nocat.lol may open this dashboard from a browser on this PC, once paired at the app. Off by default. See Web/FarmWeb.cs.</summary>
+	public bool FarmWebAllowed { get; set; }
 	// On by default. A brand new account only farms its cards until it is told what to play, and the dashboard
 	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
 	// first impression for the one screen people actually need.
@@ -1460,6 +1463,10 @@ public static partial class ConfigStore {
 			if (LanguageFromComputer != null) {
 				fresh.Language = LanguageFromComputer;
 			}
+
+			// 1.9.2: a new install opens its dashboard at farm.nocat.lol once it's set up - written in, so a config that already
+			// exists (1.9.1's, missing the key) keeps it off. Not in Docker or on a server: no browser there (Web/FarmWeb.cs).
+			fresh.FarmWebAllowed = Web.FarmWeb.DefaultForNewInstall;
 
 			SaveGlobal(fresh);
 
