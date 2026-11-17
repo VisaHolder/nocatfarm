@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "この PC の nocat.farm でこのコードを許可してください。",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "このサイトがハッキングされても、アイテムやアカウントを奪うことはできません: それらは PC 上のアプリにあります。",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "オン: ここで許可すると、https://farm.nocat.lol がこの PC のブラウザーでこのダッシュボードを開けます。トレード、アイテムの送信、確認、Steam Guardコードの閲覧、アカウントのサインイン方法の変更は決してできません。",
-    "Type the current dashboard password to change it.": "変更するには、現在のダッシュボードのパスワードを入力してください。"
+    "Type the current dashboard password to change it.": "変更するには、現在のダッシュボードのパスワードを入力してください。",
+    "your browser blocked this page": "ブラウザーがこのページをブロックしました",
+    "let it reach your PC and try again, or open nocat.farm here.": "PC へのアクセスを許可してもう一度試すか、ここで nocat.farm を開いてください。",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "アドレスバーの farm.nocat.lol の横にあるアイコンをクリックし、「ローカル ネットワークへのアクセス」を「許可」にして、このページを再読み込みしてください。",
+    "let this page reach your PC": "このページに PC へのアクセスを許可",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "ブラウザーが先に確認します - 「許可」を押してください。このページがこの PC の nocat.farm とだけ通信できるようになります。",
+    "find my nocat.farm": "nocat.farm を探す"
   },
   "settings": {
     "BackupToTelegram": {

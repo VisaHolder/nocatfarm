@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "разрешите этот код в nocat.farm на этом ПК.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Даже если этот сайт взломают, он не сможет забрать ваши предметы или аккаунт: они остаются в приложении на вашем ПК.",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Включено: https://farm.nocat.lol может открыть эту панель в браузере на этом ПК, после того как вы разрешите это здесь. Он никогда не может обмениваться, отправлять предметы, подтверждать, видеть коды Steam Guard или менять вход в аккаунты.",
-    "Type the current dashboard password to change it.": "Введите текущий пароль панели, чтобы изменить его."
+    "Type the current dashboard password to change it.": "Введите текущий пароль панели, чтобы изменить его.",
+    "your browser blocked this page": "браузер заблокировал эту страницу",
+    "let it reach your PC and try again, or open nocat.farm here.": "разрешите ей доступ к вашему ПК и попробуйте снова или откройте nocat.farm здесь.",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "В адресной строке нажмите на значок рядом с farm.nocat.lol, для «Доступ к локальной сети» выберите «Разрешить» и перезагрузите эту страницу.",
+    "let this page reach your PC": "разрешите этой странице доступ к вашему ПК",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "браузер сначала спросит - нажмите «Разрешить». Это позволит этой странице общаться только с nocat.farm на этом ПК.",
+    "find my nocat.farm": "найти мой nocat.farm"
   },
   "settings": {
     "BackupToTelegram": {

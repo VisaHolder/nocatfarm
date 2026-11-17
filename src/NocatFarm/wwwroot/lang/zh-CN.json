@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "在这台电脑上的 nocat.farm 里允许这个代码。",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "即使这个网站被黑，也拿不走你的物品或账号：它们都留在你电脑上的应用里。",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "开：在这里允许后，https://farm.nocat.lol 就能在这台电脑的浏览器里打开这个面板。它永远不能交易、发送物品、确认、查看 Steam Guard 验证码或更改账号的登录方式。",
-    "Type the current dashboard password to change it.": "输入当前的面板密码才能修改它。"
+    "Type the current dashboard password to change it.": "输入当前的面板密码才能修改它。",
+    "your browser blocked this page": "浏览器拦截了此页面",
+    "let it reach your PC and try again, or open nocat.farm here.": "允许它访问你的电脑后重试，或在这里打开 nocat.farm。",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "在地址栏中点击 farm.nocat.lol 旁边的网站图标，将“本地网络访问”设为“允许”，然后刷新此页面。",
+    "let this page reach your PC": "允许此页面访问你的电脑",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "浏览器会先询问 - 请点“允许”。这只会让此页面与这台电脑上的 nocat.farm 通信。",
+    "find my nocat.farm": "查找我的 nocat.farm"
   },
   "settings": {
     "BackupToTelegram": {

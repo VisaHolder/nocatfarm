@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "이 PC의 nocat.farm에서 이 코드를 허용하세요.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "이 웹사이트가 해킹되더라도 아이템이나 계정을 가져갈 수는 없습니다: 그것들은 PC의 앱에 있습니다.",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "켬: 여기서 허용하면 https://farm.nocat.lol이 이 PC의 브라우저에서 이 대시보드를 열 수 있습니다. 거래, 아이템 보내기, 확인, Steam Guard 코드 보기, 계정 로그인 방식 변경은 절대 할 수 없습니다.",
-    "Type the current dashboard password to change it.": "변경하려면 현재 대시보드 비밀번호를 입력하세요."
+    "Type the current dashboard password to change it.": "변경하려면 현재 대시보드 비밀번호를 입력하세요.",
+    "your browser blocked this page": "브라우저가 이 페이지를 차단했습니다",
+    "let it reach your PC and try again, or open nocat.farm here.": "PC 접근을 허용하고 다시 시도하거나, 여기서 nocat.farm을 여세요.",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "주소창에서 farm.nocat.lol 옆의 사이트 아이콘을 클릭하고 '로컬 네트워크 액세스'를 '허용'으로 바꾼 뒤 이 페이지를 새로고침하세요.",
+    "let this page reach your PC": "이 페이지의 PC 접근 허용",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "브라우저가 먼저 물어봅니다 - '허용'을 누르세요. 이 페이지가 이 PC의 nocat.farm하고만 통신하게 됩니다.",
+    "find my nocat.farm": "내 nocat.farm 찾기"
   },
   "settings": {
     "BackupToTelegram": {

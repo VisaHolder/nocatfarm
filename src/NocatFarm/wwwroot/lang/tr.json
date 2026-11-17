@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "bu koda bu bilgisayardaki nocat.farm'da izin ver.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Bu web sitesi hacklense bile eşyalarını ya da hesabını alamaz: onlar bilgisayarındaki uygulamada kalır.",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Açık: burada izin verdiğinde https://farm.nocat.lol bu bilgisayardaki bir tarayıcıda bu panoyu açabilir. Asla takas edemez, eşya gönderemez, onaylayamaz, Steam Guard kodlarını göremez ya da hesapların giriş şeklini değiştiremez.",
-    "Type the current dashboard password to change it.": "Değiştirmek için mevcut pano parolasını yaz."
+    "Type the current dashboard password to change it.": "Değiştirmek için mevcut pano parolasını yaz.",
+    "your browser blocked this page": "tarayıcın bu sayfayı engelledi",
+    "let it reach your PC and try again, or open nocat.farm here.": "bilgisayarına erişmesine izin ver ve tekrar dene ya da nocat.farm'ı burada aç.",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "Adres çubuğunda farm.nocat.lol'un yanındaki site simgesine tıkla, Yerel ağ erişimi'ni İzin ver yap ve bu sayfayı yenile.",
+    "let this page reach your PC": "bu sayfanın bilgisayarına erişmesine izin ver",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "tarayıcın önce soracak - İzin ver'e bas. Bu, sayfanın yalnızca bu bilgisayardaki nocat.farm ile konuşmasını sağlar.",
+    "find my nocat.farm": "nocat.farm'ımı bul"
   },
   "settings": {
     "BackupToTelegram": {

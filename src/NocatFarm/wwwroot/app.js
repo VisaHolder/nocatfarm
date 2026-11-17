@@ -8006,6 +8006,13 @@ function farmScreen(why, version) {
   } else if (why === 'off') {
     farmGate({ dot: 'no', title: t("nocat.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),
       primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()], how: [farmSwitchSteps()] });
+  } else if (why === 'blocked') {
+    farmGate({ dot: 'no', title: t('your browser blocked this page'), line: t('let it reach your PC and try again, or open nocat.farm here.'),
+      primary: farmHere(), ghosts: [farmAgain()],
+      how: [t('Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.'), farmOtherBrowser()] });
+  } else if (why === 'ask') {
+    farmGate({ dot: 'wait', title: t('let this page reach your PC'), line: t('your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.'),
+      primary: { label: t('find my nocat.farm'), on: 'farmFind()' }, links: [farmHere()], how: [farmOtherBrowser()] });
   } else if (why === 'old') {
     farmGate({ dot: 'no', title: t('update nocat.farm'), line: tf('this page needs a newer nocat.farm than {0}.', version || '?'),
       primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()],
@@ -8020,8 +8027,31 @@ function farmFetch(url, opts) {
   return fetch(url, o);
 }
 
+/// Chrome and Edge ask before a website may reach this PC (local network access): 'granted', 'prompt' (not asked yet),
+/// 'denied' (Block was pressed), or '' when the browser doesn't say (Firefox, older ones) - then the look itself tells.
+async function farmLnaState() {
+  for (const name of ['local-network-access', 'loopback-network', 'local-network']) {
+    try {
+      const s = await navigator.permissions.query({ name });
+      if (s && s.state) return s.state;
+    } catch { /* this browser doesn't know that name */ }
+  }
+  return '';
+}
+
+/// The person pressed "find my nocat.farm": the browser's question comes now, while they expect it - not out of nowhere.
+let farmAsked = false;
+function farmFind() {
+  farmAsked = true;
+  boot();
+}
+
 /// Is nocat.farm there, does it let this page in, and is it new enough. False when a screen is up instead.
 async function farmConnect() {
+  // Blocked in the browser looks just like a PC with no nocat.farm on it - so it's asked first, and said plainly.
+  const lna = await farmLnaState();
+  if (lna === 'denied') { farmScreen('blocked'); return false; }
+  if (lna === 'prompt' && !farmAsked) { farmScreen('ask'); return false; }
   farmScreen('looking');
   let hello = null;
   try {
@@ -8032,6 +8062,10 @@ async function farmConnect() {
   if (!hello || hello.app !== 'nocat.farm') {
     // Running but not letting this page in (the switch is off, or an older nocat.farm) still answers a look that reads
     // nothing back - and a nocat.farm that isn't running doesn't.
+    // Blocked - or the browser's question closed without an answer (it stays 'prompt'): never 'no app' for those.
+    const after = await farmLnaState();
+    if (after === 'denied') { farmScreen('blocked'); return false; }
+    if (after === 'prompt') { farmAsked = false; farmScreen('ask'); return false; }
     let there = false;
     if (!farmIsSafari()) {
       try { await farmFetch(API_BASE + '/api/ping', { mode: 'no-cors' }); there = true; } catch { there = false; }
@@ -8070,7 +8104,7 @@ async function farmPair() {
     const res = await farmFetch(API_BASE + '/api/farm/pair', { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     r = await res.json();
   } catch { r = null; }
-  if (!r) { farmScreen('missing'); return; }
+  if (!r) { farmScreen((await farmLnaState()) === 'denied' ? 'blocked' : 'missing'); return; }
   if (!r.ok) { farmPairScreen(r.Message || t("That didn't work")); return; }
 
   // A new tab for the app's own dashboard, so this one keeps watching for the answer.

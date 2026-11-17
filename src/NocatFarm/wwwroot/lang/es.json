@@ -3492,7 +3492,13 @@
     "approve this code in nocat.farm on this PC.": "aprueba este código en nocat.farm en este PC.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Aunque esta web fuera hackeada, no podría llevarse tus objetos ni tu cuenta: eso se queda en la app de tu PC.",
     "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Activado: https://farm.nocat.lol puede abrir este panel en un navegador de este PC, una vez que lo apruebes aquí. Nunca puede intercambiar, enviar objetos, confirmar, ver códigos de Steam Guard ni cambiar cómo inician sesión las cuentas.",
-    "Type the current dashboard password to change it.": "Escribe la contraseña actual del panel para cambiarla."
+    "Type the current dashboard password to change it.": "Escribe la contraseña actual del panel para cambiarla.",
+    "your browser blocked this page": "tu navegador bloqueó esta página",
+    "let it reach your PC and try again, or open nocat.farm here.": "deja que acceda a tu PC y vuelve a intentarlo, o abre nocat.farm aquí.",
+    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "En la barra de direcciones, haz clic en el icono junto a farm.nocat.lol, pon Acceso a la red local en Permitir y recarga esta página.",
+    "let this page reach your PC": "deja que esta página acceda a tu PC",
+    "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "tu navegador preguntará primero - pulsa Permitir. Solo deja que esta página hable con nocat.farm en este PC.",
+    "find my nocat.farm": "buscar mi nocat.farm"
   },
   "settings": {
     "BackupToTelegram": {
