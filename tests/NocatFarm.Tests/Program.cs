@@ -40833,6 +40833,17 @@ static class FarmWebChecks {
 					.Select(Path.GetFileName).SequenceEqual(["WebHostFarm.cs"]));
 			File.Delete(NocatFarm.Config.ConfigStore.GlobalPath);
 
+			// ── a brand-new install: the switch on where there's a screen, written into the new file ──
+			NocatFarm.Config.GlobalConfig brandNew = NocatFarm.Config.ConfigStore.LoadGlobal();
+			Check("farm.nocat.lol: a brand-new install starts with it on (on a PC with a screen), written into its first config",
+				brandNew.FarmWebAllowed == NocatFarm.Web.FarmWeb.DefaultForNewInstall && (!OperatingSystem.IsWindows() || brandNew.FarmWebAllowed)
+				&& File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains($"\"FarmWebAllowed\": {(brandNew.FarmWebAllowed ? "true" : "false")}", StringComparison.Ordinal)
+				&& !new NocatFarm.Config.GlobalConfig().FarmWebAllowed);
+			Check("farm.nocat.lol: ...but never in Docker or on a server with no screen - no browser there to open it in",
+				Src("src/NocatFarm/Web/FarmWeb.cs").Contains("public static bool DefaultForNewInstall => Platform.HasDesktop && !Platform.InContainer;", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Config/Configs.cs").Contains("fresh.FarmWebAllowed = Web.FarmWeb.DefaultForNewInstall;", StringComparison.Ordinal));
+			File.Delete(NocatFarm.Config.ConfigStore.GlobalPath);
+
 			var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = true, WebHost = "127.0.0.1", WebPort = port, FarmWebAllowed = false });
 			NocatFarm.Config.Live.Global = mgr.Global;
 			var main = new NocatFarm.Core.Bot("main", new NocatFarm.Config.BotConfig { SteamLogin = "main", Enabled = false, SharedSecret = Convert.ToBase64String(new byte[20]) });
@@ -41193,6 +41204,36 @@ static class FarmWebChecks {
 				before && (await Send("GET", "/api/status", token: token3)).Code == System.Net.HttpStatusCode.Unauthorized
 				&& !File.Exists(Path.Combine(root, "config", "state", "farm-tokens.json")));
 
+			// ── where "open the dashboard" goes: this PC's own for setting up, farm.nocat.lol after ──
+			string local = $"http://127.0.0.1:{port}/";
+			string farmPage = $"https://farm.nocat.lol/?port={port}";
+			PropertyInfo steamId = typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!;
+			PropertyInfo qr = typeof(NocatFarm.Core.Bot).GetProperty("QrChallenge")!;
+			FieldInfo guard = typeof(NocatFarm.Core.Bot).GetField("_guardPrompt", Inst)!;
+			FieldInfo sentAt = typeof(NocatFarm.Web.WebHost).GetField("_farmSentAt", Inst)!;
+			Check("open the dashboard: an account never signed in here yet (setting up) opens this PC's own", web.OpenUrl == local, web.OpenUrl);
+			steamId.SetValue(main, 76561198000000777UL);
+			Check("open the dashboard: once an account is set up it opens farm.nocat.lol, with this dashboard's port", web.OpenUrl == farmPage && web.Url == local, web.OpenUrl);
+			qr.SetValue(main, "https://s.team/q/1/2");
+			Check("open the dashboard: an account waiting on its QR code opens this PC's own", web.OpenUrl == local, web.OpenUrl);
+			qr.SetValue(main, null);
+			guard.SetValue(main, "Steam Guard code for main");
+			Check("open the dashboard: an account waiting on a Steam Guard code opens this PC's own", web.OpenUrl == local, web.OpenUrl);
+			guard.SetValue(main, null);
+			mgr.Global.FarmWebAllowed = false;
+			Check("open the dashboard: with the switch off, always this PC's own - as in 1.9.1; 'dashboard' says nothing more",
+				web.OpenUrl == local && NocatFarm.Commands.FarmDashboardLine(mgr.Global).Length == 0);
+			mgr.Global.FarmWebAllowed = true;
+			Check("open the dashboard: 'dashboard' lists the farm.nocat.lol address too", NocatFarm.Commands.FarmDashboardLine(mgr.Global).Contains($"https://farm.nocat.lol/?port={mgr.Global.WebPort}", StringComparison.Ordinal));
+			sentAt.SetValue(web, DateTime.UtcNow - NocatFarm.Web.FarmWeb.GiveUpAfter - TimeSpan.FromSeconds(5));
+			Check("open the dashboard: opened there a few minutes ago and nothing paired since (no internet, a blocked browser) - this PC's own next time",
+				web.OpenUrl == local, web.OpenUrl);
+			Check("open the dashboard: every opener goes through it - the tray, the window's button, opening on start, a second launch, 'add'",
+				Src("src/NocatFarm/Program.cs").Contains("Commands.DashboardUrl = () => web?.OpenUrl ?? \"\";", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Program.cs").Contains("tray = StartTray(manager, () => web?.OpenUrl ?? \"\");", StringComparison.Ordinal)
+				&& !Src("src/NocatFarm/Program.cs").Contains("OpenBrowser(web.Url)", StringComparison.Ordinal)
+				&& Src("src/NocatFarm/Windows/MainWindow.cs").Contains("string url = Commands.DashboardUrl?.Invoke() is { Length: > 0 } open ? open : _url();", StringComparison.Ordinal));
+
 			// ── switched off again: a paired page can't get in ──
 			asks.GetType().GetMethod("Clear")!.Invoke(asks, null);
 			(string id6, _) = await Ask();
@@ -41204,6 +41245,7 @@ static class FarmWebChecks {
 				token4.Length == 64 && offAgain.Code == System.Net.HttpStatusCode.Forbidden && offAgain.H("Access-Control-Allow-Origin").Length == 0, $"{offAgain.Code}");
 			mgr.Global.FarmWebAllowed = true;
 			Check("farm.nocat.lol: ...and on again, it's still paired", (await Send("GET", "/api/status", token: token4)).Code == System.Net.HttpStatusCode.OK);
+			Check("open the dashboard: with a browser paired, farm.nocat.lol again", web.OpenUrl == farmPage, web.OpenUrl);
 		} finally {
 			if (web != null) {
 				await web.DisposeAsync();
