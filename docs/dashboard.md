@@ -276,6 +276,52 @@ Phone page and say what's still missing.
 
 To turn the dashboard off completely, `set WebEnabled false` and restart. Everything keeps working from the console.
 
+## farm.nocat.lol
+
+**farm.nocat.lol** is this same dashboard, served from a website, so you can bookmark one address. It runs in a
+browser on the PC where nocat.farm runs, and talks straight to nocat.farm at `http://127.0.0.1:7242` (or the port
+you use: `https://farm.nocat.lol/?port=8000` once, and the page remembers it). Nothing goes through nocat.lol.
+
+It's off until you turn on *Let farm.nocat.lol open this dashboard* (Settings → Dashboard & phone, with Show
+advanced). While it's off, the website can't reach nocat.farm at all.
+
+To connect a browser:
+
+1. Open farm.nocat.lol and press **Connect**. The page shows a 6-character code.
+2. nocat.farm's own dashboard on this PC shows a box with the same code, **Approve** and **Deny**. It's also in the
+   log and, if Telegram or Discord is set up, they get a note saying to approve it in the app. There's never an
+   approve button in a message, and farm.nocat.lol can't approve itself.
+3. Check the codes match, and press **Approve**. The page carries on as the dashboard.
+
+A request runs out after 5 minutes. At most 5 wait at once, and only a few can be asked for in a minute. A browser
+stays connected for 90 days. The Phone page lists every connected browser with a **Revoke** button, and **Sign
+every device out** (or `visitors signout`) disconnects them all. So does changing the dashboard password.
+
+What it can do: see everything the dashboard shows, start, stop, pause and resume accounts, every preview, the log,
+the history, and settings and switches that don't spend money.
+
+What it can't do, ever (the page says "in the app on your PC" instead):
+
+- Steam Guard codes, confirmations, and confirming or denying anything
+- trades and sending items, card swaps, buying, selling, crafting, booster packs, Steam Points, spare items, levelling up
+  with money, product keys and free licences
+- adding, removing or disabling an account, privacy, scam watch's "It was me", unlocking achievements
+- updates, add-ons and plugins, backups and restores, importing, closing nocat.farm, answering a sign-in question
+- the dashboard password, *Open from anywhere*, notifications, and any setting that spends money or weakens
+  safety. A money switch can be turned off from there, never on.
+
+If it doesn't connect:
+
+- **nocat.farm isn't running.** The page says so and links to the download. Start it, then reload.
+- **The setting is off.** The page says how to turn it on.
+- **nocat.farm is too old.** It needs 1.9.2 or newer; the page asks you to update.
+- **Safari, or a browser or extension that blocks it.** Safari doesn't let a website talk to your own PC. Open
+  `http://localhost:7242` straight from nocat.farm instead. Chrome may ask once whether the site may reach devices on
+  your network: say yes.
+
+It only works in a browser on the same PC as nocat.farm: not from your phone, and not for nocat.farm in Docker or on
+another machine. For those, use the Phone page above.
+
 <p align="center">
   <img src="../assets/overview.png" alt="The web dashboard" width="880">
 </p>
