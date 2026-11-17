@@ -40702,11 +40702,17 @@ static class FarmWebChecks {
 			"answer 12345", "dashboard unlock", "dashboard anywhere on", "web unlock", "anywhere on", "remote on", "notify link", "steam open main",
 			"set WebPassword hunter2hunter2", "set FarmWebAllowed off", "set WebRemoteAccess on", "set WebHost 0.0.0.0", "set WebPort 8000", "set TelegramBotToken x",
 			"set DiscordOwnerId 1", "set TelegramChatId 1", "set PluginsEnabled on", "set BackupPassword x", "set BackupFolder \\\\evil\\share", "set WebProxy http://x:1",
-			"set WebTrustedProxies 0.0.0.0/0", "set NoSuchSetting 1", "set main", "set main BuyCards on"];
+			"set WebTrustedProxies 0.0.0.0/0", "set NoSuchSetting 1", "set main", "set main BuyCards on",
+			// 1.9.2 review: shutting it down, importing, a file read for keys, words other people see, updates installing by themselves,
+			// scam watch made weaker, and the other words the commands read the same as the refused ones
+			"exit", "quit", "q", "import asf", "import auto C:\\ASF", "import hourboostr %USERPROFILE%\\Downloads force", "redeem C:\\keys.txt", "redeem main D:/keys.txt", "redeem keys.txt",
+			"gamename main free skins at example.com", "name main x", "nickname main x", "spare now main", "gems now main", "anywhere start", "anywhere true", "remote start",
+			"addons uninstall rep4rep", "set UpdateMode 2", "set AutoUpdateFromHour 3", "set AutoUpdateWaitHours 1", "set UpdateCheckHours 1", "set ScamWatchTrustedDevices x",
+			"set DiscordButton1 x", "set DiscordFeatured x", "set SendScamWarnings off", "set NotifyScam off", "set SendBreakIns off", "copy settings a b yes"];
 		Check("farm.nocat.lol: everything that sends items away, signs in, runs code, lifts a scam hold or opens a back door is refused, by any name or prefix",
 			refused.All(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", refused.Where(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 		string[] allowed = [
-			"status", "s", "start main", "stop all", "pause main 30", "resume all", "restart main", "enable main", "disable main", "stuck", "play main 730", "gamename main x",
+			"status", "s", "start main", "stop all", "pause main 30", "resume all", "restart main", "enable main", "disable main", "stuck", "play main 730",
 			"persona main online", "grind main 730 2", "human main week", "wake main", "hours main", "rotation main next", "selfcheck", "cards", "drops main next",
 			"sets", "addmoney main 100", "match", "sell main", "sell main preview", "booster", "booster all", "booster plan all", "booster open all",
 			"booster main 730", "booster open main do", "spare preview all", "spare on main", "spare off main", "gems on main", "craft preview main", "craft now main",
@@ -40715,40 +40721,69 @@ static class FarmWebChecks {
 			"achievements main 730 unlock all", "ach main 730 lock all", "hunt main", "dlc main", "dlc leave main 730", "dlc undo main 730",
 			"freegames", "freeitems all", "queue", "events", "redeem AAAAA-BBBBB-CCCCC", "addlicense main 123", "value refresh", "level", "balance", "bans", "health",
 			"owns 730", "points", "points spend preview all", "points on main", "points spend main", "points off main", "privacy main public", "scamwatch",
-			"config", "config main all", "backup", "backup now", "backup status", "import asf", "log", "log 50", "stats 48", "report week", "plugins", "tutorial",
+			"config", "config main all", "backup", "backup now", "backup status", "log", "log 50", "stats 48", "report week", "plugins", "tutorial",
 			"help trade", "theme dark", "mini on", "clear", "visitors", "visitors signout", "version", "notify", "notify test", "addons", "dashboard", "dashboard cert",
-			"anywhere", "anywhere off", "update", "update versions", "update skip", "fairswap main 1", "reload", "screen off", "exit",
-			"copy settings a b", "copy settings a b yes", "steam", "steam all", "steam on main", "steam off main", "/status", "!pause main",
-			"set SteamOpenEveryAccount on", "set KeepAwake on", "set Language de", "set GlobalBlacklistedGames 730", "set UpdateMode 2", "set ScamWatchTrustedDevices x",
+			"anywhere", "anywhere off", "update", "update versions", "update skip", "fairswap main 1", "reload", "screen off", "import", "redeem main AAAAA-BBBBB-CCCCC",
+			"copy settings a b", "gamename main", "gamename main off", "name main clear", "nickname main", "set DiscordButton1 \"\"", "set SendScamWarnings on", "steam", "steam all", "steam on main", "steam off main", "/status", "!pause main",
+			"set SteamOpenEveryAccount on", "set KeepAwake on", "set Language de", "set GlobalBlacklistedGames 730", "set UpdateReminders off",
 			"set NotifyTrades off", "set BackupAuto on"];
-		Check("farm.nocat.lol: everything else is allowed - controls, previews, buying and crafting within the limits, importing, backups here",
+		Check("farm.nocat.lol: everything else is allowed - controls, previews, buying and crafting within the limits, backups here",
 			allowed.All(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", allowed.Where(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 
 		NocatFarm.Config.SettingDef Bot(string n) => NocatFarm.Config.Settings.FindBot(n)!;
 		NocatFarm.Config.SettingDef Global(string n) => NocatFarm.Config.Settings.FindGlobal(n)!;
 		NocatFarm.Config.SettingDef Any(string n) => NocatFarm.Config.Settings.Find(n)!;
 		string[] money = ["BuyCards", "BuyBooster", "SpareItems", "SpendPoints", "SellSetsForLevels", "CraftBadges", "CraftFoilBadges", "GemsForLevels", "UnlockAchievements",
-			"SteamOpenButton", "WatchForScams", "WatchHealth", "SkipRefundableGames", "Enabled"];
+			"SteamOpenButton", "WatchHealth", "SkipRefundableGames", "Enabled"];
 		Check("farm.nocat.lol: the money and item switches go on and off from there (buying stays inside the limits set here)",
 			money.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && NocatFarm.Web.FarmWeb.SettingAllowed(d, false)),
 			string.Join(", ", money.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || !NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
 		Check("farm.nocat.lol: card swaps only go off from there - they send cards to other people",
 			!NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), true) && NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), false));
+		// 1.9.2 review: scam watch only goes up from there - switched off, a standing hold ends at once (ScamWatch.HoldingTrades).
+		string[] guards = ["WatchForScams", "ScamWatchStopTrades", "ScamWatchCancelOffers", "ScamWatchRevokeKey", "ScamWatchApiKey", "ScamWatchDevices",
+			"ScamWatchDetails", "ScamWatchSessions", "SendScamWarnings", "NotifyScam", "SendBreakIns"];
+		Check("farm.nocat.lol: scam watch and its warnings only go on from there, never off",
+			guards.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
+			string.Join(", ", guards.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
+		Check("farm.nocat.lol: ...and the hold is the setting itself - so off from there would have lifted it",
+			Src("src/NocatFarm/Modules/ScamWatch.cs").Contains("public bool HoldingTrades => Bot.Cfg.ScamWatchStopTrades && (Hits.Count > 0);", StringComparison.Ordinal));
+		string[] published = ["AutoReply", "CustomGameName", "DiscordFeatured", "DiscordButton1", "DiscordButton2"];
+		Check("farm.nocat.lol: words other people see are only emptied from there - never a new one (a phishing link to every friend)",
+			published.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "") && NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "  ")
+				&& !NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "free skins at example.com") && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
+			string.Join(", ", published.Where(n => Any(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "x"))));
+		Check("farm.nocat.lol: ...their on/off switches stay open - on, they show what was typed here",
+			NocatFarm.Web.FarmWeb.SettingAllowed(Bot("AutoReplyEnabled"), true) && NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CustomGameNameEnabled"), true)
+			&& NocatFarm.Web.FarmWeb.SettingAllowed(Global("DiscordPresence"), false));
+		// A copy carries values set here: it goes ahead from there only when each change is one allowed from there.
+		var copyFrom = new NocatFarm.Config.BotConfig { ScamWatchStopTrades = false, BuyDailyLimit = 999, AutoReply = "hi" };
+		var copyTo = new NocatFarm.Config.BotConfig();
+		var plainFrom = new NocatFarm.Config.BotConfig { IdleGames = [730], HoursUntilCardDrops = 3 };
+		Check("farm.nocat.lol: a copy that would weaken scam watch or bring words others see is refused from there; an everyday one isn't",
+			!NocatFarm.Web.FarmWeb.CopyChangesAllowed(NocatFarm.Core.SettingsCopy.Build(copyFrom, copyTo, "to", 0))
+			&& NocatFarm.Web.FarmWeb.CopyChangesAllowed(NocatFarm.Core.SettingsCopy.Build(plainFrom, copyTo, "to", 0))
+			&& NocatFarm.Core.SettingsCopy.Build(plainFrom, copyTo, "to", 0).Changes.Count > 0
+			&& Src("src/NocatFarm/Web/WebHostSettingsCopy.cs").Contains("SettingsCopy.Copy(source, to, IsFarm(ctx) ?", StringComparison.Ordinal));
+		Check("farm.nocat.lol: the hosted page never offers an import - it says to do it in the app",
+			Src("src/NocatFarm/wwwroot/app.js").Contains("if (!HOSTED) $('settingsNavBots').insertAdjacentHTML", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/wwwroot/app.js").Contains("importing adds accounts and their trade rules - only in the app's own dashboard", StringComparison.Ordinal));
 		string[] closed = ["BuyDailyLimit", "BuyWeeklyLimit", "BuyMaxLevelPrice", "BuyKeepInWallet", "PointsWeeklyCap", "PointsKeepAtLeast", "SpareMaxPrice", "SpareDailyValue",
 			"CardSwapMaxLoss", "TradeMasters", "AutoTradeWith", "TradeMasterToken", "SendItemTypes", "SendOnFarmingFinished", "BoosterSendTo", "SpareGemsSendTo",
 			"AcceptFairCardSwaps", "AddonTrades", "AddonTradesConfirm", "CommandMasters", "SteamLogin", "SignInWithQr", "AccountProxy", "WebProxy", "DiscordOwnerId",
 			"TelegramChatId", "WebEnabled", "WebHost", "WebPort", "WebRemoteAccess", "WebPublicAddress", "WebTrustedProxies", "WebSignInCode", "WebRemoteOffAfter",
-			"FarmWebAllowed", "PluginsEnabled", "BackupFolder"];
+			"FarmWebAllowed", "PluginsEnabled", "BackupFolder", "UpdateMode", "AutoUpdateFromHour", "AutoUpdateUntilHour", "AutoUpdateWaitHours", "UpdateCheckHours",
+			"ScamWatchMinMinutes", "ScamWatchMaxMinutes", "ScamWatchTrustedDevices"];
 		Check("farm.nocat.lol: the money limits, where items go and who may trade or take them, the sign-in, the bots' owners and the way in are never changed from there",
 			closed.All(n => Any(n) is { } d && !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
 			string.Join(", ", closed.Where(n => Any(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null) || NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
 		Check("farm.nocat.lol: every secret is closed, by its kind",
 			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Where(static d => d.Kind == NocatFarm.Config.SettingKind.Secret)
 				.All(static d => NocatFarm.Web.FarmWeb.WayOf(d) == NocatFarm.Web.FarmWeb.SettingWay.Closed));
-		Check("farm.nocat.lol: everyday settings are open - human mode, what it plays, cards, notifications on or off, the update mode, backups, the language",
+		Check("farm.nocat.lol: everyday settings are open - human mode, what it plays, cards, notifications on or off, update reminders, backups, the language",
 			new[] { "LegitMode", "IdleGames", "FarmCards", "BedTime", "Notes", "OnlineStatus", "BoosterMake", "SpareAction", "AchievementBoost", "IUseThisAccount" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), true))
-			&& new[] { "Language", "KeepAwake", "NotifyTrades", "SendTrades", "TelegramCommands", "UpdateMode", "BackupAuto", "OpenBrowserOnStart", "ScamWatchTrustedDevices" }
+			&& new[] { "Language", "KeepAwake", "NotifyTrades", "SendTrades", "TelegramCommands", "UpdateReminders", "BackupAuto", "OpenBrowserOnStart" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), true)));
 		var sorted = typeof(NocatFarm.Web.FarmWeb).GetMethod("Sorted", BindingFlags.NonPublic | BindingFlags.Static)!;
 		Check("farm.nocat.lol: every settings section is sorted into a list - a new section starts closed",
@@ -41038,12 +41073,12 @@ static class FarmWebChecks {
 			string[] mustRefuse = ["POST /api/auth/{name}/confirmations", "POST /api/update", "POST /api/addons/install", "POST /api/addons/remove", "POST /api/plugins/toggle",
 				"POST /api/plugins/press", "POST /api/plugins/setting", "POST /api/restore/apply", "POST /api/prompt", "POST /api/bots", "DELETE /api/bots/{name}",
 				"GET /api/bots/{name}/steam-open", "POST /api/bots/{name}/steam-open", "GET /api/bots/{name}/qr.svg", "POST /api/farm/answer", "POST /api/backup",
-				"POST /api/discord/connect", "POST /api/phone/firewall", "POST /api/phone/restart", "POST /api/login"];
-			string[] mustAllow = ["POST /api/import/apply", "GET /api/import/scan", "POST /api/backups/now", "POST /api/bots/{name}/achievements/unlock-all",
+				"POST /api/discord/connect", "POST /api/phone/firewall", "POST /api/phone/restart", "POST /api/login", "POST /api/import/apply"];
+			string[] mustAllow = ["GET /api/import/scan", "GET /api/import/tools", "GET /api/import/pending", "POST /api/import/pending/clear", "POST /api/backups/now", "POST /api/bots/{name}/achievements/unlock-all",
 				"POST /api/bots/{name}/copy-settings", "POST /api/steam-open/everyone"];
-			Check("farm.nocat.lol: importing, backups here, unlocking achievements, copying settings and the Open in Steam buttons work from there",
+			Check("farm.nocat.lol: looking at what could be imported, backups here, unlocking achievements, copying settings and the Open in Steam buttons work from there",
 				mustAllow.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Allowed));
-			Check("farm.nocat.lol: confirmations, updates, add-ons, plugins, restore, a sign-in answer, adding and removing accounts, Steam Guard codes, QR, approving, the backup zip and the back doors are in the refused list",
+			Check("farm.nocat.lol: confirmations, updates, add-ons, plugins, restore, a sign-in answer, adding and removing accounts, importing, Steam Guard codes, QR, approving, the backup zip and the back doors are in the refused list",
 				mustRefuse.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Refused));
 
 			foreach ((string key, NocatFarm.Web.FarmWeb.Access access) in NocatFarm.Web.FarmWeb.Routes.Where(static kv => kv.Value == NocatFarm.Web.FarmWeb.Access.Refused)) {
@@ -41090,6 +41125,34 @@ static class FarmWebChecks {
 			Check("farm.nocat.lol: a money switch goes on and off from there (Spare items); card swaps never on",
 				swapsOn.Code == System.Net.HttpStatusCode.Forbidden && !main.Cfg.CardSwaps && spareOn.Code == System.Net.HttpStatusCode.OK && spareWasOn
 				&& spareOff.Code == System.Net.HttpStatusCode.OK && !main.Cfg.SpareItems, $"{swapsOn.Code} {spareOn.Code} {spareOff.Code}");
+			// 1.9.2 review: a field named twice - in another case, or exactly - is refused whole. Before, the check read the first
+			// "feature"/"on" it found in any case and the endpoint read "Feature"/"On" exactly, so card swaps could be turned on.
+			string[] twice = ["{\"feature\":\"SpareItems\",\"Feature\":\"CardSwaps\",\"On\":true}", "{\"Feature\":\"CardSwaps\",\"on\":false,\"On\":true}",
+				"{\"Feature\":\"SpareItems\",\"Feature\":\"CardSwaps\",\"On\":true}", "{\"Feature\":\"CardSwaps\",\"On\":false,\"On\":true}"];
+			List<string> twiceThrough = [];
+			foreach (string body in twice) {
+				Answer a = await Send("POST", "/api/bots/main/switch", token: token, json: body);
+				if ((a.Code != System.Net.HttpStatusCode.BadRequest) || ((bool?) a.Json?["ok"] != false) || main.Cfg.CardSwaps) twiceThrough.Add($"{body}: {a.Code} {main.Cfg.CardSwaps}");
+			}
+			Answer lineTwice = await Send("POST", "/api/command", token: token, json: "{\"Line\":\"status\",\"line\":\"exit\"}");
+			Answer junkBody = await Send("POST", "/api/config", token: token, json: "{\"KeepAwake\":");
+			Answer bigBody = await Send("POST", "/api/bots/main/config", token: token, json: "{\"Notes\":\"" + new string('x', 2 * 1024 * 1024) + "\"}");
+			Check("farm.nocat.lol: a body naming a field twice, in any case, is refused whole - card swaps stay off",
+				twiceThrough.Count == 0 && lineTwice.Code == System.Net.HttpStatusCode.BadRequest, string.Join("; ", twiceThrough) + $" {lineTwice.Code}");
+			Check("farm.nocat.lol: a body that isn't JSON, or is too big, gets a refusal the page can read - never a bare 500",
+				junkBody.Code == System.Net.HttpStatusCode.BadRequest && (bool?) junkBody.Json?["ok"] == false && bigBody.Code == System.Net.HttpStatusCode.BadRequest
+				&& main.Cfg.Notes != new string('x', 2 * 1024 * 1024), $"{junkBody.Code} {bigBody.Code}");
+			main.Cfg.ScamWatchStopTrades = true;
+			bool guardOff = (await Send("POST", "/api/bots/main/config", token: token, json: "{\"ScamWatchStopTrades\":false}")).Code == System.Net.HttpStatusCode.OK;
+			bool guardCmd = (await Cmd("set main ScamWatchStopTrades off")).Code == System.Net.HttpStatusCode.OK;
+			bool exitCmd = (await Cmd("exit")).Code == System.Net.HttpStatusCode.OK;
+			bool importCmd = (await Cmd("import asf C:\\nowhere")).Code == System.Net.HttpStatusCode.OK;
+			main.Cfg.AutoReply = "typed here";
+			bool replyNew = (await Send("POST", "/api/bots/main/config", token: token, json: "{\"AutoReply\":\"free skins at example.com\"}")).Code == System.Net.HttpStatusCode.OK;
+			bool replyCleared = (await Send("POST", "/api/bots/main/config", token: token, json: "{\"AutoReply\":\"\"}")).Code == System.Net.HttpStatusCode.OK;
+			Check("farm.nocat.lol: from there scam watch isn't switched off (by a save or by 'set'), the app isn't shut down, nothing is imported, and an auto-reply is only emptied",
+				!guardOff && !guardCmd && main.Cfg.ScamWatchStopTrades && !exitCmd && !importCmd && !replyNew && replyCleared && main.Cfg.AutoReply.Length == 0,
+				$"{guardOff} {guardCmd} {exitCmd} {importCmd} {replyNew} {replyCleared} [{main.Cfg.AutoReply}]");
 
 			async Task<bool> BotSave(string json) => (await Send("POST", "/api/bots/main/config", token: token, json: json)).Code == System.Net.HttpStatusCode.OK;
 			bool notes = await BotSave("{\"Notes\":\"from farm\"}");
@@ -41119,7 +41182,7 @@ static class FarmWebChecks {
 			var spending = new NocatFarm.Config.BotConfig { BuyCards = true, SpendPoints = true };
 			Check("farm.nocat.lol: a settings save is judged by what it changes - the page's Base, the empty secret boxes and the rest left as they are",
 				GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"\",\"Base\":{\"KeepAwake\":false}}") && !GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"x\"}")
-				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && GlobalOk("{\"SteamOpenEveryAccount\":true}") && GlobalOk("{\"UpdateMode\":2}")
+				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && GlobalOk("{\"SteamOpenEveryAccount\":true}") && !GlobalOk("{\"UpdateMode\":2}")
 				&& BotOk(spending, "{\"BuyCards\":false,\"SpendPoints\":false}") && BotOk(new NocatFarm.Config.BotConfig(), "{\"BuyCards\":true}")
 				&& !BotOk(spending, "{\"BuyWeeklyLimit\":1000}")
 				&& !BotOk(new NocatFarm.Config.BotConfig(), "{\"PointsOk\":true}"));

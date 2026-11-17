@@ -1612,6 +1612,11 @@ function impReset(tutorial) {
 
 /// The standalone dialog: from the Accounts page, Settings, the welcome banner, or the installer's "coming from".
 async function openImport(tool, path) {
+  // 1.9.2: importing adds accounts and their trade rules - only in the app's own dashboard, never from farm.nocat.lol.
+  if (HOSTED) {
+    modal(`<h2>${esc(t('Import from another idler'))}</h2><p class="muted">${esc(t('Do this in the app\'s own dashboard on your PC - farm.nocat.lol can\'t.'))}</p>`);
+    return;
+  }
   impReset(false);
   modal(`<h2>${esc(t('Import from another idler'))}</h2><p class="muted">${esc(t('Looking…'))}</p>`);
   if (tool) await impScan(tool, path); else await impLoadTools();
@@ -4918,8 +4923,9 @@ function renderSettings() {
     ? Object.keys(config.Bots).map((n) =>
         `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" role="button" tabindex="0" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
     : `<p class="muted small">${esc(t('No accounts yet.'))}</p>`;
-  // Accounts and their settings from another idler, straight from where the accounts are listed.
-  $('settingsNavBots').insertAdjacentHTML('beforeend',
+  // Accounts and their settings from another idler, straight from where the accounts are listed. Not at farm.nocat.lol:
+  // importing is only done in the app's own dashboard (openImport says so if it's reached another way).
+  if (!HOSTED) $('settingsNavBots').insertAdjacentHTML('beforeend',
     `<div class="s muted" role="button" tabindex="0" onclick="openImport()">+ ${esc(t('Import from another idler'))}</div>`);
 
   $('settingsNavJump').innerHTML = jump;
@@ -8072,6 +8078,8 @@ async function farmPair() {
     primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true },
     how: [t("In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.")] });
 
+  // Never past the code's own life (and a little): with nocat.farm gone mid-way, it used to ask every 2 seconds for good.
+  const deadline = Date.now() + ((Number(r.Seconds) || 300) + 15) * 1000;
   const poll = async () => {
     let p = null;
     try {
@@ -8086,7 +8094,7 @@ async function farmPair() {
       return;
     }
     if (p && p.State === 'denied') { farmPairScreen(t('It was turned down in nocat.farm.')); return; }
-    if (p && p.State === 'expired') { farmPairScreen(t('That code ran out. Press Connect for a new one.')); return; }
+    if ((p && p.State === 'expired') || (Date.now() > deadline)) { farmPairScreen(t('That code ran out. Press Connect for a new one.')); return; }
     farmPolling = setTimeout(poll, 2000);
   };
   farmPolling = setTimeout(poll, 2000);

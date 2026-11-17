@@ -2932,7 +2932,7 @@ public static partial class Commands {
 	}
 
 	/// <summary>A path rather than a key - keys have no dots, slashes or backslashes in them.</summary>
-	private static bool LooksLikePath(string text) =>
+	internal static bool LooksLikePath(string text) =>
 		text.Contains('/', StringComparison.Ordinal)
 		|| text.Contains('\\', StringComparison.Ordinal)
 		|| text.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);

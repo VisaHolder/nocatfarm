@@ -310,8 +310,7 @@ every device out** (or `visitors signout`) disconnects them all. So does changin
 
 What it can do: nearly everything the dashboard here does. That covers starting and stopping accounts, every
 preview and setting, human mode, buying cards, crafting, booster packs, Steam Points and spare-item switches (all
-inside the money limits you set here), importing from another idler, backups to the backups folder, and setting a
-dashboard password.
+inside the money limits you set here), backups to the backups folder, and setting a dashboard password.
 
 What it can't do, ever (the page says "in the app on your PC" instead). Even if the website itself were hacked, it
 couldn't take your items or your account:
@@ -321,8 +320,14 @@ couldn't take your items or your account:
 - **The money limits:** how much may be spent a day or a week, price ceilings, what's always kept
 - **The sign-in:** adding or removing an account, the Steam login and password, Steam Guard codes (never even shown),
   QR sign-in, authenticator secrets, answering a sign-in question, Open in Steam, product keys waiting
-- **Running code:** installing updates, add-ons and plugins, restoring a backup, downloading the backup zip
-- **Scam watch:** "It was me"
+- **Running code:** installing updates, how and when updates install by themselves, add-ons and plugins, restoring a
+  backup, downloading the backup zip
+- **Importing** from another idler: it adds accounts and brings who may trade with them and command them
+- **Scam watch:** "It was me", switching scam watch or its warnings off, looking less often, and trusted devices.
+  Switching them on works
+- **Words other people see:** the auto-reply, the custom game name, the profile name, and the Discord profile's line
+  and buttons. Emptying them, and their on/off switches, work
+- **Shutting nocat.farm down** (`exit`), and redeeming keys from a file (typed keys work)
 - **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
   address, port, *Open from anywhere*, trusted proxies, the firewall, and removing the dashboard password. Changing an
   existing password takes the current one, and then every browser has to sign in or pair again.

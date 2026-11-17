@@ -244,7 +244,8 @@ public static class SettingsCopy {
 	/// what changes is written onto the settings it runs on (as a dashboard save does), its switches with a go-ahead off and
 	/// their go-aheads cleared, saved, and the changes put into effect. The source isn't changed. Error set: nothing changed.
 	/// </summary>
-	public static Done Copy(Bot from, Bot to) {
+	/// <param name="allowed">1.9.2: from farm.nocat.lol, whether each change may be made from there - one that may not, and nothing is copied.</param>
+	public static Done Copy(Bot from, Bot to, Func<SettingDef, object?, bool>? allowed = null) {
 		if (from == to) {
 			return new Done(Refused("Pick two different accounts."), false);
 		}
@@ -272,6 +273,10 @@ public static class SettingsCopy {
 			Switches.Settle(plan.Result, to.Name);
 
 			changed = [.. Settings.Bot.Where(d => Settings.Show(plan.Result, d) != Settings.Show(current, d))];
+
+			if ((allowed != null) && !changed.All(d => allowed(d, Settings.Read(plan.Result, d.Name)))) {
+				return new Done(Refused(Web.FarmWeb.InAppOnly.ToString()), false);
+			}
 
 			foreach (SettingDef def in changed) {
 				Set(to.Cfg, def.Name, Settings.Read(plan.Result, def.Name));

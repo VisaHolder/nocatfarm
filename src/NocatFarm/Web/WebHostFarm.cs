@@ -147,6 +147,16 @@ public sealed partial class WebHost {
 		string key = $"{request.Method.ToUpperInvariant()} {endpoint.RoutePattern.RawText}";
 		FarmWeb.Access access = FarmWeb.RouteAccess(request.Method, endpoint.RoutePattern.RawText ?? "");
 
+		// What was sent, read once, whatever the route: a body that isn't JSON, is too big, or names a field twice (in any
+		// case) is refused before anything reads it - the check and the endpoint can't then each read a different one.
+		(bool readable, JsonObject? sent) = await FarmBodyAsync(ctx).ConfigureAwait(false);
+
+		if (!readable) {
+			await FarmAnswerAsync(ctx, StatusCodes.Status400BadRequest, "bad-request", FarmWeb.InAppOnly).ConfigureAwait(false);
+
+			return true;
+		}
+
 		if (access == FarmWeb.Access.Open) {
 			ctx.Items[FarmKey] = FarmAnon;
 
@@ -161,7 +171,7 @@ public sealed partial class WebHost {
 
 		ctx.Items[FarmKey] = session;
 
-		if ((access == FarmWeb.Access.Refused) || ((access == FarmWeb.Access.Checked) && !await FarmBodyAllowedAsync(ctx, key).ConfigureAwait(false))) {
+		if ((access == FarmWeb.Access.Refused) || ((access == FarmWeb.Access.Checked) && !FarmBodyAllowed(ctx, key, sent))) {
 			await FarmAnswerAsync(ctx, StatusCodes.Status403Forbidden, "in-app", FarmWeb.InAppOnly).ConfigureAwait(false);
 
 			return true;
@@ -190,41 +200,104 @@ public sealed partial class WebHost {
 	/// What a <see cref="FarmWeb.Access.Checked"/> route was sent: the command line, the settings it changes, the switch it
 	/// flips. Read and put back, so the endpoint reads it as it came.
 	/// </summary>
-	private async Task<bool> FarmBodyAllowedAsync(HttpContext ctx, string key) {
-		ctx.Request.EnableBuffering();
-		JsonObject? sent;
-
-		try {
-			sent = await JsonNode.ParseAsync(ctx.Request.Body, cancellationToken: ctx.RequestAborted).ConfigureAwait(false) as JsonObject;
-		} catch (JsonException) {
-			sent = null;
-		} finally {
-			ctx.Request.Body.Position = 0;
-		}
-
+	private bool FarmBodyAllowed(HttpContext ctx, string key, JsonObject? sent) {
 		// What can't be read is refused here: the endpoint would only have answered "bad request" anyway.
 		if (sent == null) {
 			return false;
 		}
 
-		switch (key) {
-			case "POST /api/command":
-				return FarmWeb.CommandAllowed(_mgr, Field(sent, "Line"));
-			case "POST /api/bots/{name}/switch":
-				// Every switch, on or off - but card swaps only off: they send cards to other people.
-				return !(Switches.FeatureOf(Field(sent, "Feature")) is { } feature && (feature == nameof(BotConfig.CardSwaps))
-					&& Field(sent, "On").Equals("true", StringComparison.OrdinalIgnoreCase));
-			case "POST /api/config":
-				return FarmPasswordAllowed(ctx, sent) is { } rest && FarmSettingsAllowed(_mgr.Global, Settings.Global, rest, JsonOptionsOf(ctx), global: true);
-			case "POST /api/bots/{name}/config":
-				return (ctx.GetRouteValue("name") is string name) && (_mgr.Get(name) is { } bot) && FarmSettingsAllowed(bot.Cfg, Settings.Bot, sent, JsonOptionsOf(ctx), global: false);
-			default:
-				return false;
+		try {
+			switch (key) {
+				case "POST /api/command":
+					// The endpoint reads it into CommandRequest, names in any case - and no name comes twice (FarmBodyAsync).
+					return FarmWeb.CommandAllowed(_mgr, Field(sent, "Line"));
+				case "POST /api/bots/{name}/switch": {
+					// Exactly as the endpoint reads them. Every switch, on or off - but card swaps only off: they send cards to
+					// other people.
+					string? feature = Switches.FeatureOf(sent["Feature"]?.ToString() ?? "");
+					bool on = (sent["On"] is JsonValue value) && value.TryGetValue(out bool b) && b;
+
+					return !((feature == nameof(BotConfig.CardSwaps)) && on);
+				}
+				case "POST /api/config":
+					return FarmPasswordAllowed(ctx, sent) is { } rest && FarmSettingsAllowed(_mgr.Global, Settings.Global, rest, JsonOptionsOf(ctx), global: true);
+				case "POST /api/bots/{name}/config":
+					return (ctx.GetRouteValue("name") is string name) && (_mgr.Get(name) is { } bot) && FarmSettingsAllowed(bot.Cfg, Settings.Bot, sent, JsonOptionsOf(ctx), global: false);
+				default:
+					return false;
+			}
+		} catch (Exception) {
+			// Never a bare 500 from here: whatever the check can't work out is refused.
+			return false;
 		}
 
-		// As the endpoint reads it: names in any case.
 		static string Field(JsonObject o, string name) =>
 			o.FirstOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value?.ToString() ?? "";
+	}
+
+	/// <summary>The most a request from farm.nocat.lol may send: a whole settings save is a few tens of KB.</summary>
+	internal const long FarmMaxBody = 1024 * 1024;
+
+	/// <summary>
+	/// A request's body from farm.nocat.lol, read once and put back for the endpoint. Readable: nothing sent, or one JSON value
+	/// no bigger than <see cref="FarmMaxBody"/> in which no object names a field twice - exactly or in another case. The
+	/// endpoints read names in any case, some the first and some the last: a name sent twice could pass the check as one
+	/// value and reach the endpoint as the other. The object, when it is one.
+	/// </summary>
+	private static async Task<(bool Readable, JsonObject? Sent)> FarmBodyAsync(HttpContext ctx) {
+		HttpRequest request = ctx.Request;
+
+		if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method) || (request.ContentLength == 0)) {
+			return (true, null);
+		}
+
+		if (request.ContentLength > FarmMaxBody) {
+			return (false, null);
+		}
+
+		if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit) {
+			limit.MaxRequestBodySize = FarmMaxBody;
+		}
+
+		request.EnableBuffering(bufferThreshold: 64 * 1024, bufferLimit: FarmMaxBody);
+
+		try {
+			using MemoryStream copy = new();
+			await request.Body.CopyToAsync(copy, ctx.RequestAborted).ConfigureAwait(false);
+
+			if (copy.Length == 0) {
+				return (true, null);
+			}
+
+			JsonNode? node = JsonNode.Parse(copy.ToArray());
+
+			return OnceEach(node) ? (true, node as JsonObject) : (false, null);
+		} catch (Exception e) when (e is not OperationCanceledException) {
+			// Not JSON, too big, or a name twice exactly (the parser throws on that one itself).
+			return (false, null);
+		} finally {
+			request.Body.Position = 0;
+		}
+
+		static bool OnceEach(JsonNode? node) {
+			switch (node) {
+				case JsonObject o: {
+					HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+
+					foreach ((string name, JsonNode? value) in o) {
+						if (!seen.Add(name) || !OnceEach(value)) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+				case JsonArray a:
+					return a.All(OnceEach);
+				default:
+					return true;
+			}
+		}
 	}
 
 	/// <summary>
@@ -313,7 +386,7 @@ public sealed partial class WebHost {
 				return false;
 			}
 
-			if (!FarmWeb.SettingAllowed(def, after as bool?)) {
+			if (!FarmWeb.ChangeAllowed(def, after)) {
 				return false;
 			}
 		}
