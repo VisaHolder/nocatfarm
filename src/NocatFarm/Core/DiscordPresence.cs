@@ -33,7 +33,7 @@ public static class DiscordPresence {
 
 	/// <summary>The logo with the n filling up with purple, as a GIF - Discord plays GIFs from a web address, not from the
 	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is wwwroot/logo-liquid.gif.</summary>
-	private const string AnimatedLogo = "https://nocat.lol/nocatfarm/logo.gif";
+	private const string AnimatedLogo = "https://nocat.lol/farm/logo.gif";
 
 	private static BotManager? _mgr;
 	/// <summary>The connection: a named pipe on Windows, a unix socket elsewhere. Both speak the same frames.</summary>

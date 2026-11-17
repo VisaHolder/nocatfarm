@@ -40,7 +40,7 @@ Check 'choices saved' (($cfg.WebPort -eq 7289) -and $cfg.StartWithWindows -and $
 $r = (Get-ItemProperty $run -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
 Check 'starts with Windows right away (no first launch needed)' ($r -like "*$inst\nocatFarm.exe*") $r
 $k = Get-ItemProperty $key -ErrorAction SilentlyContinue
-Check 'listed in Settings > Apps' (($k.DisplayName -eq 'nocat.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://nocat.lol/nocatfarm')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
+Check 'listed in Settings > Apps' (($k.DisplayName -eq 'nocat.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://nocat.lol/farm')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
 $vi = (Get-Item "$inst\nocatFarm.exe").VersionInfo
 Check 'Task Manager and the firewall prompt say nocat.farm by reap.' (($vi.FileDescription -eq 'nocat.farm') -and ($vi.ProductName -eq 'nocat.farm') -and ($vi.CompanyName -eq 'reap.')) "$($vi.FileDescription) / $($vi.ProductName) / $($vi.CompanyName)"
 Check 'Start menu shortcut' (Test-Path $startMenu)

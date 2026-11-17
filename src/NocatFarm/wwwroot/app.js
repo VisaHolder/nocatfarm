@@ -8001,7 +8001,7 @@ function farmScreen(why, version) {
       primary: farmHere(), ghosts: [farmAgain()], how: [farmOtherBrowser()] });
   } else if (why === 'missing') {
     farmGate({ dot: 'no', title: t('no app on this PC'), line: t('nocat.farm is a free Steam card farmer that runs on your own PC.'),
-      primary: { label: t('get nocat.farm'), href: 'https://nocat.lol/nocatfarm' }, ghosts: [farmAgain(), farmHere()],
+      primary: { label: t('get nocat.farm'), href: 'https://nocat.lol/farm' }, ghosts: [farmAgain(), farmHere()],
       how: [t('Start nocat.farm on this PC, then reload this page.'), farmSwitchSteps(), farmOtherBrowser()] });
   } else if (why === 'off') {
     farmGate({ dot: 'no', title: t("nocat.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),

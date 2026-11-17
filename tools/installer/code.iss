@@ -3,7 +3,7 @@
 [Code]
 const
   UrlGitHub = 'https://github.com/VisaHolder/nocatfarm';
-  UrlSite = 'https://nocat.lol/nocatfarm';
+  UrlSite = 'https://nocat.lol/farm';
   UrlMaker = 'https://nocat.lol';
   DefaultPort = 7242;
 
