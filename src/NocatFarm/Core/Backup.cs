@@ -493,7 +493,7 @@ public static partial class Backup {
 		HashSet<string> restored = new(contents.Select(static c => c.Rel), StringComparer.OrdinalIgnoreCase);
 
 		// The history coming back is the install's that made the backup: it never goes in this install's one-time catch-up
-		// of the hours from before (nocat.lol would count it twice). Settled before the first history file lands.
+		// of the hours from before (gamer.mom would count it twice). Settled before the first history file lands.
 		if (contents.Any(static c => Kind(c.Rel) == "history")) {
 			FarmTotals.Restoring(DateTime.UtcNow);
 		}

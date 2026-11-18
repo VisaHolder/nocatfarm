@@ -16,14 +16,14 @@
 
 <p align="center">
   <a href="https://github.com/VisaHolder/nocatfarm/releases/latest"><b>Download</b></a> ·
-  <a href="https://nocat.lol/farm/docs">Guide</a> ·
-  <a href="https://nocat.lol/farm/commands">Commands</a>
+  <a href="https://gamer.mom/docs">Guide</a> ·
+  <a href="https://gamer.mom/commands">Commands</a>
 </p>
 
 ## Download and install
 
 Get it from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest), or from
-[nocat.lol/farm](https://nocat.lol/farm). It runs on Windows, Mac and Linux, and in Docker. Nothing else
+[gamer.mom](https://gamer.mom). It runs on Windows, Mac and Linux, and in Docker. Nothing else
 needs installing first, not even .NET.
 
 <p align="center">
@@ -69,11 +69,11 @@ It starts farming cards straight away. Both Windows versions are the same app, a
 *Updates* to *install when I click, once everyone's asleep* and it holds the install until nobody's playing, or to *install by itself at night* for
 no click at all. `update now` always installs straight
 away. The Linux and Mac zips update themselves the same way, also as a Linux service with the unit in the zip. In
-Docker you update by hand; see [Linux, Mac and Docker](https://nocat.lol/farm/docs#linux-mac-and-docker).
+Docker you update by hand; see [Linux, Mac and Docker](https://gamer.mom/docs#linux-mac-and-docker).
 
 **A Mac, Linux or a server?** There are Mac zips (Apple Silicon and Intel: unzip, double-click `start.command`), a
 Linux zip for x64 and arm64 (Raspberry Pi), and a Dockerfile with an example compose file. You get the console and
-the web dashboard, no window. See [Linux, Mac and Docker](https://nocat.lol/farm/docs#linux-mac-and-docker).
+the web dashboard, no window. See [Linux, Mac and Docker](https://gamer.mom/docs#linux-mac-and-docker).
 
 ## What it does
 
@@ -95,7 +95,7 @@ Beyond that:
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
 - Card swaps with other nocat.farm users (off until you turn them on, per account): spare normal cards swapped one
-  for one with other people's accounts, paired by nocat.lol, checked by both sides, never a card your sets need.
+  for one with other people's accounts, paired by gamer.mom, checked by both sides, never a card your sets need.
 - For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
   and market listings to confirm or deny, like the Steam app.
 - A new VAC, game, trade or community ban is reported straight away, and that game's items are kept out of trades.
@@ -212,7 +212,7 @@ windows (off by default), and the arrow brings the full window back.
 ## The commands you'll actually use
 
 Type these in the app window or the dashboard's Console tab. You can also send them to an account in Steam chat;
-[the guide](https://nocat.lol/farm/docs#commands-by-steam-chat) shows how.
+[the guide](https://gamer.mom/docs#commands-by-steam-chat) shows how.
 
 | Command | What it does |
 |---|---|
@@ -236,7 +236,7 @@ Type these in the app window or the dashboard's Console tab. You can also send t
 | `update accept` | Install the newest version (`update now` skips any waiting, `update skip` skips that version). |
 | `help` | Every command. `help <anything>` explains one command or setting; `help rot` lists everything starting with "rot". |
 
-[Every command](https://nocat.lol/farm/commands) is in one list. In the app, `help` shows the same list.
+[Every command](https://gamer.mom/commands) is in one list. In the app, `help` shows the same list.
 
 ## Human mode
 
@@ -260,10 +260,10 @@ It talks to Steam, and to GitHub every 2 hours to see if there's a new version (
 off). Discord, Telegram, add-ons like rep4rep and SteamSpy (game lengths for achievements) only come into it if you
 turn them on, and *Open from anywhere* only talks to your router if you turn it on.
 
-Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
+Once an hour it tells gamer.mom it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
 also carries a few numbers, the game-hours banked, the cards dropped, and the items turned into gems, badges crafted,
-packs opened and items sold, for the totals on nocat.lol's nocat.farm page (*Share my farming totals* turns just that
+packs opened and items sold, for the totals on gamer.mom's nocat.farm page (*Share my farming totals* turns just that
 off). While an account buys the cheapest full sets, about every 6 hours it also shares the cheapest card sets it found
 on the market - market prices only - and takes back the ones other copies found (*Share cheapest sets with other
 nocat.farm users* turns just that off). *Count me as a user* turns it all off.
@@ -296,7 +296,7 @@ Steam Game Idler and steam-idler can all be brought over. Pick yours under *swit
 first-run walkthrough find it, or use **Import from another idler** on the Accounts page any time. It shows what it
 found before writing anything, you pick human or robot for each account, and the other program's files are never
 changed. From ASF the logins and authenticators come across too, so no passwords are needed. More in
-[the guide](https://nocat.lol/farm/docs#coming-from-another-idler).
+[the guide](https://gamer.mom/docs#coming-from-another-idler).
 
 **The settings page looks short.** That's on purpose. It shows the everyday switches; tick **Show advanced** for
 timings, farming order, the dashboard's port and password, and the rest.
@@ -317,19 +317,19 @@ accounts and settings. For the portable zip, close it and delete the folder.
 of memory is plenty. Install Docker, start it with the example compose file, and open the dashboard through an SSH
 tunnel, or from anywhere behind a password (HTTPS with your own domain works too). The guide goes through it step
 by step, from renting the server to adding your accounts:
-[On a VPS](https://nocat.lol/farm/docs#on-a-vps-a-rented-server).
+[On a VPS](https://gamer.mom/docs#on-a-vps-a-rented-server).
 
 **What if something breaks?** The dashboard's **Log** tab says what happened in plain words. If that doesn't help,
 open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.
 
 ## More
 
-- [The guide](https://nocat.lol/farm/docs) starts with a beginner's walkthrough, then covers every feature and
+- [The guide](https://gamer.mom/docs) starts with a beginner's walkthrough, then covers every feature and
   setting. The same pages are in [docs/](docs/README.md) here.
-- [Every command](https://nocat.lol/farm/commands), in one list.
+- [Every command](https://gamer.mom/commands), in one list.
 - [Add-ons](docs/addons.md): reap's official add-ons ([the signed list](addons/addons.json)), also on
-  [nocat.lol](https://nocat.lol/farm/addons).
-- [Write a plugin](https://nocat.lol/farm/plugins) to add your own commands and features in a few lines of C#.
+  [gamer.mom](https://gamer.mom/addons).
+- [Write a plugin](https://gamer.mom/plugins) to add your own commands and features in a few lines of C#.
 - To build it yourself you need the [.NET 10 SDK](https://dotnet.microsoft.com/download):
 
   ```

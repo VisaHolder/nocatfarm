@@ -32,7 +32,7 @@ try {
   New-Item -ItemType Directory -Force "$old\config" | Out-Null
   '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true, "CountMeAsUser": false }' | Set-Content "$old\config\nocatFarm.json" -Encoding utf8
   '{ "Enabled": false, "SteamLogin": "nf_dummy_moved", "IdleGames": [730, 440], "CustomGameNameEnabled": true, "CustomGameName": "moved ok" }' | Set-Content "$old\config\moved.json" -Encoding utf8
-  # No copy here ever pings nocat.lol (every one started below inherits this): an older release can save its settings
+  # No copy here ever pings gamer.mom (every one started below inherits this): an older release can save its settings
   # without "Count me as a user" off.
   $env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'
   $p = Start-Process "$old\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru

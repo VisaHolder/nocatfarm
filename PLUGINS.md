@@ -328,7 +328,7 @@ already read from Steam; nothing extra is asked for your plugin. For prices, use
 - **Off until the owner turns it on**, per account: *Let add-ons answer trade offers* (Settings, Trades, Show advanced).
   While it's off, your judge isn't even asked.
 - **Only offers nocat.farm leaves undecided.** Never offers from the owner's own accounts, donations, card swaps
-  nocat.lol paired, or fair card swaps nocat.farm accepts by itself.
+  gamer.mom paired, or fair card swaps nocat.farm accepts by itself.
 - **An Accept is refused** when the offer would give away anything on the owner's "never touch" lists or from a game
   whose cards were bought for a badge, anything promised to another offer that's still waiting, or anything Steam
   doesn't call tradable, or when Steam would hold the trade. When nocat.farm can't tell, it doesn't accept. A refused

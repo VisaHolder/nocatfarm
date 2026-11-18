@@ -1,7 +1,7 @@
 namespace NocatFarm.Core;
 
 /// <summary>
-/// 1.8.2 card swaps with other nocat.farm users: the three rules every swap has to pass - checked by nocat.lol when it
+/// 1.8.2 card swaps with other nocat.farm users: the three rules every swap has to pass - checked by gamer.mom when it
 /// pairs two accounts, again by the account that sends the offer, and once more by the one that accepts it.
 /// </summary>
 /// <remarks>

@@ -26,7 +26,7 @@ public static partial class CardExchange {
 			+ $"each worth at most {loss} less than what it gives. Never a card your sets need, the last copy of one, or anything on your never-touch lists"
 			+ $"{(bot.Cfg.CardSwapSkipHeld ? ", and never when Steam would hold the trade" : "")}. "
 			+ (bot.CanConfirmTrades ? "Its offers are confirmed by its authenticator here. " : "Its offers wait for you to confirm them on your phone. ")
-			+ "While it's on, nocat.lol keeps this account's SteamID and trade link; turning it off deletes them.";
+			+ "While it's on, gamer.mom keeps this account's SteamID and trade link; turning it off deletes them.";
 	}
 
 	/// <summary>One look for the preview: the console's text and the numbers, read from the inventory as it is now.</summary>

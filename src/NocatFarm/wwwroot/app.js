@@ -13,10 +13,10 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// 1.9.2: the same page, hosted at https://farm.nocat.lol - it talks to nocat.farm on this PC at http://127.0.0.1:<port>, with a
+// 1.9.2: the same page, hosted at https://farm.gamer.mom - it talks to nocat.farm on this PC at http://127.0.0.1:<port>, with a
 // token this browser was given when the pairing was approved in the app. Served by the app itself HOSTED is false, API_BASE
 // is '' and everything is exactly as it always was - whatever the address: a home proxy can serve the app's own page under
-// the name farm.nocat.lol too. Only the copy nocat.lol hosts carries data-farm-hosted (added when it's copied from a release).
+// the name farm.gamer.mom too. Only the copy gamer.mom hosts carries data-farm-hosted (added when it's copied from a release).
 const HOSTED = document.documentElement.hasAttribute('data-farm-hosted');
 /// The API the app must answer for this page (FarmWeb.ApiVersion): an older app is asked to update.
 const FARM_API_NEEDED = 1;
@@ -85,14 +85,14 @@ const STATUS_META = {
 async function api(path, options = {}) {
   const opts = { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  // 1.9.2: from farm.nocat.lol, never a cookie - only the token.
+  // 1.9.2: from farm.gamer.mom, never a cookie - only the token.
   if (HOSTED) { opts.credentials = 'omit'; opts.mode = 'cors'; }
   const res = await fetch(API_BASE + path, opts);
   if (res.status === 401) { forgetHistory(); if (HOSTED) farmForget(); else showLogin(); throw new Error('unauthorised'); }
   return res.json();
 }
 
-/// 1.9.2: where a button would be on farm.nocat.lol for something only the app's own dashboard does.
+/// 1.9.2: where a button would be on farm.gamer.mom for something only the app's own dashboard does.
 const inAppNote = () => `<span class="muted small farmonly">${esc(t('In the app on your PC'))}</span>`;
 
 const post = (p, b) => api(p, { method: 'POST', body: JSON.stringify(b || {}) });
@@ -618,7 +618,7 @@ function renderAlerts() {
 
   // An account signing in by QR: the code to scan, big enough for a phone camera.
   (state.QrWaiting || []).forEach((q) => {
-    // 1.9.2: on farm.nocat.lol the picture can't come along (an image can't carry the page's token) - it's in the app.
+    // 1.9.2: on farm.gamer.mom the picture can't come along (an image can't carry the page's token) - it's in the app.
     if (HOSTED) { out.push(`<div class="alert warn"><span>${esc(tf('{0} is waiting for its sign-in QR code to be scanned - it shows in the app\'s own dashboard on your PC.', q.Name))}</span></div>`); return; }
     out.push(`<div class="alert warn qr"><img src="/api/bots/${encodeURIComponent(q.Name)}/qr.svg?v=${q.QrVersion}" alt="QR code" width="168" height="168">
       <span>${esc(tf('Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.', q.Name))}</span></div>`);
@@ -666,7 +666,7 @@ function renderAlerts() {
     out.push(`<div class="alert bad"><span><b>${esc(b.Name)}</b> — ${esc(b.Detail)}</span></div>`);
   });
 
-  // 1.9.2: on farm.nocat.lol, once: what stays in the app.
+  // 1.9.2: on farm.gamer.mom, once: what stays in the app.
   if (HOSTED) {
     out.push(`<div class="alert farmnote"><span>${esc(t('Even if this website were hacked, it couldn\'t take your items or your account: those stay in the app on your PC.'))}
       <a href="${esc(farmLocalUrl())}" target="_blank" rel="noopener noreferrer">${esc(farmLocalUrl())}</a></span></div>`);
@@ -753,8 +753,8 @@ function renderOverview() {
   }
   $('verdict').textContent = verdict;
 
-  // How many Steam accounts are on nocat.farm, from nocat.lol's answer to the hourly ping. Nothing while it isn't known
-  // (an older nocat.lol doesn't say it), is too old, or Count me as a user is off.
+  // How many Steam accounts are on nocat.farm, from gamer.mom's answer to the hourly ping. Nothing while it isn't known
+  // (an older gamer.mom doesn't say it), is too old, or Count me as a user is off.
   const accountsLine = $('usercount');
   if (accountsLine) {
     accountsLine.classList.toggle('hidden', !state.Accounts);
@@ -1613,9 +1613,9 @@ function impReset(tutorial) {
 
 /// The standalone dialog: from the Accounts page, Settings, the welcome banner, or the installer's "coming from".
 async function openImport(tool, path) {
-  // 1.9.2: importing adds accounts and their trade rules - only in the app's own dashboard, never from farm.nocat.lol.
+  // 1.9.2: importing adds accounts and their trade rules - only in the app's own dashboard, never from farm.gamer.mom.
   if (HOSTED) {
-    modal(`<h2>${esc(t('Import from another idler'))}</h2><p class="muted">${esc(t('Do this in the app\'s own dashboard on your PC - farm.nocat.lol can\'t.'))}</p>`);
+    modal(`<h2>${esc(t('Import from another idler'))}</h2><p class="muted">${esc(t('Do this in the app\'s own dashboard on your PC - farm.gamer.mom can\'t.'))}</p>`);
     return;
   }
   impReset(false);
@@ -2089,7 +2089,7 @@ function renderAuthCode() {
     return;
   }
 
-  // 1.9.2: farm.nocat.lol never gets the code itself.
+  // 1.9.2: farm.gamer.mom never gets the code itself.
   if (HOSTED) {
     box.innerHTML = `<p class="muted auth-none">${esc(t('The Steam Guard code shows only in the app\'s own dashboard on your PC.'))}</p>`;
     return;
@@ -3745,7 +3745,7 @@ function tutShowDone() {
       ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
         t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
       ${config && config.Global && config.Global.CountMeAsUser === false ? ''
-        : `<p class="muted small">${esc(t('It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`}`,
+        : `<p class="muted small">${esc(t('It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`}`,
     skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
     next: t('Show me my account'),
   }, finishSignin);
@@ -4127,22 +4127,22 @@ function phoneVisitorsCard(v) {
     ${farmPagesBlock(v)}`;
 }
 
-/// 1.9.2: farm.nocat.lol on the Phone page - whether it may open this dashboard, and the browsers paired there, each with Revoke.
+/// 1.9.2: farm.gamer.mom on the Phone page - whether it may open this dashboard, and the browsers paired there, each with Revoke.
 function farmPagesBlock(v) {
   // Off with nothing paired, the server doesn't mention it at all, and the page looks exactly as it always did.
   if (!v || (!HOSTED && v.FarmOn === undefined)) return '';
   const when = (iso) => new Date(iso).toLocaleDateString();
   if (HOSTED) {
-    return `<h3>farm.nocat.lol</h3><p class="ph-text">${esc(t('This browser is paired with nocat.farm on this PC.'))}</p>
+    return `<h3>farm.gamer.mom</h3><p class="ph-text">${esc(t('This browser is paired with nocat.farm on this PC.'))}</p>
       <button class="ghost" onclick="farmRevoke('')">${esc(t('Disconnect this browser'))}</button>`;
   }
   if (!v.FarmOn) {
-    return `<h3>farm.nocat.lol</h3><p class="ph-text">${esc(t('Off: farm.nocat.lol can\'t open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.'))}</p>
+    return `<h3>farm.gamer.mom</h3><p class="ph-text">${esc(t('Off: farm.gamer.mom can\'t open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.'))}</p>
       <button class="ghost" onclick="goSetting('FarmWebAllowed')">${esc(t('Settings'))}</button>`;
   }
   const pages = v.FarmPages || [];
-  return `<h3>farm.nocat.lol</h3>
-    <p class="ph-text">${esc(t('On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.'))}</p>
+  return `<h3>farm.gamer.mom</h3>
+    <p class="ph-text">${esc(t('On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.'))}</p>
     ${pages.length ? `<div class="ph-visits">${pages.map((x) => `<div class="ph-visit ok"><span class="muted">${esc(when(x.Created))}</span><b>${esc(x.Device)}</b>
         <span class="muted">${esc(tf('until {0}', when(x.Expires)))}</span><button class="ghost" onclick="farmRevoke(${esc(JSON.stringify(x.Id))})">${esc(t('Revoke'))}</button></div>`).join('')}</div>`
       : `<p class="muted small">${esc(t('No browser is paired yet.'))}</p>`}`;
@@ -4924,7 +4924,7 @@ function renderSettings() {
     ? Object.keys(config.Bots).map((n) =>
         `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" role="button" tabindex="0" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
     : `<p class="muted small">${esc(t('No accounts yet.'))}</p>`;
-  // Accounts and their settings from another idler, straight from where the accounts are listed. Not at farm.nocat.lol:
+  // Accounts and their settings from another idler, straight from where the accounts are listed. Not at farm.gamer.mom:
   // importing is only done in the app's own dashboard (openImport says so if it's reached another way).
   if (!HOSTED) $('settingsNavBots').insertAdjacentHTML('beforeend',
     `<div class="s muted" role="button" tabindex="0" onclick="openImport()">+ ${esc(t('Import from another idler'))}</div>`);
@@ -6540,7 +6540,7 @@ function swapsPreviewHtml(d) {
   ];
   if (d.Human) limits.push(t('Only during its day (human mode)'));
   limits.push(d.Confirms ? t('Its offers are confirmed by its authenticator here') : t('Its offers wait for you to confirm them on your phone'));
-  limits.push(t("While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them"));
+  limits.push(t("While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them"));
   limits.push(d.Currency ? tf("Prices in {0}, this account's wallet currency", d.Currency) : t('Its wallet currency is not known yet - nothing is swapped until it is'));
 
   const pricing = d.SignedIn && d.Unpriced > 0
@@ -7805,7 +7805,7 @@ async function saveSettingsOnce() {
 
   const body = { ...base, ...edits };
 
-  // 1.9.2: on farm.nocat.lol, changing a password that's already set takes the current one too (checked like a sign-in).
+  // 1.9.2: on farm.gamer.mom, changing a password that's already set takes the current one too (checked like a sign-in).
   if (HOSTED && target === GLOBAL && edits.WebPassword && (edits.WebPassword !== CLEAR_SECRET)
       && ((config.GlobalSecretsSet || []).includes('WebPassword'))) {
     const current = window.prompt(t('Type the current dashboard password to change it.'));
@@ -7889,14 +7889,14 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-/// 1.9.2: a page at farm.nocat.lol asking to be let in - the same code shows there. Above everything, on every screen of
-/// this dashboard (the first-run welcome, the walkthrough, an open pop-up): somebody opening farm.nocat.lol before they've
+/// 1.9.2: a page at farm.gamer.mom asking to be let in - the same code shows there. Above everything, on every screen of
+/// this dashboard (the first-run welcome, the walkthrough, an open pop-up): somebody opening farm.gamer.mom before they've
 /// added an account still has to be able to answer it. Never on that page itself (the server sends none there).
 let lastFarmAsk = null;
 function renderFarmAsk() {
   const asks = (state && state.FarmPairs) || [];
-  const html = asks.map((p) => `<div class="alert warn farmask" role="alert"><span><b>${esc(t('farm.nocat.lol wants to open this dashboard'))}</b><br>
-      ${esc(t('Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:'))} <b class="farmask-code">${esc(p.Code)}</b>
+  const html = asks.map((p) => `<div class="alert warn farmask" role="alert"><span><b>${esc(t('farm.gamer.mom wants to open this dashboard'))}</b><br>
+      ${esc(t('Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:'))} <b class="farmask-code">${esc(p.Code)}</b>
       <span class="muted small">${esc(p.Device)}</span></span>
       <span class="spacer"></span><button onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, true)">${esc(t('Approve'))}</button>
       <button class="ghost" onclick="farmAnswer(${esc(JSON.stringify(p.Id))}, false)">${esc(t('Deny'))}</button></div>`).join('');
@@ -7943,11 +7943,11 @@ async function refresh() {
   }
 }
 
-// ── 1.9.2: farm.nocat.lol ────────────────────────────────────────────
+// ── 1.9.2: farm.gamer.mom ────────────────────────────────────────────
 // The page there finds nocat.farm on this PC, checks it can talk to it, and pairs: a code shows here and in the app, and
 // the person at the app approves it. Then it's this same dashboard, without what only the app's own dashboard does.
 
-/// The screen in front of the dashboard while it can't be used yet, drawn like the page farm.nocat.lol shows before the app
+/// The screen in front of the dashboard while it can't be used yet, drawn like the page farm.gamer.mom shows before the app
 /// is found: the wordmark, a status line with its dot, one short line, one big button, small ones under it, and the long
 /// how-to folded away behind "how?". o: { dot: 'wait'|'ok'|'no', title, line, note, code, primary, ghosts, links, how }.
 function farmGate(o) {
@@ -7990,7 +7990,7 @@ function farmGate(o) {
 const farmIsSafari = () => /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
 const farmHere = () => ({ label: t('open it here'), href: farmLocalUrl() });
 const farmAgain = () => ({ label: t('try again'), on: 'location.reload()' });
-const farmSwitchSteps = () => t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.');
+const farmSwitchSteps = () => t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.');
 const farmOtherBrowser = () => t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:') + ' ' + farmLocalUrl();
 
 /// What's wrong, said plainly: not running, not letting this page in, too old, or a browser that won't let a website reach this PC.
@@ -8002,7 +8002,7 @@ function farmScreen(why, version) {
       primary: farmHere(), ghosts: [farmAgain()], how: [farmOtherBrowser()] });
   } else if (why === 'missing') {
     farmGate({ dot: 'no', title: t('no app on this PC'), line: t('nocat.farm is a free Steam card farmer that runs on your own PC.'),
-      primary: { label: t('get nocat.farm'), href: 'https://nocat.lol/farm' }, ghosts: [farmAgain(), farmHere()],
+      primary: { label: t('get nocat.farm'), href: 'https://gamer.mom' }, ghosts: [farmAgain(), farmHere()],
       how: [t('Start nocat.farm on this PC, then reload this page.'), farmSwitchSteps(), farmOtherBrowser()] });
   } else if (why === 'off') {
     farmGate({ dot: 'no', title: t("nocat.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),
@@ -8010,7 +8010,7 @@ function farmScreen(why, version) {
   } else if (why === 'blocked') {
     farmGate({ dot: 'no', title: t('your browser blocked this page'), line: t('let it reach your PC and try again, or open nocat.farm here.'),
       primary: farmHere(), ghosts: [farmAgain()],
-      how: [t('Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.'), farmOtherBrowser()] });
+      how: [t('Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.'), farmOtherBrowser()] });
   } else if (why === 'ask') {
     farmGate({ dot: 'wait', title: t('let this page reach your PC'), line: t('your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.'),
       primary: { label: t('find my nocat.farm'), on: 'farmFind()' }, links: [farmHere()], how: [farmOtherBrowser()] });
@@ -8096,7 +8096,7 @@ function farmPairScreen(message) {
   clearTimeout(farmPolling);
   farmGate({ dot: 'ok', title: t('nocat.farm is running'), line: t('connect this browser - you approve it in the app.'), note: message || '',
     primary: { label: t('connect'), on: 'farmPair()' }, links: [farmHere()],
-    how: [t('This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.'), farmOtherBrowser()] });
+    how: [t('This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.'), farmOtherBrowser()] });
 }
 
 async function farmPair() {
@@ -8111,7 +8111,7 @@ async function farmPair() {
   // A new tab for the app's own dashboard, so this one keeps watching for the answer.
   farmGate({ dot: 'wait', code: r.Code, title: t('approve this code in nocat.farm on this PC.'), line: t('Waiting for you to approve it…'),
     primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true },
-    how: [t("In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.")] });
+    how: [t("In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.")] });
 
   // Never past the code's own life (and a little): with nocat.farm gone mid-way, it used to ask every 2 seconds for good.
   const deadline = Date.now() + ((Number(r.Seconds) || 300) + 15) * 1000;
@@ -8139,11 +8139,11 @@ async function farmPair() {
 async function farmAnswer(id, approve) {
   const r = await post('/api/farm/answer', { Id: id, Approve: approve }).catch(() => null);
   if (!r || !r.ok) toast((r && r.error) || t("That didn't work"), true);
-  else toast(approve ? t('farm.nocat.lol can open this dashboard now.') : t('Turned down.'));
+  else toast(approve ? t('farm.gamer.mom can open this dashboard now.') : t('Turned down.'));
   refresh();
 }
 
-/// The Phone page's Revoke beside a paired farm.nocat.lol page.
+/// The Phone page's Revoke beside a paired farm.gamer.mom page.
 async function farmRevoke(id) {
   const r = await post('/api/farm/revoke', { Id: id }).catch(() => null);
   toast(r && r.ok ? t('Taken back - that browser has to pair again.') : t("That didn't work"), !(r && r.ok));

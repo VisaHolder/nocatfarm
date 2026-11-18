@@ -8,8 +8,8 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// How many Steam accounts run on nocat.farm: once an hour this copy tells nocat.lol it's running and how many of its
-/// accounts are signed in, and nocat.lol answers with the accounts over every copy (and, as before, how many copies).
+/// How many Steam accounts run on nocat.farm: once an hour this copy tells gamer.mom it's running and how many of its
+/// accounts are signed in, and gamer.mom answers with the accounts over every copy (and, as before, how many copies).
 /// </summary>
 /// <remarks>
 /// What goes out is all there is: a random number made for this install (<see cref="InstallId"/>), the app version, the
@@ -24,7 +24,7 @@ namespace NocatFarm.Core;
 /// </remarks>
 public static class UserCount {
 	/// <summary>Where the ping goes. HTTPS only.</summary>
-	public const string Endpoint = "https://nocat.lol/api/farm/ping";
+	public const string Endpoint = "https://gamer.mom/api/farm/ping";
 
 	/// <summary>A count older than this isn't shown - three missed hours in a row means it's no longer today's.</summary>
 	public static readonly TimeSpan StaleAfter = TimeSpan.FromHours(3);
@@ -107,7 +107,7 @@ public static class UserCount {
 
 	/// <summary>
 	/// Where the ping really goes: <see cref="Endpoint"/>, or NOCATFARM_PING_URL when that points at this PC - for the
-	/// browser test, which answers it itself rather than counting a test copy on nocat.lol. Anything else is ignored.
+	/// browser test, which answers it itself rather than counting a test copy on gamer.mom. Anything else is ignored.
 	/// </summary>
 	public static string Target {
 		get {
@@ -129,8 +129,8 @@ public static class UserCount {
 	public const int MaxAccounts = 1000;
 
 	/// <summary>
-	/// What nocat.lol answered: the copies running (<see cref="Users"/>) and the Steam accounts signed in on them
-	/// (<see cref="Accounts"/>). Either can be null, unknown - an older nocat.lol only ever says the copies.
+	/// What gamer.mom answered: the copies running (<see cref="Users"/>) and the Steam accounts signed in on them
+	/// (<see cref="Accounts"/>). Either can be null, unknown - an older gamer.mom only ever says the copies.
 	/// </summary>
 	public readonly record struct Counts(int? Users, int? Accounts);
 
@@ -146,21 +146,21 @@ public static class UserCount {
 
 	/// <summary>
 	/// The body with the live stats added when there's a batch to send (see <see cref="FarmTotals"/>): h = game-hours,
-	/// c = cards, b = the batch's name. Without one it's the four fields above, as before. An older nocat.lol reads only
+	/// c = cards, b = the batch's name. Without one it's the four fields above, as before. An older gamer.mom reads only
 	/// the four it knows and leaves the rest.
 	/// </summary>
 	public static string Body(int signedIn, FarmTotals.Batch? batch) => Body(signedIn, batch, null);
 
 	/// <summary>
 	/// ...and the one-time catch-up of the hours and cards from before (see <see cref="FarmTotals.CatchUp"/>) in a field
-	/// of its own, "old": {h, c, b, n = accounts, d = days}. An older nocat.lol reads none of it.
+	/// of its own, "old": {h, c, b, n = accounts, d = days}. An older gamer.mom reads none of it.
 	/// </summary>
 	public static string Body(int signedIn, FarmTotals.Batch? batch, FarmTotals.CatchUp? old) => Body(signedIn, batch, old, DateTime.UtcNow);
 
 	/// <summary>
 	/// ...and with a batch, the time it covers and the accounts it's from: s = seconds since it began, e = seconds since it
 	/// was made (both counted back from now, so this PC's clock being off doesn't matter), n = this copy's accounts.
-	/// nocat.lol caps the batch by those. A batch saved by a build before them goes without them, as it did.
+	/// gamer.mom caps the batch by those. A batch saved by a build before them goes without them, as it did.
 	/// </summary>
 	public static string Body(int signedIn, FarmTotals.Batch? batch, FarmTotals.CatchUp? old, DateTime nowUtc) {
 		if ((batch == null) && (old == null)) {
@@ -183,7 +183,7 @@ public static class UserCount {
 			}
 
 			// 1.8.1: g = items turned into gems, bd = badges crafted, p = packs opened, sd = items sold - each only when
-			// there's one, so a batch without them is the body it always was. An older nocat.lol reads none of them.
+			// there's one, so a batch without them is the body it always was. An older gamer.mom reads none of them.
 			void Extra(string name, int n) {
 				if (n > 0) {
 					body[name] = n;
@@ -206,7 +206,7 @@ public static class UserCount {
 		return body.ToJsonString();
 	}
 
-	/// <summary>The batch nocat.lol says it has counted: "got" in a 200's answer - or null (an older nocat.lol never says it).</summary>
+	/// <summary>The batch gamer.mom says it has counted: "got" in a 200's answer - or null (an older gamer.mom never says it).</summary>
 	public static string? ParseGot(HttpStatusCode status, string body) {
 		if (status != HttpStatusCode.OK) {
 			return null;
@@ -224,7 +224,7 @@ public static class UserCount {
 		}
 	}
 
-	/// <summary>The catch-up nocat.lol says it has: "gotold" in a 200's answer - or null (an older nocat.lol never says it).</summary>
+	/// <summary>The catch-up gamer.mom says it has: "gotold" in a 200's answer - or null (an older gamer.mom never says it).</summary>
 	public static string? ParseGotOld(HttpStatusCode status, string body) {
 		if (status != HttpStatusCode.OK) {
 			return null;
@@ -243,7 +243,7 @@ public static class UserCount {
 	}
 
 	/// <summary>
-	/// The counts in nocat.lol's answer: a 200 with {"users":N,"accounts":M}. A count that's missing, not a whole number,
+	/// The counts in gamer.mom's answer: a 200 with {"users":N,"accounts":M}. A count that's missing, not a whole number,
 	/// or 0 is unknown; another status, not JSON, or no count in it at all is null.
 	/// </summary>
 	public static Counts? ParseReply(HttpStatusCode status, string body) {
@@ -307,7 +307,7 @@ public static class UserCount {
 			}
 
 			if (ParseReply(resp.StatusCode, text) is not { } counts) {
-				Log.Debug($"user count: no count in nocat.lol's answer (HTTP {(int) resp.StatusCode}) - trying again in an hour");
+				Log.Debug($"user count: no count in gamer.mom's answer (HTTP {(int) resp.StatusCode}) - trying again in an hour");
 
 				return false;
 			}
@@ -320,7 +320,7 @@ public static class UserCount {
 			return false;
 		} catch (Exception e) {
 			// A timeout lands here too: HttpClient's own timeout is a cancellation nobody asked for.
-			Log.Debug($"user count: nocat.lol didn't answer ({Log.Describe(e)}) - trying again in an hour");
+			Log.Debug($"user count: gamer.mom didn't answer ({Log.Describe(e)}) - trying again in an hour");
 
 			return false;
 		}
@@ -358,7 +358,7 @@ public static class UserCount {
 
 	public static int? Accounts() => Accounts(Live.Global, DateTime.UtcNow);
 
-	/// <summary>The copies running. Still read, for an older nocat.lol, but no longer shown.</summary>
+	/// <summary>The copies running. Still read, for an older gamer.mom, but no longer shown.</summary>
 	public static int? Users() => Current(Live.Global, DateTime.UtcNow)?.Users;
 
 	/// <summary>The gap to the next ping: an hour, give or take a few minutes.</summary>
@@ -393,7 +393,7 @@ public static class UserCount {
 	/// <summary>
 	/// "Count me as a user" was just switched on: with no count to show, the next ping comes in 1-3 minutes rather than up
 	/// to an hour from now. Nothing when it was on already - the dashboard runs this on every save of any setting, and
-	/// each one used to bring the ping forward again, so with nocat.lol not answering every save sent another. Nothing
+	/// each one used to bring the ping forward again, so with gamer.mom not answering every save sent another. Nothing
 	/// either when a count is showing or one is due soon anyway.
 	/// </summary>
 	public static void Nudge() => Nudge(Live.Global.CountMeAsUser, DateTime.UtcNow);

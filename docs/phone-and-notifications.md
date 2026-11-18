@@ -17,7 +17,7 @@ it's one tap away.
 If your browser offers to install it, the Phone page shows an *Install the app* button too.
 
 It works at home on your Wi-Fi and through *Open from anywhere*. Everything stays on your PC: nothing goes through
-nocat.lol or anywhere else. Alerts on your phone come through Telegram or Discord, set up under Notifications (below).
+gamer.mom or anywhere else. Alerts on your phone come through Telegram or Discord, set up under Notifications (below).
 On this PC the browser also keeps a copy of the page itself (never your accounts or settings), so the app still opens
 when the PC is briefly out of reach.
 

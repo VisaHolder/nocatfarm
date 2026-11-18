@@ -7,38 +7,38 @@ using System.Text.RegularExpressions;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// 1.8.2 card swaps: proving to nocat.lol that this copy is signed in to an account, so that nobody else can put that
-/// account on a list - nocat.lol pairs no account without it. The account signs in to nocat.lol through Steam ("Sign in
+/// 1.8.2 card swaps: proving to gamer.mom that this copy is signed in to an account, so that nobody else can put that
+/// account on a list - gamer.mom pairs no account without it. The account signs in to gamer.mom through Steam ("Sign in
 /// through Steam", OpenID 2.0) with its own web session, the way a person signs in to a trading site, and what Steam hands
-/// back goes to nocat.lol with the list, which has Steam check it.
+/// back goes to gamer.mom with the list, which has Steam check it.
 /// </summary>
 /// <remarks>
 /// Steam's answer only says "this is SteamID X, signed in just now, for this address". It can't sign in, trade or do
-/// anything else, and it's made out to this install's own address on nocat.lol (the hash of the install's random number,
+/// anything else, and it's made out to this install's own address on gamer.mom (the hash of the install's random number,
 /// and the minute), so it's of no use to anybody else, or an hour later. No password, login token or cookie leaves this
-/// PC. A proof lasts 30 days on nocat.lol; this copy sends a new one after 20, or when nocat.lol says it has none.
+/// PC. A proof lasts 30 days on gamer.mom; this copy sends a new one after 20, or when gamer.mom says it has none.
 /// </remarks>
 public static partial class CardExchange {
-	/// <summary>Where Steam's answer is made out to - nocat.lol never needs to be visited there, the answer is the address.</summary>
-	public const string ProofUrl = "https://nocat.lol/api/farm/swap/proof";
+	/// <summary>Where Steam's answer is made out to - gamer.mom never needs to be visited there, the answer is the address.</summary>
+	public const string ProofUrl = "https://gamer.mom/api/farm/swap/proof";
 
 	private static readonly Uri OpenIdLogin = new("https://steamcommunity.com/openid/login");
 
-	/// <summary>A proof is sent again after this long - nocat.lol keeps one for 30 days.</summary>
+	/// <summary>A proof is sent again after this long - gamer.mom keeps one for 30 days.</summary>
 	public static readonly TimeSpan ProofFor = TimeSpan.FromDays(20);
 
 	/// <summary>Test seam: proving an account, instead of asking Steam (null: Steam itself).</summary>
 	internal static Func<Bot, CancellationToken, Task<string?>>? ProveSeam { get; set; }
 
-	/// <summary>The install's random number as nocat.lol keeps it: the first 16 hex of its SHA-256 - never the number itself.</summary>
+	/// <summary>The install's random number as gamer.mom keeps it: the first 16 hex of its SHA-256 - never the number itself.</summary>
 	public static string InstallHash(string installId) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("nocat.farm swaps " + installId)))[..16];
 
-	/// <summary>Steam's answer to this account signing in to nocat.lol, as the query nocat.lol checks - null when it couldn't be had.</summary>
+	/// <summary>Steam's answer to this account signing in to gamer.mom, as the query gamer.mom checks - null when it couldn't be had.</summary>
 	public static async Task<string?> ProveAsync(Bot bot, CancellationToken ct) => (await CheckAsync(bot, ct).ConfigureAwait(false)).Query;
 
 	/// <summary>
 	/// Signing this account in through Steam, and why not when it can't - for the sync, and for 'swaps check', which runs
-	/// only this: nothing goes to nocat.lol, nothing is turned on. A failure goes in the debug log with its reason.
+	/// only this: nothing goes to gamer.mom, nothing is turned on. A failure goes in the debug log with its reason.
 	/// </summary>
 	public static async Task<Proved> CheckAsync(Bot bot, CancellationToken ct) {
 		Proved proved = (!bot.IsOnline || !bot.Web.Ready || (bot.SteamId == 0))
@@ -55,13 +55,13 @@ public static partial class CardExchange {
 		return proved;
 	}
 
-	/// <summary>Steam's answer as the query nocat.lol checks (null when there's none), and why there's none - never the answer itself.</summary>
+	/// <summary>Steam's answer as the query gamer.mom checks (null when there's none), and why there's none - never the answer itself.</summary>
 	public readonly record struct Proved(string? Query, Said Why) {
 		public bool Ok => Query != null;
 	}
 
 	/// <summary>
-	/// Signing in through Steam: Steam's sign-in page for nocat.lol (signed in already, it's one form), the form posted back
+	/// Signing in through Steam: Steam's sign-in page for gamer.mom (signed in already, it's one form), the form posted back
 	/// as Steam made it - with that page as its Referer, as a browser sends it - and Steam's answer, where it sends the
 	/// browser, checked to be for this account and this install.
 	/// </summary>
@@ -77,7 +77,7 @@ public static partial class CardExchange {
 		static string Q(string k, string v) => Uri.EscapeDataString(k) + "=" + Uri.EscapeDataString(v);
 
 		Uri start = new(OpenIdLogin + "?" + string.Join("&", Q("openid.ns", "http://specs.openid.net/auth/2.0"), Q("openid.mode", "checkid_setup"),
-			Q("openid.return_to", returnTo), Q("openid.realm", "https://nocat.lol/"),
+			Q("openid.return_to", returnTo), Q("openid.realm", "https://gamer.mom/"),
 			Q("openid.identity", "http://specs.openid.net/auth/2.0/identifier_select"), Q("openid.claimed_id", "http://specs.openid.net/auth/2.0/identifier_select")));
 
 		// Not signed in, Steam's page changed: no form, no proof.
@@ -102,7 +102,7 @@ public static partial class CardExchange {
 
 		// Only an answer made out to this install's address, saying it's this very account.
 		if (!back.AbsoluteUri.StartsWith(ProofUrl + "?i=" + installHash + "&", StringComparison.Ordinal)) {
-			return new Proved(null, new Said("Steam sent it to {0}, not nocat.lol", back.Host));
+			return new Proved(null, new Said("Steam sent it to {0}, not gamer.mom", back.Host));
 		}
 
 		string query = back.Query.TrimStart('?');

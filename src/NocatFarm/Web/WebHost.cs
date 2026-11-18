@@ -42,7 +42,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
 		bool loopback = IPAddress.IsLoopback(from);
 
-		// 1.9.2: a page at farm.nocat.lol is in a browser on this PC, but it is never "at this PC": nothing that's only for the
+		// 1.9.2: a page at farm.gamer.mom is in a browser on this PC, but it is never "at this PC": nothing that's only for the
 		// person sitting here ('update file', add-ons, the firewall, approving a pairing) counts it as them.
 		if (ctx.Items.ContainsKey(FarmKey)) {
 			return (from.ToString(), false);
@@ -265,7 +265,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		_sessions.Clear();
 		SaveSessions();
 
-		// 1.9.2: the pages paired at farm.nocat.lol too.
+		// 1.9.2: the pages paired at farm.gamer.mom too.
 		ForgetFarm();
 	}
 
@@ -513,7 +513,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				h.XContentTypeOptions = "nosniff";
 				h["Referrer-Policy"] = "no-referrer";
 
-				// 1.9.2: the page at farm.nocat.lol, with "Let farm.nocat.lol open this dashboard" on - its own front door, in
+				// 1.9.2: the page at farm.gamer.mom, with "Let farm.gamer.mom open this dashboard" on - its own front door, in
 				// place of Refusal (Web/WebHostFarm.cs). With the setting off this is never true, and nothing below changes.
 				if (FromFarm(ctx.Request)) {
 					if (!await FarmFrontAsync(ctx).ConfigureAwait(false)) {
@@ -715,7 +715,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	}
 
 	private bool Authorised(HttpContext ctx) {
-		// 1.9.2: from farm.nocat.lol, its own token - already checked at the front door - and nothing else: not this PC's
+		// 1.9.2: from farm.gamer.mom, its own token - already checked at the front door - and nothing else: not this PC's
 		// loopback trust, not a dashboard cookie.
 		if (ctx.Items.TryGetValue(FarmKey, out object? farm)) {
 			return farm is FarmSession;
@@ -1127,7 +1127,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	private void MapApi(WebApplication app) {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
 		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
-		MapFarm(app);   // 1.9.2: farm.nocat.lol - Web/WebHostFarm.cs
+		MapFarm(app);   // 1.9.2: farm.gamer.mom - Web/WebHostFarm.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,
@@ -1145,7 +1145,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			int pausedFor = PausedUntil is { } paused && (paused > DateTime.UtcNow) ? (int) Math.Ceiling((paused - DateTime.UtcNow).TotalSeconds) : 0;
 			object[] pages = FarmTokenList();
 
-			// 1.9.2: the pages paired at farm.nocat.lol, each with a Revoke - only while it's on or one is still paired. Otherwise
+			// 1.9.2: the pages paired at farm.gamer.mom, each with a Revoke - only while it's on or one is still paired. Otherwise
 			// the answer is exactly what it always was.
 			return !_cfg.FarmWebAllowed && (pages.Length == 0)
 				? (IResult) Results.Json(new { Visits = visits, InternetPausedFor = pausedFor })
@@ -1263,7 +1263,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			bool farm = IsFarm(ctx);
 			object[] asking = farm ? [] : FarmPairsForPage(false);
 
-			// 1.9.2: pages at farm.nocat.lol waiting for an answer here - the banner's Approve and Deny - added only while there
+			// 1.9.2: pages at farm.gamer.mom waiting for an answer here - the banner's Approve and Deny - added only while there
 			// are any. Otherwise the answer is exactly what it always was.
 			if (asking.Length == 0) {
 				return Results.Json(BuildStatus(farm));
@@ -1946,7 +1946,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			if (passwordChanged) {
 				SignOutAll();
-				// 1.9.2: never a dashboard session for farm.nocat.lol - its own pairing went with the rest, and it pairs again.
+				// 1.9.2: never a dashboard session for farm.gamer.mom - its own pairing went with the rest, and it pairs again.
 				fresh = string.IsNullOrEmpty(savedPassword) || IsFarm(ctx) ? null : NewSession(ctx, KeyOf(savedPassword));
 				Log.Info(new Said("dashboard password changed - other browsers sign in again"));
 			}
@@ -2477,7 +2477,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 		app.MapGet("/api/auth", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
 			Accounts = _mgr.All.Select(b => {
-				// 1.9.2: never the code itself to farm.nocat.lol - only whether there is one.
+				// 1.9.2: never the code itself to farm.gamer.mom - only whether there is one.
 				(string? code, int left) = IsFarm(ctx) ? (null, 0) : Confirmations.Code(b);
 
 				return new { b.Name, HasCode = b.HasAuthenticator, CanConfirm = b.CanConfirmTrades, Code = code, SecondsLeft = left };
@@ -3101,7 +3101,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 	/// <summary>Round-trip clone, so a redacted copy can be handed out without touching the live config.</summary>
 	private static T Clone<T>(T source) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(source))!;
 
-	/// <param name="farm">1.9.2: for the page at farm.nocat.lol - no Steam Guard code, no Telegram connect link.</param>
+	/// <param name="farm">1.9.2: for the page at farm.gamer.mom - no Steam Guard code, no Telegram connect link.</param>
 	private object BuildStatus(bool farm = false) {
 		Bot[] bots = [.. _mgr.All];
 		(int cards, int comments) = Stats.Totals(24);
@@ -3125,8 +3125,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
-			// Steam accounts on nocat.farm, from nocat.lol's answer to the hourly ping - what the page shows. Null while it
-			// isn't known (an older nocat.lol doesn't say it), is too old, or "Count me as a user" is off: then nothing shows.
+			// Steam accounts on nocat.farm, from gamer.mom's answer to the hourly ping - what the page shows. Null while it
+			// isn't known (an older gamer.mom doesn't say it), is too old, or "Count me as a user" is off: then nothing shows.
 			Accounts = UserCount.Accounts(),
 			// The copies running, as before: still in the answer for whatever reads it, no longer shown.
 			Users = UserCount.Users(),
@@ -3160,7 +3160,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			PluginPages = Plugins.PluginHost.Pages.Select(static p => new { p.Plugin, p.Title }),
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,
-			// Whoever opens the connect link first becomes the owner: never to farm.nocat.lol.
+			// Whoever opens the connect link first becomes the owner: never to farm.gamer.mom.
 			TelegramConnectLink = farm ? null : Notifier.TelegramConnectLink,
 			TelegramConnected = Notifier.TelegramConnected,
 			DiscordBotSet = Notifier.HasDiscordBot,

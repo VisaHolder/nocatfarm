@@ -34,7 +34,7 @@ public static class History {
 		public int Comments { get; set; }
 
 		/// <summary>Items turned into gems, badges crafted (foil too), booster packs opened and items the market history says
-		/// sold - recorded from 1.8.1 on, for the live stats on nocat.lol.</summary>
+		/// sold - recorded from 1.8.1 on, for the live stats on gamer.mom.</summary>
 		public int Gems { get; set; }
 		public int Badges { get; set; }
 		public int Packs { get; set; }
@@ -134,7 +134,7 @@ public static class History {
 
 			if (kind == Stats.KindCard) {
 				d.Cards++;
-				FarmTotals.NoteCard();   // the live stats on nocat.lol - nothing while sharing them is off
+				FarmTotals.NoteCard();   // the live stats on gamer.mom - nothing while sharing them is off
 			} else {
 				d.Comments++;
 			}
@@ -145,7 +145,7 @@ public static class History {
 
 	/// <summary>
 	/// An item turned into gems, a badge crafted, a booster pack opened or an item sold (1.8.1) - only once Steam said it's
-	/// done. Kept in the day's totals and handed to the live stats on nocat.lol (nothing goes while sharing them is off).
+	/// done. Kept in the day's totals and handed to the live stats on gamer.mom (nothing goes while sharing them is off).
 	/// </summary>
 	public static void Note(FarmTotals.Extra what, string bot, DateTime whenUtc) {
 		if (string.IsNullOrEmpty(bot)) {
@@ -195,7 +195,7 @@ public static class History {
 				d.Games[id] = d.Games.GetValueOrDefault(id) + minutes;
 			}
 
-			FarmTotals.NotePlay(minutes, apps.Count(static a => a != 0));   // the live stats on nocat.lol - nothing while sharing them is off
+			FarmTotals.NotePlay(minutes, apps.Count(static a => a != 0));   // the live stats on gamer.mom - nothing while sharing them is off
 
 			Dirty.Add(day[..7]);
 		}

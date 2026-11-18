@@ -4,7 +4,7 @@
 // one and one with an authenticator secret (so the Authenticator tab shows). Updates, the Steam group, the startup
 // entry, the tray icon, pop-ups, keeping the PC awake and the browser opening by itself are all off. A few days of history so the charts draw, and a
 // pretend ArchiSteamFarm folder for the import dialog to find. "Count me as a user" is off unless --ping-stub says the copy
-// is started with NOCATFARM_PING_URL pointing at ping-stub.mjs - a test copy never counts itself on nocat.lol.
+// is started with NOCATFARM_PING_URL pointing at ping-stub.mjs - a test copy never counts itself on gamer.mom.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

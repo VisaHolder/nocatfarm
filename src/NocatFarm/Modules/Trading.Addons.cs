@@ -7,7 +7,7 @@ namespace NocatFarm.Modules;
 /// 1.9.1: add-ons answering trade offers (<see cref="IPluginHost.AddTradeJudge"/>).
 /// </summary>
 /// <remarks>
-/// Only what the app leaves undecided is handed over: never your own accounts, a donation, a card swap nocat.lol paired, or
+/// Only what the app leaves undecided is handed over: never your own accounts, a donation, a card swap gamer.mom paired, or
 /// a fair swap the app takes itself - and only on an account whose owner switched "Let add-ons answer trade offers" on.
 /// Whatever an add-on says, the app keeps the say over what leaves the account: an Accept that would give away something
 /// on a keep list or from a kept game, something promised to another offer, or something Steam doesn't call tradable -

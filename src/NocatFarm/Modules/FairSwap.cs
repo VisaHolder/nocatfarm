@@ -131,7 +131,7 @@ internal static class FairSwap {
 			return (false, new Said("it gives a card bought for a badge - kept until it's crafted"));
 		}
 
-		// 1.8.2, as a card swap nocat.lol paired: never a card on a keep list (its game or its name), never a copy promised to
+		// 1.8.2, as a card swap gamer.mom paired: never a card on a keep list (its game or its name), never a copy promised to
 		// a paired swap - those don't count as held either - and "Keep this many of each card" kept.
 		DateTime now = DateTime.UtcNow;
 		CardExchange.Rules rules = CardExchange.RulesOf(bot, now);

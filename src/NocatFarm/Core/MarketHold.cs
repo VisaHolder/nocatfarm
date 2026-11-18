@@ -375,7 +375,7 @@ public static class MarketHold {
 
 		if (tell) {
 			Log.Attention(HeldSaid(told), bot.Name, Topic.Health);
-			CardExchange.Nudge();   // nocat.lol takes it off the swap list
+			CardExchange.Nudge();   // gamer.mom takes it off the swap list
 		}
 
 		if (from == "refused") {

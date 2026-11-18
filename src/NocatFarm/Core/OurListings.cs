@@ -298,7 +298,7 @@ public static class OurListings {
 				Log.Attention(nudge, account);
 			}
 
-			// Each sale counted once, in the history and the live stats on nocat.lol (1.8.1): only once it's written down
+			// Each sale counted once, in the history and the live stats on gamer.mom (1.8.1): only once it's written down
 			// as told - one that couldn't be is told again next look, and counted then.
 			if (saved) {
 				foreach (Entry _ in sold) {

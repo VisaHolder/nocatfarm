@@ -9,8 +9,8 @@ using NocatFarm.Core;
 namespace NocatFarm.Web;
 
 /// <summary>
-/// 1.9.2: farm.nocat.lol - the dashboard served from that website, talking straight to this app (Web/FarmWeb.cs says what
-/// it may do). Everything here sleeps while "Let farm.nocat.lol open this dashboard" is off: no timer, no file read, nothing
+/// 1.9.2: farm.gamer.mom - the dashboard served from that website, talking straight to this app (Web/FarmWeb.cs says what
+/// it may do). Everything here sleeps while "Let farm.gamer.mom open this dashboard" is off: no timer, no file read, nothing
 /// held, and requests from there are turned away exactly as before.
 ///
 /// The way in: the page asks (a pair request), gets a 6-character code, and the person at the app approves the same code
@@ -18,8 +18,8 @@ namespace NocatFarm.Web;
 /// the dashboard's sign-ins, and taken back by 'visitors signout' or its Revoke button.
 /// </summary>
 public sealed partial class WebHost {
-	/// <summary>Set on a request from farm.nocat.lol once it's let past the front door: a <see cref="FarmSession"/>, or <see cref="FarmAnon"/> on the open routes.</summary>
-	internal const string FarmKey = "nocat.farm/farm.nocat.lol";
+	/// <summary>Set on a request from farm.gamer.mom once it's let past the front door: a <see cref="FarmSession"/>, or <see cref="FarmAnon"/> on the open routes.</summary>
+	internal const string FarmKey = "nocat.farm/farm.gamer.mom";
 
 	/// <summary>A request carrying a paired page's token. Hash: the token's, as kept.</summary>
 	internal sealed record FarmSession(string Hash);
@@ -27,29 +27,29 @@ public sealed partial class WebHost {
 	/// <summary>A request from there with no token, on the hello and pairing routes only.</summary>
 	private static readonly object FarmAnon = new();
 
-	/// <summary>A request that came from farm.nocat.lol (with or without a token).</summary>
+	/// <summary>A request that came from farm.gamer.mom (with or without a token).</summary>
 	internal static bool IsFarm(HttpContext ctx) => ctx.Items.ContainsKey(FarmKey);
 
-	/// <summary>Sent by the page at farm.nocat.lol, exactly, with the setting on. Anything else goes the way it always went.</summary>
+	/// <summary>Sent by the page at farm.gamer.mom (or, this release only, farm.nocat.lol), exactly, with the setting on. Anything else goes the way it always went.</summary>
 	private bool FromFarm(HttpRequest request) =>
-		_cfg.FarmWebAllowed && string.Equals(request.Headers.Origin.ToString(), FarmWeb.Origin, StringComparison.Ordinal);
+		_cfg.FarmWebAllowed && (FarmWeb.AllowedOrigin(request.Headers.Origin.ToString()) != null);
 
 	// ── where "open the dashboard" goes ──
 
 	/// <summary>The port the dashboard really listens on - set when it starts listening.</summary>
 	private int _port;
 
-	/// <summary>When the browser was first sent to farm.nocat.lol with nothing paired yet; null before. Under <see cref="_farmGate"/>.</summary>
+	/// <summary>When the browser was first sent to farm.gamer.mom with nothing paired yet; null before. Under <see cref="_farmGate"/>.</summary>
 	private DateTime? _farmSentAt;
 
 	/// <summary>
-	/// What the tray, the window's Dashboard button, "Open the browser on start", a second launch and 'add' open: farm.nocat.lol
+	/// What the tray, the window's Dashboard button, "Open the browser on start", a second launch and 'add' open: farm.gamer.mom
 	/// once it's on and an account is set up, otherwise this PC's own address - as it always was.
 	/// </summary>
 	public string OpenUrl => FarmOpens() ? FarmWeb.PageUrl(_port) : Url;
 
 	/// <summary>
-	/// Whether "open the dashboard" goes to farm.nocat.lol now. Never while it's off, and never for setting up: with no account,
+	/// Whether "open the dashboard" goes to farm.gamer.mom now. Never while it's off, and never for setting up: with no account,
 	/// none signed in here yet, or one waiting on a Steam Guard code, a QR code or an answer, it's this PC's own dashboard -
 	/// a Steam password, a code or a QR sign-in never goes near that page. And when the page was opened a few minutes ago
 	/// and nothing has paired since (no internet, or the browser wouldn't let it in), this PC's own again. No timer: it's
@@ -86,17 +86,18 @@ public sealed partial class WebHost {
 	// ── the front door ──
 
 	/// <summary>
-	/// A request from farm.nocat.lol, before anything else: answered here (a preflight, a refusal) - true - or let on to the
+	/// A request from farm.gamer.mom, before anything else: answered here (a preflight, a refusal) - true - or let on to the
 	/// endpoint with <see cref="FarmKey"/> set - false. In place of <see cref="Refusal"/>, which turns every other website
 	/// away: the same rules it has for a page on this PC hold here too (this PC only, never through a proxy), and the
-	/// Origin is the one exact website.
+	/// Origin is one of the exact websites (FarmWeb.Origins).
 	/// </summary>
 	private async Task<bool> FarmFrontAsync(HttpContext ctx) {
 		HttpRequest request = ctx.Request;
 		IHeaderDictionary h = ctx.Response.Headers;
 
-		// The one origin, said back exactly - never '*', and never Allow-Credentials: the page has no cookie here to send.
-		h.AccessControlAllowOrigin = FarmWeb.Origin;
+		// The origin it came from, one of the allowed ones, said back exactly - never '*', and never Allow-Credentials: the
+		// page has no cookie here to send.
+		h.AccessControlAllowOrigin = FarmWeb.AllowedOrigin(request.Headers.Origin.ToString());
 		h.Vary = "Origin";
 
 		// Only a browser on this PC reaches 127.0.0.1. Not another device (the dashboard on 0.0.0.0), not a proxy, and only by
@@ -105,7 +106,7 @@ public sealed partial class WebHost {
 
 		if (!IPAddress.IsLoopback(from) || !IsLoopbackName(request.Host.Host) || request.Headers.ContainsKey("X-Forwarded-For")
 			|| request.Headers.ContainsKey("X-Real-IP") || request.Headers.ContainsKey("Forwarded") || request.Headers.ContainsKey("X-Forwarded-Host")) {
-			await FarmAnswerAsync(ctx, StatusCodes.Status403Forbidden, "this-pc", new Said("farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.")).ConfigureAwait(false);
+			await FarmAnswerAsync(ctx, StatusCodes.Status403Forbidden, "this-pc", new Said("farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.")).ConfigureAwait(false);
 
 			return true;
 		}
@@ -235,11 +236,11 @@ public sealed partial class WebHost {
 			o.FirstOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value?.ToString() ?? "";
 	}
 
-	/// <summary>The most a request from farm.nocat.lol may send: a whole settings save is a few tens of KB.</summary>
+	/// <summary>The most a request from farm.gamer.mom may send: a whole settings save is a few tens of KB.</summary>
 	internal const long FarmMaxBody = 1024 * 1024;
 
 	/// <summary>
-	/// A request's body from farm.nocat.lol, read once and put back for the endpoint. Readable: nothing sent, or one JSON value
+	/// A request's body from farm.gamer.mom, read once and put back for the endpoint. Readable: nothing sent, or one JSON value
 	/// no bigger than <see cref="FarmMaxBody"/> in which no object names a field twice - exactly or in another case. The
 	/// endpoints read names in any case, some the first and some the last: a name sent twice could pass the check as one
 	/// value and reach the endpoint as the other. The object, when it is one.
@@ -301,10 +302,10 @@ public sealed partial class WebHost {
 	}
 
 	/// <summary>
-	/// The dashboard password in a global save from farm.nocat.lol: a first one only here (a swapped page setting one would lock the owner out), an existing one changed
+	/// The dashboard password in a global save from farm.gamer.mom: a first one only here (a swapped page setting one would lock the owner out), an existing one changed
 	/// only with the current one beside it ("CurrentPassword", checked like a sign-in and counted towards the same lockout),
 	/// and never removed from there. Null when that's refused; otherwise what was sent without the password, for the rest of
-	/// the checks. The change signs every browser out, the pages at farm.nocat.lol too - they pair again.
+	/// the checks. The change signs every browser out, the pages at farm.gamer.mom too - they pair again.
 	/// </summary>
 	private JsonObject? FarmPasswordAllowed(HttpContext ctx, JsonObject sent) {
 		string? key = sent.Select(static kv => kv.Key).FirstOrDefault(static k => k.Equals(nameof(GlobalConfig.WebPassword), StringComparison.OrdinalIgnoreCase));
@@ -352,7 +353,7 @@ public sealed partial class WebHost {
 	}
 
 	/// <summary>
-	/// A settings save from farm.nocat.lol: worked out as the endpoint will (merged onto the settings as they are, secrets
+	/// A settings save from farm.gamer.mom: worked out as the endpoint will (merged onto the settings as they are, secrets
 	/// kept), and every field it would change allowed (<see cref="FarmWeb.SettingAllowed"/>). A field that isn't a setting is
 	/// refused on an account; on the global settings the save puts those back itself.
 	/// </summary>
@@ -428,7 +429,7 @@ public sealed partial class WebHost {
 			}
 		} catch (Exception e) {
 			// every page pairs again - nothing worse
-			Log.Failed("dashboard: reading the farm.nocat.lol pairings", e);
+			Log.Failed("dashboard: reading the farm.gamer.mom pairings", e);
 		}
 
 		return _farmTokens;
@@ -450,7 +451,7 @@ public sealed partial class WebHost {
 			AtomicFile.Write(FarmTokensPath, Secrets.Protect(JsonSerializer.Serialize(new SavedFarmTokens(PasswordKey, live)), "dashboard"));
 		} catch (Exception e) {
 			// they last until the next restart, then
-			Log.Failed("dashboard: saving the farm.nocat.lol pairings", e);
+			Log.Failed("dashboard: saving the farm.gamer.mom pairings", e);
 		}
 	}
 
@@ -480,7 +481,7 @@ public sealed partial class WebHost {
 					File.Delete(FarmTokensPath);
 				}
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-				Log.Failed("dashboard: forgetting the farm.nocat.lol pairings", e);
+				Log.Failed("dashboard: forgetting the farm.gamer.mom pairings", e);
 			}
 		}
 	}
@@ -523,7 +524,7 @@ public sealed partial class WebHost {
 		}
 	}
 
-	/// <summary>What the dashboard here shows as its "approve this?" banner. Empty while the setting is off, and on the page at farm.nocat.lol.</summary>
+	/// <summary>What the dashboard here shows as its "approve this?" banner. Empty while the setting is off, and on the page at farm.gamer.mom.</summary>
 	private object[] FarmPairsForPage(bool farm) {
 		lock (_farmGate) {
 			if (!_cfg.FarmWebAllowed) {
@@ -578,9 +579,9 @@ public sealed partial class WebHost {
 
 			// Loud, for somebody doing it the first time: the log line, a pop-up from the tray, and Telegram/Discord when they're set
 			// up - each saying where to approve it. Never an approve button anywhere but the dashboard on this PC.
-			Log.Attention(new Said("dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.", device, pair.Code),
-				new Said("farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device),
-				new Said("farm.nocat.lol wants to open your dashboard"), Topic.Security);
+			Log.Attention(new Said("dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.", device, pair.Code),
+				new Said("farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device),
+				new Said("farm.gamer.mom wants to open your dashboard"), Topic.Security);
 
 			return Results.Json(new { ok = true, pair.Id, pair.Code, Seconds = (int) FarmWeb.PairLifetime.TotalSeconds });
 		});
@@ -626,7 +627,7 @@ public sealed partial class WebHost {
 			}
 		});
 
-		// The banner's Approve and Deny. Only the dashboard here - on this PC, or signed in with the password - never farm.nocat.lol
+		// The banner's Approve and Deny. Only the dashboard here - on this PC, or signed in with the password - never farm.gamer.mom
 		// itself (Routes refuses it before it gets here).
 		app.MapPost("/api/farm/answer", async (HttpContext ctx) => {
 			if (IsFarm(ctx) || !Authorised(ctx)) {
@@ -650,19 +651,19 @@ public sealed partial class WebHost {
 			}
 
 			if ((pair == null) || (body == null)) {
-				return Results.Json(new { ok = false, error = new Said("That request has run out - ask again on farm.nocat.lol.").ToString() });
+				return Results.Json(new { ok = false, error = new Said("That request has run out - ask again on farm.gamer.mom.").ToString() });
 			}
 
 			if (body.Approve) {
-				Log.Good(new Said("dashboard: farm.nocat.lol ({0}) let in - code {1}", pair.Device, pair.Code));
+				Log.Good(new Said("dashboard: farm.gamer.mom ({0}) let in - code {1}", pair.Device, pair.Code));
 			} else {
-				Log.Info(new Said("dashboard: farm.nocat.lol ({0}) turned down - code {1}", pair.Device, pair.Code));
+				Log.Info(new Said("dashboard: farm.gamer.mom ({0}) turned down - code {1}", pair.Device, pair.Code));
 			}
 
 			return Results.Json(new { ok = true });
 		});
 
-		// Taking a paired page back: any of them from here, only its own from farm.nocat.lol.
+		// Taking a paired page back: any of them from here, only its own from farm.gamer.mom.
 		app.MapPost("/api/farm/revoke", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -684,7 +685,7 @@ public sealed partial class WebHost {
 			}
 
 			if (gone) {
-				Log.Info(new Said("dashboard: a farm.nocat.lol pairing was taken back"));
+				Log.Info(new Said("dashboard: a farm.gamer.mom pairing was taken back"));
 			}
 
 			return Results.Json(new { ok = gone });

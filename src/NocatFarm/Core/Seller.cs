@@ -107,7 +107,7 @@ public static class Seller {
 			return new Plan([], 0, 0, "Steam wouldn't say which cards are in a waiting trade - try again in a while");
 		}
 
-		// 1.8.2: nor are its cards promised to a card swap nocat.lol paired.
+		// 1.8.2: nor are its cards promised to a card swap gamer.mom paired.
 		HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 		// game -> card -> the copies held (asset ids), marketable normal cards only
@@ -452,7 +452,7 @@ public static class Seller {
 				return new Said("{0}: Steam wouldn't say which items are in a waiting trade - try again in a while", bot.Name).ToString();
 			}
 
-			// 1.8.2: never a card promised to a card swap nocat.lol paired, either.
+			// 1.8.2: never a card promised to a card swap gamer.mom paired, either.
 			HashSet<ulong> promised = CardExchange.NotForSale(bot, waiting, DateTime.UtcNow);
 
 			return await SellClaimedAsync(bot, [.. offers.Where(o => claimed.Contains(o.AssetId) && !promised.Contains(o.AssetId))], ct, mayAct,

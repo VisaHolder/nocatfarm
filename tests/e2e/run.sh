@@ -10,7 +10,7 @@ PORT="${2:-7377}"
 HERE=$(cd "$(dirname "$0")" && pwd)
 [ -x "$APP/nocatFarm" ] || { echo "FAIL  no nocatFarm in $APP"; exit 1; }
 [ "$PORT" != 7242 ] || { echo "FAIL  7242 is the real dashboard's port - pick another"; exit 1; }
-# Its "Count me as a user" ping goes to ping-stub.mjs on this machine (port+1), never to nocat.lol.
+# Its "Count me as a user" ping goes to ping-stub.mjs on this machine (port+1), never to gamer.mom.
 STUB_PORT=$((PORT + 1))
 [ "$STUB_PORT" != 7242 ] || { echo "FAIL  the ping stub would sit on 7242 - pick another port"; exit 1; }
 

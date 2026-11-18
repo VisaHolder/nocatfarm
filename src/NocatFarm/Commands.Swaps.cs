@@ -6,7 +6,7 @@ namespace NocatFarm;
 public static partial class Commands {
 	/// <summary>
 	/// 'swaps [account]' says what each account's card swaps are doing; 'swaps preview|on|off &lt;account&gt;' shows, turns on
-	/// (after its preview, as the switch in its settings) or off; 'swaps sync' asks nocat.lol for new matches now;
+	/// (after its preview, as the switch in its settings) or off; 'swaps sync' asks gamer.mom for new matches now;
 	/// 'swaps check &lt;account&gt;' tries only the sign-in through Steam.
 	/// </summary>
 	private static async Task<string> SwapsAsync(BotManager mgr, string[] args) {
@@ -26,7 +26,7 @@ public static partial class Commands {
 		if (verb == "sync") {
 			CardExchange.Nudge();
 
-			return "Asking nocat.lol for card swap matches in a minute or two.";
+			return "Asking gamer.mom for card swap matches in a minute or two.";
 		}
 
 		if (verb == "status") {
@@ -52,7 +52,7 @@ public static partial class Commands {
 				// Safe from anywhere, Steam chat too: it only stops things.
 				Switches.Set(bot, Switches.Swaps, false);
 
-				return $"{bot.Name}: card swaps are off - nothing is swapped, and nocat.lol deletes its SteamID and trade link in a minute or two.";
+				return $"{bot.Name}: card swaps are off - nothing is swapped, and gamer.mom deletes its SteamID and trade link in a minute or two.";
 			case "on":
 				Switches.Set(bot, Switches.Swaps, true);
 
@@ -68,7 +68,7 @@ public static partial class Commands {
 	/// through until the hold is gone. It's still turned on.
 	/// </summary>
 	public static string SwapsOnSaid(string account, int? holdDays, bool authenticator) {
-		string on = $"{account}: card swaps are on - nocat.lol gets its list in a minute or two and pairs it within the hour. 'swaps off {account}' turns it off.";
+		string on = $"{account}: card swaps are on - gamer.mom gets its list in a minute or two and pairs it within the hour. 'swaps off {account}' turns it off.";
 
 		return holdDays is int days and > 0
 			? on + Environment.NewLine + $"{account}: it has a {days}-day trade hold{(authenticator ? "" : " (no mobile authenticator)")} - swaps can't go through until the hold is gone."
@@ -82,8 +82,8 @@ public static partial class Commands {
 			: BotManager.ModuleOf<Modules.AccountHealth>(bot)?.Last?.HoldDays;
 
 	/// <summary>
-	/// 'swaps check': whether the account can sign in to nocat.lol through Steam - only ok or why not, never Steam's answer
-	/// itself. The sign-in alone: nothing goes to nocat.lol, nothing is turned on, swaps don't have to be on.
+	/// 'swaps check': whether the account can sign in to gamer.mom through Steam - only ok or why not, never Steam's answer
+	/// itself. The sign-in alone: nothing goes to gamer.mom, nothing is turned on, swaps don't have to be on.
 	/// </summary>
 	public static string SwapsCheckLine(string account, CardExchange.Proved proved) =>
 		proved.Ok ? $"{account}: Steam sign-in for card swaps works" : $"{account}: Steam sign-in for card swaps doesn't work yet - {proved.Why.ToEnglish()}";

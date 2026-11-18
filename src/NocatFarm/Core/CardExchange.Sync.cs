@@ -9,37 +9,37 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// Talking to nocat.lol for card swaps: once every 30-60 minutes this copy asks for its matches, and about every 12 hours
+/// Talking to gamer.mom for card swaps: once every 30-60 minutes this copy asks for its matches, and about every 12 hours
 /// (sooner when an account is turned on or off) it sends the list of what its opted-in accounts could swap. With no
 /// account opted in it says nothing at all - only, once, that its list is to be deleted.
 /// </summary>
 /// <remarks>
 /// Sent: the random number made for this install (the same as the user count's, never logged), the app version, and per
-/// opted-in account what <see cref="BuildList"/> makes plus its steamid and trade link token, and - until nocat.lol says
-/// it has one - Steam's answer to the account signing in to nocat.lol (<see cref="ProveAsync"/>). No account name,
-/// password, login token or anything else. An account turned off is taken off nocat.lol at the next sync whatever else
-/// happens (`rm`), even when the other accounts' lists can't be made just then. Never waits on nocat.lol: no answer is
+/// opted-in account what <see cref="BuildList"/> makes plus its steamid and trade link token, and - until gamer.mom says
+/// it has one - Steam's answer to the account signing in to gamer.mom (<see cref="ProveAsync"/>). No account name,
+/// password, login token or anything else. An account turned off is taken off gamer.mom at the next sync whatever else
+/// happens (`rm`), even when the other accounts' lists can't be made just then. Never waits on gamer.mom: no answer is
 /// one debug line, and the next try is the next look's.
 /// </remarks>
 public static partial class CardExchange {
-	public const string Endpoint = "https://nocat.lol/api/farm/swap";
+	public const string Endpoint = "https://gamer.mom/api/farm/swap";
 
-	/// <summary>The biggest list nocat.lol takes is 256 KB; this leaves room.</summary>
+	/// <summary>The biggest list gamer.mom takes is 256 KB; this leaves room.</summary>
 	public const int MaxBody = 240 * 1024;
 
-	/// <summary>A list is sent about this often (nocat.lol takes one at most every 3 hours).</summary>
+	/// <summary>A list is sent about this often (gamer.mom takes one at most every 3 hours).</summary>
 	public static readonly TimeSpan UploadEvery = TimeSpan.FromHours(12);
 
 	private static readonly Lock Gate = new();
 	private static CancellationTokenSource? _stop;
 	private static DateTime _next = DateTime.MaxValue;
 
-	/// <summary>What this copy last told nocat.lol: which accounts are on its list, and when the next list is due.</summary>
+	/// <summary>What this copy last told gamer.mom: which accounts are on its list, and when the next list is due.</summary>
 	public sealed class Sent {
 		public List<string> Listed { get; set; } = [];
 		public long NextUpload { get; set; }
 
-		/// <summary>The accounts nocat.lol said it has a proof for, and when this copy last sent one (UTC ticks).</summary>
+		/// <summary>The accounts gamer.mom said it has a proof for, and when this copy last sent one (UTC ticks).</summary>
 		public Dictionary<string, long> Proven { get; set; } = [];
 	}
 
@@ -111,7 +111,7 @@ public static partial class CardExchange {
 		}
 	}
 
-	/// <summary>An account was turned on or off: the next sync in a minute or two, so an opt-out is deleted from nocat.lol then.</summary>
+	/// <summary>An account was turned on or off: the next sync in a minute or two, so an opt-out is deleted from gamer.mom then.</summary>
 	public static void Nudge() {
 		lock (Gate) {
 			DateTime soon = DateTime.UtcNow.AddSeconds(Random.Shared.Next(30, 120));
@@ -146,12 +146,12 @@ public static partial class CardExchange {
 
 	/// <summary>
 	/// One sync: the reports of bad offers still to go, then this copy's list when one is due, and its matches back. Nothing
-	/// at all when no account is opted in and nothing is listed. Never throws for nocat.lol's sake - false and a debug line.
+	/// at all when no account is opted in and nothing is listed. Never throws for gamer.mom's sake - false and a debug line.
 	/// </summary>
 	/// <param name="build">Makes one account's entry, or null when it can't just now (the checks pass a stand-in).</param>
 	public static async Task<bool> SyncAsync(HttpClient http, IReadOnlyCollection<Bot> bots, Func<Bot, CancellationToken, Task<JsonObject?>> build, DateTime nowUtc,
 		CancellationToken ct) {
-		// 1.8.2: an account trade banned, or with Steam's market blocked, isn't on the list - it's taken off nocat.lol (rm), so
+		// 1.8.2: an account trade banned, or with Steam's market blocked, isn't on the list - it's taken off gamer.mom (rm), so
 		// nobody is paired with it, until it's over.
 		List<Bot> opted = [.. bots.Where(static b => (b.SteamId != 0) && On(b.Cfg, b.Name) && !Barred(b))];
 		Sent sent = LoadSent();
@@ -159,7 +159,7 @@ public static partial class CardExchange {
 		if ((opted.Count == 0) && (sent.Listed.Count == 0)) {
 			Remember([]);
 
-			return true;   // nothing on nocat.lol, nothing to ask
+			return true;   // nothing on gamer.mom, nothing to ask
 		}
 
 		foreach (Bot bot in opted) {
@@ -173,7 +173,7 @@ public static partial class CardExchange {
 		HashSet<string> provedNow = [];
 		bool skipped = false;
 
-		// Turned off since the last list: taken off nocat.lol now, whether or not the others' lists can be made this time.
+		// Turned off since the last list: taken off gamer.mom now, whether or not the others' lists can be made this time.
 		List<string> gone = [.. sent.Listed.Where(s => !want.Contains(s))];
 
 		if (opted.Count == 0) {
@@ -198,7 +198,7 @@ public static partial class CardExchange {
 					continue;
 				}
 
-				// Until nocat.lol has a proof that this copy is signed in to it, the account goes with one - unproven, it's
+				// Until gamer.mom has a proof that this copy is signed in to it, the account goes with one - unproven, it's
 				// never paired, so nobody else can list it.
 				string sid = bot.SteamId.ToString(CultureInfo.InvariantCulture);
 
@@ -210,7 +210,7 @@ public static partial class CardExchange {
 					} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 						throw;
 					} catch (Exception e) {
-						Log.Debug($"card swaps: couldn't sign in to nocat.lol through Steam: {Log.Describe(e)}", bot.Name);
+						Log.Debug($"card swaps: couldn't sign in to gamer.mom through Steam: {Log.Describe(e)}", bot.Name);
 					}
 
 					if (pf != null) {
@@ -245,7 +245,7 @@ public static partial class CardExchange {
 		if (acc != null) {
 			body["acc"] = acc;
 
-			// nocat.lol takes 256 KB at most: past that, the games of the account listing most go, from the end.
+			// gamer.mom takes 256 KB at most: past that, the games of the account listing most go, from the end.
 			while (Encoding.UTF8.GetByteCount(body.ToJsonString()) > MaxBody) {
 				JsonArray? games = acc.Select(static a => a?["g"] as JsonArray).Where(static g => g is { Count: > 0 }).MaxBy(static g => g!.Count);
 
@@ -264,7 +264,7 @@ public static partial class CardExchange {
 			string text = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
 			if ((resp.StatusCode != HttpStatusCode.OK) || (ParseReply(text) is not { } reply)) {
-				Log.Debug($"card swaps: nocat.lol answered HTTP {(int) resp.StatusCode} - trying again later");
+				Log.Debug($"card swaps: gamer.mom answered HTTP {(int) resp.StatusCode} - trying again later");
 
 				if (acc != null) {
 					sent.NextUpload = (nowUtc + TimeSpan.FromHours(1)).Ticks;
@@ -286,7 +286,7 @@ public static partial class CardExchange {
 				if (reply.Up) {
 					sent.Listed = listing;
 
-					// What nocat.lol has a proof for now: kept as proven (since this proof, when one just went); the rest
+					// What gamer.mom has a proof for now: kept as proven (since this proof, when one just went); the rest
 					// goes with a proof next time.
 					foreach (string s in sent.Proven.Keys.Where(s => !listing.Contains(s) || !(reply.Proven ?? []).Contains(s)).ToList()) {
 						sent.Proven.Remove(s);
@@ -299,7 +299,7 @@ public static partial class CardExchange {
 					}
 
 					sent.NextUpload = (nowUtc + (skipped ? TimeSpan.FromHours(1) : UploadEvery + TimeSpan.FromMinutes(Random.Shared.Next(-60, 61)))).Ticks;
-					Log.Debug(acc.Count == 0 ? "card swaps: the list on nocat.lol is deleted" : $"card swaps: sent the list of {acc.Count} account(s)");
+					Log.Debug(acc.Count == 0 ? "card swaps: the list on gamer.mom is deleted" : $"card swaps: sent the list of {acc.Count} account(s)");
 				} else {
 					sent.NextUpload = (nowUtc + TimeSpan.FromSeconds(Math.Clamp(reply.Wait, 60, 24 * 3600))).Ticks;
 				}
@@ -311,7 +311,7 @@ public static partial class CardExchange {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"card swaps: nocat.lol didn't answer ({Log.Describe(e)}) - trying again later");
+			Log.Debug($"card swaps: gamer.mom didn't answer ({Log.Describe(e)}) - trying again later");
 
 			return false;
 		}
@@ -319,13 +319,13 @@ public static partial class CardExchange {
 
 	/// <summary>
 	/// 1.8.2: whether an account can't swap for now - a trade ban (the ban look) or Steam's market blocked for it (the market
-	/// hold). Such an account is taken off nocat.lol's list so no swap is matched to it; put back once it's over.
+	/// hold). Such an account is taken off gamer.mom's list so no swap is matched to it; put back once it's over.
 	/// </summary>
 	public static bool Barred(Bot bot) =>
 		MarketHold.On(bot.Name) || (BotManager.ModuleOf<Modules.BanWatch>(bot)?.Last is { TradeBanned: true });
 
 	/// <summary>
-	/// nocat.lol's answer: the matches, whether the list was taken, and how long until one would be; with a list taken, the
+	/// gamer.mom's answer: the matches, whether the list was taken, and how long until one would be; with a list taken, the
 	/// accounts on it it has a proof for; and whether accounts asked to be taken off were.
 	/// </summary>
 	public sealed record Reply(List<Match> Matches, bool Up, int Wait, List<string>? Proven = null, bool Removed = false);
@@ -360,7 +360,7 @@ public static partial class CardExchange {
 		}
 	}
 
-	/// <summary>One match as nocat.lol hands it over, or null when anything in it can't be read (it's skipped, never guessed at).</summary>
+	/// <summary>One match as gamer.mom hands it over, or null when anything in it can't be read (it's skipped, never guessed at).</summary>
 	private static Match? ParseMatch(JsonElement m) {
 		static string S(JsonElement e, string name) => e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? v.GetString() ?? "" : "";
 		static ulong U(string s) => ulong.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out ulong n) ? n : 0;
@@ -404,7 +404,7 @@ public static partial class CardExchange {
 		return pairs.Count == 0 ? null : new Match(id, DateTimeOffset.FromUnixTimeMilliseconds(made).UtcDateTime, me, you, send, token, pairs);
 	}
 
-	/// <summary>Tells nocat.lol about the bad offers this account got and hasn't told yet. Kept for the next sync when it didn't answer.</summary>
+	/// <summary>Tells gamer.mom about the bad offers this account got and hasn't told yet. Kept for the next sync when it didn't answer.</summary>
 	private static async Task ReportAsync(HttpClient http, Bot bot, CancellationToken ct) {
 		Ledger ledger = Ledger.Load(bot.Name);
 
@@ -418,7 +418,7 @@ public static partial class CardExchange {
 				req.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 				using HttpResponseMessage resp = await http.SendAsync(req, ct).ConfigureAwait(false);
 
-				// Taken, or nocat.lol has no such match any more: either way it's done. Anything else goes again next time.
+				// Taken, or gamer.mom has no such match any more: either way it's done. Anything else goes again next time.
 				done = resp.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotFound;
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;

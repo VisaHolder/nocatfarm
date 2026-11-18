@@ -51,7 +51,7 @@ put in here, both ways - exactly what it did before.
 
 **Add-ons can answer offers too**, if you let them: *Let add-ons answer trade offers* (`AddonTrades`, Show advanced,
 off). An add-on with custom trade rules is then asked about the offers nocat.farm would otherwise leave for you, and can
-accept or decline them. It's never asked about your own accounts, donations or card swaps nocat.lol paired, and it can't
+accept or decline them. It's never asked about your own accounts, donations or card swaps gamer.mom paired, and it can't
 give away anything on your "never touch" lists, anything promised to another offer or anything that can't be traded, nor
 trade when Steam would hold it. Its offers wait like any other. A trade it accepts from a stranger waits for you to
 confirm it in the Steam app, unless you also turn on *Confirm add-on accepts from strangers* - which is dangerous: a
@@ -107,25 +107,25 @@ stops it at once. From the console: `swaps preview myaccount`, `swaps on myaccou
 
 How it goes:
 
-1. About twice a day your copy tells nocat.lol which spare cards each opted-in account has, for games where it has a
+1. About twice a day your copy tells gamer.mom which spare cards each opted-in account has, for games where it has a
    spare copy, with their market prices. With it go the account's SteamID and trade link, so a partner can send it an
-   offer. Turning it off deletes all of it from nocat.lol within a minute or two, even if the other accounts' cards
-   can't be read just then; its old matches go from nocat.lol within the hour.
-   The first time (and every few weeks), each account also signs in to nocat.lol through Steam, the way you'd sign in to
-   a trading site, so nocat.lol knows it's really yours. nocat.lol never pairs an account nobody proved like that: no
+   offer. Turning it off deletes all of it from gamer.mom within a minute or two, even if the other accounts' cards
+   can't be read just then; its old matches go from gamer.mom within the hour.
+   The first time (and every few weeks), each account also signs in to gamer.mom through Steam, the way you'd sign in to
+   a trading site, so gamer.mom knows it's really yours. gamer.mom never pairs an account nobody proved like that: no
    one can list your SteamID, block you, or collect trade links with made-up accounts. Steam's answer only says "this
    is SteamID X"; it can't sign in or trade, and it's made out to your copy alone.
-2. Once an hour nocat.lol pairs accounts the way ArchiSteamFarm does: a card only goes from a bigger pile to a smaller
+2. Once an hour gamer.mom pairs accounts the way ArchiSteamFarm does: a card only goes from a bigger pile to a smaller
    one, on both sides, so neither side's sets lose anything. Several games go in one offer, and of the ways to pair two
    accounts it picks the one that finishes the most badge levels and sets.
 3. One side sends the offer, with a note like `nocat.farm card swap #a1b2c3d4e5f6`. Before sending, it checks
    everything again against its own cards and prices. Then, before confirming, it checks the offer Steam actually made
    the same way the other side will: priced by Steam's own names for the cards, never by what the partner told
-   nocat.lol. Anything off and the offer is taken back, never confirmed.
-4. The other side checks it once more before accepting: it has to be exactly what nocat.lol paired (or part of it),
+   gamer.mom. Anything off and the offer is taken back, never confirmed.
+4. The other side checks it once more before accepting: it has to be exactly what gamer.mom paired (or part of it),
    from the account it paired, and give nothing else. An offer that isn't is never accepted, is left for you, and that
-   account is never swapped with again (nocat.lol is told too; after 3 different people report the same account,
-   nocat.lol never pairs it with anyone). An offer that's fine but no longer good for this account (its cards changed,
+   account is never swapped with again (gamer.mom is told too; after 3 different people report the same account,
+   gamer.mom never pairs it with anyone). An offer that's fine but no longer good for this account (its cards changed,
    or the prices did), for a match it already swapped or one paired over 2 days ago, or asking for a card already on
    another offer or swap, is declined.
 
@@ -154,11 +154,11 @@ open. With [buying cards](cards-and-idling.md#buying-cards) on, a missing card a
 this account has checked is waited for instead of bought; a swap that's only paired doesn't hold buying back. Each has its own daily limit: swaps a day, spare items a day, money spent a day - one never uses up
 another's.
 
-`swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks nocat.lol for
+`swaps` shows each account: on or off, today's swaps, matches waiting and offers out. `swaps sync` asks gamer.mom for
 new matches now.
 
 `swaps check myaccount` tries only the sign-in through Steam that swaps need, and says in one line whether it works -
-or why not, like `Steam answered 200 and showed the sign-in page again`. It sends nothing to nocat.lol, turns nothing
+or why not, like `Steam answered 200 and showed the sign-in page again`. It sends nothing to gamer.mom, turns nothing
 on, and works with swaps off. It never shows Steam's answer itself. Only at the PC, Telegram or Discord, not from Steam
 chat. When the sign-in fails during a sync, the debug log says why the same way: `swap sign-in failed · ...`.
 

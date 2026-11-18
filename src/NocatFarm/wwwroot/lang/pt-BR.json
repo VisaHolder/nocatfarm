@@ -2957,14 +2957,14 @@
     "no fresh price for some of its cards": "não há preço recente para algumas das cartas",
     "it would set back a set now": "agora faria um conjunto regredir",
     "it would lose more than your limit": "perderia mais do que o seu limite",
-    "not a swap nocat.lol paired with this account": "não é uma troca que o nocat.lol pareou com esta conta",
+    "not a swap gamer.mom paired with this account": "não é uma troca que o gamer.mom pareou com esta conta",
     "it has something that isn't a normal trading card": "tem algo que não é uma carta colecionável normal",
-    "it isn't the swap nocat.lol paired": "não é a troca que o nocat.lol pareou",
+    "it isn't the swap gamer.mom paired": "não é a troca que o gamer.mom pareou",
     "no fresh price yet for {0}": "ainda não há preço recente para {0}",
     "it's worth less than this account gives": "vale menos do que esta conta dá",
     "card swaps: couldn't read its own trade link - not listed this time": "troca de cartas: não deu para ler o próprio link de troca - não listada desta vez",
     "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "A troca de cartas está ligada para {0}: troca cartas sobrando com outros usuários do nocat.farm, dentro dos limites",
-    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "A troca de cartas está desligada para {0}: nada é trocado, e o nocat.lol a esquece",
+    "Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it": "A troca de cartas está desligada para {0}: nada é trocado, e o gamer.mom a esquece",
     "held by scam watch - no swaps until 'scamwatch ok'": "retido pelo alerta de golpes - sem trocas até 'scamwatch ok'",
     "waiting for its day": "esperando o dia dela",
     "{0} swaps today - the most for a day": "{0} trocas hoje - o máximo por dia",
@@ -2986,15 +2986,15 @@
     "card swap · you give {0} · you get {1}": "troca de cartas · você dá {0} · você recebe {1}",
     "card swap · confirm the offer to {0} on your phone": "troca de cartas · confirme a oferta para {0} no seu celular",
     "sent a swap to {0}": "troca enviada para {0}",
-    "a card swap nocat.lol paired": "uma troca de cartas pareada pelo nocat.lol",
-    "a card swap nocat.lol paired · checked, then accepted or declined": "uma troca de cartas pareada pelo nocat.lol · conferida e depois aceita ou recusada",
+    "a card swap gamer.mom paired": "uma troca de cartas pareada pelo gamer.mom",
+    "a card swap gamer.mom paired · checked, then accepted or declined": "uma troca de cartas pareada pelo gamer.mom · conferida e depois aceita ou recusada",
     "offer {0} is from an account that once sent a bad swap · left for you": "a oferta {0} é de uma conta que já mandou uma troca ruim · deixada para você",
     "from an account that once sent a bad swap": "de uma conta que já mandou uma troca ruim",
     "not now": "agora não",
     "offer {0} isn't a good swap now ({1}) - declining": "a oferta {0} não é uma boa troca agora ({1}) - recusando",
     "card swap · you'd give {0} · you'd get {1}": "troca de cartas · você daria {0} · você receberia {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "a oferta de troca {0} não é o que foi pareado ({1}) · deixada para você",
-    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "a oferta {0} diz ser uma troca que o nocat.lol não pareou · deixada para você",
+    "offer {0} says it's a card swap gamer.mom didn't pair · left for you": "a oferta {0} diz ser uma troca que o gamer.mom não pareou · deixada para você",
     "Turn on card swaps?": "Ligar a troca de cartas?",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Isto é o que ela poderia trocar agora e os limites que respeita. Nada é trocado até você apertar Ligar.",
     "spare cards to swap": "cartas sobrando para trocar",
@@ -3008,11 +3008,11 @@
     "Also when Steam would hold the trade": "Também quando a Steam reteria a troca",
     "Its offers are confirmed by its authenticator here": "As ofertas são confirmadas pelo autenticador daqui",
     "Its offers wait for you to confirm them on your phone": "As ofertas esperam você confirmar no celular",
-    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois",
+    "While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them": "Enquanto estiver ligada, o gamer.mom guarda o SteamID e o link de troca desta conta - desligar apaga os dois",
     "Its wallet currency is not known yet - nothing is swapped until it is": "A moeda da carteira ainda não é conhecida - nada é trocado até ser",
     "1 card still needs a price first.": "1 carta ainda precisa de um preço antes.",
     "{0} cards still need a price first.": "{0} cartas ainda precisam de um preço antes.",
-    "card swap offer to {0} wasn't what nocat.lol said · taken back": "a oferta de troca para {0} não era o que o nocat.lol disse · retirada",
+    "card swap offer to {0} wasn't what gamer.mom said · taken back": "a oferta de troca para {0} não era o que o gamer.mom disse · retirada",
     "it was paired more than 2 days ago": "foi pareada há mais de 2 dias",
     "Steam's name for a card in it doesn't fit its game": "o nome de uma carta no Steam não combina com o jogo dela",
     "a card in it is already on another offer or swap": "uma carta dela já está em outra oferta ou troca",
@@ -3030,7 +3030,7 @@
     "Steam answered {0} and showed the sign-in page again": "a Steam respondeu {0} e mostrou de novo a página de autorização",
     "Steam answered {0} and showed its login page": "a Steam respondeu {0} e mostrou a página de login",
     "Steam answered {0} and sent it nowhere": "a Steam respondeu {0} e não redirecionou para lugar nenhum",
-    "Steam sent it to {0}, not nocat.lol": "a Steam enviou para {0}, não para o nocat.lol",
+    "Steam sent it to {0}, not gamer.mom": "a Steam enviou para {0}, não para o gamer.mom",
     "Steam's answer wasn't a sign-in": "a resposta da Steam não era um login",
     "Steam's answer was for another account": "a resposta da Steam era de outra conta",
     "Steam's answer was too long": "a resposta da Steam era longa demais",
@@ -3130,7 +3130,7 @@
     "none - the defaults": "nenhuma - as padrão",
     "set finder · couldn't save what it shared · {0}": "buscador de conjuntos · não conseguiu salvar o que compartilhou · {0}",
     "set finder · shared lists · {0} sent, {1} taken from other copies": "buscador de conjuntos · listas compartilhadas · {0} enviados, {1} pegos de outras cópias",
-    "set finder · nocat.lol didn't answer · {0}": "buscador de conjuntos · o nocat.lol não respondeu · {0}",
+    "set finder · gamer.mom didn't answer · {0}": "buscador de conjuntos · o gamer.mom não respondeu · {0}",
     "gems kept loose · not sure yet what they're worth in levels": "gemas guardadas soltas · ainda não se sabe quantos níveis valem",
     "saving tradable gems for a sack to sell": "juntando gemas negociáveis para um saco para vender",
     "gems: today's listings are done · more tomorrow": "gemas: os anúncios de hoje acabaram · mais amanhã",
@@ -3220,7 +3220,7 @@
     "Games I pick": "Jogos que eu escolher",
     "Get messages on Telegram or Discord": "Receber mensagens no Telegram ou Discord",
     "I also use this account in my own Steam app": "Também uso esta conta no meu próprio app da Steam",
-    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Ele se conta no nocat.lol uma vez por hora, anonimamente - só um número aleatório e quantas contas. “Contar como usuário”, em Configurações, Atualizações e plugins, desliga isso.",
+    "It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Ele se conta no gamer.mom uma vez por hora, anonimamente - só um número aleatório e quantas contas. “Contar como usuário”, em Configurações, Atualizações e plugins, desliga isso.",
     "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "Primeiro farma as cartas colecionáveis. Quando acabarem, pode continuar rodando jogos para somar horas.",
     "It stays signed in and does nothing once the cards are done.": "Fica conectada e não faz nada quando as cartas acabam.",
     "Language: {0}": "Idioma: {0}",
@@ -3433,43 +3433,43 @@
     "offer {0} declined for add-on {1} · {2}": "oferta {0} recusada pelo complemento {1} · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "um complemento pode respondê-la; se não, trade accept ou decline {0} {1}",
     "plugin {0} added more than {1} trade judges - the rest are left out": "o plugin {0} adicionou mais de {1} juízes de trocas - o resto fica de fora",
-    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "Faça isso no painel do próprio app no seu PC - o farm.nocat.lol não pode.",
-    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "O farm.nocat.lol só abre o nocat.farm no mesmo PC, em http://127.0.0.1.",
+    "Do this in the app's own dashboard on your PC - farm.gamer.mom can't.": "Faça isso no painel do próprio app no seu PC - o farm.gamer.mom não pode.",
+    "farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.": "O farm.gamer.mom só abre o nocat.farm no mesmo PC, em http://127.0.0.1.",
     "This browser isn't paired with nocat.farm yet.": "Este navegador ainda não está pareado com o nocat.farm.",
     "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "Há pedidos demais esperando no nocat.farm. Responda-os no app ou espere 5 minutos.",
     "Asked too often - wait a minute and try again.": "Pedidos demais - espere um minuto e tente de novo.",
-    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "painel: farm.nocat.lol ({0}) pede para abrir este painel - código {1}. Aprove ou recuse no painel deste PC.",
-    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "O farm.nocat.lol pede para abrir o seu painel do nocat.farm (código {0}, {1}). Se for você, aprove no painel do próprio app no seu PC. Se não for, não faça nada - expira em 5 minutos.",
-    "That request has run out - ask again on farm.nocat.lol.": "Esse pedido expirou - peça de novo no farm.nocat.lol.",
-    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "painel: farm.nocat.lol ({0}) liberado - código {1}",
-    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "painel: farm.nocat.lol ({0}) recusado - código {1}",
-    "dashboard: a farm.nocat.lol pairing was taken back": "painel: um pareamento do farm.nocat.lol foi revogado",
+    "dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "painel: farm.gamer.mom ({0}) pede para abrir este painel - código {1}. Aprove ou recuse no painel deste PC.",
+    "farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "O farm.gamer.mom pede para abrir o seu painel do nocat.farm (código {0}, {1}). Se for você, aprove no painel do próprio app no seu PC. Se não for, não faça nada - expira em 5 minutos.",
+    "That request has run out - ask again on farm.gamer.mom.": "Esse pedido expirou - peça de novo no farm.gamer.mom.",
+    "dashboard: farm.gamer.mom ({0}) let in - code {1}": "painel: farm.gamer.mom ({0}) liberado - código {1}",
+    "dashboard: farm.gamer.mom ({0}) turned down - code {1}": "painel: farm.gamer.mom ({0}) recusado - código {1}",
+    "dashboard: a farm.gamer.mom pairing was taken back": "painel: um pareamento do farm.gamer.mom foi revogado",
     "In the app on your PC": "No app do seu PC",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} está esperando o código QR de login ser escaneado - ele aparece no painel do próprio app no seu PC.",
-    "farm.nocat.lol wants to open this dashboard": "O farm.nocat.lol quer abrir este painel",
+    "farm.gamer.mom wants to open this dashboard": "O farm.gamer.mom quer abrir este painel",
     "Approve": "Aprovar",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "O código do Steam Guard só aparece no painel do próprio app no seu PC.",
     "This browser is paired with nocat.farm on this PC.": "Este navegador está pareado com o nocat.farm deste PC.",
     "Disconnect this browser": "Desconectar este navegador",
-    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "Desligado: o farm.nocat.lol não pode abrir este painel. Ligue \"Deixar o farm.nocat.lol abrir este painel\" para usá-lo por esse endereço num navegador deste PC.",
+    "Off: farm.gamer.mom can't open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.": "Desligado: o farm.gamer.mom não pode abrir este painel. Ligue \"Deixar o farm.gamer.mom abrir este painel\" para usá-lo por esse endereço num navegador deste PC.",
     "until {0}": "até {0}",
     "Revoke": "Revogar",
     "No browser is paired yet.": "Nenhum navegador pareado ainda.",
-    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "No nocat.farm deste PC, abra o painel dele, depois Configurações, Painel e celular, marque Mostrar avançadas e ligue \"Deixar o farm.nocat.lol abrir este painel\". Salve e volte aqui.",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.": "No nocat.farm deste PC, abra o painel dele, depois Configurações, Painel e celular, marque Mostrar avançadas e ligue \"Deixar o farm.gamer.mom abrir este painel\". Salve e volte aqui.",
     "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "O Safari, e alguns navegadores ou extensões, impedem um site de falar com o seu próprio PC. Então abra o painel direto pelo nocat.farm:",
     "Start nocat.farm on this PC, then reload this page.": "Abra o nocat.farm neste PC e depois recarregue esta página.",
     "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "Esta página precisa de um nocat.farm mais novo que {0}. Atualize-o no painel dele neste PC e depois recarregue esta página.",
-    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Esta página fala direto com o nocat.farm deste PC - nada passa pelo nocat.lol. O nocat.farm pergunta antes: aperte Conectar e depois aprove o mesmo código no app.",
-    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "No painel do próprio nocat.farm neste PC, uma caixa pergunta se o farm.nocat.lol pode abri-lo. Confira se mostra este mesmo código e aperte Aprovar.",
+    "This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Esta página fala direto com o nocat.farm deste PC - nada passa pelo gamer.mom. O nocat.farm pergunta antes: aperte Conectar e depois aprove o mesmo código no app.",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.": "No painel do próprio nocat.farm neste PC, uma caixa pergunta se o farm.gamer.mom pode abri-lo. Confira se mostra este mesmo código e aperte Aprovar.",
     "Waiting for you to approve it…": "Esperando você aprovar…",
     "It was turned down in nocat.farm.": "Foi recusado no nocat.farm.",
     "That code ran out. Press Connect for a new one.": "Esse código expirou. Aperte Conectar para receber um novo.",
-    "farm.nocat.lol can open this dashboard now.": "Agora o farm.nocat.lol pode abrir este painel.",
+    "farm.gamer.mom can open this dashboard now.": "Agora o farm.gamer.mom pode abrir este painel.",
     "Turned down.": "Recusado.",
     "Taken back - that browser has to pair again.": "Revogado - esse navegador precisa parear de novo.",
     "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "painel no navegador: {0} - quando houver uma conta configurada ele abre lá; {1} sempre funciona neste PC",
-    "farm.nocat.lol wants to open your dashboard": "O farm.nocat.lol quer abrir o seu painel",
-    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Você acabou de abrir o farm.nocat.lol? Ele mostra um código. Aprove só se for este mesmo:",
+    "farm.gamer.mom wants to open your dashboard": "O farm.gamer.mom quer abrir o seu painel",
+    "Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:": "Você acabou de abrir o farm.gamer.mom? Ele mostra um código. Aprove só se for este mesmo:",
     "how?": "como?",
     "app port": "porta do app",
     "open it here": "abrir aqui",
@@ -3491,11 +3491,11 @@
     "connect": "conectar",
     "approve this code in nocat.farm on this PC.": "aprove este código no nocat.farm deste PC.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Mesmo que este site fosse invadido, ele não conseguiria levar seus itens nem sua conta: eles ficam no app do seu PC.",
-    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Ligado: https://farm.nocat.lol pode abrir este painel num navegador deste PC, depois que você aprovar aqui. Ele nunca pode trocar, enviar itens, confirmar, ver códigos do Steam Guard nem mudar como as contas entram.",
+    "On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Ligado: https://farm.gamer.mom pode abrir este painel num navegador deste PC, depois que você aprovar aqui. Ele nunca pode trocar, enviar itens, confirmar, ver códigos do Steam Guard nem mudar como as contas entram.",
     "Type the current dashboard password to change it.": "Digite a senha atual do painel para mudá-la.",
     "your browser blocked this page": "seu navegador bloqueou esta página",
     "let it reach your PC and try again, or open nocat.farm here.": "deixe ela acessar seu PC e tente de novo, ou abra o nocat.farm aqui.",
-    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "Na barra de endereço, clique no ícone ao lado de farm.nocat.lol, mude Acesso à rede local para Permitir e recarregue esta página.",
+    "Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "Na barra de endereço, clique no ícone ao lado de farm.gamer.mom, mude Acesso à rede local para Permitir e recarregue esta página.",
     "let this page reach your PC": "deixe esta página acessar seu PC",
     "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "seu navegador vai perguntar antes - clique em Permitir. Isso só deixa esta página falar com o nocat.farm neste PC.",
     "find my nocat.farm": "encontrar meu nocat.farm"
@@ -3955,7 +3955,7 @@
     },
     "AddonTrades": {
       "label": "Deixar complementos responderem ofertas de troca",
-      "tip": "Deixa os complementos que você instalou aceitarem ou recusarem as ofertas de troca que esta conta, senão, deixaria com você (ou recusaria com \"Recusar todo o resto\"). Nunca ofertas das suas próprias contas, doações nem trocas de cartas pareadas pelo nocat.lol. Um complemento não pode dar nada das suas listas de \"nunca mexer\", nada prometido em outra oferta nem nada que não possa ser trocado, nem trocar quando o Steam reteria a troca, e as ofertas dele esperam como qualquer outra. Só para complementos em que você confia. Desligado por padrão."
+      "tip": "Deixa os complementos que você instalou aceitarem ou recusarem as ofertas de troca que esta conta, senão, deixaria com você (ou recusaria com \"Recusar todo o resto\"). Nunca ofertas das suas próprias contas, doações nem trocas de cartas pareadas pelo gamer.mom. Um complemento não pode dar nada das suas listas de \"nunca mexer\", nada prometido em outra oferta nem nada que não possa ser trocado, nem trocar quando o Steam reteria a troca, e as ofertas dele esperam como qualquer outra. Só para complementos em que você confia. Desligado por padrão."
     },
     "AddonTradesConfirm": {
       "label": "Confirmar o que um complemento aceitar de desconhecidos",
@@ -4618,11 +4618,11 @@
     },
     "CountMeAsUser": {
       "label": "Contar como usuário",
-      "tip": "Avisa o nocat.lol uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, insígnias, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
+      "tip": "Avisa o gamer.mom uma vez por hora que esta cópia está rodando, para a página dele poder contar os usuários. Manda um número aleatório criado para esta instalação, a versão do app, a plataforma e quantas das suas contas Steam estão conectadas (só o número, por exemplo 3), mais os totais de horas e cartas e o resto (gemas, insígnias, pacotes, itens vendidos) se você compartilhar (a próxima configuração) - nada mais: nenhum nome de conta, Steam ID ou configuração. É assim que a contagem de contas Steam é feita. Desligado não manda nada. Com \"Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm\" ligado, também manda os preços de mercado dos conjuntos de cartas que achou, numa mensagem à parte (veja essa configuração)."
     },
     "ShareFarmTotals": {
       "label": "Compartilhar meus totais de farm",
-      "tip": "Adiciona alguns números à mensagem de hora em hora do \"Contar como usuário\": as horas de jogo que suas contas acumularam, as cartas que ganharam, os itens que viraram gemas, as insígnias que criaram (laminadas também), os pacotes de cartas que abriram e os itens que venderam no mercado desde a última - por exemplo 41.5 horas, 12 cartas, 30 itens em gemas, 2 insígnias, 4 pacotes e 9 itens vendidos. Na primeira vez que for ligado, também manda uma vez as horas e cartas que já estão no histórico desta cópia. O nocat.lol soma os de todo mundo e mostra os totais na página do nocat.farm. Nada sobre qual conta, jogo, carta ou item. Ligado: os números vão com a mensagem de hora em hora. Desligado: nenhum vai. Só enquanto \"Contar como usuário\" estiver ligado."
+      "tip": "Adiciona alguns números à mensagem de hora em hora do \"Contar como usuário\": as horas de jogo que suas contas acumularam, as cartas que ganharam, os itens que viraram gemas, as insígnias que criaram (laminadas também), os pacotes de cartas que abriram e os itens que venderam no mercado desde a última - por exemplo 41.5 horas, 12 cartas, 30 itens em gemas, 2 insígnias, 4 pacotes e 9 itens vendidos. Na primeira vez que for ligado, também manda uma vez as horas e cartas que já estão no histórico desta cópia. O gamer.mom soma os de todo mundo e mostra os totais na página do nocat.farm. Nada sobre qual conta, jogo, carta ou item. Ligado: os números vão com a mensagem de hora em hora. Desligado: nenhum vai. Só enquanto \"Contar como usuário\" estiver ligado."
     },
     "ReactionSpeed": {
       "label": "Velocidade de reação",
@@ -5009,7 +5009,7 @@
     },
     "CardSwaps": {
       "label": "Trocar cartas sobrando com outros usuários do nocat.farm",
-      "tip": "Troca cartas colecionáveis normais sobrando, uma por uma, com outros usuários do nocat.farm, no mesmo jogo, para os dois lados completarem conjuntos mais cedo. O nocat.lol pareia as contas; esta conta confere cada troca de novo antes. Nunca dá uma carta que seus conjuntos precisam nem a última cópia de uma, nunca cartas brilhantes, fundos ou emoticons, e nada das suas listas de \"nunca mexer\". Enquanto estiver ligada, o nocat.lol guarda o SteamID e o link de troca desta conta - desligar apaga os dois. Ao ligar, primeiro mostra o que faria e pede confirmação."
+      "tip": "Troca cartas colecionáveis normais sobrando, uma por uma, com outros usuários do nocat.farm, no mesmo jogo, para os dois lados completarem conjuntos mais cedo. O gamer.mom pareia as contas; esta conta confere cada troca de novo antes. Nunca dá uma carta que seus conjuntos precisam nem a última cópia de uma, nunca cartas brilhantes, fundos ou emoticons, e nada das suas listas de \"nunca mexer\". Enquanto estiver ligada, o gamer.mom guarda o SteamID e o link de troca desta conta - desligar apaga os dois. Ao ligar, primeiro mostra o que faria e pede confirmação."
     },
     "CardSwapMaxLoss": {
       "label": "O máximo que uma troca pode perder",
@@ -5025,7 +5025,7 @@
     },
     "ShareCheapestSets": {
       "label": "Compartilhar os conjuntos mais baratos com outros usuários do nocat.farm",
-      "tip": "Enquanto uma conta compra os conjuntos completos mais baratos, manda ao nocat.lol, mais ou menos a cada 6 horas, os conjuntos completos de cartas mais baratos que esta cópia achou no mercado, e pega de volta os que todas as outras cópias acharam - assim acha conjuntos baratos muito antes. O que vai: o jogo de cada conjunto, os nomes das cartas, o menor preço de cada carta, quantas estão à venda e quando isso foi visto - por exemplo um conjunto de 5 cartas a 0,03 cada, visto há uma hora. Nada sobre você ou suas contas. O que volta só diz quais jogos olhar primeiro: cada carta é avaliada de novo no mercado da Steam antes de qualquer compra. Ligado: compartilhado nos dois sentidos. Desligado: nada é enviado nem buscado. Só enquanto \"Contar como usuário\" estiver ligado."
+      "tip": "Enquanto uma conta compra os conjuntos completos mais baratos, manda ao gamer.mom, mais ou menos a cada 6 horas, os conjuntos completos de cartas mais baratos que esta cópia achou no mercado, e pega de volta os que todas as outras cópias acharam - assim acha conjuntos baratos muito antes. O que vai: o jogo de cada conjunto, os nomes das cartas, o menor preço de cada carta, quantas estão à venda e quando isso foi visto - por exemplo um conjunto de 5 cartas a 0,03 cada, visto há uma hora. Nada sobre você ou suas contas. O que volta só diz quais jogos olhar primeiro: cada carta é avaliada de novo no mercado da Steam antes de qualquer compra. Ligado: compartilhado nos dois sentidos. Desligado: nada é enviado nem buscado. Só enquanto \"Contar como usuário\" estiver ligado."
     },
     "GemsForLevels": {
       "label": "Usar as gemas para o máximo de níveis",
@@ -5094,8 +5094,8 @@
       "tip": "Antes de comprar as cartas que faltam para uma insígnia, calcula se os pacotes de cartas do jogo sairiam mais baratos. Um pacote são 3 cartas aleatórias do conjunto inteiro - repetidas e cartas que você já tem não contam -, então os pacotes costumam deixar algumas cartas faltando, compradas depois. Só compra pacotes quando os pacotes e as cartas que devem deixar custam pelo menos um décimo menos que as cartas que faltam. Por exemplo, um conjunto de 5 cartas faltando 4 a 0.20 cada (0.80): 3 pacotes a 0.10 devem deixar cerca de meia carta, cerca de 0.41 no total - pacotes. Um conjunto de 8 cartas faltando 4 a 0.08, com pacotes a 0.25: as cartas. Os pacotes comprados são abertos sozinhos; a próxima verificação compra o que ainda falta. Um conjunto por verificação. 'buy preview' mostra os números. Desligado por padrão."
     },
     "FarmWebAllowed": {
-      "label": "Deixar o farm.nocat.lol abrir este painel",
-      "tip": "Deixa o site farm.nocat.lol mostrar este painel num navegador deste PC, para você guardar um único endereço nos favoritos. Ele fala direto com o nocat.farm deste PC - nada passa pelo nocat.lol. Cada navegador pergunta antes: um código de 6 caracteres aparece na página e aqui, e você aprova neste painel. De lá ele faz quase tudo, mas nunca manda itens embora nem mexe em como as contas entram: trocas, confirmações, envio de itens, códigos do Steam Guard, logins e segredos, os limites de dinheiro, atualizações e complementos ficam aqui. Enquanto estiver ligado, o ícone na bandeja e \"Abrir o navegador ao iniciar\" o abrem lá quando já houver uma conta configurada; adicionar uma conta e entrar sempre acontecem aqui. Ligado numa instalação nova num PC com tela, desligado numa existente, no Docker e num servidor. Desligado: o farm.nocat.lol não alcança o nocat.farm de jeito nenhum."
+      "label": "Deixar o farm.gamer.mom abrir este painel",
+      "tip": "Deixa o site farm.gamer.mom mostrar este painel num navegador deste PC, para você guardar um único endereço nos favoritos. Ele fala direto com o nocat.farm deste PC - nada passa pelo gamer.mom. Cada navegador pergunta antes: um código de 6 caracteres aparece na página e aqui, e você aprova neste painel. De lá ele faz quase tudo, mas nunca manda itens embora nem mexe em como as contas entram: trocas, confirmações, envio de itens, códigos do Steam Guard, logins e segredos, os limites de dinheiro, atualizações e complementos ficam aqui. Enquanto estiver ligado, o ícone na bandeja e \"Abrir o navegador ao iniciar\" o abrem lá quando já houver uma conta configurada; adicionar uma conta e entrar sempre acontecem aqui. Ligado numa instalação nova num PC com tela, desligado numa existente, no Docker e num servidor. Desligado: o farm.gamer.mom não alcança o nocat.farm de jeito nenhum."
     }
   }
 }

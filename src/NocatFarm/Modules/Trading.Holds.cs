@@ -12,12 +12,12 @@ public sealed partial class Trading {
 	/// <summary>
 	/// Whether a swap can go as far as trade holds go: true none, false it would be held - left for you - and null not
 	/// known yet, asked again at the next look. Steam only answers about an account that isn't a friend with its trade
-	/// link, which an offer doesn't carry - 1.8.2: a card swap nocat.lol paired is asked with the trade link token the match
+	/// link, which an offer doesn't carry - 1.8.2: a card swap gamer.mom paired is asked with the trade link token the match
 	/// came with, when it came with one. For a stranger it may never say: after 3 looks without an answer the swap is left
 	/// for you too, and the log says why - never accepted on a guess, never asked about for ever.
 	/// </summary>
 	private async Task<bool?> HoldVerdictAsync(TradeOffers.Offer offer, bool exchange, CancellationToken ct) {
-		// A card swap nocat.lol paired looks only when "Skip swaps Steam would hold" is on.
+		// A card swap gamer.mom paired looks only when "Skip swaps Steam would hold" is on.
 		if (exchange && !Bot.Cfg.CardSwapSkipHeld) {
 			return true;
 		}

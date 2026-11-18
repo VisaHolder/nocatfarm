@@ -131,7 +131,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
 
-		// 1.8.2: a trade ban holds the market - nothing bought, listed or swapped - and takes it off nocat.lol's swap list.
+		// 1.8.2: a trade ban holds the market - nothing bought, listed or swapped - and takes it off gamer.mom's swap list.
 		MarketHold.FromBans(Bot, now, DateTime.UtcNow);
 
 		if (before == null) {

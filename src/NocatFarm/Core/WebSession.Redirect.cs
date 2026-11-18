@@ -10,7 +10,7 @@ public sealed partial class WebSession {
 
 	/// <summary>
 	/// 1.8.2 card swaps: POST a form to Steam as this account and hand back where Steam sends it, without going there.
-	/// Signing in to nocat.lol through Steam (OpenID) ends in such a redirect, and its address IS Steam's answer. The
+	/// Signing in to gamer.mom through Steam (OpenID) ends in such a redirect, and its address IS Steam's answer. The
 	/// account's own cookies and proxy. No redirect: the status Steam answered with (0 for no answer) and its page, so the
 	/// caller can say why - kept in memory only, never logged.
 	/// </summary>

@@ -4,7 +4,7 @@ namespace NocatFarm.Modules;
 
 /// <summary>
 /// 1.8.2 card swaps with other nocat.farm users - the sending side. With "Swap cards with other nocat.farm users" on, each
-/// look sends at most one offer for a match nocat.lol made (see <see cref="CardExchange"/>), after checking it all again
+/// look sends at most one offer for a match gamer.mom made (see <see cref="CardExchange"/>), after checking it all again
 /// against this account's own cards and prices, and follows up the offers it sent: noted when they go through, taken
 /// back after 2 days unanswered.
 /// </summary>
@@ -348,7 +348,7 @@ public sealed class CardSwaps(Bot bot) : BotModule(bot) {
 						l.Blocked.Add(match.You);
 					}
 				});
-				Log.Attention(new Said("card swap offer to {0} wasn't what nocat.lol said · taken back", who), Bot.Name, Topic.Trades);
+				Log.Attention(new Said("card swap offer to {0} wasn't what gamer.mom said · taken back", who), Bot.Name, Topic.Trades);
 
 				return;
 			default:
