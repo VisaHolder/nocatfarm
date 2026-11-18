@@ -11,25 +11,25 @@ namespace NocatFarm.Core;
 /// on other people's nocat.farm - so sets finish that farming alone leaves half done. Opt-in per account, off by default.
 /// </summary>
 /// <remarks>
-/// <para>How it goes. Every 12 hours or so this copy tells nocat.lol what each opted-in account could swap
+/// <para>How it goes. Every 12 hours or so this copy tells gamer.mom what each opted-in account could swap
 /// (<see cref="BuildList"/>): per game where it has a spare copy, every normal card of that game it holds, its price,
 /// and the copies it may give - never the last copy of a card, never more than "Keep this many of each card" allows,
 /// nothing on the "never touch" lists, nothing on an offer, no foils, backgrounds or emoticons. With it go its steamid
-/// and trade link (both deleted from nocat.lol the moment it opts out), the most a swap may lose, and whether it skips
-/// partners whose trades would be held. nocat.lol pairs accounts once an hour, the way ArchiSteamFarm's MatchActively
+/// and trade link (both deleted from gamer.mom the moment it opts out), the most a swap may lose, and whether it skips
+/// partners whose trades would be held. gamer.mom pairs accounts once an hour, the way ArchiSteamFarm's MatchActively
 /// does (see <see cref="SwapRules"/>), and hands each copy its matches.</para>
 /// <para>One side sends the offer (<see cref="Modules.CardSwaps"/>), with "nocat.farm card swap #&lt;match&gt;" as its
 /// note. Before sending it checks everything again against its own inventory and prices; the other side checks it all
 /// once more before accepting (<see cref="Verify"/>): that the offer is exactly what was paired (or part of it) and gives
 /// nothing else, that its sets lose nothing, and that it doesn't lose more than its limit by its own prices. An offer
-/// that isn't what was paired is never accepted, it's reported to nocat.lol, and that account is never swapped with
+/// that isn't what was paired is never accepted, it's reported to gamer.mom, and that account is never swapped with
 /// again.</para>
 /// </remarks>
 public static partial class CardExchange {
 	/// <summary>The note on every swap offer, before the match's id: "nocat.farm card swap #a1b2c3d4e5f6".</summary>
 	public const string Tag = "nocat.farm card swap #";
 
-	/// <summary>How long a match is acted on - after that it's left, and nocat.lol closes it.</summary>
+	/// <summary>How long a match is acted on - after that it's left, and gamer.mom closes it.</summary>
 	public static readonly TimeSpan MatchFor = TimeSpan.FromDays(2);
 
 	/// <summary>A swap offer nobody accepted in this long is taken back.</summary>
@@ -38,13 +38,13 @@ public static partial class CardExchange {
 	/// <summary>A price older than this is no price: no swap on it.</summary>
 	public static readonly TimeSpan PriceFor = TimeSpan.FromHours(24);
 
-	/// <summary>nocat.lol's caps on a list: games an account, cards a game, card rows an account, copies to give a card.</summary>
+	/// <summary>gamer.mom's caps on a list: games an account, cards a game, card rows an account, copies to give a card.</summary>
 	public const int MaxGames = 400, MaxCards = 40, MaxRows = 6000, MaxIds = 20, MaxAccounts = 20;
 
-	/// <summary>One card pair of a match, from this account's side: what it gives and what it gets, US cents as nocat.lol had them.</summary>
+	/// <summary>One card pair of a match, from this account's side: what it gives and what it gets, US cents as gamer.mom had them.</summary>
 	public sealed record Pair(uint Game, ulong Give, string GiveName, ulong GiveAsset, int GiveUsd, ulong Get, string GetName, ulong GetAsset, int GetUsd);
 
-	/// <summary>A match nocat.lol made: this account (<paramref name="Me"/>), its partner, whether this side sends the offer
+	/// <summary>A match gamer.mom made: this account (<paramref name="Me"/>), its partner, whether this side sends the offer
 	/// (and then the partner's trade token), and the pairs.</summary>
 	public sealed record Match(string Id, DateTime Made, ulong Me, ulong You, bool Send, string Token, List<Pair> Pairs);
 
@@ -65,7 +65,7 @@ public static partial class CardExchange {
 
 		/// <summary>
 		/// The cards coming in, by Steam's own market names ("440-Scout"), once this account checked the offer Steam made -
-		/// never the names nocat.lol was handed. What buying cards waits for.
+		/// never the names gamer.mom was handed. What buying cards waits for.
 		/// </summary>
 		public List<string> Gets { get; set; } = [];
 	}
@@ -91,7 +91,7 @@ public static partial class CardExchange {
 		/// <summary>Accounts that sent a bad swap offer: never swapped with again.</summary>
 		public List<ulong> Blocked { get; set; } = [];
 
-		/// <summary>Bad offers still to tell nocat.lol about: "match|partner".</summary>
+		/// <summary>Bad offers still to tell gamer.mom about: "match|partner".</summary>
 		public List<string> Reports { get; set; } = [];
 
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -185,7 +185,7 @@ public static partial class CardExchange {
 			}
 		}
 
-		/// <summary>The bad offers still to tell nocat.lol about.</summary>
+		/// <summary>The bad offers still to tell gamer.mom about.</summary>
 		public List<string> PendingReports() {
 			lock (Gate) {
 				return [.. Reports];
@@ -245,7 +245,7 @@ public static partial class CardExchange {
 
 	private static readonly ConcurrentDictionary<ulong, List<Match>> Known = new();
 
-	/// <summary>The matches nocat.lol handed this copy last, replacing those before (only the checks pass a list by hand).</summary>
+	/// <summary>The matches gamer.mom handed this copy last, replacing those before (only the checks pass a list by hand).</summary>
 	public static void Remember(IEnumerable<Match> matches) {
 		Dictionary<ulong, List<Match>> by = matches.GroupBy(static m => m.Me).ToDictionary(static g => g.Key, static g => g.ToList());
 
@@ -263,8 +263,8 @@ public static partial class CardExchange {
 	public static Match? Find(ulong steamId, string id) => MatchesOf(steamId).FirstOrDefault(m => m.Id == id);
 
 	/// <summary>
-	/// The matches still open on this account, for nocat.lol: not acted on yet and not too old, or with an offer out. One
-	/// that went through, was dropped or turned bad is finished - nocat.lol closes it once both sides say so.
+	/// The matches still open on this account, for gamer.mom: not acted on yet and not too old, or with an offer out. One
+	/// that went through, was dropped or turned bad is finished - gamer.mom closes it once both sides say so.
 	/// </summary>
 	public static List<string> OpenIds(string account, ulong steamId, DateTime nowUtc) {
 		Ledger ledger = Ledger.Load(account);
@@ -390,8 +390,8 @@ public static partial class CardExchange {
 	public sealed record GameRow(uint Game, int SetSize, int Level, List<CardRow> Cards);
 
 	/// <summary>
-	/// What an account could swap: every game where it may give a copy, with every card of that game it holds - nocat.lol
-	/// needs the whole set to tell what helps it. A game with more cards than nocat.lol takes is left off; past its caps,
+	/// What an account could swap: every game where it may give a copy, with every card of that game it holds - gamer.mom
+	/// needs the whole set to tell what helps it. A game with more cards than gamer.mom takes is left off; past its caps,
 	/// the games with the most to give go first.
 	/// </summary>
 	/// <param name="busy">On an offer, or promised to an open match: neither held nor given.</param>
@@ -438,14 +438,14 @@ public static partial class CardExchange {
 		return [.. kept.OrderBy(static r => r.Game)];
 	}
 
-	/// <summary>"Most a swap may lose" in US cents, for nocat.lol to pair by - rounded down, and 0 while the rate isn't known.</summary>
+	/// <summary>"Most a swap may lose" in US cents, for gamer.mom to pair by - rounded down, and 0 while the rate isn't known.</summary>
 	public static int UsdLoss(int walletCents, int currency, double? walletPerDollar) =>
 		walletCents <= 0 ? 0
 		: currency == WalletRate.UsDollar ? walletCents
 		: walletPerDollar is double rate && (rate > 0) ? (int) Math.Floor(walletCents / rate)
 		: 0;
 
-	/// <summary>One account as it goes on the list nocat.lol pairs from.</summary>
+	/// <summary>One account as it goes on the list gamer.mom pairs from.</summary>
 	/// <param name="ownHoldDays">Its own trade hold in days; -1 when not known.</param>
 	public static JsonObject AccountJson(ulong steamId, string token, int lossUsd, bool skipHeld, int ownHoldDays, bool confirms, IEnumerable<string> open, List<GameRow> rows) {
 		JsonArray games = [];
@@ -638,10 +638,10 @@ public static partial class CardExchange {
 
 	/// <summary>
 	/// The check of a swap offer by either side, on the offer Steam itself made - by the receiving side before it's
-	/// accepted, by the sending side before it's confirmed: it matches what nocat.lol paired (the same cards, or some of the
+	/// accepted, by the sending side before it's confirmed: it matches what gamer.mom paired (the same cards, or some of the
 	/// pairs - never anything else), with the account that was paired, one for one in every game; nothing in it is promised
 	/// to another swap or offer; this account keeps "Keep this many of each card" (never its last copy) and its sets lose
-	/// nothing (ASF's own test); and by its own prices - of the cards as Steam names them, never as nocat.lol was told -
+	/// nothing (ASF's own test); and by its own prices - of the cards as Steam names them, never as gamer.mom was told -
 	/// it gets at least what it gives, less the most a swap may lose.
 	/// </summary>
 	/// <param name="held">This account's cards now, less what's leaving in other swaps and offers.</param>
@@ -652,7 +652,7 @@ public static partial class CardExchange {
 	public static (Verdict Verdict, Said Why, long Give, long Get) Verify(TradeOffers.Offer offer, Match? match, IReadOnlyDictionary<SwapRules.Card, int> held,
 		Func<TradeOffers.Item, int?> price, long maxLossCents, Rules? rules = null, DateTime? nowUtc = null, IReadOnlySet<ulong>? busy = null) {
 		if ((match == null) || (match.Send != offer.Ours) || (offer.Partner != match.You)) {
-			return (Verdict.Unknown, new Said("not a swap nocat.lol paired with this account"), 0, 0);
+			return (Verdict.Unknown, new Said("not a swap gamer.mom paired with this account"), 0, 0);
 		}
 
 		if ((nowUtc is DateTime now) && (now - match.Made > MatchFor)) {
@@ -677,7 +677,7 @@ public static partial class CardExchange {
 		List<SwapRules.Card> receiving = [.. offer.Receiving.Select(static i => new SwapRules.Card(i.Game, i.ClassId))];
 
 		if (!AsPaired(offer, match)) {
-			return (Verdict.Bad, new Said("it isn't the swap nocat.lol paired"), 0, 0);
+			return (Verdict.Bad, new Said("it isn't the swap gamer.mom paired"), 0, 0);
 		}
 
 		if ((busy != null) && offer.Giving.Any(i => busy.Contains(i.AssetId))) {

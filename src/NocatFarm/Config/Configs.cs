@@ -37,7 +37,7 @@ public sealed class GlobalConfig {
 	/// <summary>Wrong passwords and codes from the internet in a day before Open from anywhere switches itself off. 0 = never.</summary>
 	public int WebRemoteOffAfter { get; set; } = 5;
 
-	/// <summary>1.9.2: https://farm.nocat.lol may open this dashboard from a browser on this PC, once paired at the app. Off by default. See Web/FarmWeb.cs.</summary>
+	/// <summary>1.9.2: https://farm.gamer.mom may open this dashboard from a browser on this PC, once paired at the app. Off by default. See Web/FarmWeb.cs.</summary>
 	public bool FarmWebAllowed { get; set; }
 	// On by default. A brand new account only farms its cards until it is told what to play, and the dashboard
 	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
@@ -351,14 +351,14 @@ public sealed class GlobalConfig {
 	[JsonIgnore]
 	public bool LooksForUpdates => UpdateMode != Core.UpdateModes.Off;
 
-	/// <summary>The hourly "this copy is running" to nocat.lol behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
+	/// <summary>The hourly "this copy is running" to gamer.mom behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
 	public bool CountMeAsUser { get; set; } = true;
 
 	/// <summary>The ping also carries the hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one - see Core/FarmTotals.cs. Only with CountMeAsUser on.</summary>
 	public bool ShareFarmTotals { get; set; } = true;
 
 	/// <summary>
-	/// 1.8.2: the set finder sends nocat.lol the cheapest whole card sets it knows (market prices only) and takes back the
+	/// 1.8.2: the set finder sends gamer.mom the cheapest whole card sets it knows (market prices only) and takes back the
 	/// ones every copy has seen, as candidates - see Core/SetShare.cs. Only with CountMeAsUser on; off sends and fetches nothing.
 	/// </summary>
 	public bool ShareCheapestSets { get; set; } = true;
@@ -1464,7 +1464,7 @@ public static partial class ConfigStore {
 				fresh.Language = LanguageFromComputer;
 			}
 
-			// 1.9.2: a new install opens its dashboard at farm.nocat.lol once it's set up - written in, so a config that already
+			// 1.9.2: a new install opens its dashboard at farm.gamer.mom once it's set up - written in, so a config that already
 			// exists (1.9.1's, missing the key) keeps it off. Not in Docker or on a server: no browser there (Web/FarmWeb.cs).
 			fresh.FarmWebAllowed = Web.FarmWeb.DefaultForNewInstall;
 

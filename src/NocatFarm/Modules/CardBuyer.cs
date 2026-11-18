@@ -431,7 +431,7 @@ public interface ICardMarket {
 /// <summary>
 /// Card swaps, as buying cards asks them: whether a missing card could come by a swap instead, and for how much. Card
 /// swapping answers through <see cref="SwapCost.Current"/> (Core/CardExchange.BuyCost.cs): a card is only waited for when
-/// a match nocat.lol made brings it - otherwise it's bought.
+/// a match gamer.mom made brings it - otherwise it's bought.
 /// </summary>
 public interface ICardSwaps {
 	/// <summary>

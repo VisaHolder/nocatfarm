@@ -45,7 +45,7 @@ echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrow
 echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$T/app/config/demo.json"
 
 ver() { curl -sf "http://127.0.0.1:$PORT/api/status" | python3 -c 'import json,sys; print(json.load(sys.stdin)["Version"])' 2>/dev/null || true; }
-# Its user-count ping to a dead port here as well, never nocat.lol: the release it starts as doesn't know CountMeAsUser,
+# Its user-count ping to a dead port here as well, never gamer.mom: the release it starts as doesn't know CountMeAsUser,
 # and a config it writes back without it would be taken as on by this build.
 (cd "$T/app" && env -u INVOCATION_ID -u JOURNAL_STREAM NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/latest.json" NOCATFARM_PING_URL="http://127.0.0.1:9/api/farm/ping" \
 	nohup "$T/app/nocatFarm" --no-gui > "$T/run.log" 2>&1 &)

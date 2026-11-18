@@ -12874,7 +12874,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── user count: the hourly ping to nocat.lol, never the real network here ────────────────────────────────
+// ── user count: the hourly ping to gamer.mom, never the real network here ────────────────────────────────
 {
 	string realRoot = NocatFarm.Config.ConfigStore.Root;
 	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
@@ -12936,7 +12936,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("user count: nothing about an account but the number (no names, no ids)", !NocatFarm.Core.UserCount.Body(2).Contains("765611", StringComparison.Ordinal)
 			&& (System.Text.Json.JsonDocument.Parse(NocatFarm.Core.UserCount.Body(2)).RootElement.EnumerateObject().Count() == 4));
 		Check("user count: Windows says windows", !OperatingSystem.IsWindows() || (NocatFarm.Core.UserCount.Os == "windows"));
-		Check("user count: HTTPS to nocat.lol", NocatFarm.Core.UserCount.Endpoint == "https://nocat.lol/api/farm/ping" && NocatFarm.Core.UserCount.Target == NocatFarm.Core.UserCount.Endpoint);
+		Check("user count: HTTPS to gamer.mom", NocatFarm.Core.UserCount.Endpoint == "https://gamer.mom/api/farm/ping" && NocatFarm.Core.UserCount.Target == NocatFarm.Core.UserCount.Endpoint);
+		Check("farm API: every call goes to https://gamer.mom/api/farm/ - the ping, the sets, the swaps and the swap proof",
+			NocatFarm.Core.SetShare.Endpoint == "https://gamer.mom/api/farm/sets" && NocatFarm.Core.CardExchange.Endpoint == "https://gamer.mom/api/farm/swap"
+			&& NocatFarm.Core.CardExchange.ProofUrl == "https://gamer.mom/api/farm/swap/proof"
+			&& new[] { NocatFarm.Core.UserCount.Endpoint, NocatFarm.Core.SetShare.Endpoint, NocatFarm.Core.CardExchange.Endpoint, NocatFarm.Core.CardExchange.ProofUrl }
+				.All(static u => new Uri(u).Host == "gamer.mom"));
 		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", "https://example.com/steal");
 		Check("user count: a test address that isn't this PC is ignored", NocatFarm.Core.UserCount.Target == NocatFarm.Core.UserCount.Endpoint);
 		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", "http://127.0.0.1:9/api/farm/ping");
@@ -12946,7 +12951,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		// The answer.
 		NocatFarm.Core.UserCount.Counts? Reply(string json) => NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, json);
 		Check("user count: reads the copies and the Steam accounts", Reply("""{"users":212,"accounts":1240}""") is { Users: 212, Accounts: 1240 });
-		Check("user count: an older nocat.lol (no accounts) - the copies, the accounts unknown", Reply("""{"users":212}""") is { Users: 212, Accounts: null });
+		Check("user count: an older gamer.mom (no accounts) - the copies, the accounts unknown", Reply("""{"users":212}""") is { Users: 212, Accounts: null });
 		Check("user count: accounts without copies are still read", Reply("""{"accounts":1240}""") is { Users: null, Accounts: 1240 });
 		Check("user count: accounts that aren't a whole number above 0 are unknown", Reply("""{"users":212,"accounts":0}""") is { Users: 212, Accounts: null }
 			&& Reply("""{"users":212,"accounts":"1240"}""") is { Accounts: null } && Reply("""{"users":212,"accounts":2.5}""") is { Accounts: null }
@@ -12976,7 +12981,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			bool ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
 			Check("user count: a good answer is kept", ok && (good.Calls == 1) && (NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow) == 1240)
 				&& (NocatFarm.Core.UserCount.Current(on, DateTime.UtcNow) is { Users: 212, Accounts: 1240 }));
-			Check("user count: one POST of JSON to nocat.lol, as nocat.farm/<version>", (good.Method == "POST") && (good.Url == NocatFarm.Core.UserCount.Endpoint)
+			Check("user count: one POST of JSON to gamer.mom, as nocat.farm/<version>", (good.Method == "POST") && (good.Url == NocatFarm.Core.UserCount.Endpoint)
 				&& (good.ContentType == "application/json") && (good.UserAgent == "nocat.farm/" + NocatFarm.Build.Version) && good.Body.Contains(id, StringComparison.Ordinal)
 				&& good.Body.Contains("\"a\":", StringComparison.Ordinal),
 				$"{good.Method} {good.Url} {good.ContentType} {good.UserAgent} {good.Body.Length}");
@@ -12987,7 +12992,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		FakePing older = Answer(System.Net.HttpStatusCode.OK, """{"users":212}""");
 		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(older)) {
 			bool ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
-			Check("user count: an older nocat.lol's answer is kept, with the accounts unknown (nothing shown)", ok
+			Check("user count: an older gamer.mom's answer is kept, with the accounts unknown (nothing shown)", ok
 				&& (NocatFarm.Core.UserCount.Current(on, DateTime.UtcNow) is { Users: 212, Accounts: null }) && (NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow) == null));
 		}
 
@@ -13051,7 +13056,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("discord card: count unknown (or Count me as a user off) falls back to the cards today", Line(3, null) == "5 cards today"
 			&& Line(3, NocatFarm.Core.UserCount.Accounts(off, DateTime.UtcNow)) == "5 cards today");
 		NocatFarm.Core.UserCount.Remember(new(212, null), DateTime.UtcNow);
-		Check("discord card: an older nocat.lol (copies only) falls back to the cards today too", Line(3, NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow)) == "5 cards today");
+		Check("discord card: an older gamer.mom (copies only) falls back to the cards today too", Line(3, NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow)) == "5 cards today");
 		NocatFarm.Core.UserCount.Forget();
 		Check("discord card: the other choices are untouched", (Line(0, 212) == "5 cards today") && (Line(1, 212) == "10 hrs past week") && (Line(2, null) == "10 hrs past month"));
 		Check("discord card: Steam accounts on nocat.farm is the default, still choice 3", (new NocatFarm.Config.GlobalConfig().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LineAccounts)
@@ -13194,7 +13199,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── user count: only switching it on brings the ping forward; no test copy ever pings nocat.lol ─────────────────────
+// ── user count: only switching it on brings the ping forward; no test copy ever pings gamer.mom ─────────────────────
 {
 	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 	Type uc = typeof(NocatFarm.Core.UserCount);
@@ -13217,7 +13222,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("user count: switching Count me as a user on brings the ping forward (1-3 minutes)", switchedOn
 			&& (DateTime) nextField.GetValue(null)! <= DateTime.UtcNow.AddMinutes(3));
 
-		// The dashboard runs it on every save, for every setting: it was on already, so nothing moves - with nocat.lol not
+		// The dashboard runs it on every save, for every setting: it was on already, so nothing moves - with gamer.mom not
 		// answering, every save used to send another ping.
 		int moved = 0;
 		for (int i = 0; i < 5; i++) {
@@ -13244,7 +13249,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 
 	// Every config a test script or workflow writes switches the ping off, and the CI runs and test containers point it at a
-	// dead port here as well - a test run never counts itself on nocat.lol. (The browser test points it at its stub.)
+	// dead port here as well - a test run never counts itself on gamer.mom. (The browser test points it at its stub.)
 	string repo = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
 	string workflows = Path.Combine(repo, ".github", "workflows");
 	IEnumerable<string> scripts = Directory.GetFiles(Path.Combine(repo, "tests"), "*.sh")
@@ -13275,7 +13280,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	bool workflowsChecked = !Directory.Exists(workflows) || (Read(".github", "workflows", "linux.yml").Contains("\nenv:\n  " + deadPort + "\n", StringComparison.Ordinal)
 		&& Read(".github", "workflows", "macos.yml").Contains("\nenv:\n  " + deadPort + "\n", StringComparison.Ordinal)
 		&& Read(".github", "workflows", "linux.yml").Contains("docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London -e NOCATFARM_PING_URL ", StringComparison.Ordinal));
-	Check("user count: the CI runs, their Docker container and the compose test ping a dead port here, not nocat.lol", workflowsChecked
+	Check("user count: the CI runs, their Docker container and the compose test ping a dead port here, not gamer.mom", workflowsChecked
 		&& Read("tests", "docker-compose.sh").Contains("      " + deadPort + "\n", StringComparison.Ordinal)
 		&& Read("tests", "update-from-release.sh").Contains("NOCATFARM_PING_URL=\"http://127.0.0.1:9/api/farm/ping\"", StringComparison.Ordinal)
 		&& Read("tools", "release-tests", "update-from-release.ps1").Contains("$env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'", StringComparison.Ordinal));
@@ -20800,7 +20805,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	}
 }
 
-// ── 1.8.0: live stats (hours and cards totals on nocat.lol) - never the real network ──────────────────
+// ── 1.8.0: live stats (hours and cards totals on gamer.mom) - never the real network ──────────────────
 {
 	string realRoot = NocatFarm.Config.ConfigStore.Root;
 	string dRoot = Path.Combine(Path.GetTempPath(), "nf-livestats-" + Guid.NewGuid().ToString("N"));
@@ -20852,10 +20857,10 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			System.Text.Json.JsonDocument.Parse(File.ReadAllText(ftPath)).RootElement.EnumerateObject().Select(p => p.Name).SequenceEqual(["FreshMinutes", "FreshCards", "FreshSince", "Pending", "LiveSince", "Old",
 				"FreshGems", "FreshBadges", "FreshPacks", "FreshSold"]));
 
-		// Not taken (a failed ping, or nocat.lol without "got"): the SAME batch goes next time; new hours wait apart.
+		// Not taken (a failed ping, or gamer.mom without "got"): the SAME batch goes next time; new hours wait apart.
 		NocatFarm.Core.FarmTotals.NotePlay(ftShare, 60, 1, ft0.AddMinutes(90));
 		NocatFarm.Core.FarmTotals.Batch? again = NocatFarm.Core.FarmTotals.ForPing(ftShare, 1, ft0.AddHours(2));
-		Check("live stats: a batch nocat.lol didn't take goes again unchanged - same name, same numbers", again == b1, $"{again} vs {b1}");
+		Check("live stats: a batch gamer.mom didn't take goes again unchanged - same name, same numbers", again == b1, $"{again} vs {b1}");
 		Check("live stats: hours banked meanwhile wait apart, not added to the batch already sent", NocatFarm.Core.FarmTotals.Unsent() is { FreshHours: 1.0, FreshCards: 0 });
 
 		// After a restart the waiting batch is still the same one.
@@ -20936,14 +20941,14 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 				&& (withTotals.RootElement.GetProperty("h").GetDouble() == 32000.5) && (withTotals.RootElement.GetProperty("c").GetInt32() == 64000)
 				&& (withTotals.RootElement.GetProperty("b").GetString() == "0123456789abcdef"));
 		}
-		Check("live stats: the biggest body is well under nocat.lol's 512-byte limit (old and new site)", System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, big)) < 300);
+		Check("live stats: the biggest body is well under gamer.mom's 512-byte limit (old and new site)", System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, big)) < 300);
 		Check("live stats: \"got\" is read only from a 200, only a batch name", NocatFarm.Core.UserCount.ParseGot(System.Net.HttpStatusCode.OK, """{"users":1,"accounts":2,"got":"0123456789abcdef"}""") == "0123456789abcdef"
 			&& NocatFarm.Core.UserCount.ParseGot(System.Net.HttpStatusCode.OK, """{"users":1,"accounts":2}""") == null
 			&& NocatFarm.Core.UserCount.ParseGot(System.Net.HttpStatusCode.OK, """{"got":"zz"}""") == null
 			&& NocatFarm.Core.UserCount.ParseGot(System.Net.HttpStatusCode.ServiceUnavailable, """{"got":"0123456789abcdef"}""") == null
 			&& NocatFarm.Core.UserCount.ParseGot(System.Net.HttpStatusCode.OK, "nope") == null);
 
-		// Through the ping, against an old nocat.lol (no "got"), a failing one, then the new one.
+		// Through the ping, against an old gamer.mom (no "got"), a failing one, then the new one.
 		FtFresh();
 		NocatFarm.Core.FarmTotals.ForPing(ftShare, 1, DateTime.UtcNow.AddHours(-1));
 		NocatFarm.Core.FarmTotals.NotePlay(ftShare, 60, 2, DateTime.UtcNow.AddMinutes(-30));
@@ -20954,7 +20959,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		string firstBody = oldSite.Body;
 		string? sentB = System.Text.Json.JsonDocument.Parse(firstBody).RootElement.TryGetProperty("b", out var bEl) ? bEl.GetString() : null;
 		Check("live stats: the ping carries the batch (2 hours)", sentB != null && firstBody.Contains("\"h\":2", StringComparison.Ordinal), firstBody);
-		Check("live stats: an old nocat.lol (no \"got\") keeps the batch waiting - nothing lost", NocatFarm.Core.FarmTotals.Unsent().Waiting?.B == sentB);
+		Check("live stats: an old gamer.mom (no \"got\") keeps the batch waiting - nothing lost", NocatFarm.Core.FarmTotals.Unsent().Waiting?.B == sentB);
 		FakePing down = new((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("""{"error":"unavailable"}""") }));
 		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(down)) {
 			await NocatFarm.Core.UserCount.PingAsync(http, ftShare);
@@ -20973,7 +20978,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(newSite)) {
 			await NocatFarm.Core.UserCount.PingAsync(http, ftShare);
 		}
-		Check("live stats: the new nocat.lol's \"got\" ends it - the batch is done", newSite.Body.Contains("\"b\":\"" + sentB + "\"", StringComparison.Ordinal)
+		Check("live stats: the new gamer.mom's \"got\" ends it - the batch is done", newSite.Body.Contains("\"b\":\"" + sentB + "\"", StringComparison.Ordinal)
 			&& NocatFarm.Core.FarmTotals.Unsent().Waiting == null);
 		FakePing after = new((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("""{"users":5,"accounts":9}""") }));
 		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(after)) {
@@ -22333,7 +22338,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	fdPast.SetValue(null, new Func<(double, int, int, int)>(static () => (0, 0, 0, 0)));
 
 	try {
-		// 2. Live stats: a batch every ~6 hours, not every ping; a batch nocat.lol hasn't taken still goes every time.
+		// 2. Live stats: a batch every ~6 hours, not every ping; a batch gamer.mom hasn't taken still goes every time.
 		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", null);
 		fdFtReset.Invoke(null, null);
 		NocatFarm.Config.GlobalConfig fdShare = new();
@@ -23875,7 +23880,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("an older file: its waiting batch and fresh count give way to the catch-up (they're in the history it's made from)",
 			(NocatFarm.Core.FarmTotals.Unsent() is { FreshHours: 0, FreshCards: 0, Waiting: null }) && (NocatFarm.Core.FarmTotals.OldForPing(fkShare, fk0) is { Hours: 10.0, Cards: 4 }));
 
-		// Through the ping: resent (same name) until nocat.lol says "gotold", then never again.
+		// Through the ping: resent (same name) until gamer.mom says "gotold", then never again.
 		FkFresh();
 		FakePing fkOldSite = new((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("""{"users":5,"accounts":9}""") }));
 		List<string?> fkSentNames = [];
@@ -23890,7 +23895,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			using System.Text.Json.JsonDocument d2 = System.Text.Json.JsonDocument.Parse(fkOldSite.Body);
 			fkSentNames.Add(d2.RootElement.TryGetProperty("old", out System.Text.Json.JsonElement oe2) ? oe2.GetProperty("b").GetString() : null);
 		}
-		Check("catch-up: an old nocat.lol (no \"gotold\") gets the same one with every ping, after a restart too",
+		Check("catch-up: an old gamer.mom (no \"gotold\") gets the same one with every ping, after a restart too",
 			(fkSentNames.Count == 3) && (fkSentNames[0] != null) && fkSentNames.All(n => n == fkSentNames[0]), string.Join(",", fkSentNames));
 		FakePing fkBatchOnly = new(async (req, ct) => {
 			using System.Text.Json.JsonDocument d = System.Text.Json.JsonDocument.Parse(await req.Content!.ReadAsStringAsync(ct));
@@ -23929,7 +23934,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 				&& (both.RootElement.GetProperty("b").GetString() == "0123456789abcdef"));
 			Check("body: the catch-up alone - the four fields plus \"old\"", onlyOld.RootElement.EnumerateObject().Select(p => p.Name).SequenceEqual(["id", "v", "os", "a", "old"]));
 		}
-		Check("body: the biggest one is well under nocat.lol's 512-byte limit", System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, fkBig, fkBigOld)) < 300,
+		Check("body: the biggest one is well under gamer.mom's 512-byte limit", System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, fkBig, fkBigOld)) < 300,
 			NocatFarm.Core.UserCount.Body(1000, fkBig, fkBigOld));
 		Check("body: no catch-up and no batch - still the plain four fields", System.Text.Json.JsonDocument.Parse(NocatFarm.Core.UserCount.Body(3, null, null)).RootElement
 			.EnumerateObject().Select(p => p.Name).SequenceEqual(["id", "v", "os", "a"]));
@@ -23939,7 +23944,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			&& NocatFarm.Core.UserCount.ParseGotOld(System.Net.HttpStatusCode.BadRequest, """{"gotold":"0123456789abcdef"}""") == null
 			&& NocatFarm.Core.UserCount.ParseGotOld(System.Net.HttpStatusCode.OK, "nope") == null);
 
-		// A batch says the time it covers and the accounts it's from: nocat.lol caps it by those, not by how many are
+		// A batch says the time it covers and the accounts it's from: gamer.mom caps it by those, not by how many are
 		// signed in when it arrives or how long since it last heard.
 		FkPast(0, 0, 0, 0);
 		FkFresh();
@@ -23967,7 +23972,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("batch span: a batch saved by a build before this goes as it did - no s/e/n",
 			!NocatFarm.Core.UserCount.Body(1, new NocatFarm.Core.FarmTotals.Batch("0123456789abcdef", 1, 0, fk0), null).Contains("\"s\"", StringComparison.Ordinal));
 		NocatFarm.Core.FarmTotals.Batch fkBigSpan = new("0123456789abcdef", 32000.5, 64000, fk0, fk0.AddDays(-400), 1000);
-		Check("batch span: the biggest body, with a catch-up, is still well under nocat.lol's 512 bytes",
+		Check("batch span: the biggest body, with a catch-up, is still well under gamer.mom's 512 bytes",
 			System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, fkBigSpan, fkBigOld, fk0.AddDays(7))) < 300, NocatFarm.Core.UserCount.Body(1000, fkBigSpan, fkBigOld, fk0.AddDays(7)));
 
 		// The file can't be read just now (another program has it open, a slow disk): try again later - nothing starts,
@@ -26643,7 +26648,7 @@ await CommandSweep.RunAsync(Check);
 				oldBody.RootElement.EnumerateObject().Select(p => p.Name).SequenceEqual(["id", "v", "os", "a", "h", "c", "b", "s", "e", "n"]));
 		}
 
-		// The body: each only when there's one, after the fields an older nocat.lol knows; well under 512 bytes.
+		// The body: each only when there's one, after the fields an older gamer.mom knows; well under 512 bytes.
 		NocatFarm.Core.FarmTotals.Batch lxSome = new("0123456789abcdef", 1.5, 2, lx0, lx0.AddHours(-6), 2, Gems: 30, Badges: 0, Packs: 4, Sold: 9);
 		using (System.Text.Json.JsonDocument someBody = System.Text.Json.JsonDocument.Parse(NocatFarm.Core.UserCount.Body(2, lxSome, null, lx0))) {
 			Check("live extras: the ping carries g (into gems), p (packs) and sd (sold) - bd left out at 0",
@@ -26653,7 +26658,7 @@ await CommandSweep.RunAsync(Check);
 		}
 		NocatFarm.Core.FarmTotals.Batch lxHuge = new("0123456789abcdef", 32000.5, int.MaxValue, lx0, lx0.AddDays(-7), 1000, int.MaxValue, int.MaxValue, int.MaxValue, int.MaxValue);
 		NocatFarm.Core.FarmTotals.CatchUp lxHugeOld = new("fedcba9876543210", 1000.0 * 401 * 32 * 24, int.MaxValue, 1000, 401, lx0);
-		Check("live extras: the biggest ping there can be is still well under nocat.lol's 512 bytes",
+		Check("live extras: the biggest ping there can be is still well under gamer.mom's 512 bytes",
 			System.Text.Encoding.UTF8.GetByteCount(NocatFarm.Core.UserCount.Body(1000, lxHuge, lxHugeOld, lx0)) < 400,
 			NocatFarm.Core.UserCount.Body(1000, lxHuge, lxHugeOld, lx0));
 
@@ -27704,7 +27709,7 @@ await CardSwapCheatChecks.RunAsync(Check);
 		+ "<input type=\"hidden\" name=\"action\" value=\"steam_openid_login\"><input type=\"hidden\" name=\"openidparams\" value=\"secretparams\">"
 		+ "<input type=\"hidden\" name=\"nonce\" value=\"n0nce\"></form></html>";
 	const string ScLogin = "<html><script>g_steamID = false;</script><div class=\"newlogindialog\">Sign in</div></html>";
-	string ScBack(ulong who, string host = "https://nocat.lol/") => host + "api/farm/swap/proof?i=" + ScHash + "&t=1&openid.mode=id_res"
+	string ScBack(ulong who, string host = "https://gamer.mom/") => host + "api/farm/swap/proof?i=" + ScHash + "&t=1&openid.mode=id_res"
 		+ "&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F" + who + "&openid.sig=s1gnature";
 	List<Uri> scAsked = [];
 	Uri? scReferer = null;
@@ -27721,7 +27726,7 @@ await CardSwapCheatChecks.RunAsync(Check);
 	Check("swaps check: the sign-in form is posted with Steam's sign-in page as its Referer (the page with its query), as a browser sends it",
 		scOk.Ok && (scAsked.Count == 2) && (scReferer != null) && (scReferer == scAsked[0]) && scReferer.Query.Contains("openid.return_to=", StringComparison.Ordinal)
 		&& (scAsked[1].AbsoluteUri == "https://steamcommunity.com/openid/login"), $"{scReferer} | {string.Join(" ", scAsked)}");
-	Check("swaps check: only Steam is asked - nothing goes to nocat.lol", scAsked.All(static u => u.Host == "steamcommunity.com"), string.Join(" ", scAsked));
+	Check("swaps check: only Steam is asked - nothing goes to gamer.mom", scAsked.All(static u => u.Host == "steamcommunity.com"), string.Join(" ", scAsked));
 
 	async Task<string> ScWhy(string? page, NocatFarm.Core.WebSession.Redirected answer, ulong who = ScMe) {
 		var r = await ScProve(page, answer, who);
@@ -27737,7 +27742,7 @@ await CardSwapCheatChecks.RunAsync(Check);
 		("the sign-in page again", await ScWhy(scForm, new(null, 200, scForm)), "Steam answered 200 and showed the sign-in page again"),
 		("the login page", await ScWhy(scForm, new(null, 200, ScLogin)), "Steam answered 200 and showed its login page"),
 		("anything else", await ScWhy(scForm, new(null, 500, "<html>error</html>")), "Steam answered 500 and sent it nowhere"),
-		("sent elsewhere", await ScWhy(scForm, new(new Uri(ScBack(ScMe, "https://evil.example/")), 302, null)), "Steam sent it to evil.example, not nocat.lol"),
+		("sent elsewhere", await ScWhy(scForm, new(new Uri(ScBack(ScMe, "https://evil.example/")), 302, null)), "Steam sent it to evil.example, not gamer.mom"),
 		("another account", await ScWhy(scForm, new(new Uri(ScBack(ScOther)), 302, null)), "Steam's answer was for another account"),
 		("not a sign-in", await ScWhy(scForm, new(new Uri(ScBack(ScMe).Replace("id_res", "cancel", StringComparison.Ordinal)), 302, null)), "Steam's answer wasn't a sign-in"),
 	];
@@ -28347,7 +28352,7 @@ await BuyFixChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", 
 // ── 1.8.2: copy settings from another account - never the account's own, the switches left off, human mode, Add account and 'copy settings'; fakes only ──
 await CopySettingsChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
-// ── 1.8.2: the shared cheapest-sets list - what goes out, what's taken back, when, and the setting; a pretend nocat.lol ──
+// ── 1.8.2: the shared cheapest-sets list - what goes out, what's taken back, when, and the setting; a pretend gamer.mom ──
 await SetShareChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
 // ── 1.8.2: the gems maths - each way winning in turn, the margin, kept loose when unsure, never losing money; fakes only ──
@@ -30231,7 +30236,7 @@ await Rep4RepMinimumChecks.RunAsync(Check);
 // 1.9.1: add-ons answering trade offers - the app's own rules around them, with pretend add-ons and a pretend Steam.
 await AddonTradeChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
-// 1.9.2: farm.nocat.lol - the dashboard from that website, talking to this app on 127.0.0.1: CORS for that one origin, pairing, and the gate.
+// 1.9.2: farm.gamer.mom - the dashboard from that website, talking to this app on 127.0.0.1: CORS for that one origin, pairing, and the gate.
 await FarmWebChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
 // SETTINGSCOUNT
@@ -30257,7 +30262,7 @@ sealed class RaceProbeModule(NocatFarm.Core.Bot bot) : NocatFarm.Core.IBotModule
 	}
 }
 
-/// <summary>A pretend nocat.lol for the user count checks: answers however it's told and notes what it was sent. Nothing reaches the network.</summary>
+/// <summary>A pretend gamer.mom for the user count checks: answers however it's told and notes what it was sent. Nothing reaches the network.</summary>
 sealed class FakePing(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> answer) : HttpMessageHandler {
 	public int Calls { get; private set; }
 	public string Method { get; private set; } = "";
@@ -30948,7 +30953,7 @@ static class CommandSweep {
 		["disable"] = ["robo"],
 		["stuck"] = [],
 		["play"] = ["robo", "robo 440", "robo 440,550", "robo none", "robo abc", "nosuch 440"],
-		["gamename"] = ["robo", "robo hello there", "robo off", "person nocat.lol"],
+		["gamename"] = ["robo", "robo hello there", "robo off", "person gamer.mom"],
 		["persona"] = ["robo", "robo online", "robo 3", "robo looking to trade", "robo bogus"],
 		["nickname"] = ["robo", "robo New Name"],
 		["grind"] = ["robo", "robo 440 2", "robo off", "all 440 1", "all off", "robo abc 2", "robo 440 abc"],
@@ -31439,7 +31444,7 @@ sealed class FakeCardSwaps : NocatFarm.Modules.ICardSwaps {
 	public Task<long?> SwapCostAsync(NocatFarm.Core.Bot? bot, uint app, string hash, CancellationToken ct) => Task.FromResult<long?>(Cost);
 }
 
-/// <summary>A pretend nocat.lol for card swaps: answers every request with <see cref="Reply"/> and notes what it was sent. Nothing reaches the network.</summary>
+/// <summary>A pretend gamer.mom for card swaps: answers every request with <see cref="Reply"/> and notes what it was sent. Nothing reaches the network.</summary>
 sealed class FakeSwapSite : HttpMessageHandler {
 	public List<string> Bodies { get; } = [];
 	public List<string> Urls { get; } = [];
@@ -31453,7 +31458,7 @@ sealed class FakeSwapSite : HttpMessageHandler {
 	}
 }
 
-/// <summary>The 1.8.2 card swap checks, in a method of their own (see "1.8.2: card swaps" above). Fakes only - nothing reaches Steam or nocat.lol.</summary>
+/// <summary>The 1.8.2 card swap checks, in a method of their own (see "1.8.2: card swaps" above). Fakes only - nothing reaches Steam or gamer.mom.</summary>
 static class CardSwapChecks {
 	public static async Task RunAsync(Action<string, bool, string> check) {
 		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
@@ -31516,9 +31521,9 @@ static class CardSwapChecks {
 			&& rows[0].Cards.Single(c => c.ClassId == 20) is { Held: 1, Give.Count: 0, Usd: 0 } && rows[0].Cards.Single(c => c.ClassId == 10) is { Held: 3, Usd: 7, Hash: "440-Card10" });
 		Check("swap list: a game with nothing to give isn't listed", NocatFarm.Core.CardExchange.BuildList([Own(1, 10), Own(2, 20)], none, rules1, _ => 5, _ => 0, _ => 0).Count == 0);
 		List<NocatFarm.Core.CardExchange.OwnCard> big = [.. Enumerable.Range(1, 41).SelectMany(i => new[] { Own((ulong) (i * 10), (ulong) i), Own((ulong) (i * 10 + 1), (ulong) i) })];
-		Check("swap list: a game with more cards than nocat.lol takes (40) is left off", NocatFarm.Core.CardExchange.BuildList(big, none, rules1, _ => 5, _ => 0, _ => 0).Count == 0);
+		Check("swap list: a game with more cards than gamer.mom takes (40) is left off", NocatFarm.Core.CardExchange.BuildList(big, none, rules1, _ => 5, _ => 0, _ => 0).Count == 0);
 		var acct = NocatFarm.Core.CardExchange.AccountJson(76561198000000001, "AbCd1234", 1, true, -1, false, ["a1b2c3d4e5f6"], rows);
-		Check("swap list: an account goes as nocat.lol reads it - steamid and ids as text, cards as [class, held, cents, name, ids]",
+		Check("swap list: an account goes as gamer.mom reads it - steamid and ids as text, cards as [class, held, cents, name, ids]",
 			acct.ToJsonString() == "{\"s\":\"76561198000000001\",\"t\":\"AbCd1234\",\"l\":1,\"nh\":1,\"eh\":-1,\"c\":0,\"o\":[\"a1b2c3d4e5f6\"],\"g\":[[440,9,2,[[\"10\",3,7,\"440-Card10\",[\"1\",\"2\"]],[\"20\",1,0,\"440-Card20\",[]],[\"30\",3,0,\"440-Card30\",[\"6\",\"7\"]]]]]}",
 			acct.ToJsonString());
 		Check("swap list: most a swap may lose in US cents - dollars as they are, another currency at its rate (rounded down), 0 without a rate",
@@ -31543,7 +31548,7 @@ static class CardSwapChecks {
 			read.Count == 4 && read.All(c => c.ClassId is 10 or 20) && read.Single(c => c.AssetId == 103) is { Tradable: false } && read[0].Hash == "440-Scout",
 			string.Join(" ", read.Select(c => $"{c.AssetId}:{c.ClassId}:{c.Tradable}")));
 
-		// ── the note on the offer, and nocat.lol's answer ──
+		// ── the note on the offer, and gamer.mom's answer ──
 		Check("swap note: only \"nocat.farm card swap #\" with a 12-hex match id names a match",
 			NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6" && NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #A1B2C3D4E5F6") == null
 			&& NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2") == null && NocatFarm.Core.CardExchange.MatchIdOf("hi") == null && NocatFarm.Core.CardExchange.MatchIdOf("") == null);
@@ -31606,7 +31611,7 @@ static class CardSwapChecks {
 		List<NocatFarm.Core.CardExchange.Chosen> Choose(Dictionary<string, int> p, long loss, out NocatFarm.Core.Said why, out List<string> unpriced, IReadOnlyList<NocatFarm.Core.CardExchange.OwnCard>? cards = null, HashSet<ulong>? busy = null) =>
 			NocatFarm.Core.CardExchange.Choose(sendMatch, cards ?? mine, busy ?? none, rules1, h => p.TryGetValue(h, out int c) ? c : null, loss, out why, out unpriced);
 		var all = Choose(sp, 1, out _, out _);
-		Check("swap send: both pairs go, with the copies nocat.lol paired and both prices", all.Count == 2 && all[0] is { Asset: 1, GivePrice: 5, GetPrice: 6 } && all[1].Asset == 6);
+		Check("swap send: both pairs go, with the copies gamer.mom paired and both prices", all.Count == 2 && all[0] is { Asset: 1, GivePrice: 5, GetPrice: 6 } && all[1].Asset == 6);
 		var gone = Choose(sp, 1, out NocatFarm.Core.Said goneWhy, out _, busy: [1, 2, 3]);
 		Check("swap send: a card of ours that's gone (or now on an offer) - its pair is left out", gone.Count == 1 && gone[0].Pair.Give == 30 && goneWhy.English.Contains("changed", StringComparison.Ordinal));
 		var swapOther = Choose(sp, 1, out _, out _, busy: [1]);
@@ -31751,7 +31756,7 @@ static class CardSwapChecks {
 		await Look(t0s.AddMinutes(170));
 		Check("swap send: \"Skip swaps Steam would hold\" off → the hold isn't even asked", sentOffers.Count == 4);
 		Check("swap send: with the authenticator here, the offer Steam made is checked to be the match, then confirmed", confirmed.SequenceEqual([9004UL]));
-		// The offer Steam made asks the partner for something else than nocat.lol said: never confirmed, taken back, partner blocked.
+		// The offer Steam made asks the partner for something else than gamer.mom said: never confirmed, taken back, partner blocked.
 		madeGet = [Ci(901, 40, "Card40", "Team Fortress 2 Foil Trading Card")];
 		sBot.Cfg.CardSwapsPerDay = 10;
 		NocatFarm.Core.CardExchange.Remember([sendMatch with { Id = "a00000000005", Made = t0s }]);
@@ -31789,11 +31794,11 @@ static class CardSwapChecks {
 			await Judge(ROffer(71, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == true);
 		var heldSwaps = (HashSet<ulong>) rt.GetField("_heldSwaps", SwInst)!.GetValue(rTrades)!;
 		var unknownOffer = new NocatFarm.Core.TradeOffers.Offer(76, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "nocat.farm card swap #0123456789ab");
-		Check("swap receive: a match this copy hasn't been handed yet → it waits (and asks nocat.lol), not left for you", await Judge(unknownOffer) == null && !heldSwaps.Contains(76));
+		Check("swap receive: a match this copy hasn't been handed yet → it waits (and asks gamer.mom), not left for you", await Judge(unknownOffer) == null && !heldSwaps.Contains(76));
 		mark = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
 		bool? badVerdict = await Judge(ROffer(72, [Ci(1, 10, "Card10"), Ci(6, 30, "Card30")], [Ci(901, 40, "Card40"), Ci(902, 50, "Card50")]));
 		var rLedger = NocatFarm.Core.CardExchange.Ledger.Load(rBot.Name);
-		Check("swap receive: asks for more than was paired → never accepted or declined, left for you, partner blocked, nocat.lol to be told",
+		Check("swap receive: asks for more than was paired → never accepted or declined, left for you, partner blocked, gamer.mom to be told",
 			(badVerdict == null) && heldSwaps.Contains(72) && rLedger.IsBlocked(YouId) && rLedger.PendingReports().SequenceEqual([$"abcabcabcabc|{YouId}"])
 			&& Log.Since(mark).Any(e => e.Said.ToEnglish().StartsWith("card swap offer ", StringComparison.Ordinal) && e.Said.ToEnglish().Contains("isn't what was paired", StringComparison.Ordinal)));
 		Check("swap receive: after that, even a good offer from that account is left for you", await Judge(ROffer(73, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == null && heldSwaps.Contains(73));
@@ -31810,7 +31815,7 @@ static class CardSwapChecks {
 		await rBot.DisposeAsync();
 		NocatFarm.Core.SparePrices.Reset();
 
-		// ── talking to nocat.lol, with a pretend one ──
+		// ── talking to gamer.mom, with a pretend one ──
 		NocatFarm.Core.CardExchange.Ledger.Reset();
 		string sentFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "cardswaps.json");
 		File.Delete(sentFile);
@@ -31826,7 +31831,7 @@ static class CardSwapChecks {
 		};
 		DateTime y0 = DateTime.UtcNow;
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0, CancellationToken.None);
-		Check("swap sync: no account with swaps on and nothing listed → nocat.lol isn't contacted at all", site.Bodies.Count == 0);
+		Check("swap sync: no account with swaps on and nothing listed → gamer.mom isn't contacted at all", site.Bodies.Count == 0);
 		NocatFarm.Core.Switches.Set(yBot, NocatFarm.Core.Switches.Swaps, true);
 		site.Reply = replyJson;
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0, CancellationToken.None);
@@ -31843,23 +31848,23 @@ static class CardSwapChecks {
 		site.Reply = "{\"m\":[],\"up\":false,\"wait\":7200}";
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0.AddHours(40), CancellationToken.None);
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0.AddHours(41), CancellationToken.None);
-		Check("swap sync: nocat.lol says wait 2 hours → no list until then", site.Bodies[3].Contains("\"acc\"", StringComparison.Ordinal) && !site.Bodies[4].Contains("\"acc\"", StringComparison.Ordinal));
+		Check("swap sync: gamer.mom says wait 2 hours → no list until then", site.Bodies[3].Contains("\"acc\"", StringComparison.Ordinal) && !site.Bodies[4].Contains("\"acc\"", StringComparison.Ordinal));
 		site.Reply = "{\"m\":[],\"up\":true,\"wait\":0}";
 		NocatFarm.Core.CardExchange.Ledger.Load(yBot.Name).Change(l => l.Reports.Add("abcabcabcabc|" + YouId));
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0.AddHours(42), CancellationToken.None);
-		Check("swap sync: a bad offer is reported (the match, and this account as its receiver) and not again once nocat.lol has it",
+		Check("swap sync: a bad offer is reported (the match, and this account as its receiver) and not again once gamer.mom has it",
 			site.Bodies.Any(b => b.Contains("\"op\":\"bad\"", StringComparison.Ordinal) && b.Contains("\"m\":\"abcabcabcabc\"", StringComparison.Ordinal) && b.Contains($"\"s\":\"{MeId}\"", StringComparison.Ordinal))
 			&& NocatFarm.Core.CardExchange.Ledger.Load(yBot.Name).PendingReports().Count == 0);
 		List<NocatFarm.Core.CardExchange.GameRow> bigRows = [.. Enumerable.Range(1, 400).Select(g => new NocatFarm.Core.CardExchange.GameRow((uint) g, 9, 0,
 			[.. Enumerable.Range(1, 15).Select(c => new NocatFarm.Core.CardExchange.CardRow((ulong) ((g * 100) + c), 3, 5, new string('x', 100), [1, 2]))]))];
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, (b, _) => Task.FromResult<System.Text.Json.Nodes.JsonObject?>(
 			NocatFarm.Core.CardExchange.AccountJson(b.SteamId, "Tok12345", 1, true, 0, false, [], bigRows)), y0.AddHours(60), CancellationToken.None);
-		Check("swap sync: a list bigger than nocat.lol takes (256 KB) is cut down, games from the end", System.Text.Encoding.UTF8.GetByteCount(site.Bodies[^1]) <= 240 * 1024
+		Check("swap sync: a list bigger than gamer.mom takes (256 KB) is cut down, games from the end", System.Text.Encoding.UTF8.GetByteCount(site.Bodies[^1]) <= 240 * 1024
 			&& site.Bodies[^1].Contains("\"g\":[[1,", StringComparison.Ordinal), $"{site.Bodies[^1].Length} bytes");
 		NocatFarm.Core.Switches.Set(yBot, NocatFarm.Core.Switches.Swaps, false);
 		int before = site.Bodies.Count;
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0.AddHours(43), CancellationToken.None);
-		Check("swap sync: turned off → an empty list goes at once (nocat.lol deletes the SteamID and trade link), and no matches are kept",
+		Check("swap sync: turned off → an empty list goes at once (gamer.mom deletes the SteamID and trade link), and no matches are kept",
 			(site.Bodies.Count == before + 1) && site.Bodies[^1].Contains("\"acc\":[]", StringComparison.Ordinal) && (NocatFarm.Core.CardExchange.MatchesOf(MeId).Count == 0));
 		await NocatFarm.Core.CardExchange.SyncAsync(siteHttp, fleet, build, y0.AddHours(44), CancellationToken.None);
 		Check("swap sync: after that, nothing more is sent", site.Bodies.Count == before + 1);
@@ -31967,7 +31972,7 @@ static class SwitchesTogetherChecks {
 			long? Cost(string hash = "100-Card 5", uint game = 100, DateTime? at = null) => NocatFarm.Core.CardExchange.CostOf(sc, game, hash, at ?? DateTime.UtcNow);
 			Check("swap cost: card swaps off - no swap, so it's bought", Cost() == null);
 			NocatFarm.Core.Switches.Set(sc, NocatFarm.Core.Switches.Swaps, true);
-			Check("swap cost: a match nocat.lol made, no offer out yet - what it brings is only the partner's word, so it's bought", Cost() == null);
+			Check("swap cost: a match gamer.mom made, no offer out yet - what it brings is only the partner's word, so it's bought", Cost() == null);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetState(match.Id, "sent", YouId, DateTime.UtcNow, 777);
 			Check("swap cost: an offer out that this account hasn't checked yet - not sure, so it's bought", Cost() == null);
 			NocatFarm.Core.CardExchange.Ledger.Load(sc.Name).SetGets(match.Id, ["100-Card 5"]);
@@ -32019,7 +32024,7 @@ static class SwitchesTogetherChecks {
 			Check("buy plan: card swaps off on this account - it's bought", (await Plan(sc)).Steps.Count == 1);
 			NocatFarm.Core.Switches.Set(sc, NocatFarm.Core.Switches.Swaps, true);
 			NocatFarm.Core.CardExchange.Remember([]);
-			Check("buy plan: no match brings it (nocat.lol paired nothing) - it's bought", (await Plan(sc)).Steps.Count == 1);
+			Check("buy plan: no match brings it (gamer.mom paired nothing) - it's bought", (await Plan(sc)).Steps.Count == 1);
 			NocatFarm.Core.CardExchange.Remember([match]);
 			NocatFarm.Core.SparePrices.Reset();
 			Check("buy plan: the swap's offer is out and checked - never bought a second time, priced or not", (await Plan(sc)).Steps.Count == 0);
@@ -32045,7 +32050,7 @@ static class SwitchesTogetherChecks {
 			var none = new HashSet<ulong>();
 			var give = NocatFarm.Core.CardExchange.Giveable(mine, none, rules);
 			var list = NocatFarm.Core.CardExchange.BuildList(mine, none, rules, _ => 5, _ => 5, _ => 1);
-			Check("swaps: a game it bought cards of for a badge isn't offered - not on the list nocat.lol pairs from; other games are",
+			Check("swaps: a game it bought cards of for a badge isn't offered - not on the list gamer.mom pairs from; other games are",
 				give.Keys.All(static k => k.Game != 100) && give.Keys.Any(static k => k.Game == 440) && list.Select(static r => r.Game).SequenceEqual([440U]));
 			var sendMatch = new NocatFarm.Core.CardExchange.Match("d0d0d0d0d0d0", DateTime.UtcNow, MeId, YouId, true, "Tok12345", [
 				new(100, 1, "100-Card 1", 1, 5, 3, "100-Card 3", 91, 5), new(440, 1, "440-Card 1", 4, 5, 3, "440-Card 3", 92, 5)]);
@@ -32645,8 +32650,8 @@ static class BuySafetyChecks {
 }
 
 /// <summary>
-/// 1.8.2 card swaps can't be cheated: each attack a partner (or anybody talking to nocat.lol) could try, played against
-/// the real code with a pretend Steam and a pretend nocat.lol. Fakes only.
+/// 1.8.2 card swaps can't be cheated: each attack a partner (or anybody talking to gamer.mom) could try, played against
+/// the real code with a pretend Steam and a pretend gamer.mom. Fakes only.
 /// </summary>
 static class CardSwapCheatChecks {
 	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
@@ -32836,7 +32841,7 @@ static class CardSwapCheatChecks {
 			var lie = new NocatFarm.Core.CardExchange.Match("c0c0c0c0c0c1", DateTime.UtcNow, MeId, YouId, true, "Tok12345", [new(100, 1, "100-Card 1", 11, 3, 5, "100-Card 5", 99, 9)]);
 			NocatFarm.Core.CardExchange.Remember([lie]);
 			long? Cost(string hash) => NocatFarm.Core.CardExchange.CostOf(cBot, 100, hash, DateTime.UtcNow);
-			Check("swap cheat: a card a partner only SAYS it will give (nocat.lol's name for it) doesn't hold buying back", Cost("100-Card 5") == null, $"{Cost("100-Card 5")}");
+			Check("swap cheat: a card a partner only SAYS it will give (gamer.mom's name for it) doesn't hold buying back", Cost("100-Card 5") == null, $"{Cost("100-Card 5")}");
 			var cLedger = NocatFarm.Core.CardExchange.Ledger.Load(cBot.Name);
 			cLedger.SetState(lie.Id, "sent", YouId, DateTime.UtcNow, 555);
 			Check("swap cheat: an offer out that hasn't been checked yet doesn't either", Cost("100-Card 5") == null, $"{Cost("100-Card 5")}");
@@ -32844,7 +32849,7 @@ static class CardSwapCheatChecks {
 			gets?.SetValue(cLedger.Of(lie.Id), new List<string> { "100-Card 4" });
 			Check("swap cheat: an offer out, checked, bringing another card - that card isn't waited for", (gets != null) && (Cost("100-Card 5") == null) && (Cost("100-Card 4") == 0));
 
-			// ── what nocat.lol hands over: names of the pair's own game, trade tokens of Steam's own shape ──
+			// ── what gamer.mom hands over: names of the pair's own game, trade tokens of Steam's own shape ──
 			string Reply(string tok, string give, string get) => "{\"m\":[{\"id\":\"a1b2c3d4e5f6\",\"t\":1760000000000,\"me\":\"76561198000000501\",\"you\":\"76561198000000602\",\"send\":true,\"tok\":\"" + tok
 				+ "\",\"p\":[[440,\"10\",\"" + give + "\",\"101\",5,\"30\",\"" + get + "\",\"901\",6]]}],\"up\":true,\"wait\":0}";
 			Check("swap cheat: a pair with a card named for another game is never taken - the whole match is skipped",
@@ -32878,7 +32883,7 @@ static class CardSwapCheatChecks {
 				NocatFarm.Log.Since(mark).Any(e => e.Said.ToEnglish().Contains("Steam won't say whether it would be held", StringComparison.Ordinal)),
 				string.Join(" | ", NocatFarm.Log.Since(mark).Select(e => e.Said.ToEnglish())));
 
-			// ── talking to nocat.lol: proving each account, and taking an opted-out one off at once ──
+			// ── talking to gamer.mom: proving each account, and taking an opted-out one off at once ──
 			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "cardswaps.json"));
 			var site = new FakeSwapSite();
 			using var http = new HttpClient(site);
@@ -32896,11 +32901,11 @@ static class CardSwapCheatChecks {
 			site.Reply = "{\"m\":[],\"up\":true,\"wait\":0,\"pv\":[\"" + MeId + "\"]}";
 			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0, CancellationToken.None);
 			var acc1 = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[^1])!["acc"]!.AsArray();
-			Check("swap cheat: each account goes with its proof of being signed in (Steam's own answer) - nocat.lol pairs nothing else",
+			Check("swap cheat: each account goes with its proof of being signed in (Steam's own answer) - gamer.mom pairs nothing else",
 				proving && (acc1.Count == 2) && acc1.All(a => a!["pf"]?.ToString() == "openid.mode=id_res&who=" + a["s"]!.ToString()), site.Bodies[^1]);
 			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(14), CancellationToken.None);
 			var acc2 = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[^1])!["acc"]?.AsArray();
-			Check("swap cheat: an account nocat.lol says is proven isn't proven again; one it doesn't, is",
+			Check("swap cheat: an account gamer.mom says is proven isn't proven again; one it doesn't, is",
 				(acc2 != null) && (acc2.Single(a => a!["s"]!.ToString() == MeId.ToString())!["pf"] == null) && (acc2.Single(a => a!["s"]!.ToString() == OtherId.ToString())!["pf"] != null), site.Bodies[^1]);
 			NocatFarm.Core.Switches.Set(y, NocatFarm.Core.Switches.Swaps, false);
 			zReadable = false;
@@ -32908,23 +32913,23 @@ static class CardSwapCheatChecks {
 			int before = site.Bodies.Count;
 			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(15), CancellationToken.None);
 			string rmBody = site.Bodies.Count > before ? site.Bodies[^1] : "";
-			Check("swap cheat: an account turned off while the other's cards can't be read - it still comes off nocat.lol at once",
+			Check("swap cheat: an account turned off while the other's cards can't be read - it still comes off gamer.mom at once",
 				rmBody.Contains("\"rm\":[\"" + MeId + "\"]", StringComparison.Ordinal) && !rmBody.Contains(OtherId + "\",\"t\"", StringComparison.Ordinal), rmBody);
 			await NocatFarm.Core.CardExchange.SyncAsync(http, both, build, y0.AddHours(16), CancellationToken.None);
-			Check("swap cheat: ...and once nocat.lol took it off, it isn't asked again", !site.Bodies[^1].Contains("\"rm\"", StringComparison.Ordinal), site.Bodies[^1]);
+			Check("swap cheat: ...and once gamer.mom took it off, it isn't asked again", !site.Bodies[^1].Contains("\"rm\"", StringComparison.Ordinal), site.Bodies[^1]);
 
-			// ── signing in to nocat.lol through Steam: Steam's own form, Steam's own answer, for this account only ──
+			// ── signing in to gamer.mom through Steam: Steam's own form, Steam's own answer, for this account only ──
 			MethodInfo? proofFrom = typeof(NocatFarm.Core.CardExchange).GetMethod("ProofFromAsync", Stat);
 			MethodInfo? hashOf = typeof(NocatFarm.Core.CardExchange).GetMethod("InstallHash", Stat);
 			string expectHash = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("nocat.farm swaps 0123456789abcdef0123456789abcdef")))[..16];
-			Check("swap cheat: the install's number goes to Steam only as its hash - the same one nocat.lol works out",
+			Check("swap cheat: the install's number goes to Steam only as its hash - the same one gamer.mom works out",
 				(hashOf != null) && ((string) hashOf.Invoke(null, ["0123456789abcdef0123456789abcdef"])! == expectHash));
 			string page = "<html><form name=\"loginForm\" id=\"openidForm\" action=\"https://steamcommunity.com/openid/login\" method=\"POST\">"
 				+ "<input type=\"hidden\" name=\"action\" value=\"steam_openid_login\"><input type=\"hidden\" name=\"openid.mode\" value=\"checkid_setup\">"
 				+ "<input type=\"hidden\" name=\"openidparams\" value=\"abc&amp;def\"><input type=\"hidden\" name=\"nonce\" value=\"n0nce\"><input type=\"image\" id=\"imageLogin\"></form></html>";
 			Uri? asked = null;
 			List<KeyValuePair<string, string>>? posted = null;
-			string back = "https://nocat.lol/api/farm/swap/proof?i=" + expectHash + "&t=1&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=id_res"
+			string back = "https://gamer.mom/api/farm/swap/proof?i=" + expectHash + "&t=1&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=id_res"
 				+ "&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F" + MeId + "&openid.sig=x";
 			async Task<string?> Prove(string html, string location, ulong who) {
 				if (proofFrom == null) {
@@ -32936,13 +32941,14 @@ static class CardSwapCheatChecks {
 				return (await (Task<NocatFarm.Core.CardExchange.Proved>) proofFrom.Invoke(null, [get, post, who, expectHash, new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc), CancellationToken.None])!).Query;
 			}
 			string? proof = await Prove(page, back, MeId);
-			Check("swap cheat: signing in posts back Steam's own form and hands nocat.lol Steam's answer as it came",
+			Check("swap cheat: signing in posts back Steam's own form and hands gamer.mom Steam's answer as it came",
 				(proof == back[(back.IndexOf('?') + 1)..]) && (posted != null) && posted.Any(f => f is { Key: "openidparams", Value: "abc&def" }) && posted.Any(f => f is { Key: "nonce", Value: "n0nce" })
-				&& (asked != null) && Uri.UnescapeDataString(asked.Query).Contains("openid.return_to=https://nocat.lol/api/farm/swap/proof?i=" + expectHash + "&t=", StringComparison.Ordinal)
-				&& Uri.UnescapeDataString(asked.Query).Contains("openid.realm=https://nocat.lol/", StringComparison.Ordinal), $"{proof} | {asked}");
+				&& (asked != null) && Uri.UnescapeDataString(asked.Query).Contains("openid.return_to=https://gamer.mom/api/farm/swap/proof?i=" + expectHash + "&t=", StringComparison.Ordinal)
+				&& Uri.UnescapeDataString(asked.Query).Contains("openid.realm=https://gamer.mom/", StringComparison.Ordinal), $"{proof} | {asked}");
 			Check("swap cheat: not signed in (Steam's login page), an answer for another account, or one sent elsewhere - no proof",
 				(proofFrom != null) && (await Prove("<html>Sign in</html>", back, MeId) == null) && (await Prove(page, back, OtherId) == null)
-				&& (await Prove(page, back.Replace("https://nocat.lol/", "https://evil.example/", StringComparison.Ordinal), MeId) == null));
+				&& (await Prove(page, back.Replace("https://gamer.mom/", "https://evil.example/", StringComparison.Ordinal), MeId) == null)
+				&& (await Prove(page, back.Replace("https://gamer.mom/", "https://nocat.lol/", StringComparison.Ordinal), MeId) == null));
 		} finally {
 			foreach (var bot in made) {
 				await bot.DisposeAsync();
@@ -34690,7 +34696,7 @@ static class CopySettingsChecks {
 	}
 }
 
-/// <summary>The shared cheapest-sets list against a pretend nocat.lol: what goes out, what's taken back, when, and the setting.</summary>
+/// <summary>The shared cheapest-sets list against a pretend gamer.mom: what goes out, what's taken back, when, and the setting.</summary>
 static class SetShareChecks {
 	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
 		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
@@ -34725,7 +34731,7 @@ static class SetShareChecks {
 				var first = r.GetProperty("s")[0];
 				Check("set sharing: what goes out - the install's random number, the version and the sets, nothing else",
 					r.EnumerateObject().Select(static p => p.Name).SequenceEqual(["id", "v", "s"]) && NocatFarm.Core.UserCount.IsId(r.GetProperty("id").GetString()), body[..Math.Min(200, body.Length)]);
-				Check("set sharing: each set as nocat.lol takes it - the game, then each card's name (without '<app>-'), US cents, listings and seconds since it was seen",
+				Check("set sharing: each set as gamer.mom takes it - the game, then each card's name (without '<app>-'), US cents, listings and seconds since it was seen",
 					(first[0].GetUInt32() == 100) && (first[1].GetArrayLength() == 5) && (first[1][0][0].GetString() == "Card 1") && (first[1][0][1].GetInt32() == 4)
 					&& (first[1][0][2].GetInt32() == 10) && (first[1][0][3].GetInt64() is >= 3000 and <= 3600), first.ToString());
 			}
@@ -34737,7 +34743,7 @@ static class SetShareChecks {
 				new(1, 502, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"502-C{i}", 3, 5, now.AddHours(-49)))]),   // too old
 				new(1, 503, [.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"503-C{i}", 100_001, 5, now.AddMinutes(-5)))]),
 			};
-			Check("set sharing: a set with anything nocat.lol would refuse is left out, not sent", NocatFarm.Core.SetShare.Sets(odd, now).Count == 0);
+			Check("set sharing: a set with anything gamer.mom would refuse is left out, not sent", NocatFarm.Core.SetShare.Sets(odd, now).Count == 0);
 			Check("set sharing: at most 1000 sets go",
 				NocatFarm.Core.SetShare.Sets(Enumerable.Range(1, 1200).Select(a => new NocatFarm.Core.SetFinder.SetRecord(1, (uint) a,
 					[.. Enumerable.Range(1, 5).Select(i => new NocatFarm.Core.SetFinder.RecordCard($"{a}-C{i}", 3, 5, now))])).ToList(), now).Count == 1000);
@@ -34760,7 +34766,7 @@ static class SetShareChecks {
 				(taken == 1) && (finder.Known(now).Count == before + 1) && !finder.ToFill(now).Contains(900u)
 				&& finder.Records(now).Any(static r => r.App == 900) && !finder.Records(now, own: true).Any(static r => r.App == 900), string.Join(",", finder.ToFill(now)));
 
-			// ── one go, against a pretend nocat.lol ──
+			// ── one go, against a pretend gamer.mom ──
 			var site = new FakeSetsSite { Table = table };
 			using var http = NocatFarm.Core.SetShare.MakeClient(site);
 			var g = new NocatFarm.Config.GlobalConfig { CountMeAsUser = true, ShareCheapestSets = true };
@@ -34785,13 +34791,13 @@ static class SetShareChecks {
 			Check("set sharing: 2 hours on with nothing new, only the fetch - the same sets aren't sent again",
 				(site.Calls.Count == 3) && (site.Calls[2].Method == "GET"));
 			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(24.2), CancellationToken.None);
-			Check("set sharing: a day on, the same sets go again so nocat.lol's copy of them doesn't age out",
+			Check("set sharing: a day on, the same sets go again so gamer.mom's copy of them doesn't age out",
 				(site.Calls.Count == 5) && (site.Calls[3].Method == "POST"));
 			site.Fail = true;
 			int calls = site.Calls.Count;
 			var down = await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(31), CancellationToken.None);
 			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(32), CancellationToken.None);
-			Check("set sharing: nocat.lol not answering is nothing - no error, and it doesn't ask again for 2 hours",
+			Check("set sharing: gamer.mom not answering is nothing - no error, and it doesn't ask again for 2 hours",
 				!down.Sent && (down.Taken == 0) && (site.Calls.Count == calls + 1), site.Calls.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 			Check("set sharing: the setting - on, beside 'Share my farming totals', shown only while 'Count me as a user' is on, its words say what goes",
@@ -34808,7 +34814,7 @@ static class SetShareChecks {
 	}
 }
 
-/// <summary>A pretend nocat.lol for the shared cheapest-sets list: notes each request, answers a send with "up" and a fetch with its table.</summary>
+/// <summary>A pretend gamer.mom for the shared cheapest-sets list: notes each request, answers a send with "up" and a fetch with its table.</summary>
 sealed class FakeSetsSite : HttpMessageHandler {
 	public sealed record Call(string Method, string Url, string Body, string UserAgent, string ContentType);
 
@@ -37681,7 +37687,7 @@ sealed class RefusingSpareSteam : NocatFarm.Core.ISpareSteam {
 /// <summary>
 /// 1.8.2 review fixes, "safe" half: the market hold, Steam's refusals, the gems and spare items retries, the market's own 429
 /// wait and hourly cap, one confirmation read a batch, human mode's spacing, restarts mid-send, spend limits read safely and
-/// swaps off nocat.lol for a held account. Fakes only - nothing reaches Steam or nocat.lol.
+/// swaps off gamer.mom for a held account. Fakes only - nothing reaches Steam or gamer.mom.
 /// </summary>
 static class SafeChecks182 {
 	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
@@ -37762,7 +37768,7 @@ static class SafeChecks182 {
 				&& hResult.Problem.StartsWith("Steam's market is blocked", StringComparison.Ordinal) && (relisted == 0) && (stepped == 0)
 				&& !swapSent.Ok && swapSent.Message.StartsWith("Steam's market is blocked", StringComparison.Ordinal),
 				$"{listedSaid} / {hResult.Problem} / {swapSent.Message}");
-			Check("hold: an account held is off nocat.lol's swap list (rm) until it's over", NocatFarm.Core.CardExchange.Barred(hBot)
+			Check("hold: an account held is off gamer.mom's swap list (rm) until it's over", NocatFarm.Core.CardExchange.Barred(hBot)
 				&& Src("src/NocatFarm/Core/CardExchange.Sync.cs").Contains("On(b.Cfg, b.Name) && !Barred(b))];", StringComparison.Ordinal));
 			string buyerSrc = Src("src/NocatFarm/Modules/CardBuyer.cs");
 			Check("hold: purchases the owner already confirmed on the phone still finish (only a new purchase asks the hold)",
@@ -38106,7 +38112,7 @@ static class SafeChecks182 {
 				&& !File.ReadAllText(Path.Combine(root, "config", "sf-limfile.json")).Contains("-3", StringComparison.Ordinal),
 				$"{limRead?.BuyDailyLimit} {limRead?.BuyWeeklyLimit}");
 
-			// ── a held account off nocat.lol's swap list ──
+			// ── a held account off gamer.mom's swap list ──
 			var site = new FakeSwapSite();
 			using var siteHttp = new HttpClient(site);
 			var yBot = NewBot(steamId: 76561198000000999UL);
@@ -38121,7 +38127,7 @@ static class SafeChecks182 {
 			prove.SetValue(null, null);
 			var firstSync = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[0])!.AsObject();
 			var secondSync = System.Text.Json.Nodes.JsonNode.Parse(site.Bodies[^1])!.AsObject();
-			Check("swaps: a trade-banned account is taken off nocat.lol's list at the next sync - no swap is matched to it",
+			Check("swaps: a trade-banned account is taken off gamer.mom's list at the next sync - no swap is matched to it",
 				(site.Bodies.Count == 2) && (firstSync["acc"]?.AsArray().Count == 1) && (secondSync["acc"]?.AsArray().Count == 0),
 				string.Join(" || ", site.Bodies));
 		} finally {
@@ -39304,9 +39310,9 @@ static class Polish182Checks {
 			NocatFarm.Config.Live.Global.CountMeAsUser = true;
 			string aboutOn = NocatFarm.Commands.About();
 			NocatFarm.Config.Live.Global.CountMeAsUser = countWas;
-			Check("wording: 'version' says it counts itself on nocat.lol only while Count me as a user is on",
-				!aboutOff.Contains("Once an hour it tells nocat.lol", StringComparison.Ordinal) && aboutOff.Contains("doesn't count itself", StringComparison.Ordinal)
-				&& aboutOn.Contains("Once an hour it tells nocat.lol", StringComparison.Ordinal));
+			Check("wording: 'version' says it counts itself on gamer.mom only while Count me as a user is on",
+				!aboutOff.Contains("Once an hour it tells gamer.mom", StringComparison.Ordinal) && aboutOff.Contains("doesn't count itself", StringComparison.Ordinal)
+				&& aboutOn.Contains("Once an hour it tells gamer.mom", StringComparison.Ordinal));
 		} finally {
 			foreach (NocatFarm.Core.Bot b in bots) {
 				await b.DisposeAsync();
@@ -40580,7 +40586,7 @@ static class AddonTradeChecks {
 			await Look(noDonations);
 			Check("add-on trades: ...nor a donation with \"Accept donations\" off", (TJ.AskedA == 0) && (noDonations.Posts.Count == 0));
 			string loop = Src("src/NocatFarm/Modules/Trading.cs");
-			Check("add-on trades: asked only when the app leaves it undecided - not a nocat.lol card swap, a fair swap, or one whose swap test couldn't finish",
+			Check("add-on trades: asked only when the app leaves it undecided - not a gamer.mom card swap, a fair swap, or one whose swap test couldn't finish",
 				loop.Contains("if (!accept && (swap != null) && !exchange && AddonsMayJudge(offer, allowed, fleet)) {", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Modules/Trading.Addons.cs").Contains("!offer.IsPureDonation && !fleet.Contains(offer.Partner) && !allowed.ContainsKey(offer.Partner);", StringComparison.Ordinal));
 
@@ -40661,7 +40667,7 @@ sealed class TJudgeB : NocatFarm.Plugins.INocatPlugin {
 }
 
 /// <summary>
-/// 1.9.2: farm.nocat.lol - the dashboard served from that website, talking to this app on 127.0.0.1 (Web/FarmWeb.cs,
+/// 1.9.2: farm.gamer.mom - the dashboard served from that website, talking to this app on 127.0.0.1 (Web/FarmWeb.cs,
 /// Web/WebHostFarm.cs). A real dashboard on a free port, with no accounts signed in to Steam; nothing reaches the network
 /// but this PC's loopback. What's checked: the CORS answers for that one origin, every other origin as before, the switch
 /// off changing nothing, pairing, and the gate - every route and every command sorted, and what's refused refused.
@@ -40681,15 +40687,15 @@ static class FarmWebChecks {
 		// ── the lists themselves: every command and every setting sorted ──
 		var policy = NocatFarm.Web.FarmWeb.Commands;
 		string[] names = [.. NocatFarm.Commands.All.Select(static c => c.Name)];
-		Check("farm.nocat.lol: every command in Commands.All is in the farm list - allowed, allowed in part, or refused",
+		Check("farm.gamer.mom: every command in Commands.All is in the farm list - allowed, allowed in part, or refused",
 			names.All(n => policy.ContainsKey(n)), string.Join(", ", names.Where(n => !policy.ContainsKey(n))));
-		Check("farm.nocat.lol: ...and the farm list names no command that doesn't exist", policy.Keys.All(k => names.Contains(k, StringComparer.OrdinalIgnoreCase)),
+		Check("farm.gamer.mom: ...and the farm list names no command that doesn't exist", policy.Keys.All(k => names.Contains(k, StringComparer.OrdinalIgnoreCase)),
 			string.Join(", ", policy.Keys.Where(k => !names.Contains(k, StringComparer.OrdinalIgnoreCase))));
 		// 'set' is marked never too, but is judged by the setting it changes (below): bare, it only answers with its usage.
-		Check("farm.nocat.lol: a command marked never is refused bare and with words after it",
+		Check("farm.gamer.mom: a command marked never is refused bare and with words after it",
 			policy.Where(static kv => (kv.Value == null) && (kv.Key != "set")).All(kv => !NocatFarm.Web.FarmWeb.CommandAllowed(null, kv.Key) && !NocatFarm.Web.FarmWeb.CommandAllowed(null, kv.Key + " main 1")),
 			string.Join(", ", policy.Where(static kv => (kv.Value == null) && (kv.Key != "set")).Where(kv => NocatFarm.Web.FarmWeb.CommandAllowed(null, kv.Key)).Select(static kv => kv.Key)));
-		Check("farm.nocat.lol: a plugin's command, or a word that's no command, is refused (deny by default)",
+		Check("farm.gamer.mom: a plugin's command, or a word that's no command, is refused (deny by default)",
 			!NocatFarm.Web.FarmWeb.CommandAllowed(null, "rep4rep pause all") && !NocatFarm.Web.FarmWeb.CommandAllowed(null, "r4r clear all")
 			&& !NocatFarm.Web.FarmWeb.CommandAllowed(null, "frobnicate") && !NocatFarm.Web.FarmWeb.CommandAllowed(null, "unlock"));
 
@@ -40709,7 +40715,7 @@ static class FarmWebChecks {
 			"gamename main free skins at example.com", "name main x", "nickname main x", "spare now main", "gems now main", "anywhere start", "anywhere true", "remote start",
 			"addons uninstall rep4rep", "set UpdateMode 2", "set AutoUpdateFromHour 3", "set AutoUpdateWaitHours 1", "set UpdateCheckHours 1", "set ScamWatchTrustedDevices x",
 			"set DiscordButton1 x", "set DiscordFeatured x", "set SendScamWarnings off", "set NotifyScam off", "set SendBreakIns off", "copy settings a b yes"];
-		Check("farm.nocat.lol: everything that sends items away, signs in, runs code, lifts a scam hold or opens a back door is refused, by any name or prefix",
+		Check("farm.gamer.mom: everything that sends items away, signs in, runs code, lifts a scam hold or opens a back door is refused, by any name or prefix",
 			refused.All(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", refused.Where(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 		string[] allowed = [
 			"status", "s", "start main", "stop all", "pause main 30", "resume all", "restart main", "enable main", "disable main", "stuck", "play main 730",
@@ -40731,7 +40737,7 @@ static class FarmWebChecks {
 		if (!OperatingSystem.IsWindows()) {
 			allowed = [.. allowed.Where(static l => l is not ("set KeepAwake on" or "set NotifyTrades off"))];
 		}
-		Check("farm.nocat.lol: everything else is allowed - controls, previews, buying and crafting within the limits, backups here",
+		Check("farm.gamer.mom: everything else is allowed - controls, previews, buying and crafting within the limits, backups here",
 			allowed.All(l => NocatFarm.Web.FarmWeb.CommandAllowed(null, l)), string.Join(" | ", allowed.Where(l => !NocatFarm.Web.FarmWeb.CommandAllowed(null, l))));
 
 		NocatFarm.Config.SettingDef Bot(string n) => NocatFarm.Config.Settings.FindBot(n)!;
@@ -40739,10 +40745,10 @@ static class FarmWebChecks {
 		NocatFarm.Config.SettingDef Any(string n) => NocatFarm.Config.Settings.Find(n)!;
 		string[] money = ["BuyCards", "BuyBooster", "SpareItems", "SpendPoints", "SellSetsForLevels", "CraftBadges", "CraftFoilBadges", "GemsForLevels", "UnlockAchievements",
 			"SteamOpenButton", "WatchHealth", "SkipRefundableGames", "Enabled"];
-		Check("farm.nocat.lol: the money and item switches go on and off from there (buying stays inside the limits set here)",
+		Check("farm.gamer.mom: the money and item switches go on and off from there (buying stays inside the limits set here)",
 			money.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && NocatFarm.Web.FarmWeb.SettingAllowed(d, false)),
 			string.Join(", ", money.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || !NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
-		Check("farm.nocat.lol: card swaps only go off from there - they send cards to other people",
+		Check("farm.gamer.mom: card swaps only go off from there - they send cards to other people",
 			!NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), true) && NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CardSwaps"), false));
 		// 1.9.2 review: scam watch only goes up from there - switched off, a standing hold ends at once (ScamWatch.HoldingTrades).
 		string[] guards = ["WatchForScams", "ScamWatchStopTrades", "ScamWatchCancelOffers", "ScamWatchRevokeKey", "ScamWatchApiKey", "ScamWatchDevices",
@@ -40751,29 +40757,29 @@ static class FarmWebChecks {
 		if (!OperatingSystem.IsWindows()) {
 			guards = [.. guards.Where(static n => n != "NotifyScam")];
 		}
-		Check("farm.nocat.lol: scam watch and its warnings only go on from there, never off",
+		Check("farm.gamer.mom: scam watch and its warnings only go on from there, never off",
 			guards.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
 			string.Join(", ", guards.Where(n => Any(n) is not { } d || !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
-		Check("farm.nocat.lol: ...and the hold is the setting itself - so off from there would have lifted it",
+		Check("farm.gamer.mom: ...and the hold is the setting itself - so off from there would have lifted it",
 			Src("src/NocatFarm/Modules/ScamWatch.cs").Contains("public bool HoldingTrades => Bot.Cfg.ScamWatchStopTrades && (Hits.Count > 0);", StringComparison.Ordinal));
 		string[] published = ["AutoReply", "CustomGameName", "DiscordFeatured", "DiscordButton1", "DiscordButton2"];
-		Check("farm.nocat.lol: words other people see are only emptied from there - never a new one (a phishing link to every friend)",
+		Check("farm.gamer.mom: words other people see are only emptied from there - never a new one (a phishing link to every friend)",
 			published.All(n => Any(n) is { } d && NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "") && NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "  ")
 				&& !NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "free skins at example.com") && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
 			string.Join(", ", published.Where(n => Any(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null, "x"))));
-		Check("farm.nocat.lol: ...their on/off switches stay open - on, they show what was typed here",
+		Check("farm.gamer.mom: ...their on/off switches stay open - on, they show what was typed here",
 			NocatFarm.Web.FarmWeb.SettingAllowed(Bot("AutoReplyEnabled"), true) && NocatFarm.Web.FarmWeb.SettingAllowed(Bot("CustomGameNameEnabled"), true)
 			&& NocatFarm.Web.FarmWeb.SettingAllowed(Global("DiscordPresence"), false));
 		// A copy carries values set here: it goes ahead from there only when each change is one allowed from there.
 		var copyFrom = new NocatFarm.Config.BotConfig { ScamWatchStopTrades = false, BuyDailyLimit = 999, AutoReply = "hi" };
 		var copyTo = new NocatFarm.Config.BotConfig();
 		var plainFrom = new NocatFarm.Config.BotConfig { IdleGames = [730], HoursUntilCardDrops = 3 };
-		Check("farm.nocat.lol: a copy that would weaken scam watch or bring words others see is refused from there; an everyday one isn't",
+		Check("farm.gamer.mom: a copy that would weaken scam watch or bring words others see is refused from there; an everyday one isn't",
 			!NocatFarm.Web.FarmWeb.CopyChangesAllowed(NocatFarm.Core.SettingsCopy.Build(copyFrom, copyTo, "to", 0))
 			&& NocatFarm.Web.FarmWeb.CopyChangesAllowed(NocatFarm.Core.SettingsCopy.Build(plainFrom, copyTo, "to", 0))
 			&& NocatFarm.Core.SettingsCopy.Build(plainFrom, copyTo, "to", 0).Changes.Count > 0
 			&& Src("src/NocatFarm/Web/WebHostSettingsCopy.cs").Contains("SettingsCopy.Copy(source, to, IsFarm(ctx) ?", StringComparison.Ordinal));
-		Check("farm.nocat.lol: the hosted page never offers an import - it says to do it in the app",
+		Check("farm.gamer.mom: the hosted page never offers an import - it says to do it in the app",
 			Src("src/NocatFarm/wwwroot/app.js").Contains("if (!HOSTED) $('settingsNavBots').insertAdjacentHTML", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/app.js").Contains("importing adds accounts and their trade rules - only in the app's own dashboard", StringComparison.Ordinal));
 		string[] closed = ["BuyDailyLimit", "BuyWeeklyLimit", "BuyMaxLevelPrice", "BuyKeepInWallet", "PointsWeeklyCap", "PointsKeepAtLeast", "SpareMaxPrice", "SpareDailyValue",
@@ -40782,37 +40788,46 @@ static class FarmWebChecks {
 			"TelegramChatId", "WebEnabled", "WebHost", "WebPort", "WebRemoteAccess", "WebPublicAddress", "WebTrustedProxies", "WebSignInCode", "WebRemoteOffAfter",
 			"FarmWebAllowed", "PluginsEnabled", "BackupFolder", "UpdateMode", "AutoUpdateFromHour", "AutoUpdateUntilHour", "AutoUpdateWaitHours", "UpdateCheckHours",
 			"ScamWatchMinMinutes", "ScamWatchMaxMinutes", "ScamWatchTrustedDevices"];
-		Check("farm.nocat.lol: the money limits, where items go and who may trade or take them, the sign-in, the bots' owners and the way in are never changed from there",
+		Check("farm.gamer.mom: the money limits, where items go and who may trade or take them, the sign-in, the bots' owners and the way in are never changed from there",
 			closed.All(n => Any(n) is { } d && !NocatFarm.Web.FarmWeb.SettingAllowed(d, true) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, false) && !NocatFarm.Web.FarmWeb.SettingAllowed(d, null)),
 			string.Join(", ", closed.Where(n => Any(n) is not { } d || NocatFarm.Web.FarmWeb.SettingAllowed(d, null) || NocatFarm.Web.FarmWeb.SettingAllowed(d, true) || NocatFarm.Web.FarmWeb.SettingAllowed(d, false))));
-		Check("farm.nocat.lol: every secret is closed, by its kind",
+		Check("farm.gamer.mom: every secret is closed, by its kind",
 			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Where(static d => d.Kind == NocatFarm.Config.SettingKind.Secret)
 				.All(static d => NocatFarm.Web.FarmWeb.WayOf(d) == NocatFarm.Web.FarmWeb.SettingWay.Closed));
-		Check("farm.nocat.lol: everyday settings are open - human mode, what it plays, cards, notifications on or off, update reminders, backups, the language",
+		Check("farm.gamer.mom: everyday settings are open - human mode, what it plays, cards, notifications on or off, update reminders, backups, the language",
 			new[] { "LegitMode", "IdleGames", "FarmCards", "BedTime", "Notes", "OnlineStatus", "BoosterMake", "SpareAction", "AchievementBoost", "IUseThisAccount" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), true))
 			&& new[] { "Language", "SendTrades", "TelegramCommands", "UpdateReminders", "BackupAuto", "OpenBrowserOnStart" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), true)));
 		var sorted = typeof(NocatFarm.Web.FarmWeb).GetMethod("Sorted", BindingFlags.NonPublic | BindingFlags.Static)!;
-		Check("farm.nocat.lol: every settings section is sorted into a list - a new section starts closed",
+		Check("farm.gamer.mom: every settings section is sorted into a list - a new section starts closed",
 			NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Select(static d => d.Section).Distinct().All(s => (bool) sorted.Invoke(null, [s])!),
 			string.Join(", ", NocatFarm.Config.Settings.Global.Concat(NocatFarm.Config.Settings.Bot).Select(static d => d.Section).Distinct().Where(s => !(bool) sorted.Invoke(null, [s])!)));
-		Check("farm.nocat.lol: the setting is off by default, in Dashboard & phone, with a plain explanation",
+		Check("farm.gamer.mom: the setting is off by default, in Dashboard & phone, with a plain explanation",
 			!new NocatFarm.Config.GlobalConfig().FarmWebAllowed && Global("FarmWebAllowed") is { Section: "Dashboard & phone", Kind: NocatFarm.Config.SettingKind.Bool } fw
 			&& fw.Tooltip.Contains("never send items away or touch how the accounts sign in", StringComparison.Ordinal));
-		Check("farm.nocat.lol: the one origin, as one constant - https, no port, no subdomain", Farm == "https://farm.nocat.lol"
-			&& Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("string.Equals(request.Headers.Origin.ToString(), FarmWeb.Origin, StringComparison.Ordinal)", StringComparison.Ordinal));
-		Check("farm.nocat.lol: never Allow-Credentials, never a cookie, never '*'", !Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("AllowCredentials", StringComparison.Ordinal)
+		Check("farm.gamer.mom: the origin, as one constant - https, no port, no subdomain - and the page links there", Farm == "https://farm.gamer.mom"
+			&& NocatFarm.Web.FarmWeb.PageUrl(8000) == "https://farm.gamer.mom/?port=8000"
+			&& Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("(FarmWeb.AllowedOrigin(request.Headers.Origin.ToString()) != null)", StringComparison.Ordinal));
+		Check("farm.gamer.mom: the allow-list is exactly the new address and, this release only, the old https://farm.nocat.lol",
+			NocatFarm.Web.FarmWeb.OldSiteOrigin == "https://farm.nocat.lol"
+			&& NocatFarm.Web.FarmWeb.Origins.SequenceEqual(["https://farm.gamer.mom", "https://farm.nocat.lol"])
+			&& NocatFarm.Web.FarmWeb.AllowedOrigin("https://farm.gamer.mom") == "https://farm.gamer.mom"
+			&& NocatFarm.Web.FarmWeb.AllowedOrigin("https://farm.nocat.lol") == "https://farm.nocat.lol"
+			&& new string?[] { null, "", "null", "https://evil.example", "https://FARM.GAMER.MOM", "https://farm.gamer.mom/", "http://farm.nocat.lol",
+				"https://farm.nocat.lol:443", "https://x.farm.gamer.mom", "https://gamer.mom", "https://nocat.lol", "https://farm.gamer.mom, https://farm.nocat.lol" }
+				.All(static o => NocatFarm.Web.FarmWeb.AllowedOrigin(o) == null));
+		Check("farm.gamer.mom: never Allow-Credentials, never a cookie, never '*'", !Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("AllowCredentials", StringComparison.Ordinal)
 			&& !Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("Cookies", StringComparison.Ordinal) && !Src("src/NocatFarm/Web/WebHostFarm.cs").Contains("AccessControlAllowOrigin = \"*\"", StringComparison.Ordinal));
-		Check("farm.nocat.lol: the code is 6 characters nobody misreads", Enumerable.Range(0, 200).Select(static _ => NocatFarm.Web.FarmWeb.NewCode())
+		Check("farm.gamer.mom: the code is 6 characters nobody misreads", Enumerable.Range(0, 200).Select(static _ => NocatFarm.Web.FarmWeb.NewCode())
 			.All(static c => c.Length == 6 && c.All(static ch => "23456789ABCDEFGHJKMNPQRSTUVWXYZ".Contains(ch))));
-		Check("farm.nocat.lol: status leaves the Steam Guard code and the Telegram connect link out for it",
+		Check("farm.gamer.mom: status leaves the Steam Guard code and the Telegram connect link out for it",
 			Src("src/NocatFarm/Web/WebHost.cs").Contains("SteamOpenCode = !farm && ", StringComparison.Ordinal) && Src("src/NocatFarm/Web/WebHost.cs").Contains("SteamOpenCodeLeft = !farm && ", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/Web/WebHost.cs").Contains("TelegramConnectLink = farm ? null : Notifier.TelegramConnectLink,", StringComparison.Ordinal));
-		Check("farm.nocat.lol: the hosted page keeps API_BASE empty when the app serves it, and only ever talks to 127.0.0.1",
+		Check("farm.gamer.mom: the hosted page keeps API_BASE empty when the app serves it, and only ever talks to 127.0.0.1",
 			Src("src/NocatFarm/wwwroot/app.js").Contains("const API_BASE = HOSTED ? `http://127.0.0.1:${farmPort}` : '';", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/app.js").Contains("const HOSTED = document.documentElement.hasAttribute('data-farm-hosted');", StringComparison.Ordinal)
-			&& !Src("src/NocatFarm/wwwroot/app.js").Contains("location.hostname === 'farm.nocat.lol'", StringComparison.Ordinal)
+			&& !Src("src/NocatFarm/wwwroot/app.js").Contains("location.hostname === 'farm.gamer.mom'", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/app.js").Contains("if (HOSTED) { opts.credentials = 'omit'; opts.mode = 'cors'; }", StringComparison.Ordinal));
 
 		// The page served by the app itself: no API base, so every request goes where it always went (1.9.1's own calls, word for word).
@@ -40826,24 +40841,24 @@ static class FarmWebChecks {
 			"const res = await fetch('/api/restore/check', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/zip' }), body: file });",
 			"await fetch('/api/ping').then((r) => r.json()).catch(() => null);",
 			"let token = HOSTED ? (farmStore.get('nocatfarm-farm-token') || '') : (localStorage.getItem('nocatfarm-token') || '');"];
-		Check("farm.nocat.lol: served by the app, the page has no API base and asks the same addresses as 1.9.1, with the same sign-in token",
+		Check("farm.gamer.mom: served by the app, the page has no API base and asks the same addresses as 1.9.1, with the same sign-in token",
 			sameCalls.All(c => appJs.Contains(c, StringComparison.Ordinal)) && !Src("src/NocatFarm/wwwroot/index.html").Contains("data-farm-hosted", StringComparison.Ordinal)
 			&& System.Text.RegularExpressions.Regex.Matches(appJs, @"\bfetch\(").Count == sameCalls.Length - 1 + 1,
 			string.Join(" | ", sameCalls.Where(c => !appJs.Contains(c, StringComparison.Ordinal))) + $" fetches={System.Text.RegularExpressions.Regex.Matches(appJs, @"\bfetch\(").Count}");
-		Check("farm.nocat.lol: the hosted screens and the hidden buttons only ever come up in hosted mode",
+		Check("farm.gamer.mom: the hosted screens and the hidden buttons only ever come up in hosted mode",
 			appJs.Contains("if (HOSTED) {\n    document.body.classList.add('hosted');", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/style.css").Contains(".hosted .farm-hide", StringComparison.Ordinal)
 			&& appJs.Contains("if (!v || (!HOSTED && v.FarmOn === undefined)) return '';", StringComparison.Ordinal));
 
 		string indexHtml = Src("src/NocatFarm/wwwroot/index.html");
 		string css = Src("src/NocatFarm/wwwroot/style.css");
-		Check("farm.nocat.lol: the approve banner sits above every screen - outside the app, the welcome and the login, over any pop-up - and is drawn on every status poll",
+		Check("farm.gamer.mom: the approve banner sits above every screen - outside the app, the welcome and the login, over any pop-up - and is drawn on every status poll",
 			indexHtml.IndexOf("<div id=\"farmAsk\"", StringComparison.Ordinal) is > 0 and int askAt && askAt < indexHtml.IndexOf("<div id=\"login\"", StringComparison.Ordinal)
 			&& askAt < indexHtml.IndexOf("<div id=\"welcome\"", StringComparison.Ordinal) && askAt < indexHtml.IndexOf("<div id=\"app\"", StringComparison.Ordinal)
 			&& appJs.Contains("    state = await api('/api/status');\n    renderFarmAsk();", StringComparison.Ordinal)
 			&& css.Contains(".farmask-bar { position: fixed;", StringComparison.Ordinal) && css.Contains("z-index: 1000;", StringComparison.Ordinal)
 			&& !appJs.Contains("out.push(`<div class=\"alert warn farmask", StringComparison.Ordinal));
-		Check("farm.nocat.lol: the hosted screens are drawn like the page there - a status dot, one line, one big button, the how-to folded away - and say a hacked site couldn't take anything",
+		Check("farm.gamer.mom: the hosted screens are drawn like the page there - a status dot, one line, one big button, the how-to folded away - and say a hacked site couldn't take anything",
 			appJs.Contains("<div class=\"fg-brand\">nocat.<b>farm</b></div>", StringComparison.Ordinal) && appJs.Contains("<details class=\"fg-how\">", StringComparison.Ordinal)
 			&& appJs.Contains("Even if this website were hacked, it couldn\\'t take your items or your account: those stay in the app on your PC.", StringComparison.Ordinal)
 			&& css.Contains(".fg { width: min(400px, 100%);", StringComparison.Ordinal));
@@ -40874,17 +40889,17 @@ static class FarmWebChecks {
 			oldShape.Remove("FarmWebAllowed");
 			File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, oldShape.ToJsonString());
 			NocatFarm.Config.GlobalConfig fromOld = NocatFarm.Config.ConfigStore.LoadGlobal();
-			Check("farm.nocat.lol: a 1.9.1 config loads with no problem, everything as it was, the new switch off",
+			Check("farm.gamer.mom: a 1.9.1 config loads with no problem, everything as it was, the new switch off",
 				NocatFarm.Config.ConfigStore.GlobalLoadProblem == null && fromOld.WebPort == 7300 && !fromOld.FarmWebAllowed);
 			var newShape = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath))!.AsObject();
 			newShape["FarmWebAllowed"] = true;
 			newShape["SomeSettingFromANewerVersion"] = true;   // what 1.9.1 sees in FarmWebAllowed: a key it doesn't know
 			File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, newShape.ToJsonString());
 			NocatFarm.Config.GlobalConfig fromNew = NocatFarm.Config.ConfigStore.LoadGlobal();
-			Check("farm.nocat.lol: a key the loader doesn't know is skipped quietly - so 1.9.1, put back by the updater, loads a 1.9.2 config and simply has no switch",
+			Check("farm.gamer.mom: a key the loader doesn't know is skipped quietly - so 1.9.1, put back by the updater, loads a 1.9.2 config and simply has no switch",
 				NocatFarm.Config.ConfigStore.GlobalLoadProblem == null && fromNew.FarmWebAllowed && fromNew.WebPort == 7300
 				&& !Src("src/NocatFarm/Config/Configs.cs").Contains("UnmappedMemberHandling", StringComparison.Ordinal));
-			Check("farm.nocat.lol: its pairings file is its own - never in a backup, and nothing else reads it",
+			Check("farm.gamer.mom: its pairings file is its own - never in a backup, and nothing else reads it",
 				NocatFarm.Core.Backup.Kind("state/farm-tokens.json") == null
 				&& Directory.GetFiles(Path.Combine(repo, "src", "NocatFarm"), "*.cs", SearchOption.AllDirectories)
 					.Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) && File.ReadAllText(f).Contains("farm-tokens", StringComparison.Ordinal))
@@ -40893,11 +40908,11 @@ static class FarmWebChecks {
 
 			// ── a brand-new install: the switch on where there's a screen, written into the new file ──
 			NocatFarm.Config.GlobalConfig brandNew = NocatFarm.Config.ConfigStore.LoadGlobal();
-			Check("farm.nocat.lol: a brand-new install starts with it on (on a PC with a screen), written into its first config",
+			Check("farm.gamer.mom: a brand-new install starts with it on (on a PC with a screen), written into its first config",
 				brandNew.FarmWebAllowed == NocatFarm.Web.FarmWeb.DefaultForNewInstall && (!OperatingSystem.IsWindows() || brandNew.FarmWebAllowed)
 				&& File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains($"\"FarmWebAllowed\": {(brandNew.FarmWebAllowed ? "true" : "false")}", StringComparison.Ordinal)
 				&& !new NocatFarm.Config.GlobalConfig().FarmWebAllowed);
-			Check("farm.nocat.lol: ...but never in Docker or on a server with no screen - no browser there to open it in",
+			Check("farm.gamer.mom: ...but never in Docker or on a server with no screen - no browser there to open it in",
 				Src("src/NocatFarm/Web/FarmWeb.cs").Contains("public static bool DefaultForNewInstall => Platform.HasDesktop && !Platform.InContainer;", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Config/Configs.cs").Contains("fresh.FarmWebAllowed = Web.FarmWeb.DefaultForNewInstall;", StringComparison.Ordinal));
 			File.Delete(NocatFarm.Config.ConfigStore.GlobalPath);
@@ -40908,9 +40923,9 @@ static class FarmWebChecks {
 			((System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager).GetField("_bots", Inst)!.GetValue(mgr)!)["main"] = main;
 			web = new NocatFarm.Web.WebHost(mgr, mgr.Global);
 			FieldInfo tokensField = typeof(NocatFarm.Web.WebHost).GetField("_farmTokens", Inst)!;
-			Check("farm.nocat.lol: nothing about it is read at start", tokensField.GetValue(web) == null);
+			Check("farm.gamer.mom: nothing about it is read at start", tokensField.GetValue(web) == null);
 			bool started = (bool) await (Task<bool>) typeof(NocatFarm.Web.WebHost).GetMethod("StartAsync", Inst, [typeof(string), typeof(int)])!.Invoke(web, ["127.0.0.1", port])!;
-			Check("farm.nocat.lol: the dashboard starts for the checks", started);
+			Check("farm.gamer.mom: the dashboard starts for the checks", started);
 			using HttpClient http = new(new SocketsHttpHandler { UseCookies = false }) { BaseAddress = new Uri($"http://127.0.0.1:{port}/"), Timeout = TimeSpan.FromSeconds(15) };
 
 			// A request as a browser sends it: from another site it says so (Sec-Fetch-Site), with its Origin.
@@ -40952,13 +40967,13 @@ static class FarmWebChecks {
 			Answer offHello = await Send("GET", "/api/farm/hello");
 			Answer offStatus = await Send("GET", "/api/status");
 			Answer offLocal = await Send("GET", "/api/status", origin: null);
-			Check("farm.nocat.lol off: its preflight is refused like any other site's, with no CORS header",
+			Check("farm.gamer.mom off: its preflight is refused like any other site's, with no CORS header",
 				offPre.Code == System.Net.HttpStatusCode.Forbidden && offPre.H("Access-Control-Allow-Origin").Length == 0, $"{offPre.Code}");
-			Check("farm.nocat.lol off: the hello and the API are refused with today's words, no CORS header",
+			Check("farm.gamer.mom off: the hello and the API are refused with today's words, no CORS header",
 				offHello.Code == System.Net.HttpStatusCode.Forbidden && offStatus.Code == System.Net.HttpStatusCode.Forbidden
 				&& offStatus.Body.Contains("came from another website", StringComparison.Ordinal) && offStatus.H("Access-Control-Allow-Origin").Length == 0, $"{offHello.Code} {offStatus.Code}");
 			Answer offVisitors = await Send("GET", "/api/visitors", origin: null);
-			Check("farm.nocat.lol off: this PC's own dashboard answers exactly as in 1.9.1 - no new field in the status or the Visitors list, no CORS header",
+			Check("farm.gamer.mom off: this PC's own dashboard answers exactly as in 1.9.1 - no new field in the status or the Visitors list, no CORS header",
 				offLocal.Code == System.Net.HttpStatusCode.OK && offLocal.Json?["FarmPairs"] == null && offLocal.H("Access-Control-Allow-Origin").Length == 0
 				&& (offVisitors.Json as System.Text.Json.Nodes.JsonObject)?.Select(static kv => kv.Key).Order().SequenceEqual(["InternetPausedFor", "Visits"]) == true, offVisitors.Body);
 			List<string> differs = [];
@@ -40973,22 +40988,32 @@ static class FarmWebChecks {
 				}
 			}
 
-			Check("farm.nocat.lol off: refused exactly as any other website is - the same answer, word for word, on every kind of request", differs.Count == 0, string.Join("; ", differs));
-			Check("farm.nocat.lol off: still nothing read", tokensField.GetValue(web) == null);
+			Check("farm.gamer.mom off: refused exactly as any other website is - the same answer, word for word, on every kind of request", differs.Count == 0, string.Join("; ", differs));
+			Check("farm.gamer.mom off: still nothing read", tokensField.GetValue(web) == null);
 
 			// ── on ──
 			mgr.Global.FarmWebAllowed = true;
 			Answer pre = await Preflight("/api/status");
-			Check("farm.nocat.lol: a preflight answers with that exact origin, Vary: Origin, the methods and the two headers",
+			Check("farm.gamer.mom: a preflight answers with that exact origin, Vary: Origin, the methods and the two headers",
 				pre.Code == System.Net.HttpStatusCode.NoContent && pre.H("Access-Control-Allow-Origin") == Farm && pre.H("Vary").Contains("Origin", StringComparison.Ordinal)
 				&& pre.H("Access-Control-Allow-Methods").Contains("GET", StringComparison.Ordinal) && pre.H("Access-Control-Allow-Methods").Contains("POST", StringComparison.Ordinal)
 				&& pre.H("Access-Control-Allow-Headers").Contains("Authorization", StringComparison.Ordinal) && pre.H("Access-Control-Allow-Headers").Contains("Content-Type", StringComparison.Ordinal),
 				$"{pre.Code} {string.Join("; ", pre.Headers.Select(static kv => kv.Key + "=" + kv.Value))}");
-			Check("farm.nocat.lol: Chrome's private-network question gets its yes", pre.H("Access-Control-Allow-Private-Network") == "true");
-			Check("farm.nocat.lol: never Allow-Credentials", !pre.Headers.ContainsKey("Access-Control-Allow-Credentials"));
+			Check("farm.gamer.mom: Chrome's private-network question gets its yes", pre.H("Access-Control-Allow-Private-Network") == "true");
+			Check("farm.gamer.mom: never Allow-Credentials", !pre.Headers.ContainsKey("Access-Control-Allow-Credentials"));
 
-			string[] others = ["https://evil.example", "https://x.farm.nocat.lol", "http://farm.nocat.lol", "https://nocat.lol", "https://farm.nocat.lol:8443",
-				"https://farm.nocat.lol.evil.example", "https://FARM.NOCAT.LOL", "null", "https://farm.nocat.lol/", "https://farm.nocat.lol, https://evil.example"];
+			// The old address, still let in this one release: its preflight and hello answer with its own origin said back.
+			Answer oldPre = await Preflight("/api/status", NocatFarm.Web.FarmWeb.OldSiteOrigin);
+			Answer oldHello = await Send("GET", "/api/farm/hello", NocatFarm.Web.FarmWeb.OldSiteOrigin);
+			Check("farm.gamer.mom: the old https://farm.nocat.lol is still let in this release - its own origin said back, never the new one",
+				oldPre.Code == System.Net.HttpStatusCode.NoContent && oldPre.H("Access-Control-Allow-Origin") == "https://farm.nocat.lol"
+				&& oldHello.Code == System.Net.HttpStatusCode.OK && oldHello.H("Access-Control-Allow-Origin") == "https://farm.nocat.lol",
+				$"{oldPre.Code} {oldPre.H("Access-Control-Allow-Origin")} | {oldHello.Code} {oldHello.H("Access-Control-Allow-Origin")}");
+
+			string[] others = ["https://evil.example", "https://x.farm.gamer.mom", "http://farm.gamer.mom", "https://gamer.mom", "https://farm.gamer.mom:8443",
+				"https://farm.gamer.mom.evil.example", "https://FARM.GAMER.MOM", "null", "https://farm.gamer.mom/", "https://farm.gamer.mom, https://evil.example",
+				"https://x.farm.nocat.lol", "http://farm.nocat.lol", "https://nocat.lol", "https://farm.nocat.lol:8443", "https://farm.nocat.lol.evil.example",
+				"https://FARM.NOCAT.LOL", "https://farm.nocat.lol/", "https://farm.nocat.lol, https://farm.gamer.mom", "https://farm.gamer.mom, https://farm.nocat.lol"];
 			List<string> leaked = [];
 
 			foreach (string o in others) {
@@ -41002,28 +41027,28 @@ static class FarmWebChecks {
 				}
 			}
 
-			Check("farm.nocat.lol: every other origin is refused exactly as before - other sites, subdomains, http, other nocat.lol hosts, other ports",
+			Check("farm.gamer.mom: every other origin is refused exactly as before - other sites, subdomains, http, other gamer.mom and nocat.lol hosts, other ports",
 				leaked.Count == 0, string.Join("; ", leaked));
 
 			Answer hello = await Send("GET", "/api/farm/hello");
 			var helloKeys = (hello.Json as System.Text.Json.Nodes.JsonObject)?.Select(static kv => kv.Key).Order().ToArray() ?? [];
-			Check("farm.nocat.lol: the hello says app, version, api and paired:false - and nothing else",
+			Check("farm.gamer.mom: the hello says app, version, api and paired:false - and nothing else",
 				hello.Code == System.Net.HttpStatusCode.OK && helloKeys.SequenceEqual(["api", "app", "paired", "version"]) && (string?) hello.Json!["app"] == "nocat.farm"
 				&& (int) hello.Json["api"]! == NocatFarm.Web.FarmWeb.ApiVersion && (bool) hello.Json["paired"]! == false && hello.H("Access-Control-Allow-Origin") == Farm
 				&& !hello.Headers.ContainsKey("Set-Cookie"), $"{hello.Code} {hello.Body}");
 			Answer helloLocal = await Send("GET", "/api/farm/hello", origin: null);
-			Check("farm.nocat.lol: the hello is only for that page", helloLocal.Code == System.Net.HttpStatusCode.NotFound, $"{helloLocal.Code}");
+			Check("farm.gamer.mom: the hello is only for that page", helloLocal.Code == System.Net.HttpStatusCode.NotFound, $"{helloLocal.Code}");
 
 			Answer bare = await Send("GET", "/api/status");
-			Check("farm.nocat.lol: unpaired, nothing - not even with no password, from this PC's own loopback",
+			Check("farm.gamer.mom: unpaired, nothing - not even with no password, from this PC's own loopback",
 				bare.Code == System.Net.HttpStatusCode.Unauthorized && bare.H("Access-Control-Allow-Origin") == Farm, $"{bare.Code}");
 			Answer junk = await Send("GET", "/api/status", token: "0123456789abcdef0123456789abcdef");
-			Check("farm.nocat.lol: a made-up token is refused", junk.Code == System.Net.HttpStatusCode.Unauthorized, $"{junk.Code}");
+			Check("farm.gamer.mom: a made-up token is refused", junk.Code == System.Net.HttpStatusCode.Unauthorized, $"{junk.Code}");
 			Answer page = await Send("GET", "/index.html");
-			Check("farm.nocat.lol: only the API answers it, never the files", page.Code == System.Net.HttpStatusCode.Forbidden, $"{page.Code}");
+			Check("farm.gamer.mom: only the API answers it, never the files", page.Code == System.Net.HttpStatusCode.Forbidden, $"{page.Code}");
 			Answer rebind = await Send("GET", "/api/farm/hello", more: req => req.Headers.Host = $"farm.evil.example:{port}");
 			Answer proxied = await Send("GET", "/api/farm/hello", more: req => req.Headers.TryAddWithoutValidation("X-Forwarded-For", "203.0.113.9"));
-			Check("farm.nocat.lol: a name that isn't this PC's (DNS rebinding) or a proxy is refused",
+			Check("farm.gamer.mom: a name that isn't this PC's (DNS rebinding) or a proxy is refused",
 				rebind.Code == System.Net.HttpStatusCode.Forbidden && proxied.Code == System.Net.HttpStatusCode.Forbidden, $"{rebind.Code} {proxied.Code}");
 
 			// ── pairing ──
@@ -41038,29 +41063,29 @@ static class FarmWebChecks {
 			(string id1, string code1) = await Ask();
 			Answer waiting = await Poll(id1);
 			Answer banner = await Local("GET", "/api/status");
-			Check("farm.nocat.lol: a pair request gets a 6-character code and an id", code1.Length == 6 && id1.Length == 32, $"{id1} {code1}");
-			Check("farm.nocat.lol: ...waits for the person at the app", (string?) waiting.Json?["State"] == "waiting");
-			Check("farm.nocat.lol: ...and the dashboard here shows it with the same code", banner.Json?["FarmPairs"] is System.Text.Json.Nodes.JsonArray { Count: 1 } fp
+			Check("farm.gamer.mom: a pair request gets a 6-character code and an id", code1.Length == 6 && id1.Length == 32, $"{id1} {code1}");
+			Check("farm.gamer.mom: ...waits for the person at the app", (string?) waiting.Json?["State"] == "waiting");
+			Check("farm.gamer.mom: ...and the dashboard here shows it with the same code", banner.Json?["FarmPairs"] is System.Text.Json.Nodes.JsonArray { Count: 1 } fp
 				&& (string?) fp[0]!["Code"] == code1 && (string?) fp[0]!["Id"] == id1);
-			Check("farm.nocat.lol: ...in the log too, saying to approve it in the app",
+			Check("farm.gamer.mom: ...in the log too, saying to approve it in the app",
 				NocatFarm.Log.Recent(50).Any(e => e.Said.ToEnglish().Contains(code1, StringComparison.Ordinal) && e.Said.ToEnglish().Contains("Approve or deny it in the dashboard on this PC", StringComparison.Ordinal)));
 			Answer selfApprove = await Send("POST", "/api/farm/answer", json: $"{{\"Id\":\"{id1}\",\"Approve\":true}}");
-			Check("farm.nocat.lol: the page can't approve itself", selfApprove.Code == System.Net.HttpStatusCode.Unauthorized && (string?) (await Poll(id1)).Json?["State"] == "waiting", $"{selfApprove.Code}");
+			Check("farm.gamer.mom: the page can't approve itself", selfApprove.Code == System.Net.HttpStatusCode.Unauthorized && (string?) (await Poll(id1)).Json?["State"] == "waiting", $"{selfApprove.Code}");
 			Answer approve = await Local("POST", "/api/farm/answer", $"{{\"Id\":\"{id1}\",\"Approve\":true}}");
 			Answer got = await Poll(id1);
 			string token = (string?) got.Json?["Token"] ?? "";
-			Check("farm.nocat.lol: approved at the app, the page's next look gets its token", (bool?) approve.Json?["ok"] == true && (string?) got.Json?["State"] == "approved" && token.Length == 64, got.Body);
-			Check("farm.nocat.lol: ...once - the request is gone after that", (string?) (await Poll(id1)).Json?["State"] == "expired");
-			Check("farm.nocat.lol: kept hashed and encrypted on disk, never the token itself",
+			Check("farm.gamer.mom: approved at the app, the page's next look gets its token", (bool?) approve.Json?["ok"] == true && (string?) got.Json?["State"] == "approved" && token.Length == 64, got.Body);
+			Check("farm.gamer.mom: ...once - the request is gone after that", (string?) (await Poll(id1)).Json?["State"] == "expired");
+			Check("farm.gamer.mom: kept hashed and encrypted on disk, never the token itself",
 				File.Exists(Path.Combine(root, "config", "state", "farm-tokens.json")) && !File.ReadAllText(Path.Combine(root, "config", "state", "farm-tokens.json")).Contains(token, StringComparison.Ordinal));
 
 			Answer status = await Send("GET", "/api/status", token: token);
-			Check("farm.nocat.lol: with its token it reads the status - CORS'd, no banner, no Telegram connect link",
+			Check("farm.gamer.mom: with its token it reads the status - CORS'd, no banner, no Telegram connect link",
 				status.Code == System.Net.HttpStatusCode.OK && status.H("Access-Control-Allow-Origin") == Farm && status.Json?["FarmPairs"] == null
 				&& status.Json?["TelegramConnectLink"] == null, $"{status.Code}");
 			Answer auth = await Send("GET", "/api/auth", token: token);
 			Answer authLocal = await Local("GET", "/api/auth");
-			Check("farm.nocat.lol: the Authenticator page there has no Steam Guard code - here it does",
+			Check("farm.gamer.mom: the Authenticator page there has no Steam Guard code - here it does",
 				auth.Code == System.Net.HttpStatusCode.OK && auth.Json?["Accounts"]?[0]?["HasCode"]?.GetValue<bool>() == true && auth.Json?["Accounts"]?[0]?["Code"] == null
 				&& ((string?) authLocal.Json?["Accounts"]?[0]?["Code"])?.Length == 5, $"{auth.Body} / {authLocal.Body}");
 
@@ -41070,11 +41095,11 @@ static class FarmWebChecks {
 				.OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()
 				.SelectMany(static e => (e.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()?.HttpMethods ?? ["ANY"]).Select(m => $"{m} {e.RoutePattern.RawText}"))
 				.Distinct()];
-			Check("farm.nocat.lol: every API route the dashboard maps is sorted - allowed, checked or refused",
+			Check("farm.gamer.mom: every API route the dashboard maps is sorted - allowed, checked or refused",
 				mapped.Count > 60 && mapped.All(r => NocatFarm.Web.FarmWeb.Routes.ContainsKey(r)), string.Join(", ", mapped.Where(r => !NocatFarm.Web.FarmWeb.Routes.ContainsKey(r))));
-			Check("farm.nocat.lol: ...and the list names no route that isn't mapped", NocatFarm.Web.FarmWeb.Routes.Keys.All(mapped.Contains),
+			Check("farm.gamer.mom: ...and the list names no route that isn't mapped", NocatFarm.Web.FarmWeb.Routes.Keys.All(mapped.Contains),
 				string.Join(", ", NocatFarm.Web.FarmWeb.Routes.Keys.Where(k => !mapped.Contains(k))));
-			Check("farm.nocat.lol: a route nobody listed is refused", NocatFarm.Web.FarmWeb.RouteAccess("POST", "/api/something/new") == NocatFarm.Web.FarmWeb.Access.Refused);
+			Check("farm.gamer.mom: a route nobody listed is refused", NocatFarm.Web.FarmWeb.RouteAccess("POST", "/api/something/new") == NocatFarm.Web.FarmWeb.Access.Refused);
 
 			string Fill(string pattern) => pattern.Replace("{name}", "main", StringComparison.Ordinal).Replace("{feature}", "spare", StringComparison.Ordinal)
 				.Replace("{action}", "start", StringComparison.Ordinal).Replace("{id}", "x", StringComparison.Ordinal);
@@ -41085,9 +41110,9 @@ static class FarmWebChecks {
 				"POST /api/discord/connect", "POST /api/phone/firewall", "POST /api/phone/restart", "POST /api/login", "POST /api/import/apply"];
 			string[] mustAllow = ["GET /api/import/scan", "GET /api/import/tools", "GET /api/import/pending", "POST /api/import/pending/clear", "POST /api/backups/now", "POST /api/bots/{name}/achievements/unlock-all",
 				"POST /api/bots/{name}/copy-settings", "POST /api/steam-open/everyone"];
-			Check("farm.nocat.lol: looking at what could be imported, backups here, unlocking achievements, copying settings and the Open in Steam buttons work from there",
+			Check("farm.gamer.mom: looking at what could be imported, backups here, unlocking achievements, copying settings and the Open in Steam buttons work from there",
 				mustAllow.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Allowed));
-			Check("farm.nocat.lol: confirmations, updates, add-ons, plugins, restore, a sign-in answer, adding and removing accounts, importing, Steam Guard codes, QR, approving, the backup zip and the back doors are in the refused list",
+			Check("farm.gamer.mom: confirmations, updates, add-ons, plugins, restore, a sign-in answer, adding and removing accounts, importing, Steam Guard codes, QR, approving, the backup zip and the back doors are in the refused list",
 				mustRefuse.All(static r => NocatFarm.Web.FarmWeb.Routes[r] == NocatFarm.Web.FarmWeb.Access.Refused));
 
 			foreach ((string key, NocatFarm.Web.FarmWeb.Access access) in NocatFarm.Web.FarmWeb.Routes.Where(static kv => kv.Value == NocatFarm.Web.FarmWeb.Access.Refused)) {
@@ -41100,7 +41125,7 @@ static class FarmWebChecks {
 				}
 			}
 
-			Check("farm.nocat.lol: every refused route is refused with a token too, saying to do it in the app - before anything runs",
+			Check("farm.gamer.mom: every refused route is refused with a token too, saying to do it in the app - before anything runs",
 				through.Count == 0, string.Join("; ", through));
 
 			string[] reads = ["/api/status", "/api/log?n=5", "/api/history?days=2", "/api/commands", "/api/settings/schema", "/api/config", "/api/visitors", "/api/phone", "/api/auth",
@@ -41115,15 +41140,15 @@ static class FarmWebChecks {
 				}
 			}
 
-			Check("farm.nocat.lol: it reads what the dashboard reads", blocked.Count == 0, string.Join("; ", blocked));
+			Check("farm.gamer.mom: it reads what the dashboard reads", blocked.Count == 0, string.Join("; ", blocked));
 
 			async Task<Answer> Cmd(string line) => await Send("POST", "/api/command", token: token, json: System.Text.Json.JsonSerializer.Serialize(new { Line = line }));
 			Answer cmdOk = await Cmd("status");
 			Answer cmdNo = await Cmd("confirm main all");
 			Answer cmdSet = await Cmd("set main SteamPassword hunter2hunter2");
 			Answer cmdPlugin = await Cmd("rep4rep pause all");
-			Check("farm.nocat.lol: its Console runs everyday commands", cmdOk.Code == System.Net.HttpStatusCode.OK && ((string?) cmdOk.Json?["output"] ?? "").Length > 0, cmdOk.Body);
-			Check("farm.nocat.lol: ...and refuses confirm, an account's Steam password and a plugin's command, saying where to do it",
+			Check("farm.gamer.mom: its Console runs everyday commands", cmdOk.Code == System.Net.HttpStatusCode.OK && ((string?) cmdOk.Json?["output"] ?? "").Length > 0, cmdOk.Body);
+			Check("farm.gamer.mom: ...and refuses confirm, an account's Steam password and a plugin's command, saying where to do it",
 				cmdNo.Code == System.Net.HttpStatusCode.Forbidden && cmdSet.Code == System.Net.HttpStatusCode.Forbidden && cmdPlugin.Code == System.Net.HttpStatusCode.Forbidden
 				&& ((string?) cmdNo.Json?["output"] ?? "").Contains("in the app's own dashboard", StringComparison.Ordinal) && mgr.Global.WebPassword.Length == 0);
 
@@ -41131,7 +41156,7 @@ static class FarmWebChecks {
 			Answer spareOn = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":true}");
 			bool spareWasOn = main.Cfg.SpareItems;
 			Answer spareOff = await Send("POST", "/api/bots/main/switch", token: token, json: "{\"Feature\":\"SpareItems\",\"On\":false}");
-			Check("farm.nocat.lol: a money switch goes on and off from there (Spare items); card swaps never on",
+			Check("farm.gamer.mom: a money switch goes on and off from there (Spare items); card swaps never on",
 				swapsOn.Code == System.Net.HttpStatusCode.Forbidden && !main.Cfg.CardSwaps && spareOn.Code == System.Net.HttpStatusCode.OK && spareWasOn
 				&& spareOff.Code == System.Net.HttpStatusCode.OK && !main.Cfg.SpareItems, $"{swapsOn.Code} {spareOn.Code} {spareOff.Code}");
 			// 1.9.2 review: a field named twice - in another case, or exactly - is refused whole. Before, the check read the first
@@ -41146,9 +41171,9 @@ static class FarmWebChecks {
 			Answer lineTwice = await Send("POST", "/api/command", token: token, json: "{\"Line\":\"status\",\"line\":\"exit\"}");
 			Answer junkBody = await Send("POST", "/api/config", token: token, json: "{\"BackupAuto\":");
 			Answer bigBody = await Send("POST", "/api/bots/main/config", token: token, json: "{\"Notes\":\"" + new string('x', 2 * 1024 * 1024) + "\"}");
-			Check("farm.nocat.lol: a body naming a field twice, in any case, is refused whole - card swaps stay off",
+			Check("farm.gamer.mom: a body naming a field twice, in any case, is refused whole - card swaps stay off",
 				twiceThrough.Count == 0 && lineTwice.Code == System.Net.HttpStatusCode.BadRequest, string.Join("; ", twiceThrough) + $" {lineTwice.Code}");
-			Check("farm.nocat.lol: a body that isn't JSON, or is too big, gets a refusal the page can read - never a bare 500",
+			Check("farm.gamer.mom: a body that isn't JSON, or is too big, gets a refusal the page can read - never a bare 500",
 				junkBody.Code == System.Net.HttpStatusCode.BadRequest && (bool?) junkBody.Json?["ok"] == false && bigBody.Code == System.Net.HttpStatusCode.BadRequest
 				&& main.Cfg.Notes != new string('x', 2 * 1024 * 1024), $"{junkBody.Code} {bigBody.Code}");
 			main.Cfg.ScamWatchStopTrades = true;
@@ -41159,7 +41184,7 @@ static class FarmWebChecks {
 			main.Cfg.AutoReply = "typed here";
 			bool replyNew = (await Send("POST", "/api/bots/main/config", token: token, json: "{\"AutoReply\":\"free skins at example.com\"}")).Code == System.Net.HttpStatusCode.OK;
 			bool replyCleared = (await Send("POST", "/api/bots/main/config", token: token, json: "{\"AutoReply\":\"\"}")).Code == System.Net.HttpStatusCode.OK;
-			Check("farm.nocat.lol: from there scam watch isn't switched off (by a save or by 'set'), the app isn't shut down, nothing is imported, and an auto-reply is only emptied",
+			Check("farm.gamer.mom: from there scam watch isn't switched off (by a save or by 'set'), the app isn't shut down, nothing is imported, and an auto-reply is only emptied",
 				!guardOff && !guardCmd && main.Cfg.ScamWatchStopTrades && !exitCmd && !importCmd && !replyNew && replyCleared && main.Cfg.AutoReply.Length == 0,
 				$"{guardOff} {guardCmd} {exitCmd} {importCmd} {replyNew} {replyCleared} [{main.Cfg.AutoReply}]");
 
@@ -41171,14 +41196,14 @@ static class FarmWebChecks {
 			bool masters = await BotSave("{\"CommandMasters\":\"76561198000000001\"}");
 			bool secret = await BotSave("{\"SteamPassword\":\"x\"}");
 			bool login = await BotSave("{\"SteamLogin\":\"someone-else\"}");
-			Check("farm.nocat.lol: an account's settings save from there, the buying switch included (it still needs its go-ahead, as here); its money limits, where items go, who commands it, its password and login don't",
+			Check("farm.gamer.mom: an account's settings save from there, the buying switch included (it still needs its go-ahead, as here); its money limits, where items go, who commands it, its password and login don't",
 				notes && main.Cfg.Notes == "from farm" && buy && !limit && !target && !masters && !secret && !login && main.Cfg.SteamLogin == "main",
 				$"{notes} {buy} {limit} {target} {masters} {secret} {login}");
 			main.Cfg.BuyCards = false;
 			Answer globalNo = await Send("POST", "/api/config", token: token, json: "{\"DiscordOwnerId\":\"1\",\"BackupAuto\":true}");
 			Answer globalFarm = await Send("POST", "/api/config", token: token, json: "{\"FarmWebAllowed\":false}");
 			Answer globalHook = await Send("POST", "/api/config", token: token, json: "{\"DiscordWebhookUrl\":\"https://evil.example/x\"}");
-			Check("farm.nocat.lol: global saves with a bot's owner, the switch itself or a notification address are refused whole",
+			Check("farm.gamer.mom: global saves with a bot's owner, the switch itself or a notification address are refused whole",
 				globalNo.Code == System.Net.HttpStatusCode.Forbidden && globalFarm.Code == System.Net.HttpStatusCode.Forbidden && globalHook.Code == System.Net.HttpStatusCode.Forbidden
 				&& mgr.Global.WebPassword.Length == 0 && !mgr.Global.BackupAuto && mgr.Global.FarmWebAllowed && mgr.Global.DiscordWebhookUrl.Length == 0);
 			var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, PropertyNameCaseInsensitive = true };
@@ -41189,7 +41214,7 @@ static class FarmWebChecks {
 			bool BotOk(NocatFarm.Config.BotConfig cfg, string json) => (bool) settingsAllowed.MakeGenericMethod(typeof(NocatFarm.Config.BotConfig))
 				.Invoke(null, [cfg, NocatFarm.Config.Settings.Bot, System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject(), opts, false])!;
 			var spending = new NocatFarm.Config.BotConfig { BuyCards = true, SpendPoints = true };
-			Check("farm.nocat.lol: a settings save is judged by what it changes - the page's Base, the empty secret boxes and the rest left as they are",
+			Check("farm.gamer.mom: a settings save is judged by what it changes - the page's Base, the empty secret boxes and the rest left as they are",
 				GlobalOk("{\"BackupAuto\":true,\"WebPassword\":\"\",\"Base\":{\"BackupAuto\":false}}") && !GlobalOk("{\"BackupAuto\":true,\"WebPassword\":\"x\"}")
 				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && GlobalOk("{\"SteamOpenEveryAccount\":true}") && !GlobalOk("{\"UpdateMode\":2}")
 				&& BotOk(spending, "{\"BuyCards\":false,\"SpendPoints\":false}") && BotOk(new NocatFarm.Config.BotConfig(), "{\"BuyCards\":true}")
@@ -41211,11 +41236,11 @@ static class FarmWebChecks {
 			bool untouched = Pw("{\"WebPassword\":\"\",\"BackupAuto\":true}");
 			mgr.Global.WebPassword = "";
 			web.ClearLockouts();
-			Check("farm.nocat.lol: a first dashboard password is never set from there; an existing one changes only with the current one; it's never removed from there",
+			Check("farm.gamer.mom: a first dashboard password is never set from there; an existing one changes only with the current one; it's never removed from there",
 				!firstOne && !noCurrent && !wrongCurrent && rightCurrent && !removing && untouched, $"{firstOne} {noCurrent} {wrongCurrent} {rightCurrent} {removing} {untouched}");
-			Check("farm.nocat.lol: a password changed from there signs every browser out, its own pairing too, and hands it no dashboard session",
+			Check("farm.gamer.mom: a password changed from there signs every browser out, its own pairing too, and hands it no dashboard session",
 				Src("src/NocatFarm/Web/WebHost.cs").Contains("fresh = string.IsNullOrEmpty(savedPassword) || IsFarm(ctx) ? null : NewSession(ctx, KeyOf(savedPassword));", StringComparison.Ordinal)
-				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("SaveSessions();\n\n\t\t// 1.9.2: the pages paired at farm.nocat.lol too.\n\t\tForgetFarm();", StringComparison.Ordinal));
+				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("SaveSessions();\n\n\t\t// 1.9.2: the pages paired at farm.gamer.mom too.\n\t\tForgetFarm();", StringComparison.Ordinal));
 
 			// ── the wrong origin with a token, and a password set ──
 			Answer evilToken = await Send("GET", "/api/status", origin: "https://evil.example", token: token);
@@ -41223,7 +41248,7 @@ static class FarmWebChecks {
 			Answer noOrigin = await Send("GET", "/api/status", origin: null, token: token);
 			Answer stillFarm = await Send("GET", "/api/status", token: token);
 			mgr.Global.WebPassword = "";
-			Check("farm.nocat.lol: its token from another website is refused, and with a password it isn't a dashboard sign-in either",
+			Check("farm.gamer.mom: its token from another website is refused, and with a password it isn't a dashboard sign-in either",
 				evilToken.Code == System.Net.HttpStatusCode.Forbidden && noOrigin.Code == System.Net.HttpStatusCode.Unauthorized && stillFarm.Code == System.Net.HttpStatusCode.OK,
 				$"{evilToken.Code} {noOrigin.Code} {stillFarm.Code}");
 
@@ -41258,7 +41283,7 @@ static class FarmWebChecks {
 				notReached.Count == 0 && ((string?) sessionAuth.Json?["Accounts"]?[0]?["Code"])?.Length == 5, string.Join("; ", notReached));
 			Answer sessionAsFarm = await Send("GET", "/api/status", token: session);
 			Answer farmAsSession = await Send("GET", "/api/status", origin: null, token: token);
-			Check("1.9.1 sign-in: a dashboard session is no farm.nocat.lol token, and a farm.nocat.lol token is no dashboard session",
+			Check("1.9.1 sign-in: a dashboard session is no farm.gamer.mom token, and a farm.gamer.mom token is no dashboard session",
 				sessionAsFarm.Code == System.Net.HttpStatusCode.Unauthorized && farmAsSession.Code == System.Net.HttpStatusCode.Unauthorized, $"{sessionAsFarm.Code} {farmAsSession.Code}");
 			Answer wrongPw = await Send("POST", "/api/login", origin: null, json: "{\"Password\":\"nope\"}");
 			Check("1.9.1 sign-in: a wrong password answers as before", wrongPw.Code == System.Net.HttpStatusCode.Unauthorized && (string?) wrongPw.Json?["error"] == "wrong password", wrongPw.Body);
@@ -41266,25 +41291,25 @@ static class FarmWebChecks {
 
 			// ── kept over a restart ──
 			tokensField.SetValue(web, null);
-			Check("farm.nocat.lol: a paired page stays paired over a restart (read back from disk)", (await Send("GET", "/api/status", token: token)).Code == System.Net.HttpStatusCode.OK);
+			Check("farm.gamer.mom: a paired page stays paired over a restart (read back from disk)", (await Send("GET", "/api/status", token: token)).Code == System.Net.HttpStatusCode.OK);
 			Answer listed = await Local("GET", "/api/visitors");
 			string pageId = (string?) listed.Json?["FarmPages"]?[0]?["Id"] ?? "";
-			Check("farm.nocat.lol: it shows on the Phone page's list, with its device and an id to revoke it by",
+			Check("farm.gamer.mom: it shows on the Phone page's list, with its device and an id to revoke it by",
 				(bool?) listed.Json?["FarmOn"] == true && pageId.Length == 12 && listed.Json?["FarmPages"] is System.Text.Json.Nodes.JsonArray { Count: 1 }, listed.Body);
 
 			// ── deny, expiry, the limits ──
 			(string id2, _) = await Ask();
 			await Local("POST", "/api/farm/answer", $"{{\"Id\":\"{id2}\",\"Approve\":false}}");
-			Check("farm.nocat.lol: turned down at the app, the page is told so, and gets nothing", (string?) (await Poll(id2)).Json?["State"] == "denied");
+			Check("farm.gamer.mom: turned down at the app, the page is told so, and gets nothing", (string?) (await Poll(id2)).Json?["State"] == "denied");
 			(string id3, _) = await Ask();
 			Answer fourth = await Send("POST", "/api/farm/pair", json: "{}");
-			Check("farm.nocat.lol: a few pair requests a minute, no more", id3.Length == 32 && fourth.Code == System.Net.HttpStatusCode.TooManyRequests && (string?) fourth.Json?["error"] == "slow",
+			Check("farm.gamer.mom: a few pair requests a minute, no more", id3.Length == 32 && fourth.Code == System.Net.HttpStatusCode.TooManyRequests && (string?) fourth.Json?["error"] == "slow",
 				$"{fourth.Code} {fourth.Body}");
 			var pairs = (System.Collections.IList) typeof(NocatFarm.Web.WebHost).GetField("_farmPairs", Inst)!.GetValue(web)!;
 			var asks = typeof(NocatFarm.Web.WebHost).GetField("_farmAsks", Inst)!.GetValue(web)!;
 			object pending3 = pairs.Cast<object>().Single(p => (string) p.GetType().GetProperty("Id")!.GetValue(p)! == id3);
 			pending3.GetType().GetField("<Expires>k__BackingField", Inst)!.SetValue(pending3, DateTime.UtcNow.AddSeconds(-1));
-			Check("farm.nocat.lol: a request runs out after its 5 minutes - gone, and not on the banner",
+			Check("farm.gamer.mom: a request runs out after its 5 minutes - gone, and not on the banner",
 				(string?) (await Poll(id3)).Json?["State"] == "expired" && pairs.Count == 0 && (await Local("GET", "/api/status")).Json?["FarmPairs"] == null);
 			asks.GetType().GetMethod("Clear")!.Invoke(asks, null);
 			List<string> held = [];
@@ -41296,12 +41321,12 @@ static class FarmWebChecks {
 
 			asks.GetType().GetMethod("Clear")!.Invoke(asks, null);
 			Answer busy = await Send("POST", "/api/farm/pair", json: "{}");
-			Check("farm.nocat.lol: at most 5 wait at once", held.All(static h => h.Length == 32) && busy.Code == System.Net.HttpStatusCode.TooManyRequests && (string?) busy.Json?["error"] == "busy"
+			Check("farm.gamer.mom: at most 5 wait at once", held.All(static h => h.Length == 32) && busy.Code == System.Net.HttpStatusCode.TooManyRequests && (string?) busy.Json?["error"] == "busy"
 				&& pairs.Count == NocatFarm.Web.FarmWeb.MaxPending, $"{busy.Code}");
 
 			// ── revoking, and signing everyone out ──
 			Answer revoked = await Local("POST", "/api/farm/revoke", $"{{\"Id\":\"{pageId}\"}}");
-			Check("farm.nocat.lol: Revoke on the Phone page takes it back at once", (bool?) revoked.Json?["ok"] == true
+			Check("farm.gamer.mom: Revoke on the Phone page takes it back at once", (bool?) revoked.Json?["ok"] == true
 				&& (await Send("GET", "/api/status", token: token)).Code == System.Net.HttpStatusCode.Unauthorized);
 			asks.GetType().GetMethod("Clear")!.Invoke(asks, null);
 			pairs.Clear();
@@ -41309,7 +41334,7 @@ static class FarmWebChecks {
 			await Local("POST", "/api/farm/answer", $"{{\"Id\":\"{id4}\",\"Approve\":true}}");
 			string token2 = (string?) (await Poll(id4)).Json?["Token"] ?? "";
 			Answer ownRevoke = await Send("POST", "/api/farm/revoke", token: token2, json: "{\"Id\":\"nothing\"}");
-			Check("farm.nocat.lol: the page can give its own access back", token2.Length == 64 && (bool?) ownRevoke.Json?["ok"] == true
+			Check("farm.gamer.mom: the page can give its own access back", token2.Length == 64 && (bool?) ownRevoke.Json?["ok"] == true
 				&& (await Send("GET", "/api/status", token: token2)).Code == System.Net.HttpStatusCode.Unauthorized);
 			asks.GetType().GetMethod("Clear")!.Invoke(asks, null);
 			(string id5, _) = await Ask();
@@ -41317,20 +41342,20 @@ static class FarmWebChecks {
 			string token3 = (string?) (await Poll(id5)).Json?["Token"] ?? "";
 			bool before = (await Send("GET", "/api/status", token: token3)).Code == System.Net.HttpStatusCode.OK;
 			await Local("POST", "/api/visitors/signout", "{}");
-			Check("farm.nocat.lol: Sign every device out takes every paired page with it, file and all",
+			Check("farm.gamer.mom: Sign every device out takes every paired page with it, file and all",
 				before && (await Send("GET", "/api/status", token: token3)).Code == System.Net.HttpStatusCode.Unauthorized
 				&& !File.Exists(Path.Combine(root, "config", "state", "farm-tokens.json")));
 
-			// ── where "open the dashboard" goes: this PC's own for setting up, farm.nocat.lol after ──
+			// ── where "open the dashboard" goes: this PC's own for setting up, farm.gamer.mom after ──
 			string local = $"http://127.0.0.1:{port}/";
-			string farmPage = $"https://farm.nocat.lol/?port={port}";
+			string farmPage = $"https://farm.gamer.mom/?port={port}";
 			PropertyInfo steamId = typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!;
 			PropertyInfo qr = typeof(NocatFarm.Core.Bot).GetProperty("QrChallenge")!;
 			FieldInfo guard = typeof(NocatFarm.Core.Bot).GetField("_guardPrompt", Inst)!;
 			FieldInfo sentAt = typeof(NocatFarm.Web.WebHost).GetField("_farmSentAt", Inst)!;
 			Check("open the dashboard: an account never signed in here yet (setting up) opens this PC's own", web.OpenUrl == local, web.OpenUrl);
 			steamId.SetValue(main, 76561198000000777UL);
-			Check("open the dashboard: once an account is set up it opens farm.nocat.lol, with this dashboard's port", web.OpenUrl == farmPage && web.Url == local, web.OpenUrl);
+			Check("open the dashboard: once an account is set up it opens farm.gamer.mom, with this dashboard's port", web.OpenUrl == farmPage && web.Url == local, web.OpenUrl);
 			qr.SetValue(main, "https://s.team/q/1/2");
 			Check("open the dashboard: an account waiting on its QR code opens this PC's own", web.OpenUrl == local, web.OpenUrl);
 			qr.SetValue(main, null);
@@ -41341,7 +41366,7 @@ static class FarmWebChecks {
 			Check("open the dashboard: with the switch off, always this PC's own - as in 1.9.1; 'dashboard' says nothing more",
 				web.OpenUrl == local && NocatFarm.Commands.FarmDashboardLine(mgr.Global).Length == 0);
 			mgr.Global.FarmWebAllowed = true;
-			Check("open the dashboard: 'dashboard' lists the farm.nocat.lol address too", NocatFarm.Commands.FarmDashboardLine(mgr.Global).Contains($"https://farm.nocat.lol/?port={mgr.Global.WebPort}", StringComparison.Ordinal));
+			Check("open the dashboard: 'dashboard' lists the farm.gamer.mom address too", NocatFarm.Commands.FarmDashboardLine(mgr.Global).Contains($"https://farm.gamer.mom/?port={mgr.Global.WebPort}", StringComparison.Ordinal));
 			sentAt.SetValue(web, DateTime.UtcNow - NocatFarm.Web.FarmWeb.GiveUpAfter - TimeSpan.FromSeconds(5));
 			Check("open the dashboard: opened there a few minutes ago and nothing paired since (no internet, a blocked browser) - this PC's own next time",
 				web.OpenUrl == local, web.OpenUrl);
@@ -41358,11 +41383,11 @@ static class FarmWebChecks {
 			string token4 = (string?) (await Poll(id6)).Json?["Token"] ?? "";
 			mgr.Global.FarmWebAllowed = false;
 			Answer offAgain = await Send("GET", "/api/status", token: token4);
-			Check("farm.nocat.lol: switched off, even a paired page is turned away as any website is",
+			Check("farm.gamer.mom: switched off, even a paired page is turned away as any website is",
 				token4.Length == 64 && offAgain.Code == System.Net.HttpStatusCode.Forbidden && offAgain.H("Access-Control-Allow-Origin").Length == 0, $"{offAgain.Code}");
 			mgr.Global.FarmWebAllowed = true;
-			Check("farm.nocat.lol: ...and on again, it's still paired", (await Send("GET", "/api/status", token: token4)).Code == System.Net.HttpStatusCode.OK);
-			Check("open the dashboard: with a browser paired, farm.nocat.lol again", web.OpenUrl == farmPage, web.OpenUrl);
+			Check("farm.gamer.mom: ...and on again, it's still paired", (await Send("GET", "/api/status", token: token4)).Code == System.Net.HttpStatusCode.OK);
+			Check("open the dashboard: with a browser paired, farm.gamer.mom again", web.OpenUrl == farmPage, web.OpenUrl);
 		} finally {
 			if (web != null) {
 				await web.DisposeAsync();

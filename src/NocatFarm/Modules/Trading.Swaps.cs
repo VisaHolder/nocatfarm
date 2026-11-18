@@ -7,8 +7,8 @@ namespace NocatFarm.Modules;
 /// swap #...") on an account with card swaps on is checked against that match (<see cref="CardExchange.Verify"/>) instead
 /// of the ordinary fair-swap test, once when it comes and again right before it's accepted:
 /// <list type="bullet">
-/// <item>exactly what nocat.lol paired (or some of its pairs), from the account it paired, nothing else - else it's never
-/// accepted, it's left for you, nocat.lol is told, and that account is never swapped with again;</item>
+/// <item>exactly what gamer.mom paired (or some of its pairs), from the account it paired, nothing else - else it's never
+/// accepted, it's left for you, gamer.mom is told, and that account is never swapped with again;</item>
 /// <item>a match this account hasn't swapped, declined or found bad already, paired no more than 2 days ago, asking for no
 /// copy that's on another offer or promised to another match - else it's declined;</item>
 /// <item>this account keeps "Keep this many of each card" (never its last copy), its sets lose nothing (ASF's own test),
@@ -33,7 +33,7 @@ public sealed partial class Trading {
 	private readonly Dictionary<ulong, int> _exchangeWaits = [];
 
 	/// <summary>
-	/// Swap offers naming a match this copy hasn't been handed yet, and since when: the sender's copy may have asked nocat.lol
+	/// Swap offers naming a match this copy hasn't been handed yet, and since when: the sender's copy may have asked gamer.mom
 	/// for its matches before this one did. Asked again at once, and given 3 hours before it's left for you.
 	/// </summary>
 	private readonly Dictionary<ulong, DateTime> _exchangeUnknown = [];
@@ -41,7 +41,7 @@ public sealed partial class Trading {
 	/// <summary>Both sides' worth in the wallet's currency, from the last check - said when it's accepted.</summary>
 	private readonly Dictionary<ulong, (long Give, long Get, int Currency)> _exchangeWorth = [];
 
-	/// <summary>An offer that says it's a card swap nocat.lol paired, on an account with card swaps on.</summary>
+	/// <summary>An offer that says it's a card swap gamer.mom paired, on an account with card swaps on.</summary>
 	private bool IsExchangeOffer(TradeOffers.Offer offer) => !offer.Ours && (CardExchange.MatchIdOf(offer.Message) != null) && CardExchange.On(Bot.Cfg, Bot.Name);
 
 	/// <summary>The verdict for the queue: true accept, false decline, null not now (or left for you).</summary>
@@ -155,7 +155,7 @@ public sealed partial class Trading {
 
 				return Remember(false, why);
 			case CardExchange.Verdict.Bad:
-				// Never accepted, never declined behind your back: it's yours to look at. nocat.lol hears at the next sync.
+				// Never accepted, never declined behind your back: it's yours to look at. gamer.mom hears at the next sync.
 				LeaveHeldSwap(offer.Id);
 				ledger.Change(l => {
 					if (!l.Blocked.Contains(offer.Partner)) {
@@ -191,7 +191,7 @@ public sealed partial class Trading {
 				}
 
 				LeaveHeldSwap(offer.Id);
-				Log.Info(new Said("offer {0} says it's a card swap nocat.lol didn't pair · left for you", n), Bot.Name);
+				Log.Info(new Said("offer {0} says it's a card swap gamer.mom didn't pair · left for you", n), Bot.Name);
 
 				return Remember(null, why);
 		}

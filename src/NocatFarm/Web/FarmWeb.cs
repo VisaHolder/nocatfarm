@@ -5,14 +5,14 @@ using NocatFarm.Core;
 namespace NocatFarm.Web;
 
 /// <summary>
-/// 1.9.2: the dashboard served from https://farm.nocat.lol, talking straight to this app on http://127.0.0.1. Off unless
-/// "Let farm.nocat.lol open this dashboard" (FarmWebAllowed) is on.
+/// 1.9.2: the dashboard served from https://farm.gamer.mom, talking straight to this app on http://127.0.0.1. Off unless
+/// "Let farm.gamer.mom open this dashboard" (FarmWebAllowed) is on.
 ///
 /// What a page there may do is decided here, in one place, deny-by-default: every API route and every command word is
 /// in a list below - allowed, allowed in part, or refused - and anything that isn't in a list is refused. The checks
 /// walk <see cref="Commands.All"/> and every mapped route, so a new one can't slip through unclassified.
 ///
-/// The one risk it guards against is the page's own code being swapped (nocat.lol, its Cloudflare account or GitHub taken
+/// The one risk it guards against is the page's own code being swapped (gamer.mom, its Cloudflare account or GitHub taken
 /// over). So only what would let that code steal or take over is refused: items leaving or being sent somewhere else, the
 /// Steam sign-in and its secrets (Steam Guard codes are never even shown), running code (updates and how they install,
 /// add-ons, plugins, a restore), lifting or weakening a scam-watch hold, importing (it adds accounts and their trade rules),
@@ -22,11 +22,31 @@ namespace NocatFarm.Web;
 /// cookie - each one approved at the app.
 /// </summary>
 public static class FarmWeb {
-	/// <summary>The one website allowed, exactly: https, no port, no subdomain, no other nocat.lol host.</summary>
-	public const string SiteOrigin = "https://farm.nocat.lol";
+	/// <summary>The website, exactly: https, no port, no subdomain, no other gamer.mom host. Every link to the page goes here.</summary>
+	public const string SiteOrigin = "https://farm.gamer.mom";
 
-	/// <summary>Checked against the Origin header, ordinal. Only the checks change it.</summary>
-	internal static string Origin { get; set; } = SiteOrigin;
+	/// <summary>
+	/// The page's old address, still let in for this one release so pages paired there keep working while the move to
+	/// gamer.mom settles - never linked to. It can go in the release after.
+	/// </summary>
+	public const string OldSiteOrigin = "https://farm.nocat.lol";
+
+	/// <summary>The websites let in, each checked against the Origin header exactly, ordinal. Only the checks change it.</summary>
+	internal static string[] Origins { get; set; } = [SiteOrigin, OldSiteOrigin];
+
+	/// <summary>
+	/// The allowed origin <paramref name="origin"/> is, exactly as written here - what is said back as
+	/// Access-Control-Allow-Origin - or null for any other website (subdomains, http, other ports, case, lists).
+	/// </summary>
+	public static string? AllowedOrigin(string? origin) {
+		foreach (string allowed in Origins) {
+			if (string.Equals(origin, allowed, StringComparison.Ordinal)) {
+				return allowed;
+			}
+		}
+
+		return null;
+	}
 
 	/// <summary>
 	/// What the page is told the app can do, so a page newer than the app can say "update your app". Raised whenever the
@@ -64,7 +84,7 @@ public static class FarmWeb {
 	public static readonly TimeSpan GiveUpAfter = TimeSpan.FromMinutes(3);
 
 	/// <summary>The refusal the page shows instead of a button that fails.</summary>
-	public static Said InAppOnly => new Said("Do this in the app's own dashboard on your PC - farm.nocat.lol can't.");
+	public static Said InAppOnly => new Said("Do this in the app's own dashboard on your PC - farm.gamer.mom can't.");
 
 	/// <summary>Letters and digits nobody misreads (no 0/O, 1/I/L).</summary>
 	private const string CodeLetters = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -88,7 +108,7 @@ public static class FarmWeb {
 		/// <summary>With a token, and what was sent is looked at too (a command, a settings save, a switch).</summary>
 		Checked,
 
-		/// <summary>Never from farm.nocat.lol.</summary>
+		/// <summary>Never from farm.gamer.mom.</summary>
 		Refused
 	}
 
@@ -97,7 +117,7 @@ public static class FarmWeb {
 	/// mapped that isn't listed, or listed that isn't mapped.
 	/// </summary>
 	public static readonly IReadOnlyDictionary<string, Access> Routes = new Dictionary<string, Access>(StringComparer.Ordinal) {
-		// farm.nocat.lol itself
+		// farm.gamer.mom itself
 		["GET /api/farm/hello"] = Access.Open,
 		["POST /api/farm/pair"] = Access.Open,
 		["GET /api/farm/pair/{id}"] = Access.Open,
@@ -138,7 +158,7 @@ public static class FarmWeb {
 		["POST /api/bots/{name}/{action}"] = Access.Allowed,   // start, stop, pause, resume - nothing else is answered there
 		["POST /api/bots/{name}/inventory/refresh"] = Access.Allowed,
 		["POST /api/visitors/signout"] = Access.Allowed,
-		["POST /api/logs/open"] = Access.Allowed,   // opens nothing: farm.nocat.lol is never "at this PC"
+		["POST /api/logs/open"] = Access.Allowed,   // opens nothing: farm.gamer.mom is never "at this PC"
 		["POST /api/command/history"] = Access.Allowed,
 		["POST /api/notify/test"] = Access.Allowed,
 		["POST /api/theme"] = Access.Allowed,
@@ -442,7 +462,7 @@ public static class FarmWeb {
 		Settings.SecSafety, Settings.SecTrading, Settings.SecSocial, Settings.SecItems, Settings.SecFamily, Settings.SecSaleEvents, Settings.SecScamWatch,
 		Settings.SecHealth, Settings.SecSpare, Settings.SecPacks, Settings.SecPoints, Settings.SecBuy];
 
-	/// <summary>How a setting may be changed from farm.nocat.lol.</summary>
+	/// <summary>How a setting may be changed from farm.gamer.mom.</summary>
 	public static SettingWay WayOf(SettingDef def) =>
 		(def.Kind == SettingKind.Secret) || ClosedKeys.Contains(def.Name) || !KnownSections.Contains(def.Section) ? SettingWay.Closed
 		: OffOnlyKeys.Contains(def.Name) ? SettingWay.OffOnly

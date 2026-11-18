@@ -888,7 +888,7 @@ public static class SpareRun {
 			return (null, "Steam wouldn't say what's on its profile - try again in a while");
 		}
 
-		// 1.8.2: cards promised to a card swap nocat.lol paired stay for it - never sold or turned into gems meanwhile.
+		// 1.8.2: cards promised to a card swap gamer.mom paired stay for it - never sold or turned into gems meanwhile.
 		HashSet<ulong> busy = [.. CardExchange.NotForSale(bot, promised, DateTime.UtcNow), .. listings.Where(static l => l.AssetId != 0).Select(static l => l.AssetId)];
 		List<SpareItem> items = Spare.Read(inventory);
 		DateTime now = DateTime.UtcNow;

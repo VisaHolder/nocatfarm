@@ -244,7 +244,7 @@ public static class SettingsCopy {
 	/// what changes is written onto the settings it runs on (as a dashboard save does), its switches with a go-ahead off and
 	/// their go-aheads cleared, saved, and the changes put into effect. The source isn't changed. Error set: nothing changed.
 	/// </summary>
-	/// <param name="allowed">1.9.2: from farm.nocat.lol, whether each change may be made from there - one that may not, and nothing is copied.</param>
+	/// <param name="allowed">1.9.2: from farm.gamer.mom, whether each change may be made from there - one that may not, and nothing is copied.</param>
 	public static Done Copy(Bot from, Bot to, Func<SettingDef, object?, bool>? allowed = null) {
 		if (from == to) {
 			return new Done(Refused("Pick two different accounts."), false);

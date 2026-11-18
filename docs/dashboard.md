@@ -276,32 +276,32 @@ Phone page and say what's still missing.
 
 To turn the dashboard off completely, `set WebEnabled false` and restart. Everything keeps working from the console.
 
-## farm.nocat.lol
+## farm.gamer.mom
 
-**farm.nocat.lol** is this same dashboard, served from a website, so you can bookmark one address. It runs in a
+**farm.gamer.mom** is this same dashboard, served from a website, so you can bookmark one address. It runs in a
 browser on the PC where nocat.farm runs, and talks straight to nocat.farm at `http://127.0.0.1:7242` (or the port
-you use: `https://farm.nocat.lol/?port=8000` once, and the page remembers it). Nothing goes through nocat.lol.
+you use: `https://farm.gamer.mom/?port=8000` once, and the page remembers it). Nothing goes through gamer.mom.
 
-The switch is *Let farm.nocat.lol open this dashboard* (Settings → Dashboard & phone, with Show advanced). A **new
+The switch is *Let farm.gamer.mom open this dashboard* (Settings → Dashboard & phone, with Show advanced). A **new
 install** on a PC with a screen starts with it on. An install that was already there before 1.9.2 keeps it off, and so
 do Docker and a server with no screen, since the page only works from a browser on the same machine. While it's off,
 the website can't reach nocat.farm at all.
 
 While it's on, the tray's **Open dashboard**, the window's Dashboard button, *Open the browser on start*, and opening
-nocat.farm a second time all go to `https://farm.nocat.lol/?port=<your port>`, but only once an account is set up.
+nocat.farm a second time all go to `https://farm.gamer.mom/?port=<your port>`, but only once an account is set up.
 **Setting up always stays on this PC's own dashboard**: with no account yet, none signed in here yet, or one waiting on
 a Steam Guard code, a QR code or a password, they open `http://localhost:<port>` instead. Your Steam password, Steam
-Guard codes and QR sign-in never go near farm.nocat.lol. If the page was opened a few minutes ago and nothing has
+Guard codes and QR sign-in never go near farm.gamer.mom. If the page was opened a few minutes ago and nothing has
 paired since (no internet, or the browser blocked it), the next open goes to this PC's own dashboard again. On start,
-the log shows both addresses, and `dashboard` lists the farm.nocat.lol one too. nocat.farm itself never needs
-nocat.lol to work: `http://localhost:<port>` always opens the dashboard.
+the log shows both addresses, and `dashboard` lists the farm.gamer.mom one too. nocat.farm itself never needs
+gamer.mom to work: `http://localhost:<port>` always opens the dashboard.
 
 To connect a browser:
 
-1. Open farm.nocat.lol and press **Connect**. The page shows a 6-character code.
+1. Open farm.gamer.mom and press **Connect**. The page shows a 6-character code.
 2. nocat.farm's own dashboard on this PC shows a box with the same code, **Approve** and **Deny**. It's also in the
    log and, if Telegram or Discord is set up, they get a note saying to approve it in the app. There's never an
-   approve button in a message, and farm.nocat.lol can't approve itself.
+   approve button in a message, and farm.gamer.mom can't approve itself.
 3. Check the codes match, and press **Approve**. The page carries on as the dashboard.
 
 A request runs out after 5 minutes. At most 5 wait at once, and only a few can be asked for in a minute. A browser

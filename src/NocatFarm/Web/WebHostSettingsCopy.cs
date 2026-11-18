@@ -71,7 +71,7 @@ public sealed partial class WebHost {
 				return Results.Json(new { ok = false, error = Loc.T("No such account.") }, statusCode: 404);
 			}
 
-			// 1.9.2: from farm.nocat.lol, only a copy whose every change could be made from there - a copy carries values set here.
+			// 1.9.2: from farm.gamer.mom, only a copy whose every change could be made from there - a copy carries values set here.
 			SettingsCopy.Done done = SettingsCopy.Copy(source, to, IsFarm(ctx) ? new Func<NocatFarm.Config.SettingDef, object?, bool>(FarmWeb.ChangeAllowed) : null);
 
 			if (done.Plan.Error is { } error) {

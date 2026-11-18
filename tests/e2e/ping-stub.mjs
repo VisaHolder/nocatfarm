@@ -1,7 +1,7 @@
-// A stand-in for nocat.lol's user count, so a test copy never counts itself on the real site:
+// A stand-in for gamer.mom's user count, so a test copy never counts itself on the real site:
 //   node tests/e2e/ping-stub.mjs <port>
 // The copy under test is started with NOCATFARM_PING_URL=http://127.0.0.1:<port>/api/farm/ping (the app only takes an
-// address on this PC there). POST /api/farm/ping answers {"users":212,"accounts":1240} the way nocat.lol does - the
+// address on this PC there). POST /api/farm/ping answers {"users":212,"accounts":1240} the way gamer.mom does - the
 // accounts big enough to need a thousands separator; GET /seen lists what was sent, for dashboard.mjs to check. Listens
 // on 127.0.0.1 only.
 import http from 'node:http';

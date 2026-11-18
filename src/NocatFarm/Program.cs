@@ -347,7 +347,7 @@ if (OperatingSystem.IsWindows()) {
 // Told once, so anything that wants the dashboard asks Commands rather than carrying its own copy of the URL and
 // its own Process.Start. Outside the tray block: it used to be set only when there was a tray icon, so with the
 // tray off, 'add' never opened the dashboard however OpenDashboardAfterAdd was set.
-// 1.9.2: farm.nocat.lol once it's on and an account is set up, this PC's own address otherwise (WebHost.OpenUrl).
+// 1.9.2: farm.gamer.mom once it's on and an account is set up, this PC's own address otherwise (WebHost.OpenUrl).
 Commands.DashboardUrl = () => web?.OpenUrl ?? "";
 
 TrayIcon? tray = null;

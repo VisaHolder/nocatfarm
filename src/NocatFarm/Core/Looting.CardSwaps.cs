@@ -25,7 +25,7 @@ public static partial class Looting {
 
 	/// <summary>
 	/// 1.8.2 card swaps: one offer to another nocat.farm user's account - these cards of ours for those of theirs, with the
-	/// match's note on it so their copy can check it against what nocat.lol paired. Not confirmed here: the sending side
+	/// match's note on it so their copy can check it against what gamer.mom paired. Not confirmed here: the sending side
 	/// first reads the offer Steam made back and checks it's exactly the match (Modules/CardSwaps.cs), then confirms it.
 	/// </summary>
 	/// <param name="giving">This account's cards, paired with <paramref name="taking"/> by position (the same game each).</param>

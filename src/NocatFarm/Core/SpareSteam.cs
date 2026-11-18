@@ -173,7 +173,7 @@ public sealed class LiveSpareSteam(Bot bot, Func<bool>? mayAct = null, SpareSpre
 
 	/// <summary>
 	/// Steam's answer to turning an item into gems, as it is - and a yes counted in the history and the live stats on
-	/// nocat.lol (1.8.1). Only a yes: a no, or no clear answer, counts nothing (an unclear one the inventory then shows went
+	/// gamer.mom (1.8.1). Only a yes: a no, or no clear answer, counts nothing (an unclear one the inventory then shows went
 	/// through is counted by <see cref="GemsIfGoneAsync"/>).
 	/// </summary>
 	public static (bool Ok, int Gems, string? Why) Counted(string account, (bool Ok, int Gems, string? Why) result) {

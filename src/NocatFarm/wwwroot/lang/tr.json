@@ -2957,14 +2957,14 @@
     "no fresh price for some of its cards": "bazı kartlarının güncel fiyatı yok",
     "it would set back a set now": "şimdi bir seti geriletirdi",
     "it would lose more than your limit": "sınırından fazla kaybettirirdi",
-    "not a swap nocat.lol paired with this account": "nocat.lol'un bu hesapla eşleştirdiği bir takas değil",
+    "not a swap gamer.mom paired with this account": "gamer.mom'un bu hesapla eşleştirdiği bir takas değil",
     "it has something that isn't a normal trading card": "normal bir koleksiyon kartı olmayan bir şey içeriyor",
-    "it isn't the swap nocat.lol paired": "nocat.lol'un eşleştirdiği takas değil",
+    "it isn't the swap gamer.mom paired": "gamer.mom'un eşleştirdiği takas değil",
     "no fresh price yet for {0}": "{0} için henüz güncel fiyat yok",
     "it's worth less than this account gives": "bu hesabın verdiğinden daha az değerli",
     "card swaps: couldn't read its own trade link - not listed this time": "kart takası: kendi takas bağlantısı okunamadı - bu sefer listelenmedi",
     "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} için kart takası açık: fazla kartları sınırları içinde diğer nocat.farm kullanıcılarıyla takas eder",
-    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} için kart takası kapalı: hiçbir şey takas edilmez ve nocat.lol onu unutur",
+    "Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it": "{0} için kart takası kapalı: hiçbir şey takas edilmez ve gamer.mom onu unutur",
     "held by scam watch - no swaps until 'scamwatch ok'": "dolandırıcılık takibi tarafından durduruldu - 'scamwatch ok' gelene kadar takas yok",
     "waiting for its day": "gününü bekliyor",
     "{0} swaps today - the most for a day": "bugün {0} takas - bir günün en fazlası",
@@ -2986,15 +2986,15 @@
     "card swap · you give {0} · you get {1}": "kart takası · verdiğin {0} · aldığın {1}",
     "card swap · confirm the offer to {0} on your phone": "kart takası · {0} kişisine teklifi telefonunda onayla",
     "sent a swap to {0}": "{0} kişisine takas gönderildi",
-    "a card swap nocat.lol paired": "nocat.lol'un eşleştirdiği kart takası",
-    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol'un eşleştirdiği kart takası · kontrol edilir, sonra kabul ya da reddedilir",
+    "a card swap gamer.mom paired": "gamer.mom'un eşleştirdiği kart takası",
+    "a card swap gamer.mom paired · checked, then accepted or declined": "gamer.mom'un eşleştirdiği kart takası · kontrol edilir, sonra kabul ya da reddedilir",
     "offer {0} is from an account that once sent a bad swap · left for you": "{0} numaralı teklif bir zamanlar kötü takas göndermiş bir hesaptan · sana bırakıldı",
     "from an account that once sent a bad swap": "bir zamanlar kötü takas göndermiş bir hesaptan",
     "not now": "şimdi değil",
     "offer {0} isn't a good swap now ({1}) - declining": "{0} numaralı teklif şu an iyi bir takas değil ({1}) - reddediliyor",
     "card swap · you'd give {0} · you'd get {1}": "kart takası · vereceğin {0} · alacağın {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "{0} numaralı takas teklifi eşleştirilen değil ({1}) · sana bırakıldı",
-    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "{0} numaralı teklif nocat.lol'un eşleştirmediği bir kart takası olduğunu söylüyor · sana bırakıldı",
+    "offer {0} says it's a card swap gamer.mom didn't pair · left for you": "{0} numaralı teklif gamer.mom'un eşleştirmediği bir kart takası olduğunu söylüyor · sana bırakıldı",
     "Turn on card swaps?": "Kart takası açılsın mı?",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Şu an takas edebileceği bu, uyduğu sınırlar da bunlar. Aç'a basana kadar hiçbir şey takas edilmez.",
     "spare cards to swap": "takas edilecek fazla kart",
@@ -3008,11 +3008,11 @@
     "Also when Steam would hold the trade": "Steam takası bekletecek olsa da",
     "Its offers are confirmed by its authenticator here": "Teklifleri buradaki doğrulayıcısı onaylar",
     "Its offers wait for you to confirm them on your phone": "Teklifleri telefonunda onaylamanı bekler",
-    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Açıkken nocat.lol bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler",
+    "While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them": "Açıkken gamer.mom bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler",
     "Its wallet currency is not known yet - nothing is swapped until it is": "Cüzdan para birimi henüz bilinmiyor - bilinene kadar hiçbir şey takas edilmez",
     "1 card still needs a price first.": "1 kartın önce hâlâ bir fiyata ihtiyacı var.",
     "{0} cards still need a price first.": "{0} kartın önce hâlâ bir fiyata ihtiyacı var.",
-    "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} kişisine takas teklifi nocat.lol'un söylediği gibi değildi · geri alındı",
+    "card swap offer to {0} wasn't what gamer.mom said · taken back": "{0} kişisine takas teklifi gamer.mom'un söylediği gibi değildi · geri alındı",
     "it was paired more than 2 days ago": "2 günden daha önce eşleştirildi",
     "Steam's name for a card in it doesn't fit its game": "içindeki bir kartın Steam adı oyununa uymuyor",
     "a card in it is already on another offer or swap": "içindeki bir kart zaten başka bir teklifte ya da takasta",
@@ -3030,7 +3030,7 @@
     "Steam answered {0} and showed the sign-in page again": "Steam {0} yanıtı verdi ve oturum açma sayfasını yeniden gösterdi",
     "Steam answered {0} and showed its login page": "Steam {0} yanıtı verdi ve giriş sayfasını gösterdi",
     "Steam answered {0} and sent it nowhere": "Steam {0} yanıtı verdi ve hiçbir yere yönlendirmedi",
-    "Steam sent it to {0}, not nocat.lol": "Steam, nocat.lol yerine {0} adresine gönderdi",
+    "Steam sent it to {0}, not gamer.mom": "Steam, gamer.mom yerine {0} adresine gönderdi",
     "Steam's answer wasn't a sign-in": "Steam'in yanıtı bir oturum açma değildi",
     "Steam's answer was for another account": "Steam'in yanıtı başka bir hesap içindi",
     "Steam's answer was too long": "Steam'in yanıtı çok uzundu",
@@ -3130,7 +3130,7 @@
     "none - the defaults": "hiçbiri - varsayılanlar",
     "set finder · couldn't save what it shared · {0}": "set bulucu · paylaştığını kaydedemedi · {0}",
     "set finder · shared lists · {0} sent, {1} taken from other copies": "set bulucu · ortak listeler · {0} gönderildi, diğer kopyalardan {1} alındı",
-    "set finder · nocat.lol didn't answer · {0}": "set bulucu · nocat.lol yanıt vermedi · {0}",
+    "set finder · gamer.mom didn't answer · {0}": "set bulucu · gamer.mom yanıt vermedi · {0}",
     "gems kept loose · not sure yet what they're worth in levels": "mücevherler serbest kalıyor · seviye olarak değerleri henüz belli değil",
     "saving tradable gems for a sack to sell": "satılacak bir çuval için takas edilebilir mücevher biriktiriliyor",
     "gems: today's listings are done · more tomorrow": "mücevherler: bugünün listelemeleri bitti · yarın devam",
@@ -3220,7 +3220,7 @@
     "Games I pick": "Seçtiğim oyunlar",
     "Get messages on Telegram or Discord": "Telegram ya da Discord'da mesaj al",
     "I also use this account in my own Steam app": "Bu hesabı kendi Steam uygulamamda da kullanıyorum",
-    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Saatte bir nocat.lol'da anonim olarak sayılır - yalnızca rastgele bir numara ve hesap sayısı. Ayarlar, Güncellemeler ve eklentiler altındaki “Beni kullanıcı say” bunu kapatır.",
+    "It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Saatte bir gamer.mom'da anonim olarak sayılır - yalnızca rastgele bir numara ve hesap sayısı. Ayarlar, Güncellemeler ve eklentiler altındaki “Beni kullanıcı say” bunu kapatır.",
     "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "Önce koleksiyon kartlarını toplar. Bitince saat eklemek için oyunları açık tutmaya devam edebilir.",
     "It stays signed in and does nothing once the cards are done.": "Kartlar bitince girişli kalır ve hiçbir şey yapmaz.",
     "Language: {0}": "Dil: {0}",
@@ -3433,43 +3433,43 @@
     "offer {0} declined for add-on {1} · {2}": "{0} numaralı teklif {1} eklentisi için reddedildi · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "bir eklenti cevap verebilir, yoksa trade accept ya da decline {0} {1}",
     "plugin {0} added more than {1} trade judges - the rest are left out": "{0} eklentisi {1} takas yargıcından fazlasını ekledi - geri kalanı dışarıda bırakıldı",
-    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "Bunu bilgisayarındaki uygulamanın kendi panosunda yap - farm.nocat.lol bunu yapamaz.",
-    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol, nocat.farm'ı yalnızca aynı bilgisayarda, http://127.0.0.1 adresinde açar.",
+    "Do this in the app's own dashboard on your PC - farm.gamer.mom can't.": "Bunu bilgisayarındaki uygulamanın kendi panosunda yap - farm.gamer.mom bunu yapamaz.",
+    "farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.gamer.mom, nocat.farm'ı yalnızca aynı bilgisayarda, http://127.0.0.1 adresinde açar.",
     "This browser isn't paired with nocat.farm yet.": "Bu tarayıcı henüz nocat.farm ile eşleştirilmedi.",
     "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm'da bekleyen çok fazla istek var. Onları uygulamada yanıtla ya da 5 dakika bekle.",
     "Asked too often - wait a minute and try again.": "Çok sık istendi - bir dakika bekleyip tekrar dene.",
-    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "pano: farm.nocat.lol ({0}) bu panoyu açmak istiyor - kod {1}. Bu bilgisayardaki panoda izin ver ya da reddet.",
-    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol nocat.farm panonu açmak istiyor (kod {0}, {1}). Sensen, bilgisayarındaki uygulamanın kendi panosunda izin ver. Değilsen hiçbir şey yapma - 5 dakika içinde süresi dolar.",
-    "That request has run out - ask again on farm.nocat.lol.": "Bu isteğin süresi doldu - farm.nocat.lol'da tekrar iste.",
-    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "pano: farm.nocat.lol ({0}) içeri alındı - kod {1}",
-    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "pano: farm.nocat.lol ({0}) reddedildi - kod {1}",
-    "dashboard: a farm.nocat.lol pairing was taken back": "pano: bir farm.nocat.lol eşleşmesi geri alındı",
+    "dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "pano: farm.gamer.mom ({0}) bu panoyu açmak istiyor - kod {1}. Bu bilgisayardaki panoda izin ver ya da reddet.",
+    "farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.gamer.mom nocat.farm panonu açmak istiyor (kod {0}, {1}). Sensen, bilgisayarındaki uygulamanın kendi panosunda izin ver. Değilsen hiçbir şey yapma - 5 dakika içinde süresi dolar.",
+    "That request has run out - ask again on farm.gamer.mom.": "Bu isteğin süresi doldu - farm.gamer.mom'da tekrar iste.",
+    "dashboard: farm.gamer.mom ({0}) let in - code {1}": "pano: farm.gamer.mom ({0}) içeri alındı - kod {1}",
+    "dashboard: farm.gamer.mom ({0}) turned down - code {1}": "pano: farm.gamer.mom ({0}) reddedildi - kod {1}",
+    "dashboard: a farm.gamer.mom pairing was taken back": "pano: bir farm.gamer.mom eşleşmesi geri alındı",
     "In the app on your PC": "Bilgisayarındaki uygulamada",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0}, giriş QR kodunun taranmasını bekliyor - kod, bilgisayarındaki uygulamanın kendi panosunda görünür.",
-    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol bu panoyu açmak istiyor",
+    "farm.gamer.mom wants to open this dashboard": "farm.gamer.mom bu panoyu açmak istiyor",
     "Approve": "İzin ver",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard kodu yalnızca bilgisayarındaki uygulamanın kendi panosunda görünür.",
     "This browser is paired with nocat.farm on this PC.": "Bu tarayıcı bu bilgisayardaki nocat.farm ile eşleştirildi.",
     "Disconnect this browser": "Bu tarayıcının bağlantısını kes",
-    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "Kapalı: farm.nocat.lol bu panoyu açamaz. Bu bilgisayardaki bir tarayıcıda o adresten kullanmak için \"farm.nocat.lol bu panoyu açabilsin\" ayarını aç.",
+    "Off: farm.gamer.mom can't open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.": "Kapalı: farm.gamer.mom bu panoyu açamaz. Bu bilgisayardaki bir tarayıcıda o adresten kullanmak için \"farm.gamer.mom bu panoyu açabilsin\" ayarını aç.",
     "until {0}": "{0} tarihine kadar",
     "Revoke": "Geri al",
     "No browser is paired yet.": "Henüz eşleştirilmiş tarayıcı yok.",
-    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "Bu bilgisayardaki nocat.farm'ın kendi panosunu aç, sonra Ayarlar, Pano ve telefon, Gelişmişleri göster'i işaretle ve \"farm.nocat.lol bu panoyu açabilsin\" ayarını aç. Kaydet ve buraya dön.",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.": "Bu bilgisayardaki nocat.farm'ın kendi panosunu aç, sonra Ayarlar, Pano ve telefon, Gelişmişleri göster'i işaretle ve \"farm.gamer.mom bu panoyu açabilsin\" ayarını aç. Kaydet ve buraya dön.",
     "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari ve bazı tarayıcılar ya da eklentiler, bir web sitesinin kendi bilgisayarınla konuşmasını engeller. O zaman panoyu doğrudan nocat.farm'dan aç:",
     "Start nocat.farm on this PC, then reload this page.": "Bu bilgisayarda nocat.farm'ı başlat, sonra bu sayfayı yenile.",
     "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "Bu sayfa {0} sürümünden yeni bir nocat.farm istiyor. Onu bu bilgisayardaki kendi panosunda güncelle, sonra bu sayfayı yenile.",
-    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Bu sayfa doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. nocat.farm önce sana sorar: Bağlan'a bas, sonra aynı koda uygulamada izin ver.",
-    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "Bu bilgisayardaki nocat.farm'ın kendi panosunda, farm.nocat.lol'un onu açıp açamayacağını soran bir kutu çıkar. Aynı kodu gösterdiğini kontrol et, sonra İzin ver'e bas.",
+    "This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Bu sayfa doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey gamer.mom üzerinden geçmez. nocat.farm önce sana sorar: Bağlan'a bas, sonra aynı koda uygulamada izin ver.",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.": "Bu bilgisayardaki nocat.farm'ın kendi panosunda, farm.gamer.mom'un onu açıp açamayacağını soran bir kutu çıkar. Aynı kodu gösterdiğini kontrol et, sonra İzin ver'e bas.",
     "Waiting for you to approve it…": "İzin vermeni bekliyor…",
     "It was turned down in nocat.farm.": "nocat.farm'da reddedildi.",
     "That code ran out. Press Connect for a new one.": "Bu kodun süresi doldu. Yeni bir kod için Bağlan'a bas.",
-    "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol artık bu panoyu açabilir.",
+    "farm.gamer.mom can open this dashboard now.": "farm.gamer.mom artık bu panoyu açabilir.",
     "Turned down.": "Reddedildi.",
     "Taken back - that browser has to pair again.": "Geri alındı - o tarayıcının yeniden eşleşmesi gerekiyor.",
     "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "tarayıcıdaki pano: {0} - bir hesap kurulduktan sonra orada açılır; {1} bu bilgisayarda her zaman çalışır",
-    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol panonu açmak istiyor",
-    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Az önce farm.nocat.lol'u mu açtın? Orada bir kod görünür. Yalnızca bu kodla aynıysa izin ver:",
+    "farm.gamer.mom wants to open your dashboard": "farm.gamer.mom panonu açmak istiyor",
+    "Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:": "Az önce farm.gamer.mom'u mu açtın? Orada bir kod görünür. Yalnızca bu kodla aynıysa izin ver:",
     "how?": "nasıl?",
     "app port": "uygulama portu",
     "open it here": "burada aç",
@@ -3491,11 +3491,11 @@
     "connect": "bağlan",
     "approve this code in nocat.farm on this PC.": "bu koda bu bilgisayardaki nocat.farm'da izin ver.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Bu web sitesi hacklense bile eşyalarını ya da hesabını alamaz: onlar bilgisayarındaki uygulamada kalır.",
-    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Açık: burada izin verdiğinde https://farm.nocat.lol bu bilgisayardaki bir tarayıcıda bu panoyu açabilir. Asla takas edemez, eşya gönderemez, onaylayamaz, Steam Guard kodlarını göremez ya da hesapların giriş şeklini değiştiremez.",
+    "On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Açık: burada izin verdiğinde https://farm.gamer.mom bu bilgisayardaki bir tarayıcıda bu panoyu açabilir. Asla takas edemez, eşya gönderemez, onaylayamaz, Steam Guard kodlarını göremez ya da hesapların giriş şeklini değiştiremez.",
     "Type the current dashboard password to change it.": "Değiştirmek için mevcut pano parolasını yaz.",
     "your browser blocked this page": "tarayıcın bu sayfayı engelledi",
     "let it reach your PC and try again, or open nocat.farm here.": "bilgisayarına erişmesine izin ver ve tekrar dene ya da nocat.farm'ı burada aç.",
-    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "Adres çubuğunda farm.nocat.lol'un yanındaki site simgesine tıkla, Yerel ağ erişimi'ni İzin ver yap ve bu sayfayı yenile.",
+    "Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "Adres çubuğunda farm.gamer.mom'un yanındaki site simgesine tıkla, Yerel ağ erişimi'ni İzin ver yap ve bu sayfayı yenile.",
     "let this page reach your PC": "bu sayfanın bilgisayarına erişmesine izin ver",
     "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "tarayıcın önce soracak - İzin ver'e bas. Bu, sayfanın yalnızca bu bilgisayardaki nocat.farm ile konuşmasını sağlar.",
     "find my nocat.farm": "nocat.farm'ımı bul"
@@ -3955,7 +3955,7 @@
     },
     "AddonTrades": {
       "label": "Eklentilerin takas tekliflerine cevap vermesine izin ver",
-      "tip": "Bu hesabın aksi halde sana bırakacağı (ya da \"Diğer her şeyi reddet\" ile reddedeceği) takas tekliflerini, kurduğun eklentilerin kabul etmesine ya da reddetmesine izin verir. Kendi hesaplarından gelen teklifler, bağışlar ve nocat.lol'un eşleştirdiği kart takasları asla dahil değildir. Bir eklenti \"asla dokunma\" listelerindeki hiçbir şeyi, başka bir teklife söz verilmiş hiçbir şeyi ya da takas edilemeyen hiçbir şeyi veremez, Steam takası bekletecekse takas da yapamaz; teklifleri de diğerleri gibi bekler. Yalnızca güvendiğin eklentiler için. Varsayılan olarak kapalı."
+      "tip": "Bu hesabın aksi halde sana bırakacağı (ya da \"Diğer her şeyi reddet\" ile reddedeceği) takas tekliflerini, kurduğun eklentilerin kabul etmesine ya da reddetmesine izin verir. Kendi hesaplarından gelen teklifler, bağışlar ve gamer.mom'un eşleştirdiği kart takasları asla dahil değildir. Bir eklenti \"asla dokunma\" listelerindeki hiçbir şeyi, başka bir teklife söz verilmiş hiçbir şeyi ya da takas edilemeyen hiçbir şeyi veremez, Steam takası bekletecekse takas da yapamaz; teklifleri de diğerleri gibi bekler. Yalnızca güvendiğin eklentiler için. Varsayılan olarak kapalı."
     },
     "AddonTradesConfirm": {
       "label": "Eklentilerin yabancılardan kabul ettiklerini onayla",
@@ -4618,11 +4618,11 @@
     },
     "CountMeAsUser": {
       "label": "Beni kullanıcı say",
-      "tip": "Kullanıcıları sayabilsin diye nocat.lol'a saatte bir bu kopyanın çalıştığını söyler. Bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının giriş yaptığını (yalnızca sayı, örneğin 3) gönderir; paylaşıyorsan saat ve kart toplamlarını ve geri kalanını da (mücevherler, rozetler, paketler, satılan eşyalar) (sonraki ayar) - başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle çıkar. Kapalı: hiçbir şey göndermez. \"En ucuz setleri diğer nocat.farm kullanıcılarıyla paylaş\" açıksa, bulduğu kart setlerinin pazar fiyatlarını da ayrı bir mesajla gönderir (o ayara bak)."
+      "tip": "Kullanıcıları sayabilsin diye gamer.mom'a saatte bir bu kopyanın çalıştığını söyler. Bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü, platform ve Steam hesaplarından kaçının giriş yaptığını (yalnızca sayı, örneğin 3) gönderir; paylaşıyorsan saat ve kart toplamlarını ve geri kalanını da (mücevherler, rozetler, paketler, satılan eşyalar) (sonraki ayar) - başka hiçbir şey: hesap adı, Steam ID ya da ayar yok. Steam hesapları sayısı böyle çıkar. Kapalı: hiçbir şey göndermez. \"En ucuz setleri diğer nocat.farm kullanıcılarıyla paylaş\" açıksa, bulduğu kart setlerinin pazar fiyatlarını da ayrı bir mesajla gönderir (o ayara bak)."
     },
     "ShareFarmTotals": {
       "label": "Farm toplamlarımı paylaş",
-      "tip": "Saatlik \"Beni kullanıcı say\" mesajına birkaç sayı ekler: bir öncekinden beri hesaplarının biriktirdiği oyun saati, aldıkları kartlar, mücevhere çevirdikleri eşyalar, ürettikleri rozetler (parlak olanlar da), açtıkları kart paketleri ve pazarda sattıkları eşyalar - örneğin 41.5 saat, 12 kart, mücevhere çevrilen 30 eşya, 2 rozet, 4 paket ve satılan 9 eşya. İlk açıldığında, bu kopyanın geçmişinde önceden olan saatleri ve kartları bir kez de gönderir. nocat.lol herkesinkini toplar ve toplamları nocat.farm sayfasında gösterir. Hangi hesap, oyun, kart ya da eşya olduğu hakkında hiçbir şey yok. Açık: sayılar saatlik mesajla gider. Kapalı: hiçbiri gitmez. Yalnızca \"Beni kullanıcı say\" açıkken."
+      "tip": "Saatlik \"Beni kullanıcı say\" mesajına birkaç sayı ekler: bir öncekinden beri hesaplarının biriktirdiği oyun saati, aldıkları kartlar, mücevhere çevirdikleri eşyalar, ürettikleri rozetler (parlak olanlar da), açtıkları kart paketleri ve pazarda sattıkları eşyalar - örneğin 41.5 saat, 12 kart, mücevhere çevrilen 30 eşya, 2 rozet, 4 paket ve satılan 9 eşya. İlk açıldığında, bu kopyanın geçmişinde önceden olan saatleri ve kartları bir kez de gönderir. gamer.mom herkesinkini toplar ve toplamları nocat.farm sayfasında gösterir. Hangi hesap, oyun, kart ya da eşya olduğu hakkında hiçbir şey yok. Açık: sayılar saatlik mesajla gider. Kapalı: hiçbiri gitmez. Yalnızca \"Beni kullanıcı say\" açıkken."
     },
     "ReactionSpeed": {
       "label": "Tepki hızı",
@@ -5009,7 +5009,7 @@
     },
     "CardSwaps": {
       "label": "Fazla kartları diğer nocat.farm kullanıcılarıyla takasla",
-      "tip": "Fazla normal koleksiyon kartlarını aynı oyunda diğer nocat.farm kullanıcılarıyla bire bir takas eder, böylece iki taraf da setlerini daha çabuk tamamlar. nocat.lol hesapları eşleştirir; bu hesap her takası önce yeniden kontrol eder. Setlerinin ihtiyaç duyduğu bir kartı ya da bir kartın son kopyasını, parlak kartları, arka planları, ifadeleri ve \"asla dokunma\" listelerindeki hiçbir şeyi asla vermez. Açıkken nocat.lol bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler. Açarken önce ne yapacağını gösterir ve onay ister."
+      "tip": "Fazla normal koleksiyon kartlarını aynı oyunda diğer nocat.farm kullanıcılarıyla bire bir takas eder, böylece iki taraf da setlerini daha çabuk tamamlar. gamer.mom hesapları eşleştirir; bu hesap her takası önce yeniden kontrol eder. Setlerinin ihtiyaç duyduğu bir kartı ya da bir kartın son kopyasını, parlak kartları, arka planları, ifadeleri ve \"asla dokunma\" listelerindeki hiçbir şeyi asla vermez. Açıkken gamer.mom bu hesabın SteamID'sini ve takas bağlantısını tutar - kapatmak bunları siler. Açarken önce ne yapacağını gösterir ve onay ister."
     },
     "CardSwapMaxLoss": {
       "label": "Bir takasın kaybedebileceği en fazla",
@@ -5025,7 +5025,7 @@
     },
     "ShareCheapestSets": {
       "label": "En ucuz setleri diğer nocat.farm kullanıcılarıyla paylaş",
-      "tip": "Bir hesap en ucuz tam setleri satın aldığı sürece, bu kopyanın pazarda bulduğu en ucuz tam kart setlerini yaklaşık 6 saatte bir nocat.lol'a gönderir ve diğer tüm kopyaların bulduklarını geri alır - böylece ucuz setleri çok daha erken bulur. Gidenler: her setin oyunu, kartlarının adları, her kartın en düşük fiyatı, kaç tanesinin satışta olduğu ve bunun ne zaman görüldüğü - örneğin tanesi 0,03 olan 5 kartlık bir set, bir saat önce görülmüş. Sen ya da hesapların hakkında hiçbir şey yok. Geri gelenler yalnızca önce hangi oyunlara bakılacağını söyler: bir şey satın alınmadan önce her kart Steam pazarında yeniden fiyatlanır. Açık: iki yönlü paylaşılır. Kapalı: hiçbir şey gönderilmez ya da alınmaz. Yalnızca \"Beni kullanıcı say\" açıkken."
+      "tip": "Bir hesap en ucuz tam setleri satın aldığı sürece, bu kopyanın pazarda bulduğu en ucuz tam kart setlerini yaklaşık 6 saatte bir gamer.mom'a gönderir ve diğer tüm kopyaların bulduklarını geri alır - böylece ucuz setleri çok daha erken bulur. Gidenler: her setin oyunu, kartlarının adları, her kartın en düşük fiyatı, kaç tanesinin satışta olduğu ve bunun ne zaman görüldüğü - örneğin tanesi 0,03 olan 5 kartlık bir set, bir saat önce görülmüş. Sen ya da hesapların hakkında hiçbir şey yok. Geri gelenler yalnızca önce hangi oyunlara bakılacağını söyler: bir şey satın alınmadan önce her kart Steam pazarında yeniden fiyatlanır. Açık: iki yönlü paylaşılır. Kapalı: hiçbir şey gönderilmez ya da alınmaz. Yalnızca \"Beni kullanıcı say\" açıkken."
     },
     "GemsForLevels": {
       "label": "Mücevherleri en çok seviye için kullan",
@@ -5094,8 +5094,8 @@
       "tip": "Bir rozetin eksik kartlarını almadan önce, oyunun kart paketlerinin daha ucuza gelip gelmeyeceğini hesaplar. Bir paket, setin tamamından rastgele 3 karttır - tekrarlar ve zaten sahip olduğun kartlar sayılmaz - bu yüzden paketler genelde bazı eksik kartları bırakır, onlar sonra alınır. Yalnızca paketler ve bırakmaları beklenen kartlar, eksik kartlardan en az onda bir daha ucuzsa paket alır. Örneğin 5 kartlık bir sette tanesi 0.20 olan 4 kart eksikse (0.80): 0.10'luk 3 paketin yaklaşık yarım kart bırakması beklenir, toplam yaklaşık 0.41 - paketler. 8 kartlık bir sette tanesi 0.08 olan 4 kart eksik, paketler 0.25: kartlar. Alınan paketler kendiliğinden açılır; sonraki bakış hâlâ eksik olanı alır. Bakış başına bir set. 'buy preview' sayıları gösterir. Varsayılan olarak kapalı."
     },
     "FarmWebAllowed": {
-      "label": "farm.nocat.lol bu panoyu açabilsin",
-      "tip": "farm.nocat.lol web sitesinin bu panoyu bu bilgisayardaki bir tarayıcıda göstermesine izin verir; böylece yer imlerine tek bir adres eklersin. Doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey nocat.lol üzerinden geçmez. Her tarayıcı önce sorar: sayfada ve burada 6 karakterlik bir kod görünür ve sen bu panoda izin verirsin. Oradan neredeyse her şeyi yapabilir, ama asla eşyaları başka yere gönderemez ya da hesapların nasıl giriş yaptığına dokunamaz: takaslar, onaylar, eşya gönderme, Steam Guard kodları, girişler ve gizli bilgiler, para sınırları, güncellemeler ve eklentiler burada kalır. Açıkken, bir hesap kurulduktan sonra tepsi simgesi ve \"Başlangıçta tarayıcıyı aç\" onu orada açar; hesap eklemek ve giriş yapmak her zaman burada olur. Ekranı olan bir bilgisayardaki yeni kurulumda açık, mevcut kurulumda, Docker'da ve sunucuda kapalı. Kapalı: farm.nocat.lol nocat.farm'a hiç ulaşamaz."
+      "label": "farm.gamer.mom bu panoyu açabilsin",
+      "tip": "farm.gamer.mom web sitesinin bu panoyu bu bilgisayardaki bir tarayıcıda göstermesine izin verir; böylece yer imlerine tek bir adres eklersin. Doğrudan bu bilgisayardaki nocat.farm ile konuşur - hiçbir şey gamer.mom üzerinden geçmez. Her tarayıcı önce sorar: sayfada ve burada 6 karakterlik bir kod görünür ve sen bu panoda izin verirsin. Oradan neredeyse her şeyi yapabilir, ama asla eşyaları başka yere gönderemez ya da hesapların nasıl giriş yaptığına dokunamaz: takaslar, onaylar, eşya gönderme, Steam Guard kodları, girişler ve gizli bilgiler, para sınırları, güncellemeler ve eklentiler burada kalır. Açıkken, bir hesap kurulduktan sonra tepsi simgesi ve \"Başlangıçta tarayıcıyı aç\" onu orada açar; hesap eklemek ve giriş yapmak her zaman burada olur. Ekranı olan bir bilgisayardaki yeni kurulumda açık, mevcut kurulumda, Docker'da ve sunucuda kapalı. Kapalı: farm.gamer.mom nocat.farm'a hiç ulaşamaz."
     }
   }
 }

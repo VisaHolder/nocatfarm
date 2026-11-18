@@ -419,7 +419,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		bool swapWanted = Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner);
-		// 1.8.2: a card swap nocat.lol paired is judged on what was paired (Trading.Swaps.cs) - and declined when it no longer
+		// 1.8.2: a card swap gamer.mom paired is judged on what was paired (Trading.Swaps.cs) - and declined when it no longer
 		// fits, whatever "Decline everything else" says; one that isn't what was paired is left for you.
 		bool exchange = !fromMaster && !donation && IsExchangeOffer(offer);
 		bool? swap = exchange ? await ExchangeVerdictAsync(offer, ct).ConfigureAwait(false)
@@ -428,7 +428,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		bool accept = fromMaster || donation || fair;
 
 		// 1.9.1: what the app leaves undecided, add-ons may answer (Trading.Addons.cs) - only where you let them, and never your
-		// own accounts, a donation, a card swap nocat.lol paired or a fair swap (nor one whose test couldn't finish yet). A
+		// own accounts, a donation, a card swap gamer.mom paired or a fair swap (nor one whose test couldn't finish yet). A
 		// failure, a disagreement or an accept the app refuses leaves it alone: never declined on an answer nobody gave.
 		PluginHost.Judged? addon = null;
 
@@ -458,7 +458,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait() + (Bot.Cfg.LegitMode && _wasHeld ? AfterWaking() : TimeSpan.Zero))
 			&& (_waiting.DueOf(offer.Id) is { } due)) {
 			Said what = addonAccept ? new Said("an add-on accepts it") : addonDecline ? new Said("an add-on declines it")
-				: !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap nocat.lol paired")
+				: !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : exchange ? new Said("a card swap gamer.mom paired")
 				: fair ? new Said("a fair card swap") : new Said("a donation");
 			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
@@ -512,7 +512,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 				_waiting.Remove(offer.Id);
 
-				// A card swap nocat.lol paired said why already, and is declined at the next look.
+				// A card swap gamer.mom paired said why already, and is declined at the next look.
 				if ((still == false) && !exchange) {
 					Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
 				}
@@ -557,7 +557,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			if (accept) {
 				// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
 				// your own) are confirmed without asking.
-				// A card swap nocat.lol paired: you turned swaps on for this account, after its preview - that is the go-ahead.
+				// A card swap gamer.mom paired: you turned swaps on for this account, after its preview - that is the go-ahead.
 				// 1.9.1: an add-on's accept is never from your own accounts - confirmed only when you switched "Confirm add-on accepts
 				// from strangers" on.
 				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner) || exchange
@@ -827,7 +827,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		if (IsExchangeOffer(offer)) {
-			return new Said("a card swap nocat.lol paired · checked, then accepted or declined");
+			return new Said("a card swap gamer.mom paired · checked, then accepted or declined");
 		}
 
 		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {

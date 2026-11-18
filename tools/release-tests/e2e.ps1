@@ -7,8 +7,8 @@
 # window, if it opens one, is drawn where nobody can see it), with no tray icon (--no-tray, and Tray off in its config),
 # and the browser is headless. Not --no-gui: on Windows that opens a console window instead of the app's own.
 #
-# Its hourly "Count me as a user" ping never reaches nocat.lol: NOCATFARM_PING_URL points it at tests\e2e\ping-stub.mjs on
-# this PC (port+1), which answers like nocat.lol does, so the dashboard's user count is tested too.
+# Its hourly "Count me as a user" ping never reaches gamer.mom: NOCATFARM_PING_URL points it at tests\e2e\ping-stub.mjs on
+# this PC (port+1), which answers like gamer.mom does, so the dashboard's user count is tested too.
 param([int]$Port = 7377, [string]$TestRoot = '', [string]$AppDir = '')
 $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -83,7 +83,7 @@ cmd /c "npx playwright install chromium 2>&1" | Out-Null
 Pop-Location
 
 $password = 'e2e-' + [guid]::NewGuid().ToString('N')
-# The stand-in for nocat.lol first, then the copy - started with the address of it, so its pings go there and nowhere else.
+# The stand-in for gamer.mom first, then the copy - started with the address of it, so its pings go there and nowhere else.
 $stub = [OffScreen]::Start((Get-Command node).Source, "`"$E2E\ping-stub.mjs`" $StubPort", $E2E)
 $env:NOCATFARM_PING_URL = "http://127.0.0.1:$StubPort/api/farm/ping"
 try { $id = [OffScreen]::Start("$W\nocatFarm.exe", '--minimized --no-tray', $W) } finally { Remove-Item Env:NOCATFARM_PING_URL -ErrorAction SilentlyContinue }

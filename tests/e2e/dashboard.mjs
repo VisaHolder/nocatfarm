@@ -4,7 +4,7 @@
 // --set-password  the copy has no password yet: set this one first, from this PC, the way the Phone page does
 // --fixture       the folder make-fixture.mjs wrote (for the pretend ArchiSteamFarm folder the import dialog is shown)
 // --ping-stub     ping-stub.mjs, which the copy was started to send its "Count me as a user" ping to (NOCATFARM_PING_URL):
-//                 the user count is checked against it. Without it the setting is left alone - it would tell nocat.lol.
+//                 the user count is checked against it. Without it the setting is left alone - it would tell gamer.mom.
 //
 // It signs in (a wrong password first), then on every page lists everything that can be clicked, typed in or picked,
 // and uses each in a safe way: switches and boxes are put back afterwards, anything that deletes, signs in to Steam,
@@ -118,7 +118,7 @@ const SKIP_SETTING = {
   NotifyHealth: 'pop-ups on this PC',
   UpdateMode: 'could install a newer version mid-test',
   DiscordPresence: "shows on the Discord running on this PC",
-  ...(PING_STUB ? {} : { CountMeAsUser: 'tells nocat.lol this copy is running (no --ping-stub to send it to instead)' }),
+  ...(PING_STUB ? {} : { CountMeAsUser: 'tells gamer.mom this copy is running (no --ping-stub to send it to instead)' }),
   TelegramBotToken: 'connects to Telegram',
   DiscordBotToken: 'connects to Discord',
   DiscordWebhookUrl: 'posts to Discord',
@@ -1255,7 +1255,7 @@ for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bo
   await healthy('weights picker: healthy after searching');
 }
 
-// The user count: the copy pinged the stand-in for nocat.lol (never the real one), the Overview says how many Steam
+// The user count: the copy pinged the stand-in for gamer.mom (never the real one), the Overview says how many Steam
 // accounts are on nocat.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
 if (PING_STUB) {
   let status = {};
@@ -1309,7 +1309,7 @@ if (PING_STUB) {
   check('user count: switched back on, the count is back', (await api('/api/status')).Accounts === 1240);
   await healthy('user count: healthy after switching it off and on');
 } else {
-  skip('user count', 'no --ping-stub: the copy would tell nocat.lol it is running');
+  skip('user count', 'no --ping-stub: the copy would tell gamer.mom it is running');
 }
 
 // The Discord card's second line: Steam accounts on nocat.farm first (the default), no account names any more.

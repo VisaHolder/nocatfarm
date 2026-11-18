@@ -1729,7 +1729,7 @@ a.loglink:hover { color: #79b8ff; }
 .field.chips .langpick { margin: 0; }
 .field .proxysignin { margin-top: 6px; font-size: 12.5px; }
 @media (max-width: 900px) { .jump .j.sub { display: none; } }
-/* 1.9.2: farm.nocat.lol - the pairing screen, the code to match, the approve banner here, and what the hosted page leaves out. */
+/* 1.9.2: farm.gamer.mom - the pairing screen, the code to match, the approve banner here, and what the hosted page leaves out. */
 .alert.farmnote { font-size: 12.5px; }
 .alert.farmask { border-width: 2px; font-size: 14px; }
 .alert.farmask .farmask-code { font-size: 22px; letter-spacing: 4px; margin: 0 6px; }
@@ -1738,7 +1738,7 @@ a.loglink:hover { color: #79b8ff; }
 /* 1.9.2: the pairing banner, above every screen of this dashboard (the welcome, the walkthrough, a pop-up). */
 .farmask-bar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1000; width: min(720px, calc(100% - 24px)); display: grid; gap: 8px; }
 .farmask-bar .alert { margin: 0; box-shadow: 0 10px 40px rgba(0,0,0,.55); background: var(--panel); flex-wrap: wrap; }
-/* 1.9.2: farm.nocat.lol's screens before it's connected - drawn like the page there: wordmark, a status dot, one line,
+/* 1.9.2: farm.gamer.mom's screens before it's connected - drawn like the page there: wordmark, a status dot, one line,
    one big light button, small ones under it, the how-to folded away. Dark whatever the theme, like that page. */
 #farmGate { position: fixed; inset: 0; z-index: 900; overflow-y: auto; display: grid; place-items: center; padding: 24px 16px;
   background: radial-gradient(90% 55% at 50% -10%, rgba(139,92,246,.09), transparent 70%), #0a0a0a; color: #d4d4d4; font: 14px/1.6 var(--mono); color-scheme: dark; }

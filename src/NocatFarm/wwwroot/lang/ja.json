@@ -2957,14 +2957,14 @@
     "no fresh price for some of its cards": "一部のカードに最新の価格がありません",
     "it would set back a set now": "今だとセットが後退します",
     "it would lose more than your limit": "上限より多く損します",
-    "not a swap nocat.lol paired with this account": "nocat.lol がこのアカウントと組んだ交換ではありません",
+    "not a swap gamer.mom paired with this account": "gamer.mom がこのアカウントと組んだ交換ではありません",
     "it has something that isn't a normal trading card": "通常のトレーディングカードではないものが含まれています",
-    "it isn't the swap nocat.lol paired": "nocat.lol が組んだ交換ではありません",
+    "it isn't the swap gamer.mom paired": "gamer.mom が組んだ交換ではありません",
     "no fresh price yet for {0}": "{0} の最新の価格がまだありません",
     "it's worth less than this account gives": "このアカウントが渡す分より価値が低いです",
     "card swaps: couldn't read its own trade link - not listed this time": "カード交換: 自分のトレードリンクを読めませんでした - 今回は載せません",
     "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} のカード交換はオン: 上限の範囲で、余ったカードを他の nocat.farm ユーザーと交換します",
-    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} のカード交換はオフ: 何も交換せず、nocat.lol からも消えます",
+    "Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it": "{0} のカード交換はオフ: 何も交換せず、gamer.mom からも消えます",
     "held by scam watch - no swaps until 'scamwatch ok'": "詐欺監視で保留中 - 'scamwatch ok' まで交換しません",
     "waiting for its day": "その日の活動時間を待っています",
     "{0} swaps today - the most for a day": "今日は {0} 回交換 - 1 日の上限です",
@@ -2986,15 +2986,15 @@
     "card swap · you give {0} · you get {1}": "カード交換 · 渡す {0} · 受け取る {1}",
     "card swap · confirm the offer to {0} on your phone": "カード交換 · {0} へのオファーをスマホで確認して",
     "sent a swap to {0}": "{0} に交換を送信しました",
-    "a card swap nocat.lol paired": "nocat.lol が組んだカード交換",
-    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol が組んだカード交換 · 確認してから承認か拒否",
+    "a card swap gamer.mom paired": "gamer.mom が組んだカード交換",
+    "a card swap gamer.mom paired · checked, then accepted or declined": "gamer.mom が組んだカード交換 · 確認してから承認か拒否",
     "offer {0} is from an account that once sent a bad swap · left for you": "オファー {0} は以前に不正な交換を送ったアカウントから · あなたの判断に残します",
     "from an account that once sent a bad swap": "以前に不正な交換を送ったアカウントから",
     "not now": "今はしません",
     "offer {0} isn't a good swap now ({1}) - declining": "オファー {0} は今は良い交換ではありません ({1}) - 拒否します",
     "card swap · you'd give {0} · you'd get {1}": "カード交換 · 渡す予定 {0} · 受け取る予定 {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "交換オファー {0} は組まれた内容と違います ({1}) · あなたの判断に残します",
-    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "オファー {0} は nocat.lol が組んでいないカード交換を名乗っています · あなたの判断に残します",
+    "offer {0} says it's a card swap gamer.mom didn't pair · left for you": "オファー {0} は gamer.mom が組んでいないカード交換を名乗っています · あなたの判断に残します",
     "Turn on card swaps?": "カード交換をオンにしますか?",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "今交換できるものと、守る上限です。オンにするを押すまで何も交換しません。",
     "spare cards to swap": "交換できる余りカード",
@@ -3008,11 +3008,11 @@
     "Also when Steam would hold the trade": "Steam が取引を保留する場合も交換します",
     "Its offers are confirmed by its authenticator here": "オファーはここにある認証システムで確認されます",
     "Its offers wait for you to confirm them on your phone": "オファーはスマホでの確認を待ちます",
-    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "オンの間、nocat.lol はこのアカウントの SteamID とトレードリンクを保持します - オフにすると削除されます",
+    "While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them": "オンの間、gamer.mom はこのアカウントの SteamID とトレードリンクを保持します - オフにすると削除されます",
     "Its wallet currency is not known yet - nothing is swapped until it is": "ウォレットの通貨がまだ分かりません - 分かるまで何も交換しません",
     "1 card still needs a price first.": "1 枚のカードはまだ先に価格が必要です。",
     "{0} cards still need a price first.": "{0} 枚のカードはまだ先に価格が必要です。",
-    "card swap offer to {0} wasn't what nocat.lol said · taken back": "{0} への交換オファーは nocat.lol の内容と違いました · 取り消しました",
+    "card swap offer to {0} wasn't what gamer.mom said · taken back": "{0} への交換オファーは gamer.mom の内容と違いました · 取り消しました",
     "it was paired more than 2 days ago": "ペアになってから2日以上たっています",
     "Steam's name for a card in it doesn't fit its game": "中のカードの Steam での名前がそのゲームと合いません",
     "a card in it is already on another offer or swap": "中のカードはすでに別のオファーか交換に入っています",
@@ -3030,7 +3030,7 @@
     "Steam answered {0} and showed the sign-in page again": "Steamは{0}を返し、サインインページを再表示しました",
     "Steam answered {0} and showed its login page": "Steamは{0}を返し、ログインページを表示しました",
     "Steam answered {0} and sent it nowhere": "Steamは{0}を返し、どこにも転送しませんでした",
-    "Steam sent it to {0}, not nocat.lol": "Steamは nocat.lol ではなく {0} に転送しました",
+    "Steam sent it to {0}, not gamer.mom": "Steamは gamer.mom ではなく {0} に転送しました",
     "Steam's answer wasn't a sign-in": "Steamの応答はサインインではありませんでした",
     "Steam's answer was for another account": "Steamの応答は別のアカウントのものでした",
     "Steam's answer was too long": "Steamの応答が長すぎました",
@@ -3130,7 +3130,7 @@
     "none - the defaults": "なし - 既定値",
     "set finder · couldn't save what it shared · {0}": "セット探し · 共有した内容を保存できませんでした · {0}",
     "set finder · shared lists · {0} sent, {1} taken from other copies": "セット探し · 共有リスト · {0} 件送信、他のコピーから {1} 件取り込み",
-    "set finder · nocat.lol didn't answer · {0}": "セット探し · nocat.lol が応答しませんでした · {0}",
+    "set finder · gamer.mom didn't answer · {0}": "セット探し · gamer.mom が応答しませんでした · {0}",
     "gems kept loose · not sure yet what they're worth in levels": "ジェムはそのまま · レベルに換算した価値がまだわかりません",
     "saving tradable gems for a sack to sell": "売るジェムの袋のために取引可能なジェムを貯めています",
     "gems: today's listings are done · more tomorrow": "ジェム: 今日の出品は終わりました · 続きは明日",
@@ -3220,7 +3220,7 @@
     "Games I pick": "選んだゲーム",
     "Get messages on Telegram or Discord": "Telegram か Discord でメッセージを受け取る",
     "I also use this account in my own Steam app": "このアカウントを自分の Steam アプリでも使う",
-    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "1 時間に 1 回、匿名で nocat.lol に数えられます。送るのはランダムな番号とアカウント数だけです。設定の「アップデートとプラグイン」にある「ユーザーとして数える」でオフにできます。",
+    "It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "1 時間に 1 回、匿名で gamer.mom に数えられます。送るのはランダムな番号とアカウント数だけです。設定の「アップデートとプラグイン」にある「ユーザーとして数える」でオフにできます。",
     "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "まずトレーディングカードを集めます。終わったら、ゲームを動かし続けて時間を増やせます。",
     "It stays signed in and does nothing once the cards are done.": "カードが終わったら、サインインしたまま何もしません。",
     "Language: {0}": "言語: {0}",
@@ -3433,43 +3433,43 @@
     "offer {0} declined for add-on {1} · {2}": "アドオン {1} によりオファー {0} を拒否しました · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "アドオンが答えることがあります。それ以外は trade accept か decline {0} {1}",
     "plugin {0} added more than {1} trade judges - the rest are left out": "プラグイン {0} が {1} 個を超えるトレード判定を追加しました - 残りは使われません",
-    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "これは PC 上のアプリ自身のダッシュボードで行ってください - farm.nocat.lol からはできません。",
-    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol が nocat.farm を開けるのは、同じ PC 上の http://127.0.0.1 だけです。",
+    "Do this in the app's own dashboard on your PC - farm.gamer.mom can't.": "これは PC 上のアプリ自身のダッシュボードで行ってください - farm.gamer.mom からはできません。",
+    "farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.gamer.mom が nocat.farm を開けるのは、同じ PC 上の http://127.0.0.1 だけです。",
     "This browser isn't paired with nocat.farm yet.": "このブラウザーはまだ nocat.farm とペアリングされていません。",
     "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm で待っているリクエストが多すぎます。アプリで答えるか、5 分待ってください。",
     "Asked too often - wait a minute and try again.": "リクエストが多すぎます - 1 分待ってからもう一度どうぞ。",
-    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "ダッシュボード: farm.nocat.lol ({0}) がこのダッシュボードを開こうとしています - コード {1}。この PC のダッシュボードで許可か拒否をしてください。",
-    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol が nocat.farm のダッシュボードを開こうとしています (コード {0}、{1})。あなたなら、PC 上のアプリ自身のダッシュボードで許可してください。違うなら何もしないでください - 5 分で期限切れになります。",
-    "That request has run out - ask again on farm.nocat.lol.": "そのリクエストは期限切れです - farm.nocat.lol でもう一度リクエストしてください。",
-    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "ダッシュボード: farm.nocat.lol ({0}) を許可 - コード {1}",
-    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "ダッシュボード: farm.nocat.lol ({0}) を拒否 - コード {1}",
-    "dashboard: a farm.nocat.lol pairing was taken back": "ダッシュボード: farm.nocat.lol のペアリングを取り消しました",
+    "dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "ダッシュボード: farm.gamer.mom ({0}) がこのダッシュボードを開こうとしています - コード {1}。この PC のダッシュボードで許可か拒否をしてください。",
+    "farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.gamer.mom が nocat.farm のダッシュボードを開こうとしています (コード {0}、{1})。あなたなら、PC 上のアプリ自身のダッシュボードで許可してください。違うなら何もしないでください - 5 分で期限切れになります。",
+    "That request has run out - ask again on farm.gamer.mom.": "そのリクエストは期限切れです - farm.gamer.mom でもう一度リクエストしてください。",
+    "dashboard: farm.gamer.mom ({0}) let in - code {1}": "ダッシュボード: farm.gamer.mom ({0}) を許可 - コード {1}",
+    "dashboard: farm.gamer.mom ({0}) turned down - code {1}": "ダッシュボード: farm.gamer.mom ({0}) を拒否 - コード {1}",
+    "dashboard: a farm.gamer.mom pairing was taken back": "ダッシュボード: farm.gamer.mom のペアリングを取り消しました",
     "In the app on your PC": "PC 上のアプリで",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} はサインイン用 QR コードのスキャン待ちです - PC 上のアプリ自身のダッシュボードに表示されます。",
-    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol がこのダッシュボードを開こうとしています",
+    "farm.gamer.mom wants to open this dashboard": "farm.gamer.mom がこのダッシュボードを開こうとしています",
     "Approve": "許可",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guardコードは PC 上のアプリ自身のダッシュボードにだけ表示されます。",
     "This browser is paired with nocat.farm on this PC.": "このブラウザーはこの PC の nocat.farm とペアリング済みです。",
     "Disconnect this browser": "このブラウザーの接続を解除",
-    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "オフ: farm.nocat.lol はこのダッシュボードを開けません。この PC のブラウザーでそのアドレスから使うには、「farm.nocat.lol からこのダッシュボードを開けるようにする」をオンにしてください。",
+    "Off: farm.gamer.mom can't open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.": "オフ: farm.gamer.mom はこのダッシュボードを開けません。この PC のブラウザーでそのアドレスから使うには、「farm.gamer.mom からこのダッシュボードを開けるようにする」をオンにしてください。",
     "until {0}": "{0} まで",
     "Revoke": "取り消す",
     "No browser is paired yet.": "ペアリングされたブラウザーはまだありません。",
-    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "この PC の nocat.farm で自身のダッシュボードを開き、設定、ダッシュボードとスマホ で「詳細を表示」にチェックを入れて、「farm.nocat.lol からこのダッシュボードを開けるようにする」をオンにしてください。保存したら、ここに戻ってください。",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.": "この PC の nocat.farm で自身のダッシュボードを開き、設定、ダッシュボードとスマホ で「詳細を表示」にチェックを入れて、「farm.gamer.mom からこのダッシュボードを開けるようにする」をオンにしてください。保存したら、ここに戻ってください。",
     "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari や一部のブラウザー、拡張機能は、Web サイトが自分の PC と通信するのを止めます。その場合は nocat.farm から直接ダッシュボードを開いてください:",
     "Start nocat.farm on this PC, then reload this page.": "この PC で nocat.farm を起動してから、このページを再読み込みしてください。",
     "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "このページには {0} より新しい nocat.farm が必要です。この PC の自身のダッシュボードで更新してから、このページを再読み込みしてください。",
-    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "このページはこの PC の nocat.farm と直接通信します - nocat.lol を経由するものはありません。nocat.farm はまずあなたに確認します: 「接続」を押して、アプリで同じコードを許可してください。",
-    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "この PC の nocat.farm 自身のダッシュボードに、farm.nocat.lol が開いてよいかを尋ねる表示が出ます。同じコードであることを確かめてから「許可」を押してください。",
+    "This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.": "このページはこの PC の nocat.farm と直接通信します - gamer.mom を経由するものはありません。nocat.farm はまずあなたに確認します: 「接続」を押して、アプリで同じコードを許可してください。",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.": "この PC の nocat.farm 自身のダッシュボードに、farm.gamer.mom が開いてよいかを尋ねる表示が出ます。同じコードであることを確かめてから「許可」を押してください。",
     "Waiting for you to approve it…": "許可を待っています…",
     "It was turned down in nocat.farm.": "nocat.farm で拒否されました。",
     "That code ran out. Press Connect for a new one.": "そのコードは期限切れです。「接続」を押すと新しいコードが出ます。",
-    "farm.nocat.lol can open this dashboard now.": "farm.nocat.lol がこのダッシュボードを開けるようになりました。",
+    "farm.gamer.mom can open this dashboard now.": "farm.gamer.mom がこのダッシュボードを開けるようになりました。",
     "Turned down.": "拒否しました。",
     "Taken back - that browser has to pair again.": "取り消しました - そのブラウザーはもう一度ペアリングが必要です。",
     "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "ブラウザーのダッシュボード: {0} - アカウントの設定が済むとそこで開きます。この PC では {1} がいつでも使えます",
-    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol があなたのダッシュボードを開こうとしています",
-    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "今 farm.nocat.lol を開きましたか？ そこにコードが表示されます。これと同じコードの場合だけ許可してください:",
+    "farm.gamer.mom wants to open your dashboard": "farm.gamer.mom があなたのダッシュボードを開こうとしています",
+    "Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:": "今 farm.gamer.mom を開きましたか？ そこにコードが表示されます。これと同じコードの場合だけ許可してください:",
     "how?": "方法は？",
     "app port": "アプリのポート",
     "open it here": "ここで開く",
@@ -3491,11 +3491,11 @@
     "connect": "接続",
     "approve this code in nocat.farm on this PC.": "この PC の nocat.farm でこのコードを許可してください。",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "このサイトがハッキングされても、アイテムやアカウントを奪うことはできません: それらは PC 上のアプリにあります。",
-    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "オン: ここで許可すると、https://farm.nocat.lol がこの PC のブラウザーでこのダッシュボードを開けます。トレード、アイテムの送信、確認、Steam Guardコードの閲覧、アカウントのサインイン方法の変更は決してできません。",
+    "On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "オン: ここで許可すると、https://farm.gamer.mom がこの PC のブラウザーでこのダッシュボードを開けます。トレード、アイテムの送信、確認、Steam Guardコードの閲覧、アカウントのサインイン方法の変更は決してできません。",
     "Type the current dashboard password to change it.": "変更するには、現在のダッシュボードのパスワードを入力してください。",
     "your browser blocked this page": "ブラウザーがこのページをブロックしました",
     "let it reach your PC and try again, or open nocat.farm here.": "PC へのアクセスを許可してもう一度試すか、ここで nocat.farm を開いてください。",
-    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "アドレスバーの farm.nocat.lol の横にあるアイコンをクリックし、「ローカル ネットワークへのアクセス」を「許可」にして、このページを再読み込みしてください。",
+    "Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "アドレスバーの farm.gamer.mom の横にあるアイコンをクリックし、「ローカル ネットワークへのアクセス」を「許可」にして、このページを再読み込みしてください。",
     "let this page reach your PC": "このページに PC へのアクセスを許可",
     "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "ブラウザーが先に確認します - 「許可」を押してください。このページがこの PC の nocat.farm とだけ通信できるようになります。",
     "find my nocat.farm": "nocat.farm を探す"
@@ -3955,7 +3955,7 @@
     },
     "AddonTrades": {
       "label": "アドオンにトレードオファーへの返答を任せる",
-      "tip": "このアカウントが本来あなたに任せる（または「それ以外はすべて断る」で断る）トレードオファーを、インストールしたアドオンが承認・拒否できるようにします。自分のアカウントからのオファー、寄付、nocat.lol が組んだカード交換は対象外です。アドオンは「触れない」リストにあるもの、別のオファーで渡す予定のもの、トレードできないものを渡せず、Steam が保留にする取引もできません。オファーは他と同じように待ってから処理されます。信頼できるアドオンだけに使ってください。既定はオフです。"
+      "tip": "このアカウントが本来あなたに任せる（または「それ以外はすべて断る」で断る）トレードオファーを、インストールしたアドオンが承認・拒否できるようにします。自分のアカウントからのオファー、寄付、gamer.mom が組んだカード交換は対象外です。アドオンは「触れない」リストにあるもの、別のオファーで渡す予定のもの、トレードできないものを渡せず、Steam が保留にする取引もできません。オファーは他と同じように待ってから処理されます。信頼できるアドオンだけに使ってください。既定はオフです。"
     },
     "AddonTradesConfirm": {
       "label": "アドオンが他人から承認した取引を確認する",
@@ -4618,11 +4618,11 @@
     },
     "CountMeAsUser": {
       "label": "ユーザーとして数える",
-      "tip": "このコピーが動いていることを 1 時間に 1 回 nocat.lol に知らせ、ページでユーザー数を数えられるようにします。送るのは、このインストール用に作ったランダムな番号、アプリのバージョン、プラットフォーム、サインインしている Steam アカウントの数（数だけ、例: 3）、そして共有する場合は時間とカードの合計とその他（ジェム、バッジ、パック、売れたアイテム）（次の設定）です - それ以外は送りません: アカウント名、Steam ID、設定は送りません。Steam アカウント数はこれで数えています。オフ: 何も送りません。 「最も安いセットをほかの nocat.farm ユーザーと共有する」がオンなら、見つけたカードセットのマーケット価格も別のメッセージで送ります（その設定を参照）。"
+      "tip": "このコピーが動いていることを 1 時間に 1 回 gamer.mom に知らせ、ページでユーザー数を数えられるようにします。送るのは、このインストール用に作ったランダムな番号、アプリのバージョン、プラットフォーム、サインインしている Steam アカウントの数（数だけ、例: 3）、そして共有する場合は時間とカードの合計とその他（ジェム、バッジ、パック、売れたアイテム）（次の設定）です - それ以外は送りません: アカウント名、Steam ID、設定は送りません。Steam アカウント数はこれで数えています。オフ: 何も送りません。 「最も安いセットをほかの nocat.farm ユーザーと共有する」がオンなら、見つけたカードセットのマーケット価格も別のメッセージで送ります（その設定を参照）。"
     },
     "ShareFarmTotals": {
       "label": "ファームの合計を共有する",
-      "tip": "1 時間ごとの「ユーザーとして数える」のメッセージにいくつかの数を加えます: 前回からアカウントが稼いだゲームのプレイ時間、手に入れたカード、ジェムにしたアイテム、作ったバッジ（キラも含む）、開封したブースターパック、マーケットで売れたアイテムの数です - 例: 41.5 時間、カード 12 枚、ジェムにしたアイテム 30 個、バッジ 2 個、パック 4 個、売れたアイテム 9 個。初めてオンにしたときは、このコピーの履歴にあるそれ以前の時間とカードも一度だけ送ります。nocat.lol は全員の分を足して、nocat.farm のページに合計を表示します。どのアカウント、ゲーム、カード、アイテムかは送りません。オン: 数を毎時のメッセージと一緒に送ります。オフ: どれも送りません。「ユーザーとして数える」がオンのときだけ働きます。"
+      "tip": "1 時間ごとの「ユーザーとして数える」のメッセージにいくつかの数を加えます: 前回からアカウントが稼いだゲームのプレイ時間、手に入れたカード、ジェムにしたアイテム、作ったバッジ（キラも含む）、開封したブースターパック、マーケットで売れたアイテムの数です - 例: 41.5 時間、カード 12 枚、ジェムにしたアイテム 30 個、バッジ 2 個、パック 4 個、売れたアイテム 9 個。初めてオンにしたときは、このコピーの履歴にあるそれ以前の時間とカードも一度だけ送ります。gamer.mom は全員の分を足して、nocat.farm のページに合計を表示します。どのアカウント、ゲーム、カード、アイテムかは送りません。オン: 数を毎時のメッセージと一緒に送ります。オフ: どれも送りません。「ユーザーとして数える」がオンのときだけ働きます。"
     },
     "ReactionSpeed": {
       "label": "反応の速さ",
@@ -5009,7 +5009,7 @@
     },
     "CardSwaps": {
       "label": "余ったカードをほかの nocat.farm ユーザーと交換",
-      "tip": "余った通常のトレーディングカードを、同じゲーム内で 1 枚ずつ他の nocat.farm ユーザーと交換し、お互いのセットを早く揃えます。nocat.lol がアカウントを組み合わせ、このアカウントがどの交換も先にもう一度確認します。セットに必要なカードやその最後の 1 枚、フォイル、背景、絵文字、「触らない」リストにあるものは決して渡しません。オンの間、nocat.lol はこのアカウントの SteamID とトレードリンクを保持し、オフにすると削除されます。オンにするとまず何をするかを見せて、確認を求めます。"
+      "tip": "余った通常のトレーディングカードを、同じゲーム内で 1 枚ずつ他の nocat.farm ユーザーと交換し、お互いのセットを早く揃えます。gamer.mom がアカウントを組み合わせ、このアカウントがどの交換も先にもう一度確認します。セットに必要なカードやその最後の 1 枚、フォイル、背景、絵文字、「触らない」リストにあるものは決して渡しません。オンの間、gamer.mom はこのアカウントの SteamID とトレードリンクを保持し、オフにすると削除されます。オンにするとまず何をするかを見せて、確認を求めます。"
     },
     "CardSwapMaxLoss": {
       "label": "交換で損してよい上限",
@@ -5025,7 +5025,7 @@
     },
     "ShareCheapestSets": {
       "label": "最も安いセットをほかの nocat.farm ユーザーと共有する",
-      "tip": "アカウントが最も安いフルセットを買っている間、このコピーがマーケットで見つけた最も安いフルセットを約 6 時間ごとに nocat.lol に送り、ほかのすべてのコピーが見つけたものを受け取ります - 安いセットがずっと早く見つかります。送るもの: 各セットのゲーム、カードの名前、各カードの最安値、出品数、それを見た時刻 - 例: 1 枚 0.03 のカード 5 枚のセット、1 時間前に確認。あなたやアカウントについては何も送りません。受け取るものは、どのゲームを先に調べるかを決めるだけです: 何かを買う前に、すべてのカードを Steam マーケットで改めて値付けします。オン: 双方向で共有。オフ: 何も送らず、何も受け取りません。「ユーザーとして数える」がオンの間だけ。"
+      "tip": "アカウントが最も安いフルセットを買っている間、このコピーがマーケットで見つけた最も安いフルセットを約 6 時間ごとに gamer.mom に送り、ほかのすべてのコピーが見つけたものを受け取ります - 安いセットがずっと早く見つかります。送るもの: 各セットのゲーム、カードの名前、各カードの最安値、出品数、それを見た時刻 - 例: 1 枚 0.03 のカード 5 枚のセット、1 時間前に確認。あなたやアカウントについては何も送りません。受け取るものは、どのゲームを先に調べるかを決めるだけです: 何かを買う前に、すべてのカードを Steam マーケットで改めて値付けします。オン: 双方向で共有。オフ: 何も送らず、何も受け取りません。「ユーザーとして数える」がオンの間だけ。"
     },
     "GemsForLevels": {
       "label": "ジェムを最も多くのレベルに使う",
@@ -5094,8 +5094,8 @@
       "tip": "バッジに足りないカードを買う前に、そのゲームのブースターパックの方が安くなるかを計算します。パックはセット全体からランダムな 3 枚で、重複や持っているカードは数に入りません。そのため、パックだけでは足りないカードが残ることが多く、残りは後で買います。パックと、パックが残す見込みのカードの合計が、足りないカードより 1 割以上安いときだけパックを買います。例: 5 枚セットで 4 枚足りず各 0.20（0.80）なら、0.10 のパック 3 個で残るのは約半枚、合計約 0.41 - パックを買います。8 枚セットで 4 枚足りず各 0.08、パック 0.25 なら: カードを買います。買ったパックは自動で開封し、次の確認でまだ足りないものを買います。1 回の確認で 1 セットまで。'buy preview' で数字を確認できます。初期設定はオフ。"
     },
     "FarmWebAllowed": {
-      "label": "farm.nocat.lol からこのダッシュボードを開けるようにする",
-      "tip": "farm.nocat.lol の Web サイトが、この PC のブラウザーでこのダッシュボードを表示できるようにします。ブックマークするアドレスが 1 つで済みます。この PC の nocat.farm と直接通信し、nocat.lol を経由するものはありません。ブラウザーごとに最初に確認します: 6 文字のコードがページとここに表示され、このダッシュボードで許可します。そこからはほぼすべてができますが、アイテムを送り出すことや、アカウントのサインイン方法に触れることは決してできません。トレード、確認、アイテムの送信、Steam Guardコード、ログイン情報とシークレット、金額の上限、更新、アドオンはここだけです。オンの間は、アカウントの設定が済むと、トレイアイコンと「起動時にブラウザを開く」がそこで開きます。アカウントの追加とサインインは常にここで行います。画面のある PC への新規インストールではオン、既存のもの、Docker、サーバーではオフです。オフ: farm.nocat.lol は nocat.farm にまったく届きません。"
+      "label": "farm.gamer.mom からこのダッシュボードを開けるようにする",
+      "tip": "farm.gamer.mom の Web サイトが、この PC のブラウザーでこのダッシュボードを表示できるようにします。ブックマークするアドレスが 1 つで済みます。この PC の nocat.farm と直接通信し、gamer.mom を経由するものはありません。ブラウザーごとに最初に確認します: 6 文字のコードがページとここに表示され、このダッシュボードで許可します。そこからはほぼすべてができますが、アイテムを送り出すことや、アカウントのサインイン方法に触れることは決してできません。トレード、確認、アイテムの送信、Steam Guardコード、ログイン情報とシークレット、金額の上限、更新、アドオンはここだけです。オンの間は、アカウントの設定が済むと、トレイアイコンと「起動時にブラウザを開く」がそこで開きます。アカウントの追加とサインインは常にここで行います。画面のある PC への新規インストールではオン、既存のもの、Docker、サーバーではオフです。オフ: farm.gamer.mom は nocat.farm にまったく届きません。"
     }
   }
 }

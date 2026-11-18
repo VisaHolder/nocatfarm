@@ -512,14 +512,14 @@ for now: robots.txt keeps programs off it. Their prices are never kept or truste
 
 **Shared with other nocat.farm users.** With *Share cheapest sets with other nocat.farm users* on (*Global settings →
 Updates & plugins*, on by default, only while *Count me as a user* is on), about every 6 hours the finder sends
-nocat.lol the cheapest whole sets it knows (up to 300: each set's game, its cards' names, each card's cheapest price in
+gamer.mom the cheapest whole sets it knows (up to 300: each set's game, its cards' names, each card's cheapest price in
 US cents, how many are for sale and how long ago that was seen - nothing about you or your accounts) and takes back the
 cheapest 1,000 sets every copy has seen. Like the public lists, those only say which games to read first: every card is
 still priced on the market by this copy before a set counts, and again in the wallet's currency before anything is
-bought. nocat.lol keeps each card's cheapest price seen in the last two days, and one copy alone can't make a set look
+bought. gamer.mom keeps each card's cheapest price seen in the last two days, and one copy alone can't make a set look
 cheaper than it is: a price only another copy backs up wins, an odd one out among several is ignored, and a card only
 one copy claims for a game is left out. It sends only when it learned something new (or a day has passed), and if
-nocat.lol doesn't answer it tries again 6 hours later. Off, nothing is sent or fetched.
+gamer.mom doesn't answer it tries again 6 hours later. Off, nothing is sent or fetched.
 
 `sets myaccount` shows the 20 cheapest whole sets right now for badges that account can still level - each set's price
 in the wallet's currency (at the rate learned from the market; US dollars until that's learned), its cards, and the XP
@@ -529,7 +529,7 @@ game, in US dollars. It only reads: nothing is bought. The buying preview (*Buy 
 cheapest under what it would buy.
 
 **Card swaps.** With [card swaps](trades.md#card-swaps-with-other-nocatfarm-users) on as well, a missing card that a
-swap nocat.lol has already paired will bring is waited for instead of bought - when the spare card it gives for it is
+swap gamer.mom has already paired will bring is waited for instead of bought - when the spare card it gives for it is
 worth less than the card costs to buy, or when the swap's offer is already out (buying it then would be a second
 copy). The whole set waits with it: never half a set. If no swap brings the card, swaps are off, or it isn't sure,
 the card is bought. A paired swap that doesn't happen lets go after 2 days, and the next look buys.

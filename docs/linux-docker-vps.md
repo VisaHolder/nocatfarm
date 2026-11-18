@@ -114,7 +114,7 @@ Discord app, so it stays off.
 
 1. Download `nocat.farm-v<version>_osx-arm64.zip` for an M1 or newer Mac, or `nocat.farm-v<version>_osx-x64.zip` for
    an Intel Mac, from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest), or *mac* / *mac intel* on
-   [nocat.lol/farm](https://nocat.lol/farm).
+   [gamer.mom](https://gamer.mom).
 2. Unzip it (Safari does that by itself) and double-click `start.command`. It opens in Terminal, and the dashboard
    opens in your browser. Keep that Terminal window open (minimise it if you like). Closing it signs the accounts out and stops nocat.farm.
 3. If the Mac says it can't be opened, go to **System Settings → Privacy & Security**, scroll down and press

@@ -93,7 +93,7 @@ $Exe = Join-Path $App 'nocatFarm.exe'
 $Data = Join-Path $Root 'data'
 $Url = "http://127.0.0.1:$Port"
 
-# Nothing from a test copy reaches nocat.lol or GitHub: every address it could call points at a closed port here.
+# Nothing from a test copy reaches gamer.mom or GitHub: every address it could call points at a closed port here.
 $env:NOCATFARM_WEB_PORT = "$Port"
 $env:NOCATFARM_WEB_HOST = '127.0.0.1'
 $env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/ping'

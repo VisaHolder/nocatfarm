@@ -10,7 +10,7 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// The shared cheapest-sets list (1.8.2): every copy whose set finder is looking sends nocat.lol the whole sets it knows,
+/// The shared cheapest-sets list (1.8.2): every copy whose set finder is looking sends gamer.mom the whole sets it knows,
 /// and takes back the cheapest ones every copy has seen - so each copy knows far more cheap sets than its own slow walk.
 /// </summary>
 /// <remarks>
@@ -25,15 +25,15 @@ namespace NocatFarm.Core;
 /// when it knows something new (or a day has passed). No answer is one debug line and the next try is hours away.
 /// </remarks>
 public static class SetShare {
-	public const string Endpoint = "https://nocat.lol/api/farm/sets";
+	public const string Endpoint = "https://gamer.mom/api/farm/sets";
 
 	/// <summary>Between two goes (a send and a fetch).</summary>
 	public static readonly TimeSpan Every = TimeSpan.FromHours(2);
 
-	/// <summary>The same sets are sent again after this, so nocat.lol's copy of them doesn't age out.</summary>
+	/// <summary>The same sets are sent again after this, so gamer.mom's copy of them doesn't age out.</summary>
 	public static readonly TimeSpan SendAgainAfter = TimeSpan.FromHours(24);
 
-	/// <summary>Sets sent at most - the cheapest it read itself. nocat.lol takes 1000.</summary>
+	/// <summary>Sets sent at most - the cheapest it read itself. gamer.mom takes 1000.</summary>
 	public const int MaxSets = 1000;
 
 	/// <summary>Sets taken from the shared list at most.</summary>
@@ -87,7 +87,7 @@ public static class SetShare {
 	}
 
 	/// <summary>
-	/// The sets that go out: the cheapest <see cref="MaxSets"/> whole ones it knows, each as nocat.lol takes it - 5 to 15
+	/// The sets that go out: the cheapest <see cref="MaxSets"/> whole ones it knows, each as gamer.mom takes it - 5 to 15
 	/// cards of that game, each priced 1 cent to 1,000.00, listed, and seen in the last 48 hours. Anything else is left out.
 	/// [app, [[name, US cents, listings, seconds since seen]...]].
 	/// </summary>
@@ -148,7 +148,7 @@ public static class SetShare {
 
 	// ── what comes back ──────────────────────────────────────────────────────
 	/// <summary>
-	/// The shared list as nocat.lol hands it out ({v: 1, s: [[app, [[name, US cents, listings, seconds since seen, ...]...]]...]}),
+	/// The shared list as gamer.mom hands it out ({v: 1, s: [[app, [[name, US cents, listings, seconds since seen, ...]...]]...]}),
 	/// as plain records for <see cref="SetFinder.Merge"/> - which checks each one again. A set with anything unreadable in it
 	/// is left out; the list is read up to <see cref="MaxTaken"/> sets. Empty when it isn't that answer at all.
 	/// </summary>
@@ -292,13 +292,13 @@ public static class SetShare {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			// closing
 		} catch (Exception e) {
-			Log.Debug(new Said("set finder · nocat.lol didn't answer · {0}", Log.Describe(e)));
+			Log.Debug(new Said("set finder · gamer.mom didn't answer · {0}", Log.Describe(e)));
 		}
 
 		return new Go(sent, got, taken);
 	}
 
-	/// <summary>nocat.lol's answer to a send: {"up": true} when it took the sets.</summary>
+	/// <summary>gamer.mom's answer to a send: {"up": true} when it took the sets.</summary>
 	public static bool Up(string text) {
 		try {
 			using JsonDocument doc = JsonDocument.Parse(text);
@@ -318,7 +318,7 @@ public static class SetShare {
 				SetFinder finder = SetFinder.Shared;
 				await TickAsync(finder, Http.Value, Live.Global, finder.Looking(mgr.All, DateTime.UtcNow), DateTime.UtcNow, CancellationToken.None).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Debug(new Said("set finder · nocat.lol didn't answer · {0}", Log.Describe(e)));
+				Log.Debug(new Said("set finder · gamer.mom didn't answer · {0}", Log.Describe(e)));
 			}
 
 			await Task.Delay(TimeSpan.FromMinutes(10)).ConfigureAwait(false);

@@ -2957,14 +2957,14 @@
     "no fresh price for some of its cards": "部分卡牌没有最新价格",
     "it would set back a set now": "现在会让某套卡退步",
     "it would lose more than your limit": "损失会超过你的上限",
-    "not a swap nocat.lol paired with this account": "不是 nocat.lol 为此账户配对的交换",
+    "not a swap gamer.mom paired with this account": "不是 gamer.mom 为此账户配对的交换",
     "it has something that isn't a normal trading card": "其中有不是普通集换式卡牌的东西",
-    "it isn't the swap nocat.lol paired": "不是 nocat.lol 配对的那次交换",
+    "it isn't the swap gamer.mom paired": "不是 gamer.mom 配对的那次交换",
     "no fresh price yet for {0}": "{0} 还没有最新价格",
     "it's worth less than this account gives": "价值低于此账户付出的",
     "card swaps: couldn't read its own trade link - not listed this time": "卡牌交换：读不到自己的交易链接 - 这次不上榜",
     "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "{0} 的卡牌交换已开启：在限制范围内与其他 nocat.farm 用户交换多余的卡牌",
-    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "{0} 的卡牌交换已关闭：不再交换任何东西，nocat.lol 也会忘掉它",
+    "Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it": "{0} 的卡牌交换已关闭：不再交换任何东西，gamer.mom 也会忘掉它",
     "held by scam watch - no swaps until 'scamwatch ok'": "被防诈骗暂停 - 输入 'scamwatch ok' 前不交换",
     "waiting for its day": "等它的一天开始",
     "{0} swaps today - the most for a day": "今天已交换 {0} 次 - 一天的上限",
@@ -2986,15 +2986,15 @@
     "card swap · you give {0} · you get {1}": "卡牌交换 · 你付出 {0} · 你得到 {1}",
     "card swap · confirm the offer to {0} on your phone": "卡牌交换 · 请在手机上确认给 {0} 的报价",
     "sent a swap to {0}": "已向 {0} 发送交换",
-    "a card swap nocat.lol paired": "nocat.lol 配对的卡牌交换",
-    "a card swap nocat.lol paired · checked, then accepted or declined": "nocat.lol 配对的卡牌交换 · 先检查，再接受或拒绝",
+    "a card swap gamer.mom paired": "gamer.mom 配对的卡牌交换",
+    "a card swap gamer.mom paired · checked, then accepted or declined": "gamer.mom 配对的卡牌交换 · 先检查，再接受或拒绝",
     "offer {0} is from an account that once sent a bad swap · left for you": "报价 {0} 来自曾发送过不良交换的账户 · 留给你处理",
     "from an account that once sent a bad swap": "来自曾发送过不良交换的账户",
     "not now": "现在不行",
     "offer {0} isn't a good swap now ({1}) - declining": "报价 {0} 现在不是好交换（{1}）- 正在拒绝",
     "card swap · you'd give {0} · you'd get {1}": "卡牌交换 · 你会付出 {0} · 你会得到 {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "交换报价 {0} 与配对的不一致（{1}）· 留给你处理",
-    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "报价 {0} 自称是 nocat.lol 没配对过的卡牌交换 · 留给你处理",
+    "offer {0} says it's a card swap gamer.mom didn't pair · left for you": "报价 {0} 自称是 gamer.mom 没配对过的卡牌交换 · 留给你处理",
     "Turn on card swaps?": "开启卡牌交换？",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "这是它现在能交换的，以及它遵守的限制。在你按下开启之前不会交换任何东西。",
     "spare cards to swap": "可交换的多余卡牌",
@@ -3008,11 +3008,11 @@
     "Also when Steam would hold the trade": "即使 Steam 会暂挂交易也交换",
     "Its offers are confirmed by its authenticator here": "它的报价由这里的验证器确认",
     "Its offers wait for you to confirm them on your phone": "它的报价要等你在手机上确认",
-    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除",
+    "While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them": "开启期间，gamer.mom 会保存此账户的 SteamID 和交易链接 - 关闭后即删除",
     "Its wallet currency is not known yet - nothing is swapped until it is": "还不知道它的钱包货币 - 知道之前不交换任何东西",
     "1 card still needs a price first.": "还有 1 张卡需要先定价。",
     "{0} cards still need a price first.": "还有 {0} 张卡需要先定价。",
-    "card swap offer to {0} wasn't what nocat.lol said · taken back": "给 {0} 的交换报价与 nocat.lol 说的不符 · 已撤回",
+    "card swap offer to {0} wasn't what gamer.mom said · taken back": "给 {0} 的交换报价与 gamer.mom 说的不符 · 已撤回",
     "it was paired more than 2 days ago": "配对已超过 2 天",
     "Steam's name for a card in it doesn't fit its game": "其中一张卡的 Steam 名称与它的游戏不符",
     "a card in it is already on another offer or swap": "其中一张卡已在别的报价或交换里",
@@ -3030,7 +3030,7 @@
     "Steam answered {0} and showed the sign-in page again": "Steam 返回 {0}，并再次显示了登录页面",
     "Steam answered {0} and showed its login page": "Steam 返回 {0}，并显示了其账户登录页",
     "Steam answered {0} and sent it nowhere": "Steam 返回 {0}，没有跳转到任何地方",
-    "Steam sent it to {0}, not nocat.lol": "Steam 跳转到了 {0}，而不是 nocat.lol",
+    "Steam sent it to {0}, not gamer.mom": "Steam 跳转到了 {0}，而不是 gamer.mom",
     "Steam's answer wasn't a sign-in": "Steam 的回应不是登录",
     "Steam's answer was for another account": "Steam 的回应属于另一个账户",
     "Steam's answer was too long": "Steam 的回应太长",
@@ -3130,7 +3130,7 @@
     "none - the defaults": "无 - 使用默认值",
     "set finder · couldn't save what it shared · {0}": "卡组查找 · 无法保存已分享的内容 · {0}",
     "set finder · shared lists · {0} sent, {1} taken from other copies": "卡组查找 · 共享列表 · 发送 {0} 个，从其他副本取得 {1} 个",
-    "set finder · nocat.lol didn't answer · {0}": "卡组查找 · nocat.lol 没有响应 · {0}",
+    "set finder · gamer.mom didn't answer · {0}": "卡组查找 · gamer.mom 没有响应 · {0}",
     "gems kept loose · not sure yet what they're worth in levels": "宝石保持散装 · 还不确定它们值多少等级",
     "saving tradable gems for a sack to sell": "正在为要出售的一袋宝石攒可交易宝石",
     "gems: today's listings are done · more tomorrow": "宝石：今天的上架已完成 · 明天继续",
@@ -3220,7 +3220,7 @@
     "Games I pick": "我挑的游戏",
     "Get messages on Telegram or Discord": "在 Telegram 或 Discord 上收消息",
     "I also use this account in my own Steam app": "我也在自己的 Steam 应用里用这个账号",
-    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "它每小时在 nocat.lol 匿名计数一次——只有一个随机编号和账号数量。设置里“更新与插件”下的“把我算作用户”可以关掉。",
+    "It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "它每小时在 gamer.mom 匿名计数一次——只有一个随机编号和账号数量。设置里“更新与插件”下的“把我算作用户”可以关掉。",
     "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "先挂交易卡牌。挂完后，可以继续挂游戏来增加时长。",
     "It stays signed in and does nothing once the cards are done.": "卡牌挂完后保持登录，什么都不做。",
     "Language: {0}": "语言：{0}",
@@ -3433,43 +3433,43 @@
     "offer {0} declined for add-on {1} · {2}": "已按附加组件 {1} 拒绝报价 {0} · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "附加组件可能会答复它，否则 trade accept 或 decline {0} {1}",
     "plugin {0} added more than {1} trade judges - the rest are left out": "插件 {0} 添加了超过 {1} 个交易判定 - 其余的不予采用",
-    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "请在你电脑上应用自己的面板里操作 - farm.nocat.lol 做不了。",
-    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol 只能在同一台电脑上通过 http://127.0.0.1 打开 nocat.farm。",
+    "Do this in the app's own dashboard on your PC - farm.gamer.mom can't.": "请在你电脑上应用自己的面板里操作 - farm.gamer.mom 做不了。",
+    "farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.gamer.mom 只能在同一台电脑上通过 http://127.0.0.1 打开 nocat.farm。",
     "This browser isn't paired with nocat.farm yet.": "这个浏览器还没有和 nocat.farm 配对。",
     "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "nocat.farm 里等待处理的请求太多了。在应用里处理它们，或等 5 分钟。",
     "Asked too often - wait a minute and try again.": "请求太频繁 - 等一分钟再试。",
-    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "面板：farm.nocat.lol（{0}）请求打开这个面板 - 代码 {1}。请在这台电脑上的面板里允许或拒绝。",
-    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol 请求打开你的 nocat.farm 面板（代码 {0}，{1}）。如果是你本人，请在你电脑上应用自己的面板里允许。如果不是，什么都不用做 - 5 分钟后失效。",
-    "That request has run out - ask again on farm.nocat.lol.": "这个请求已失效 - 请在 farm.nocat.lol 上重新请求。",
-    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "面板：已允许 farm.nocat.lol（{0}）- 代码 {1}",
-    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "面板：已拒绝 farm.nocat.lol（{0}）- 代码 {1}",
-    "dashboard: a farm.nocat.lol pairing was taken back": "面板：已撤销一个 farm.nocat.lol 配对",
+    "dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "面板：farm.gamer.mom（{0}）请求打开这个面板 - 代码 {1}。请在这台电脑上的面板里允许或拒绝。",
+    "farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.gamer.mom 请求打开你的 nocat.farm 面板（代码 {0}，{1}）。如果是你本人，请在你电脑上应用自己的面板里允许。如果不是，什么都不用做 - 5 分钟后失效。",
+    "That request has run out - ask again on farm.gamer.mom.": "这个请求已失效 - 请在 farm.gamer.mom 上重新请求。",
+    "dashboard: farm.gamer.mom ({0}) let in - code {1}": "面板：已允许 farm.gamer.mom（{0}）- 代码 {1}",
+    "dashboard: farm.gamer.mom ({0}) turned down - code {1}": "面板：已拒绝 farm.gamer.mom（{0}）- 代码 {1}",
+    "dashboard: a farm.gamer.mom pairing was taken back": "面板：已撤销一个 farm.gamer.mom 配对",
     "In the app on your PC": "在你电脑上的应用里",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} 正在等待扫描登录二维码 - 二维码显示在你电脑上应用自己的面板里。",
-    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol 想打开这个面板",
+    "farm.gamer.mom wants to open this dashboard": "farm.gamer.mom 想打开这个面板",
     "Approve": "允许",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Steam Guard 验证码只显示在你电脑上应用自己的面板里。",
     "This browser is paired with nocat.farm on this PC.": "这个浏览器已和这台电脑上的 nocat.farm 配对。",
     "Disconnect this browser": "断开这个浏览器",
-    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "关：farm.nocat.lol 无法打开这个面板。打开“允许 farm.nocat.lol 打开这个面板”，就能在这台电脑的浏览器里通过那个地址使用它。",
+    "Off: farm.gamer.mom can't open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.": "关：farm.gamer.mom 无法打开这个面板。打开“允许 farm.gamer.mom 打开这个面板”，就能在这台电脑的浏览器里通过那个地址使用它。",
     "until {0}": "到 {0}",
     "Revoke": "撤销",
     "No browser is paired yet.": "还没有配对的浏览器。",
-    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "在这台电脑上的 nocat.farm 里打开它自己的面板，然后进入设置、面板与手机，勾选显示高级，并打开“允许 farm.nocat.lol 打开这个面板”。保存后回到这里。",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.": "在这台电脑上的 nocat.farm 里打开它自己的面板，然后进入设置、面板与手机，勾选显示高级，并打开“允许 farm.gamer.mom 打开这个面板”。保存后回到这里。",
     "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari 以及一些浏览器或扩展会阻止网站和你自己的电脑通信。这时请直接从 nocat.farm 打开面板：",
     "Start nocat.farm on this PC, then reload this page.": "在这台电脑上启动 nocat.farm，然后重新加载这个页面。",
     "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "这个页面需要比 {0} 更新的 nocat.farm。请在这台电脑上它自己的面板里更新，然后重新加载这个页面。",
-    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "这个页面直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。nocat.farm 会先问你：点“连接”，然后在应用里允许同样的代码。",
-    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "在这台电脑上 nocat.farm 自己的面板里，会有一个框询问是否允许 farm.nocat.lol 打开它。确认显示的是同样的代码，然后点“允许”。",
+    "This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.": "这个页面直接和这台电脑上的 nocat.farm 通信 - 不经过 gamer.mom。nocat.farm 会先问你：点“连接”，然后在应用里允许同样的代码。",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.": "在这台电脑上 nocat.farm 自己的面板里，会有一个框询问是否允许 farm.gamer.mom 打开它。确认显示的是同样的代码，然后点“允许”。",
     "Waiting for you to approve it…": "正在等你允许…",
     "It was turned down in nocat.farm.": "在 nocat.farm 里被拒绝了。",
     "That code ran out. Press Connect for a new one.": "这个代码已失效。点“连接”获取新的。",
-    "farm.nocat.lol can open this dashboard now.": "现在 farm.nocat.lol 可以打开这个面板了。",
+    "farm.gamer.mom can open this dashboard now.": "现在 farm.gamer.mom 可以打开这个面板了。",
     "Turned down.": "已拒绝。",
     "Taken back - that browser has to pair again.": "已撤销 - 那个浏览器需要重新配对。",
     "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "浏览器里的面板：{0} - 设置好账号后会在那里打开；在这台电脑上 {1} 始终可用",
-    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol 想打开你的面板",
-    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "你刚刚打开了 farm.nocat.lol 吗？它会显示一个代码。只有和这个代码一样时才允许：",
+    "farm.gamer.mom wants to open your dashboard": "farm.gamer.mom 想打开你的面板",
+    "Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:": "你刚刚打开了 farm.gamer.mom 吗？它会显示一个代码。只有和这个代码一样时才允许：",
     "how?": "怎么做？",
     "app port": "应用端口",
     "open it here": "在这里打开",
@@ -3491,11 +3491,11 @@
     "connect": "连接",
     "approve this code in nocat.farm on this PC.": "在这台电脑上的 nocat.farm 里允许这个代码。",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "即使这个网站被黑，也拿不走你的物品或账号：它们都留在你电脑上的应用里。",
-    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "开：在这里允许后，https://farm.nocat.lol 就能在这台电脑的浏览器里打开这个面板。它永远不能交易、发送物品、确认、查看 Steam Guard 验证码或更改账号的登录方式。",
+    "On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "开：在这里允许后，https://farm.gamer.mom 就能在这台电脑的浏览器里打开这个面板。它永远不能交易、发送物品、确认、查看 Steam Guard 验证码或更改账号的登录方式。",
     "Type the current dashboard password to change it.": "输入当前的面板密码才能修改它。",
     "your browser blocked this page": "浏览器拦截了此页面",
     "let it reach your PC and try again, or open nocat.farm here.": "允许它访问你的电脑后重试，或在这里打开 nocat.farm。",
-    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "在地址栏中点击 farm.nocat.lol 旁边的网站图标，将“本地网络访问”设为“允许”，然后刷新此页面。",
+    "Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "在地址栏中点击 farm.gamer.mom 旁边的网站图标，将“本地网络访问”设为“允许”，然后刷新此页面。",
     "let this page reach your PC": "允许此页面访问你的电脑",
     "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "浏览器会先询问 - 请点“允许”。这只会让此页面与这台电脑上的 nocat.farm 通信。",
     "find my nocat.farm": "查找我的 nocat.farm"
@@ -3955,7 +3955,7 @@
     },
     "AddonTrades": {
       "label": "让附加组件答复交易报价",
-      "tip": "让你安装的附加组件接受或拒绝这个账号本来会留给你处理（或按“其余一律拒绝”拒绝）的交易报价。来自你自己账号的报价、捐赠和 nocat.lol 配对的卡牌交换一概不交给它。附加组件不能送出“永不动”列表里的东西、已许给另一个报价的东西或不能交易的东西，Steam 会暂挂的交易也不做，它的报价也和其他报价一样要等一会儿。只给你信任的附加组件用。默认关闭。"
+      "tip": "让你安装的附加组件接受或拒绝这个账号本来会留给你处理（或按“其余一律拒绝”拒绝）的交易报价。来自你自己账号的报价、捐赠和 gamer.mom 配对的卡牌交换一概不交给它。附加组件不能送出“永不动”列表里的东西、已许给另一个报价的东西或不能交易的东西，Steam 会暂挂的交易也不做，它的报价也和其他报价一样要等一会儿。只给你信任的附加组件用。默认关闭。"
     },
     "AddonTradesConfirm": {
       "label": "确认附加组件从陌生人那里接受的交易",
@@ -4618,11 +4618,11 @@
     },
     "CountMeAsUser": {
       "label": "把我算作用户",
-      "tip": "每小时告诉 nocat.lol 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。 开启“与其他 nocat.farm 用户分享最便宜的卡组”时，还会在单独的消息中发送找到的卡组的市场价格（见该设置）。"
+      "tip": "每小时告诉 gamer.mom 一次这个副本正在运行，好让它的页面统计用户数。发送的是为本次安装生成的随机编号、应用版本、平台、以及有多少个 Steam 账户已登录（只是数字，例如 3），如果你分享的话还有时长和卡牌总数以及其余的（宝石、徽章、补充包、卖出的物品）（见下一个设置）——别的都不发：没有账户名、Steam ID 或设置。Steam 账户数就是这样得来的。关闭则什么都不发送。 开启“与其他 nocat.farm 用户分享最便宜的卡组”时，还会在单独的消息中发送找到的卡组的市场价格（见该设置）。"
     },
     "ShareFarmTotals": {
       "label": "分享我的挂卡总数",
-      "tip": "在每小时的“把我算作用户”消息里加几个数字：自上次以来你的账户累积的游戏时长、获得的卡牌、转成宝石的物品、合成的徽章（闪亮徽章也算）、打开的补充包，以及在市场上卖出的物品 - 例如 41.5 小时、12 张卡、30 件物品转成宝石、2 个徽章、4 个补充包和卖出 9 件物品。第一次开启时，还会把这个副本历史里之前的时长和卡牌一次性发送过去。nocat.lol 会把所有人的数字加起来，在它的 nocat.farm 页面上显示总数。不包含任何关于哪个账户、游戏、卡牌或物品的信息。开启：这些数字随每小时的消息发送。关闭：都不发送。只在“把我算作用户”开启时有效。"
+      "tip": "在每小时的“把我算作用户”消息里加几个数字：自上次以来你的账户累积的游戏时长、获得的卡牌、转成宝石的物品、合成的徽章（闪亮徽章也算）、打开的补充包，以及在市场上卖出的物品 - 例如 41.5 小时、12 张卡、30 件物品转成宝石、2 个徽章、4 个补充包和卖出 9 件物品。第一次开启时，还会把这个副本历史里之前的时长和卡牌一次性发送过去。gamer.mom 会把所有人的数字加起来，在它的 nocat.farm 页面上显示总数。不包含任何关于哪个账户、游戏、卡牌或物品的信息。开启：这些数字随每小时的消息发送。关闭：都不发送。只在“把我算作用户”开启时有效。"
     },
     "ReactionSpeed": {
       "label": "反应速度",
@@ -5009,7 +5009,7 @@
     },
     "CardSwaps": {
       "label": "与其他 nocat.farm 用户交换多余的卡牌",
-      "tip": "在同一游戏内与其他 nocat.farm 用户一换一交换多余的普通集换式卡牌，让双方都更快集齐卡套。nocat.lol 负责配对账户；此账户在每次交换前会再检查一遍。它绝不交出你的卡套需要的卡或某张卡的最后一张，绝不交换闪亮卡牌、背景或表情，也不动你「绝不动」清单里的东西。开启期间，nocat.lol 会保存此账户的 SteamID 和交易链接 - 关闭后即删除。开启时会先展示它会做什么，并请你确认。"
+      "tip": "在同一游戏内与其他 nocat.farm 用户一换一交换多余的普通集换式卡牌，让双方都更快集齐卡套。gamer.mom 负责配对账户；此账户在每次交换前会再检查一遍。它绝不交出你的卡套需要的卡或某张卡的最后一张，绝不交换闪亮卡牌、背景或表情，也不动你「绝不动」清单里的东西。开启期间，gamer.mom 会保存此账户的 SteamID 和交易链接 - 关闭后即删除。开启时会先展示它会做什么，并请你确认。"
     },
     "CardSwapMaxLoss": {
       "label": "每次交换最多可亏",
@@ -5025,7 +5025,7 @@
     },
     "ShareCheapestSets": {
       "label": "与其他 nocat.farm 用户分享最便宜的卡组",
-      "tip": "只要有账户在购买最便宜的整套，大约每 6 小时把这个副本在市场上找到的最便宜整套卡牌发送给 nocat.lol，并取回所有其他副本找到的卡组——这样能更早找到便宜的卡组。发送的内容：每套卡组的游戏、卡牌名称、每张卡的最低价、在售数量以及看到的时间——例如一套 5 张、每张 0.03、一小时前看到的卡组。不包含任何关于你或你账户的信息。取回的内容只决定先检查哪些游戏：购买任何东西之前，每张卡都会在 Steam 市场上重新定价。开启：双向分享。关闭：什么都不发送也不取回。仅在“把我算作用户”开启时。"
+      "tip": "只要有账户在购买最便宜的整套，大约每 6 小时把这个副本在市场上找到的最便宜整套卡牌发送给 gamer.mom，并取回所有其他副本找到的卡组——这样能更早找到便宜的卡组。发送的内容：每套卡组的游戏、卡牌名称、每张卡的最低价、在售数量以及看到的时间——例如一套 5 张、每张 0.03、一小时前看到的卡组。不包含任何关于你或你账户的信息。取回的内容只决定先检查哪些游戏：购买任何东西之前，每张卡都会在 Steam 市场上重新定价。开启：双向分享。关闭：什么都不发送也不取回。仅在“把我算作用户”开启时。"
     },
     "GemsForLevels": {
       "label": "把宝石用在最多的等级上",
@@ -5094,8 +5094,8 @@
       "tip": "在购买徽章缺少的卡牌之前，先算一算这个游戏的补充包会不会更便宜。一个补充包是整套中随机的 3 张卡——重复的和你已有的卡不算数——所以补充包通常会留下一些缺少的卡，之后再买。只有当补充包加上它们预计留下的卡牌，比缺少的卡牌至少便宜十分之一时才买补充包。例如：5 张一套，缺 4 张，每张 0.20（0.80）：3 个 0.10 的补充包预计只留下约半张，总共约 0.41 —— 买补充包。8 张一套，缺 4 张，每张 0.08，补充包 0.25：买卡牌。买到的补充包会自动打开；下一次查看再买仍然缺的。每次查看一套。'buy preview' 会显示这些数字。默认关闭。"
     },
     "FarmWebAllowed": {
-      "label": "允许 farm.nocat.lol 打开这个面板",
-      "tip": "让 farm.nocat.lol 网站能在这台电脑的浏览器里显示这个面板，这样只需收藏一个地址。它直接和这台电脑上的 nocat.farm 通信 - 不经过 nocat.lol。每个浏览器都会先询问：页面上和这里会显示一个 6 位代码，你在这个面板里允许。之后它几乎什么都能做，但永远不能把物品发走，也不能改动账号的登录方式：交易、确认、发送物品、Steam Guard 验证码、登录信息和密钥、金额上限、更新和插件都留在这里。开启时，设置好账号后，托盘图标和“启动时打开浏览器”会在那里打开它；添加账号和登录始终在这里进行。在有屏幕的电脑上新安装时默认开启，已有的安装、Docker 和服务器上默认关闭。关闭时：farm.nocat.lol 完全连不上 nocat.farm。"
+      "label": "允许 farm.gamer.mom 打开这个面板",
+      "tip": "让 farm.gamer.mom 网站能在这台电脑的浏览器里显示这个面板，这样只需收藏一个地址。它直接和这台电脑上的 nocat.farm 通信 - 不经过 gamer.mom。每个浏览器都会先询问：页面上和这里会显示一个 6 位代码，你在这个面板里允许。之后它几乎什么都能做，但永远不能把物品发走，也不能改动账号的登录方式：交易、确认、发送物品、Steam Guard 验证码、登录信息和密钥、金额上限、更新和插件都留在这里。开启时，设置好账号后，托盘图标和“启动时打开浏览器”会在那里打开它；添加账号和登录始终在这里进行。在有屏幕的电脑上新安装时默认开启，已有的安装、Docker 和服务器上默认关闭。关闭时：farm.gamer.mom 完全连不上 nocat.farm。"
     }
   }
 }

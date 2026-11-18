@@ -17,7 +17,7 @@ only come into it if you set them up, and the Discord profile card only talks to
 hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Open from anywhere*, if you turn it on,
 talks to your router.
 
-Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
+Once an hour it tells gamer.mom it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your Steam accounts are signed in, as a number only. No account name, Steam ID or setting goes with
 it, and the install ID isn't in backups. That's where "1,240 Steam accounts on nocat.farm" on the Overview and the
 Discord card comes from. *Count me as a user* (*Global settings
@@ -25,14 +25,14 @@ Discord card comes from. *Count me as a user* (*Global settings
 
 With *Share my farming totals* (*Global settings → Updates & plugins*, right under *Count me as a user*, on while that is) the same
 message also carries two numbers, about every 6 hours: the game-hours banked and the cards dropped since the last one. They're capped to
-what your accounts could really have done in that time, and each lot is sent under a random name until nocat.lol says
+what your accounts could really have done in that time, and each lot is sent under a random name until gamer.mom says
 it has it, so it's never counted twice. With them go how many hours that lot covers and how many accounts this copy
-has (a number only), which nocat.lol caps it by. The first time it's on, the message also carries, once, the same two numbers for
+has (a number only), which gamer.mom caps it by. The first time it's on, the message also carries, once, the same two numbers for
 what this copy's history already held from before (up to about 400 days), so the hours you banked before 1.8.0 count
 too. That's added up the moment counting starts, so an hour is in it or in the 6-hourly numbers, never both, and it's
-capped to what your accounts could have done on those days. nocat.lol counts it once per install, ever. A history restored from a backup belongs to the copy that made the
+capped to what your accounts could have done on those days. gamer.mom counts it once per install, ever. A history restored from a backup belongs to the copy that made the
 backup, so it's never sent from the copy it's restored on. That's the
-"hours of game time banked · cards farmed" on nocat.lol's nocat.farm page.
+"hours of game time banked · cards farmed" on gamer.mom's nocat.farm page.
 
 From 1.8.1 the same lots also carry four more counts: items turned into gems, badges crafted (foil too), booster packs
 opened, and items the market history says sold. Each is counted only once Steam says it's done, and capped per account
@@ -41,18 +41,18 @@ only started keeping them then. Turn the setting off and none of these numbers i
 
 The shared cheapest-sets list (1.8.2, *Share cheapest sets with other nocat.farm users*, right under *Share my farming
 totals*, on while *Count me as a user* is): only while an account buys the cheapest full sets, about every 6 hours the
-set finder sends nocat.lol the cheapest whole card sets it found on the market - each set's game, its cards' names,
+set finder sends gamer.mom the cheapest whole card sets it found on the market - each set's game, its cards' names,
 each card's cheapest price in US cents, how many are for sale and how long ago that was seen - with the same random
 install ID, and takes back the cheapest ones every copy found. Nothing about you or your accounts. What comes back only
 says which games to check first: every card is priced again on the Steam market before anything is bought, so a wrong
 price there can't cost you money. Turn it off (or *Count me as a user*) and nothing is sent or fetched.
 
 Card swaps with other nocat.farm users (1.8.2, *Swap spare cards with other nocat.farm users*, off on every account) talk to
-nocat.lol only for accounts you turned them on for: the same random install ID, and for each of those accounts its
+gamer.mom only for accounts you turned them on for: the same random install ID, and for each of those accounts its
 SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Every few weeks each account
-also signs in to nocat.lol through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID
-it is, can't sign in or trade, and nocat.lol keeps only the date. Never an account name, password or login. Turning
-swaps off on an account deletes its SteamID and trade link from nocat.lol within a minute or two, and its old matches
+also signs in to gamer.mom through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID
+it is, can't sign in or trade, and gamer.mom keeps only the date. Never an account name, password or login. Turning
+swaps off on an account deletes its SteamID and trade link from gamer.mom within a minute or two, and its old matches
 within the hour; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even

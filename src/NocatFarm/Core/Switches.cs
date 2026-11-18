@@ -80,14 +80,14 @@ public static class Switches {
 			}
 		}
 
-		// On or off, nocat.lol hears in a minute or two: an opt-out deletes this account's SteamID and trade link there.
+		// On or off, gamer.mom hears in a minute or two: an opt-out deletes this account's SteamID and trade link there.
 		if (feature == Swaps) {
 			CardExchange.Nudge();
 		}
 
 		Said said = (feature, on) switch {
 			(Swaps, true) => new Said("Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits", bot.Name),
-			(Swaps, false) => new Said("Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it", bot.Name),
+			(Swaps, false) => new Said("Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it", bot.Name),
 			(Spare, true) => new Said("Spare items is on for {0}: it turns spare items into gems or sells them, within its limits", bot.Name),
 			(Spare, false) => new Said("Spare items is off for {0}: nothing is turned into gems or sold", bot.Name),
 			(Buy, true) => new Said("Buying cards is on for {0}: it buys missing cards for its badges by itself, within its limits", bot.Name),

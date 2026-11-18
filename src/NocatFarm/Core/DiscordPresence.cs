@@ -33,7 +33,7 @@ public static class DiscordPresence {
 
 	/// <summary>The logo with the n filling up with purple, as a GIF - Discord plays GIFs from a web address, not from the
 	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is wwwroot/logo-liquid.gif.</summary>
-	private const string AnimatedLogo = "https://nocat.lol/farm/logo.gif";
+	private const string AnimatedLogo = "https://gamer.mom/logo.gif";
 
 	private static BotManager? _mgr;
 	/// <summary>The connection: a named pipe on Windows, a unix socket elsewhere. Both speak the same frames.</summary>
@@ -300,7 +300,7 @@ public static class DiscordPresence {
 	/// <summary>
 	/// The card's second line for a Second line choice: 1 hours past week, 2 hours past month, 3 Steam accounts (the card
 	/// already says Playing nocat.farm, so not "on nocat.farm" again), anything else the cards today. The accounts count falls back to the cards today while it isn't known -
-	/// "Count me as a user" off, no answer yet, an older nocat.lol that doesn't say it, or the last one too old
+	/// "Count me as a user" off, no answer yet, an older gamer.mom that doesn't say it, or the last one too old
 	/// (<paramref name="accounts"/> null).
 	/// </summary>
 	/// <param name="minutesOver">The minutes played over the last so many days, over every account.</param>

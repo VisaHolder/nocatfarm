@@ -94,7 +94,7 @@ def main():
         with open(os.path.join(out, name + ".md"), "w", encoding="utf-8", newline="\n") as f:
             f.write(convert(text))
         written.append(name)
-    sidebar += ["", f"[Download]({'https://github.com/VisaHolder/nocatfarm/releases/latest'}) · [nocat.lol/farm](https://nocat.lol/farm)"]
+    sidebar += ["", f"[Download]({'https://github.com/VisaHolder/nocatfarm/releases/latest'}) · [gamer.mom](https://gamer.mom)"]
     with open(os.path.join(out, "_Sidebar.md"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(sidebar) + "\n")
     with open(os.path.join(out, "_Footer.md"), "w", encoding="utf-8", newline="\n") as f:

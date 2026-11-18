@@ -25,7 +25,7 @@ permissions:
   contents: write   # only used to add the zips to a release when a tag is given
 
 # Every copy started here - the test copies, the ones an update restarts, the Docker containers - sends its "Count me as
-# a user" ping to a dead port on this machine, never to nocat.lol: a test run must never count itself as a user. The
+# a user" ping to a dead port on this machine, never to gamer.mom: a test run must never count itself as a user. The
 # test configs switch it off as well; this covers a config a copy writes for itself. (The browser test's own copy points
 # at tests/e2e/ping-stub.mjs instead.)
 env:

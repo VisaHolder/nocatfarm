@@ -5,42 +5,42 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// The hours banked and cards dropped on this install that haven't gone to nocat.lol yet - what the hourly ping (see
+/// The hours banked and cards dropped on this install that haven't gone to gamer.mom yet - what the hourly ping (see
 /// <see cref="UserCount"/>) adds to the "hours of game time banked · cards farmed" totals on the download page.
 /// </summary>
 /// <remarks>
 /// Only numbers ever leave: game-hours and cards (and from 1.8.1 items turned into gems, badges crafted, packs opened and
-/// items sold), since the last time nocat.lol said it had them - with how long that covers and how many accounts this copy
-/// has, which nocat.lol caps them by. Nothing about which account, game, card or item.
+/// items sold), since the last time gamer.mom said it had them - with how long that covers and how many accounts this copy
+/// has, which gamer.mom caps them by. Nothing about which account, game, card or item.
 ///
 /// A restored backup's history is the install's that made it: it never goes in this install's catch-up (see
 /// <see cref="Restoring"/>). A file that can't be read just now is tried again later; a broken one is kept aside and
 /// counting goes on from then with no catch-up - never one that could count the history twice.
 ///
-/// Never twice: what's due is put into a "batch" with a random name and saved to disk BEFORE it is sent. Until nocat.lol
+/// Never twice: what's due is put into a "batch" with a random name and saved to disk BEFORE it is sent. Until gamer.mom
 /// answers that it has that batch ("got": its name), the same batch - same name, same numbers - goes with every ping, and
-/// nocat.lol counts a name only once. Whatever is banked meanwhile waits in the "fresh" counter for the batch after.
-/// An older nocat.lol never says "got", so the batch just waits (for <see cref="GiveUpAfter"/> at most) - nothing lost,
+/// gamer.mom counts a name only once. Whatever is banked meanwhile waits in the "fresh" counter for the batch after.
+/// An older gamer.mom never says "got", so the batch just waits (for <see cref="GiveUpAfter"/> at most) - nothing lost,
 /// nothing doubled.
 ///
 /// Never nonsense: a batch is capped to what could physically have happened since the batch before it - every account
 /// running Steam's limit of <see cref="MaxGamesPerAccount"/> games the whole time, and a card per game every half hour.
-/// nocat.lol caps it again on its side.
+/// gamer.mom caps it again on its side.
 ///
 /// The hours from before (one time only): the history already holds up to ~400 days of game-hours and cards from before
 /// this copy started counting. The moment counting starts on this install - the first time sharing is on - that history
 /// is added up and frozen as one "catch-up" (<see cref="CatchUp"/>), saved before it's sent, sent with every ping until
-/// nocat.lol answers "gotold", and never made again. The same moment starts the fresh counter from 0, so an hour is
+/// gamer.mom answers "gotold", and never made again. The same moment starts the fresh counter from 0, so an hour is
 /// either in the catch-up or in a batch, never both: the history and the counter are both fed under the history's own
 /// lock, and the catch-up is added up under it too. It's capped to what's physically possible (each account's day at
-/// most 32 games for 24 hours, and <see cref="MaxCardsPerAccountDay"/> cards). An older nocat.lol never says "gotold":
-/// the catch-up simply keeps going with the pings, so it's counted the day nocat.lol can.
+/// most 32 games for 24 hours, and <see cref="MaxCardsPerAccountDay"/> cards). An older gamer.mom never says "gotold":
+/// the catch-up simply keeps going with the pings, so it's counted the day gamer.mom can.
 ///
 /// The rest (1.8.1): items turned into gems, badges crafted (foil too), booster packs opened and items sold on the
 /// market (<see cref="Extra"/>) go in the same batches, each capped per account per hour
 /// (<see cref="MaxGemItemsPerAccountHour"/> and the others). The history didn't record them before 1.8.1, so there's no
 /// catch-up of them: they count from when this version runs, and the history records them from then on too. An older
-/// nocat.lol simply doesn't read them.
+/// gamer.mom simply doesn't read them.
 ///
 /// "Count me as a user" or "Share my farming totals" off: nothing is counted or sent, and the batches waiting
 /// are dropped. A catch-up already made is kept, not sent, until sharing is on again - it never overlaps the batches
@@ -87,8 +87,8 @@ public static class FarmTotals {
 	}
 
 	/// <summary>
-	/// A new batch is made at most this often, not with every hourly ping: each batch is a write on nocat.lol, and one an
-	/// hour from every copy was far more than the totals need. A batch nocat.lol hasn't taken yet still goes with every
+	/// A new batch is made at most this often, not with every hourly ping: each batch is a write on gamer.mom, and one an
+	/// hour from every copy was far more than the totals need. A batch gamer.mom hasn't taken yet still goes with every
 	/// ping until it does.
 	/// </summary>
 	public static readonly TimeSpan BatchEvery = TimeSpan.FromHours(6);
@@ -96,13 +96,13 @@ public static class FarmTotals {
 	/// <summary><see cref="BatchEvery"/> - which the older checks set to 0, for a batch at every ping.</summary>
 	private static TimeSpan _batchGap = BatchEvery;
 
-	/// <summary>A batch nocat.lol never took is dropped after this - an old nocat.lol that never will, or a week offline.</summary>
+	/// <summary>A batch gamer.mom never took is dropped after this - an old gamer.mom that never will, or a week offline.</summary>
 	public static readonly TimeSpan GiveUpAfter = TimeSpan.FromDays(7);
 
 	/// <summary>
 	/// One batch: its random name, the game-hours (one decimal) and cards in it, and when it was made - plus when the time
 	/// it covers began (<paramref name="Start"/>) and how many accounts this copy had (<paramref name="Accounts"/>), which
-	/// nocat.lol caps it by. A batch saved by a build before those has neither (default, 0) and goes without them. And
+	/// gamer.mom caps it by. A batch saved by a build before those has neither (default, 0) and goes without them. And
 	/// (1.8.1) items turned into gems, badges crafted, packs opened and items sold - 0 in a batch saved before.
 	/// </summary>
 	public sealed record Batch(string B, double Hours, int Cards, DateTime Made, DateTime Start = default, int Accounts = 0,
@@ -114,7 +114,7 @@ public static class FarmTotals {
 
 	/// <summary>
 	/// The one-time catch-up: game-hours (one decimal) and cards from the history before counting started, from
-	/// <paramref name="Accounts"/> accounts over <paramref name="Days"/> days (what nocat.lol caps it by), its random name,
+	/// <paramref name="Accounts"/> accounts over <paramref name="Days"/> days (what gamer.mom caps it by), its random name,
 	/// and when it was made.
 	/// </summary>
 	public sealed record CatchUp(string B, double Hours, int Cards, int Accounts, int Days, DateTime Made);
@@ -128,7 +128,7 @@ public static class FarmTotals {
 		/// <summary>When counting started on this install - and the catch-up was made. Null: not yet.</summary>
 		public DateTime? LiveSince { get; set; }
 
-		/// <summary>The catch-up waiting for nocat.lol's "gotold", or null (none, or taken).</summary>
+		/// <summary>The catch-up waiting for gamer.mom's "gotold", or null (none, or taken).</summary>
 		public CatchUp? Old { get; set; }
 
 		/// <summary>Items turned into gems, badges crafted, packs opened and items sold, not in a batch yet (1.8.1).</summary>
@@ -246,7 +246,7 @@ public static class FarmTotals {
 	}
 
 	/// <summary>
-	/// What goes with this ping: the batch still waiting for nocat.lol's "got", or a new one made from what's fresh - or
+	/// What goes with this ping: the batch still waiting for gamer.mom's "got", or a new one made from what's fresh - or
 	/// null when there's nothing to send (or sharing is off, which also drops anything waiting). A new batch is on disk
 	/// before this returns; if it can't be saved, nothing is sent this time.
 	/// </summary>
@@ -270,7 +270,7 @@ public static class FarmTotals {
 			}
 
 			if ((_state.Pending is { } old) && (nowUtc - old.Made > GiveUpAfter)) {
-				Log.Debug($"live stats: nocat.lol never took the totals made {old.Made:yyyy-MM-dd HH:mm} UTC - dropped");
+				Log.Debug($"live stats: gamer.mom never took the totals made {old.Made:yyyy-MM-dd HH:mm} UTC - dropped");
 				_state.Pending = null;
 				SaveNow(nowUtc, soon: false);
 			}
@@ -304,7 +304,7 @@ public static class FarmTotals {
 				FreshMinutes = _state.FreshMinutes, FreshCards = _state.FreshCards, FreshSince = _state.FreshSince, LiveSince = _state.LiveSince, Old = _state.Old,
 				FreshGems = _state.FreshGems, FreshBadges = _state.FreshBadges, FreshPacks = _state.FreshPacks, FreshSold = _state.FreshSold
 			};
-			// The time it covers and the accounts go with it: nocat.lol caps it by those, not by how many are signed in when
+			// The time it covers and the accounts go with it: gamer.mom caps it by those, not by how many are signed in when
 			// it arrives (none, right after a restart) or how long since it last heard (days, after it was down).
 			Batch batch = new(Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(8)), Math.Min(hours, maxHours), Math.Min(cards, maxCards), nowUtc,
 				_state.FreshSince, Math.Min(fleet, UserCount.MaxAccounts), gems, badges, packs, sold);
@@ -339,10 +339,10 @@ public static class FarmTotals {
 		}
 	}
 
-	/// <summary>nocat.lol said it has this batch: it's done, and never sent again.</summary>
+	/// <summary>gamer.mom said it has this batch: it's done, and never sent again.</summary>
 	public static void Acknowledged(string b, DateTime nowUtc) {
 		lock (Gate) {
-			// Can't be read just now: the batch goes again, under the name nocat.lol already has.
+			// Can't be read just now: the batch goes again, under the name gamer.mom already has.
 			if (Load(nowUtc) && (_state.Pending is { } p) && (p.B == b)) {
 				_state.Pending = null;
 				SaveNow(nowUtc, soon: false);
@@ -374,7 +374,7 @@ public static class FarmTotals {
 		}
 	}
 
-	/// <summary>nocat.lol said it has the catch-up ("gotold"): done for good - it's never made or sent again.</summary>
+	/// <summary>gamer.mom said it has the catch-up ("gotold"): done for good - it's never made or sent again.</summary>
 	public static void OldAcknowledged(string b, DateTime nowUtc) {
 		lock (Gate) {
 			if (Load(nowUtc) && (_state.Old is { } o) && (o.B == b)) {
@@ -384,7 +384,7 @@ public static class FarmTotals {
 		}
 	}
 
-	/// <summary>The catch-up waiting for nocat.lol, or null; and when counting started on this install (null: not yet).</summary>
+	/// <summary>The catch-up waiting for gamer.mom, or null; and when counting started on this install (null: not yet).</summary>
 	public static (CatchUp? Old, DateTime? LiveSince) UnsentOld() {
 		lock (Gate) {
 			return Load(DateTime.UtcNow) ? (_state.Old, _state.LiveSince) : (null, null);
@@ -448,7 +448,7 @@ public static class FarmTotals {
 		});
 	}
 
-	/// <summary>What hasn't gone yet: game-hours and cards fresh, and the batch waiting for nocat.lol (or null).</summary>
+	/// <summary>What hasn't gone yet: game-hours and cards fresh, and the batch waiting for gamer.mom (or null).</summary>
 	public static (double FreshHours, int FreshCards, Batch? Waiting) Unsent() {
 		lock (Gate) {
 			return Load(DateTime.UtcNow) ? (_state.FreshMinutes / 60, _state.FreshCards, _state.Pending) : (0, 0, null);

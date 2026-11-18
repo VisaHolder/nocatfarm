@@ -40,7 +40,7 @@ Check 'choices saved' (($cfg.WebPort -eq 7289) -and $cfg.StartWithWindows -and $
 $r = (Get-ItemProperty $run -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
 Check 'starts with Windows right away (no first launch needed)' ($r -like "*$inst\nocatFarm.exe*") $r
 $k = Get-ItemProperty $key -ErrorAction SilentlyContinue
-Check 'listed in Settings > Apps' (($k.DisplayName -eq 'nocat.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://nocat.lol/farm')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
+Check 'listed in Settings > Apps' (($k.DisplayName -eq 'nocat.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://gamer.mom')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
 $vi = (Get-Item "$inst\nocatFarm.exe").VersionInfo
 Check 'Task Manager and the firewall prompt say nocat.farm by reap.' (($vi.FileDescription -eq 'nocat.farm') -and ($vi.ProductName -eq 'nocat.farm') -and ($vi.CompanyName -eq 'reap.')) "$($vi.FileDescription) / $($vi.ProductName) / $($vi.CompanyName)"
 Check 'Start menu shortcut' (Test-Path $startMenu)
@@ -52,7 +52,7 @@ $cfgRaw = Get-Content "$inst\config\nocatFarm.json" -Raw | ConvertFrom-Json
 $cfgRaw | Add-Member -NotePropertyName OpenBrowserOnStart -NotePropertyValue $false -Force
 $cfgRaw | Add-Member -NotePropertyName JoinGroup -NotePropertyValue $false -Force
 $cfgRaw | Add-Member -NotePropertyName CheckForUpdates -NotePropertyValue $false -Force
-$cfgRaw | Add-Member -NotePropertyName CountMeAsUser -NotePropertyValue $false -Force   # a test copy never counts itself on nocat.lol
+$cfgRaw | Add-Member -NotePropertyName CountMeAsUser -NotePropertyValue $false -Force   # a test copy never counts itself on gamer.mom
 [IO.File]::WriteAllText("$inst\config\nocatFarm.json", ($cfgRaw | ConvertTo-Json -Depth 10))
 Start-Process "$inst\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $inst; Start-Sleep 7
 $st = try { (Invoke-RestMethod http://127.0.0.1:7289/api/status).Version } catch { "down: $($_.Exception.Message)" }

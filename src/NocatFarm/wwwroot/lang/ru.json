@@ -2957,14 +2957,14 @@
     "no fresh price for some of its cards": "для некоторых его карточек нет свежей цены",
     "it would set back a set now": "сейчас это отбросило бы набор назад",
     "it would lose more than your limit": "потеря превысила бы ваш лимит",
-    "not a swap nocat.lol paired with this account": "это не обмен, который nocat.lol подобрал для этого аккаунта",
+    "not a swap gamer.mom paired with this account": "это не обмен, который gamer.mom подобрал для этого аккаунта",
     "it has something that isn't a normal trading card": "в нём есть что-то, что не является обычной коллекционной карточкой",
-    "it isn't the swap nocat.lol paired": "это не тот обмен, который подобрал nocat.lol",
+    "it isn't the swap gamer.mom paired": "это не тот обмен, который подобрал gamer.mom",
     "no fresh price yet for {0}": "для {0} пока нет свежей цены",
     "it's worth less than this account gives": "это стоит меньше, чем отдаёт этот аккаунт",
     "card swaps: couldn't read its own trade link - not listed this time": "обмен карточками: не удалось прочитать свою ссылку для обмена - в этот раз не в списке",
     "Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits": "Обмен карточками включён для {0}: он меняет лишние карточки с другими пользователями nocat.farm в пределах своих лимитов",
-    "Card swaps is off for {0}: nothing is swapped, and nocat.lol forgets it": "Обмен карточками выключен для {0}: ничего не меняется, и nocat.lol его забывает",
+    "Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it": "Обмен карточками выключен для {0}: ничего не меняется, и gamer.mom его забывает",
     "held by scam watch - no swaps until 'scamwatch ok'": "задержано защитой от мошенников - никаких обменов до 'scamwatch ok'",
     "waiting for its day": "ждёт своего дня",
     "{0} swaps today - the most for a day": "{0} обменов сегодня - максимум за день",
@@ -2986,15 +2986,15 @@
     "card swap · you give {0} · you get {1}": "обмен карточками · отдаёте {0} · получаете {1}",
     "card swap · confirm the offer to {0} on your phone": "обмен карточками · подтвердите предложение для {0} на телефоне",
     "sent a swap to {0}": "обмен отправлен {0}",
-    "a card swap nocat.lol paired": "обмен карточками, подобранный nocat.lol",
-    "a card swap nocat.lol paired · checked, then accepted or declined": "обмен карточками, подобранный nocat.lol · проверяется, потом принимается или отклоняется",
+    "a card swap gamer.mom paired": "обмен карточками, подобранный gamer.mom",
+    "a card swap gamer.mom paired · checked, then accepted or declined": "обмен карточками, подобранный gamer.mom · проверяется, потом принимается или отклоняется",
     "offer {0} is from an account that once sent a bad swap · left for you": "предложение {0} от аккаунта, который однажды прислал плохой обмен · оставлено вам",
     "from an account that once sent a bad swap": "от аккаунта, который однажды прислал плохой обмен",
     "not now": "не сейчас",
     "offer {0} isn't a good swap now ({1}) - declining": "предложение {0} сейчас невыгодно ({1}) - отклоняю",
     "card swap · you'd give {0} · you'd get {1}": "обмен карточками · отдал бы {0} · получил бы {1}",
     "card swap offer {0} isn't what was paired ({1}) · left for you": "предложение обмена {0} не совпадает с подобранным ({1}) · оставлено вам",
-    "offer {0} says it's a card swap nocat.lol didn't pair · left for you": "предложение {0} называет себя обменом, который nocat.lol не подбирал · оставлено вам",
+    "offer {0} says it's a card swap gamer.mom didn't pair · left for you": "предложение {0} называет себя обменом, который gamer.mom не подбирал · оставлено вам",
     "Turn on card swaps?": "Включить обмен карточками?",
     "This is what it could swap now, and the limits it keeps to. Nothing is swapped until you press Turn on.": "Вот что он мог бы обменять сейчас, и лимиты, которых он держится. Ничего не меняется, пока вы не нажмёте «Включить».",
     "spare cards to swap": "лишних карточек для обмена",
@@ -3008,11 +3008,11 @@
     "Also when Steam would hold the trade": "Даже если Steam задержал бы обмен",
     "Its offers are confirmed by its authenticator here": "Его предложения подтверждает аутентификатор здесь",
     "Its offers wait for you to confirm them on your phone": "Его предложения ждут, пока вы подтвердите их на телефоне",
-    "While it's on, nocat.lol keeps this account's SteamID and trade link - turning it off deletes them": "Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их",
+    "While it's on, gamer.mom keeps this account's SteamID and trade link - turning it off deletes them": "Пока он включён, gamer.mom хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их",
     "Its wallet currency is not known yet - nothing is swapped until it is": "Валюта кошелька ещё неизвестна - ничего не меняется, пока она не станет известна",
     "1 card still needs a price first.": "1 карточке сначала ещё нужна цена.",
     "{0} cards still need a price first.": "{0} карточкам сначала ещё нужна цена.",
-    "card swap offer to {0} wasn't what nocat.lol said · taken back": "предложение обмена для {0} не совпало с тем, что сказал nocat.lol · отозвано",
+    "card swap offer to {0} wasn't what gamer.mom said · taken back": "предложение обмена для {0} не совпало с тем, что сказал gamer.mom · отозвано",
     "it was paired more than 2 days ago": "пара составлена больше 2 дней назад",
     "Steam's name for a card in it doesn't fit its game": "название карточки в Steam не подходит к её игре",
     "a card in it is already on another offer or swap": "карточка из него уже в другом предложении или обмене",
@@ -3030,7 +3030,7 @@
     "Steam answered {0} and showed the sign-in page again": "Steam ответил {0} и снова показал страницу входа",
     "Steam answered {0} and showed its login page": "Steam ответил {0} и показал страницу авторизации",
     "Steam answered {0} and sent it nowhere": "Steam ответил {0} и никуда не перенаправил",
-    "Steam sent it to {0}, not nocat.lol": "Steam перенаправил на {0}, а не на nocat.lol",
+    "Steam sent it to {0}, not gamer.mom": "Steam перенаправил на {0}, а не на gamer.mom",
     "Steam's answer wasn't a sign-in": "ответ Steam не был входом",
     "Steam's answer was for another account": "ответ Steam был для другого аккаунта",
     "Steam's answer was too long": "ответ Steam слишком длинный",
@@ -3130,7 +3130,7 @@
     "none - the defaults": "нет - стандартные",
     "set finder · couldn't save what it shared · {0}": "поиск наборов · не удалось сохранить, чем поделился · {0}",
     "set finder · shared lists · {0} sent, {1} taken from other copies": "поиск наборов · общие списки · отправлено {0}, взято {1} у других копий",
-    "set finder · nocat.lol didn't answer · {0}": "поиск наборов · nocat.lol не ответил · {0}",
+    "set finder · gamer.mom didn't answer · {0}": "поиск наборов · gamer.mom не ответил · {0}",
     "gems kept loose · not sure yet what they're worth in levels": "самоцветы остаются россыпью · пока неясно, сколько уровней они стоят",
     "saving tradable gems for a sack to sell": "копит обмениваемые самоцветы на мешок для продажи",
     "gems: today's listings are done · more tomorrow": "самоцветы: на сегодня всё выставлено · ещё завтра",
@@ -3220,7 +3220,7 @@
     "Games I pick": "Игры, которые я выберу",
     "Get messages on Telegram or Discord": "Получать сообщения в Telegram или Discord",
     "I also use this account in my own Steam app": "Я тоже пользуюсь этим аккаунтом в своём приложении Steam",
-    "It counts itself on nocat.lol once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Раз в час он анонимно отмечается на nocat.lol - только случайный номер и число аккаунтов. «Считать меня пользователем» в Настройках, «Обновления и плагины», это выключает.",
+    "It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.": "Раз в час он анонимно отмечается на gamer.mom - только случайный номер и число аккаунтов. «Считать меня пользователем» в Настройках, «Обновления и плагины», это выключает.",
     "It farms trading cards first. Once they are done, it can keep playing games to add hours.": "Сначала фармит коллекционные карточки. Когда они закончатся, может дальше держать игры, чтобы копить часы.",
     "It stays signed in and does nothing once the cards are done.": "Остаётся в сети и ничего не делает, когда карточки закончатся.",
     "Language: {0}": "Язык: {0}",
@@ -3433,43 +3433,43 @@
     "offer {0} declined for add-on {1} · {2}": "предложение {0} отклонено по дополнению {1} · {2}",
     "an add-on may answer it, else trade accept or decline {0} {1}": "может ответить дополнение, иначе trade accept или decline {0} {1}",
     "plugin {0} added more than {1} trade judges - the rest are left out": "плагин {0} добавил больше {1} судей обменов - остальные не учитываются",
-    "Do this in the app's own dashboard on your PC - farm.nocat.lol can't.": "Сделайте это в собственной панели приложения на вашем ПК - farm.nocat.lol этого не может.",
-    "farm.nocat.lol only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.nocat.lol открывает nocat.farm только на том же ПК, по адресу http://127.0.0.1.",
+    "Do this in the app's own dashboard on your PC - farm.gamer.mom can't.": "Сделайте это в собственной панели приложения на вашем ПК - farm.gamer.mom этого не может.",
+    "farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.": "farm.gamer.mom открывает nocat.farm только на том же ПК, по адресу http://127.0.0.1.",
     "This browser isn't paired with nocat.farm yet.": "Этот браузер ещё не связан с nocat.farm.",
     "Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.": "В nocat.farm ждёт слишком много запросов. Ответьте на них в приложении или подождите 5 минут.",
     "Asked too often - wait a minute and try again.": "Слишком часто - подождите минуту и попробуйте снова.",
-    "dashboard: farm.nocat.lol ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "панель: farm.nocat.lol ({0}) просит открыть эту панель - код {1}. Разрешите или отклоните это в панели на этом ПК.",
-    "farm.nocat.lol asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.nocat.lol просит открыть вашу панель nocat.farm (код {0}, {1}). Если это вы, разрешите в собственной панели приложения на вашем ПК. Если нет, ничего не делайте - запрос истечёт через 5 минут.",
-    "That request has run out - ask again on farm.nocat.lol.": "Этот запрос истёк - запросите снова на farm.nocat.lol.",
-    "dashboard: farm.nocat.lol ({0}) let in - code {1}": "панель: farm.nocat.lol ({0}) впущен - код {1}",
-    "dashboard: farm.nocat.lol ({0}) turned down - code {1}": "панель: farm.nocat.lol ({0}) отклонён - код {1}",
-    "dashboard: a farm.nocat.lol pairing was taken back": "панель: связь с farm.nocat.lol отозвана",
+    "dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.": "панель: farm.gamer.mom ({0}) просит открыть эту панель - код {1}. Разрешите или отклоните это в панели на этом ПК.",
+    "farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.": "farm.gamer.mom просит открыть вашу панель nocat.farm (код {0}, {1}). Если это вы, разрешите в собственной панели приложения на вашем ПК. Если нет, ничего не делайте - запрос истечёт через 5 минут.",
+    "That request has run out - ask again on farm.gamer.mom.": "Этот запрос истёк - запросите снова на farm.gamer.mom.",
+    "dashboard: farm.gamer.mom ({0}) let in - code {1}": "панель: farm.gamer.mom ({0}) впущен - код {1}",
+    "dashboard: farm.gamer.mom ({0}) turned down - code {1}": "панель: farm.gamer.mom ({0}) отклонён - код {1}",
+    "dashboard: a farm.gamer.mom pairing was taken back": "панель: связь с farm.gamer.mom отозвана",
     "In the app on your PC": "В приложении на вашем ПК",
     "{0} is waiting for its sign-in QR code to be scanned - it shows in the app's own dashboard on your PC.": "{0} ждёт, пока отсканируют его QR-код для входа - он показан в собственной панели приложения на вашем ПК.",
-    "farm.nocat.lol wants to open this dashboard": "farm.nocat.lol хочет открыть эту панель",
+    "farm.gamer.mom wants to open this dashboard": "farm.gamer.mom хочет открыть эту панель",
     "Approve": "Разрешить",
     "The Steam Guard code shows only in the app's own dashboard on your PC.": "Код Steam Guard показывается только в собственной панели приложения на вашем ПК.",
     "This browser is paired with nocat.farm on this PC.": "Этот браузер связан с nocat.farm на этом ПК.",
     "Disconnect this browser": "Отключить этот браузер",
-    "Off: farm.nocat.lol can't open this dashboard. Turn on Let farm.nocat.lol open this dashboard to use it from that address in a browser on this PC.": "Выключено: farm.nocat.lol не может открыть эту панель. Включите «Разрешить farm.nocat.lol открывать эту панель», чтобы пользоваться ею по тому адресу в браузере на этом ПК.",
+    "Off: farm.gamer.mom can't open this dashboard. Turn on Let farm.gamer.mom open this dashboard to use it from that address in a browser on this PC.": "Выключено: farm.gamer.mom не может открыть эту панель. Включите «Разрешить farm.gamer.mom открывать эту панель», чтобы пользоваться ею по тому адресу в браузере на этом ПК.",
     "until {0}": "до {0}",
     "Revoke": "Отозвать",
     "No browser is paired yet.": "Пока ни один браузер не связан.",
-    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.nocat.lol open this dashboard. Save, and come back here.": "В nocat.farm на этом ПК откройте его собственную панель, затем «Настройки», «Панель и телефон», отметьте «Показать расширенные» и включите «Разрешить farm.nocat.lol открывать эту панель». Сохраните и вернитесь сюда.",
+    "In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.": "В nocat.farm на этом ПК откройте его собственную панель, затем «Настройки», «Панель и телефон», отметьте «Показать расширенные» и включите «Разрешить farm.gamer.mom открывать эту панель». Сохраните и вернитесь сюда.",
     "Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:": "Safari, а также некоторые браузеры и расширения не дают сайту связаться с вашим собственным ПК. Тогда откройте панель прямо из nocat.farm:",
     "Start nocat.farm on this PC, then reload this page.": "Запустите nocat.farm на этом ПК, затем перезагрузите эту страницу.",
     "This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.": "Этой странице нужен nocat.farm новее {0}. Обновите его в его собственной панели на этом ПК, затем перезагрузите эту страницу.",
-    "This page talks straight to nocat.farm on this PC - nothing goes through nocat.lol. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Эта страница говорит напрямую с nocat.farm на этом ПК - через nocat.lol ничего не идёт. nocat.farm сначала спросит вас: нажмите «Подключить», затем разрешите тот же код в приложении.",
-    "In nocat.farm's own dashboard on this PC, a box asks whether farm.nocat.lol may open it. Check it shows this same code, then press Approve.": "В собственной панели nocat.farm на этом ПК появится вопрос, можно ли farm.nocat.lol её открыть. Проверьте, что там тот же код, и нажмите «Разрешить».",
+    "This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.": "Эта страница говорит напрямую с nocat.farm на этом ПК - через gamer.mom ничего не идёт. nocat.farm сначала спросит вас: нажмите «Подключить», затем разрешите тот же код в приложении.",
+    "In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.": "В собственной панели nocat.farm на этом ПК появится вопрос, можно ли farm.gamer.mom её открыть. Проверьте, что там тот же код, и нажмите «Разрешить».",
     "Waiting for you to approve it…": "Ждём, пока вы разрешите…",
     "It was turned down in nocat.farm.": "Это отклонили в nocat.farm.",
     "That code ran out. Press Connect for a new one.": "Этот код истёк. Нажмите «Подключить», чтобы получить новый.",
-    "farm.nocat.lol can open this dashboard now.": "Теперь farm.nocat.lol может открывать эту панель.",
+    "farm.gamer.mom can open this dashboard now.": "Теперь farm.gamer.mom может открывать эту панель.",
     "Turned down.": "Отклонено.",
     "Taken back - that browser has to pair again.": "Отозвано - этому браузеру нужно связаться заново.",
     "dashboard in the browser: {0} - once an account is set up it opens there; {1} always works on this PC": "панель в браузере: {0} - когда аккаунт настроен, она открывается там; {1} на этом ПК работает всегда",
-    "farm.nocat.lol wants to open your dashboard": "farm.nocat.lol хочет открыть вашу панель",
-    "Did you just open farm.nocat.lol? It shows a code. Approve only if it is this same one:": "Вы только что открыли farm.nocat.lol? Там показан код. Разрешайте, только если это тот же самый:",
+    "farm.gamer.mom wants to open your dashboard": "farm.gamer.mom хочет открыть вашу панель",
+    "Did you just open farm.gamer.mom? It shows a code. Approve only if it is this same one:": "Вы только что открыли farm.gamer.mom? Там показан код. Разрешайте, только если это тот же самый:",
     "how?": "как?",
     "app port": "порт приложения",
     "open it here": "открыть здесь",
@@ -3491,11 +3491,11 @@
     "connect": "подключить",
     "approve this code in nocat.farm on this PC.": "разрешите этот код в nocat.farm на этом ПК.",
     "Even if this website were hacked, it couldn't take your items or your account: those stay in the app on your PC.": "Даже если этот сайт взломают, он не сможет забрать ваши предметы или аккаунт: они остаются в приложении на вашем ПК.",
-    "On: https://farm.nocat.lol can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Включено: https://farm.nocat.lol может открыть эту панель в браузере на этом ПК, после того как вы разрешите это здесь. Он никогда не может обмениваться, отправлять предметы, подтверждать, видеть коды Steam Guard или менять вход в аккаунты.",
+    "On: https://farm.gamer.mom can open this dashboard in a browser on this PC, once you approve it here. It can never trade, send items, confirm, see Steam Guard codes or change how accounts sign in.": "Включено: https://farm.gamer.mom может открыть эту панель в браузере на этом ПК, после того как вы разрешите это здесь. Он никогда не может обмениваться, отправлять предметы, подтверждать, видеть коды Steam Guard или менять вход в аккаунты.",
     "Type the current dashboard password to change it.": "Введите текущий пароль панели, чтобы изменить его.",
     "your browser blocked this page": "браузер заблокировал эту страницу",
     "let it reach your PC and try again, or open nocat.farm here.": "разрешите ей доступ к вашему ПК и попробуйте снова или откройте nocat.farm здесь.",
-    "Next to farm.nocat.lol in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "В адресной строке нажмите на значок рядом с farm.nocat.lol, для «Доступ к локальной сети» выберите «Разрешить» и перезагрузите эту страницу.",
+    "Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.": "В адресной строке нажмите на значок рядом с farm.gamer.mom, для «Доступ к локальной сети» выберите «Разрешить» и перезагрузите эту страницу.",
     "let this page reach your PC": "разрешите этой странице доступ к вашему ПК",
     "your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.": "браузер сначала спросит - нажмите «Разрешить». Это позволит этой странице общаться только с nocat.farm на этом ПК.",
     "find my nocat.farm": "найти мой nocat.farm"
@@ -3955,7 +3955,7 @@
     },
     "AddonTrades": {
       "label": "Разрешить дополнениям отвечать на предложения обмена",
-      "tip": "Позволяет установленным дополнениям принимать или отклонять предложения обмена, которые этот аккаунт иначе оставил бы вам (или отклонил бы по «Отклонять всё остальное»). Никогда — предложения от ваших собственных аккаунтов, пожертвования и обмены карточками, которые подобрал nocat.lol. Дополнение не может отдать ничего из ваших списков «никогда не трогать», ничего обещанного в другом предложении и ничего, что нельзя обменять, и не может меняться, когда Steam задержал бы обмен; его предложения ждут, как и любые другие. Только для дополнений, которым вы доверяете. По умолчанию выключено."
+      "tip": "Позволяет установленным дополнениям принимать или отклонять предложения обмена, которые этот аккаунт иначе оставил бы вам (или отклонил бы по «Отклонять всё остальное»). Никогда — предложения от ваших собственных аккаунтов, пожертвования и обмены карточками, которые подобрал gamer.mom. Дополнение не может отдать ничего из ваших списков «никогда не трогать», ничего обещанного в другом предложении и ничего, что нельзя обменять, и не может меняться, когда Steam задержал бы обмен; его предложения ждут, как и любые другие. Только для дополнений, которым вы доверяете. По умолчанию выключено."
     },
     "AddonTradesConfirm": {
       "label": "Подтверждать принятое дополнением от незнакомцев",
@@ -4618,11 +4618,11 @@
     },
     "CountMeAsUser": {
       "label": "Считать меня пользователем",
-      "tip": "Раз в час сообщает nocat.lol, что эта копия работает, чтобы на его странице можно было считать пользователей. Отправляет случайный номер, созданный для этой установки, версию приложения, платформу и сколько ваших аккаунтов Steam в сети (только число, например 3), плюс суммы часов и карточек и остальное (самоцветы, значки, наборы, проданные предметы), если вы ими делитесь (следующая настройка) - и больше ничего: ни имён аккаунтов, ни Steam ID, ни настроек. Так и получается счётчик аккаунтов Steam. Выключено: ничего не отправляется. С включённым «Делиться самыми дешёвыми наборами с другими пользователями nocat.farm» отправляет ещё и рыночные цены найденных наборов карточек, отдельным сообщением (см. эту настройку)."
+      "tip": "Раз в час сообщает gamer.mom, что эта копия работает, чтобы на его странице можно было считать пользователей. Отправляет случайный номер, созданный для этой установки, версию приложения, платформу и сколько ваших аккаунтов Steam в сети (только число, например 3), плюс суммы часов и карточек и остальное (самоцветы, значки, наборы, проданные предметы), если вы ими делитесь (следующая настройка) - и больше ничего: ни имён аккаунтов, ни Steam ID, ни настроек. Так и получается счётчик аккаунтов Steam. Выключено: ничего не отправляется. С включённым «Делиться самыми дешёвыми наборами с другими пользователями nocat.farm» отправляет ещё и рыночные цены найденных наборов карточек, отдельным сообщением (см. эту настройку)."
     },
     "ShareFarmTotals": {
       "label": "Делиться моими итогами фарма",
-      "tip": "Добавляет несколько чисел к ежечасному сообщению «Считать меня пользователем»: часы игрового времени, которые набрали ваши аккаунты, полученные карточки, предметы, превращённые в самоцветы, созданные значки (и металлические тоже), открытые наборы карточек и предметы, проданные на торговой площадке, с прошлого раза - например, 41.5 часа, 12 карточек, 30 предметов в самоцветы, 2 значка, 4 набора и 9 проданных предметов. При первом включении также один раз отправляет часы и карточки, которые уже есть в истории этой копии. nocat.lol складывает числа всех и показывает итоги на своей странице nocat.farm. Ничего о том, какой аккаунт, игра, карточка или предмет. Включено: числа идут с ежечасным сообщением. Выключено: ни одно. Только пока включено «Считать меня пользователем»."
+      "tip": "Добавляет несколько чисел к ежечасному сообщению «Считать меня пользователем»: часы игрового времени, которые набрали ваши аккаунты, полученные карточки, предметы, превращённые в самоцветы, созданные значки (и металлические тоже), открытые наборы карточек и предметы, проданные на торговой площадке, с прошлого раза - например, 41.5 часа, 12 карточек, 30 предметов в самоцветы, 2 значка, 4 набора и 9 проданных предметов. При первом включении также один раз отправляет часы и карточки, которые уже есть в истории этой копии. gamer.mom складывает числа всех и показывает итоги на своей странице nocat.farm. Ничего о том, какой аккаунт, игра, карточка или предмет. Включено: числа идут с ежечасным сообщением. Выключено: ни одно. Только пока включено «Считать меня пользователем»."
     },
     "ReactionSpeed": {
       "label": "Скорость реакции",
@@ -5009,7 +5009,7 @@
     },
     "CardSwaps": {
       "label": "Меняться лишними карточками с другими пользователями nocat.farm",
-      "tip": "Меняет лишние обычные коллекционные карточки один к одному с другими пользователями nocat.farm, в одной игре, чтобы обе стороны быстрее собирали наборы. nocat.lol подбирает пары аккаунтов; этот аккаунт ещё раз проверяет каждый обмен. Он никогда не отдаёт карточку, нужную вашим наборам, или последний экземпляр, никогда металлические карточки, фоны или смайлики и ничего из списков «не трогать». Пока он включён, nocat.lol хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их. При включении он сначала показывает, что будет делать, и просит подтвердить."
+      "tip": "Меняет лишние обычные коллекционные карточки один к одному с другими пользователями nocat.farm, в одной игре, чтобы обе стороны быстрее собирали наборы. gamer.mom подбирает пары аккаунтов; этот аккаунт ещё раз проверяет каждый обмен. Он никогда не отдаёт карточку, нужную вашим наборам, или последний экземпляр, никогда металлические карточки, фоны или смайлики и ничего из списков «не трогать». Пока он включён, gamer.mom хранит SteamID и ссылку для обмена этого аккаунта - выключение удаляет их. При включении он сначала показывает, что будет делать, и просит подтвердить."
     },
     "CardSwapMaxLoss": {
       "label": "Сколько обмен может потерять, не больше",
@@ -5025,7 +5025,7 @@
     },
     "ShareCheapestSets": {
       "label": "Делиться самыми дешёвыми наборами с другими пользователями nocat.farm",
-      "tip": "Пока какой-нибудь аккаунт покупает самые дешёвые полные наборы, примерно раз в 6 часов отправляет nocat.lol самые дешёвые полные наборы карточек, которые эта копия нашла на торговой площадке, и забирает те, что нашли все другие копии, - так дешёвые наборы находятся гораздо раньше. Что отправляется: игра каждого набора, названия его карточек, самая низкая цена каждой карточки, сколько выставлено и когда это видели - например, набор из 5 карточек по 0,03, увиденный час назад. Ничего о вас или ваших аккаунтах. То, что приходит, лишь говорит, какие игры проверить первыми: каждая карточка заново оценивается на торговой площадке Steam перед любой покупкой. Включено: обмен в обе стороны. Выключено: ничего не отправляется и не забирается. Только пока включено «Считать меня пользователем»."
+      "tip": "Пока какой-нибудь аккаунт покупает самые дешёвые полные наборы, примерно раз в 6 часов отправляет gamer.mom самые дешёвые полные наборы карточек, которые эта копия нашла на торговой площадке, и забирает те, что нашли все другие копии, - так дешёвые наборы находятся гораздо раньше. Что отправляется: игра каждого набора, названия его карточек, самая низкая цена каждой карточки, сколько выставлено и когда это видели - например, набор из 5 карточек по 0,03, увиденный час назад. Ничего о вас или ваших аккаунтах. То, что приходит, лишь говорит, какие игры проверить первыми: каждая карточка заново оценивается на торговой площадке Steam перед любой покупкой. Включено: обмен в обе стороны. Выключено: ничего не отправляется и не забирается. Только пока включено «Считать меня пользователем»."
     },
     "GemsForLevels": {
       "label": "Тратить самоцветы на максимум уровней",
@@ -5094,8 +5094,8 @@
       "tip": "Прежде чем купить карточки, которых не хватает значку, считает, не выйдут ли дешевле наборы карточек этой игры. Набор - это 3 случайные карточки из всего комплекта; повторы и карточки, которые у вас уже есть, не считаются, поэтому наборы обычно оставляют часть недостающих карточек, и их покупают потом. Покупает наборы, только если наборы и карточки, которые они, скорее всего, оставят, стоят хотя бы на десятую часть меньше недостающих карточек. Например, в комплекте из 5 карточек не хватает 4 по 0.20 (0.80): 3 набора по 0.10, скорее всего, оставят около половины карточки, всего около 0.41 - наборы. В комплекте из 8 не хватает 4 по 0.08, наборы по 0.25: карточки. Купленные наборы открываются сами; следующая проверка покупает то, чего всё ещё не хватает. Один комплект за проверку. 'buy preview' показывает цифры. По умолчанию выключено."
     },
     "FarmWebAllowed": {
-      "label": "Разрешить farm.nocat.lol открывать эту панель",
-      "tip": "Позволяет сайту farm.nocat.lol показывать эту панель в браузере на этом ПК, чтобы хранить в закладках один адрес. Он говорит напрямую с nocat.farm на этом ПК - через nocat.lol ничего не идёт. Каждый браузер сначала спрашивает: 6-символьный код появляется на странице и здесь, и вы разрешаете его в этой панели. Оттуда можно почти всё, но никогда нельзя отправить предметы куда-то или изменить вход в аккаунты: обмены, подтверждения, отправка предметов, коды Steam Guard, логины и секреты, денежные лимиты, обновления и дополнения остаются здесь. Пока это включено, значок в трее и «Открывать браузер при запуске» открывают её там, когда аккаунт уже настроен; добавление аккаунта и вход всегда происходят здесь. Включено при новой установке на ПК с экраном, выключено у существующей, в Docker и на сервере. Выключено: farm.nocat.lol вообще не может связаться с nocat.farm."
+      "label": "Разрешить farm.gamer.mom открывать эту панель",
+      "tip": "Позволяет сайту farm.gamer.mom показывать эту панель в браузере на этом ПК, чтобы хранить в закладках один адрес. Он говорит напрямую с nocat.farm на этом ПК - через gamer.mom ничего не идёт. Каждый браузер сначала спрашивает: 6-символьный код появляется на странице и здесь, и вы разрешаете его в этой панели. Оттуда можно почти всё, но никогда нельзя отправить предметы куда-то или изменить вход в аккаунты: обмены, подтверждения, отправка предметов, коды Steam Guard, логины и секреты, денежные лимиты, обновления и дополнения остаются здесь. Пока это включено, значок в трее и «Открывать браузер при запуске» открывают её там, когда аккаунт уже настроен; добавление аккаунта и вход всегда происходят здесь. Включено при новой установке на ПК с экраном, выключено у существующей, в Docker и на сервере. Выключено: farm.gamer.mom вообще не может связаться с nocat.farm."
     }
   }
 }

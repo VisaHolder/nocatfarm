@@ -429,7 +429,7 @@ public interface IPluginHost {
 	/// OnLoadAsync. The app keeps the say:
 	///
 	///   • only on an account whose owner switched on "Let add-ons answer trade offers" (off by default)
-	///   • never for the account's own accounts, a donation, a card swap nocat.lol paired, or a fair card swap the app takes
+	///   • never for the account's own accounts, a donation, a card swap gamer.mom paired, or a fair card swap the app takes
 	///     itself - only what it would otherwise leave for the owner (or decline under "Decline everything else")
 	///   • an Accept is refused when the offer gives away anything on the keep lists or from a kept game, anything promised
 	///     to another offer, anything Steam doesn't call tradable, or when the trade would be held - and when the app can't
