@@ -14,9 +14,10 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // 1.9.2: the same page, hosted at https://farm.nocat.lol - it talks to nocat.farm on this PC at http://127.0.0.1:<port>, with a
-// token this browser was given when the pairing was approved in the app. Served by the app itself (every other address)
-// HOSTED is false, API_BASE is '' and everything is exactly as it always was.
-const HOSTED = location.hostname === 'farm.nocat.lol' || document.documentElement.hasAttribute('data-farm-hosted');
+// token this browser was given when the pairing was approved in the app. Served by the app itself HOSTED is false, API_BASE
+// is '' and everything is exactly as it always was - whatever the address: a home proxy can serve the app's own page under
+// the name farm.nocat.lol too. Only the copy nocat.lol hosts carries data-farm-hosted (added when it's copied from a release).
+const HOSTED = document.documentElement.hasAttribute('data-farm-hosted');
 /// The API the app must answer for this page (FarmWeb.ApiVersion): an older app is asked to update.
 const FARM_API_NEEDED = 1;
 const farmStore = {

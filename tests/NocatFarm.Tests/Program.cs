@@ -40791,7 +40791,7 @@ static class FarmWebChecks {
 		Check("farm.nocat.lol: everyday settings are open - human mode, what it plays, cards, notifications on or off, update reminders, backups, the language",
 			new[] { "LegitMode", "IdleGames", "FarmCards", "BedTime", "Notes", "OnlineStatus", "BoosterMake", "SpareAction", "AchievementBoost", "IUseThisAccount" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Bot(n), true))
-			&& new[] { "Language", "KeepAwake", "NotifyTrades", "SendTrades", "TelegramCommands", "UpdateReminders", "BackupAuto", "OpenBrowserOnStart" }
+			&& new[] { "Language", "SendTrades", "TelegramCommands", "UpdateReminders", "BackupAuto", "OpenBrowserOnStart" }
 				.All(n => NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), null) || NocatFarm.Web.FarmWeb.SettingAllowed(Global(n), true)));
 		var sorted = typeof(NocatFarm.Web.FarmWeb).GetMethod("Sorted", BindingFlags.NonPublic | BindingFlags.Static)!;
 		Check("farm.nocat.lol: every settings section is sorted into a list - a new section starts closed",
@@ -40811,7 +40811,8 @@ static class FarmWebChecks {
 			&& Src("src/NocatFarm/Web/WebHost.cs").Contains("TelegramConnectLink = farm ? null : Notifier.TelegramConnectLink,", StringComparison.Ordinal));
 		Check("farm.nocat.lol: the hosted page keeps API_BASE empty when the app serves it, and only ever talks to 127.0.0.1",
 			Src("src/NocatFarm/wwwroot/app.js").Contains("const API_BASE = HOSTED ? `http://127.0.0.1:${farmPort}` : '';", StringComparison.Ordinal)
-			&& Src("src/NocatFarm/wwwroot/app.js").Contains("const HOSTED = location.hostname === 'farm.nocat.lol' || document.documentElement.hasAttribute('data-farm-hosted');", StringComparison.Ordinal)
+			&& Src("src/NocatFarm/wwwroot/app.js").Contains("const HOSTED = document.documentElement.hasAttribute('data-farm-hosted');", StringComparison.Ordinal)
+			&& !Src("src/NocatFarm/wwwroot/app.js").Contains("location.hostname === 'farm.nocat.lol'", StringComparison.Ordinal)
 			&& Src("src/NocatFarm/wwwroot/app.js").Contains("if (HOSTED) { opts.credentials = 'omit'; opts.mode = 'cors'; }", StringComparison.Ordinal));
 
 		// The page served by the app itself: no API base, so every request goes where it always went (1.9.1's own calls, word for word).
@@ -41143,7 +41144,7 @@ static class FarmWebChecks {
 				if ((a.Code != System.Net.HttpStatusCode.BadRequest) || ((bool?) a.Json?["ok"] != false) || main.Cfg.CardSwaps) twiceThrough.Add($"{body}: {a.Code} {main.Cfg.CardSwaps}");
 			}
 			Answer lineTwice = await Send("POST", "/api/command", token: token, json: "{\"Line\":\"status\",\"line\":\"exit\"}");
-			Answer junkBody = await Send("POST", "/api/config", token: token, json: "{\"KeepAwake\":");
+			Answer junkBody = await Send("POST", "/api/config", token: token, json: "{\"BackupAuto\":");
 			Answer bigBody = await Send("POST", "/api/bots/main/config", token: token, json: "{\"Notes\":\"" + new string('x', 2 * 1024 * 1024) + "\"}");
 			Check("farm.nocat.lol: a body naming a field twice, in any case, is refused whole - card swaps stay off",
 				twiceThrough.Count == 0 && lineTwice.Code == System.Net.HttpStatusCode.BadRequest, string.Join("; ", twiceThrough) + $" {lineTwice.Code}");
@@ -41174,12 +41175,12 @@ static class FarmWebChecks {
 				notes && main.Cfg.Notes == "from farm" && buy && !limit && !target && !masters && !secret && !login && main.Cfg.SteamLogin == "main",
 				$"{notes} {buy} {limit} {target} {masters} {secret} {login}");
 			main.Cfg.BuyCards = false;
-			Answer globalNo = await Send("POST", "/api/config", token: token, json: "{\"DiscordOwnerId\":\"1\",\"KeepAwake\":true}");
+			Answer globalNo = await Send("POST", "/api/config", token: token, json: "{\"DiscordOwnerId\":\"1\",\"BackupAuto\":true}");
 			Answer globalFarm = await Send("POST", "/api/config", token: token, json: "{\"FarmWebAllowed\":false}");
 			Answer globalHook = await Send("POST", "/api/config", token: token, json: "{\"DiscordWebhookUrl\":\"https://evil.example/x\"}");
 			Check("farm.nocat.lol: global saves with a bot's owner, the switch itself or a notification address are refused whole",
 				globalNo.Code == System.Net.HttpStatusCode.Forbidden && globalFarm.Code == System.Net.HttpStatusCode.Forbidden && globalHook.Code == System.Net.HttpStatusCode.Forbidden
-				&& mgr.Global.WebPassword.Length == 0 && !mgr.Global.KeepAwake && mgr.Global.FarmWebAllowed && mgr.Global.DiscordWebhookUrl.Length == 0);
+				&& mgr.Global.WebPassword.Length == 0 && !mgr.Global.BackupAuto && mgr.Global.FarmWebAllowed && mgr.Global.DiscordWebhookUrl.Length == 0);
 			var opts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, PropertyNameCaseInsensitive = true };
 			opts.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 			MethodInfo settingsAllowed = typeof(NocatFarm.Web.WebHost).GetMethod("FarmSettingsAllowed", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -41189,7 +41190,7 @@ static class FarmWebChecks {
 				.Invoke(null, [cfg, NocatFarm.Config.Settings.Bot, System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject(), opts, false])!;
 			var spending = new NocatFarm.Config.BotConfig { BuyCards = true, SpendPoints = true };
 			Check("farm.nocat.lol: a settings save is judged by what it changes - the page's Base, the empty secret boxes and the rest left as they are",
-				GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"\",\"Base\":{\"KeepAwake\":false}}") && !GlobalOk("{\"KeepAwake\":true,\"WebPassword\":\"x\"}")
+				GlobalOk("{\"BackupAuto\":true,\"WebPassword\":\"\",\"Base\":{\"BackupAuto\":false}}") && !GlobalOk("{\"BackupAuto\":true,\"WebPassword\":\"x\"}")
 				&& GlobalOk("{\"WebPassword\":\"\",\"TelegramBotToken\":\"\"}") && GlobalOk("{\"SteamOpenEveryAccount\":true}") && !GlobalOk("{\"UpdateMode\":2}")
 				&& BotOk(spending, "{\"BuyCards\":false,\"SpendPoints\":false}") && BotOk(new NocatFarm.Config.BotConfig(), "{\"BuyCards\":true}")
 				&& !BotOk(spending, "{\"BuyWeeklyLimit\":1000}")
@@ -41207,7 +41208,7 @@ static class FarmWebChecks {
 			bool wrongCurrent = Pw("{\"WebPassword\":\"a-new-password\",\"CurrentPassword\":\"guess\"}");
 			bool rightCurrent = Pw("{\"WebPassword\":\"a-new-password\",\"CurrentPassword\":\"the-current-password\"}");
 			bool removing = Pw("{\"WebPassword\":\"\\u0000clear\",\"CurrentPassword\":\"the-current-password\"}");
-			bool untouched = Pw("{\"WebPassword\":\"\",\"KeepAwake\":true}");
+			bool untouched = Pw("{\"WebPassword\":\"\",\"BackupAuto\":true}");
 			mgr.Global.WebPassword = "";
 			web.ClearLockouts();
 			Check("farm.nocat.lol: a first dashboard password is never set from there; an existing one changes only with the current one; it's never removed from there",
