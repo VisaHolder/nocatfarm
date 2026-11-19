@@ -83,7 +83,24 @@ if [ "$PROG" = nocatFarm ]; then
 	sleep 5
 	left=$(cd "$T/app" && find . -iname '*nocat*' | head -n 5)
 	[ -z "$left" ] || { echo "FAIL: left under the old names: $left"; exit 1; }
-	pgrep -x gamerFarm > /dev/null || { echo "FAIL: it isn't running as gamerFarm"; exit 1; }
+	# The program the running copy runs - the copy that holds the folder's lock, by the file it was started from. Never by
+	# its name: on a Mac the old updater started it through the script under the old name, which keeps that name as the
+	# start of its command line on purpose (tools/linux/old-program.sh) - so pgrep -x gamerFarm found nothing there,
+	# though gamerFarm was what ran.
+	p=$(head -n 1 "$T/app/config/state/instance.lock" 2>/dev/null || true)
+	exe=""
+	if [ -n "$p" ] && [ -e "/proc/$p/exe" ]; then
+		exe=$(readlink "/proc/$p/exe" 2>/dev/null || true)
+	elif [ -n "$p" ]; then
+		# A Mac: the files it has mapped (its program and libraries) - the program is the one called gamerFarm, if it's there
+		exe=$(lsof -a -p "$p" -d txt -Fn 2>/dev/null | sed -n 's/^n//p' | grep '/gamerFarm$' | head -n 1 || true)
+	fi
+	if [ "$(basename "${exe:-none}")" != gamerFarm ]; then
+		echo "FAIL: it isn't running as gamerFarm (process ${p:-none} runs ${exe:-nothing})"
+		ps -A -ww -o pid= -o args= | grep -i farm | grep -v grep || true
+		exit 1
+	fi
+	echo "running as gamerFarm: process $p, $exe (started as: $(ps -ww -o args= -p "$p" | cut -c 1-200))"
 	echo "PASS: moved over from $FROM - settings, program and logs under the new names, nothing left under the old ones"
 fi
 curl -sf -X POST "http://127.0.0.1:$PORT/api/command" -H 'Content-Type: application/json' -d '{"line":"status"}' | grep -q demo
