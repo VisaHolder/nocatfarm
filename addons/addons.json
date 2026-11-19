@@ -1,5 +1,5 @@
 {
-  "serial": 7,
+  "serial": 8,
   "addons": [
     {
       "id": "rep4rep",
@@ -18,11 +18,11 @@
         "tr": "rep4rep puanı kazandırır: rep4rep'in dağıttığı profil yorumlarını, açtığın hesaplardan insan hızında gönderir. Kendi panel sekmesi, yorum engel listesi var ve gamer.farm her hesabı Steam'in yorum sınırının altında tutar.",
         "zh-CN": "赚取 rep4rep 积分：以真人般的节奏，从你打开的账号发布 rep4rep 分发的个人资料评论。有自己的面板标签页和评论屏蔽列表，gamer.farm 会让每个账号都低于 Steam 的评论上限。"
       },
-      "version": "1.0.1",
+      "version": "1.0.2",
       "minAppVersion": "1.9.0",
       "file": "nocatfarm.rep4rep.dll",
-      "url": "https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.3/nocatfarm.rep4rep.dll",
-      "sha256": "72ab3e69cac29fb7a16925ca3fade20948c4d0eb7a255f531238b6140e5e7872",
+      "url": "https://github.com/VisaHolder/nocatfarm/releases/download/v2.0.0/nocatfarm.rep4rep.dll",
+      "sha256": "735d909b7645e530adb94850ec5d53e01b25ee26c2839e8263ce78340a3683b5",
       "source": "https://github.com/VisaHolder/gamerfarm/tree/main/addons/rep4rep"
     }
   ]
