@@ -37,7 +37,7 @@ needs installing first, not even .NET.
      needed. If you already use ArchiSteamFarm, Idle Master or a portable gamer.farm, it finds it and offers to
      bring your accounts over.
      If Windows says it protected your PC, click More info, then Run anyway.
-   - `gamer.farm-v…-portable.zip` is the portable version. Right-click it, *Extract All…*, and run `nocatFarm.exe`.
+   - `gamer.farm-v…-portable.zip` is the portable version. Right-click it, *Extract All…*, and run `gamerFarm.exe`.
      Nothing gets installed and everything stays in that folder.
 2. The dashboard opens in your browser with a short walkthrough. Pick your language, then **Easy** (a few plain
    questions, about two minutes) or **Advanced** (your phone, opening it from anywhere, notifications, the update
@@ -79,7 +79,7 @@ the web dashboard, no window. See [Linux, Mac and Docker](https://gamer.mom/docs
 
 gamer.farm signs your Steam accounts in and farms their trading cards, one game after another, with a rough
 estimate of how long is left. When the cards are done it idles your games for playtime, up to 32 at once, and can
-show a made-up game name on your profile (like `nocat.lol`) while the real games keep counting.
+show a made-up game name on your profile (like `gamer.mom`) while the real games keep counting.
 
 The account you actually play on can go in **human mode**. Then it plays one game at a time, takes breaks and
 meals, goes to bed, and skips the odd day. When a game drops its last card it plays on for another 15-20 minutes
@@ -109,8 +109,7 @@ Beyond that:
 - History charts show cards per day, hours banked and inventory value, with this week against last.
 - The Phone page gives you QR codes for your Wi-Fi and for away from home, and a checklist that fixes whatever
   isn't ready. The dashboard can go on your phone's home screen with the gamer.farm icon.
-- Discord and Telegram can send you notifications and take commands. There's an optional *Playing gamer.farm*
-  card for your Discord profile too.
+- Discord and Telegram can send you notifications and take commands.
 - If you switch it on, achievements are earned one at a time in an order a real player could manage: "10 kills"
   after "5 kills", chapter 2 after chapter 1, Hard after Normal, the ending last. It paces them to how long the
   game really takes, so "finish the game" never lands 3 hours into a 20-hour game. An optional hunter picks games to
@@ -223,7 +222,7 @@ Type these in the app window or the dashboard's Console tab. You can also send t
 | `cards` | Cards left to farm, and about how long it'll take. |
 | `drops myaccount` | Go for card drops right now, then back to normal. |
 | `play myaccount 730, 440` | Idle these games (the number is in the game's store link). Human-mode accounts pick their games under Settings → Human mode instead. |
-| `gamename myaccount nocat.lol` | Show this name on your profile instead of the real game. |
+| `gamename myaccount gamer.mom` | Show this name on your profile instead of the real game. |
 | `human myaccount week` | See how human mode would spend the next week. |
 | `value` | What each account's items are worth. |
 | `match` | Swap spare cards between your own accounts so sets finish (`match do` sends them). |
@@ -304,7 +303,7 @@ timings, farming order, the dashboard's port and password, and the rest.
 **It says Steam is rate-limiting it.** Steam slows down any PC that asks too much at once, usually after a lot of
 restarts. gamer.farm waits it out by itself.
 
-**Where are my settings?** In the `config` folder next to `nocatFarm.exe`. With the setup that's
+**Where are my settings?** In the `config` folder next to `gamerFarm.exe`. With the setup that's
 `%LOCALAPPDATA%\Programs\gamer.farm\config`; with the portable zip it's wherever you unzipped it. Back that folder
 up and you've backed up everything. Or turn on **Back up every day** (Settings → Global settings → Backups) for a
 password-locked backup that opens on any PC: on the new one, pick *Restore from a backup file* in the first-run
@@ -335,8 +334,8 @@ open an [issue](https://github.com/VisaHolder/gamerfarm/issues) and paste the lo
   ```
   git clone https://github.com/VisaHolder/gamerfarm.git
   cd gamerfarm
-  dotnet publish src/NocatFarm -c Release -o run
-  run\nocatFarm.exe
+  dotnet publish src/GamerFarm -c Release -o run
+  run\gamerFarm.exe
   ```
 
 ## Licence

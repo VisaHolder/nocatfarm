@@ -1,0 +1,440 @@
+﻿using System.Globalization;
+using System.Text;
+using GamerFarm.Core;
+
+namespace GamerFarm.Windows;
+
+/// <summary>
+/// The console as a board rather than a firehose.
+///
+/// A scrolling log answers "what happened" but never "what is it doing", and with several accounts running it
+/// buries the answer under lines you have already read. This paints one row per account and repaints it in
+/// place, so the screen always shows the present tense: who is playing what, for how much longer, and how much
+/// of today is left. The log still exists - the last few lines sit underneath, and the whole thing is in the
+/// file and on the dashboard - but it is no longer the main event.
+///
+/// Everything is drawn with ANSI escapes rather than Console.SetCursorPosition, because that fights with
+/// anything else writing to the same handle and flickers badly over a redraw this frequent.
+/// </summary>
+public sealed class LiveConsole : IDisposable {
+	private const int LogLines = 6;
+
+	private readonly BotManager _mgr;
+	private readonly Lock _paint = new();
+	// Entries, not formatted lines. Formatting on arrival froze each row in the language it was logged in,
+	// so a language change left the six rows already on screen untouched - the same mistake the window made.
+	private readonly List<Log.Entry> _recent = [];
+	private CancellationTokenSource? _cts;
+	private string _input = "";
+	private int _lastHeight;
+	private int _paintFailures;
+	private bool _enabled;
+
+	public LiveConsole(BotManager mgr) => _mgr = mgr;
+
+	/// <summary>True once the board owns the screen, so the ordinary log printer stays out of the way.</summary>
+	public bool Active => _enabled;
+
+	public void Start() {
+		if (!TryEnableAnsi()) {
+			Log.Info("terminal can't redraw - using the plain scrolling log");
+
+			return;
+		}
+
+		_enabled = true;
+		Log.Suppressed = true;
+		Log.Written += OnLogged;
+		Prompt.Changed += Repaint;
+
+		// The lines it will show, not the last few entries of which most may be hidden debug detail. Under the lock
+		// OnLogged takes - it is already subscribed, so a line logged right now arrives there at the same moment - and
+		// merged by sequence number: added bare, the backfill raced those, could put a line in twice, and left the
+		// rows out of order.
+		lock (_recent) {
+			HashSet<long> have = [.. _recent.Select(static e => e.Seq)];
+			_recent.AddRange(Log.Recent(200).Where(Shown).Where(e => !have.Contains(e.Seq)).TakeLast(LogLines));
+			_recent.Sort(static (a, b) => a.Seq.CompareTo(b.Seq));
+
+			while (_recent.Count > LogLines) {
+				_recent.RemoveAt(0);
+			}
+		}
+
+		_cts = new CancellationTokenSource();
+		CancellationToken ct = _cts.Token;
+
+		_ = Task.Run(async () => {
+			// One second is fast enough to feel live and slow enough to cost nothing. Countdowns are shown in
+			// minutes, so there is nothing on screen that changes faster than this.
+			while (!ct.IsCancellationRequested) {
+				try {
+					Paint();
+					_paintFailures = 0;
+				} catch (Exception e) {
+					// A resize mid-paint can throw and the next tick redraws fine. But if painting keeps failing
+					// the user is staring at a frozen screen with the log suppressed behind it, which is far worse
+					// than no board at all - so give up and hand the console back.
+					if (++_paintFailures >= 5) {
+						Dispose();
+						Log.Warn(new Said("live view failed ({0}) - back to the plain log", e.GetType().Name));
+						Log.Failed("live view: painting failed five times in a row", e);
+						Log.StackToFile(e);
+
+						return;
+					}
+				}
+
+				try {
+					await Task.Delay(1000, ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) {
+					return;
+				}
+			}
+		}, ct);
+	}
+
+	/// <summary>Redraw now. Used when something off-screen changed what the rows should say - a new language.</summary>
+	public void Repaint() => Paint();
+
+	/// <summary>The line being typed, so a repaint doesn't wipe it out from under the user.</summary>
+	public void SetInput(string text) {
+		_input = text;
+		Paint();
+	}
+
+	/// <summary>
+	/// Show what a command answered.
+	///
+	/// The board repaints over the same rows every second, so anything simply written to the console would be
+	/// gone before it could be read. This scrolls the answer out ABOVE the board and starts the board again
+	/// underneath it, which is the only way both can share one screen.
+	/// </summary>
+	public void Show(string command, string output) {
+		lock (_paint) {
+			_lastHeight = 0;   // the board is about to be pushed up; do not overwrite where it used to be
+
+			StringBuilder sb = new();
+			sb.Append("\x1b[2K").Append("  > ").Append(command).Append('\n');
+
+			foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
+				sb.Append("\x1b[2K").Append("  ").Append(line).Append('\n');
+			}
+
+			sb.Append('\n');
+			Console.Out.Write(sb.ToString());
+			Console.Out.Flush();
+		}
+
+		Paint();
+	}
+
+	/// <summary>
+	/// DEBUG only with "Show debug detail" on, like the window, the plain console and the dashboard. The board showed it
+	/// regardless, and its few log rows filled with "reusing web token" and pushed out the lines worth reading. And only the
+	/// kinds of line the "Show in the app's log" chips show (Core/LogShow.cs) - from the next line on.
+	/// </summary>
+	private static bool Shown(Log.Entry entry) => ((entry.Level != "DEBUG") || Log.DebugEnabled) && Core.LogShow.Shows(entry);
+
+	private void OnLogged(Log.Entry entry) {
+		if (!Shown(entry)) {
+			return;
+		}
+
+		lock (_recent) {
+			_recent.Add(entry);
+
+			while (_recent.Count > LogLines) {
+				_recent.RemoveAt(0);
+			}
+		}
+
+		Paint();
+	}
+
+	/// <summary>Empty the log part of the board - the 'clear' command typed here. The log file is untouched.</summary>
+	public void ClearLog() {
+		lock (_recent) {
+			_recent.Clear();
+		}
+
+		Paint();
+	}
+
+	private static string Format(Log.Entry entry) =>
+		$"{entry.When:HH:mm:ss} {Log.Bar} {Log.Pad(entry.Source, 10)} {Log.Bar} {entry.Text}";
+
+	// ── painting ────────────────────────────────────────────────────────────
+	private void Paint() {
+		if (!_enabled) {
+			return;
+		}
+
+		lock (_paint) {
+			int width = Math.Max(48, SafeWidth());
+			StringBuilder sb = new();
+
+			// Back to the top of the block we drew last time, then redraw over it. Clearing the whole screen
+			// every second makes the text visibly strobe; overwriting in place does not.
+			//
+			// height - 1, NOT height. The last line drawn is the prompt, deliberately left without a newline so
+			// the cursor sits where the user is typing - which means the cursor is already ON the block's last
+			// row, not below it. Moving up the full height would climb one row per repaint and chew through
+			// whatever was on screen above.
+			if (_lastHeight > 1) {
+				sb.Append("\x1b[").Append(_lastHeight - 1).Append('F');
+			} else if (_lastHeight == 1) {
+				sb.Append('\r');
+			}
+
+			int height = 0;
+
+			void Line(string text) {
+				sb.Append("\x1b[2K").Append(Trim(text, width)).Append('\n');
+				height++;
+			}
+
+			Line(Dim($"  gamerFarm {Version()}") + new string(' ', Math.Max(2, width - 22 - Version().Length)) + Dim($"{DateTime.Now:HH:mm:ss}"));
+			Line("");
+
+			IReadOnlyCollection<Bot> bots = _mgr.All;
+
+			if (bots.Count == 0) {
+				Line(Dim("  no accounts yet - type 'tutorial'"));
+			} else {
+				int nameWidth = Math.Clamp(bots.Max(static b => b.Name.Length), 6, 14);
+
+				// Column headings, so every figure below has a name against it. Without them the board was a row
+				// of bare numbers you had to already know the meaning of.
+				Line(Dim($"  {Log.Pad("ACCOUNT", nameWidth)}  {Log.Pad("DOING", 30)}  {Log.Pad("THIS SITTING", 24)}  {Log.Pad("TODAY", 16)}  COMMENTS"));
+
+				foreach (Bot bot in bots) {
+					Line(Row(bot, nameWidth));
+				}
+			}
+
+			Line("");
+
+			lock (_recent) {
+				foreach (Log.Entry entry in _recent) {
+					Line(Dim("  " + Format(entry)));
+				}
+
+				for (int i = _recent.Count; i < LogLines; i++) {
+					Line("");
+				}
+			}
+
+			// A question waiting for an answer (a Steam Guard code, a password) gets its own line right above the input,
+			// part of the board. Written to the console by itself, the next repaint drew straight over it.
+			Prompt.Question? asked = Prompt.Current;
+
+			if (asked != null) {
+				Line("\x1b[33m  " + asked.Text + ":\x1b[0m");
+			}
+
+			// The prompt is drawn last and left without a newline, so the cursor ends where the user is typing. Then everything
+			// below it is cleared: a board one row shorter than the last (the question answered) left the old prompt row,
+			// "  ? " and all, under the new one. Only here, where the console takes ANSI - Paint does nothing otherwise.
+			sb.Append("\x1b[2K").Append(asked != null ? "  ? " : "  > ").Append(_input).Append("\x1b[J");
+			height++;
+
+			_lastHeight = height;
+			Console.Out.Write(sb.ToString());
+			Console.Out.Flush();
+		}
+	}
+
+	/// <summary>
+	/// One line describing what an account is doing, in the present tense and in plain words.
+	///
+	/// The order matters: the most specific true thing wins. "online" is what an account is when there is
+	/// nothing better to say about it, not a thing worth saying when it is mid-session on Counter-Strike.
+	/// </summary>
+	private static string Row(Bot bot, int nameWidth) {
+		string name = Colour(bot, Log.Pad(bot.Name, nameWidth));
+
+		if (!bot.IsOnline) {
+			return $"  {name}  {Dim(Loc.T(bot.StatusText))}";
+		}
+
+		// Worked out once in BotStatus and painted here. The bars and the dimming are this board's business;
+		// deciding WHAT is true is not, and doing both in two places is exactly how the two boards drifted.
+		BotStatus s = BotStatus.Of(bot);
+
+		string doing = s.Doing;
+		string sitting = s.Sitting;
+		string today = "";
+
+		if (s.SessionTotal > 0) {
+			sitting = $"{Bar(s.SessionDone, s.SessionTotal)} {sitting}";
+		} else if (!s.Sitting.IsEmpty) {
+			sitting = Dim(sitting);
+		}
+
+		if (s.DayTotal > 0) {
+			today = $"{Bar(s.DayDone, s.DayTotal)} {Fmt.Hm(s.DayDone)}/{Fmt.Hm(s.DayTotal)}";
+		} else if (!s.Today.IsEmpty) {
+			// Compared on the ENGLISH, not the painted text - the sentence itself is translated by now.
+			today = s.Today.English is "nothing to farm" ? Dim(s.Today) : s.Today;
+		}
+
+		if (!s.Persona.IsEmpty) {
+			doing += Dim("  (" + s.Persona + ")");
+		}
+
+		if (!s.Warning.IsEmpty) {
+			doing += "\u001b[33m  " + s.Warning + "\u001b[0m";
+		}
+
+		string said = s.Comments.Length > 0 ? s.Comments : Dim("-");
+
+		return $"  {name}  {Pad(doing, 30)}  {Pad(sitting, 24)}  {Pad(today, 16)}  {said}";
+	}
+
+	/// <summary>A small progress bar. Eight cells reads as a fraction without eating the row.</summary>
+	private static string Bar(int done, int total) {
+		const int Cells = 8;
+		int filled = total <= 0 ? 0 : Math.Clamp((int) Math.Round((double) done / total * Cells), 0, Cells);
+
+		return "\u001b[36m" + new string('#', filled) + "\u001b[90m" + new string('.', Cells - filled) + "\u001b[0m";
+	}
+
+	/// <summary>
+	/// Pad to a column width counting only VISIBLE columns, so colour codes can't skew the layout - and an emoji, two
+	/// columns wide, can't push the rest of its row along by one.
+	/// </summary>
+	private static string Pad(string text, int width) {
+		string cut = Visible(text) > width ? Trim(text, width) : text;
+
+		return cut + new string(' ', Math.Max(0, width - Visible(cut)));
+	}
+
+	private static int Visible(string text) {
+		int count = 0;
+
+		for (int i = 0; i < text.Length;) {
+			if (text[i] == '\u001b') {
+				i = PastEscape(text, i);
+
+				continue;
+			}
+
+			int n = StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			count += Columns.ElementWidth(text.AsSpan(i, n));
+			i += n;
+		}
+
+		return count;
+	}
+
+	/// <summary>Where the colour code starting at <paramref name="at"/> ends: just past its first letter.</summary>
+	private static int PastEscape(string text, int at) {
+		int i = at + 1;
+
+		while ((i < text.Length) && !char.IsLetter(text[i])) {
+			i++;
+		}
+
+		return Math.Min(i + 1, text.Length);
+	}
+
+	private static string Colour(Bot bot, string name) {
+		// Signed out and paused keep their own colours whatever the account is set to: those are states you
+		// need to see at a glance, and losing them to a per-account colour would be a bad trade.
+		if (!bot.IsOnline) {
+			return "\x1b[90m" + name + "\x1b[0m";
+		}
+
+		if (bot.Paused || bot.PlayingBlocked) {
+			return "\x1b[33m" + name + "\x1b[0m";
+		}
+
+		return (NameColour.Of(bot.Cfg.LogColour)?.Ansi ?? "\x1b[36m") + name + "\x1b[0m";
+	}
+
+	private static string Dim(string text) => "\x1b[90m" + text + "\x1b[0m";
+
+	/// <summary>
+	/// Trim to the terminal width WITHOUT counting the escape sequences, which take no screen columns - on a whole text
+	/// element, so the cut never leaves half an emoji behind to be drawn as "�".
+	/// </summary>
+	private static string Trim(string text, int width) {
+		int visible = 0;
+
+		for (int i = 0; i < text.Length;) {
+			if (text[i] == '\x1b') {
+				i = PastEscape(text, i);
+
+				continue;
+			}
+
+			int n = StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			visible += Columns.ElementWidth(text.AsSpan(i, n));
+
+			if (visible > width) {
+				return text[..i] + "\x1b[0m";
+			}
+
+			i += n;
+		}
+
+		return text;
+	}
+
+	private static int SafeWidth() {
+		try {
+			return Console.WindowWidth - 1;
+		} catch {
+			return 100;
+		}
+	}
+
+	private static string Version() =>
+		typeof(LiveConsole).Assembly.GetName().Version?.ToString(3) ?? "";
+
+	// ── terminal setup ──────────────────────────────────────────────────────
+	/// <summary>
+	/// Turn on VT processing. Windows consoles have understood ANSI since Windows 10, but not by default, and
+	/// without this the escapes are printed as literal garbage - which is far worse than a plain log.
+	/// </summary>
+	private static bool TryEnableAnsi() {
+		try {
+			if (Console.IsOutputRedirected) {
+				return false;   // piped to a file: escapes would end up in the file
+			}
+
+			if (!OperatingSystem.IsWindows()) {
+				return true;
+			}
+
+			return NativeConsole.EnableVirtualTerminal();
+		} catch {
+			return false;
+		}
+	}
+
+	public void Dispose() {
+		if (!_enabled) {
+			return;
+		}
+
+		_enabled = false;
+		Log.Written -= OnLogged;
+		Prompt.Changed -= Repaint;
+		Log.Suppressed = false;
+
+		try {
+			_cts?.Cancel();
+			_cts?.Dispose();
+		} catch {
+			// already gone
+		}
+
+		try {
+			Console.Out.Write("\x1b[0m\n");
+		} catch {
+			// the console may already be gone on the way out
+		}
+	}
+}

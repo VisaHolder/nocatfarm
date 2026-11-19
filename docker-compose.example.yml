@@ -3,7 +3,7 @@
 #   1. Copy this file to docker-compose.yml.
 #   2. Make the data folders, and put the dashboard password and your time zone in a file called .env next to this one:
 #        mkdir -p config logs backups plugins
-#        echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
+#        echo 'GAMERFARM_WEB_PASSWORD=something-long-and-your-own' > .env
 #        echo 'TZ=Europe/London' >> .env        (yours - see the list at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 #   3. docker compose up -d --build
 #   4. Open http://localhost:7242 and sign in with that password. Add accounts there (the Steam Guard code or
@@ -15,13 +15,13 @@
 # Stopping: docker compose down - every account signs out cleanly first.
 
 services:
-  nocatfarm:
+  gamerfarm:
     build: .
-    image: nocatfarm:latest
-    container_name: nocatfarm
+    image: gamerfarm:latest
+    container_name: gamerfarm
     # The device name Steam shows for these logins. Without it, it's a random container id that changes on
     # every re-create.
-    hostname: nocatfarm
+    hostname: gamerfarm
     restart: unless-stopped
     init: true
     # Time to sign every account out before Docker gives up and kills it.
@@ -37,23 +37,23 @@ services:
       # LANG: de_DE.UTF-8
       # REQUIRED - compose won't start without it (it's read from .env). With no password the dashboard only
       # lets in requests from inside the container itself, which through a published port is nobody.
-      NOCATFARM_WEB_PASSWORD: ${NOCATFARM_WEB_PASSWORD:?put NOCATFARM_WEB_PASSWORD=yourpassword in a .env file next to docker-compose.yml}
+      GAMERFARM_WEB_PASSWORD: ${GAMERFARM_WEB_PASSWORD:?put GAMERFARM_WEB_PASSWORD=yourpassword in a .env file next to docker-compose.yml}
       # Or keep it out of the environment with a Docker secret: delete the line above, uncomment the two
-      # "secrets" blocks below, and put the password in ./nocatfarm_password.txt
-      # NOCATFARM_WEB_PASSWORD_FILE: /run/secrets/nocatfarm_password
+      # "secrets" blocks below, and put the password in ./gamerfarm_password.txt
+      # GAMERFARM_WEB_PASSWORD_FILE: /run/secrets/gamerfarm_password
       # For your phone: this computer's address on your wifi (e.g. 192.168.1.20). From inside Docker gamer.farm can't
       # see it, so Open on your phone and /dashboard use this for the link and the QR code.
-      # NOCATFARM_HOME_ADDRESS: 192.168.1.20
+      # GAMERFARM_HOME_ADDRESS: 192.168.1.20
       # On a VPS, or anywhere it's opened from the internet on purpose (the port published beyond 127.0.0.1, or a proxy):
       # the address people use to reach it, like farm.example.com or 203.0.113.7:7242. Without it, "Open from anywhere" is
       # off and every visitor from the internet is refused - Open from anywhere asks a home router for a forward (UPnP),
       # and a VPS has no router to ask. The SSH tunnel doesn't need it. Taken away again, the next start clears it.
-      # NOCATFARM_PUBLIC_ADDRESS: farm.example.com
+      # GAMERFARM_PUBLIC_ADDRESS: farm.example.com
       # Behind Caddy or another reverse proxy that isn't inside this container: its address as the container sees it
       # (Docker's network - 172.16.0.0/12 covers Docker's own ranges). Its X-Forwarded-For is then believed, so visitors
       # from the internet count as the internet - the sign-in code, the lockouts and switching itself off all work.
       # Without it, everybody coming through the proxy looks like home.
-      # NOCATFARM_TRUSTED_PROXIES: 172.16.0.0/12
+      # GAMERFARM_TRUSTED_PROXIES: 172.16.0.0/12
     ports:
       # This machine only. To reach it from your phone or another PC, make it "7242:7242".
       - "127.0.0.1:7242:7242"
@@ -69,12 +69,12 @@ services:
       # - /path/to/ArchiSteamFarm:/import/asf:ro
       # Optional: the same Steam machine id across re-creates, instead of a new one made up each time.
       # - /etc/machine-id:/etc/machine-id:ro
-    # Lets `docker attach nocatfarm` type commands into it (detach again with Ctrl+P then Ctrl+Q). No tty on
+    # Lets `docker attach gamerfarm` type commands into it (detach again with Ctrl+P then Ctrl+Q). No tty on
     # purpose: with one, the live board's screen redraws fill `docker logs`.
     stdin_open: true
     # secrets:
-    #   - nocatfarm_password
+    #   - gamerfarm_password
 
 # secrets:
-#   nocatfarm_password:
-#     file: ./nocatfarm_password.txt
+#   gamerfarm_password:
+#     file: ./gamerfarm_password.txt

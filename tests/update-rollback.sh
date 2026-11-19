@@ -11,18 +11,18 @@
 set -e
 RID="$1"
 APP="${2:-app}"
-VER=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
+VER=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/GamerFarm/GamerFarm.csproj)
 PORT=7250
 PORT2=7251
 FEED=8765
 T="$PWD/upd-test"
 
 # The "new" versions: a good 9.9.9, and a 9.9.8 whose program exits at once.
-dotnet publish src/NocatFarm -c Release -o upd/good -r "$RID" --self-contained true \
+dotnet publish src/GamerFarm -c Release -o upd/good -r "$RID" --self-contained true \
 	-p:PublishSingleFile=false -p:DebugType=none -p:Version=9.9.9 --nologo -v q
 rm -rf upd/broken && cp -R upd/good upd/broken
-printf '#!/bin/sh\nexit 3\n' > upd/broken/nocatFarm
-chmod +x upd/broken/nocatFarm
+printf '#!/bin/sh\nexit 3\n' > upd/broken/gamerFarm
+chmod +x upd/broken/gamerFarm
 rm -f upd/good.zip upd/broken.zip
 (cd upd/good && zip -qry "$PWD/../good.zip" .) || { echo "zip failed: $?"; exit 1; }
 (cd upd/broken && zip -qry "$PWD/../broken.zip" .) || { echo "zip failed: $?"; exit 1; }
@@ -53,15 +53,15 @@ fresh() {
 	cp -R "$APP" "$HERE"
 	rm -rf "$HERE/config" "$HERE/logs"
 	mkdir -p "$DATA/config" "$CWD/data2/config"
-	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$DATA/config/nocatFarm.json"
-	echo "{\"WebPort\":$PORT2,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$CWD/data2/config/nocatFarm.json"
+	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$DATA/config/gamerFarm.json"
+	echo "{\"WebPort\":$PORT2,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$CWD/data2/config/gamerFarm.json"
 }
 
 # As from a terminal: a CI runner is itself a systemd service, and what it starts inherits the markers that make
 # gamer.farm (rightly) refuse to update itself as a service. --path is relative, to the folder it's started from.
 start() {   # feed [data folder] [port]
-	(cd "$CWD" && env -u INVOCATION_ID -u JOURNAL_STREAM NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/$1.json" \
-		nohup "$HERE/nocatFarm" --no-gui --path "${2:-data}" > "$T/run-$1.log" 2>&1 &)
+	(cd "$CWD" && env -u INVOCATION_ID -u JOURNAL_STREAM GAMERFARM_UPDATE_FEED="http://127.0.0.1:$FEED/$1.json" \
+		nohup "$HERE/gamerFarm" --no-gui --path "${2:-data}" > "$T/run-$1.log" 2>&1 &)
 	for i in $(seq 1 60); do curl -sf "http://127.0.0.1:${3:-$PORT}/api/status" > /dev/null && return 0; sleep 1; done; return 1; }
 ver() { curl -sf "http://127.0.0.1:${1:-$PORT}/api/status" | python3 -c 'import json,sys; print(json.load(sys.stdin)["Version"])' 2>/dev/null || true; }
 cmd() { curl -sf -X POST "http://127.0.0.1:$PORT/api/command" -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
@@ -89,8 +89,8 @@ done
 logs
 [ -n "$back" ] || { echo "FAIL: not put back"; exit 1; }
 grep -q 'update undone: 9.9.8' "$DATA"/logs/*.log
-test -x "$HERE/nocatFarm"
-if grep -q 'exit 3' "$HERE/nocatFarm"; then echo "FAIL: the broken program was left in place"; exit 1; fi
+test -x "$HERE/gamerFarm"
+if grep -q 'exit 3' "$HERE/gamerFarm"; then echo "FAIL: the broken program was left in place"; exit 1; fi
 echo "PASS: back on $VER, on the same --path data folder, and it said why"
 stop
 
@@ -100,10 +100,10 @@ cmd 'update now'
 for i in $(seq 1 90); do sleep 2; [ "$(ver)" = "9.9.9" ] && break; done
 logs
 test "$(ver)" = "9.9.9"
-grep -q '"WebPort": *'"$PORT" "$DATA/config/nocatFarm.json"
+grep -q '"WebPort": *'"$PORT" "$DATA/config/gamerFarm.json"
 # Started on the same folder: the new version's log is in it, and nothing was made next to the program instead.
 grep -q 'updated .* 9.9.9' "$DATA"/logs/*.log
-if [ -e "$HERE/config/nocatFarm.json" ]; then echo "FAIL: a config/nocatFarm.json was made next to the program"; exit 1; fi
+if [ -e "$HERE/config/gamerFarm.json" ]; then echo "FAIL: a config/gamerFarm.json was made next to the program"; exit 1; fi
 if [ -e "$HERE/data" ]; then echo "FAIL: a data folder was made next to the program"; exit 1; fi
 sleep 40   # past the half minute before it says "ok" - it must not be put back after that
 test "$(ver)" = "9.9.9"
@@ -113,7 +113,7 @@ if [ "$(uname)" = "Darwin" ]; then
 	# Every library and the program itself still carries a valid signature after being replaced (a file changed in place
 	# under its signature is what gets a Mac program "Killed: 9"). Only the ones signed to begin with.
 	signed=0
-	for f in "$HERE/nocatFarm" "$HERE"/*.dylib; do
+	for f in "$HERE/gamerFarm" "$HERE"/*.dylib; do
 		if codesign -d "$f" > /dev/null 2>&1; then
 			codesign --verify "$f" || { echo "FAIL: $f's signature is broken after the update"; exit 1; }
 			signed=$((signed + 1))
@@ -143,8 +143,8 @@ if [ "$(uname)" = "Darwin" ] && [ -x "$HERE/start.command" ]; then
 	echo "== 4. Mac, started from start.command"
 	fresh
 	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$HERE/config.json.tmp"
-	mkdir -p "$HERE/config" && mv "$HERE/config.json.tmp" "$HERE/config/nocatFarm.json"
-	(cd "$HERE" && NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/good.json" nohup "$HERE/start.command" --no-gui > "$T/run-command.log" 2>&1 &)
+	mkdir -p "$HERE/config" && mv "$HERE/config.json.tmp" "$HERE/config/gamerFarm.json"
+	(cd "$HERE" && GAMERFARM_UPDATE_FEED="http://127.0.0.1:$FEED/good.json" nohup "$HERE/start.command" --no-gui > "$T/run-command.log" 2>&1 &)
 	for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/status" > /dev/null && break; sleep 1; done
 	test "$(ver)" = "$VER"
 	cmd 'update now'

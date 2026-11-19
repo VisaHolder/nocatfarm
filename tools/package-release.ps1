@@ -7,12 +7,16 @@
     gamer.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     gamer.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
     gamer.farm-v<version>_linux-arm.zip     Linux on 32-bit ARM (older Pis, Android TV boxes running Debian in Termux)
-    nocat.farm-v<version>-portable.zip,     2.0.0: the same zips again under the names before the rename (gamer.farm was
-    nocat.farm-v<version>_<rid>.zip         nocat.farm) - attach them too while copies before 2.0.0 are about. Those pick
-                                            their download by its end (-portable / _linux-x64 ...), so either name works for
-                                            them; the old one is there in case anything goes by the whole name. Not made for
-                                            a test build as another version (-AsVersion), or with -NoOldNames.
-    nocatfarm.rep4rep.dll                   the official rep4rep add-on (one per addons/<id>), any platform - and
+    gamer.farm-old-updater-v<version>-portable.zip,   2.0.1: the same zips for the updater of a version from before 2.0.1,
+    gamer.farm-old-updater-v<version>_<rid>.zip       which starts the program under its old name: they also have that
+                                                      name - on Windows a copy of gamerFarm.exe (it starts gamerFarm.dll),
+                                                      on Linux a small script that starts gamerFarm (tools/linux/
+                                                      old-program.sh), and the service helper under its old name. That
+                                                      updater takes the first zip for its machine in the release, and
+                                                      GitHub lists them by name: "-old-updater" sorts before "-v". This
+                                                      version and later never take them. Made for -AsVersion builds too
+                                                      (the update tests need them); not with -NoOldUpdater.
+    gamerfarm.rep4rep.dll                   the official rep4rep add-on (one per addons/<id>), any platform - and
                                             addons/addons.json + .sig rewritten and signed (see the add-ons step)
   The Mac zips (_osx-arm64, _osx-x64) are NOT made here: a Mac only runs a signed app, and it's only signed when
   built on a Mac. After creating the release: gh workflow run macos.yml -f tag=v<version>
@@ -37,22 +41,23 @@
 param(
     [ValidateSet('', 'linux-x64', 'linux-arm64', 'linux-arm')][string]$OnlyRid = '',
     [string]$AsVersion = '',
-    # 2.0.0: no copies under the old nocat.farm-* names (see the list above).
-    [switch]$NoOldNames,
+    # 2.0.1: no zips for the updaters from before 2.0.1 (see the list above).
+    [Alias('NoOldNames')][switch]$NoOldUpdater,
     # The add-on signing key (private, PKCS#8 base64) - outside every repository. Back it up: without it no new add-on
     # index can be signed that the copies already out there accept.
-    [string]$AddonKey = $(if ($env:NOCATFARM_ADDON_KEY) { $env:NOCATFARM_ADDON_KEY } else { 'C:\Users\pauld\Documents\devKit\keys\nocatfarm-addons.key' })
+    # Its file keeps the name it was made with, where it has always been.
+    [string]$AddonKey = $(if ($env:GAMERFARM_ADDON_KEY) { $env:GAMERFARM_ADDON_KEY } elseif ($env:NOCATFARM_ADDON_KEY) { $env:NOCATFARM_ADDON_KEY } else { 'C:\Users\pauld\Documents\devKit\keys\nocatfarm-addons.key' })
 )
 
 $ErrorActionPreference = 'Stop'
 
 $root  = Split-Path -Parent $PSScriptRoot          # the repo root
-$proj  = Join-Path $root 'src/NocatFarm'
+$proj  = Join-Path $root 'src/GamerFarm'
 $dist  = Join-Path $root 'dist'
 $stage = Join-Path $dist 'gamer.farm'
 
 # --- version straight from the csproj, so the zip name always matches the build -------------------------
-[xml]$csproj = Get-Content (Join-Path $proj 'NocatFarm.csproj')
+[xml]$csproj = Get-Content (Join-Path $proj 'GamerFarm.csproj')
 $version = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1)
 if (-not $version) { $version = '0.0.0' }
 # Built as another version: the update tests need a "newer" one of this very code.
@@ -61,13 +66,29 @@ if ($AsVersion) { $version = $AsVersion; $versionArgs = @("-p:Version=$AsVersion
 
 Write-Host "Packaging gamer.farm v$version" -ForegroundColor Cyan
 
-# --- 2.0.0: the old name next to the new one ---------------------------------------------------------------
-# gamer.farm-v2.0.0-portable.zip -> nocat.farm-v2.0.0-portable.zip, byte for byte the same file.
-function Copy-OldName([string]$zip) {
-    if ($AsVersion -or $NoOldNames) { return }
-    $old = Join-Path (Split-Path -Parent $zip) ((Split-Path -Leaf $zip) -replace '^gamer\.farm-', 'nocat.farm-')
-    Copy-Item $zip $old -Force
-    Write-Host "Done  ->  $old  (the same zip under the name before 2.0.0)" -ForegroundColor Green
+# --- 2.0.1: the zip for the updaters from before 2.0.1 --------------------------------------------------------
+# The same files as $from, plus what an updater from before 2.0.1 needs to start what it put in: the program under its old
+# name (see the list at the top). Zipped as gamer.farm-old-updater-v<version>... beside $zip.
+function New-OldUpdaterZip([string]$from, [string]$zip, [bool]$windows) {
+    if ($NoOldUpdater) { return }
+    $old = Join-Path (Split-Path -Parent $zip) ((Split-Path -Leaf $zip) -replace '^gamer\.farm-v', 'gamer.farm-old-updater-v')
+    $ostage = "$from-old-updater"
+    if (Test-Path $ostage) { Remove-Item $ostage -Recurse -Force }
+    Copy-Item $from $ostage -Recurse
+    if ($windows) {
+        # A copy of the starter runs the program its build names - gamerFarm.dll - whatever the file is called.
+        Copy-Item (Join-Path $ostage 'gamerFarm.exe') (Join-Path $ostage 'nocatFarm.exe') -Force
+    } else {
+        foreach ($pair in @(@('linux/old-program.sh', 'nocatFarm'), @('linux/gamerfarm-service.sh', 'nocatfarm-service.sh'))) {
+            $src = Join-Path $PSScriptRoot $pair[0]
+            if ([System.IO.File]::ReadAllText($src).Contains("`r")) { throw "$($pair[0]) has Windows line endings" }
+            Copy-Item $src (Join-Path $ostage $pair[1]) -Force
+        }
+    }
+    New-FlatZip $ostage $old
+    if (-not $windows) { Set-UnixModes $old }
+    Remove-Item $ostage -Recurse -Force
+    Write-Host "Done  ->  $old  (for updaters from before 2.0.1)" -ForegroundColor Green
 }
 
 # --- SAFETY: never ship personal data. Abort loudly if any is present. ---------------------------------
@@ -93,7 +114,7 @@ function Assert-Clean([string]$dir) {
 # write "gamer.farm\wwwroot\app.js" with backslashes, which the zip format doesn't allow - Windows copes, but
 # unzip warns and other tools can flatten the folders. Forward slashes.
 #
-# And FLAT - nocatFarm.exe at the top of the zip, not inside a gamer.farm/ folder. The in-app updater looks for
+# And FLAT - gamerFarm.exe at the top of the zip, not inside a gamer.farm/ folder. The in-app updater looks for
 # the exe at the top, and every copy already installed runs that check, so a foldered zip is one nobody can update
 # to. Unzipping by hand still gives a folder of its own (Windows names it after the zip), and updating by hand is
 # unzipping over the install folder.
@@ -118,7 +139,7 @@ function New-FlatZip([string]$from, [string]$zip) {
 
 # --- Linux file modes ------------------------------------------------------------------------------------
 # A zip made on Windows says "made on MS-DOS" and carries no Unix permissions, so unzip on Linux extracts
-# nocatFarm without its executable bit and it won't start until somebody runs chmod +x. There's no API for
+# gamerFarm without its executable bit and it won't start until somebody runs chmod +x. There's no API for
 # this in System.IO.Compression, so the central directory is patched after the fact: every entry is marked
 # "made on Unix" (so unzip honours the mode), the program, createdump and the native .so libraries get 0755,
 # everything else 0644. The file data isn't touched, only the two header fields.
@@ -145,7 +166,7 @@ function Set-UnixModes([string]$zip) {
         $commentLen = [BitConverter]::ToUInt16($bytes, $p + 32)
         $name = [System.Text.Encoding]::UTF8.GetString($bytes, $p + 46, $nameLen)
 
-        $exec = ($name -ceq 'nocatFarm') -or ($name -ceq 'createdump') -or ($name -ceq 'nocatfarm-service.sh') -or ($name -like '*.so') -or ($name -like '*.so.*')
+        $exec = ($name -ceq 'gamerFarm') -or ($name -ceq 'nocatFarm') -or ($name -ceq 'createdump') -or ($name -like '*-service.sh') -or ($name -like '*.so') -or ($name -like '*.so.*')
         $mode = if ($exec) { 0x81ED } else { 0x81A4 }    # regular file, 0755 / 0644
 
         $bytes[$p + 5] = 3                                  # "version made by" host: 3 = Unix
@@ -186,16 +207,16 @@ New-FlatZip $stage $zip
 
 $size = [math]::Round((Get-Item $zip).Length / 1MB, 1)
 Write-Host "Done  ->  $zip  (${size} MB)" -ForegroundColor Green
-Copy-OldName $zip
+New-OldUpdaterZip $stage $zip $true
 
 # --- the installer, from the very same files ----------------------------------------------------------------
-# Inno Setup 7 builds it (tools/installer/nocatfarm.iss). The installed copy updates itself from the zip above,
+# Inno Setup 7 builds it (tools/installer/gamerfarm.iss). The installed copy updates itself from the zip above,
 # exactly like the portable one. Without Inno Setup on this machine the setup is skipped, loudly.
 $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe", "$env:ProgramFiles\Inno Setup 7\ISCC.exe",
           "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($iscc) {
     python (Join-Path $PSScriptRoot 'installer/make-messages.py') | Out-Null
-    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer/nocatfarm.iss')
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer/gamerfarm.iss')
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build the installer' }
     $setup = Join-Path $dist "gamer.farm-v$version-setup.exe"
     $ssize = [math]::Round((Get-Item $setup).Length / 1MB, 1)
@@ -209,7 +230,7 @@ if ($iscc) {
 # release address written into addons/addons.json, its serial raised by one (the app refuses a list older than one it has
 # had) - which is then SIGNED (addons.json.sig) with the add-on key. The app
 # installs nothing unless the signature verifies with the key built into it AND the file's SHA-256 matches. The private
-# key lives outside every repository (devKit\keys\nocatfarm-addons.key) and never goes near a build output.
+# key lives outside every repository (devKit\keys, under the name it was made with) and never goes near a build output.
 # Not for a test build as another version (-AsVersion): the index must only ever name real releases.
 if (-not $AsVersion) {
     if (-not (Test-Path $AddonKey)) { throw "the add-on signing key isn't at $AddonKey - addons.json can't be signed" }
@@ -243,7 +264,7 @@ if (-not $AsVersion) {
 
 # ==== Linux ==============================================================================================
 # Self-contained as well, so it runs on a box with no .NET. The csproj makes these a plain console program
-# (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./nocatFarm.
+# (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./gamerFarm.
 foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-arm64', 'linux-arm') })) {
     $lstage = Join-Path $dist "gamer.farm-$rid"
     if (Test-Path $lstage) { Remove-Item $lstage -Recurse -Force }
@@ -257,7 +278,7 @@ foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-ar
     Copy-Item (Join-Path $root 'README.md') $lstage -Force
     # Running it as a systemd service: the unit and its helper, for the service to update itself (docs/linux-docker-vps.md). Read by
     # sh and systemd: one stray carriage return and every start fails, so a checkout that has them stops the build.
-    foreach ($f in 'nocatfarm-service.sh', 'nocatfarm.service') {
+    foreach ($f in 'gamerfarm-service.sh', 'gamerfarm.service') {
         $from = Join-Path $PSScriptRoot "linux/$f"
         if ([System.IO.File]::ReadAllText($from).Contains("`r")) { throw "$f has Windows line endings" }
         Copy-Item $from $lstage -Force
@@ -269,8 +290,8 @@ foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-ar
 
     $lsize = [math]::Round((Get-Item $lzip).Length / 1MB, 1)
     Write-Host "Done  ->  $lzip  (${lsize} MB)" -ForegroundColor Green
-    Copy-OldName $lzip
+    New-OldUpdaterZip $lstage $lzip $false
 }
 
 Write-Host 'Clean: no accounts, tokens, or logs included.' -ForegroundColor Green
-Write-Host 'Upload the setup and all four zips to the release (and, unless -NoOldNames, their four nocat.farm-* copies), then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray
+Write-Host 'Upload the setup, all four zips and their four gamer.farm-old-updater-* zips to the release, then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The old-updater zips sort first by name on purpose - see the note at the top.' -ForegroundColor DarkGray

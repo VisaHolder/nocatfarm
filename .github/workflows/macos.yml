@@ -29,7 +29,7 @@ permissions:
 # test configs switch it off as well; this covers a config a copy writes for itself. (The browser test's own copy points
 # at tests/e2e/ping-stub.mjs instead.)
 env:
-  NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
+  GAMERFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
 
 jobs:
   mac:
@@ -53,70 +53,75 @@ jobs:
 
       - name: build the self-contained app
         run: |
-          dotnet publish src/NocatFarm -c Release -o app -r ${{ matrix.rid }} --self-contained true \
+          dotnet publish src/GamerFarm -c Release -o app -r ${{ matrix.rid }} --self-contained true \
             -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
           cp tools/macos/start.command app/start.command
           cp README.md app/README.md
-          chmod +x app/nocatFarm app/start.command
-          file app/nocatFarm
-          codesign --verify --verbose app/nocatFarm
+          chmod +x app/gamerFarm app/start.command
+          file app/gamerFarm
+          codesign --verify --verbose app/gamerFarm
 
       - name: zip it (flat, permissions kept, no .DS_Store)
         run: |
           # What Finder leaves in any folder it has shown - put there on purpose, so leaving it out is tested
           touch app/.DS_Store app/wwwroot/.DS_Store
-          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/GamerFarm/GamerFarm.csproj)
           name="gamer.farm-v${version}_${{ matrix.rid }}.zip"
           (cd app && zip -qry -X "../$name" . -x '.DS_Store' -x '*/.DS_Store')
-          unzip -l "$name" | grep -E ' (nocatFarm|start\.command)$'
+          unzip -l "$name" | grep -E ' (gamerFarm|start\.command)$'
           # never a bare "! cmd" or "a && b" as a check: bash -e stops for neither, so such a check could never fail
           if unzip -l "$name" | grep 'DS_Store'; then echo "FAIL: .DS_Store in the zip"; exit 1; fi
           # names only (-Z1), one a line: a top-level folder of somebody's data, or a zip inside - a backup or an old release
           if unzip -Z1 "$name" | grep -E '^(config|logs|backups|tokens|state|authenticators)/|\.zip$'; then echo "FAIL: personal folders or a zip in the zip"; exit 1; fi
           # MAC_ZIP, not ZIP: zip reads $ZIP as options of its own, and every zip made later in the job went wrong
           echo "MAC_ZIP=$name" >> "$GITHUB_ENV"
-          # 2.0.0: the same zip under the name before the rename, for the release too (see tools/package-release.ps1)
-          cp "$name" "nocat.farm-v${version}_${{ matrix.rid }}.zip"
-          echo "MAC_OLD_ZIP=nocat.farm-v${version}_${{ matrix.rid }}.zip" >> "$GITHUB_ENV"
+          # 2.0.1: the zip for updaters from before 2.0.1, for the release too (see tools/package-release.ps1): the same app,
+          # plus the small script under the program's old name that such an updater starts
+          old="gamer.farm-old-updater-v${version}_${{ matrix.rid }}.zip"
+          rm -rf app-old && cp -Rp app app-old && rm -f app-old/.DS_Store app-old/wwwroot/.DS_Store
+          cp tools/linux/old-program.sh app-old/nocatFarm && chmod +x app-old/nocatFarm
+          (cd app-old && zip -qry -X "../$old" . -x '.DS_Store' -x '*/.DS_Store')
+          rm -rf app-old
+          echo "MAC_OLD_ZIP=$old" >> "$GITHUB_ENV"
 
       - name: unpack the zip into a folder with a space and (1) in its name
         run: |
           APP="$PWD/gamer.farm (1)"
           unzip -q "$MAC_ZIP" -d "$APP"
           echo "APP=$APP" >> "$GITHUB_ENV"
-          test -x "$APP/nocatFarm"
+          test -x "$APP/gamerFarm"
           test -x "$APP/start.command"
-          codesign --verify --verbose "$APP/nocatFarm"
+          codesign --verify --verbose "$APP/gamerFarm"
 
       # GitHub's Macs are slow and busy: a check that only failed on timing is run once more. A real failure fails twice.
       - name: unit tests
         run: |
-          cd tests/NocatFarm.Tests
+          cd tests/GamerFarm.Tests
           dotnet run -c Release || { echo "::warning::unit tests failed once - running them again"; dotnet run -c Release --no-build; }
 
       - name: live Steam connection and idling (anonymous - no account)
         timeout-minutes: 4
         # The unpacked release connects to Steam over WebSocket and TCP, signs in anonymously, sends the idler's
         # games-played message (custom name with emoji first, then 730 and 440), stays on 20s and logs off. Exits 1 on any FAIL.
-        run: '"$APP/nocatFarm" --path "$RUNNER_TEMP/steam-selftest" --steam-selftest'
+        run: '"$APP/gamerFarm" --path "$RUNNER_TEMP/steam-selftest" --steam-selftest'
 
       - name: start it through start.command
         run: |
           mkdir -p "$APP/config"
-          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"OpenBrowserOnStart":false,"CountMeAsUser":false}' > "$APP/config/nocatFarm.json"
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"OpenBrowserOnStart":false,"CountMeAsUser":false}' > "$APP/config/gamerFarm.json"
           echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$APP/config/demo.json"
           # quarantined like a real download, so start.command's own fix is tested too
-          xattr -w com.apple.quarantine "0081;00000000;Safari;" "$APP/nocatFarm" || true
+          xattr -w com.apple.quarantine "0081;00000000;Safari;" "$APP/gamerFarm" || true
           ("$APP/start.command" --no-gui < /dev/null > run.log 2>&1 & echo $! > pid)
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:7242/api/status > /dev/null && break; sleep 1; done
           curl -sf http://127.0.0.1:7242/api/status | tee status.json | head -c 300; echo
           grep -q '"Version"' status.json
-          if xattr -p com.apple.quarantine "$APP/nocatFarm" 2>/dev/null; then echo "FAIL: start.command left the quarantine on"; exit 1; fi
+          if xattr -p com.apple.quarantine "$APP/gamerFarm" 2>/dev/null; then echo "FAIL: start.command left the quarantine on"; exit 1; fi
 
       - name: a second copy on the same folder says so and exits
         run: |
           set +e
-          (cd "$APP" && ./nocatFarm --no-gui < /dev/null > "$GITHUB_WORKSPACE/second.log" 2>&1)
+          (cd "$APP" && ./gamerFarm --no-gui < /dev/null > "$GITHUB_WORKSPACE/second.log" 2>&1)
           code=$?
           set -e
           cat second.log
@@ -134,7 +139,7 @@ jobs:
           cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
           cmd 'log folder' | tee out.txt; grep -q 'logs' out.txt
           cmd 'set UpdateCheckHours 5' | tee out.txt; grep -q 'UpdateCheckHours = 5' out.txt
-          grep -q '"UpdateCheckHours": 5' "$APP/config/nocatFarm.json"
+          grep -q '"UpdateCheckHours": 5' "$APP/config/gamerFarm.json"
           cmd 'backup' | tee out.txt; grep -q 'Backup saved' out.txt
           [ "$(stat -f %Lp "$APP/backups")" = "700" ]
           for z in "$APP"/backups/*.zip; do [ "$(stat -f %Lp "$z")" = "600" ] || { echo "$z isn't 600"; exit 1; }; done
@@ -158,8 +163,8 @@ jobs:
       - name: secrets are encrypted on disk
         run: |
           curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"set TelegramBotToken 123456789:not-a-real-token"}' > /dev/null
-          grep -q 'nocat-aes1:' "$APP/config/nocatFarm.json"
-          if grep -q 'not-a-real-token' "$APP/config/nocatFarm.json"; then echo "FAIL: the token is on disk as it was typed"; exit 1; fi
+          grep -q 'nocat-aes1:' "$APP/config/gamerFarm.json"
+          if grep -q 'not-a-real-token' "$APP/config/gamerFarm.json"; then echo "FAIL: the token is on disk as it was typed"; exit 1; fi
           test -f "$APP/config/state/secret.key"
           [ "$(stat -f %Lp "$APP/config/state/secret.key")" = "600" ]
 
@@ -183,11 +188,13 @@ jobs:
       - name: updating from the newest GitHub release to this build
         run: |
           # This build as 9.9.9, made the way the release zip is made
-          dotnet publish src/NocatFarm -c Release -o new -r ${{ matrix.rid }} --self-contained true \
+          dotnet publish src/GamerFarm -c Release -o new -r ${{ matrix.rid }} --self-contained true \
             -p:PublishSingleFile=false -p:DebugType=none -p:Version=9.9.9 --nologo -v q
-          cp tools/macos/start.command new/start.command && cp README.md new/README.md && chmod +x new/nocatFarm new/start.command
+          cp tools/macos/start.command new/start.command && cp README.md new/README.md && chmod +x new/gamerFarm new/start.command
           (cd new && zip -qry -X ../new-9.9.9.zip . -x '.DS_Store' -x '*/.DS_Store')
-          sh tests/update-from-release.sh ${{ matrix.rid }} new-9.9.9.zip
+          cp tools/linux/old-program.sh new/nocatFarm && chmod +x new/nocatFarm
+          (cd new && zip -qry -X ../new-old-9.9.9.zip . -x '.DS_Store' -x '*/.DS_Store')
+          sh tests/update-from-release.sh ${{ matrix.rid }} new-9.9.9.zip new-old-9.9.9.zip
 
       - uses: actions/upload-artifact@v4
         with:

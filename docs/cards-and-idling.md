@@ -80,7 +80,7 @@ rotation myaccount        # which batch, when the next one starts, and what's in
 rotation myaccount next   # move on to the next batch now
 ```
 
-*Show as* (`gamename myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
+*Show as* (`gamename myaccount gamer.mom`) makes friends see that name instead of the real game, while the real games
 still count playtime. `gamename myaccount off` removes it, and *Keep the custom name while farming cards* (on) keeps it showing
 during card farming too. Now and then Steam drops the name and shows the real game; the account card then warns
 "Steam shows …" and gamer.farm puts the name back.

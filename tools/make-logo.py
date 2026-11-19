@@ -53,14 +53,14 @@ def save(rel, im, **kw):
 
 master = icon(1024)
 save("assets/logo.png", master)
-for rel, n in [("assets/icon.png", 256), ("src/NocatFarm/wwwroot/logo.png", 256), ("src/NocatFarm/wwwroot/icon-512.png", 512),
-               ("src/NocatFarm/wwwroot/icon-192.png", 192)]:
+for rel, n in [("assets/icon.png", 256), ("src/GamerFarm/wwwroot/logo.png", 256), ("src/GamerFarm/wwwroot/icon-512.png", 512),
+               ("src/GamerFarm/wwwroot/icon-192.png", 192)]:
     save(rel, master.resize((n, n), Image.LANCZOS))
 # iOS draws its own corners: a flat square, no see-through edge
 apple = Image.new("RGBA", (180, 180), BG)
 apple.alpha_composite(master.resize((180, 180), Image.LANCZOS))
-save("src/NocatFarm/wwwroot/apple-touch-icon.png", apple.convert("RGB"))
-save("src/NocatFarm/wwwroot/icon-maskable-512.png", maskable(512))
+save("src/GamerFarm/wwwroot/apple-touch-icon.png", apple.convert("RGB"))
+save("src/GamerFarm/wwwroot/icon-maskable-512.png", maskable(512))
 ico_sizes = [(16, 16), (24, 24), (32, 32), (48, 48), (256, 256)]
-for rel in ["src/NocatFarm/nocatFarm.ico", "src/NocatFarm/wwwroot/favicon.ico"]:
+for rel in ["src/GamerFarm/gamerFarm.ico", "src/GamerFarm/wwwroot/favicon.ico"]:
     save(rel, master, format="ICO", sizes=ico_sizes)

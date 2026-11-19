@@ -4,15 +4,15 @@
 param([int]$Port = 7356, [string]$TestRoot = '')
 $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
-$W = Join-Path $(if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'nocatfarm-tests' }) 'security'
+$Version = (Select-Xml -Path "$Repo\src\GamerFarm\GamerFarm.csproj" -XPath '//Version').Node.InnerText
+$W = Join-Path $(if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'gamerfarm-tests' }) 'security'
 
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force "$W\config" | Out-Null
 Expand-Archive "$Repo\dist\gamer.farm-v$Version-portable.zip" -DestinationPath $W
-Set-Content "$W\config\nocatFarm.json" -Encoding utf8 -Value "{`"WebPort`":$port,`"WebHost`":`"127.0.0.1`",`"CheckForUpdates`":false,`"AutoUpdate`":0,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false,`"CountMeAsUser`":false}"
+Set-Content "$W\config\gamerFarm.json" -Encoding utf8 -Value "{`"WebPort`":$port,`"WebHost`":`"127.0.0.1`",`"CheckForUpdates`":false,`"AutoUpdate`":0,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false,`"CountMeAsUser`":false}"
 Set-Content "$W\config\demo.json" -Encoding utf8 -Value '{"Enabled":false,"SteamLogin":"not_a_real_account"}'
-$p = Start-Process "$W\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $W -WindowStyle Hidden -PassThru
+$p = Start-Process "$W\gamerFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $W -WindowStyle Hidden -PassThru
 
 try {
   $up = $false
@@ -30,7 +30,7 @@ try {
   $code = $LASTEXITCODE
   Pop-Location
 } finally {
-  Start-Process "$W\nocatFarm.exe" -ArgumentList '--quit' -WorkingDirectory $W -WindowStyle Hidden -Wait
+  Start-Process "$W\gamerFarm.exe" -ArgumentList '--quit' -WorkingDirectory $W -WindowStyle Hidden -Wait
   Start-Sleep 1
   if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
 }

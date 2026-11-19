@@ -227,7 +227,7 @@ for an hour. On this PC itself the lockout is only a minute, since whoever is at
 anyway. A reverse proxy on the same PC, like Caddy for HTTPS, makes every visitor look like this PC, so there
 gamer.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
 in front of Docker comes in from Docker's own network) is only believed once its address is in *Trust forwarded
-addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
+addresses from* (`WebTrustedProxies`, or `GAMERFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
 you if the password is short enough to guess.
 
@@ -273,6 +273,16 @@ set WebHost 0.0.0.0
 
 then restarting. `dashboard` in the console, and `/dashboard` on Telegram and Discord, give the same links as the
 Phone page and say what's still missing.
+
+**A sign-in link.** `dashboard link` (in the console, or `/dashboard link` on Telegram and Discord) gives a link that
+opens the dashboard without typing the password. It works once, for 60 seconds. The browser that opens it is signed in
+just as if it had typed the password: it shows on the Phone page, and **Sign every device out** signs it out too. A link
+that was already used or has run out shows the normal sign-in page, and counts as a wrong password towards the lockout.
+From outside your home it follows the same rules as the password: with *Open from anywhere* off, paused or switched off,
+it doesn't open; with the Telegram code on, it still asks for the code. The log never shows the link. A program that's
+already signed in (with a session token from `POST /api/login`, sent as `Authorization: Bearer <token>`) can ask for
+one with `POST /api/signin-link`. The answer is `{"code":"...","path":"/?signin=...","expiresIn":60}`: open the
+dashboard's address plus `path` in the browser. Pages paired at farm.gamer.mom can't ask for one.
 
 To turn the dashboard off completely, `set WebEnabled false` and restart. Everything keeps working from the console.
 
@@ -326,8 +336,8 @@ couldn't take your items or your account:
 - **Importing** from another idler: it adds accounts and brings who may trade with them and command them
 - **Scam watch:** "It was me", switching scam watch or its warnings off, looking less often, and trusted devices.
   Switching them on works
-- **Words other people see:** the auto-reply, the custom game name, the profile name, and the Discord profile's line
-  and buttons. Emptying them, and their on/off switches, work
+- **Words other people see:** the auto-reply, the custom game name and the profile name. Emptying them, and their
+  on/off switches, work
 - **Shutting gamer.farm down** (`exit`), and redeeming keys from a file (typed keys work)
 - **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
   address, port, *Open from anywhere*, trusted proxies, the firewall, and setting a first dashboard password or removing it (set from a hacked page, a first

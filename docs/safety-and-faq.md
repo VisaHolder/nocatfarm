@@ -13,14 +13,13 @@ password: AES-256-GCM, with the key made from the password by PBKDF2-SHA256 and 
 
 gamer.farm talks to Steam, always. It checks GitHub every 2 hours for a new version (*Look for updates every*) and
 downloads one when you say so; *Notify if an update is available* turns the check off. Discord, Telegram and rep4rep
-only come into it if you set them up, and the Discord profile card only talks to the Discord app on your own PC. The
+only come into it if you set them up. The
 hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Open from anywhere*, if you turn it on,
 talks to your router.
 
 Once an hour it tells gamer.mom it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your Steam accounts are signed in, as a number only. No account name, Steam ID or setting goes with
-it, and the install ID isn't in backups. That's where "1,240 Steam accounts on gamer.farm" on the Overview and the
-Discord card comes from. *Count me as a user* (*Global settings
+it, and the install ID isn't in backups. That's where "1,240 Steam accounts on gamer.farm" on the Overview comes from. *Count me as a user* (*Global settings
 → Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
 
 With *Share my farming totals* (*Global settings → Updates & plugins*, right under *Count me as a user*, on while that is) the same
@@ -85,7 +84,7 @@ after you stop.
 
 **I don't want the gamer.farm group.** Clear *Groups every account joins* (Global settings → All accounts).
 
-**Where are my settings?** In the `config` folder next to `nocatFarm.exe`. Back it up and you've backed up
+**Where are my settings?** In the `config` folder next to `gamerFarm.exe`. Back it up and you've backed up
 everything.
 
 **Why can't I find the custom name and games-to-idle settings?** The account is in human mode, which hides them on
@@ -113,12 +112,12 @@ plain static files.
 ```
 git clone https://github.com/VisaHolder/gamerfarm.git
 cd gamerfarm
-dotnet publish src/NocatFarm -c Release -o run
-run\nocatFarm.exe
+dotnet publish src/GamerFarm -c Release -o run
+run\gamerFarm.exe
 ```
 
-On Linux it's `dotnet publish src/NocatFarm -c Release -r linux-x64 -o run` (or `linux-arm64`), then
-`run/nocatFarm`. `tools/package-release.ps1` builds all the release files.
+On Linux it's `dotnet publish src/GamerFarm -c Release -r linux-x64 -o run` (or `linux-arm64`), then
+`run/gamerFarm`. `tools/package-release.ps1` builds all the release files.
 
 `run/` isn't in the repository. It's where your accounts, tokens and logs end up.
 

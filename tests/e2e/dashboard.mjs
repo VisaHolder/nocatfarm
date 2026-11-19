@@ -3,7 +3,7 @@
 //   node tests/e2e/dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--ping-stub <url>] [--headed]
 // --set-password  the copy has no password yet: set this one first, from this PC, the way the Phone page does
 // --fixture       the folder make-fixture.mjs wrote (for the pretend ArchiSteamFarm folder the import dialog is shown)
-// --ping-stub     ping-stub.mjs, which the copy was started to send its "Count me as a user" ping to (NOCATFARM_PING_URL):
+// --ping-stub     ping-stub.mjs, which the copy was started to send its "Count me as a user" ping to (GAMERFARM_PING_URL):
 //                 the user count is checked against it. Without it the setting is left alone - it would tell gamer.mom.
 //
 // It signs in (a wrong password first), then on every page lists everything that can be clicked, typed in or picked,
@@ -36,7 +36,7 @@ if (!BASE || !PASSWORD) {
   process.exit(2);
 }
 const HOST = new URL(BASE).host;
-const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'nocatfarm-e2e-'));
+const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'gamerfarm-e2e-'));
 
 // ── reporting ────────────────────────────────────────────────────────────────
 let fails = 0;
@@ -117,7 +117,6 @@ const SKIP_SETTING = {
   NotifyScam: 'pop-ups on this PC',
   NotifyHealth: 'pop-ups on this PC',
   UpdateMode: 'could install a newer version mid-test',
-  DiscordPresence: "shows on the Discord running on this PC",
   ...(PING_STUB ? {} : { CountMeAsUser: 'tells gamer.mom this copy is running (no --ping-stub to send it to instead)' }),
   TelegramBotToken: 'connects to Telegram',
   DiscordBotToken: 'connects to Discord',
@@ -290,7 +289,7 @@ async function settle(ms = 250) {
 const evalq = (fn, arg) => page.evaluate(fn, arg);
 async function api(p, method = 'GET', body) {
   return evalq(async ({ p, method, body }) => {
-    const res = await fetch(p, { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (localStorage.getItem('nocatfarm-token') || '') }, body: body ? JSON.stringify(body) : undefined });
+    const res = await fetch(p, { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (localStorage.getItem('gamerfarm-token') || '') }, body: body ? JSON.stringify(body) : undefined });
     return res.json();
   }, { p, method, body });
 }
@@ -535,6 +534,36 @@ await signIn();
 check('the right password opens the dashboard', await page.isVisible('#app'));
 await healthy('first draw after signing in');
 
+// 2.0.2: a one-time sign-in link, asked for the way a home server's own dashboard asks (a Bearer session), opened in a browser
+// that has never signed in: straight into the dashboard, with the code gone from the address - and a second time, it's run out.
+{
+  const relay = await fetch(BASE + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Password: PASSWORD }) }).then((r) => r.json()).catch(() => null);
+  const minted = relay && relay.token
+    ? await fetch(BASE + '/api/signin-link', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + relay.token }, body: '{}' }).then((r) => r.json()).catch(() => null)
+    : null;
+  check('sign-in link: a signed-in program gets one', !!(minted && minted.code && minted.path === '/?signin=' + minted.code && minted.expiresIn === 60), JSON.stringify(minted && { path: !!minted.path, expiresIn: minted.expiresIn }));
+  if (minted && minted.path) {
+    const fresh = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p2 = await fresh.newPage();
+    await p2.goto(BASE + minted.path);
+    const opened = await p2.waitForSelector('#app:not(.hidden)', { timeout: 15000 }).then(() => true).catch(() => false);
+    check('sign-in link: opened in a browser that never signed in, it opens the dashboard - and the code is gone from the address',
+      opened && !p2.url().includes('signin') && await p2.isHidden('#login'), p2.url().replace(/signin=[^&]+/, 'signin=…'));
+    await fresh.close();
+    const other = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p3 = await other.newPage();
+    const p3errors = [];
+    p3.on('pageerror', (e) => p3errors.push(e.message));
+    await p3.goto(BASE + minted.path);
+    await p3.waitForFunction(() => document.getElementById('loginError').textContent.trim() !== '', null, { timeout: 8000 }).catch(() => {});
+    check('sign-in link: the second time it has run out - the sign-in page says so, and the address is clean again',
+      await p3.isVisible('#login') && /link/i.test(await p3.textContent('#loginError')) && !p3.url().includes('signin'),
+      `[${(await p3.textContent('#loginError')).trim()}] said=${await p3.getAttribute('html', 'data-signin')} login=${await p3.isVisible('#login')} app=${await p3.isVisible('#app')} errors=${p3errors.join(' | ')}`);
+    await other.close();
+  }
+  problems.length = 0;
+}
+
 // ── 2. every page, every control ─────────────────────────────────────────────
 views = await evalq(() => [...document.querySelectorAll('.navitem')].filter((n) => window.__e2e.visible(n)).map((n) => n.dataset.view));
 const inMarkup = await evalq(() => [...document.querySelectorAll('.navitem')].map((n) => n.dataset.view));
@@ -660,24 +689,20 @@ async function settingsOn(target) {
   if (await page.inputValue('#setSearch')) { await page.fill('#setSearch', ''); await settle(200); }
 }
 
-// The Discord card's second-line pills, in the order they're drawn.
-const DISCORD_LINES = [3, 0, 1, 2];
 const valuesOf = (cfg, target) => (target ? cfg.Bots[target] : cfg.Global);
 const secretsOf = (cfg, target) => (target ? (cfg.BotSecretsSet || {})[target] || [] : cfg.GlobalSecretsSet || []);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-// Setting names on screen right now, in order - rows, and the chips of the panels (Notifications, Discord card).
+// Setting names on screen right now, in order - rows, and the chips of the panels (Notifications).
 const shownSettings = () => evalq(() => {
   const out = [];
   const add = (n, el) => {
     const h3 = el.closest('.section') && el.closest('.section').querySelector('h3');
     if (n && !out.some((x) => x.name === n)) out.push({ name: n, section: h3 ? h3.dataset.section : '' });
   };
-  document.querySelectorAll('#settingsBody [data-setting], #settingsBody .langpick .p[onclick], #settingsBody .dhead input, #settingsBody .dline .p').forEach((el) => {
+  document.querySelectorAll('#settingsBody [data-setting], #settingsBody .langpick .p[onclick]').forEach((el) => {
     if (!window.__e2e.visible(el) && !el.closest('label.switch')) return;
     if (el.dataset.setting) { add(el.dataset.setting, el); return; }
-    if (el.closest('.dhead')) { add('DiscordPresence', el); return; }
-    if (el.closest('.dline')) { add('DiscordSecondLine', el); return; }
     const m = (el.getAttribute('onclick') || '').match(/editAndRender\('(\w+)'/);
     if (m) add(m[1], el);
   });
@@ -731,14 +756,10 @@ async function change(def, target) {
   const box = boxOf(n);
   const tag = (await box.count()) ? await box.evaluate((e) => e.tagName.toLowerCase() + ':' + (e.type || '') + ':' + e.className) : '';
 
-  if (n === 'DiscordSecondLine') {
-    const pills = page.locator('#settingsBody .dline .p');
-    const on = await pills.evaluateAll((els) => els.findIndex((e) => e.classList.contains('on')));
-    await pills.nth(on === 1 ? 2 : 1).click();
-  } else if (n === 'GameWeights') {
+  if (n === 'GameWeights') {
     await weightsScenario();
   } else if (!tag) {
-    // A chip on a panel (what gets sent to Discord/Telegram, the parts of the Discord card).
+    // A chip on a panel (what gets sent to Discord/Telegram).
     const pill = page.locator(`#settingsBody .langpick .p[onclick*="editAndRender('${n}'"]`).first();
     if (!(await pill.count())) return { why: 'no control for it on screen' };
     await pill.click();
@@ -759,15 +780,10 @@ async function change(def, target) {
     // A list of times every quarter of an hour: the next one along.
     await box.selectOption(String(((Math.floor((Number(cur) || 0) / 15) + 1) * 15) % 1440));
   } else if (tag.startsWith('div') && /pills/.test(tag)) {
-    // Choice pills, or the accounts shown on the Discord card.
+    // Choice pills.
     const want = CHOICE_VALUE[n];
     if (want !== undefined && Number(cur) !== want) await box.locator(`.p[onclick*="editAndRender('${n}',${want})"]`).first().click();
     else await box.locator('.p:not(.on)').first().click();
-  } else if (tag.startsWith('div') && /dbtnpick/.test(tag)) {
-    await box.locator('select').selectOption('custom');
-    await settle(150);
-    await page.fill(`#f-${n}-label`, 'E2E');
-    await page.fill(`#f-${n}-link`, 'https://example.com/e2e');
   } else if (tag.startsWith('select')) {
     const opts = await box.evaluate((e) => [...e.options].map((o) => o.value));
     const now = await box.inputValue();
@@ -835,9 +851,6 @@ async function putBack(def, orig, target, defaults) {
       const btn = field(n).locator('button[onclick^="clearSecret"]');
       if (await btn.count()) await btn.click(); else return false;
     } finally { dialogAnswer = 'dismiss'; }
-  } else if (n === 'DiscordSecondLine') {
-    // The pills in their order on screen: Steam accounts on gamer.farm (3), then cards today, hours past week, past month.
-    await page.locator('#settingsBody .dline .p').nth(DISCORD_LINES.indexOf(Number(orig))).click();
   } else if (n === 'GameWeights') {
     // Built back through the editor: every side game dropped, the main game swapped back, the others added, the share set.
     const want = String(orig || '').split(',').map((s) => s.trim()).filter(Boolean).map((s) => s.split(':').map(Number));
@@ -871,16 +884,8 @@ async function putBack(def, orig, target, defaults) {
     await box.selectOption(String(orig));
   } else if (def.Kind === 'Time') {
     await box.selectOption(String(orig));
-  } else if (tag.startsWith('div') && /dbtnpick/.test(tag)) {
-    const bots = await evalq(() => state.Bots.map((b) => b.Name.toLowerCase()));
-    const v = String(orig || '');
-    await box.locator('select').selectOption(!v ? '' : v.toLowerCase() === 'github' ? 'github' : bots.includes(v.toLowerCase()) ? v : 'custom');
   } else if (tag.startsWith('div') && /pills/.test(tag)) {
-    if (n === 'DiscordPresenceAccounts') {
-      if (!orig) await box.locator('.p').first().click(); else return false;
-    } else {
-      await box.locator(`.p[onclick*="editAndRender('${n}',${orig})"]`).first().click();
-    }
+    await box.locator(`.p[onclick*="editAndRender('${n}',${orig})"]`).first().click();
   } else if (tag.startsWith('select')) {
     await box.selectOption(String(orig));
   } else if (def.Kind === 'AppIds') {
@@ -1256,7 +1261,7 @@ for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bo
 }
 
 // The user count: the copy pinged the stand-in for gamer.mom (never the real one), the Overview says how many Steam
-// accounts are on gamer.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
+// accounts are on gamer.farm, and "Count me as a user" off hides it.
 if (PING_STUB) {
   let status = {};
   for (let i = 0; i < 60 && status.Accounts !== 1240; i++) { status = await api('/api/status'); if (status.Accounts !== 1240) await sleep(1000); }
@@ -1288,17 +1293,11 @@ if (PING_STUB) {
   check('user count: ...and its tooltip says only how many accounts, as a number', /only how many, as a number/.test(await line.getAttribute('data-tip') || ''),
     await line.getAttribute('data-tip'));
   await settingsOn(null);
-  // The card already says Playing gamer.farm: its second line is the short "1,240 Steam accounts", without "on gamer.farm".
-  const cardLine = await page.locator('#settingsBody .dcard .dstate').textContent() || '';
-  check('user count: the Discord card\'s preview counts the Steam accounts, in the short form',
-    cardLine.includes('1,240 Steam accounts') && !cardLine.includes('on gamer.farm'), cardLine);
   await field('CountMeAsUser').locator('label.switch').first().click();
   await settle(150);
   await saveNow(null);
   const offStatus = await api('/api/status');
   check('user count: Count me as a user off - the status has no count', offStatus.Accounts == null && offStatus.Users == null);
-  check('user count: ...and the Discord card falls back to the cards today', /cards today/.test(await page.locator('#settingsBody .dcard .dstate').textContent() || ''),
-    await page.locator('#settingsBody .dcard .dstate').textContent());
   await gotoView('overview');
   await settle(300);
   check('user count: ...and the Overview hides the line', !(await line.isVisible()));
@@ -1312,14 +1311,11 @@ if (PING_STUB) {
   skip('user count', 'no --ping-stub: the copy would tell gamer.mom it is running');
 }
 
-// The Discord card's second line: Steam accounts on gamer.farm first (the default), no account names any more.
+// 2.0.1: the Discord profile card is gone - no section, no switch, no preview.
 {
   await settingsOn(null);
-  const pills = await page.locator('#settingsBody .dline .p').allTextContents();
-  check('discord card: the second line is Steam accounts on gamer.farm, cards today, hours past week or month - no account names, no people',
-    pills.length === 4 && pills[0] === 'Steam accounts on gamer.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
-  check('discord card: Steam accounts on gamer.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
-    && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
+  check('discord card: gone (2.0.1) - no Discord profile section, no card, no switch',
+    !(await page.locator('#settingsBody h3[data-section="Discord profile"]').count()) && !(await page.locator('#settingsBody .dcard, #settingsBody .dhead').count()));
 }
 
 // ── 1.8.2: copy settings from another account ────────────────────────────────

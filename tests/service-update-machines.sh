@@ -60,7 +60,7 @@ EOF
 	boot
 	wait_up || { echo "the VM never came up"; exit 1; }
 	on 'cloud-init status --wait > /dev/null; systemctl is-system-running --wait; ps -p 1 -o comm=; systemctl --version | head -n 1; uname -r'
-	tar -C "$SRC" -cf - tests/service-update.sh tools/linux src/NocatFarm/NocatFarm.csproj | on 'mkdir -p src && tar -xf - -C src'
+	tar -C "$SRC" -cf - tests/service-update.sh tools/linux src/GamerFarm/GamerFarm.csproj | on 'mkdir -p src && tar -xf - -C src'
 	tar -C "$ZIPS" -cf - . | on 'mkdir -p zips && tar -xf - -C zips'
 	for s in $REBOOTS; do
 		echo "=========== $s"
@@ -111,7 +111,7 @@ EOF
 	on sh -c 'apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq unzip zip curl python3 procps > /dev/null' || { echo "couldn't install the test tools"; exit 1; }
 	echo "what a self-contained gamer.farm needs that's missing from this template:"
 	on sh -c 'dpkg -l libssl3 libstdc++6 libgcc-s1 2>/dev/null | grep ^ii | cut -c5-30' || true
-	tar -C "$SRC" -cf - tests/service-update.sh tools/linux src/NocatFarm/NocatFarm.csproj | on sh -c 'mkdir -p /root/src && tar -xf - -C /root/src'
+	tar -C "$SRC" -cf - tests/service-update.sh tools/linux src/GamerFarm/GamerFarm.csproj | on sh -c 'mkdir -p /root/src && tar -xf - -C /root/src'
 	tar -C "$ZIPS" -cf - . | on sh -c 'mkdir -p /root/zips && tar -xf - -C /root/zips'
 	on sh -c 'test -f /.dockerenv; echo ".dockerenv there: $?  (1 = no)"; env | grep -c DOTNET_RUNNING_IN_CONTAINER'
 	if on bash /root/src/tests/service-update.sh all /root/zips; then record PASS "every scenario inside the container"; else record FAIL "scenarios inside the container"; fi

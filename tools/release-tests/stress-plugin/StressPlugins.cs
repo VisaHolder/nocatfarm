@@ -1,6 +1,6 @@
-using NocatFarm.Plugins;
+using GamerFarm.Plugins;
 
-namespace NocatFarm.StressTest;
+namespace GamerFarm.StressTest;
 
 // Plugins that misbehave on purpose, for tools/release-tests/stress.ps1 (a hidden test copy, no Steam accounts). Each one is
 // something a badly written add-on could really do. None of them may take gamer.farm down, hold it still, or make it grow
@@ -9,14 +9,14 @@ namespace NocatFarm.StressTest;
 // end any .NET program, and PLUGINS.md says so.
 
 /// <summary>Throws straight away in OnLoadAsync.</summary>
-public sealed class ThrowsOnLoad : INocatPlugin {
+public sealed class ThrowsOnLoad : IGamerPlugin {
 	public string Name => "stress-throws";
 	public string Version => "1.0";
 	public Task OnLoadAsync(IPluginHost host, CancellationToken ct) => throw new InvalidOperationException("stress: thrown on load");
 }
 
 /// <summary>Blocks its OnLoadAsync for a minute before any await - the start must go on after 15 seconds.</summary>
-public sealed class BlocksOnLoad : INocatPlugin {
+public sealed class BlocksOnLoad : IGamerPlugin {
 	public string Name => "stress-blocks";
 	public string Version => "1.0";
 
@@ -27,7 +27,7 @@ public sealed class BlocksOnLoad : INocatPlugin {
 }
 
 /// <summary>Never finishes loading.</summary>
-public sealed class NeverLoads : INocatPlugin {
+public sealed class NeverLoads : IGamerPlugin {
 	public string Name => "stress-never";
 	public string Version => "1.0";
 	public Task OnLoadAsync(IPluginHost host, CancellationToken ct) => new TaskCompletionSource().Task;
@@ -35,7 +35,7 @@ public sealed class NeverLoads : INocatPlugin {
 
 /// <summary>Loads, then floods: the log, notifications, settings, events that block, async voids that throw, unobserved
 /// tasks that fail, comment posts in a tight loop, a page that's enormous, commands that never answer.</summary>
-public sealed class Flood : INocatPlugin {
+public sealed class Flood : IGamerPlugin {
 	private IPluginHost _host = null!;
 	private readonly CancellationTokenSource _stop = new();
 	private int _ticks;

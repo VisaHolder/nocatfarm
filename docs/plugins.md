@@ -4,7 +4,7 @@
 
 A plugin is a DLL, written in C#, that adds commands and features. reap's official ones are called
 [add-ons](addons.md) and install from the Plugins page, checked against a signed list. Plugins are off by default. To use one, put the
-DLL in the `plugins` folder next to `nocatFarm.exe`, turn on **Load plugins** (Settings → Global settings → Updates &
+DLL in the `plugins` folder next to `gamerFarm.exe`, turn on **Load plugins** (Settings → Global settings → Updates &
 plugins, under Show advanced, or `set PluginsEnabled true`), and restart. `plugins` and the dashboard's Plugins page
 list what's loaded and the commands each one added, and each plugin has its own on/off switch there.
 

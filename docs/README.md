@@ -22,7 +22,7 @@ Nothing past Start here is required reading. Open whichever page you need.
 - [Trades](trades.md): trade offers, sending items, the Authenticator page, ban watch, scam watch, account health,
   inventory value and history charts
 - [Achievements and the hunter](achievements.md)
-- [Phone and notifications](phone-and-notifications.md): the phone app, Discord and Telegram, pop-ups, the Discord profile card,
+- [Phone and notifications](phone-and-notifications.md): the phone app, Discord and Telegram, pop-ups,
   the daily summary, the weekly report, stuck accounts and Steam groups
 - [Add-ons](addons.md): reap's official add-ons, installed from the dashboard - and the [rep4rep](rep4rep.md) add-on,
   only if you use rep4rep.com

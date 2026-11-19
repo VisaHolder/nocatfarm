@@ -22,11 +22,11 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS
 WORKDIR /src
 
 # Restore on its own layer, so it only runs again when the project file changes.
-COPY src/NocatFarm/NocatFarm.csproj src/NocatFarm/
-RUN dotnet restore src/NocatFarm/NocatFarm.csproj
+COPY src/GamerFarm/GamerFarm.csproj src/GamerFarm/
+RUN dotnet restore src/GamerFarm/GamerFarm.csproj
 
-COPY src/NocatFarm/ src/NocatFarm/
-RUN dotnet publish src/NocatFarm/NocatFarm.csproj -c Release -o /out --no-restore \
+COPY src/GamerFarm/ src/GamerFarm/
+RUN dotnet publish src/GamerFarm/GamerFarm.csproj -c Release -o /out --no-restore \
         -p:UseAppHost=false -p:DebugType=none
 
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}
@@ -39,9 +39,9 @@ RUN mkdir -p /data/config /data/logs /data/backups /data/plugins \
  && chmod 0777 /data /data/config /data/logs /data/backups /data/plugins
 
 # The dashboard has to listen beyond the container to be reachable through a published port. It still lets
-# nobody in without a password - set NOCATFARM_WEB_PASSWORD (docker-compose.example.yml refuses to start without).
+# nobody in without a password - set GAMERFARM_WEB_PASSWORD (docker-compose.example.yml refuses to start without).
 # The base image's own ASPNETCORE_HTTP_PORTS=8080 is cleared: the dashboard picks its port itself (WebPort, 7242).
-ENV NOCATFARM_WEB_HOST=0.0.0.0 \
+ENV GAMERFARM_WEB_HOST=0.0.0.0 \
     ASPNETCORE_HTTP_PORTS=
 
 EXPOSE 7242
@@ -56,7 +56,7 @@ WORKDIR /data
 # Healthy while the dashboard answers. The image has no curl or wget, so the app asks itself (--ping: reads the port
 # from the settings, asks /api/ping, starts nothing). A dashboard that's switched off counts as healthy.
 HEALTHCHECK --interval=1m --timeout=15s --start-period=1m --retries=3 \
-    CMD ["dotnet", "/app/nocatFarm.dll", "--path", "/data", "--ping"]
+    CMD ["dotnet", "/app/gamerFarm.dll", "--path", "/data", "--ping"]
 
 # SIGTERM (docker stop) signs every account out cleanly before exiting - give it time: stop_grace_period in compose.
-ENTRYPOINT ["dotnet", "/app/nocatFarm.dll", "--path", "/data"]
+ENTRYPOINT ["dotnet", "/app/gamerFarm.dll", "--path", "/data"]
