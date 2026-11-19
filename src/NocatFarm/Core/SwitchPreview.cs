@@ -215,7 +215,7 @@ public static class SwitchPreview {
 			lines.Add("Steam is set to ask which account to use each time it starts - the button turns that off, or Steam would ignore the account it's pointed at.");
 		}
 
-		lines.Add("Pressing a button closes Steam, points it at that account, and starts Steam again. It never stops nocat.farm farming.");
+		lines.Add("Pressing a button closes Steam, points it at that account, and starts Steam again. It never stops gamer.farm farming.");
 
 		return (string.Join(Environment.NewLine, lines), data);
 	}

@@ -1,8 +1,8 @@
-; nocat.farm setup - the screen and what it does. Included from nocatfarm.iss.
+; gamer.farm setup - the screen and what it does. Included from nocatfarm.iss.
 
 [Code]
 const
-  UrlGitHub = 'https://github.com/VisaHolder/nocatfarm';
+  UrlGitHub = 'https://github.com/VisaHolder/gamerfarm';
   UrlSite = 'https://gamer.mom';
   UrlMaker = 'https://nocat.lol';
   DefaultPort = 7242;
@@ -15,7 +15,7 @@ const
   MainBtnW = 200;     // "auf 1.6.3 aktualisieren", "mettre à jour vers 1.6.3"
   SecBtnW = 130;      // "deinstallieren"
 
-  // nocat.farm's palette, as $BBGGRR
+  // gamer.farm's palette, as $BBGGRR
   CBg = $0A0A0A;
   CPanel = $111111;
   CLine = $333333;
@@ -43,17 +43,18 @@ type
   end;
 
 var
-  Upgrading: Boolean;   // nocat.farm is installed here already: update / reinstall / uninstall
+  Upgrading: Boolean;   // gamer.farm is installed here already: update / reinstall / uninstall
   InstalledNewer: Boolean;   // ...and it's newer than this setup: no downgrade offered
   InstalledVersion: String;
-  Portable: String;     // a portable nocat.farm found on this PC, '' if none
+  Portable: String;     // a portable gamer.farm found on this PC, '' if none
   PortableHere: Boolean;   // the install folder picked is that portable copy's own folder: nothing to move
   MovePick: array[0..1] of TToggle;   // 0 move it here, 1 start fresh
   MoveHave, MoveFrom: TLabel;
   RunsRule: TBitmapImage;
   InstallDir: String;
   ShowingAdvanced: Boolean;
-  CloseOnly: Boolean;   // the last screen's "close" (or its cross): finish without opening nocat.farm
+  CloseOnly: Boolean;   // the last screen's "close" (or its cross): finish without opening gamer.farm
+  HadOldDesktopIcon: Boolean;   // 2.0.0: an update over a copy with a "nocat.farm" desktop shortcut - it gets a "gamer.farm" one
   HoverTimer: LongWord;
 
   LogoImg: TBitmapImage;
@@ -283,7 +284,7 @@ begin
 end;
 
 // 64-bit PowerShell. The setup itself is 32-bit, so plain powershell.exe would be the 32-bit one - and that can't read
-// the path of a 64-bit program: a running nocat.farm or ArchiSteamFarm was never found, and never stopped.
+// the path of a 64-bit program: a running gamer.farm or ArchiSteamFarm was never found, and never stopped.
 function PowerShell: String;
 begin
   Result := ExpandConstant('{sysnative}\WindowsPowerShell\v1.0\powershell.exe');
@@ -371,7 +372,7 @@ begin
   Result := GetVersionNumbers(Exe, MS, LS) and ((MS > $00010004) or ((MS = $00010004) and ((LS shr 16) >= 8)));
 end;
 
-// Close the nocat.farm in Dir cleanly and wait for it. One that can't be asked (older than --quit), or that didn't
+// Close the gamer.farm in Dir cleanly and wait for it. One that can't be asked (older than --quit), or that didn't
 // close in time (--quit gives up after 120s and says so), is stopped - rather than left for Windows' "file in use".
 procedure CloseCopy(const Dir: String);
 var
@@ -392,7 +393,21 @@ end;
 
 function WantsDesktopIcon: Boolean;
 begin
-  Result := (not Upgrading) and Toggles[1].On;
+  Result := ((not Upgrading) and Toggles[1].On) or HadOldDesktopIcon;
+end;
+
+// [InstallDelete] (2.0.0): the old "nocat.farm" shortcuts go only when this updates an install - see nocatfarm.iss.
+function IsUpgrading: Boolean;
+begin
+  Result := Upgrading;
+end;
+
+// [InstallDelete], just before the old "nocat.farm" desktop shortcut of an install being updated is deleted: remember
+// it was there, so the update puts a "gamer.farm" one in its place.
+function NoteOldDesktopIcon: Boolean;
+begin
+  HadOldDesktopIcon := Upgrading and FileExists(ExpandConstant('{autodesktop}\nocat.farm.lnk'));
+  Result := Upgrading;
 end;
 
 // The version installed is newer than this setup - "update to" would be a downgrade.
@@ -470,7 +485,7 @@ end;
 
 procedure ShowPath;
 begin
-  if ShotMode then PathLabel.Caption := CustomMessage('InstallsTo') + '  C:\Users\you\AppData\Local\Programs\nocat.farm'
+  if ShotMode then PathLabel.Caption := CustomMessage('InstallsTo') + '  C:\Users\you\AppData\Local\Programs\gamer.farm'
   else PathLabel.Caption := CustomMessage('InstallsTo') + '  ' + ShortPath(InstallDir, 58);
   ChangeLink.Left := PathLabel.Left + PathLabel.Width + ScaleX(12);
 end;
@@ -621,7 +636,7 @@ begin
   Result := True;
   if CurPageID = wpReady then begin
     if not WizardSilent then begin
-      // A newer nocat.farm is installed: no downgrade from here - the button opens the one that's there.
+      // A newer gamer.farm is installed: no downgrade from here - the button opens the one that's there.
       if Upgrading and InstalledNewer then begin
         OpenCopy(InstallDir);
         Result := False;
@@ -650,7 +665,7 @@ begin
   RunsRule.Visible := Choosing;
   ShowToggle(Toggles[0], Choosing);
   ShowToggle(Toggles[1], Choosing);
-  // Other idlers only when there's no nocat.farm already; a portable one gets "move it here / start fresh".
+  // Other idlers only when there's no gamer.farm already; a portable one gets "move it here / start fresh".
   ComingFrom.Visible := Choosing and (Portable = '');
   SourceFrom.Visible := Choosing and (Portable = '');
   for I := 0 to SrcLast do ShowToggle(Sources[I], Choosing and (Portable = ''));
@@ -736,7 +751,7 @@ begin
   end;
 
   // Screenshots never show whose PC they were taken on.
-  if ShotMode and (Portable <> '') then Portable := 'C:\Users\you\Downloads\nocat.farm';
+  if ShotMode and (Portable <> '') then Portable := 'C:\Users\you\Downloads\gamer.farm';
 
   // Borderless, a 1px grey edge (the form's own colour) around the black face - like the app's window.
   W := FormW;
@@ -755,9 +770,9 @@ begin
 
   // header: the wordmark (it drags the window, like a title bar), the version, a close cross
   Box(1, 52, W - 2, 1, CLine);
-  Farm := Words('nocat.', 24, 16, 13, CText, True);
+  Farm := Words('gamer.', 24, 16, 13, CText, True);
   Farm := Words('farm', 24, 16, 13, CPurple, True);
-  Farm.Left := ScaleX(24) + Words('nocat.', -500, 16, 13, CText, True).Width;
+  Farm.Left := ScaleX(24) + Words('gamer.', -500, 16, 13, CText, True).Width;
   with Words('setup {#AppVersion}', 0, 21, 9, CMuted, False) do Left := ScaleX(W - 150);
   Drag := Words('', 0, 0, 9, CMuted, False);
   Drag.AutoSize := False;
@@ -804,7 +819,7 @@ begin
     if SourcePath[SrcAsf] <> '' then PickSource(SrcAsf) else PickSource(SrcFresh);
   end;
 
-  // a portable nocat.farm: move it into the install, or start fresh
+  // a portable gamer.farm: move it into the install, or start fresh
   MoveHave := Words(CustomMessage('MoveHave'), 24, 182, 9, CMuted, False);
   MakeToggle(MovePick[0], CustomMessage('MoveHere'), 24, 204, False, @MoveClick);
   MoveFrom := Words('', 60, 226, 9, CMuted, False);
@@ -847,7 +862,7 @@ begin
   // bottom: the links, the buttons
   Box(1, H - 68, W - 2, 1, CLine);
   LinkGit := Link('github', 24, H - 40);
-  LinkSite := Link('nocat.farm', 0, H - 40);
+  LinkSite := Link('gamer.farm', 0, H - 40);
   LinkSite.Left := LinkGit.Left + LinkGit.Width + ScaleX(18);
   LinkMaker := Link(CustomMessage('MadeBy'), 0, H - 40);
   LinkMaker.Left := LinkSite.Left + LinkSite.Width + ScaleX(18);
@@ -961,7 +976,7 @@ begin
     if SourcePath[Source] <> '' then Args := Args + ' "ImportPath=' + SourcePath[Source] + '"';
   end;
   if not Exec(ExpandConstant('{app}\{#AppExe}'), Args, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then begin
-    // The reason is in English, as nocat.farm wrote it - still more use than a bare number.
+    // The reason is in English, as gamer.farm wrote it - still more use than a bare number.
     Why := SetupProblem(Code);
     if Why <> '' then Why := #13#10#13#10 + Why;
     Log('--setup failed with exit code ' + IntToStr(Code) + Why);
@@ -1048,7 +1063,7 @@ begin
     DelTree(App, True, True, True);   // updates add files the uninstall log never saw
     Exit;
   end;
-  // A folder of the person's own choosing: only what nocat.farm put there.
+  // A folder of the person's own choosing: only what gamer.farm put there.
   DelTree(App + '\config', True, True, True);
   DelTree(App + '\logs', True, True, True);
   DelTree(App + '\backups', True, True, True);
@@ -1069,7 +1084,7 @@ var
   Code: Integer;
   Wipe: Boolean;
 begin
-  // After "are you sure" - answering no must leave nocat.farm running.
+  // After "are you sure" - answering no must leave gamer.farm running.
   if CurUninstallStep = usUninstall then CloseCopy(RemoveBackslash(ExpandConstant('{app}')));
   if CurUninstallStep <> usPostUninstall then Exit;
 

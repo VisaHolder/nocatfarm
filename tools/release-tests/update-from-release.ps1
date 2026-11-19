@@ -10,7 +10,9 @@ $ErrorActionPreference = 'Stop'
 $dir = Join-Path $SP 'update-from'
 $port = 7295
 if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
-Expand-Archive "$Repo\dist\nocat.farm-v$From-portable.zip" $dir
+# Releases before 2.0.0 are nocat.farm-v<version>-portable.zip
+$fromZip = @("$Repo\dist\gamer.farm-v$From-portable.zip", "$Repo\dist\nocat.farm-v$From-portable.zip") | Where-Object { Test-Path $_ } | Select-Object -First 1
+Expand-Archive $fromZip $dir
 New-Item -ItemType Directory -Force (Join-Path $dir 'config') | Out-Null
 Set-Content (Join-Path $dir 'config\nocatFarm.json') -Encoding utf8 -Value "{`"WebPort`":$port,`"CheckForUpdates`":true,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false,`"CountMeAsUser`":false}"
 

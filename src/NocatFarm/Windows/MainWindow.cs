@@ -443,7 +443,7 @@ public sealed partial class MainWindow : IDisposable {
 
 		// WS_THICKFRAME is what gives the edges a grab handle. The caption is still drawn by hand - this only
 		// adds the sizing border, which Windows keeps outside the client area we paint.
-		_hwnd = CreateWindowEx(WsExToolWindow, "nocatFarmWindow", "nocat.farm",
+		_hwnd = CreateWindowEx(WsExToolWindow, "nocatFarmWindow", "gamer.farm",
 			unchecked((int) (WsPopup | WsClipChildren | WsMinimizeBox | WsThickFrame)), x, y, openW, openH,
 			IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
 
@@ -453,7 +453,7 @@ public sealed partial class MainWindow : IDisposable {
 
 		// Reaffirm the title. CreateWindowEx already set it, but doing it here too keeps the intent obvious next to
 		// the other window setup. Correct now that DefWindowProc is the Unicode variant (see its declaration).
-		SetWindowText(_hwnd, "nocat.farm");
+		SetWindowText(_hwnd, "gamer.farm");
 
 		int dark = 1;
 		DwmSetWindowAttribute(_hwnd, DwmUseImmersiveDarkMode, ref dark, sizeof(int));
@@ -609,7 +609,7 @@ public sealed partial class MainWindow : IDisposable {
 
 		if (verdict == QuestionWatch.Verdict.Drop) {
 			_typed.Reset();
-			Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("  that line was typed while nocat.farm was asking something, so it wasn't run or kept - type it again if it was a command")));
+			Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("  that line was typed while gamer.farm was asking something, so it wasn't run or kept - type it again if it was a command")));
 			Invalidate();
 
 			return;
@@ -1137,7 +1137,7 @@ public sealed partial class MainWindow : IDisposable {
 				string ask = Core.Loc.T("Sign your Steam app into {0}? Steam will close and open again.", name);
 
 				// 1.8.2: an account Steam doesn't remember yet opens on Steam's sign-in - say so, with its Steam Guard code
-				// when nocat.farm has its authenticator (Ctrl+C copies a message box's text).
+				// when gamer.farm has its authenticator (Ctrl+C copies a message box's text).
 				if ((_mgr.Get(name) is { } who) && Core.SteamOpen.Look(who).SignIn) {
 					ask += "\n\n" + Core.Loc.T("Steam doesn't remember this account yet, so it opens on Steam's sign-in with the name filled in: type its password once and keep Remember me ticked.");
 
@@ -1408,8 +1408,8 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, 0, _w, TitleH, Panel);
 		Fill(dc, 0, TitleH - 1, _w, 1, Border);
 
-		Text(dc, "nocat.", Pad, 9, _fontBold, TextBright);
-		int w = TextWidth(dc, "nocat.", _fontBold);
+		Text(dc, "gamer.", Pad, 9, _fontBold, TextBright);
+		int w = TextWidth(dc, "gamer.", _fontBold);
 		Text(dc, "farm", Pad + w, 9, _fontBold, Wordmark);
 
 		Text(dc, DateTime.Now.ToString("HH:mm:ss"), _w - 190, 10, _fontSmall, TextDim);
@@ -2155,8 +2155,8 @@ public sealed partial class MainWindow : IDisposable {
 		Fill(dc, 0, 0, _w, MiniTitleH, Panel);
 		Fill(dc, 0, MiniTitleH - 1, _w, 1, Border);
 
-		Text(dc, "nocat.", 10, 7, _fontBold, TextBright);
-		int titleEnd = 10 + TextWidth(dc, "nocat.", _fontBold);
+		Text(dc, "gamer.", 10, 7, _fontBold, TextBright);
+		int titleEnd = 10 + TextWidth(dc, "gamer.", _fontBold);
 		Text(dc, "farm", titleEnd, 7, _fontBold, Wordmark);
 		titleEnd += TextWidth(dc, "farm", _fontBold);
 

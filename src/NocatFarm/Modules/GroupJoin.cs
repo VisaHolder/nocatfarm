@@ -5,7 +5,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Joins Steam groups: every group in the global "Groups every account joins" list (the nocat.farm group to start
+/// Joins Steam groups: every group in the global "Groups every account joins" list (the gamer.farm group to start
 /// with - <c>JoinGroup</c> keeps one account out of it), and this account's own "Also join these
 /// groups". A group is joined only when it's open - one that
 /// needs approval or an invitation is left alone and the log says which.
@@ -149,7 +149,7 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 	public static List<string> Wanted(Bot bot) {
 		List<string> all = [];
 
-		// The shared list (the nocat.farm group unless it's been changed) unless this account is kept out of
+		// The shared list (the gamer.farm group unless it's been changed) unless this account is kept out of
 		// it, then this account's own extras.
 		IEnumerable<string> shared = bot.Cfg.JoinGroup ? Split(Live.Global.GroupsToJoin) : [];
 

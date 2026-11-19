@@ -8,7 +8,7 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// How many Steam accounts run on nocat.farm: once an hour this copy tells gamer.mom it's running and how many of its
+/// How many Steam accounts run on gamer.farm: once an hour this copy tells gamer.mom it's running and how many of its
 /// accounts are signed in, and gamer.mom answers with the accounts over every copy (and, as before, how many copies).
 /// </summary>
 /// <remarks>
@@ -52,13 +52,13 @@ public static class UserCount {
 		PooledConnectionLifetime = TimeSpan.FromMinutes(15)
 	}));
 
-	/// <summary>The client the ping is sent with: 10 seconds and no more, a plain nocat.farm User-Agent, a small answer.</summary>
+	/// <summary>The client the ping is sent with: 10 seconds and no more, a plain gamer.farm User-Agent, a small answer.</summary>
 	public static HttpClient MakeClient(HttpMessageHandler handler) {
 		HttpClient http = new(handler, true) {
 			Timeout = TimeSpan.FromSeconds(10),
 			MaxResponseContentBufferSize = 64 * 1024
 		};
-		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "nocat.farm/" + Build.Version);
+		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "gamer.farm/" + Build.Version);
 
 		return http;
 	}
@@ -273,10 +273,10 @@ public static class UserCount {
 		}
 	}
 
-	/// <summary>"1,240 Steam accounts on nocat.farm", the number grouped the way the language picked writes it.</summary>
+	/// <summary>"1,240 Steam accounts on gamer.farm", the number grouped the way the language picked writes it.</summary>
 	public static string AccountsLine(int n) => n == 1
-		? new Said("1 Steam account on nocat.farm").ToString()
-		: new Said("{0} Steam accounts on nocat.farm", Fmt.Grouped(n)).ToString();
+		? new Said("1 Steam account on gamer.farm").ToString()
+		: new Said("{0} Steam accounts on gamer.farm", Fmt.Grouped(n)).ToString();
 
 	/// <summary>
 	/// One ping: says this copy is running and keeps the counts that come back. Nothing at all with "Count me as a user"
@@ -353,7 +353,7 @@ public static class UserCount {
 		}
 	}
 
-	/// <summary>The Steam accounts on nocat.farm - the number shown - or null while it isn't known.</summary>
+	/// <summary>The Steam accounts on gamer.farm - the number shown - or null while it isn't known.</summary>
 	public static int? Accounts(GlobalConfig g, DateTime nowUtc) => Current(g, nowUtc)?.Accounts;
 
 	public static int? Accounts() => Accounts(Live.Global, DateTime.UtcNow);

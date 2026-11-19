@@ -109,7 +109,7 @@ EOF
 	on sh -c 'grep -E "^0 " /proc/self/uid_map'
 	on cat /etc/debian_version
 	on sh -c 'apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq unzip zip curl python3 procps > /dev/null' || { echo "couldn't install the test tools"; exit 1; }
-	echo "what a self-contained nocat.farm needs that's missing from this template:"
+	echo "what a self-contained gamer.farm needs that's missing from this template:"
 	on sh -c 'dpkg -l libssl3 libstdc++6 libgcc-s1 2>/dev/null | grep ^ii | cut -c5-30' || true
 	tar -C "$SRC" -cf - tests/service-update.sh tools/linux src/NocatFarm/NocatFarm.csproj | on sh -c 'mkdir -p /root/src && tar -xf - -C /root/src'
 	tar -C "$ZIPS" -cf - . | on sh -c 'mkdir -p /root/zips && tar -xf - -C /root/zips'

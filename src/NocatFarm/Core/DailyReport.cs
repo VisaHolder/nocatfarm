@@ -10,7 +10,7 @@ namespace NocatFarm.Core;
 /// answers "what did I actually get overnight?" without reading the whole log. Laid out as a ReportCard.
 ///
 /// "Played" is a delta: game-minutes now minus the game-minutes snapshotted at the last summary. So it counts only
-/// the time nocat.farm actually ran games, and it survives a restart because the snapshot is on disk. Every
+/// the time gamer.farm actually ran games, and it survives a restart because the snapshot is on disk. Every
 /// running game counts, the way Steam credits playtime: 32 games for an hour is 32 hours played - the same hours
 /// that land on the account's Steam profile, which is why the word is "played" (it used to say "banked") and why a
 /// day can show far more than 24h. The lifetime total is left out of the message and kept for 'report' and 'stats',
@@ -188,7 +188,7 @@ public static class DailyReport {
 	/// <summary>One account's day as the summary counts it.</summary>
 	/// <param name="Minutes">Game-minutes played since the last summary - null for an account with nothing to count
 	/// from yet (the very first summary), which is "not counted yet" rather than a made-up "off".</param>
-	/// <param name="Total">Every game-minute nocat.farm has put on it - shown only where someone asks ('report', 'stats').</param>
+	/// <param name="Total">Every game-minute gamer.farm has put on it - shown only where someone asks ('report', 'stats').</param>
 	public sealed record Day(string Name, double? Minutes, int Cards, int Comments, double Total);
 
 	/// <summary>The card, and what the next summary counts from - kept only when the real one goes out.</summary>

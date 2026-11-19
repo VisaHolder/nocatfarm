@@ -459,7 +459,7 @@ public sealed class TrayIcon : IDisposable {
 			AppendMenu(menu, MfString, IdStartAll, Loc.T("Start all accounts"));
 			AppendMenu(menu, MfString, IdStopAll, Loc.T("Stop all accounts"));
 			AppendMenu(menu, MfSeparator, 0, null);
-			AppendMenu(menu, MfString, IdExit, Loc.T("Exit nocat.farm"));
+			AppendMenu(menu, MfString, IdExit, Loc.T("Exit gamer.farm"));
 
 			GetCursorPos(out Point p);
 

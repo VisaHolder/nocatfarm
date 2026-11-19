@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace NocatFarm.Addons.Rep4Rep;
 
 /// <summary>
-/// One account's commenting record - everything that MUST survive a restart. The property names are the ones nocat.farm
+/// One account's commenting record - everything that MUST survive a restart. The property names are the ones gamer.farm
 /// 1.8.x wrote to config/state/rep4rep-&lt;account&gt;.json, so the app's move of those files into this add-on's state
 /// (Config/MigrateRep4Rep.cs) reads straight in.
 /// </summary>
@@ -211,7 +211,7 @@ public sealed class AddonState {
 }
 
 /// <summary>
-/// Comments not to post (GitHub issue VisaHolder/nocatfarm#1): a task whose comment has one of these words or phrases, or a
+/// Comments not to post (GitHub issue VisaHolder/gamerfarm#1): a task whose comment has one of these words or phrases, or a
 /// link, is skipped - no comment goes out, and rep4rep hands out another. Whole words, any case: "add" catches "add me +rep",
 /// not "address".
 /// </summary>

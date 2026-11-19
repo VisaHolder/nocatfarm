@@ -73,7 +73,7 @@ public static class OffScreen {
 
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force $W | Out-Null
-if ($AppDir) { Copy-Item "$AppDir\*" $W -Recurse } else { Expand-Archive "$Repo\dist\nocat.farm-v$Version-portable.zip" -DestinationPath $W }
+if ($AppDir) { Copy-Item "$AppDir\*" $W -Recurse } else { Expand-Archive "$Repo\dist\gamer.farm-v$Version-portable.zip" -DestinationPath $W }
 node "$E2E\make-fixture.mjs" $W $Port --ping-stub
 
 # Playwright and its Chromium, once.

@@ -62,7 +62,7 @@ public static class LevelReport {
 		}
 	}
 
-	/// <summary>A listing of nocat.farm's that sold, with what the account got.</summary>
+	/// <summary>A listing of gamer.farm's that sold, with what the account got.</summary>
 	public static void NoteSale(string account, long cents, int currency, DateTime now) {
 		if (cents <= 0) {
 			return;

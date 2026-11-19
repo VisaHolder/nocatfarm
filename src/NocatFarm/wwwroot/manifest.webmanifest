@@ -1,7 +1,7 @@
 {
-  "name": "nocat.farm",
-  "short_name": "nocat.farm",
-  "description": "Your nocat.farm dashboard: Steam accounts, cards, hours and free stuff.",
+  "name": "gamer.farm",
+  "short_name": "gamer.farm",
+  "description": "Your gamer.farm dashboard: Steam accounts, cards, hours and free stuff.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

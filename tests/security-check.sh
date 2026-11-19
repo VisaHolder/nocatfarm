@@ -3,7 +3,7 @@
 #   the security headers; a wrong password from the internet; five of them switching "Open from anywhere" off (the
 #   default), after which even the right password from outside is refused while home still gets in; the visitor log;
 #   and turning it back on opening it again.
-# The internet is played by X-Forwarded-For from this machine: nocat.farm only believes that header from loopback,
+# The internet is played by X-Forwarded-For from this machine: gamer.farm only believes that header from loopback,
 # which is exactly how a proxy on the same PC reaches it - or from a proxy listed in WebTrustedProxies, which is how
 # Docker (reached from its own network, not loopback) is checked.
 #   sh tests/security-check.sh http://127.0.0.1:7242 path/to/config [the password it already has]

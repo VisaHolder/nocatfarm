@@ -129,14 +129,14 @@ public static partial class MobileAuth {
 			using JsonDocument doc = JsonDocument.Parse(json);
 			(string? shared, string? identity, string? device) = (Find(doc.RootElement, "shared_secret"), Find(doc.RootElement, "identity_secret"), Find(doc.RootElement, "device_id"));
 
-			// A plain maFile in nocat.farm's own folder is encrypted in place once it has been read - an authenticator's
+			// A plain maFile in gamer.farm's own folder is encrypted in place once it has been read - an authenticator's
 			// secrets are the account's Steam Guard. Files anywhere else (ASF's folder, say) are never touched.
 			if (Secrets.IsPlain(stored) && Secrets.Available && (shared != null) && !SelfUpdate.OnTrial
 				&& string.Equals(Path.GetDirectoryName(Path.GetFullPath(path)), Path.GetFullPath(MaFiles.Dir), StringComparison.OrdinalIgnoreCase)) {
 				try {
 					AtomicFile.Write(path, Secrets.Protect(stored, Path.GetFileNameWithoutExtension(path)));
 					Log.Info(new Said("encrypted {0} - keep your own backup of the maFile", Path.GetFileName(path)));
-					Log.Debug(new Said("an encrypted maFile only opens in nocat.farm on this Windows user"));
+					Log.Debug(new Said("an encrypted maFile only opens in gamer.farm on this Windows user"));
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					// Still plain on disk, still read fine - the next read tries again.
 					Log.Debug(new Said("couldn't encrypt {0} in place: {1}", Path.GetFileName(path), Log.Describe(e)));

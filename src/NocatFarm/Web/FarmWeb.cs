@@ -69,12 +69,12 @@ public static class FarmWeb {
 	/// <summary>Paired pages kept, at most; the oldest goes when another is approved.</summary>
 	public const int MaxTokens = 10;
 
-	/// <summary>The page, for this PC's nocat.farm on <paramref name="port"/> - what "open the dashboard" opens once it's set up.</summary>
+	/// <summary>The page, for this PC's gamer.farm on <paramref name="port"/> - what "open the dashboard" opens once it's set up.</summary>
 	public static string PageUrl(int port) => $"{SiteOrigin}/?port={port}";
 
 	/// <summary>
 	/// The switch's value for a brand-new install only (a config made on first start): on where there's a desktop with a
-	/// browser on the same machine. Off in Docker and on a server with no screen - the page only reaches nocat.farm from a
+	/// browser on the same machine. Off in Docker and on a server with no screen - the page only reaches gamer.farm from a
 	/// browser on the PC it runs on, and there is none there. A config that already exists is never changed: missing the
 	/// key, it's off, as in 1.9.1.
 	/// </summary>

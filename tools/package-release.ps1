@@ -1,12 +1,17 @@
 <#
-  package-release.ps1 - build clean, shippable nocat.farm release zips.
+  package-release.ps1 - build clean, shippable gamer.farm release zips.
 
   Produces, in dist/:
-    nocat.farm-v<version>-setup.exe         Windows installer (the recommended download) - needs Inno Setup 7
-    nocat.farm-v<version>-portable.zip      Windows (win-x64) portable - also the one the in-app updater installs
-    nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
-    nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
-    nocat.farm-v<version>_linux-arm.zip     Linux on 32-bit ARM (older Pis, Android TV boxes running Debian in Termux)
+    gamer.farm-v<version>-setup.exe         Windows installer (the recommended download) - needs Inno Setup 7
+    gamer.farm-v<version>-portable.zip      Windows (win-x64) portable - also the one the in-app updater installs
+    gamer.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
+    gamer.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
+    gamer.farm-v<version>_linux-arm.zip     Linux on 32-bit ARM (older Pis, Android TV boxes running Debian in Termux)
+    nocat.farm-v<version>-portable.zip,     2.0.0: the same zips again under the names before the rename (gamer.farm was
+    nocat.farm-v<version>_<rid>.zip         nocat.farm) - attach them too while copies before 2.0.0 are about. Those pick
+                                            their download by its end (-portable / _linux-x64 ...), so either name works for
+                                            them; the old one is there in case anything goes by the whole name. Not made for
+                                            a test build as another version (-AsVersion), or with -NoOldNames.
     nocatfarm.rep4rep.dll                   the official rep4rep add-on (one per addons/<id>), any platform - and
                                             addons/addons.json + .sig rewritten and signed (see the add-ons step)
   The Mac zips (_osx-arm64, _osx-x64) are NOT made here: a Mac only runs a signed app, and it's only signed when
@@ -32,6 +37,8 @@
 param(
     [ValidateSet('', 'linux-x64', 'linux-arm64', 'linux-arm')][string]$OnlyRid = '',
     [string]$AsVersion = '',
+    # 2.0.0: no copies under the old nocat.farm-* names (see the list above).
+    [switch]$NoOldNames,
     # The add-on signing key (private, PKCS#8 base64) - outside every repository. Back it up: without it no new add-on
     # index can be signed that the copies already out there accept.
     [string]$AddonKey = $(if ($env:NOCATFARM_ADDON_KEY) { $env:NOCATFARM_ADDON_KEY } else { 'C:\Users\pauld\Documents\devKit\keys\nocatfarm-addons.key' })
@@ -42,7 +49,7 @@ $ErrorActionPreference = 'Stop'
 $root  = Split-Path -Parent $PSScriptRoot          # the repo root
 $proj  = Join-Path $root 'src/NocatFarm'
 $dist  = Join-Path $root 'dist'
-$stage = Join-Path $dist 'nocat.farm'
+$stage = Join-Path $dist 'gamer.farm'
 
 # --- version straight from the csproj, so the zip name always matches the build -------------------------
 [xml]$csproj = Get-Content (Join-Path $proj 'NocatFarm.csproj')
@@ -52,7 +59,16 @@ if (-not $version) { $version = '0.0.0' }
 $versionArgs = @()
 if ($AsVersion) { $version = $AsVersion; $versionArgs = @("-p:Version=$AsVersion") }
 
-Write-Host "Packaging nocat.farm v$version" -ForegroundColor Cyan
+Write-Host "Packaging gamer.farm v$version" -ForegroundColor Cyan
+
+# --- 2.0.0: the old name next to the new one ---------------------------------------------------------------
+# gamer.farm-v2.0.0-portable.zip -> nocat.farm-v2.0.0-portable.zip, byte for byte the same file.
+function Copy-OldName([string]$zip) {
+    if ($AsVersion -or $NoOldNames) { return }
+    $old = Join-Path (Split-Path -Parent $zip) ((Split-Path -Leaf $zip) -replace '^gamer\.farm-', 'nocat.farm-')
+    Copy-Item $zip $old -Force
+    Write-Host "Done  ->  $old  (the same zip under the name before 2.0.0)" -ForegroundColor Green
+}
 
 # --- SAFETY: never ship personal data. Abort loudly if any is present. ---------------------------------
 function Assert-Clean([string]$dir) {
@@ -74,10 +90,10 @@ function Assert-Clean([string]$dir) {
 
 # --- zip -----------------------------------------------------------------------------------------------
 # Every entry is named by hand. On Windows PowerShell 5.1 both Compress-Archive and ZipFile.CreateFromDirectory
-# write "nocat.farm\wwwroot\app.js" with backslashes, which the zip format doesn't allow - Windows copes, but
+# write "gamer.farm\wwwroot\app.js" with backslashes, which the zip format doesn't allow - Windows copes, but
 # unzip warns and other tools can flatten the folders. Forward slashes.
 #
-# And FLAT - nocatFarm.exe at the top of the zip, not inside a nocat.farm/ folder. The in-app updater looks for
+# And FLAT - nocatFarm.exe at the top of the zip, not inside a gamer.farm/ folder. The in-app updater looks for
 # the exe at the top, and every copy already installed runs that check, so a foldered zip is one nobody can update
 # to. Unzipping by hand still gives a folder of its own (Windows names it after the zip), and updating by hand is
 # unzipping over the install folder.
@@ -165,11 +181,12 @@ Assert-Clean $stage
 # --- bundle the readme so the zip is self-explanatory --------------------------------------------------
 Copy-Item (Join-Path $root 'README.md') $stage -Force
 
-$zip = Join-Path $dist "nocat.farm-v$version-portable.zip"
+$zip = Join-Path $dist "gamer.farm-v$version-portable.zip"
 New-FlatZip $stage $zip
 
 $size = [math]::Round((Get-Item $zip).Length / 1MB, 1)
 Write-Host "Done  ->  $zip  (${size} MB)" -ForegroundColor Green
+Copy-OldName $zip
 
 # --- the installer, from the very same files ----------------------------------------------------------------
 # Inno Setup 7 builds it (tools/installer/nocatfarm.iss). The installed copy updates itself from the zip above,
@@ -180,7 +197,7 @@ if ($iscc) {
     python (Join-Path $PSScriptRoot 'installer/make-messages.py') | Out-Null
     & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer/nocatfarm.iss')
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build the installer' }
-    $setup = Join-Path $dist "nocat.farm-v$version-setup.exe"
+    $setup = Join-Path $dist "gamer.farm-v$version-setup.exe"
     $ssize = [math]::Round((Get-Item $setup).Length / 1MB, 1)
     Write-Host "Done  ->  $setup  (${ssize} MB)" -ForegroundColor Green
 } else {
@@ -228,7 +245,7 @@ if (-not $AsVersion) {
 # Self-contained as well, so it runs on a box with no .NET. The csproj makes these a plain console program
 # (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./nocatFarm.
 foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-arm64', 'linux-arm') })) {
-    $lstage = Join-Path $dist "nocat.farm-$rid"
+    $lstage = Join-Path $dist "gamer.farm-$rid"
     if (Test-Path $lstage) { Remove-Item $lstage -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $lstage | Out-Null
 
@@ -246,13 +263,14 @@ foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-ar
         Copy-Item $from $lstage -Force
     }
 
-    $lzip = Join-Path $dist "nocat.farm-v${version}_$rid.zip"
+    $lzip = Join-Path $dist "gamer.farm-v${version}_$rid.zip"
     New-FlatZip $lstage $lzip
     Set-UnixModes $lzip
 
     $lsize = [math]::Round((Get-Item $lzip).Length / 1MB, 1)
     Write-Host "Done  ->  $lzip  (${lsize} MB)" -ForegroundColor Green
+    Copy-OldName $lzip
 }
 
 Write-Host 'Clean: no accounts, tokens, or logs included.' -ForegroundColor Green
-Write-Host 'Upload the setup and all four zips to the release, then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray
+Write-Host 'Upload the setup and all four zips to the release (and, unless -NoOldNames, their four nocat.farm-* copies), then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray

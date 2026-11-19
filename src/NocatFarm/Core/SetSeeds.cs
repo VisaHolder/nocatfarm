@@ -12,7 +12,7 @@ namespace NocatFarm.Core;
 /// </summary>
 /// <remarks>
 /// Polite by rule: each site's robots.txt is read first and followed (any answer but a 200 there, and the site is left
-/// alone that day); at most once a day; under an honest name, "nocat.farm set finder"; and a site that doesn't answer,
+/// alone that day); at most once a day; under an honest name, "gamer.farm set finder"; and a site that doesn't answer,
 /// answers anything but a 200, or sends a list that can't be read reliably is skipped with one debug line - the finder
 /// carries on by itself. Checked October 2026:
 /// <list type="bullet">
@@ -34,10 +34,10 @@ public static class SetSeeds {
 	public static readonly TimeSpan Every = TimeSpan.FromDays(1);
 
 	/// <summary>What robots.txt calls this reader.</summary>
-	public const string RobotName = "nocat.farm";
+	public const string RobotName = "gamer.farm";
 
 	/// <summary>The name it reads under.</summary>
-	public static string Agent => $"nocat.farm set finder/{Build.Version}";
+	public static string Agent => $"gamer.farm set finder/{Build.Version}";
 
 	/// <summary>A list: the site's name, where its list is, and how it's read - the games, the cheapest set first, at most so many.</summary>
 	public sealed record Source(string Name, Uri List, Func<string, int, IReadOnlyList<uint>?> Parse);

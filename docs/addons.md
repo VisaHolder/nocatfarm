@@ -2,26 +2,26 @@
 
 # Add-ons
 
-Add-ons are extras that aren't part of nocat.farm itself. Each one is a single file you can install, switch off or
+Add-ons are extras that aren't part of gamer.farm itself. Each one is a single file you can install, switch off or
 remove at any time. The official ones are made by reap and listed here and on
 [gamer.mom/addons](https://gamer.mom/addons).
 
 | Add-on | What it does |
 |---|---|
-| [rep4rep](rep4rep.md) | Earns rep4rep points by posting the profile comments rep4rep hands out, at a human pace, from the accounts you switch on. Was built into nocat.farm until 1.9.0. |
+| [rep4rep](rep4rep.md) | Earns rep4rep points by posting the profile comments rep4rep hands out, at a human pace, from the accounts you switch on. Was built into gamer.farm until 1.9.0. |
 
-The list nocat.farm reads is [`addons/addons.json`](../addons/addons.json) in this repository.
+The list gamer.farm reads is [`addons/addons.json`](../addons/addons.json) in this repository.
 
 ## Installing one
 
 **From the dashboard:** open the **Plugins** tab. *Official add-ons* lists each one and whether you have it. Press
-**Install**, then restart nocat.farm. Installing also turns on *Load plugins* for you.
+**Install**, then restart gamer.farm. Installing also turns on *Load plugins* for you.
 
 **From the console:** `addons` lists them, `addons install rep4rep` installs one, and `addons remove rep4rep` takes it
-out again. Restart after either one. Removing doesn't need GitHub: it works with the list nocat.farm last checked, or
+out again. Restart after either one. Removing doesn't need GitHub: it works with the list gamer.farm last checked, or
 just the add-on's file name in `plugins`.
 
-Installing and removing only work at this PC: in the nocat.farm window or its console, or on the dashboard opened on
+Installing and removing only work at this PC: in the gamer.farm window or its console, or on the dashboard opened on
 this PC. A dashboard you signed into with its password works too, its Console included. They don't work from Steam
 chat, Telegram or Discord.
 
@@ -31,16 +31,16 @@ settings, so if you install it again it carries on where it left off.
 
 ## Why it's safe to install
 
-An add-on runs inside nocat.farm, next to your Steam logins. So nocat.farm only installs an official one when all of
+An add-on runs inside gamer.farm, next to your Steam logins. So gamer.farm only installs an official one when all of
 these checks pass:
 
 - **The list is signed.** `addons.json` comes with `addons.json.sig`, a signature made with reap's private key. That
-  key is kept on reap's PC and never put online. nocat.farm has the matching public key built in, and refuses a list
+  key is kept on reap's PC and never put online. gamer.farm has the matching public key built in, and refuses a list
   whose signature doesn't match. So someone who got into the GitHub repository still couldn't add or swap an add-on.
-- **The file is the one the list names.** The file is downloaded from nocat.farm's own GitHub releases, never from
+- **The file is the one the list names.** The file is downloaded from gamer.farm's own GitHub releases, never from
   anywhere else. Its SHA-256 has to match the one in the signed list, or it isn't installed.
-- **It fits your version.** An add-on that needs a newer nocat.farm says so instead of installing.
-- **Never backwards.** Every list has a number that goes up with each new one. nocat.farm remembers the highest it has
+- **It fits your version.** An add-on that needs a newer gamer.farm says so instead of installing.
+- **Never backwards.** Every list has a number that goes up with each new one. gamer.farm remembers the highest it has
   seen and refuses an older list, and it won't install an older version of an add-on over a newer one.
 - **Only names from the list.** The dashboard and the command take an add-on's name, never a web address.
 
@@ -54,7 +54,7 @@ one. Plugins are off until you turn on *Load plugins*.
 
 Add-ons get the same narrow plugin API as any other plugin. They can see your accounts but can't touch the Steam
 connection, your logins or your config files. Anything that changes something goes through a command. The one exception
-is posting a profile comment as an account, which rep4rep needs, and nocat.farm stays in charge of it:
+is posting a profile comment as an account, which rep4rep needs, and gamer.farm stays in charge of it:
 
 - never on an account that's offline, paused, switched off or signing off
 - in human mode, only while the account is up and settled in (not while it's asleep, on a break or while you're

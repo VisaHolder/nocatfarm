@@ -638,7 +638,7 @@ public static class Seller {
 		// 1.8.2: the confirmations list read once for the whole batch, not one to three times a listing.
 		foreach (ulong listing in await bot.ConfirmManyAsync(MatchPending(now, up, started), ct).ConfigureAwait(false)) {
 			confirmed++;
-			// Confirmed by nocat.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
+			// Confirmed by gamer.farm itself: up, never one you declined - and said, as one confirmed in the Steam app is.
 			Listing live = now.First(l => l.Id == listing);
 			OurListings.Mark(bot.Name, live);
 			Log.Good(SpareRun.LiveSaid(live.Hash, live.BuyerCents, (int) bot.WalletCurrency), bot.Name);
@@ -900,7 +900,7 @@ public static class Seller {
 	/// Take down listings that have sat unsold for a week while the market went under them. The cards come back to
 	/// the inventory and the next sell lists them again at that day's price.
 	/// </summary>
-	/// <param name="oursOnly">Only listings nocat.farm put up itself (<see cref="OurListings"/>) - what Spare items does by
+	/// <param name="oursOnly">Only listings gamer.farm put up itself (<see cref="OurListings"/>) - what Spare items does by
 	/// itself. Without it ('sell relist', which you type) every one of the account's card listings counts.</param>
 	public static async Task<(int Removed, int Stale)> RelistAsync(Bot bot, CancellationToken ct, int days = 7, bool oursOnly = false) {
 		// 1.8.2: never taken down while the market is held - it couldn't go up again.
@@ -960,7 +960,7 @@ public static class Seller {
 	/// <summary>
 	/// Spare items' own unsold listings, after <paramref name="days"/>: each taken down to go up again a step cheaper (see
 	/// <see cref="SpareListings.StepTo"/>), the step remembered for when it's listed again, and each step logged -
-	/// "Level ??? Ninja unsold 4 days - 0.31 -> 0.30 CAD". At its floor a listing stays up. Only listings nocat.farm put up
+	/// "Level ??? Ninja unsold 4 days - 0.31 -> 0.30 CAD". At its floor a listing stays up. Only listings gamer.farm put up
 	/// itself (<see cref="OurListings"/>) - never one you listed by hand, nor one Steam is still holding off the market.
 	/// Returns how many came down.
 	/// </summary>

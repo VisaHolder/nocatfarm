@@ -97,7 +97,7 @@ for (int i = 0; i < args.Length; i++) {
 
 try {
 	Console.OutputEncoding = Encoding.UTF8;
-	Console.Title = "nocat.farm";
+	Console.Title = "gamer.farm";
 } catch {
 	// a redirected or unusual console - harmless
 }
@@ -120,7 +120,7 @@ try {
 	}
 
 	Console.WriteLine();
-	Console.WriteLine($"  nocat.farm can't write its settings next to itself: {e.Message}");
+	Console.WriteLine($"  gamer.farm can't write its settings next to itself: {e.Message}");
 
 	// Said for the machine it's on: on Linux or a Mac the usual cause is a folder that belongs to another user (unzipped
 	// with sudo, or /opt), and "move it to Documents" was Windows advice that fixes nothing there.
@@ -128,7 +128,7 @@ try {
 		Console.WriteLine("  Move the folder somewhere you can write to - Desktop, Documents or its own folder on another drive.");
 	} else {
 		Console.WriteLine($"  The folder isn't writable by this user ({Environment.UserName}). Give it to this user -");
-		Console.WriteLine($"  sudo chown -R {Environment.UserName}: \"{Path.GetFullPath(root)}\" - or run nocat.farm as its owner.");
+		Console.WriteLine($"  sudo chown -R {Environment.UserName}: \"{Path.GetFullPath(root)}\" - or run gamer.farm as its owner.");
 	}
 
 	Console.WriteLine();
@@ -238,7 +238,7 @@ AtomicFile.SweepLeftovers(ConfigStore.ConfigDir);
 
 // Back on a version after going back to an older one: the settings the older one didn't know, and so left out when it
 // saved, are put back before anything reads them - only those (see Rollback). Said once the log is open.
-// Nothing in it may stop nocat.farm starting: whatever it didn't expect is said, and the settings load as they are.
+// Nothing in it may stop gamer.farm starting: whatever it didn't expect is said, and the settings load as they are.
 List<Rollback.Note> broughtBack;
 
 try {
@@ -318,7 +318,7 @@ Commands.ExitHandler = () => shutdown.Cancel();
 
 // Every way out goes through Commands.RequestExit (see Quit): the "closing" flag first, then the cancel. The tray's
 // Exit, Ctrl+C, SIGTERM and "every account has finished" used to cancel on their own, the flag never went up, and an
-// update part-way through signing the accounts out carried on - installed itself and started nocat.farm again after
+// update part-way through signing the accounts out carried on - installed itself and started gamer.farm again after
 // it had been closed. Anything that still cancels directly raises the flag here too.
 shutdown.Token.Register(static () => Commands.RequestExit());
 
@@ -477,7 +477,7 @@ NocatFarm.Core.SelfUpdate.NotifierReady();
 	NocatFarm.Core.RunState.MachineStarted(startedAt)) is { } backUp) {
 		_ = Task.Run(async () => {
 			await Task.Delay(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
-			Log.Event(backUp, "nocat.farm", Topic.Problems);   // good news, so the log's green - still under Problems, so Telegram and Discord get it
+			Log.Event(backUp, "gamer.farm", Topic.Problems);   // good news, so the log's green - still under Problems, so Telegram and Discord get it
 		});
 	}
 
@@ -525,7 +525,7 @@ if (!shutdown.IsCancellationRequested) {
 	// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
 	NocatFarm.Core.RemoteAccess.Start();
 
-	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on nocat.farm". Sends nothing while it's off.
+	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on gamer.farm". Sends nothing while it's off.
 	NocatFarm.Core.UserCount.Start();
 	NocatFarm.Core.CardExchange.Start();   // 1.8.2 card swaps: says nothing unless an account has them on
 	NocatFarm.Core.SetFinder.Start(manager);   // 1.8.2 the cheapest whole sets on the market: looks only while an account buys full sets, or after 'sets'
@@ -535,7 +535,7 @@ if (!shutdown.IsCancellationRequested) {
 	NocatFarm.Core.BackupSchedule.Start();
 }
 
-// 1.5.9's "Tell me if nocat.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
+// 1.5.9's "Tell me if gamer.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
 try {
 	File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "stop-alert-id.txt"));
 } catch (IOException) {
@@ -668,7 +668,7 @@ void Banner() {
 
 			Console.Write("  │  ");
 			Console.ForegroundColor = ConsoleColor.White;
-			Console.Write("nocat.");
+			Console.Write("gamer.");
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.Write("farm");
 			Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -757,7 +757,7 @@ static void Quit() => Commands.RequestExit();
 [SupportedOSPlatform("windows")]
 TrayIcon StartTray(BotManager mgr, Func<string> url) {
 	TrayIcon icon = new(
-		"nocat.farm",
+		"gamer.farm",
 		url,
 		() => _ = mgr.StartAllAsync(),
 		() => _ = mgr.StopAllAsync(),

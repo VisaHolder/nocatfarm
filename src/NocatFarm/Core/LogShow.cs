@@ -14,7 +14,7 @@ namespace NocatFarm.Core;
 /// <see cref="LogStack"/> sorts what stacks - not by hundreds of call sites each saying what they are. In order: what the line
 /// was written as (an answer to a command, a trade), the account's status line, the sentence's rules below, the
 /// notification topic it was sent under, the sentence with its values filled in (for a line built of parts, "{0} · {1}"),
-/// and last where it came from - nocat.farm itself, the chats and the daily summary are app messages.
+/// and last where it came from - gamer.farm itself, the chats and the daily summary are app messages.
 /// </remarks>
 public static class LogShow {
 	/// <summary>The kinds, each with its chip (a global switch, on by default).</summary>
@@ -186,7 +186,7 @@ public static class LogShow {
 		return LogStack.KindOf(said) switch {
 			LogStack.Gems => Selling,
 			LogStack.Update => App,
-			_ => source is "nocat.farm" or "discord" or "telegram" or "report" or "plugins" ? App : null
+			_ => source is "gamer.farm" or "nocat.farm" or "discord" or "telegram" or "report" or "plugins" ? App : null
 		};
 	}
 

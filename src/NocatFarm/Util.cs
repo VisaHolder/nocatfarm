@@ -490,10 +490,10 @@ public static class Background {
 	/// Each loop catches its own failures; one that got past that used to simply stop, the feature going quiet with
 	/// nothing in the log.
 	/// </summary>
-	public static void Loop(Said which, Func<Task> loop, string source = "nocat.farm") =>
+	public static void Loop(Said which, Func<Task> loop, string source = "gamer.farm") =>
 		_ = Task.Run(loop).ContinueWith(t => {
 			Exception e = t.Exception!.GetBaseException();
-			Log.Error(new Said("{0} stopped: {1} - restart nocat.farm to get it back", which, Log.Describe(e)), source);
+			Log.Error(new Said("{0} stopped: {1} - restart gamer.farm to get it back", which, Log.Describe(e)), source);
 			Log.StackToFile(e, source);
 		}, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
 

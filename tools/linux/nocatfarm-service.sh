@@ -1,11 +1,11 @@
 #!/bin/sh
-# nocat.farm's helper for running as a systemd service: it puts an update in while nothing is running, inside what
+# gamer.farm's helper for running as a systemd service: it puts an update in while nothing is running, inside what
 # systemd supervises, so there is never a second copy and never a script that outlives the service.
 #
 #   nocatfarm-service.sh prepare   ExecStartPre: runs before every start.
 #   nocatfarm-service.sh watch     ExecStartPost: runs after every start, and waits only while an update is on trial.
 #
-# How an update goes. nocat.farm unpacks and checks it in .nocatfarm-update/job in this folder, signs the accounts out,
+# How an update goes. gamer.farm unpacks and checks it in .nocatfarm-update/job in this folder, signs the accounts out,
 # writes job/ready, and exits with code 75. systemd restarts it, and "prepare" moves the new files in, keeping what it
 # replaced in job/backup. The new version then has three minutes to say it's fine, in job/started.txt.
 #
@@ -27,7 +27,7 @@ here=$(cd "$(dirname "$0")" && pwd -P) || exit 1
 box=$here/.nocatfarm-update
 job=$box/job
 
-say() { printf 'nocat.farm update: %s\n' "$*"; }
+say() { printf 'gamer.farm update: %s\n' "$*"; }
 
 # One small file the app left in the job, or nothing.
 from_job() { cat "$job/$1" 2>/dev/null; }
@@ -51,7 +51,7 @@ forget_job() {
 	mv -f "$job" "$box/old-job" && rm -rf "${box:?}/old-job"
 }
 
-# Process ids of other copies of nocat.farm running from this folder, by the program each one runs.
+# Process ids of other copies of gamer.farm running from this folder, by the program each one runs.
 from_here() {
 	for d in /proc/[0-9]*; do
 		t=$(readlink "$d/exe" 2>/dev/null) || continue
@@ -89,7 +89,7 @@ put_back() {
 swap_in() {
 	other=$(from_here | head -n 1)
 	if [ -n "$other" ]; then
-		say "another nocat.farm (process $other) is running from this folder - leaving it alone"
+		say "another gamer.farm (process $other) is running from this folder - leaving it alone"
 		leave_note "busy $other"
 		forget_job
 		return 0
@@ -154,7 +154,7 @@ settle_trial() {
 	forget_job
 }
 
-# What tells nocat.farm the unit it runs under has these pieces: this very start's id, written by this script. An older
+# What tells gamer.farm the unit it runs under has these pieces: this very start's id, written by this script. An older
 # unit never runs it, so the app there keeps saying "update by hand" and never exits for an update. Also not written
 # when this folder can't be written, where an update couldn't go in anyway.
 stamp() {

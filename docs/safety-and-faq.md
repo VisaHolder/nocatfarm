@@ -11,7 +11,7 @@ authenticator secrets and proxy passwords are all encrypted on disk: on Windows 
 and on Linux, a Mac and Docker they use a key only your user can read. The daily backup file is locked with your backup
 password: AES-256-GCM, with the key made from the password by PBKDF2-SHA256 and 600,000 rounds.
 
-nocat.farm talks to Steam, always. It checks GitHub every 2 hours for a new version (*Look for updates every*) and
+gamer.farm talks to Steam, always. It checks GitHub every 2 hours for a new version (*Look for updates every*) and
 downloads one when you say so; *Notify if an update is available* turns the check off. Discord, Telegram and rep4rep
 only come into it if you set them up, and the Discord profile card only talks to the Discord app on your own PC. The
 hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Open from anywhere*, if you turn it on,
@@ -19,7 +19,7 @@ talks to your router.
 
 Once an hour it tells gamer.mom it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your Steam accounts are signed in, as a number only. No account name, Steam ID or setting goes with
-it, and the install ID isn't in backups. That's where "1,240 Steam accounts on nocat.farm" on the Overview and the
+it, and the install ID isn't in backups. That's where "1,240 Steam accounts on gamer.farm" on the Overview and the
 Discord card comes from. *Count me as a user* (*Global settings
 → Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
 
@@ -32,14 +32,14 @@ what this copy's history already held from before (up to about 400 days), so the
 too. That's added up the moment counting starts, so an hour is in it or in the 6-hourly numbers, never both, and it's
 capped to what your accounts could have done on those days. gamer.mom counts it once per install, ever. A history restored from a backup belongs to the copy that made the
 backup, so it's never sent from the copy it's restored on. That's the
-"hours of game time banked · cards farmed" on gamer.mom's nocat.farm page.
+"hours of game time banked · cards farmed" on gamer.mom's gamer.farm page.
 
 From 1.8.1 the same lots also carry four more counts: items turned into gems, badges crafted (foil too), booster packs
 opened, and items the market history says sold. Each is counted only once Steam says it's done, and capped per account
 per hour (60 items into gems, 10 badges, 30 packs, 60 sold). There's nothing from before 1.8.1 for these: the history
 only started keeping them then. Turn the setting off and none of these numbers is sent.
 
-The shared cheapest-sets list (1.8.2, *Share cheapest sets with other nocat.farm users*, right under *Share my farming
+The shared cheapest-sets list (1.8.2, *Share cheapest sets with other gamer.farm users*, right under *Share my farming
 totals*, on while *Count me as a user* is): only while an account buys the cheapest full sets, about every 6 hours the
 set finder sends gamer.mom the cheapest whole card sets it found on the market - each set's game, its cards' names,
 each card's cheapest price in US cents, how many are for sale and how long ago that was seen - with the same random
@@ -47,13 +47,13 @@ install ID, and takes back the cheapest ones every copy found. Nothing about you
 says which games to check first: every card is priced again on the Steam market before anything is bought, so a wrong
 price there can't cost you money. Turn it off (or *Count me as a user*) and nothing is sent or fetched.
 
-Card swaps with other nocat.farm users (1.8.2, *Swap spare cards with other nocat.farm users*, off on every account) talk to
+Card swaps with other gamer.farm users (1.8.2, *Swap spare cards with other gamer.farm users*, off on every account) talk to
 gamer.mom only for accounts you turned them on for: the same random install ID, and for each of those accounts its
 SteamID, its trade link, the most a swap may lose, and its spare cards with their prices. Every few weeks each account
 also signs in to gamer.mom through Steam, so nobody else can list your SteamID: Steam's answer only says which SteamID
 it is, can't sign in or trade, and gamer.mom keeps only the date. Never an account name, password or login. Turning
 swaps off on an account deletes its SteamID and trade link from gamer.mom within a minute or two, and its old matches
-within the hour; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-nocatfarm-users).
+within the hour; with no account on, nothing is sent at all. See [Trades](trades.md#card-swaps-with-other-gamerfarm-users).
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
@@ -66,7 +66,7 @@ erase one.
 It never fights you for your account. See [Staying out of your way](human-mode.md#staying-out-of-your-way).
 
 Automating your accounts is against Steam's Subscriber Agreement and can get an account limited or banned.
-nocat.farm is built to be gentle, but only run it on accounts you're willing to risk.
+gamer.farm is built to be gentle, but only run it on accounts you're willing to risk.
 
 ## FAQ
 
@@ -83,7 +83,7 @@ after you stop.
 **Can all my accounts join my Steam group?** Yes, put its link in *Groups every account joins*. See
 [Steam groups](phone-and-notifications.md#steam-groups).
 
-**I don't want the nocat.farm group.** Clear *Groups every account joins* (Global settings → All accounts).
+**I don't want the gamer.farm group.** Clear *Groups every account joins* (Global settings → All accounts).
 
 **Where are my settings?** In the `config` folder next to `nocatFarm.exe`. Back it up and you've backed up
 everything.
@@ -111,8 +111,8 @@ You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). There's no np
 plain static files.
 
 ```
-git clone https://github.com/VisaHolder/nocatfarm.git
-cd nocatfarm
+git clone https://github.com/VisaHolder/gamerfarm.git
+cd gamerfarm
 dotnet publish src/NocatFarm -c Release -o run
 run\nocatFarm.exe
 ```
@@ -122,7 +122,7 @@ On Linux it's `dotnet publish src/NocatFarm -c Release -r linux-x64 -o run` (or 
 
 `run/` isn't in the repository. It's where your accounts, tokens and logs end up.
 
-Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else is written from scratch for nocat.farm.
+Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else is written from scratch for gamer.farm.
 
 ---
 

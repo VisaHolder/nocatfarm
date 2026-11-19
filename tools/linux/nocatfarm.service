@@ -1,8 +1,8 @@
-# nocat.farm as a systemd service: starts with the machine, comes back after a crash, and can update itself.
+# gamer.farm as a systemd service: starts with the machine, comes back after a crash, and can update itself.
 # Copy to /etc/systemd/system/nocatfarm.service and change "youruser" and, if it isn't in /opt/nocatfarm, the folder. The
 # user must own the folder (sudo chown -R youruser: /opt/nocatfarm). See docs/linux-docker-vps.md.
 [Unit]
-Description=nocat.farm
+Description=gamer.farm
 After=network-online.target
 Wants=network-online.target
 # However often it stops, systemd keeps bringing it back: the limit would leave it stopped for good.

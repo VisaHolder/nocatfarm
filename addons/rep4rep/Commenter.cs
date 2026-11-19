@@ -4,7 +4,7 @@ using static NocatFarm.Addons.Rep4Rep.Texts;
 namespace NocatFarm.Addons.Rep4Rep;
 
 /// <summary>
-/// One account's rep4rep commenting: fetch a task, ask the app to post it, tell rep4rep. Ported from nocat.farm 1.8.9's
+/// One account's rep4rep commenting: fetch a task, ask the app to post it, tell rep4rep. Ported from gamer.farm 1.8.9's
 /// Rep4RepModule with every behaviour kept - but the post itself, and the rules that keep an account out of trouble (awake,
 /// spaced, under a ceiling, not paused), are now the app's (<see cref="IPluginHost.PostProfileCommentAsync"/>). This keeps
 /// its own, stricter ones on top: the account's daily cap, its gap, its window hours, the hold, refused-profile strikes.

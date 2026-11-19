@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/overview.png" alt="nocat.farm's dashboard: every account at a glance" width="880">
+  <img src="assets/overview.png" alt="gamer.farm's dashboard: every account at a glance" width="880">
 </p>
 
-<h1 align="center">nocat.farm</h1>
+<h1 align="center">gamer.farm</h1>
 
 <p align="center">
   <b>Farms Steam trading cards and idles games on all your accounts, in the background.<br>
@@ -10,34 +10,34 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/VisaHolder/nocatfarm/releases/latest"><img src="https://img.shields.io/github/v/release/VisaHolder/nocatfarm?label=release&color=8b5cf6" alt="Latest release"></a>
+  <a href="https://github.com/VisaHolder/gamerfarm/releases/latest"><img src="https://img.shields.io/github/v/release/VisaHolder/gamerfarm?label=release&color=8b5cf6" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MPL--2.0-blue" alt="MPL-2.0"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/VisaHolder/nocatfarm/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/VisaHolder/gamerfarm/releases/latest"><b>Download</b></a> ·
   <a href="https://gamer.mom/docs">Guide</a> ·
   <a href="https://gamer.mom/commands">Commands</a>
 </p>
 
 ## Download and install
 
-Get it from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest), or from
+Get it from the [latest release](https://github.com/VisaHolder/gamerfarm/releases/latest), or from
 [gamer.mom](https://gamer.mom). It runs on Windows, Mac and Linux, and in Docker. Nothing else
 needs installing first, not even .NET.
 
 <p align="center">
-  <img src="assets/setup.png" alt="The setup: one screen, then it opens nocat.farm" width="880">
+  <img src="assets/setup.png" alt="The setup: one screen, then it opens gamer.farm" width="880">
   <br><sub>The setup is one screen: which idler you're switching from, start with Windows, a desktop shortcut.</sub>
 </p>
 
 1. There are two Windows files:
-   - `nocat.farm-v…-setup.exe` is the one most people want. It installs like any other app, with a Start menu
+   - `gamer.farm-v…-setup.exe` is the one most people want. It installs like any other app, with a Start menu
      entry, a desktop shortcut, start with Windows, and an uninstaller in *Settings → Apps*. No admin rights
-     needed. If you already use ArchiSteamFarm, Idle Master or a portable nocat.farm, it finds it and offers to
+     needed. If you already use ArchiSteamFarm, Idle Master or a portable gamer.farm, it finds it and offers to
      bring your accounts over.
      If Windows says it protected your PC, click More info, then Run anyway.
-   - `nocat.farm-v…-portable.zip` is the portable version. Right-click it, *Extract All…*, and run `nocatFarm.exe`.
+   - `gamer.farm-v…-portable.zip` is the portable version. Right-click it, *Extract All…*, and run `nocatFarm.exe`.
      Nothing gets installed and everything stays in that folder.
 2. The dashboard opens in your browser with a short walkthrough. Pick your language, then **Easy** (a few plain
    questions, about two minutes) or **Advanced** (your phone, opening it from anywhere, notifications, the update
@@ -59,7 +59,7 @@ needs installing first, not even .NET.
 </p>
 
 <p align="center">
-  <img src="assets/setup-existing.png" alt="The setup when nocat.farm is already on the PC" width="880">
+  <img src="assets/setup-existing.png" alt="The setup when gamer.farm is already on the PC" width="880">
   <br><sub>Run the setup again and it offers to move a portable copy into the install, or to update or uninstall.</sub>
 </p>
 
@@ -77,13 +77,13 @@ the web dashboard, no window. See [Linux, Mac and Docker](https://gamer.mom/docs
 
 ## What it does
 
-nocat.farm signs your Steam accounts in and farms their trading cards, one game after another, with a rough
+gamer.farm signs your Steam accounts in and farms their trading cards, one game after another, with a rough
 estimate of how long is left. When the cards are done it idles your games for playtime, up to 32 at once, and can
 show a made-up game name on your profile (like `nocat.lol`) while the real games keep counting.
 
 The account you actually play on can go in **human mode**. Then it plays one game at a time, takes breaks and
 meals, goes to bed, and skips the odd day. When a game drops its last card it plays on for another 15-20 minutes
-before a break, the way a normal session ends. Start a game yourself on any account and nocat.farm backs off, then
+before a break, the way a normal session ends. Start a game yourself on any account and gamer.farm backs off, then
 picks up again a few minutes after you stop.
 
 Beyond that:
@@ -94,9 +94,9 @@ Beyond that:
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
-- Card swaps with other nocat.farm users (off until you turn them on, per account): spare normal cards swapped one
+- Card swaps with other gamer.farm users (off until you turn them on, per account): spare normal cards swapped one
   for one with other people's accounts, paired by gamer.mom, checked by both sides, never a card your sets need.
-- For accounts whose authenticator is in nocat.farm there's an Authenticator page: the Steam Guard code, and trades
+- For accounts whose authenticator is in gamer.farm there's an Authenticator page: the Steam Guard code, and trades
   and market listings to confirm or deny, like the Steam app.
 - A new VAC, game, trade or community ban is reported straight away, and that game's items are kept out of trades.
 - Scam watch looks at each account every 30-60 minutes for the signs of a stolen account: a new API key, a new
@@ -108,15 +108,15 @@ Beyond that:
   any PC. Off until you set a folder and password. `backup now` makes one straight away.
 - History charts show cards per day, hours banked and inventory value, with this week against last.
 - The Phone page gives you QR codes for your Wi-Fi and for away from home, and a checklist that fixes whatever
-  isn't ready. The dashboard can go on your phone's home screen with the nocat.farm icon.
-- Discord and Telegram can send you notifications and take commands. There's an optional *Playing nocat.farm*
+  isn't ready. The dashboard can go on your phone's home screen with the gamer.farm icon.
+- Discord and Telegram can send you notifications and take commands. There's an optional *Playing gamer.farm*
   card for your Discord profile too.
 - If you switch it on, achievements are earned one at a time in an order a real player could manage: "10 kills"
   after "5 kills", chapter 2 after chapter 1, Hard after Normal, the ending last. It paces them to how long the
   game really takes, so "finish the game" never lands 3 hours into a 20-hour game. An optional hunter picks games to
   earn them in.
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+**Your items are safe by default.** gamer.farm never sells, turns into gems, opens, buys, swaps or spends anything by
 itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
 until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
 what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
@@ -167,7 +167,7 @@ authenticator it keeps is encrypted.
 
 <p align="center">
   <img src="assets/authenticator.png" alt="The Authenticator page: Steam Guard code and confirmations" width="880">
-  <br><sub>The Authenticator page: the code, and confirm or deny, for accounts whose authenticator is in nocat.farm.</sub>
+  <br><sub>The Authenticator page: the code, and confirm or deny, for accounts whose authenticator is in gamer.farm.</sub>
 </p>
 
 <p align="center">
@@ -263,16 +263,16 @@ turn them on, and *Open from anywhere* only talks to your router if you turn it 
 Once an hour it tells gamer.mom it's running, to count Steam accounts: a random install ID, the version, the platform
 and how many of your accounts are signed in (just the number), nothing else. About every 6 hours the same message
 also carries a few numbers, the game-hours banked, the cards dropped, and the items turned into gems, badges crafted,
-packs opened and items sold, for the totals on gamer.mom's nocat.farm page (*Share my farming totals* turns just that
+packs opened and items sold, for the totals on gamer.mom's gamer.farm page (*Share my farming totals* turns just that
 off). While an account buys the cheapest full sets, about every 6 hours it also shares the cheapest card sets it found
 on the market - market prices only - and takes back the ones other copies found (*Share cheapest sets with other
-nocat.farm users* turns just that off). *Count me as a user* turns it all off.
+gamer.farm users* turns just that off). *Count me as a user* turns it all off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
 you also use in your own Steam app, turn on *I also use this account in my own Steam app* and it won't kick you off Friends & Chat.
 
 Automating your accounts is against Steam's Subscriber Agreement and can get an account limited or banned.
-nocat.farm is built to be gentle, but only run it on accounts you're OK with risking.
+gamer.farm is built to be gentle, but only run it on accounts you're OK with risking.
 
 ## FAQ
 
@@ -285,7 +285,7 @@ few minutes after you stop.
 **How many accounts can it run?** As many as you like. They sign in one after another so Steam doesn't mind.
 
 **Can all my accounts join my Steam group?** Yes. Paste the group's link into **Groups every account joins**
-(Settings → Global settings → All accounts). It starts with the nocat.farm group, and you can change or clear it.
+(Settings → Global settings → All accounts). It starts with the gamer.farm group, and you can change or clear it.
 Each account joins at its own random time, minutes apart, so they don't all turn up at once. `joingroup all <link>`
 does it right now. Only open groups work; ones that need approval or an invite are skipped, and the log says why.
 
@@ -302,15 +302,15 @@ changed. From ASF the logins and authenticators come across too, so no passwords
 timings, farming order, the dashboard's port and password, and the rest.
 
 **It says Steam is rate-limiting it.** Steam slows down any PC that asks too much at once, usually after a lot of
-restarts. nocat.farm waits it out by itself.
+restarts. gamer.farm waits it out by itself.
 
 **Where are my settings?** In the `config` folder next to `nocatFarm.exe`. With the setup that's
-`%LOCALAPPDATA%\Programs\nocat.farm\config`; with the portable zip it's wherever you unzipped it. Back that folder
+`%LOCALAPPDATA%\Programs\gamer.farm\config`; with the portable zip it's wherever you unzipped it. Back that folder
 up and you've backed up everything. Or turn on **Back up every day** (Settings → Global settings → Backups) for a
 password-locked backup that opens on any PC: on the new one, pick *Restore from a backup file* in the first-run
 walkthrough.
 
-**How do I uninstall it?** Windows *Settings → Apps → nocat.farm → Uninstall*. It asks whether to keep your
+**How do I uninstall it?** Windows *Settings → Apps → gamer.farm → Uninstall*. It asks whether to keep your
 accounts and settings. For the portable zip, close it and delete the folder.
 
 **Can I run it on a VPS, so my PC doesn't have to stay on?** Yes. A small rented Linux server with 1 CPU and 1 GB
@@ -320,7 +320,7 @@ by step, from renting the server to adding your accounts:
 [On a VPS](https://gamer.mom/docs#on-a-vps-a-rented-server).
 
 **What if something breaks?** The dashboard's **Log** tab says what happened in plain words. If that doesn't help,
-open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.
+open an [issue](https://github.com/VisaHolder/gamerfarm/issues) and paste the log lines.
 
 ## More
 
@@ -333,8 +333,8 @@ open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the lo
 - To build it yourself you need the [.NET 10 SDK](https://dotnet.microsoft.com/download):
 
   ```
-  git clone https://github.com/VisaHolder/nocatfarm.git
-  cd nocatfarm
+  git clone https://github.com/VisaHolder/gamerfarm.git
+  cd gamerfarm
   dotnet publish src/NocatFarm -c Release -o run
   run\nocatFarm.exe
   ```
@@ -342,6 +342,6 @@ open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the lo
 ## Licence
 
 [Mozilla Public License 2.0](LICENSE). Use it, fork it, sell it. Plugins can use any licence you like, even
-closed-source. If you change nocat.farm's own files and share the result, share those changes too.
+closed-source. If you change gamer.farm's own files and share the result, share those changes too.
 
-Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else is written from scratch for nocat.farm.
+Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else is written from scratch for gamer.farm.

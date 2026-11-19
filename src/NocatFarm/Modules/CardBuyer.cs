@@ -633,7 +633,7 @@ public sealed class BuyPlan {
 	/// <summary><see cref="Block"/> in plain words (English, for the console). Empty when nothing blocks it.</summary>
 	public string Blocked => Block switch {
 		BuyBlock.Billing => "Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy",
-		BuyBlock.Email => "Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do",
+		BuyBlock.Email => "Steam asks for every market purchase on this account to be confirmed by email, which gamer.farm can't do",
 		BuyBlock.Unknown => "Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time",
 		_ => ""
 	};
@@ -641,7 +641,7 @@ public sealed class BuyPlan {
 	/// <summary><see cref="Block"/> for the log, translated.</summary>
 	public Said BlockedSaid => Block switch {
 		BuyBlock.Billing => new Said("Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy"),
-		BuyBlock.Email => new Said("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
+		BuyBlock.Email => new Said("Steam asks for every market purchase on this account to be confirmed by email, which gamer.farm can't do"),
 		BuyBlock.Unknown => new Said("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time"),
 		_ => new Said("")
 	};
@@ -2396,7 +2396,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 	private BuyBlock _saidBlocked = BuyBlock.None;
 	private bool _saidStopped;
 
-	/// <summary>The spending list couldn't be saved: nothing more is bought until nocat.farm starts again.</summary>
+	/// <summary>The spending list couldn't be saved: nothing more is bought until gamer.farm starts again.</summary>
 	private bool _cantSave;
 
 	/// <summary>1.8.2: Steam said too many purchases wait for a confirmation - said once, until they're confirmed or let go.</summary>
@@ -3096,7 +3096,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 				Log.Attention(new Said("card buying stopped · its spending list can't be read or saved"), Bot.Name);
 			}
 
-			return (_cantSave ? "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again" : Ledger.UnreadableText, true);
+			return (_cantSave ? "the list of what it spent on cards couldn't be saved, so it stopped buying until gamer.farm starts again" : Ledger.UnreadableText, true);
 		}
 
 		if (!Bot.Cfg.CraftBadges) {
@@ -3813,7 +3813,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			if (!Ledger.Add(pending)) {
 				Ledger.Replace(pending, null);
 				CantSave();
-				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until gamer.farm starts again";
 				result.Lasting = true;
 
 				return Asked(step, onPhone, result, false);
@@ -3910,7 +3910,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			if (!saved || _cantSave) {
 				CantSave();
-				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until gamer.farm starts again";
 				result.Lasting = true;
 
 				return Asked(step, onPhone, result, false);
@@ -4030,7 +4030,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 			if (!Ledger.Add(pending)) {
 				Ledger.Replace(pending, null);
 				CantSave();
-				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until gamer.farm starts again";
 				result.Lasting = true;
 
 				return Asked(step, onPhone, result, false);
@@ -4122,7 +4122,7 @@ public sealed class CardBuyer(Bot bot, ICardMarket? market = null, ICardSwaps? s
 
 			if (!saved || _cantSave) {
 				CantSave();
-				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until nocat.farm starts again";
+				result.Problem = "the list of what it spent on cards couldn't be saved, so it stopped buying until gamer.farm starts again";
 				result.Lasting = true;
 
 				return Asked(step, onPhone, result, false);

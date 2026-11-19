@@ -66,7 +66,7 @@ jobs:
           # What Finder leaves in any folder it has shown - put there on purpose, so leaving it out is tested
           touch app/.DS_Store app/wwwroot/.DS_Store
           version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
-          name="nocat.farm-v${version}_${{ matrix.rid }}.zip"
+          name="gamer.farm-v${version}_${{ matrix.rid }}.zip"
           (cd app && zip -qry -X "../$name" . -x '.DS_Store' -x '*/.DS_Store')
           unzip -l "$name" | grep -E ' (nocatFarm|start\.command)$'
           # never a bare "! cmd" or "a && b" as a check: bash -e stops for neither, so such a check could never fail
@@ -75,10 +75,13 @@ jobs:
           if unzip -Z1 "$name" | grep -E '^(config|logs|backups|tokens|state|authenticators)/|\.zip$'; then echo "FAIL: personal folders or a zip in the zip"; exit 1; fi
           # MAC_ZIP, not ZIP: zip reads $ZIP as options of its own, and every zip made later in the job went wrong
           echo "MAC_ZIP=$name" >> "$GITHUB_ENV"
+          # 2.0.0: the same zip under the name before the rename, for the release too (see tools/package-release.ps1)
+          cp "$name" "nocat.farm-v${version}_${{ matrix.rid }}.zip"
+          echo "MAC_OLD_ZIP=nocat.farm-v${version}_${{ matrix.rid }}.zip" >> "$GITHUB_ENV"
 
       - name: unpack the zip into a folder with a space and (1) in its name
         run: |
-          APP="$PWD/nocat.farm (1)"
+          APP="$PWD/gamer.farm (1)"
           unzip -q "$MAC_ZIP" -d "$APP"
           echo "APP=$APP" >> "$GITHUB_ENV"
           test -x "$APP/nocatFarm"
@@ -126,7 +129,7 @@ jobs:
           cmd() { curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
           curl -sf http://127.0.0.1:7242/ | grep -qi '<html'
           curl -sf http://127.0.0.1:7242/logo-liquid.gif -o /dev/null
-          cmd version | tee out.txt; grep -qi 'nocat' out.txt
+          cmd version | tee out.txt; grep -qi 'gamer.farm' out.txt
           cmd 'status' | tee out.txt; grep -q 'demo' out.txt
           cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
           cmd 'log folder' | tee out.txt; grep -q 'logs' out.txt
@@ -194,7 +197,7 @@ jobs:
 
       - name: add it to the release
         if: inputs.tag != ''
-        run: gh release upload "${{ inputs.tag }}" "$MAC_ZIP" --clobber --repo "${{ github.repository }}"
+        run: gh release upload "${{ inputs.tag }}" "$MAC_ZIP" "$MAC_OLD_ZIP" --clobber --repo "${{ github.repository }}"
 
       - name: log
         if: always()

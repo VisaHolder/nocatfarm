@@ -363,7 +363,7 @@ public static partial class Rollback {
 
 			// One file at a time: a file that doesn't read - not JSON, or a name in it twice, which reads and then throws once
 			// it's gone through - is passed over, and the rest still come back. It used to stop the whole copy, and a name in
-			// it twice escaped altogether: nocat.farm closed at every start.
+			// it twice escaped altogether: gamer.farm closed at every start.
 			JsonObject? saved;
 
 			try {

@@ -736,7 +736,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		File.WriteAllText(maFile, maJson);
 		var first = NocatFarm.Core.MobileAuth.ReadMaFile(maFile);
 		var again = NocatFarm.Core.MobileAuth.ReadMaFile(maFile);
-		Check("secrets: an authenticator file in nocat.farm's folder is encrypted and still reads", (first.Shared == "c2hhcmVkLXNlY3JldA==")
+		Check("secrets: an authenticator file in gamer.farm's folder is encrypted and still reads", (first.Shared == "c2hhcmVkLXNlY3JldA==")
 			&& Clear(maFile, "c2hhcmVkLXNlY3JldA==", "aWRlbnRpdHk=") && (again.Shared == "c2hhcmVkLXNlY3JldA==") && (again.DeviceId == "android:1234"));
 
 		string elsewhere = Path.Combine(tmpRoot, "asf", "alt.maFile");
@@ -1057,7 +1057,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("import asf: custom name kept, and like ASF the real game shows while farming", (main.Config.CustomGameName == "nocat.lol") && !main.Config.PlayWhileFarming);
 		Check("import asf: a device it can't map is said, not guessed", main.Notes.Any(n => n.ToString().Contains("Play as if on")) && (main.Config.GameDevice == 0));
 		Check("import asf: PasswordFormat 1 (ASF's AES) opens", Acct(asfScan, "aes").Config.SteamPassword == "aes-pass-ü1", Acct(asfScan, "aes").Config.SteamPassword);
-		// What ASF did, copied - and a setting its file leaves out is ASF's default (off), not nocat.farm's.
+		// What ASF did, copied - and a setting its file leaves out is ASF's default (off), not gamer.farm's.
 		Check("import asf: donations, card swaps and gifts copied when ASF has them on", Acct(asfScan, "aes").Config is { AcceptDonations: true, AcceptFairCardSwaps: true, AcceptGifts: true, AcceptGiftedGames: true });
 		Check("import asf: ...and off when ASF's file leaves them out, like ASF", main.Config is { AcceptDonations: false, AcceptFairCardSwaps: false, AcceptGifts: false, AcceptGiftedGames: false });
 		var custom = Acct(asfScan, "customkey");
@@ -3287,7 +3287,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 				string accounts = NocatFarm.Core.DiscordPresence.SecondLine(NocatFarm.Core.DiscordPresence.LineAccounts, 12345, "", _ => 0);
 				string number = NocatFarm.Fmt.Grouped(12345);
 
-				if (!accounts.Contains(number, StringComparison.Ordinal) || accounts.Contains("nocat.farm", StringComparison.Ordinal)) {
+				if (!accounts.Contains(number, StringComparison.Ordinal) || accounts.Contains("gamer.farm", StringComparison.Ordinal)) {
 					cut.Add($"{code}: {accounts}");
 				}
 
@@ -3309,7 +3309,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			}
 
 			Check("discord card: 12,345 Steam accounts plus the counter fits Discord's line in every language", tooLong.Count == 0, string.Join(" | ", tooLong));
-			Check("discord card: ...the number always whole, and no \"on nocat.farm\" on the card", cut.Count == 0, string.Join(" | ", cut));
+			Check("discord card: ...the number always whole, and no \"on gamer.farm\" on the card", cut.Count == 0, string.Join(" | ", cut));
 			Check("discord card: ...with \"3 linked\" kept wherever it fits (English, German, French, Japanese, Korean, Chinese...)",
 				!dropped.Any(d => d is "en 3/3" or "de 3/3" or "fr 3/3" or "ja 3/3" or "ko 3/3" or "zh-CN 3/3" or "ru 3/3" or "pl 3/3" or "tr 3/3" or "pt-BR 3/3"),
 				"left off: " + string.Join(", ", dropped));
@@ -3386,10 +3386,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("log file: a caught failure says what, whose, the type and the reason", lines.Any(l => l.Contains("|DEBUG|acct1|couldn't save the drop run: IOException: disk full, token=[hidden]")), string.Join(" / ", lines.Take(3)));
 	Check("log file: the same failure in a loop is written once", (written == 1) && (lines.Count(l => l.Contains("RateLimitExceeded")) == 1), $"{written} written");
 	Check("log file: a different failure, or the same one after a recovery, is written again", (changed == 1) && (afterRecover == 1) && (lines.Count(l => l.Contains("PICS asked too often: Timeout")) == 2));
-	Check("log file: a crash is an ERROR line with the reason", lines.Any(l => l.Contains("|ERROR|nocat.farm|crashed: InvalidOperationException: boom from the crash test")));
-	Check("log file: ...followed by its stack trace", lines.Any(l => l.Contains("|DEBUG|nocat.farm|   at ") && l.Contains("Program")));
-	Check("log file: a background task nobody awaited is written down with its stack", lines.Any(l => l.Contains("|ERROR|nocat.farm|a background task failed: FormatException: nobody awaited this"))
-		&& lines.Any(l => l.Contains("|DEBUG|nocat.farm|") && l.Contains("FormatException: nobody awaited this") && !l.Contains("|ERROR|")), $"{lines.Length} lines");
+	Check("log file: a crash is an ERROR line with the reason", lines.Any(l => l.Contains("|ERROR|gamer.farm|crashed: InvalidOperationException: boom from the crash test")));
+	Check("log file: ...followed by its stack trace", lines.Any(l => l.Contains("|DEBUG|gamer.farm|   at ") && l.Contains("Program")));
+	Check("log file: a background task nobody awaited is written down with its stack", lines.Any(l => l.Contains("|ERROR|gamer.farm|a background task failed: FormatException: nobody awaited this"))
+		&& lines.Any(l => l.Contains("|DEBUG|gamer.farm|") && l.Contains("FormatException: nobody awaited this") && !l.Contains("|ERROR|")), $"{lines.Length} lines");
 
 	try {
 		Directory.Delete(logRoot, true);
@@ -4501,7 +4501,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			(lostGap.Count == 1) && (lostGap[0].App == 570) && (lostGap[0].Minutes == 20), string.Join(", ", lostGap.Select(static x => $"{x.App} {x.Minutes}m")));
 
 		// ── learning: a restart in the middle of your sitting ──
-		// He played from 21:26, nocat.farm updated at 22:18, and all it kept was "Counter-Strike 2 for 37m" from 22:19.
+		// He played from 21:26, gamer.farm updated at 22:18, and all it kept was "Counter-Strike 2 for 37m" from 22:19.
 		object RsWatcher(string bot) => Activator.CreateInstance(watchT, Inst, null, [bot], null)!;
 		List<NocatFarm.Modules.OwnerHabits.Sitting> RsSee(object w, DateTime at, bool on, uint app) =>
 			((IEnumerable) watchT.GetMethod("Observe", Inst)!.Invoke(w, [at, on, app])!).Cast<NocatFarm.Modules.OwnerHabits.Sitting>().ToList();
@@ -4529,7 +4529,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			(rsCutShort.Count == 0) && (rsNotYet.Count == 0) && (rsThrough.Count == 0) && (rsWhole.Count == 1) && (rsWhole[0].Start == rs0) && (rsWhole[0].Minutes == 91) && (rsWhole[0].App == 730),
 			RsSaid(rsWhole));
 
-		// Stopped while nocat.farm was off: a few minutes' grace for Steam to say otherwise, then it ends where he was last seen.
+		// Stopped while gamer.farm was off: a few minutes' grace for Steam to say otherwise, then it ends where he was last seen.
 		object rsGone = RsWatcher(rsName);
 		RsPlaying(rsGone, rs0, rs0.AddMinutes(40), 730);
 		watchT.GetMethod("Flush", Inst)!.Invoke(rsGone, []);
@@ -5412,7 +5412,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			using var sr = new StreamReader(za.GetEntry("README.txt")!.Open());
 			Check("backup: the README says how to restore", sr.ReadToEnd().Contains("How to restore", StringComparison.Ordinal));
 		}
-		Check("backup: named by the day", NocatFarm.Core.Backup.FileName(new DateTime(2026, 9, 30)) == "nocat.farm-backup-2026-09-30.zip");
+		Check("backup: named by the day", NocatFarm.Core.Backup.FileName(new DateTime(2026, 9, 30)) == "gamer.farm-backup-2026-09-30.zip");
 
 		// Restored into an empty config folder, every file comes back byte for byte.
 		NocatFarm.Config.ConfigStore.UseRoot(rootB);
@@ -6287,7 +6287,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 // ── after an update: one short "what's new" line with where to read it, not every change strung across the window ──
 {
-	Check("what's new: the release's own page", NocatFarm.Core.SelfUpdate.ReleasePage("1.6.2") == "https://github.com/VisaHolder/nocatfarm/releases/tag/v1.6.2"
+	Check("what's new: the release's own page", NocatFarm.Core.SelfUpdate.ReleasePage("1.6.2") == "https://github.com/VisaHolder/gamerfarm/releases/tag/v1.6.2"
 		&& NocatFarm.Core.SelfUpdate.ReleasePage("v1.6.2") == NocatFarm.Core.SelfUpdate.ReleasePage("1.6.2"));
 	string su = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SelfUpdate.cs"));
 	Check("what's new: the log line is the version and the link, not the notes", su.Contains("Log.Info(new Said(\"what's new in {0}: {1}\", p[1], ReleasePage(p[1])));", StringComparison.Ordinal));
@@ -7307,7 +7307,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		// Closing is never "all clear" for an install by itself (the manager isn't even looked at).
 		var quiet = ((bool Quiet, string Why)) typeof(NocatFarm.Core.UpdateCheck).GetMethod("Quiet", S)!.Invoke(null, [null, null])!;
-		Check("update: a closing app is never a quiet moment to install", !quiet.Quiet && (quiet.Why == "nocat.farm is closing"), quiet.Why);
+		Check("update: a closing app is never a quiet moment to install", !quiet.Quiet && (quiet.Why == "gamer.farm is closing"), quiet.Why);
 
 		// No update timer is started once closing, and Stop takes one away.
 		FieldInfo timerField = typeof(NocatFarm.Core.UpdateCheck).GetField("_timer", S)!;
@@ -7876,7 +7876,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var restartArgs = typeof(NocatFarm.Core.SelfUpdate).GetMethod("RestartArgs", S)!;
 		List<string> Restart(string[] a, string r) => (List<string>) restartArgs.Invoke(null, [a, r])!;
 		Check("restart: a relative --path comes back as the absolute folder",
-			Restart(["--no-gui", "--path", "data"], "/home/me/nocat.farm (1)/data").SequenceEqual(["--no-gui", "--path", "/home/me/nocat.farm (1)/data"]));
+			Restart(["--no-gui", "--path", "data"], "/home/me/gamer.farm (1)/data").SequenceEqual(["--no-gui", "--path", "/home/me/gamer.farm (1)/data"]));
 		Check("restart: --PATH too, and nothing else is changed",
 			Restart(["--PATH", @"..\data", "--minimized"], @"C:\farm\data").SequenceEqual(["--PATH", @"C:\farm\data", "--minimized"])
 			&& Restart(["--no-web"], "/x").SequenceEqual(["--no-web"]) && Restart(["--path"], "/x").SequenceEqual(["--path"]));
@@ -7898,7 +7898,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			&& detached.Contains("setsid nohup /bin/sh \"$0\" \"$@\"", StringComparison.Ordinal) && detached.Contains("POSIX::setsid()", StringComparison.Ordinal));
 		Check("update: the download folder is a fresh private one (mkdtemp), not a guessable name in /tmp",
 			Src("Core/SelfUpdate.cs").Contains("work = Directory.CreateTempSubdirectory(\"nocatfarm-update-\").FullName;", StringComparison.Ordinal));
-		Check("update: no other copy of nocat.farm is running from this test's folder", ((List<int>) typeof(NocatFarm.Core.SelfUpdate).GetMethod("OthersRunningHere", S)!.Invoke(null, [])!).Count == 0);
+		Check("update: no other copy of gamer.farm is running from this test's folder", ((List<int>) typeof(NocatFarm.Core.SelfUpdate).GetMethod("OthersRunningHere", S)!.Invoke(null, [])!).Count == 0);
 
 		// Names: one set of characters that can't be in one, on every system.
 		Check("names: a : * ? \" < > | \\ / or a control character is refused on every system",
@@ -8043,8 +8043,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			}
 		});
 
-		string mine = OperatingSystem.IsWindows() ? "nocat.farm-v99.0.0-portable.zip" : $"nocat.farm-v99.0.0_{NocatFarm.Core.Platform.ReleaseRid}.zip";
-		string notMine = OperatingSystem.IsWindows() ? "nocat.farm-v99.0.0_osx-arm64.zip" : "nocat.farm-v99.0.0-portable.zip";
+		string mine = OperatingSystem.IsWindows() ? "gamer.farm-v99.0.0-portable.zip" : $"gamer.farm-v99.0.0_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+		string notMine = OperatingSystem.IsWindows() ? "gamer.farm-v99.0.0_osx-arm64.zip" : "gamer.farm-v99.0.0-portable.zip";
 		string Release(string tag, params string[] assets) => System.Text.Json.JsonSerializer.Serialize(new {
 			tag_name = tag, html_url = "https://example.invalid/", body = "- a test",
 			assets = assets.Select(a => new { name = a, browser_download_url = $"http://127.0.0.1:{feedPort}/{a}", size = 1234 }).ToArray()
@@ -8053,7 +8053,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", $"http://127.0.0.1:{feedPort}/latest.json");
 
 		try {
-			answer = Release("v99.0.0", notMine, "nocat.farm-v99.0.0.tar.gz");
+			answer = Release("v99.0.0", notMine, "gamer.farm-v99.0.0.tar.gz");
 			string? problem = NocatFarm.Core.UpdateCheck.LookAsync(force: true, quiet: true).Result;
 			Check("update check: a release with no zip for this machine yet isn't announced", (problem == null) && (NocatFarm.Core.UpdateCheck.Available == null), problem ?? NocatFarm.Core.UpdateCheck.Available ?? "");
 			// ...but it isn't "you're on the newest" either: 'update' said exactly that on a Mac between the tag and its zips.
@@ -11178,7 +11178,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& File.ReadAllText(Path.Combine(root, "Modules", "HumanMode.cs")).Contains("Bot.Cfg.OfflineIdleGames.Count(a => MayBankAtNight(a, banned))", StringComparison.Ordinal)
 		&& (NocatFarm.Core.DlcAchievements.RuleNow >= 6));
 	Check("old names: the sign-in page says 'dashboard unlock', the achievements usage says 'achievements'",
-		js.Contains("t('Or type dashboard unlock in the nocat.farm window.')", StringComparison.Ordinal) && !js.Contains("'Or type unlock in", StringComparison.Ordinal)
+		js.Contains("t('Or type dashboard unlock in the gamer.farm window.')", StringComparison.Ordinal) && !js.Contains("'Or type unlock in", StringComparison.Ordinal)
 		&& !File.ReadAllText(Path.Combine(root, "Commands.cs")).Contains("\"cheevo <account>", StringComparison.Ordinal)
 		&& !File.ReadAllText(Path.Combine(root, "Commands.cs")).Contains("'cheevo {bot.Name}", StringComparison.Ordinal)
 		&& !File.ReadAllText(Path.Combine(root, "..", "..", "docs", "phone-and-notifications.md")).Contains("/dashboard anywhere", StringComparison.Ordinal));
@@ -11884,13 +11884,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 
 	// Copies from this folder are known by the program file. Started as "dotnet nocatFarm.dll" that's the .NET host, and
-	// the script took every .NET program on the machine for another nocat.farm here.
+	// the script took every .NET program on the machine for another gamer.farm here.
 	string ProgramOf(string? running, string here) => (string) su.GetMethod("ProgramPath", S)!.Invoke(null, [running, here, "nocatFarm"])!;
 	Check("update: the swap script knows this copy by its own program, not the .NET host it was started with",
 		(ProgramOf("/usr/lib/dotnet/dotnet", "/opt/nf") == Path.Combine("/opt/nf", "nocatFarm"))
 		&& (ProgramOf("/usr/local/share/dotnet/dotnet", "/Users/me/nf") == Path.Combine("/Users/me/nf", "nocatFarm"))
 		&& (ProgramOf(null, "/opt/nf") == Path.Combine("/opt/nf", "nocatFarm"))
-		&& (ProgramOf("/home/me/nocat.farm (1)/nocatFarm", "/home/me/nocat.farm (1)") == "/home/me/nocat.farm (1)/nocatFarm")
+		&& (ProgramOf("/home/me/gamer.farm (1)/nocatFarm", "/home/me/gamer.farm (1)") == "/home/me/gamer.farm (1)/nocatFarm")
 		&& File.ReadAllText(Path.Combine(root, "Core", "SelfUpdate.cs")).Contains("swap.Environment[\"NF_EXE\"] = ProgramPath(Environment.ProcessPath, here, ExeName);", StringComparison.Ordinal));
 
 	// Example folders in the shape of a path on the machine it runs on: the dashboard's import box went by "can it update
@@ -12981,8 +12981,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			bool ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
 			Check("user count: a good answer is kept", ok && (good.Calls == 1) && (NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow) == 1240)
 				&& (NocatFarm.Core.UserCount.Current(on, DateTime.UtcNow) is { Users: 212, Accounts: 1240 }));
-			Check("user count: one POST of JSON to gamer.mom, as nocat.farm/<version>", (good.Method == "POST") && (good.Url == NocatFarm.Core.UserCount.Endpoint)
-				&& (good.ContentType == "application/json") && (good.UserAgent == "nocat.farm/" + NocatFarm.Build.Version) && good.Body.Contains(id, StringComparison.Ordinal)
+			Check("user count: one POST of JSON to gamer.mom, as gamer.farm/<version>", (good.Method == "POST") && (good.Url == NocatFarm.Core.UserCount.Endpoint)
+				&& (good.ContentType == "application/json") && (good.UserAgent == "gamer.farm/" + NocatFarm.Build.Version) && good.Body.Contains(id, StringComparison.Ordinal)
 				&& good.Body.Contains("\"a\":", StringComparison.Ordinal),
 				$"{good.Method} {good.Url} {good.ContentType} {good.UserAgent} {good.Body.Length}");
 		}
@@ -13044,26 +13044,26 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		string? langWas = NocatFarm.Config.Live.Global.Language;
 		NocatFarm.Config.Live.Global.Language = "en";
 		string Line(int choice, int? accounts) => NocatFarm.Core.DiscordPresence.SecondLine(choice, accounts, "5 cards today", _ => 600);
-		Check("discord card: the short form (the card already says Playing nocat.farm), with a thousands separator", Line(NocatFarm.Core.DiscordPresence.LineAccounts, 1240) == "1,240 Steam accounts", Line(3, 1240));
+		Check("discord card: the short form (the card already says Playing gamer.farm), with a thousands separator", Line(NocatFarm.Core.DiscordPresence.LineAccounts, 1240) == "1,240 Steam accounts", Line(3, 1240));
 		Check("discord card: just one Steam account", Line(3, 1) == "1 Steam account", Line(3, 1));
 		Check("discord card: a few, and a lot", Line(3, 7) == "7 Steam accounts" && Line(3, 1234567) == "1,234,567 Steam accounts", Line(3, 1234567));
 		Check("discord card: with the counter it fits Discord's line", NocatFarm.Core.DiscordPresence.WithCounter(Line(3, 1240), 3, 3) == "1,240 Steam accounts · 3 linked"
 			&& NocatFarm.Core.DiscordPresence.WithCounter(Line(3, 12345), 3, 3) == "12,345 Steam accounts · 3 linked"
 			&& NocatFarm.Core.DiscordPresence.WithCounter(Line(3, 12345), 3, 3).Length <= NocatFarm.Core.DiscordPresence.LineFits,
 			NocatFarm.Core.DiscordPresence.WithCounter(Line(3, 12345), 3, 3));
-		Check("user count: the Overview's line is the same sentence", NocatFarm.Core.UserCount.AccountsLine(1240) == "1,240 Steam accounts on nocat.farm"
-			&& NocatFarm.Core.UserCount.AccountsLine(1) == "1 Steam account on nocat.farm");
+		Check("user count: the Overview's line is the same sentence", NocatFarm.Core.UserCount.AccountsLine(1240) == "1,240 Steam accounts on gamer.farm"
+			&& NocatFarm.Core.UserCount.AccountsLine(1) == "1 Steam account on gamer.farm");
 		Check("discord card: count unknown (or Count me as a user off) falls back to the cards today", Line(3, null) == "5 cards today"
 			&& Line(3, NocatFarm.Core.UserCount.Accounts(off, DateTime.UtcNow)) == "5 cards today");
 		NocatFarm.Core.UserCount.Remember(new(212, null), DateTime.UtcNow);
 		Check("discord card: an older gamer.mom (copies only) falls back to the cards today too", Line(3, NocatFarm.Core.UserCount.Accounts(on, DateTime.UtcNow)) == "5 cards today");
 		NocatFarm.Core.UserCount.Forget();
 		Check("discord card: the other choices are untouched", (Line(0, 212) == "5 cards today") && (Line(1, 212) == "10 hrs past week") && (Line(2, null) == "10 hrs past month"));
-		Check("discord card: Steam accounts on nocat.farm is the default, still choice 3", (new NocatFarm.Config.GlobalConfig().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LineAccounts)
+		Check("discord card: Steam accounts on gamer.farm is the default, still choice 3", (new NocatFarm.Config.GlobalConfig().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LineAccounts)
 			&& (NocatFarm.Core.DiscordPresence.LineAccounts == 3));
 		Check("discord card: the choice is named for the Steam accounts, no people any more",
 			NocatFarm.Config.Settings.FindGlobal("DiscordSecondLine") is { } secondLine
-			&& NocatFarm.Config.Settings.ParseChoices(secondLine).Any(o => (o.Value == 3) && (o.Label == "Steam accounts on nocat.farm"))
+			&& NocatFarm.Config.Settings.ParseChoices(secondLine).Any(o => (o.Value == 3) && (o.Label == "Steam accounts on gamer.farm"))
 			&& !(secondLine.Choices ?? "").Contains("people", StringComparison.OrdinalIgnoreCase) && !secondLine.Tooltip.Contains("people", StringComparison.OrdinalIgnoreCase));
 		Check("settings: Count me as a user says the accounts signed in go too, as a number only",
 			NocatFarm.Config.Settings.FindGlobal("CountMeAsUser") is { } countMe && countMe.Tooltip.Contains("how many of your Steam accounts are signed in (just the number)", StringComparison.Ordinal));
@@ -13082,7 +13082,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("numbers: the language picked is the one used", NocatFarm.Fmt.Grouped(1240) == "1.240" && NocatFarm.Core.UserCount.AccountsLine(1240).StartsWith("1.240 ", StringComparison.Ordinal),
 			NocatFarm.Core.UserCount.AccountsLine(1240));
 		NocatFarm.Config.Live.Global.Language = langWas;
-		NocatFarm.Core.Loc.T("Steam accounts on nocat.farm");
+		NocatFarm.Core.Loc.T("Steam accounts on gamer.farm");
 		Check("settings: Count me as a user is there, Show account names is gone",
 			(NocatFarm.Config.Settings.FindGlobal("CountMeAsUser") is { Kind: NocatFarm.Config.SettingKind.Bool, Advanced: false })
 			&& (NocatFarm.Config.Settings.FindGlobal("DiscordShowNames") == null) && (typeof(NocatFarm.Config.GlobalConfig).GetProperty("DiscordShowNames") == null)
@@ -13094,7 +13094,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			return NocatFarm.Config.ConfigStore.LoadGlobal();
 		}
 		NocatFarm.Config.GlobalConfig named = LoadOld("""{ "StatusEveryMinutes": 7, "DiscordShowNames": true, "DiscordSecondLine": 1 }""");
-		Check("old config: DiscordShowNames on still loads, and takes Steam accounts on nocat.farm", !NocatFarm.Config.ConfigStore.GlobalBroken
+		Check("old config: DiscordShowNames on still loads, and takes Steam accounts on gamer.farm", !NocatFarm.Config.ConfigStore.GlobalBroken
 			&& (named.StatusEveryMinutes == 7) && (named.DiscordSecondLine == NocatFarm.Core.DiscordPresence.LineAccounts));
 		Check("old config: ...and is written back without the old key", !File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains("DiscordShowNames", StringComparison.Ordinal)
 			&& (NocatFarm.Config.ConfigStore.LoadGlobal().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LineAccounts));
@@ -14089,12 +14089,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── market prices ask as "nocat.farm/<version>": the market answers 429 to the browser string every time ─────────
+// ── market prices ask as "gamer.farm/<version>": the market answers 429 to the browser string every time ─────────
 {
 	var market = NocatFarm.Core.Browser.Market(TimeSpan.FromSeconds(5));
 	string sent = string.Join(" ", market.DefaultRequestHeaders.UserAgent.Select(static p => p.ToString()));
 	Check("market: price lookups go under the app's own name, never the browser string", sent == NocatFarm.Core.Browser.MarketAgent
-		&& NocatFarm.Core.Browser.MarketAgent.StartsWith("nocat.farm/", StringComparison.Ordinal) && !sent.Contains("Chrome", StringComparison.Ordinal), sent);
+		&& NocatFarm.Core.Browser.MarketAgent.StartsWith("gamer.farm/", StringComparison.Ordinal) && !sent.Contains("Chrome", StringComparison.Ordinal), sent);
 	string book = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "PriceBook.cs"));
 	Check("market: price lookups send an Accept header - without one the market answers 429 every time", market.DefaultRequestHeaders.Accept.Count > 0,
 		string.Join(", ", market.DefaultRequestHeaders.Accept));
@@ -14413,7 +14413,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		lock (sent) {
 			sentA = sent.Any(static s => s.Way == 'A');
 			sentB = sent.Any(static s => s.Way == 'B');
-			allAccept = sent.All(static s => (s.Accept.Length > 0) && (s.Way == 'A' ? s.Agent.StartsWith("nocat.farm/", StringComparison.Ordinal) : s.Agent.Contains("Firefox/", StringComparison.Ordinal)));
+			allAccept = sent.All(static s => (s.Accept.Length > 0) && (s.Way == 'A' ? s.Agent.StartsWith("gamer.farm/", StringComparison.Ordinal) : s.Agent.Contains("Firefox/", StringComparison.Ordinal)));
 		}
 		Check("market ways: every request actually sent, either way, carried its Accept header and its own name", sentA && sentB && allAccept);
 		gapP.SetValue(null, 0d);
@@ -15168,7 +15168,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── update file: a nocat.farm zip on this PC, installed the way an update is - only from this PC ──────────────────────
+// ── update file: a gamer.farm zip on this PC, installed the way an update is - only from this PC ──────────────────────
 {
 	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
 	Type su = typeof(NocatFarm.Core.SelfUpdate);
@@ -15183,13 +15183,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	// A zip the way the release script makes one (see FakeProgram): for this machine, or the kind of computer named.
 	string Zip(string name, Version version, bool withExe = true, string? rid = null)
 		=> FakeProgram.Zip(Path.Combine(zips, name), version, rid, withExe: withExe, extra: [("README.md", "readme")]);
-	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"gamer.farm-v{v}-portable.zip" : $"gamer.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
 	string newer = Zip(Mine("9.9.9"), new Version(9, 9, 9));
 	string older = Zip(Mine("1.6.0"), new Version(1, 6, 0));
 	string same = Zip(Mine(Build.Version), Version.Parse(Build.Version));
 	// For another kind of computer, really: a Mac's off Windows (told by its name there), Windows' own off it (nocatFarm.exe).
-	string other = OperatingSystem.IsWindows() ? Zip("nocat.farm-v9.9.9_osx-arm64.zip", new Version(9, 9, 9), rid: "osx-arm64")
-		: Zip("nocat.farm-v9.9.9-portable.zip", new Version(9, 9, 9), rid: "win-x64");
+	string other = OperatingSystem.IsWindows() ? Zip("gamer.farm-v9.9.9_osx-arm64.zip", new Version(9, 9, 9), rid: "osx-arm64")
+		: Zip("gamer.farm-v9.9.9-portable.zip", new Version(9, 9, 9), rid: "win-x64");
 	// ...and off Windows the other chip, by what's in it - under this machine's own name. Apple silicon runs an Intel Mac's
 	// program, so there it's Intel that has no other.
 	string? otherChipRid = FakeProgram.Here switch {
@@ -15214,6 +15214,31 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		File.Copy(newer, renamed);
 		Check("update file: reads the version from the program in the zip, not the file name",
 			(Look(newer).V == "9.9.9") && (Look(renamed).V == "9.9.9"), Look(renamed).Why.ToString());
+		// 2.0.0: the release zips are gamer.farm-*, with the same files again as nocat.farm-* for copies before the rename.
+		string oldName = Path.Combine(zips, Mine("9.9.9").Replace("gamer.farm-", "nocat.farm-", StringComparison.Ordinal));
+		File.Copy(newer, oldName);
+		Check("update file (2.0.0): a zip under the name before the rename (nocat.farm-v...) goes in like one named gamer.farm",
+			Look(oldName).V == "9.9.9", Look(oldName).Why.ToString());
+		using (System.Text.Json.JsonDocument both = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(new {
+			assets = new[] { "gamer.farm-v2.0.0-portable.zip", "gamer.farm-v2.0.0-setup.exe", "gamer.farm-v2.0.0_linux-arm.zip", "gamer.farm-v2.0.0_linux-arm64.zip",
+				"gamer.farm-v2.0.0_linux-x64.zip", "gamer.farm-v2.0.0_osx-arm64.zip", "gamer.farm-v2.0.0_osx-x64.zip", "nocat.farm-v2.0.0-portable.zip",
+				"nocat.farm-v2.0.0_linux-arm.zip", "nocat.farm-v2.0.0_linux-arm64.zip", "nocat.farm-v2.0.0_linux-x64.zip", "nocat.farm-v2.0.0_osx-arm64.zip",
+				"nocat.farm-v2.0.0_osx-x64.zip", "nocatfarm.rep4rep.dll" }
+				.Select(static n => new { name = n, browser_download_url = "https://github.com/VisaHolder/gamerfarm/releases/download/v2.0.0/" + n, size = 1 }).ToArray()
+		}))) {
+			string? picked = NocatFarm.Core.SelfUpdate.ZipForThisMachine(both.RootElement)?.Url;
+			Check("update (2.0.0): a release with every zip under both names - this machine's gamer.farm zip is the one installed",
+				picked == "https://github.com/VisaHolder/gamerfarm/releases/download/v2.0.0/" + Mine("2.0.0"), picked ?? "none");
+		}
+		using (System.Text.Json.JsonDocument onlyOld = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(new {
+			assets = new[] { "nocat.farm-v1.9.3-portable.zip", "nocat.farm-v1.9.3-setup.exe", "nocat.farm-v1.9.3_linux-arm.zip", "nocat.farm-v1.9.3_linux-arm64.zip",
+				"nocat.farm-v1.9.3_linux-x64.zip", "nocat.farm-v1.9.3_osx-arm64.zip", "nocat.farm-v1.9.3_osx-x64.zip" }
+				.Select(static n => new { name = n, browser_download_url = "https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.3/" + n, size = 1 }).ToArray()
+		}))) {
+			string? picked = NocatFarm.Core.SelfUpdate.ZipForThisMachine(onlyOld.RootElement)?.Url;
+			Check("update (2.0.0): a release from before the rename (only nocat.farm-* zips) still has this machine's zip - going back to one works",
+				picked == "https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.3/" + Mine("1.9.3").Replace("gamer.farm-", "nocat.farm-", StringComparison.Ordinal), picked ?? "none");
+		}
 		Check("update file: no file there - says so", (Look(Path.Combine(zips, "gone.zip")).V == null)
 			&& Look(Path.Combine(zips, "gone.zip")).Why.ToString().Contains("there's no file at", StringComparison.Ordinal));
 		Check("update file: a zip for another kind of computer is refused, and says which one this needs",
@@ -15251,7 +15276,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			string old = await Commands.RunAtThisPcAsync(mgr, $"update file {older}");
 			string sameSaid = await Commands.RunAtThisPcAsync(mgr, $"update file {same}");
 			Check("update file: an older version needs force, and says so plainly",
-				old.Contains($"has nocat.farm 1.6.0, and you have {Build.Version} - an older one", StringComparison.Ordinal) && old.Contains($"update file {older} force", StringComparison.Ordinal)
+				old.Contains($"has gamer.farm 1.6.0, and you have {Build.Version} - an older one", StringComparison.Ordinal) && old.Contains($"update file {older} force", StringComparison.Ordinal)
 				&& !NocatFarm.Core.SelfUpdate.Busy, old);
 			Check("update file: so does the same version", sameSaid.Contains("the same version", StringComparison.Ordinal) && sameSaid.Contains(" force", StringComparison.Ordinal), sameSaid);
 
@@ -15300,8 +15325,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			string note = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "updated.txt");
 			string staged = swapped?.Environment["NF_STAGED"] ?? "";
 			Check("update file: a newer zip says what it installs, from which file",
-				going.StartsWith($"installing nocat.farm 9.9.9 from {Path.GetFileName(newer)}", StringComparison.Ordinal), going);
-			Check("update file: ...and goes down the normal swap: staged with the program, the note for \"updated A → B\", then nocat.farm closes",
+				going.StartsWith($"installing gamer.farm 9.9.9 from {Path.GetFileName(newer)}", StringComparison.Ordinal), going);
+			Check("update file: ...and goes down the normal swap: staged with the program, the note for \"updated A → B\", then gamer.farm closes",
 				exited && (swapped != null) && File.Exists(Path.Combine(staged, exe)) && File.Exists(Path.Combine(staged, "nocatFarm.dll"))
 				&& (swapped.Environment["NF_TAG"] == "file:9.9.9") && File.Exists(note) && File.ReadAllText(note).StartsWith($"{Build.Version}|9.9.9|", StringComparison.Ordinal),
 				$"{exited} {swapped?.Environment["NF_TAG"]} {staged}");
@@ -15325,7 +15350,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-failed.txt"), "crashed file:9.9.9");
 		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
 		Check("update file: one that crashed is put back and said, but its version isn't skipped",
-			(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("nocat.farm 9.9.9 from the file didn't start", StringComparison.Ordinal) == true),
+			(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("gamer.farm 9.9.9 from the file didn't start", StringComparison.Ordinal) == true),
 			NocatFarm.Core.SelfUpdate.LastFailure ?? "null");
 
 		// The same version from a file ('force'), whose files didn't all copy in: the note names the version that's running, and
@@ -15378,7 +15403,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	List<string> wrong = [];
 	foreach ((string what, byte[] program, string[] runsOnThese) in programs) {
 		foreach (string rid in rids) {
-			bool? said = runsOn(program, rid, $"nocat.farm-v1.7.4_{rid}.zip");
+			bool? said = runsOn(program, rid, $"gamer.farm-v1.7.4_{rid}.zip");
 			if (said != runsOnThese.Contains(rid)) {
 				wrong.Add($"{what} on {rid}: {said?.ToString() ?? "not a program"}");
 			}
@@ -15386,7 +15411,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 	foreach ((string what, byte[] program) in new[] { ("Windows' MZ", FakeProgram.For("win-x64")), ("nothing", Array.Empty<byte>()), ("text", "program"u8.ToArray()) }) {
 		foreach (string rid in rids) {
-			if (runsOn(program, rid, $"nocat.farm-v1.7.4_{rid}.zip") != null) {
+			if (runsOn(program, rid, $"gamer.farm-v1.7.4_{rid}.zip") != null) {
 				wrong.Add($"{what} on {rid}: taken for a Linux or Mac program");
 			}
 		}
@@ -15400,14 +15425,14 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	try {
 		List<string> refused = [];
 		foreach (string rid in rids.Append("win-x64")) {
-			string name = rid.StartsWith("win-", StringComparison.Ordinal) ? "nocat.farm-v1.7.4-portable.zip" : $"nocat.farm-v1.7.4_{rid}.zip";
+			string name = rid.StartsWith("win-", StringComparison.Ordinal) ? "gamer.farm-v1.7.4-portable.zip" : $"gamer.farm-v1.7.4_{rid}.zip";
 			string path = FakeProgram.Zip(Path.Combine(zips, name), new Version(1, 7, 4), rid);
 			var (v, why) = ((string?, NocatFarm.Core.Said)) typeof(NocatFarm.Core.SelfUpdate).GetMethod("LookInZipFor", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [path, rid])!;
 			if (v != "1.7.4") {
 				refused.Add($"{rid}: {why.ToEnglish()}");
 			}
 		}
-		Check("update file: the pretend nocat.farm for each kind of computer is taken there, its version read from nocatFarm.dll", refused.Count == 0, string.Join(" | ", refused));
+		Check("update file: the pretend gamer.farm for each kind of computer is taken there, its version read from nocatFarm.dll", refused.Count == 0, string.Join(" | ", refused));
 	} finally {
 		TestTemp.Gone(zips);   // tried again while a late write lets go (slow Macs)
 	}
@@ -15429,8 +15454,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	// A release zip as the release script makes one, for this machine (see FakeProgram).
 	byte[] ZipBytes(Version version) => FakeProgram.ZipBytes(version);
-	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
-	string notMine = OperatingSystem.IsWindows() ? "nocat.farm-v1.6.3_osx-arm64.zip" : "nocat.farm-v1.6.3-portable.zip";
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"gamer.farm-v{v}-portable.zip" : $"gamer.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string notMine = OperatingSystem.IsWindows() ? "gamer.farm-v1.6.3_osx-arm64.zip" : "gamer.farm-v1.6.3-portable.zip";
 	string olderZip = Path.Combine(zips, Mine("1.6.0"));
 	File.WriteAllBytes(olderZip, ZipBytes(new Version(1, 6, 0)));
 
@@ -15541,7 +15566,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			await Commands.RunAtThisPcAsync(mgr, "update file");
 			await (Task) pickingP.GetValue(null)!;
 			Check("update file with no path: the picked zip goes through the same checks as a typed one - an older one needs force",
-				Said(before, $"has nocat.farm 1.6.0, and you have {cur} - an older one") && Said(before, $"update file {olderZip} force") && !NocatFarm.Core.SelfUpdate.Busy);
+				Said(before, $"has gamer.farm 1.6.0, and you have {cur} - an older one") && Said(before, $"update file {olderZip} force") && !NocatFarm.Core.SelfUpdate.Busy);
 		}
 
 		pickerP.SetValue(null, null);
@@ -15647,18 +15672,18 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			NocatFarm.Core.UpdateCheck.RemindIfDue();
 			NocatFarm.Core.UpdateCheck.AutoInstallIfDue(mgr);
 			Check("update to: the newer version isn't offered again, or put back by itself at night",
-				!Said(quiet, $"nocat.farm v{cur} is out") && !Said(quiet, $"installing v{cur} by itself") && !NocatFarm.Core.SelfUpdate.Busy);
+				!Said(quiet, $"gamer.farm v{cur} is out") && !Said(quiet, $"installing v{cur} by itself") && !NocatFarm.Core.SelfUpdate.Busy);
 			NocatFarm.Core.UpdateCheck.Skipped = null;
 			long loud = Mark();
 			NocatFarm.Core.UpdateCheck.RemindIfDue();
-			Check("update to: ...which it would be, without the skip", Said(loud, $"reminder: nocat.farm v{cur} is out"));
+			Check("update to: ...which it would be, without the skip", Said(loud, $"reminder: gamer.farm v{cur} is out"));
 			uc.GetProperty("Available")!.SetValue(null, null);
 
 			// The older version didn't start and the newer one was put back: said as going back, and nothing is skipped for it.
 			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-failed.txt"), "crashed back:1.6.1");
 			NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
 			Check("update to: an older version that didn't start - put back, said plainly, and not skipped",
-				(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains($"going back didn't work: nocat.farm 1.6.1 didn't start, so you're on {cur} again", StringComparison.Ordinal) == true),
+				(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains($"going back didn't work: gamer.farm 1.6.1 didn't start, so you're on {cur} again", StringComparison.Ordinal) == true),
 				NocatFarm.Core.SelfUpdate.LastFailure ?? "null");
 		}
 	} finally {
@@ -15799,7 +15824,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
-// ── human mode's wait, said as it is: the first sign-in since nocat.farm started is "signed in at", one after a reconnect
+// ── human mode's wait, said as it is: the first sign-in since gamer.farm started is "signed in at", one after a reconnect
 //    "signed in again at", each with when it opens ─────────────────────────────────────────────────────────────────
 {
 	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, WakeDelayMinMinutes = 30, WakeDelayMaxMinutes = 30 };
@@ -16326,7 +16351,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("slow: no 'Exception of type' text and no exception type in a line people see",
 			shown.Count > 0 && !shown.Any(static e => e.Text.Contains("Exception", StringComparison.Ordinal)), string.Join(" / ", shown.Select(static e => $"{e.Level} {e.Text}")));
 		Check("slow: Steam dropping a request with nobody signed out is a warning that says so",
-			shown.Any(static e => (e.Source == "nocat.farm") && (e.Level == "WARN") && (e.Text == "'match' stopped before it was done: Steam dropped the request")), unnamed);
+			shown.Any(static e => (e.Source == "gamer.farm") && (e.Level == "WARN") && (e.Text == "'match' stopped before it was done: Steam dropped the request")), unnamed);
 
 		string quick = await Commands.SlowAsync(new Commands.Slow("bans", "looking up its bans"), [gone], static _ => throw new SteamKit2.AsyncJobFailedException(), TimeSpan.FromSeconds(5));
 		Check("slow: cut short inside the reply's wait, the reply says it plainly too",
@@ -16347,8 +16372,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		List<Log.Entry> handler = [.. Log.Since(seq2).Where(static e => e.Level != "DEBUG")];
 		Check("lost task: one only cut off is a warning, not an error",
 			handler.Count == 1 && (handler[0].Level == "WARN") && handler[0].Text.Contains("cut off partway", StringComparison.Ordinal), string.Join(" / ", handler.Select(static e => $"{e.Level} {e.Text}")));
-		// Where the null is hit depends on what the JIT inlines: Commands.UsageLines on x64, the Columns.Width it calls on Apple silicon. Either is "where in nocat.farm".
-		Check("lost task: it says where in nocat.farm it was when it can", Log.WhereFrom(where) is "Commands.UsageLines" or "Columns.Width", Log.WhereFrom(where) + " | " + where.StackTrace);
+		// Where the null is hit depends on what the JIT inlines: Commands.UsageLines on x64, the Columns.Width it calls on Apple silicon. Either is "where in gamer.farm".
+		Check("lost task: it says where in gamer.farm it was when it can", Log.WhereFrom(where) is "Commands.UsageLines" or "Columns.Width", Log.WhereFrom(where) + " | " + where.StackTrace);
 	} finally {
 		TaskScheduler.UnobservedTaskException -= Lost;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -16395,7 +16420,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	int port = ((System.Net.IPEndPoint) listener.LocalEndpoint).Port;
 	List<string> askedFor = [];
 	CancellationTokenSource stopServing = new();
-	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"gamer.farm-v{v}-portable.zip" : $"gamer.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
 	byte[] releases = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(new[] {
 		new { tag_name = "v" + newer, draft = false, prerelease = false, assets = new[] { new { name = Mine(newer), browser_download_url = $"http://127.0.0.1:{port}/zips/x.zip", size = 1234 } } }
 	}));
@@ -16478,7 +16503,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("update to, by hand: that version's own way in - its tag in Docker, its release page and zip as a service",
 			NocatFarm.Core.Platform.InContainer
 				? byHand.Contains("git checkout v1.0.1", StringComparison.Ordinal)
-				: byHand.Contains(NocatFarm.Core.SelfUpdate.ReleasePage("1.0.1"), StringComparison.Ordinal) && byHand.Contains("nocat.farm-v1.0.1_", StringComparison.Ordinal), byHand);
+				: byHand.Contains(NocatFarm.Core.SelfUpdate.ReleasePage("1.0.1"), StringComparison.Ordinal) && byHand.Contains("gamer.farm-v1.0.1_", StringComparison.Ordinal), byHand);
 		string commands = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Replace("\r\n", "\n");
 		int fromFile = commands.IndexOf("private static async Task<string> UpdateFromFile(", StringComparison.Ordinal);
 		Check("update to, by hand: going back saves the settings first there too; update file says \"by hand\" before \"only at this PC\"",
@@ -16615,7 +16640,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			&& notes.Any(static n => n.Detail?.Contains("passed over rbdup.json", StringComparison.Ordinal) == true), thrown?.ToString() ?? Notes(notes));
 		Check("bringing back: ...and with a file passed over, the copy isn't marked as done - it tries again next start", File.Exists(copy) && !File.Exists(applied));
 		string program = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Program.cs")).Replace("\r\n", "\n");
-		Check("bringing back: nothing it throws stops nocat.farm starting - said, and the settings load as they are",
+		Check("bringing back: nothing it throws stops gamer.farm starting - said, and the settings load as they are",
 			program.Contains("try {\n\tbroughtBack = Rollback.RestoreMissing();\n} catch (Exception e) {", StringComparison.Ordinal));
 
 		// Fixed, and started as a new version on trial: filled in, but marked as done only once the trial is over - put back,
@@ -16858,7 +16883,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
 	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", rel)).Replace("\r\n", "\n");
 
-	// The program for each kind of computer, and a nocat.farm zip: see FakeProgram.
+	// The program for each kind of computer, and a gamer.farm zip: see FakeProgram.
 	byte[] Elf(ushort machine) => FakeProgram.Elf(machine);
 	byte[] MachO(uint cpu) => FakeProgram.MachO(cpu);
 	byte[] mz = FakeProgram.For("win-x64");
@@ -16883,7 +16908,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
 		Check("update file, going back didn't start: the skip from before is put back, and its note goes",
 			(NocatFarm.Core.UpdateCheck.Skipped == "v8.8.8") && !File.Exists(skipBefore)
-			&& (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("nocat.farm 1.0.0 from the file didn't start", StringComparison.Ordinal) == true),
+			&& (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("gamer.farm 1.0.0 from the file didn't start", StringComparison.Ordinal) == true),
 			$"{NocatFarm.Core.UpdateCheck.Skipped} {File.Exists(skipBefore)} {NocatFarm.Core.SelfUpdate.LastFailure}");
 
 		File.WriteAllText(skipBefore, $"{cur}|1.0.0|v8.8.8");
@@ -16896,8 +16921,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 		// 2. A zip with a backups/ folder of its own: this install's backups (one a day, by date) aren't written over.
 		if (NocatFarm.Core.SelfUpdate.Supported) {
-			string withBackups = MakeZip(OperatingSystem.IsWindows() ? "nocat.farm-v9.9.9-portable.zip" : $"nocat.farm-v9.9.9_{NocatFarm.Core.Platform.ReleaseRid}.zip",
-				new Version(9, 9, 9), exeHere, Here(), "Backups/nocat.farm-backup-2026-10-06.zip");
+			string withBackups = MakeZip(OperatingSystem.IsWindows() ? "gamer.farm-v9.9.9-portable.zip" : $"gamer.farm-v9.9.9_{NocatFarm.Core.Platform.ReleaseRid}.zip",
+				new Version(9, 9, 9), exeHere, Here(), "Backups/gamer.farm-backup-2026-10-06.zip");
 			System.Diagnostics.ProcessStartInfo? swapped = null;
 			bool exited = false;
 			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
@@ -16962,11 +16987,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			string.Join(" | ", twice.Select(static n => n.Detail ?? n.Line.ToEnglish())));
 
 		// 5. 'update file' off Windows: the zip is judged by what's in it, not its name - a download renamed "(1)" goes in.
-		string linuxRenamed = MakeZip("nocat.farm-v1.7.4_linux-x64 (1).zip", new Version(1, 7, 4), "nocatFarm", Elf(62));
+		string linuxRenamed = MakeZip("gamer.farm-v1.7.4_linux-x64 (1).zip", new Version(1, 7, 4), "nocatFarm", Elf(62));
 		string anyName = MakeZip("download.zip", new Version(1, 7, 4), "nocatFarm", Elf(62));
-		string linuxArm = MakeZip("nocat.farm-v1.7.4_linux-arm64.zip", new Version(1, 7, 4), "nocatFarm", Elf(183));
-		string mac = MakeZip("nocat.farm-v1.7.4_osx-arm64 (2).zip", new Version(1, 7, 4), "nocatFarm", MachO(0x0100000C));
-		string windowsZip = MakeZip("nocat.farm-v1.7.4-portable.zip", new Version(1, 7, 4), "nocatFarm.exe", mz);
+		string linuxArm = MakeZip("gamer.farm-v1.7.4_linux-arm64.zip", new Version(1, 7, 4), "nocatFarm", Elf(183));
+		string mac = MakeZip("gamer.farm-v1.7.4_osx-arm64 (2).zip", new Version(1, 7, 4), "nocatFarm", MachO(0x0100000C));
+		string windowsZip = MakeZip("gamer.farm-v1.7.4-portable.zip", new Version(1, 7, 4), "nocatFarm.exe", mz);
 		Check("update file off Windows: a renamed zip, or any name, with the program for this computer is taken",
 			(Look(linuxRenamed, "linux-x64").V == "1.7.4") && (Look(anyName, "linux-x64").V == "1.7.4") && (Look(mac, "osx-arm64").V == "1.7.4"),
 			$"{Look(linuxRenamed, "linux-x64").Why} | {Look(anyName, "linux-x64").Why} | {Look(mac, "osx-arm64").Why}");
@@ -17018,10 +17043,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			!startHere.Contains("On Linux, a Mac or in Docker, type the path", StringComparison.Ordinal) && startHere.Contains("On Linux or a Mac, type the path", StringComparison.Ordinal));
 		string commandsSrc = Src("src/NocatFarm/Commands.cs");
 		Check("update file: the help, the refusal, the command list and the guide count the console as this PC",
-			commandsSrc.Contains("Only in the nocat.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
-			&& commandsSrc.Contains("\"update file only works at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC.", StringComparison.Ordinal)
-			&& Src("docs/COMMANDS.md").Contains("Only in the nocat.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
-			&& startHere.Contains("only works in the nocat.farm window or its console, or the dashboard opened on this PC", StringComparison.Ordinal));
+			commandsSrc.Contains("Only in the gamer.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
+			&& commandsSrc.Contains("\"update file only works at this PC - in the gamer.farm window or its console, or the dashboard opened on this PC.", StringComparison.Ordinal)
+			&& Src("docs/COMMANDS.md").Contains("Only in the gamer.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
+			&& startHere.Contains("only works in the gamer.farm window or its console, or the dashboard opened on this PC", StringComparison.Ordinal));
 	} finally {
 		startP.SetValue(null, startBefore);
 		exitP.SetValue(null, exitBefore);
@@ -17612,10 +17637,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
 	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
 	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", rel)).Replace("\r\n", "\n");
-	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"gamer.farm-v{v}-portable.zip" : $"gamer.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
 
 	// The start of a program file - Linux's ELF (either byte order), a Mac's Mach-O, a Mac's universal one - and a
-	// nocat.farm zip: see FakeProgram.
+	// gamer.farm zip: see FakeProgram.
 	byte[] Elf(ushort machine, bool bigEndian = false) => FakeProgram.Elf(machine, bigEndian);
 	byte[] MachO(uint cpu) => FakeProgram.MachO(cpu);
 	byte[] Fat(bool wide, params uint[] cpus) => FakeProgram.Fat(wide, cpus);
@@ -17708,7 +17733,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			string? closed = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, fromFile: older);
 			exitFlag.SetValue(null, false);
 			Check("going back that stopped - closed while the accounts signed out: the copy it took of the settings goes again",
-				(closed?.Contains("nocat.farm was closed first", StringComparison.Ordinal) == true) && (swapped == null) && (Waiting().Length == 0),
+				(closed?.Contains("gamer.farm was closed first", StringComparison.Ordinal) == true) && (swapped == null) && (Waiting().Length == 0),
 				$"{closed} | {string.Join(" ", Waiting().Select(Path.GetFileName))}");
 			Settle(swapped);
 
@@ -17793,11 +17818,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("bringing back: ...and the copy with it is done, so it's said once", !File.Exists(damaged) && File.Exists(damaged[..^".zip".Length] + "-applied.zip"), brokenSaid);
 
 		// 3. 'update file' on a chip the list didn't have: the program's own machine for the ones .NET runs on, and the name
-		// for any other. Every one of them was refused, "needs nocat.farm-v<version>_linux-riscv64.zip" - the name it had.
+		// for any other. Every one of them was refused, "needs gamer.farm-v<version>_linux-riscv64.zip" - the name it had.
 		(string Rid, byte[] Program)[] chips = [("linux-riscv64", Elf(243)), ("linux-loongarch64", Elf(258)), ("linux-s390x", Elf(22, bigEndian: true)), ("linux-ppc64le", Elf(21))];
 		List<string> chipsSaid = [];
 		foreach ((string rid, byte[] program) in chips) {
-			string named = MakeZip($"nocat.farm-v1.7.4_{rid}.zip", new Version(1, 7, 4), "nocatFarm", program);
+			string named = MakeZip($"gamer.farm-v1.7.4_{rid}.zip", new Version(1, 7, 4), "nocatFarm", program);
 			string renamed = MakeZip($"download-{rid}.zip", new Version(1, 7, 4), "nocatFarm", program);
 			(string? v, string why) = Look(named, rid);
 			(string? v2, string why2) = Look(renamed, rid);
@@ -17808,19 +17833,19 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		}
 		Check("update file on RISC-V, LoongArch, s390x, ppc64le: the zip with that chip's program is taken - named or not - and refused on another chip",
 			chipsSaid.Count == 0, string.Join(" | ", chipsSaid));
-		string mipsNamed = MakeZip("nocat.farm-v1.7.4_linux-mips64.zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
-		string mipsOther = MakeZip("nocat.farm-v1.7.4_linux-x64 (3).zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
+		string mipsNamed = MakeZip("gamer.farm-v1.7.4_linux-mips64.zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
+		string mipsOther = MakeZip("gamer.farm-v1.7.4_linux-x64 (3).zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
 		Check("update file on a chip not in the list: by its name, as an update picks its download",
 			(Look(mipsNamed, "linux-mips64").V == "1.7.4") && Look(mipsOther, "linux-mips64").Why.Contains("another kind of computer", StringComparison.Ordinal),
 			$"{Look(mipsNamed, "linux-mips64").Why} | {Look(mipsOther, "linux-mips64").Why}");
 
 		// 4. Apple silicon runs an Intel program too (Rosetta), and a trial that fails puts the old one back: an Intel Mac
 		// zip is taken there, plain or universal, with the universal list in 32 or 64 bits. An Intel Mac still can't run Apple's.
-		string intelMac = MakeZip("nocat.farm-v1.7.4_osx-x64.zip", new Version(1, 7, 4), "nocatFarm", MachO(Intel));
+		string intelMac = MakeZip("gamer.farm-v1.7.4_osx-x64.zip", new Version(1, 7, 4), "nocatFarm", MachO(Intel));
 		string intelFat = MakeZip("intel-fat.zip", new Version(1, 7, 4), "nocatFarm", Fat(false, Intel));
 		string wideBoth = MakeZip("wide-both.zip", new Version(1, 7, 4), "nocatFarm", Fat(true, Intel, AppleSilicon));
 		string wideApple = MakeZip("wide-apple.zip", new Version(1, 7, 4), "nocatFarm", Fat(true, AppleSilicon));
-		string appleMac = MakeZip("nocat.farm-v1.7.4_osx-arm64.zip", new Version(1, 7, 4), "nocatFarm", MachO(AppleSilicon));
+		string appleMac = MakeZip("gamer.farm-v1.7.4_osx-arm64.zip", new Version(1, 7, 4), "nocatFarm", MachO(AppleSilicon));
 		Check("update file on Apple silicon: an Intel Mac zip is taken - plain, universal, or universal with the 64-bit list",
 			(Look(intelMac, "osx-arm64").V == "1.7.4") && (Look(intelFat, "osx-arm64").V == "1.7.4") && (Look(wideBoth, "osx-arm64").V == "1.7.4")
 			&& (Look(wideApple, "osx-arm64").V == "1.7.4") && (Look(wideBoth, "osx-x64").V == "1.7.4"),
@@ -17864,12 +17889,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			};
 			long before = Mark();
 			await Commands.RunAtThisPcAsync(mgr, $"update file {newerZip}");
-			for (int i = 0; (i < 120) && !Said(before, "nocat.farm was closed first"); i++) {
+			for (int i = 0; (i < 120) && !Said(before, "gamer.farm was closed first"); i++) {
 				await Task.Delay(100);
 			}
 			exitFlag.SetValue(null, false);
 			Check("update file, a newer test build that stopped before the swap: the release is still skipped",
-				Said(before, "nocat.farm was closed first") && !exited && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newer),
+				Said(before, "gamer.farm was closed first") && !exited && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newer),
 				$"{exited} {NocatFarm.Core.UpdateCheck.Skipped}");
 			for (int i = 0; (i < 50) && NocatFarm.Core.SelfUpdate.Busy; i++) {
 				await Task.Delay(100);
@@ -17904,8 +17929,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		}
 		if ((shell != null) && (assertClean.Length > 0)) {
 			int clean = Package("nocatFarm.exe", "wwwroot/app.js", "README.md");
-			int backups = Package("nocatFarm.exe", "backups/nocat.farm-backup-2026-10-06.zip");
-			int strayZip = Package("nocatFarm.exe", "nocat.farm-v1.7.2-portable.zip");
+			int backups = Package("nocatFarm.exe", "backups/gamer.farm-backup-2026-10-06.zip");
+			int strayZip = Package("nocatFarm.exe", "gamer.farm-v1.7.2-portable.zip");
 			int deepZip = Package("nocatFarm.exe", "wwwroot/old.zip");
 			Check("packaging: a clean build packs; a top-level backups/ or any zip in it is refused",
 				(clean == 0) && (backups != 0) && (strayZip != 0) && (deepZip != 0), $"clean {clean}, backups {backups}, zip {strayZip}, deep zip {deepZip}");
@@ -18703,7 +18728,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
 	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
 	string? skippedBefore = NocatFarm.Core.UpdateCheck.Skipped;
-	string mine = OperatingSystem.IsWindows() ? $"nocat.farm-v{newer}-portable.zip" : $"nocat.farm-v{newer}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string mine = OperatingSystem.IsWindows() ? $"gamer.farm-v{newer}-portable.zip" : $"gamer.farm-v{newer}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
 	byte[] zipBytes = FakeProgram.ZipBytes(Version.Parse(newer));
 
 	// A pretend GitHub on this PC: the one release, by its tag, and its zip.
@@ -18846,7 +18871,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		List<string> lost = [];
 		foreach (string line in new[] { $"update file {notZip}", $"update file \"{notZip}\"", $"update file {notZip} force", $"update file \"{notZip}\" FORCE", $"update file '{notZip}'\tforce" }) {
 			string said = await Commands.RunAtThisPcAsync(mgr, line);
-			// Found: it's read, and isn't a nocat.farm zip - not "there's no file at" a path with one space where two were.
+			// Found: it's read, and isn't a gamer.farm zip - not "there's no file at" a path with one space where two were.
 			if (!said.Contains("nocat  farm.zip as a zip", StringComparison.Ordinal) || said.Contains("there's no file at", StringComparison.Ordinal)) {
 				lost.Add($"{line} -> {said}");
 			}
@@ -18866,7 +18891,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 
 		// A file dragged into a Mac's Terminal is pasted with a backslash before every space and bracket - and "there's no file
 		// at" a path with the backslashes in. Off Windows, a path that isn't there is tried again without them.
-		string dragged = Path.Combine(folder, "nocat.farm-v1.7.4_osx-arm64 (1).zip").Replace('\\', '/');
+		string dragged = Path.Combine(folder, "gamer.farm-v1.7.4_osx-arm64 (1).zip").Replace('\\', '/');
 		File.WriteAllText(dragged, "not a zip");
 		string escaped = dragged.Replace(" ", "\\ ", StringComparison.Ordinal).Replace("(", "\\(", StringComparison.Ordinal).Replace(")", "\\)", StringComparison.Ordinal);
 		MethodInfo? draggedP = typeof(Commands).GetMethod("DraggedPath", BindingFlags.NonPublic | BindingFlags.Static);
@@ -19096,7 +19121,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			"gamename alt STEAM-SUMMER-SALE-2024", "gamename alt XCOM2-WAR-OF-CHOSEN", "gamename alt CALL-OF-DUTY-WW2", "gamename alt C:\\Games\\Portal2",
 			"trade accept alt 71234567890123456", "status 76561190000000001", "play alt 730 440 570", "hours alt", "status", "status alt", "status\talt", "dlcach alt",
 			"persona alt reap. @ home", "persona alt someone@example.com", "persona alt Ca$h", "nickname alt Mr. Smith", "notify test", "log 100", "2fa", "guard alt",
-			"import asf C:\\asf\\config", "update file C:\\Downloads\\nocat.farm.zip", "redeem", "redeem alt", "answer",
+			"import asf C:\\asf\\config", "update file C:\\Downloads\\gamer.farm.zip", "redeem", "redeem alt", "answer",
 		]) {
 			Plain("ordinary", line);
 		}
@@ -19492,9 +19517,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			.Replace("<div class=\"phone_header_description\">Phone: <span class=\"account_data_field\">Ends in 42</span></div>", "<a href=\"https://store.steampowered.com/phone/add\">Add a phone</a>"))?.Phone == "none");
 		Check("scam watch: no details on a sign-in page", NocatFarm.Modules.ScamWatch.ParseDetails(APage("signin.html")) == null);
 
-		// ── nocat.farm's own sign-ins: the device name it gives Steam at login ──
+		// ── gamer.farm's own sign-ins: the device name it gives Steam at login ──
 		string botSrc = File.ReadAllText(Path.Combine(ASrcRoot(), "Core", "Bot.cs"));
-		Check("scam watch: nocat.farm names its device the same at the sign-in and the logon (DeviceFriendlyName and MachineName are both DeviceName)",
+		Check("scam watch: gamer.farm names its device the same at the sign-in and the logon (DeviceFriendlyName and MachineName are both DeviceName)",
 			botSrc.Contains("DeviceFriendlyName = DeviceName", StringComparison.Ordinal) && botSrc.Contains("MachineName = DeviceName,", StringComparison.Ordinal));
 		var ownCfg = new NocatFarm.Config.BotConfig();
 		var own = new NocatFarm.Core.Bot("watch-own", ownCfg);
@@ -19549,7 +19574,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		hits = await watch.CheckAsync();
 		Check("scam watch: nothing changed - quiet", (hits.Count == 0) && (Published(bot.Name, Topic.ScamWatch) == 0) && !NocatFarm.Modules.ScamWatch.HoldsTrades(bot));
 
-		// Its own new sign-in (nocat.farm signing in again with the password), and a trusted device of yours: quiet.
+		// Its own new sign-in (gamer.farm signing in again with the password), and a trusted device of yours: quiet.
 		string Add(string json, string id, string name) => json.Replace("data-revoked_devices", "data-x").Replace("}]\" data-x",
 			"},{&quot;token_id&quot;:&quot;" + id + "&quot;,&quot;token_description&quot;:&quot;" + name + "&quot;}]\" data-x");
 		pages[NocatFarm.Modules.ScamWatch.DevicesPageUrl] = Add(APage("devices.html"), "3333333333333333333", Environment.MachineName + " (SteamKit2)");
@@ -19875,7 +19900,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 
 // ── 1.8.0: password-locked backups - the lock itself ──────────────────────────────────────────────────────
 {
-	byte[] plain = System.Text.Encoding.UTF8.GetBytes("a nocat.farm archive, pretend");
+	byte[] plain = System.Text.Encoding.UTF8.GetBytes("a gamer.farm archive, pretend");
 	const string Pw = "correct horse battery";
 	byte[] locked = NocatFarm.Core.LockedBackup.Lock(plain, Pw);
 	Check("locked backup: starts NOCATBAK, format 1, PBKDF2-SHA256, 600,000 rounds",
@@ -19914,7 +19939,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	string rootA = Path.Combine(Path.GetTempPath(), "nf-locked-a-" + Guid.NewGuid().ToString("N"));
 	string rootB = Path.Combine(Path.GetTempPath(), "nf-locked-b-" + Guid.NewGuid().ToString("N"));
 	string rootC = Path.Combine(Path.GetTempPath(), "nf-locked-c-" + Guid.NewGuid().ToString("N"));
-	string outDir = Path.Combine(rootA, "onedrive", "nocat.farm");
+	string outDir = Path.Combine(rootA, "onedrive", "gamer.farm");
 	const string BackupPw = "my-own-backup-password-42";
 	string[] secretsUsed = [BackupPw, "dash-pass-123456", "123456:telegram-token-ABC", "https://discord.com/api/webhooks/1/secret-hook",
 		"steam-pass-alt", "c2hhcmVkLXNlY3JldA==", "aWRlbnRpdHktc2VjcmV0", "refresh-token-alt-eyJ", "access-token-alt-eyJ", "MAFILE-SECRET-BODY", "AAAAA-BBBBB-CCCCC"];
@@ -19930,7 +19955,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		// logins, an authenticator file, the key queue, history - all sealed on disk the way the app seals them ──
 		NocatFarm.Config.ConfigStore.UseRoot(rootA);
 		NocatFarm.Core.BackupSchedule.Reset();
-		Directory.CreateDirectory(Path.Combine(rootA, "onedrive"));   // the OneDrive folder is there; nocat.farm's own folder in it is made
+		Directory.CreateDirectory(Path.Combine(rootA, "onedrive"));   // the OneDrive folder is there; gamer.farm's own folder in it is made
 		var gA = new NocatFarm.Config.GlobalConfig {
 			WebEnabled = false, WebPassword = "dash-pass-123456", TelegramBotToken = "123456:telegram-token-ABC",
 			DiscordWebhookUrl = "https://discord.com/api/webhooks/1/secret-hook", StatusEveryMinutes = 11,
@@ -19972,7 +19997,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		DateTime now = new(2026, 10, 11, 5, 40, 0);
 		var (ok, said) = await NocatFarm.Core.BackupSchedule.RunAsync(now);
 		string[] written = Directory.Exists(outDir) ? Directory.GetFiles(outDir) : [];
-		Check("daily backup: written into the folder, named by the day", ok && written.Length == 1 && Path.GetFileName(written[0]) == "nocat.farm-backup-2026-10-11.nfbackup", said.ToEnglish());
+		Check("daily backup: written into the folder, named by the day", ok && written.Length == 1 && Path.GetFileName(written[0]) == "gamer.farm-backup-2026-10-11.nfbackup", said.ToEnglish());
 		Check("daily backup: a copy kept next to the app too", Directory.GetFiles(NocatFarm.Core.Backup.Folder, "*.nfbackup").Length == 1);
 		Check("daily backup: no half-written files left", !Directory.GetFiles(outDir, "*.tmp").Any() && !Directory.GetFiles(NocatFarm.Core.Backup.Folder, "*.tmp").Any());
 		byte[] file = File.ReadAllBytes(written[0]);
@@ -20085,27 +20110,32 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		// ── the keep count ──
 		DirectoryInfo dir = new(outDir);
 		for (int i = 1; i <= 6; i++) {
-			string old = Path.Combine(outDir, $"nocat.farm-backup-2026-10-0{i}.nfbackup");
+			// 2.0.0: the older half under the name before the rename - still its own, still counted and cleared.
+			string old = Path.Combine(outDir, $"{(i <= 3 ? "nocat" : "gamer")}.farm-backup-2026-10-0{i}.nfbackup");
 			File.WriteAllBytes(old, [1]);
 			File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-20 + i));
 		}
 		File.WriteAllText(Path.Combine(outDir, "my notes.txt"), "mine");
-		File.WriteAllBytes(Path.Combine(outDir, "nocat.farm-backup-2026-09-30.zip"), [1]);
+		File.WriteAllBytes(Path.Combine(outDir, "gamer.farm-backup-2026-09-30.zip"), [1]);
 		File.WriteAllBytes(Path.Combine(outDir, "something-else.nfbackup"), [1]);
 		NocatFarm.Core.BackupSchedule.Reset();
 		var (ok2, _) = await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(1));
 		List<string> left = [.. dir.GetFiles().Select(f => f.Name).Order()];
 		Check("keep count: only the newest 3 of its own backups are left, the one just made among them", ok2
-			&& left.Count(NocatFarm.Core.LockedBackup.IsOurs) == 3 && left.Contains("nocat.farm-backup-2026-10-12.nfbackup") && left.Contains("nocat.farm-backup-2026-10-11.nfbackup")
-			&& left.Contains("nocat.farm-backup-2026-10-06.nfbackup"), string.Join(",", left));
+			&& left.Count(NocatFarm.Core.LockedBackup.IsOurs) == 3 && left.Contains("gamer.farm-backup-2026-10-12.nfbackup") && left.Contains("gamer.farm-backup-2026-10-11.nfbackup")
+			&& left.Contains("gamer.farm-backup-2026-10-06.nfbackup"), string.Join(",", left));
+		Check("keep count (2.0.0): the ones made before the rename, named nocat.farm-backup-*, are its own and went first",
+			!left.Any(static n => n.StartsWith("nocat.farm-backup-2026-10-0", StringComparison.Ordinal))
+			&& NocatFarm.Core.LockedBackup.IsOurs("nocat.farm-backup-2026-10-01.nfbackup") && NocatFarm.Core.LockedBackup.IsOurs("gamer.farm-backup-2026-10-01-120000.nfbackup")
+			&& !NocatFarm.Core.LockedBackup.IsOurs("other.farm-backup-2026-10-01.nfbackup"), string.Join(",", left));
 		Check("keep count: nothing that isn't its own backup is ever deleted",
-			left.Contains("my notes.txt") && left.Contains("nocat.farm-backup-2026-09-30.zip") && left.Contains("something-else.nfbackup"));
+			left.Contains("my notes.txt") && left.Contains("gamer.farm-backup-2026-09-30.zip") && left.Contains("something-else.nfbackup"));
 		var (ok3, _) = await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(1));
-		Check("a second backup the same day gets a name of its own", ok3 && dir.GetFiles("nocat.farm-backup-2026-10-12-*.nfbackup").Length == 1);
+		Check("a second backup the same day gets a name of its own", ok3 && dir.GetFiles("gamer.farm-backup-2026-10-12-*.nfbackup").Length == 1);
 
 		// ── failures: said, notified once per reason a day, and that it works again ──
 		published.Clear();
-		string gone = Path.Combine(rootA, "unplugged-drive", "nocat.farm");
+		string gone = Path.Combine(rootA, "unplugged-drive", "gamer.farm");
 		NocatFarm.Config.Live.Global.BackupFolder = gone;
 		var (bad1, why1) = await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(2));
 		var (bad2, _) = await NocatFarm.Core.BackupSchedule.RunAsync(now.AddDays(2).AddHours(1));
@@ -20188,7 +20218,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 	string www = Path.Combine(repo, "src", "NocatFarm", "wwwroot");
 	using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(www, "manifest.webmanifest")));
 	var m = manifest.RootElement;
-	Check("phone app: the manifest opens it full screen as nocat.farm", m.GetProperty("name").GetString() == "nocat.farm" && m.GetProperty("display").GetString() == "standalone"
+	Check("phone app: the manifest opens it full screen as gamer.farm", m.GetProperty("name").GetString() == "gamer.farm" && m.GetProperty("display").GetString() == "standalone"
 		&& m.GetProperty("start_url").GetString() == "./" && m.GetProperty("theme_color").GetString()!.StartsWith('#'));
 	Check("phone app: every icon in it is there, a 192, a 512 and one for round masks",
 		m.GetProperty("icons").EnumerateArray().All(i => File.Exists(Path.Combine(www, i.GetProperty("src").GetString()!)))
@@ -21988,7 +22018,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		string shared = Path.Combine(root, "Dropbox");
 		Directory.CreateDirectory(shared);
 		Check("backup: a folder that's already there (Dropbox, a NAS) is left as it is - only one it makes, or its own, is owner-only",
-			!NocatFarm.Core.LockedBackup.TightensFolder(shared) && NocatFarm.Core.LockedBackup.TightensFolder(Path.Combine(shared, "nocat.farm"))
+			!NocatFarm.Core.LockedBackup.TightensFolder(shared) && NocatFarm.Core.LockedBackup.TightensFolder(Path.Combine(shared, "gamer.farm"))
 			&& NocatFarm.Core.LockedBackup.TightensFolder(NocatFarm.Core.Backup.Folder));
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -22208,7 +22238,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			fcApp.Contains("const byItself = !!values.PointsOk && val('SpendPoints');", StringComparison.Ordinal)
 			&& fcApp.Contains("Off: nothing is spent.", StringComparison.Ordinal));
 
-		// ── finding 8: relisting only touches listings nocat.farm put up itself ──
+		// ── finding 8: relisting only touches listings gamer.farm put up itself ──
 		var fcListedAt = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
 		NocatFarm.Core.OurListings.Add("fc-sell", 900, "440-Card900", 7, fcListedAt);
 		NocatFarm.Core.OurListings.Add("fc-sell", 901, "440-Card901", 12, fcListedAt);
@@ -22220,7 +22250,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 			new(4, 8888, "440-Hand", 30, fcListedAt, false)                                      // yours, listed by hand
 		};
 		var ours = NocatFarm.Core.OurListings.Ours(onMarket, ourRecord).Select(static l => l.Id).Order().ToList();
-		Check("only listings nocat.farm made are relisted - never one you listed by hand", ours.SequenceEqual([1ul, 2ul]), string.Join(",", ours));
+		Check("only listings gamer.farm made are relisted - never one you listed by hand", ours.SequenceEqual([1ul, 2ul]), string.Join(",", ours));
 
 		// ── finding 22: rolling back to 1.7.x keeps "Sell duplicate cards" and "Open booster packs" as they were ──
 		NocatFarm.Core.SpareLedger.Load("fc-roll").Approved = true;   // 1.7.x is only told to sell after 'spare ok' (fix FE 1)
@@ -22618,7 +22648,7 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 
 	// 7. the two backups told apart
 	Check("readability: 'backup' help tells the quick zip and the password-locked backup apart",
-		Commands.All.First(static c => c.Name == "backup").Help == "'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup.");
+		Commands.All.First(static c => c.Name == "backup").Help == "'backup' saves a quick zip into the backups folder next to gamer.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup.");
 	int ftPanel = ftApp.IndexOf("function backupPanel()", StringComparison.Ordinal);
 	string ftPanelText = ftPanel < 0 ? "" : ftApp[ftPanel..ftApp.IndexOf("\n}\n", ftPanel, StringComparison.Ordinal)];
 	Check("readability: Backup & restore points at Backups for a backup that opens on any PC",
@@ -25057,9 +25087,9 @@ if (NocatFarm.Core.SelfUpdate.Supported) {
 		Check("declined: nothing is judged from a list that may not be whole, nor a listing made minutes ago", (notWhole.Count == 0) && (tooNew.Count == 0));
 		NocatFarm.Core.OurListings.Add("sr-decl", 21, $"{SG}-Ninja", 20, listedAt);
 		NocatFarm.Core.OurListings.Add("sr-decl", 22, $"{SG}-Pirate", 20, listedAt);
-		NocatFarm.Core.OurListings.Mark("sr-decl", Up(30, 22, "Pirate", true));   // confirmed by nocat.farm on the authenticator
+		NocatFarm.Core.OurListings.Mark("sr-decl", Up(30, 22, "Pirate", true));   // confirmed by gamer.farm on the authenticator
 		var reviewed = NocatFarm.Core.OurListings.Review("sr-decl", [], noSales, srNow);
-		Check("declined: a listing nocat.farm confirmed itself is never taken for a declined one, and a review is saved",
+		Check("declined: a listing gamer.farm confirmed itself is never taken for a declined one, and a review is saved",
 			reviewed.Select(static e => e.AssetId).SequenceEqual([21ul]) && NocatFarm.Core.OurListings.Load("sr-decl").All(static e => e.Settled)
 			&& (NocatFarm.Core.OurListings.Review("sr-decl", [], noSales, srNow).Count == 0));
 		var memory = NocatFarm.Core.SpareListings.Load("sr-decl");
@@ -26214,7 +26244,7 @@ await CommandSweep.RunAsync(Check);
 		// ── a pack it made isn't "new"
 		var justMade = NocatFarm.Core.Spare.PlanPacks([PmPack(900), PmPack(901)], 2, 7, [], _ => pmNow, new HashSet<ulong>(), _ => null, 24, pmNow,
 			madeHere: new HashSet<ulong> { 900 });
-		Check("packs made: a pack nocat.farm made itself is opened at once - \"leave new packs alone\" is for packs that came in other ways",
+		Check("packs made: a pack gamer.farm made itself is opened at once - \"leave new packs alone\" is for packs that came in other ways",
 			justMade.Single(static p => p.Pack.AssetId == 900).Open && !justMade.Single(static p => p.Pack.AssetId == 901).Open
 			&& justMade.Single(static p => p.Pack.AssetId == 901).Why.ToEnglish().Contains("within the last 7", StringComparison.Ordinal));
 		var ownPlan = NocatFarm.Core.Spare.PlanPacks([PmPack(902)], 0, 7, [], _ => pmNow, new HashSet<ulong>(), _ => null, 24, pmNow, own: new HashSet<ulong> { 902 });
@@ -26329,8 +26359,8 @@ await CommandSweep.RunAsync(Check);
 		Check("the timed look's debug line is one line", !NocatFarm.Core.SpareRun.OneLine("a\n  b\r\n    c   d").Contains('\n')
 			&& (NocatFarm.Core.SpareRun.OneLine("a\n  b\r\n    c   d") == "a · b · c d"), NocatFarm.Core.SpareRun.OneLine("a\n  b\r\n    c   d"));
 
-		Check("packs made: \"Leave new packs alone\" says packs nocat.farm made itself aren't held back",
-			NocatFarm.Config.Settings.FindBot("BoosterOpenNewDays")!.Tooltip.Contains("nocat.farm made itself", StringComparison.Ordinal));
+		Check("packs made: \"Leave new packs alone\" says packs gamer.farm made itself aren't held back",
+			NocatFarm.Config.Settings.FindBot("BoosterOpenNewDays")!.Tooltip.Contains("gamer.farm made itself", StringComparison.Ordinal));
 	} finally {
 		NocatFarm.Log.Published -= pmOnHeard;
 		NocatFarm.Log.Notify = pmWasNotify;
@@ -26383,10 +26413,10 @@ await CommandSweep.RunAsync(Check);
 		&& lsBeat[0].Header.StartsWith("▸ ×4 playing", StringComparison.Ordinal), lsBeat[0].Header);
 
 	var lsUpdate = new List<NocatFarm.Core.LogStack.Row>();
-	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("nocat.farm", new NocatFarm.Core.Said("update in {0}s", 30)));
-	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("nocat.farm", new NocatFarm.Core.Said("update · signing out {0} {1}/{2}", "new", 1, 3), "GOOD"));
-	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("nocat.farm", new NocatFarm.Core.Said("update in {0}s", 20)));
-	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("nocat.farm", new NocatFarm.Core.Said("commented on {0} and credited ({1}/{2} today)", "x", 1, 10), "GOOD"));
+	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("gamer.farm", new NocatFarm.Core.Said("update in {0}s", 30)));
+	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("gamer.farm", new NocatFarm.Core.Said("update · signing out {0} {1}/{2}", "new", 1, 3), "GOOD"));
+	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("gamer.farm", new NocatFarm.Core.Said("update in {0}s", 20)));
+	NocatFarm.Core.LogStack.Add(lsUpdate, LsLine("gamer.farm", new NocatFarm.Core.Said("commented on {0} and credited ({1}/{2} today)", "x", 1, 10), "GOOD"));
 	Check("stacked log: an update's countdown and sign-outs are one row; a comment after it is a row of its own",
 		(lsUpdate.Count == 2) && lsUpdate[0].Stacked && (lsUpdate[0].Lines.Count() == 3) && !lsUpdate[1].Stacked);
 	Check("stacked log: a line alone of its kind shows as itself, with no marker",
@@ -26487,7 +26517,7 @@ await CommandSweep.RunAsync(Check);
 	Check("short lines: the common lines fit the small window - 64 columns at most",
 		lsCommon.All(static l => NocatFarm.Columns.Width(l) <= 64), string.Join(" | ", lsCommon.Where(static l => NocatFarm.Columns.Width(l) > 64)));
 	Check("short lines: none of the old long wordings is left in what's logged",
-		new[] { ("Core/SpareRun.cs", "beats selling\", "), ("Core/Seller.cs", "instead of listing it"), ("Modules/CardFarmer.cs", "new Said(\" · {0} by nocat.farm\""),
+		new[] { ("Core/SpareRun.cs", "beats selling\", "), ("Core/Seller.cs", "instead of listing it"), ("Modules/CardFarmer.cs", "new Said(\" · {0} by gamer.farm\""),
 			("Core/Bot.cs", "(Gap between logins)"), ("Modules/Boosters.Auto.cs", "made a {0} booster ({1} gems") }
 			.All(p => !LsSrc(p.Item1).Contains(p.Item2, StringComparison.Ordinal)));
 }
@@ -27057,11 +27087,11 @@ await CommandSweep.RunAsync(Check);
 	Check("steam open: vdf round-trips (re-parses to the same names)",
 		NocatFarm.Core.SteamVdf.Parse(soParsed.Serialize()).Child("users")?.Children[0].Value.Leaf("AccountName") == "owner");
 
-	// The account is found by the login name, never by the nocat.farm account name (here deliberately different).
+	// The account is found by the login name, never by the gamer.farm account name (here deliberately different).
 	var soReady = new NocatFarm.Core.SteamOpen.Inputs(vdf, "owner", true, 0, true);
 	NocatFarm.Core.SteamOpen.Plan soPlan = NocatFarm.Core.SteamOpen.Decide("farmer_login", 0, soReady);
 	Check("steam open: a remembered account gives an OK plan", soPlan.Code == NocatFarm.Core.SteamOpen.Ok);
-	Check("steam open: the plan points auto-login at the real login name, not the nocat.farm name", soPlan.NewAutoLoginUser == "farmer_login");
+	Check("steam open: the plan points auto-login at the real login name, not the gamer.farm name", soPlan.NewAutoLoginUser == "farmer_login");
 
 	// By the SteamID64 (the block's own key), even when the login name typed doesn't match any account's name.
 	NocatFarm.Core.SteamOpen.Plan soById = NocatFarm.Core.SteamOpen.Decide("not-the-login-name", 76561190000000002UL, soReady);
@@ -27680,7 +27710,7 @@ await CommandSweep.RunAsync(Check);
 		!wkHuman.Contains("(was.Ends <= now) || !MayCarryOn(was)", StringComparison.Ordinal)
 		&& wkHuman.Contains("if (!MayCarryOn(was)) {", StringComparison.Ordinal));
 }
-// ── 1.8.2: card swaps with other nocat.farm users - the rules, the list, the checks on both sides, the sync; fakes only ──
+// ── 1.8.2: card swaps with other gamer.farm users - the rules, the list, the checks on both sides, the sync; fakes only ──
 await CardSwapChecks.RunAsync(Check);
 
 // ── 1.8.2: the five switches, and card swaps beside buying cards and spare items ──
@@ -27773,7 +27803,7 @@ await CardSwapCheatChecks.RunAsync(Check);
 // ── 1.8.2: Open in Steam starts Steam like a double-click ──
 {
 	// Steam is started the way a double-click starts it: explorer.exe "<steam.exe>" through the shell, so Steam's parent is
-	// Explorer and not nocat.farm - nothing passed to Steam, nothing elevated.
+	// Explorer and not gamer.farm - nothing passed to Steam, nothing elevated.
 	System.Diagnostics.ProcessStartInfo sdStart = NocatFarm.Core.SteamOpen.StartInfo(@"C:\Program Files (x86)\Steam\steam.exe", @"C:\Windows");
 	Check("steam open: Steam is started through Explorer - explorer.exe \"<steam.exe>\" from the Windows folder",
 		(sdStart.FileName == Path.Combine(@"C:\Windows", "explorer.exe")) && (sdStart.Arguments == "\"C:\\Program Files (x86)\\Steam\\steam.exe\""), $"{sdStart.FileName} {sdStart.Arguments}");
@@ -27891,8 +27921,8 @@ await CardSwapCheatChecks.RunAsync(Check);
 
 		NocatFarm.Config.ConfigStore.SaveBot(sfPlain.Name, sfPlain.Cfg);
 
-		// The Steam Guard code: only the 5 characters, and only from an authenticator nocat.farm has.
-		Check("steam open: an account with its authenticator in nocat.farm gives its 5-character Steam Guard code",
+		// The Steam Guard code: only the 5 characters, and only from an authenticator gamer.farm has.
+		Check("steam open: an account with its authenticator in gamer.farm gives its 5-character Steam Guard code",
 			NocatFarm.Core.SteamOpen.GuardCode(sfGuarded) is { Code.Length: 5, SecondsLeft: > 0 and <= 30 });
 		Check("steam open: an account without an authenticator gives no code", NocatFarm.Core.SteamOpen.GuardCode(sfPlain) == null);
 
@@ -28485,7 +28515,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		&& (NocatFarm.Core.SetFinder.Named(999_002, "Kept Name") == "Kept Name") && (NocatFarm.Core.SetFinder.Named(999_003, "app 999003") == "app 999003"));
 }
 
-// ── 1.8.5 back up: the machine restarting told apart from nocat.farm alone stopping, when the boot time can be trusted ──
+// ── 1.8.5 back up: the machine restarting told apart from gamer.farm alone stopping, when the boot time can be trusted ──
 {
 	DateTime rsNow = new(2026, 10, 25, 20, 0, 0, DateTimeKind.Utc);
 	var ended = NocatFarm.Core.RunState.Read($"running {rsNow.AddMinutes(-30).Ticks}");
@@ -28542,7 +28572,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 	}
 
 	var pattern = (System.Text.RegularExpressions.Regex) typeof(NocatFarm.Core.Backup).GetMethod("Pattern", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, null)!;
-	Check("backups 1.8.5: the listings nocat.farm made go in a backup - an account moved to another machine still takes down and relists its own",
+	Check("backups 1.8.5: the listings gamer.farm made go in a backup - an account moved to another machine still takes down and relists its own",
 		pattern.IsMatch("state/listed-new.json") && !pattern.IsMatch("state/listed-new.json.bak"));
 }
 
@@ -28716,7 +28746,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		var caAgain = NocatFarm.Web.DashboardCert.Authority();
 		var leafAgain = NocatFarm.Web.DashboardCert.Current();
 		string pfx = Path.Combine(tmpRoot, "config", "state", "dashboard-ca.pfx");
-		Check("https: the authority is made once and read back the same after a restart; the certificate it signs too, covering localhost and nocat.farm",
+		Check("https: the authority is made once and read back the same after a restart; the certificate it signs too, covering localhost and gamer.farm",
 			madeNow && !NocatFarm.Web.DashboardCert.MadeNow && (caPrint == caAgain.Thumbprint) && (leafPrint == leafAgain.Thumbprint)
 			&& (leafIssuer == caSubject) && leafKey && File.Exists(NocatFarm.Web.DashboardCert.CrtPath)
 			&& File.ReadAllText(NocatFarm.Web.DashboardCert.CrtPath).StartsWith("-----BEGIN CERTIFICATE-----", StringComparison.Ordinal)
@@ -29338,10 +29368,18 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 			{ "addons": [ { "id": "demo", "name": "Demo", "plugin": "Demo", "description": { "en": "A demo.", "de": "Eine Demo." }, "version": "1.2.0",
 			  "minAppVersion": "{{min}}", "file": "nocatfarm.demo.dll", "url": "{{url}}", "sha256": "{{(hash.Length > 0 ? hash : sha)}}" } ] }
 			""";
-		byte[] good = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll"));
+		byte[] good = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/gamerfarm/releases/download/v1.9.0/nocatfarm.demo.dll"));
 		var list = NocatFarm.Plugins.Addons.Parse(good, Sign(good), pub, out NocatFarm.Core.Said why);
 		Check("add-on list: signed with the key - read, one entry, its description per language",
 			(list?.Count == 1) && (list[0].DescriptionIn("de") == "Eine Demo.") && (list[0].DescriptionIn("ko") == "A demo."), why.ToEnglish());
+		// 2.0.0: the repository is VisaHolder/gamerfarm now. The list keeps the old name's addresses (GitHub forwards them) while
+		// copies before 2.0.0 take only those - so this takes both, and nothing else.
+		Check("add-on list (2.0.0): a release file under the new repository name and the one before the rename are both taken",
+			NocatFarm.Plugins.Addons.FromGitHub("https://github.com/VisaHolder/gamerfarm/releases/download/v2.0.0/nocatfarm.rep4rep.dll")
+			&& NocatFarm.Plugins.Addons.FromGitHub("https://github.com/VisaHolder/nocatfarm/releases/download/v2.0.0/nocatfarm.rep4rep.dll")
+			&& !NocatFarm.Plugins.Addons.FromGitHub("https://github.com/VisaHolder/gamerfarm-evil/releases/download/v2.0.0/x.dll")
+			&& !NocatFarm.Plugins.Addons.FromGitHub("https://github.com/someone/nocatfarm/releases/download/v2.0.0/x.dll")
+			&& !NocatFarm.Plugins.Addons.FromGitHub("https://github.com/VisaHolder/nocatfarm/releases/download/../x.dll"));
 		byte[] tampered = (byte[]) good.Clone();
 		tampered[Array.IndexOf(tampered, (byte) 'D')] = (byte) 'E';
 		var bad = NocatFarm.Plugins.Addons.Parse(tampered, Sign(good), pub, out NocatFarm.Core.Said badWhy);
@@ -29352,7 +29390,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		Check("add-on list: a bad signature is refused - a changed byte, another key (the built-in one included), none at all",
 			(bad == null) && badWhy.ToEnglish().Contains("signature", StringComparison.Ordinal) && (wrongKey == null) && (builtIn == null) && (noSig == null));
 		byte[] elsewhere = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://example.com/nocatfarm.demo.dll"));
-		Check("add-on list: an entry whose file isn't a nocat.farm GitHub release is left out, even signed",
+		Check("add-on list: an entry whose file isn't a gamer.farm GitHub release is left out, even signed",
 			NocatFarm.Plugins.Addons.Parse(elsewhere, Sign(elsewhere), pub, out _)?.Count == 0);
 
 		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, PluginsEnabled = false, DisabledPlugins = ["Demo"] };
@@ -29362,14 +29400,14 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		var unknownAddon = await NocatFarm.Plugins.Addons.InstallFromAsync(list!, "evil", (_, _) => Give(dll), CancellationToken.None);
 		Check("add-on install: a name that isn't on the signed list is refused, nothing downloaded", !unknownAddon.Ok && (downloads == 0)
 			&& unknownAddon.Message.ToEnglish().Contains("no official add-on called 'evil'", StringComparison.Ordinal), unknownAddon.Message.ToEnglish());
-		byte[] wrongSha = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll", hash: new string('a', 64)));
+		byte[] wrongSha = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/gamerfarm/releases/download/v1.9.0/nocatfarm.demo.dll", hash: new string('a', 64)));
 		var wrongList = NocatFarm.Plugins.Addons.Parse(wrongSha, Sign(wrongSha), pub, out _)!;
 		var wrongFile = await NocatFarm.Plugins.Addons.InstallFromAsync(wrongList, "demo", (_, _) => Give(dll), CancellationToken.None);
 		Check("add-on install: a good signature but a file whose SHA-256 isn't the list's - refused, nothing put in plugins/",
 			!wrongFile.Ok && !File.Exists(Path.Combine(plugDir, "nocatfarm.demo.dll")) && !NocatFarm.Config.Live.Global.PluginsEnabled, wrongFile.Message.ToEnglish());
-		byte[] tooNew = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll", min: "99.0.0"));
+		byte[] tooNew = System.Text.Encoding.UTF8.GetBytes(IndexJson("https://github.com/VisaHolder/gamerfarm/releases/download/v1.9.0/nocatfarm.demo.dll", min: "99.0.0"));
 		var tooNewAddon = await NocatFarm.Plugins.Addons.InstallFromAsync(NocatFarm.Plugins.Addons.Parse(tooNew, Sign(tooNew), pub, out _)!, "demo", (_, _) => Give(dll), CancellationToken.None);
-		Check("add-on install: one that needs a newer nocat.farm says so and isn't installed", !tooNewAddon.Ok && tooNewAddon.Message.ToEnglish().Contains("needs nocat.farm 99.0.0", StringComparison.Ordinal));
+		Check("add-on install: one that needs a newer gamer.farm says so and isn't installed", !tooNewAddon.Ok && tooNewAddon.Message.ToEnglish().Contains("needs gamer.farm 99.0.0", StringComparison.Ordinal));
 		var installed = await NocatFarm.Plugins.Addons.InstallFromAsync(list!, "demo", (_, _) => Give(dll), CancellationToken.None);
 		Check("add-on install: the signed list's file - in plugins/, Load plugins on, its own switch on, a restart asked for",
 			installed.Ok && File.ReadAllBytes(Path.Combine(plugDir, "nocatfarm.demo.dll")).SequenceEqual(dll) && NocatFarm.Config.Live.Global.PluginsEnabled
@@ -29953,7 +29991,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 		byte[] FxIndex(string version, string sha, long serial = 0) => System.Text.Encoding.UTF8.GetBytes(
 			"{ " + (serial > 0 ? $"\"serial\": {serial}, " : "") + "\"addons\": [ { \"id\": \"demo\", \"name\": \"Demo\", \"plugin\": \"Demo\", \"description\": { \"en\": \"A demo.\" }, "
 			+ $"\"version\": \"{version}\", \"minAppVersion\": \"1.0.0\", \"file\": \"nocatfarm.demo.dll\", "
-			+ $"\"url\": \"https://github.com/VisaHolder/nocatfarm/releases/download/v1.9.0/nocatfarm.demo.dll\", \"sha256\": \"{sha}\" }} ] }}");
+			+ $"\"url\": \"https://github.com/VisaHolder/gamerfarm/releases/download/v1.9.0/nocatfarm.demo.dll\", \"sha256\": \"{sha}\" }} ] }}");
 		IReadOnlyList<NocatFarm.Plugins.AddonEntry> FxList(string version, string sha) {
 			byte[] json = FxIndex(version, sha);
 			return NocatFarm.Plugins.Addons.Parse(json, FxSign(json), NocatFarm.Plugins.Addons.Key, out _)!;
@@ -29977,7 +30015,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 			&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 9 }) && File.ReadAllBytes(demo + ".new").SequenceEqual(v1), heldInstall.Message.ToEnglish());
 		var heldRemove = NocatFarm.Plugins.Addons.Uninstall(l1, "demo");
 		Check("add-on held: taking it out leaves a .remove for the next start instead of a refused delete",
-			File.Exists(demo) && File.Exists(demo + ".remove") && !File.Exists(demo + ".new") && heldRemove.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal), heldRemove.ToEnglish());
+			File.Exists(demo) && File.Exists(demo + ".remove") && !File.Exists(demo + ".new") && heldRemove.ToEnglish().Contains("when gamer.farm restarts", StringComparison.Ordinal), heldRemove.ToEnglish());
 		NocatFarm.Plugins.PluginHost.SettlePending(plugDir);
 		NocatFarm.Plugins.PluginHost.ForgetMapped();
 		Check("add-on held: and at the next start it's gone", !File.Exists(demo) && !File.Exists(demo + ".remove"));
@@ -29999,7 +30037,7 @@ await Polish182Checks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..
 				heldByInstall = await NocatFarm.Plugins.Addons.InstallFromAsync(l1, "demo", (_, _) => Task.FromResult(v1), CancellationToken.None);
 			}
 			Check("add-on held (Windows): a file the app didn't know was held - a refused delete becomes a .remove, a refused replace a .new",
-				heldBy.ToEnglish().Contains("when nocat.farm restarts", StringComparison.Ordinal) && heldByInstall.Ok && File.ReadAllBytes(demo + ".new").SequenceEqual(v1)
+				heldBy.ToEnglish().Contains("when gamer.farm restarts", StringComparison.Ordinal) && heldByInstall.Ok && File.ReadAllBytes(demo + ".new").SequenceEqual(v1)
 				&& File.ReadAllBytes(demo).SequenceEqual(new byte[] { 7 }), heldBy.ToEnglish() + " / " + heldByInstall.Message.ToEnglish());
 			File.Delete(demo + ".new");
 			File.Delete(demo);
@@ -30307,7 +30345,7 @@ sealed class HoldHandler : HttpMessageHandler {
 delegate bool? RunsOnCheck(ReadOnlySpan<byte> head, string rid, string name);
 
 /// <summary>
-/// A pretend nocat.farm for 'update file' and the updater, for any kind of computer as a release names it (win-x64,
+/// A pretend gamer.farm for 'update file' and the updater, for any kind of computer as a release names it (win-x64,
 /// linux-arm64, osx-x64): the program with just enough of a real start for SelfUpdate.LookInZipFor to know whose it is -
 /// Linux's ELF with its machine at byte 18, a Mac's Mach-O with its CPU after the magic number - and nocatFarm.dll, where
 /// the version is read from on every kind of computer. Windows is told by the zip's name, so its program is only "MZ".
@@ -30375,7 +30413,7 @@ static class FakeProgram {
 	}
 
 	/// <summary>
-	/// A nocat.farm zip as the release script makes one: flat, the program for <paramref name="rid"/> (this machine unless
+	/// A gamer.farm zip as the release script makes one: flat, the program for <paramref name="rid"/> (this machine unless
 	/// named) and nocatFarm.dll - an assembly called nocatFarm at <paramref name="version"/> - and any other files given.
 	/// </summary>
 	public static byte[] ZipBytes(Version version, string? rid = null, string? exe = null, byte[]? program = null, bool withExe = true,
@@ -30704,7 +30742,7 @@ sealed class FakePointsShopSilent : NocatFarm.Modules.IPointsSteam {
 	}
 }
 
-/// <summary>the two switches as nocat.farm 1.7.3 reads them from an account's file.</summary>
+/// <summary>the two switches as gamer.farm 1.7.3 reads them from an account's file.</summary>
 sealed class Config173Switches {
 	public bool SellDuplicates { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
@@ -31552,6 +31590,13 @@ static class CardSwapChecks {
 		Check("swap note: only \"nocat.farm card swap #\" with a 12-hex match id names a match",
 			NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6" && NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #A1B2C3D4E5F6") == null
 			&& NocatFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2") == null && NocatFarm.Core.CardExchange.MatchIdOf("hi") == null && NocatFarm.Core.CardExchange.MatchIdOf("") == null);
+		// 2.0.0: the app is gamer.farm now, but the note it sends keeps the old name - copies before 2.0.0 know a swap only by
+		// it. A note under the new name is read too, for the release that switches over.
+		Check("swap note (2.0.0): sent as \"nocat.farm card swap #\", so copies before the rename know it",
+			NocatFarm.Core.CardExchange.Tag == "nocat.farm card swap #");
+		Check("swap note (2.0.0): \"gamer.farm card swap #\" names a match as well, by the same rules",
+			NocatFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6" && NocatFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #a1b2") == null
+			&& NocatFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #A1B2C3D4E5F6") == null && NocatFarm.Core.CardExchange.MatchIdOf("other.farm card swap #a1b2c3d4e5f6") == null);
 		const ulong MeId = 76561198000000101UL, YouId = 76561198000000202UL;
 		string replyJson = "{\"m\":[{\"id\":\"a1b2c3d4e5f6\",\"t\":1760000000000,\"me\":\"76561198000000101\",\"you\":\"76561198000000202\",\"send\":true,\"tok\":\"Tok12345\",\"p\":[[440,\"10\",\"440-Scout\",\"101\",5,\"30\",\"440-Pyro\",\"901\",6]]},"
 			+ "{\"id\":\"bbbbbbbbbbbb\",\"t\":1760000000000,\"me\":\"76561198000000101\",\"you\":\"76561198000000202\",\"send\":true,\"p\":[[440,\"10\",\"440-Scout\",\"101\",5,\"30\",\"440-Pyro\",\"901\",6]]},"
@@ -31568,7 +31613,7 @@ static class CardSwapChecks {
 		var recvMatch = new NocatFarm.Core.CardExchange.Match("a1b2c3d4e5f6", DateTime.UtcNow, MeId, YouId, false, "", [
 			new(440, 10, "440-Scout", 101, 5, 30, "440-Pyro", 901, 6), new(440, 10, "440-Scout", 102, 5, 40, "440-Spy", 902, 5)]);
 		NocatFarm.Core.TradeOffers.Offer Offer(List<NocatFarm.Core.TradeOffers.Item> giving, List<NocatFarm.Core.TradeOffers.Item> receiving, ulong from = YouId) =>
-			new(555, from, NocatFarm.Core.TradeOffers.Active, false, null, giving, receiving, 0, "nocat.farm card swap #a1b2c3d4e5f6");
+			new(555, from, NocatFarm.Core.TradeOffers.Active, false, null, giving, receiving, 0, "gamer.farm card swap #a1b2c3d4e5f6");
 		var recvHeld = Held((10, 4), (30, 0), (40, 1));
 		var prices = new Dictionary<string, int> { ["440-Scout"] = 5, ["440-Pyro"] = 6, ["440-Spy"] = 5 };
 		(NocatFarm.Core.CardExchange.Verdict V, NocatFarm.Core.Said Why, long Give, long Get) Verify(NocatFarm.Core.TradeOffers.Offer o, NocatFarm.Core.CardExchange.Match? m = null,
@@ -31788,12 +31833,12 @@ static class CardSwapChecks {
 		var rMatch = new NocatFarm.Core.CardExchange.Match("abcabcabcabc", DateTime.UtcNow, MeId, YouId, false, "", [new(440, 10, "440-Card10", 1, 5, 40, "440-Card40", 901, 6)]);
 		NocatFarm.Core.CardExchange.Remember([rMatch]);
 		NocatFarm.Core.TradeOffers.Offer ROffer(ulong id, List<NocatFarm.Core.TradeOffers.Item> giving, List<NocatFarm.Core.TradeOffers.Item> receiving) =>
-			new(id, YouId, NocatFarm.Core.TradeOffers.Active, false, null, giving, receiving, 0, "nocat.farm card swap #abcabcabcabc");
+			new(id, YouId, NocatFarm.Core.TradeOffers.Active, false, null, giving, receiving, 0, "gamer.farm card swap #abcabcabcabc");
 		Check("swap receive: an offer with the note, on an account with swaps on, is a swap offer", (bool) rt.GetMethod("IsExchangeOffer", SwInst)!.Invoke(rTrades, [ROffer(1, [], [])])!);
 		Check("swap receive: what was paired, fine for the sets and the prices → accept",
 			await Judge(ROffer(71, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")])) == true);
 		var heldSwaps = (HashSet<ulong>) rt.GetField("_heldSwaps", SwInst)!.GetValue(rTrades)!;
-		var unknownOffer = new NocatFarm.Core.TradeOffers.Offer(76, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "nocat.farm card swap #0123456789ab");
+		var unknownOffer = new NocatFarm.Core.TradeOffers.Offer(76, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "gamer.farm card swap #0123456789ab");
 		Check("swap receive: a match this copy hasn't been handed yet → it waits (and asks gamer.mom), not left for you", await Judge(unknownOffer) == null && !heldSwaps.Contains(76));
 		mark = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
 		bool? badVerdict = await Judge(ROffer(72, [Ci(1, 10, "Card10"), Ci(6, 30, "Card30")], [Ci(901, 40, "Card40"), Ci(902, 50, "Card50")]));
@@ -32059,7 +32104,7 @@ static class SwitchesTogetherChecks {
 			NocatFarm.Core.TradeOffers.Item Ci(ulong asset, ulong cls, uint game) =>
 				new(753, "6", asset, cls, 0, 1, "Some Game Trading Card", $"Card {cls}", game, true, "", $"{game}-Card {cls}");
 			var recvMatch = sendMatch with { Id = "e0e0e0e0e0e0", Send = false };
-			var offer = new NocatFarm.Core.TradeOffers.Offer(5, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 1, 100)], [Ci(91, 3, 100)], 0, "nocat.farm card swap #e0e0e0e0e0e0");
+			var offer = new NocatFarm.Core.TradeOffers.Offer(5, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(1, 1, 100)], [Ci(91, 3, 100)], 0, "gamer.farm card swap #e0e0e0e0e0e0");
 			var held = NocatFarm.Core.CardExchange.Held(mine, none);
 			var kept = NocatFarm.Core.CardExchange.Verify(offer, recvMatch, held, _ => 5, 1, rules);
 			var fine = NocatFarm.Core.CardExchange.Verify(offer, recvMatch, held, _ => 5, 1, NocatFarm.Core.CardExchange.Rules.From(new NocatFarm.Config.BotConfig()));
@@ -32798,7 +32843,7 @@ static class CardSwapCheatChecks {
 			Seam(trades, "ReadOffers", (Func<CancellationToken, Task<List<NocatFarm.Core.TradeOffers.Offer>?>>) (_ => Task.FromResult<List<NocatFarm.Core.TradeOffers.Offer>?>([.. live])));
 			MethodInfo judge = typeof(NocatFarm.Modules.Trading).GetMethod("ExchangeJudgeNowAsync", Inst)!;
 			async Task<bool?> Judge(ulong id, string match, ulong asset) {
-				var offer = new NocatFarm.Core.TradeOffers.Offer(id, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(asset, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "nocat.farm card swap #" + match);
+				var offer = new NocatFarm.Core.TradeOffers.Offer(id, YouId, NocatFarm.Core.TradeOffers.Active, false, null, [Ci(asset, 10, "Card10")], [Ci(901, 40, "Card40")], 0, "gamer.farm card swap #" + match);
 				live.Add(offer);
 				try {
 					object task = judge.Invoke(trades, [offer, CancellationToken.None])!;
@@ -33327,7 +33372,7 @@ static class CraftSellChecks {
 		string S(string card) => $"590830-{card}";
 		NocatFarm.Core.MarketQuote Q(string hash, int lowest, int sales = 150) => new(hash, 20, lowest, lowest + 2, sales, DateTime.UtcNow.Ticks);
 
-		// The account as it was: buying turned on through its preview ('buy on new'), then nocat.farm restarted.
+		// The account as it was: buying turned on through its preview ('buy on new'), then gamer.farm restarted.
 		NocatFarm.Core.Bot NewAccount() {
 			var b = new NocatFarm.Core.Bot("new" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig {
 				CraftBadges = true, SellSetsForLevels = true, BuyFullSets = true, LegitMode = false, BuyDailyLimit = 1.5f
@@ -33933,13 +33978,13 @@ static class SetFinderChecks {
 		const string SceRobots = "User-agent: SEOkicks-Robot\nDisallow: /\n\nUser-agent: SemrushBot\nDisallow: /";
 		const string ToolsRobots = "User-agent: *\nDisallow: /cards/*\nAllow: /cards/$\nAllow: /cards/index.html\n\nDisallow: /itemvalue/*\nAllow: /itemvalue/$";
 		Check("seeds: robots.txt followed - steamcardexchange.net's lets it read the list; steam.tools' keeps it off its /cards/ files",
-			NocatFarm.Core.SetSeeds.Allowed(SceRobots, "nocat.farm", "/api/request.php?GetBadgePrices_Guest")
-			&& !NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "nocat.farm", "/cards/set_data.json") && NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "nocat.farm", "/cards/"));
-		Check("seeds: a group naming nocat.farm is the one it follows, the longest rule wins, and Allow on a tie",
-			!NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nAllow: /\n\nUser-agent: nocat.farm\nDisallow: /api/", "nocat.farm", "/api/request.php")
-			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /api/\nAllow: /api/request.php", "nocat.farm", "/api/request.php?x")
-			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow:", "nocat.farm", "/anything")
-			&& !NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /", "nocat.farm", "/api/request.php"));
+			NocatFarm.Core.SetSeeds.Allowed(SceRobots, "gamer.farm", "/api/request.php?GetBadgePrices_Guest")
+			&& !NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "gamer.farm", "/cards/set_data.json") && NocatFarm.Core.SetSeeds.Allowed(ToolsRobots, "gamer.farm", "/cards/"));
+		Check("seeds: a group naming gamer.farm is the one it follows, the longest rule wins, and Allow on a tie",
+			!NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nAllow: /\n\nUser-agent: gamer.farm\nDisallow: /api/", "gamer.farm", "/api/request.php")
+			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /api/\nAllow: /api/request.php", "gamer.farm", "/api/request.php?x")
+			&& NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow:", "gamer.farm", "/anything")
+			&& !NocatFarm.Core.SetSeeds.Allowed("User-agent: *\nDisallow: /", "gamer.farm", "/api/request.php"));
 
 		// Read through a pretend web: what's asked, and what each answer does.
 		string big = System.Text.Json.JsonSerializer.Serialize(new { data = Enumerable.Range(1, 120).Select(static i => new object[] { new[] { (5000 + i).ToString(System.Globalization.CultureInfo.InvariantCulture), $"G{i}" }, 5, "$" + (i / 100.0).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), 1792385898, 1 }) });
@@ -33997,8 +34042,8 @@ static class SetFinderChecks {
 		var shortList = new NocatFarm.Core.SetFinder(NewState());
 		int tooShort = await NocatFarm.Core.SetSeeds.ReadAsync(shortList, Fetch, now, CancellationToken.None, [sce]);
 		Check("seeds: a page that can't be read reliably is skipped", (unread == 0) && (tooShort == 0) && (garbled.ToFill(now).Count == 0) && (shortList.ToFill(now).Count == 0));
-		Check("seeds: an honest name - nocat.farm set finder",
-			NocatFarm.Core.SetSeeds.Agent.StartsWith("nocat.farm set finder/", StringComparison.Ordinal) && (NocatFarm.Core.SetSeeds.RobotName == "nocat.farm"));
+		Check("seeds: an honest name - gamer.farm set finder",
+			NocatFarm.Core.SetSeeds.Agent.StartsWith("gamer.farm set finder/", StringComparison.Ordinal) && (NocatFarm.Core.SetSeeds.RobotName == "gamer.farm"));
 	}
 
 	/// <summary>'sets' asked: it looks for the next day.</summary>
@@ -34782,8 +34827,8 @@ static class SetShareChecks {
 			Check("set sharing: on - its sets sent, then the shared list fetched and handed to the finder",
 				go.Sent && (go.Got == 1) && (site.Calls.Count == 2) && (site.Calls[0].Method == "POST") && site.Calls[0].Body.Contains("\"s\":[[100,", StringComparison.Ordinal)
 				&& (site.Calls[1].Method == "GET") && site.Calls.All(static c => c.Url == NocatFarm.Core.SetShare.Endpoint), string.Join(" | ", site.Calls.Select(static c => c.Method + " " + c.Url)));
-			Check("set sharing: a plain nocat.farm User-Agent, JSON, and nothing about any account",
-				site.Calls[0].UserAgent.StartsWith("nocat.farm/", StringComparison.Ordinal) && site.Calls[0].ContentType.StartsWith("application/json", StringComparison.Ordinal)
+			Check("set sharing: a plain gamer.farm User-Agent, JSON, and nothing about any account",
+				site.Calls[0].UserAgent.StartsWith("gamer.farm/", StringComparison.Ordinal) && site.Calls[0].ContentType.StartsWith("application/json", StringComparison.Ordinal)
 				&& !site.Calls[0].Body.Contains("steam", StringComparison.OrdinalIgnoreCase));
 			await NocatFarm.Core.SetShare.TickAsync(finder, http, g, true, now.AddHours(1.5), CancellationToken.None);
 			Check("set sharing: gentle - nothing again for 2 hours", site.Calls.Count == 2);
@@ -34801,10 +34846,10 @@ static class SetShareChecks {
 				!down.Sent && (down.Taken == 0) && (site.Calls.Count == calls + 1), site.Calls.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 			Check("set sharing: the setting - on, beside 'Share my farming totals', shown only while 'Count me as a user' is on, its words say what goes",
-				NocatFarm.Config.Settings.Global.Single(static d => d.Name == "ShareCheapestSets") is { ShowWhen: "CountMeAsUser=true", Group: "Counting users", Label: "Share cheapest sets with other nocat.farm users" } d
+				NocatFarm.Config.Settings.Global.Single(static d => d.Name == "ShareCheapestSets") is { ShowWhen: "CountMeAsUser=true", Group: "Counting users", Label: "Share cheapest sets with other gamer.farm users" } d
 				&& d.Tooltip.Contains("Nothing about you or your accounts", StringComparison.Ordinal) && d.Tooltip.Contains("priced again on the Steam market", StringComparison.Ordinal));
 			Check("set sharing: the docs say what's shared and that it's only ever a candidate",
-				Src("docs/cards-and-idling.md").Contains("Share cheapest sets with other nocat.farm users", StringComparison.Ordinal));
+				Src("docs/cards-and-idling.md").Contains("Share cheapest sets with other gamer.farm users", StringComparison.Ordinal));
 		} finally {
 			NocatFarm.Log.Suppressed = wasSuppressed;
 			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -35411,7 +35456,7 @@ static class SettingsCleanupChecks {
 				&& B("LegitMode")!.Tooltip.Contains("Robot-mode settings are hidden", StringComparison.Ordinal), string.Join(", ", humanOnly));
 			(string Name, string Label)[] relabels = [("Enabled", "Run this account"), ("LegitMode", "Play like a person (human mode)"),
 				("IUseThisAccount", "I also use this account in my own Steam app"), ("BlacklistedGames", "Never play these games"),
-				("AchievementBoost", "Achievement hunt"), ("ShowInventoryValue", "Show inventory value"), ("CardSwaps", "Swap spare cards with other nocat.farm users"),
+				("AchievementBoost", "Achievement hunt"), ("ShowInventoryValue", "Show inventory value"), ("CardSwaps", "Swap spare cards with other gamer.farm users"),
 				("SpareKeepGems", "Gems never packed, sent or sold"),
 				("BoosterKeepGems", "Gems packs never use"), ("LongerRhythms", "Quiet spells now and then"), ("ClearNotifications", "Clear Steam's notification counters")];
 			(string Name, string Label)[] relabelsGlobal = [("MaxConcurrentFarming", "Accounts farming at once"), ("MarketCurrency", "Show inventory values in"),
@@ -35477,7 +35522,7 @@ static class SettingsCleanupChecks {
 			var fresh = new NocatFarm.Config.BotConfig();
 			Check("defaults: a new account protects refunds, and starts with the auto-reply and the custom game name off",
 				fresh.SkipRefundableGames && !fresh.AutoReplyEnabled && !fresh.CustomGameNameEnabled && fresh.JoinGroup);
-			Check("defaults: a new human-mode account doesn't join the nocat.farm group; a robot one still does",
+			Check("defaults: a new human-mode account doesn't join the gamer.farm group; a robot one still does",
 				!newHuman.JoinGroup && new NocatFarm.Config.BotConfig().JoinGroup
 				&& Src("src/NocatFarm/Web/WebHost.cs").Contains("Settings.NewHumanAccount(cfg);", StringComparison.Ordinal)
 				&& Src("src/NocatFarm/Commands.Copy.cs").Contains("Settings.NewHumanAccount(cfg);", StringComparison.Ordinal)
@@ -38793,7 +38838,7 @@ static class LogShowChecks {
 			("new", "🏆 Camera Shy · Portal · 11/15", Achievements), ("new", "achievements: 716 games to hunt", Achievements),
 			("new", "achievements: Portal for 1h20m · 9/15", Achievements),
 			("new", "  Crusher 0.07 CAD, ED Tank2 0.08 CAD, TMP Unit 0.07 CAD", Answers), ("telegram", "> /status", Answers),
-			("nocat.farm", "update in 10s", App), ("nocat.farm", "installing 1.8.2", App), ("discord", "Discord: presence off", App),
+			("gamer.farm", "update in 10s", App), ("gamer.farm", "installing 1.8.2", App), ("discord", "Discord: presence off", App),
 			("report", "◈ new: 81h played · 9 comments", App), ("new", "settings saved from the dashboard", App),
 			("new", "something nobody has written a rule for", null)];
 		string[] wrong = [.. real.Where(r => NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said(r.Text), r.Source) != r.Kind)
@@ -38811,8 +38856,10 @@ static class LogShowChecks {
 			(NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("farming cards on {0} · {1} of {2} card drop(s)", "SOS OPS!", 0, 2), kind: NocatFarm.Core.LogStack.Heartbeat)) == Doing)
 			&& (NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("anything at all"), show: Trades)) == Trades)
 			&& (NocatFarm.Core.LogShow.KindOf(Line("INFO", "new", new NocatFarm.Core.Said("bought {0} ({1}) · {2}", "a", "b", "c"), show: Answers)) == Answers));
-		Check("log show: a line no rule knows falls back on its notification topic, then where it came from - nocat.farm, the chats and the report are app messages",
+		Check("log show: a line no rule knows falls back on its notification topic, then where it came from - gamer.farm, the chats and the report are app messages",
 			(NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new reward line"), "new", NocatFarm.Topic.FreeStuff) == Free)
+			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new line"), "gamer.farm") == App)
+			// 2.0.0: log files from before the rename name the app nocat.farm
 			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new line"), "nocat.farm") == App)
 			&& (NocatFarm.Core.LogShow.KindOf(new NocatFarm.Core.Said("a brand-new line"), "new") == null));
 
@@ -39329,7 +39376,7 @@ static class Polish182Checks {
 
 /// <summary>
 /// 1.9.0 stress checks: hostile plugins, files that can't be read as they are, an API answering garbage. Each is something
-/// that crashed nocat.farm, held it still, or stopped a part of it until the file was fixed by hand - fixed, and kept fixed.
+/// that crashed gamer.farm, held it still, or stopped a part of it until the file was fixed by hand - fixed, and kept fixed.
 /// </summary>
 static class StressChecks190 {
 	public static async Task RunAsync(Action<string, bool, string> check) {
@@ -39356,7 +39403,7 @@ static class StressChecks190 {
 			} catch (Exception e) {
 				loadThrew = e;
 			}
-			Check("stress: a plugins folder that can't be made (a file of that name) - nocat.farm starts without plugins, no crash", loadThrew == null, loadThrew?.Message ?? "");
+			Check("stress: a plugins folder that can't be made (a file of that name) - gamer.farm starts without plugins, no crash", loadThrew == null, loadThrew?.Message ?? "");
 			File.Delete(NocatFarm.Plugins.PluginHost.Folder);
 			await NocatFarm.Plugins.PluginHost.LoadAllAsync(mgr, CancellationToken.None);   // an empty folder now: _mgr is set for the starts below
 
@@ -39846,7 +39893,7 @@ static class ServiceUpdateChecks {
 
 		string byHand = NocatFarm.Core.SelfUpdate.ByHand("v1.2.3").ToEnglish();
 		Check("service: without the new unit it says how to get it and how to update by hand", NocatFarm.Core.Platform.InContainer
-			|| (byHand.Contains("nocatfarm.service", StringComparison.Ordinal) && byHand.Contains("nocat.farm-v1.2.3_", StringComparison.Ordinal)), byHand);
+			|| (byHand.Contains("nocatfarm.service", StringComparison.Ordinal) && byHand.Contains("gamer.farm-v1.2.3_", StringComparison.Ordinal)), byHand);
 
 		string why = NocatFarm.Core.SelfUpdate.SwapFailure("interrupted file:9.9.9", false).ToEnglish();
 		Check("service: stopped half way says so, with the version alone", why.Contains("9.9.9 was stopped half way", StringComparison.Ordinal) && !why.Contains("file:", StringComparison.Ordinal), why);
@@ -39922,7 +39969,7 @@ static class ServiceUpdateChecks {
 
 		string top = Path.Combine(Path.GetTempPath(), "nf-helper-" + Guid.NewGuid().ToString("N"));
 		// A space and "(1)", as people end up with.
-		string here = Path.Combine(top, "nocat.farm (1)").Replace('\\', '/');
+		string here = Path.Combine(top, "gamer.farm (1)").Replace('\\', '/');
 		string state = Path.Combine(top, "data", "state").Replace('\\', '/');
 		string job = here + "/.nocatfarm-update/job";
 		string script = here + "/nocatfarm-service.sh";
@@ -40859,7 +40906,7 @@ static class FarmWebChecks {
 			&& css.Contains(".farmask-bar { position: fixed;", StringComparison.Ordinal) && css.Contains("z-index: 1000;", StringComparison.Ordinal)
 			&& !appJs.Contains("out.push(`<div class=\"alert warn farmask", StringComparison.Ordinal));
 		Check("farm.gamer.mom: the hosted screens are drawn like the page there - a status dot, one line, one big button, the how-to folded away - and say a hacked site couldn't take anything",
-			appJs.Contains("<div class=\"fg-brand\">nocat.<b>farm</b></div>", StringComparison.Ordinal) && appJs.Contains("<details class=\"fg-how\">", StringComparison.Ordinal)
+			appJs.Contains("<div class=\"fg-brand\">gamer.<b>farm</b></div>", StringComparison.Ordinal) && appJs.Contains("<details class=\"fg-how\">", StringComparison.Ordinal)
 			&& appJs.Contains("Even if this website were hacked, it couldn\\'t take your items or your account: those stay in the app on your PC.", StringComparison.Ordinal)
 			&& css.Contains(".fg { width: min(400px, 100%);", StringComparison.Ordinal));
 
@@ -41033,7 +41080,7 @@ static class FarmWebChecks {
 			Answer hello = await Send("GET", "/api/farm/hello");
 			var helloKeys = (hello.Json as System.Text.Json.Nodes.JsonObject)?.Select(static kv => kv.Key).Order().ToArray() ?? [];
 			Check("farm.gamer.mom: the hello says app, version, api and paired:false - and nothing else",
-				hello.Code == System.Net.HttpStatusCode.OK && helloKeys.SequenceEqual(["api", "app", "paired", "version"]) && (string?) hello.Json!["app"] == "nocat.farm"
+				hello.Code == System.Net.HttpStatusCode.OK && helloKeys.SequenceEqual(["api", "app", "paired", "version"]) && (string?) hello.Json!["app"] == "gamer.farm"
 				&& (int) hello.Json["api"]! == NocatFarm.Web.FarmWeb.ApiVersion && (bool) hello.Json["paired"]! == false && hello.H("Access-Control-Allow-Origin") == Farm
 				&& !hello.Headers.ContainsKey("Set-Cookie"), $"{hello.Code} {hello.Body}");
 			Answer helloLocal = await Send("GET", "/api/farm/hello", origin: null);

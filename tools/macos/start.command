@@ -1,6 +1,6 @@
 #!/bin/bash
-# nocat.farm on a Mac. Double-click this to start it; it opens in Terminal and the dashboard opens in your browser.
-# Keep the Terminal window open (minimise it) - closing it stops nocat.farm.
+# gamer.farm on a Mac. Double-click this to start it; it opens in Terminal and the dashboard opens in your browser.
+# Keep the Terminal window open (minimise it) - closing it stops gamer.farm.
 cd "$(dirname "$0")" || exit 1
 
 # Restarted by an update: open can't hand a program its options, so the updater leaves them in restart-args.txt, one

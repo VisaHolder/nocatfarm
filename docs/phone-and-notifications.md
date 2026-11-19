@@ -8,7 +8,7 @@ the other ways to keep an eye on things.
 
 ## The phone app
 
-Open the dashboard on your phone (see the Phone page) and put it on the home screen, with the nocat.farm icon, so
+Open the dashboard on your phone (see the Phone page) and put it on the home screen, with the gamer.farm icon, so
 it's one tap away.
 
 - **iPhone, in Safari:** the Share button, then *Add to Home Screen*. It opens like an app.
@@ -40,7 +40,7 @@ These use a webhook, which can only post. In Discord, go to Server Settings → 
 Commands need your own bot. It's optional and separate from the webhook.
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and sign in.
-2. Press **New Application**, name it `nocat.farm`, tick the box and press **Create**.
+2. Press **New Application**, name it `gamer.farm`, tick the box and press **Create**.
 3. Open **Bot** on the left, press **Reset Token** and copy the token.
 4. Paste it into **Discord bot token** and press **Save**. A few seconds later the dashboard says the bot is online
    and shows **Add the bot to your server**.
@@ -82,7 +82,7 @@ summary of every account, the last 24 hours and the version, and `/help` sends t
 works with a `/` in front: `/cards`, `/offers`, `/trade accept myaccount 4`, `/2fa myaccount`, `/dashboard`.
 `/console` switches to console mode, where you type commands without the `/`; send `/console` again to leave it.
 `/remove <account>` and `/exit` need `confirm` on the end (`/remove farm1 confirm`, `/exit confirm`), because
-nocat.farm can't be started again from Telegram.
+gamer.farm can't be started again from Telegram.
 
 ### What gets sent
 
@@ -129,9 +129,9 @@ palette as each account's *Colour in the log*.
 Show advanced: *Pop up when you earn* (cards, credited comments), *Pop up for comments* (on your profiles), *Pop up
 for problems* (Steam Guard needed, failed sign-ins, comment bans, bans) and *Pop up for trade offers*.
 
-**Discord profile card** (*Global settings → Discord profile*, off). While nocat.farm is open, your Discord profile
-shows *Playing nocat.farm*, with what it's doing (farming cards, idling games, or *Paused* when every account it
-shows is paused or you're playing on it) and how many Steam accounts are on nocat.farm. It needs the Discord app open on the same PC,
+**Discord profile card** (*Global settings → Discord profile*, off). While gamer.farm is open, your Discord profile
+shows *Playing gamer.farm*, with what it's doing (farming cards, idling games, or *Paused* when every account it
+shows is paused or you're playing on it) and how many Steam accounts are on gamer.farm. It needs the Discord app open on the same PC,
 with Discord's Activity Privacy letting it share what you play. Nothing goes over the internet for this. The options
 are under Show advanced:
 
@@ -140,13 +140,13 @@ are under Show advanced:
 - *Featured account*: which account's Steam avatar sits on the logo. Left on *the first account
   shown*, it's the first account shown
 - *Show accounts online*, *Show an account's avatar* and *Show how long it's been running*, all on
-- *Second line*: *Steam accounts on nocat.farm* (the default, like *1,240 Steam accounts on nocat.farm*), cards today, hours past
+- *Second line*: *Steam accounts on gamer.farm* (the default, like *1,240 Steam accounts on gamer.farm*), cards today, hours past
   week or hours past month, added up over all your accounts. Every running game counts, the way Steam counts it: 8
   games for an hour is 8 hours. The Steam accounts count comes from *Count me as a user*; while it's off or not known yet, the
   card shows the cards today
 - Discord allows two pictures and two buttons on a card, no more. The big picture is the logo, the small one the
   featured account's avatar
-- *Button 1* and *Button 2*: pick *Get nocat.farm*, an account's Steam page, *Your own link* (a box for the button's
+- *Button 1* and *Button 2*: pick *Get gamer.farm*, an account's Steam page, *Your own link* (a box for the button's
   text and one for where it goes), or *none*. Discord doesn't show you your own buttons, but other people see them.
 
 ## Daily summary
@@ -163,8 +163,8 @@ hours; `stats` adds cards and comments by hour.
 
 ## The machine itself
 
-`status`, Telegram's `/status` and the daily summary end with how the machine nocat.farm runs on is doing, for example
-`nocat.farm up 1d 4h 12m · 2.4 GB memory free · 7.0 GB storage free · 54°C` - memory and the temperature only where
+`status`, Telegram's `/status` and the daily summary end with how the machine gamer.farm runs on is doing, for example
+`gamer.farm up 1d 4h 12m · 2.4 GB memory free · 7.0 GB storage free · 54°C` - memory and the temperature only where
 they can be read (most Linux machines; many Android boxes and PCs don't show the temperature). It warns once, under
 *Send problems that need you*, when the CPU stays over 80°C for 10 minutes, storage where its files are drops under 1 GB,
 or memory under 200 MB - and again only after it has recovered well clear of that.
@@ -173,7 +173,7 @@ When every account loses Steam for more than 5 minutes - the internet going down
 all back: `back online after 14m offline · all 3 account(s) signed back in`. One account reconnecting by itself isn't
 said, nor is one that can't sign in or waits for a Steam Guard code.
 
-When nocat.farm comes back by itself after it wasn't closed properly, it says so, and where the machine's start time
+When gamer.farm comes back by itself after it wasn't closed properly, it says so, and where the machine's start time
 can be trusted (Windows, Mac and Linux - not inside Termux on an Android box) it says which it was:
 `the machine restarted (a power cut or a reboot) at about 22:31`, or `stopped unexpectedly (a crash - the machine kept
 running)`. Closed on purpose, shut down with the machine, or restarted by an update: nothing is said.
@@ -191,14 +191,14 @@ is on, then a line for all accounts - laid out like the daily summary, zeros lef
 If the PC was off that day, it comes when it's next on. `report week` shows it any time; `report` alone shows the
 daily summary.
 
-"Put up for sale" is what nocat.farm listed.
+"Put up for sale" is what gamer.farm listed.
 
 Below that, **Levelling** has a line for each account that levelled, sold or bought cards that week: the XP it gained
 and the level it went to, what its own listings sold for, what buying cards spent, and how long its next goal takes at
 that pace - *Stop buying at Steam level* when it's set, else level 100 (then the next hundred). For example
 `new: +1,200 XP (level 52 -> 54) · sold 0.92 CAD · spent 6.40 CAD · level 100 in about 9 weeks at this pace`.
 
-**Listings waiting for your phone.** A listing nocat.farm put up that has waited 3 hours for its confirmation on your
+**Listings waiting for your phone.** A listing gamer.farm put up that has waited 3 hours for its confirmation on your
 phone is said once, under *Send problems that need you*: `3 market listing(s) on new waiting for your phone since 14:10
 - confirm or cancel them in the Steam app`. The same ones aren't said again while they wait; a new one that starts
 waiting is.
@@ -221,7 +221,7 @@ shows each account as the alarm sees it.
 ## Steam groups
 
 Every robot account joins the groups in **Groups every account joins** (*Global settings → All accounts*, Show
-advanced). It starts with the nocat.farm group. Paste group links or short names separated by commas, or clear the box
+advanced). It starts with the gamer.farm group. Paste group links or short names separated by commas, or clear the box
 to stop joining it. A human-mode account added new doesn't join them: a believable account isn't in a group named
 after the farming tool, on its public profile.
 

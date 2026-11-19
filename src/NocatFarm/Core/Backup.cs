@@ -28,6 +28,8 @@ namespace NocatFarm.Core;
 public static partial class Backup {
 	internal const string ManifestName = "manifest.json";
 	internal const string ReadmeName = "README.txt";
+	/// <summary>What a backup's manifest says made it. Still "nocat.farm" after the 2.0.0 rename: every backup made before
+	/// says that, and copies before 2.0.0 restore only a manifest that does.</summary>
 	internal const string App = "nocat.farm";
 	internal const int Format = 1;
 
@@ -42,7 +44,7 @@ public static partial class Backup {
 
 	internal const int MaxEntries = 5000;
 
-	/// <summary>What the copy made just before a restore is called after: nocat.farm-backup-2026-09-30-before-restore.zip.</summary>
+	/// <summary>What the copy made just before a restore is called after: gamer.farm-backup-2026-09-30-before-restore.zip.</summary>
 	internal const string BeforeRestore = "-before-restore";
 
 	/// <summary>A moment as the log shows it: 2026-09-30 14:05.</summary>
@@ -240,9 +242,9 @@ public static partial class Backup {
 		return ms.ToArray();
 	}
 
-	/// <summary>nocat.farm-backup-2026-09-30.zip - the date it was made, local time.</summary>
+	/// <summary>gamer.farm-backup-2026-09-30.zip - the date it was made, local time.</summary>
 	public static string FileName(DateTime local, string suffix = "") =>
-		$"nocat.farm-backup-{local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{suffix}.zip";
+		$"gamer.farm-backup-{local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{suffix}.zip";
 
 	/// <summary>Where the 'backup' command puts them: a backups folder next to config.</summary>
 	public static string Folder => Path.Combine(ConfigStore.Root, "backups");
@@ -317,10 +319,10 @@ public static partial class Backup {
 	/// <summary>The README.txt that goes in every backup - what's inside and how to put it back, in plain words.</summary>
 	internal static string Readme(Manifest m) {
 		StringBuilder sb = new();
-		sb.AppendLine("nocat.farm backup");
+		sb.AppendLine("gamer.farm backup");
 		sb.AppendLine("=================");
 		sb.AppendLine();
-		sb.AppendLine(CultureInfo.InvariantCulture, $"Made {m.Created.ToLocalTime():yyyy-MM-dd HH:mm} by nocat.farm {m.Version} on {m.Machine}.");
+		sb.AppendLine(CultureInfo.InvariantCulture, $"Made {m.Created.ToLocalTime():yyyy-MM-dd HH:mm} by gamer.farm {m.Version} on {m.Machine}.");
 		sb.AppendLine(CultureInfo.InvariantCulture, $"Accounts: {(m.Accounts.Count == 0 ? "none" : string.Join(", ", m.Accounts))}");
 		sb.AppendLine();
 		sb.AppendLine("What's inside (all under config/):");
@@ -337,10 +339,10 @@ public static partial class Backup {
 		sb.AppendLine("  points-, spare-           Steam Points spent this week, spare items' daily counts (never an ok to spend:");
 		sb.AppendLine("                            whether Spare items and Steam Points are on stays as it is on the PC you restore on)");
 		sb.AppendLine("  buy-                      money spent buying cards this week (never an ok to buy, the same way)");
-		sb.AppendLine("  listed-                   the market listings nocat.farm put up, so it can still take them down and relist them");
-		sb.AppendLine("  manifest.json             what this backup is, so nocat.farm knows it on restore");
+		sb.AppendLine("  listed-                   the market listings gamer.farm put up, so it can still take them down and relist them");
+		sb.AppendLine("  manifest.json             what this backup is, so gamer.farm knows it on restore");
 		sb.AppendLine();
-		sb.AppendLine("Not inside: logs, caches (prices, game names), and anything nocat.farm rebuilds by itself.");
+		sb.AppendLine("Not inside: logs, caches (prices, game names), and anything gamer.farm rebuilds by itself.");
 		sb.AppendLine();
 		sb.AppendLine("How to restore:");
 		sb.AppendLine("  In the dashboard: Settings, Global settings, Backup & restore, Restore a backup - pick this zip.");
@@ -373,14 +375,14 @@ public static partial class Backup {
 		Inspection result = new();
 
 		if (bytes.LongLength > MaxZipBytes) {
-			return Fail(new Said("that file is too big to be a nocat.farm backup"));
+			return Fail(new Said("that file is too big to be a gamer.farm backup"));
 		}
 
 		try {
 			using ZipArchive zip = new(new MemoryStream(bytes, writable: false), ZipArchiveMode.Read);
 
 			if (zip.Entries.Count > MaxEntries) {
-				return Fail(new Said("that zip has far too many files to be a nocat.farm backup"));
+				return Fail(new Said("that zip has far too many files to be a gamer.farm backup"));
 			}
 
 			long total = 0;
@@ -403,7 +405,7 @@ public static partial class Backup {
 				}
 
 				if ((name is not (ManifestName or ReadmeName)) && (!name.StartsWith("config/", StringComparison.Ordinal) || (Kind(name["config/".Length..]) == null))) {
-					return Fail(new Said("refused: {0} isn't something a nocat.farm backup holds", name));
+					return Fail(new Said("refused: {0} isn't something a gamer.farm backup holds", name));
 				}
 
 				// The size in the header is only what the zip claims - read no more than the limit whatever it says.
@@ -428,15 +430,15 @@ public static partial class Backup {
 		} catch (Exception e) when (e is InvalidDataException or JsonException or IOException or NotSupportedException) {
 			Log.Failed("backup: reading a zip to restore", e);
 
-			return Fail(new Said("that isn't a zip nocat.farm can read"));
+			return Fail(new Said("that isn't a zip gamer.farm can read"));
 		}
 
 		if (result.Manifest is not { App: App } manifest) {
-			return Fail(new Said("that isn't a nocat.farm backup - it has no manifest"));
+			return Fail(new Said("that isn't a gamer.farm backup - it has no manifest"));
 		}
 
 		if (manifest.Format > Format) {
-			return Fail(new Said("that backup is from a newer nocat.farm ({0}) - update first", manifest.Version));
+			return Fail(new Said("that backup is from a newer gamer.farm ({0}) - update first", manifest.Version));
 		}
 
 		contents = found;

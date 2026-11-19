@@ -209,7 +209,7 @@ public static class Tutorial {
 			"  rep4rep                          with it installed: a summary; its own tab is on the dashboard",
 			"",
 			"The rep4rep API key and each account's on/off, cap, gaps and hours are on the dashboard's Plugins",
-			"page. Whatever an add-on asks, nocat.farm decides when a comment goes out: only while the account",
+			"page. Whatever an add-on asks, gamer.farm decides when a comment goes out: only while the account",
 			"is up (in human mode), spaced out, at most 25 a day per account, never on a paused one."
 		]),
 
@@ -235,7 +235,7 @@ public static class Tutorial {
 			"",
 			"  set StartWithWindows true     launch when you sign in to Windows",
 			"  set StartMinimized true       start straight to the tray",
-			"  set KeepAwake true            stop the PC sleeping while nocat.farm is open",
+			"  set KeepAwake true            stop the PC sleeping while gamer.farm is open",
 			"",
 			"The dashboard is the same product with a mouse, and it switches off:",
 			"  set WebEnabled false          console only (restart to apply)"

@@ -1,12 +1,12 @@
 [Wiki home](README.md) · [Front page](../README.md)
 
-# nocat.farm commands
+# gamer.farm commands
 
-Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's **Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** (start with `/` or `!`, from an account listed under *Accept commands from*).
+Every command gamer.farm has, and what it does. You can type them in the app window, in the dashboard's **Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** (start with `/` or `!`, from an account listed under *Accept commands from*).
 
 In the app, `help` lists them all and `help <command>` explains one. It explains settings too: `help FarmCards`.
 
-**How to read them:** `<account>` is something you must type (an account's name in nocat.farm); `[count]` is optional; `a|b` means one or the other. Most commands that take an account also take `all`, for every account.
+**How to read them:** `<account>` is something you must type (an account's name in gamer.farm); `[count]` is optional; `a|b` means one or the other. Most commands that take an account also take `all`, for every account.
 
 *This page is generated from the app's own command list, so it always matches the version you download.*
 
@@ -44,7 +44,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep the account configured but never log it in. |
 | `stuck` <br>also `alarm` | The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off. |
-| `steam [account\|all] \| open <account> \| on\|off <account\|all>` | Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops nocat.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on. |
+| `steam [account\|all] \| open <account> \| on\|off <account\|all>` | Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops gamer.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on. |
 
 ## Playing
 
@@ -83,16 +83,16 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | Command | What it does |
 |---|---|
 | `offers [account\|all]` | Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold. |
-| `trade accept\|decline <account> <number\|all> \| cancel <account> <offer id\|all>` | Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation. |
+| `trade accept\|decline <account> <number\|all> \| cancel <account> <offer id\|all>` | Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in gamer.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation. |
 | `send <account\|all> [to <account>] [types]` | Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account. |
-| `swaps [account] \| preview\|on\|off\|check <account> \| sync` | Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and gamer.mom deletes its SteamID and trade link. 'swaps sync' asks gamer.mom for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to gamer.mom and turns nothing on. |
+| `swaps [account] \| preview\|on\|off\|check <account> \| sync` | Card swaps with other gamer.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and gamer.mom deletes its SteamID and trade link. 'swaps sync' asks gamer.mom for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to gamer.mom and turns nothing on. |
 
 ## Steam Guard
 
 | Command | What it does |
 |---|---|
 | `2fa [account]` <br>also `guard` | Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code. |
-| `confirmations [account]` | What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in nocat.farm. |
+| `confirmations [account]` | What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in gamer.farm. |
 | `confirm <account> <number\|all>` | Confirm what 'confirmations' listed under that number, or all of it. |
 | `deny <account> <number\|all>` | Deny (cancel) what 'confirmations' listed under that number, or all of it. |
 
@@ -136,7 +136,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | `config [account] [all]` | Show the settings and their current values. Add 'all' to include the advanced ones. |
 | `set [account] <key> <value>` | Change a setting. Without an account name it changes a global one. |
-| `backup [now\|status]` | 'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup. |
+| `backup [now\|status]` | 'backup' saves a quick zip into the backups folder next to gamer.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup. |
 | `import <asf\|ime\|idlemaster\|hourboostr\|singleboostr\|sgi\|steamidler\|auto> [path] [force]` | Bring accounts and settings across from another idler, ArchiSteamFarm login tokens and all. |
 
 ## The app
@@ -146,7 +146,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `log [count\|folder]` <br>also `logs` | The last few log lines. 'log folder' opens the folder the log files are in, on this PC. |
 | `stats [hours]` | Everything: each account's last 24 hours (hours banked, cards, comments, totals), then cards dropped and comments posted, by hour. Give a number of hours to look further back. |
 | `report [week]` | The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments). |
-| `notify [test\|link]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner. |
+| `notify [test\|link]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the gamer.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `addons [install\|remove <name>]` <br>also `addon` | reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept), even with GitHub not answering. Installing and removing only work at this PC, or on the dashboard signed in with its password. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
@@ -155,12 +155,12 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window. |
 | `dashboard [unlock\|cert]` <br>also `web`, `link` | The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'. |
 | `anywhere [on\|off]` <br>also `remote` | Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too. |
-| `clear` <br>also `cls` | Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
+| `clear` <br>also `cls` | Clears the log off the screen you type it in: the gamer.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
 | `visitors [signout]` <br>also `who` | Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password. |
 | `version` <br>also `about` | Which version this is. |
-| `update [accept\|now\|skip] \| file [zip] [force] \| versions \| to <version>` | Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a nocat.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the nocat.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out. |
-| `answer <text>` | Answer whatever nocat.farm is waiting on, like a Steam Guard code or a password. |
-| `exit` <br>also `quit`, `q` | Shut nocat.farm down. |
+| `update [accept\|now\|skip] \| file [zip] [force] \| versions \| to <version>` | Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a gamer.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the gamer.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out. |
+| `answer <text>` | Answer whatever gamer.farm is waiting on, like a Steam Guard code or a password. |
+| `exit` <br>also `quit`, `q` | Shut gamer.farm down. |
 
 ## Advanced
 
@@ -169,7 +169,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `fairswap <account> <offerID>` | Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks, never accepts or declines. |
 | `addlicense <account\|all> <IDs>` | Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why. |
 | `reload` | Re-read every config file from disk. |
-| `screen off` <br>also `monitor`, `display` | Turns this computer's screens off now to save power. nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too. |
+| `screen off` <br>also `monitor`, `display` | Turns this computer's screens off now to save power. gamer.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too. |
 
 ## More
 

@@ -131,7 +131,7 @@ public sealed class GlobalConfig {
 	/// <summary>The one Discord user the bot obeys - filled in by /connect with the code the dashboard shows.</summary>
 	public string DiscordOwnerId { get; set; } = "";
 
-	/// <summary>"Playing nocat.farm" on your Discord profile while it's open.</summary>
+	/// <summary>"Playing gamer.farm" on your Discord profile while it's open.</summary>
 	public bool DiscordPresence { get; set; }
 
 	/// <summary>Which accounts the Discord card is about: names, or "all". Empty = every account not in human mode.</summary>
@@ -154,7 +154,7 @@ public sealed class GlobalConfig {
 	public bool DiscordShowTimer { get; set; } = true;
 
 	/// <summary>What the card's second line counts: 0 cards today, 1 hours in the past week, 2 hours in the past month,
-	/// 3 Steam accounts on nocat.farm (<see cref="Core.DiscordPresence.LineAccounts"/>, once "people using nocat.farm").</summary>
+	/// 3 Steam accounts on gamer.farm (<see cref="Core.DiscordPresence.LineAccounts"/>, once "people using gamer.farm").</summary>
 	public int DiscordSecondLine { get; set; } = Core.DiscordPresence.LineAccounts;
 
 	/// <summary>The colour of "telegram" and "discord" in the log, from the same palette as the accounts'.</summary>
@@ -223,7 +223,7 @@ public sealed class GlobalConfig {
 	public bool? HealthAlertPopup { get; set; }
 
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
-	/// with the nocat.farm group; anyone can change or clear it.</summary>
+	/// with the gamer.farm group; anyone can change or clear it.</summary>
 	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";
 
 	public bool ExitWhenAllFinished { get; set; }
@@ -1282,9 +1282,9 @@ public sealed class BotConfig {
 	public int GiftDelayMaxMinutes { get; set; } = 15;
 	public bool AcceptFairCardSwaps { get; set; }
 
-	// ── 1.8.2: card swaps with other nocat.farm users (Core/CardExchange.cs) ──
+	// ── 1.8.2: card swaps with other gamer.farm users (Core/CardExchange.cs) ──
 	/// <summary>
-	/// Swap spare normal cards one for one with other nocat.farm users' accounts. Only turned on through its preview: the
+	/// Swap spare normal cards one for one with other gamer.farm users' accounts. Only turned on through its preview: the
 	/// go-ahead lives in config/state/cardswaps-&lt;account&gt;.json, never here (see <see cref="Core.Switches"/>).
 	/// </summary>
 	public bool CardSwaps { get; set; }
@@ -1777,7 +1777,7 @@ public static partial class ConfigStore {
 
 	/// <summary>
 	/// The Discord card's "Account names" second line is gone. A file still holding DiscordShowNames gets it taken out: on
-	/// (the old default) takes the new default, Steam accounts on nocat.farm; off had picked one of the counts, which it keeps.
+	/// (the old default) takes the new default, Steam accounts on gamer.farm; off had picked one of the counts, which it keeps.
 	/// A file without the key is left alone, so a count picked since is never touched.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back (without the old key).</returns>
@@ -2342,7 +2342,7 @@ public static partial class ConfigStore {
 		("state", "points-", ".json"),   // Steam Points spent (Modules/PointsSpender.cs)
 		("state", "spare-", ".json"),
 		("state", "buy-", ".json"),   // money spent buying cards, and its go-ahead (Modules/CardBuyer.cs)
-		("state", "listed-", ".json"),   // listings nocat.farm put up itself (Core/OurListings.cs)
+		("state", "listed-", ".json"),   // listings gamer.farm put up itself (Core/OurListings.cs)
 		("state", "levels-", ".json"),   // 1.8.7: its levelling figures for the weekly report (Core/LevelReport.cs)
 		("state", "boosters-", ".json"),   // booster packs automatic made and still has to open (Modules/BoosterPick.cs)
 		("state", "steamopen-", ".json"),   // 1.8.2: the Open in Steam button's go-ahead (Core/SteamOpenLedger.cs)

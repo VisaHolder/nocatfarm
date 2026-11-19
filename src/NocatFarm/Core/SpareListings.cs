@@ -12,7 +12,7 @@ namespace NocatFarm.Core;
 /// item back with a new id from Steam, so its old id says nothing once it's back.
 /// </remarks>
 public sealed class SpareListings {
-	/// <summary>A listing nocat.farm made that you declined (or that came down before it ever went up), and when that was seen.</summary>
+	/// <summary>A listing gamer.farm made that you declined (or that came down before it ever went up), and when that was seen.</summary>
 	public sealed record Declined(string Hash, ulong AssetId, DateTime At);
 
 	/// <summary>An unsold listing taken down at <paramref name="FromCents"/> to go up again at <paramref name="ToCents"/> (what a buyer pays).</summary>

@@ -1068,7 +1068,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		string id = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
 		_codesSent.Enqueue(now);
 
-		Said message = new("nocat.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) typed the right dashboard password from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
+		Said message = new("gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) typed the right dashboard password from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
 			code, ip, Visitors.Device(device), CodeMinutes);
 
 		if (!await Notifier.SendPrivateNowAsync(message.ToString(), ct).ConfigureAwait(false)) {
@@ -1275,7 +1275,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			return Results.Json(status);
 		}));
 
-		// Opens only on the PC nocat.farm runs on, and only for someone sitting at it: from a phone it would pop up a
+		// Opens only on the PC gamer.farm runs on, and only for someone sitting at it: from a phone it would pop up a
 		// window on a screen nobody is looking at. Everyone gets the path.
 		app.MapPost("/api/logs/open", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
 			Path = Log.Folder,
@@ -1536,7 +1536,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			AddonRequest? body = await ReadJsonAsync<AddonRequest>(ctx).ConfigureAwait(false);
 
 			if (!MayInstallAddons(ctx)) {
-				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
+				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the gamer.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
 			}
 
 			if (string.IsNullOrWhiteSpace(body?.Id)) {
@@ -1557,7 +1557,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			AddonRequest? body = await ReadJsonAsync<AddonRequest>(ctx).ConfigureAwait(false);
 
 			if (!MayInstallAddons(ctx)) {
-				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
+				return Results.Json(new { Ok = false, Message = new Said("add-ons are installed and removed only at this PC - in the gamer.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString() });
 			}
 
 			// The list only to put a name to the file: taking an add-on out works without it (GitHub down, or it's gone from the list).
@@ -1745,7 +1745,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				await ctx.Request.Body.CopyToAsync(ms, ctx.RequestAborted).ConfigureAwait(false);
 				bytes = ms.ToArray();
 			} catch (Exception e) when (e is BadHttpRequestException or IOException) {
-				return Results.Json(new { Ok = false, Error = new Said("that file is too big to be a nocat.farm backup").ToString() });
+				return Results.Json(new { Ok = false, Error = new Said("that file is too big to be a gamer.farm backup").ToString() });
 			}
 
 			// A password-locked backup: held here until the page sends its password (/api/restore/unlock).
@@ -2052,12 +2052,12 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			(string code, string said) = await SteamOpen.OpenAsync(bot).ConfigureAwait(false);
 
-			// 1.8.2: Steam is on the sign-in - the card shows the Steam Guard code (when nocat.farm has its authenticator).
+			// 1.8.2: Steam is on the sign-in - the card shows the Steam Guard code (when gamer.farm has its authenticator).
 			return Results.Json(new { ok = code is SteamOpen.Ok or SteamOpen.SignIn, code, said, login = bot.Cfg.SteamLogin });
 		});
 
 		// 1.8.2: what pressing the button would do, for its confirm dialog - read-only, from the local Steam files - and the
-		// account's Steam Guard code right now when Steam would open on its sign-in and nocat.farm has its authenticator.
+		// account's Steam Guard code right now when Steam would open on its sign-in and gamer.farm has its authenticator.
 		// Only the 5-character code, never a secret.
 		app.MapGet("/api/bots/{name}/steam-open", (HttpContext ctx, string name) => {
 			if (!Authorised(ctx)) {
@@ -2463,7 +2463,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 			// Asked the way the Log's "open the folder" asks: a visitor through a proxy on this PC arrives from loopback too.
 			if (!OperatingSystem.IsWindows() || !WhoIsSigningIn(ctx).ThisPc) {
-				return Results.Json(new { Ok = false, Error = new Said("only from the PC nocat.farm runs on").ToString() });
+				return Results.Json(new { Ok = false, Error = new Said("only from the PC gamer.farm runs on").ToString() });
 			}
 
 			(bool ok, string why) = await NocatFarm.Windows.Firewall.AllowAsync(Live.Global.WebPort).ConfigureAwait(false);
@@ -3125,7 +3125,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
-			// Steam accounts on nocat.farm, from gamer.mom's answer to the hourly ping - what the page shows. Null while it
+			// Steam accounts on gamer.farm, from gamer.mom's answer to the hourly ping - what the page shows. Null while it
 			// isn't known (an older gamer.mom doesn't say it), is too old, or "Count me as a user" is off: then nothing shows.
 			Accounts = UserCount.Accounts(),
 			// The copies running, as before: still in the answer for whatever reads it, no longer shown.
@@ -3225,7 +3225,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 					SteamOpen = Core.SteamOpen.On(b.Cfg, b.Name),
 					SteamOpenSupported = Core.SteamOpen.Supported,
 					// 1.8.2: the button left Steam on this account's sign-in: its Steam Guard code (5 characters, never a secret)
-					// and the seconds it has left, when nocat.farm has its authenticator. Empty otherwise.
+					// and the seconds it has left, when gamer.farm has its authenticator. Empty otherwise.
 					SteamOpenCode = !farm && Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } guard) ? guard.Code : "",
 					SteamOpenCodeLeft = !farm && Core.SteamOpen.OnSignIn(b.Name) && (Core.SteamOpen.GuardCode(b) is { } left) ? left.SecondsLeft : 0,
 					SteamId = b.SteamId.ToString(),

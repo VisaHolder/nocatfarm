@@ -19,19 +19,19 @@ and the Settings page shows the everyday switches first, with a **Show advanced*
 | **Human mode** | Makes an account play like a person, with one game at a time, breaks and a bedtime, instead of running around the clock. |
 | **Badge** | What a full set of cards turns into. Badges raise your Steam level. |
 | **Steam Guard** | The extra code Steam asks for when you sign in, from your email or the Steam app on your phone. |
-| **Authenticator / maFile** | The Steam app's Steam Guard, stored as a file. A `.maFile` comes from tools like Steam Desktop Authenticator or ArchiSteamFarm. With one, nocat.farm can type Steam Guard codes and confirm trades by itself. You don't need one. |
+| **Authenticator / maFile** | The Steam app's Steam Guard, stored as a file. A `.maFile` comes from tools like Steam Desktop Authenticator or ArchiSteamFarm. With one, gamer.farm can type Steam Guard codes and confirm trades by itself. You don't need one. |
 | **SteamID64** | A long number that identifies a Steam account, like `76561198000000000`. Some trade settings ask for it. |
-| **Dashboard** | nocat.farm's web page. It runs on your own PC and opens in your browser. |
+| **Dashboard** | gamer.farm's web page. It runs on your own PC and opens in your browser. |
 | **Console** | Where you type commands: in the app window, and on the dashboard's Console tab. |
-| **ArchiSteamFarm (ASF)** | Another card farming program. nocat.farm can bring your accounts across from it. |
+| **ArchiSteamFarm (ASF)** | Another card farming program. gamer.farm can bring your accounts across from it. |
 
 ## 1. Install and run
 
-The [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest) has two Windows downloads. They're
+The [latest release](https://github.com/VisaHolder/gamerfarm/releases/latest) has two Windows downloads. They're
 the same app, so pick whichever suits you.
 
-**The setup, `nocat.farm-v…-setup.exe`,** is what most people want. It's one screen. It installs to
-`%LOCALAPPDATA%\Programs\nocat.farm` without asking for admin rights, which is what lets it keep updating itself,
+**The setup, `gamer.farm-v…-setup.exe`,** is what most people want. It's one screen. It installs to
+`%LOCALAPPDATA%\Programs\gamer.farm` without asking for admin rights, which is what lets it keep updating itself,
 and adds a Start menu entry, a desktop shortcut and "start with Windows" if you leave those ticked. *change* picks a
 different folder, and *advanced* adds the dashboard port and starting hidden in the tray.
 
@@ -42,16 +42,16 @@ It also checks what's already on the PC:
 - Pick ArchiSteamFarm, Idle Master or another idler under *switching from*, and the dashboard opens straight on
   bringing those accounts over (see [Coming from another idler](accounts.md#coming-from-another-idler)). It finds
   ASF by itself on your Desktop, in Documents or in Downloads.
-- If there's a portable nocat.farm, it offers to move it into the install. Accounts, settings and history come
+- If there's a portable gamer.farm, it offers to move it into the install. Accounts, settings and history come
   along. The old copy is closed first and its folder is left alone.
-- If nocat.farm is already installed, a newer setup offers to update (or reinstall) and to uninstall. Updating keeps
+- If gamer.farm is already installed, a newer setup offers to update (or reinstall) and to uninstall. Updating keeps
   your accounts and settings. An older setup doesn't offer to go back a version.
 
-To uninstall, go to Windows *Settings → Apps → nocat.farm → Uninstall*. It asks whether to delete your accounts
+To uninstall, go to Windows *Settings → Apps → gamer.farm → Uninstall*. It asks whether to delete your accounts
 and settings as well - saved Steam logins, authenticators, backups and logs with them. Say no if you might install it
 again.
 
-**The portable zip, `nocat.farm-v…-portable.zip`,** installs nothing. Right-click it, choose **Extract All…**, open the
+**The portable zip, `gamer.farm-v…-portable.zip`,** installs nothing. Right-click it, choose **Extract All…**, open the
 folder and run **`nocatFarm.exe`**. Settings, logs and login tokens all stay in that folder, and uninstalling is
 closing it and deleting the folder. It updates itself the same way the installed one does.
 
@@ -82,8 +82,8 @@ replays it.
    ArchiSteamFarm or something like it.
 3. **The account.** Type the **Steam account name**: what you type to sign in to Steam, not your display name or
    email. The **password** is optional; leave it empty and you're asked once when it signs in. For your main account
-   you can tick *I also use this account in my own Steam app* - then nocat.farm never changes its online status, so it
-   never kicks you off Friends & Chat. Under **More**: a nickname for the account in nocat.farm, and *Sign in with a
+   you can tick *I also use this account in my own Steam app* - then gamer.farm never changes its online status, so it
+   never kicks you off Friends & Chat. Under **More**: a nickname for the account in gamer.farm, and *Sign in with a
    QR code instead*, to scan a code with the Steam app so nothing is typed at all.
 
 If the setup finds another idler with accounts in it (ArchiSteamFarm, Idle Master, HourBoostr, Steam Game
@@ -104,7 +104,7 @@ question more, from the account's own games:
 and has the rest as cards to open when you like: **Use it from your phone**, **Get messages on Telegram or Discord**,
 **A daily backup**, and the **Show on my Discord profile** switch.
 
-From then on nocat.farm keeps a Steam login token and signs itself in. No password is stored unless you type one
+From then on gamer.farm keeps a Steam login token and signs itself in. No password is stored unless you type one
 into the settings.
 
 ## 3. What it does by itself
@@ -125,14 +125,14 @@ It also, without being asked:
 - shows a Health line on each account card and tells you when something gets worse
 - during Steam sales nominates and votes in the Steam Awards - a human-mode account one step at a time, inside its
   day (see [Sale events](cards-and-idling.md#sale-events))
-- on a robot account, joins the nocat.farm Steam group, which you can change or clear (a human-mode account added new
+- on a robot account, joins the gamer.farm Steam group, which you can change or clear (a human-mode account added new
   doesn't join it - see [Steam groups](phone-and-notifications.md#steam-groups))
 - clears Steam's notification counters
 - writes a daily summary in the log at 09:30
 - checks for updates every 2 hours and tells you what's new, but only installs one by itself if you set *Updates*
   to *install by itself at night* (or never looks, with *don't look for updates*)
 
-**Your items are safe by default.** nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by
+**Your items are safe by default.** gamer.farm never sells, turns into gems, opens, buys, swaps or spends anything by
 itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off
 until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show
 what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during
@@ -141,7 +141,7 @@ Steam sales, and free games if you turn that on.
 These stay **off** until you turn them on: human mode (unless you picked "My main account"), claiming free games, earning
 achievements, spare items (turning spare cards into gems or selling them), opening booster packs, spending Steam
 Points on levels, buying cards, making booster packs from gems, crafting badges, fair card swaps, card swaps with
-other nocat.farm users, the auto-reply, a custom game name, daily backups, Discord and Telegram, and plugins and [add-ons](addons.md) like rep4rep.
+other gamer.farm users, the auto-reply, a custom game name, daily backups, Discord and Telegram, and plugins and [add-ons](addons.md) like rep4rep.
 On the account's Settings page these are together at the end, under **Items and spending**. Nothing that sells, opens, uses up or gets rid of an account's items happens on a newly
 added account - farm accounts too - until you turn it on.
 
@@ -153,7 +153,7 @@ The dashboard is where you do almost everything. Its tabs, in order:
 |---|---|
 | Overview | Every account at a glance, today's cards, and history charts. |
 | Accounts | One card per account with Start, Pause, Stop, Cards and Settings. **+ Add account** is here. |
-| Authenticator | Steam Guard codes and trade confirmations. Only there once an account's authenticator is in nocat.farm. |
+| Authenticator | Steam Guard codes and trade confirmations. Only there once an account's authenticator is in gamer.farm. |
 | Phone | Opening the dashboard on your phone, at home or away, and Telegram and Discord. |
 | Log | What happened, in plain words. |
 | Console | Where you type commands. |
@@ -164,7 +164,7 @@ On Windows there's also the app window, with the log (repeats stacked into one r
 see each line), a command line, and buttons to start or stop everything,
 open the dashboard and list your accounts. **mini** shrinks it to a small panel with one line per account. The
 tray icon by the clock has a menu too: open the dashboard, show or hide the window, mini mode, start or stop all
-accounts, and exit. Closing the window leaves nocat.farm running in the tray.
+accounts, and exit. Closing the window leaves gamer.farm running in the tray.
 
 ## 5. Things most people change
 
@@ -220,7 +220,7 @@ Type these in the app window or the dashboard's Console tab, using the name you 
 ## 7. Updating
 
 **On Windows**, when a new version is out the dashboard shows an **Update** button. Click it, or type
-`update accept`. nocat.farm downloads the new version, signs your accounts out one by one, swaps the files and
+`update accept`. gamer.farm downloads the new version, signs your accounts out one by one, swaps the files and
 restarts. Your accounts, settings, logs and plugins are kept.
 
 That's *Updates* set to *install when I click* (Settings → Global settings → Updates & plugins), the default. If
@@ -228,7 +228,7 @@ you'd rather it didn't restart while an account is in the middle of something, s
 `update accept` then wait until no human-mode account is awake, nobody is playing on any account, and no trade or
 gift is waiting its turn. Robot accounts that stay on all night don't hold it up. With no human-mode accounts at
 all, it waits for the night install hours instead (3 to 6 in the morning unless you change them). A
-waiting update is forgotten if you restart nocat.farm. `update now` always installs straight away.
+waiting update is forgotten if you restart gamer.farm. `update now` always installs straight away.
 
 To have it update with no click at all, set *Updates* to **install by itself at night**. It then installs a new
 version on its own, but only between the hours you pick (3 to 6 in the morning by default), only once the version
@@ -236,11 +236,11 @@ has been out for a while (*Wait after a release for*, 2 hours) so a bad release 
 no human-mode account is awake, nobody is playing and no trade offer or gift is waiting. *Look for updates every*
 sets how often it checks (2 hours).
 
-`update file <zip>` installs a nocat.farm zip that's already on this PC, the same way, putting back included. It only
-works in the nocat.farm window or its console, or the dashboard opened on this PC. A zip with the same or an older
+`update file <zip>` installs a gamer.farm zip that's already on this PC, the same way, putting back included. It only
+works in the gamer.farm window or its console, or the dashboard opened on this PC. A zip with the same or an older
 version needs `update file <zip> force`. Type just `update file` (or press *Install from a file…* under Settings →
 Updates & plugins on this PC) and a window opens to pick the zip, starting in Downloads. On Linux or a Mac, type the
-path. In Docker, nocat.farm is updated by hand (see below).
+path. In Docker, gamer.farm is updated by hand (see below).
 
 To go back to an older version, `update versions` lists the ones still on GitHub (the last 5 releases), and
 `update to 1.7.3` installs one, the same way. Or use *Go back to an older version* under Settings → Updates &
@@ -275,12 +275,12 @@ Check the **Log** tab first. It says what happened in plain words. Some common o
 | An account stopped trying to sign in | After 3 failed sign-ins in a row it stops, so Steam doesn't block your connection. Check the password, then `start myaccount`. |
 | "Rate-limited" or "too many logins" | Steam slows down a PC that asks too much, usually after lots of restarts. It waits it out by itself. |
 | Steam kicks you off Friends & Chat | Turn on *I also use this account in my own Steam app* for that account. |
-| Friends see the real game, not your custom name | The account card warns "Steam shows …" and nocat.farm puts the name back by itself. Human-mode accounts have no custom name, on purpose. |
+| Friends see the real game, not your custom name | The account card warns "Steam shows …" and gamer.farm puts the name back by itself. Human-mode accounts have no custom name, on purpose. |
 | Nothing is farming | Type `cards myaccount`. With no cards left it idles its games, if it has any. If it says it's waiting, human mode may have it asleep or on a break; `human myaccount` shows its day. |
 | The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out: for a minute on this PC, an hour from anywhere else. The page counts down; type `dashboard unlock` in the app window (or on Telegram) to skip the wait. |
 | The settings page looks short | Tick **Show advanced**. |
 
-Still stuck? Open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.
+Still stuck? Open an [issue](https://github.com/VisaHolder/gamerfarm/issues) and paste the log lines.
 
 ---
 

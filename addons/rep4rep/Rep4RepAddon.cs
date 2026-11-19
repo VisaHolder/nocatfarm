@@ -6,11 +6,11 @@ using static NocatFarm.Addons.Rep4Rep.Texts;
 namespace NocatFarm.Addons.Rep4Rep;
 
 /// <summary>
-/// The official rep4rep add-on for nocat.farm: earns rep4rep points by posting the profile comments rep4rep hands out, on a
+/// The official rep4rep add-on for gamer.farm: earns rep4rep points by posting the profile comments rep4rep hands out, on a
 /// human schedule, from every account switched on for it. One rep4rep account (one API key) drives them all.
 /// </summary>
 /// <remarks>
-/// Until 1.9.0 this was part of nocat.farm itself. The app moved every 1.8.x setting and record across the first time it
+/// Until 1.9.0 this was part of gamer.farm itself. The app moved every 1.8.x setting and record across the first time it
 /// started as 1.9.0 (Config/MigrateRep4Rep.cs): the key (still encrypted), each account's on/off, cap, gaps and hours, the
 /// hold, and the comment counts - so installing this picks up exactly where it was.
 /// </remarks>
@@ -19,7 +19,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 
 	public string Version { get; } = typeof(Rep4RepAddon).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "1.0.0";
 
-	/// <summary>The nocat.farm this needs at least: the comment and page abilities came in 1.9.0.</summary>
+	/// <summary>The gamer.farm this needs at least: the comment and page abilities came in 1.9.0.</summary>
 	internal const string MinAppVersion = "1.9.0";
 
 	// ── setting names (the app's migration writes these - keep them) ──────────
@@ -44,7 +44,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 		Texts.Language = () => host.Language;
 
 		if (!System.Version.TryParse(host.AppVersion, out System.Version? app) || (app < System.Version.Parse(MinAppVersion))) {
-			host.Log(T("rep4rep needs nocat.farm {0} or newer - this is {1}; not starting", MinAppVersion, host.AppVersion));
+			host.Log(T("rep4rep needs gamer.farm {0} or newer - this is {1}; not starting", MinAppVersion, host.AppVersion));
 
 			return;
 		}
@@ -559,7 +559,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 			blocks.Add(PluginBlock.Line(T("2. On rep4rep.com, open Settings and make an API key.")));
 			blocks.Add(PluginBlock.Link(T("rep4rep.com → Settings"), "https://rep4rep.com/dashboard/settings"));
 			blocks.Add(PluginBlock.Line(T("3. Paste the key under Plugins → rep4rep → API key, then switch commenting on for your accounts here.")));
-			blocks.Add(PluginBlock.Note(T("nocat.farm registers your Steam accounts with rep4rep by itself. You don't have to add anything on their website.")));
+			blocks.Add(PluginBlock.Note(T("gamer.farm registers your Steam accounts with rep4rep by itself. You don't have to add anything on their website.")));
 
 			return new PluginPage(blocks);
 		}
@@ -619,7 +619,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 		}
 
 		blocks.Add(PluginBlock.Heading(T("Pacing")));
-		blocks.Add(PluginBlock.Note(T("Steam lets an account leave about 10 comments a day on people who aren't its friends. Go past that and Steam quietly stops accepting comments from that account for around a day. nocat.farm keeps every account under the line, spaces the comments out at random, only posts during the hours you allow - and in human mode only while the account is up. Each account's cap, gaps and hours are under Plugins → rep4rep.")));
+		blocks.Add(PluginBlock.Note(T("Steam lets an account leave about 10 comments a day on people who aren't its friends. Go past that and Steam quietly stops accepting comments from that account for around a day. gamer.farm keeps every account under the line, spaces the comments out at random, only posts during the hours you allow - and in human mode only while the account is up. Each account's cap, gaps and hours are under Plugins → rep4rep.")));
 		blocks.Add(PluginBlock.Note(T("These live on rep4rep.com, because their API can't do them: removing a Steam profile · editing your custom comment list · task history · buying points · referrals.")));
 		blocks.Add(PluginBlock.Link(T("Spend your points"), "https://rep4rep.com/dashboard/"));
 
@@ -645,7 +645,7 @@ public sealed class Rep4RepAddon : INocatPlugin {
 			return;
 		}
 
-		blocks.Add(PluginBlock.Note(T("nocat.farm posts these for you on a schedule. There's nothing to do here - this is just what's waiting. rep4rep checks the text matches exactly, so these are posted character for character.")));
+		blocks.Add(PluginBlock.Note(T("gamer.farm posts these for you on a schedule. There's nothing to do here - this is just what's waiting. rep4rep checks the text matches exactly, so these are posted character for character.")));
 		int minimum = Commenter(acc.Name).MinPoints;
 
 		blocks.Add(PluginBlock.Table([T("Profile"), T("Points"), T("Comment"), ""],

@@ -1,6 +1,6 @@
-# nocat.farm wiki
+# gamer.farm wiki
 
-nocat.farm runs your Steam accounts in the background. It farms their trading cards, idles games for playtime, and
+gamer.farm runs your Steam accounts in the background. It farms their trading cards, idles games for playtime, and
 can make an account play like a real person. It runs on your own PC, with no sign-up and no server.
 
 If you've just downloaded it, read [Start here](start-here.md) first. It goes from installing to a running account,

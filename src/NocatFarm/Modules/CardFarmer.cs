@@ -675,7 +675,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// "idling 0m so far" thirty seconds after a logon was technically true and worth nothing. What
 				// anybody actually wants to know here is how much this account has done in total.
 				//
-				// "run by nocat.farm", not "played in total".
+				// "run by gamer.farm", not "played in total".
 				//
 				// "in total" was the fix for "· 4m played" reading as a contradiction under human mode's
 				// "1h34m/7h12m today" - but it overshot: it sounds like the account's lifetime Steam hours,

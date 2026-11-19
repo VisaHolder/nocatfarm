@@ -1314,7 +1314,7 @@ public static class SpareRun {
 		LiveSpareSteam steam = new(bot, () => StillMayAct(bot, SpareGate(bot)), look.Spread, gemsAtStart);
 
 		// Selling, where it's chosen: its own listings unsold after the days set come down, to go up again a step cheaper -
-		// never under the floor - or for gems. Only listings nocat.farm put up itself - never one you listed by hand. Asked
+		// never under the floor - or for gems. Only listings gamer.farm put up itself - never one you listed by hand. Asked
 		// again before each one: turned off, held or human mode's day over part way stops the rest.
 		// 1.8.5: first, with a share of its own (a third of the look's number on a human-mode account). After the items it
 		// only ever got what they left - with 326 items waiting for gems that was nothing, and 62 listings sat for days.
@@ -1637,7 +1637,7 @@ public static class SpareRun {
 
 		// Whether a pack is worth more than its cards: both sides from one US-dollar shortlist, so the answer doesn't depend
 		// on the currency. What one is LISTED at is priced in this account's own currency, below.
-		// The packs nocat.farm made itself: never held back as new. The ones automatic "Make booster packs" made to level a
+		// The packs gamer.farm made itself: never held back as new. The ones automatic "Make booster packs" made to level a
 		// badge are opened at the next chance - by it (Modules/Boosters.Auto.cs) or here, whichever comes first - and never
 		// sent or sold. Found in the inventory first, so one Steam didn't give the id of yet isn't taken for a new pack.
 		Modules.BoosterPick.Memory memory = BotManager.ModuleOf<Modules.Boosters>(bot)?.AutoMemory ?? Modules.BoosterPick.Memory.Load(bot.Name);

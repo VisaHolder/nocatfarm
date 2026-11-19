@@ -7,8 +7,8 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// 1.8.2 card swaps with other nocat.farm users: spare NORMAL trading cards swapped one for one, same game, with accounts
-/// on other people's nocat.farm - so sets finish that farming alone leaves half done. Opt-in per account, off by default.
+/// 1.8.2 card swaps with other gamer.farm users: spare NORMAL trading cards swapped one for one, same game, with accounts
+/// on other people's gamer.farm - so sets finish that farming alone leaves half done. Opt-in per account, off by default.
 /// </summary>
 /// <remarks>
 /// <para>How it goes. Every 12 hours or so this copy tells gamer.mom what each opted-in account could swap
@@ -27,7 +27,12 @@ namespace NocatFarm.Core;
 /// </remarks>
 public static partial class CardExchange {
 	/// <summary>The note on every swap offer, before the match's id: "nocat.farm card swap #a1b2c3d4e5f6".</summary>
+	/// <remarks>2.0.0 renamed the app gamer.farm, but the note keeps the old name: copies before 2.0.0 know a swap offer only
+	/// by it, and would take one saying anything else for an ordinary trade. <see cref="MatchIdOf"/> reads both.</remarks>
 	public const string Tag = "nocat.farm card swap #";
+
+	/// <summary>2.0.0: the same note under the new name - read, never sent (see <see cref="Tag"/>).</summary>
+	public const string NewTag = "gamer.farm card swap #";
 
 	/// <summary>How long a match is acted on - after that it's left, and gamer.mom closes it.</summary>
 	public static readonly TimeSpan MatchFor = TimeSpan.FromDays(2);
@@ -297,15 +302,17 @@ public static partial class CardExchange {
 		return (game != 0) && (hash.Length > prefix.Length) && hash.StartsWith(prefix, StringComparison.Ordinal);
 	}
 
-	/// <summary>The match an offer's note names - "nocat.farm card swap #a1b2c3d4e5f6" - or null when it isn't a swap offer.</summary>
+	/// <summary>The match an offer's note names - "nocat.farm card swap #a1b2c3d4e5f6" (or, from 2.0.0 on, "gamer.farm ...") - or null when it isn't a swap offer.</summary>
 	public static string? MatchIdOf(string message) {
 		string m = (message ?? "").Trim();
 
-		if (!m.StartsWith(Tag, StringComparison.Ordinal)) {
+		string? tag = m.StartsWith(Tag, StringComparison.Ordinal) ? Tag : m.StartsWith(NewTag, StringComparison.Ordinal) ? NewTag : null;
+
+		if (tag == null) {
 			return null;
 		}
 
-		string id = m[Tag.Length..].Trim();
+		string id = m[tag.Length..].Trim();
 
 		return (id.Length == 12) && id.All(static c => c is (>= '0' and <= '9') or (>= 'a' and <= 'f')) ? id : null;
 	}

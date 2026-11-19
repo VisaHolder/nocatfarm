@@ -2,20 +2,20 @@
 
 # Linux, Mac and Docker
 
-nocat.farm runs on a home server, a NAS, a Raspberry Pi 4 or 5 (64-bit) or a VPS. There's no window or tray icon on
+gamer.farm runs on a home server, a NAS, a Raspberry Pi 4 or 5 (64-bit) or a VPS. There's no window or tray icon on
 Linux; you get the console and the web dashboard, and everything else is the same.
 
 On the first start the language follows `LANG` (`LANG=de_DE.UTF-8` starts it in German; in Docker, uncomment the `LANG` line in the compose file); change it later in Settings.
 
 ## From the zip
 
-1. Download `nocat.farm-v<version>_linux-x64.zip` (Intel/AMD), `nocat.farm-v<version>_linux-arm64.zip` (Raspberry
-   Pi, ARM servers) or `nocat.farm-v<version>_linux-arm.zip` (32-bit ARM: older Pis, an Android TV box running Debian
-   in Termux) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest).
+1. Download `gamer.farm-v<version>_linux-x64.zip` (Intel/AMD), `gamer.farm-v<version>_linux-arm64.zip` (Raspberry
+   Pi, ARM servers) or `gamer.farm-v<version>_linux-arm.zip` (32-bit ARM: older Pis, an Android TV box running Debian
+   in Termux) from [Releases](https://github.com/VisaHolder/gamerfarm/releases/latest).
 2. Unzip it into its own folder and start it:
 
    ```
-   unzip nocat.farm-v<version>_linux-x64.zip -d nocatfarm
+   unzip gamer.farm-v<version>_linux-x64.zip -d nocatfarm
    cd nocatfarm
    ./nocatFarm
    ```
@@ -44,7 +44,7 @@ In another folder, change `/opt/nocatfarm` in the file too. To keep your account
 
 ```ini
 [Unit]
-Description=nocat.farm
+Description=gamer.farm
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=0
@@ -85,7 +85,7 @@ itself at night (*Updates*: *install by itself at night*). It makes a safety cop
 start is put back. Started from a terminal or a desktop, the new version starts in the background; the dashboard is
 where you see it.
 
-Run as a service with the unit above, the same happens inside the service: nocat.farm gets the update ready and closes,
+Run as a service with the unit above, the same happens inside the service: gamer.farm gets the update ready and closes,
 and systemd starts it again with `nocatfarm-service.sh` putting the new files in first. The new version then has up to
 three minutes to say it's fine. If it crashes, hangs, or the machine stops half way, the old files go back at the next
 start, and the log says what happened. There's only ever one copy running, and `sudo systemctl stop nocatfarm` while an
@@ -112,11 +112,11 @@ Discord app, so it stays off.
 
 ## Mac
 
-1. Download `nocat.farm-v<version>_osx-arm64.zip` for an M1 or newer Mac, or `nocat.farm-v<version>_osx-x64.zip` for
-   an Intel Mac, from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest), or *mac* / *mac intel* on
+1. Download `gamer.farm-v<version>_osx-arm64.zip` for an M1 or newer Mac, or `gamer.farm-v<version>_osx-x64.zip` for
+   an Intel Mac, from [Releases](https://github.com/VisaHolder/gamerfarm/releases/latest), or *mac* / *mac intel* on
    [gamer.mom](https://gamer.mom).
 2. Unzip it (Safari does that by itself) and double-click `start.command`. It opens in Terminal, and the dashboard
-   opens in your browser. Keep that Terminal window open (minimise it if you like). Closing it signs the accounts out and stops nocat.farm.
+   opens in your browser. Keep that Terminal window open (minimise it if you like). Closing it signs the accounts out and stops gamer.farm.
 3. If the Mac says it can't be opened, go to **System Settings → Privacy & Security**, scroll down and press
    **Open Anyway**, once. `start.command` then takes the same "downloaded from the internet" mark off everything else
    in the folder by itself.
@@ -136,8 +136,8 @@ Docker from get.docker.com has everything. Ubuntu's own `docker.io` package need
 `sudo apt install docker-compose-v2`.
 
 ```
-git clone https://github.com/VisaHolder/nocatfarm.git
-cd nocatfarm
+git clone https://github.com/VisaHolder/gamerfarm.git
+cd gamerfarm
 cp docker-compose.example.yml docker-compose.yml
 mkdir -p config logs backups plugins
 echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
@@ -166,7 +166,7 @@ The example compose file is commented line by line. The parts worth knowing:
 | `user: "1000:1000"` | Must match the owner of `./config`, `./logs`, `./backups` and `./plugins` (`id -u`, `id -g`). If the log says it can't write to `/data/config`, fix this, or remove the line and run `sudo chown -R 1654:1654 config logs backups plugins`. |
 | `stop_grace_period: 1m` | Gives `docker compose down` time to sign every account out cleanly. |
 
-About `NOCATFARM_HOME_ADDRESS`: from inside a container, nocat.farm only sees Docker's own network, and no phone can
+About `NOCATFARM_HOME_ADDRESS`: from inside a container, gamer.farm only sees Docker's own network, and no phone can
 reach that. So without this line the Phone page and `/dashboard` can't show you a home link or a QR code. They tell
 you to open this computer's address with the published port instead. Set it, run `docker compose up -d`, and the
 link and code appear. The port also has to be published beyond `127.0.0.1` (the line above).
@@ -190,7 +190,7 @@ answering.
 
 ## On a VPS (a rented server)
 
-A VPS is a small Linux computer you rent by the month from a hosting company, and it means nocat.farm can run 24/7
+A VPS is a small Linux computer you rent by the month from a hosting company, and it means gamer.farm can run 24/7
 without your own PC staying on. The cheapest ones are fine: 1 CPU and 1 GB of memory is plenty for a handful of
 accounts. Pick Ubuntu 24.04 (64-bit) when it asks. Intel/AMD and ARM both work.
 
@@ -200,12 +200,12 @@ accounts. Pick Ubuntu 24.04 (64-bit) when it asks. Intel/AMD and ARM both work.
 ssh root@your.server.address
 ```
 
-**2. Install Docker and start nocat.farm.** Paste these one at a time:
+**2. Install Docker and start gamer.farm.** Paste these one at a time:
 
 ```
 curl -fsSL https://get.docker.com | sh
-git clone https://github.com/VisaHolder/nocatfarm.git
-cd nocatfarm
+git clone https://github.com/VisaHolder/gamerfarm.git
+cd gamerfarm
 cp docker-compose.example.yml docker-compose.yml
 mkdir -p config logs backups plugins && chown -R 1000:1000 config logs backups plugins
 echo 'NOCATFARM_WEB_PASSWORD=pick-a-long-password-you-use-nowhere-else' > .env
@@ -227,7 +227,7 @@ ssh -L 7242:127.0.0.1:7242 root@your.server.address
 Keep that window open and go to `http://localhost:7242` on your PC. That's the server's dashboard, over the
 encrypted SSH connection, and nobody else can reach it.
 
-If you want it on your phone, or without a tunnel, nocat.farm has to be told it's meant to be reached from the
+If you want it on your phone, or without a tunnel, gamer.farm has to be told it's meant to be reached from the
 internet. Everything from outside is turned away until it is: *Open from anywhere* asks a home router to forward the
 port (UPnP), and a VPS has no router to ask. The server's own address does it. In `docker-compose.yml`, uncomment
 `NOCATFARM_PUBLIC_ADDRESS` and put the address in (or, through the SSH tunnel, type
@@ -254,15 +254,15 @@ Then, in `docker-compose.yml`, uncomment and fill in both of these, and run `doc
 ```
 
 The second one matters. Caddy on the server reaches the container through Docker's own network (an address like
-`172.18.0.1`), not as "this PC", so without it nocat.farm doesn't believe the visitor's address Caddy passes on, and
+`172.18.0.1`), not as "this PC", so without it gamer.farm doesn't believe the visitor's address Caddy passes on, and
 everybody on the internet looks like they're at home: no sign-in code on Telegram, one lockout shared by everyone, and
 *Open from anywhere* never switching itself off. `172.16.0.0/12` covers the networks Docker makes; it's the setting
 *Trust forwarded addresses from* (`WebTrustedProxies`). With the Linux zip instead of Docker, Caddy on the same server
 comes in as this PC, which is already believed, so only `NOCATFARM_PUBLIC_ADDRESS` (or *Public address*) is needed.
 
 **4. Add your accounts** in the dashboard, the same as on a PC. The Steam Guard code, or the QR scan with the Steam
-app, is asked for right on the page. If you already have nocat.farm on your PC, stop it there, copy its `config`
-folder into the server's `nocatfarm/config` (with `scp -r`), and start it. Each account signs in once more, because
+app, is asked for right on the page. If you already have gamer.farm on your PC, stop it there, copy its `config`
+folder into the server's `gamerfarm/config` (with `scp -r`), and start it. Each account signs in once more, because
 Windows ties saved logins to your Windows user.
 
 A few things to know. Steam sees the server's location: signing in from a data centre in another city or country is
@@ -272,8 +272,8 @@ and the server at once, or they keep signing each other out.
 
 | To | Run |
 |---|---|
-| Update | `cd nocatfarm && git pull && docker compose up -d --build` |
-| Back up (the `config` folder is everything) | `scp -r root@your.server.address:nocatfarm/config .` from your PC, or `backup` in the Console (it lands in `nocatfarm/backups`) |
+| Update | `cd gamerfarm && git pull && docker compose up -d --build` (set up before 2.0.0, the folder is `nocatfarm`) |
+| Back up (the `config` folder is everything) | `scp -r root@your.server.address:gamerfarm/config .` from your PC, or `backup` in the Console (it lands in `gamerfarm/backups`) |
 | See the log | `docker compose logs -f` on the server, or the dashboard's Log tab |
 
 ---

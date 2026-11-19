@@ -1,6 +1,6 @@
 'use strict';
 
-// nocat.farm dashboard. Vanilla JS on purpose: no build step, no framework, no CDN. The whole UI is three files
+// gamer.farm dashboard. Vanilla JS on purpose: no build step, no framework, no CDN. The whole UI is three files
 // served off the exe, so the dashboard can never be the reason the tool won't start.
 //
 // Every label, tooltip, range and default comes from /api/settings/schema, which is generated from the same
@@ -13,7 +13,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// 1.9.2: the same page, hosted at https://farm.gamer.mom - it talks to nocat.farm on this PC at http://127.0.0.1:<port>, with a
+// 1.9.2: the same page, hosted at https://farm.gamer.mom - it talks to gamer.farm on this PC at http://127.0.0.1:<port>, with a
 // token this browser was given when the pairing was approved in the app. Served by the app itself HOSTED is false, API_BASE
 // is '' and everything is exactly as it always was - whatever the address: a home proxy can serve the app's own page under
 // the name farm.gamer.mom too. Only the copy gamer.mom hosts carries data-farm-hosted (added when it's copied from a release).
@@ -24,7 +24,7 @@ const farmStore = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* private window */ } }
 };
-/// The port nocat.farm listens on: ?port= once (remembered), or the one remembered, or 7242.
+/// The port gamer.farm listens on: ?port= once (remembered), or the one remembered, or 7242.
 const farmPort = (() => {
   if (!HOSTED) return 0;
   const asked = Number(new URLSearchParams(location.search).get('port'));
@@ -121,7 +121,7 @@ function loginLocked(seconds, thisPc) {
   const draw = () => {
     const wait = left >= 60 ? `${Math.ceil(left / 60)}m` : `${left}s`;
     $('loginError').textContent = tf('Too many wrong passwords - try again in {0}.', wait)
-      + (thisPc ? ' ' + t('Or type dashboard unlock in the nocat.farm window.') : '');
+      + (thisPc ? ' ' + t('Or type dashboard unlock in the gamer.farm window.') : '');
   };
   draw();
   loginLockTimer = setInterval(() => {
@@ -514,7 +514,7 @@ function render() {
 
   $('navAccounts').textContent = bots.length || '';
 
-  // No account's authenticator is in nocat.farm: the Authenticator tab would only ever say so - it goes, and comes back
+  // No account's authenticator is in gamer.farm: the Authenticator tab would only ever say so - it goes, and comes back
   // by itself the moment one is added.
   const authTab = document.querySelector('.navitem[data-view="auth"]');
   if (authTab) authTab.classList.toggle('hidden', !bots.some((b) => b.HasAuthenticator));
@@ -546,7 +546,7 @@ function render() {
 
   paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
-    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
+    <dt data-tip="${esc(t('How long gamer.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
   // Kept with the rail rather than in renderOverview, for the same reason as the Plugins tag above: that only
   // runs on the Overview tab, so a dashboard opened on any other tab showed the placeholder version from the
@@ -557,20 +557,20 @@ function render() {
   if (ver) {
     if (state.UpdateAvailable) {
       ver.textContent = `v${state.Version} → ${state.UpdateAvailable}`;
-      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
+      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/gamerfarm/releases';
       ver.classList.add('update');
       ver.dataset.tip = tf('{0} is out - you have {1}. Click to see what changed.', state.UpdateAvailable, state.Version);
     } else if (state.UpdateNoDownloadYet) {
       // Newer, but not downloadable here yet (the Mac zips come a while after the tag): shown, with no Update button.
       ver.textContent = `v${state.Version} → ${state.UpdateNoDownloadYet}`;
-      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
+      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/gamerfarm/releases';
       ver.classList.add('update');
       ver.dataset.tip = tf("{0} is out, and you have {1}. There's no download for this computer yet. It usually comes within the hour.", state.UpdateNoDownloadYet, state.Version);
     } else {
       ver.textContent = 'v' + state.Version;
-      ver.href = 'https://github.com/VisaHolder/nocatfarm';
+      ver.href = 'https://github.com/VisaHolder/gamerfarm';
       ver.classList.remove('update');
-      ver.dataset.tip = t('nocat.farm on GitHub - source, releases and issues.');
+      ver.dataset.tip = t('gamer.farm on GitHub - source, releases and issues.');
     }
   }
 
@@ -629,7 +629,7 @@ function renderAlerts() {
     out.push(`<div class="alert warn"><span>${esc(state.Prompt)}</span><span class="spacer"></span>${inAppNote()}</div>`);
   } else if (state.Prompt && !tutorialSignin) {
     out.push(`<div class="alert warn">
-      <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
+      <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. gamer.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
       <input id="promptInput" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off">
       <button onclick="sendPrompt()">${esc(t('Submit'))}</button></div>`);
   }
@@ -753,7 +753,7 @@ function renderOverview() {
   }
   $('verdict').textContent = verdict;
 
-  // How many Steam accounts are on nocat.farm, from gamer.mom's answer to the hourly ping. Nothing while it isn't known
+  // How many Steam accounts are on gamer.farm, from gamer.mom's answer to the hourly ping. Nothing while it isn't known
   // (an older gamer.mom doesn't say it), is too old, or Count me as a user is off.
   const accountsLine = $('usercount');
   if (accountsLine) {
@@ -1257,7 +1257,7 @@ function renderAccounts() {
     $('bots').innerHTML = state.Bots.length
       ? `<p class="muted">${esc(t('No accounts match that.'))}</p>`
       : `<div class="card"><h2>${esc(t('No accounts yet'))}</h2>
-         <p class="muted">${esc(t('Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.'))}</p>
+         <p class="muted">${esc(t('Add one and gamer.farm will ask for the password and a Steam Guard code once, then remember it with a login token.'))}</p>
          <button onclick="showAddAccount()">+ ${esc(t('Add account'))}</button></div>`;
     return;
   }
@@ -1274,10 +1274,10 @@ function renderAccounts() {
       ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
-        data-tip="${esc(t("What your friends list shows for this account. The status is what nocat.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
+        data-tip="${esc(t("What your friends list shows for this account. The status is what gamer.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.Scam && b.Scam.length ? `<div class="bot-scam" data-tip="${esc(t("Scam watch saw a sign of a stolen account or a trade scam. If it was you, type scamwatch ok and the account name. If it wasn't, change the Steam password now."))}">${esc(tf('SCAM WATCH: {0}', b.Scam[b.Scam.length - 1]))}</div>` : ''}
       ${b.Health ? `<div class="bot-health ${b.Health.Colour}" data-tip="${esc(t('Account health: level, bans, trade hold, market access, limited account, Steam Guard and phone. Checked when it signs in and every few hours; you are told when something gets worse. Type health for every item.'))}">${esc(tf('Health: {0}', b.Health.Line))}</div>` : ''}
-      ${b.Bans && !b.Health ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
+      ${b.Bans && !b.Health ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. gamer.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
       ${b.NameNotShowing && !b.PersonaHidden
         ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
         : ''}
@@ -1444,7 +1444,7 @@ function showAddAccount() {
       <input id="a-name" type="text" placeholder="mybot" autocomplete="off">
       <label for="a-login">${esc(t('Steam account name'))}${tipIcon(t("What you type into Steam's sign-in box. Not your display name, not your email."))}</label>
       <input id="a-login" type="text" autocomplete="off">
-      <label for="a-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
+      <label for="a-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and gamer.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
       <input id="a-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
       <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
       <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
@@ -1686,7 +1686,7 @@ async function impPick(tool) {
   renderImport(true);
 }
 
-/// The example in the folder box, in the shape of the machine nocat.farm runs on (Windows, or a Mac/Linux/Docker path).
+/// The example in the folder box, in the shape of the machine gamer.farm runs on (Windows, or a Mac/Linux/Docker path).
 function folderHint() { return state && state.Windows === false ? '/path/to/folder' : 'C:\\...\\folder'; }
 
 /// "Pick a folder", or "look in this folder" on a preview that found nothing: the path box decides.
@@ -1717,12 +1717,12 @@ function importToolsHtml() {
     return tf('Found at {0} - {1}.', tl.Path, what);
   };
 
-  return `<p class="muted small">${esc(t('Pick the program your accounts are in now. nocat.farm only reads its files - it never changes them.'))}</p>
+  return `<p class="muted small">${esc(t('Pick the program your accounts are in now. gamer.farm only reads its files - it never changes them.'))}</p>
     <div class="pickcards">
       ${tools.map((tl) => `<div class="pickcard ${tl.Found ? 'on' : ''}" data-tool="${esc(tl.Id)}" role="button" tabindex="0" onclick="impPick(this.dataset.tool)">
         <b>${esc(tl.Name)}</b><span>${esc(found(tl))}</span></div>`).join('')}
     </div>
-    <p class="muted small">${esc(t('Somewhere else? Paste the folder the idler is in and nocat.farm works out which one it is.'))}</p>
+    <p class="muted small">${esc(t('Somewhere else? Paste the folder the idler is in and gamer.farm works out which one it is.'))}</p>
     <div class="impfolder"><input id="impPath" type="text" placeholder="${esc(folderHint())}" autocomplete="off" onkeydown="if(event.key==='Enter')impPickFolder('auto')">
       <button class="ghost" onclick="impPickFolder('auto')">${esc(t('Look here'))}</button></div>`;
 }
@@ -1742,7 +1742,7 @@ function importPreviewHtml() {
   if (!s) return `<p class="error">${esc(t("Couldn't look there."))}</p>`;
 
   if (!s.Found) {
-    return `<p>${esc(s.ToolName ? tf('No {0} files were found.', s.ToolName) : t('Nothing nocat.farm can import was found there.'))}</p>
+    return `<p>${esc(s.ToolName ? tf('No {0} files were found.', s.ToolName) : t('Nothing gamer.farm can import was found there.'))}</p>
       ${looked}${notes(s.Notes)}
       <p class="muted small">${esc(t('If it is somewhere else, paste its folder:'))}</p>${retry}`;
   }
@@ -1921,7 +1921,7 @@ function removeBot(name) {
     <h2>${esc(tf('Remove {0}?', name))}</h2>
     <p>${tf('This deletes {0} and the stored login token for it.', `<code>config/${esc(name)}.json</code>`)}</p>
     <ul class="muted small">
-      <li>${esc(t('Nothing happens to the Steam account itself - it is only removed from nocat.farm.'))}</li>
+      <li>${esc(t('Nothing happens to the Steam account itself - it is only removed from gamer.farm.'))}</li>
       <li>${esc(t('Adding it back needs the password and a fresh Steam Guard code.'))}</li>
       <li>${esc(t('Anything it was farming stops.'))}</li>
     </ul>
@@ -2084,7 +2084,7 @@ function renderAuthCode() {
 
   if (!a) { box.innerHTML = ''; return; }
   if (!a.HasCode) {
-    box.innerHTML = `<p class="muted auth-none">${tf('{0} has no authenticator in nocat.farm. Put its maFile in {1} (or paste its secrets in the account settings) and its codes and confirmations show up here.',
+    box.innerHTML = `<p class="muted auth-none">${tf('{0} has no authenticator in gamer.farm. Put its maFile in {1} (or paste its secrets in the account settings) and its codes and confirmations show up here.',
       esc(a.Name), '<code>config/authenticators</code>')}</p>`;
     return;
   }
@@ -2149,7 +2149,7 @@ function renderAuthList() {
   if (rules) rules.innerHTML = '';
   if (!a) { box.innerHTML = ''; return; }
   if (!a.CanConfirm) {
-    box.innerHTML = `<p class="muted">${esc(t('Confirmations need this account\'s authenticator in nocat.farm (its identity secret). Until then they are confirmed on your phone.'))}</p>`;
+    box.innerHTML = `<p class="muted">${esc(t('Confirmations need this account\'s authenticator in gamer.farm (its identity secret). Until then they are confirmed on your phone.'))}</p>`;
     return;
   }
 
@@ -2264,7 +2264,7 @@ function renderAddons() {
       : x.Newer ? tf('{0} installed - {1} is out', x.Loaded, x.Version)
       : x.Installed ? t('installed') : t('not installed');
     const install = !x.Fits
-      ? `<span class="muted small">${esc(tf('needs nocat.farm {0} or newer', x.MinAppVersion))}</span>`
+      ? `<span class="muted small">${esc(tf('needs gamer.farm {0} or newer', x.MinAppVersion))}</span>`
       : (!x.Installed || x.Newer) && !x.Waiting
         ? `<button onclick="installAddon(${id})" ${a.CanInstall ? '' : 'disabled'}>${esc(x.Newer ? t('Update') : t('Install'))}</button>` : '';
     const remove = x.Installed ? `<button class="ghost" onclick="removeAddon(${id})" ${a.CanInstall ? '' : 'disabled'}>${esc(t('Remove'))}</button>` : '';
@@ -2277,7 +2277,7 @@ function renderAddons() {
   return `${rows}
     <p class="muted small">${esc(t('Installing one turns on Load plugins and needs a restart. Only add-ons on the signed list can be installed here, each checked against it first.'))}
       ${a.CanInstall ? '' : esc(t('Installing and removing work only on the dashboard on this PC, or one signed in with the dashboard password.'))}
-      <a href="https://github.com/VisaHolder/nocatfarm/blob/main/docs/addons.md" target="_blank" rel="noopener noreferrer">${esc(t('About add-ons'))}</a></p>`;
+      <a href="https://github.com/VisaHolder/gamerfarm/blob/main/docs/addons.md" target="_blank" rel="noopener noreferrer">${esc(t('About add-ons'))}</a></p>`;
 }
 
 async function installAddon(id) {
@@ -2336,7 +2336,7 @@ function renderPlugins() {
     ${rows || `<p class="muted empty">${esc(t('Nothing installed yet.'))}</p>`}
     <p class="muted small">${esc(t('Drop a .dll in this folder and restart:'))} <code>${esc(d.Folder)}</code></p>
     ${cmds ? `<h2 style="margin-top:18px" data-t="Commands they added">${esc(t('Commands they added'))}</h2><ul class="unlocks">${cmds}</ul>` : ''}
-    <p class="muted small"><a href="https://github.com/VisaHolder/nocatfarm/blob/main/PLUGINS.md" target="_blank" rel="noopener noreferrer">${esc(t('How to write one'))}</a></p>`;
+    <p class="muted small"><a href="https://github.com/VisaHolder/gamerfarm/blob/main/PLUGINS.md" target="_blank" rel="noopener noreferrer">${esc(t('How to write one'))}</a></p>`;
 }
 
 // A plugin's own settings, drawn from what it declared. Same controls as everywhere else, so a plugin gets a
@@ -2732,13 +2732,13 @@ function tutFrame(o) {
     `<i class="${i < at ? 'done' : i === at ? 'now' : ''}"></i>`).join('');
 
   return `<div class="tut-head">
-      <img src="logo.png" alt="" class="tut-logo"><span class="tut-brand">nocat.<b>farm</b></span>
+      <img src="logo.png" alt="" class="tut-logo"><span class="tut-brand">gamer.<b>farm</b></span>
       <span class="spacer"></span>
       <button class="tut-x" onclick="closeTutorial()" data-tip="${esc(t('You can skip this and come back from the Overview page.'))}" aria-label="${esc(t('Skip'))}">✕</button>
     </div>
     <div class="tut-bar" aria-hidden="true">${bar}</div>
     <div class="tut-stage" id="tutStage">
-      ${o.hero ? `<div class="tut-hero"><img src="logo.png" alt=""><h1 class="wordmark">nocat.<span>farm</span></h1></div>` : ''}
+      ${o.hero ? `<div class="tut-hero"><img src="logo.png" alt=""><h1 class="wordmark">gamer.<span>farm</span></h1></div>` : ''}
       ${o.badge ? `<div class="tut-check-big" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>` : ''}
       ${o.kicker ? `<div class="tut-kicker">${esc(o.kicker)}</div>` : ''}
@@ -2932,7 +2932,7 @@ function tutStepLanguage() {
 function tutStepWelcome() {
   const b = (name) => `<b>${esc(name)}</b>`;
   return {
-    title: t('Welcome to nocat.farm'),
+    title: t('Welcome to gamer.farm'),
     lead: esc(t('It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.')),
     body: `<div class="pickcards tut-cards">
         ${tutCard(tutorialMode === 'easy', "tutorialMode='easy';renderTutorial()", tutIcon('easy'), t('Easy'),
@@ -2993,7 +2993,7 @@ function tutPhoneStatus(p) {
   let html = '';
 
   if (p.NeedsRestart) {
-    html += `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
+    html += `<div class="tut-note warn"><b>${esc(t('One more thing: restart gamer.farm'))}</b>
       <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span>
       <span><button class="small" onclick="phoneRestart(this, tutAfterRestart)">${esc(t('Restart the dashboard now'))}</button></span></div>`;
   }
@@ -3002,13 +3002,13 @@ function tutPhoneStatus(p) {
     html += `<div class="tut-note"><b>${esc(t('Windows Firewall is blocking your phone'))}</b>
       <span>${esc(t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.'))}</span>
       ${p.OnThisPc ? `<span><button class="small" id="tutFw" onclick="tutFirewall(this)">${esc(t('Let it through the firewall'))}</button></span>`
-        : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`}
+        : `<span class="muted small">${esc(t('Press it on the PC gamer.farm runs on.'))}</span>`}
       ${d && d.fwMsg ? `<span class="small ${d.fwBad ? 'error' : ''}" style="margin:0">${esc(d.fwMsg)}</span>` : ''}</div>`;
   }
 
   if (p.OpenAtHome && p.NeedsHomeAddress) {
     html += `<div class="tut-note"><b>${esc(t('Running in Docker'))}</b>
-      <span>${esc(t("From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</span></div>`;
+      <span>${esc(t("From inside Docker gamer.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</span></div>`;
   }
 
   if (p.OpenAtHome && p.Qr) {
@@ -3061,9 +3061,9 @@ function tutStepAnywhere() {
   const p = d.info;
   return {
     title: t('Open it from anywhere?'),
-    lead: esc(t('Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.')),
+    lead: esc(t('Check on your accounts away from home, on mobile data. Like Jellyfin: gamer.farm asks your router to pass the dashboard through to this PC. No other app needed.')),
     body: `<ul class="tut-list">
-        <li>${esc(t("From outside it opens over https with nocat.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert')."))}</li>
+        <li>${esc(t("From outside it opens over https with gamer.farm's own certificate - install it on your phone once (it comes to Telegram, or type 'dashboard cert')."))}</li>
         <li>${esc(t('It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.'))}</li>
         <li>${esc(t("Some routers and internet providers don't allow it. If yours doesn't, it says why."))}</li>
       </ul>
@@ -3378,7 +3378,7 @@ function tutStepType() {
   return {
     hero: true,
     title: t('What kind of account is it?'),
-    lead: esc(t('nocat.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.')),
+    lead: esc(t('gamer.farm signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this PC. This picks the right settings for the account; anything can be changed later.')),
     body: `<div class="pickcards tut-cards">
         ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main account'),
           t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}
@@ -3397,7 +3397,7 @@ function tutStepType() {
 /// Said once in the walkthrough, so nobody is surprised: nothing of theirs is sold, ground, opened, bought, swapped or spent by default.
 function safeItemsNote() {
   return `<div class="tut-note safe-items"><b>${esc(t('Your items are safe by default'))}</b>
-    <span>${esc(t("nocat.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
+    <span>${esc(t("gamer.farm never sells, turns into gems, opens, buys, swaps or spends anything by itself. Spare items, opening and making booster packs, spending Steam Points, buying cards and card swaps are all off until you switch them on in an account's settings - and selling, gems, Steam Points, buying cards and card swaps show what they would do first and ask you to confirm. The only things it picks up by itself are free: event items during Steam sales, and free games if you turn that on."))}</span></div>`;
 }
 
 function tutStepFinal() {
@@ -3438,13 +3438,13 @@ function tutStepFinal() {
     body: `<div class="tut-fields">
         ${field('tut-login', t('Steam account name'), t("What you type into Steam's sign-in box. Not your display name, not your email."),
           `<input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off" spellcheck="false">`)}
-        ${field('tut-pass', t('Password'), t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'),
+        ${field('tut-pass', t('Password'), t('Optional. Leave it blank and gamer.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'),
           `<input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">`)}
       </div>
       ${tutorialHuman === true ? `<label class="tut-check"><input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">
-        <span>${esc(t('I also use this account in my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+        <span>${esc(t('I also use this account in my own Steam app'))}${tipIcon(t('Then gamer.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
       <details class="tut-more"><summary>${esc(t('More'))}</summary>
-        <div class="tut-fields">${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
+        <div class="tut-fields">${field('tut-name', t('Nickname (optional)'), t("What this account is called in gamer.farm. Leave it empty and it uses the Steam account name."),
           `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}</div>
         <label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
           <span>${esc(t('Sign in with a QR code instead'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>
@@ -3739,11 +3739,11 @@ function tutShowDone() {
       <p class="muted small">${esc(tutCloseNote())}</p>
       ${safeItemsNote()}
       ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
-      ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
+      ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart gamer.farm'))}</b>
         <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span></div>` : ''}
       ${tutOptionalCards()}
       ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
-        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
+        t('Show on my Discord profile'), t('Your Discord shows Playing gamer.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}
       ${config && config.Global && config.Global.CountMeAsUser === false ? ''
         : `<p class="muted small">${esc(t('It counts itself on gamer.mom once an hour, anonymously - just a random number and how many accounts. Count me as a user, under Settings, Updates & plugins, turns it off.'))}</p>`}`,
     skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
@@ -3755,8 +3755,8 @@ function tutShowDone() {
 function tutCloseNote() {
   const tray = !(config && config.Global && config.Global.Tray === false) && !(state && state.Windows === false);
   return tray
-    ? t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.')
-    : t('You can close this window - nocat.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.');
+    ? t('You can close this window - gamer.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.')
+    : t('You can close this window - gamer.farm keeps running by the clock. The Accounts page shows what each account is doing, and that is where you add another one.');
 }
 
 // 1.8.2: human mode outside its day as the set-up ends - it goes straight to sleep, not "settles in, then plays".
@@ -4133,7 +4133,7 @@ function farmPagesBlock(v) {
   if (!v || (!HOSTED && v.FarmOn === undefined)) return '';
   const when = (iso) => new Date(iso).toLocaleDateString();
   if (HOSTED) {
-    return `<h3>farm.gamer.mom</h3><p class="ph-text">${esc(t('This browser is paired with nocat.farm on this PC.'))}</p>
+    return `<h3>farm.gamer.mom</h3><p class="ph-text">${esc(t('This browser is paired with gamer.farm on this PC.'))}</p>
       <button class="ghost" onclick="farmRevoke('')">${esc(t('Disconnect this browser'))}</button>`;
   }
   if (!v.FarmOn) {
@@ -4162,9 +4162,9 @@ function phoneHomeCard(p, ready) {
       <div class="ph-name">${esc(t('On the same Wi-Fi'))}</div></div>
       ${ready ? phPill('ok', t('Ready')) : phPill('', t('Not ready yet'))}</div>`;
 
-  // In Docker the addresses nocat.farm can see are Docker's own - showing one would send the phone nowhere.
+  // In Docker the addresses gamer.farm can see are Docker's own - showing one would send the phone nowhere.
   if (p.NeedsHomeAddress) {
-    return `${head}<p class="ph-text">${esc(t("From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</p>
+    return `${head}<p class="ph-text">${esc(t("From inside Docker gamer.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</p>
       <pre class="ph-code">environment:\n  - NOCATFARM_HOME_ADDRESS=192.168.1.50</pre>`;
   }
 
@@ -4220,7 +4220,7 @@ function phoneAwayCard(p, ready) {
   }
 
   return `${head}${toggle}${body}
-    <p class="ph-note">${esc(t("Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm."))}</p>`;
+    <p class="ph-note">${esc(t("Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not gamer.farm."))}</p>`;
 }
 
 /// The checklist: each thing a phone needs, ticked or not, and the fix beside it. Firewall only on Windows, the
@@ -4269,7 +4269,7 @@ function phoneChecklist(p) {
         : p.FirewallBlocks ? t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.')
         : t('Lets it in.'),
       fix: listens && p.FirewallBlocks ? (p.OnThisPc ? `<button class="ph-go" onclick="allowFirewall(this)">${esc(t('Allow through Windows Firewall'))}</button>`
-        : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`) : '' });
+        : `<span class="muted small">${esc(t('Press it on the PC gamer.farm runs on.'))}</span>`) : '' });
   }
 
   const routerOk = !!p.Outside;
@@ -4367,7 +4367,7 @@ async function phoneRestart(btn, after) {
   phone.restarting = false;
   await loadPhone(true);
   const p = phone.info;
-  if (!back) toast(t("It didn't come back. Check the nocat.farm window."), true);
+  if (!back) toast(t("It didn't come back. Check the gamer.farm window."), true);
   else if (p && p.RestartProblem) toast(p.RestartProblem, true);
   else toast(t('The dashboard is back.'));
   if (after) after();
@@ -4427,7 +4427,7 @@ function phoneSafeCard(p) {
       <li>${esc(!p.SignInCode ? t('Asking for a Telegram code when signing in from outside is off - the password alone lets somebody in.')
         : p.CodeReady ? t('From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.')
         : t('Connect Telegram and signing in from outside will also take a code sent to it.'))}</li>
-      <li>${esc(t("From outside it only opens over https, with nocat.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once."))}</li>
+      <li>${esc(t("From outside it only opens over https, with gamer.farm's own certificate - 'dashboard cert' sends it to Telegram to install on your phone once."))}</li>
     </ul>
     ${p.RemoteOn ? `<button class="ghost ph-off" onclick="phoneRemote(false, this)">${esc(t('Turn Open from anywhere off'))}</button>`
       : `<p class="muted small">${esc(t('Off. Only your home Wi-Fi can open it.'))}</p>`}`;
@@ -4701,7 +4701,7 @@ async function run(line) {
   }
 
   // '/help x' is the same request as 'help x'; the server doesn't strip the slash, so send it without one.
-  // 'clear' is this screen's own business: the Log tab and this console empty here, and the nocat.farm window keeps
+  // 'clear' is this screen's own business: the Log tab and this console empty here, and the gamer.farm window keeps
   // its lines (and the other way round). Nothing goes to the server.
   if (asHelp === 'clear' || asHelp === 'cls') {
     logClearedAt = logLines.length ? logLines[logLines.length - 1].Seq : logClearedAt;
@@ -4939,7 +4939,7 @@ function renderSettings() {
   const q = ($('setSearch').value || '').toLowerCase();
 
   $('settingsHeader').innerHTML = settingsTarget === GLOBAL
-    ? `<p class="muted small">${esc(t('These apply to nocat.farm as a whole.'))} <code>config/nocatFarm.json</code></p>`
+    ? `<p class="muted small">${esc(t('These apply to gamer.farm as a whole.'))} <code>config/nocatFarm.json</code></p>`
     : `<div class="toolbar"><b>${esc(settingsTarget)}</b>
         <span class="muted small">config/${esc(settingsTarget)}.json</span>
         <span class="spacer"></span>
@@ -5219,7 +5219,7 @@ function pacerLine(live, name, hrs, done) {
 async function openLogFolder() {
   const r = await post('/api/logs/open', {}).catch(() => null);
   if (!r || !r.Path) { toast(t('File logging is off - turn on "Write a log file" below.'), true); return; }
-  toast(r.Opened ? tf('Opened {0}', r.Path) : tf('The log files are in {0} on the PC nocat.farm runs on.', r.Path));
+  toast(r.Opened ? tf('Opened {0}', r.Path) : tf('The log files are in {0} on the PC gamer.farm runs on.', r.Path));
 }
 
 function sectionIntro(section, values) {
@@ -5890,7 +5890,7 @@ async function downloadBackup(btn) {
     if (!res.ok) throw new Error(String(res.status));
 
     const blob = await res.blob();
-    const name = (/filename="?([^";]+)/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || 'nocat.farm-backup.zip';
+    const name = (/filename="?([^";]+)/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || 'gamer.farm-backup.zip';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -5934,7 +5934,7 @@ function showRestoreCheck(r) {
 
   modal(`
     <h2>${esc(t('Restore this backup?'))}</h2>
-    <p>${esc(tf('Made {0} by nocat.farm {1} on {2}.', new Date(r.Created).toLocaleString(), r.Version, r.Machine))}</p>
+    <p>${esc(tf('Made {0} by gamer.farm {1} on {2}.', new Date(r.Created).toLocaleString(), r.Version, r.Machine))}</p>
     <p><b>${esc(t('Accounts'))}:</b> ${esc((r.Accounts || []).join(', ') || '-')}</p>
     <p class="muted small">${esc(what)}</p>
     ${r.Logs ? `<p class="muted small">${esc(tf('{0} log file(s) too - put back only where there is none.', r.Logs))}</p>` : ''}
@@ -5986,7 +5986,7 @@ function pickRestoreFile() {
 function askBackupPassword(token, again) {
   modal(`
     <h2>${esc(t('This backup is locked'))}</h2>
-    <p>${esc(t('Type the backup password it was made with. It only goes to nocat.farm on this PC, and is never written down.'))}</p>
+    <p>${esc(t('Type the backup password it was made with. It only goes to gamer.farm on this PC, and is never written down.'))}</p>
     ${again ? `<p class="small warnline">${esc(t('wrong backup password'))}</p>` : ''}
     <input type="password" id="bkPw" autocomplete="off" spellcheck="false" placeholder="${esc(t('Backup password'))}"
       onkeydown="if (event.key === 'Enter') $('bkGo').click()">
@@ -6038,7 +6038,7 @@ function backupsIntro() {
   if (b.On && b.Next) lines.push(`<p class="muted small">${esc(tf('Next one: {0}, into {1} ({2} kept there now).', when(b.Next), b.Folder, b.Kept))}</p>`);
   return `<div class="explain">
     <b>${esc(t('A backup that opens on any PC'))}</b>
-    <p style="margin:6px 0 10px">${esc(t('Once a day everything goes into one file locked with your backup password. If this PC dies: install nocat.farm on the new one, pick Restore from a backup file, type the password - and your accounts sign straight back in.'))}</p>
+    <p style="margin:6px 0 10px">${esc(t('Once a day everything goes into one file locked with your backup password. If this PC dies: install gamer.farm on the new one, pick Restore from a backup file, type the password - and your accounts sign straight back in.'))}</p>
     ${lines.join('')}
     <div class="backupbtns">
       <button class="ghost" ${b.PasswordSet ? '' : 'disabled'} onclick="backupNow(this)">${esc(t('Back up now'))}</button>
@@ -6102,7 +6102,7 @@ function phoneAppCard() {
   if (g.PhoneInstallHint === false) return `<h2>${esc(t('Phone app'))}</h2>${alerts}`;
   const how = runningAsApp()
     ? `<p class="ph-text">${esc(t("You're using the app from your home screen."))}</p>`
-    : `<p class="ph-text">${esc(t("Put the dashboard on your phone's home screen, with the nocat.farm icon, so it's one tap away."))}</p>
+    : `<p class="ph-text">${esc(t("Put the dashboard on your phone's home screen, with the gamer.farm icon, so it's one tap away."))}</p>
       <ul class="small">
         <li>${tf('{0}: the Share button, then Add to Home Screen. It opens like an app.', `<b>${esc(t('iPhone, in Safari'))}</b>`)}</li>
         <li>${tf('{0}: the ⋮ menu, then Add to Home screen. Its icon goes on your home screen and opens in Chrome.', `<b>${esc(t('Android, in Chrome'))}</b>`)}</li>
@@ -6112,7 +6112,7 @@ function phoneAppCard() {
 }
 
 // ── other versions ───────────────────────────────────────────────────────────
-// Under the update settings: going back to an older version still on GitHub, and a nocat.farm zip from this PC. The
+// Under the update settings: going back to an older version still on GitHub, and a gamer.farm zip from this PC. The
 // zip button only shows on this PC, where the window to pick it opens - from a phone it would open on a screen nobody
 // is looking at, and 'update file' refuses it from there anyway. Going back is 'update to', the same rights as Update.
 let versionsInfo = null;
@@ -6145,7 +6145,7 @@ function otherVersionsHtml() {
     <p style="margin:6px 0 10px">${esc(t('Go back to an older version still on GitHub. Your settings are saved first, and come back when you update again.'))}</p>
     <div class="backupbtns">
       <button class="ghost" onclick="askGoBack(this)">${esc(t('Go back to an older version'))}</button>
-      ${v.CanPick ? `<button class="ghost" data-tip="${esc(t('Opens a window on this PC to pick a nocat.farm zip, and installs it the way an update goes in.'))}" onclick="installFromFile(this)">${esc(t('Install from a file…'))}</button>` : ''}
+      ${v.CanPick ? `<button class="ghost" data-tip="${esc(t('Opens a window on this PC to pick a gamer.farm zip, and installs it the way an update goes in.'))}" onclick="installFromFile(this)">${esc(t('Install from a file…'))}</button>` : ''}
     </div></div>`;
 }
 
@@ -6394,7 +6394,7 @@ function steamOpenSafe() {
   return [
     t('It never types a password and never touches your login tokens.'),
     t('It backs up the files it changes first, and keeps the last three backups.'),
-    t('It never stops nocat.farm farming this account - Steam only backs the farm off when you actually launch a game.'),
+    t('It never stops gamer.farm farming this account - Steam only backs the farm off when you actually launch a game.'),
   ];
 }
 
@@ -6410,7 +6410,7 @@ function steamOpenAllPreviewHtml(d) {
 }
 
 // Press the Open in Steam button on an account card: it asks first (Steam closes and opens again). 1.8.2: for an account
-// Steam doesn't remember yet it says Steam opens on its sign-in, and shows the Steam Guard code to type when nocat.farm
+// Steam doesn't remember yet it says Steam opens on its sign-in, and shows the Steam Guard code to type when gamer.farm
 // has its authenticator - only the 5-character code, refreshed as it runs out.
 let steamOpenTimer = null;
 async function openInSteam(name) {
@@ -6593,7 +6593,7 @@ function buyPreviewHtml(d) {
   // purchase confirmed in the Steam app waits for your phone - not a block since 1.8.2, so 3 is never sent.)
   const blocked = [null,
     t("Steam wants billing details with each market purchase and none are saved on this account - buy one card by hand on the market once (that saves them), then it can buy"),
-    t("Steam asks for every market purchase on this account to be confirmed by email, which nocat.farm can't do"),
+    t("Steam asks for every market purchase on this account to be confirmed by email, which gamer.farm can't do"),
     null,
     t("Steam didn't say how this account's market purchases are confirmed, so nothing is bought this time")][d.Blocked];
   if (blocked) top.push(`<p class="problem">${esc(blocked)}</p>`);
@@ -6742,7 +6742,7 @@ function discordControl(def, cur, id) {
     return `<div class="dbtnpick" data-setting="${def.Name}">
       <select id="${id}" onchange="discordButtonPick('${def.Name}',this.value)">
         <option value="" ${pick === '' ? 'selected' : ''}>${esc(t('none'))}</option>
-        <option value="github" ${pick === 'github' ? 'selected' : ''}>${esc(t('Get nocat.farm'))}</option>
+        <option value="github" ${pick === 'github' ? 'selected' : ''}>${esc(t('Get gamer.farm'))}</option>
         ${bots.map((b) => `<option value="${esc(b.Name)}" ${pick === b.Name ? 'selected' : ''}>${esc(tf('{0} on Steam', who(b)))}</option>`).join('')}
         <option value="custom" ${pick === 'custom' ? 'selected' : ''}>${esc(t('Your own link'))}</option>
       </select>
@@ -6987,7 +6987,7 @@ function pairHtml(lo, hi, values, defaults, depth) {
     <label for="f-${lo.Name}">${labelWithTip(t(lo.Range), tip)}</label>
     <div class="ctl"><span class="pairctl">${pairBox(lo, values)}<span class="pairto">${esc(t('to'))}</span>${pairBox(hi, values)}${unitHtml(lo)}</span></div>
     <div class="meta">
-      ${lo.NeedsRestart || hi.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
+      ${lo.NeedsRestart || hi.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time gamer.farm starts.'))}">⟳</span>` : ''}
       <span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="${esc(revert)}">${esc(tf('default {0}', `${shown(lo)} - ${shown(hi)}`))}</span>
     </div></div>`;
 }
@@ -7223,7 +7223,7 @@ function fieldHtml(def, values, defaults, depth = 0) {
     : def.Kind === 'Time' ? timeLabel(Number(def0))
     : (def.Kind === 'Choice' || def.Kind === 'Pick') ? (choiceName() || String(def0))
     // the Discord buttons' code word, and an empty account list, in the words the dropdowns use
-    : /^DiscordButton[12]$/.test(def.Name) ? (String(def0).toLowerCase() === 'github' ? t('Get nocat.farm') : def0 ? String(def0) : t('none'))
+    : /^DiscordButton[12]$/.test(def.Name) ? (String(def0).toLowerCase() === 'github' ? t('Get gamer.farm') : def0 ? String(def0) : t('none'))
     : def.Name === 'DiscordPresenceAccounts' && !def0 ? t('every account not in human mode')
     : def.Name === 'DiscordFeatured' && !def0 ? t('the first account shown')
     : String(def0);
@@ -7232,7 +7232,7 @@ function fieldHtml(def, values, defaults, depth = 0) {
     <label for="${id}">${labelWithTip(tSetting(def, 'label'), tSetting(def, 'tip'))}</label>
     <div class="ctl">${ctl}${proxySignInBox(def, values)}</div>
     <div class="meta">
-      ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
+      ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time gamer.farm starts.'))}">⟳</span>` : ''}
       ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
     </div>${offHint(def, values)}</div>`;
 }
@@ -7282,13 +7282,13 @@ const PANEL_ROWS = { has: (name) => ((schema && schema.PanelRows) || []).include
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowCounter', 'Accounts online'], ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
-  // The second line is one pick of four: the Steam accounts on nocat.farm, or one of three counts.
+  // The second line is one pick of four: the Steam accounts on gamer.farm, or one of three counts.
   const line = Number(val('DiscordSecondLine') ?? 3);
-  const lines = [[3, 'Steam accounts on nocat.farm'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
+  const lines = [[3, 'Steam accounts on gamer.farm'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
   return `<div class="explain dcard-intro">
     <div class="dhead"><b>${esc(t('Show on my Discord profile'))}</b>
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
-    <p style="margin:6px 0 0">${esc(t('While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
+    <p style="margin:6px 0 0">${esc(t('While gamer.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
     <div class="langpick">${parts.map(([k, label]) =>
       `<span class="p ${val(k) ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
     <div class="dline"><span class="muted small">${esc(t('Second line'))}</span><div class="langpick">${lines.map(([n, label]) =>
@@ -7303,12 +7303,12 @@ function grouped(n) {
   try { return Number(n).toLocaleString(langCode); } catch { return Number(n).toLocaleString('en-US'); }
 }
 
-/// "1,240 Steam accounts on nocat.farm" - the Overview line.
+/// "1,240 Steam accounts on gamer.farm" - the Overview line.
 function steamAccountsOn(n) {
-  return n === 1 ? t('1 Steam account on nocat.farm') : tf('{0} Steam accounts on nocat.farm', grouped(n));
+  return n === 1 ? t('1 Steam account on gamer.farm') : tf('{0} Steam accounts on gamer.farm', grouped(n));
 }
 
-/// "1,240 Steam accounts" - the Discord card's second line, which already says Playing nocat.farm above it.
+/// "1,240 Steam accounts" - the Discord card's second line, which already says Playing gamer.farm above it.
 function steamAccounts(n) {
   return n === 1 ? t('1 Steam account') : tf('{0} Steam accounts', grouped(n));
 }
@@ -7355,7 +7355,7 @@ function discordPreview(val) {
   const button = (v) => {
     v = String(v || '').trim();
     if (!v) return null;
-    if (v.toLowerCase() === 'github') return t('Get nocat.farm');
+    if (v.toLowerCase() === 'github') return t('Get gamer.farm');
     const bar = v.indexOf('|');
     if (bar > 0) return v.slice(0, bar).trim();
     const b = bots.find((x) => x.Name.toLowerCase() === v.toLowerCase());
@@ -7382,7 +7382,7 @@ function discordPreview(val) {
     <div class="drow">
       <div class="dart"><img src="logo-liquid.gif" alt="">${face ? `<img class="dface" src="${esc(face.Avatar)}" alt="">` : ''}</div>
       <div class="dtext">
-        <div class="dname">nocat.farm</div>
+        <div class="dname">gamer.farm</div>
         <div>${esc(details)}</div>
         ${meta ? `<div class="dmeta">${meta}</div>` : ''}
       </div>
@@ -7481,7 +7481,7 @@ async function discordConnectCode(btn) {
   const r = await post('/api/discord/connect', {}).catch(() => null);
   btn.disabled = false;
   if (!r || !r.Code) {
-    toast(t("Couldn't reach nocat.farm"), true);
+    toast(t("Couldn't reach gamer.farm"), true);
     return;
   }
   discordCode = { code: r.Code, minutes: r.Minutes || 10, until: Date.now() + (r.Minutes || 10) * 60000, owner: r.OwnerId || '' };
@@ -7499,25 +7499,25 @@ function notifyGuide(which) {
   if (which === 'telegram') {
     return `<details class="guide"><summary>${esc(t('How to set up Telegram (2 minutes)'))}</summary><ol>
       ${step(tf('Open Telegram, search for {0} (the one with the blue check) and press {1}.', b('@BotFather'), b(t('Start'))))}
-      ${step(tf('Send {0}. Give it a name, like {1}, then a username that ends in "bot", like {2}.', '<code>/newbot</code>', b('nocat.farm'), b('myname_farm_bot')))}
+      ${step(tf('Send {0}. Give it a name, like {1}, then a username that ends in "bot", like {2}.', '<code>/newbot</code>', b('gamer.farm'), b('myname_farm_bot')))}
       ${step(tf('BotFather sends you a token that looks like {0}. Copy it.', '<code>123456789:AAH...</code>'))}
       ${step(tf('Paste it into {0} below and press {1}.', b(t('Telegram bot token')), b(t('Save'))))}
-      ${step(tf('Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.', b(t('Connect Telegram')), b(t('Start'))))}
+      ${step(tf('Press {0} here (it shows up once the token is saved), then press {1} in Telegram. gamer.farm connects and says hello.', b(t('Connect Telegram')), b(t('Start'))))}
       ${step(tf('Optional: send BotFather {0} and give your bot the {1}.', '<code>/setuserpic</code>',
-        `<a href="https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/assets/logo.png" target="_blank" rel="noopener">${esc(t('nocat.farm logo'))}</a>`))}
+        `<a href="https://raw.githubusercontent.com/VisaHolder/gamerfarm/main/assets/logo.png" target="_blank" rel="noopener">${esc(t('gamer.farm logo'))}</a>`))}
     </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Everyone makes their own bot: Telegram only lets one program read each bot.'))}</p></details>`;
   }
   if (which === 'discord') {
     return `<details class="guide"><summary>${esc(t('How to set up Discord (1 minute)'))}</summary><ol>
       ${step(tf('In your Discord server, open {0}.', b(t('Server Settings → Integrations → Webhooks'))))}
-      ${step(tf('Press {0}, pick the channel notifications should go to, and name it {1} if you like.', b(t('New Webhook')), b('nocat.farm')))}
+      ${step(tf('Press {0}, pick the channel notifications should go to, and name it {1} if you like.', b(t('New Webhook')), b('gamer.farm')))}
       ${step(tf('Press {0}, paste it into {1} below and press {2}.', b(t('Copy Webhook URL')), b(t('Discord webhook')), b(t('Save'))))}
     </ol><p class="muted small">${esc(t('Anyone with the webhook link can post in that channel, so keep it private.'))}</p></details>`;
   }
   return `<details class="guide"><summary>${esc(t('How to set up Discord commands (3 minutes)'))}</summary><ol>
       ${step(tf('Open the {0} and sign in with your Discord account.',
         `<a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>`))}
-      ${step(tf('Press {0}, name it {1}, tick the box and press {2}.', b('New Application'), b('nocat.farm'), b('Create')))}
+      ${step(tf('Press {0}, name it {1}, tick the box and press {2}.', b('New Application'), b('gamer.farm'), b('Create')))}
       ${step(tf('Open {0} on the left, press {1} and copy the token it shows.', b('Bot'), b('Reset Token')))}
       ${step(tf('Paste it into {0} below and press {1}.', b(t('Discord bot token')), b(t('Save'))))}
       ${step(tf('A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.', b(t('Add the bot to your server'))))}
@@ -7535,7 +7535,7 @@ async function notifyTest(btn) {
   btn.textContent = old;
   // Each line comes with whether it worked. Matching the words instead only ever worked in English - the lines
   // arrive translated, so a failed test showed as a green toast in every other language.
-  const lines = (r && r.Results) || [{ Ok: false, Text: t("Couldn't reach nocat.farm") }];
+  const lines = (r && r.Results) || [{ Ok: false, Text: t("Couldn't reach gamer.farm") }];
   toast(lines.map((l) => l.Text).join(' · '), lines.some((l) => !l.Ok));
 }
 
@@ -7918,7 +7918,7 @@ async function refresh() {
     if (tutorialSignin) renderSignin();
     if (view === 'phone') loadPhone();
 
-    // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
+    // gamer.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
     // matches nothing forever and the log tab silently freezes.
     if (bootId !== null && state.BootId !== bootId) { logLines = []; logClearedAt = 0; }
     bootId = state.BootId;
@@ -7944,7 +7944,7 @@ async function refresh() {
 }
 
 // ── 1.9.2: farm.gamer.mom ────────────────────────────────────────────
-// The page there finds nocat.farm on this PC, checks it can talk to it, and pairs: a code shows here and in the app, and
+// The page there finds gamer.farm on this PC, checks it can talk to it, and pairs: a code shows here and in the app, and
 // the person at the app approves it. Then it's this same dashboard, without what only the app's own dashboard does.
 
 /// The screen in front of the dashboard while it can't be used yet, drawn like the page farm.gamer.mom shows before the app
@@ -7963,7 +7963,7 @@ function farmGate(o) {
     : `<button type="button" class="fg-lnk" onclick="${b.on}">${esc(b.label)}</button>`;
   const ghosts = o.ghosts || [];
   $('farmGateBody').innerHTML = `
-    <div class="fg-brand">nocat.<b>farm</b></div>
+    <div class="fg-brand">gamer.<b>farm</b></div>
     ${o.code ? `<div class="fg-code">${esc(o.code)}</div>` : ''}
     <div class="fg-head">
       <div class="fg-st"><span class="fg-dot ${o.dot || 'no'}"></span><h1>${esc(o.title)}</h1></div>
@@ -7990,34 +7990,34 @@ function farmGate(o) {
 const farmIsSafari = () => /^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
 const farmHere = () => ({ label: t('open it here'), href: farmLocalUrl() });
 const farmAgain = () => ({ label: t('try again'), on: 'location.reload()' });
-const farmSwitchSteps = () => t('In nocat.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.');
-const farmOtherBrowser = () => t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from nocat.farm instead:') + ' ' + farmLocalUrl();
+const farmSwitchSteps = () => t('In gamer.farm on this PC, open its own dashboard, then Settings, Dashboard & phone, tick Show advanced, and turn on Let farm.gamer.mom open this dashboard. Save, and come back here.');
+const farmOtherBrowser = () => t('Safari, and some browsers or extensions, block a website from talking to your own PC. Then open the dashboard straight from gamer.farm instead:') + ' ' + farmLocalUrl();
 
 /// What's wrong, said plainly: not running, not letting this page in, too old, or a browser that won't let a website reach this PC.
 function farmScreen(why, version) {
   if (why === 'looking') {
     farmGate({ dot: 'wait', title: t('looking for your app…'), line: t('checking this PC') });
   } else if (why === 'missing' && farmIsSafari()) {
-    farmGate({ dot: 'no', title: t("Safari can't reach your PC"), line: t('open nocat.farm here instead - it works the same.'),
+    farmGate({ dot: 'no', title: t("Safari can't reach your PC"), line: t('open gamer.farm here instead - it works the same.'),
       primary: farmHere(), ghosts: [farmAgain()], how: [farmOtherBrowser()] });
   } else if (why === 'missing') {
-    farmGate({ dot: 'no', title: t('no app on this PC'), line: t('nocat.farm is a free Steam card farmer that runs on your own PC.'),
-      primary: { label: t('get nocat.farm'), href: 'https://gamer.mom' }, ghosts: [farmAgain(), farmHere()],
-      how: [t('Start nocat.farm on this PC, then reload this page.'), farmSwitchSteps(), farmOtherBrowser()] });
+    farmGate({ dot: 'no', title: t('no app on this PC'), line: t('gamer.farm is a free Steam card farmer that runs on your own PC.'),
+      primary: { label: t('get gamer.farm'), href: 'https://gamer.mom' }, ghosts: [farmAgain(), farmHere()],
+      how: [t('Start gamer.farm on this PC, then reload this page.'), farmSwitchSteps(), farmOtherBrowser()] });
   } else if (why === 'off') {
-    farmGate({ dot: 'no', title: t("nocat.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),
-      primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()], how: [farmSwitchSteps()] });
+    farmGate({ dot: 'no', title: t("gamer.farm isn't letting this page in"), line: t('switch it on in the app, or update it to 1.9.2 or newer.'),
+      primary: { label: t('open gamer.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()], how: [farmSwitchSteps()] });
   } else if (why === 'blocked') {
-    farmGate({ dot: 'no', title: t('your browser blocked this page'), line: t('let it reach your PC and try again, or open nocat.farm here.'),
+    farmGate({ dot: 'no', title: t('your browser blocked this page'), line: t('let it reach your PC and try again, or open gamer.farm here.'),
       primary: farmHere(), ghosts: [farmAgain()],
       how: [t('Next to farm.gamer.mom in the address bar, click the site icon, set Local network access to Allow, then reload this page.'), farmOtherBrowser()] });
   } else if (why === 'ask') {
-    farmGate({ dot: 'wait', title: t('let this page reach your PC'), line: t('your browser will ask first - press Allow. It only lets this page talk to nocat.farm on this PC.'),
-      primary: { label: t('find my nocat.farm'), on: 'farmFind()' }, links: [farmHere()], how: [farmOtherBrowser()] });
+    farmGate({ dot: 'wait', title: t('let this page reach your PC'), line: t('your browser will ask first - press Allow. It only lets this page talk to gamer.farm on this PC.'),
+      primary: { label: t('find my gamer.farm'), on: 'farmFind()' }, links: [farmHere()], how: [farmOtherBrowser()] });
   } else if (why === 'old') {
-    farmGate({ dot: 'no', title: t('update nocat.farm'), line: tf('this page needs a newer nocat.farm than {0}.', version || '?'),
-      primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()],
-      how: [tf('This page needs a newer nocat.farm than {0}. Update it in its own dashboard on this PC, then reload this page.', version || '?')] });
+    farmGate({ dot: 'no', title: t('update gamer.farm'), line: tf('this page needs a newer gamer.farm than {0}.', version || '?'),
+      primary: { label: t('open gamer.farm'), href: farmLocalUrl(), newTab: true }, ghosts: [farmAgain()],
+      how: [tf('This page needs a newer gamer.farm than {0}. Update it in its own dashboard on this PC, then reload this page.', version || '?')] });
   }
 }
 
@@ -8040,16 +8040,16 @@ async function farmLnaState() {
   return '';
 }
 
-/// The person pressed "find my nocat.farm": the browser's question comes now, while they expect it - not out of nowhere.
+/// The person pressed "find my gamer.farm": the browser's question comes now, while they expect it - not out of nowhere.
 let farmAsked = false;
 function farmFind() {
   farmAsked = true;
   boot();
 }
 
-/// Is nocat.farm there, does it let this page in, and is it new enough. False when a screen is up instead.
+/// Is gamer.farm there, does it let this page in, and is it new enough. False when a screen is up instead.
 async function farmConnect() {
-  // Blocked in the browser looks just like a PC with no nocat.farm on it - so it's asked first, and said plainly.
+  // Blocked in the browser looks just like a PC with no gamer.farm on it - so it's asked first, and said plainly.
   const lna = await farmLnaState();
   if (lna === 'denied') { farmScreen('blocked'); return false; }
   if (lna === 'prompt' && !farmAsked) { farmScreen('ask'); return false; }
@@ -8060,9 +8060,9 @@ async function farmConnect() {
     hello = r.ok ? await r.json() : null;
   } catch { hello = null; }
 
-  if (!hello || hello.app !== 'nocat.farm') {
-    // Running but not letting this page in (the switch is off, or an older nocat.farm) still answers a look that reads
-    // nothing back - and a nocat.farm that isn't running doesn't.
+  if (!hello || hello.app !== 'gamer.farm') {
+    // Running but not letting this page in (the switch is off, or an older gamer.farm) still answers a look that reads
+    // nothing back - and a gamer.farm that isn't running doesn't.
     // Blocked - or the browser's question closed without an answer (it stays 'prompt'): never 'no app' for those.
     const after = await farmLnaState();
     if (after === 'denied') { farmScreen('blocked'); return false; }
@@ -8094,9 +8094,9 @@ let farmPolling = null;
 
 function farmPairScreen(message) {
   clearTimeout(farmPolling);
-  farmGate({ dot: 'ok', title: t('nocat.farm is running'), line: t('connect this browser - you approve it in the app.'), note: message || '',
+  farmGate({ dot: 'ok', title: t('gamer.farm is running'), line: t('connect this browser - you approve it in the app.'), note: message || '',
     primary: { label: t('connect'), on: 'farmPair()' }, links: [farmHere()],
-    how: [t('This page talks straight to nocat.farm on this PC - nothing goes through gamer.mom. nocat.farm asks you first: press Connect, then approve the same code in the app.'), farmOtherBrowser()] });
+    how: [t('This page talks straight to gamer.farm on this PC - nothing goes through gamer.mom. gamer.farm asks you first: press Connect, then approve the same code in the app.'), farmOtherBrowser()] });
 }
 
 async function farmPair() {
@@ -8109,11 +8109,11 @@ async function farmPair() {
   if (!r.ok) { farmPairScreen(r.Message || t("That didn't work")); return; }
 
   // A new tab for the app's own dashboard, so this one keeps watching for the answer.
-  farmGate({ dot: 'wait', code: r.Code, title: t('approve this code in nocat.farm on this PC.'), line: t('Waiting for you to approve it…'),
-    primary: { label: t('open nocat.farm'), href: farmLocalUrl(), newTab: true },
-    how: [t("In nocat.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.")] });
+  farmGate({ dot: 'wait', code: r.Code, title: t('approve this code in gamer.farm on this PC.'), line: t('Waiting for you to approve it…'),
+    primary: { label: t('open gamer.farm'), href: farmLocalUrl(), newTab: true },
+    how: [t("In gamer.farm's own dashboard on this PC, a box asks whether farm.gamer.mom may open it. Check it shows this same code, then press Approve.")] });
 
-  // Never past the code's own life (and a little): with nocat.farm gone mid-way, it used to ask every 2 seconds for good.
+  // Never past the code's own life (and a little): with gamer.farm gone mid-way, it used to ask every 2 seconds for good.
   const deadline = Date.now() + ((Number(r.Seconds) || 300) + 15) * 1000;
   const poll = async () => {
     let p = null;
@@ -8128,7 +8128,7 @@ async function farmPair() {
       boot();
       return;
     }
-    if (p && p.State === 'denied') { farmPairScreen(t('It was turned down in nocat.farm.')); return; }
+    if (p && p.State === 'denied') { farmPairScreen(t('It was turned down in gamer.farm.')); return; }
     if ((p && p.State === 'expired') || (Date.now() > deadline)) { farmPairScreen(t('That code ran out. Press Connect for a new one.')); return; }
     farmPolling = setTimeout(poll, 2000);
   };
@@ -8161,7 +8161,7 @@ async function boot() {
   const ping = HOSTED ? await api('/api/ping').catch(() => null) : await fetch('/api/ping').then((r) => r.json()).catch(() => null);
   // The pairing screen is up (a 401), or the app went away in between.
   if (HOSTED && !ping) { if ($('farmGate').classList.contains('hidden')) farmScreen('missing'); return; }
-  if (!ping) { showLogin(t("Can't reach nocat.farm.")); return; }
+  if (!ping) { showLogin(t("Can't reach gamer.farm.")); return; }
   if (ping.needsPassword && !ping.authorised && !token) { showLogin(); return; }
 
   $('login').classList.add('hidden');

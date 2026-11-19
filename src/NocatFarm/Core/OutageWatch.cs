@@ -49,7 +49,7 @@ public static class OutageWatch {
 	private static Timer? _timer;
 	private static Watch _watch = new(null, false);
 
-	/// <summary>Looks every 30 seconds while nocat.farm runs.</summary>
+	/// <summary>Looks every 30 seconds while gamer.farm runs.</summary>
 	public static void Start(BotManager mgr) {
 		_timer = new Timer(_ => {
 			try {
@@ -57,7 +57,7 @@ public static class OutageWatch {
 				_watch = next;
 
 				if (line is { } said) {
-					Log.Event(said, "nocat.farm", Topic.Problems);   // good news, green - under Problems, so Telegram and Discord get it
+					Log.Event(said, "gamer.farm", Topic.Problems);   // good news, green - under Problems, so Telegram and Discord get it
 				}
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't look at the connection: {0}", Log.Describe(e)));

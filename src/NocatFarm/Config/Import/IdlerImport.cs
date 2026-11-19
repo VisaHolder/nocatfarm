@@ -21,7 +21,7 @@ public sealed class ImportedAccount {
 
 	public string SteamId { get; set; } = "";
 
-	/// <summary>A Steam refresh token - the same kind nocat.farm keeps, so the account signs in with no password.</summary>
+	/// <summary>A Steam refresh token - the same kind gamer.farm keeps, so the account signs in with no password.</summary>
 	public string? Token { get; set; }
 
 	/// <summary>A whole maFile, kept (encrypted) so confirmations have its device ID as well as the secrets.</summary>
@@ -72,7 +72,7 @@ public sealed class ImportScan {
 	public bool Found => Path != null;
 }
 
-/// <summary>One idler nocat.farm can read.</summary>
+/// <summary>One idler gamer.farm can read.</summary>
 public interface IIdlerImporter {
 	/// <summary>Short id used by the dashboard, the console and the installer ("asf", "ime", …).</summary>
 	string Id { get; }
@@ -134,7 +134,7 @@ public static class IdlerImport {
 
 		if (importer == null) {
 			ImportScan none = new() { Tool = tool, ToolName = tool };
-			none.Notes.Add(new Said("nocat.farm can't import from that program"));
+			none.Notes.Add(new Said("gamer.farm can't import from that program"));
 
 			return none;
 		}
@@ -178,7 +178,7 @@ public static class IdlerImport {
 
 		ImportScan missing = new() { Tool = Auto, ToolName = "" };
 		missing.Looked.Add(path);
-		missing.Notes.Add(new Said("None of the idlers nocat.farm knows keeps its files in that folder"));
+		missing.Notes.Add(new Said("None of the idlers gamer.farm knows keeps its files in that folder"));
 
 		return missing;
 	}

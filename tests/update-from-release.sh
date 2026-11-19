@@ -18,24 +18,28 @@ rm -rf "$T" && mkdir -p "$T/feed" "$T/app"
 # closed doesn't come back), so it can't be what's tested: people on it update by hand once, as its release notes say.
 SKIP=""
 case "$RID" in linux-*) SKIP="v1.6.4" ;; esac
-TAG=$(gh release list --repo VisaHolder/nocatfarm --limit 10 --json tagName -q '.[].tagName' | while read -r t; do
+# The repository: this run's own on GitHub (VisaHolder/gamerfarm - VisaHolder/nocatfarm before the 2.0.0 rename).
+REPO="${GITHUB_REPOSITORY:-VisaHolder/gamerfarm}"
+TAG=$(gh release list --repo "$REPO" --limit 10 --json tagName -q '.[].tagName' | while read -r t; do
 	[ "$t" = "$SKIP" ] && continue
-	if gh release view "$t" --repo VisaHolder/nocatfarm --json assets -q '.assets[].name' | grep -q "_${RID}\.zip\$"; then
+	if gh release view "$t" --repo "$REPO" --json assets -q '.assets[].name' | grep -q "_${RID}\.zip\$"; then
 		echo "$t"
 		break
 	fi
 done)
 test -n "$TAG" || { echo "FAIL  no release has a zip for $RID"; exit 1; }
-gh release download "$TAG" --repo VisaHolder/nocatfarm --pattern "*_${RID}.zip" --dir "$T"
+# From 2.0.0 a release has its zips under both names, gamer.farm-* and (for copies before the rename) nocat.farm-*: the
+# same file, so the first will do.
+gh release download "$TAG" --repo "$REPO" --pattern "*_${RID}.zip" --dir "$T"
 OLDZIP=$(ls "$T"/*_"$RID".zip | head -n 1)
-FROM=$(basename "$OLDZIP" | sed -n 's/^nocat\.farm-v\(.*\)_'"$RID"'\.zip$/\1/p')
+FROM=$(basename "$OLDZIP" | sed -n -e 's/^gamer\.farm-v\(.*\)_'"$RID"'\.zip$/\1/p' -e 's/^nocat\.farm-v\(.*\)_'"$RID"'\.zip$/\1/p')
 echo "the newest release: $FROM ($OLDZIP)"
 unzip -q "$OLDZIP" -d "$T/app"
 test -x "$T/app/nocatFarm"
 
 cp "$NEW" "$T/feed/new.zip"
 size=$(wc -c < "$T/feed/new.zip" | tr -d ' ')
-printf '{"tag_name":"v9.9.9","body":"- this build","assets":[{"name":"nocat.farm-v9.9.9_%s.zip","browser_download_url":"http://127.0.0.1:%s/new.zip","size":%s}]}' \
+printf '{"tag_name":"v9.9.9","body":"- this build","assets":[{"name":"gamer.farm-v9.9.9_%s.zip","browser_download_url":"http://127.0.0.1:%s/new.zip","size":%s}]}' \
 	"$RID" "$FEED" "$size" > "$T/feed/latest.json"
 (cd "$T/feed" && nohup python3 -m http.server "$FEED" --bind 127.0.0.1 > "$T/feed.log" 2>&1 &)
 for i in $(seq 1 30); do curl -sf "http://127.0.0.1:$FEED/latest.json" > /dev/null && break; sleep 1; done

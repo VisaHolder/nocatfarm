@@ -40,7 +40,7 @@ namespace NocatFarm.Core;
 /// hand, as it always has: the helper is what says it's there, see <see cref="ServiceUnitReady"/>.
 /// </remarks>
 public static class SelfUpdate {
-	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
+	private const string Releases = "https://api.github.com/repos/VisaHolder/gamerfarm/releases/latest";
 
 	/// <summary>
 	/// Where to ask what's newest. GitHub - unless NOCATFARM_UPDATE_FEED points at a copy on this same machine, which is
@@ -51,7 +51,7 @@ public static class SelfUpdate {
 			? feed : Releases;
 
 	/// <summary>Every release kept on GitHub - the last five - for 'update versions'.</summary>
-	private const string ReleaseList = "https://api.github.com/repos/VisaHolder/nocatfarm/releases";
+	private const string ReleaseList = "https://api.github.com/repos/VisaHolder/gamerfarm/releases";
 
 	/// <summary>
 	/// Where to ask for every release: GitHub - or, while <see cref="Feed"/> is a copy on this machine, the same copy under
@@ -114,15 +114,15 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>Where a person gets it by hand when updating itself can't.</summary>
-	private const string ReleasesPage = "https://github.com/VisaHolder/nocatfarm/releases/latest";
+	private const string ReleasesPage = "https://github.com/VisaHolder/gamerfarm/releases/latest";
 
-	/// <summary>One release's page, where its notes are: https://github.com/VisaHolder/nocatfarm/releases/tag/v1.6.2.</summary>
-	public static string ReleasePage(string version) => $"https://github.com/VisaHolder/nocatfarm/releases/tag/v{version.TrimStart('v', 'V')}";
+	/// <summary>One release's page, where its notes are: https://github.com/VisaHolder/gamerfarm/releases/tag/v1.6.2.</summary>
+	public static string ReleasePage(string version) => $"https://github.com/VisaHolder/gamerfarm/releases/tag/v{version.TrimStart('v', 'V')}";
 
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
 	static SelfUpdate() {
-		Http.DefaultRequestHeaders.Add("User-Agent", "nocat.farm/" + Build.Version);
+		Http.DefaultRequestHeaders.Add("User-Agent", "gamer.farm/" + Build.Version);
 	}
 
 	/// <summary>True while a download is in flight, so a second press doesn't start a second one.</summary>
@@ -162,9 +162,9 @@ public static class SelfUpdate {
 	/// Start the swap - unless 'update skip' got there first. Under the same lock as <see cref="Skip"/>, so a skip either
 	/// lands before this and nothing is started, or finds the swap already going and is told it's too late.
 	/// </summary>
-	/// <remarks>Nor once nocat.farm is closing: the flag goes up before anything is cancelled, so an install that got
+	/// <remarks>Nor once gamer.farm is closing: the flag goes up before anything is cancelled, so an install that got
 	/// this far while the app was being closed stops here rather than starting the swap - which would install the new
-	/// version and start nocat.farm again after it had been closed. The flag goes up under this same lock, so closing
+	/// version and start gamer.farm again after it had been closed. The flag goes up under this same lock, so closing
 	/// lands either before the check (nothing is started) or after the swap has been (too late, as for a skip) - never
 	/// between the two, where it was read as still open and the swap then started anyway.</remarks>
 	/// <param name="tag">The version going in, for a skip of it to win - null for one from a file, which a skip doesn't stop.</param>
@@ -279,10 +279,10 @@ public static class SelfUpdate {
 	/// </summary>
 	public static Said ByHand(string? tag) {
 		if (Platform.InContainer) {
-			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept");
+			return new Said("gamer.farm doesn't update itself inside Docker - in the gamerfarm folder (nocatfarm before 2.0.0) run git pull, then docker compose up -d --build. config/ and logs/ are kept");
 		}
 
-		return new Said("this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
+		return new Said("this service can't update gamer.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
 	}
 
 	/// <summary>
@@ -294,26 +294,26 @@ public static class SelfUpdate {
 		string v = version.TrimStart('v', 'V');
 
 		if (Platform.InContainer) {
-			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build", v);
+			return new Said("gamer.farm doesn't update itself inside Docker - in the gamerfarm folder (nocatfarm before 2.0.0) run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build", v);
 		}
 
-		return new Said("this service can't update nocat.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(v), ReleasePage(v));
+		return new Said("this service can't update gamer.farm by itself (an older unit, or its user can't write this folder) - put in nocatfarm.service from the zip to fix that, the Linux docs say how. By hand: stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(v), ReleasePage(v));
 	}
 
-	/// <summary>The release file for this machine off Windows: nocat.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
+	/// <summary>The release file for this machine off Windows: gamer.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
 	private static string ReleaseZipName(string? tag) =>
-		$"nocat.farm-{(string.IsNullOrEmpty(tag) ? "v*" : "v" + tag.TrimStart('v', 'V'))}_{Platform.ReleaseRid}.zip";
+		$"gamer.farm-{(string.IsNullOrEmpty(tag) ? "v*" : "v" + tag.TrimStart('v', 'V'))}_{Platform.ReleaseRid}.zip";
 
-	/// <summary>What the zip for <paramref name="rid"/> is called: nocat.farm-v&lt;version&gt;-portable.zip on Windows,
-	/// nocat.farm-v&lt;version&gt;_linux-x64.zip and so on elsewhere. A file name, not prose.</summary>
+	/// <summary>What the zip for <paramref name="rid"/> is called: gamer.farm-v&lt;version&gt;-portable.zip on Windows,
+	/// gamer.farm-v&lt;version&gt;_linux-x64.zip and so on elsewhere. A file name, not prose.</summary>
 	private static string ZipNameFor(string rid) =>
-		rid.StartsWith("win-", StringComparison.Ordinal) ? "nocat.farm-v<version>-portable.zip" : $"nocat.farm-v<version>_{rid}.zip";
+		rid.StartsWith("win-", StringComparison.Ordinal) ? "gamer.farm-v<version>-portable.zip" : $"gamer.farm-v<version>_{rid}.zip";
 
 	/// <summary>
 	/// Is this release asset the zip for this machine?
 	///
-	/// The Windows zip has no platform in its name (nocat.farm-v1.3.9.zip, nocat.farm-v1.4.9-portable.zip); the Linux ones carry their
-	/// platform after an underscore (nocat.farm-v1.3.9_linux-x64.zip). The underscore is load-bearing: GitHub lists
+	/// The Windows zip has no platform in its name (gamer.farm-v1.3.9.zip, gamer.farm-v1.4.9-portable.zip); the Linux ones carry their
+	/// platform after an underscore (gamer.farm-v1.3.9_linux-x64.zip). The underscore is load-bearing: GitHub lists
 	/// a release's files alphabetically, and every copy up to 1.3.8 installs simply the FIRST .zip in that list.
 	/// "_" sorts after the "." of ".zip", so the Windows zip stays first and those copies keep updating properly -
 	/// with "-linux" it would sort first and every one of them would download the Linux build and refuse it.
@@ -354,12 +354,12 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>
-	/// 'update file': the version in a nocat.farm zip on this PC, or why it can't go in here - checked the way the updater
+	/// 'update file': the version in a gamer.farm zip on this PC, or why it can't go in here - checked the way the updater
 	/// checks a download, before anything is signed out: a zip for this machine, readable, and the program at the top of it
 	/// (or inside its one folder, like releases up to 1.2.6). The version is read from the program itself, not the file
 	/// name, which anybody can rename. Which kind of computer it's for: on Windows by its name, the way an update picks its
 	/// download; on Linux and a Mac by the program in it. Told by the name there too, a download the browser saved as
-	/// "nocat.farm-v1.7.4_linux-x64 (1).zip" - or one renamed to anything - was refused as for another kind of computer.
+	/// "gamer.farm-v1.7.4_linux-x64 (1).zip" - or one renamed to anything - was refused as for another kind of computer.
 	/// </summary>
 	internal static (string? Version, Said Problem) LookInZip(string path) => LookInZipFor(path, Platform.ReleaseRid);
 
@@ -370,14 +370,14 @@ public static class SelfUpdate {
 		bool windows = rid.StartsWith("win-", StringComparison.Ordinal);
 		string exeName = ExeNameFor(windows);
 		string zipName = ZipNameFor(rid);
-		Said another = new("{0} is a nocat.farm for another kind of computer - this one needs {1}", name, zipName);
+		Said another = new("{0} is a gamer.farm for another kind of computer - this one needs {1}", name, zipName);
 
 		if (!File.Exists(path)) {
 			return (null, new Said("there's no file at {0}", path));
 		}
 
 		if (!name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
-			return (null, new Said("{0} isn't a zip - it needs a nocat.farm zip like {1}", name, zipName));
+			return (null, new Said("{0} isn't a zip - it needs a gamer.farm zip like {1}", name, zipName));
 		}
 
 		if (windows && (name.Contains("linux", StringComparison.OrdinalIgnoreCase) || name.Contains("osx", StringComparison.OrdinalIgnoreCase))) {
@@ -397,7 +397,7 @@ public static class SelfUpdate {
 				// Off Windows, the Windows zip: its program is nocatFarm.exe.
 				return (null, !windows && (Entry(ExeNameFor(true)) != null)
 					? another
-					: new Said("{0} isn't a nocat.farm zip for this computer - there's no {1} in it", name, exeName));
+					: new Said("{0} isn't a gamer.farm zip for this computer - there's no {1} in it", name, exeName));
 			}
 
 			if (!windows) {
@@ -410,14 +410,14 @@ public static class SelfUpdate {
 
 				switch (RunsOn(head.AsSpan(0, got), rid, name)) {
 					case null:
-						return (null, new Said("{0} isn't a nocat.farm zip - its {1} isn't a program", name, exeName));
+						return (null, new Said("{0} isn't a gamer.farm zip - its {1} isn't a program", name, exeName));
 					case false:
 						return (null, another);
 				}
 			}
 
 			if (Entry(ProgramDll) is not { } program) {
-				return (null, new Said("{0} isn't a nocat.farm zip - there's no {1} in it", name, ProgramDll));
+				return (null, new Said("{0} isn't a gamer.farm zip - there's no {1} in it", name, ProgramDll));
 			}
 
 			using MemoryStream copy = new();
@@ -430,14 +430,14 @@ public static class SelfUpdate {
 			using System.Reflection.PortableExecutable.PEReader pe = new(copy);
 
 			if (!pe.HasMetadata) {
-				return (null, new Said("{0} isn't a nocat.farm zip - its {1} isn't a program", name, ProgramDll));
+				return (null, new Said("{0} isn't a gamer.farm zip - its {1} isn't a program", name, ProgramDll));
 			}
 
 			System.Reflection.Metadata.MetadataReader meta = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
 			System.Reflection.Metadata.AssemblyDefinition assembly = meta.GetAssemblyDefinition();
 
 			if (!meta.GetString(assembly.Name).Equals(Path.GetFileNameWithoutExtension(exeName), StringComparison.Ordinal)) {
-				return (null, new Said("{0} isn't a nocat.farm zip - its {1} is another program", name, ProgramDll));
+				return (null, new Said("{0} isn't a gamer.farm zip - its {1} is another program", name, ProgramDll));
 			}
 
 			Version v = assembly.Version;
@@ -454,7 +454,7 @@ public static class SelfUpdate {
 	/// has. Null when it's neither.
 	/// </summary>
 	/// <param name="name">The zip's name: for a chip not in the list below, the name says it, as an update picks its download.
-	/// Without it every zip was refused there - "needs nocat.farm-v&lt;version&gt;_linux-riscv64.zip", the very name it had.</param>
+	/// Without it every zip was refused there - "needs gamer.farm-v&lt;version&gt;_linux-riscv64.zip", the very name it had.</param>
 	private static bool? RunsOn(ReadOnlySpan<byte> head, string rid, string name) {
 		bool linux = rid.StartsWith("linux-", StringComparison.Ordinal), mac = rid.StartsWith("osx-", StringComparison.Ordinal);
 		string arch = rid[(rid.IndexOf('-') + 1)..];
@@ -507,7 +507,7 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>
-	/// Other copies of nocat.farm running from this very folder (with a config folder of their own, or the lock would have
+	/// Other copies of gamer.farm running from this very folder (with a config folder of their own, or the lock would have
 	/// stopped them). Off Windows only: an update replaces the files they're running, putting the old version back would
 	/// stop them, and the check for "the new version is up" would see them instead. Their process ids; empty when none.
 	/// </summary>
@@ -548,9 +548,9 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>
-	/// The program file that is this copy of nocat.farm, for the swap script to know copies from this folder by: the one
+	/// The program file that is this copy of gamer.farm, for the swap script to know copies from this folder by: the one
 	/// running, unless that's the .NET host - started as "dotnet nocatFarm.dll", the running program is dotnet itself, and
-	/// the script took every .NET program on the machine for another nocat.farm in this folder and refused to update.
+	/// the script took every .NET program on the machine for another gamer.farm in this folder and refused to update.
 	/// </summary>
 	internal static string ProgramPath(string? processPath, string here, string exeName) =>
 		(processPath != null) && Path.GetFileName(processPath).Equals(exeName, StringComparison.Ordinal) ? processPath : Path.Combine(here, exeName);
@@ -597,7 +597,7 @@ public static class SelfUpdate {
 		}
 
 		if (why is { } said) {
-			Log.Publish(Topic.Installs, "nocat.farm", said);
+			Log.Publish(Topic.Installs, "gamer.farm", said);
 		}
 	}
 
@@ -634,7 +634,7 @@ public static class SelfUpdate {
 				Gone(noted);
 				TryDelete(NotePath);
 				TryDelete(NotesPath);
-				Fail(new Said("update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed", swapCode[4..].Trim()));
+				Fail(new Said("update stopped - another gamer.farm is running from this folder (process {0}); close it first, nothing changed", swapCode[4..].Trim()));
 
 				return;
 			}
@@ -677,7 +677,7 @@ public static class SelfUpdate {
 				if (bad.StartsWith(FromFileMark, StringComparison.Ordinal)) {
 					PutSkipBack(bad[FromFileMark.Length..]);
 					Gone(bad[FromFileMark.Length..]);
-					Fail(new Said("update undone: nocat.farm {0} from the file didn't start, back on {1}", bad[FromFileMark.Length..], Build.Version));
+					Fail(new Said("update undone: gamer.farm {0} from the file didn't start, back on {1}", bad[FromFileMark.Length..], Build.Version));
 
 					return;
 				}
@@ -688,7 +688,7 @@ public static class SelfUpdate {
 				if (bad.StartsWith(BackMark, StringComparison.Ordinal)) {
 					PutSkipBack(bad[BackMark.Length..]);
 					Gone(bad[BackMark.Length..]);
-					Fail(new Said("going back didn't work: nocat.farm {0} didn't start, so you're on {1} again", bad[BackMark.Length..], Build.Version));
+					Fail(new Said("going back didn't work: gamer.farm {0} didn't start, so you're on {1} again", bad[BackMark.Length..], Build.Version));
 
 					return;
 				}
@@ -917,7 +917,7 @@ public static class SelfUpdate {
 			await Task.Delay(Settle).ConfigureAwait(false);
 
 			Said done = new Said("Install complete - now on {0} (was {1}).", to, from);
-			Log.Publish(Topic.Installs, "nocat.farm", notes.Length > 0 ? new Said("{0}\n\n{1}", done, new Said("What's new:\n{0}", notes)) : done);
+			Log.Publish(Topic.Installs, "gamer.farm", notes.Length > 0 ? new Said("{0}\n\n{1}", done, new Said("What's new:\n{0}", notes)) : done);
 		});
 	}
 
@@ -1117,7 +1117,7 @@ public static class SelfUpdate {
 	/// <summary>Starts the swap script. Swappable so the checks can see what it would be started with, and nothing is replaced.</summary>
 	internal static Action<ProcessStartInfo> StartSwap { get; set; } = static swap => Process.Start(swap)?.Dispose();
 
-	/// <summary>Closes nocat.farm once the swap script has it. Swappable for the same reason.</summary>
+	/// <summary>Closes gamer.farm once the swap script has it. Swappable for the same reason.</summary>
 	internal static Action ExitForSwap { get; set; } = static () => {
 		RunState.Why = "update";   // 1.8.4: an update's restart isn't news
 		Commands.RequestExit();
@@ -1133,7 +1133,7 @@ public static class SelfUpdate {
 	/// shut down and the script takes over - so the caller should treat a null return as "we're going down".
 	/// </summary>
 	/// <param name="byItself">"Update by itself" started it, at night - the message says so.</param>
-	/// <param name="fromFile">'update file': a nocat.farm zip on this PC, installed instead of the newest release - checked
+	/// <param name="fromFile">'update file': a gamer.farm zip on this PC, installed instead of the newest release - checked
 	/// with <see cref="LookInZip"/> first, then everything after the download is the same: unpacked, the safety copy, the
 	/// accounts signed out one at a time, the swap, the half-minute check and putting the old version back.</param>
 	/// <param name="toVersion">'update to': that release instead of the newest - an older one too, which is the point. Its
@@ -1241,7 +1241,7 @@ public static class SelfUpdate {
 
 				// Closed while GitHub was asked: nothing downloaded for an app on its way out.
 				if (Commands.ExitRequested) {
-					return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+					return Fail(new Said("update stopped - gamer.farm was closed first; nothing changed"));
 				}
 
 				// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
@@ -1266,7 +1266,7 @@ public static class SelfUpdate {
 			// Another copy running from this folder (on a config folder of its own): replacing the files under it, and
 			// stopping "the new version" if it didn't come up, would take that one down too. Said now, before a download.
 			if (OthersRunningHere() is [int other, ..]) {
-				return Fail(new Said("update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed", other));
+				return Fail(new Said("update stopped - another gamer.farm is running from this folder (process {0}); close it first, nothing changed", other));
 			}
 
 			// One folder per install, made fresh with a random name that only this user can open (mkdtemp): two copies
@@ -1378,7 +1378,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: couldn't unpack ({0}) - disk full?", Log.Scrub(e.Message)));
 			}
 
-			// Releases up to 1.2.6 put everything inside one nocat.farm/ folder; later ones are flat. Take either:
+			// Releases up to 1.2.6 put everything inside one gamer.farm/ folder; later ones are flat. Take either:
 			// looking only at the top level refused every foldered release outright, so the update button could
 			// never install one.
 			string payload = staged;
@@ -1473,8 +1473,8 @@ public static class SelfUpdate {
 				}
 			}
 
-			Log.Publish(Topic.Installs, "nocat.farm", fromFile != null
-				? new Said("Installing nocat.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.", tag, Path.GetFileName(fromFile))
+			Log.Publish(Topic.Installs, "gamer.farm", fromFile != null
+				? new Said("Installing gamer.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.", tag, Path.GetFileName(fromFile))
 				: goingBack
 					? new Said("Downloaded {0} ({1}MB) - going back to it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
 				: byItself
@@ -1484,9 +1484,9 @@ public static class SelfUpdate {
 			await SignOutOneByOneAsync(tag, signedOut, ct).ConfigureAwait(false);
 
 			// Closed while the accounts were signing out: the update stops there. Carried on, the swap went ahead as
-			// the app shut down, installed the new version and started nocat.farm again after it had been closed.
+			// the app shut down, installed the new version and started gamer.farm again after it had been closed.
 			if (Commands.ExitRequested) {
-				return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+				return Fail(new Said("update stopped - gamer.farm was closed first; nothing changed"));
 			}
 
 			string okFile = Path.Combine(work, "started.txt");
@@ -1505,7 +1505,7 @@ public static class SelfUpdate {
 					FileName = "cmd.exe",
 					// /s with a second pair of quotes round the path: without it cmd keeps the quotes only when nothing in the path
 					// is one of ( ) & ^ @ - a Windows user called "Paul (Home)" has a temp folder like that, cmd ran "C:\Users\Paul",
-					// the script never started and nocat.farm closed for good. /d: the user's own cmd start-up hooks stay out of it.
+					// the script never started and gamer.farm closed for good. /d: the user's own cmd start-up hooks stay out of it.
 					Arguments = SwapArguments(script),
 					UseShellExecute = false,
 					CreateNoWindow = true,
@@ -1518,7 +1518,7 @@ public static class SelfUpdate {
 				// on top, and on its own where neither is there. It waits for this PID, like the Windows one.
 				//
 				// The options to start with go to the script as its own arguments, each exactly as it is. Split on spaces, a
-				// --path to "nocat.farm (1)" came back as two and it started on the wrong folder.
+				// --path to "gamer.farm (1)" came back as two and it started on the wrong folder.
 				swap = new("/bin/sh") { UseShellExecute = false, WorkingDirectory = Path.GetTempPath() };
 				swap.ArgumentList.Add("-c");
 				swap.ArgumentList.Add(DetachedStart);
@@ -1610,7 +1610,7 @@ public static class SelfUpdate {
 			if (!swapped) {
 				// Closed in the moment between the check above and the handover: stopped, and nothing is signed back in.
 				if (Commands.ExitRequested) {
-					return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+					return Fail(new Said("update stopped - gamer.farm was closed first; nothing changed"));
 				}
 
 				SignBackIn(signedOut);
@@ -1681,12 +1681,12 @@ public static class SelfUpdate {
 	///
 	/// A copy that fails part-way leaves a mix of old and new files - a broken install that might even believe it
 	/// updated. So the program files (not config, logs or plugins) are copied aside first, and put back if the new
-	/// ones don't all go in. Either way nocat.farm is started again: the window running this is hidden, so the only
+	/// ones don't all go in. Either way gamer.farm is started again: the window running this is hidden, so the only
 	/// place a failure can be SEEN is the app itself, whose first line then says, in red, what went wrong.
 	/// </summary>
 	/// <remarks>
 	/// Every path comes from an environment variable set on the process (NF_HERE, NF_WORK, NF_STAGED, NF_BACKUP,
-	/// NF_FAIL), and NF_ARGS carries the command line nocat.farm was started with, so every restart - the new version
+	/// NF_FAIL), and NF_ARGS carries the command line gamer.farm was started with, so every restart - the new version
 	/// or the old one put back - comes up with the same --path, --no-gui and so on. The script itself is plain ASCII.
 	/// The safety copy is made by the app before this runs (see ApplyAsync).
 	///
@@ -1708,8 +1708,8 @@ public static class SelfUpdate {
 	private static string SwapScript(int pid) =>
 		$"""
 		@echo off
-		rem nocat.farm self-update. Written by the app, run once, deletes itself.
-		echo Waiting for nocat.farm to close...
+		rem gamer.farm self-update. Written by the app, run once, deletes itself.
+		echo Waiting for gamer.farm to close...
 		:wait
 		tasklist /fi "PID eq {pid}" 2>nul | find "{pid}" >nul
 		if not errorlevel 1 (
@@ -1719,7 +1719,7 @@ public static class SelfUpdate {
 		echo Updating...
 		robocopy "%NF_STAGED%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
 		set rc=%errorlevel%
-		rem This window is hidden, so a "press a key" here waited for ever and nocat.farm never came back. On a
+		rem This window is hidden, so a "press a key" here waited for ever and gamer.farm never came back. On a
 		rem failed copy: put every file back, leave the reason for the app to say, and start it again as it was.
 		if %rc% GEQ 8 (
 			robocopy "%NF_BACKUP%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
@@ -1788,7 +1788,7 @@ public static class SelfUpdate {
 	/// under the signature it checked ("Killed: 9"); renamed, the old file lives on for whatever still has it open.
 	///
 	/// The new version is known by its process id ($!), never by a pattern: pgrep -f read the folder as a regular
-	/// expression, so "nocat.farm (1)" never matched itself - a good update was taken for a crash and put back - and
+	/// expression, so "gamer.farm (1)" never matched itself - a good update was taken for a crash and put back - and
 	/// pkill -f couldn't stop anything there, or stopped another copy's.
 	/// </remarks>
 	/// <summary>
@@ -1800,10 +1800,10 @@ public static class SelfUpdate {
 
 	private const string UnixSwapScript = """
 		#!/bin/sh
-		# nocat.farm self-update. Written by the app, run once. The options to start with are this script's arguments.
+		# gamer.farm self-update. Written by the app, run once. The options to start with are this script's arguments.
 		while kill -0 "$NF_PID" 2>/dev/null; do sleep 1; done
 
-		# Process ids of copies of nocat.farm running from this folder: by the program each one runs (/proc on Linux), or
+		# Process ids of copies of gamer.farm running from this folder: by the program each one runs (/proc on Linux), or
 		# on a Mac by the program its command line starts with - compared as text, never as a pattern.
 		from_here() {
 			if [ -e /proc/self/exe ]; then

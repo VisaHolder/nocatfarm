@@ -50,7 +50,7 @@ public static class PluginHost {
 
 	public static async Task LoadAllAsync(BotManager mgr, CancellationToken ct) {
 		// 1.9.0: never the end of the start. A plugins folder that couldn't be read or made - a file of that name, a folder
-		// this user may not open - threw out of here, and nocat.farm crashed at every start until somebody found out why.
+		// this user may not open - threw out of here, and gamer.farm crashed at every start until somebody found out why.
 		try {
 			await LoadEveryAsync(mgr, ct).ConfigureAwait(false);
 		} catch (Exception e) when (e is not OperationCanceledException) {
@@ -123,7 +123,7 @@ public static class PluginHost {
 				await StartAsync(type, file, ct).ConfigureAwait(false);
 			}
 		} catch (ReflectionTypeLoadException e) {
-			// The usual cause is a plugin built against a different nocat.farm. Say so rather than printing a
+			// The usual cause is a plugin built against a different gamer.farm. Say so rather than printing a
 			// wall of loader exceptions.
 			NocatFarm.Log.Warn(new Said("couldn't load plugin {0} - built for another version?", Path.GetFileName(file)));
 			NocatFarm.Log.Debug(new Said("plugin {0}: {1}", Path.GetFileName(file), NocatFarm.Log.Scrub(e.LoaderExceptions.FirstOrDefault()?.Message)));
@@ -148,7 +148,7 @@ public static class PluginHost {
 	/// </summary>
 	/// <remarks>
 	/// Awaited on this thread, a plugin whose constructor or OnLoadAsync blocked before its first await - a Thread.Sleep, a
-	/// .Result on a website - held nocat.farm's start there for good: the 15 seconds only counted once a Task came back, which
+	/// .Result on a website - held gamer.farm's start there for good: the 15 seconds only counted once a Task came back, which
 	/// it never did. And an async void it started from OnLoadAsync that threw ended the process.
 	/// </remarks>
 	internal static async Task StartAsync(Type type, string file, CancellationToken ct) {

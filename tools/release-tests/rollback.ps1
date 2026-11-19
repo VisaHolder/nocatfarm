@@ -1,6 +1,6 @@
 ﻿# Updating itself against releases served from this machine (NOCATFARM_UPDATE_FEED): a download that's gone and a
 # damaged one change nothing, a new version that crashes is put back, a good one goes in and stays.
-#   -Mode portable | installed   (installed needs dist\nocat.farm-v<version>-setup.exe)
+#   -Mode portable | installed   (installed needs dist\gamer.farm-v<version>-setup.exe)
 #   -Port, -FeedPort and -TestRoot move it off its usual ports and folder, to run beside another test.
 param([string]$Mode = 'portable', [int]$Port = 7298, [int]$FeedPort = 8766, [string]$TestRoot = '')   # portable | installed
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
@@ -25,7 +25,7 @@ if ($true) {
 }
 function Feed($name, $tag, $zip) {
   $size = if (Test-Path "$W\$zip") { (Get-Item "$W\$zip").Length } else { 12345 }
-  Set-Content "$W\$name.json" -Encoding ascii -Value ('{"tag_name":"' + $tag + '","body":"- a test release","assets":[{"name":"nocat.farm-' + $tag + '-portable.zip","browser_download_url":"http://127.0.0.1:' + $feedPort + '/' + $zip + '","size":' + $size + '}]}')
+  Set-Content "$W\$name.json" -Encoding ascii -Value ('{"tag_name":"' + $tag + '","body":"- a test release","assets":[{"name":"gamer.farm-' + $tag + '-portable.zip","browser_download_url":"http://127.0.0.1:' + $feedPort + '/' + $zip + '","size":' + $size + '}]}')
 }
 Feed 'broken' 'v9.9.8' 'broken.zip'; Feed 'good' 'v9.9.9' 'good.zip'; Feed 'nolink' 'v9.9.7' 'missing.zip'; Feed 'damaged' 'v9.9.6' 'damaged.zip'
 $srv = Start-Process python -ArgumentList '-m', 'http.server', $feedPort, '--bind', '127.0.0.1' -WorkingDirectory $W -WindowStyle Hidden -PassThru
@@ -35,7 +35,7 @@ Start-Sleep 2
 $here = Join-Path $SP "winupd-$Mode"
 if (Test-Path $here) { Remove-Item $here -Recurse -Force }
 if ($Mode -eq 'installed') {
-  $p = Start-Process "$Repo\dist\nocat.farm-v$Version-setup.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$here`"", '/MOVE=no', '/FROM=fresh', '/STARTUP=no', '/DESKTOP=no', '/HIDDEN=yes', "/PORT=$port" -PassThru -Wait
+  $p = Start-Process "$Repo\dist\gamer.farm-v$Version-setup.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$here`"", '/MOVE=no', '/FROM=fresh', '/STARTUP=no', '/DESKTOP=no', '/HIDDEN=yes', "/PORT=$port" -PassThru -Wait
   Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$here*" } | Stop-Process -Force
   Copy-Item "$W\base\*" $here -Recurse -Force   # this build's updater, in the installed folder
 } else {

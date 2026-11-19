@@ -34,7 +34,7 @@ test -s upd/broken.zip
 
 feed() {   # name tag zip
 	size=$(wc -c < "upd/$3" | tr -d ' ')
-	printf '{"tag_name":"%s","body":"- a test release","assets":[{"name":"nocat.farm-%s_%s.zip","browser_download_url":"http://127.0.0.1:%s/%s","size":%s}]}' \
+	printf '{"tag_name":"%s","body":"- a test release","assets":[{"name":"gamer.farm-%s_%s.zip","browser_download_url":"http://127.0.0.1:%s/%s","size":%s}]}' \
 		"$2" "$2" "$RID" "$FEED" "$3" "$size" > "upd/$1.json"
 }
 feed broken v9.9.8 broken.zip
@@ -44,7 +44,7 @@ for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$FEED/good.json" > /dev/null
 curl -sf "http://127.0.0.1:$FEED/good.json" > /dev/null || { echo "the test feed didn't start"; cat feed.log; exit 1; }
 
 # A fresh copy of the release being tested, with nothing of any earlier run in it, and a data folder elsewhere.
-HERE="$T/nocat.farm (1)"
+HERE="$T/gamer.farm (1)"
 CWD="$T/started from here"
 DATA="$CWD/data"
 fresh() {
@@ -58,7 +58,7 @@ fresh() {
 }
 
 # As from a terminal: a CI runner is itself a systemd service, and what it starts inherits the markers that make
-# nocat.farm (rightly) refuse to update itself as a service. --path is relative, to the folder it's started from.
+# gamer.farm (rightly) refuse to update itself as a service. --path is relative, to the folder it's started from.
 start() {   # feed [data folder] [port]
 	(cd "$CWD" && env -u INVOCATION_ID -u JOURNAL_STREAM NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/$1.json" \
 		nohup "$HERE/nocatFarm" --no-gui --path "${2:-data}" > "$T/run-$1.log" 2>&1 &)
@@ -108,7 +108,7 @@ if [ -e "$HERE/data" ]; then echo "FAIL: a data folder was made next to the prog
 sleep 40   # past the half minute before it says "ok" - it must not be put back after that
 test "$(ver)" = "9.9.9"
 test -z "$(find "$HERE" -name '*.nf-new')"
-echo "PASS: updated $VER -> 9.9.9 in \"nocat.farm (1)\", restarted on the relative --path's folder, and it stayed"
+echo "PASS: updated $VER -> 9.9.9 in \"gamer.farm (1)\", restarted on the relative --path's folder, and it stayed"
 if [ "$(uname)" = "Darwin" ]; then
 	# Every library and the program itself still carries a valid signature after being replaced (a file changed in place
 	# under its signature is what gets a Mac program "Killed: 9"). Only the ones signed to begin with.
@@ -129,9 +129,9 @@ start good data "$PORT"
 start good data2 "$PORT2"
 test "$(ver "$PORT2")" = "$VER"
 cmd 'update now'
-for i in $(seq 1 30); do sleep 1; grep -q 'another nocat.farm is running from this folder' "$DATA"/logs/*.log 2>/dev/null && break; done
+for i in $(seq 1 30); do sleep 1; grep -q 'another gamer.farm is running from this folder' "$DATA"/logs/*.log 2>/dev/null && break; done
 logs
-grep -q "another nocat.farm is running from this folder (process $(pid_of "$CWD/data2"))" "$DATA"/logs/*.log
+grep -q "another gamer.farm is running from this folder (process $(pid_of "$CWD/data2"))" "$DATA"/logs/*.log
 test "$(ver)" = "$VER" || { echo "FAIL: the first copy is on $(ver), not $VER"; exit 1; }
 test "$(ver "$PORT2")" = "$VER" || { echo "FAIL: the second copy is on $(ver "$PORT2"), not $VER"; exit 1; }
 echo "PASS: refused with the other copy's process id, nothing changed, both still up"

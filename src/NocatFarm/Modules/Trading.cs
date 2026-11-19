@@ -18,7 +18,7 @@ namespace NocatFarm.Modules;
 /// list has to be accounts you personally own.
 ///
 /// And card swaps: one for one, judged by <see cref="FairSwap"/> against the cards held at the moment of accepting.
-/// Offers from the other accounts in this nocat.farm are always judged that way, so the matcher's offers between
+/// Offers from the other accounts in this gamer.farm are always judged that way, so the matcher's offers between
 /// them go through without anybody having to turn swaps on for strangers.
 ///
 /// Nothing is acted on the instant it lands. A trade accepted two seconds after it was sent is a bot accepting.
@@ -130,7 +130,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		return Rng.HumanMinutes(lo, hi);
 	}
 
-	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
+	// Another account in this gamer.farm counts too: swaps between your own accounts are always looked at.
 	private bool Wanted => Bot.Cfg.AcceptDonations || (Bot.Cfg.AutoTradeWith.Trim().Length > 0) || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
 		|| ((BotManager.Instance?.All.Count ?? 0) > 1) || Bot.Cfg.CardSwaps || (Bot.Cfg.AddonTrades && PluginHost.HasTradeJudges);
 
@@ -810,7 +810,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>What nocat.farm is going to do with it, in words.</summary>
+	/// <summary>What gamer.farm is going to do with it, in words.</summary>
 	private Said Plan(TradeOffers.Offer offer, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool awake, int n) {
 		bool later = !awake;
 

@@ -5,7 +5,7 @@ namespace NocatFarm.Core;
 /// <summary>
 /// Just enough of Valve's KeyValues text format to read and edit <c>config/loginusers.vdf</c> - the list of accounts
 /// the Steam client remembers, each a block of flags (AccountName, RememberPassword, MostRecent, ...). Nothing here
-/// touches a login token: those live elsewhere, encrypted, and nocat.farm never reads or writes them.
+/// touches a login token: those live elsewhere, encrypted, and gamer.farm never reads or writes them.
 /// </summary>
 /// <remarks>
 /// A node is either a leaf (a quoted string value) or a map of child nodes, kept in the order they were read so the

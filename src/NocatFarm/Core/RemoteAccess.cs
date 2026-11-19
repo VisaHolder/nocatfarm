@@ -15,7 +15,7 @@ namespace NocatFarm.Core;
 /// tool. Off unless switched on, and never without a dashboard password long enough to hold up to the internet.
 /// </summary>
 /// <remarks>
-/// The forward is renewed every half hour with a lease of an hour, so a PC that's switched off - or nocat.farm
+/// The forward is renewed every half hour with a lease of an hour, so a PC that's switched off - or gamer.farm
 /// removed - doesn't leave the port forwarded for ever. Routers that only take permanent forwards get one, and it's
 /// taken away again when the switch is turned off. Turned off, the forward is removed straight away.
 /// </remarks>
@@ -23,7 +23,7 @@ public static partial class RemoteAccess {
 	/// <summary>The shortest dashboard password it opens to the internet with.</summary>
 	public const int MinPasswordLength = 12;
 
-	private const string Description = "nocat.farm dashboard";
+	private const string Description = "gamer.farm dashboard";
 	private const string AddMapping = "AddPortMapping";
 	private const string DeleteMapping = "DeletePortMapping";
 	private const string AskExternalIp = "GetExternalIPAddress";
@@ -246,7 +246,7 @@ public static partial class RemoteAccess {
 	}
 
 	/// <summary>
-	/// Closing: the forward goes, so nothing is left pointing at a PC where nocat.farm isn't running. The next start
+	/// Closing: the forward goes, so nothing is left pointing at a PC where gamer.farm isn't running. The next start
 	/// puts it back (a few seconds in). Waits a few seconds for the router at most.
 	/// </summary>
 	public static async Task StopAsync() {

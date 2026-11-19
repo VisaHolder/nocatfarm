@@ -18,7 +18,7 @@ namespace NocatFarm.Modules;
 /// <list type="bullet">
 /// <item>the Web API key page - a key appearing (or changing) that wasn't there before is the API-key trade scam: the
 /// thief watches the account's offers and swaps them for fake ones. Only a fingerprint of the key is kept;</item>
-/// <item>the authorized-devices page - a device that's new since the last look and isn't one of yours (nocat.farm's own
+/// <item>the authorized-devices page - a device that's new since the last look and isn't one of yours (gamer.farm's own
 /// sign-ins carry this PC's device name, <see cref="Bot.DeviceName"/>);</item>
 /// <item>the account details page - the masked email, the phone ending and Steam Guard, compared with the last look.</item>
 /// </list>
@@ -26,7 +26,7 @@ namespace NocatFarm.Modules;
 ///
 /// On a hit, as set per account: trades stop being accepted (and items sent) until 'scamwatch ok &lt;account&gt;', the
 /// account's own outgoing offers are cancelled, and - only when switched on, off by default - a new API key is revoked.
-/// Nothing else is ever changed. The first look is only a baseline: what's already there was there before nocat.farm
+/// Nothing else is ever changed. The first look is only a baseline: what's already there was there before gamer.farm
 /// was watching, so it isn't reported as new.
 /// </remarks>
 public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
@@ -48,7 +48,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 
 	/// <summary>
 	/// One authorized device: an id (a fingerprint of Steam's token id), its name, where it was first seen, and whether it's
-	/// the very sign-in reading the page - nocat.farm's own session, by definition.
+	/// the very sign-in reading the page - gamer.farm's own session, by definition.
 	/// </summary>
 	public sealed record Device(string Id, string Name, string Where, bool ThisSession = false);
 
@@ -420,7 +420,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 		GlobalConfig g = Live.Global;
 
 		// One red line per warning - in the window, the console and the log file, and to the chats: which account, what
-		// changed, and what nocat.farm did about it. Never the key, the address or anything else secret: only the words.
+		// changed, and what gamer.farm did about it. Never the key, the address or anything else secret: only the words.
 		foreach (Hit h in found) {
 			Log.Alarm(Line(Bot.Name, h, Bot.Cfg), Bot.Name, Topic.ScamWatch, g.NotifyScam);
 		}
@@ -445,7 +445,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 		var p => new Said("ends in {0}", p)
 	};
 
-	/// <summary>What nocat.farm did about a warning, by the account's settings.</summary>
+	/// <summary>What gamer.farm did about a warning, by the account's settings.</summary>
 	public static Said Did(string account, BotConfig cfg) => (cfg.ScamWatchStopTrades, cfg.ScamWatchCancelOffers) switch {
 		(true, true) => new Said("trade auto-accept and sending stopped, and its sent offers are being cancelled - type 'scamwatch ok {0}' when you've checked", account),
 		(true, false) => new Said("trade auto-accept and sending stopped - type 'scamwatch ok {0}' when you've checked", account),
@@ -606,7 +606,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Whether a device's name is one of yours: nocat.farm's own (this PC's device name - Steam may add a note in brackets
+	/// Whether a device's name is one of yours: gamer.farm's own (this PC's device name - Steam may add a note in brackets
 	/// after it, the way SteamKit's own default reads "PC (SteamKit2)") or one you trust.
 	/// </summary>
 	public static bool IsOurs(string name, IReadOnlySet<string> ours) {
@@ -622,7 +622,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// The names nocat.farm's own sign-ins carry - every account's <see cref="Bot.DeviceName"/> (this PC's name unless
+	/// The names gamer.farm's own sign-ins carry - every account's <see cref="Bot.DeviceName"/> (this PC's name unless
 	/// "device name" is set), which is what Steam lists them under - plus the trusted names from the setting.
 	/// </summary>
 	public static HashSet<string> OwnDeviceNames(Bot bot) {
@@ -763,7 +763,7 @@ public sealed partial class ScamWatch(Bot bot) : BotModule(bot) {
 			return null;
 		}
 
-		// The token reading the page - nocat.farm's own session. Its id is said beside the list.
+		// The token reading the page - gamer.farm's own session. Its id is said beside the list.
 		string requesting = RequestingRegex().Match(html) is { Success: true } r ? WebUtility.HtmlDecode(r.Groups[1].Value).Trim('"') : "";
 
 		try {

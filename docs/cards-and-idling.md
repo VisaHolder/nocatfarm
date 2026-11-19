@@ -83,7 +83,7 @@ rotation myaccount next   # move on to the next batch now
 *Show as* (`gamename myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
 still count playtime. `gamename myaccount off` removes it, and *Keep the custom name while farming cards* (on) keeps it showing
 during card farming too. Now and then Steam drops the name and shows the real game; the account card then warns
-"Steam shows …" and nocat.farm puts the name back.
+"Steam shows …" and gamer.farm puts the name back.
 
 *Play as if on* sets the device badge friends see: PC, phone, Big Picture, VR or controller. (Steam Deck is in the
 list, but Steam shows the controller badge for it.) *Appear as* (`persona myaccount invisible`) is the status:
@@ -182,7 +182,7 @@ off to level with normal badges only and leave foil cards alone. If Steam refuse
 **Selling.** `sell myaccount` shows which spare cards it would list and what you'd get after Steam's fees.
 `sell myaccount do` lists them (5 at a time by default), and `sell myaccount relist` takes down week-old listings
 the market has gone under. To have it done by itself, see *Deal with spare items* below - it sells or turns into gems,
-whichever pays more. Listings need confirming in the Steam app unless the authenticator is in nocat.farm.
+whichever pays more. Listings need confirming in the Steam app unless the authenticator is in gamer.farm.
 
 **Level-up planning.** `levelup myaccount 50` works out what reaching level 50 would cost: badges it can craft now,
 sets it has nearly finished, and the cheapest full sets on the market for the rest. Prices are looked up slowly in
@@ -242,13 +242,13 @@ Two things follow:
 
 | Route | XP for the cost | Who does it |
 |---|---|---|
-| Card drops from your games | free | nocat.farm (*Farm trading cards*) |
-| Steam Points: the seasonal badge | 100 XP per 1,000 points | nocat.farm, once you turn on *Spend Steam Points on levels* |
-| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | nocat.farm, once you turn on *Buy missing cards* and *Buy the cheapest full sets* (with *Make booster packs: automatic*, *Use gems for the most levels* sells the sacks by itself when that wins - see [Use gems for the most levels](#use-gems-for-the-most-levels); or *Spare items* → *Gems afterwards* set to sell the sacks) - see [Buying cards](#buying-cards) |
-| Gems into booster packs | about 20 to 50 XP per 1,000 gems | nocat.farm (*Make booster packs: automatic*) |
+| Card drops from your games | free | gamer.farm (*Farm trading cards*) |
+| Steam Points: the seasonal badge | 100 XP per 1,000 points | gamer.farm, once you turn on *Spend Steam Points on levels* |
+| Sell the gems, buy the cheapest sets | about 150 to 350 XP per 1,000 gems | gamer.farm, once you turn on *Buy missing cards* and *Buy the cheapest full sets* (with *Make booster packs: automatic*, *Use gems for the most levels* sells the sacks by itself when that wins - see [Use gems for the most levels](#use-gems-for-the-most-levels); or *Spare items* → *Gems afterwards* set to sell the sacks) - see [Buying cards](#buying-cards) |
+| Gems into booster packs | about 20 to 50 XP per 1,000 gems | gamer.farm (*Make booster packs: automatic*) |
 | Keep the gems | nothing | - |
 
-### What nocat.farm does by itself, and what you choose
+### What gamer.farm does by itself, and what you choose
 
 **By itself, with automatic on:**
 
@@ -346,7 +346,7 @@ Sources:
 The Points Shop sells one thing that raises your Steam level: the **seasonal badge** (in October 2026, *Summer
 Collection - 2026*). Each level costs 1,000 points and is worth 100 XP, up to level 40 (4,000 XP for 40,000 points). A
 new one comes with the big Steam sales. Nothing else in the shop - profile items, backgrounds, emoticons, avatar
-frames - gives any XP, so nocat.farm never buys those. When the shop sells no badge, it buys nothing and says so.
+frames - gives any XP, so gamer.farm never buys those. When the shop sells no badge, it buys nothing and says so.
 
 Points spent are gone for good, so it's careful:
 
@@ -440,7 +440,7 @@ spends the account's Steam wallet, so it's careful:
 - **Billing details.** Steam may want billing details with every market purchase (some countries always do). Each order
   carries the ones saved on the account, exactly as Steam's own market page sends them, plus any tax your country adds
   on Steam's fee. Only when none are saved does it stop and tell you: buy one card by hand on the market once, and the
-  details are saved for next time. They're never written to the log, shown, or kept by nocat.farm.
+  details are saved for next time. They're never written to the log, shown, or kept by gamer.farm.
 - **Limits.** *Spend at most a day* (1.50) and *Spend at most a week* (8.00), in the wallet's own currency, over any
   24 hours and any 7 days by Steam's clock (a wrong PC clock can't move them) - and never more than the wallet holds.
   *Always keep in the wallet* (0, off) never lets buying take the wallet below an amount you pick: add 100.00 with 20.00
@@ -461,7 +461,7 @@ spends the account's Steam wallet, so it's careful:
 - **Only its own orders.** It takes back only orders it placed itself (it keeps their ids) - never a buy order you
   placed by hand.
 - **Its spending list.** If the list of what it spent (config/state/buy-*account*.json) can't be read, it buys nothing
-  and says so - fix or delete that file. If the list can't be saved, it stops buying until nocat.farm starts again.
+  and says so - fix or delete that file. If the list can't be saved, it stops buying until gamer.farm starts again.
 - **Then it's crafted.** *Craft badges from card sets* has to be on - otherwise nothing is bought, or the cards would
   only sit there. Once a set is whole, badge crafting looks within the hour instead of at its daily round.
 - **Spending the day's money.** After a look that bought sets, while money is left today and cheap levels are still to
@@ -507,10 +507,10 @@ the market, no dumped card, the limits) still apply.
 
 Once a day it also reads public "cheapest sets" lists, only to choose which games to check first: steamcardexchange.net's
 badge price list (the 1,000 cheapest sets). It reads each site's robots.txt first and follows it, under the name
-"nocat.farm set finder", and leaves a site alone that day if it doesn't answer or says no. steam.tools' list is skipped
+"gamer.farm set finder", and leaves a site alone that day if it doesn't answer or says no. steam.tools' list is skipped
 for now: robots.txt keeps programs off it. Their prices are never kept or trusted - only which games to look at.
 
-**Shared with other nocat.farm users.** With *Share cheapest sets with other nocat.farm users* on (*Global settings →
+**Shared with other gamer.farm users.** With *Share cheapest sets with other gamer.farm users* on (*Global settings →
 Updates & plugins*, on by default, only while *Count me as a user* is on), about every 6 hours the finder sends
 gamer.mom the cheapest whole sets it knows (up to 300: each set's game, its cards' names, each card's cheapest price in
 US cents, how many are for sale and how long ago that was seen - nothing about you or your accounts) and takes back the
@@ -528,7 +528,7 @@ the 1,000 cheapest sets checked*) and when it last looked. `sets` alone shows th
 game, in US dollars. It only reads: nothing is bought. The buying preview (*Buy missing cards*' popup) shows the five
 cheapest under what it would buy.
 
-**Card swaps.** With [card swaps](trades.md#card-swaps-with-other-nocatfarm-users) on as well, a missing card that a
+**Card swaps.** With [card swaps](trades.md#card-swaps-with-other-gamerfarm-users) on as well, a missing card that a
 swap gamer.mom has already paired will bring is waited for instead of bought - when the spare card it gives for it is
 worth less than the card costs to buy, or when the swap's offer is already out (buying it then would be a second
 copy). The whole set waits with it: never half a set. If no swap brings the card, swaps are off, or it isn't sure,
@@ -542,7 +542,7 @@ that's held whole, since the missing cards will be bought.
 **How it buys.** Trading cards are bought the way Steam's new market buys them: one order for one card at the
 cheapest listing's price, which goes through at once - or, if somebody bought that card first, is taken back. Nothing
 is ever left waiting on the market. If Steam wants each purchase confirmed in the Steam app, it confirms its own
-purchase with the account's authenticator when that's in nocat.farm - only that market purchase, matched exactly. If
+purchase with the account's authenticator when that's in gamer.farm - only that market purchase, matched exactly. If
 it can't confirm it, it denies that same confirmation so nothing is left waiting in your Steam app. By email, it buys
 nothing and tells you once.
 
@@ -552,7 +552,7 @@ asking, it takes the order back. If Steam still hasn't said, the purchase stays 
 decides: a copy of the card that wasn't there before the order proves it was bought (each copy proves one purchase,
 never two). The inventory is read gently - a little after the purchase, and once a minute at most.
 
-**Confirming on your phone.** Without the authenticator in nocat.farm, a purchase Steam wants confirmed in the Steam
+**Confirming on your phone.** Without the authenticator in gamer.farm, a purchase Steam wants confirmed in the Steam
 app waits for you, like a market listing: the log says *confirm the card purchase in the Steam app* (once for the
 set), and you confirm it on your phone. Until then it counts as spent against the limits. While it waits, it sends
 the order again with your confirmation every couple of minutes, as Steam's page does (that asks Steam, it doesn't
@@ -628,7 +628,7 @@ badge still needs (at level 2 it keeps 3 of each), and second copies of backgrou
 
 **Never touched, whatever the settings:**
 
-- anything that came in within the last 7 days (counted from when nocat.farm first saw it). Everything already in
+- anything that came in within the last 7 days (counted from when gamer.farm first saw it). Everything already in
   the inventory the first time it looks counts as old, so months-old cards don't wait a week - only items that come in
   after that do;
 - anything on your keep list (item names, or whole games);
@@ -653,7 +653,7 @@ it's kept).
 **Prices in each account's own currency.** Every price that decides anything - the price limit, the daily value
 cap, gems or selling - is in that account's own Steam wallet currency, so two accounts in different countries never
 share a number. Steam's market search prices a whole game's items in one request, but only ever answers in US dollars;
-so for a wallet in another currency nocat.farm learns the rate from the market itself - it prices a few items both
+so for a wallet in another currency gamer.farm learns the rate from the market itself - it prices a few items both
 ways (their Canadian price over their dollar price, say) and takes the middle one - keeps it for a day, and turns the
 search's dollars into the wallet's currency with it. An item whose converted price is close to the price limit (80%
 to 125% of it) is priced in its own currency instead, to be sure. A big inventory in Canadian dollars is decided in a
@@ -684,7 +684,7 @@ less than the sale, and never makes a sale that pays less than the gems - each s
 eats tiny ones. An item nobody lists right now but that sold lately is kept when that sale would pay more than its
 gems. *Gems only* never sells, and keeps an item that would sell for at least 0.01 more than its gems. If neither
 pays anything it's kept. Turning items into gems needs no phone confirmation; selling does, unless the authenticator
-is in nocat.farm.
+is in gamer.farm.
 
 **Settings changed while a look runs count at once.** Right before each item is turned into gems, listed or sent,
 the settings are read again: Spare items turned off, the account paused or held by scam watch stops the look; an item
@@ -788,7 +788,7 @@ Robot accounts keep the gap in seconds.
 Turn Spare items off (or scam watch holds the account) in the middle of a look and it stops there: no more gems, no
 sacks packed or moved, no listing taken down.
 
-**Unsold listings step down.** A listing nocat.farm put up itself that's still unsold after 7 days comes down and goes
+**Unsold listings step down.** A listing gamer.farm put up itself that's still unsold after 7 days comes down and goes
 up again a cent cheaper than its last price - or a cent under a cheaper real listing, if there is one (a dumped
 listing doesn't count). Never under 80% of what it sold for over the last day: at that floor it stays up, so it
 doesn't go round and round. Each step is in the log: "lowered Level ??? Ninja from 0.31 CAD to 0.30 CAD - unsold 4 days". If the price
@@ -833,7 +833,7 @@ the log says once: turn it on in Settings to see what it would do.
 | Selling price | A cent under the real price (the last day's median, or the cheapest listing if higher, ignoring a dump), the same as the cheapest, the median (never under the cheapest; no median - kept), or a cent under the cheapest (cheapest 0.12 lists at 0.11; ignores a dump, never under your own cheapest listing, *Lowest relist price, of the recent sale price* or *Only sell if you get at least*). Priced again in the wallet's currency right before each listing | a cent under the real price |
 | Only sell if you get at least | The least you'd get after fees, in the wallet's own currency. Less: gems - but never gems worth less than the sale less 0.01 (then it's sold); no gems for it, kept. 0 sells anything | 0.05 |
 | A cheapest listing this far under its sales is a dump (%) | A cent under the real price: with only one sale in the last day and the cheapest listing this far under it, the prices contradict each other and the item is kept. A cent under the cheapest: that listing is ignored and it lists a cent under the sale price. 0: nothing counts as a dump | 50 |
-| Take down unsold listings after (days) | Only listings nocat.farm put up itself: still unsold, it comes down and goes up again a cent cheaper, or a cent under a cheaper real listing. Yours are never touched | 7 |
+| Take down unsold listings after (days) | Only listings gamer.farm put up itself: still unsold, it comes down and goes up again a cent cheaper, or a cent under a cheaper real listing. Yours are never touched | 7 |
 | Never go lower than (% of the real sale price) | The floor for those steps, a percent of what it sold for over the last day. At the floor it stays up | 80 |
 | If you decline a listing on your phone, try again after (days) | That item, every copy, isn't listed again for this long. 0 never again | 30 |
 
@@ -861,7 +861,7 @@ says, and they're never sent or sold. `booster open new do` opens them too. Whil
 with `booster new 603750` counts as automatic's own as well.
 
 A pack that came in within the last 7 days (*Leave new packs alone*), or is on the market or in a trade offer, is
-never opened. Packs nocat.farm made itself - automatic, *games I pick* or `booster <account> <appIDs>` - are never
+never opened. Packs gamer.farm made itself - automatic, *games I pick* or `booster <account> <appIDs>` - are never
 held back as new: that rule is for packs from drops and trades. On a human-mode account packs are opened only during
 its day, *Items per look, human mode* at a time (3 by default). Every opened pack is written in the log with what came
 out and how many of its cards the account didn't have yet: "opened s&box pack: 3× Flying Contraption (1 new)". Why it
@@ -885,7 +885,7 @@ every account.
 | Keep at least this many gems | A pack is made only while the gems cover it plus this | 0 |
 | Use gems for the most levels | With buying cards on: each time, a sack sold, a pack sold, a pack's cards sold or packs for the closest badge - whichever gives the most levels for 1,000 gems (see [Use gems for the most levels](#use-gems-for-the-most-levels)) | on |
 | Open booster packs | Never, only when the cards are worth more (on average), even when only the cheapest three are worth more, when either, or always. For levelling, always. Packs automatic made are opened by it either way | never |
-| Leave new packs alone for (days) | 0 to 30. Always shown: it holds back new packs from selling or sending too. Packs nocat.farm made itself are never held back | 7 |
+| Leave new packs alone for (days) | 0 to 30. Always shown: it holds back new packs from selling or sending too. Packs gamer.farm made itself are never held back | 7 |
 | Never open packs from these games | Games whose packs stay sealed. Always shown, even with opening off | empty |
 | Packs it doesn't open | Keep them, send them to another of your accounts, or sell them. Sending or selling happens only while Spare items is on; selling keeps to its caps and its selling price | keep |
 | Send unopened packs to | The name of another of your accounts here. Sending needs the phone to confirm unless the authenticator is added | - |

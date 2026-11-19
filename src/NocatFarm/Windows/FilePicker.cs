@@ -7,7 +7,7 @@ namespace NocatFarm.Windows;
 
 /// <summary>
 /// The window's "pick a file" window, for 'update file' typed with no path: Windows' own open-file window, owned by the
-/// nocat.farm window and run on its thread - the one thread here with a message pump that may show one.
+/// gamer.farm window and run on its thread - the one thread here with a message pump that may show one.
 /// </summary>
 public sealed partial class MainWindow {
 	/// <summary>WM_APP + 3: run what's waiting in <see cref="_onThread"/>, posted so it runs on the window's own thread.</summary>
@@ -25,7 +25,7 @@ public sealed partial class MainWindow {
 	internal bool CanPick => _running && _ready && (_hwnd != IntPtr.Zero);
 
 	/// <summary>
-	/// Windows' open-file window for a nocat.farm zip, starting in Downloads, on top of everything. The path picked, or null
+	/// Windows' open-file window for a gamer.farm zip, starting in Downloads, on top of everything. The path picked, or null
 	/// for Cancel. From any thread: the window itself is shown on the window's own.
 	/// </summary>
 	internal Task<string?> PickZipAsync() {
@@ -40,7 +40,7 @@ public sealed partial class MainWindow {
 		});
 
 		if ((_hwnd == IntPtr.Zero) || !PostMessage(_hwnd, WmRunHere, IntPtr.Zero, IntPtr.Zero)) {
-			picked.TrySetException(new InvalidOperationException("the nocat.farm window isn't open"));
+			picked.TrySetException(new InvalidOperationException("the gamer.farm window isn't open"));
 		}
 
 		return picked.Task;
@@ -64,12 +64,12 @@ public sealed partial class MainWindow {
 				lStructSize = Marshal.SizeOf<OpenFileName>(),
 				hwndOwner = _hwnd,
 				// Pairs of "what it's called" and "*.zip", each ending in a nul, and one more at the end.
-				lpstrFilter = Loc.T("nocat.farm zip") + " (*.zip)\0*.zip\0\0",
+				lpstrFilter = Loc.T("gamer.farm zip") + " (*.zip)\0*.zip\0\0",
 				nFilterIndex = 1,
 				lpstrFile = file,
 				nMaxFile = Chars,
 				lpstrInitialDir = Downloads(),
-				lpstrTitle = Loc.T("Pick the nocat.farm zip to install"),
+				lpstrTitle = Loc.T("Pick the gamer.farm zip to install"),
 				Flags = OfnFileMustExist | OfnPathMustExist | OfnHideReadOnly | OfnNoChangeDir | OfnExplorer
 			};
 
@@ -97,7 +97,7 @@ public sealed partial class MainWindow {
 
 	/// <summary>
 	/// The "pick a file" window, once it's there: put on top of every other window, and to the front if Windows lets it.
-	/// It's this thread's own dialog window, owned by the nocat.farm window.
+	/// It's this thread's own dialog window, owned by the gamer.farm window.
 	/// </summary>
 	private void RaisePicker() {
 		IntPtr found = IntPtr.Zero;

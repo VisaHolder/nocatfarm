@@ -109,11 +109,11 @@ public static class Confirmations {
 				_alignedAt = DateTime.UtcNow;
 				Log.Recovered("steamclock");
 			} else {
-				Log.DebugOnChange("steamclock", $"Steam's clock: QueryTime answered {(int) r.StatusCode} with no server_time - using this PC's clock", "nocat.farm");
+				Log.DebugOnChange("steamclock", $"Steam's clock: QueryTime answered {(int) r.StatusCode} with no server_time - using this PC's clock", "gamer.farm");
 			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException && !ct.IsCancellationRequested) {
 			// Retried every five minutes while it fails - the same reason once an hour is plenty.
-			Log.DebugOnChange("steamclock", $"Steam's clock: couldn't ask api.steampowered.com/ITwoFactorService/QueryTime: {Log.Describe(e)}", "nocat.farm");
+			Log.DebugOnChange("steamclock", $"Steam's clock: couldn't ask api.steampowered.com/ITwoFactorService/QueryTime: {Log.Describe(e)}", "gamer.farm");
 			_alignedAt = DateTime.UtcNow - TimeSpan.FromMinutes(55);   // try again in five minutes, not every call
 		} finally {
 			AlignGate.Release();
@@ -143,7 +143,7 @@ public static class Confirmations {
 		string? identity = bot.Secrets.Identity;
 
 		if (string.IsNullOrWhiteSpace(identity)) {
-			return (false, new Said("this account's authenticator isn't in nocat.farm").ToString(), []);
+			return (false, new Said("this account's authenticator isn't in gamer.farm").ToString(), []);
 		}
 
 		if ((bot.SteamId == 0) || !bot.IsOnline || !bot.Web.Ready) {

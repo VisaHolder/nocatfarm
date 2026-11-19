@@ -196,7 +196,7 @@ public static class Platform {
 
 	/// <summary>
 	/// The computer's own address on the home network, for the phone link - "192.168.1.20", or with a port when Docker
-	/// publishes a different one. Inside a container nocat.farm only sees Docker's internal network, which no phone can
+	/// publishes a different one. Inside a container gamer.farm only sees Docker's internal network, which no phone can
 	/// reach, so this is the only way it can know. Null when not set.
 	/// </summary>
 	public static string? HomeAddress => Environment.GetEnvironmentVariable(EnvHomeAddress)?.Trim() is { Length: > 0 } v ? v : null;

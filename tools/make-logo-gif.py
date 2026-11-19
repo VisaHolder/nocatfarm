@@ -1,4 +1,4 @@
-# The nocat.farm logo with the n filling up with purple liquid, as a looping GIF for the Discord card.
+# The gamer.farm logo with the g filling up with purple liquid, as a looping GIF for the Discord card.
 #   python tools/make-logo-gif.py src/NocatFarm/wwwroot/logo-liquid.gif   (the settings preview)
 # Then copy it to the site as public/nocatfarm/logo.gif (what the Discord card shows).
 import math, os, sys
@@ -20,7 +20,7 @@ n_mask = white & (xs < 680)
 dot_mask = white & (xs >= 680)
 # soft edges: the anti-aliased coverage of the white shapes
 cover = np.clip((lum - 0.25) / (0.94 - 0.25), 0, 1) * logo[..., 3]
-cover[(xs < 140) | (xs > 890) | (ys < 200) | (ys > 750)] = 0   # the icon's border and corners: flat background
+cover[(xs < 140) | (xs > 890) | (ys < 150) | (ys > 860)] = 0   # the icon's border and corners: flat background
 n_cov = np.where(xs < 680, cover, 0)
 dot_cov = np.where(xs >= 680, cover, 0)
 

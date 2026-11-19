@@ -1,15 +1,15 @@
-; nocat.farm setup - built by tools/package-release.ps1 with Inno Setup 7:
+; gamer.farm setup - built by tools/package-release.ps1 with Inno Setup 7:
 ;
 ;   ISCC /DAppVersion=1.4.8 /DSourceDir=<staged release folder> tools\installer\nocatfarm.iss
 ;   ISCC /DAppVersion=1.4.8 /DPreview tools\installer\nocatfarm.iss      (the real screens, installs nothing -
 ;                                                                     /UPGRADE, /NEWER, /FRESH or /SHOTS to see the others)
 ;
-; One screen in nocat.farm's own look - black, a thin grey border, the wordmark, monospace, [x] toggles, flat
+; One screen in gamer.farm's own look - black, a thin grey border, the wordmark, monospace, [x] toggles, flat
 ; buttons - instead of Windows' wizard pages. It does the Windows side only (files, shortcuts, start with Windows,
 ; moving an existing copy over); phone, "from anywhere", updates and the firewall are chosen in the dashboard's
 ; first-run setup, which opens when it's done.
 ;
-; Installs for the person running it - %LOCALAPPDATA%\Programs\nocat.farm, no admin - so nocat.farm can keep
+; Installs for the person running it - %LOCALAPPDATA%\Programs\gamer.farm, no admin - so gamer.farm can keep
 ; updating itself (Program Files would need an admin prompt for every update). The app, its settings and its logs
 ; all live in that one folder, exactly like the portable zip.
 ;
@@ -20,7 +20,7 @@
   #error Pass /DAppVersion=x.y.z
 #endif
 
-#define AppName "nocat.farm"
+#define AppName "gamer.farm"
 #define AppExe "nocatFarm.exe"
 
 [Setup]
@@ -31,8 +31,8 @@ AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher=reap.
 AppPublisherURL=https://gamer.mom
-AppSupportURL=https://github.com/VisaHolder/nocatfarm/issues
-AppUpdatesURL=https://github.com/VisaHolder/nocatfarm/releases
+AppSupportURL=https://github.com/VisaHolder/gamerfarm/issues
+AppUpdatesURL=https://github.com/VisaHolder/gamerfarm/releases
 AppComments=Free. If you paid for it, you got scammed.
 AppCopyright=reap.
 VersionInfoCompany=reap.
@@ -54,7 +54,7 @@ SetupIconFile=..\..\src\NocatFarm\nocatFarm.ico
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 WizardStyle=modern
-; Never Inno's own language box: a language nocat.farm doesn't speak gets English.
+; Never Inno's own language box: a language gamer.farm doesn't speak gets English.
 ShowLanguageDialog=no
 LanguageDetectionMethod=uilanguage
 CloseApplications=no
@@ -63,11 +63,11 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 OutputDir=..\..\dist
 #ifdef Preview
-OutputBaseFilename=nocat.farm-v{#AppVersion}-setup-PREVIEW
+OutputBaseFilename=gamer.farm-v{#AppVersion}-setup-PREVIEW
 Uninstallable=no
 CreateUninstallRegKey=no
 #else
-OutputBaseFilename=nocat.farm-v{#AppVersion}-setup
+OutputBaseFilename=gamer.farm-v{#AppVersion}-setup
 #endif
 
 [Languages]
@@ -89,6 +89,13 @@ Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.i
 Source: "art\logo-128.bmp"; Flags: dontcopy
 #ifndef Preview
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; 2.0.0: the shortcuts were called nocat.farm before the rename. Updating an install, the old ones go and the new ones
+; below take their place (a desktop one only where there was one - see NoteOldDesktopIcon). A fresh install leaves any
+; nocat.farm shortcut alone: it isn't this setup's, it may be one somebody made for a portable copy.
+[InstallDelete]
+Type: files; Name: "{autoprograms}\nocat.farm.lnk"; Check: IsUpgrading
+Type: files; Name: "{autodesktop}\nocat.farm.lnk"; Check: NoteOldDesktopIcon
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; Comment: "{cm:Tagline}"

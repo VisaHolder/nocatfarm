@@ -149,8 +149,8 @@ public static partial class LockedBackup {
 	}
 
 	public static Said Says(Problem p) => p switch {
-		Problem.NotOurs => new Said("that isn't a nocat.farm backup"),
-		Problem.Newer => new Said("that backup is from a newer nocat.farm - update first"),
+		Problem.NotOurs => new Said("that isn't a gamer.farm backup"),
+		Problem.Newer => new Said("that backup is from a newer gamer.farm - update first"),
 		Problem.WrongPassword => new Said("wrong backup password"),
 		_ => new Said("that backup file has been changed or damaged since it was made, so it can't be trusted")
 	};
@@ -445,7 +445,7 @@ public static partial class LockedBackup {
 				// file - a locked backup never has one), a log file, the manifest.
 				if (!Backup.SafeName(name) || !seen.Add(name)
 					|| !((name == Backup.ManifestName) || (config && (PartOf(name["config/".Length..]) != null)) || LogName().IsMatch(name))) {
-					return Fail(new Said("refused: {0} isn't something a nocat.farm backup holds", name));
+					return Fail(new Said("refused: {0} isn't something a gamer.farm backup holds", name));
 				}
 
 				byte[] data = ReadCapped(entry, Backup.MaxFileBytes);
@@ -470,7 +470,7 @@ public static partial class LockedBackup {
 		}
 
 		if (manifest is not { App: Backup.App }) {
-			return Fail(new Said("that isn't a nocat.farm backup - it has no manifest"));
+			return Fail(new Said("that isn't a gamer.farm backup - it has no manifest"));
 		}
 
 		if (manifest.Format > FormatNow) {
@@ -572,11 +572,11 @@ public static partial class LockedBackup {
 	}
 
 	// ── where they go ───────────────────────────────────────────────────────
-	/// <summary>nocat.farm-backup-2026-10-11.nfbackup - the date it was made, local time.</summary>
+	/// <summary>gamer.farm-backup-2026-10-11.nfbackup - the date it was made, local time.</summary>
 	public static string FileName(DateTime local, string suffix = "") =>
-		$"nocat.farm-backup-{local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{suffix}{Extension}";
+		$"gamer.farm-backup-{local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{suffix}{Extension}";
 
-	[GeneratedRegex(@"^nocat\.farm-backup-\d{4}-\d{2}-\d{2}(?:-\d{6}(?:-\d+)?)?\.nfbackup\z", RegexOptions.CultureInvariant)]
+	[GeneratedRegex(@"^(?:gamer|nocat)\.farm-backup-\d{4}-\d{2}-\d{2}(?:-\d{6}(?:-\d+)?)?\.nfbackup\z", RegexOptions.CultureInvariant)]
 	private static partial Regex OurName();
 
 	/// <summary>Whether a file name is one of ours - the only files the keep count ever deletes.</summary>
@@ -652,7 +652,7 @@ public static partial class LockedBackup {
 				WriteInto(Backup.Folder, locked, now, mustExist: false);
 				Prune(Backup.Folder, g.BackupKeep);
 			} catch (Failed f) {
-				Log.Warn(new Said("backup: the copy next to nocat.farm wasn't saved - {0}", f.Why));
+				Log.Warn(new Said("backup: the copy next to gamer.farm wasn't saved - {0}", f.Why));
 			}
 		}
 
@@ -710,7 +710,7 @@ public static partial class LockedBackup {
 	}
 
 	/// <summary>
-	/// Whether a backup folder is made owner-only (0700 off Windows): one nocat.farm makes itself, and its own backups
+	/// Whether a backup folder is made owner-only (0700 off Windows): one gamer.farm makes itself, and its own backups
 	/// folder. A folder of the owner's that's already there - a Dropbox, a NAS share - is left as it is; the backup files
 	/// in it are owner-only all the same.
 	/// </summary>

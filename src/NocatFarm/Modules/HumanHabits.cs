@@ -381,7 +381,7 @@ public sealed record LearnedHabits(HabitPicture All, HabitPicture? Weekdays, Hab
 /// Turns "Steam says somebody else is playing on this account" - read every tick - into finished sittings.
 /// </summary>
 internal sealed class OwnerWatch {
-	/// <summary>No word for this long (the PC asleep, nocat.farm closed) and the sitting ends where it was last seen.</summary>
+	/// <summary>No word for this long (the PC asleep, gamer.farm closed) and the sitting ends where it was last seen.</summary>
 	internal static readonly TimeSpan LostAfter = TimeSpan.FromMinutes(30);
 
 	/// <summary>How often "last seen" is written out while a sitting goes on - every tick would be a write every 20 seconds.</summary>
@@ -413,7 +413,7 @@ internal sealed class OwnerWatch {
 
 	/// <summary>
 	/// One that keeps the sitting in progress in the account's state, so a restart in the middle of one (an update, say)
-	/// carries on with it. It was kept in memory only: he played from 21:26, nocat.farm updated at 22:18, and all it kept
+	/// carries on with it. It was kept in memory only: he played from 21:26, gamer.farm updated at 22:18, and all it kept
 	/// was "Counter-Strike 2 for 37m" from 22:19 - the first 53 minutes gone and the start time wrong.
 	/// </summary>
 	internal OwnerWatch(string bot) {
@@ -438,7 +438,7 @@ internal sealed class OwnerWatch {
 		Load(now);
 		List<OwnerHabits.Sitting> done = [];
 
-		// One read back after a restart is ended here too, when nocat.farm was off for longer than this.
+		// One read back after a restart is ended here too, when gamer.farm was off for longer than this.
 		if ((_since is { } open) && (now - _lastSeen > LostAfter)) {
 			Close(open, _lastSeen, done);
 		}
@@ -460,7 +460,7 @@ internal sealed class OwnerWatch {
 			_restoredAt = null;
 		} else if (_since is { } started) {
 			// Just back from a restart: Steam may not have said yet. Still nothing after a few minutes, and he stopped
-			// while nocat.farm was off - the sitting ends where he was last seen.
+			// while gamer.farm was off - the sitting ends where he was last seen.
 			if (_restoredAt is { } back) {
 				if (now - back >= RestoredGrace) {
 					Close(started, _lastSeen, done);

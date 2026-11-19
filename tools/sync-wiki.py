@@ -4,7 +4,7 @@ Copies the wiki in docs/ to the repo's GitHub Wiki tab, so the two never drift a
 docs/ is the source: it's versioned with the code and reviewed with it. The Wiki tab is a copy made from it -
 edits made there are overwritten by the next run.
 
-    python tools/sync-wiki.py <path to a clone of nocatfarm.wiki.git>
+    python tools/sync-wiki.py <path to a clone of gamerfarm.wiki.git (nocatfarm.wiki.git before the 2.0.0 rename)>
 
 Then commit and push in that clone. What it does to each page:
   - names it for the wiki (docs/human-mode.md -> Human-Mode.md, docs/README.md -> Home.md)
@@ -18,8 +18,8 @@ import sys
 
 REPO = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 DOCS = os.path.join(REPO, "docs")
-BLOB = "https://github.com/VisaHolder/nocatfarm/blob/main/"
-RAW = "https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/"
+BLOB = "https://github.com/VisaHolder/gamerfarm/blob/main/"
+RAW = "https://raw.githubusercontent.com/VisaHolder/gamerfarm/main/"
 
 # Wiki page names, in contents order. Pages not listed here aren't copied.
 PAGES = [
@@ -80,7 +80,7 @@ def main():
         sys.exit(__doc__)
     out = os.path.abspath(sys.argv[1])
     written = []
-    sidebar = ["**[nocat.farm](Home)**", ""]
+    sidebar = ["**[gamer.farm](Home)**", ""]
     for src, name in PAGES:
         path = os.path.join(DOCS, src)
         if not os.path.exists(path):
@@ -94,7 +94,7 @@ def main():
         with open(os.path.join(out, name + ".md"), "w", encoding="utf-8", newline="\n") as f:
             f.write(convert(text))
         written.append(name)
-    sidebar += ["", f"[Download]({'https://github.com/VisaHolder/nocatfarm/releases/latest'}) · [gamer.mom](https://gamer.mom)"]
+    sidebar += ["", f"[Download]({'https://github.com/VisaHolder/gamerfarm/releases/latest'}) · [gamer.mom](https://gamer.mom)"]
     with open(os.path.join(out, "_Sidebar.md"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(sidebar) + "\n")
     with open(os.path.join(out, "_Footer.md"), "w", encoding="utf-8", newline="\n") as f:

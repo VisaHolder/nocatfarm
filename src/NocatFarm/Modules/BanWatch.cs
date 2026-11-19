@@ -135,7 +135,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		MarketHold.FromBans(Bot, now, DateTime.UtcNow);
 
 		if (before == null) {
-			// The first look: whatever is there was there before nocat.farm was watching - say it once, calmly.
+			// The first look: whatever is there was there before gamer.farm was watching - say it once, calmly.
 			if (now.Any) {
 				Log.Info(new Said("bans on record: {0}", Summary(now)), Bot.Name);
 			}

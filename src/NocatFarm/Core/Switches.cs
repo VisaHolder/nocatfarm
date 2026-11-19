@@ -24,7 +24,7 @@ public static class Switches {
 	/// <summary>Buying cards (1.8.2): its go-ahead lives beside its spending, in Modules.BuyLedger.</summary>
 	public const string Buy = "BuyCards";
 
-	/// <summary>1.8.2: card swaps with other nocat.farm users (Core/CardExchange.cs) - its go-ahead is in its own ledger.</summary>
+	/// <summary>1.8.2: card swaps with other gamer.farm users (Core/CardExchange.cs) - its go-ahead is in its own ledger.</summary>
 	public const string Swaps = "CardSwaps";
 
 	/// <summary>Whether this account's spare items are on: the switch and its go-ahead together.</summary>
@@ -86,7 +86,7 @@ public static class Switches {
 		}
 
 		Said said = (feature, on) switch {
-			(Swaps, true) => new Said("Card swaps is on for {0}: it swaps spare cards with other nocat.farm users, within its limits", bot.Name),
+			(Swaps, true) => new Said("Card swaps is on for {0}: it swaps spare cards with other gamer.farm users, within its limits", bot.Name),
 			(Swaps, false) => new Said("Card swaps is off for {0}: nothing is swapped, and gamer.mom forgets it", bot.Name),
 			(Spare, true) => new Said("Spare items is on for {0}: it turns spare items into gems or sells them, within its limits", bot.Name),
 			(Spare, false) => new Said("Spare items is off for {0}: nothing is turned into gems or sold", bot.Name),

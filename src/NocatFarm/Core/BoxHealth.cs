@@ -4,13 +4,13 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// 1.8.5: how the machine nocat.farm runs on is doing - memory free, storage free where its files live, how hot the CPU
+/// 1.8.5: how the machine gamer.farm runs on is doing - memory free, storage free where its files live, how hot the CPU
 /// is - in 'status', Telegram's /status and the daily summary, with a warning once when it overheats, or storage or
 /// memory runs out (and once more only after it recovered). reap's farm lives on a TV box nobody looks at.
 /// </summary>
 public static class BoxHealth {
 	/// <param name="MemoryMb">Memory free for programs (null: can't be read here).</param>
-	/// <param name="StorageMb">Storage free where nocat.farm's files are.</param>
+	/// <param name="StorageMb">Storage free where gamer.farm's files are.</param>
 	/// <param name="TempC">The hottest CPU sensor (null: none readable - most Android boxes and PCs).</param>
 	public sealed record Health(long? MemoryMb, long? StorageMb, double? TempC);
 
@@ -102,8 +102,8 @@ public static class BoxHealth {
 
 		Check("hot", (hotSince is { } since) && (now - since >= HotFor), h.TempC is not >= HotC - 5, () => new Said("the machine is running hot - {0}°C for over {1} minutes; give it air (or a fan), or it may slow down or shut itself off",
 			Math.Round(h.TempC ?? 0).ToString(CultureInfo.InvariantCulture), (int) HotFor.TotalMinutes));
-		Check("storage", h.StorageMb is < LowStorageMb, h.StorageMb is not < LowStorageMb * 3 / 2, () => new Said("storage is nearly full where nocat.farm keeps its files - {0} free; logs and backups need room", Size(h.StorageMb ?? 0)));
-		Check("memory", h.MemoryMb is < LowMemoryMb, h.MemoryMb is not < LowMemoryMb * 3 / 2, () => new Said("the machine is nearly out of memory - {0} free; nocat.farm (or something beside it) may be stopped", Size(h.MemoryMb ?? 0)));
+		Check("storage", h.StorageMb is < LowStorageMb, h.StorageMb is not < LowStorageMb * 3 / 2, () => new Said("storage is nearly full where gamer.farm keeps its files - {0} free; logs and backups need room", Size(h.StorageMb ?? 0)));
+		Check("memory", h.MemoryMb is < LowMemoryMb, h.MemoryMb is not < LowMemoryMb * 3 / 2, () => new Said("the machine is nearly out of memory - {0} free; gamer.farm (or something beside it) may be stopped", Size(h.MemoryMb ?? 0)));
 
 		return (new Watch(hotSince, said), warn);
 	}
@@ -111,7 +111,7 @@ public static class BoxHealth {
 	private static Timer? _timer;
 	private static Watch _watch = new(null, new HashSet<string>());
 
-	/// <summary>Looks once a minute while nocat.farm runs.</summary>
+	/// <summary>Looks once a minute while gamer.farm runs.</summary>
 	public static void Start() {
 		_timer = new Timer(_ => {
 			try {

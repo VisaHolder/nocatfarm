@@ -21,7 +21,7 @@ up() { for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/status" > /
 pid() { head -n 1 "$T/data/config/state/instance.lock"; }
 gone() { for i in $(seq 1 40); do kill -0 "$1" 2>/dev/null || return 0; sleep 1; done; return 1; }
 # SIGHUP back to its default for what's started here, however this step was started: a signal that was ignored on entry
-# stays ignored in sh, and inherited that way nocat.farm would (rightly) leave it ignored.
+# stays ignored in sh, and inherited that way gamer.farm would (rightly) leave it ignored.
 hup_default() { python3 -c 'import os, signal, sys; signal.signal(signal.SIGHUP, signal.SIG_DFL); os.execv(sys.argv[1], sys.argv[1:])' "$@"; }
 detached() { if command -v setsid > /dev/null 2>&1; then setsid "$@"; else "$@"; fi; }
 

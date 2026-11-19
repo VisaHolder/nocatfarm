@@ -3,7 +3,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// 1.8.2 card swaps with other nocat.farm users - the receiving side. An offer whose note names a match ("nocat.farm card
+/// 1.8.2 card swaps with other gamer.farm users - the receiving side. An offer whose note names a match ("gamer.farm card
 /// swap #...") on an account with card swaps on is checked against that match (<see cref="CardExchange.Verify"/>) instead
 /// of the ordinary fair-swap test, once when it comes and again right before it's accepted:
 /// <list type="bullet">
