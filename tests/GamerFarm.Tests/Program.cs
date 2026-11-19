@@ -30086,6 +30086,9 @@ await AddonTradeChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, ".
 // 1.9.2: farm.gamer.mom - the dashboard from that website, talking to this app on 127.0.0.1: CORS for that one origin, pairing, and the gate.
 await FarmWebChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
+// 2.0.2: one-time sign-in links - who may ask, once and 60 seconds, the same session as the password, the lockout, and from outside.
+await SignInLinkChecks.RunAsync(Check, Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+
 // SETTINGSCOUNT
 // Last of all: nothing the checks made is left in the temp folder.
 // ── 2.0.1: the names from before - read where they are, moved over, and old plugins still loading ─────────────────────
@@ -41526,6 +41529,313 @@ static class FarmWebChecks {
 				await web.DisposeAsync();
 			}
 
+			currentWeb.SetValue(null, realWeb);
+			GamerFarm.Config.Live.Global = wasLive;
+			GamerFarm.Config.ConfigStore.UseRoot(realRoot);
+			GamerFarm.Core.Visitors.Reload();
+			GamerFarm.Log.Suppressed = wasSuppressed;
+			TestTemp.Gone(root);
+
+			if (!hadWww && Directory.Exists(servedWww) && !Directory.EnumerateFileSystemEntries(servedWww).Any()) {
+				try { Directory.Delete(servedWww); } catch (IOException) { /* the next build's */ }
+			}
+		}
+	}
+}
+
+/// <summary>
+/// 2.0.2: one-time sign-in links (Web/WebHostSignInLink.cs). A real dashboard with a password on a free port, nothing but this
+/// PC's loopback. Who may ask for one, what the code is, that it works once and for 60 seconds, that the browser gets exactly
+/// a password sign-in's session (cookie, Phone page, sign out everywhere), that the redirect drops the code, that a wrong one
+/// counts towards the lockout, and that from outside it follows the password's rules.
+/// </summary>
+static class SignInLinkChecks {
+	sealed record Answer(System.Net.HttpStatusCode Code, string Body, Dictionary<string, string> Headers, List<string> Cookies) {
+		public string H(string name) => Headers.TryGetValue(name, out string? v) ? v : "";
+		public System.Text.Json.Nodes.JsonNode? Json { get { try { return System.Text.Json.Nodes.JsonNode.Parse(Body); } catch { return null; } } }
+		public string? Cookie(string name) => Cookies.FirstOrDefault(c => c.StartsWith(name + "=", StringComparison.Ordinal));
+	}
+
+	public static async Task RunAsync(Action<string, bool, string> check, string repo) {
+		void Check(string name, bool ok, string detail = "") => check(name, ok, detail);
+		string Src(string rel) => File.ReadAllText(Path.Combine(repo, rel)).Replace("\r\n", "\n");
+		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+		const string Password = "a-long-dashboard-password";
+
+		// ── what's written, checked as written ──
+		string link = Src("src/GamerFarm/Web/WebHostSignInLink.cs");
+		Check("sign-in link: the code is 32 random bytes, URL-safe, kept only as a hash",
+			link.Contains("Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32))", StringComparison.Ordinal)
+			&& link.Contains("new SignInLink(CodeHash(code), now.AddSeconds(SignInLinkSeconds), PasswordKey)", StringComparison.Ordinal)
+			&& GamerFarm.Web.WebHost.SignInLinkSeconds == 60 && GamerFarm.Web.WebHost.SignInLinksKept is > 0 and <= 5);
+		Check("sign-in link: compared in constant time, against every waiting link",
+			link.Contains("if (CryptographicOperations.FixedTimeEquals(l.Hash, hash)) {", StringComparison.Ordinal)
+			&& !link.Contains("break;", StringComparison.Ordinal));
+		Check("sign-in link: from outside with the Telegram code on, it asks for the code - as the right password does",
+			link.Contains("if (NeedsCode(internet)) {\n\t\t\tGiveBack(attempt);\n\t\t\tstring? challenge = await SendCodeAsync(ip, thisPc, device, link.Key, ctx.RequestAborted, link: true)", StringComparison.Ordinal)
+			&& Src("src/GamerFarm/wwwroot/app.js").Contains("if (what === 'code') {\n    loginChallenge = a;", StringComparison.Ordinal));
+		Check("sign-in link: the lockout and the brake are checked before the code is looked at, and a wrong one is counted",
+			link.IndexOf("Reserve(ip, thisPc, internet, device)", StringComparison.Ordinal) is > 0 and int reserveAt
+			&& reserveAt < link.IndexOf("TakeSignInCode(typed)", StringComparison.Ordinal)
+			&& link.Contains("CountFailure(attempt, Visitors.What.WrongCode, link: true);", StringComparison.Ordinal));
+		Check("sign-in link: farm.gamer.mom can't ask for one - the route, the handler and 'dashboard link' from its Console",
+			GamerFarm.Web.FarmWeb.RouteAccess("POST", "/api/signin-link") == GamerFarm.Web.FarmWeb.Access.Refused
+			&& link.Contains("if (IsFarm(ctx) || !Authorised(ctx)) {", StringComparison.Ordinal)
+			&& !GamerFarm.Web.FarmWeb.CommandAllowed(null, "dashboard link") && !GamerFarm.Web.FarmWeb.CommandAllowed(null, "link link")
+			&& GamerFarm.Web.FarmWeb.CommandAllowed(null, "dashboard"));
+		Check("sign-in link: Steam chat can't ask for one ('dashboard' is refused there whole)", GamerFarm.Commands.SteamChatRefuses("dashboard"));
+		string reply = "A sign-in link for the dashboard - it works once, for 60 seconds:\n  On the PC itself: http://127.0.0.1:7242/?signin=Ab3_-xYz0123456789abcdefghijklmnopqrstuvwxy";
+		List<string> logged = GamerFarm.Commands.ReplyForLog("dashboard link", reply);
+		Check("sign-in link: 'dashboard link' never puts the code in the log file",
+			logged.Count == 2 && !string.Join("\n", logged).Contains("Ab3_-xYz", StringComparison.Ordinal) && string.Join("\n", logged).Contains("signin=*****", StringComparison.Ordinal),
+			string.Join(" | ", logged));
+		Check("sign-in link: the log says how it signed in, in plain words",
+			Src("src/GamerFarm/Core/Visitors.cs").Contains("\"dashboard: signed in with a sign-in link from {0} ({1}, {2})\"", StringComparison.Ordinal));
+		Check("sign-in link: 'dashboard link' is in the command list and the docs",
+			GamerFarm.Commands.All.Single(static c => c.Name == "dashboard").Args.Contains("link", StringComparison.Ordinal)
+			&& Src("docs/COMMANDS.md").Contains("dashboard link", StringComparison.Ordinal)
+			&& Src("docs/dashboard.md").Contains("POST /api/signin-link", StringComparison.Ordinal));
+
+		// ── a real dashboard ──
+		string realRoot = GamerFarm.Config.ConfigStore.Root;
+		GamerFarm.Config.GlobalConfig wasLive = GamerFarm.Config.Live.Global;
+		PropertyInfo currentWeb = typeof(GamerFarm.Web.WebHost).GetProperty("Current")!;
+		object? realWeb = currentWeb.GetValue(null);
+		Func<string>? wasUrl = GamerFarm.Commands.DashboardUrl;
+		bool wasSuppressed = GamerFarm.Log.Suppressed;
+		GamerFarm.Log.Suppressed = true;
+		string root = Path.Combine(Path.GetTempPath(), "nf-signin-" + Guid.NewGuid().ToString("N"));
+		string servedWww = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+		bool hadWww = Directory.Exists(servedWww);
+		Directory.CreateDirectory(Path.Combine(root, "config", "state"));
+		GamerFarm.Config.ConfigStore.UseRoot(root);
+		GamerFarm.Core.Visitors.Reload();
+		System.Net.Sockets.TcpListener free = new(System.Net.IPAddress.Loopback, 0);
+		free.Start();
+		int port = ((System.Net.IPEndPoint) free.LocalEndpoint).Port;
+		free.Stop();
+		GamerFarm.Web.WebHost? web = null;
+
+		try {
+			var mgr = new GamerFarm.Core.BotManager(new GamerFarm.Config.GlobalConfig {
+				WebEnabled = true, WebHost = "127.0.0.1", WebPort = port, WebPassword = Password, FarmWebAllowed = true, WebRemoteAccess = false
+			});
+			GamerFarm.Config.Live.Global = mgr.Global;
+			web = new GamerFarm.Web.WebHost(mgr, mgr.Global);
+			bool started = (bool) await (Task<bool>) typeof(GamerFarm.Web.WebHost).GetMethod("StartAsync", Inst, [typeof(string), typeof(int)])!.Invoke(web, ["127.0.0.1", port])!;
+			Check("sign-in link: the dashboard starts for the checks", started);
+			using HttpClient http = new(new SocketsHttpHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = new Uri($"http://127.0.0.1:{port}/"), Timeout = TimeSpan.FromSeconds(15) };
+
+			async Task<Answer> Send(string method, string path, string? token = null, string? json = null, string? from = null, string? cookie = null, string? origin = null) {
+				using HttpRequestMessage req = new(new HttpMethod(method), path);
+
+				if (token != null) {
+					req.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
+				}
+
+				if (from != null) {
+					req.Headers.TryAddWithoutValidation("X-Forwarded-For", from);
+				}
+
+				if (cookie != null) {
+					req.Headers.TryAddWithoutValidation("Cookie", cookie);
+				}
+
+				if (origin != null) {
+					req.Headers.TryAddWithoutValidation("Origin", origin);
+					req.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "cross-site");
+				}
+
+				if (json != null) {
+					req.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+				}
+
+				using HttpResponseMessage r = await http.SendAsync(req);
+				Dictionary<string, string> h = new(StringComparer.OrdinalIgnoreCase);
+
+				foreach (var kv in r.Headers.Concat(r.Content.Headers)) {
+					h[kv.Key] = string.Join(", ", kv.Value);
+				}
+
+				List<string> cookies = r.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? set) ? [.. set] : [];
+
+				return new Answer(r.StatusCode, await r.Content.ReadAsStringAsync(), h, cookies);
+			}
+
+			Task<Answer> Mint(string? token, string? cookie = null) => Send("POST", "/api/signin-link", token: token, json: "{}", cookie: cookie);
+			Task<Answer> Open(string code, string? from = null) => Send("GET", "/?signin=" + Uri.EscapeDataString(code), from: from);
+			string CodeOf(Answer a) => (string?) a.Json?["code"] ?? "";
+			string SaidOf(Answer a) => System.Text.RegularExpressions.Regex.Match(a.Body, "data-signin=\"([^\"]*)\"").Groups[1].Value;
+			string CookieValue(string setCookie) => setCookie.Split(';')[0];
+			string CookieFlags(string setCookie) => string.Join(";", setCookie.Split(';').Skip(1).Select(static p => p.Trim().ToLowerInvariant()).Where(static p => !p.StartsWith("expires=", StringComparison.Ordinal)).Order());
+			var failures = (System.Collections.IDictionary) typeof(GamerFarm.Web.WebHost).GetField("_failures", Inst)!.GetValue(web)!;
+			int FailuresFrom(string ip) => failures.Contains(ip) ? (int) failures[ip]!.GetType().GetField("Item1")!.GetValue(failures[ip])! : 0;
+
+			// ── who may ask ──
+			Answer noOne = await Mint(null);
+			Answer junk = await Mint("not-a-session");
+			Check("sign-in link: nobody signed in can't ask for one", noOne.Code == System.Net.HttpStatusCode.Unauthorized && junk.Code == System.Net.HttpStatusCode.Unauthorized,
+				$"{noOne.Code} {junk.Code}");
+			Answer login = await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}");
+			string session = (string?) login.Json?["token"] ?? "";
+			string passwordCookie = login.Cookie("gamerfarm") ?? "";
+			Check("sign-in link: (the password signs in, as the relay does it)", session.Length > 0 && passwordCookie.Length > 0, login.Body);
+			Answer minted = await Mint(session);
+			string code = CodeOf(minted);
+			Check("sign-in link: a Bearer session gets {code, path, expiresIn} - exactly those, path /?signin=<code>, 60 seconds",
+				minted.Code == System.Net.HttpStatusCode.OK
+				&& (minted.Json as System.Text.Json.Nodes.JsonObject)?.Select(static kv => kv.Key).SequenceEqual(["code", "path", "expiresIn"]) == true
+				&& (string?) minted.Json?["path"] == "/?signin=" + code && (int?) minted.Json?["expiresIn"] == 60, minted.Body);
+			Check("sign-in link: the code is 128+ bits, URL-safe",
+				code.Length >= 22 && code.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_') && System.Buffers.Text.Base64Url.DecodeFromChars(code).Length >= 16, code.Length.ToString());
+			Answer byCookie = await Mint(null, CookieValue(passwordCookie));
+			Check("sign-in link: a dashboard session by its cookie can ask too", byCookie.Code == System.Net.HttpStatusCode.OK && CodeOf(byCookie).Length > 0 && CodeOf(byCookie) != code);
+
+			// farm.gamer.mom: a page paired the real way, asking with its own token.
+			Answer pair = await Send("POST", "/api/farm/pair", json: "{}", origin: GamerFarm.Web.FarmWeb.SiteOrigin);
+			string pairId = (string?) pair.Json?["Id"] ?? "";
+			await Send("POST", "/api/farm/answer", token: session, json: $"{{\"Id\":\"{pairId}\",\"Approve\":true}}");
+			string farmToken = (string?) (await Send("GET", "/api/farm/pair/" + pairId, origin: GamerFarm.Web.FarmWeb.SiteOrigin)).Json?["Token"] ?? "";
+			Answer farmStatus = await Send("GET", "/api/status", token: farmToken, origin: GamerFarm.Web.FarmWeb.SiteOrigin);
+			Answer farmMint = await Send("POST", "/api/signin-link", token: farmToken, json: "{}", origin: GamerFarm.Web.FarmWeb.SiteOrigin);
+			Answer farmMintBare = await Mint(farmToken);
+			Answer farmCmd = await Send("POST", "/api/command", token: farmToken, json: "{\"Line\":\"dashboard link\"}", origin: GamerFarm.Web.FarmWeb.SiteOrigin);
+			Check("sign-in link: a farm.gamer.mom token is refused - from its page, sent bare, and as 'dashboard link' in its Console",
+				farmToken.Length > 0 && farmStatus.Code == System.Net.HttpStatusCode.OK
+				&& farmMint.Code == System.Net.HttpStatusCode.Forbidden && farmMintBare.Code == System.Net.HttpStatusCode.Unauthorized
+				&& farmCmd.Code == System.Net.HttpStatusCode.Forbidden && !farmMint.Body.Contains("signin=", StringComparison.Ordinal) && !farmCmd.Body.Contains("signin=", StringComparison.Ordinal),
+				$"{farmToken.Length} {farmStatus.Code} {farmMint.Code} {farmMintBare.Code} {farmCmd.Code}");
+
+			// ── opening it ──
+			Answer opened = await Open(code);
+			string linkCookie = opened.Cookie("gamerfarm") ?? "";
+			Check("sign-in link: a right code redirects to / - the code in neither the address nor anything sent back",
+				opened.Code == System.Net.HttpStatusCode.Redirect && opened.H("Location") == "/" && !opened.Body.Contains(code, StringComparison.Ordinal)
+				&& opened.H("Cache-Control").Contains("no-store", StringComparison.Ordinal), $"{opened.Code} {opened.H("Location")}");
+			Check("sign-in link: ...with exactly the cookie a password sign-in gets - the same name and flags",
+				linkCookie.Length > 0 && CookieFlags(linkCookie) == CookieFlags(passwordCookie) && CookieFlags(linkCookie).Contains("httponly", StringComparison.Ordinal)
+				&& CookieFlags(linkCookie).Contains("samesite=strict", StringComparison.Ordinal) && CookieValue(linkCookie) != CookieValue(passwordCookie),
+				$"{CookieFlags(linkCookie)} / {CookieFlags(passwordCookie)}");
+			Answer withCookie = await Send("GET", "/api/status", cookie: CookieValue(linkCookie));
+			Answer staleAndCookie = await Send("GET", "/api/status", token: "an-old-token-from-before", cookie: CookieValue(linkCookie));
+			Check("sign-in link: the session works - and a page still holding an old token gets in by the cookie beside it",
+				withCookie.Code == System.Net.HttpStatusCode.OK && staleAndCookie.Code == System.Net.HttpStatusCode.OK, $"{withCookie.Code} {staleAndCookie.Code}");
+			GamerFarm.Core.Visitors.Visit newest = GamerFarm.Core.Visitors.Recent(1)[0];
+			Answer visitors = await Send("GET", "/api/visitors", token: session);
+			Check("sign-in link: it's listed among the visitors as a sign-in",
+				newest.What == GamerFarm.Core.Visitors.What.SignedIn && newest.Ip == "127.0.0.1"
+				&& (string?) visitors.Json?["Visits"]?[0]?["Kind"] == "SignedIn", $"{newest.What} {newest.Ip}");
+			Answer again = await Open(code);
+			Check("sign-in link: it works once - the second time it's the sign-in page saying it ran out, no cookie",
+				again.Code == System.Net.HttpStatusCode.OK && SaidOf(again) == "expired" && again.Cookie("gamerfarm") == null
+				&& again.H("Content-Type").StartsWith("text/html", StringComparison.Ordinal), $"{again.Code} [{SaidOf(again)}]");
+			Answer head = await Send("HEAD", "/?signin=" + CodeOf(byCookie));
+			Answer afterHead = await Open(CodeOf(byCookie));
+			Check("sign-in link: a HEAD (a link preview) doesn't use it up", head.Code == System.Net.HttpStatusCode.OK && afterHead.Code == System.Net.HttpStatusCode.Redirect, $"{head.Code} {afterHead.Code}");
+			web.ClearLockouts();
+
+			// Run out: 60 seconds after it was made.
+			string late = CodeOf(await Mint(session));
+			var links = (System.Collections.IList) typeof(GamerFarm.Web.WebHost).GetField("_signInLinks", Inst)!.GetValue(web)!;
+			object waiting = links[links.Count - 1]!;
+			waiting.GetType().GetField("<Expires>k__BackingField", Inst)!.SetValue(waiting, DateTime.UtcNow.AddSeconds(-1));
+			Answer expired = await Open(late);
+			Check("sign-in link: after its 60 seconds it's run out", SaidOf(expired) == "expired" && expired.Cookie("gamerfarm") == null, $"{expired.Code} [{SaidOf(expired)}]");
+			Answer empty = await Send("GET", "/?signin=");
+			Check("sign-in link: an empty or made-up one is no sign-in either", SaidOf(empty) == "expired" && SaidOf(await Open("x" + code)) == "expired" && empty.Cookie("gamerfarm") == null);
+			web.ClearLockouts();
+
+			// Only a few wait at once: the oldest goes.
+			List<string> many = [];
+			for (int i = 0; i <= GamerFarm.Web.WebHost.SignInLinksKept; i++) {
+				many.Add(CodeOf(await Mint(session)));
+			}
+			Check("sign-in link: only a few wait at once - one more drops the oldest",
+				links.Count == GamerFarm.Web.WebHost.SignInLinksKept && SaidOf(await Open(many[0])) == "expired" && (await Open(many[^1])).Code == System.Net.HttpStatusCode.Redirect, links.Count.ToString());
+			web.ClearLockouts();
+
+			// ── the lockout: a wrong link counts as a wrong password does, in the same count ──
+			const string Phone = "192.168.2.23";
+			string kept = CodeOf(await Mint(session));
+			await Open("wrong-one", Phone);
+			await Open(code, Phone);   // used already
+			int afterTwo = FailuresFrom(Phone);
+			for (int i = 0; i < 3; i++) {
+				await Send("POST", "/api/login", json: "{\"Password\":\"guess\"}", from: Phone);
+			}
+			Answer lockedOut = await Open(kept, Phone);
+			Check("sign-in link: a wrong or used one counts towards the address's lockout, together with wrong passwords",
+				afterTwo == 2 && FailuresFrom(Phone) == 5 && SaidOf(lockedOut).StartsWith("locked:", StringComparison.Ordinal) && lockedOut.Cookie("gamerfarm") == null,
+				$"{afterTwo} {FailuresFrom(Phone)} [{SaidOf(lockedOut)}]");
+			Answer lockedPw = await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}", from: Phone);
+			Check("sign-in link: ...and once locked out, the right password is refused there too", lockedPw.Code == System.Net.HttpStatusCode.TooManyRequests, lockedPw.Code.ToString());
+			web.ClearLockouts();
+			Answer fromPhone = await Open(kept, Phone);
+			Check("sign-in link: a link opened while locked out isn't used up - after the lockout it works, from home",
+				fromPhone.Code == System.Net.HttpStatusCode.Redirect && GamerFarm.Core.Visitors.Recent(1)[0] is { What: GamerFarm.Core.Visitors.What.SignedIn, Ip: Phone, Where: "home" },
+				$"{fromPhone.Code}");
+
+			// ── revoked ──
+			Answer before = await Send("GET", "/api/status", cookie: CookieValue(fromPhone.Cookie("gamerfarm") ?? ""));
+			string unopened = CodeOf(await Mint(session));
+			await Send("POST", "/api/visitors/signout", token: session, json: "{}");
+			Answer afterOut = await Send("GET", "/api/status", cookie: CookieValue(fromPhone.Cookie("gamerfarm") ?? ""));
+			Check("sign-in link: 'sign out everywhere' signs its session out, and a link not opened yet goes with it",
+				before.Code == System.Net.HttpStatusCode.OK && afterOut.Code == System.Net.HttpStatusCode.Unauthorized && SaidOf(await Open(unopened)) == "expired",
+				$"{before.Code} {afterOut.Code}");
+			web.ClearLockouts();
+			session = (string?) (await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}")).Json?["token"] ?? "";
+			string beforeChange = CodeOf(await Mint(session));
+			mgr.Global.WebPassword = "another-long-dashboard-password";
+			Answer afterChange = await Open(beforeChange);
+			mgr.Global.WebPassword = Password;
+			Check("sign-in link: made before the password changed, it signs nobody in", SaidOf(afterChange) == "expired" && afterChange.Cookie("gamerfarm") == null, $"{afterChange.Code}");
+			web.ClearLockouts();
+			session = (string?) (await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}")).Json?["token"] ?? "";
+
+			// ── from outside: the password's rules ──
+			const string Away = "203.0.113.9";
+			FieldInfo shut = typeof(GamerFarm.Web.WebHost).GetField("_internetShut", Inst)!;
+			FieldInfo paused = typeof(GamerFarm.Web.WebHost).GetField("_internetPausedUntil", Inst)!;
+			string outside = CodeOf(await Mint(session));
+			shut.SetValue(web, true);
+			Answer whileShut = await Open(outside, Away);
+			Answer pwWhileShut = await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}", from: Away);
+			shut.SetValue(web, false);
+			Check("sign-in link: with Open from anywhere switched itself off, a link from outside doesn't open it - as the password doesn't",
+				whileShut.Code == System.Net.HttpStatusCode.Forbidden && whileShut.Cookie("gamerfarm") == null && pwWhileShut.Code != System.Net.HttpStatusCode.OK,
+				$"{whileShut.Code} {pwWhileShut.Code}");
+			paused.SetValue(web, DateTime.UtcNow.AddMinutes(30));
+			Answer whilePaused = await Open(outside, Away);
+			Answer pwWhilePaused = await Send("POST", "/api/login", json: $"{{\"Password\":\"{Password}\"}}", from: Away);
+			paused.SetValue(web, DateTime.MinValue);
+			Check("sign-in link: with signing in from outside paused, it doesn't open either (and isn't used up)",
+				SaidOf(whilePaused).StartsWith("locked:", StringComparison.Ordinal) && whilePaused.Cookie("gamerfarm") == null && pwWhilePaused.Code == System.Net.HttpStatusCode.TooManyRequests,
+				$"[{SaidOf(whilePaused)}] {pwWhilePaused.Code}");
+			Answer awayOpen = await Open(outside, Away);
+			Check("sign-in link: with nothing in the way and no Telegram code to ask for, from outside it signs in as the password would - noted as the internet",
+				awayOpen.Code == System.Net.HttpStatusCode.Redirect && GamerFarm.Core.Visitors.Recent(1)[0] is { What: GamerFarm.Core.Visitors.What.SignedIn, Ip: Away, Where: "internet" },
+				$"{awayOpen.Code}");
+			await Open("wrong-from-outside", Away);
+			var misses = (System.Collections.ICollection) typeof(GamerFarm.Web.WebHost).GetField("_internetMisses", Inst)!.GetValue(web)!;
+			Check("sign-in link: a wrong one from outside counts towards the internet brake, as a wrong password does", misses.Count == 1 && FailuresFrom(Away) == 1, $"{misses.Count} {FailuresFrom(Away)}");
+			web.ClearLockouts();
+
+			// ── 'dashboard link', for everybody: console, Telegram, Discord ──
+			GamerFarm.Commands.DashboardUrl = () => web.Url;
+			string said = await GamerFarm.Commands.RunLoggedAsync(mgr, "dashboard link", "telegram");
+			System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(said, $@"http://127\.0\.0\.1:{port}/\?signin=([A-Za-z0-9_\-]+)");
+			Answer fromCommand = m.Success ? await Open(m.Groups[1].Value) : new Answer((System.Net.HttpStatusCode) 0, "", [], []);
+			Check("sign-in link: 'dashboard link' gives a working link at the dashboard's own address",
+				m.Success && fromCommand.Code == System.Net.HttpStatusCode.Redirect && said.Contains("60", StringComparison.Ordinal), said);
+			GamerFarm.Commands.DashboardUrl = () => "";
+			Check("sign-in link: 'dashboard link' with no dashboard running says so", !(await GamerFarm.Commands.RunLoggedAsync(mgr, "dashboard link", "console")).Contains("signin=", StringComparison.Ordinal));
+		} finally {
+			if (web != null) {
+				await web.DisposeAsync();
+			}
+
+			GamerFarm.Commands.DashboardUrl = wasUrl;
 			currentWeb.SetValue(null, realWeb);
 			GamerFarm.Config.Live.Global = wasLive;
 			GamerFarm.Config.ConfigStore.UseRoot(realRoot);

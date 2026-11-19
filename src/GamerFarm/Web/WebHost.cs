@@ -267,6 +267,9 @@ public sealed partial class WebHost : IAsyncDisposable {
 
 		// 1.9.2: the pages paired at farm.gamer.mom too.
 		ForgetFarm();
+
+		// 2.0.2: and any sign-in link not opened yet.
+		ForgetSignInLinks();
 	}
 
 	// ── sessions that outlive a restart ──
@@ -552,6 +555,17 @@ public sealed partial class WebHost : IAsyncDisposable {
 				}
 			});
 
+			// 2.0.2: a sign-in link, /?signin=<code> - answered here, before the page itself (Web/WebHostSignInLink.cs).
+			_app.Use(async (HttpContext ctx, RequestDelegate next) => {
+				if (IsSignInLink(ctx.Request)) {
+					await SignInByLinkAsync(ctx).ConfigureAwait(false);
+
+					return;
+				}
+
+				await next(ctx).ConfigureAwait(false);
+			});
+
 			_app.UseDefaultFiles();
 
 			// Revalidate every time rather than letting the browser guess.
@@ -729,12 +743,19 @@ public sealed partial class WebHost : IAsyncDisposable {
 			return IPAddress.IsLoopback(ip);
 		}
 
-		string? token = ctx.Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "", StringComparison.Ordinal)
-			?? ctx.Request.Cookies["gamerfarm"]
-			?? ctx.Request.Cookies["nocatfarm"];   // 2.0.1: a browser signed in before keeps its sign-in, under the name it was given
+		// 2.0.2: any one of them that's a signed-in session. Only the first was looked at, so a page still holding an old token
+		// from before a "sign out everywhere" sent it along and was turned away, with the cookie a sign-in link just gave it
+		// right there beside it.
+		string? bearer = ctx.Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "", StringComparison.Ordinal);
 
-		return !string.IsNullOrEmpty(token) && _sessions.TryGetValue(Hash(token), out DateTime expires) && (expires > DateTime.UtcNow);
+		return SignedInAs(bearer)
+			|| SignedInAs(ctx.Request.Cookies["gamerfarm"])
+			|| SignedInAs(ctx.Request.Cookies["nocatfarm"]);   // 2.0.1: a browser signed in before keeps its sign-in, under the name it was given
 	}
+
+	/// <summary>A token that's one of the signed-in sessions, not run out.</summary>
+	private bool SignedInAs(string? token) =>
+		!string.IsNullOrEmpty(token) && _sessions.TryGetValue(Hash(token), out DateTime expires) && (expires > DateTime.UtcNow);
 
 	/// <summary>
 	/// Checks the password. Right from home: signed in (<paramref name="token"/>). Right from the internet with the code
@@ -790,7 +811,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 	}
 
 	/// <summary>False when the password changed since it was checked - then nobody is signed in by it.</summary>
-	private bool SignIn(HttpContext ctx, Attempt attempt, string passwordKey, out string token) {
+	/// <param name="link">2.0.2: by a sign-in link, not the password - the log says so.</param>
+	private bool SignIn(HttpContext ctx, Attempt attempt, string passwordKey, out string token, bool link = false) {
 		GiveBack(attempt);
 		token = "";
 
@@ -806,7 +828,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 			SaveBrake();
 		}
 
-		Visitors.Note(Visitors.What.SignedIn, attempt.Ip, attempt.ThisPc, attempt.Device);
+		Visitors.Note(Visitors.What.SignedIn, attempt.Ip, attempt.ThisPc, attempt.Device, link: link);
 
 		foreach (string stale in _sessions.Where(static kv => kv.Value < DateTime.UtcNow).Select(static kv => kv.Key).ToArray()) {
 			_sessions.TryRemove(stale, out _);
@@ -940,19 +962,20 @@ public sealed partial class WebHost : IAsyncDisposable {
 	}
 
 	/// <summary>A wrong password or a wrong code: towards this address's lockout, and from the internet, the brake.</summary>
-	private void CountFailure(Attempt attempt, Visitors.What what) {
+	/// <param name="link">2.0.2: a sign-in link that was wrong, used or run out - the log says so.</param>
+	private void CountFailure(Attempt attempt, Visitors.What what, bool link = false) {
 		if (!attempt.Settle()) {
 			return;
 		}
 
 		try {
-			CountSettledFailure(attempt, what);
+			CountSettledFailure(attempt, what, link);
 		} finally {
 			SaveBrake();
 		}
 	}
 
-	private void CountSettledFailure(Attempt attempt, Visitors.What what) {
+	private void CountSettledFailure(Attempt attempt, Visitors.What what, bool link) {
 		(string ip, bool thisPc, string? device) = (attempt.Ip, attempt.ThisPc, attempt.Device);
 
 		// Already in the count - its place was taken before the compare (see Reserve).
@@ -967,7 +990,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 				_pendingCodes.TryRemove(id, out _);
 			}
 		} else {
-			Visitors.Note(what, ip, thisPc, device);
+			Visitors.Note(what, ip, thisPc, device, link: link);
 		}
 
 		if (!attempt.Internet) {
@@ -1048,7 +1071,8 @@ public sealed partial class WebHost : IAsyncDisposable {
 	/// Sends a fresh sign-in code to Telegram for this address and returns what the page quotes back with it, or null
 	/// when it couldn't be sent (Telegram down, or too many codes this hour) - then nobody gets in from outside.
 	/// </summary>
-	private async Task<string?> SendCodeAsync(string ip, bool thisPc, string? device, string passwordKey, CancellationToken ct) {
+	/// <param name="link">2.0.2: asked for by a sign-in link, not the password - the message says which.</param>
+	private async Task<string?> SendCodeAsync(string ip, bool thisPc, string? device, string passwordKey, CancellationToken ct, bool link = false) {
 		DateTime now = DateTime.UtcNow;
 
 		while (_codesSent.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
@@ -1070,8 +1094,11 @@ public sealed partial class WebHost : IAsyncDisposable {
 		string id = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
 		_codesSent.Enqueue(now);
 
-		Said message = new("gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) typed the right dashboard password from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
-			code, ip, Visitors.Device(device), CodeMinutes);
+		Said message = link
+			? new Said("gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
+				code, ip, Visitors.Device(device), CodeMinutes)
+			: new Said("gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) typed the right dashboard password from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
+				code, ip, Visitors.Device(device), CodeMinutes);
 
 		if (!await Notifier.SendPrivateNowAsync(message.ToString(), ct).ConfigureAwait(false)) {
 			Log.Warn(new Said("dashboard: couldn't send the sign-in code to Telegram - nobody can sign in from outside until it can"));
@@ -1130,6 +1157,7 @@ public sealed partial class WebHost : IAsyncDisposable {
 		MapBackups(app);   // the password-locked backups - Web/WebHostBackups.cs
 		MapSettingsCopy(app);   // 1.8.2: copy settings from another account - Web/WebHostSettingsCopy.cs
 		MapFarm(app);   // 1.9.2: farm.gamer.mom - Web/WebHostFarm.cs
+		MapSignInLink(app);   // 2.0.2: one-time sign-in links - Web/WebHostSignInLink.cs
 
 		app.MapGet("/api/ping", (HttpContext ctx) => Results.Json(new {
 			ok = true,

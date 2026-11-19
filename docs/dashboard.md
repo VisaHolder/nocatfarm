@@ -274,6 +274,16 @@ set WebHost 0.0.0.0
 then restarting. `dashboard` in the console, and `/dashboard` on Telegram and Discord, give the same links as the
 Phone page and say what's still missing.
 
+**A sign-in link.** `dashboard link` (in the console, or `/dashboard link` on Telegram and Discord) gives a link that
+opens the dashboard without typing the password. It works once, for 60 seconds. The browser that opens it is signed in
+just as if it had typed the password: it shows on the Phone page, and **Sign every device out** signs it out too. A link
+that was already used or has run out shows the normal sign-in page, and counts as a wrong password towards the lockout.
+From outside your home it follows the same rules as the password: with *Open from anywhere* off, paused or switched off,
+it doesn't open; with the Telegram code on, it still asks for the code. The log never shows the link. A program that's
+already signed in (with a session token from `POST /api/login`, sent as `Authorization: Bearer <token>`) can ask for
+one with `POST /api/signin-link`. The answer is `{"code":"...","path":"/?signin=...","expiresIn":60}`: open the
+dashboard's address plus `path` in the browser. Pages paired at farm.gamer.mom can't ask for one.
+
 To turn the dashboard off completely, `set WebEnabled false` and restart. Everything keeps working from the console.
 
 ## farm.gamer.mom

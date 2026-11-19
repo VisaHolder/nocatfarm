@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: 保留之前的版本最后写入的设置",
     "update: the version before is being put back - stopping": "更新：正在换回之前的版本 - 停止",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "更新已停止 - 这个服务启动的是 gamerFarm，2.0.1 之前的版本没有它；请手动装入。什么都没变",
-    "moving in: the startup entry from before 2.0.1 is gone": "迁移：2.0.1 之前的开机启动项已删除"
+    "moving in: the startup entry from before 2.0.1 is gone": "迁移：2.0.1 之前的开机启动项已删除",
+    "The dashboard isn't running, so there's no link to give.": "面板没有在运行，所以没有链接可给。",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "面板：{0} 通过登录链接登录了（{1}，{2}）",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "面板：{0}（{1}）的登录链接错误或已过期",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "gamer.farm 面板登录验证码：{0}\n\n{1}（{2}）有人从家外打开了面板登录链接。验证码 {3} 分钟内有效。\n\n不是你？不要把验证码告诉任何人。在这里发送 /visitors signout，然后修改面板密码。",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "面板登录链接 - 只能用一次，{0} 秒内有效：",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "面板没有设置密码，所以在这台电脑上本来就不用密码就能打开。",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "这个登录链接已过期。用密码登录，或者获取一个新链接。"
   },
   "settings": {
     "BackupToTelegram": {

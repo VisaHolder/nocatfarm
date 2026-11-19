@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: önceki bir sürümün en son yazdığı ayarlar tutuluyor",
     "update: the version before is being put back - stopping": "güncelleme: önceki sürüm geri konuyor - duruyor",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "güncelleme durdu - bu hizmet gamerFarm'ı başlatıyor, 2.0.1'den önceki sürümlerde o yok; birini elle kur. Hiçbir şey değişmedi",
-    "moving in: the startup entry from before 2.0.1 is gone": "taşınma: 2.0.1'den önceki başlangıç kaydı kaldırıldı"
+    "moving in: the startup entry from before 2.0.1 is gone": "taşınma: 2.0.1'den önceki başlangıç kaydı kaldırıldı",
+    "The dashboard isn't running, so there's no link to give.": "Panel çalışmıyor, bu yüzden verilecek bir bağlantı yok.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "panel: {0} adresinden giriş bağlantısıyla giriş yapıldı ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "panel: {0} ({1}) adresinden yanlış ya da süresi dolmuş giriş bağlantısı",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "gamer.farm panel giriş kodu: {0}\n\n{1} ({2}) adresindeki biri evin dışından bir panel giriş bağlantısı açtı. Kod {3} dakika geçerli.\n\nSen değil miydin? Kodu kimseye verme. Buraya /visitors signout gönder, sonra panel parolasını değiştir.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Panel için bir giriş bağlantısı - bir kez, {0} saniye boyunca çalışır:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "Panelin parolası yok, bu yüzden bu bilgisayarda zaten parolasız açılıyor.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Bu giriş bağlantısının süresi doldu. Parolayla giriş yap ya da yeni bir bağlantı al."
   },
   "settings": {
     "BackupToTelegram": {

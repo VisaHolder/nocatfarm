@@ -35,6 +35,11 @@ const farmPort = (() => {
 const API_BASE = HOSTED ? `http://127.0.0.1:${farmPort}` : '';
 const farmLocalUrl = () => `http://localhost:${farmPort || location.port || 7242}`;
 let token = HOSTED ? (farmStore.get('gamerfarm-farm-token') || '') : (localStorage.getItem('gamerfarm-token') || '');
+// 2.0.2: a sign-in link that didn't sign in - the app puts what it came to on <html data-signin>, for the sign-in page to
+// say. The code comes off the address at once, so it stays in neither the address bar nor the history.
+let signInLinkSaid = HOSTED ? null : document.documentElement.getAttribute('data-signin');
+// window.history: this script has a 'history' of its own just below (the console's), not set yet here.
+if (signInLinkSaid !== null) window.history.replaceState(null, '', '/');
 let refreshSeconds = 3;
 let state = null;          // /api/status
 let schema = null;         // /api/settings/schema
@@ -111,6 +116,24 @@ function showLogin(message) {
   $('app').classList.add('hidden');
   $('welcome').classList.add('hidden');
   if (message) $('loginError').textContent = message;
+  else if (signInLinkSaid) { const said = signInLinkSaid; signInLinkSaid = null; showSignInLink(said); }
+}
+
+/// 2.0.2: what a sign-in link came to, said once on the sign-in page: run out, locked, shut, or the Telegram code to type.
+function showSignInLink(said) {
+  const [what, a, b] = said.split(':');
+  if (what === 'code') {
+    loginChallenge = a;
+    loginAskCode(true, tf('We sent a 6-digit code to your Telegram. Type it here - it works for {0} minutes.', b));
+  } else if (what === 'locked') {
+    loginLocked(Number(a), b === '1');
+  } else if (what === 'closed') {
+    $('loginError').textContent = t('Open from anywhere switched itself off after too many wrong passwords. It opens again once it is turned back on at home.');
+  } else if (what === 'nocode') {
+    $('loginError').textContent = t("Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.");
+  } else {
+    $('loginError').textContent = t('That sign-in link has run out. Sign in with the password, or get a new link.');
+  }
 }
 
 // Too many wrong passwords: say that, count down, and say how to skip the wait - not "Wrong password" for the right one.

@@ -137,7 +137,7 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window."),
-		new("dashboard", "[unlock|cert]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'.", "web|link", "unlock"),
+		new("dashboard", "[unlock|cert|link]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard link' gives a one-time sign-in link: it opens the dashboard without typing the password, works once, for 60 seconds. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'.", "web|link", "unlock"),
 		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
 		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the gamer.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
@@ -850,6 +850,10 @@ public static partial class Commands {
 
 		masked = KeysMasked(Log.Scrub(masked), notKeys);
 
+		// 2.0.2: 'dashboard link' answers with a sign-in link - a whole dashboard session for a minute, and the log file is read
+		// by more than the owner (the dashboard's Log page, a page paired at farm.gamer.mom).
+		masked = SignInCode().Replace(masked, "signin=*****");
+
 		// 'redeem' answers with the key on a line of its own, or first, or quoted - in whatever shape it was given, and a key
 		// queued and activated later comes back with no line to say what it was. Not every long word in it: the game's name.
 		if (verb == "redeem") {
@@ -868,6 +872,10 @@ public static partial class Commands {
 	[System.Text.RegularExpressions.GeneratedRegex(@"\b[23456789BCDFGHJKMNPQRTVWXY]{5}\b", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
 	private static partial System.Text.RegularExpressions.Regex GuardCode();
 
+	/// <summary>2.0.2: the code of a dashboard sign-in link, wherever it's said - "?signin=" and what follows.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"signin=[A-Za-z0-9_\-]+", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex SignInCode();
+
 	/// <summary>A Steam Guard code as '2fa' says it, with the seconds it has left after it: "BCDFG   (25s left)".</summary>
 	[System.Text.RegularExpressions.GeneratedRegex(@"\b[23456789BCDFGHJKMNPQRTVWXY]{5}\b(?=\s+\(\d+s left\))", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
 	private static partial System.Text.RegularExpressions.Regex GuardCodeWithTimeLeft();
@@ -884,6 +892,14 @@ public static partial class Commands {
 	internal static string FarmDashboardLine(GlobalConfig g) => g.FarmWebAllowed
 		? $"{Environment.NewLine}  farm.gamer.mom  {Web.FarmWeb.PageUrl(g.WebPort)}   (in a browser on this PC, once an account is set up - setting one up stays on this PC's own address)"
 		: "";
+
+	/// <summary>
+	/// 2.0.2: 'dashboard link' - a fresh one-time sign-in link for each address the dashboard opens at. Only where the owner
+	/// types: Steam chat refuses 'dashboard' whole, and a page at farm.gamer.mom refuses 'link' (FarmWeb.Commands).
+	/// </summary>
+	private static string SignInLink() => Web.WebHost.Current is { } web && (DashboardUrl?.Invoke() is { Length: > 0 })
+		? web.SignInLinkText()
+		: new Said("The dashboard isn't running, so there's no link to give.").ToString();
 
 	/// <summary>Set by the host so 'exit' works from the dashboard too, not just from the console.</summary>
 	public static Action? ExitHandler { get; set; }
@@ -1066,6 +1082,8 @@ public static partial class Commands {
 						? await DashboardCertAsync().ConfigureAwait(false)   // 1.8.6: the certificate for the phone, again
 					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "anywhere" or "remote"
 						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
+						: (rest.Length > 0) && rest[0].Equals("link", StringComparison.OrdinalIgnoreCase)
+							? SignInLink()   // 2.0.2: a one-time sign-in link
 						: DashboardLinks.Text(mgr.Global) + FarmDashboardLine(mgr.Global),
 				"unlock" => Unlock(),
 				"visitors" or "who" => VisitorsCommand(rest),

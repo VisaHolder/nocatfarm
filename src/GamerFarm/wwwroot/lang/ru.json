@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: сохраняются настройки, которые последней записала прежняя версия",
     "update: the version before is being put back - stopping": "обновление: возвращается прежняя версия - останавливаюсь",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "обновление остановлено - эта служба запускает gamerFarm, которого нет в версиях до 2.0.1; установите такую вручную. Ничего не изменилось",
-    "moving in: the startup entry from before 2.0.1 is gone": "переезд: запись автозапуска из версии до 2.0.1 удалена"
+    "moving in: the startup entry from before 2.0.1 is gone": "переезд: запись автозапуска из версии до 2.0.1 удалена",
+    "The dashboard isn't running, so there's no link to give.": "Панель не запущена, поэтому ссылки нет.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "панель: вход по ссылке для входа с {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "панель: неверная или истёкшая ссылка для входа с {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "Код входа в панель gamer.farm: {0}\n\nКто-то с {1} ({2}) открыл ссылку для входа в панель не из дома. Код действует {3} мин.\n\nЭто не вы? Никому не сообщайте код. Отправьте сюда /visitors signout, затем смените пароль панели.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Ссылка для входа в панель - работает один раз, {0} с:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "У панели нет пароля, поэтому на этом компьютере она и так открывается без него.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Срок действия этой ссылки для входа истёк. Войдите с паролем или получите новую ссылку."
   },
   "settings": {
     "BackupToTelegram": {

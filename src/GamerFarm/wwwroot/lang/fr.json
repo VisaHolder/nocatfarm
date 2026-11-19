@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: les paramètres écrits en dernier par une version d'avant sont ceux qui sont gardés",
     "update: the version before is being put back - stopping": "mise à jour : la version d'avant est remise en place - arrêt",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "mise à jour arrêtée - ce service lance gamerFarm, que les versions d'avant 2.0.1 n'ont pas ; installez-en une à la main. Rien n'a changé",
-    "moving in: the startup entry from before 2.0.1 is gone": "déménagement : l'entrée de démarrage d'avant 2.0.1 a été retirée"
+    "moving in: the startup entry from before 2.0.1 is gone": "déménagement : l'entrée de démarrage d'avant 2.0.1 a été retirée",
+    "The dashboard isn't running, so there's no link to give.": "Le tableau de bord ne tourne pas, il n'y a donc pas de lien à donner.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "tableau de bord : connexion avec un lien de connexion depuis {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "tableau de bord : un lien de connexion faux ou expiré depuis {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "Code de connexion au tableau de bord gamer.farm : {0}\n\nQuelqu'un à {1} ({2}) a ouvert un lien de connexion au tableau de bord depuis l'extérieur de chez vous. Le code est valable {3} minutes.\n\nCe n'est pas vous ? Ne donnez le code à personne. Envoyez /visitors signout ici, puis changez le mot de passe du tableau de bord.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Un lien de connexion au tableau de bord - il marche une fois, pendant {0} secondes :",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "Le tableau de bord n'a pas de mot de passe, il s'ouvre donc sans sur ce PC de toute façon.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Ce lien de connexion a expiré. Connectez-vous avec le mot de passe, ou demandez un nouveau lien."
   },
   "settings": {
     "BackupToTelegram": {
