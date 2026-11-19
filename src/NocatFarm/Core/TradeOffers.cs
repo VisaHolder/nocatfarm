@@ -29,8 +29,11 @@ public static class TradeOffers {
 	/// <param name="Kind">1.9.1: what kind of Steam item it is, from the same description (add-on trade judges). Other when Steam didn't say.</param>
 	/// <param name="Tradable">1.9.1: Steam's description says it can be traded. False when Steam didn't say - never assumed.</param>
 	/// <param name="Marketable">1.9.1: Steam's description says it can be sold on the market. False when Steam didn't say.</param>
+	/// <param name="GooType">1.10.0: the gem type Steam's "turn into gems" action names, which is what a gem value follows;
+	/// 0 when the description has no such action.</param>
+	/// <param name="GooBorder">1.10.0: the border colour that action names - 1 for a foil card; 0 when it names none.</param>
 	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "", string Hash = "",
-		SpareKind Kind = SpareKind.Other, bool Tradable = false, bool Marketable = false);
+		SpareKind Kind = SpareKind.Other, bool Tradable = false, bool Marketable = false, int GooType = 0, int GooBorder = 0);
 
 	/// <param name="Giving">What this account would hand over.</param>
 	/// <param name="Receiving">What this account would get.</param>
@@ -276,11 +279,12 @@ public static class TradeOffers {
 			uint amount = uint.TryParse(Text(i, "amount"), out uint n) ? n : 1;
 			bool described = descriptions.TryGetValue($"{Text(i, "classid")}_{Text(i, "instanceid")}", out JsonElement d);
 			uint game = described && uint.TryParse(Text(d, "market_fee_app"), out uint g) ? g : 0;
+			(int gooType, int gooBorder) = described ? Spare.GooOf(d) : (0, 0);
 
 			items.Add(new Item(app, Text(i, "contextid"), asset, classId, instanceId, Math.Max(1, amount),
 				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : "",
 				described ? Text(d, "market_hash_name") : "", described ? Spare.KindOf(d) : SpareKind.Other, described && Yes(Text(d, "tradable")),
-				described && Yes(Text(d, "marketable"))));
+				described && Yes(Text(d, "marketable")), gooType, gooBorder));
 		}
 
 		return items;

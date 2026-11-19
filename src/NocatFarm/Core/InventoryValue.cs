@@ -524,6 +524,19 @@ public sealed partial class InventoryValue(Bot bot) {
 	/// <summary>About how many market requests the prices still being priced will take.</summary>
 	public int RequestsLeft => Pricing == 0 ? 0 : PriceBook.RequestsFor(Waiting());
 
+	/// <summary>
+	/// What it holds for one game, by market name and how many, from the last recount; empty when that game wasn't read.
+	/// <see cref="ByGame"/> only totals a game's items, which cannot say which of a set's cards are held - and that is what
+	/// a rule that judges a trade by the set it completes needs.
+	/// </summary>
+	public IReadOnlyDictionary<string, int> HeldCounts(uint app) {
+		lock (_tallyGate) {
+			return _tally.TryGetValue(app, out TallyGame? game)
+				? game.Counted.ToDictionary(static held => held.Key, static held => held.Value.Count, StringComparer.Ordinal)
+				: new Dictionary<string, int>(StringComparer.Ordinal);
+		}
+	}
+
 	/// <summary>The currency the running total is in. 0 until the first recount.</summary>
 	private int _tallyCurrency;
 
