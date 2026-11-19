@@ -214,7 +214,7 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 
 | On `host` | What it's for |
 |---|---|
-| `Accounts` · `Account("farm1")` | Every account, or one by the name you gave it in gamer.farm (`null` if there's no such account). Each has `Name`, `SteamId`, `IsOnline`, `Persona`, `Status`, `Playing`, `CardsRemaining` (-1 until it has looked), `Library` and `InventoryByGame`. |
+| `Accounts` · `Account("farm1")` | Every account, or one by the name you gave it in gamer.farm (`null` if there's no such account). Each has `Name`, `SteamId`, `IsOnline`, `Persona`, `Status`, `Playing`, `CardsRemaining` (-1 until it has looked), `Library` and `InventoryByGame`. It also has `WalletCurrency` and `WalletCents` (the wallet Steam last pushed, `""` and -1 until then) and `CardSet(appId)`: the game's set size and how many of its cards the account holds, or `null` when the set isn't known. |
 | `Log("text")` | Write a line to the log. It shows up tagged `[plugin]`. |
 | `RunCommandAsync("pause farm1")` | Run a command and get back the text it would have printed. |
 | `AddCommand(verb, usage, help, handler)` | Add a command. It works in the console, the dashboard and Steam chat, and is listed by `plugins` and on the dashboard's Plugins page (not by `help`). |
@@ -229,6 +229,7 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `Notify("text", "farm1")` | Send a line out on Telegram, Discord and the tray, the way the app's own news goes, when *Send add-on messages* is on. It also goes in the log. |
 | `AddTradeJudge((offer, ct) => ...)` | Be asked about incoming trade offers gamer.farm leaves undecided, and answer Accept, Decline or Leave. See [Answering trade offers](#answering-trade-offers). |
 | `KnownMarketPrice(appId, name)` · `MarketPriceAsync(appId, name)` | A Steam market price: the lowest listing, in the app's market currency, and when it was read. `KnownMarketPrice` only gives what gamer.farm already holds. `MarketPriceAsync` asks the market when the held one is old, through gamer.farm's own spaced-out queue, at most 60 times an hour per plugin. |
+| `GemValueAsync(item)` | How many gems one trade item turns into, when Steam says: its `GooType` and `GooBorder` travel with the item, and gamer.farm reads the value through its own cache and queue (`null` when unknown or no ask is left). A market price is not the same thing: a background's gem value follows its type and border, not what somebody lists it for. |
 
 | Event | When it fires |
 |---|---|
@@ -322,6 +323,12 @@ over, `Receiving` what it would get. Each item has its ids, amount, name, market
 `Tradable` and `Marketable`, and for Steam community items the game it belongs to (`GameAppId`). It's what gamer.farm
 already read from Steam; nothing extra is asked for your plugin. For prices, use
 `host.MarketPriceAsync(753, item.MarketHashName, token)` instead of asking the market yourself.
+
+A judge that values what it is offered can now ask for the missing pieces:
+`await host.GemValueAsync(item)` for an item's gem value, and, from `host.Account(offer.Account)`,
+`WalletCurrency`/`WalletCents` for the wallet the app would pay with, and `CardSet(gameAppId)` for the set size
+and the number of cards that account already holds. Card-set sizes come from gamer.farm's own card list and cost no
+Steam read; a `null` set or gem value means "not known", so leave the offer alone rather than guess.
 
 ### What gamer.farm does whatever your judge says
 

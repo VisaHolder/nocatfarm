@@ -40535,6 +40535,27 @@ static class AddonTradeChecks {
 				&& handed.Giving[0] is { AssetId: 1, Kind: GamerFarm.Plugins.PluginTradeItemKind.Card, Tradable: true, MarketHashName: "440-Scout", GameAppId: 440, AppId: 753, ContextId: "6" }
 				&& handed.Receiving[0] is { Kind: GamerFarm.Plugins.PluginTradeItemKind.Gems, Amount: 500 });
 
+			// The value a judge needs: Steam's gem type, the account's set size and wallet.
+			GamerFarm.Core.TradeOffers.Item gooCard = Card(190) with { GooType = 7, GooBorder = 1 };
+			GamerFarm.Plugins.PluginTradeOffer gooHanded = GamerFarm.Modules.Trading.ForAddons("main",
+				Offer(190, [gooCard], [Gems(2, 500)]), DateTime.UtcNow);
+			Check("plugin API: Steam's gem value type and border colour reach a trade judge with the item",
+				gooHanded.Giving[0] is { GooType: 7, GooBorder: 1 }, $"{gooHanded.Giving[0]}");
+
+			using System.Text.Json.JsonDocument gooDoc = System.Text.Json.JsonDocument.Parse(
+				"""{"owner_actions":[{"link":"javascript:GetGooValue('6','123','440','7','1')"}]}""");
+			Check("plugin API: a GooValue owner action is read from Steam's item description",
+				GamerFarm.Core.Spare.GooOf(gooDoc.RootElement) == (7, 1), $"{GamerFarm.Core.Spare.GooOf(gooDoc.RootElement)}");
+
+			var apiHost = new GamerFarm.Plugins.Host(mgr, "api-values");
+			Check("plugin API: an item without a GooValue type has no gem value to ask Steam for",
+				await apiHost.GemValueAsync(new GamerFarm.Plugins.PluginTradeItem(753, "6", 1, 1, 1, 1, "Scout", "440-Scout",
+					"Trading Card", GamerFarm.Plugins.PluginTradeItemKind.Card, true, true, 440, true), CancellationToken.None) is null);
+
+			GamerFarm.Plugins.PluginCardSet shape = new(440, "Team Fortress 2", 6, 2);
+			Check("plugin API: a card set gives its game, size and how many cards the account holds",
+				shape is { AppId: 440, Game: "Team Fortress 2", SetSize: 6, Owned: 2 }, $"{shape}");
+
 			// ── the judges together (PluginHost) ──
 			async Task<GamerFarm.Plugins.PluginHost.Judged> Judge() => await GamerFarm.Plugins.PluginHost.JudgeTradeAsync(() => handed, CancellationToken.None);
 			TJ.A = (_, _) => Task.FromResult(GamerFarm.Plugins.PluginTradeAnswer.Accept("12 gems a card"));

@@ -490,6 +490,54 @@ internal sealed partial class Host(BotManager mgr, string owner) : IPluginHost {
 		return KnownMarketPrice(appId, marketHashName);
 	}
 
+	/// <summary>
+	/// A gem value, from the cache the app and every add-on share, or from one ask of Steam's gem-value page. The type and
+	/// border come from the trade's own description, so this is the real value of that item, not a guess from its price.
+	/// </summary>
+	public async Task<int?> GemValueAsync(PluginTradeItem item, CancellationToken ct = default) {
+		if ((item.GooType <= 0) || (item.GameAppId == 0)) {
+			return null;
+		}
+
+		SpareItem spare = new(0, item.GameAppId, KindOf(item.Kind), item.MarketHashName, item.Name, item.Tradable, item.Marketable,
+			GooType: item.GooType, GooBorder: item.GooBorder);
+
+		if (SteamGems.KnownValue(spare) is int known && (known > 0)) {
+			return known;
+		}
+
+		if (!MayAskMarket()) {
+			return null;
+		}
+
+		Bot? bot = mgr.All.FirstOrDefault(static b => b.IsOnline) ?? mgr.All.FirstOrDefault();
+
+		if (bot is null) {
+			return null;
+		}
+
+		try {
+			int? value = await new LiveSpareSteam(bot).GemValueAsync(spare, ct).ConfigureAwait(false);
+			return value > 0 ? value : null;
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			GamerFarm.Log.Failed($"plugin {_owner}: a gem value", e);
+			return null;
+		}
+	}
+
+	private static SpareKind KindOf(PluginTradeItemKind kind) => kind switch {
+		PluginTradeItemKind.Card => SpareKind.Card,
+		PluginTradeItemKind.FoilCard => SpareKind.FoilCard,
+		PluginTradeItemKind.Background => SpareKind.Background,
+		PluginTradeItemKind.Emoticon => SpareKind.Emoticon,
+		PluginTradeItemKind.BoosterPack => SpareKind.BoosterPack,
+		PluginTradeItemKind.Gems => SpareKind.Gems,
+		PluginTradeItemKind.GemSack => SpareKind.GemSack,
+		_ => SpareKind.Other
+	};
+
 	/// <summary>A market name worth asking about: something, not a page of text.</summary>
 	private static bool PriceName(string? name) => !string.IsNullOrWhiteSpace(name) && (name.Length <= 256) && !name.Any(char.IsControl);
 
@@ -643,5 +691,19 @@ internal sealed partial class Host(BotManager mgr, string owner) : IPluginHost {
 
 		public IReadOnlyList<PluginGameValue> InventoryByGame =>
 			[.. bot.Inventory.ByGame.Select(static v => new PluginGameValue(v.AppId, v.Game, v.Items, v.Value))];
+
+		public string WalletCurrency => bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? "" : bot.WalletCurrency.ToString();
+		public long WalletCents => bot.WalletCents ?? -1;
+
+		public PluginCardSet? CardSet(uint appId) {
+			SetFinder.KnownSet? set = SetFinder.Shared.Known(DateTime.UtcNow).FirstOrDefault(s => s.App == appId);
+
+			if (set is null) {
+				return null;
+			}
+
+			IReadOnlyDictionary<string, int> held = bot.Inventory.HeldCounts(appId);
+			return new PluginCardSet(appId, set.Game, set.Cards.Count, set.Cards.Count(held.ContainsKey));
+		}
 	}
 }
