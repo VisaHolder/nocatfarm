@@ -75,7 +75,7 @@ public static class SteamSelfTest {
 		g.SteamProtocol = chosen;
 		SteamConfiguration steamConfig = Bot.BuildSteamConfiguration(new BotConfig());
 
-		Console.WriteLine($"nocat.farm {Build.Version} Steam self-test - {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture}, "
+		Console.WriteLine($"gamer.farm {Build.Version} Steam self-test - {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture}, "
 			+ $".NET {Environment.Version}, SteamKit2 {typeof(SteamClient).Assembly.GetName().Version?.ToString(3)}");
 		Console.WriteLine($"      transport set: {steamConfig.ProtocolTypes} (websocket and tcp both tested), connection timeout {steamConfig.ConnectionTimeout.TotalSeconds:0}s, "
 			+ $"proxy {(string.IsNullOrWhiteSpace(g.WebProxy) ? "none" : "yes")}, time zone {TimeZoneInfo.Local.Id}");

@@ -3,12 +3,12 @@
 # rep4rep
 
 rep4rep is an outside site where people trade Steam profile comments for points. Since 1.9.0 it isn't built into
-nocat.farm any more. It's an official [add-on](addons.md) that you install if you want it.
+gamer.farm any more. It's an official [add-on](addons.md) that you install if you want it.
 
 ## Setting it up
 
 1. Install it: **Plugins** tab → *Official add-ons* → **Install** next to rep4rep (or type `addons install rep4rep`),
-   then restart nocat.farm.
+   then restart gamer.farm.
 2. On rep4rep.com, open **Settings → API key** and make a key. One key covers all your Steam accounts. No rep4rep account
    yet? [rep4rep.com/?r=reap](https://rep4rep.com/?r=reap).
 3. Paste the key under **Plugins → rep4rep → API key**.
@@ -19,10 +19,10 @@ nocat.farm any more. It's an official [add-on](addons.md) that you install if yo
 *Register accounts automatically* (on) adds each Steam account to rep4rep the first time it's needed, so you don't have
 to add anything on their website.
 
-If rep4rep says the key is invalid (it answers 401), nocat.farm tells you: make a new key at rep4rep.com
+If rep4rep says the key is invalid (it answers 401), gamer.farm tells you: make a new key at rep4rep.com
 **Settings → API key** and paste it in again.
 
-**Coming from 1.8.x?** Nothing to redo. When you update, nocat.farm moves your key (still encrypted), each account's
+**Coming from 1.8.x?** Nothing to redo. When you update, gamer.farm moves your key (still encrypted), each account's
 on/off, cap, gaps and hours, any hold that's running, and the comment counts into the add-on's files. Install the add-on
 and it picks up from there. Accounts only stay on if *Use rep4rep* was on before.
 
@@ -38,7 +38,7 @@ stops taking comments from that account for about a day. So, per account:
 | *Only post from / until* | 10:00 / 23:00 | a few random minutes in from each end |
 | *Lower the daily cap when Steam says it's reached* | on | Steam's daily-limit refusal below your cap becomes the account's cap (never below 5) |
 
-On top of these, nocat.farm has its own rules that no add-on can get around. Comments are only posted while the account
+On top of these, gamer.farm has its own rules that no add-on can get around. Comments are only posted while the account
 is up and settled in (in human mode), never on a paused account, and never more than 25 a day per account. See
 [Add-ons](addons.md#what-an-add-on-cant-do).
 
@@ -68,7 +68,7 @@ rep4rep points              # points to spend, and points still being checked
 rep4rep profiles            # the Steam profiles registered on your rep4rep account
 rep4rep tasks myaccount     # comments waiting for one account
 rep4rep on myaccount        # switch commenting on (off to stop); 'all' for every account
-rep4rep now myaccount       # try a post now (never past the cap, and nocat.farm's rules still apply)
+rep4rep now myaccount       # try a post now (never past the cap, and gamer.farm's rules still apply)
 rep4rep pause myaccount     # hold it; rep4rep resume to carry on
 rep4rep rest myaccount      # a full day off, then a clean start
 rep4rep clear myaccount     # lift a rest and forget refused profiles

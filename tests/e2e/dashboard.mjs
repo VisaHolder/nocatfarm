@@ -1,4 +1,4 @@
-// Every button, switch, tab, chip and form of the nocat.farm dashboard, clicked in a real browser (Chromium, through
+// Every button, switch, tab, chip and form of the gamer.farm dashboard, clicked in a real browser (Chromium, through
 // Playwright) against a copy that is already running:
 //   node tests/e2e/dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--ping-stub <url>] [--headed]
 // --set-password  the copy has no password yet: set this one first, from this PC, the way the Phone page does
@@ -836,7 +836,7 @@ async function putBack(def, orig, target, defaults) {
       if (await btn.count()) await btn.click(); else return false;
     } finally { dialogAnswer = 'dismiss'; }
   } else if (n === 'DiscordSecondLine') {
-    // The pills in their order on screen: Steam accounts on nocat.farm (3), then cards today, hours past week, past month.
+    // The pills in their order on screen: Steam accounts on gamer.farm (3), then cards today, hours past week, past month.
     await page.locator('#settingsBody .dline .p').nth(DISCORD_LINES.indexOf(Number(orig))).click();
   } else if (n === 'GameWeights') {
     // Built back through the editor: every side game dropped, the main game swapped back, the others added, the share set.
@@ -1256,7 +1256,7 @@ for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bo
 }
 
 // The user count: the copy pinged the stand-in for gamer.mom (never the real one), the Overview says how many Steam
-// accounts are on nocat.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
+// accounts are on gamer.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
 if (PING_STUB) {
   let status = {};
   for (let i = 0; i < 60 && status.Accounts !== 1240; i++) { status = await api('/api/status'); if (status.Accounts !== 1240) await sleep(1000); }
@@ -1279,19 +1279,19 @@ if (PING_STUB) {
   check('user count: the ping is a JSON POST of the install id, the version, the platform, the accounts signed in and the hours/cards totals as numbers - nothing else',
     seen.length >= 1 && JSON.stringify(keys.slice(0, 4)) === '["id","v","os","a"]' && totalsOk && /^[0-9a-f]{32}$/.test(body.id || '')
       && ['windows', 'linux', 'mac', 'docker'].includes(body.os) && Number.isInteger(body.a) && body.a === 0
-      && /^application\/json/.test(first.contentType || '') && (first.userAgent || '') === `nocat.farm/${body.v}`, JSON.stringify(first));
+      && /^application\/json/.test(first.contentType || '') && (first.userAgent || '') === `gamer.farm/${body.v}`, JSON.stringify(first));
   await gotoView('overview');
   await settle(300);
   const line = page.locator('#usercount');
-  check('user count: the Overview says "1,240 Steam accounts on nocat.farm"', await line.isVisible() && (await line.textContent()) === '1,240 Steam accounts on nocat.farm',
+  check('user count: the Overview says "1,240 Steam accounts on gamer.farm"', await line.isVisible() && (await line.textContent()) === '1,240 Steam accounts on gamer.farm',
     await line.textContent());
   check('user count: ...and its tooltip says only how many accounts, as a number', /only how many, as a number/.test(await line.getAttribute('data-tip') || ''),
     await line.getAttribute('data-tip'));
   await settingsOn(null);
-  // The card already says Playing nocat.farm: its second line is the short "1,240 Steam accounts", without "on nocat.farm".
+  // The card already says Playing gamer.farm: its second line is the short "1,240 Steam accounts", without "on gamer.farm".
   const cardLine = await page.locator('#settingsBody .dcard .dstate').textContent() || '';
   check('user count: the Discord card\'s preview counts the Steam accounts, in the short form',
-    cardLine.includes('1,240 Steam accounts') && !cardLine.includes('on nocat.farm'), cardLine);
+    cardLine.includes('1,240 Steam accounts') && !cardLine.includes('on gamer.farm'), cardLine);
   await field('CountMeAsUser').locator('label.switch').first().click();
   await settle(150);
   await saveNow(null);
@@ -1312,13 +1312,13 @@ if (PING_STUB) {
   skip('user count', 'no --ping-stub: the copy would tell gamer.mom it is running');
 }
 
-// The Discord card's second line: Steam accounts on nocat.farm first (the default), no account names any more.
+// The Discord card's second line: Steam accounts on gamer.farm first (the default), no account names any more.
 {
   await settingsOn(null);
   const pills = await page.locator('#settingsBody .dline .p').allTextContents();
-  check('discord card: the second line is Steam accounts on nocat.farm, cards today, hours past week or month - no account names, no people',
-    pills.length === 4 && pills[0] === 'Steam accounts on nocat.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
-  check('discord card: Steam accounts on nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
+  check('discord card: the second line is Steam accounts on gamer.farm, cards today, hours past week or month - no account names, no people',
+    pills.length === 4 && pills[0] === 'Steam accounts on gamer.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
+  check('discord card: Steam accounts on gamer.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
     && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
 }
 

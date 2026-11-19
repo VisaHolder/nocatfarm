@@ -1,4 +1,4 @@
-# nocat.farm with Docker Compose.
+# gamer.farm with Docker Compose.
 #
 #   1. Copy this file to docker-compose.yml.
 #   2. Make the data folders, and put the dashboard password and your time zone in a file called .env next to this one:
@@ -11,7 +11,7 @@
 #
 # Accounts, login tokens and settings live in ./config, logs in ./logs and backups in ./backups - all three survive
 # rebuilds and re-creates.
-# Updating: get the new source (git pull), then run step 3 again. nocat.farm doesn't update itself in Docker.
+# Updating: get the new source (git pull), then run step 3 again. gamer.farm doesn't update itself in Docker.
 # Stopping: docker compose down - every account signs out cleanly first.
 
 services:
@@ -41,7 +41,7 @@ services:
       # Or keep it out of the environment with a Docker secret: delete the line above, uncomment the two
       # "secrets" blocks below, and put the password in ./nocatfarm_password.txt
       # NOCATFARM_WEB_PASSWORD_FILE: /run/secrets/nocatfarm_password
-      # For your phone: this computer's address on your wifi (e.g. 192.168.1.20). From inside Docker nocat.farm can't
+      # For your phone: this computer's address on your wifi (e.g. 192.168.1.20). From inside Docker gamer.farm can't
       # see it, so Open on your phone and /dashboard use this for the link and the QR code.
       # NOCATFARM_HOME_ADDRESS: 192.168.1.20
       # On a VPS, or anywhere it's opened from the internet on purpose (the port published beyond 127.0.0.1, or a proxy):

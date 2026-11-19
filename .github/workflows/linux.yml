@@ -58,13 +58,13 @@ jobs:
           command -v pwsh > /dev/null || { dotnet tool install --global PowerShell && echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH" && export PATH="$PATH:$HOME/.dotnet/tools"; }
           pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid ${{ matrix.rid }}
           version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
-          zip="dist/nocat.farm-v${version}_${{ matrix.rid }}.zip"
+          zip="dist/gamer.farm-v${version}_${{ matrix.rid }}.zip"
           unzip -l "$zip" | grep -E ' (nocatFarm|README\.md)$'
           # never a bare "! cmd" or "a && b" as a check: bash -e stops for neither, so such a check could never fail
           # names only (-Z1), one a line: a top-level folder of somebody's data, or a zip inside - a backup or an old release
           if unzip -Z1 "$zip" | grep -E '^(config|logs|backups|tokens|state|authenticators)/|\.zip$'; then echo "FAIL: personal folders or a zip in the zip"; exit 1; fi
           # unpacked the way the docs say, into a folder people end up with: a space and "(1)" in it
-          APP="$PWD/nocat.farm (1)"
+          APP="$PWD/gamer.farm (1)"
           unzip -q "$zip" -d "$APP"
           echo "APP=$APP" >> "$GITHUB_ENV"
           [ "$(stat -c %a "$APP/nocatFarm")" = "755" ]
@@ -115,7 +115,7 @@ jobs:
           cmd() { curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
           curl -sf http://127.0.0.1:7242/ | grep -qi '<html'
           curl -sf http://127.0.0.1:7242/app.js | head -c 50 > /dev/null
-          cmd version | tee out.txt; grep -qi 'nocat' out.txt
+          cmd version | tee out.txt; grep -qi 'gamer.farm' out.txt
           cmd 'status' | tee out.txt; grep -q 'demo' out.txt
           cmd 'update' | tee out.txt; grep -Eqi 'newest|linux|zip|out' out.txt
           cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
@@ -168,7 +168,7 @@ jobs:
       - name: updating from the newest GitHub release to this build
         run: |
           pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid ${{ matrix.rid }} -AsVersion 9.9.9
-          sh tests/update-from-release.sh ${{ matrix.rid }} "dist/nocat.farm-v9.9.9_${{ matrix.rid }}.zip"
+          sh tests/update-from-release.sh ${{ matrix.rid }} "dist/gamer.farm-v9.9.9_${{ matrix.rid }}.zip"
 
       - name: log
         if: always()
@@ -198,12 +198,13 @@ jobs:
           version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
           mkdir -p zips
           pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64
-          mv "dist/nocat.farm-v${version}_linux-x64.zip" zips/cur.zip
+          mv "dist/gamer.farm-v${version}_linux-x64.zip" zips/cur.zip
           pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64 -AsVersion 9.9.9
-          mv dist/nocat.farm-v9.9.9_linux-x64.zip zips/good.zip
+          mv dist/gamer.farm-v9.9.9_linux-x64.zip zips/good.zip
           pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid linux-x64 -AsVersion 9.9.8
-          mv dist/nocat.farm-v9.9.8_linux-x64.zip zips/hand.zip
-          gh release download --repo VisaHolder/nocatfarm --pattern "*_linux-x64.zip" --output zips/prev.zip
+          mv dist/gamer.farm-v9.9.8_linux-x64.zip zips/hand.zip
+          # From 2.0.0 a release has the zip under both names (gamer.farm-*, and nocat.farm-* for copies before the rename)
+          gh release download --repo "${{ github.repository }}" --pattern "gamer.farm-v*_linux-x64.zip" --output zips/prev.zip             || gh release download --repo "${{ github.repository }}" --pattern "nocat.farm-v*_linux-x64.zip" --output zips/prev.zip
           unzip -l zips/cur.zip | grep -E ' (nocatfarm-service\.sh|nocatfarm\.service)$'
           unzip -p zips/cur.zip nocatFarm.runtimeconfig.json | grep -c DOTNET_RUNNING_IN_CONTAINER || true
           systemctl --version | head -n 1

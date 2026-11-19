@@ -11,7 +11,7 @@ namespace NocatFarm.Plugins;
 /// <param name="Plugin">The plugin's own Name once it's loaded - for its on/off switch.</param>
 /// <param name="Description">What it does, per language code ("en" always there).</param>
 /// <param name="File">The DLL's file name in plugins/.</param>
-/// <param name="Url">Where to get it: a release file on the nocat.farm GitHub, nowhere else.</param>
+/// <param name="Url">Where to get it: a release file on the gamer.farm GitHub, nowhere else.</param>
 /// <param name="Sha256">The DLL's SHA-256, lowercase hex.</param>
 public sealed record AddonEntry(string Id, string Name, string Plugin, IReadOnlyDictionary<string, string> Description, string Version,
 	string MinAppVersion, string File, string Url, string Sha256) {
@@ -24,24 +24,28 @@ public sealed record AddonEntry(string Id, string Name, string Plugin, IReadOnly
 /// 1.9.0: reap's official add-ons - the list on GitHub, and installing one from it.
 /// </summary>
 /// <remarks>
-/// The list is addons/addons.json on the nocat.farm repository's main branch, with addons.json.sig beside it: an ECDSA P-256
+/// The list is addons/addons.json on the gamer.farm repository's main branch, with addons.json.sig beside it: an ECDSA P-256
 /// signature over the file's exact bytes, made at release time with a key that lives on reap's PC and nowhere else. The
 /// public half is built in here. A sha256 in a list fetched from the same place as the file proves nothing on its own -
 /// whoever could change one could change both - so nothing is installed unless, all three:
 ///
 ///   • the list's signature verifies with the built-in key
-///   • the add-on is in that list, and its minimum nocat.farm version is this one or older
+///   • the add-on is in that list, and its minimum gamer.farm version is this one or older
 ///   • the downloaded file's SHA-256 is the one the list gives
 ///
 /// Only names from the list can be asked for - never an address - and the address it gives must be a release file on the
-/// nocat.farm GitHub. A DLL put in plugins/ by hand still loads as it always has, with the warning that goes with it.
+/// gamer.farm GitHub. A DLL put in plugins/ by hand still loads as it always has, with the warning that goes with it.
 /// </remarks>
 public static partial class Addons {
-	public const string IndexUrl = "https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/addons/addons.json";
+	public const string IndexUrl = "https://raw.githubusercontent.com/VisaHolder/gamerfarm/main/addons/addons.json";
 	public const string SignatureUrl = IndexUrl + ".sig";
 
-	/// <summary>Where every official add-on comes from: a release file of nocat.farm's own repository.</summary>
-	public const string DownloadPrefix = "https://github.com/VisaHolder/nocatfarm/releases/download/";
+	/// <summary>Where every official add-on comes from: a release file of gamer.farm's own repository.</summary>
+	public const string DownloadPrefix = "https://github.com/VisaHolder/gamerfarm/releases/download/";
+
+	/// <summary>2.0.0: the same repository under its name before the rename (GitHub forwards it). The list keeps giving
+	/// this one while copies before 2.0.0 are about, since those take no other - so both are taken here.</summary>
+	public const string OldDownloadPrefix = "https://github.com/VisaHolder/nocatfarm/releases/download/";
 
 	/// <summary>The public key the list must be signed with (SubjectPublicKeyInfo, base64). The private key is on reap's PC only.</summary>
 	public const string PublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExyV0DW47QH+b8G2LwGwUCLOIYdIMzkhFu/Xrz9CDQPra7qfjFs3dV3W6TZ7943zXfd84FuOsekmMsHW8qSOfgg==";
@@ -133,16 +137,16 @@ public static partial class Addons {
 	private static string Str(JsonElement e, string name) =>
 		e.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? v.GetString() ?? "" : "";
 
-	/// <summary>An entry nothing odd can come of: a plain id and file name, real versions, a 64-digit hash, a nocat.farm release address.</summary>
+	/// <summary>An entry nothing odd can come of: a plain id and file name, real versions, a 64-digit hash, a gamer.farm release address.</summary>
 	internal static bool WellFormed(AddonEntry e) =>
 		IdRx().IsMatch(e.Id) && FileRx().IsMatch(e.File) && ShaRx().IsMatch(e.Sha256)
 		&& Version.TryParse(e.Version, out _) && Version.TryParse(e.MinAppVersion, out _)
 		&& (e.Plugin.Length is > 0 and <= 64) && (e.Name.Length is > 0 and <= 64)
 		&& FromGitHub(e.Url);
 
-	/// <summary>A release file of nocat.farm's own repository, over https, with nothing odd in the path.</summary>
+	/// <summary>A release file of gamer.farm's own repository, over https, with nothing odd in the path.</summary>
 	internal static bool FromGitHub(string url) =>
-		url.StartsWith(DownloadPrefix, StringComparison.Ordinal) && Uri.TryCreate(url, UriKind.Absolute, out Uri? u)
+		(url.StartsWith(DownloadPrefix, StringComparison.Ordinal) || url.StartsWith(OldDownloadPrefix, StringComparison.Ordinal)) && Uri.TryCreate(url, UriKind.Absolute, out Uri? u)
 		&& (u.Scheme == Uri.UriSchemeHttps) && (u.Host == "github.com") && !url.Contains("..", StringComparison.Ordinal)
 		&& string.IsNullOrEmpty(u.Query) && string.IsNullOrEmpty(u.Fragment);
 
@@ -167,7 +171,7 @@ public static partial class Addons {
 			: new Said("{0} downloaded, but it isn't the file the add-on list signed for - not installed", entry.Name);
 	}
 
-	/// <summary>Whether this nocat.farm is new enough for it.</summary>
+	/// <summary>Whether this gamer.farm is new enough for it.</summary>
 	internal static bool Fits(AddonEntry entry, string appVersion) =>
 		Version.TryParse(entry.MinAppVersion, out Version? min) && Version.TryParse(appVersion, out Version? app) && (app >= min);
 
@@ -207,7 +211,7 @@ public static partial class Addons {
 			long seen = SeenSerial();
 
 			if (serial < seen) {
-				return (null, new Said("the add-on list from GitHub is older than one this nocat.farm has already had - nothing from it is installed"));
+				return (null, new Said("the add-on list from GitHub is older than one this gamer.farm has already had - nothing from it is installed"));
 			}
 
 			try {
@@ -358,7 +362,7 @@ public static partial class Addons {
 		}
 
 		if (!Fits(entry, Build.Version)) {
-			return (false, new Said("{0} needs nocat.farm {1} or newer - this is {2}; update first", entry.Name, entry.MinAppVersion, Build.Version));
+			return (false, new Said("{0} needs gamer.farm {1} or newer - this is {2}; update first", entry.Name, entry.MinAppVersion, Build.Version));
 		}
 
 		// Never backwards: a list offering an older one than is installed is an old list, or a mistake. Removing it is the way back.
@@ -418,11 +422,11 @@ public static partial class Addons {
 			ConfigStore.SaveGlobal(Live.Global);
 		}
 
-		Log.Good(new Said("add-on {0} {1} installed - restart nocat.farm to load it", entry.Name, entry.Version));
+		Log.Good(new Said("add-on {0} {1} installed - restart gamer.farm to load it", entry.Name, entry.Version));
 
 		return (true, turnedOn
-			? new Said("{0} {1} is installed, and Load plugins is now on. Restart nocat.farm to load it.", entry.Name, entry.Version)
-			: new Said("{0} {1} is installed. Restart nocat.farm to load it.", entry.Name, entry.Version));
+			? new Said("{0} {1} is installed, and Load plugins is now on. Restart gamer.farm to load it.", entry.Name, entry.Version)
+			: new Said("{0} {1} is installed. Restart gamer.farm to load it.", entry.Name, entry.Version));
 	}
 
 	/// <summary>Install one by its id, from the list on GitHub, every check made (see the class remarks).</summary>
@@ -435,7 +439,7 @@ public static partial class Addons {
 	/// <summary>The file, from the address the verified list gave - a release file on GitHub, no bigger than <see cref="MaxBytes"/>.</summary>
 	private static async Task<byte[]> DownloadAsync(string url, CancellationToken ct) {
 		if (!FromGitHub(url)) {
-			throw new InvalidOperationException("not a nocat.farm release address");
+			throw new InvalidOperationException("not a gamer.farm release address");
 		}
 
 		using HttpResponseMessage r = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
@@ -523,7 +527,7 @@ public static partial class Addons {
 				File.WriteAllText(target + PluginHost.RemoveSuffix, "");
 				Log.Info(new Said("add-on {0} is removed at the next restart", found.Name));
 
-				return new Said("{0} is removed when nocat.farm restarts. Its settings are kept, in case you put it back.", found.Name);
+				return new Said("{0} is removed when gamer.farm restarts. Its settings are kept, in case you put it back.", found.Name);
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			return new Said("couldn't remove {0}: {1}", found.File, Log.Scrub(e.Message));

@@ -9,7 +9,7 @@
 #   6. closing while a plugin never lets go of its unload
 # Not part of run-all.ps1 (it takes ~10 minutes). Run it before a release that touches plugins, files or the dashboard:
 #   powershell -ExecutionPolicy Bypass -File tools\release-tests\stress.ps1 [-Port 7381] [-Minutes 6]
-#   -AppDir a built nocat.farm folder (default: src\NocatFarm\bin\Release\net10.0, built by the test build)
+#   -AppDir a built gamer.farm folder (default: src\NocatFarm\bin\Release\net10.0, built by the test build)
 #
 # Kind to the PC it runs on: the copy and the hammer run at below-normal priority, 4 workers, bursts of a minute with a
 # half-minute rest. Nothing reaches the internet: updates, the user count, the shared sets and swaps point at a closed
@@ -146,7 +146,7 @@ function Stop-Copy($id, [int]$seconds = 60) {
 
 function Day-Log { Get-ChildItem "$Data\logs\nocatFarm-*.log" -ErrorAction SilentlyContinue | Get-Content -Raw -ErrorAction SilentlyContinue | Out-String }
 
-# Every .json under config reads as JSON - the files nocat.farm wrote never half-written.
+# Every .json under config reads as JSON - the files gamer.farm wrote never half-written.
 function Broken-Json {
   $bad = @()
   foreach ($f in Get-ChildItem "$Data\config" -Recurse -Filter *.json -File -ErrorAction SilentlyContinue) {

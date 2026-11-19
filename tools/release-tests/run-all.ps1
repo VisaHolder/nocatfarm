@@ -52,19 +52,19 @@ try {
     Step 'updating itself - installed' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode installed }
     Step 'Linux, Docker and Mac on GitHub' {
       $sha = (git rev-parse HEAD).Trim()
-      gh workflow run linux.yml --repo VisaHolder/nocatfarm | Out-Null
-      gh workflow run macos.yml --repo VisaHolder/nocatfarm | Out-Null
+      gh workflow run linux.yml --repo VisaHolder/gamerfarm | Out-Null
+      gh workflow run macos.yml --repo VisaHolder/gamerfarm | Out-Null
       Start-Sleep 15
       foreach ($w in 'linux.yml', 'macos.yml') {
         # Filtered here, not with gh's -q: Windows PowerShell mangles the quotes a jq filter needs on the way to gh.
         # Into a variable first: Windows PowerShell's ConvertFrom-Json hands a JSON list down the pipe as ONE object, so
         # piping it straight on matched every run at once.
-        $runs = gh run list --repo VisaHolder/nocatfarm --workflow $w --limit 5 --json databaseId,headSha | ConvertFrom-Json
+        $runs = gh run list --repo VisaHolder/gamerfarm --workflow $w --limit 5 --json databaseId,headSha | ConvertFrom-Json
         $id = ($runs | Where-Object { $_.headSha -eq $sha } | Select-Object -First 1).databaseId
         if (-not $id) { Write-Output "FAIL: no $w run found for $sha"; continue }
-        gh run watch $id --repo VisaHolder/nocatfarm --exit-status | Out-Null
+        gh run watch $id --repo VisaHolder/gamerfarm --exit-status | Out-Null
         # Judged by each job's own result. Matching words in the log flagged a pass, because two test names end in "failure".
-        $run = gh run view $id --repo VisaHolder/nocatfarm --json jobs,conclusion | ConvertFrom-Json
+        $run = gh run view $id --repo VisaHolder/gamerfarm --json jobs,conclusion | ConvertFrom-Json
         foreach ($job in $run.jobs) {
           if ($job.conclusion -eq 'success') { "$($job.name) success" } else { "FAIL: $($job.name) $($job.conclusion)" }
         }

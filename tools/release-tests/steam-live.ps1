@@ -13,7 +13,7 @@ $W = Join-Path $(if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'nocatf
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force "$W\data" | Out-Null
 if (-not $App) {
-  Expand-Archive "$Repo\dist\nocat.farm-v$Version-portable.zip" -DestinationPath "$W\app"
+  Expand-Archive "$Repo\dist\gamer.farm-v$Version-portable.zip" -DestinationPath "$W\app"
   $App = "$W\app"
 }
 

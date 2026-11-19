@@ -22,7 +22,7 @@ public static class Playtime {
 	private static int _fetching;
 
 	static Playtime() {
-		Http.DefaultRequestHeaders.Add("User-Agent", "nocat.farm/" + Build.Version);
+		Http.DefaultRequestHeaders.Add("User-Agent", "gamer.farm/" + Build.Version);
 	}
 
 	private sealed record Entry(double Hours, long At);

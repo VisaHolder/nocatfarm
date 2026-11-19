@@ -70,7 +70,7 @@ public static class AsfImport {
 
 	/// <summary>
 	/// ASF's config folder for a path: the folder itself when ASF.json is in it, or its config subfolder (the installer
-	/// and most people point at the folder ArchiSteamFarm.exe is in). Never nocat.farm's own config folder.
+	/// and most people point at the folder ArchiSteamFarm.exe is in). Never gamer.farm's own config folder.
 	/// </summary>
 	private static string? ConfigFolder(string path) {
 		try {
@@ -182,7 +182,7 @@ public static class AsfImport {
 		return scan;
 	}
 
-	/// <summary>ASF.json: the global blacklist and the web proxy, where nocat.farm has the same thing.</summary>
+	/// <summary>ASF.json: the global blacklist and the web proxy, where gamer.farm has the same thing.</summary>
 	private static void ReadGlobal(JsonElement asf, ImportScan scan) {
 		if (Apps(Prop(asf, "Blacklist")) is { Count: > 0 } blacklist) {
 			scan.Settings.Add(new ImportSetting("GlobalBlacklistedGames", string.Join(", ", blacklist), ToGlobal: g => {
@@ -316,7 +316,7 @@ public static class AsfImport {
 			bot.BoosterMake = bot.BoosterPackGames.Count > 0 ? 1 : 0;   // "games I pick", as ASF made them
 		}
 
-		// What the ASF account did, copied. Left out of its file means ASF's own default - off - and not nocat.farm's,
+		// What the ASF account did, copied. Left out of its file means ASF's own default - off - and not gamer.farm's,
 		// which accepts gifts: an account that never took a gift under ASF started taking every one after the import.
 		// ASF's one switch covers every kind of gift, so it decides gifted games too.
 		bool gifts = Bool(cfg, "AcceptGifts") ?? false;
@@ -432,7 +432,7 @@ public static class AsfImport {
 					return fromEnvironment;
 				}
 
-				problem = new Said("its ASF password comes from the environment variable {0}, which isn't set for nocat.farm - the login token signs in, or it asks for the password once", stored);
+				problem = new Said("its ASF password comes from the environment variable {0}, which isn't set for gamer.farm - the login token signs in, or it asks for the password once", stored);
 
 				return null;
 			case 4: {
@@ -451,7 +451,7 @@ public static class AsfImport {
 				return null;
 			}
 			default:
-				problem = new Said("its ASF password is stored in a way nocat.farm doesn't know, so it wasn't copied - the login token signs in, or it asks for the password once");
+				problem = new Said("its ASF password is stored in a way gamer.farm doesn't know, so it wasn't copied - the login token signs in, or it asks for the password once");
 
 				return null;
 		}
@@ -501,7 +501,7 @@ public static class AsfImport {
 	/// <summary>ASF packs its farming switches into one bitfield. Unpack it into the individual settings here.</summary>
 	private static void TranslateFarming(JsonElement cfg, BotConfig bot) {
 		// Left out means ASF's default, none of them - as with the trading switches. Skipped instead, the sale-event
-		// things below stayed at nocat.farm's "on" for a bot ASF never ran them on.
+		// things below stayed at gamer.farm's "on" for a bot ASF never ran them on.
 		int flags = Int(cfg, "FarmingPreferences") ?? 0;
 
 		// ASF's EFarmingPreferences values. These were read one bit off, so FarmingPausedByDefault (1) arrived as
@@ -542,7 +542,7 @@ public static class AsfImport {
 	/// or above. That is exactly what our trade-masters list means, so it comes straight across.
 	/// </summary>
 	private static void TranslateTrading(JsonElement cfg, BotConfig bot, ulong owner) {
-		// Left out of the file means ASF's default, 0: no donations, no card swaps - not nocat.farm's defaults.
+		// Left out of the file means ASF's default, 0: no donations, no card swaps - not gamer.farm's defaults.
 		int flags = Int(cfg, "TradingPreferences") ?? 0;
 		bot.AcceptDonations = (flags & 1) != 0;   // AcceptDonations
 		bot.AcceptFairCardSwaps = (flags & 2) != 0;   // SteamTradeMatcher

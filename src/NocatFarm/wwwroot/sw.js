@@ -1,10 +1,10 @@
-// nocat.farm's service worker: part of what lets the dashboard be installed like an app. Browsers only run one on this
+// gamer.farm's service worker: part of what lets the dashboard be installed like an app. Browsers only run one on this
 // PC itself (localhost) or over https; anywhere else the page simply works without it.
 //
 // It keeps a copy of the page itself - the shell: the HTML, the script, the styles, the icons and fonts - so the app
 // opens even when the PC is briefly out of reach, and says so instead of a browser error. It NEVER keeps anything from
 // /api/: account names, inventories, codes and settings always come fresh from the PC, or not at all. The shell is
-// fetched fresh first too, so an update to nocat.farm shows straight away; the copy is only for when the PC can't be reached.
+// fetched fresh first too, so an update to gamer.farm shows straight away; the copy is only for when the PC can't be reached.
 'use strict';
 
 const SHELL = 'nocatfarm-shell-v1';

@@ -2,7 +2,7 @@ using NocatFarm.Core;
 
 namespace NocatFarm;
 
-/// <summary>1.8.2: card swaps with other nocat.farm users ('swaps').</summary>
+/// <summary>1.8.2: card swaps with other gamer.farm users ('swaps').</summary>
 public static partial class Commands {
 	/// <summary>
 	/// 'swaps [account]' says what each account's card swaps are doing; 'swaps preview|on|off &lt;account&gt;' shows, turns on

@@ -4,23 +4,31 @@ using Microsoft.Win32;
 namespace NocatFarm.Windows;
 
 /// <summary>
-/// The entry the installer leaves in Windows' installed-apps list (Settings > Apps). nocat.farm updates itself, so
+/// The entry the installer leaves in Windows' installed-apps list (Settings > Apps). gamer.farm updates itself, so
 /// without this the list would go on showing the version that was first installed.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class InstallRecord {
-	/// <summary>The installer's AppId - never changes, or Windows would list two nocat.farms.</summary>
+	/// <summary>The installer's AppId - never changes, or Windows would list two gamer.farms.</summary>
 	public const string AppId = "{89595F01-E60C-4593-9BA7-51B5A3A2F7C5}";
 
 	private const string Key = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + AppId + "_is1";
 
-	/// <summary>Bring the listed version up to this one, when this copy is the one that was installed.</summary>
+	/// <summary>The name the list shows. 2.0.0: an install made before the rename is listed as nocat.farm until this says otherwise.</summary>
+	internal const string DisplayName = "gamer.farm";
+
+	/// <summary>Bring the listed version (and, from 2.0.0, the name) up to this one, when this copy is the one that was installed.</summary>
 	public static void Refresh() {
 		try {
 			using RegistryKey? key = Here(writable: true);
 
 			if ((key != null) && !string.Equals(key.GetValue("DisplayVersion") as string, Build.Version, StringComparison.Ordinal)) {
 				key.SetValue("DisplayVersion", Build.Version);
+			}
+
+			// Only the name Windows shows: the uninstaller works from its own files, not from this.
+			if ((key != null) && !string.Equals(key.GetValue("DisplayName") as string, DisplayName, StringComparison.Ordinal)) {
+				key.SetValue("DisplayName", DisplayName);
 			}
 		} catch (Exception e) when (e is UnauthorizedAccessException or System.Security.SecurityException or IOException) {
 			// the list shows the old number - nothing else depends on it

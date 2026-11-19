@@ -190,7 +190,7 @@ public sealed class SpareInput {
 	public required SpareBadges Badges { get; init; }
 	public required SpareRules Rules { get; init; }
 
-	/// <summary>When nocat.farm first saw the item - null for one it hasn't seen before now (counted as just received).</summary>
+	/// <summary>When gamer.farm first saw the item - null for one it hasn't seen before now (counted as just received).</summary>
 	public required Func<ulong, DateTime?> Received { get; init; }
 
 	/// <summary>Items on the market or in a waiting trade offer.</summary>
@@ -819,7 +819,7 @@ public static partial class Spare {
 
 	/// <param name="choice">As <see cref="PackChoice"/> gives it: 0 never, 1 only when the cards are worth more than the pack on
 	/// average (foils included), 2 always, 3 only when even the three cheapest cards are worth more than the pack, 4 when either does.</param>
-	/// <param name="madeHere">Packs nocat.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
+	/// <param name="madeHere">Packs gamer.farm made itself (BoosterPick.Memory.MadeIds): never held back as new - "Leave new
 	/// packs alone" is for packs that came in other ways, drops and trades. One made to level a badge waited 7 days.</param>
 	/// <param name="own">Packs automatic "Make booster packs" made to level a badge and still has to open: opened at the next
 	/// chance, whatever "Open booster packs" says - only one on the market or in a trade offer is left.</param>

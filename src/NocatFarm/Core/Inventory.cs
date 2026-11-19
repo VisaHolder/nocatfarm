@@ -73,7 +73,7 @@ public static class Inventory {
 	/// <param name="source">The account, for the log.</param>
 	/// <returns>Null when even the first page couldn't be read.</returns>
 	public static async Task<InventoryContents?> ReadAsync(Func<Uri, CancellationToken, Task<string?>> get, ulong steamId, uint app,
-		string context, CancellationToken ct, int pageSize = PageSize, string source = "nocat.farm") {
+		string context, CancellationToken ct, int pageSize = PageSize, string source = "gamer.farm") {
 		InventoryContents found = new();
 		string? start = null;
 

@@ -106,7 +106,7 @@ public sealed partial class WebHost {
 
 		if (!IPAddress.IsLoopback(from) || !IsLoopbackName(request.Host.Host) || request.Headers.ContainsKey("X-Forwarded-For")
 			|| request.Headers.ContainsKey("X-Real-IP") || request.Headers.ContainsKey("Forwarded") || request.Headers.ContainsKey("X-Forwarded-Host")) {
-			await FarmAnswerAsync(ctx, StatusCodes.Status403Forbidden, "this-pc", new Said("farm.gamer.mom only opens nocat.farm on the same PC, at http://127.0.0.1.")).ConfigureAwait(false);
+			await FarmAnswerAsync(ctx, StatusCodes.Status403Forbidden, "this-pc", new Said("farm.gamer.mom only opens gamer.farm on the same PC, at http://127.0.0.1.")).ConfigureAwait(false);
 
 			return true;
 		}
@@ -165,7 +165,7 @@ public sealed partial class WebHost {
 		}
 
 		if (FarmSessionOf(request) is not { } session) {
-			await FarmAnswerAsync(ctx, StatusCodes.Status401Unauthorized, "unauthorised", new Said("This browser isn't paired with nocat.farm yet.")).ConfigureAwait(false);
+			await FarmAnswerAsync(ctx, StatusCodes.Status401Unauthorized, "unauthorised", new Said("This browser isn't paired with gamer.farm yet.")).ConfigureAwait(false);
 
 			return true;
 		}
@@ -546,10 +546,10 @@ public sealed partial class WebHost {
 	}
 
 	private void MapFarm(WebApplication app) {
-		// What the page looks for first: is nocat.farm there, and can it talk to this page. Nothing else - not whether this
+		// What the page looks for first: is gamer.farm there, and can it talk to this page. Nothing else - not whether this
 		// browser is paired, not a name or an account.
 		app.MapGet("/api/farm/hello", (HttpContext ctx) => IsFarm(ctx)
-			? Results.Json(new { app = "nocat.farm", version = Build.Version, api = FarmWeb.ApiVersion, paired = false })
+			? Results.Json(new { app = "gamer.farm", version = Build.Version, api = FarmWeb.ApiVersion, paired = false })
 			: Results.NotFound());
 
 		app.MapPost("/api/farm/pair", (HttpContext ctx) => {
@@ -565,7 +565,7 @@ public sealed partial class WebHost {
 				PruneFarmLocked(now);
 
 				if (_farmPairs.Count >= FarmWeb.MaxPending) {
-					return Results.Json(new { ok = false, error = "busy", Message = new Said("Too many requests are waiting at nocat.farm. Answer them in the app, or wait 5 minutes.").ToString() }, statusCode: 429);
+					return Results.Json(new { ok = false, error = "busy", Message = new Said("Too many requests are waiting at gamer.farm. Answer them in the app, or wait 5 minutes.").ToString() }, statusCode: 429);
 				}
 
 				if (_farmAsks.Count >= FarmWeb.PairsPerMinute) {
@@ -580,7 +580,7 @@ public sealed partial class WebHost {
 			// Loud, for somebody doing it the first time: the log line, a pop-up from the tray, and Telegram/Discord when they're set
 			// up - each saying where to approve it. Never an approve button anywhere but the dashboard on this PC.
 			Log.Attention(new Said("dashboard: farm.gamer.mom ({0}) asks to open this dashboard - code {1}. Approve or deny it in the dashboard on this PC.", device, pair.Code),
-				new Said("farm.gamer.mom asks to open your nocat.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device),
+				new Said("farm.gamer.mom asks to open your gamer.farm dashboard (code {0}, {1}). If that's you, approve it in the app's own dashboard on your PC. If not, do nothing - it runs out in 5 minutes.", pair.Code, device),
 				new Said("farm.gamer.mom wants to open your dashboard"), Topic.Security);
 
 			return Results.Json(new { ok = true, pair.Id, pair.Code, Seconds = (int) FarmWeb.PairLifetime.TotalSeconds });
@@ -635,7 +635,7 @@ public sealed partial class WebHost {
 			}
 
 			if (!AtThisPc(ctx) && string.IsNullOrEmpty(_cfg.WebPassword)) {
-				return Results.Json(new { ok = false, error = new Said("only from the PC nocat.farm runs on").ToString() }, statusCode: 403);
+				return Results.Json(new { ok = false, error = new Said("only from the PC gamer.farm runs on").ToString() }, statusCode: 403);
 			}
 
 			FarmAnswerRequest? body = await ReadJsonAsync<FarmAnswerRequest>(ctx).ConfigureAwait(false);

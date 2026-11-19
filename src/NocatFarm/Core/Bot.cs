@@ -34,7 +34,7 @@ public sealed class Bot : IAsyncDisposable {
 		private set => Volatile.Write(ref _onlineSinceTicks, ToTicks(value));
 	}
 
-	/// <summary>How many times it has signed in since nocat.farm started: past the first, a sign-in is one "again".</summary>
+	/// <summary>How many times it has signed in since gamer.farm started: past the first, a sign-in is one "again".</summary>
 	public int SignIns {
 		get => Volatile.Read(ref _signIns);
 		private set => Volatile.Write(ref _signIns, value);
@@ -2742,7 +2742,7 @@ public sealed class Bot : IAsyncDisposable {
 		// PlayingAppID is what the account's playing session is running. While blocked that is a session OTHER than
 		// this one - Steam allows one playing session per account, so our games-played is accepted and then quietly
 		// ignored, which from the inside looks identical to it never having been sent. While not blocked it is our
-		// own: the line used to call nocat.farm's own game list "other session playing app 730".
+		// own: the line used to call gamer.farm's own game list "other session playing app 730".
 		Log.Debug(SessionStateLine(blocked, app), Name);
 
 		// Before anything below can return early: this is what you're playing, stood down for or not.

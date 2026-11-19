@@ -43,7 +43,7 @@ public static partial class Settings {
 
 	/// <summary>
 	/// A new account added as a human-mode one (the walkthrough, Add account, 'add ... human', an import): it doesn't join
-	/// "Groups every account joins" - the nocat.farm group by default - so a believable account isn't publicly in a group
+	/// "Groups every account joins" - the gamer.farm group by default - so a believable account isn't publicly in a group
 	/// named after the farming tool. Robot accounts still join. Only new accounts: one that's there keeps what it has.
 	/// </summary>
 	public static void NewHumanAccount(BotConfig cfg) => cfg.JoinGroup = false;

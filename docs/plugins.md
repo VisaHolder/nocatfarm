@@ -8,11 +8,11 @@ DLL in the `plugins` folder next to `nocatFarm.exe`, turn on **Load plugins** (S
 plugins, under Show advanced, or `set PluginsEnabled true`), and restart. `plugins` and the dashboard's Plugins page
 list what's loaded and the commands each one added, and each plugin has its own on/off switch there.
 
-A plugin runs inside nocat.farm, right next to your Steam logins, so only run plugins you wrote yourself or fully
+A plugin runs inside gamer.farm, right next to your Steam logins, so only run plugins you wrote yourself or fully
 trust.
 
 [PLUGINS.md](../PLUGINS.md) shows how to write one, with a working plugin in about five minutes. ArchiSteamFarm
-plugins don't work in nocat.farm; [PLUGINS.md](../PLUGINS.md#not-supported-asf-plugins) explains why.
+plugins don't work in gamer.farm; [PLUGINS.md](../PLUGINS.md#not-supported-asf-plugins) explains why.
 
 ---
 

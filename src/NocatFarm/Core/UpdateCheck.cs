@@ -206,15 +206,15 @@ public static class UpdateCheck {
 		// With "Update by itself" on, it says it's going to - "'update accept' installs it" read as if nothing would happen
 		// without you.
 		Log.Attention(SelfUpdate.Supported && (Live.Global.UpdateMode == UpdateModes.AtNight)
-				? new Said("reminder: nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", Available)
+				? new Said("reminder: gamer.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", Available)
 			: SelfUpdate.Supported
-				? new Said("reminder: nocat.farm {0} is out - 'update accept' installs it", Available)
-				: new Said("reminder: nocat.farm {0} is out - 'update' shows how", Available),
+				? new Said("reminder: gamer.farm {0} is out - 'update accept' installs it", Available)
+				: new Said("reminder: gamer.farm {0} is out - 'update' shows how", Available),
 			UpdateBrief(Available), UpdateTitle(Available), Topic.Updates, loud: false);
 	}
 
 	/// <summary>The pop-up: short, no links, one thing to do.</summary>
-	private static Said UpdateTitle(string tag) => new("nocat.farm {0} is ready", tag);
+	private static Said UpdateTitle(string tag) => new("gamer.farm {0} is ready", tag);
 
 	// Off Windows it can't install itself (see SelfUpdate), so the one thing to do is the manual step. What's new comes
 	// first - a version number alone gives nobody a reason to update.
@@ -222,7 +222,7 @@ public static class UpdateCheck {
 		Said how = SelfUpdate.Supported
 			? Live.Global.UpdateMode == UpdateModes.AtNight
 				? new("{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.", tag, Build.Version)
-				: new("{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.", tag, Build.Version)
+				: new("{0} is out - you have {1}. Type update accept in the gamer.farm window, or /update accept here, to install it.", tag, Build.Version)
 			// Docker (no image is published - it's built from the source) or a service: the same steps 'update' gives.
 			: new("{0} is out - you have {1}.\n{2}", tag, Build.Version, SelfUpdate.ByHand(tag));
 
@@ -231,7 +231,7 @@ public static class UpdateCheck {
 
 	static UpdateCheck() {
 		// GitHub refuses anonymous requests without one.
-		Http.DefaultRequestHeaders.Add("User-Agent", "nocat.farm/" + Build.Version);
+		Http.DefaultRequestHeaders.Add("User-Agent", "gamer.farm/" + Build.Version);
 	}
 
 	/// <summary>
@@ -301,10 +301,10 @@ public static class UpdateCheck {
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if ((Available != tag) && !quiet && !IsSkipped(tag)) {
 				Log.Attention(SelfUpdate.Supported && (Live.Global.UpdateMode == UpdateModes.AtNight)
-						? new Said("nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", tag)
+						? new Said("gamer.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", tag)
 					: SelfUpdate.Supported
-						? new Said("nocat.farm {0} is out - 'update accept' installs it", tag)
-						: new Said("nocat.farm {0} is out - 'update' shows how to install it", tag),
+						? new Said("gamer.farm {0} is out - 'update accept' installs it", tag)
+						: new Said("gamer.farm {0} is out - 'update' shows how to install it", tag),
 					UpdateBrief(tag), UpdateTitle(tag), Topic.Updates);
 				Log.Info(new Said("'update skip' skips it · {0}", page));
 				_remindedAt = DateTime.UtcNow;
@@ -533,7 +533,7 @@ public static class UpdateCheck {
 		// Closing is never a quiet moment: its accounts are signing out because it's closing, not because they're
 		// asleep - counted as clear, an install by itself could start as the app went down.
 		if (Commands.ExitRequested) {
-			return (false, new Said("nocat.farm is closing").ToString());
+			return (false, new Said("gamer.farm is closing").ToString());
 		}
 
 		foreach (Bot b in mgr.All) {

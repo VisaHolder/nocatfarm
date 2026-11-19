@@ -166,7 +166,7 @@ public static class SteamClientSwitch {
 	/// </summary>
 	/// <param name="login">The Steam login name (Cfg.SteamLogin), matched against the saved accounts.</param>
 	/// <param name="steamId">The account's SteamID64, matched first; 0 when it isn't signed in yet.</param>
-	/// <param name="display">The nocat.farm account name, for the log and the reply.</param>
+	/// <param name="display">The gamer.farm account name, for the log and the reply.</param>
 	public static async Task<(string Code, string Said)> OpenAsync(string login, ulong steamId, string display) {
 		if (!await OneAtATime.WaitAsync(0).ConfigureAwait(false)) {
 			return (SteamOpen.SteamBusy, new Said("one Open in Steam is already running - wait for it to finish").ToEnglish());
@@ -228,7 +228,7 @@ public static class SteamClientSwitch {
 						return;   // the write failed, so don't start Steam onto a half-written change
 					}
 
-					// 1.8.2: the way a double-click starts it - through Explorer, so Steam isn't nocat.farm's child.
+					// 1.8.2: the way a double-click starts it - through Explorer, so Steam isn't gamer.farm's child.
 					try {
 						Process.Start(SteamOpen.StartInfo(exe, Environment.GetFolderPath(Environment.SpecialFolder.Windows)))?.Dispose();
 					} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {

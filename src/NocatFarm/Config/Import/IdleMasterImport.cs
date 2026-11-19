@@ -90,7 +90,7 @@ public sealed class IdleMasterImport(bool extended) : IIdlerImporter {
 				bot.FarmingOrder = 3;   // most cards left
 				break;
 			case "mostvalue":
-				scan.Notes.Add(new Said("it farmed the most valuable cards first, which nocat.farm doesn't do - it farms most played first"));
+				scan.Notes.Add(new Said("it farmed the most valuable cards first, which gamer.farm doesn't do - it farms most played first"));
 				break;
 		}
 

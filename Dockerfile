@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# nocat.farm in Docker - headless: the log goes to `docker logs`, the dashboard is on port 7242.
+# gamer.farm in Docker - headless: the log goes to `docker logs`, the dashboard is on port 7242.
 #
 #   docker compose up -d --build  (after copying docker-compose.example.yml to docker-compose.yml)
 #
@@ -9,8 +9,8 @@
 # either way - or `sudo apt install docker-buildx` first.
 #
 # Framework-dependent, on Microsoft's ASP.NET Core runtime image, rather than self-contained on runtime-deps:
-#   - nocat.farm IS an ASP.NET Core app, so that image carries exactly the runtime it needs, and Microsoft keeps
-#     it patched: rebuilding picks up .NET security fixes without waiting for a nocat.farm release.
+#   - gamer.farm IS an ASP.NET Core app, so that image carries exactly the runtime it needs, and Microsoft keeps
+#     it patched: rebuilding picks up .NET security fixes without waiting for a gamer.farm release.
 #   - The build output is plain IL, so one build serves every CPU. The same Dockerfile builds amd64 and arm64
 #     (docker buildx build --platform linux/amd64,linux/arm64 .) without cross-compiling anything.
 #   - The app's own layer is a few MB rather than ~100MB of bundled runtime, so an update pulls only that.

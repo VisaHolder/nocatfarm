@@ -9,9 +9,10 @@ using NocatFarm.Core;
 namespace NocatFarm.Web;
 
 /// <summary>
-/// 1.8.6: the dashboard's own certificates, for "Open from anywhere" over HTTPS - made by nocat.farm itself, no outside
+/// 1.8.6: the dashboard's own certificates, for "Open from anywhere" over HTTPS - made by gamer.farm itself, no outside
 /// service or name (reap turned down Let's Encrypt, sslip.io and Tailscale: it has to work for anybody, on their own PC
-/// or box). A small authority ("nocat.farm dashboard", 10 years) is made once; its public part goes to the phone once
+/// or box). A small authority ("nocat.farm dashboard", 10 years - the name kept from before 2.0.0: phones that
+/// installed it trust only the names it was made with, nocat.farm among them) is made once; its public part goes to the phone once
 /// and the phone trusts the dashboard from then on - no warning page. The certificate the dashboard shows is signed by
 /// it and made again by itself when the box's address changes or it nears its end, without anything new on the phone.
 /// </summary>
@@ -169,7 +170,7 @@ public static class DashboardCert {
 
 	/// <summary>How to install it on a phone, plainly, with the fingerprint to check.</summary>
 	public static Said InstallSaid(string fingerprint) => new(
-		"nocat.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}",
+		"gamer.farm dashboard certificate - install it once and your phone trusts the dashboard over https (no warning page). Android: open the file, or Settings > Security > Encryption & credentials > Install a certificate > CA certificate. iPhone: open the file, Settings > Profile Downloaded > Install, then Settings > General > About > Certificate Trust Settings > turn it on. Check the fingerprint (SHA-256): {0}",
 		fingerprint);
 
 	/// <summary>Forget what's loaded - the checks, and a reset.</summary>

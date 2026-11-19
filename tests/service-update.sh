@@ -1,5 +1,5 @@
 #!/bin/bash
-# nocat.farm updating itself as a real systemd service: run as root on a machine (or LXC container) with systemd, no Steam
+# gamer.farm updating itself as a real systemd service: run as root on a machine (or LXC container) with systemd, no Steam
 # accounts. Each scenario installs the zip fresh in /opt/nocatfarm, under the unit from tools/linux, with its data in a
 # separate --path folder, running as a user of its own - and checks "exactly one copy" with ps every time.
 #
@@ -52,7 +52,7 @@ make_variant() {   # name, then the text of the nocatFarm that replaces the prog
 
 offer() {   # the zip in the feed folder (no .zip), the version
 	size=$(wc -c < "$WORK/feed/$1.zip")
-	printf '{"tag_name":"v%s","body":"- a test release","assets":[{"name":"nocat.farm-v%s_linux-x64.zip","browser_download_url":"http://127.0.0.1:%s/%s.zip","size":%s}]}' \
+	printf '{"tag_name":"v%s","body":"- a test release","assets":[{"name":"gamer.farm-v%s_linux-x64.zip","browser_download_url":"http://127.0.0.1:%s/%s.zip","size":%s}]}' \
 		"$2" "$2" "$FEED" "$1" "$size" > "$WORK/feed/latest.tmp"
 	mv -f "$WORK/feed/latest.tmp" "$WORK/feed/latest.json"
 }
@@ -89,7 +89,7 @@ write_new_unit() {
 write_old_unit() {
 	cat > "$UNITFILE" <<EOF
 [Unit]
-Description=nocat.farm
+Description=gamer.farm
 After=network-online.target
 Wants=network-online.target
 
@@ -295,6 +295,23 @@ scn_first_update_from_previous_release() {
 	went_in 9.9.9 "$pid"
 }
 
+# 2.0.0 (the rename to gamer.farm): the release people have now, already under the unit that lets it update itself, puts in
+# THIS build with its own updater and its own helper - as a box like the owner's does. Same unit, same folder, same
+# program name, and the settings come along.
+scn_previous_release_updates_itself() {
+	[ -f "$ZIPS/prev.zip" ] || die "no prev.zip"
+	offer good 9.9.9
+	fresh "$ZIPS/prev.zip" new
+	from=$(ver)
+	say "the release people have now: $from, under the unit that updates itself"
+	pid=$(main_pid)
+	cmd 'update now' | sed 's/^/    /'
+	went_in 9.9.9 "$pid"
+	grep -q "\"WebPort\": *$PORT" "$DATA/config/nocatFarm.json" || die "settings lost"
+	cmd 'version' | grep -q 'gamer.farm' || die "it doesn't call itself gamer.farm"
+	say "$from put in this build by itself and it stayed, on the same settings"
+}
+
 scn_update_now() {
 	offer good 9.9.9
 	fresh "$ZIPS/cur.zip" new
@@ -304,8 +321,8 @@ scn_update_now() {
 	cmd 'update now' | sed 's/^/    /'
 	went_in 9.9.9 "$pid"
 	# The helper did it, inside the service. (The exit code itself: see stop_while_staged, which catches it between the two.)
-	journalctl -u "$UNIT" --no-pager | grep -q 'nocat.farm update: putting in 9.9.9' || die "the journal doesn't show the helper putting it in"
-	journalctl -u "$UNIT" --no-pager | grep -q 'nocat.farm update: 9.9.9 is in' || die "the journal doesn't show the helper finishing"
+	journalctl -u "$UNIT" --no-pager | grep -q 'gamer.farm update: putting in 9.9.9' || die "the journal doesn't show the helper putting it in"
+	journalctl -u "$UNIT" --no-pager | grep -q 'gamer.farm update: 9.9.9 is in' || die "the journal doesn't show the helper finishing"
 	grep -q 'nocat-aes1:' "$DATA/config/nocatFarm.json" || die "the settings' secret isn't encrypted any more"
 	ownership_ok
 	sleep 40
@@ -675,7 +692,7 @@ if [ "$MODE" = one ]; then
 	exit 0
 fi
 
-ALL="${NF_SCENARIOS:-update_now update_accept dashboard_button update_file night_install bad_exit3 bad_exit0 bad_late_crash bad_not_a_program bad_hangs_and_ignores_stop kill9_new_version_on_trial kill9_mid_swap stop_mid_swap stop_during_countdown stop_while_staged hand_install_while_staged stop_on_trial first_update_from_previous_release older_unit_is_by_hand folder_not_writable_is_by_hand never_gives_up_restarting second_copy_refused}"
+ALL="${NF_SCENARIOS:-update_now update_accept dashboard_button update_file night_install bad_exit3 bad_exit0 bad_late_crash bad_not_a_program bad_hangs_and_ignores_stop kill9_new_version_on_trial kill9_mid_swap stop_mid_swap stop_during_countdown stop_while_staged hand_install_while_staged stop_on_trial first_update_from_previous_release previous_release_updates_itself older_unit_is_by_hand folder_not_writable_is_by_hand never_gives_up_restarting second_copy_refused}"
 results=""
 failed=0
 for s in $ALL; do

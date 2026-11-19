@@ -183,7 +183,7 @@ public static partial class Commands {
 		(string text, _) = await SwitchPreview.LookAsync(bot, feature, ct).ConfigureAwait(false);
 
 		return feature == Switches.SteamOpenButton
-			? text + Environment.NewLine + "Pressing the button closes Steam, points its saved accounts at this one, and starts Steam again. It never stops nocat.farm farming this account."
+			? text + Environment.NewLine + "Pressing the button closes Steam, points its saved accounts at this one, and starts Steam again. It never stops gamer.farm farming this account."
 			: text;
 	}
 

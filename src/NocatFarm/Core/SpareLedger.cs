@@ -9,7 +9,7 @@ namespace NocatFarm.Core;
 /// days" rule), whether you've said <c>spare ok</c>, whether the first preview went out, and today's count and value.
 /// </summary>
 /// <remarks>
-/// Steam's inventory doesn't say when an item arrived. So the first time nocat.farm sees an item is taken as when it
+/// Steam's inventory doesn't say when an item arrived. So the first time gamer.farm sees an item is taken as when it
 /// came in. Except on the very first look at an account: everything already there counts as old - months-old cards
 /// waited a week otherwise - and only what comes in after that waits its days. After an update from 1.8.0, what its own
 /// first look saw counts as old the same way, and what it saw come in later keeps the day it came. An item that leaves and comes back (a listing taken down) gets a new id from Steam and

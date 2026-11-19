@@ -5,7 +5,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// 1.8.5: what became of the offers this account sent - by nocat.farm or by hand on Steam. reap sent a friend a bunch of
+/// 1.8.5: what became of the offers this account sent - by gamer.farm or by hand on Steam. reap sent a friend a bunch of
 /// trades and nothing in the log said when they went through; he had to sign in to the account to see.
 /// </summary>
 public sealed partial class Trading {

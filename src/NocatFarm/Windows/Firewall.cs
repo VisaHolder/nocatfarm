@@ -17,6 +17,8 @@ namespace NocatFarm.Windows;
 /// </remarks>
 [SupportedOSPlatform("windows")]
 public static class Firewall {
+	/// <summary>The rule's name. Kept from before the 2.0.0 rename: the rule an older copy made is found and replaced by it,
+	/// and the uninstaller of an install made before 2.0.0 takes away only a rule by this name.</summary>
 	public const string RuleName = "nocat.farm dashboard";
 
 	private const int Inbound = 1;

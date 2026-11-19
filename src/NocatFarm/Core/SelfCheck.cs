@@ -104,7 +104,7 @@ public static class SelfCheck {
 		}
 
 		if (!bot.Cfg.LegitMode && (bot.PlayingApps.Count > 0 || bot.Cfg.IdleGames.Count > 0)) {
-			Add(15, 1, "no human rhythm: it plays for as long as nocat.farm runs - no breaks, no meals, no bedtime", "turn on human mode (LegitMode)");
+			Add(15, 1, "no human rhythm: it plays for as long as gamer.farm runs - no breaks, no meals, no bedtime", "turn on human mode (LegitMode)");
 		}
 
 		if (!bot.Cfg.LegitMode && (bot.Cfg.FarmOffline || bot.Cfg.OnlineStatus is 0 or 7) && (bot.PlayingApps.Count > 0 || bot.Cfg.IdleGames.Count > 0)) {

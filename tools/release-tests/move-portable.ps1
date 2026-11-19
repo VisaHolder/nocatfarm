@@ -2,7 +2,7 @@
 # kept, its startup entry taken over, the old folder left alone.
 # Then, with the accounts that uninstall kept still in the folder and a file in them held open (Explorer, a virus scan),
 # a second move: it can't set them aside, so it stops - and every kept account is still there.
-# Needs dist\nocat.farm-v<version>-setup.exe and dist\nocat.farm-v<from>-portable.zip:  -From 1.5.3
+# Needs dist\gamer.farm-v<version>-setup.exe and dist\gamer.farm-v<from>-portable.zip:  -From 1.5.3
 # (-Setup another-setup.exe runs the same checks against another build's setup.)
 param([Parameter(Mandatory)][string]$From, [string]$Setup = '')
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
@@ -12,13 +12,13 @@ $SP = Join-Path $env:TEMP 'nocatfarm-tests'
 New-Item -ItemType Directory -Force $SP | Out-Null
 $ErrorActionPreference = 'Continue'
 $old = "$SP\old147"; $inst = "$SP\inst148"
-$setup = if ($Setup) { (Resolve-Path $Setup).Path } else { "$Repo\dist\nocat.farm-v$Version-setup.exe" }
+$setup = if ($Setup) { (Resolve-Path $Setup).Path } else { "$Repo\dist\gamer.farm-v$Version-setup.exe" }
 $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 function Check($name, $ok, $detail = '') { "{0}  {1}{2}" -f ($(if ($ok) { 'PASS' } else { 'FAIL' })), $name, $(if ($detail) { "  ($detail)" } else { '' }) }
 $savedRun = (Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
 
 # The real startup entry, remembered on disk. Read from the registry alone, a run that overlapped another (or followed
-# one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's nocat.farm
+# one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's gamer.farm
 # then stopped starting with Windows. An entry pointing in here is never taken for the real one.
 $realRunFile = Join-Path $SP 'real-run-entry.txt'
 # No entry at all is the owner's choice (Start with Windows off) - the saved one is forgotten, not put back.
@@ -28,7 +28,9 @@ elseif (Test-Path $realRunFile) { $savedRun = (Get-Content $realRunFile -Raw).Tr
 else { $savedRun = $null }
 try {
   Remove-Item $old, $inst -Recurse -Force -ErrorAction SilentlyContinue
-  Expand-Archive "$Repo\dist\nocat.farm-v$From-portable.zip" $old
+  # Releases before 2.0.0 are nocat.farm-v<version>-portable.zip
+  $fromZip = @("$Repo\dist\gamer.farm-v$From-portable.zip", "$Repo\dist\nocat.farm-v$From-portable.zip") | Where-Object { Test-Path $_ } | Select-Object -First 1
+  Expand-Archive $fromZip $old
   New-Item -ItemType Directory -Force "$old\config" | Out-Null
   '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true, "CountMeAsUser": false }' | Set-Content "$old\config\nocatFarm.json" -Encoding utf8
   '{ "Enabled": false, "SteamLogin": "nf_dummy_moved", "IdleGames": [730, 440], "CustomGameNameEnabled": true, "CustomGameName": "moved ok" }' | Set-Content "$old\config\moved.json" -Encoding utf8

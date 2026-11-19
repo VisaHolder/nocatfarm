@@ -4,7 +4,7 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// The market listings nocat.farm put up itself, per account (config/state/listed-&lt;account&gt;.json) - so taking down
+/// The market listings gamer.farm put up itself, per account (config/state/listed-&lt;account&gt;.json) - so taking down
 /// stale listings (Spare items) only ever touches its own, never a card the owner listed by hand.
 /// </summary>
 /// <remarks>
@@ -15,7 +15,7 @@ namespace NocatFarm.Core;
 public static class OurListings {
 	/// <param name="Tracked">Written by 1.8.1 or later, which follows each listing until it's gone - see <see cref="Judge"/>.
 	/// An older record is never taken for a declined listing: whether it was ever up isn't known.</param>
-	/// <param name="Active">Seen up on the market (not waiting on a confirmation), or confirmed by nocat.farm itself.</param>
+	/// <param name="Active">Seen up on the market (not waiting on a confirmation), or confirmed by gamer.farm itself.</param>
 	/// <param name="Settled">Gone from the market, and already judged - sold, taken down, or declined.</param>
 	/// <param name="BuyerCents">What a buyer paid for it as listed - the price a step down starts from. 0 in a record from
 	/// before 1.8.1.</param>
@@ -53,14 +53,14 @@ public static class OurListings {
 				return File.Exists(path) ? JsonSerializer.Deserialize<List<Entry>>(File.ReadAllText(path)) ?? [] : [];
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 				// Nothing known as ours: then nothing is taken down - the safe way round.
-				Log.Debug(new Said("couldn't read which listings nocat.farm made: {0}", Log.Describe(e)), account);
+				Log.Debug(new Said("couldn't read which listings gamer.farm made: {0}", Log.Describe(e)), account);
 
 				return [];
 			}
 		}
 	}
 
-	/// <summary>Write down one listing nocat.farm just put up, with what a buyer pays for it.</summary>
+	/// <summary>Write down one listing gamer.farm just put up, with what a buyer pays for it.</summary>
 	public static void Add(string account, ulong assetId, string hash, int youGetCents, DateTime utc, int buyerCents = 0) {
 		lock (Gate) {
 			List<Entry> all = Load(account);
@@ -78,7 +78,7 @@ public static class OurListings {
 
 			return true;
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-			Log.Debug(new Said("couldn't write down a listing nocat.farm made: {0}", Log.Describe(e)), account);
+			Log.Debug(new Said("couldn't write down a listing gamer.farm made: {0}", Log.Describe(e)), account);
 
 			return false;
 		}
@@ -137,7 +137,7 @@ public static class OurListings {
 	}
 
 	/// <summary>
-	/// Follow each listing nocat.farm made against what's on the market now. Seen up (or held by Steam): noted. Gone after
+	/// Follow each listing gamer.farm made against what's on the market now. Seen up (or held by Steam): noted. Gone after
 	/// being up: sold or taken down, settled. Gone without ever being seen up: confirmed on the phone and sold before the
 	/// next look - found in the market <paramref name="history"/> - or declined in the Steam app, or taken down while it still
 	/// waited on its confirmation: settled, and returned as declined. Steam's confirmation list doesn't keep a declined one,
@@ -241,7 +241,7 @@ public static class OurListings {
 	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, HashSet<ulong>> Reminded = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
-	/// 1.8.7: listings nocat.farm put up that have waited <see cref="RemindAfter"/> or more for a confirmation on the owner's
+	/// 1.8.7: listings gamer.farm put up that have waited <see cref="RemindAfter"/> or more for a confirmation on the owner's
 	/// phone - never seen up on the market. Said once when one starts counting, with how many wait and since when; nothing when
 	/// every one waiting was said already (the account's own authenticator confirms its own, so this is the phone ones).
 	/// reap had listings sitting unconfirmed for a day without knowing.
@@ -321,8 +321,8 @@ public static class OurListings {
 	}
 
 	/// <summary>
-	/// Mark the record of this listing as up - confirmed by nocat.farm on the account's authenticator - or, with
-	/// <paramref name="settled"/>, as gone: taken down by nocat.farm itself, never a declined one.
+	/// Mark the record of this listing as up - confirmed by gamer.farm on the account's authenticator - or, with
+	/// <paramref name="settled"/>, as gone: taken down by gamer.farm itself, never a declined one.
 	/// </summary>
 	public static void Mark(string account, Seller.Listing listing, bool settled = false) {
 		lock (Gate) {
@@ -375,7 +375,7 @@ public static class OurListings {
 	public static List<(Seller.Listing Listing, Entry Entry)> OursWithRecords(IEnumerable<Seller.Listing> listings, IReadOnlyList<Entry> ours) =>
 		[.. Pair(listings, ours).Select(p => (p.Value, ours[p.Key]))];
 
-	/// <summary>The listings among <paramref name="listings"/> that nocat.farm made: by item id, or the same item at the same price listed then.</summary>
+	/// <summary>The listings among <paramref name="listings"/> that gamer.farm made: by item id, or the same item at the same price listed then.</summary>
 	public static List<Seller.Listing> Ours(IEnumerable<Seller.Listing> listings, IReadOnlyList<Entry> ours) {
 		List<Seller.Listing> all = [.. listings];
 		HashSet<Seller.Listing> mine = [.. Pair(all, ours).Values];

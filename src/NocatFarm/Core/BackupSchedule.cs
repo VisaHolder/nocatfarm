@@ -8,7 +8,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// The daily locked backup (<see cref="LockedBackup"/>): once a day at the time set under Settings, Backups - a few
-/// minutes later each day, by a fixed random amount - and as soon as nocat.farm is open again if the PC was off then.
+/// minutes later each day, by a fixed random amount - and as soon as gamer.farm is open again if the PC was off then.
 /// </summary>
 /// <remarks>
 /// A failure (the folder missing, the disk full, no permission) is said in the log and sent as a notification - once per
@@ -245,9 +245,9 @@ public static class BackupSchedule {
 		}
 
 		if (wasFailing) {
-			Log.Publish(Topic.Backups, "nocat.farm", new Said("backups work again - {0}", Path.GetFileName(path)));
+			Log.Publish(Topic.Backups, "gamer.farm", new Said("backups work again - {0}", Path.GetFileName(path)));
 		} else if (g.BackupMessages == 2) {
-			Log.Publish(Topic.Backups, "nocat.farm", new Said("backup saved: {0} ({1} KB)", Path.GetFileName(path), kb));
+			Log.Publish(Topic.Backups, "gamer.farm", new Said("backup saved: {0} ({1} KB)", Path.GetFileName(path), kb));
 		}
 
 		return (true, saved);
@@ -276,7 +276,7 @@ public static class BackupSchedule {
 
 		// Once per reason a day: a drive left unplugged all day is one message, not one an hour.
 		if (tell) {
-			Log.Publish(Topic.Backups, "nocat.farm", said);
+			Log.Publish(Topic.Backups, "gamer.farm", said);
 		}
 
 		return said;

@@ -233,7 +233,7 @@ public static class AppInstance {
 					Log.StackToFile(e);
 				}
 			}
-		}) { IsBackground = true, Name = "nocat.farm instance" };
+		}) { IsBackground = true, Name = "gamer.farm instance" };
 
 		_listener.Start();
 	}

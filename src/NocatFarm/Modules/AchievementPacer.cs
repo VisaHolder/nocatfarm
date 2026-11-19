@@ -1175,7 +1175,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Steam's own total for the game, not just the minutes this tool has idled.
 		//
 		// The rarity floor asks one question: could a real player plausibly have reached this achievement by now?
-		// Answering it from our own accrued minutes threw away every hour the account played before nocat.farm
+		// Answering it from our own accrued minutes threw away every hour the account played before gamer.farm
 		// ever saw it. An account with thousands of genuine hours in a game was treated as a beginner and had the
 		// rare tail locked shut forever - the opposite of what the gate is for, and the reason a long-played
 		// library would never fill in. Steam's figure already includes anything we idled, so it is simply the
@@ -3118,7 +3118,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						"";
 
 					// The hours the pacing goes by: Steam's own count when it's the bigger one, as in the status line. Only
-					// the minutes nocat.farm played itself went out here, so the dashboard read "45.6h played" beside a
+					// the minutes gamer.farm played itself went out here, so the dashboard read "45.6h played" beside a
 					// status of "401.7h in" for the same game.
 					return new Row(
 						kv.Key,

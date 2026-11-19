@@ -4,7 +4,7 @@ namespace NocatFarm.Config;
 
 /// <summary>
 /// What the setup wizard chose - language, starting with Windows, the dashboard, phone and "from anywhere" - saved
-/// into the config before nocat.farm first starts, through the same checks as 'set'. The installer never writes the
+/// into the config before gamer.farm first starts, through the same checks as 'set'. The installer never writes the
 /// config itself, so the file only ever has one writer and one format. Nothing secret comes this way: the dashboard
 /// password is chosen in the dashboard's own first-run setup.
 /// </summary>
@@ -70,7 +70,7 @@ public static class SetupChoices {
 		}
 	}
 
-	/// <summary>0 saved; 2 a choice it doesn't take or a value that doesn't fit; 3 nocat.farm is running from this folder;
+	/// <summary>0 saved; 2 a choice it doesn't take or a value that doesn't fit; 3 gamer.farm is running from this folder;
 	/// 4 (SaveFailed) the choices couldn't be written. <see cref="Problem"/> says why.</summary>
 	public static int Apply(IEnumerable<string> choices) {
 		Problem = null;
@@ -78,7 +78,7 @@ public static class SetupChoices {
 		// Not while it's running: the running copy would write its own settings over these.
 		if (Mutex.TryOpenExisting(AppInstance.LockName(ConfigStore.Root), out Mutex? held)) {
 			held.Dispose();
-			Problem = "nocat.farm is running from this folder - close it first";
+			Problem = "gamer.farm is running from this folder - close it first";
 
 			return 3;
 		}
@@ -132,7 +132,7 @@ public static class SetupChoices {
 			PendingImport.Clear();
 		}
 
-		// Straight away, not at the first start - closing the setup without opening nocat.farm must still leave it
+		// Straight away, not at the first start - closing the setup without opening gamer.farm must still leave it
 		// starting with Windows (or not), as chosen.
 		StartWithWindows(g.StartWithWindows);
 

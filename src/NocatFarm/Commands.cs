@@ -60,7 +60,7 @@ public static partial class Commands {
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 		new("stuck", "", GroupAccounts, "The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off.", "alarm"),
-		new("steam", "[account|all] | open <account> | on|off <account|all>", GroupAccounts, "Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops nocat.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on."),
+		new("steam", "[account|all] | open <account> | on|off <account|all>", GroupAccounts, "Open in Steam: sign your Steam desktop app into an account in one click, no password. 'steam open <account>' closes Steam, points its saved accounts at that account, and starts Steam again - it signs straight in from the login Steam already remembers. An account Steam doesn't remember yet opens on Steam's sign-in with its name filled in: type its password once with Remember me ticked, and after that it's one click. It never stops gamer.farm farming that account (Steam allows the sign-in and only backs the farm off when you actually launch a game). Windows only. Bare, or with an account, it says whether each account can do it and whether Steam remembers it. 'steam on <account>' shows the button in the dashboard and the window (the same as the switch in its settings, after its preview); 'steam off <account>' hides it. 'steam all' shows what the button would do on every account, and 'steam on all' / 'steam off all' turn it on or off for every account at once. The button is off until you turn it on."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
@@ -89,12 +89,12 @@ public static partial class Commands {
 		new("levelup", "<account> <level> [buy [yes]] | <account> stop", GroupCards, "What reaching a Steam level would cost, at once from the prices already known: the badge levels missing, the ones its own sets make, and the cheapest levels to buy for the rest. 'buy' shows it as a level goal; 'buy yes' starts it - buying cards buys exactly those levels at its own pace, never over the total shown and a tenth, and stops at the level. 'stop' ends a goal.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
-		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
+		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in gamer.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
 		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "", "loot"),
-		new("swaps", "[account] | preview|on|off|check <account> | sync", GroupTrades, "Card swaps with other nocat.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and gamer.mom deletes its SteamID and trade link. 'swaps sync' asks gamer.mom for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to gamer.mom and turns nothing on."),
+		new("swaps", "[account] | preview|on|off|check <account> | sync", GroupTrades, "Card swaps with other gamer.farm users: whether each account swaps, today's swaps, matches waiting and offers out. 'swaps preview <account>' shows how many spare cards it could swap and the limits; 'swaps on <account>' turns it on (the same as the switch in its settings, after its preview); 'swaps off <account>' turns it off, and gamer.mom deletes its SteamID and trade link. 'swaps sync' asks gamer.mom for new matches now. 'swaps check <account>' only tries the account's sign-in through Steam that swaps need, and says whether it works - it sends nothing to gamer.mom and turns nothing on."),
 
 		new("2fa", "[account]", GroupGuard, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
-		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
+		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in gamer.farm."),
 		new("confirm", "<account> <number|all>", GroupGuard, "Confirm what 'confirmations' listed under that number, or all of it."),
 		new("deny", "<account> <number|all>", GroupGuard, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
 
@@ -124,13 +124,13 @@ public static partial class Commands {
 
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
-		new("backup", "[now|status]", GroupSettings, "'backup' saves a quick zip into the backups folder next to nocat.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup."),
+		new("backup", "[now|status]", GroupSettings, "'backup' saves a quick zip into the backups folder next to gamer.farm - its saved logins only open on this PC. For the password-locked backup that opens on any PC: 'backup now' makes one right away, 'backup status' says when the last was made and the next is due. Restore either from the dashboard (Settings, Backup & restore) or the first-run setup."),
 		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler, ArchiSteamFarm login tokens and all."),
 
 		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
 		new("stats", "[hours]", GroupOther, "Everything: each account's last 24 hours (hours banked, cards, comments, totals), then cards dropped and comments posted, by hour. Give a number of hours to look further back."),
 		new("report", "[week]", GroupOther, "The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments).", "", "weekly"),
-		new("notify", "[test|link]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner."),
+		new("notify", "[test|link]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the gamer.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("addons", "[install|remove <name>]", GroupOther, "reap's official add-ons, from the signed list on GitHub: what each one does, and whether it's installed. 'addons install <name>' downloads one, checks it's the very file the list signed for, puts it in the plugins folder and turns on Load plugins - restart to load it. 'addons remove <name>' takes it out again (its settings are kept), even with GitHub not answering. Installing and removing only work at this PC, or on the dashboard signed in with its password.", "addon"),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
@@ -139,25 +139,25 @@ public static partial class Commands {
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window."),
 		new("dashboard", "[unlock|cert]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. Locked out after too many wrong passwords? 'dashboard unlock' lets you (and anyone else locked out) sign in again straight away. 'dashboard cert' sends the dashboard's own certificate to Telegram, with how to install it on a phone once so it opens over https from anywhere with no warning page. To open it from anywhere, see 'anywhere'.", "web|link", "unlock"),
 		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
-		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
+		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the gamer.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("update", "[accept|now|skip] | file [zip] [force] | versions | to <version>", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a nocat.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the nocat.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out."),
-		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on, like a Steam Guard code or a password."),
-		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q"),
+		new("update", "[accept|now|skip] | file [zip] [force] | versions | to <version>", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a gamer.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the gamer.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out."),
+		new("answer", "<text>", GroupOther, "Answer whatever gamer.farm is waiting on, like a Steam Guard code or a password."),
+		new("exit", "", GroupOther, "Shut gamer.farm down.", "quit|q"),
 
 		// For checking and fixing things by hand. They all keep working; they're just last, out of the everyday list.
 		new("fairswap", "<account> <offerID>", GroupAdvanced, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks, never accepts or declines."),
 		new("addlicense", "<account|all> <IDs>", GroupAdvanced,
 			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
 		new("reload", "", GroupAdvanced, "Re-read every config file from disk."),
-		new("screen", "off", GroupAdvanced, "Turns this computer's screens off now to save power. nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display")
+		new("screen", "off", GroupAdvanced, "Turns this computer's screens off now to save power. gamer.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display")
 	];
 
 	/// <summary>
 	/// Closing. Set before anything is cancelled, by every way out (exit, the tray, the window, Ctrl+C, SIGTERM) - an
 	/// update that is downloading or signing accounts out reads it and stops rather than installing and starting
-	/// nocat.farm again after it was closed. Volatile: it is read on other threads, and once set it stays set.
+	/// gamer.farm again after it was closed. Volatile: it is read on other threads, and once set it stays set.
 	/// </summary>
 	public static bool ExitRequested => _exitRequested;
 
@@ -180,7 +180,7 @@ public static partial class Commands {
 		BotManager? mgr = Host;
 
 		if (mgr == null) {
-			return "nocat.farm isn't ready yet";
+			return "gamer.farm isn't ready yet";
 		}
 
 		// The guards below read the words as the dispatcher does - split at any white space, so 'set<tab>WebPassword' is 'set'
@@ -710,7 +710,7 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// Run a command typed at this PC: the nocat.farm window, its console, or the dashboard opened on this PC itself. Only
+	/// Run a command typed at this PC: the gamer.farm window, its console, or the dashboard opened on this PC itself. Only
 	/// those three call it. Everything else - Steam chat, Telegram, Discord, a plugin, a dashboard on a phone or from the
 	/// internet - is not at this PC.
 	/// </summary>
@@ -934,7 +934,7 @@ public static partial class Commands {
 	/// host is told: an update checking the flag can never see the app closing without it. Safe to call twice.
 	/// </summary>
 	/// <remarks>The flag goes up under the updater's handover lock, which checks it and starts the swap as one step.
-	/// Set without it, a close between that check and the swap starting installed the new version and started nocat.farm
+	/// Set without it, a close between that check and the swap starting installed the new version and started gamer.farm
 	/// again after it had been closed. Only the flag is under it: the host is told outside, since cancelling runs every
 	/// shutdown callback on this thread, and none of them should wait on a swap starting.</remarks>
 	public static void RequestExit() {
@@ -1069,7 +1069,7 @@ public static partial class Commands {
 						: DashboardLinks.Text(mgr.Global) + FarmDashboardLine(mgr.Global),
 				"unlock" => Unlock(),
 				"visitors" or "who" => VisitorsCommand(rest),
-				"clear" or "cls" => new Said("clear works in the nocat.farm window and the dashboard - it clears that screen").ToString(),
+				"clear" or "cls" => new Said("clear works in the gamer.farm window and the dashboard - it clears that screen").ToString(),
 				"anywhere" or "remote" => await Anywhere(mgr, rest).ConfigureAwait(false),
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
@@ -1132,7 +1132,7 @@ public static partial class Commands {
 		// No dashboard, nothing to forward: 'anywhere on' waited fifteen seconds and then said it was "still asking your
 		// router", which it never would.
 		if (!g.WebEnabled) {
-			return new Said("the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first").ToString();
+			return new Said("the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart gamer.farm first").ToString();
 		}
 
 		if (what is "on" or "start" or "true") {
@@ -1331,7 +1331,7 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// 'update file [zip] [force]': install a nocat.farm zip that's on this PC - a build to try out before it's released -
+	/// 'update file [zip] [force]': install a gamer.farm zip that's on this PC - a build to try out before it's released -
 	/// picked in a window when no zip is named (see <see cref="PickAndInstall"/>),
 	/// the way an update goes in, safety copy and putting back included.
 	/// </summary>
@@ -1350,7 +1350,7 @@ public static partial class Commands {
 		}
 
 		if (!atThisPc) {
-			return "update file only works at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC. Not from Steam chat, Telegram, Discord or another device.";
+			return "update file only works at this PC - in the gamer.farm window or its console, or the dashboard opened on this PC. Not from Steam chat, Telegram, Discord or another device.";
 		}
 
 		(string path, bool force) = FileAndForce(rest);
@@ -1378,7 +1378,7 @@ public static partial class Commands {
 
 	/// <summary>
 	/// A file dragged into a Mac's Terminal is pasted with a backslash before every space and bracket -
-	/// .../nocat.farm-v1.7.4_osx-arm64\ \(1\).zip - and there was "no file at" it. Off Windows, a path that isn't there is taken
+	/// .../gamer.farm-v1.7.4_osx-arm64\ \(1\).zip - and there was "no file at" it. Off Windows, a path that isn't there is taken
 	/// without them. On Windows a backslash is a folder, and stays.
 	/// </summary>
 	internal static string DraggedPath(string path, bool windows) =>
@@ -1389,7 +1389,7 @@ public static partial class Commands {
 	private static partial System.Text.RegularExpressions.Regex Escaped();
 
 	/// <summary>
-	/// The "pick a file" window for 'update file' typed with no path: on Windows, the nocat.farm window's own, opened on
+	/// The "pick a file" window for 'update file' typed with no path: on Windows, the gamer.farm window's own, opened on
 	/// this PC's desktop. Null where there's no desktop to open one on - Linux, a Mac, Docker, --no-gui, a service.
 	/// </summary>
 	private static Func<Task<string?>>? Picker() =>
@@ -1457,7 +1457,7 @@ public static partial class Commands {
 			}
 		});
 
-		return "A window to pick the file opened on this PC. Pick the nocat.farm zip there, or Cancel to change nothing.";
+		return "A window to pick the file opened on this PC. Pick the gamer.farm zip there, or Cancel to change nothing.";
 	}
 
 	/// <summary>A zip on this PC, typed or picked: checked, then installed the way an update is.</summary>
@@ -1495,7 +1495,7 @@ public static partial class Commands {
 		string file = Path.GetFileName(path);
 
 		if (!force && !UpdateCheck.IsNewerThanThisBuild(version)) {
-			return $"{file} has nocat.farm {version}, and you have {Build.Version} - {(version == Build.Version ? "the same version" : "an older one")}. To install it anyway:  update file {path} force";
+			return $"{file} has gamer.farm {version}, and you have {Build.Version} - {(version == Build.Version ? "the same version" : "an older one")}. To install it anyway:  update file {path} force";
 		}
 
 		// A file goes in skipped or not (the install doesn't look), and a skip of the release with its number is left as it is:
@@ -1524,7 +1524,7 @@ public static partial class Commands {
 			}
 		});
 
-		return $"installing nocat.farm {version} from {file} - the log shows how it goes, and it restarts into it by itself. If it doesn't start, {Build.Version} is put back."
+		return $"installing gamer.farm {version} from {file} - the log shows how it goes, and it restarts into it by itself. If it doesn't start, {Build.Version} is put back."
 			+ (back ? " " + GoingBackSaid(version, hold) : "");
 	}
 
@@ -1882,7 +1882,7 @@ public static partial class Commands {
 
 		if (sub is "install" or "remove" or "uninstall") {
 			if (!mayInstall) {
-				return new Said("add-ons are installed and removed only at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString();
+				return new Said("add-ons are installed and removed only at this PC - in the gamer.farm window or its console, or the dashboard opened on this PC (or signed in with its password)").ToString();
 			}
 
 			if (string.IsNullOrWhiteSpace(name)) {
@@ -1962,13 +1962,13 @@ public static partial class Commands {
 	// 1.8.2: says it counts itself only while "Count me as a user" is on.
 	public static string About() => Live.Global.CountMeAsUser
 		? $"""
-		nocat.farm {Build.Version} - Steam idler and trading-card farmer.
+		gamer.farm {Build.Version} - Steam idler and trading-card farmer.
 		Everything runs on this PC. Your accounts never leave it. Once an hour it tells gamer.mom it's running, to count
 		Steam accounts: a random install ID, the version, the platform and how many accounts
 		are signed in (just the number), nothing else. Count me as a user turns it off.
 		"""
 		: $"""
-		nocat.farm {Build.Version} - Steam idler and trading-card farmer.
+		gamer.farm {Build.Version} - Steam idler and trading-card farmer.
 		Everything runs on this PC. Your accounts never leave it. Count me as a user is off,
 		so it doesn't count itself on gamer.mom.
 		""";
@@ -1999,7 +1999,7 @@ public static partial class Commands {
 		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}{(fallback is int or float or double ? unit : "")}");
 
 		if (def.NeedsRestart) {
-			sb.AppendLine("  Takes effect the next time nocat.farm starts.");
+			sb.AppendLine("  Takes effect the next time gamer.farm starts.");
 		}
 
 		return sb.ToString().TrimEnd();
@@ -2203,9 +2203,9 @@ public static partial class Commands {
 			}
 		}
 
-		// 1.8.5: the machine itself - memory, storage, heat - and how long nocat.farm has been up.
+		// 1.8.5: the machine itself - memory, storage, heat - and how long gamer.farm has been up.
 		sb.AppendLine();
-		sb.AppendLine($"  nocat.farm up {ReportCard.Uptime()}{(BoxHealth.Line(BoxHealth.Read()) is { } health ? " · " + health : "")}");
+		sb.AppendLine($"  gamer.farm up {ReportCard.Uptime()}{(BoxHealth.Line(BoxHealth.Read()) is { } health ? " · " + health : "")}");
 
 		return sb.ToString().TrimEnd();
 	}
@@ -3115,7 +3115,7 @@ public static partial class Commands {
 			List<Bot> able = [.. mgr.All.Where(static b => b.CanConfirmTrades)];
 
 			if (able.Count == 0) {
-				return new Said("No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.").ToString();
+				return new Said("No account has its authenticator in gamer.farm - add its maFile under config/authenticators to confirm from here.").ToString();
 			}
 
 			List<string> all = [];
@@ -4650,7 +4650,7 @@ public static partial class Commands {
 
 		if ((args.Length > 0) && args[0].Equals("link", StringComparison.OrdinalIgnoreCase)) {
 			if (!atThisPc) {
-				return "The Telegram connect link is only given at this PC: 'notify link' in the nocat.farm window or its console, or Connect Telegram in the dashboard's Settings, Notifications.";
+				return "The Telegram connect link is only given at this PC: 'notify link' in the gamer.farm window or its console, or Connect Telegram in the dashboard's Settings, Notifications.";
 			}
 
 			return Notifier.TelegramConnectLink is { } link
@@ -4878,7 +4878,7 @@ public static partial class Commands {
 			}
 
 			Underway mine = underway[i]!;
-			string from = name.Length > 0 ? name : "nocat.farm";
+			string from = name.Length > 0 ? name : "gamer.farm";
 			tasks[i] = Run(one, name, key, before);
 			_ = tasks[i]!.ContinueWith(done => mine.Answer(done.Result.Reply, from), CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion,
 				TaskScheduler.Default);
@@ -4918,7 +4918,7 @@ public static partial class Commands {
 				? $"{named}{job.Doing} now{(job.HowLong.Length > 0 ? " - " + job.HowLong : "")}; {whereItGoes}"
 				: $"{named}still {job.Doing} - {whereItGoes}";
 
-			string source = name.Length > 0 ? name : "nocat.farm";
+			string source = name.Length > 0 ? name : "gamer.farm";
 			Background.Run(job.What, () => task.ContinueWith(done => {
 				// Cut short or failed: Run has already said so in the log, the way it was.
 				if (done.Result.Logged) {
@@ -4959,7 +4959,7 @@ public static partial class Commands {
 		return string.Join(Environment.NewLine, lines);
 
 		async Task<Done> Run(T one, string name, string key, Task after) {
-			string source = name.Length > 0 ? name : "nocat.farm";
+			string source = name.Length > 0 ? name : "gamer.farm";
 			IReadOnlyList<Bot> accounts = accountsOf(one);
 			long[] stops = [.. accounts.Select(static b => b.StopCount)];
 
@@ -5983,7 +5983,7 @@ public static partial class Commands {
 			return $"import <{tools}> [path] [force]\n"
 				+ string.Join("\n", IdlerImport.Tools.Select(static t => $"  {t.Id,-13} {t.Name}")) + "\n"
 				+ $"  {IdlerImport.Auto,-13} work out which idler a folder belongs to (needs the path)\n"
-				+ "  Leave the path out and nocat.farm looks in that idler's usual places.\n"
+				+ "  Leave the path out and gamer.farm looks in that idler's usual places.\n"
 				+ "  Add 'force' to overwrite accounts that already exist here.\n"
 				+ "  The dashboard (Accounts > Import from another idler) shows what it found before anything is written.";
 		}

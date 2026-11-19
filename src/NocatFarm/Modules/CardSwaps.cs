@@ -3,7 +3,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// 1.8.2 card swaps with other nocat.farm users - the sending side. With "Swap cards with other nocat.farm users" on, each
+/// 1.8.2 card swaps with other gamer.farm users - the sending side. With "Swap cards with other gamer.farm users" on, each
 /// look sends at most one offer for a match gamer.mom made (see <see cref="CardExchange"/>), after checking it all again
 /// against this account's own cards and prices, and follows up the offers it sent: noted when they go through, taken
 /// back after 2 days unanswered.
@@ -12,7 +12,7 @@ namespace NocatFarm.Modules;
 /// Never more than "Swaps a day, at most"; on a human-mode account only in its own day and spaced out (45 minutes to
 /// 2 hours between swaps); never while scam watch holds its trades; never with an account whose trades would be held,
 /// when that's switched on; never with an account that once sent a bad offer. The offer is confirmed by itself when the
-/// account's authenticator is in nocat.farm - otherwise it waits for your phone, and the log says so - and only once the
+/// account's authenticator is in gamer.farm - otherwise it waits for your phone, and the log says so - and only once the
 /// offer Steam made has passed the receiving side's own check (<see cref="CardExchange.Verify"/>), by Steam's own names
 /// and this account's own prices. Outside its day or while scam watch holds it, an offer out is only ever taken back,
 /// never confirmed. Turned off, its swap offers still out are taken back.

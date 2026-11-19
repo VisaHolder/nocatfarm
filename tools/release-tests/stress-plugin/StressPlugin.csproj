@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- For tools/release-tests/stress.ps1 only - never shipped: a plugin that does everything a plugin shouldn't, dropped in a
-       hidden test copy's plugins folder to see that nocat.farm keeps going. Built against the plugin API, like rep4rep. -->
+       hidden test copy's plugins folder to see that gamer.farm keeps going. Built against the plugin API, like rep4rep. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

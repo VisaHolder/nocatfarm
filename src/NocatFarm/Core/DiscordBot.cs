@@ -185,7 +185,7 @@ public static partial class Notifier {
 
 		List<Dictionary<string, object>> set = [.. everyday.Select(c => Command(c.Name, c.Description, "args", args, false))];
 		set.Add(Command("nocat", new Said("Run any console command, like pause farm1 30"), "command", new Said("The command, typed like in the window"), true));
-		set.Add(Command("connect", new Said("Connect your Discord account to nocat.farm"), "code", new Said("The code Connect Discord shows in nocat.farm"), true));
+		set.Add(Command("connect", new Said("Connect your Discord account to gamer.farm"), "code", new Said("The code Connect Discord shows in gamer.farm"), true));
 
 		return set;
 
@@ -377,7 +377,7 @@ public static partial class Notifier {
 								d = new {
 									token,
 									intents = 1,   // GUILDS: enough for the servers to arrive, and not a privileged one
-									properties = new Dictionary<string, string> { ["os"] = OperatingSystem.IsWindows() ? "windows" : "linux", ["browser"] = "nocat.farm", ["device"] = "nocat.farm" }
+									properties = new Dictionary<string, string> { ["os"] = OperatingSystem.IsWindows() ? "windows" : "linux", ["browser"] = "gamer.farm", ["device"] = "gamer.farm" }
 								}
 							};
 						await link.SendAsync(hello, conn.Token).ConfigureAwait(false);
@@ -694,7 +694,7 @@ public static partial class Notifier {
 
 		for (int attempt = 0; ; attempt++) {
 			using HttpRequestMessage req = new(method, DiscordApi + path);
-			req.Headers.TryAddWithoutValidation("User-Agent", $"DiscordBot (https://github.com/VisaHolder/nocatfarm, {Build.Version})");
+			req.Headers.TryAddWithoutValidation("User-Agent", $"DiscordBot (https://github.com/VisaHolder/gamerfarm, {Build.Version})");
 
 			// The interaction replies carry their own token in the address and need no bot token.
 			if (token != null) {
@@ -760,12 +760,12 @@ public static partial class Notifier {
 
 			switch (DiscordGate(name, userId, G.DiscordOwnerId)) {
 				case DiscordAsk.NotConnected:
-					await DiscordReplyAsync(id, replyToken, new Said("Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.").ToString(), Ephemeral, ct).ConfigureAwait(false);
+					await DiscordReplyAsync(id, replyToken, new Said("Not connected yet. In gamer.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.").ToString(), Ephemeral, ct).ConfigureAwait(false);
 
 					return;
 				case DiscordAsk.NotAllowed:
 					Log.Debug(new Said("discord bot: {0} isn't the connected Discord account - ignored", userName), "discord");
-					await DiscordReplyAsync(id, replyToken, new Said("Only the owner of this nocat.farm can use its commands.").ToString(), Ephemeral, ct).ConfigureAwait(false);
+					await DiscordReplyAsync(id, replyToken, new Said("Only the owner of this gamer.farm can use its commands.").ToString(), Ephemeral, ct).ConfigureAwait(false);
 
 					return;
 				case DiscordAsk.Connect:
@@ -841,7 +841,7 @@ public static partial class Notifier {
 	private static async Task DiscordConnectAsync(string id, string replyToken, string userId, string userName, string code, int flags, CancellationToken ct) {
 		if ((userId.Length == 0) || !UseDiscordCode(code)) {
 			Log.Debug(new Said("discord bot: a /connect with a wrong or old code from {0}", userName), "discord");
-			await DiscordReplyAsync(id, replyToken, new Said("That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.", DiscordCodeMinutes).ToString(), Ephemeral, ct).ConfigureAwait(false);
+			await DiscordReplyAsync(id, replyToken, new Said("That code doesn't match. In gamer.farm, press Connect Discord for a new one - each code works once, for {0} minutes.", DiscordCodeMinutes).ToString(), Ephemeral, ct).ConfigureAwait(false);
 
 			return;
 		}
@@ -887,7 +887,7 @@ public static partial class Notifier {
 
 			return [(needs == "remove"
 				? new Said("That deletes the account and its saved login. Run {0} confirm to really do it.", typed)
-				: new Said("That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.", typed)).ToString()];
+				: new Said("That closes gamer.farm, and it can't be started again from Discord. Run {0} confirm to really do it.", typed)).ToString()];
 		}
 
 		if (_mgr == null) {

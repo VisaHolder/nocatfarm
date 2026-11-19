@@ -1175,7 +1175,7 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 /* ── the walkthrough ───────────────────────────────────────────────── */
 /* The first-run setup is the one place the wordmark's purple is allowed to spread: the progress bar, the picked
    card, the main button. It is the product introducing itself, not a state or a warning, so the colour reads as
-   "nocat.farm" rather than as a signal - and everything else stays the same greys, fonts and square corners as the
+   "gamer.farm" rather than as a signal - and everything else stays the same greys, fonts and square corners as the
    rest of the dashboard. */
 :root { --brand: #8b5cf6; --brand-soft: rgba(139, 92, 246, .13); --brand-line: rgba(139, 92, 246, .55); --brand-glow: rgba(139, 92, 246, .35); }
 :root[data-theme="light"] { --brand: #6d28d9; --brand-soft: rgba(109, 40, 217, .07); --brand-line: rgba(109, 40, 217, .45); --brand-glow: rgba(109, 40, 217, .2); }

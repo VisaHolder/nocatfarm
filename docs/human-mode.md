@@ -182,7 +182,7 @@ are running, blacklisted games, games *Protect refunds* is holding, and the main
 
 This matters for any account you also play on, human mode or not.
 
-*Stand down when you play* (on) stops nocat.farm playing the moment you start a game on that account yourself. While
+*Stand down when you play* (on) stops gamer.farm playing the moment you start a game on that account yourself. While
 you're on it, it doesn't change the account's status either. The right one goes back on once you're done.
 *Wait before resuming* (5 minutes) is how long after you stop before it carries on; a human-mode account waits a
 random time, up to three times that. *I also use this account in my own Steam app* (off) means it never changes the online status,

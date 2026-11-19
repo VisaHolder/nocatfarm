@@ -1,23 +1,23 @@
 ﻿# The setup, end to end in a scratch folder: fresh install, start, a second launch, --quit, --setup choices,
 # reinstall over it (and over a "newer" one), uninstall - and uninstalling a folder of your own, data and all. Your own start-with-Windows entry and desktop shortcut are saved and put back.
-# Needs dist\nocat.farm-v<version>-setup.exe (tools\package-release.ps1).
+# Needs dist\gamer.farm-v<version>-setup.exe (tools\package-release.ps1).
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
 $SP = Join-Path $env:TEMP 'nocatfarm-tests'
 New-Item -ItemType Directory -Force $SP | Out-Null
 $ErrorActionPreference = 'Continue'
-$inst = "$SP\nocat.farm"
-$setup = "$Repo\dist\nocat.farm-v$Version-setup.exe"
+$inst = "$SP\gamer.farm"
+$setup = "$Repo\dist\gamer.farm-v$Version-setup.exe"
 $key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{89595F01-E60C-4593-9BA7-51B5A3A2F7C5}_is1"
 $run = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-$startMenu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\nocat.farm.lnk"
-$desktop = [Environment]::GetFolderPath('Desktop') + "\nocat.farm.lnk"
+$startMenu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\gamer.farm.lnk"
+$desktop = [Environment]::GetFolderPath('Desktop') + "\gamer.farm.lnk"
 # reap's own start-with-Windows entry and desktop shortcut: saved now, put back at the end whatever happens
 $savedRun = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
 
 # The real startup entry, remembered on disk. Read from the registry alone, a run that overlapped another (or followed
-# one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's nocat.farm
+# one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's gamer.farm
 # then stopped starting with Windows. An entry pointing in here is never taken for the real one.
 $realRunFile = Join-Path $SP 'real-run-entry.txt'
 # No entry at all is the owner's choice (Start with Windows off) - the saved one is forgotten, not put back.
@@ -26,7 +26,7 @@ elseif ($savedRun -notlike "*nocatfarm-tests*") { Set-Content $realRunFile $save
 elseif (Test-Path $realRunFile) { $savedRun = (Get-Content $realRunFile -Raw).Trim() }
 else { $savedRun = $null }
 $savedLnk = "$SP\saved-desktop.lnk"; Remove-Item $savedLnk -ErrorAction SilentlyContinue
-if (Test-Path ([Environment]::GetFolderPath('Desktop') + "\nocat.farm.lnk")) { Copy-Item ([Environment]::GetFolderPath('Desktop') + "\nocat.farm.lnk") $savedLnk }
+if (Test-Path ([Environment]::GetFolderPath('Desktop') + "\gamer.farm.lnk")) { Copy-Item ([Environment]::GetFolderPath('Desktop') + "\gamer.farm.lnk") $savedLnk }
 try {
 function Check($name, $ok, $detail = '') { "{0}  {1}{2}" -f ($(if ($ok) { 'PASS' } else { 'FAIL' })), $name, $(if ($detail) { "  ($detail)" } else { '' }) }
 
@@ -40,9 +40,9 @@ Check 'choices saved' (($cfg.WebPort -eq 7289) -and $cfg.StartWithWindows -and $
 $r = (Get-ItemProperty $run -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
 Check 'starts with Windows right away (no first launch needed)' ($r -like "*$inst\nocatFarm.exe*") $r
 $k = Get-ItemProperty $key -ErrorAction SilentlyContinue
-Check 'listed in Settings > Apps' (($k.DisplayName -eq 'nocat.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://gamer.mom')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
+Check 'listed in Settings > Apps' (($k.DisplayName -eq 'gamer.farm') -and ($k.DisplayVersion -eq $Version) -and ($k.Publisher -eq 'reap.') -and ($k.URLInfoAbout -eq 'https://gamer.mom')) "$($k.DisplayName) $($k.DisplayVersion) by $($k.Publisher), $($k.URLInfoAbout)"
 $vi = (Get-Item "$inst\nocatFarm.exe").VersionInfo
-Check 'Task Manager and the firewall prompt say nocat.farm by reap.' (($vi.FileDescription -eq 'nocat.farm') -and ($vi.ProductName -eq 'nocat.farm') -and ($vi.CompanyName -eq 'reap.')) "$($vi.FileDescription) / $($vi.ProductName) / $($vi.CompanyName)"
+Check 'Task Manager and the firewall prompt say gamer.farm by reap.' (($vi.FileDescription -eq 'gamer.farm') -and ($vi.ProductName -eq 'gamer.farm') -and ($vi.CompanyName -eq 'reap.')) "$($vi.FileDescription) / $($vi.ProductName) / $($vi.CompanyName)"
 Check 'Start menu shortcut' (Test-Path $startMenu)
 Check 'desktop shortcut' (Test-Path $desktop)
 Check 'no import asked for (fresh)' (-not (Test-Path "$inst\config\state\import-pending.json"))
@@ -95,7 +95,7 @@ Remove-Item $own -Recurse -Force -ErrorAction SilentlyContinue
 $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$own`"", '/MOVE=no', '/FROM=fresh', '/STARTUP=no', '/DESKTOP=no', "/LOG=`"$SP\install3.log`"" -PassThru -Wait
 Check 'installed into a folder of your own' (($p.ExitCode -eq 0) -and (Test-Path "$own\nocatFarm.exe") -and (Test-Path "$own\config\nocatFarm.json")) "exit $($p.ExitCode)"
 New-Item -ItemType Directory -Force "$own\backups", "$own\logs", "$own\config.old-20260101-000000" | Out-Null
-Set-Content "$own\backups\nocat.farm-backup.zip" 'logins'; Set-Content "$own\logs\x.log" 'log'; Set-Content "$own\config.old-20260101-000000\old.json" '{}'
+Set-Content "$own\backups\gamer.farm-backup.zip" 'logins'; Set-Content "$own\logs\x.log" 'log'; Set-Content "$own\config.old-20260101-000000\old.json" '{}'
 Set-Content "$own\my notes.txt" 'mine'
 $p = Start-Process "$own\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DELETEDATA=yes' -PassThru -Wait; Start-Sleep 2
 Check 'uninstall finished' ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
@@ -107,6 +107,6 @@ Check 'your own files in that folder kept' (Test-Path "$own\my notes.txt")
 Remove-Item $own -Recurse -Force -ErrorAction SilentlyContinue
 } finally {
   if ($savedRun) { Set-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name nocatFarm -Value $savedRun }
-  if (Test-Path $savedLnk) { Copy-Item $savedLnk ([Environment]::GetFolderPath('Desktop') + "\nocat.farm.lnk") -Force }
+  if (Test-Path $savedLnk) { Copy-Item $savedLnk ([Environment]::GetFolderPath('Desktop') + "\gamer.farm.lnk") -Force }
   "restored reap's startup entry: $((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm)"
 }

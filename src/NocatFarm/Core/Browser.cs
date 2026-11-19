@@ -38,7 +38,7 @@ public static class Browser {
 	/// <remarks>
 	/// The market turned the browser string above away: with it, every price lookup and every search page from this
 	/// app came back 429, the first request after every pause included, while the same address asking the same thing
-	/// as "nocat.farm/1.7.0", as curl, or as an older Chrome got its answer each time (2026-10-05, 6 of 6 and 12 of 12).
+	/// as "gamer.farm/1.7.0", as curl, or as an older Chrome got its answer each time (2026-10-05, 6 of 6 and 12 of 12).
 	/// That is why one inventory sat at "931 still to price" for a whole day: each pause ended in another 429 and a
 	/// longer pause. The rest of the community site is fine with the browser string, and the firewall there is why
 	/// <see cref="UserAgent"/> stays for everything else.
@@ -60,7 +60,7 @@ public static class Browser {
 	}
 
 	/// <summary>The name market requests go under: the app and its version, nothing pretended.</summary>
-	public static string MarketAgent => "nocat.farm/" + Build.Version;
+	public static string MarketAgent => "gamer.farm/" + Build.Version;
 
 	/// <summary>
 	/// The second way of asking the market: as a desktop Firefox would - the ESR that is current, never a version that

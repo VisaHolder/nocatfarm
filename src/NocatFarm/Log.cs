@@ -251,7 +251,7 @@ public static class Log {
 		} catch (Exception e) {
 			// tidying up must never take the app down - but say so, or the folder just grows without anyone knowing why.
 			// Straight to the file: this runs inside the day roll, and a full Write from here would roll again.
-			FileOnly("nocat.farm", $"couldn't clear old log files: {Describe(e)}");
+			FileOnly("gamer.farm", $"couldn't clear old log files: {Describe(e)}");
 		}
 	}
 
@@ -269,18 +269,18 @@ public static class Log {
 	/// <summary>Everything logged after <paramref name="seq"/>. The dashboard uses this to catch up cheaply.</summary>
 	public static IReadOnlyList<Entry> Since(long seq) => Ring.Where(e => e.Seq > seq).ToArray();
 
-	public static void Info(string text, string source = "nocat.farm") => Info(new Core.Said(text), source);
-	public static void Info(Core.Said text, string source = "nocat.farm") => Write("INFO", source, text, ConsoleColor.Gray);
-	public static void Good(string text, string source = "nocat.farm") => Good(new Core.Said(text), source);
-	public static void Good(Core.Said text, string source = "nocat.farm") => Write("GOOD", source, text, ConsoleColor.Green);
-	public static void Warn(string text, string source = "nocat.farm") => Warn(new Core.Said(text), source);
+	public static void Info(string text, string source = "gamer.farm") => Info(new Core.Said(text), source);
+	public static void Info(Core.Said text, string source = "gamer.farm") => Write("INFO", source, text, ConsoleColor.Gray);
+	public static void Good(string text, string source = "gamer.farm") => Good(new Core.Said(text), source);
+	public static void Good(Core.Said text, string source = "gamer.farm") => Write("GOOD", source, text, ConsoleColor.Green);
+	public static void Warn(string text, string source = "gamer.farm") => Warn(new Core.Said(text), source);
 
 	/// <summary>
 	/// An account's status, said every so often (Modules/Heartbeat.cs): an INFO line that the window and the dashboard stack
 	/// into one row updating in place, rather than a new row every ten minutes.
 	/// </summary>
 	public static void Status(Core.Said text, string source) => Write("INFO", source, text, ConsoleColor.Gray, kind: Core.LogStack.Heartbeat);
-	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
+	public static void Warn(Core.Said text, string source = "gamer.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
 
 	/// <summary>
 	/// An answer to a command that comes back later, in the log under the account it's about - an INFO line like any other,
@@ -298,25 +298,25 @@ public static class Log {
 		Publish(Topic.Trades, source, text);
 	}
 
-	public static void Error(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Error(new Core.Said(text), source, topic);
+	public static void Error(string text, string source = "gamer.farm", Topic topic = Topic.Problems) => Error(new Core.Said(text), source, topic);
 
-	public static void Error(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Problems) {
+	public static void Error(Core.Said text, string source = "gamer.farm", Topic topic = Topic.Problems) {
 		Write("ERROR", source, text, ConsoleColor.Red);
 		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
 		Publish(topic, source, text);
 	}
 
 	/// <summary>Something social happened - somebody commented on a profile.</summary>
-	public static void Event(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Social) {
+	public static void Event(Core.Said text, string source = "gamer.farm", Topic topic = Topic.Social) {
 		Write("GOOD", source, text, ConsoleColor.Cyan, about: topic);
 		Notify?.Invoke(NotifyKind.Social, source, text.ToString());
 		Publish(topic, source, text);
 	}
 
 	/// <summary>Something was earned - a card dropped, a comment was credited.</summary>
-	public static void Reward(string text, string source = "nocat.farm", Topic topic = Topic.Cards) => Reward(new Core.Said(text), source, topic);
+	public static void Reward(string text, string source = "gamer.farm", Topic topic = Topic.Cards) => Reward(new Core.Said(text), source, topic);
 
-	public static void Reward(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Cards) {
+	public static void Reward(Core.Said text, string source = "gamer.farm", Topic topic = Topic.Cards) {
 		Write("GOOD", source, text, ConsoleColor.Yellow, about: topic);
 		Notify?.Invoke(NotifyKind.Earning, source, text.ToString());
 		Publish(topic, source, text);
@@ -330,9 +330,9 @@ public static class Log {
 	public static void Earned(Core.Said text, string source) => Write("GOOD", source, text, ConsoleColor.Yellow, about: Topic.Items);
 
 	/// <summary>Something needs a human: a Steam Guard code, a password, a decision.</summary>
-	public static void Attention(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Attention(new Core.Said(text), source, topic);
+	public static void Attention(string text, string source = "gamer.farm", Topic topic = Topic.Problems) => Attention(new Core.Said(text), source, topic);
 
-	public static void Attention(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Problems) {
+	public static void Attention(Core.Said text, string source = "gamer.farm", Topic topic = Topic.Problems) {
 		Write("WARN", source, text, ConsoleColor.Magenta);
 		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
 		Publish(topic, source, text);
@@ -344,11 +344,11 @@ public static class Log {
 	/// With <paramref name="loud"/> false it's the log only - for reminders, which would be spam as pop-ups.
 	/// </summary>
 	public static void Attention(Core.Said text, Core.Said brief, Core.Said title, Topic topic, bool loud = true) {
-		Write("WARN", "nocat.farm", text, ConsoleColor.Magenta);
+		Write("WARN", "gamer.farm", text, ConsoleColor.Magenta);
 
 		if (loud) {
 			Notify?.Invoke(NotifyKind.Problem, title.ToString(), brief.ToString());
-			Publish(topic, "nocat.farm", brief);
+			Publish(topic, "gamer.farm", brief);
 		}
 	}
 
@@ -382,9 +382,9 @@ public static class Log {
 	/// On screen it is genuinely unwanted by default: every web request, every licence count, every re-assert,
 	/// in grey, scrolling the three lines somebody actually cared about off the top.
 	/// </summary>
-	public static void Debug(string text, string source = "nocat.farm") => Debug(new Core.Said(text), source);
+	public static void Debug(string text, string source = "gamer.farm") => Debug(new Core.Said(text), source);
 
-	public static void Debug(Core.Said text, string source = "nocat.farm") =>
+	public static void Debug(Core.Said text, string source = "gamer.farm") =>
 		Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: _debug);
 
 	// ── when something goes wrong ─────────────────────────────────────────────
@@ -392,7 +392,7 @@ public static class Log {
 	// DEBUG lines that say what failed, on which account, and why - always in the file, on screen only if asked.
 
 	/// <summary>"what: ExceptionType: message", as a DEBUG line - for a catch that carries on without the thing it tried.</summary>
-	public static void Failed(string what, Exception e, string source = "nocat.farm") => Debug($"{what}: {Describe(e)}", source);
+	public static void Failed(string what, Exception e, string source = "gamer.farm") => Debug($"{what}: {Describe(e)}", source);
 
 	/// <summary>
 	/// Whether a failure is only the work being cut off: Steam failing every request still out when the connection drops
@@ -424,7 +424,7 @@ public static class Log {
 	private static readonly System.Text.RegularExpressions.Regex OwnFrame =
 		new(@"at NocatFarm\.(?:\w+\.)*?(\w+\.\w+)\(", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-	/// <summary>Where in nocat.farm a failure came from - "EventItems.QueueLockedAsync" - or empty when no frame of ours says.</summary>
+	/// <summary>Where in gamer.farm a failure came from - "EventItems.QueueLockedAsync" - or empty when no frame of ours says.</summary>
 	public static string WhereFrom(Exception e) =>
 		OwnFrame.Match(Unwrap(e).StackTrace ?? "") is { Success: true } m ? m.Groups[1].Value : "";
 
@@ -492,7 +492,7 @@ public static class Log {
 	/// says it all and the next thousand bury the rest. Returns whether it was written. <see cref="Recovered"/>
 	/// clears it, so the next failure after a success is written straight away.
 	/// </summary>
-	public static bool DebugOnChange(string key, string text, string source = "nocat.farm") {
+	public static bool DebugOnChange(string key, string text, string source = "gamer.farm") {
 		if (!OnChange(key, text)) {
 			return false;
 		}
@@ -503,7 +503,7 @@ public static class Log {
 	}
 
 	/// <summary>The same, for a line with values - compared by its English, values filled in.</summary>
-	public static bool DebugOnChange(string key, Core.Said text, string source = "nocat.farm") {
+	public static bool DebugOnChange(string key, Core.Said text, string source = "gamer.farm") {
 		if (!OnChange(key, text.ToEnglish())) {
 			return false;
 		}
@@ -534,14 +534,14 @@ public static class Log {
 	/// to the screen and the file, then the whole stack trace to the file only, one line each, straight away: this
 	/// can run with the process on its way down, and anything slower than an append is not going to happen.
 	/// </summary>
-	public static void Crash(Core.Said what, Exception e, string source = "nocat.farm") {
+	public static void Crash(Core.Said what, Exception e, string source = "gamer.farm") {
 		Write("ERROR", source, what, ConsoleColor.Red);
 		StackToFile(e, source);
 	}
 
 	/// <summary>
 	/// For <see cref="TaskScheduler.UnobservedTaskException"/>: a task nobody awaited threw. Written down and marked seen,
-	/// with where in nocat.farm it was when a frame of ours says. One only cut off - an account signing out under it, Steam
+	/// with where in gamer.farm it was when a frame of ours says. One only cut off - an account signing out under it, Steam
 	/// not answering - is a warning, not the red line: nothing broke, and the red line read as if something had.
 	/// </summary>
 	public static void OnUnobservedTask(object? sender, UnobservedTaskExceptionEventArgs e) {
@@ -567,7 +567,7 @@ public static class Log {
 	}
 
 	/// <summary>The full exception - type, message, stack, inner exceptions - into the file only, one line each.</summary>
-	public static void StackToFile(Exception e, string source = "nocat.farm") {
+	public static void StackToFile(Exception e, string source = "gamer.farm") {
 		string? file = TodaysFile();
 
 		if (file == null) {
@@ -618,7 +618,7 @@ public static class Log {
 					Console.Write($"{now:HH:mm:ss} ");
 					Console.Write(Bar);
 
-					Console.ForegroundColor = source == "nocat.farm" ? ConsoleColor.DarkGray : ConsoleColor.DarkCyan;
+					Console.ForegroundColor = source == "gamer.farm" ? ConsoleColor.DarkGray : ConsoleColor.DarkCyan;
 					Console.Write($" {Pad(source, 10)} ");
 
 					Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -690,7 +690,7 @@ public static class Log {
 					}
 
 					_capNoted = true;
-					text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}|WARN|nocat.farm|this log passed {DebugCapBytes / (1024 * 1024)} MB today - debug detail stops here until tomorrow{Environment.NewLine}";
+					text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}|WARN|gamer.farm|this log passed {DebugCapBytes / (1024 * 1024)} MB today - debug detail stops here until tomorrow{Environment.NewLine}";
 				}
 
 				File.AppendAllText(file, text);

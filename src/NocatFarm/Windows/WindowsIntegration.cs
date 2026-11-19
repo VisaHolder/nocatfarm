@@ -179,7 +179,7 @@ public static class WindowsIntegration {
 	private static bool _awake;
 	private static bool _awayMode;
 
-	/// <summary>Hold the machine awake while nocat.farm is open, or let it sleep again. Safe from any thread.</summary>
+	/// <summary>Hold the machine awake while gamer.farm is open, or let it sleep again. Safe from any thread.</summary>
 	public static void KeepAwake(bool keep) {
 		lock (AwakeGate) {
 			if (keep == _awake) {
@@ -191,7 +191,7 @@ public static class WindowsIntegration {
 					ReasonContext reason = new() {
 						Version = PowerRequestContextVersion,
 						Flags = PowerRequestContextSimpleString,
-						SimpleReasonString = "nocat.farm is running your Steam accounts"
+						SimpleReasonString = "gamer.farm is running your Steam accounts"
 					};
 
 					IntPtr handle = PowerCreateRequest(ref reason);

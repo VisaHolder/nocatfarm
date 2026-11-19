@@ -208,7 +208,7 @@ public static partial class Looting {
 		(await SendItemsCheckedAsync(bot, to, token, types, ct).ConfigureAwait(false)).Text;
 
 	/// <summary>
-	/// 1.9.0: what a send may take, less the booster packs that are nocat.farm's own to open: the ones buying cards bought
+	/// 1.9.0: what a send may take, less the booster packs that are gamer.farm's own to open: the ones buying cards bought
 	/// instead of cards and hasn't opened yet (<paramref name="unopened"/>, BuyLedger.BoughtPackIds), and the ones automatic
 	/// "Make booster packs" made to open or to sell (<paramref name="auto"/>) - by their id, or, one it hasn't found in the
 	/// inventory yet, every pack of its game newer than it (one of them is it). Whatever "Which items to send" says.
@@ -278,13 +278,13 @@ public static partial class Looting {
 
 		// Claimed before the waiting trades are read, not after: another send or a sale that already made its offer
 		// or listing has released its claim by then, so its trade shows up below - see Bot.ClaimItems.
-		// 1.9.0: never a booster pack that's nocat.farm's own to open - bought instead of cards, or made by automatic "Make
+		// 1.9.0: never a booster pack that's gamer.farm's own to open - bought instead of cards, or made by automatic "Make
 		// booster packs" (to open or to sell; let go of first when it isn't automatic any more, as spare items does).
 		List<Item> wanted = LeaveOwnPacks(allowed.Where(i => WantedType(i.Type, types)), Modules.BuyLedger.Of(bot.Name).UnopenedPacks(DateTime.UtcNow),
 			AutoPacks(bot), out int keptPacks);
 
 		if (keptPacks > 0) {
-			Log.Debug(new Said("{0} booster pack(s) nocat.farm still has to open aren't sent - they're opened first", keptPacks), bot.Name);
+			Log.Debug(new Said("{0} booster pack(s) gamer.farm still has to open aren't sent - they're opened first", keptPacks), bot.Name);
 		}
 
 		HashSet<ulong> claimed = bot.ClaimItems(wanted.Select(static i => i.AssetId));

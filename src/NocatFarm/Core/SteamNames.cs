@@ -5,7 +5,7 @@ namespace NocatFarm.Core;
 
 /// <summary>
 /// The Steam name behind a SteamID, for saying who a trade offer is from. Your own accounts are named by their
-/// nocat.farm name; anyone else's name comes from their public profile, remembered for a day.
+/// gamer.farm name; anyone else's name comes from their public profile, remembered for a day.
 /// </summary>
 public static partial class SteamNames {
 	private static readonly ConcurrentDictionary<ulong, (string Name, DateTime At)> Known = new();

@@ -1,9 +1,9 @@
-# nocat.farm plugins
+# gamer.farm plugins
 
-A plugin is one DLL that adds your own commands and features to nocat.farm. You write a small C# class, build it,
+A plugin is one DLL that adds your own commands and features to gamer.farm. You write a small C# class, build it,
 drop the DLL in the `plugins` folder, and it runs.
 
-You need to be able to write a little C#. If you just want to use nocat.farm, you can skip this page.
+You need to be able to write a little C#. If you just want to use gamer.farm, you can skip this page.
 
 **Contents** · [Your first plugin](#your-first-plugin) · [A bigger example](#a-bigger-example-card-tally) ·
 [What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Profile comments](#posting-a-profile-comment) ·
@@ -17,7 +17,7 @@ You need to be able to write a little C#. If you just want to use nocat.farm, yo
 This one adds a `hello` command and writes a line in the log whenever a card drops. It takes about five minutes.
 
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Everywhere below, replace
-`C:\path\to\nocat.farm` with the folder your `nocatFarm.exe` is in.
+`C:\path\to\gamer.farm` with the folder your `nocatFarm.exe` is in.
 
 ### Step 1: make a project
 
@@ -26,7 +26,7 @@ dotnet new classlib -n HelloPlugin
 cd HelloPlugin
 ```
 
-### Step 2: point it at nocat.farm
+### Step 2: point it at gamer.farm
 
 Open `HelloPlugin.csproj`, delete everything in it, and paste this:
 
@@ -40,7 +40,7 @@ Open `HelloPlugin.csproj`, delete everything in it, and paste this:
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nocatFarm">
-      <HintPath>C:\path\to\nocat.farm\nocatFarm.dll</HintPath>
+      <HintPath>C:\path\to\gamer.farm\nocatFarm.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
@@ -81,7 +81,7 @@ public sealed class HelloPlugin : INocatPlugin {
 
 ```
 dotnet build -c Release
-copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\nocat.farm\plugins\
+copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\gamer.farm\plugins\
 ```
 
 (Make the `plugins` folder next to `nocatFarm.exe` if it isn't there yet.)
@@ -89,7 +89,7 @@ copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\nocat.farm\plugins\
 ### Step 5: turn plugins on
 
 Plugins are off until you switch them on. In the dashboard, go to **Settings**, tick **Show advanced**, and under
-**Updates & plugins** switch on **Load plugins**. Or type `set PluginsEnabled true`. Then restart nocat.farm.
+**Updates & plugins** switch on **Load plugins**. Or type `set PluginsEnabled true`. Then restart gamer.farm.
 
 ### Step 6: try it
 
@@ -186,7 +186,7 @@ farm1: 5 cards
 myaccount: 1 card
 ```
 
-Both examples on this page build against the current nocat.farm.
+Both examples on this page build against the current gamer.farm.
 
 ---
 
@@ -198,13 +198,13 @@ Both examples on this page build against the current nocat.farm.
 | **Read** | Every account: online or not, what it's playing, cards left, its games and playtime, what its items are worth, and any of its settings. |
 | **Do** | Run any command, the same ones you type, like `pause farm1` or `grind farm1 730 2`. |
 | **Add** | New commands, settings that get real controls on the dashboard's Plugins page (one value, or one per account), and a dashboard tab of its own. |
-| **Comment** | Post a Steam profile comment as an account - with nocat.farm deciding when (see [below](#posting-a-profile-comment)). |
-| **Trade** | Accept or decline incoming trade offers nocat.farm leaves undecided - with nocat.farm's safety rules on top, and only where the owner allows it (see [below](#answering-trade-offers)). |
+| **Comment** | Post a Steam profile comment as an account - with gamer.farm deciding when (see [below](#posting-a-profile-comment)). |
+| **Trade** | Accept or decline incoming trade offers gamer.farm leaves undecided - with gamer.farm's safety rules on top, and only where the owner allows it (see [below](#answering-trade-offers)). |
 | **Remember** | Save its own data so it survives restarts and updates. |
 
 What it can't do through the API is reach the Steam connection, the login tokens or the config files. Anything
 that changes something goes through a command, so it's checked and logged exactly like a command you typed. The two
-exceptions are a profile comment and an answer to a trade offer, and nocat.farm keeps the say over both.
+exceptions are a profile comment and an answer to a trade offer, and gamer.farm keeps the say over both.
 
 ---
 
@@ -214,21 +214,21 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 
 | On `host` | What it's for |
 |---|---|
-| `Accounts` · `Account("farm1")` | Every account, or one by the name you gave it in nocat.farm (`null` if there's no such account). Each has `Name`, `SteamId`, `IsOnline`, `Persona`, `Status`, `Playing`, `CardsRemaining` (-1 until it has looked), `Library` and `InventoryByGame`. |
+| `Accounts` · `Account("farm1")` | Every account, or one by the name you gave it in gamer.farm (`null` if there's no such account). Each has `Name`, `SteamId`, `IsOnline`, `Persona`, `Status`, `Playing`, `CardsRemaining` (-1 until it has looked), `Library` and `InventoryByGame`. |
 | `Log("text")` | Write a line to the log. It shows up tagged `[plugin]`. |
 | `RunCommandAsync("pause farm1")` | Run a command and get back the text it would have printed. |
 | `AddCommand(verb, usage, help, handler)` | Add a command. It works in the console, the dashboard and Steam chat, and is listed by `plugins` and on the dashboard's Plugins page (not by `help`). |
 | `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting and read its current value (always as text, so parse it yourself). Kinds: `Text`, `Int`, `Bool`, `Choice`, `Secret`. For `Choice`, pass `Choices` as one `"value label"` string per option. A `Secret` (an API key, say) is kept encrypted on disk like the app's own and never sent back to the dashboard; `Setting` gives it to you as plain text. `PerAccount: true` gives it one value per account, shown as a table. |
 | `GetSetting("farm1", "FarmCards")` | Read one of an account's own settings, by its setting name. `null` if the account or setting doesn't exist. To change one, run a `set` command. |
 | `SaveStateAsync(json)` · `LoadStateAsync()` | Keep your own data between restarts. `LoadStateAsync` returns `null` the first time. |
-| `AppVersion` | Which nocat.farm version is running. |
+| `AppVersion` | Which gamer.farm version is running. |
 | `Language` | The app's language code (`en`, `de`, `pt-BR`, ...), for a plugin that carries its own translations. |
 | `Setting("name", "farm1")` · `SetSetting(name, value, account)` | A per-account setting (declared with `PerAccount: true`): read one account's value, or change one of your own settings from a command or a page button. |
 | `CanComment("farm1")` · `PostProfileCommentAsync("farm1", steamId64, text)` | Whether the app would let that account post a profile comment now (and why not, and until when), and post one. See [Posting a profile comment](#posting-a-profile-comment). |
 | `AddPage(title, render)` | A dashboard tab of your own. See [A dashboard tab of your own](#a-dashboard-tab-of-your-own). |
 | `Notify("text", "farm1")` | Send a line out on Telegram, Discord and the tray, the way the app's own news goes, when *Send add-on messages* is on. It also goes in the log. |
-| `AddTradeJudge((offer, ct) => ...)` | Be asked about incoming trade offers nocat.farm leaves undecided, and answer Accept, Decline or Leave. See [Answering trade offers](#answering-trade-offers). |
-| `KnownMarketPrice(appId, name)` · `MarketPriceAsync(appId, name)` | A Steam market price: the lowest listing, in the app's market currency, and when it was read. `KnownMarketPrice` only gives what nocat.farm already holds. `MarketPriceAsync` asks the market when the held one is old, through nocat.farm's own spaced-out queue, at most 60 times an hour per plugin. |
+| `AddTradeJudge((offer, ct) => ...)` | Be asked about incoming trade offers gamer.farm leaves undecided, and answer Accept, Decline or Leave. See [Answering trade offers](#answering-trade-offers). |
+| `KnownMarketPrice(appId, name)` · `MarketPriceAsync(appId, name)` | A Steam market price: the lowest listing, in the app's market currency, and when it was read. `KnownMarketPrice` only gives what gamer.farm already holds. `MarketPriceAsync` asks the market when the held one is old, through gamer.farm's own spaced-out queue, at most 60 times an hour per plugin. |
 
 | Event | When it fires |
 |---|---|
@@ -236,7 +236,7 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `CardDropped` | A card dropped: the account, the game's appID, and how many cards that game has left. |
 | `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count; to look at the offers themselves, use `AddTradeJudge`. |
 
-`INocatPlugin` has one optional extra: `OnUnloadAsync()`, called when nocat.farm closes. It gets 5 seconds.
+`INocatPlugin` has one optional extra: `OnUnloadAsync()`, called when gamer.farm closes. It gets 5 seconds.
 
 **Where things are saved** (in the `config/plugins/` folder, named after your plugin's `Name`):
 
@@ -251,7 +251,7 @@ Every built-in command is in [the command list](docs/COMMANDS.md).
 ## Posting a profile comment
 
 `host.PostProfileCommentAsync(account, targetSteamId64, text)` posts one comment on somebody's Steam profile as one of
-your accounts. It exists for the [rep4rep add-on](docs/rep4rep.md). A plugin can only ask; nocat.farm decides, and
+your accounts. It exists for the [rep4rep add-on](docs/rep4rep.md). A plugin can only ask; gamer.farm decides, and
 these rules hold whatever the plugin does:
 
 - **Never on an account that's standing still**: offline, paused, switched off or signing off.
@@ -265,7 +265,7 @@ these rules hold whatever the plugin does:
   (private, or friends only), nothing is sent.
 - Only an individual's SteamID64 that isn't the account's own, and 1 to 1000 characters of text.
 
-When nocat.farm says no, nothing is sent or counted and you get `PluginCommentOutcome.NotNow`, with `Detail` saying why
+When gamer.farm says no, nothing is sent or counted and you get `PluginCommentOutcome.NotNow`, with `Detail` saying why
 in the app's language and `RetryAt` saying when it expects to say yes, if it knows. `CanComment(account)` asks the same
 question without posting. The other outcomes are what Steam said: `Posted`, `CommentsClosed`, `NotSent` (it never left
 this PC), `Unknown` (sent, no answer - count it and never send the same comment again), `Refused`, `RateLimited`,
@@ -276,7 +276,7 @@ Keep your own limits on top: the rep4rep add-on also has its own per-account cap
 ## Answering trade offers
 
 `host.AddTradeJudge(...)` lets your plugin answer incoming trade offers: custom trade rules, a gem exchange, a level-up
-bot. nocat.farm asks your judge about each offer it would otherwise leave for the owner, and your judge answers
+bot. gamer.farm asks your judge about each offer it would otherwise leave for the owner, and your judge answers
 `Accept`, `Decline` or `Leave` (no opinion), with a short reason that goes in the log.
 
 This one accepts offers that only take normal trading cards and only pay gems, at a price per card set on the Plugins
@@ -295,7 +295,7 @@ public sealed class GemsForCards : INocatPlugin {
             PluginSettingKind.Int, Default: "15"));
 
         host.AddTradeJudge((offer, token) => {
-            // Not the kind of offer this plugin knows about: no opinion, nocat.farm does what it would anyway.
+            // Not the kind of offer this plugin knows about: no opinion, gamer.farm does what it would anyway.
             if (offer.Giving.Count == 0 || offer.Giving.Any(i => i.Kind != PluginTradeItemKind.Card)
                 || offer.Receiving.Count == 0 || offer.Receiving.Any(i => i.Kind != PluginTradeItemKind.Gems)) {
                 return Task.FromResult(PluginTradeAnswer.Leave());
@@ -319,22 +319,22 @@ The `offer` your judge gets has the account's name, the offer's id, who sent it 
 was sent, the trade hold if Steam already said, and the items on both sides: `Giving` is what the account would hand
 over, `Receiving` what it would get. Each item has its ids, amount, name, market name, Steam's type line, a simple
 `Kind` (`Card`, `FoilCard`, `Background`, `Emoticon`, `BoosterPack`, `Gems`, `GemSack` or `Other`), whether Steam says it's
-`Tradable` and `Marketable`, and for Steam community items the game it belongs to (`GameAppId`). It's what nocat.farm
+`Tradable` and `Marketable`, and for Steam community items the game it belongs to (`GameAppId`). It's what gamer.farm
 already read from Steam; nothing extra is asked for your plugin. For prices, use
 `host.MarketPriceAsync(753, item.MarketHashName, token)` instead of asking the market yourself.
 
-### What nocat.farm does whatever your judge says
+### What gamer.farm does whatever your judge says
 
 - **Off until the owner turns it on**, per account: *Let add-ons answer trade offers* (Settings, Trades, Show advanced).
   While it's off, your judge isn't even asked.
-- **Only offers nocat.farm leaves undecided.** Never offers from the owner's own accounts, donations, card swaps
-  gamer.mom paired, or fair card swaps nocat.farm accepts by itself.
+- **Only offers gamer.farm leaves undecided.** Never offers from the owner's own accounts, donations, card swaps
+  gamer.mom paired, or fair card swaps gamer.farm accepts by itself.
 - **An Accept is refused** when the offer would give away anything on the owner's "never touch" lists or from a game
   whose cards were bought for a badge, anything promised to another offer that's still waiting, or anything Steam
-  doesn't call tradable, or when Steam would hold the trade. When nocat.farm can't tell, it doesn't accept. A refused
+  doesn't call tradable, or when Steam would hold the trade. When gamer.farm can't tell, it doesn't accept. A refused
   offer is left for the owner, with the reason in the log, and your judge isn't asked about it again.
 - **Nothing happens at once.** The offer waits like every other one (2 to 15 minutes by default), and your judge is
-  asked again right before nocat.farm answers it. If the answer changed, the offer is left alone.
+  asked again right before gamer.farm answers it. If the answer changed, the offer is left alone.
 - **No confirming for strangers.** When Steam wants an accepted trade confirmed and the offer is from somebody who
   isn't one of the owner's accounts, it waits for the owner's phone, unless the owner also turned on *Confirm add-on
   accepts from strangers*.
@@ -398,7 +398,7 @@ A few more things worth knowing:
   `async` handler too (`host.CardDropped += async (a, app, left) => { await ...; }`): what it throws after an
   `await` is caught and logged the same way instead of taking the app down.
 - Two copies of the same plugin (the same `Name`, say a second copy of its DLL) run once: the first found stays.
-- Some failures end any .NET program, and nocat.farm can't catch them for you: an exception thrown on a `Thread` or
+- Some failures end any .NET program, and gamer.farm can't catch them for you: an exception thrown on a `Thread` or
   in a `Timer` callback you started yourself, an `async void` you started from your own background task that throws,
   a real stack overflow, or `Environment.Exit`. Catch everything in your own threads and timers.
 - Each plugin has its own on/off switch on the dashboard's Plugins page.
@@ -407,7 +407,7 @@ A few more things worth knowing:
 
 ## Is it safe?
 
-A plugin runs inside nocat.farm, where your Steam sessions are. The API is kept narrow on purpose, but a determined
+A plugin runs inside gamer.farm, where your Steam sessions are. The API is kept narrow on purpose, but a determined
 DLL could still read anything the app can. So only run plugins you wrote yourself or got from someone you trust.
 That's why plugins are off until you switch them on.
 
@@ -419,11 +419,11 @@ keeps it out. Each plugin loads on its own, so two plugins can use different ver
 Tell people what it does, what settings it has, and why they can trust it. They're running your code next to their
 Steam accounts.
 
-Licence it however you like, closed-source or commercial included. nocat.farm is [MPL-2.0](LICENSE), which only asks
-you to share changes to nocat.farm's own files, and your plugin is your own files.
+Licence it however you like, closed-source or commercial included. gamer.farm is [MPL-2.0](LICENSE), which only asks
+you to share changes to gamer.farm's own files, and your plugin is your own files.
 
 ## Not supported: ASF plugins
 
-ArchiSteamFarm plugins can't run in nocat.farm. They're built against ASF's own code (its `Bot` type, its config and
+ArchiSteamFarm plugins can't run in gamer.farm. They're built against ASF's own code (its `Bot` type, its config and
 its internals), and none of that exists here. Porting is usually easy, though. Most ASF plugins are a few hundred
 lines, and against this API they tend to come out shorter.

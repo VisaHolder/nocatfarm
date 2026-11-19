@@ -24,7 +24,7 @@ public static partial class Looting {
 	public const string NoAnswer = "Steam didn't answer";
 
 	/// <summary>
-	/// 1.8.2 card swaps: one offer to another nocat.farm user's account - these cards of ours for those of theirs, with the
+	/// 1.8.2 card swaps: one offer to another gamer.farm user's account - these cards of ours for those of theirs, with the
 	/// match's note on it so their copy can check it against what gamer.mom paired. Not confirmed here: the sending side
 	/// first reads the offer Steam made back and checks it's exactly the match (Modules/CardSwaps.cs), then confirms it.
 	/// </summary>

@@ -17,7 +17,7 @@ namespace NocatFarm.Core;
 /// What goes out is market prices only: each set's game id, its cards' names, each card's cheapest listing in US cents,
 /// how many are listed and how many seconds ago it was seen - plus this install's random number (the user count's, see
 /// <see cref="UserCount.InstallId"/>) and the app version. Nothing about any account. Only while "Count me as a user" and
-/// "Share cheapest sets with other nocat.farm users" are both on; either off sends and fetches nothing.
+/// "Share cheapest sets with other gamer.farm users" are both on; either off sends and fetches nothing.
 ///
 /// What comes back is only ever a candidate (<see cref="SetFinder.Merge"/>): which games the finder reads first. Every
 /// card is priced again on the real Steam market before a set is known, ranked or bought, so a wrong price there costs a
@@ -42,7 +42,7 @@ public static class SetShare {
 	/// <summary>A Steam set is 5 to 15 cards.</summary>
 	public const int MinCards = 5, MaxCards = 15;
 
-	/// <summary>Whether this copy shares: "Count me as a user" and "Share cheapest sets with other nocat.farm users".</summary>
+	/// <summary>Whether this copy shares: "Count me as a user" and "Share cheapest sets with other gamer.farm users".</summary>
 	public static bool Sharing(GlobalConfig g) => g.CountMeAsUser && g.ShareCheapestSets;
 
 	/// <summary>
@@ -66,13 +66,13 @@ public static class SetShare {
 		PooledConnectionLifetime = TimeSpan.FromMinutes(15)
 	}));
 
-	/// <summary>The client: 30 seconds, a plain nocat.farm User-Agent, an answer of 8 MB at most.</summary>
+	/// <summary>The client: 30 seconds, a plain gamer.farm User-Agent, an answer of 8 MB at most.</summary>
 	public static HttpClient MakeClient(HttpMessageHandler handler) {
 		HttpClient http = new(handler, true) {
 			Timeout = TimeSpan.FromSeconds(30),
 			MaxResponseContentBufferSize = 8 * 1024 * 1024
 		};
-		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "nocat.farm/" + Build.Version);
+		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "gamer.farm/" + Build.Version);
 
 		return http;
 	}

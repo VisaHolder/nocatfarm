@@ -21,6 +21,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 INDEX = ROOT / "addons" / "addons.json"
+# The repository's name before 2.0.0 (GitHub forwards it to VisaHolder/gamerfarm): copies before 2.0.0 install an add-on
+# only from this address, and 2.0.0 and later take both.
 RELEASE = "https://github.com/VisaHolder/nocatfarm/releases/download/v{app}/{file}"
 
 

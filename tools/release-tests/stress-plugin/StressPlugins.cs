@@ -3,7 +3,7 @@ using NocatFarm.Plugins;
 namespace NocatFarm.StressTest;
 
 // Plugins that misbehave on purpose, for tools/release-tests/stress.ps1 (a hidden test copy, no Steam accounts). Each one is
-// something a badly written add-on could really do. None of them may take nocat.farm down, hold it still, or make it grow
+// something a badly written add-on could really do. None of them may take gamer.farm down, hold it still, or make it grow
 // without end. What can't be guarded against from inside the process - a Thread or Timer callback that throws, an async void
 // started from the plugin's own background thread that throws, a real stack overflow, Environment.Exit - is left out: those
 // end any .NET program, and PLUGINS.md says so.

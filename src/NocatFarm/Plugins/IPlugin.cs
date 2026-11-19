@@ -305,7 +305,7 @@ public sealed record PluginSetting(
 
 /// <summary>Everything a plugin can ask the app to do.</summary>
 public interface IPluginHost {
-	/// <summary>Which nocat.farm this is, so a plugin can refuse to load against one it doesn't know.</summary>
+	/// <summary>Which gamer.farm this is, so a plugin can refuse to load against one it doesn't know.</summary>
 	string AppVersion { get; }
 
 	/// <summary>Every configured account, whether signed in or not.</summary>
@@ -315,7 +315,7 @@ public interface IPluginHost {
 	IPluginAccount? Account(string name);
 
 	/// <summary>
-	/// Write to the log. Lines are tagged [plugin], so it is obvious they didn't come from nocat.farm itself.
+	/// Write to the log. Lines are tagged [plugin], so it is obvious they didn't come from gamer.farm itself.
 	/// </summary>
 	void Log(string message);
 

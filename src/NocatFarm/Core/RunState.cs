@@ -91,31 +91,31 @@ public static class RunState {
 
 	/// <summary>The line for Telegram and the log, or null when there's nothing to say.</summary>
 	/// <param name="machineStarted">1.8.5: when the machine last started (<see cref="MachineStarted"/>) - after the run was last
-	/// seen: the machine restarted; before: nocat.farm alone stopped (a crash). Null: not known - the line says either.</param>
+	/// seen: the machine restarted; before: gamer.farm alone stopped (a crash). Null: not known - the line says either.</param>
 	public static Said? Line(Ended? last, DateTime now, int accounts, DateTime? machineStarted = null) {
 		if (last == null) {
 			return null;
 		}
 
 		if (last.System) {
-			return new Said("nocat.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in", accounts);
+			return new Said("gamer.farm is back up after the machine shut it down (a restart or a stop) · {0} account(s) signing in", accounts);
 		}
 
 		if (last.LastSeen is { } seen && (now > seen) && (machineStarted is { } booted)) {
 			string ago = Fmt.Hm(Math.Max(1, (int) Math.Ceiling((now - seen).TotalMinutes)));
 
 			return booted > seen
-				? new Said("nocat.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in",
+				? new Said("gamer.farm is back up - the machine restarted (a power cut or a reboot) at about {0}, last seen running {1} ago · {2} account(s) signing in",
 					(Func<string>) (() => Fmt.Clock(booted)), ago, accounts)
-				: new Said("nocat.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in", ago, accounts);
+				: new Said("gamer.farm is back up after it stopped unexpectedly (a crash - the machine kept running) - last seen running {0} ago · {1} account(s) signing in", ago, accounts);
 		}
 
 		if (last.LastSeen is { } seenAt && (now > seenAt)) {
-			return new Said("nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in",
+			return new Said("gamer.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) - last seen running {0} ago · {1} account(s) signing in",
 				Fmt.Hm(Math.Max(1, (int) Math.Ceiling((now - seenAt).TotalMinutes))), accounts);
 		}
 
-		return new Said("nocat.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in", accounts);
+		return new Said("gamer.farm is back up after an unexpected stop (a crash, a power cut or the machine restarting) · {0} account(s) signing in", accounts);
 	}
 
 	private static void Mark(DateTime now) => Write($"running {now.Ticks.ToString(CultureInfo.InvariantCulture)}");

@@ -25,7 +25,7 @@ public static partial class Notifier {
 	private static HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };   // not readonly: the checks answer for Telegram
 
 	/// <summary>Where the bot's picture comes from - the app icon, from the repo.</summary>
-	private const string Avatar = "https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/assets/icon.png";
+	private const string Avatar = "https://raw.githubusercontent.com/VisaHolder/gamerfarm/main/assets/icon.png";
 
 	/// <summary>How long after the first event a batch goes out, so a burst becomes one message.</summary>
 	private static readonly TimeSpan BatchWindow = TimeSpan.FromSeconds(8);
@@ -261,12 +261,12 @@ public static partial class Notifier {
 		Topic.Points => (new Said("Steam Points"), 0x9B59B6),
 		Topic.Backups => (new Said("Backups"), 0x3498DB),
 		Topic.Items => (new Said("Spare items & packs"), 0x9B59B6),
-		_ => (new Said("nocat.farm"), 0xC8C8C8)
+		_ => (new Said("gamer.farm"), 0xC8C8C8)
 	};
 
 	/// <summary>The account an event came from - none for the app's own events.</summary>
 	private static string? Account(Block b) =>
-		(b.Source.Length > 0) && (b.Source != "nocat.farm") && (b.Source != "report") ? b.Source : null;
+		(b.Source.Length > 0) && (b.Source != "gamer.farm") && (b.Source != "report") ? b.Source : null;
 
 	/// <summary>"Cards · kylro" - the account where there is one; the app's own events just say what they are.</summary>
 	private static string Title(Block b) {
@@ -288,7 +288,7 @@ public static partial class Notifier {
 	private static async Task<(bool Ok, string Why)> SendDiscordAsync(List<Block> blocks, CancellationToken ct) {
 		foreach (List<object> chunk in EmbedChunks(blocks)) {
 			object payload = new {
-				username = "nocat.farm",
+				username = "gamer.farm",
 				avatar_url = Avatar,
 				embeds = chunk.ToArray()
 			};
@@ -316,7 +316,7 @@ public static partial class Notifier {
 		List<List<object>> chunks = [];
 		List<object> current = [];
 		int size = 0;
-		string footer = "nocat.farm " + Build.Version;
+		string footer = "gamer.farm " + Build.Version;
 
 		foreach (Block b in blocks) {
 			(_, int colour) = Look(b.Topic);
@@ -758,7 +758,7 @@ public static partial class Notifier {
 			try {
 				using MultipartFormDataContent form = new();
 				form.Add(new StringContent(G.TelegramChatId), "chat_id");
-				form.Add(new StringContent(new Said("nocat.farm backup · {0} · password-locked", Path.GetFileName(path)).ToString()), "caption");
+				form.Add(new StringContent(new Said("gamer.farm backup · {0} · password-locked", Path.GetFileName(path)).ToString()), "caption");
 				await using FileStream file = File.OpenRead(path);
 				form.Add(new StreamContent(file), "document", Path.GetFileName(path));
 				(HttpResponseMessage? sent, string error) = await TryPostAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/sendDocument", form, ct).ConfigureAwait(false);
@@ -900,7 +900,7 @@ public static partial class Notifier {
 		// PC - a file sent with a question, 'docker logs'. Asked for at this PC instead, where it's meant to be pressed.
 		if (TelegramConnectLink != null) {
 			Log.Info(new Said("Telegram bot {0} found - press Connect Telegram in Settings", _botName), "telegram");
-			Log.Info(new Said("or type 'notify link' in the nocat.farm window or its console for the link to press Start on"), "telegram");
+			Log.Info(new Said("or type 'notify link' in the gamer.farm window or its console for the link to press Start on"), "telegram");
 		}
 
 		return true;
@@ -914,7 +914,7 @@ public static partial class Notifier {
 		List<string> result = [];
 		List<string> picked = [.. Enum.GetValues<Topic>().Where(Wanted).Select(static t => Look(t).Label.ToString())];
 		string chosen = picked.Count > 0 ? string.Join(", ", picked) : new Said("nothing yet - pick below").ToString();
-		string hello = new Said("This is what nocat.farm notifications look like. You'll get: {0}", chosen).ToString();
+		string hello = new Said("This is what gamer.farm notifications look like. You'll get: {0}", chosen).ToString();
 
 		if (!HasDiscord && !HasTelegramToken) {
 			result.Add(new Said("nothing is set up yet - paste a Discord webhook link or a Telegram bot token first").ToString());
@@ -924,11 +924,11 @@ public static partial class Notifier {
 
 		if (HasDiscord) {
 			(bool ok, string why) = await PostDiscordAsync(new {
-				username = "nocat.farm",
+				username = "gamer.farm",
 				avatar_url = Avatar,
 				embeds = new[] {
-					new { title = new Said("nocat.farm is connected").ToString(), description = hello, color = 0x8B5CF6,
-						footer = new { text = "nocat.farm " + Build.Version }, timestamp = DateTime.UtcNow.ToString("o") }
+					new { title = new Said("gamer.farm is connected").ToString(), description = hello, color = 0x8B5CF6,
+						footer = new { text = "gamer.farm " + Build.Version }, timestamp = DateTime.UtcNow.ToString("o") }
 				}
 			}, ct).ConfigureAwait(false);
 			result.Add(ok ? new Said("Discord: sent - check the channel").ToString() : new Said("Discord: didn't work - {0}", why).ToString());
@@ -938,10 +938,10 @@ public static partial class Notifier {
 
 			if (G.TelegramChatId.Length == 0) {
 				result.Add(_webhookBusy
-					? new Said("Telegram: this bot is already connected to something else (a webhook), so its messages can't be read - make a new bot with @BotFather just for nocat.farm, or put your chat ID in \"Telegram chat\" (Show advanced)").ToString()
+					? new Said("Telegram: this bot is already connected to something else (a webhook), so its messages can't be read - make a new bot with @BotFather just for gamer.farm, or put your chat ID in \"Telegram chat\" (Show advanced)").ToString()
 					: new Said("Telegram: {0} works but isn't connected yet - press Connect Telegram, press Start in Telegram, then test again", _botName.Length > 0 ? _botName : new Said("your bot").ToString()).ToString());
 			} else {
-				(bool ok, string why) = await PostTelegramAsync($"{Header()}\n<b>{Html(new Said("nocat.farm is connected").ToString())}</b>\n{Html(hello)}", ct).ConfigureAwait(false);
+				(bool ok, string why) = await PostTelegramAsync($"{Header()}\n<b>{Html(new Said("gamer.farm is connected").ToString())}</b>\n{Html(hello)}", ct).ConfigureAwait(false);
 				result.Add(ok ? new Said("Telegram: sent - check the chat").ToString() : new Said("Telegram: didn't work - {0}", why).ToString());
 			}
 		}

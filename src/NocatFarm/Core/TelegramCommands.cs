@@ -14,7 +14,7 @@ namespace NocatFarm.Core;
 /// in front - /start new, /pause kylro, /update accept. Only the connected chat is obeyed - anyone else who finds
 /// the bot is ignored - and the two that can't be undone from a phone (exit, remove) ask for "confirm" first.
 ///
-/// The same listener finds the chat in the first place - but only through the private link nocat.farm hands out
+/// The same listener finds the chat in the first place - but only through the private link gamer.farm hands out
 /// (t.me/yourbot?start=CODE), never "whoever messages first": with commands on, the connected chat controls every
 /// account, and a bot's username is public. It long-polls getUpdates, which Telegram refuses while a webhook owns
 /// the bot - that case is said once, plainly, instead of waiting for ever.
@@ -86,7 +86,7 @@ public static partial class Notifier {
 
 				// 409 means one of two things. A webhook is set: another program owns this bot's incoming messages for
 				// good - sending still works, so a chat ID typed in by hand does too, but listening never will. Or
-				// another program is long-polling the same bot right now (often a second copy of nocat.farm): Telegram
+				// another program is long-polling the same bot right now (often a second copy of gamer.farm): Telegram
 				// serves one reader at a time, so back off and try again. Each is said once, plainly.
 				if (r.StatusCode == HttpStatusCode.Conflict) {
 					string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -95,7 +95,7 @@ public static partial class Notifier {
 						if (_pollerWarnedFor != token) {
 							_pollerWarnedFor = token;
 							Log.Warn(new Said("Telegram bot in use elsewhere - commands may not arrive"), "telegram");
-							Log.Debug(new Said("only one program can read a Telegram bot - a second nocat.farm?"), "telegram");
+							Log.Debug(new Said("only one program can read a Telegram bot - a second gamer.farm?"), "telegram");
 						}
 
 						await Task.Delay(30_000, ct).ConfigureAwait(false);
@@ -108,7 +108,7 @@ public static partial class Notifier {
 
 					if (_webhookWarnedFor != token) {
 						_webhookWarnedFor = token;
-						Log.Warn(new Said("Telegram bot has a webhook - nocat.farm can't read it"), "telegram");
+						Log.Warn(new Said("Telegram bot has a webhook - gamer.farm can't read it"), "telegram");
 						Log.Info(new Said("make a new bot with @BotFather, or fill in \"Telegram chat\""), "telegram");
 					}
 
@@ -140,7 +140,7 @@ public static partial class Notifier {
 					string chatId = chat.GetProperty("id").GetRawText();
 					string text = msg.TryGetProperty("text", out JsonElement t) ? t.GetString() ?? "" : "";
 
-					// Sent while nocat.farm was closed: skipped, so a "/stop all" from yesterday doesn't fire this
+					// Sent while gamer.farm was closed: skipped, so a "/stop all" from yesterday doesn't fire this
 					// morning. Anything sent since it opened - even while the accounts are still starting - counts.
 					if (msg.TryGetProperty("date", out JsonElement sent) && (DateTimeOffset.FromUnixTimeSeconds(sent.GetInt64()) < _listeningSince)) {
 						continue;
@@ -152,8 +152,8 @@ public static partial class Notifier {
 						if (isPrivate && text.Contains(PairCode, StringComparison.Ordinal)) {
 							await ConnectAsync(chatId, chat, ct).ConfigureAwait(false);
 						} else if (isPrivate && _hinted.Add(chatId)) {
-							// Probably the owner, pressing Start from BotFather's link instead of nocat.farm's.
-							await ReplyAsync(chatId, Html(new Said("Not connected yet. In nocat.farm, open Settings, Notifications and press Connect Telegram - it brings you back here with the right link.").ToString()), ct).ConfigureAwait(false);
+							// Probably the owner, pressing Start from BotFather's link instead of gamer.farm's.
+							await ReplyAsync(chatId, Html(new Said("Not connected yet. In gamer.farm, open Settings, Notifications and press Connect Telegram - it brings you back here with the right link.").ToString()), ct).ConfigureAwait(false);
 						}
 
 						continue;
@@ -218,10 +218,10 @@ public static partial class Notifier {
 		}
 	}
 
-	/// <summary>When nocat.farm opened, give or take a few seconds for Telegram's clock.</summary>
+	/// <summary>When gamer.farm opened, give or take a few seconds for Telegram's clock.</summary>
 	private static readonly DateTimeOffset StartedAt = new DateTimeOffset(Build.StartedUtc).AddSeconds(-5);
 
-	/// <summary>Messages from before this are old news: opening nocat.farm, or listening again after a stretch of not.</summary>
+	/// <summary>Messages from before this are old news: opening gamer.farm, or listening again after a stretch of not.</summary>
 	private static DateTimeOffset _listeningSince = StartedAt;
 
 	private static bool _notListening;
@@ -360,7 +360,7 @@ public static partial class Notifier {
 			return;
 		}
 
-		// The two that can't be undone from a phone: shutting nocat.farm down (nothing can start it again from here)
+		// The two that can't be undone from a phone: shutting gamer.farm down (nothing can start it again from here)
 		// and deleting an account. Both need "confirm" on the end. Guarded by the command the word REACHES, so an
 		// alias ('delete') can't walk past a check written for one spelling ('remove').
 		(string? needs, rest) = ConfirmGuard(first, rest);
@@ -369,7 +369,7 @@ public static partial class Notifier {
 			string typed = $"/{first} {rest}".Trim();
 			await PostTelegramAsync(Html(needs == "remove"
 				? new Said("That deletes the account and its saved login. Send {0} confirm to really do it.", typed).ToString()
-				: new Said("That closes nocat.farm, and it can't be started again from Telegram. Send {0} confirm to really do it.", typed).ToString()), ct).ConfigureAwait(false);
+				: new Said("That closes gamer.farm, and it can't be started again from Telegram. Send {0} confirm to really do it.", typed).ToString()), ct).ConfigureAwait(false);
 
 			return;
 		}

@@ -1,5 +1,5 @@
 """
-Writes docs/COMMANDS.md - every command nocat.farm has - straight from the command list in src/NocatFarm/Commands.cs,
+Writes docs/COMMANDS.md - every command gamer.farm has - straight from the command list in src/NocatFarm/Commands.cs,
 so the docs can never drift from the app. Run it whenever a command changes (package-release.ps1 runs it too):
 
     python tools/gen-commands.py
@@ -48,16 +48,16 @@ def cell(text):
 lines = [
     "[Wiki home](README.md) · [Front page](../README.md)",
     "",
-    "# nocat.farm commands",
+    "# gamer.farm commands",
     "",
-    "Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's "
+    "Every command gamer.farm has, and what it does. You can type them in the app window, in the dashboard's "
     "**Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** "
     "(start with `/` or `!`, from an account listed under *Accept commands from*).",
     "",
     "In the app, `help` lists them all and `help <command>` explains one. It explains settings too: "
     "`help FarmCards`.",
     "",
-    "**How to read them:** `<account>` is something you must type (an account's name in nocat.farm); `[count]` "
+    "**How to read them:** `<account>` is something you must type (an account's name in gamer.farm); `[count]` "
     "is optional; `a|b` means one or the other. Most commands that take an account also take `all`, for every "
     "account.",
     "",

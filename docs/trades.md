@@ -20,7 +20,7 @@ new trade offer 4 from SomeGuy: you get 1 item(s): ..., you give 3 item(s): ... 
 It also tells you when an offer is accepted, declined, needs confirming, or is gone (cancelled, answered elsewhere
 or expired).
 
-Offers an account **sent** are followed too - ones nocat.farm sent and ones you sent by hand on Steam, so you don't have to
+Offers an account **sent** are followed too - ones gamer.farm sent and ones you sent by hand on Steam, so you don't have to
 sign in to see what happened. Every 15 minutes it looks, and each one that ended is said once, in the log, as a pop-up and
 on Discord/Telegram (*Send trades*):
 
@@ -40,7 +40,7 @@ trade decline myaccount 4         # decline it (or: all)
 trade cancel myaccount <offer id> # take back an offer this account sent that hasn't gone through (or: all)
 ```
 
-Accepting an offer that sends items out also confirms it, if the account's authenticator is in nocat.farm.
+Accepting an offer that sends items out also confirms it, if the account's authenticator is in gamer.farm.
 
 **Your other accounts** (`AutoTradeWith`) sets which accounts it trades with without asking you, and in which
 direction. List account names or SteamID64s, separated by commas: `farm1` or `farm1:both` trades both ways (the
@@ -50,7 +50,7 @@ own switch). A config from before 1.8.2 with *Accept anything from your own acco
 put in here, both ways - exactly what it did before.
 
 **Add-ons can answer offers too**, if you let them: *Let add-ons answer trade offers* (`AddonTrades`, Show advanced,
-off). An add-on with custom trade rules is then asked about the offers nocat.farm would otherwise leave for you, and can
+off). An add-on with custom trade rules is then asked about the offers gamer.farm would otherwise leave for you, and can
 accept or decline them. It's never asked about your own accounts, donations or card swaps gamer.mom paired, and it can't
 give away anything on your "never touch" lists, anything promised to another offer or anything that can't be traded, nor
 trade when Steam would hold it. Its offers wait like any other. A trade it accepts from a stranger waits for you to
@@ -79,7 +79,7 @@ send (like 4 for about 4 in the morning); left at -1 it goes every so many hours
 account's card on the dashboard shows when the next send is, each send is in the log, and a send Steam refuses is
 sent to you as a problem with Steam's reason.
 
-Between accounts that aren't Steam friends, Steam needs the other account's trade link token. nocat.farm reads it
+Between accounts that aren't Steam friends, Steam needs the other account's trade link token. gamer.farm reads it
 by itself when that account is signed in here; otherwise set *Trade link token of the receiving account*. Offers the account sends
 confirm themselves when its authenticator is here, and otherwise wait for you in the Steam app.
 
@@ -91,17 +91,17 @@ card-swapping sites send. One is accepted only when every item is an ordinary tr
 for one, and the swap never sets your sets back: every card you give away must still have more copies afterwards
 than any incoming card had before. Swaps that would sit in a trade hold are left alone. A swap with a stranger is
 accepted, but its confirmation waits for you in the Steam app (or on the Authenticator page). Swaps between accounts
-in your own nocat.farm (the ones `match` sends) are always judged this way and accepted by themselves, even with
+in your own gamer.farm (the ones `match` sends) are always judged this way and accepted by themselves, even with
 the setting off. `fairswap myaccount <offer id>` tells you whether an offer passes and why not, without accepting or
 declining it.
 
 Items from games the account is banned in can't be traded. Ban watch adds those games to *...but not these games*
 by itself, and you can add more.
 
-## Card swaps with other nocat.farm users
+## Card swaps with other gamer.farm users
 
-*Swap spare cards with other nocat.farm users* (`CardSwaps`, off) swaps your spare normal trading cards with other people's
-nocat.farm accounts: one card for one card, in the same game, so both of you finish sets sooner. It's per account.
+*Swap spare cards with other gamer.farm users* (`CardSwaps`, off) swaps your spare normal trading cards with other people's
+gamer.farm accounts: one card for one card, in the same game, so both of you finish sets sooner. It's per account.
 Ticking it first shows what it could swap now and its limits, and nothing happens until you press **Turn on**. Off
 stops it at once. From the console: `swaps preview myaccount`, `swaps on myaccount`, `swaps off myaccount`.
 
@@ -118,7 +118,7 @@ How it goes:
 2. Once an hour gamer.mom pairs accounts the way ArchiSteamFarm does: a card only goes from a bigger pile to a smaller
    one, on both sides, so neither side's sets lose anything. Several games go in one offer, and of the ways to pair two
    accounts it picks the one that finishes the most badge levels and sets.
-3. One side sends the offer, with a note like `nocat.farm card swap #a1b2c3d4e5f6`. Before sending, it checks
+3. One side sends the offer, with a note like `gamer.farm card swap #a1b2c3d4e5f6`. Before sending, it checks
    everything again against its own cards and prices. Then, before confirming, it checks the offer Steam actually made
    the same way the other side will: priced by Steam's own names for the cards, never by what the partner told
    gamer.mom. Anything off and the offer is taken back, never confirmed.
@@ -145,7 +145,7 @@ What it never does:
 - Nothing while scam watch holds the account's trades, and an offer already out isn't confirmed then either (nor
   outside a human-mode account's day) - it waits, or is taken back.
 
-An account whose authenticator is in nocat.farm confirms its own offers. Without one, the offer waits for you in the
+An account whose authenticator is in gamer.farm confirms its own offers. Without one, the offer waits for you in the
 Steam app on your phone, and the log says so. An offer nobody accepted in 2 days is taken back, and so is every swap
 offer still out when you turn swaps off.
 
@@ -179,7 +179,7 @@ confirm myaccount 2     # confirm number 2 (or: all)
 deny myaccount 1        # deny number 1
 ```
 
-The tab stays hidden until at least one account's authenticator is in nocat.farm. Once it's showing, an account
+The tab stays hidden until at least one account's authenticator is in gamer.farm. Once it's showing, an account
 with no authenticator gets a note saying where to put its maFile.
 
 ## Ban watch
@@ -198,7 +198,7 @@ pages, the same as you would in a browser, and looks for the signs of a stolen a
 - **An API key.** A Steam Web API key that appears (or changes) without you is the most common trade scam: the thief
   watches your trade offers and swaps them for fake ones. Only a fingerprint of the key is kept, never the key.
 - **A new device.** A device on the account's *Authorized devices* list that wasn't there last time and isn't yours.
-  nocat.farm's own sign-ins carry this PC's name (or the account's *Device name* setting), so it never warns about
+  gamer.farm's own sign-ins carry this PC's name (or the account's *Device name* setting), so it never warns about
   itself. Add your own phones and PCs to *Devices of yours to ignore*.
 - **Email, phone or Steam Guard changed.** Only the hidden forms Steam shows (like `fa***@example.com`, ends in 42)
   are kept. Steam Guard (phone app, email codes or off) is asked from Steam's own two-factor service, the same one the
@@ -211,7 +211,7 @@ The first look only takes note of what's there; nothing already on the account i
 that says the account can't have a key (no checked email, no phone app) counts as "no key", so a key appearing later
 is a warning.
 
-On a warning you get a red line in the log (which account, what changed and what nocat.farm did), a pop-up, a
+On a warning you get a red line in the log (which account, what changed and what gamer.farm did), a pop-up, a
 Discord/Telegram message and a red banner on the dashboard. Then, as set per account:
 
 - trades stop being accepted by themselves, and nothing is sent, swapped or listed on the market by itself (timed
@@ -246,7 +246,7 @@ level, bans, trade hold, market access, limited account, Steam Guard and phone. 
 *all good · level 12*; otherwise what isn't, like *market: blocked for 7 day(s) (new device)*. While it's on, it
 takes the place of the old bans line.
 
-It checks a few minutes after the account signs in, then every 5 to 7 hours. It reads only what nocat.farm already
+It checks a few minutes after the account signs in, then every 5 to 7 hours. It reads only what gamer.farm already
 reads (the ban watch, scam watch's account page, the trade-hold lookup, what Steam says at sign-in) plus one look at
 the Community Market page. When something gets **worse** it tells you once (log, pop-up, Discord/Telegram); getting
 better is only written in the log. A new ban is told once, as health's, whichever look finds it. `health [account]`

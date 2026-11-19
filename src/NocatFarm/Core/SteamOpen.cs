@@ -5,13 +5,13 @@ namespace NocatFarm.Core;
 ///
 /// It does what the open-source account switchers do, and nothing riskier: it points Steam's own saved-accounts files
 /// at the account (<c>config/loginusers.vdf</c> and the <c>AutoLoginUser</c> registry value), closes Steam and starts
-/// it again. Steam then signs in from the login it already remembers for that account. nocat.farm never reads, writes
+/// it again. Steam then signs in from the login it already remembers for that account. gamer.farm never reads, writes
 /// or hand-crafts a login token - if the client doesn't already remember the account, it says to sign in once with
 /// "Remember me" ticked and leaves everything alone. 1.8.2: an account Steam doesn't remember yet still opens - on
 /// Steam's own sign-in, with its login name filled in (only the AutoLoginUser registry value points at it).
 /// </summary>
 /// <remarks>
-/// Signing the client in does NOT stop nocat.farm farming the account: Steam allows many sign-ins at once and only one
+/// Signing the client in does NOT stop gamer.farm farming the account: Steam allows many sign-ins at once and only one
 /// <em>playing</em> session, so the farm keeps its session until you actually launch a game - which is the same
 /// "you're playing" step-aside the app already handles. Windows only for now; the reading and writing of the Windows
 /// files lives in <see cref="Windows.SteamClientSwitch"/>, and everything decided without touching the PC is here so
@@ -32,14 +32,14 @@ public static class SteamOpen {
 	public const string SignIn = "sign-in";
 
 	// ── how Steam is closed and started (1.8.2) ──
-	// nocat.farm never touches the Steam Client Service, never repairs or installs anything, and never runs anything
+	// gamer.farm never touches the Steam Client Service, never repairs or installs anything, and never runs anything
 	// elevated: no "runas", no admin rights asked for. It only asks the running Steam to close (steam.exe -shutdown, as
 	// Steam documents) and starts Steam again exactly as a double-click on it does.
 
 	/// <summary>
 	/// 1.8.2: how Steam is started - the way a double-click does: <c>explorer.exe "&lt;steam.exe&gt;"</c>, through the shell
-	/// (ShellExecute, no handles inherited). Explorer starts Steam, so Steam's parent is Explorer, not nocat.farm, and it
-	/// shares nothing with nocat.farm's process. Started as nocat.farm's own child, Steam showed "Steam Service Error: the
+	/// (ShellExecute, no handles inherited). Explorer starts Steam, so Steam's parent is Explorer, not gamer.farm, and it
+	/// shares nothing with gamer.farm's process. Started as gamer.farm's own child, Steam showed "Steam Service Error: the
 	/// Steam Service on your machine requires some maintenance". Nothing is passed to Steam itself - no login, no switches.
 	/// </summary>
 	/// <param name="steamExe">The full path of steam.exe.</param>
@@ -114,7 +114,7 @@ public static class SteamOpen {
 	/// <summary>
 	/// Work out, from what the files say, what signing the client into this account would change - without touching
 	/// anything. The account is found by its SteamID64 (the block's own key) first, then by its Steam login name -
-	/// never by the nocat.farm account name, which is only a label and may be nothing like the real login. Never gives
+	/// never by the gamer.farm account name, which is only a label and may be nothing like the real login. Never gives
 	/// away or edits another account's login; the only field it clears on others is MostRecent, the single "last used"
 	/// pointer the client reads at startup, which by definition can belong to one account.
 	/// </summary>
@@ -272,9 +272,9 @@ public static class SteamOpen {
 		SignInSince.TryGetValue(account, out DateTime since) && ((now ?? DateTime.UtcNow) - since < SignInWindow);
 
 	/// <summary>
-	/// 1.8.2: the account's Steam Guard code right now and the seconds it has left, from its authenticator in nocat.farm
+	/// 1.8.2: the account's Steam Guard code right now and the seconds it has left, from its authenticator in gamer.farm
 	/// (maFile or the secret in its settings) - the same code the Authenticator page shows. Only the 5-character code ever
-	/// leaves here, never a secret. Null when nocat.farm has no authenticator for it.
+	/// leaves here, never a secret. Null when gamer.farm has no authenticator for it.
 	/// </summary>
 	public static (string Code, int SecondsLeft)? GuardCode(Bot bot) {
 		if (!bot.HasAuthenticator) {

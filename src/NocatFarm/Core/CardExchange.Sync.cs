@@ -84,7 +84,7 @@ public static partial class CardExchange {
 			Timeout = TimeSpan.FromSeconds(30),
 			MaxResponseContentBufferSize = 2 * 1024 * 1024
 		};
-		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "nocat.farm/" + Build.Version);
+		http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "gamer.farm/" + Build.Version);
 
 		return http;
 	});

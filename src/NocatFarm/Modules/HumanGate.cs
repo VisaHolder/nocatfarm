@@ -196,7 +196,7 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 			Start.YouStopped => new Said("you stopped playing on it at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}", from, until),
 			Start.Back => new Said("it was back from a break at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}", from, until),
 			Start.Spaced => new Said("it did something at {0} - human mode spaces things out; it can go ahead from about {1}", from, until),
-			// "Again" only past this run's first sign-in: the first after starting nocat.farm said it too.
+			// "Again" only past this run's first sign-in: the first after starting gamer.farm said it too.
 			_ when bot.SignIns > 1 => new Said("it signed in again at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}", from, until),
 			_ => new Said("it signed in at {0} - human mode waits a little before doing things that show on the account; it can go ahead from about {1}", from, until)
 		};

@@ -18,7 +18,7 @@ top of the dashboard, with an *It was me* button (see [Scam watch](trades.md#sca
 
 An installed add-on can have a tab of its own, right after **Plugins** - the [rep4rep add-on](rep4rep.md) does.
 **Authenticator** only shows once at least one account's
-authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
+authenticator is in gamer.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
 phone (see [below](#using-the-dashboard-from-another-device)).
 
 **Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. Lines in a
@@ -81,7 +81,7 @@ The dashboard comes in a dark and a light theme (the *theme* button under the ta
 At the bottom of *Settings → Global settings* is **Backup & restore**. `backup` in the Console does the same
 download into a `backups` folder next to `config` and says where.
 
-**Download a backup** gives one file, like `nocat.farm-backup-2026-09-30.zip`, with your settings, every account,
+**Download a backup** gives one file, like `gamer.farm-backup-2026-09-30.zip`, with your settings, every account,
 saved logins, authenticator files, the history, lifetime totals, today's human-mode plans, hunt progress, comment counts, add-on settings and rep4rep
 counts and the key queue. Logs and caches aren't in it. A `README.txt` inside says what's there.
 
@@ -93,7 +93,7 @@ goes in the zip too, so it restores anywhere. Either way, keep the zip private: 
 **Restore a backup** checks the zip first and shows what's in it: when and where it was made, the accounts, the
 files. Nothing changes until you press *Restore*. Then every account stops, the files go back, and the accounts
 start again. Accounts that aren't in the backup are left alone, and what gets replaced is saved in `backups` first.
-A zip that isn't a nocat.farm backup, or has anything else in it, is refused. Restoring only works in the
+A zip that isn't a gamer.farm backup, or has anything else in it, is refused. Restoring only works in the
 dashboard, not from Telegram, Discord or Steam chat. On Linux and a Mac the backups are only readable by your user,
 and in Docker they're kept in `./backups` next to `./config`.
 
@@ -104,8 +104,8 @@ off until you set it up, because it needs a **backup password** that only you pi
 down somewhere safe: without it nobody can open the backup, you included. It stays on this PC, encrypted like your other
 secrets, so the daily backup runs with nobody there. It's never sent anywhere and never written to the log.
 
-Once a day (4 am by default, give or take up to 30 minutes, and as soon as nocat.farm is open again if the PC was off)
-it saves `nocat.farm-backup-2026-10-11.nfbackup` into the folder you pick, such as your OneDrive or a USB drive. Inside
+Once a day (4 am by default, give or take up to 30 minutes, and as soon as gamer.farm is open again if the PC was off)
+it saves `gamer.farm-backup-2026-10-11.nfbackup` into the folder you pick, such as your OneDrive or a USB drive. Inside
 are your settings, accounts and saved logins, authenticators and history (each one a switch, plus logs if you want
 them). The saved logins are opened first and the whole file is locked with your password
 (strong encryption - without the password it can't be opened), so it opens on any Windows, Linux or Mac PC. It keeps the
@@ -119,7 +119,7 @@ If a backup fails (the folder is missing, the disk is full, no permission) it sa
 Discord, once per reason a day, and tries again an hour later. `backup now` makes one straight away; `backup status`
 says when the last one was made and when the next is due.
 
-**To restore on a new PC:** install nocat.farm, and in the first-run setup pick *Restore from a backup file* (or later
+**To restore on a new PC:** install gamer.farm, and in the first-run setup pick *Restore from a backup file* (or later
 *Settings → Backup & restore → Restore a backup*). Pick the `.nfbackup` file and type the password. It shows what's
 inside first; press *Restore* and the saved logins are locked again with the new PC's own key, so the accounts sign
 straight back in. A wrong password is refused and can be typed again; a file that was changed after it was made is
@@ -130,7 +130,7 @@ refused. Restoring only works at home or on this PC.
 | Setting | What it does | Default |
 |---|---|---|
 | *Back up every day* | the daily locked backup | off |
-| *Save backups in* | the folder it goes in, e.g. `D:\OneDrive\nocat.farm`; empty is the `backups` folder | empty |
+| *Save backups in* | the folder it goes in, e.g. `D:\OneDrive\gamer.farm`; empty is the `backups` folder | empty |
 | *Backup password* | locks the backups, 12+ characters, picked by you | none |
 | *Keep the last* | how many of its backups stay in the folder | 7 backups |
 | *Back up at* | the hour it runs | 4 am |
@@ -181,7 +181,7 @@ mini mode next time if you left it that way.
 ## Tray
 
 Left- or right-click the icon for the menu: Open dashboard, Hide/Show the window, Mini mode/Full window, Start all
-accounts, Stop all accounts and Exit nocat.farm, in the dashboard's language. Double-clicking shows the window.
+accounts, Stop all accounts and Exit gamer.farm, in the dashboard's language. Double-clicking shows the window.
 
 *Start hidden* (a setting) or `--minimized` starts straight to the tray. *Start with Windows* adds a start-up entry
 for your own Windows user.
@@ -214,7 +214,7 @@ done:
    out.
 3. **Windows Firewall.** If your phone just keeps loading, Windows is blocking it; many PCs are set not to ask.
    **Allow through Windows Firewall** lets in only the dashboard's port, only on home networks, after Windows asks
-   you to confirm. The rule is called "nocat.farm dashboard" if you ever want to remove it. In Docker this line is
+   you to confirm. The rule is called "gamer.farm dashboard" if you ever want to remove it. In Docker this line is
    the computer's address instead (see [Docker](linux-docker-vps.md#docker)).
 4. **Router** (away from home only). Ticked once the port is being forwarded.
 
@@ -225,7 +225,7 @@ at the bottom sums up what's exposed and has a button to turn *Open from anywher
 A phone that signs in stays signed in for 7 days (*Stay signed in for*). Five wrong passwords lock that address out
 for an hour. On this PC itself the lockout is only a minute, since whoever is at the PC can open the config folder
 anyway. A reverse proxy on the same PC, like Caddy for HTTPS, makes every visitor look like this PC, so there
-nocat.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
+gamer.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
 in front of Docker comes in from Docker's own network) is only believed once its address is in *Trust forwarded
 addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
@@ -239,15 +239,15 @@ is sent to Telegram and Discord (*Send dashboard sign-ins*), and so is anybody g
 or *Open from anywhere* switching itself off (*Send break-in attempts*). Both are on by default.
 
 **From anywhere.** Turning on *Open from anywhere* (on the Phone page, or Settings → Dashboard & phone → Open from outside, with Show advanced)
-works like Jellyfin. nocat.farm asks your router to forward the dashboard's port to this PC (UPnP), finds your
+works like Jellyfin. gamer.farm asks your router to forward the dashboard's port to this PC (UPnP), finds your
 internet address, and gives you a link and QR code that work anywhere. It needs a password of at least 12
 characters, because anyone on the internet can reach the sign-in page. From the internet it only opens over **https**,
-with nocat.farm's own certificate - no outside service or name. The first time it's turned on, the certificate goes to your
+with gamer.farm's own certificate - no outside service or name. The first time it's turned on, the certificate goes to your
 Telegram chat with how to install it on the phone (or type `dashboard cert`; without Telegram, it says where the file is):
 install it once and the phone opens the https link with no warning page, from then on. Check the fingerprint the message
-gives against what the phone shows. If your internet address changes, nocat.farm makes its certificate again by itself -
-nothing new to install. At home and on this PC plain http still works. The forward is taken away when you turn it off or close nocat.farm, and put back when it
-starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
+gives against what the phone shows. If your internet address changes, gamer.farm makes its certificate again by itself -
+nothing new to install. At home and on this PC plain http still works. The forward is taken away when you turn it off or close gamer.farm, and put back when it
+starts. Turned off, it's off at once: gamer.farm itself turns away anything from the internet, so a phone that still
 had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
 mix of addresses, pause signing in from outside for an hour (home still works, and `dashboard unlock` lifts it). And after
 *Switch off Open from anywhere after this many failed sign-ins a day* (5 wrong passwords or codes from the internet by
@@ -261,7 +261,7 @@ never lets anyone in from the internet, and a code you didn't ask for means some
 type `visitors signout`. The code works for 5 minutes, only for the address it was sent for, and five wrong codes
 lock that address out like five wrong passwords. At home and on this PC the password is all it asks. Until Telegram
 is connected, the password is enough from outside too; the Phone page says which. Test it on mobile data with the phone's Wi-Fi off. From inside your own home your internet address often
-won't open, and that's the router, not nocat.farm. If your router has UPnP switched off, the page says so; forward
+won't open, and that's the router, not gamer.farm. If your router has UPnP switched off, the page says so; forward
 the port by hand and put your address in *Public address* instead (a name like `myname.duckdns.org` works too).
 
 The same can be done by typing:
@@ -279,27 +279,27 @@ To turn the dashboard off completely, `set WebEnabled false` and restart. Everyt
 ## farm.gamer.mom
 
 **farm.gamer.mom** is this same dashboard, served from a website, so you can bookmark one address. It runs in a
-browser on the PC where nocat.farm runs, and talks straight to nocat.farm at `http://127.0.0.1:7242` (or the port
+browser on the PC where gamer.farm runs, and talks straight to gamer.farm at `http://127.0.0.1:7242` (or the port
 you use: `https://farm.gamer.mom/?port=8000` once, and the page remembers it). Nothing goes through gamer.mom.
 
 The switch is *Let farm.gamer.mom open this dashboard* (Settings → Dashboard & phone, with Show advanced). A **new
 install** on a PC with a screen starts with it on. An install that was already there before 1.9.2 keeps it off, and so
 do Docker and a server with no screen, since the page only works from a browser on the same machine. While it's off,
-the website can't reach nocat.farm at all.
+the website can't reach gamer.farm at all.
 
 While it's on, the tray's **Open dashboard**, the window's Dashboard button, *Open the browser on start*, and opening
-nocat.farm a second time all go to `https://farm.gamer.mom/?port=<your port>`, but only once an account is set up.
+gamer.farm a second time all go to `https://farm.gamer.mom/?port=<your port>`, but only once an account is set up.
 **Setting up always stays on this PC's own dashboard**: with no account yet, none signed in here yet, or one waiting on
 a Steam Guard code, a QR code or a password, they open `http://localhost:<port>` instead. Your Steam password, Steam
 Guard codes and QR sign-in never go near farm.gamer.mom. If the page was opened a few minutes ago and nothing has
 paired since (no internet, or the browser blocked it), the next open goes to this PC's own dashboard again. On start,
-the log shows both addresses, and `dashboard` lists the farm.gamer.mom one too. nocat.farm itself never needs
+the log shows both addresses, and `dashboard` lists the farm.gamer.mom one too. gamer.farm itself never needs
 gamer.mom to work: `http://localhost:<port>` always opens the dashboard.
 
 To connect a browser:
 
 1. Open farm.gamer.mom and press **Connect**. The page shows a 6-character code.
-2. nocat.farm's own dashboard on this PC shows a box with the same code, **Approve** and **Deny**. It's also in the
+2. gamer.farm's own dashboard on this PC shows a box with the same code, **Approve** and **Deny**. It's also in the
    log and, if Telegram or Discord is set up, they get a note saying to approve it in the app. There's never an
    approve button in a message, and farm.gamer.mom can't approve itself.
 3. Check the codes match, and press **Approve**. The page carries on as the dashboard.
@@ -328,7 +328,7 @@ couldn't take your items or your account:
   Switching them on works
 - **Words other people see:** the auto-reply, the custom game name, the profile name, and the Discord profile's line
   and buttons. Emptying them, and their on/off switches, work
-- **Shutting nocat.farm down** (`exit`), and redeeming keys from a file (typed keys work)
+- **Shutting gamer.farm down** (`exit`), and redeeming keys from a file (typed keys work)
 - **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
   address, port, *Open from anywhere*, trusted proxies, the firewall, and setting a first dashboard password or removing it (set from a hacked page, a first
 password would lock you out of your own dashboard). Changing an
@@ -336,14 +336,14 @@ password would lock you out of your own dashboard). Changing an
 
 If it doesn't connect:
 
-- **nocat.farm isn't running.** The page says so and links to the download. Start it, then reload.
+- **gamer.farm isn't running.** The page says so and links to the download. Start it, then reload.
 - **The setting is off.** The page says how to turn it on.
-- **nocat.farm is too old.** It needs 1.9.2 or newer; the page asks you to update.
+- **gamer.farm is too old.** It needs 1.9.2 or newer; the page asks you to update.
 - **Safari, or a browser or extension that blocks it.** Safari doesn't let a website talk to your own PC. Open
-  `http://localhost:7242` straight from nocat.farm instead. Chrome may ask once whether the site may reach devices on
+  `http://localhost:7242` straight from gamer.farm instead. Chrome may ask once whether the site may reach devices on
   your network: say yes.
 
-It only works in a browser on the same PC as nocat.farm: not from your phone, and not for nocat.farm in Docker or on
+It only works in a browser on the same PC as gamer.farm: not from your phone, and not for gamer.farm in Docker or on
 another machine. For those, use the Phone page above.
 
 <p align="center">

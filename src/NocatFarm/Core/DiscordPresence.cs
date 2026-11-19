@@ -11,9 +11,9 @@ using NocatFarm.Modules;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// "Playing nocat.farm" on your Discord profile while nocat.farm is open - the same card a game gets.
+/// "Playing gamer.farm" on your Discord profile while gamer.farm is open - the same card a game gets.
 ///
-/// Talks to the Discord app on this PC over its local pipe (discord-ipc-N): a handshake with nocat.farm's
+/// Talks to the Discord app on this PC over its local pipe (discord-ipc-N): a handshake with gamer.farm's
 /// Discord application ID, then SET_ACTIVITY whenever what it would show changes. Nothing goes over the
 /// internet from here, and there is no token - Discord shows it for whoever is signed into the Discord app.
 /// With Discord closed it quietly tries again every minute.
@@ -26,10 +26,10 @@ namespace NocatFarm.Core;
 /// accounts, never a human-mode account, whose whole point is looking like a person.
 /// </summary>
 public static class DiscordPresence {
-	/// <summary>nocat.farm's application in the Discord Developer Portal: its name and logo are what Discord shows.</summary>
+	/// <summary>gamer.farm's application in the Discord Developer Portal: its name and logo are what Discord shows.</summary>
 	private const string AppId = "1553951357894008872";
 
-	private const string Site = "https://github.com/VisaHolder/nocatfarm";
+	private const string Site = "https://github.com/VisaHolder/gamerfarm";
 
 	/// <summary>The logo with the n filling up with purple, as a GIF - Discord plays GIFs from a web address, not from the
 	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is wwwroot/logo-liquid.gif.</summary>
@@ -108,7 +108,7 @@ public static class DiscordPresence {
 				if ((json != _lastSent) || (DateTime.UtcNow - _sentAt > TimeSpan.FromMinutes(3))) {
 					string? reply = await SendCardAsync(activity).ConfigureAwait(false);
 
-					// Stopped (nocat.farm closing) since the top of the loop: nothing was sent.
+					// Stopped (gamer.farm closing) since the top of the loop: nothing was sent.
 					if (reply == null) {
 						continue;
 					}
@@ -138,7 +138,7 @@ public static class DiscordPresence {
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
-						Log.Info(new Said("Discord: showing nocat.farm"), "discord");
+						Log.Info(new Said("Discord: showing gamer.farm"), "discord");
 					}
 				}
 
@@ -165,11 +165,11 @@ public static class DiscordPresence {
 	/// <summary>
 	/// The card. Null clears it (nothing picked to show).
 	///
-	///   nocat.farm
+	///   gamer.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
 	///   1,240 Steam accounts · 3 linked  what Second line picks, and how many are signed in
-	///   5:12:00 elapsed                  since nocat.farm was opened
-	///   [ Get nocat.farm ] [ reap. on Steam ]
+	///   5:12:00 elapsed                  since gamer.farm was opened
+	///   [ Get gamer.farm ] [ reap. on Steam ]
 	///
 	/// The logo links to GitHub and says the version and today's cards on hover; the first shown account's avatar
 	/// sits in its corner. Every part but the first two lines has its own switch.
@@ -218,7 +218,7 @@ public static class DiscordPresence {
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
 		// The line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks", or the Steam
-		// accounts on nocat.farm.
+		// accounts on gamer.farm.
 		string state = SecondLine(G.DiscordSecondLine, UserCount.Accounts(), today,
 			days => History.MinutesOver(days, farm.Select(static b => b.Name)));
 
@@ -231,7 +231,7 @@ public static class DiscordPresence {
 		// What clicking does is said on hover - Discord gives a picture no other hint that it's a link.
 		Dictionary<string, object> assets = new() {
 			["large_image"] = AnimatedLogo,
-			["large_text"] = new Said("nocat.farm {0} · {1} · click to open it on GitHub", NocatFarm.Build.Version, today).ToString(),
+			["large_text"] = new Said("gamer.farm {0} · {1} · click to open it on GitHub", NocatFarm.Build.Version, today).ToString(),
 			["large_url"] = Site
 		};
 
@@ -292,14 +292,14 @@ public static class DiscordPresence {
 	}
 
 	/// <summary>
-	/// The Second line choice that shows how many Steam accounts are on nocat.farm - the default. It was "people using
-	/// nocat.farm" once and keeps its number, so a config that picked it still does.
+	/// The Second line choice that shows how many Steam accounts are on gamer.farm - the default. It was "people using
+	/// gamer.farm" once and keeps its number, so a config that picked it still does.
 	/// </summary>
 	public const int LineAccounts = 3;
 
 	/// <summary>
 	/// The card's second line for a Second line choice: 1 hours past week, 2 hours past month, 3 Steam accounts (the card
-	/// already says Playing nocat.farm, so not "on nocat.farm" again), anything else the cards today. The accounts count falls back to the cards today while it isn't known -
+	/// already says Playing gamer.farm, so not "on gamer.farm" again), anything else the cards today. The accounts count falls back to the cards today while it isn't known -
 	/// "Count me as a user" off, no answer yet, an older gamer.mom that doesn't say it, or the last one too old
 	/// (<paramref name="accounts"/> null).
 	/// </summary>
@@ -311,12 +311,12 @@ public static class DiscordPresence {
 		_ => cardsToday
 	};
 
-	/// <summary>"1,240 Steam accounts" - the card's short form of the Overview's "1,240 Steam accounts on nocat.farm".</summary>
+	/// <summary>"1,240 Steam accounts" - the card's short form of the Overview's "1,240 Steam accounts on gamer.farm".</summary>
 	public static string SteamAccounts(int n) => n == 1
 		? new Said("1 Steam account").ToString()
 		: new Said("{0} Steam accounts", Fmt.Grouped(n)).ToString();
 
-	/// <summary>The Steam name people know the account by; the nocat.farm name until Steam has said it.</summary>
+	/// <summary>The Steam name people know the account by; the gamer.farm name until Steam has said it.</summary>
 	private static string Display(Bot b) => b.SteamName.Length > 0 ? b.SteamName : b.Name;
 
 	private static string Profile(Bot b) => b.SteamId != 0 ? $"https://steamcommunity.com/profiles/{b.SteamId}" : Site;
@@ -330,7 +330,7 @@ public static class DiscordPresence {
 		}
 
 		if (v.Equals("github", StringComparison.OrdinalIgnoreCase)) {
-			return new { label = new Said("Get nocat.farm").ToString(), url = Site };
+			return new { label = new Said("Get gamer.farm").ToString(), url = Site };
 		}
 
 		int bar = v.IndexOf('|');
@@ -380,7 +380,7 @@ public static class DiscordPresence {
 	}
 
 	/// <summary>
-	/// The card sent on the connection as it is right now, and Discord's answer - or null when nocat.farm is closing, or
+	/// The card sent on the connection as it is right now, and Discord's answer - or null when gamer.farm is closing, or
 	/// there's no connection any more. Under <see cref="SendGate"/>, the same lock <see cref="Disconnect"/> takes to
 	/// clear the card, and <see cref="_stopped"/> is looked at inside it: a card can never go out after the clear.
 	/// </summary>
@@ -409,10 +409,10 @@ public static class DiscordPresence {
 	private static readonly Lock StateGate = new();
 
 	/// <summary>
-	/// A connection that has done its handshake becomes THE connection - unless nocat.farm started closing while it was
+	/// A connection that has done its handshake becomes THE connection - unless gamer.farm started closing while it was
 	/// being made, and then it is closed instead. Stop used to find nothing to take down while a connect was under way
 	/// (the pipe was only set part-way through), the connect then put it in place and the loop sent the card: Playing
-	/// nocat.farm came back up on the profile of an app that was closing.
+	/// gamer.farm came back up on the profile of an app that was closing.
 	/// </summary>
 	private static bool Adopt(Stream connected) {
 		lock (StateGate) {
@@ -576,7 +576,7 @@ public static class DiscordPresence {
 	/// <summary>Set at shutdown: the loop stays away from Discord from then on.</summary>
 	private static volatile bool _stopped;
 
-	/// <summary>Called at shutdown, so the card goes when nocat.farm does.</summary>
+	/// <summary>Called at shutdown, so the card goes when gamer.farm does.</summary>
 	/// <remarks>And stays gone: the accounts' sign-outs come after this and can take a while, and the loop - which had no
 	/// idea - connected again within fifteen seconds and put the card back up for the rest of the way out.</remarks>
 	public static void Stop() {
