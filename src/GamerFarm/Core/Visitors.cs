@@ -71,7 +71,8 @@ public static class Visitors {
 	}
 
 	/// <summary>Write a visit down, and say it where it matters.</summary>
-	public static void Note(What what, string ip, bool thisPc, string? userAgent, int count = 0, int minutes = 0) {
+	/// <param name="link">2.0.2: by a sign-in link (signed in, or a wrong or run-out one) - the log says so.</param>
+	public static void Note(What what, string ip, bool thisPc, string? userAgent, int count = 0, int minutes = 0, bool link = false) {
 		string where = WhereFrom(ip, thisPc);
 		string device = Device(userAgent);
 		DateTime now = DateTime.UtcNow;
@@ -118,7 +119,9 @@ public static class Visitors {
 
 		switch (what) {
 			case What.SignedIn:
-				Log.Info(new Said("dashboard: signed in from {0} ({1}, {2})", ip, WhereWords(where), device));
+				Log.Info(link
+					? new Said("dashboard: signed in with a sign-in link from {0} ({1}, {2})", ip, WhereWords(where), device)
+					: new Said("dashboard: signed in from {0} ({1}, {2})", ip, WhereWords(where), device));
 
 				if (outside) {
 					Log.Publish(Topic.Security, "dashboard", new Said("signed in from outside your home: {0} ({1}). Not you? Send /visitors signout here (on Discord: /run visitors signout) - it signs every browser and phone out - then change the dashboard password.", ip, device));
@@ -146,7 +149,9 @@ public static class Visitors {
 
 				break;
 			case What.WrongCode:
-				Log.Info(new Said("dashboard: wrong sign-in code from {0} ({1})", ip, device));
+				Log.Info(link
+					? new Said("dashboard: a sign-in link that was wrong or had run out, from {0} ({1})", ip, device)
+					: new Said("dashboard: wrong sign-in code from {0} ({1})", ip, device));
 
 				break;
 			case What.TurnedAway:

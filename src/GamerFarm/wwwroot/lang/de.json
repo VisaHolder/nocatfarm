@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: die Einstellungen, die eine frühere Version zuletzt geschrieben hat, werden behalten",
     "update: the version before is being put back - stopping": "Update: die vorige Version wird zurückgeholt - wird beendet",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "Update gestoppt - dieser Dienst startet gamerFarm, das Versionen vor 2.0.1 nicht haben; spiel eine von Hand ein. Nichts wurde geändert",
-    "moving in: the startup entry from before 2.0.1 is gone": "Umzug: der Autostart-Eintrag von vor 2.0.1 ist entfernt"
+    "moving in: the startup entry from before 2.0.1 is gone": "Umzug: der Autostart-Eintrag von vor 2.0.1 ist entfernt",
+    "The dashboard isn't running, so there's no link to give.": "Das Dashboard läuft nicht, also gibt es keinen Link.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "Dashboard: mit einem Anmeldelink angemeldet von {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "Dashboard: ein falscher oder abgelaufener Anmeldelink von {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "gamer.farm Dashboard-Anmeldecode: {0}\n\nJemand bei {1} ({2}) hat von außerhalb deines Zuhauses einen Dashboard-Anmeldelink geöffnet. Der Code gilt {3} Minuten.\n\nWarst du das nicht? Gib den Code niemandem. Schick hier /visitors signout und ändere dann das Dashboard-Passwort.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Ein Anmeldelink für das Dashboard - er funktioniert einmal, {0} Sekunden lang:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "Es gibt kein Dashboard-Passwort, also öffnet es sich auf diesem PC sowieso ohne.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Dieser Anmeldelink ist abgelaufen. Melde dich mit dem Passwort an oder hol dir einen neuen Link."
   },
   "settings": {
     "BackupToTelegram": {

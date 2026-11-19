@@ -173,6 +173,7 @@ public static class FarmWeb {
 		// only in the app: items leaving, the sign-in and its secrets, running code, the scam hold, the back doors
 		["POST /api/login"] = Access.Refused,
 		["POST /api/login/code"] = Access.Refused,
+		["POST /api/signin-link"] = Access.Refused,   // 2.0.2: a sign-in link is a whole dashboard session
 		["POST /api/addons/install"] = Access.Refused,
 		["POST /api/addons/remove"] = Access.Refused,
 		["POST /api/plugins/press"] = Access.Refused,
@@ -267,7 +268,7 @@ public static class FarmWeb {
 			["exit"] = null,   // the app shut down on every PC the page is open on, with no way to start it again from there
 			["notify"] = static (_, w) => !Has(w, "link"),   // the link makes whoever opens it the owner
 			["addons"] = static (_, w) => !Has(w, "install") && !Has(w, "remove") && !Has(w, "uninstall"),
-			["dashboard"] = static (_, w) => !Has(w, "unlock") && !Has(w, "anywhere") && !Has(w, "remote"),
+			["dashboard"] = static (_, w) => !Has(w, "unlock") && !Has(w, "anywhere") && !Has(w, "remote") && !Has(w, "link"),
 			["anywhere"] = static (_, w) => !Has(w, "on") && !Has(w, "start") && !Has(w, "true"),   // as 'anywhere' reads them
 			["update"] = static (_, w) => (w.Length == 0) || (w[0] is "versions" or "skip"),
 			["answer"] = null,   // a Steam Guard code or a password

@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: 以前のバージョンが最後に書いた設定を残します",
     "update: the version before is being put back - stopping": "更新: 以前のバージョンに戻しています - 停止します",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "更新を停止しました - このサービスは gamerFarm を起動しますが、2.0.1 より前のバージョンにはありません。手動で入れてください。何も変わっていません",
-    "moving in: the startup entry from before 2.0.1 is gone": "引っ越し: 2.0.1 より前のスタートアップ登録を削除しました"
+    "moving in: the startup entry from before 2.0.1 is gone": "引っ越し: 2.0.1 より前のスタートアップ登録を削除しました",
+    "The dashboard isn't running, so there's no link to give.": "ダッシュボードが動いていないため、リンクは出せません。",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "ダッシュボード: {0} からサインインリンクでサインイン ({1}、{2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "ダッシュボード: {0} ({1}) から間違った、または期限切れのサインインリンク",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "gamer.farm ダッシュボードのサインインコード: {0}\n\n{1} ({2}) の誰かが、自宅の外からダッシュボードのサインインリンクを開きました。コードは {3} 分間有効です。\n\n心当たりがない場合は、コードを誰にも教えないでください。ここで /visitors signout を送り、そのあとダッシュボードのパスワードを変更してください。",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "ダッシュボードのサインインリンク - 1 回だけ、{0} 秒間使えます:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "ダッシュボードにパスワードがないため、この PC ではどのみちパスワードなしで開きます。",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "このサインインリンクは期限切れです。パスワードでサインインするか、新しいリンクを取得してください。"
   },
   "settings": {
     "BackupToTelegram": {

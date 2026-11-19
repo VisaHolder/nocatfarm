@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: zostają ustawienia, które ostatnio zapisała wcześniejsza wersja",
     "update: the version before is being put back - stopping": "aktualizacja: przywracana jest poprzednia wersja - zatrzymuję",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "aktualizacja zatrzymana - ta usługa uruchamia gamerFarm, którego wersje sprzed 2.0.1 nie mają; wgraj ją ręcznie. Nic się nie zmieniło",
-    "moving in: the startup entry from before 2.0.1 is gone": "przeprowadzka: wpis autostartu sprzed 2.0.1 został usunięty"
+    "moving in: the startup entry from before 2.0.1 is gone": "przeprowadzka: wpis autostartu sprzed 2.0.1 został usunięty",
+    "The dashboard isn't running, so there's no link to give.": "Panel nie działa, więc nie ma linku do podania.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "panel: zalogowano linkiem logowania z {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "panel: błędny lub wygasły link logowania z {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "Kod logowania do panelu gamer.farm: {0}\n\nKtoś z {1} ({2}) otworzył link logowania do panelu spoza twojego domu. Kod działa przez {3} min.\n\nTo nie ty? Nikomu nie podawaj kodu. Wyślij tutaj /visitors signout, a potem zmień hasło do panelu.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Link logowania do panelu - działa raz, przez {0} s:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "Panel nie ma hasła, więc na tym komputerze i tak otwiera się bez niego.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Ten link logowania wygasł. Zaloguj się hasłem albo weź nowy link."
   },
   "settings": {
     "BackupToTelegram": {

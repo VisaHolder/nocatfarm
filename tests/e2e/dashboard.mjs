@@ -534,6 +534,36 @@ await signIn();
 check('the right password opens the dashboard', await page.isVisible('#app'));
 await healthy('first draw after signing in');
 
+// 2.0.2: a one-time sign-in link, asked for the way a home server's own dashboard asks (a Bearer session), opened in a browser
+// that has never signed in: straight into the dashboard, with the code gone from the address - and a second time, it's run out.
+{
+  const relay = await fetch(BASE + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Password: PASSWORD }) }).then((r) => r.json()).catch(() => null);
+  const minted = relay && relay.token
+    ? await fetch(BASE + '/api/signin-link', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + relay.token }, body: '{}' }).then((r) => r.json()).catch(() => null)
+    : null;
+  check('sign-in link: a signed-in program gets one', !!(minted && minted.code && minted.path === '/?signin=' + minted.code && minted.expiresIn === 60), JSON.stringify(minted && { path: !!minted.path, expiresIn: minted.expiresIn }));
+  if (minted && minted.path) {
+    const fresh = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p2 = await fresh.newPage();
+    await p2.goto(BASE + minted.path);
+    const opened = await p2.waitForSelector('#app:not(.hidden)', { timeout: 15000 }).then(() => true).catch(() => false);
+    check('sign-in link: opened in a browser that never signed in, it opens the dashboard - and the code is gone from the address',
+      opened && !p2.url().includes('signin') && await p2.isHidden('#login'), p2.url().replace(/signin=[^&]+/, 'signin=…'));
+    await fresh.close();
+    const other = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p3 = await other.newPage();
+    const p3errors = [];
+    p3.on('pageerror', (e) => p3errors.push(e.message));
+    await p3.goto(BASE + minted.path);
+    await p3.waitForFunction(() => document.getElementById('loginError').textContent.trim() !== '', null, { timeout: 8000 }).catch(() => {});
+    check('sign-in link: the second time it has run out - the sign-in page says so, and the address is clean again',
+      await p3.isVisible('#login') && /link/i.test(await p3.textContent('#loginError')) && !p3.url().includes('signin'),
+      `[${(await p3.textContent('#loginError')).trim()}] said=${await p3.getAttribute('html', 'data-signin')} login=${await p3.isVisible('#login')} app=${await p3.isVisible('#app')} errors=${p3errors.join(' | ')}`);
+    await other.close();
+  }
+  problems.length = 0;
+}
+
 // ── 2. every page, every control ─────────────────────────────────────────────
 views = await evalq(() => [...document.querySelectorAll('.navitem')].filter((n) => window.__e2e.visible(n)).map((n) => n.dataset.view));
 const inMarkup = await evalq(() => [...document.querySelectorAll('.navitem')].map((n) => n.dataset.view));

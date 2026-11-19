@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: 이전 버전이 마지막으로 쓴 설정을 유지합니다",
     "update: the version before is being put back - stopping": "업데이트: 이전 버전으로 되돌리는 중 - 중지합니다",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "업데이트 중지됨 - 이 서비스는 gamerFarm을 실행하는데, 2.0.1 이전 버전에는 그것이 없습니다. 직접 설치하세요. 아무것도 바뀌지 않았습니다",
-    "moving in: the startup entry from before 2.0.1 is gone": "이전: 2.0.1 이전의 시작 프로그램 항목을 지웠습니다"
+    "moving in: the startup entry from before 2.0.1 is gone": "이전: 2.0.1 이전의 시작 프로그램 항목을 지웠습니다",
+    "The dashboard isn't running, so there's no link to give.": "대시보드가 실행 중이 아니라서 줄 링크가 없습니다.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "대시보드: {0}에서 로그인 링크로 로그인 ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "대시보드: {0} ({1})에서 틀렸거나 만료된 로그인 링크",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "gamer.farm 대시보드 로그인 코드: {0}\n\n{1} ({2})에서 누군가 집 밖에서 대시보드 로그인 링크를 열었습니다. 코드는 {3}분 동안 유효합니다.\n\n본인이 아닌가요? 코드를 아무에게도 알려 주지 마세요. 여기서 /visitors signout을 보낸 다음 대시보드 비밀번호를 바꾸세요.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "대시보드 로그인 링크 - 한 번, {0}초 동안 쓸 수 있습니다:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "대시보드 비밀번호가 없어서 이 PC에서는 어차피 비밀번호 없이 열립니다.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "이 로그인 링크는 만료되었습니다. 비밀번호로 로그인하거나 새 링크를 받으세요."
   },
   "settings": {
     "BackupToTelegram": {

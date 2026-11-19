@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: ficam as configurações que uma versão anterior gravou por último",
     "update: the version before is being put back - stopping": "atualização: a versão anterior está sendo restaurada - parando",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "atualização interrompida - este serviço inicia o gamerFarm, que as versões anteriores à 2.0.1 não têm; instale uma à mão. Nada mudou",
-    "moving in: the startup entry from before 2.0.1 is gone": "mudança: a entrada de inicialização de antes da 2.0.1 foi removida"
+    "moving in: the startup entry from before 2.0.1 is gone": "mudança: a entrada de inicialização de antes da 2.0.1 foi removida",
+    "The dashboard isn't running, so there's no link to give.": "O painel não está rodando, então não há link para dar.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "painel: login com um link de login de {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "painel: um link de login errado ou expirado de {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "Código de login do painel do gamer.farm: {0}\n\nAlguém em {1} ({2}) abriu um link de login do painel de fora da sua casa. O código vale por {3} minutos.\n\nNão foi você? Não passe o código para ninguém. Mande /visitors signout aqui e depois troque a senha do painel.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Um link de login para o painel - funciona uma vez, por {0} segundos:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "O painel não tem senha, então neste PC ele abre sem senha de qualquer jeito.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Esse link de login expirou. Entre com a senha ou peça um link novo."
   },
   "settings": {
     "BackupToTelegram": {

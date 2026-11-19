@@ -3464,7 +3464,14 @@
     "config: the settings a version from before wrote last are the ones kept": "config: se conservan los ajustes que escribió por última vez una versión anterior",
     "update: the version before is being put back - stopping": "actualización: se está volviendo a poner la versión anterior; deteniéndose",
     "update stopped - this service starts gamerFarm, which versions before 2.0.1 don't have; put one in by hand. Nothing changed": "actualización detenida: este servicio inicia gamerFarm, que las versiones anteriores a 2.0.1 no tienen; instala una a mano. No se cambió nada",
-    "moving in: the startup entry from before 2.0.1 is gone": "traslado: la entrada de inicio de antes de 2.0.1 ya no está"
+    "moving in: the startup entry from before 2.0.1 is gone": "traslado: la entrada de inicio de antes de 2.0.1 ya no está",
+    "The dashboard isn't running, so there's no link to give.": "El panel no está en marcha, así que no hay enlace que dar.",
+    "dashboard: signed in with a sign-in link from {0} ({1}, {2})": "panel: sesión iniciada con un enlace de inicio de sesión desde {0} ({1}, {2})",
+    "dashboard: a sign-in link that was wrong or had run out, from {0} ({1})": "panel: un enlace de inicio de sesión incorrecto o caducado desde {0} ({1})",
+    "gamer.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) opened a dashboard sign-in link from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.": "Código de inicio de sesión del panel de gamer.farm: {0}\n\nAlguien en {1} ({2}) abrió un enlace de inicio de sesión del panel desde fuera de tu casa. El código vale durante {3} minutos.\n\n¿No fuiste tú? No le des el código a nadie. Envía /visitors signout aquí y luego cambia la contraseña del panel.",
+    "A sign-in link for the dashboard - it works once, for {0} seconds:": "Un enlace de inicio de sesión para el panel: funciona una vez, durante {0} segundos:",
+    "There's no dashboard password, so it opens on this PC without one anyway.": "El panel no tiene contraseña, así que en este PC se abre sin ella de todos modos.",
+    "That sign-in link has run out. Sign in with the password, or get a new link.": "Ese enlace de inicio de sesión ha caducado. Inicia sesión con la contraseña o pide un enlace nuevo."
   },
   "settings": {
     "BackupToTelegram": {
