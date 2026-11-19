@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The official rep4rep add-on: one DLL, nocatfarm.rep4rep.dll, dropped in gamer.farm's plugins folder (or installed from
-       the dashboard's Plugins page). Built against the plugin API (src/NocatFarm/Plugins/IPlugin.cs) and nothing else. -->
+  <!-- The official rep4rep add-on: one DLL, gamerfarm.rep4rep.dll, dropped in gamer.farm's plugins folder (or installed from
+       the dashboard's Plugins page). Built against the plugin API (src/GamerFarm/Plugins/IPlugin.cs) and nothing else. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>nocatfarm.rep4rep</AssemblyName>
-    <RootNamespace>NocatFarm.Addons.Rep4Rep</RootNamespace>
+    <AssemblyName>gamerfarm.rep4rep</AssemblyName>
+    <RootNamespace>GamerFarm.Addons.Rep4Rep</RootNamespace>
     <!-- The add-on's own version: addons/addons.json lists it, and the dashboard says when a newer one is out. -->
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -16,8 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Private=false: nocatFarm.dll is never copied beside the add-on - the one the app has loaded is the one it uses. -->
-    <ProjectReference Include="..\..\src\NocatFarm\NocatFarm.csproj">
+    <!-- Private=false: gamerFarm.dll is never copied beside the add-on - the one the app has loaded is the one it uses. -->
+    <ProjectReference Include="..\..\src\GamerFarm\GamerFarm.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
@@ -29,6 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="NocatFarm.Tests" />
+    <InternalsVisibleTo Include="GamerFarm.Tests" />
   </ItemGroup>
 </Project>

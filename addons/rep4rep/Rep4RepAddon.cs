@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text;
-using NocatFarm.Plugins;
-using static NocatFarm.Addons.Rep4Rep.Texts;
+using GamerFarm.Plugins;
+using static GamerFarm.Addons.Rep4Rep.Texts;
 
-namespace NocatFarm.Addons.Rep4Rep;
+namespace GamerFarm.Addons.Rep4Rep;
 
 /// <summary>
 /// The official rep4rep add-on for gamer.farm: earns rep4rep points by posting the profile comments rep4rep hands out, on a
@@ -14,7 +14,7 @@ namespace NocatFarm.Addons.Rep4Rep;
 /// started as 1.9.0 (Config/MigrateRep4Rep.cs): the key (still encrypted), each account's on/off, cap, gaps and hours, the
 /// hold, and the comment counts - so installing this picks up exactly where it was.
 /// </remarks>
-public sealed class Rep4RepAddon : INocatPlugin {
+public sealed class Rep4RepAddon : IGamerPlugin {
 	public string Name => "rep4rep";
 
 	public string Version { get; } = typeof(Rep4RepAddon).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "1.0.0";

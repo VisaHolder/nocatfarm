@@ -7,15 +7,15 @@
 param([Parameter(Mandatory)][string]$From, [string]$Setup = '')
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
-$SP = Join-Path $env:TEMP 'nocatfarm-tests'
+$Version = (Select-Xml -Path "$Repo\src\GamerFarm\GamerFarm.csproj" -XPath '//Version').Node.InnerText
+$SP = Join-Path $env:TEMP 'gamerfarm-tests'
 New-Item -ItemType Directory -Force $SP | Out-Null
 $ErrorActionPreference = 'Continue'
 $old = "$SP\old147"; $inst = "$SP\inst148"
 $setup = if ($Setup) { (Resolve-Path $Setup).Path } else { "$Repo\dist\gamer.farm-v$Version-setup.exe" }
 $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 function Check($name, $ok, $detail = '') { "{0}  {1}{2}" -f ($(if ($ok) { 'PASS' } else { 'FAIL' })), $name, $(if ($detail) { "  ($detail)" } else { '' }) }
-$savedRun = (Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
+$savedRun = (Get-ItemProperty $runKey -Name gamerFarm -ErrorAction SilentlyContinue).gamerFarm
 
 # The real startup entry, remembered on disk. Read from the registry alone, a run that overlapped another (or followed
 # one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's gamer.farm
@@ -23,7 +23,7 @@ $savedRun = (Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyConti
 $realRunFile = Join-Path $SP 'real-run-entry.txt'
 # No entry at all is the owner's choice (Start with Windows off) - the saved one is forgotten, not put back.
 if (-not $savedRun) { Remove-Item $realRunFile -ErrorAction SilentlyContinue }
-elseif ($savedRun -notlike "*nocatfarm-tests*") { Set-Content $realRunFile $savedRun -Encoding utf8 }
+elseif ($savedRun -notlike "*gamerfarm-tests*") { Set-Content $realRunFile $savedRun -Encoding utf8 }
 elseif (Test-Path $realRunFile) { $savedRun = (Get-Content $realRunFile -Raw).Trim() }
 else { $savedRun = $null }
 try {
@@ -31,18 +31,23 @@ try {
   # Releases before 2.0.0 are nocat.farm-v<version>-portable.zip
   $fromZip = @("$Repo\dist\gamer.farm-v$From-portable.zip", "$Repo\dist\nocat.farm-v$From-portable.zip") | Where-Object { Test-Path $_ } | Select-Object -First 1
   Expand-Archive $fromZip $old
+  # 2.0.1: before it, the program was nocatFarm.exe, its settings nocatFarm.json and its startup entry nocatFarm.
+  $oldExe = if (Test-Path "$old\gamerFarm.exe") { 'gamerFarm.exe' } else { 'nocatFarm.exe' }
+  $oldCfg = if ($oldExe -eq 'gamerFarm.exe') { 'gamerFarm.json' } else { 'nocatFarm.json' }
+  $oldRun = [IO.Path]::GetFileNameWithoutExtension($oldExe)
   New-Item -ItemType Directory -Force "$old\config" | Out-Null
-  '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true, "CountMeAsUser": false }' | Set-Content "$old\config\nocatFarm.json" -Encoding utf8
+  '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true, "CountMeAsUser": false }' | Set-Content "$old\config\$oldCfg" -Encoding utf8
   '{ "Enabled": false, "SteamLogin": "nf_dummy_moved", "IdleGames": [730, 440], "CustomGameNameEnabled": true, "CustomGameName": "moved ok" }' | Set-Content "$old\config\moved.json" -Encoding utf8
   # No copy here ever pings gamer.mom (every one started below inherits this): an older release can save its settings
   # without "Count me as a user" off.
+  $env:GAMERFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'
   $env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'
-  $p = Start-Process "$old\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
+  $p = Start-Process "$old\$oldExe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
   Start-Sleep 6
-  Set-ItemProperty $runKey -Name nocatFarm -Value "`"$old\nocatFarm.exe`" --minimized"
+  Set-ItemProperty $runKey -Name $oldRun -Value "`"$old\$oldExe`" --minimized"
   $v = try { (Invoke-RestMethod http://127.0.0.1:7288/api/status).Version } catch { 'down' }
   Check 'the previous release, running on its own port' ($v -eq $From) $v
-  $pointsOld = (Get-ItemProperty $runKey).nocatFarm -like "*old147*"
+  $pointsOld = (Get-ItemProperty $runKey).$oldRun -like "*old147*"
   Check 'its start-with-Windows entry points at it (so the setup finds it)' $pointsOld
   if (-not $pointsOld) { throw 'Run entry not pointing at the test copy - stopping before the setup could find the real app' }
 
@@ -51,18 +56,19 @@ try {
   Start-Sleep 2
   Check 'the running copy was closed first' ($p.HasExited)
   Check 'the account came across' (Test-Path "$inst\config\moved.json")
-  $cfg = Get-Content "$inst\config\nocatFarm.json" -Raw | ConvertFrom-Json
+  $cfg = Get-Content "$inst\config\gamerFarm.json" -Raw | ConvertFrom-Json
   Check 'its own port was kept (not reset to 7242)' ($cfg.WebPort -eq 7288) "port $($cfg.WebPort)"
   Check 'start with Windows off, as chosen' (-not $cfg.StartWithWindows)
-  $r = (Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
+  $r = "$((Get-ItemProperty $runKey -Name gamerFarm -ErrorAction SilentlyContinue).gamerFarm) $((Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm)"
   Check 'the old copy no longer starts with Windows' (-not ($r -like "*old147*")) "$r"
+  Check '2.0.1: the settings came across under their new name' ((Test-Path "$inst\config\gamerFarm.json") -and -not (Test-Path "$inst\config\nocatFarm.json"))
   Check 'the old folder is left alone' (Test-Path "$old\config\moved.json")
 
-  $n = Start-Process "$inst\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $inst -WindowStyle Hidden -PassThru
+  $n = Start-Process "$inst\gamerFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $inst -WindowStyle Hidden -PassThru
   Start-Sleep 7
   $st = try { Invoke-RestMethod http://127.0.0.1:7288/api/status } catch { $null }
   Check 'the installed copy opens on the same port with the account' (($st.Version -eq $Version) -and ($st.Bots.Name -contains 'moved')) "$($st.Version) $($st.Bots.Name -join ',')"
-  Start-Process "$inst\nocatFarm.exe" -ArgumentList '--quit' -WorkingDirectory $inst -WindowStyle Hidden -Wait
+  Start-Process "$inst\gamerFarm.exe" -ArgumentList '--quit' -WorkingDirectory $inst -WindowStyle Hidden -Wait
   Start-Sleep 2
   Check '--quit closed it' ($n.HasExited)
   $u = Start-Process "$inst\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -PassThru -Wait
@@ -71,13 +77,13 @@ try {
   "--- the kept accounts can't be set aside (a file in them is open): the move stops, and none of them is deleted"
   # The uninstaller finishes from a copy of itself: until it has, the setup would take this for an update, not a move.
   $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{89595F01-E60C-4593-9BA7-51B5A3A2F7C5}_is1"
-  for ($i = 0; ($i -lt 60) -and ((Test-Path $uninstallKey) -or (Test-Path "$inst\nocatFarm.exe")); $i++) { Start-Sleep 1 }
+  for ($i = 0; ($i -lt 60) -and ((Test-Path $uninstallKey) -or (Test-Path "$inst\gamerFarm.exe")); $i++) { Start-Sleep 1 }
   Check 'the uninstall kept the accounts' (Test-Path "$inst\config\moved.json")
   '{ "Enabled": false, "SteamLogin": "nf_dummy_kept" }' | Set-Content "$inst\config\kept.json" -Encoding utf8
-  $p = Start-Process "$old\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
+  $p = Start-Process "$old\$oldExe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
   Start-Sleep 6
-  Set-ItemProperty $runKey -Name nocatFarm -Value "`"$old\nocatFarm.exe`" --minimized"
-  $held = [IO.File]::Open("$inst\config\nocatFarm.json", 'Open', 'ReadWrite', 'None')
+  Set-ItemProperty $runKey -Name $oldRun -Value "`"$old\$oldExe`" --minimized"
+  $held = [IO.File]::Open("$inst\config\gamerFarm.json", 'Open', 'ReadWrite', 'None')
   try {
     $s = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$inst`"", '/MOVE=yes', '/STARTUP=no', "/LOG=`"$SP\move-held.log`"" -PassThru -Wait
   } finally {
@@ -92,7 +98,9 @@ try {
   for ($i = 0; ($i -lt 30) -and (Test-Path "$inst\config"); $i++) { Start-Sleep 1 }   # the uninstaller finishes from a copy of itself
   Check 'uninstalled again, data and all' (($u.ExitCode -eq 0) -and -not (Test-Path "$inst\config")) "exit $($u.ExitCode)"
 } finally {
-  Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*old147*" -or $_.Path -like "*inst148*" } | Stop-Process -Force
-  if ($savedRun) { Set-ItemProperty $runKey -Name nocatFarm -Value $savedRun } else { Remove-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue }
-  "restored reap's startup entry: $((Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm)"
+  Get-Process gamerFarm, nocatFarm -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*old147*" -or $_.Path -like "*inst148*" } | Stop-Process -Force
+  # A test copy's entry under the old name never stays.
+  if ((Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm -like "*gamerfarm-tests*") { Remove-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue }
+  if ($savedRun) { Set-ItemProperty $runKey -Name gamerFarm -Value $savedRun } else { Remove-ItemProperty $runKey -Name gamerFarm -ErrorAction SilentlyContinue }
+  "restored reap's startup entry: $((Get-ItemProperty $runKey -Name gamerFarm -ErrorAction SilentlyContinue).gamerFarm)"
 }

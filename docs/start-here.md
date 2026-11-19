@@ -52,7 +52,7 @@ and settings as well - saved Steam logins, authenticators, backups and logs with
 again.
 
 **The portable zip, `gamer.farm-v…-portable.zip`,** installs nothing. Right-click it, choose **Extract All…**, open the
-folder and run **`nocatFarm.exe`**. Settings, logs and login tokens all stay in that folder, and uninstalling is
+folder and run **`gamerFarm.exe`**. Settings, logs and login tokens all stay in that folder, and uninstalling is
 closing it and deleting the folder. It updates itself the same way the installed one does.
 
 The files ending in `_osx-arm64` (M1 and newer) and `_osx-x64` (Intel) are for a Mac, and `_linux-x64` and
@@ -102,7 +102,7 @@ question more, from the account's own games:
 
 **Skip - use the defaults** is always there. The last screen says what the account is doing, that your items are safe,
 and has the rest as cards to open when you like: **Use it from your phone**, **Get messages on Telegram or Discord**,
-**A daily backup**, and the **Show on my Discord profile** switch.
+and **A daily backup**.
 
 From then on gamer.farm keeps a Steam login token and signs itself in. No password is stored unless you type one
 into the settings.
@@ -173,7 +173,7 @@ All of these are in **Settings**, with the account picked on the left. The comma
 **Games to idle** (farm accounts): *What it plays → Games to idle*, or `play myaccount 730, 440`. These play once
 the cards are done.
 
-**A custom game name** (farm accounts): *What it plays → Show as*, or `gamename myaccount nocat.lol`. Friends see that
+**A custom game name** (farm accounts): *What it plays → Show as*, or `gamename myaccount gamer.mom`. Friends see that
 name instead of the real game, and the real games still count playtime.
 
 **Human mode**: *Human mode → Human mode*. Then set **Games and how often** (`730:70, 440:30` means 70%
@@ -210,7 +210,7 @@ Type these in the app window or the dashboard's Console tab, using the name you 
 | `pause myaccount 60` | Stop playing for 60 minutes, then carry on by itself. `resume myaccount` ends it early. |
 | `cards` | Cards left to farm, and about how long it'll take. |
 | `play myaccount 730, 440` | Idle these games. |
-| `gamename myaccount nocat.lol` | Show this name instead of the real game. `gamename myaccount off` removes it. |
+| `gamename myaccount gamer.mom` | Show this name instead of the real game. `gamename myaccount off` removes it. |
 | `offers` | Trade offers waiting on your accounts. |
 | `update` | Check for a new version. |
 | `help` | Every command. `help <command>` or `help <setting>` explains one; `help rot` lists everything starting with "rot". |

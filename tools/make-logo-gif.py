@@ -1,6 +1,6 @@
 # The gamer.farm logo with the g filling up with purple liquid, as a looping GIF for the Discord card.
-#   python tools/make-logo-gif.py src/NocatFarm/wwwroot/logo-liquid.gif   (the settings preview)
-# Then copy it to the site as public/nocatfarm/logo.gif (what the Discord card shows).
+#   python tools/make-logo-gif.py src/GamerFarm/wwwroot/logo-liquid.gif   (the settings preview)
+# Then copy it to the site as public/gamerfarm/logo.gif (what the Discord card shows).
 import math, os, sys
 import numpy as np
 from PIL import Image, ImageFilter

@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 
-namespace NocatFarm.Addons.Rep4Rep;
+namespace GamerFarm.Addons.Rep4Rep;
 
 /// <summary>
 /// The add-on's own translations: lang/&lt;code&gt;.json inside the DLL, English text to translated, in the app's language

@@ -227,7 +227,7 @@ for an hour. On this PC itself the lockout is only a minute, since whoever is at
 anyway. A reverse proxy on the same PC, like Caddy for HTTPS, makes every visitor look like this PC, so there
 gamer.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
 in front of Docker comes in from Docker's own network) is only believed once its address is in *Trust forwarded
-addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
+addresses from* (`WebTrustedProxies`, or `GAMERFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
 you if the password is short enough to guess.
 
@@ -326,8 +326,8 @@ couldn't take your items or your account:
 - **Importing** from another idler: it adds accounts and brings who may trade with them and command them
 - **Scam watch:** "It was me", switching scam watch or its warnings off, looking less often, and trusted devices.
   Switching them on works
-- **Words other people see:** the auto-reply, the custom game name, the profile name, and the Discord profile's line
-  and buttons. Emptying them, and their on/off switches, work
+- **Words other people see:** the auto-reply, the custom game name and the profile name. Emptying them, and their
+  on/off switches, work
 - **Shutting gamer.farm down** (`exit`), and redeeming keys from a file (typed keys work)
 - **The back doors:** the Telegram and Discord bot tokens and owners, who may command the accounts, the dashboard's
   address, port, *Open from anywhere*, trusted proxies, the firewall, and setting a first dashboard password or removing it (set from a hacked page, a first

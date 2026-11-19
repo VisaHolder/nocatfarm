@@ -1,6 +1,6 @@
 #!/bin/bash
 # gamer.farm updating itself as a real systemd service: run as root on a machine (or LXC container) with systemd, no Steam
-# accounts. Each scenario installs the zip fresh in /opt/nocatfarm, under the unit from tools/linux, with its data in a
+# accounts. Each scenario installs the zip fresh in /opt/gamerfarm, under the unit from tools/linux, with its data in a
 # separate --path folder, running as a user of its own - and checks "exactly one copy" with ps every time.
 #
 #   bash tests/service-update.sh all <folder with the zips>     every scenario that needs no reboot; PASS/FAIL per scenario
@@ -8,6 +8,10 @@
 #
 # The zips, all made by tools/package-release.ps1 from this code unless it says otherwise:
 #   cur.zip   as its own version; good.zip  as 9.9.9; hand.zip  as 9.9.8; prev.zip  the newest GitHub release (optional)
+#   cur-old.zip, good-old.zip  the same as cur and good, the zips for updaters from before 2.0.1 (optional: the scenarios
+#   from the previous release need them while it's from before 2.0.1); next.zip  as 10.0.0 (optional, the same)
+# 2.0.1: a scenario on the release from before 2.0.1 runs in the layout that had: nocatfarm.service, /opt/nocatfarm,
+# /var/lib/nocatfarm, nocatfarm-service.sh and nocatFarm.json (old_layout).
 # NF_TEST_POWER=host: a power cut comes from outside (lxc-stop -k), not from this machine's own kernel.
 set -u
 
@@ -16,10 +20,14 @@ SCN=""
 if [ "$MODE" = one ]; then SCN="${2:-}"; ZIPS="${3:-}"; else ZIPS="${2:-}"; fi
 ZIPS=$(cd "$ZIPS" && pwd) || exit 2
 SRC=$(cd "$(dirname "$0")/.." && pwd)
-UNIT=nocatfarm
-HERE=/opt/nocatfarm
-DATA=/var/lib/nocatfarm
-JOB=$HERE/.nocatfarm-update/job
+UNIT=gamerfarm
+HERE=/opt/gamerfarm
+DATA=/var/lib/gamerfarm
+BOX=.gamerfarm-update
+HELPER=gamerfarm-service.sh
+PROG=gamerFarm
+CFG=gamerFarm.json
+JOB=$HERE/$BOX/job
 USR=nftest
 PORT=7250
 FEED=8765
@@ -28,6 +36,21 @@ LOGS=$DATA/logs
 UNITFILE=/etc/systemd/system/$UNIT.service
 DROPIN=/etc/systemd/system/$UNIT.service.d
 VER=$(cd "$WORK" 2>/dev/null && cat cur.ver 2>/dev/null || true)
+
+# A service set up before 2.0.1: its unit, folders, helper, program and settings file all have the old names, and keep them.
+old_layout() {
+	UNIT=nocatfarm
+	HERE=/opt/nocatfarm
+	DATA=/var/lib/nocatfarm
+	BOX=.nocatfarm-update
+	HELPER=nocatfarm-service.sh
+	PROG=nocatFarm
+	CFG=nocatFarm.json
+	JOB=$HERE/$BOX/job
+	LOGS=$DATA/logs
+	UNITFILE=/etc/systemd/system/$UNIT.service
+	DROPIN=/etc/systemd/system/$UNIT.service.d
+}
 
 say() { echo "    $*"; }
 die() {
@@ -40,26 +63,34 @@ die() {
 must() { "$@" || die "$*"; }
 
 # ── the zips, the pretend GitHub ─────────────────────────────────────────────
-make_variant() {   # name, then the text of the nocatFarm that replaces the program
+make_variant() {   # name, then the text of the gamerFarm that replaces the program
 	rm -rf "${WORK:?}/v" && mkdir -p "$WORK/v"
 	unzip -q "$ZIPS/good.zip" -d "$WORK/v"
-	printf '%b' "$2" > "$WORK/v/nocatFarm"
-	chmod 755 "$WORK/v/nocatFarm"
+	printf '%b' "$2" > "$WORK/v/gamerFarm"
+	chmod 755 "$WORK/v/gamerFarm"
 	rm -f "$WORK/feed/$1.zip"
 	(cd "$WORK/v" && zip -qry "$WORK/feed/$1.zip" .)
 	rm -rf "${WORK:?}/v"
 }
 
-offer() {   # the zip in the feed folder (no .zip), the version
+offer() {   # the zip in the feed folder (no .zip), the version, and (2.0.1) its zip for updaters from before 2.0.1
 	size=$(wc -c < "$WORK/feed/$1.zip")
-	printf '{"tag_name":"v%s","body":"- a test release","assets":[{"name":"gamer.farm-v%s_linux-x64.zip","browser_download_url":"http://127.0.0.1:%s/%s.zip","size":%s}]}' \
-		"$2" "$2" "$FEED" "$1" "$size" > "$WORK/feed/latest.tmp"
+	asset=$(printf '{"name":"gamer.farm-v%s_linux-x64.zip","browser_download_url":"http://127.0.0.1:%s/%s.zip","size":%s}' "$2" "$FEED" "$1" "$size")
+	if [ -n "${3:-}" ]; then
+		# Sorted by name, the way GitHub lists a release's files: this one comes first.
+		osize=$(wc -c < "$WORK/feed/$3.zip")
+		asset=$(printf '{"name":"gamer.farm-old-updater-v%s_linux-x64.zip","browser_download_url":"http://127.0.0.1:%s/%s.zip","size":%s},%s' "$2" "$FEED" "$3" "$osize" "$asset")
+	fi
+	printf '{"tag_name":"v%s","body":"- a test release","assets":[%s]}' "$2" "$asset" > "$WORK/feed/latest.tmp"
 	mv -f "$WORK/feed/latest.tmp" "$WORK/feed/latest.json"
 }
 
 prepare_machine() {
 	id "$USR" > /dev/null 2>&1 || useradd -m -s /bin/sh "$USR"
 	mkdir -p "$WORK/feed"
+	for z in good-old next; do
+		if [ -f "$ZIPS/$z.zip" ] && [ ! -f "$WORK/feed/$z.zip" ]; then cp "$ZIPS/$z.zip" "$WORK/feed/$z.zip"; fi
+	done
 	if [ ! -f "$WORK/feed/good.zip" ]; then
 		cp "$ZIPS/good.zip" "$WORK/feed/good.zip"
 		make_variant exit3 '#!/bin/sh\nexit 3\n'
@@ -67,7 +98,7 @@ prepare_machine() {
 		make_variant latecrash '#!/bin/sh\nsleep 8\nexit 134\n'
 		make_variant garbage 'not a program at all\n'
 		make_variant hang "#!/bin/sh\ntrap '' TERM\nwhile :; do sleep 3600; done\n"
-		sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$SRC/src/NocatFarm/NocatFarm.csproj" > "$WORK/cur.ver"
+		sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$SRC/src/GamerFarm/GamerFarm.csproj" > "$WORK/cur.ver"
 	fi
 	VER=$(cat "$WORK/cur.ver")
 	if ! curl -sf "http://127.0.0.1:$FEED/good.zip" -o /dev/null -r 0-1; then
@@ -80,9 +111,11 @@ prepare_machine() {
 }
 
 # ── installing ───────────────────────────────────────────────────────────────
+# The unit the zip has - in the old layout, the same unit as a release from before 2.0.1 had it (only the names differ).
 write_new_unit() {
-	sed -e "s/^User=youruser/User=$USR/" -e "s|^ExecStart=/opt/nocatfarm/nocatFarm|ExecStart=/opt/nocatfarm/nocatFarm --no-gui --path $DATA|" \
-		"$SRC/tools/linux/nocatfarm.service" > "$UNITFILE"
+	sed -e "s/^User=youruser/User=$USR/" -e "s|/opt/gamerfarm/gamerfarm-service.sh|$HERE/$HELPER|g" \
+		-e "s|^ExecStart=/opt/gamerfarm/gamerFarm|ExecStart=$HERE/$PROG --no-gui --path $DATA|" -e "s|/opt/gamerfarm|$HERE|g" \
+		"$SRC/tools/linux/gamerfarm.service" > "$UNITFILE"
 }
 
 # The unit the docs gave up to 1.9.0.
@@ -96,7 +129,7 @@ Wants=network-online.target
 [Service]
 User=$USR
 WorkingDirectory=$HERE
-ExecStart=$HERE/nocatFarm --no-gui --path $DATA
+ExecStart=$HERE/$PROG --no-gui --path $DATA
 Restart=on-failure
 TimeoutStopSec=60
 
@@ -109,6 +142,9 @@ write_dropin() {
 	mkdir -p "$DROPIN"
 	cat > "$DROPIN/test.conf" <<EOF
 [Service]
+Environment=GAMERFARM_UPDATE_FEED=http://127.0.0.1:$FEED/latest.json
+Environment=GAMERFARM_PING_URL=http://127.0.0.1:9/api/farm/ping
+# A release from before 2.0.1 reads them only under their old names - and this build takes those too.
 Environment=NOCATFARM_UPDATE_FEED=http://127.0.0.1:$FEED/latest.json
 Environment=NOCATFARM_PING_URL=http://127.0.0.1:9/api/farm/ping
 EOF
@@ -116,13 +152,18 @@ EOF
 
 config_with() {   # extra json fields
 	mkdir -p "$DATA/config"
-	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false${1:-}}" > "$DATA/config/nocatFarm.json"
+	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false${1:-}}" > "$DATA/config/$CFG"
 }
 
 wipe() {
-	systemctl stop "$UNIT" 2>/dev/null || true
-	systemctl reset-failed "$UNIT" 2>/dev/null || true
-	rm -rf "${HERE:?}" "${DATA:?}" "${DROPIN:?}/slow.conf"
+	# Both layouts: what the scenario before left running under the other unit (2.0.1) must not answer on the same port.
+	for u in gamerfarm nocatfarm; do
+		systemctl stop "$u" 2>/dev/null || true
+		systemctl reset-failed "$u" 2>/dev/null || true
+		[ "$u" = "$UNIT" ] || rm -f "/etc/systemd/system/$u.service"
+	done
+	systemctl daemon-reload 2>/dev/null || true
+	rm -rf /opt/gamerfarm /opt/nocatfarm /var/lib/gamerfarm /var/lib/nocatfarm "${DROPIN:?}/slow.conf"
 	mkdir -p "$HERE" "$DATA"
 }
 
@@ -143,7 +184,7 @@ fresh() {   # zip, unit (new|old), extra config
 	ready || die "the dashboard didn't come up"
 }
 
-manifest() { (cd "$HERE" && find . -type f ! -path './.nocatfarm-update/*' ! -name '.nf-*' -print0 | sort -z | xargs -0 sha256sum); }
+manifest() { (cd "$HERE" && find . -type f ! -path "./$BOX/*" ! -name '.nf-*' -print0 | sort -z | xargs -0 sha256sum); }
 
 ver() { curl -sf "http://127.0.0.1:$PORT/api/status" | python3 -c 'import json,sys; print(json.load(sys.stdin)["Version"])' 2>/dev/null; }
 cmd() { curl -sf -X POST "http://127.0.0.1:$PORT/api/command" -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
@@ -152,14 +193,14 @@ restarts() { systemctl show -p NRestarts --value "$UNIT"; }
 
 # Exactly one copy, and it's the one systemd knows about.
 one_copy() {
-	ps -o pid,ppid,user,etimes,args -C nocatFarm 2>/dev/null | sed 's/^/    ps: /'
-	n=$(pgrep -x nocatFarm | wc -l)
+	ps -o pid,ppid,user,etimes,args -C gamerFarm,nocatFarm 2>/dev/null | sed 's/^/    ps: /'
+	n=$(pgrep -x 'gamerFarm|nocatFarm' | wc -l)
 	[ "$n" = 1 ] || die "$n copies running"
-	[ "$(pgrep -x nocatFarm)" = "$(main_pid)" ] || die "the copy running ($(pgrep -x nocatFarm)) isn't systemd's main process ($(main_pid))"
+	[ "$(pgrep -x 'gamerFarm|nocatFarm')" = "$(main_pid)" ] || die "the copy running ($(pgrep -x 'gamerFarm|nocatFarm')) isn't systemd's main process ($(main_pid))"
 }
 
 no_copy() {
-	n=$(pgrep -x nocatFarm | wc -l)
+	n=$(pgrep -x 'gamerFarm|nocatFarm' | wc -l)
 	[ "$n" = 0 ] || die "$n copies running, none expected"
 	systemctl is-active -q "$UNIT" && die "the service is active, it should be stopped"
 	return 0
@@ -188,9 +229,9 @@ wait_phase() {   # phase, seconds
 
 # The helper made to go slowly, so a stop lands half way through its files.
 slow_helper() {
-	sed -i 's/^\(\s*\)mv -f "\$1\/\$f" "\$here\/\$f" || exit 1$/&\n\1sleep 6/' "$HERE/nocatfarm-service.sh"
-	grep -q 'sleep 6' "$HERE/nocatfarm-service.sh" || die "couldn't slow the helper down"
-	chown "$USR:" "$HERE/nocatfarm-service.sh"
+	sed -i 's/^\(\s*\)mv -f "\$1\/\$f" "\$here\/\$f" || exit 1$/&\n\1sleep 6/' "$HERE/$HELPER"
+	grep -q 'sleep 6' "$HERE/$HELPER" || die "couldn't slow the helper down"
+	chown "$USR:" "$HERE/$HELPER"
 }
 
 # Half way: some of the files have gone in, not all.
@@ -201,12 +242,12 @@ wait_half_way() {
 		moved=0; left=0
 		while IFS= read -r f; do
 			f=${f#./}
-			[ "$f" = nocatfarm-service.sh ] && continue
+			[ "$f" = "$HELPER" ] && continue
 			cmp -s "$JOB/backup/$f" "$HERE/$f" || moved=$((moved + 1))
 		done < <(cd "$JOB/backup" && find . -type f)
 		while IFS= read -r f; do
 			f=${f#./}
-			[ "$f" = nocatfarm-service.sh ] && continue
+			[ "$f" = "$HELPER" ] && continue
 			cmp -s "$JOB/new/$f" "$HERE/$f" || left=$((left + 1))
 		done < <(cd "$JOB/new" && find . -type f)
 		if [ "$moved" -gt 0 ] && [ "$left" -gt 0 ]; then
@@ -231,7 +272,7 @@ ownership_ok() {
 	bad=$(find "$HERE" "$DATA" ! -user "$USR" | head -n 5)
 	[ -z "$bad" ] || die "not owned by $USR: $bad"
 	[ "$(stat -c %a "$DATA/config/state/secret.key")" = 600 ] || die "secret.key is $(stat -c %a "$DATA/config/state/secret.key")"
-	[ "$(stat -c %a "$HERE/.nocatfarm-update")" = 700 ] || die ".nocatfarm-update is $(stat -c %a "$HERE/.nocatfarm-update")"
+	[ "$(stat -c %a "$HERE/$BOX")" = 700 ] || die "$BOX is $(stat -c %a "$HERE/$BOX")"
 }
 
 went_in() {   # version, the program's pid before
@@ -259,6 +300,13 @@ went_back() {   # text in the log
 # ── the scenarios ────────────────────────────────────────────────────────────
 scn_first_update_from_previous_release() {
 	[ -f "$ZIPS/prev.zip" ] || die "no prev.zip"
+	if unzip -l "$ZIPS/prev.zip" | grep -q ' nocatFarm$'; then
+		old_layout
+		[ -f "$ZIPS/cur-old.zip" ] || die "no cur-old.zip, for a release from before 2.0.1"
+		byhand="$ZIPS/cur-old.zip"
+	else
+		byhand="$ZIPS/cur.zip"
+	fi
 	offer good 9.9.9
 	fresh "$ZIPS/prev.zip" old
 	from=$(ver)
@@ -269,18 +317,18 @@ scn_first_update_from_previous_release() {
 	sleep 20
 	[ "$(main_pid)" = "$pid" ] || die "it restarted"
 	one_copy
-	say "by hand, as it says: stop, unzip over the folder, start"
+	say "by hand, as it says: stop, unzip over the folder, start ($(basename "$byhand"))"
 	systemctl stop "$UNIT"
-	unzip -qo "$ZIPS/cur.zip" -d "$HERE"
+	unzip -qo "$byhand" -d "$HERE"
 	chown -R "$USR:" "$HERE"
 	systemctl start "$UNIT"
 	ready || die "it didn't come up after updating by hand"
 	[ "$(ver)" = "$VER" ] || die "on $(ver), not $VER"
-	grep -q "\"WebPort\": *$PORT" "$DATA/config/nocatFarm.json" || die "settings lost"
+	grep -q "\"WebPort\": *$PORT" "$DATA/config/gamerFarm.json" || die "settings lost (or not under their new name)"
 	say "still under the old unit: it says how to get the new one"
 	pid=$(main_pid)
 	cmd 'update now' | tee "$WORK/out" | sed 's/^/    /'
-	grep -q 'nocatfarm.service' "$WORK/out" || die "it should have named the new unit"
+	grep -q 'gamerfarm.service' "$WORK/out" || die "it should have named the new unit"
 	sleep 15
 	[ "$(main_pid)" = "$pid" ] || die "it restarted"
 	[ ! -d "$JOB" ] || die "something was staged"
@@ -291,25 +339,52 @@ scn_first_update_from_previous_release() {
 	systemctl restart "$UNIT"
 	ready || die "it didn't come up under the new unit"
 	pid=$(main_pid)
+	offer good 9.9.9 good-old
 	cmd 'update now' | sed 's/^/    /'
 	went_in 9.9.9 "$pid"
 }
 
-# 2.0.0 (the rename to gamer.farm): the release people have now, already under the unit that lets it update itself, puts in
-# THIS build with its own updater and its own helper - as a box like the owner's does. Same unit, same folder, same
-# program name, and the settings come along.
+# The release people have now, already under the unit that lets it update itself, puts in THIS build with its own updater
+# and its own helper - as a box like the owner's does. From before 2.0.1 (the old layout), it takes the zip made for it.
+# Same unit, same folders, and the settings come along; the names from before stay only where the unit needs them.
 scn_previous_release_updates_itself() {
 	[ -f "$ZIPS/prev.zip" ] || die "no prev.zip"
-	offer good 9.9.9
+	oldprev=""
+	if unzip -l "$ZIPS/prev.zip" | grep -q ' nocatFarm$'; then
+		old_layout
+		oldprev=1
+		[ -f "$ZIPS/good-old.zip" ] || die "no good-old.zip, for a release from before 2.0.1"
+	fi
+	offer good 9.9.9 good-old
 	fresh "$ZIPS/prev.zip" new
 	from=$(ver)
 	say "the release people have now: $from, under the unit that updates itself"
 	pid=$(main_pid)
 	cmd 'update now' | sed 's/^/    /'
 	went_in 9.9.9 "$pid"
-	grep -q "\"WebPort\": *$PORT" "$DATA/config/nocatFarm.json" || die "settings lost"
+	grep -q "\"WebPort\": *$PORT" "$DATA/config/gamerFarm.json" || die "settings lost (or not under their new name)"
 	cmd 'version' | grep -q 'gamer.farm' || die "it doesn't call itself gamer.farm"
 	say "$from put in this build by itself and it stayed, on the same settings"
+	if [ -n "$oldprev" ]; then
+		[ ! -e "$DATA/config/nocatFarm.json" ] || die "the settings file is still under its old name"
+		[ ! -e "$HERE/nocatFarm.dll" ] || die "the old program's files are still there"
+		head -c 2 "$HERE/nocatFarm" | grep -q '#!' || die "what the unit starts isn't the script that starts gamerFarm"
+		grep -q 'nocatfarm-\*) box=' "$HERE/nocatfarm-service.sh" || die "the helper wasn't updated under its old name"
+		test -x "$HERE/gamerFarm" || die "no gamerFarm"
+		[ "$(ps -o comm= -p "$(main_pid)")" = gamerFarm ] || die "the service's process isn't gamerFarm"
+		ls "$LOGS"/nocatFarm-*.log > /dev/null 2>&1 && die "logs still under the old name"
+		say "under the unit from before 2.0.1: its script, helper and folders stay, everything else has the new names"
+		if [ -f "$ZIPS/next.zip" ]; then
+			say "and it goes on updating itself there: 10.0.0, a plain zip"
+			pid=$(main_pid)
+			offer next 10.0.0
+			cmd 'update now' | sed 's/^/    /'
+			went_in 10.0.0 "$pid"
+			head -c 2 "$HERE/nocatFarm" | grep -q '#!' || die "the script the unit starts went"
+			grep -q 'nocatfarm-\*) box=' "$HERE/nocatfarm-service.sh" || die "the helper under its old name went"
+			journalctl -u "$UNIT" --no-pager | grep -q 'gamer.farm update: 10.0.0 is in' || die "the helper under its old name didn't put it in"
+		fi
+	fi
 }
 
 scn_update_now() {
@@ -323,7 +398,7 @@ scn_update_now() {
 	# The helper did it, inside the service. (The exit code itself: see stop_while_staged, which catches it between the two.)
 	journalctl -u "$UNIT" --no-pager | grep -q 'gamer.farm update: putting in 9.9.9' || die "the journal doesn't show the helper putting it in"
 	journalctl -u "$UNIT" --no-pager | grep -q 'gamer.farm update: 9.9.9 is in' || die "the journal doesn't show the helper finishing"
-	grep -q 'nocat-aes1:' "$DATA/config/nocatFarm.json" || die "the settings' secret isn't encrypted any more"
+	grep -q 'nocat-aes1:' "$DATA/config/gamerFarm.json" || die "the settings' secret isn't encrypted any more"
 	ownership_ok
 	sleep 40
 	[ "$(ver)" = 9.9.9 ] || die "put back after the half minute"
@@ -410,7 +485,7 @@ scn_kill9_mid_swap() {
 	offer good 9.9.9
 	fresh "$ZIPS/cur.zip" new
 	slow_helper
-	manifest | grep -v nocatfarm-service.sh > "$WORK/before"
+	manifest | grep -v "$HELPER" > "$WORK/before"
 	cmd 'update now' | sed 's/^/    /'
 	wait_half_way
 	say "kill -9 everything in the service, half way through the files"
@@ -419,10 +494,10 @@ scn_kill9_mid_swap() {
 	wait_ver "$VER" 60 || die "not back on $VER"
 	one_copy
 	[ ! -d "$JOB" ] || die "the job is still there"
-	manifest | grep -v nocatfarm-service.sh > "$WORK/after"
+	manifest | grep -v "$HELPER" > "$WORK/after"
 	diff "$WORK/before" "$WORK/after" > /dev/null || { diff "$WORK/before" "$WORK/after" | head; die "the files aren't the old ones"; }
 	say "old files back byte for byte; trying again works, it wasn't skipped"
-	cp "$SRC/tools/linux/nocatfarm-service.sh" "$HERE/nocatfarm-service.sh"; chown "$USR:" "$HERE/nocatfarm-service.sh"
+	cp "$SRC/tools/linux/gamerfarm-service.sh" "$HERE/$HELPER"; chown "$USR:" "$HERE/$HELPER"
 	sleep 3
 	pid=$(main_pid)
 	cmd 'update now' | sed 's/^/    /'
@@ -433,7 +508,7 @@ scn_stop_mid_swap() {
 	offer good 9.9.9
 	fresh "$ZIPS/cur.zip" new
 	slow_helper
-	manifest | grep -v nocatfarm-service.sh > "$WORK/before"
+	manifest | grep -v "$HELPER" > "$WORK/before"
 	cmd 'update now' | sed 's/^/    /'
 	wait_half_way
 	systemctl stop "$UNIT"
@@ -445,7 +520,7 @@ scn_stop_mid_swap() {
 	ready || die "not up"
 	[ "$(ver)" = "$VER" ] || die "on $(ver)"
 	one_copy
-	manifest | grep -v nocatfarm-service.sh > "$WORK/after"
+	manifest | grep -v "$HELPER" > "$WORK/after"
 	diff "$WORK/before" "$WORK/after" > /dev/null || die "the files aren't the old ones"
 }
 
@@ -528,7 +603,7 @@ scn_stop_on_trial() {
 scn_older_unit_is_by_hand() {
 	offer good 9.9.9
 	fresh "$ZIPS/cur.zip" new
-	test -f "$HERE/.nocatfarm-update/unit-ok" || die "the helper left no mark under the new unit"
+	test -f "$HERE/.gamerfarm-update/unit-ok" || die "the helper left no mark under the new unit"
 	say "the same folder under the old unit: the mark from the last start doesn't count"
 	write_old_unit
 	systemctl daemon-reload
@@ -536,7 +611,7 @@ scn_older_unit_is_by_hand() {
 	ready || die "not up"
 	pid=$(main_pid)
 	cmd 'update now' | tee "$WORK/out" | sed 's/^/    /'
-	grep -q 'nocatfarm.service' "$WORK/out" || die "it should have said how"
+	grep -q 'gamerfarm.service' "$WORK/out" || die "it should have said how"
 	curl -sf "http://127.0.0.1:$PORT/api/status" | grep -q '"CanSelfUpdate":true' && die "the dashboard offers to update" || true
 	sleep 25
 	[ "$(main_pid)" = "$pid" ] || die "it exited"
@@ -551,12 +626,12 @@ scn_folder_not_writable_is_by_hand() {
 	systemctl stop "$UNIT"
 	chown -R root: "$HERE"
 	chmod -R go-w "$HERE"
-	rm -rf "${HERE:?}/.nocatfarm-update"
+	rm -rf "${HERE:?}/.gamerfarm-update"
 	systemctl start "$UNIT"
 	ready || die "it must still start from a folder it can't write"
 	pid=$(main_pid)
 	cmd 'update now' | tee "$WORK/out" | sed 's/^/    /'
-	grep -q 'nocatfarm.service' "$WORK/out" || die "it should have said how"
+	grep -q 'gamerfarm.service' "$WORK/out" || die "it should have said how"
 	sleep 20
 	[ "$(main_pid)" = "$pid" ] || die "it exited"
 	one_copy
@@ -566,8 +641,8 @@ scn_never_gives_up_restarting() {
 	offer good 9.9.9
 	fresh "$ZIPS/cur.zip" new
 	systemctl stop "$UNIT"
-	mv "$HERE/nocatFarm" "$HERE/nocatFarm.real"
-	printf '#!/bin/sh\nexit 3\n' > "$HERE/nocatFarm"; chmod 755 "$HERE/nocatFarm"; chown "$USR:" "$HERE/nocatFarm"
+	mv "$HERE/gamerFarm" "$HERE/gamerFarm.real"
+	printf '#!/bin/sh\nexit 3\n' > "$HERE/gamerFarm"; chmod 755 "$HERE/gamerFarm"; chown "$USR:" "$HERE/gamerFarm"
 	cat > "$DROPIN/slow.conf" <<EOF
 [Service]
 RestartSec=200ms
@@ -580,7 +655,7 @@ EOF
 	say "$n restarts in 25 seconds"
 	[ "$n" -gt 20 ] || die "only $n restarts"
 	[ "$(systemctl show -p Result --value "$UNIT")" != start-limit-hit ] || die "systemd gave up"
-	mv -f "$HERE/nocatFarm.real" "$HERE/nocatFarm"
+	mv -f "$HERE/gamerFarm.real" "$HERE/gamerFarm"
 	ready 60 || die "it didn't come back by itself once the program was fixed"
 	rm -f "$DROPIN/slow.conf"; systemctl daemon-reload
 	one_copy
@@ -589,7 +664,7 @@ EOF
 scn_second_copy_refused() {
 	fresh "$ZIPS/cur.zip" new
 	code=0
-	out=$(timeout 60 su -s /bin/sh "$USR" -c "$HERE/nocatFarm --no-gui --path $DATA" < /dev/null 2>&1) || code=$?
+	out=$(timeout 60 su -s /bin/sh "$USR" -c "$HERE/gamerFarm --no-gui --path $DATA" < /dev/null 2>&1) || code=$?
 	say "second copy: exit $code"
 	[ "$code" -ne 0 ] && [ "$code" -ne 124 ] || die "second copy: exit $code"
 	echo "$out" | grep -q 'already running for this folder' || die "it didn't say another copy has the folder"
@@ -614,7 +689,7 @@ check_booted() {   # expected version
 	ready 240 || die "didn't come back on boot"
 	[ "$(ver)" = "$1" ] || { wait_ver "$1" 120 || die "on $(ver), not $1"; }
 	one_copy
-	say "$(uptime -p 2>/dev/null): up on $1, $(pgrep -x nocatFarm | wc -l) copy"
+	say "$(uptime -p 2>/dev/null): up on $1, $(pgrep -x 'gamerFarm|nocatFarm' | wc -l) copy"
 }
 
 scn_reboot_after_update_a() {
@@ -629,7 +704,7 @@ scn_reboot_after_update_b() { check_booted 9.9.9; }
 scn_power_cut_mid_swap_a() {
 	offer_and_enable
 	slow_helper
-	manifest | grep -v nocatfarm-service.sh > "$WORK/before"
+	manifest | grep -v "$HELPER" > "$WORK/before"
 	cmd 'update now' | sed 's/^/    /'
 	wait_half_way
 	power_cut
@@ -638,7 +713,7 @@ scn_power_cut_mid_swap_b() {
 	check_booted "$VER"
 	wait_log 'was stopped half way' 120 || die "it never said it was stopped half way"
 	[ ! -d "$JOB" ] || die "the job is still there"
-	manifest | grep -v nocatfarm-service.sh > "$WORK/after"
+	manifest | grep -v "$HELPER" > "$WORK/after"
 	diff "$WORK/before" "$WORK/after" > /dev/null || { diff "$WORK/before" "$WORK/after" | head; die "the files aren't the old ones"; }
 	say "old files back byte for byte after the power cut"
 }

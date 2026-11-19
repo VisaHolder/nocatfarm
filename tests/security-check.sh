@@ -58,7 +58,7 @@ TOKEN=$(sed -n 's/.*"token":"\([0-9a-f]*\)".*/\1/p' body.txt)
 cmd visitors > visitors.txt
 check "visitors: the wrong passwords are listed, from the internet" sh -c "grep -q 'wrong password' visitors.txt && grep -q '198.51.100.1' visitors.txt"
 check "visitors: switching itself off is listed" grep -q 'closed to the internet' visitors.txt
-check "settings: Open from anywhere was switched off and saved" grep -q '"WebRemoteAccess": false' "$CONFIG/nocatFarm.json"
+check "settings: Open from anywhere was switched off and saved" grep -q '"WebRemoteAccess": false' "$CONFIG/gamerFarm.json"
 
 cmd unlock > /dev/null
 check "unlock: opens it again (a forward set up by hand needs no Open from anywhere)" test "$(code 203.0.113.10 "$PW")" = 200

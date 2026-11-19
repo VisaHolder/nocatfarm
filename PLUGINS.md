@@ -17,7 +17,7 @@ You need to be able to write a little C#. If you just want to use gamer.farm, yo
 This one adds a `hello` command and writes a line in the log whenever a card drops. It takes about five minutes.
 
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Everywhere below, replace
-`C:\path\to\gamer.farm` with the folder your `nocatFarm.exe` is in.
+`C:\path\to\gamer.farm` with the folder your `gamerFarm.exe` is in.
 
 ### Step 1: make a project
 
@@ -39,15 +39,15 @@ Open `HelloPlugin.csproj`, delete everything in it, and paste this:
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nocatFarm">
-      <HintPath>C:\path\to\gamer.farm\nocatFarm.dll</HintPath>
+    <Reference Include="gamerFarm">
+      <HintPath>C:\path\to\gamer.farm\gamerFarm.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
 </Project>
 ```
 
-> Keep `<Private>false</Private>`. Without it, your build copies `nocatFarm.dll` next to your plugin, and the
+> Keep `<Private>false</Private>`. Without it, your build copies `gamerFarm.dll` next to your plugin, and the
 > plugin ends up with its own copy that doesn't match the running app.
 
 ### Step 3: write the plugin
@@ -55,9 +55,9 @@ Open `HelloPlugin.csproj`, delete everything in it, and paste this:
 Delete `Class1.cs`. Make a file called `HelloPlugin.cs` with this in it:
 
 ```csharp
-using NocatFarm.Plugins;
+using GamerFarm.Plugins;
 
-public sealed class HelloPlugin : INocatPlugin {
+public sealed class HelloPlugin : IGamerPlugin {
     public string Name => "Hello";
     public string Version => "1.0.0";
 
@@ -84,7 +84,7 @@ dotnet build -c Release
 copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\gamer.farm\plugins\
 ```
 
-(Make the `plugins` folder next to `nocatFarm.exe` if it isn't there yet.)
+(Make the `plugins` folder next to `gamerFarm.exe` if it isn't there yet.)
 
 ### Step 5: turn plugins on
 
@@ -113,9 +113,9 @@ the dashboard and adds a `tally` command.
 
 ```csharp
 using System.Text.Json;
-using NocatFarm.Plugins;
+using GamerFarm.Plugins;
 
-public sealed class CardTally : INocatPlugin {
+public sealed class CardTally : IGamerPlugin {
     public string Name => "CardTally";
     public string Version => "1.0.0";
 
@@ -236,14 +236,14 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `CardDropped` | A card dropped: the account, the game's appID, and how many cards that game has left. |
 | `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count; to look at the offers themselves, use `AddTradeJudge`. |
 
-`INocatPlugin` has one optional extra: `OnUnloadAsync()`, called when gamer.farm closes. It gets 5 seconds.
+`IGamerPlugin` has one optional extra: `OnUnloadAsync()`, called when gamer.farm closes. It gets 5 seconds.
 
 **Where things are saved** (in the `config/plugins/` folder, named after your plugin's `Name`):
 
 - `<Name>.json`: what you save with `SaveStateAsync`
 - `<Name>.settings.json`: the values of your settings, as changed on the Plugins page
 
-The full, commented contract is one file: [`src/NocatFarm/Plugins/IPlugin.cs`](src/NocatFarm/Plugins/IPlugin.cs).
+The full, commented contract is one file: [`src/GamerFarm/Plugins/IPlugin.cs`](src/GamerFarm/Plugins/IPlugin.cs).
 Every built-in command is in [the command list](docs/COMMANDS.md).
 
 ---
@@ -283,9 +283,9 @@ This one accepts offers that only take normal trading cards and only pay gems, a
 page, and declines the ones that pay too little:
 
 ```csharp
-using NocatFarm.Plugins;
+using GamerFarm.Plugins;
 
-public sealed class GemsForCards : INocatPlugin {
+public sealed class GemsForCards : IGamerPlugin {
     public string Name => "GemsForCards";
     public string Version => "1.0.0";
 
@@ -367,9 +367,9 @@ time it's shown, refreshed or a button is pressed.
 
 ## Rules
 
-Plugins live in the `plugins` folder next to `nocatFarm.exe`, or inside the `--path` folder if you use one. Only the
+Plugins live in the `plugins` folder next to `gamerFarm.exe`, or inside the `--path` folder if you use one. Only the
 top level is loaded, so DLLs in subfolders are ignored, but your plugin's own dependencies can sit next to it.
-Several plugins in one DLL is fine; every `INocatPlugin` class in it loads.
+Several plugins in one DLL is fine; every `IGamerPlugin` class in it loads.
 
 Plugins load once, when the app starts, before any account signs in. Subscribe to events in `OnLoadAsync` and you
 won't miss the first ones. If you add or change a plugin, restart.
@@ -403,7 +403,9 @@ A few more things worth knowing:
   a real stack overflow, or `Environment.Exit`. Catch everything in your own threads and timers.
 - Each plugin has its own on/off switch on the dashboard's Plugins page.
 - If the app can't read your DLL, the log says it was probably built against a different version. Rebuild against
-  the current `nocatFarm.dll`.
+  the current `gamerFarm.dll`.
+- A plugin built for a version before 2.0.1, when the program and its plugin interface had the old name, still loads
+  as it is - you don't have to rebuild it. Rebuild it against `gamerFarm.dll` with `IGamerPlugin` when you next change it.
 
 ## Is it safe?
 
@@ -413,7 +415,7 @@ That's why plugins are off until you switch them on.
 
 ## Sharing your plugin
 
-Ship just your DLL, plus any NuGet libraries it uses. Never ship `nocatFarm.dll` with it; `<Private>false</Private>`
+Ship just your DLL, plus any NuGet libraries it uses. Never ship `gamerFarm.dll` with it; `<Private>false</Private>`
 keeps it out. Each plugin loads on its own, so two plugins can use different versions of the same library.
 
 Tell people what it does, what settings it has, and why they can trust it. They're running your code next to their

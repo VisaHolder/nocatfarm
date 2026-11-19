@@ -14,7 +14,7 @@ fails=0
 check() { name="$1"; shift; if "$@"; then echo "PASS  $name"; else echo "FAIL  $name"; fails=$((fails + 1)); fi; }
 
 rm -rf "$T" && mkdir -p "$T/data/config"
-echo "{\"WebPort\":$PORT,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$T/data/config/nocatFarm.json"
+echo "{\"WebPort\":$PORT,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$T/data/config/gamerFarm.json"
 echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$T/data/config/demo.json"
 
 up() { for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/status" > /dev/null && return 0; sleep 1; done; return 1; }
@@ -26,12 +26,12 @@ hup_default() { python3 -c 'import os, signal, sys; signal.signal(signal.SIGHUP,
 detached() { if command -v setsid > /dev/null 2>&1; then setsid "$@"; else "$@"; fi; }
 
 # ── 1. a second copy on the same folder ──
-(cd "$T" && hup_default "$APP/nocatFarm" --no-gui --path data < /dev/null > "$T/first.log" 2>&1 &)
+(cd "$T" && hup_default "$APP/gamerFarm" --no-gui --path data < /dev/null > "$T/first.log" 2>&1 &)
 up
 first=$(pid)
 start=$(date +%s)
 set +e
-(cd "$T" && detached "$APP/nocatFarm" --no-gui --path data < /dev/null > "$T/second.log" 2>&1)
+(cd "$T" && detached "$APP/gamerFarm" --no-gui --path data < /dev/null > "$T/second.log" 2>&1)
 code=$?
 set -e
 took=$(( $(date +%s) - start ))
@@ -50,7 +50,7 @@ check "SIGHUP: through the clean shutdown" grep -q 'shutting down' "$T/first.log
 check "SIGHUP: the lifetime totals were written on the way out" test -f "$T/data/config/state/lifetime.json"
 
 # ── 3. nohup: SIGHUP ignored, as asked ──
-(cd "$T" && nohup "$APP/nocatFarm" --no-gui --path data < /dev/null > "$T/nohup.log" 2>&1 &)
+(cd "$T" && nohup "$APP/gamerFarm" --no-gui --path data < /dev/null > "$T/nohup.log" 2>&1 &)
 up
 third=$(pid)
 kill -HUP "$third"

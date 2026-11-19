@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gamer.farm</title>
+<link rel="icon" href="favicon.ico">
+<!-- The phone app: "Add to Home Screen" puts the gamer.farm icon on the home screen. iPhone opens it like an app (the
+     apple- tags); Chrome on Android opens it in a normal tab over a plain http address. Relative links, so it works at whatever address the dashboard is opened on. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="gamer.farm">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+  // 2.0.1: what this browser kept under the names from before (signed in, the theme, the console's history, the hosted
+  // page's port and pairing) takes the new ones, once - so nobody is signed out or loses a setting by the rename.
+  try {
+    ['token', 'theme', 'histrange', 'history', 'farm-port', 'farm-token'].forEach(function (k) {
+      var was = localStorage.getItem('nocatfarm-' + k);
+      if (was !== null && localStorage.getItem('gamerfarm-' + k) === null) localStorage.setItem('gamerfarm-' + k, was);
+      localStorage.removeItem('nocatfarm-' + k);
+    });
+  } catch (e) {}
+  // Before the stylesheet paints, so a light-theme user never sees a dark flash.
+  try { document.documentElement.setAttribute('data-theme', localStorage.getItem('gamerfarm-theme') || 'dark'); } catch (e) {}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 1.9.2: a page at farm.gamer.mom asking to open this dashboard - above every screen, a pop-up and the first-run welcome
+     included (app.js renderFarmAsk). Never shown on that page itself. -->
+<div id="farmAsk" class="farmask-bar hidden"></div>
+
+<!-- ── password gate ─────────────────────────────────────────────────── -->
+<div id="login" class="gate hidden">
+  <form class="card gate-card" onsubmit="return doLogin(event)">
+    <h1 class="wordmark">gamer.<span>farm</span></h1>
+    <p class="muted" data-t="This dashboard is password protected.">This dashboard is password protected.</p>
+    <input id="pw" type="password" placeholder="Password" data-t-ph="Password" autocomplete="current-password">
+    <input id="loginCode" class="hidden" type="text" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" autocomplete="one-time-code"
+      placeholder="6-digit code" data-t-ph="6-digit code" aria-label="6-digit code">
+    <button type="submit" data-t="Sign in">Sign in</button>
+    <p id="loginError" class="error"></p>
+  </form>
+</div>
+
+<!-- ── 1.9.2: farm.gamer.mom - finding gamer.farm on this PC and pairing with it (app.js farmGate). Never shown when gamer.farm serves this page. ── -->
+<div id="farmGate" class="hidden">
+  <main class="fg" id="farmGateBody"></main>
+</div>
+
+<!-- ── first run ─────────────────────────────────────────────────────── -->
+<div id="welcome" class="gate hidden">
+  <div class="welcome-hero">
+    <img src="logo.png" alt="">
+    <h1 class="wordmark">gamer.<span>farm</span></h1>
+    <p class="welcome-tag" data-t="Trading cards, hours and free stuff for your Steam accounts - running by itself, on this PC.">Trading cards, hours and free stuff for your Steam accounts - running by itself, on this PC.</p>
+  </div>
+
+  <div class="card welcome-card">
+    <div id="importBanner" class="hidden"></div>
+
+    <p class="lead" data-t="Let's add your first Steam account.">Let's add your first Steam account.</p>
+
+    <!-- The same questions as the walkthrough's, in the same order: what kind of account, its Steam login, an optional
+         password; the nickname under More. -->
+    <p class="welcome-ask"><b data-t="What kind of account is it?">What kind of account is it?</b></p>
+    <div class="pickcards">
+      <div class="pickcard" id="w-type-human" role="button" tabindex="0" onclick="welcomePickType(true)">
+        <b data-t="My main account">My main account</b>
+        <span data-t="Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.">Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.</span>
+      </div>
+      <div class="pickcard" id="w-type-robot" role="button" tabindex="0" onclick="welcomePickType(false)">
+        <b data-t="A spare or farm account">A spare or farm account</b>
+        <span data-t="Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.">Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.</span>
+      </div>
+    </div>
+
+    <div class="form2">
+      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email." data-t-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
+      <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
+
+      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="gamer.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it." data-t-tip="gamer.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
+      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
+    </div>
+
+    <label class="tut-check hidden" id="w-self-row"><input id="w-self" type="checkbox">
+      <span data-t="I also use this account in my own Steam app">I also use this account in my own Steam app</span></label>
+
+    <details class="tut-more"><summary data-t="More">More</summary>
+      <div class="form2">
+        <label for="w-name"><span data-t="Nickname (optional)">Nickname (optional)</span><i class="info" data-tip="What this account is called in gamer.farm. Leave it empty and it uses the Steam account name." data-t-tip="What this account is called in gamer.farm. Leave it empty and it uses the Steam account name."></i></label>
+        <input id="w-name" type="text" placeholder="same as the Steam account name" data-t-ph="same as the Steam account name" autocomplete="off">
+      </div>
+    </details>
+
+    <p id="welcomeError" class="error"></p>
+    <div class="wbtns">
+      <button class="tut-go" onclick="createFirstBot()" data-t="Add account">Add account</button>
+      <button class="ghost" onclick="startTutorial()" data-t="Walk me through it">Walk me through it</button>
+    </div>
+    <p class="muted small foot"><span data-t="Everything here is also a command. This step is">Everything here is also a command. This step is</span> <code>add mybot mysteamlogin</code>.</p>
+  </div>
+</div>
+
+<!-- ── app ───────────────────────────────────────────────────────────── -->
+<div id="app" class="hidden">
+
+  <header class="rail">
+    <h1 class="wordmark">gamer.<span>farm</span></h1>
+
+    <nav>
+      <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="auth"><span data-t="Authenticator">Authenticator</span><b id="navAuth"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="phone"><span data-t="Phone">Phone</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="log"><span data-t="Log">Log</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="console"><span data-t="Console">Console</span></a>
+      <a class="navitem" id="navPlugins" tabindex="0" role="button" data-view="plugins"><span data-t="Plugins">Plugins</span><i class="navtag"></i></a>
+      <a class="navitem" tabindex="0" role="button" data-view="settings"><span data-t="Settings">Settings</span></a>
+    </nav>
+
+    <!-- The status readout, then (outside it) the theme control and version: the readout gives way as the window
+         narrows, the controls never do. -->
+    <div class="rail-foot">
+      <div id="railChips" class="chips"></div>
+      <dl id="railStats" class="railstats"></dl>
+    </div>
+    <div class="railfoot-meta">
+      <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
+              data-tip="Switch between the dark and light themes." data-t-tip="Switch between the dark and light themes.">theme</button>
+      <button class="updatebtn hidden farm-hide" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
+      <a class="muted small ghlink" id="version" href="https://github.com/VisaHolder/gamerfarm"
+         target="_blank" rel="noopener noreferrer"
+         data-tip="gamer.farm on GitHub - source, releases and issues." data-t-tip="gamer.farm on GitHub - source, releases and issues."></a>
+    </div>
+  </header>
+
+  <div class="main">
+    <div id="alerts" class="alerts"></div>
+
+    <!-- Overview -->
+    <section id="view-overview" class="view">
+      <p id="verdict" class="verdict">&nbsp;</p>
+      <p id="usercount" class="usercount muted small hidden" data-tip="Steam accounts signed in on the copies of gamer.farm that ran in the last 24 hours. Count me as a user, under Updates &amp; plugins, adds yours - only how many, as a number. Off sends nothing and hides this." data-t-tip="Steam accounts signed in on the copies of gamer.farm that ran in the last 24 hours. Count me as a user, under Updates &amp; plugins, adds yours - only how many, as a number. Off sends nothing and hides this."></p>
+      <div id="tiles" class="tiles"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
+      <div class="card">
+        <h2 data-t="Accounts">Accounts</h2>
+        <div id="glance"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+      <div class="card">
+        <h2><span data-t="Today">Today</span><span class="muted small" style="text-transform:none;letter-spacing:0" data-t="last 24 hours">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account." data-t-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
+        <div id="today"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+      <div class="card">
+        <h2><span data-t="History">History</span><i class="info" data-tip="Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year." data-t-tip="Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year."></i></h2>
+        <div id="histBar" class="toolbar histbar"></div>
+        <div id="history"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+      <div class="card">
+        <h2 class="h2links"><span data-t="Recent activity">Recent activity</span><span class="links"><a class="muted small" role="button" tabindex="0" onclick="go('phone')" data-t="Open on your phone">Open on your phone</a><a class="muted small" role="button" tabindex="0" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></span></h2>
+        <div id="recent" class="recent"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- Accounts -->
+    <section id="view-accounts" class="view hidden">
+      <div class="toolbar">
+        <input id="acctSearch" type="text" placeholder="Search accounts…" data-t-ph="Search accounts…" oninput="render()">
+        <div id="acctFilters" class="chips"></div>
+        <span class="spacer"></span>
+        <button class="ghost" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
+        <button class="farm-hide" onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
+      </div>
+      <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+    </section>
+
+    <!-- 1.9.0: a plugin's own tab (an add-on's, like rep4rep) - drawn from what the plugin returns, see app.js ppBlock -->
+    <section id="view-pluginpage" class="view hidden">
+      <div class="card">
+        <div class="toolbar"><h2 id="ppTitle" style="margin:0"></h2><span class="spacer"></span>
+          <button class="ghost" onclick="loadPluginPage(ppPlugin, null)" data-t="Refresh">Refresh</button></div>
+        <pre id="ppOut" class="out hidden" style="white-space:pre-wrap"></pre>
+        <div id="ppBody"></div>
+      </div>
+    </section>
+
+    <!-- Log -->
+    <section id="view-log" class="view hidden">
+      <div class="card logcard">
+        <div class="toolbar">
+          <input id="logSearch" type="text" placeholder="Search the log…" data-t-ph="Search the log…" oninput="renderLog()">
+          <div id="logLevels" class="chips"></div>
+          <select id="logBot" onchange="renderLog()"></select>
+          <label class="inline"><input type="checkbox" id="logFollow" checked> <span data-t="Follow">Follow</span></label>
+          <button class="ghost" onclick="copyLog()" data-t="Copy">Copy</button>
+        </div>
+        <div id="logBody" class="out"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- Authenticator: codes and confirmations, like the Steam app -->
+    <section id="view-auth" class="view hidden">
+      <div id="authBody"></div>
+    </section>
+
+    <!-- Phone: the dashboard at home and away, a checklist that ticks itself, Telegram and Discord -->
+    <section id="view-phone" class="view hidden">
+      <div id="phoneTop"></div>
+      <div class="ph-cards">
+        <div id="phoneHome" class="card ph-card"></div>
+        <div id="phoneAway" class="card ph-card"></div>
+      </div>
+      <div class="ph-cols">
+        <div id="phoneReady" class="card"></div>
+        <div class="ph-colside">
+          <div id="phoneChat" class="card"></div>
+          <div id="phoneSafe" class="card"></div>
+        </div>
+      </div>
+      <div id="phoneApp" class="card"></div>
+      <div id="phoneVisitors" class="card"></div>
+    </section>
+
+    <!-- Plugins -->
+    <section id="view-plugins" class="view hidden">
+      <div class="card">
+        <h2 data-t="Plugins">Plugins</h2>
+        <div id="pluginsBody"></div>
+      </div>
+    </section>
+
+    <section id="view-console" class="view hidden">
+      <p class="muted small" data-t="Anything you can do on the other tabs you can type here — and the other way round.">Anything you can do on the other tabs you can type here — and the other way round.</p>
+      <div class="consolewrap">
+        <div class="card console-card">
+          <div id="out" class="out"></div>
+          <form class="cmdline" onsubmit="return sendCommand(event)">
+            <span class="chev">&gt;</span>
+            <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="type a command, or 'help'" data-t-ph="type a command, or 'help'">
+            <button type="submit" data-t="Run">Run</button>
+          </form>
+        </div>
+        <div class="card cmdlist">
+          <h2 data-t="Commands">Commands</h2>
+          <div id="cmdList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view hidden">
+      <div class="settingswrap">
+        <div class="card settingsnav">
+          <h2 data-t="Global">Global</h2>
+          <div id="settingsNavGlobal"></div>
+          <h2 data-t="Accounts">Accounts</h2>
+          <div id="settingsNavBots"></div>
+          <h2 data-t="Jump to">Jump to</h2>
+          <div id="settingsNavJump"></div>
+        </div>
+        <div class="card settingsform">
+          <div class="toolbar sticky">
+            <input id="setSearch" type="text" placeholder="Search settings…" data-t-ph="Search settings…" oninput="renderSettings()">
+            <label class="inline"><input type="checkbox" id="setAdvanced" onchange="renderSettings()"> <span data-t="Show advanced">Show advanced</span><i class="info" data-tip="Settings most people never need. Nothing here is dangerous, it's just detail." data-t-tip="Settings most people never need. Nothing here is dangerous, it's just detail."></i></label>
+            <label class="inline"><input type="checkbox" id="setChanged" onchange="renderSettings()"> <span data-t="Only changed">Only changed</span><i class="info" data-tip="Show only the settings that differ from their defaults." data-t-tip="Show only the settings that differ from their defaults."></i></label>
+            <span class="spacer"></span>
+            <button id="saveBtn" onclick="saveSettings()" disabled data-t="Save">Save</button>
+          </div>
+          <div id="settingsHeader"></div>
+          <div id="settingsBody"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="tip" class="tip hidden"></div>
+<div id="modal" class="modal hidden"><div id="modalCard" class="card"></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>

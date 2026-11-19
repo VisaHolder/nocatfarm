@@ -15,12 +15,12 @@ On the first start the language follows `LANG` (`LANG=de_DE.UTF-8` starts it in 
 2. Unzip it into its own folder and start it:
 
    ```
-   unzip gamer.farm-v<version>_linux-x64.zip -d nocatfarm
-   cd nocatfarm
-   ./nocatFarm
+   unzip gamer.farm-v<version>_linux-x64.zip -d gamerfarm
+   cd gamerfarm
+   ./gamerFarm
    ```
 
-   If it says *permission denied*, run `chmod +x nocatFarm` once. No `unzip` on a fresh server? `sudo apt install unzip`
+   If it says *permission denied*, run `chmod +x gamerFarm` once. No `unzip` on a fresh server? `sudo apt install unzip`
    (Debian, Ubuntu, Raspberry Pi OS) or `sudo dnf install unzip` (Fedora).
 
 There's no .NET to install. It prints the dashboard address when it starts. To use the dashboard from another
@@ -30,17 +30,17 @@ device, set a password and open it up (see
 It runs on the machine's own time zone, which human mode's day and the daily summary follow. A VPS is usually on UTC:
 `timedatectl` shows it, and `sudo timedatectl set-timezone Europe/London` (yours) changes it.
 
-To run it as a systemd service, with the folder at `/opt/nocatfarm`: give the folder to the user it runs as, and put the
+To run it as a systemd service, with the folder at `/opt/gamerfarm`: give the folder to the user it runs as, and put the
 unit from the zip in place, with your user name instead of `youruser`:
 
 ```
-sudo chown -R youruser: /opt/nocatfarm
-sudo cp /opt/nocatfarm/nocatfarm.service /etc/systemd/system/nocatfarm.service
-sudo sed -i "s/^User=youruser/User=$USER/" /etc/systemd/system/nocatfarm.service
+sudo chown -R youruser: /opt/gamerfarm
+sudo cp /opt/gamerfarm/gamerfarm.service /etc/systemd/system/gamerfarm.service
+sudo sed -i "s/^User=youruser/User=$USER/" /etc/systemd/system/gamerfarm.service
 ```
 
-In another folder, change `/opt/nocatfarm` in the file too. To keep your accounts and settings somewhere else, add `--path` to the end of the `ExecStart=` line, for example
-`ExecStart=/opt/nocatfarm/nocatFarm --path /var/lib/nocatfarm`, with that folder owned by the same user. The unit is:
+In another folder, change `/opt/gamerfarm` in the file too. To keep your accounts and settings somewhere else, add `--path` to the end of the `ExecStart=` line, for example
+`ExecStart=/opt/gamerfarm/gamerFarm --path /var/lib/gamerfarm`, with that folder owned by the same user. The unit is:
 
 ```ini
 [Unit]
@@ -51,10 +51,10 @@ StartLimitIntervalSec=0
 
 [Service]
 User=youruser
-WorkingDirectory=/opt/nocatfarm
-ExecStartPre=/bin/sh /opt/nocatfarm/nocatfarm-service.sh prepare
-ExecStart=/opt/nocatfarm/nocatFarm
-ExecStartPost=/bin/sh /opt/nocatfarm/nocatfarm-service.sh watch
+WorkingDirectory=/opt/gamerfarm
+ExecStartPre=/bin/sh /opt/gamerfarm/gamerfarm-service.sh prepare
+ExecStart=/opt/gamerfarm/gamerFarm
+ExecStartPost=/bin/sh /opt/gamerfarm/gamerfarm-service.sh watch
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=75
@@ -69,15 +69,15 @@ WantedBy=multi-user.target
 Then start it, and have it start with the machine:
 
 ```
-sudo systemctl daemon-reload && sudo systemctl enable --now nocatfarm
+sudo systemctl daemon-reload && sudo systemctl enable --now gamerfarm
 ```
 
 It comes back by itself after a crash or a power cut, however many times, and `quit` on the dashboard still closes it
 until you start it again. It also runs in a Linux container (LXC, on Proxmox for example) the same way, as long as the
 container runs systemd: a small template may need `apt install unzip libssl3` first.
 
-`sudo systemctl stop nocatfarm` signs every account out cleanly first. The log goes to the journal
-(`journalctl -u nocatfarm -f`). Type commands in the dashboard's Console tab, which is also where Steam Guard prompts
+`sudo systemctl stop gamerfarm` signs every account out cleanly first. The log goes to the journal
+(`journalctl -u gamerfarm -f`). Type commands in the dashboard's Console tab, which is also where Steam Guard prompts
 appear.
 
 **Updating.** It updates itself like on Windows: **Update** on the dashboard, `update accept`, `update file <zip>`, or by
@@ -86,29 +86,36 @@ start is put back. Started from a terminal or a desktop, the new version starts 
 where you see it.
 
 Run as a service with the unit above, the same happens inside the service: gamer.farm gets the update ready and closes,
-and systemd starts it again with `nocatfarm-service.sh` putting the new files in first. The new version then has up to
+and systemd starts it again with `gamerfarm-service.sh` putting the new files in first. The new version then has up to
 three minutes to say it's fine. If it crashes, hangs, or the machine stops half way, the old files go back at the next
-start, and the log says what happened. There's only ever one copy running, and `sudo systemctl stop nocatfarm` while an
+start, and the log says what happened. There's only ever one copy running, and `sudo systemctl stop gamerfarm` while an
 update is waiting just stops it: the update goes in when you start it again. The service's user has to own the folder,
 and `update file` needs a zip that user can read. Typed from another device, `update file` is refused, so run it on the
 machine itself: `curl -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"update file /path/to.zip"}'`.
 
-**An older unit** (one without the `nocatfarm-service.sh` lines, like the one these docs used to give) doesn't update
+**Installed before 2.0.1?** A service set up then keeps working as it is, and keeps updating itself: its unit is still
+called `nocatfarm.service`, in the folder you gave it (often `/opt/nocatfarm`, with the data in `/var/lib/nocatfarm`),
+and starts the program under its old name. That's a small script now that starts `gamerFarm`, and the helper keeps its
+old name too - the unit names them, and nothing changes a unit but you. So `journalctl -u nocatfarm` and
+`systemctl restart nocatfarm` stay as they were. Nothing has to change. To move it to the new names anyway, do it while
+it's stopped: `sudo systemctl disable --now nocatfarm`, put `gamerfarm.service` from the zip in (as above, with your user
+and folders - `ExecStart=/opt/nocatfarm/gamerFarm --path /var/lib/nocatfarm` keeps your data where it is), then
+`sudo systemctl daemon-reload && sudo systemctl enable --now gamerfarm`. Once it runs, the script under the old name
+goes by itself; `sudo rm /etc/systemd/system/nocatfarm.service` removes the old unit.
+
+**An older unit** (one without the `gamerfarm-service.sh` lines, like the one these docs used to give) doesn't update
 itself: it tells you when a new version is out and how. Stop it, unzip the new zip over the folder (`unzip -o`), and start
 it again. `config/` and `logs/` aren't in the zip, so they're kept. To update by itself from then on, put the new unit in
-as above and run `sudo systemctl daemon-reload && sudo systemctl restart nocatfarm`.
+as above and run `sudo systemctl daemon-reload && sudo systemctl restart gamerfarm`.
 
 Closing the terminal it runs in (or the SSH session ending) closes it cleanly, accounts signed out first. To keep it
-running after you log out without a service, start it with `nohup ./nocatFarm &`, or inside `tmux` or `screen`. One copy
+running after you log out without a service, start it with `nohup ./gamerFarm &`, or inside `tmux` or `screen`. One copy
 runs per config folder: a second one on the same folder says which process already has it, and exits.
 
 Saved logins are encrypted with a key in `config/state/secret.key` that only your user can read, so back up the
 whole `config` folder together. Backups (`backup`, in the `backups` folder) are only readable by your user too. A config
 folder from Windows works too, but each account signs in once more,
 because Windows ties saved logins to your Windows user.
-
-The Discord profile card needs the Discord desktop app on the same desktop. On a server or in Docker there's no
-Discord app, so it stays off.
 
 ## Mac
 
@@ -140,7 +147,7 @@ git clone https://github.com/VisaHolder/gamerfarm.git
 cd gamerfarm
 cp docker-compose.example.yml docker-compose.yml
 mkdir -p config logs backups plugins
-echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
+echo 'GAMERFARM_WEB_PASSWORD=something-long-and-your-own' > .env
 echo 'TZ=Europe/London' >> .env
 docker compose up -d --build
 ```
@@ -156,22 +163,22 @@ The example compose file is commented line by line. The parts worth knowing:
 | Line | What it's for |
 |---|---|
 | `./config`, `./logs`, `./backups` and `./plugins` | Your data (`/data/config`, `/data/logs`, `/data/backups` and `/data/plugins` inside the container), plugins and [add-ons](addons.md) included. Rebuilding and re-creating keep them. |
-| `NOCATFARM_WEB_PASSWORD` | Required. Compose won't start without it. |
+| `GAMERFARM_WEB_PASSWORD` | Required. Compose won't start without it. |
 | `"127.0.0.1:7242:7242"` | The port, on this machine only. Change it to `"7242:7242"` to reach it from other devices. |
-| `NOCATFARM_HOME_ADDRESS` | For your phone. Uncomment it and put in this computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if you publish a different port). |
+| `GAMERFARM_HOME_ADDRESS` | For your phone. Uncomment it and put in this computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if you publish a different port). |
 | `TZ` | Your time zone, read from `.env`. Human mode's day and the daily summary follow it. UTC without it. |
-| `NOCATFARM_PUBLIC_ADDRESS` | Only when it's reached from the internet on purpose (a VPS, a published port, a proxy): the address people use, like `farm.example.com`. Without it every visitor from the internet is refused. See [On a VPS](#on-a-vps-a-rented-server). |
-| `NOCATFARM_TRUSTED_PROXIES` | Only behind Caddy or another proxy outside the container: `172.16.0.0/12` (Docker's own networks). See [On a VPS](#on-a-vps-a-rented-server). |
+| `GAMERFARM_PUBLIC_ADDRESS` | Only when it's reached from the internet on purpose (a VPS, a published port, a proxy): the address people use, like `farm.example.com`. Without it every visitor from the internet is refused. See [On a VPS](#on-a-vps-a-rented-server). |
+| `GAMERFARM_TRUSTED_PROXIES` | Only behind Caddy or another proxy outside the container: `172.16.0.0/12` (Docker's own networks). See [On a VPS](#on-a-vps-a-rented-server). |
 | `hostname` | The device name Steam shows. Without it, it changes on every re-create. |
 | `user: "1000:1000"` | Must match the owner of `./config`, `./logs`, `./backups` and `./plugins` (`id -u`, `id -g`). If the log says it can't write to `/data/config`, fix this, or remove the line and run `sudo chown -R 1654:1654 config logs backups plugins`. |
 | `stop_grace_period: 1m` | Gives `docker compose down` time to sign every account out cleanly. |
 
-About `NOCATFARM_HOME_ADDRESS`: from inside a container, gamer.farm only sees Docker's own network, and no phone can
+About `GAMERFARM_HOME_ADDRESS`: from inside a container, gamer.farm only sees Docker's own network, and no phone can
 reach that. So without this line the Phone page and `/dashboard` can't show you a home link or a QR code. They tell
 you to open this computer's address with the published port instead. Set it, run `docker compose up -d`, and the
 link and code appear. The port also has to be published beyond `127.0.0.1` (the line above).
 
-Commands go in the dashboard's Console tab, or `docker attach nocatfarm` (Ctrl+P then Ctrl+Q to detach). The log is
+Commands go in the dashboard's Console tab, or `docker attach gamerfarm` (Ctrl+P then Ctrl+Q to detach). The log is
 `docker compose logs -f`. Plugins and add-ons live in `./plugins`.
 
 **Coming from ArchiSteamFarm:** uncomment the `/import/asf` line and point it at your ASF folder (the one with
@@ -184,7 +191,7 @@ changed. Stop ASF first: one account can't be signed in by two programs at once.
 
 The image builds for amd64 and arm64 from the same Dockerfile. `docker compose up -d --build` builds it for the
 machine it's on. To build both at once you need somewhere to put them, like your own registry:
-`docker buildx build --platform linux/amd64,linux/arm64 -t yourname/nocatfarm --push .`
+`docker buildx build --platform linux/amd64,linux/arm64 -t yourname/gamerfarm --push .`
 (or one platform with `--load`, to use it on this machine). `docker ps` shows whether it's *healthy*: the dashboard
 answering.
 
@@ -208,7 +215,7 @@ git clone https://github.com/VisaHolder/gamerfarm.git
 cd gamerfarm
 cp docker-compose.example.yml docker-compose.yml
 mkdir -p config logs backups plugins && chown -R 1000:1000 config logs backups plugins
-echo 'NOCATFARM_WEB_PASSWORD=pick-a-long-password-you-use-nowhere-else' > .env
+echo 'GAMERFARM_WEB_PASSWORD=pick-a-long-password-you-use-nowhere-else' > .env
 echo 'TZ=Europe/London' >> .env
 docker compose up -d --build
 ```
@@ -230,11 +237,11 @@ encrypted SSH connection, and nobody else can reach it.
 If you want it on your phone, or without a tunnel, gamer.farm has to be told it's meant to be reached from the
 internet. Everything from outside is turned away until it is: *Open from anywhere* asks a home router to forward the
 port (UPnP), and a VPS has no router to ask. The server's own address does it. In `docker-compose.yml`, uncomment
-`NOCATFARM_PUBLIC_ADDRESS` and put the address in (or, through the SSH tunnel, type
+`GAMERFARM_PUBLIC_ADDRESS` and put the address in (or, through the SSH tunnel, type
 `set WebPublicAddress your.server.address:7242` in the dashboard's Console). Then there are two ways.
 
 The quick one is to open the port: in `docker-compose.yml` change `"127.0.0.1:7242:7242"` to `"7242:7242"`, set
-`NOCATFARM_PUBLIC_ADDRESS: your.server.address:7242`, run `docker compose up -d`, and allow it in the server's
+`GAMERFARM_PUBLIC_ADDRESS: your.server.address:7242`, run `docker compose up -d`, and allow it in the server's
 firewall (`ufw allow 7242/tcp` on Ubuntu). It's then at `http://your.server.address:7242`. That's plain http, so the
 long password matters; five wrong tries lock that address out for an hour.
 
@@ -249,8 +256,8 @@ reverse_proxy 127.0.0.1:7242
 Then, in `docker-compose.yml`, uncomment and fill in both of these, and run `docker compose up -d`:
 
 ```
-      NOCATFARM_PUBLIC_ADDRESS: farm.yourdomain.com
-      NOCATFARM_TRUSTED_PROXIES: 172.16.0.0/12
+      GAMERFARM_PUBLIC_ADDRESS: farm.yourdomain.com
+      GAMERFARM_TRUSTED_PROXIES: 172.16.0.0/12
 ```
 
 The second one matters. Caddy on the server reaches the container through Docker's own network (an address like
@@ -258,7 +265,7 @@ The second one matters. Caddy on the server reaches the container through Docker
 everybody on the internet looks like they're at home: no sign-in code on Telegram, one lockout shared by everyone, and
 *Open from anywhere* never switching itself off. `172.16.0.0/12` covers the networks Docker makes; it's the setting
 *Trust forwarded addresses from* (`WebTrustedProxies`). With the Linux zip instead of Docker, Caddy on the same server
-comes in as this PC, which is already believed, so only `NOCATFARM_PUBLIC_ADDRESS` (or *Public address*) is needed.
+comes in as this PC, which is already believed, so only `GAMERFARM_PUBLIC_ADDRESS` (or *Public address*) is needed.
 
 **4. Add your accounts** in the dashboard, the same as on a PC. The Steam Guard code, or the QR scan with the Steam
 app, is asked for right on the page. If you already have gamer.farm on your PC, stop it there, copy its `config`
@@ -272,7 +279,7 @@ and the server at once, or they keep signing each other out.
 
 | To | Run |
 |---|---|
-| Update | `cd gamerfarm && git pull && docker compose up -d --build` (set up before 2.0.0, the folder is `nocatfarm`) |
+| Update | `cd gamerfarm && git pull && docker compose up -d --build` (set up before 2.0.0, the folder is `gamerfarm`) |
 | Back up (the `config` folder is everything) | `scp -r root@your.server.address:gamerfarm/config .` from your PC, or `backup` in the Console (it lands in `gamerfarm/backups`) |
 | See the log | `docker compose logs -f` on the server, or the dashboard's Log tab |
 

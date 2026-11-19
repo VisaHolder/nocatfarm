@@ -36,7 +36,7 @@ import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent / "src" / "NocatFarm"
+ROOT = pathlib.Path(__file__).resolve().parent.parent / "src" / "GamerFarm"
 LANG = ROOT / "wwwroot" / "lang"
 
 # Words that read the same in every language, or are not prose at all.
