@@ -522,7 +522,7 @@ internal sealed partial class Host(BotManager mgr, string owner) : IPluginHost {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			NocatFarm.Log.Failed($"plugin {_owner}: a gem value", e);
+			GamerFarm.Log.Failed($"plugin {_owner}: a gem value", e);
 			return null;
 		}
 	}

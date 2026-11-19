@@ -40536,8 +40536,8 @@ static class AddonTradeChecks {
 				&& handed.Receiving[0] is { Kind: GamerFarm.Plugins.PluginTradeItemKind.Gems, Amount: 500 });
 
 			// The value a judge needs: Steam's gem type, the account's set size and wallet.
-			NocatFarm.Core.TradeOffers.Item gooCard = Card(190) with { GooType = 7, GooBorder = 1 };
-			NocatFarm.Plugins.PluginTradeOffer gooHanded = NocatFarm.Modules.Trading.ForAddons("main",
+			GamerFarm.Core.TradeOffers.Item gooCard = Card(190) with { GooType = 7, GooBorder = 1 };
+			GamerFarm.Plugins.PluginTradeOffer gooHanded = GamerFarm.Modules.Trading.ForAddons("main",
 				Offer(190, [gooCard], [Gems(2, 500)]), DateTime.UtcNow);
 			Check("plugin API: Steam's gem value type and border colour reach a trade judge with the item",
 				gooHanded.Giving[0] is { GooType: 7, GooBorder: 1 }, $"{gooHanded.Giving[0]}");
@@ -40545,14 +40545,14 @@ static class AddonTradeChecks {
 			using System.Text.Json.JsonDocument gooDoc = System.Text.Json.JsonDocument.Parse(
 				"""{"owner_actions":[{"link":"javascript:GetGooValue('6','123','440','7','1')"}]}""");
 			Check("plugin API: a GooValue owner action is read from Steam's item description",
-				NocatFarm.Core.Spare.GooOf(gooDoc.RootElement) == (7, 1), $"{NocatFarm.Core.Spare.GooOf(gooDoc.RootElement)}");
+				GamerFarm.Core.Spare.GooOf(gooDoc.RootElement) == (7, 1), $"{GamerFarm.Core.Spare.GooOf(gooDoc.RootElement)}");
 
-			var apiHost = new NocatFarm.Plugins.Host(mgr, "api-values");
+			var apiHost = new GamerFarm.Plugins.Host(mgr, "api-values");
 			Check("plugin API: an item without a GooValue type has no gem value to ask Steam for",
-				await apiHost.GemValueAsync(new NocatFarm.Plugins.PluginTradeItem(753, "6", 1, 1, 1, 1, "Scout", "440-Scout",
-					"Trading Card", NocatFarm.Plugins.PluginTradeItemKind.Card, true, true, 440, true), CancellationToken.None) is null);
+				await apiHost.GemValueAsync(new GamerFarm.Plugins.PluginTradeItem(753, "6", 1, 1, 1, 1, "Scout", "440-Scout",
+					"Trading Card", GamerFarm.Plugins.PluginTradeItemKind.Card, true, true, 440, true), CancellationToken.None) is null);
 
-			NocatFarm.Plugins.PluginCardSet shape = new(440, "Team Fortress 2", 6, 2);
+			GamerFarm.Plugins.PluginCardSet shape = new(440, "Team Fortress 2", 6, 2);
 			Check("plugin API: a card set gives its game, size and how many cards the account holds",
 				shape is { AppId: 440, Game: "Team Fortress 2", SetSize: 6, Owned: 2 }, $"{shape}");
 
