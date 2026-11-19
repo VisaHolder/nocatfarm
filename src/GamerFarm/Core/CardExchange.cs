@@ -26,14 +26,13 @@ namespace GamerFarm.Core;
 /// again.</para>
 /// </remarks>
 public static partial class CardExchange {
-	/// <summary>The note on every swap offer, before the match's id: the name from before 2.0.0, then "card swap #a1b2c3d4e5f6".</summary>
-	/// <remarks>2.0.0 renamed the app gamer.farm, but the note keeps the old name: copies before 2.0.0 know a swap offer only
-	/// by it, and would take one saying anything else for an ordinary trade - the swap would never happen. <see cref="MatchIdOf"/>
-	/// reads both. Once no copy from before 2.0.0 swaps any more, this sends <see cref="NewTag"/> instead.</remarks>
-	public const string Tag = "nocat.farm card swap #";
+	/// <summary>The note on every swap offer, before the match's id: "gamer.farm card swap #a1b2c3d4e5f6".</summary>
+	/// <remarks>2.0.1 sends the new name. Copies from 2.0.0 on read it; older ones update before they swap.
+	/// <see cref="MatchIdOf"/> still reads the note from before 2.0.0 (<see cref="NewTag"/>).</remarks>
+	public const string Tag = "gamer.farm card swap #";
 
-	/// <summary>2.0.0: the same note under the new name - read, never sent (see <see cref="Tag"/>).</summary>
-	public const string NewTag = "gamer.farm card swap #";
+	/// <summary>The note from before 2.0.1 - read on offers still out there, never sent (see <see cref="Tag"/>).</summary>
+	public const string NewTag = "nocat.farm card swap #";
 
 	/// <summary>How long a match is acted on - after that it's left, and gamer.mom closes it.</summary>
 	public static readonly TimeSpan MatchFor = TimeSpan.FromDays(2);

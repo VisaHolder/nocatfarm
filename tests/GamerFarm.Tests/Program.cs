@@ -31686,10 +31686,9 @@ static class CardSwapChecks {
 		Check("swap note: only \"nocat.farm card swap #\" with a 12-hex match id names a match",
 			GamerFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6" && GamerFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #A1B2C3D4E5F6") == null
 			&& GamerFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2") == null && GamerFarm.Core.CardExchange.MatchIdOf("hi") == null && GamerFarm.Core.CardExchange.MatchIdOf("") == null);
-		// 2.0.0: the app is gamer.farm now, but the note it sends keeps the old name - copies before 2.0.0 know a swap only by
-		// it. A note under the new name is read too, for the release that switches over.
-		Check("swap note (2.0.0): sent as \"nocat.farm card swap #\", so copies before the rename know it",
-			GamerFarm.Core.CardExchange.Tag == "nocat.farm card swap #");
+		// 2.0.1: the note sent says gamer.farm; the one from before is still read.
+		Check("swap note (2.0.1): sent as \"gamer.farm card swap #\", the old note still read",
+			GamerFarm.Core.CardExchange.Tag == "gamer.farm card swap #" && GamerFarm.Core.CardExchange.MatchIdOf("nocat.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6");
 		Check("swap note (2.0.0): \"gamer.farm card swap #\" names a match as well, by the same rules",
 			GamerFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #a1b2c3d4e5f6") == "a1b2c3d4e5f6" && GamerFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #a1b2") == null
 			&& GamerFarm.Core.CardExchange.MatchIdOf("gamer.farm card swap #A1B2C3D4E5F6") == null && GamerFarm.Core.CardExchange.MatchIdOf("other.farm card swap #a1b2c3d4e5f6") == null);
@@ -31845,7 +31844,7 @@ static class CardSwapChecks {
 		string first = await Look(t0s);
 		var sentLedger = GamerFarm.Core.CardExchange.Ledger.Load(sBot.Name);
 		Check("swap send: one offer, to the partner with its trade token, the match's note, our copies for theirs, one for one",
-			sentOffers.Count == 1 && sentOffers[0] is { Partner: YouId, Token: "Tok12345", Note: "nocat.farm card swap #dddddddddddd" }
+			sentOffers.Count == 1 && sentOffers[0] is { Partner: YouId, Token: "Tok12345", Note: "gamer.farm card swap #dddddddddddd" }
 			&& sentOffers[0].Give.Select(i => i.AssetId).SequenceEqual([1UL, 6UL]) && sentOffers[0].Take.Select(i => i.AssetId).SequenceEqual([901UL, 902UL])
 			&& sentOffers[0].Give.All(i => i is { App: 753, Context: 6, Amount: 1 }), first);
 		Check("swap send: noted as sent with its offer, counted for today", sentLedger.Of("dddddddddddd") is { State: "sent", Offer: 9001 } && sentLedger.DoneToday(t0s) == 1);
