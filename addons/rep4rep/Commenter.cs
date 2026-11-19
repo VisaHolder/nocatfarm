@@ -1,7 +1,7 @@
-using NocatFarm.Plugins;
-using static NocatFarm.Addons.Rep4Rep.Texts;
+using GamerFarm.Plugins;
+using static GamerFarm.Addons.Rep4Rep.Texts;
 
-namespace NocatFarm.Addons.Rep4Rep;
+namespace GamerFarm.Addons.Rep4Rep;
 
 /// <summary>
 /// One account's rep4rep commenting: fetch a task, ask the app to post it, tell rep4rep. Ported from gamer.farm 1.8.9's

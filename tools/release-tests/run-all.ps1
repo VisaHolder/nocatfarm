@@ -8,7 +8,7 @@
 param([Parameter(Mandatory)][string]$From)
 $ErrorActionPreference = 'Continue'   # native tools write progress to stderr; failures are read from the output instead
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
+$Version = (Select-Xml -Path "$Repo\src\GamerFarm\GamerFarm.csproj" -XPath '//Version').Node.InnerText
 $failed = @()
 # "N failed" counts only on a line of its own - the summary every test script ends with. Anywhere in a line, the app's
 # own log inside a test ("dashboard: 5 failed logins from 127.0.0.1") failed a run whose every check had passed.
@@ -31,15 +31,16 @@ function Step($name, [scriptblock]$run) {
 
 # A run stopped part-way leaves things behind: a test copy the update swap restarted by itself (on the default port, where
 # it answered for the real dashboard) and the test download server. Clear them first, so they can't pass or fail this run.
-Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like "$env:TEMP\nocatfarm-tests\*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like "$env:TEMP\gamerfarm-tests\*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort 8768 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
 Get-NetTCPConnection -LocalPort 8766 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
 
 Push-Location $Repo
 try {
-  Step 'build' { dotnet build src/NocatFarm -c Release --no-incremental }
-  Step 'unit tests' { Push-Location tests/NocatFarm.Tests; dotnet run -c Release; Pop-Location }
+  Step 'build' { dotnet build src/GamerFarm -c Release --no-incremental }
+  Step 'unit tests' { Push-Location tests/GamerFarm.Tests; dotnet run -c Release; Pop-Location }
   Step 'translations' { $env:PYTHONIOENCODING = 'utf-8'; python tools/check-translations.py }
-  Step 'dashboard script parses' { node -e "new Function(require('fs').readFileSync('src/NocatFarm/wwwroot/app.js','utf8')); console.log('all clear')" }
+  Step 'dashboard script parses' { node -e "new Function(require('fs').readFileSync('src/GamerFarm/wwwroot/app.js','utf8')); console.log('all clear')" }
   Step 'commands list is current' { python tools/gen-commands.py }
   if ($failed.Count -eq 0) {
     Step 'release files' { powershell -ExecutionPolicy Bypass -File tools\package-release.ps1 }
@@ -50,6 +51,11 @@ try {
     Step 'every button (browser)' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\e2e.ps1" }
     Step 'updating itself - portable' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode portable }
     Step 'updating itself - installed' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode installed }
+    # 2.0.1: a copy from before 2.0.1 puts this build in with its own updater, and comes back with everything under the new names.
+    foreach ($old in @($From, '1.9.3') | Select-Object -Unique) {
+      Step "updating from $old (before 2.0.1) - portable" { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\update-old.ps1" -From $old -Mode portable }
+    }
+    Step "updating from $From (before 2.0.1) - installed" { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\update-old.ps1" -From $From -Mode installed }
     Step 'Linux, Docker and Mac on GitHub' {
       $sha = (git rev-parse HEAD).Trim()
       gh workflow run linux.yml --repo VisaHolder/gamerfarm | Out-Null

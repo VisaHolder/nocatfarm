@@ -38,7 +38,7 @@ On/off settings take `true`/`false` (or `on`/`off`). Game lists take appIDs or s
 `none`. On the dashboard, a game list's box searches the account's own games by name (every account's, for a global
 list): type part of a name and pick it. A pasted appID or store link works there too, for a game it doesn't own. A choice takes its number or the start of its label, so `set myaccount OnlineStatus invisible` works.
 
-Settings live in `config/nocatFarm.json` (global) and `config/<account>.json`, as plain JSON under the same names.
+Settings live in `config/gamerFarm.json` (global) and `config/<account>.json`, as plain JSON under the same names.
 You can edit them by hand and type `reload`. Back up the `config` folder and you've backed up everything.
 
 ### Global settings
@@ -50,8 +50,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Updates & plugins | *Updates*: ask me and install once my accounts are asleep, ask me and install right away (the default), install by itself at night, or don't look for updates; *Count me as a user* (on: once an hour tells gamer.mom it's running and how many accounts are signed in, as a number only, see [Privacy and safety](safety-and-faq.md#privacy-and-safety)); right under it *Share my farming totals* (on, only while *Count me as a user* is on: the hourly message also carries the game-hours banked, cards dropped, items turned into gems, badges crafted, packs opened and items sold since the last one, as numbers only, for the totals on gamer.mom's gamer.farm page; the first time, it also sends once, the totals already in its history from before - hours and cards, the only ones it kept before 1.8.1) | *Share cheapest sets with other gamer.farm users* (on, only while *Count me as a user* is on: while an account buys the cheapest full sets, about every 6 hours the set finder sends gamer.mom the cheapest card sets it found - market prices only - and takes back the ones other copies found, only as which games to check first, see [Buying cards](cards-and-idling.md#buying-cards)), *Install by itself between* (3 to 6), *Wait after a release for* (2 hours), *Remind me every hour*, *Load plugins* |
 | Backups | *Back up every day* (off), *Save backups in*, *Backup password* (see [Daily backups](dashboard.md#daily-backups-that-open-on-any-pc)) | *Keep the last* (7 backups), *Back up at* (4 am), what's included, *Backup messages* (only when one fails; or off, or after every backup), *Send the daily backup to Telegram* (on), *Also keep a copy here* |
 | All accounts | *Restart a stuck account* (on, see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Stuck after* (3 hours), *Groups every account joins*, *Never play these games (all accounts)*, *Open in Steam buttons on every account*, *Devices of yours to ignore* (see [Scam watch](trades.md#scam-watch)) |
-| Dashboard & phone | | *Web dashboard*, opening the browser, *Stay signed in for* (7 days), *Listen on*, *Port*, *Dashboard password*; *Open from outside*: *Open from anywhere*, *Ask for a Telegram code when signing in from outside* (on), *Switch off Open from anywhere after this many failed sign-ins a day* (5; 0 never), *Public address*, *Trust forwarded addresses from*; *Let farm.gamer.mom open this dashboard* (on for a new install on a PC with a screen, off for an existing one, Docker and servers; see [farm.gamer.mom](dashboard.md#farmnocatlol)); *Show how to install it on a phone* (on, see [The phone app](phone-and-notifications.md#the-phone-app)) |
-| Discord profile | the *Playing gamer.farm* card: its switch, what it shows, a preview | which accounts, the featured account, the two buttons |
+| Dashboard & phone | | *Web dashboard*, opening the browser, *Stay signed in for* (7 days), *Listen on*, *Port*, *Dashboard password*; *Open from outside*: *Open from anywhere*, *Ask for a Telegram code when signing in from outside* (on), *Switch off Open from anywhere after this many failed sign-ins a day* (5; 0 never), *Public address*, *Trust forwarded addresses from*; *Let farm.gamer.mom open this dashboard* (on for a new install on a PC with a screen, off for an existing one, Docker and servers; see [farm.gamer.mom](dashboard.md#farmgamermom)); *Show how to install it on a phone* (on, see [The phone app](phone-and-notifications.md#the-phone-app)) |
 | Steam connection & logs | | *Accounts farming at once* (0 = no limit), *Connect using*, *Proxy* (a user name and password under *needs a sign-in*); the log: *Write a log file*, *Keep logs for* (14 days), *Show debug detail on screen*, *Say what it's doing every* (5 minutes while playing) and *While resting, say what it's doing every* (30 minutes; 0 turns them off), the daily summary and *Daily summary at* (09:30), the *Weekly report* (off) with its day and hour |
 
 At the bottom of Global settings is **Backup & restore**. See [Backup and restore](dashboard.md#backup-and-restore).
@@ -123,20 +122,20 @@ without questions: `unins000.exe /VERYSILENT` keeps your accounts and settings, 
 ### Environment variables
 
 Environment variables work on any install, not just Docker. When set, they win at every start (and after a restore)
-and are written into `config/nocatFarm.json`. Take `NOCATFARM_PUBLIC_ADDRESS` or `NOCATFARM_TRUSTED_PROXIES` away again
+and are written into `config/gamerFarm.json`. Take `GAMERFARM_PUBLIC_ADDRESS` or `GAMERFARM_TRUSTED_PROXIES` away again
 and the next start clears what it had set, unless you've changed it in Settings since:
 
 | Variable | What it sets |
 |---|---|
-| `NOCATFARM_WEB_HOST` | *Listen on* (`WebHost`). |
-| `NOCATFARM_WEB_PORT` | *Port* (`WebPort`, 7242 by default). |
-| `NOCATFARM_WEB_PASSWORD` | *Dashboard password*. |
-| `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from (how Docker secrets arrive). Wins over the one above. |
-| `NOCATFARM_PUBLIC_ADDRESS` | *Public address* (`WebPublicAddress`): the address it's reached at from the internet, like `farm.example.com` or `203.0.113.7:7242`. On a VPS it's what lets visitors from outside in at all - see [On a VPS](linux-docker-vps.md#on-a-vps-a-rented-server). |
-| `NOCATFARM_TRUSTED_PROXIES` | *Trust forwarded addresses from* (`WebTrustedProxies`): a reverse proxy that isn't on this PC, like Caddy in front of Docker (`172.16.0.0/12`). Its X-Forwarded-For is believed, so internet visitors count as the internet. A proxy on this PC needs nothing. |
-| `NOCATFARM_HOME_ADDRESS` | Your computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if Docker publishes a different one). Inside Docker gamer.farm can't see it, so without this the Phone page and `/dashboard` can't show the home link or its QR code, and tell you what to open instead. |
-| `NOCATFARM_PING_URL` | For the browser test only: sends the *Count me as a user* ping to a stand-in on this PC instead of gamer.mom. Only an address on this PC is taken; anything else is ignored. |
-| `NOCATFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
+| `GAMERFARM_WEB_HOST` | *Listen on* (`WebHost`). |
+| `GAMERFARM_WEB_PORT` | *Port* (`WebPort`, 7242 by default). |
+| `GAMERFARM_WEB_PASSWORD` | *Dashboard password*. |
+| `GAMERFARM_WEB_PASSWORD_FILE` | A file to read the password from (how Docker secrets arrive). Wins over the one above. |
+| `GAMERFARM_PUBLIC_ADDRESS` | *Public address* (`WebPublicAddress`): the address it's reached at from the internet, like `farm.example.com` or `203.0.113.7:7242`. On a VPS it's what lets visitors from outside in at all - see [On a VPS](linux-docker-vps.md#on-a-vps-a-rented-server). |
+| `GAMERFARM_TRUSTED_PROXIES` | *Trust forwarded addresses from* (`WebTrustedProxies`): a reverse proxy that isn't on this PC, like Caddy in front of Docker (`172.16.0.0/12`). Its X-Forwarded-For is believed, so internet visitors count as the internet. A proxy on this PC needs nothing. |
+| `GAMERFARM_HOME_ADDRESS` | Your computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if Docker publishes a different one). Inside Docker gamer.farm can't see it, so without this the Phone page and `/dashboard` can't show the home link or its QR code, and tell you what to open instead. |
+| `GAMERFARM_PING_URL` | For the browser test only: sends the *Count me as a user* ping to a stand-in on this PC instead of gamer.mom. Only an address on this PC is taken; anything else is ignored. |
+| `GAMERFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
 
 ## Commands
 

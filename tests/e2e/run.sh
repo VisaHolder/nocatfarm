@@ -8,13 +8,13 @@ set -e
 APP="$1"
 PORT="${2:-7377}"
 HERE=$(cd "$(dirname "$0")" && pwd)
-[ -x "$APP/nocatFarm" ] || { echo "FAIL  no nocatFarm in $APP"; exit 1; }
+[ -x "$APP/gamerFarm" ] || { echo "FAIL  no gamerFarm in $APP"; exit 1; }
 [ "$PORT" != 7242 ] || { echo "FAIL  7242 is the real dashboard's port - pick another"; exit 1; }
 # Its "Count me as a user" ping goes to ping-stub.mjs on this machine (port+1), never to gamer.mom.
 STUB_PORT=$((PORT + 1))
 [ "$STUB_PORT" != 7242 ] || { echo "FAIL  the ping stub would sit on 7242 - pick another port"; exit 1; }
 
-T=$(mktemp -d "${TMPDIR:-/tmp}/nocatfarm-e2e.XXXXXX")
+T=$(mktemp -d "${TMPDIR:-/tmp}/gamerfarm-e2e.XXXXXX")
 node "$HERE/make-fixture.mjs" "$T" "$PORT" --ping-stub
 
 [ -d "$HERE/node_modules/playwright" ] || (cd "$HERE" && npm ci --no-audit --no-fund)
@@ -22,7 +22,7 @@ node "$HERE/make-fixture.mjs" "$T" "$PORT" --ping-stub
 
 nohup node "$HERE/ping-stub.mjs" "$STUB_PORT" < /dev/null > "$T/stub.log" 2>&1 &
 STUB=$!
-NOCATFARM_PING_URL="http://127.0.0.1:$STUB_PORT/api/farm/ping" nohup "$APP/nocatFarm" --no-gui --path "$T" < /dev/null > "$T/run.log" 2>&1 &
+GAMERFARM_PING_URL="http://127.0.0.1:$STUB_PORT/api/farm/ping" nohup "$APP/gamerFarm" --no-gui --path "$T" < /dev/null > "$T/run.log" 2>&1 &
 PID=$!
 stop() {
 	kill -TERM "$STUB" 2>/dev/null || true

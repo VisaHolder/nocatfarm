@@ -1,0 +1,222 @@
+﻿using System.Text.Json;
+using GamerFarm.Config;
+
+namespace GamerFarm.Core;
+
+/// <summary>
+/// How long each account has spent actually running games, for as long as gamerFarm has been watching.
+/// </summary>
+/// <remarks>
+/// The log could already tell you what an account is doing this minute and how far into today it is, but not
+/// the one number anybody actually wants: how much has this thing done for me. "no cards left to farm - idling
+/// 0m so far" thirty seconds after a logon was the reductio - technically true, and worth nothing.
+///
+/// Counted from what Steam was TOLD is running, not from wall-clock uptime, so an account sitting signed in
+/// doing nothing accrues nothing. Written to disk on a timer rather than on every tick, because this is a
+/// vanity number and is not worth an fsync a minute.
+/// </remarks>
+public static class Lifetime {
+	private static readonly Lock Gate = new();
+
+	/// <summary>One save at a time, snapshot to file: the minute's save from a heartbeat and the shutdown save together
+	/// could write in the wrong order, the older numbers landing last.</summary>
+	private static readonly Lock SaveGate = new();
+	private static readonly Dictionary<string, double> Minutes = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Game-minutes: every game that was running counts, the way Steam credits playtime - 32 games for an
+	/// hour is 32 hours. The clock total above is an hour however many games were on, which made a robot running
+	/// 32 games around the clock look like it banked 20 hours a day.</summary>
+	private static readonly Dictionary<string, double> GameMinutes = new(StringComparer.OrdinalIgnoreCase);
+
+	private static DateTime _lastSave = DateTime.MinValue;
+	private static bool _loaded;
+
+	/// <summary>Set when the file existed but could not be read, so Save refuses to write over it.</summary>
+	private static bool _loadFailed;
+
+	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "lifetime.json");
+
+	private static string GamesPath => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "lifetime-games.json");
+
+	/// <summary>Total minutes this account has spent with a game running.</summary>
+	public static int For(string bot) {
+		Load();
+
+		lock (Gate) {
+			return Minutes.TryGetValue(bot, out double m) ? (int) m : 0;
+		}
+	}
+
+	/// <summary>Total game-minutes for this account: every running game counted, the way Steam counts it.</summary>
+	public static int GamesFor(string bot) {
+		Load();
+
+		lock (Gate) {
+			return GameMinutes.TryGetValue(bot, out double m) ? (int) m : 0;
+		}
+	}
+
+	/// <summary>Credit time actually spent playing. Anything longer than a few minutes is treated as a gap.</summary>
+	/// <remarks>
+	/// Written every minute, not every five.
+	///
+	/// At five, everything since the last write was lost whenever the process ended without the graceful stop
+	/// that calls Save - a crash, a kill, a machine going down. That is not the rare case it sounds like: it
+	/// silently ate most of the number. An account with an hour and a half on the clock for the day was still
+	/// reporting a lifetime total of three minutes, because each run only ever persisted the twenty seconds
+	/// credited by its first tick and then died before the next five-minute boundary.
+	///
+	/// The cost of the shorter interval is one atomic write of a few hundred bytes a minute, which is nothing
+	/// next to a total that is wrong by a factor of thirty.
+	/// </remarks>
+	public static void Add(string bot, double minutes, int games = 1) {
+		if ((minutes <= 0) || (minutes > 5)) {
+			return;
+		}
+
+		Load();
+
+		bool due;
+
+		lock (Gate) {
+			Minutes[bot] = Minutes.GetValueOrDefault(bot) + minutes;
+
+			if (games > 0) {
+				GameMinutes[bot] = GameMinutes.GetValueOrDefault(bot, Minutes[bot] - minutes) + (minutes * games);
+			}
+
+			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(1);
+
+			if (due) {
+				_lastSave = DateTime.UtcNow;
+			}
+		}
+
+		if (due) {
+			Save();
+		}
+	}
+
+	private static void Load() {
+		lock (Gate) {
+			if (_loaded) {
+				return;
+			}
+
+			_loaded = true;
+
+			try {
+				if (File.Exists(Path)) {
+					Dictionary<string, double>? saved = JsonSerializer.Deserialize<Dictionary<string, double>>(File.ReadAllText(Path));
+
+					if (saved != null) {
+						foreach ((string bot, double m) in saved) {
+							Minutes[bot] = m;
+						}
+					}
+				}
+			} catch (Exception e) {
+				// Remembered, because a read we could not complete must never be written back over. Starting
+				// from zero after a failed read and then saving is how a transient problem - a file still being
+				// written, a lock, a bad sector - turns into permanent loss.
+				_loadFailed = true;
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, Log.Scrub(e.Message)));
+			}
+
+			try {
+				if (File.Exists(GamesPath)) {
+					Dictionary<string, double>? saved = JsonSerializer.Deserialize<Dictionary<string, double>>(File.ReadAllText(GamesPath));
+
+					if (saved != null) {
+						foreach ((string bot, double m) in saved) {
+							GameMinutes[bot] = m;
+						}
+					}
+				} else if (!_loadFailed) {
+					// First run with game-hours: the clock total times how many games this account had on at once,
+					// as the day-by-day history recorded it (never less than one - every clock minute had a game).
+					foreach ((string bot, double m) in Minutes) {
+						(double clock, double banked) = History.Recent(History.KeepDays, bot);
+						GameMinutes[bot] = m * (clock > 0 ? Math.Max(1, banked / clock) : 1);
+					}
+				}
+			} catch (Exception e) {
+				_loadFailed = true;
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, Log.Scrub(e.Message)));
+			}
+		}
+	}
+
+	/// <summary>Forget what's in memory and read the files again - after a restore put other ones in their place.
+	/// Not saved first: what's in memory is exactly what the restore replaced.</summary>
+	internal static void Reload() {
+		lock (Gate) {
+			Minutes.Clear();
+			GameMinutes.Clear();
+			_loaded = false;
+			_loadFailed = false;
+		}
+
+		Load();
+	}
+
+	/// <summary>Write the totals out.</summary>
+	/// <remarks>
+	/// Load FIRST, and never write nothing over something.
+	///
+	/// This is called on shutdown, and it used to serialise whatever was in memory without reading the file
+	/// first. Every read path (For, Total, Add) loads on demand, so a run that ended before ANY of them
+	/// happened - started and stopped again, or stopped while still signing in - held an empty dictionary and
+	/// wrote `{}` straight over months of accumulated hours. One quick restart at the wrong moment and the
+	/// number was gone, silently, with the log line about it sitting at Debug where nobody would see it.
+	///
+	/// The empty-guard is the belt to Load's braces: if there is genuinely nothing to record, the right thing
+	/// to do with a file that already has something in it is leave it alone.
+	/// </remarks>
+	public static void Save() {
+		if (ConfigStore.RestoreWriting) {
+			return;   // see ConfigStore.RestoreWriting: the restored totals are about to be read in
+		}
+
+		try {
+			Load();
+
+			lock (SaveGate) {
+				WriteLocked();
+			}
+		} catch (Exception e) {
+			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
+		}
+	}
+
+	private static void WriteLocked() {
+		Dictionary<string, double> snapshot;
+		Dictionary<string, double> games;
+
+		lock (Gate) {
+			snapshot = new Dictionary<string, double>(Minutes);
+			games = new Dictionary<string, double>(GameMinutes);
+		}
+
+		string path = Path;
+
+		if (_loadFailed) {
+			Log.Debug("the lifetime totals could not be read this run - not writing over them");
+
+			return;
+		}
+
+		if ((snapshot.Count == 0) && File.Exists(path)) {
+			Log.Debug("nothing to record - leaving the existing lifetime totals alone");
+
+			return;
+		}
+
+		Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+		AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+
+		if ((games.Count > 0) || !File.Exists(GamesPath)) {
+			AtomicFile.Write(GamesPath, JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true }));
+		}
+	}
+}

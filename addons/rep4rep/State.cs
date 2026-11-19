@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace NocatFarm.Addons.Rep4Rep;
+namespace GamerFarm.Addons.Rep4Rep;
 
 /// <summary>
 /// One account's commenting record - everything that MUST survive a restart. The property names are the ones gamer.farm

@@ -5,14 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>nocatfarm.stress</AssemblyName>
+    <AssemblyName>gamerfarm.stress</AssemblyName>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\NocatFarm\NocatFarm.csproj">
+    <ProjectReference Include="..\..\..\src\GamerFarm\GamerFarm.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>

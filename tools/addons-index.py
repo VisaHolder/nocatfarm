@@ -1,5 +1,10 @@
 """Write each official add-on's built DLL into addons/addons.json: its version, its release address and its SHA-256.
 
+2.0.1: they go in each entry's "current" - the build for gamer.farm 2.0.1 and later, under its own file name
+(gamerfarm.<id>.dll). The fields outside "current" are left exactly as they are: they're the build every copy from before
+2.0.1 takes (those read nothing else), made for the program's name then - the last one, attached to the v2.0.0 release.
+A copy of 2.0.1 or later takes "current".
+
     python tools/addons-index.py <app version> <folder with the built DLLs>
     python tools/addons-index.py --bump        only the serial, for a list re-signed without a new build
 
@@ -21,9 +26,10 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 INDEX = ROOT / "addons" / "addons.json"
-# The repository's name before 2.0.0 (GitHub forwards it to VisaHolder/gamerfarm): copies before 2.0.0 install an add-on
-# only from this address, and 2.0.0 and later take both.
-RELEASE = "https://github.com/VisaHolder/nocatfarm/releases/download/v{app}/{file}"
+# Where "current" builds are: this repository's releases (2.0.0 and later take this address).
+RELEASE = "https://github.com/VisaHolder/gamerfarm/releases/download/v{app}/{file}"
+# The first version that takes "current".
+CURRENT_FROM = "2.0.1"
 
 
 def write(data):
@@ -44,7 +50,9 @@ def main():
     app, built = sys.argv[1], pathlib.Path(sys.argv[2])
 
     for entry in data["addons"]:
-        dll = built / entry["file"]
+        current = entry.get("current", {})
+        file = current.get("file") or f"gamerfarm.{entry['id']}.dll"
+        dll = built / file
 
         if not dll.exists():
             sys.exit(f"addons-index: {dll} wasn't built")
@@ -53,10 +61,17 @@ def main():
         proj = next((ROOT / "addons" / entry["id"]).glob("*.csproj"))
         version = re.search(r"<Version>([^<]+)</Version>", proj.read_text(encoding="utf-8")).group(1)
 
-        entry["version"] = version
-        entry["url"] = RELEASE.format(app=app, file=entry["file"])
-        entry["sha256"] = hashlib.sha256(dll.read_bytes()).hexdigest()
-        print(f"  {entry['id']} {version}  sha256 {entry['sha256']}")
+        entry["current"] = {
+            "version": version,
+            "minAppVersion": current.get("minAppVersion") or CURRENT_FROM,
+            "file": file,
+            "url": RELEASE.format(app=app, file=file),
+            "sha256": hashlib.sha256(dll.read_bytes()).hexdigest(),
+        }
+        # "source" last, as it was.
+        if "source" in entry:
+            entry["source"] = entry.pop("source")
+        print(f"  {entry['id']} {version}  sha256 {entry['current']['sha256']}  (copies before {CURRENT_FROM} keep {entry['file']} {entry['version']})")
 
     write(data)
 

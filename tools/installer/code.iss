@@ -1,10 +1,10 @@
-; gamer.farm setup - the screen and what it does. Included from nocatfarm.iss.
+; gamer.farm setup - the screen and what it does. Included from gamerfarm.iss.
 
 [Code]
 const
   UrlGitHub = 'https://github.com/VisaHolder/gamerfarm';
   UrlSite = 'https://gamer.mom';
-  UrlMaker = 'https://nocat.lol';
+  UrlMaker = 'https://gamer.mom';
   DefaultPort = 7242;
 
   // The screen, in pixels at 100%. Every language's words are measured against these (Consolas: 6px a character at
@@ -54,7 +54,7 @@ var
   InstallDir: String;
   ShowingAdvanced: Boolean;
   CloseOnly: Boolean;   // the last screen's "close" (or its cross): finish without opening gamer.farm
-  HadOldDesktopIcon: Boolean;   // 2.0.0: an update over a copy with a "nocat.farm" desktop shortcut - it gets a "gamer.farm" one
+  HadOldDesktopIcon: Boolean;   // 2.0.0: an update over a copy with an old-named desktop shortcut - it gets a "gamer.farm" one
   HoverTimer: LongWord;
 
   LogoImg: TBitmapImage;
@@ -333,15 +333,28 @@ begin
   if Result = '' then Result := ScanFor(AddBackslash(GetEnv('USERPROFILE')) + 'Downloads', Exe, Marker, 2);
 end;
 
-function FindNocatFarm: String;
+// A folder with gamer.farm's settings in it - under their name now, or the one before 2.0.1.
+function HasSettings(const Dir: String): Boolean;
+begin
+  Result := (Dir <> '') and (FileExists(Dir + '\config\gamerFarm.json') or FileExists(Dir + '\config\nocatFarm.json'));
+end;
+
+// A portable copy to move in: the one that starts with Windows, the one running, or one where people unzip things -
+// under the program's name now, or the one before 2.0.1.
+function FindGamerFarm: String;
 var
   Run: String;
 begin
   Result := '';
-  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm', Run) then
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm', Run) then
     Result := DirOfExe(Run);
-  if (Result = '') or not FileExists(Result + '\config\nocatFarm.json') then Result := RunningDir('nocatFarm');
-  if (Result = '') or not FileExists(Result + '\config\nocatFarm.json') then Result := ScanUsual('{#AppExe}', 'config\nocatFarm.json');
+  if not HasSettings(Result) and RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm', Run) then
+    Result := DirOfExe(Run);
+  if not HasSettings(Result) then Result := RunningDir('gamerFarm');
+  if not HasSettings(Result) then Result := RunningDir('nocatFarm');
+  if not HasSettings(Result) then Result := ScanUsual('{#AppExe}', 'config\gamerFarm.json');
+  if not HasSettings(Result) then Result := ScanUsual('{#OldExe}', 'config\nocatFarm.json');
+  if not HasSettings(Result) then Result := '';
   if SameDir(Result, InstallDir) then Result := '';
   Result := RemoveBackslash(Result);
 end;
@@ -377,17 +390,21 @@ end;
 procedure CloseCopy(const Dir: String);
 var
   Code: Integer;
-  Exe, Quoted: String;
+  Exe, Quoted, OldQuoted: String;
 begin
   Exe := Dir + '\{#AppExe}';
-  Quoted := Exe;
+  // 2.0.1: a copy from before 2.0.1 has the program under its old name.
+  if not FileExists(Exe) then Exe := Dir + '\{#OldExe}';
+  Quoted := Dir + '\{#AppExe}';
+  OldQuoted := Dir + '\{#OldExe}';
   StringChangeEx(Quoted, '''', '''''', True);   // PowerShell single quotes: an apostrophe is written twice
+  StringChangeEx(OldQuoted, '''', '''''', True);
   if not FileExists(Exe) then Exit;
   if KnowsQuit(Exe) then begin
     if Exec(Exe, '--quit', Dir, SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then Exit;
     Log('--quit didn''t close ' + Exe + ' (exit ' + IntToStr(Code) + ') - stopping it');
   end;
-  Exec(PowerShell, '-NoProfile -NonInteractive -Command "Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object Path -eq ''' + Quoted + ''' | Stop-Process -Force; Start-Sleep -Seconds 2"',
+  Exec(PowerShell, '-NoProfile -NonInteractive -Command "Get-Process gamerFarm,nocatFarm -ErrorAction SilentlyContinue | Where-Object { ($_.Path -eq ''' + Quoted + ''') -or ($_.Path -eq ''' + OldQuoted + ''') } | Stop-Process -Force; Start-Sleep -Seconds 2"',
     '', SW_HIDE, ewWaitUntilTerminated, Code);
 end;
 
@@ -396,13 +413,13 @@ begin
   Result := ((not Upgrading) and Toggles[1].On) or HadOldDesktopIcon;
 end;
 
-// [InstallDelete] (2.0.0): the old "nocat.farm" shortcuts go only when this updates an install - see nocatfarm.iss.
+// [InstallDelete] (2.0.0): the old-named shortcuts and (2.0.1) program files go only when this updates an install - see gamerfarm.iss.
 function IsUpgrading: Boolean;
 begin
   Result := Upgrading;
 end;
 
-// [InstallDelete], just before the old "nocat.farm" desktop shortcut of an install being updated is deleted: remember
+// [InstallDelete], just before the old-named desktop shortcut of an install being updated is deleted: remember
 // it was there, so the update puts a "gamer.farm" one in its place.
 function NoteOldDesktopIcon: Boolean;
 begin
@@ -739,13 +756,13 @@ begin
     if ParamYes('NEWER', False) then InstalledVersion := '9.9.9' else InstalledVersion := '1.4.7';
   end else
     Upgrading := RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{89595F01-E60C-4593-9BA7-51B5A3A2F7C5}_is1', 'DisplayVersion', InstalledVersion)
-      and FileExists(AddBackslash(InstallDir) + '{#AppExe}');
+      and (FileExists(AddBackslash(InstallDir) + '{#AppExe}') or FileExists(AddBackslash(InstallDir) + '{#OldExe}'));
   InstalledNewer := Upgrading and IsNewer(InstalledVersion);
   if InstalledNewer then Log('version ' + InstalledVersion + ' is installed, newer than this setup ({#AppVersion})');
 
   // /FRESH shows what a PC with nothing on it gets (for the preview).
   if not Upgrading and not ParamYes('FRESH', False) then begin
-    Portable := FindNocatFarm;
+    Portable := FindGamerFarm;
     SourcePath[SrcAsf] := FindAsf;
     SourcePath[SrcIdleMaster] := FindIdleMaster;
   end;
@@ -1026,6 +1043,10 @@ begin
   if DirExists(Portable + '\logs') then CopyTree(Portable + '\logs', ExpandConstant('{app}\logs'));
   // The portable's startup entry would start the old copy at every sign-in next to this one. With start with
   // Windows on, the choices below point it here; with it off, nothing should start at all.
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm', Run)
+    and SameDir(DirOfExe(Run), Portable) then
+    RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm');
+  // 2.0.1: and the one a copy from before 2.0.1 made, under the old name.
   if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm', Run)
     and SameDir(DirOfExe(Run), Portable) then
     RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm');
@@ -1088,6 +1109,9 @@ begin
   if CurUninstallStep = usUninstall then CloseCopy(RemoveBackslash(ExpandConstant('{app}')));
   if CurUninstallStep <> usPostUninstall then Exit;
 
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm', Run)
+    and SameDir(DirOfExe(Run), ExpandConstant('{app}')) then
+    RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm');
   if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm', Run)
     and SameDir(DirOfExe(Run), ExpandConstant('{app}')) then
     RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm');
@@ -1096,10 +1120,12 @@ begin
   // said first, and it's netsh itself that asks, not a command prompt. Any copy's button makes the same rule, so it
   // stays while another copy is set to start with Windows - and a silent uninstall never stops on Windows' prompt.
   if not UninstallSilent
-    and not (RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'nocatFarm', Run) and FileExists(DirOfExe(Run) + '\{#AppExe}'))
-    and Exec(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall show rule name="nocat.farm dashboard"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0) then begin
+    and not (RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'gamerFarm', Run) and FileExists(DirOfExe(Run) + '\{#AppExe}'))
+    and ((Exec(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall show rule name="gamer.farm dashboard"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0))
+      or (Exec(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall show rule name="nocat.farm dashboard"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0))) then begin
     MsgBox(CustomMessage('FirewallAsk'), mbInformation, MB_OK);
-    ShellExec('runas', ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall delete rule name="nocat.farm dashboard"', '', SW_HIDE, ewWaitUntilTerminated, Code);
+    // One prompt for both: the rule as it's called now, and as a copy from before 2.0.1 named it.
+    ShellExec('runas', ExpandConstant('{sys}\cmd.exe'), '/c netsh advfirewall firewall delete rule name="gamer.farm dashboard" & netsh advfirewall firewall delete rule name="nocat.farm dashboard"', '', SW_HIDE, ewWaitUntilTerminated, Code);
   end;
 
   // /DELETEDATA=yes|no answers this for an unattended uninstall; otherwise it's asked (a silent one keeps them).

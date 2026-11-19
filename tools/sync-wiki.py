@@ -4,7 +4,7 @@ Copies the wiki in docs/ to the repo's GitHub Wiki tab, so the two never drift a
 docs/ is the source: it's versioned with the code and reviewed with it. The Wiki tab is a copy made from it -
 edits made there are overwritten by the next run.
 
-    python tools/sync-wiki.py <path to a clone of gamerfarm.wiki.git (nocatfarm.wiki.git before the 2.0.0 rename)>
+    python tools/sync-wiki.py <path to a clone of gamerfarm.wiki.git (gamerfarm.wiki.git before the 2.0.0 rename)>
 
 Then commit and push in that clone. What it does to each page:
   - names it for the wiki (docs/human-mode.md -> Human-Mode.md, docs/README.md -> Home.md)

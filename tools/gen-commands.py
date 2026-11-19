@@ -1,5 +1,5 @@
 """
-Writes docs/COMMANDS.md - every command gamer.farm has - straight from the command list in src/NocatFarm/Commands.cs,
+Writes docs/COMMANDS.md - every command gamer.farm has - straight from the command list in src/GamerFarm/Commands.cs,
 so the docs can never drift from the app. Run it whenever a command changes (package-release.ps1 runs it too):
 
     python tools/gen-commands.py
@@ -7,7 +7,7 @@ so the docs can never drift from the app. Run it whenever a command changes (pac
 import io, os, re
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-SRC = os.path.join(ROOT, "src", "NocatFarm", "Commands.cs")
+SRC = os.path.join(ROOT, "src", "GamerFarm", "Commands.cs")
 OUT = os.path.join(ROOT, "docs", "COMMANDS.md")
 
 s = io.open(SRC, encoding="utf-8-sig").read().replace("\r\n", "\n")
@@ -51,7 +51,7 @@ lines = [
     "# gamer.farm commands",
     "",
     "Every command gamer.farm has, and what it does. You can type them in the app window, in the dashboard's "
-    "**Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** "
+    "**Console** tab, on **Telegram** (start with `/`), on **Discord** (`/run command:` runs any of them), or send them to one of your accounts in **Steam chat** "
     "(start with `/` or `!`, from an account listed under *Accept commands from*).",
     "",
     "In the app, `help` lists them all and `help <command>` explains one. It explains settings too: "

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace NocatFarm.Addons.Rep4Rep;
+namespace GamerFarm.Addons.Rep4Rep;
 
 /// <summary>One comment task rep4rep has assigned to an account.</summary>
 public sealed class Rep4RepTask {
@@ -73,7 +73,7 @@ public sealed class Rep4RepApi : IDisposable {
 		// An answer is a few kilobytes. Unbounded, a broken or hostile answer of gigabytes was read into memory whole - on a
 		// TV box, the end of the app. Past this the call fails like any other.
 		_http.MaxResponseContentBufferSize = MaxAnswerBytes;
-		_http.DefaultRequestHeaders.Add("User-Agent", "nocatFarm-rep4rep");
+		_http.DefaultRequestHeaders.Add("User-Agent", "gamerFarm-rep4rep");
 	}
 
 	/// <summary>The biggest answer read from rep4rep.</summary>

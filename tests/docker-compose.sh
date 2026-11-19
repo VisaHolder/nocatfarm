@@ -4,7 +4,7 @@
 #   - without a password in .env, compose refuses to start it;
 #   - it comes up healthy (the image's own health check), on the time zone from .env;
 #   - a backup lands in ./backups, survives `up -d --force-recreate`, and restores;
-#   - signing in from outside through a proxy that isn't loopback (Docker's network), with NOCATFARM_TRUSTED_PROXIES:
+#   - signing in from outside through a proxy that isn't loopback (Docker's network), with GAMERFARM_TRUSTED_PROXIES:
 #     tests/security-check.sh against the container;
 #   - `docker compose down` signs out cleanly.
 # Run from the repo root:  sh tests/docker-compose.sh
@@ -23,12 +23,12 @@ mkdir -p config logs backups
 # check for the test, and the proxy it's reached through - Docker's network - trusted.
 cat > docker-compose.override.yml <<EOF
 services:
-  nocatfarm:
+  gamerfarm:
     user: "$(id -u):$(id -g)"
     environment:
-      NOCATFARM_TRUSTED_PROXIES: 172.16.0.0/12
+      GAMERFARM_TRUSTED_PROXIES: 172.16.0.0/12
       # A test container never counts itself on gamer.mom: its user-count ping goes to a dead port inside it.
-      NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
+      GAMERFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
     healthcheck:
       interval: 5s
       start_period: 5s
@@ -37,22 +37,22 @@ EOF
 echo "== without a password"
 if docker compose up -d > up.txt 2>&1; then echo "FAIL: it started without a password"; cat up.txt; exit 1; fi
 cat up.txt
-grep -q 'NOCATFARM_WEB_PASSWORD' up.txt
-echo "PASS: compose refuses to start without NOCATFARM_WEB_PASSWORD, and says what to put in .env"
+grep -q 'GAMERFARM_WEB_PASSWORD' up.txt
+echo "PASS: compose refuses to start without GAMERFARM_WEB_PASSWORD, and says what to put in .env"
 
-echo "NOCATFARM_WEB_PASSWORD=$PW" > .env
+echo "GAMERFARM_WEB_PASSWORD=$PW" > .env
 echo "TZ=Asia/Tokyo" >> .env
 docker compose up -d --build
 
 up() { for i in $(seq 1 90); do curl -s -o /dev/null -w '%{http_code}' "$B/api/ping" | grep -q 200 && return 0; sleep 1; done; return 1; }
-healthy() { for i in $(seq 1 90); do [ "$(docker inspect -f '{{.State.Health.Status}}' nocatfarm)" = "healthy" ] && return 0; sleep 2; done; return 1; }
+healthy() { for i in $(seq 1 90); do [ "$(docker inspect -f '{{.State.Health.Status}}' gamerfarm)" = "healthy" ] && return 0; sleep 2; done; return 1; }
 token() { curl -sf -X POST "$B/api/login" -H 'Content-Type: application/json' -d "{\"Password\":\"$PW\"}" | sed -E 's/.*"token":"([^"]+)".*/\1/'; }
 cmd() { curl -sf -X POST "$B/api/command" -H 'Content-Type: application/json' -H "Authorization: Bearer $1" -d "{\"Line\":\"$2\"}"; echo; }
 
 up
-healthy || { docker inspect -f '{{json .State.Health}}' nocatfarm; exit 1; }
+healthy || { docker inspect -f '{{json .State.Health}}' gamerfarm; exit 1; }
 echo "PASS: up and healthy (the image's --ping health check)"
-test "$(docker compose exec -T nocatfarm printenv TZ)" = "Asia/Tokyo"
+test "$(docker compose exec -T gamerfarm printenv TZ)" = "Asia/Tokyo"
 echo "PASS: on the time zone from .env"
 
 echo "== a backup survives a re-create, and restores"
@@ -72,7 +72,7 @@ check=$(curl -sf -X POST "$B/api/restore/check" -H "Authorization: Bearer $TOKEN
 echo "$check" | head -c 300; echo
 restore=$(echo "$check" | sed -E 's/.*"Token":"([^"]+)".*/\1/')
 curl -sf -X POST "$B/api/restore/apply" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H "Origin: $B" -d "{\"Token\":\"$restore\"}" | head -c 300; echo
-grep -Eq '"UpdateCheckHours": *2,?[[:space:]]*$' config/nocatFarm.json || { echo "FAIL: the restore didn't put the settings back"; grep UpdateCheckHours config/nocatFarm.json; exit 1; }
+grep -Eq '"UpdateCheckHours": *2,?[[:space:]]*$' config/gamerFarm.json || { echo "FAIL: the restore didn't put the settings back"; grep UpdateCheckHours config/gamerFarm.json; exit 1; }
 test "$(ls backups/*.zip | wc -l)" -ge 2
 echo "PASS: the backup was still there after the re-create, restored, and kept a copy of what it replaced"
 
